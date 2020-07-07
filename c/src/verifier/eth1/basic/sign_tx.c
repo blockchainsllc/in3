@@ -70,8 +70,8 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
       case CTX_ERROR:
         return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
-      case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
 
       // if it is useable, we can now handle the result.
@@ -156,7 +156,7 @@ static void add_req_id(sb_t* sb, uint64_t id) {
 
 /** gets the v-value from the chain_id */
 static uint64_t get_v(in3_ctx_t* ctx) {
-  uint64_t v = ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id;
+  uint64_t v = ctx->client->chain_id;
   if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
   return v;
 }
@@ -202,14 +202,14 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
     switch (in3_ctx_state(c)) {
       case CTX_ERROR:
         return ctx_set_error(ctx, c->error, IN3_ERPC);
-      case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
       case CTX_SUCCESS: {
-        if (c->raw_response && c->raw_response->result.len == 65)
-          memcpy(sig, c->raw_response->result.data, 65);
-        else if (c->raw_response && c->raw_response->error.data)
-          return ctx_set_error(ctx, c->raw_response->error.data, IN3_EINVAL);
+        if (c->raw_response && c->raw_response->data.len == 65)
+          memcpy(sig, c->raw_response->data.data, 65);
+        else if (c->raw_response && c->raw_response->state)
+          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
         else
           return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
       }
@@ -230,15 +230,18 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
 
   // if we reached that point we have a valid signature in sig
   // create raw transaction with signature
-  bytes_t data, last;
-  uint8_t v = 27 + sig[64] + (get_v(ctx) ? (get_v(ctx) * 2 + 8) : 0);
+  bytes_t  data, last;
+  uint32_t v = 27 + sig[64] + (get_v(ctx) ? (get_v(ctx) * 2 + 8) : 0);
   EXPECT_EQ(rlp_decode(&raw_tx, 0, &data), 2)                           // the raw data must be a list(2)
   EXPECT_EQ(rlp_decode(&data, 5, &last), 1)                             // the last element (data) must be an item (1)
   bytes_builder_t* rlp = bb_newl(raw_tx.len + 68);                      // we try to make sure, we don't have to reallocate
   bb_write_raw_bytes(rlp, data.data, last.data + last.len - data.data); // copy the existing data without signature
 
   // add v
-  data = bytes(&v, 1);
+  uint8_t vdata[sizeof(v)];
+  data = bytes(vdata, sizeof(vdata));
+  int_to_bytes(v, vdata);
+  b_optimize_len(&data);
   rlp_encode_item(rlp, &data);
 
   // add r

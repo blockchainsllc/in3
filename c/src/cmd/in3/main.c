@@ -119,6 +119,8 @@ void show_help(char* name) {
 -thr           runs test request including health-check when showing in3_weights \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
+-bn            a coma seperated list of urls (or address:url) to be used as boot nodes\n\
 -os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
@@ -388,13 +390,13 @@ bytes_t* get_std_in() {
 
 // convert the name to a chain_id
 uint64_t getchain_id(char* name) {
-  if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
-  if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
-  if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
-  if (strcmp(name, "ewc") == 0) return ETH_CHAIN_ID_EWC;
-  if (strcmp(name, "ipfs") == 0) return ETH_CHAIN_ID_IPFS;
-  if (strcmp(name, "btc") == 0) return ETH_CHAIN_ID_BTC;
-  if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
+  if (strcmp(name, "mainnet") == 0) return CHAIN_ID_MAINNET;
+  if (strcmp(name, "kovan") == 0) return CHAIN_ID_KOVAN;
+  if (strcmp(name, "goerli") == 0) return CHAIN_ID_GOERLI;
+  if (strcmp(name, "ewc") == 0) return CHAIN_ID_EWC;
+  if (strcmp(name, "ipfs") == 0) return CHAIN_ID_IPFS;
+  if (strcmp(name, "btc") == 0) return CHAIN_ID_BTC;
+  if (strcmp(name, "local") == 0) return CHAIN_ID_LOCAL;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
     return bytes_to_long(d, hex_to_bytes(name + 2, -1, d, 32));
@@ -533,39 +535,84 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
   }
 }
 
+static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
+  if (!upddate) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
+  char* cpy = alloca(strlen(nodes) + 1);
+  for (unsigned int i = 0; i < c->chains_length; i++) {
+    if (!upddate && c->chains[i].nodelist_upd8_params) {
+      _free(c->chains[i].nodelist_upd8_params);
+      c->chains[i].nodelist_upd8_params = NULL;
+    }
+    memcpy(cpy, nodes, strlen(nodes) + 1);
+    char* s  = NULL;
+    sb_t* sb = sb_new("{\"nodes\":{\"");
+    sb_add_hexuint(sb, c->chains[i].chain_id);
+    sb_add_chars(sb, "\":{\"nodeList\":[");
+    for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
+      if (next != cpy) sb_add_char(sb, ',');
+      str_range_t address, url;
+
+      if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
+        address = (str_range_t){.data = next, .len = s - next};
+        url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
+      } else {
+        address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
+        url     = (str_range_t){.data = next, .len = strlen(next)};
+      }
+      sb_add_chars(sb, "{\"address\":\"");
+      sb_add_range(sb, address.data, 0, address.len);
+      sb_add_chars(sb, "\",\"url\":\"");
+      sb_add_range(sb, url.data, 0, url.len);
+      sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+    }
+    sb_add_chars(sb, "]}}}");
+    char* err = in3_configure(c, sb->data);
+    if (err)
+      die(err);
+    sb_free(sb);
+  }
+}
+
 static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
 static in3_ret_t debug_transport(in3_request_t* req) {
+  if (req->action == REQ_ACTION_SEND) {
 #ifndef DEBUG
-  if (debug_mode)
-    fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
+    if (debug_mode)
+      fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
-  if (in_response.len) {
-    for (int i = 0; i < req->urls_len; i++)
-      sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
-    return 0;
-  }
-  if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
-    char* data         = str_find(req->payload, "0x");
-    *strchr(data, '"') = 0;
-    printf("%s\n", data);
-    exit(EXIT_SUCCESS);
+    if (in_response.len) {
+      for (unsigned int i = 0; i < req->urls_len; i++) {
+        req->ctx->raw_response[i].state = IN3_OK;
+        sb_add_range(&req->ctx->raw_response[i].data, (char*) in_response.data, 0, in_response.len);
+        req->ctx->raw_response[i].state = IN3_OK;
+      }
+      return 0;
+    }
+    if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
+      char* data         = str_find(req->payload, "0x");
+      *strchr(data, '"') = 0;
+      printf("%s\n", data);
+      exit(EXIT_SUCCESS);
+    }
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(req);
 #else
   in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new((uint8_t*) req->results[0].result.data, req->results[0].result.len);
+  if (req->action != REQ_ACTION_CLEANUP) {
+    last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
 #ifndef DEBUG
-  if (debug_mode) {
-    if (req->results[0].result.len)
-      fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].result.data);
-    else
-      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].error.data);
-  }
+    if (debug_mode) {
+      if (req->ctx->raw_response[0].state == IN3_OK)
+        fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+      else
+        fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+    }
 #endif
+  }
   return r;
 }
 static char*     test_name = NULL;
@@ -577,7 +624,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
-    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->results->result.data);
+    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->ctx->raw_response->data.data);
     exit(0);
   }
 
@@ -633,7 +680,7 @@ int main(int argc, char* argv[]) {
   // create the client
   in3_t* c                         = in3_for_chain(0);
   c->transport                     = debug_transport;
-  c->request_count                 = 1;
+  c->request_count                 = 2;
   bool            out_response     = false;
   int             run_test_request = 0;
   bool            force_hex        = false;
@@ -719,6 +766,10 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
+    else if (strcmp(argv[i], "-nl") == 0)
+      set_nodelist(c, argv[++i], false);
+    else if (strcmp(argv[i], "-bn") == 0)
+      set_nodelist(c, argv[++i], true);
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
@@ -775,6 +826,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
       sig_type = argv[++i];
     else if (strcmp(argv[i], "-debug") == 0) {
+      in3_log_set_quiet(false);
       in3_log_set_level(LOG_TRACE);
       debug_mode = true;
     } else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
@@ -874,7 +926,7 @@ int main(int argc, char* argv[]) {
     return 0;
 #ifdef IPFS
   } else if (strcmp(method, "ipfs_get") == 0) {
-    c->chain_id = ETH_CHAIN_ID_IPFS;
+    c->chain_id = CHAIN_ID_IPFS;
     int size    = strlen(params);
     if (p == 1 || params[1] != '"' || size < 20 || strstr(params + 2, "\"") == NULL) die("missing ipfs has");
     params[size - 2] = 0;
@@ -885,7 +937,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "ipfs_put") == 0) {
-    c->chain_id         = ETH_CHAIN_ID_IPFS;
+    c->chain_id         = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
     printf("%s\n", ipfs_put(c, &data));
@@ -923,20 +975,19 @@ int main(int argc, char* argv[]) {
           urls[0] = health_url;
           sprintf(health_url, "%s/health", chain->nodelist[i].url);
           in3_request_t r;
-          r.in3      = c;
-          r.urls     = urls;
-          r.urls_len = 1;
-          r.timeout  = 5000;
-          r.payload  = "";
-          r.results  = _malloc(sizeof(in3_response_t));
-          sb_init(&r.results->error);
-          sb_init(&r.results->result);
+          in3_ctx_t     ctx       = {0};
+          ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
+          ctx.raw_response->state = IN3_WAITING;
+          ctx.client              = c;
+          r.ctx                   = &ctx;
+          r.urls                  = urls;
+          r.urls_len              = 1;
+          r.payload               = "";
           c->transport(&r);
-
-          if (r.results->error.len || !r.results->result.len)
+          if (ctx.raw_response->state)
             health = 0;
           else {
-            health_res = parse_json(r.results->result.data);
+            health_res = parse_json(ctx.raw_response->data.data);
             if (!health_res)
               health = 0;
             else {
@@ -944,7 +995,7 @@ int main(int argc, char* argv[]) {
               version      = d_get_string(health_res->result, "version");
               running      = d_get_int(health_res->result, "running");
               char* status = d_get_string(health_res->result, "status");
-              if (!status && strcmp(status, "healthy")) health = 0;
+              if (!status || strcmp(status, "healthy")) health = 0;
             }
           }
           if (version) {
@@ -954,9 +1005,9 @@ int main(int argc, char* argv[]) {
           health_s = _malloc(3000);
           sprintf(health_s, "%-22s %-7s   %7d   %-9s ", node_name ? node_name : "-", version ? version : "-", running, health ? "OK" : "unhealthy");
 
-          _free(r.results->result.data);
-          _free(r.results->error.data);
-          _free(r.results);
+          if (ctx.raw_response->data.data)
+            _free(ctx.raw_response->data.data);
+          _free(ctx.raw_response);
           if (health_res) json_free(health_res);
         }
       }
@@ -1042,6 +1093,11 @@ int main(int argc, char* argv[]) {
     if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
       char     prefix[] = "msg";
       bytes_t* tmp_data = b_new((uint8_t*) NULL, data->len + strlen(prefix));
+      uint8_t  hash[32];
+
+      hasher_Raw(HASHER_SHA2, data->data, data->len, hash);
+      printf("Match the following hash with the message hash on ledger device\n");
+      print_hex(hash, 32);
 
       memcpy(tmp_data->data, prefix, strlen(prefix));
       memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
@@ -1157,14 +1213,18 @@ int main(int argc, char* argv[]) {
   }
 
   in3_log_debug("..sending request %s %s\n", method, params);
+  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
 
   // Update nodelist if a newer latest block was reported
-  if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
+  if (chain && chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
-    in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
+    if (chain->type == CHAIN_ETH)
+      in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
+    //    else if (chain->type == CHAIN_BTC)
+    //     in3_client_rpc(c, "getblockcount", "[]", &r, &e);
   }
 
   // if we need to wait

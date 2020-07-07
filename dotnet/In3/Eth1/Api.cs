@@ -1,9 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Text.Json;
+using System.Threading.Tasks;
 using In3.Crypto;
 using In3.Utils;
 
@@ -60,9 +59,9 @@ namespace In3.Eth1
         /// If you need the very latest block, change <see cref="Configuration.ClientConfiguration.SignatureCount" /> to <see langword="0"/>.
         /// </summary>
         /// <returns>The number of the block.</returns>
-        public BigInteger BlockNumber()
+        public async Task<BigInteger> BlockNumber()
         {
-            string jsonResponse = _in3.SendRpc(EthBlockNumber, new object[] { });
+            string jsonResponse = await _in3.SendRpc(EthBlockNumber, new object[] { });
             return DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -83,9 +82,9 @@ namespace In3.Eth1
         ///   TransactionHashBlock earliest = (TransactionHashBlock) _client.Eth1.GetBlockByNumber(BlockParameter.Earliest, false);
         ///   </code>
         /// </example>
-        public Block GetBlockByNumber(BigInteger blockNumber, bool shouldIncludeTransactions = true)
+        public async Task<Block> GetBlockByNumber(BigInteger blockNumber, bool shouldIncludeTransactions = true)
         {
-            string jsonResponse = _in3.SendRpc(EthGetBlockByNumber,
+            string jsonResponse = await _in3.SendRpc(EthGetBlockByNumber,
                 new object[] { BlockParameter.AsString(blockNumber), shouldIncludeTransactions });
             if (shouldIncludeTransactions)
             {
@@ -108,9 +107,9 @@ namespace In3.Eth1
         /// Returning <see cref="Block" /> must be cast to <see cref="TransactionBlock" /> or <see cref="TransactionHashBlock" /> to access the transaction data.
         /// </para>
         /// </remarks>
-        public Block GetBlockByHash(string blockHash, bool shouldIncludeTransactions = true)
+        public async Task<Block> GetBlockByHash(string blockHash, bool shouldIncludeTransactions = true)
         {
-            string jsonResponse = _in3.SendRpc(EthGetBlockByHash,
+            string jsonResponse = await _in3.SendRpc(EthGetBlockByHash,
                 new object[] { blockHash, shouldIncludeTransactions });
             if (shouldIncludeTransactions)
             {
@@ -132,9 +131,9 @@ namespace In3.Eth1
         /// <param name="signature">Function signature, with parameters. i.e. <i>>getBalance(uint256):uint256</i>, can contain the return types but will be ignored.</param>
         /// <param name="args">Function parameters, in the same order as in passed on to <b>signature</b>.</param>
         /// <returns>The encoded data.</returns>
-        public string AbiEncode(string signature, object[] args)
+        public async Task<string> AbiEncode(string signature, object[] args)
         {
-            string jsonResponse = _in3.SendRpc(In3AbiEncode, new object[] {
+            string jsonResponse = await _in3.SendRpc(In3AbiEncode, new object[] {
                 signature, args});
             return RpcHandler.From<string>(jsonResponse);
         }
@@ -146,9 +145,9 @@ namespace In3.Eth1
         /// <param name="signature">Function signature i.e. <i>>(address,string,uint256)</i> or <i>>getBalance(uint256):uint256</i>. In case of the latter, the function signature will be ignored and only the return types will be parsed.</param>
         /// <param name="encodedData">Abi encoded values. Usually the string returned from a rpc to the EVM.</param>
         /// <returns>The decoded argugments for the function call given the encded data.</returns>
-        public string[] AbiDecode(string signature, string encodedData)
+        public async Task<string[]> AbiDecode(string signature, string encodedData)
         {
-            string jsonResponse = _in3.SendRpc(In3AbiDecode, new object[] {
+            string jsonResponse = await _in3.SendRpc(In3AbiDecode, new object[] {
                 signature, encodedData});
             // This is ugly, unsemantic and error prone and SHOULD be changed.
             JsonElement result = (JsonElement)RpcHandler.From<object>(jsonResponse);
@@ -175,9 +174,9 @@ namespace In3.Eth1
         /// The current gas price in Wei (1 ETH equals 1000000000000000000 Wei ).
         /// </summary>
         /// <returns>The gas price.</returns>
-        public long GetGasPrice()
+        public async Task<long> GetGasPrice()
         {
-            string jsonResponse = _in3.SendRpc(EthGasPrice, new object[] { });
+            string jsonResponse = await _in3.SendRpc(EthGasPrice, new object[] { });
             return (long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -185,9 +184,9 @@ namespace In3.Eth1
         /// Get the <see cref="Chain" /> which the client is currently connected to.
         /// </summary>
         /// <returns>The <see cref="Chain" />.</returns>
-        public Chain GetChainId()
+        public async Task<Chain> GetChainId()
         {
-            string jsonResponse = _in3.SendRpc(EthChainId, new object[] { });
+            string jsonResponse = await _in3.SendRpc(EthChainId, new object[] { });
             return (Chain)(long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -197,9 +196,9 @@ namespace In3.Eth1
         /// <param name="address">Address to check for balance.</param>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>The current balance in wei.</returns>
-        public BigInteger GetBalance(string address, BigInteger blockNumber)
+        public async Task<BigInteger> GetBalance(string address, BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthGetBalance, new object[] { address, BlockParameter.AsString(blockNumber) });
+            string jsonResponse = await _in3.SendRpc(EthGetBalance, new object[] { address, BlockParameter.AsString(blockNumber) });
             return DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -209,9 +208,9 @@ namespace In3.Eth1
         /// <param name="address">Ethereum address.</param>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>Smart-Contract bytecode in hexadecimal.</returns>
-        public string GetCode(string address, BigInteger blockNumber)
+        public async Task<string> GetCode(string address, BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthGetCode, new object[] { address, BlockParameter.AsString(blockNumber) });
+            string jsonResponse = await _in3.SendRpc(EthGetCode, new object[] { address, BlockParameter.AsString(blockNumber) });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -223,9 +222,9 @@ namespace In3.Eth1
         /// <param name="position">Position index, 0x0 up to 100.</param>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>Stored value in designed position.</returns>
-        public string GetStorageAt(string address, BigInteger position, BigInteger blockNumber)
+        public async Task<string> GetStorageAt(string address, BigInteger position, BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthGetStorageAt, new object[] {
+            string jsonResponse = await _in3.SendRpc(EthGetStorageAt, new object[] {
                 address, DataTypeConverter.BigIntToPrefixedHex(position), BlockParameter.AsString(blockNumber)
             });
             return RpcHandler.From<string>(jsonResponse);
@@ -236,9 +235,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="blockHash">Desired block hash.</param>
         /// <returns>The number (count) of <see cref="Transaction" />.</returns>
-        public long GetBlockTransactionCountByHash(string blockHash)
+        public async Task<long> GetBlockTransactionCountByHash(string blockHash)
         {
-            string jsonResponse = _in3.SendRpc(EthGetBlockTransactionCountByHash, new object[] { blockHash });
+            string jsonResponse = await _in3.SendRpc(EthGetBlockTransactionCountByHash, new object[] { blockHash });
             return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
@@ -247,9 +246,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>The number (count) of <see cref="Transaction" />.</returns>
-        public long GetBlockTransactionCountByNumber(BigInteger blockNumber)
+        public async Task<long> GetBlockTransactionCountByNumber(BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthGetBlockTransactionCountByNumber, new object[] { BlockParameter.AsString(blockNumber) });
+            string jsonResponse = await _in3.SendRpc(EthGetBlockTransactionCountByNumber, new object[] { BlockParameter.AsString(blockNumber) });
             return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
@@ -261,9 +260,9 @@ namespace In3.Eth1
         /// <param name="blockHash">Desired block hash.</param>
         /// <param name="index">The index of the <see cref="Transaction" /> in a <see cref="Block" /></param>
         /// <returns>The <see cref="Transaction" /> (if it exists).</returns>
-        public Transaction GetTransactionByBlockHashAndIndex(String blockHash, int index)
+        public async Task<Transaction> GetTransactionByBlockHashAndIndex(String blockHash, int index)
         {
-            string jsonResponse = _in3.SendRpc(EthGetTransactionByBlockHashAndIndex,
+            string jsonResponse = await _in3.SendRpc(EthGetTransactionByBlockHashAndIndex,
                 new object[] { blockHash, BlockParameter.AsString(index) });
             return RpcHandler.From<Transaction>(jsonResponse);
         }
@@ -275,9 +274,9 @@ namespace In3.Eth1
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <param name="index">The index of the <see cref="Transaction" /> in a <see cref="Block" /></param>
         /// <returns>The <see cref="Transaction" /> (if it exists).</returns>
-        public Transaction GetTransactionByBlockNumberAndIndex(BigInteger blockNumber, int index)
+        public async Task<Transaction> GetTransactionByBlockNumberAndIndex(BigInteger blockNumber, int index)
         {
-            string jsonResponse = _in3.SendRpc(EthGetTransactionByBlockNumberAndIndex,
+            string jsonResponse = await _in3.SendRpc(EthGetTransactionByBlockNumberAndIndex,
                 new object[] { BlockParameter.AsString(blockNumber), BlockParameter.AsString(index) });
             return RpcHandler.From<Transaction>(jsonResponse);
         }
@@ -288,9 +287,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="transactionHash">Desired transaction hash.</param>
         /// <returns>The <see cref="Transaction" /> (if it exists).</returns>
-        public Transaction GetTransactionByHash(string transactionHash)
+        public async Task<Transaction> GetTransactionByHash(string transactionHash)
         {
-            string jsonResponse = _in3.SendRpc(EthGetTransactionByHash, new object[] { transactionHash });
+            string jsonResponse = await _in3.SendRpc(EthGetTransactionByHash, new object[] { transactionHash });
             return RpcHandler.From<Transaction>(jsonResponse);
         }
 
@@ -302,9 +301,9 @@ namespace In3.Eth1
         /// <param name="address">Ethereum account address.</param>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>Number of transactions mined from this address.</returns>
-        public long GetTransactionCount(string address, BigInteger blockNumber)
+        public async Task<long> GetTransactionCount(string address, BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthGetTransactionCount, new object[] { address, BlockParameter.AsString(blockNumber) });
+            string jsonResponse = await _in3.SendRpc(EthGetTransactionCount, new object[] { address, BlockParameter.AsString(blockNumber) });
             return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
@@ -316,9 +315,9 @@ namespace In3.Eth1
         /// <remarks>
         /// <para>Client will add the other required fields, gas and chaind id.</para>
         /// </remarks>
-        public string SendRawTransaction(string transactionData)
+        public async Task<string> SendRawTransaction(string transactionData)
         {
-            string jsonResponse = _in3.SendRpc(EthSendRawTransaction, new object[] { transactionData });
+            string jsonResponse = await _in3.SendRpc(EthSendRawTransaction, new object[] { transactionData });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -329,9 +328,9 @@ namespace In3.Eth1
         /// <param name="address">Ethereum address.</param>
         /// <param name="shouldUseChainId">If <see langword="true" />, the chain id is integrated as well. Default being <see langword="false" />.</param>
         /// <returns>EIP-55 compliant, mixed-case address.</returns>
-        public string ChecksumAddress(string address, bool? shouldUseChainId = null)
+        public async Task<string> ChecksumAddress(string address, bool? shouldUseChainId = null)
         {
-            string jsonResponse = _in3.SendRpc(EthChecksumAddress, new object[] { address, shouldUseChainId });
+            string jsonResponse = await _in3.SendRpc(EthChecksumAddress, new object[] { address, shouldUseChainId });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -341,9 +340,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="blockHash">Desired block hash.</param>
         /// <returns>The number of uncles in a block.</returns>
-        public long GetUncleCountByBlockHash(string blockHash)
+        public async Task<long> GetUncleCountByBlockHash(string blockHash)
         {
-            string jsonResponse = _in3.SendRpc(EthGetUncleCountByBlockHash, new object[] { blockHash });
+            string jsonResponse = await _in3.SendRpc(EthGetUncleCountByBlockHash, new object[] { blockHash });
             return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
@@ -353,9 +352,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>The number of uncles in a block.</returns>
-        public long GetUncleCountByBlockNumber(BigInteger blockNumber)
+        public async Task<long> GetUncleCountByBlockNumber(BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthGetUncleCountByBlockNumber, new object[] { BlockParameter.AsString(blockNumber) });
+            string jsonResponse = await _in3.SendRpc(EthGetUncleCountByBlockNumber, new object[] { BlockParameter.AsString(blockNumber) });
             return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
@@ -369,9 +368,9 @@ namespace In3.Eth1
         /// <remarks>
         /// <para>Use the returned filter id to perform other filter operations.</para>
         /// </remarks>
-        public long NewBlockFilter()
+        public async Task<long> NewBlockFilter()
         {
-            string jsonResponse = _in3.SendRpc(EthNewBlockFilter, new object[] { });
+            string jsonResponse = await _in3.SendRpc(EthNewBlockFilter, new object[] { });
             return (long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -380,9 +379,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="filterId">The filter id returned by <see cref="Eth1.Api.NewBlockFilter" />.</param>
         /// <returns>The result of the operation, <see langword="true" /> on success or <see langword="false" /> on failure.</returns>
-        public bool UninstallFilter(long filterId)
+        public async Task<bool> UninstallFilter(long filterId)
         {
-            string jsonResponse = _in3.SendRpc(EthUninstallFilter, new object[] { DataTypeConverter.BigIntToPrefixedHex(filterId) });
+            string jsonResponse = await _in3.SendRpc(EthUninstallFilter, new object[] { DataTypeConverter.BigIntToPrefixedHex(filterId) });
             return RpcHandler.From<bool>(jsonResponse);
         }
 
@@ -393,17 +392,15 @@ namespace In3.Eth1
         /// <param name="request">The transaction request to be processed.</param>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>Ddecoded result. If only one return value is expected the Object will be returned, if not an array of objects will be the result.</returns>
-        public object Call(TransactionRequest request, BigInteger blockNumber)
+        public async Task<object> Call(TransactionRequest request, BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthCall, new object[] { MapTransactionToRpc(request), BlockParameter.AsString(blockNumber) });
+            string jsonResponse = await _in3.SendRpc(EthCall, new object[] { await MapTransactionToRpc(request), BlockParameter.AsString(blockNumber) });
             if (request.IsFunctionInvocation())
             {
-                return AbiDecode(request.Function, RpcHandler.From<string>(jsonResponse));
+                return await AbiDecode(request.Function, RpcHandler.From<string>(jsonResponse));
             }
-            else
-            {
-                return RpcHandler.From<object>(jsonResponse);
-            }
+
+            return RpcHandler.From<object>(jsonResponse);
         }
 
         /// <summary>
@@ -412,9 +409,9 @@ namespace In3.Eth1
         /// <param name="request">The transaction request whose cost will be estimated.</param>
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <returns>Estimated gas in Wei.</returns>
-        public long EstimateGas(TransactionRequest request, BigInteger blockNumber)
+        public async Task<long> EstimateGas(TransactionRequest request, BigInteger blockNumber)
         {
-            string jsonResponse = _in3.SendRpc(EthEstimateGas, new object[] { MapTransactionToRpc(request), BlockParameter.AsString(blockNumber) });
+            string jsonResponse = await _in3.SendRpc(EthEstimateGas, new object[] { await MapTransactionToRpc(request), BlockParameter.AsString(blockNumber) });
             return (long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -429,9 +426,9 @@ namespace In3.Eth1
         /// <remarks>
         /// <para>Use the returned filter id to perform other filter operations.</para>
         /// </remarks>
-        public long NewLogFilter(LogFilter filter)
+        public async Task<long> NewLogFilter(LogFilter filter)
         {
-            string jsonResponse = _in3.SendRpc(EthNewFilter, new object[] { filter.ToRPc() });
+            string jsonResponse = await _in3.SendRpc(EthNewFilter, new object[] { filter.ToRPc() });
             return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
@@ -443,9 +440,9 @@ namespace In3.Eth1
         /// <remarks>
         /// <para>Since the return is the <see lang="Log[]" /> since last poll, executing this multiple times changes the state making this a "non-idempotent" getter.</para>
         /// </remarks>
-        public Log[] GetFilterChangesFromLogs(long filterId)
+        public async Task<Log[]> GetFilterChangesFromLogs(long filterId)
         {
-            string jsonResponse = _in3.SendRpc(EthGetFilterChanges, new object[] { DataTypeConverter.BigIntToPrefixedHex((BigInteger)filterId) });
+            string jsonResponse = await _in3.SendRpc(EthGetFilterChanges, new object[] { DataTypeConverter.BigIntToPrefixedHex((BigInteger)filterId) });
             return RpcHandler.From<Log[]>(jsonResponse);
         }
 
@@ -457,9 +454,9 @@ namespace In3.Eth1
         /// <remarks>
         /// <para>Since the return is the <see langword="Log[]" /> since last poll, executing this multiple times changes the state making this a "non-idempotent" getter.</para>
         /// </remarks>
-        public Log[] GetFilterLogs(long filterId)
+        public async Task<Log[]> GetFilterLogs(long filterId)
         {
-            string jsonResponse = _in3.SendRpc(EthGetFilterLogs, new object[] { DataTypeConverter.BigIntToPrefixedHex((BigInteger)filterId) });
+            string jsonResponse = await _in3.SendRpc(EthGetFilterLogs, new object[] { DataTypeConverter.BigIntToPrefixedHex((BigInteger)filterId) });
             return RpcHandler.From<Log[]>(jsonResponse);
         }
 
@@ -468,9 +465,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="filter">Filter conditions.</param>
         /// <returns>Logs that satisfy the <paramref name="filter" />.</returns>
-        public Log[] GetLogs(LogFilter filter)
+        public async Task<Log[]> GetLogs(LogFilter filter)
         {
-            string jsonResponse = _in3.SendRpc(EthGetLogs, new object[] { filter.ToRPc() });
+            string jsonResponse = await _in3.SendRpc(EthGetLogs, new object[] { filter.ToRPc() });
             return RpcHandler.From<Log[]>(jsonResponse);
         }
 
@@ -479,9 +476,9 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="transactionHash">Desired transaction hash.</param>
         /// <returns>The mined transaction data including event logs.</returns>
-        public TransactionReceipt GetTransactionReceipt(string transactionHash)
+        public async Task<TransactionReceipt> GetTransactionReceipt(string transactionHash)
         {
-            string jsonResponse = _in3.SendRpc(EthGetTransactionReceipt, new object[] { transactionHash });
+            string jsonResponse = await _in3.SendRpc(EthGetTransactionReceipt, new object[] { transactionHash });
             return RpcHandler.From<TransactionReceipt>(jsonResponse);
         }
 
@@ -503,7 +500,7 @@ namespace In3.Eth1
         ///    client.Eth1.SendTransaction(tx);
         ///   </code>
         /// </example>
-        public string SendTransaction(TransactionRequest tx)
+        public async Task<string> SendTransaction(TransactionRequest tx)
         {
             if (_in3.Signer == null)
                 throw new SystemException("No Signer set. This is needed in order to sign transaction.");
@@ -513,7 +510,7 @@ namespace In3.Eth1
                 throw new SystemException("The from address is not supported by the signer");
             tx = _in3.Signer.PrepareTransaction(tx);
 
-            string jsonResponse = _in3.SendRpc(EthSendTransaction, new object[] { MapTransactionToRpc(tx) });
+            string jsonResponse = await _in3.SendRpc(EthSendTransaction, new object[] { await MapTransactionToRpc(tx) });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -523,9 +520,9 @@ namespace In3.Eth1
         /// <param name="blockNumber">Block number or <see cref="BlockParameter.Latest" /> or <see cref="BlockParameter.Earliest" />.</param>
         /// <param name="position">Position of the block.</param>
         /// <returns>The uncle block.</returns>
-        public Block GetUncleByBlockNumberAndIndex(BigInteger blockNumber, int position)
+        public async Task<Block> GetUncleByBlockNumberAndIndex(BigInteger blockNumber, int position)
         {
-            string jsonResponse = _in3.SendRpc(EthGetUncleByBlockNumberAndIndex,
+            string jsonResponse = await _in3.SendRpc(EthGetUncleByBlockNumberAndIndex,
                 new object[] { BlockParameter.AsString(blockNumber), DataTypeConverter.BigIntToPrefixedHex(position) });
             return RpcHandler.From<TransactionBlock>(jsonResponse);
         }
@@ -539,21 +536,21 @@ namespace In3.Eth1
         /// <remarks>
         /// The actual semantics of the returning value changes according to <paramref name="type" />.
         /// </remarks>
-        public string Ens(string name, ENSParameter type = null)
+        public async Task<string> Ens(string name, ENSParameter type = null)
         {
-            string jsonResponse = _in3.SendRpc(EthENS, new object[] { name, type?.Value });
+            string jsonResponse = await _in3.SendRpc(EthENS, new object[] { name, type?.Value });
             return RpcHandler.From<string>(jsonResponse);
         }
 
         // For sure this should not be here at all. As soon as there is a decoupled way to abiEncode, got to extract this to a wrapper (e.g.: adapter or a factory method on TransactionRpc itself.
-        private Rpc.Transaction MapTransactionToRpc(TransactionRequest tx)
+        private async Task<Rpc.Transaction> MapTransactionToRpc(TransactionRequest tx)
         {
             Rpc.Transaction result = new Rpc.Transaction();
 
             result.Data = tx.Data == null || tx.Data.Length < 2 ? "0x" : tx.Data;
             if (!String.IsNullOrEmpty(tx.Function))
             {
-                string fnData = AbiEncode(tx.Function, tx.Params);
+                string fnData = await AbiEncode(tx.Function, tx.Params);
                 if (fnData != null && fnData.Length > 2 && fnData.StartsWith("0x"))
                     result.Data += fnData.Substring(2 + (result.Data.Length > 2 ? 8 : 0));
             }

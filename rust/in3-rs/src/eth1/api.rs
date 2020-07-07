@@ -1,16 +1,12 @@
 //! Ethereum JSON RPC client API. This implementation is more or less consistent with the
 //! [Ethereum JSON RPC wiki](https://github.com/ethereum/wiki/wiki/JSON-RPC).
-use ethereum_types::{Address, U256};
-use serde_json::json;
-
 use crate::error::*;
-use crate::eth1::{
-    Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
-    Transaction, TransactionReceipt,
-};
+use crate::eth1::*;
+use crate::in3::chain::{BTC, IPFS};
 use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
+use serde_json::json;
 
 /// Primary interface for the Ethereum JSON RPC API.
 pub struct Api {
@@ -21,6 +17,7 @@ impl ApiTrait for Api {
     /// Creates an [`eth1::Api`](../eth1/api/struct.Api.html) instance by consuming a
     /// [`Client`](../in3/struct.Client.html).
     fn new(client: Box<dyn ClientTrait>) -> Self {
+        assert!(client.id() != BTC && client.id() != IPFS);
         Api { client }
     }
 
@@ -574,9 +571,7 @@ mod tests {
             "eth_blockNumber",
             r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
         )];
-        let transport: Box<dyn Transport> = Box::new(MockTransport {
-            responses: responses,
-        });
+        let transport: Box<dyn Transport> = Box::new(MockTransport { responses });
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let num: u64 = task::block_on(eth_api.block_number())?
@@ -725,9 +720,6 @@ mod tests {
     fn test_eth_api_chain_id() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-        // let mut client = Client::new(chain::MAINNET);
-        // let _ = client.configure(config);
-        // let mut eth_api = Api::new(client);
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let ret: u64 = task::block_on(eth_api.chain_id())?
             .try_into()
@@ -868,9 +860,11 @@ mod tests {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        eth_api
-            .client()
-            .set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
+        eth_api.client().set_signer(Box::new(In3Signer::new(
+            "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
+                .try_into()
+                .unwrap(),
+        )));
         let data = "f8da098609184e72a0008296c094f99dbd3cfc292b11f74deea9fa730825ee0b56f2849184e72ab87000ff86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affff2ea0936324cf235541114275bb72b5acfb5a5c1f6f6e7f426c94806ff4093539bfaaa010a7482378b19ee0930a77c14b18c5664b3aa6c3ebc7420954d81263625d6d6a";
         let rawbytes: Bytes = FromHex::from_hex(data).unwrap().into(); // cannot fail
         let hash: Hash = task::block_on(eth_api.send_raw_transaction(rawbytes))
@@ -886,13 +880,15 @@ mod tests {
             "eth_sendRawTransaction",
             r#"[{"jsonrpc":"2.0","result":"0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a","id":2,"in3":{"lastValidatorChange":0,"lastNodeList":2837876,"execTime":213,"rpcTime":213,"rpcCount":1,"currentBlock":2850136,"version":"2.1.0"}}]"#,
         )];
-        let transport: Box<dyn Transport> = Box::new(MockTransport {
-            responses: responses,
-        });
+        let transport: Box<dyn Transport> = Box::new(MockTransport { responses });
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x5":{"needsUpdate":false}}}}"#;
         let mut client = Client::new(chain::GOERLI);
         let _ = client.configure(config);
-        client.set_pk_signer("dcb7b68bf23f6b29ffef8f316b0015bfd952385f26ae72befaf68cf0d0b6b1b6");
+        client.set_signer(Box::new(In3Signer::new(
+            "dcb7b68bf23f6b29ffef8f316b0015bfd952385f26ae72befaf68cf0d0b6b1b6"
+                .try_into()
+                .unwrap(),
+        )));
         client.set_transport(transport);
         let mut eth_api = Api::new(client);
         let to: Address =
@@ -903,8 +899,8 @@ mod tests {
         let data = "00";
         let rawbytes: Bytes = FromHex::from_hex(&data).unwrap().into(); // cannot fail
         let txn = OutgoingTransaction {
-            to: to,
-            from: from,
+            to,
+            from,
             gas: Some((0x668A0).into()),
             gas_price: Some((0xee6b28000i64).into()),
             value: Some((0x1bc16d674ec80000i64).into()),

@@ -1,9 +1,6 @@
-extern crate in3;
-
 use async_std::task;
 
 use in3::prelude::*;
-
 use in3::transport::MockTransport;
 
 fn main() {
@@ -17,6 +14,6 @@ fn main() {
     }));
     match task::block_on(c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#)) {
         Ok(res) => println!("{}", res),
-        Err(err) => println!("Failed with error: {}", err),
+        Err(err) => println!("Failed with error: {:?}", err),
     }
 }

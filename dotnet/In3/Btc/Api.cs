@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using In3.Utils;
 
 namespace In3.Btc
@@ -28,9 +29,9 @@ namespace In3.Btc
         ///   Transaction desiredTransaction = in3.Btc.GetTransaction("1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d");
         ///   </code>
         /// </example>
-        public Transaction GetTransaction(string txid)
+        public async Task<Transaction> GetTransaction(string txid)
         {
-            string jsonResponse = _in3.SendRpc(BtcGetRawTransaction, new object[] { txid, true });
+            string jsonResponse = await _in3.SendRpc(BtcGetRawTransaction, new object[] { txid, true });
             return RpcHandler.From<Transaction>(jsonResponse);
         }
 
@@ -44,9 +45,9 @@ namespace In3.Btc
         ///   byte[] serializedTransaction = in3.Btc.GetTransactionBytes("1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d");
         ///   </code>
         /// </example>
-        public byte[] GetTransactionBytes(string txid)
+        public async Task<byte[]> GetTransactionBytes(string txid)
         {
-            string jsonResponse = _in3.SendRpc(BtcGetRawTransaction, new object[] { txid, false });
+            string jsonResponse = await _in3.SendRpc(BtcGetRawTransaction, new object[] { txid, false });
             return DataTypeConverter.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -60,9 +61,9 @@ namespace In3.Btc
         ///   BlockHeader header = in3.Btc.GetBlockHeader("0000000000000000000cd3c5d7638014e78a5fba33be5fa5cb10ef9f03d99e60");
         ///   </code>
         /// </example>
-        public BlockHeader GetBlockHeader(string blockHash)
+        public async Task<BlockHeader> GetBlockHeader(string blockHash)
         {
-            string jsonResponse = _in3.SendRpc(BtcGetBlockHeader, new object[] { blockHash, true });
+            string jsonResponse = await _in3.SendRpc(BtcGetBlockHeader, new object[] { blockHash, true });
             return RpcHandler.From<BlockHeader>(jsonResponse);
         }
 
@@ -76,9 +77,9 @@ namespace In3.Btc
         ///   byte[] header = in3.Btc.GetBlockHeaderBytes("0000000000000000000cd3c5d7638014e78a5fba33be5fa5cb10ef9f03d99e60");
         ///   </code>
         /// </example>
-        public byte[] GetBlockHeaderBytes(string blockHash)
+        public async Task<byte[]> GetBlockHeaderBytes(string blockHash)
         {
-            string jsonResponse = _in3.SendRpc(BtcGetBlockHeader, new object[] { blockHash, false });
+            string jsonResponse = await _in3.SendRpc(BtcGetBlockHeader, new object[] { blockHash, false });
             return DataTypeConverter.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
         }
 
@@ -93,9 +94,9 @@ namespace In3.Btc
         ///   Transaction t1 = block.Tx[0];
         ///   </code>
         /// </example>
-        public Block<Transaction> GetBlockWithTxData(string blockHash)
+        public async Task<Block<Transaction>> GetBlockWithTxData(string blockHash)
         {
-            string jsonResponse = _in3.SendRpc(BtcGetBlock, new object[] { blockHash, 2 });
+            string jsonResponse = await _in3.SendRpc(BtcGetBlock, new object[] { blockHash, 2 });
             return RpcHandler.From<Block<Transaction>>(jsonResponse);
         }
 
@@ -110,9 +111,9 @@ namespace In3.Btc
         ///   string t1 = block.Tx[0];
         ///   </code>
         /// </example>
-        public Block<string> GetBlockWithTxIds(string blockHash)
+        public async Task<Block<string>> GetBlockWithTxIds(string blockHash)
         {
-            string jsonResponse = _in3.SendRpc(BtcGetBlock, new object[] { blockHash, 1 });
+            string jsonResponse = await _in3.SendRpc(BtcGetBlock, new object[] { blockHash, 1 });
             return RpcHandler.From<Block<string>>(jsonResponse);
         }
 
@@ -126,9 +127,9 @@ namespace In3.Btc
         ///   byte[] blockBytes = in3.Btc.GetBlockBytes("000000000000000000064ba7512ecc70cabd7ed17e31c06f2205d5ecdadd6d22");
         ///   </code>
         /// </example>
-        public byte[] GetBlockBytes(string blockHash)
+        public async Task<byte[]> GetBlockBytes(string blockHash)
         {
-            string jsonResponse = _in3.SendRpc(BtcGetBlock, new object[] { blockHash, false });
+            string jsonResponse = await _in3.SendRpc(BtcGetBlock, new object[] { blockHash, false });
             return DataTypeConverter.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
         }
     }

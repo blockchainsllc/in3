@@ -36,7 +36,7 @@
 
 #include "context.h"
 
-#ifdef ERR_MSG
+#ifdef LOGGING
 #define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
 #else
 #define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)
@@ -62,9 +62,7 @@ NONULL in3_request_t* in3_create_request(
  * frees a previuosly allocated request.
  */
 NONULL void request_free(
-    in3_request_t*   req,          /**< [in] the request. */
-    const in3_ctx_t* ctx,          /**< [in] the request context. */
-    bool             response_free /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */
+    in3_request_t* req /**< [in] the request. */
 );
 
 /**

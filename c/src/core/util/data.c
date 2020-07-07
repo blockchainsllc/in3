@@ -149,7 +149,7 @@ static size_t d_token_size(const d_token_t* item) {
 }
 
 bytes_t* d_bytes(const d_token_t* item) {
-  return (bytes_t*) item;
+  return d_type(item) == T_BYTES ? (bytes_t*) item : NULL;
 }
 
 bytes_t* d_bytesl(d_token_t* item, size_t l) {

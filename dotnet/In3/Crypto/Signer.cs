@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using In3.Eth1;
 
 namespace In3.Crypto
@@ -20,8 +21,8 @@ namespace In3.Crypto
         /// </summary>
         /// <param name="data">Data to be signed.</param>
         /// <param name="account">The account that will sign the transaction.</param>
-        /// <returns>The signed transactiond ata.</returns>
-        string Sign(string data, string account);
+        /// <returns>The signed transaction data.</returns>
+        Task<string> Sign(string data, string account);
 
         /// <summary>
         /// Optional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. Invoked just before sending a transaction through <see cref="Eth1.Api.SendTransaction" />.

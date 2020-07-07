@@ -18,11 +18,10 @@ namespace Test
 
         public void BuildTransport(string[][] fileNameTuples) {
             StubTransport newTransport = new StubTransport();
-
             foreach (string[] fileNameTuple in fileNameTuples) {
                 newTransport.AddMockedresponse(fileNameTuple[0], fileNameTuple[1]);
             }
-
+            
             _client.Transport = newTransport;
         }
 
@@ -43,7 +42,7 @@ namespace Test
             clientConfig.RequestCount = 1;
             clientConfig.AutoUpdateList = false;
             clientConfig.Proof = Proof.None;
-            clientConfig.MaxAttempts = 1;
+            clientConfig.MaxAttempts = 10;
             clientConfig.SignatureCount = 0;
         }
 

@@ -125,12 +125,8 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
     char* req = _malloc(200);
 
     // we can use the cache_key, since it contains the hexencoded string with a "C"-prefix.
-    snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\",\"latest\"]}", cache_key + 1);
-    in3_proof_t old_proof  = vc->ctx->client->proof;
-    vc->ctx->client->proof = PROOF_NONE; // we don't need proof since we have the codehash!
-    res                    = ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
-    vc->ctx->client->proof = old_proof;
-    return res;
+    snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\",\"latest\"],\"in3\":{\"verification\":\"none\"}}", cache_key + 1);
+    return ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
   }
 }
 

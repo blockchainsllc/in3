@@ -49,6 +49,7 @@
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
+#include "../util/transport.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -91,7 +92,7 @@ static void test_configure_request() {
   d_token_t* signers = d_get(in3, key("signers"));
   TEST_ASSERT_NOT_NULL(signers);
   TEST_ASSERT_EQUAL(2, d_len(signers));
-  request_free(request, ctx, false);
+  request_free(request);
   json_free(json);
   ctx_free(ctx);
 
@@ -99,14 +100,14 @@ static void test_configure_request() {
 }
 
 static void test_configure_signed_request() {
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_LOCAL);
+  in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
   TEST_ASSERT_NULL(in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}"));
   c->flags = FLAGS_INCLUDE_CODE;
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
     c->chains[i].nodelist_upd8_params = NULL;
   }
-  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  in3_ctx_t* ctx = ctx_new(c, "{\"id\":2,\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
   json_ctx_t*    json    = parse_json(request->payload);
@@ -118,13 +119,13 @@ static void test_configure_signed_request() {
   char hex[150];
   TEST_ASSERT_EQUAL(65 * 2, bytes_to_hex(sig->data, sig->len, hex)); // 65bytes *2
   TEST_ASSERT_EQUAL_STRING("8e39d2066cf9d1898e6bc9fbbfaa8fd6b9e5a86515e643f537c831982718866d0903e91f5f8824363dd3754fe550b37aa1e6eeb3742f13ad36d3321972e959a701", hex);
-  request_free(request, ctx, false);
+  request_free(request);
   json_free(json);
   ctx_free(ctx);
   in3_free(c);
 }
 static void test_exec_req() {
-  in3_t* c      = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c      = in3_for_chain(CHAIN_ID_MAINNET);
   char*  result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
   TEST_ASSERT_EQUAL_STRING("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
   _free(result);
@@ -143,9 +144,72 @@ static void test_exec_req() {
 
   in3_free(c);
 }
+static void test_partial_response() {
+  in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
+  c->request_count = 3;
+  c->flags         = 0;
+  _free(c->chains->nodelist_upd8_params);
+  c->chains->nodelist_upd8_params = NULL;
 
+  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+  in3_request_t* req = in3_create_request(ctx);
+
+  // first response is an error we expect a waiting since the transport has not passed all responses yet
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
+  TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
+  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
+
+  // now we have a valid response and should get a accaptable response
+  in3_ctx_add_response(req->ctx, 2, false, "{\"result\":\"0x100\"}", -1);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
+
+  request_free(req);
+  ctx_free(ctx);
+  in3_free(c);
+}
+
+static void test_retry_response() {
+  in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
+  c->request_count = 2;
+  c->flags         = 0;
+  _free(c->chains->nodelist_upd8_params);
+  c->chains->nodelist_upd8_params = NULL;
+
+  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+  in3_request_t* req = in3_create_request(ctx);
+
+  // first response is an error we expect a waiting since the transport has not passed all responses yet
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
+  TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
+  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
+  TEST_ASSERT_NOT_NULL(ctx->raw_response);              // we still keep the raw response
+
+  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"no internet\"}", -1);
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+
+  TEST_ASSERT_NULL(ctx->raw_response);
+  request_free(req);
+
+  // we must create a new request since this is a reattempt
+  req = in3_create_request(ctx);
+  TEST_ASSERT_NOT_NULL(ctx->raw_response); // now the raw response is set
+
+  in3_ctx_add_response(req->ctx, 0, false, "{\"result\":\"0x100\"}", -1);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
+
+  request_free(req);
+  ctx_free(ctx);
+  in3_free(c);
+}
 static void test_configure() {
-  in3_t* c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
+  in3_t* c   = in3_for_chain(CHAIN_ID_MULTICHAIN);
   char*  tmp = NULL;
 
   // proof
@@ -156,9 +220,9 @@ static void test_configure() {
   // rpc
   tmp = in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
   TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
-  TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chain_id);
+  TEST_ASSERT_EQUAL(CHAIN_ID_LOCAL, c->chain_id);
   TEST_ASSERT_EQUAL(1, c->request_count);
-  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist->url);
+  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, CHAIN_ID_LOCAL)->nodelist->url);
   free(tmp);
 
   // missing registryId and contract
@@ -192,9 +256,9 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"mainnet\"}");
   TEST_ASSERT_EQUAL(c->chain_id, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":5}");
-  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_GOERLI);
+  TEST_ASSERT_EQUAL(c->chain_id, CHAIN_ID_GOERLI);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x2a\"}");
-  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_KOVAN);
+  TEST_ASSERT_EQUAL(c->chain_id, CHAIN_ID_KOVAN);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"0x1234\"}", "expected uint8");
@@ -215,7 +279,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":\"0xffff\"}");
   TEST_ASSERT_EQUAL(c->finality, 65535);
 #else
-  c->chain_id = ETH_CHAIN_ID_GOERLI;
+  c->chain_id = CHAIN_ID_GOERLI;
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":101}", "expected %");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":0}", "expected %");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":1}");
@@ -396,9 +460,9 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":65536}", "expected string");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"rpc\":\"rpc.local\"}");
   TEST_ASSERT_EQUAL(c->proof, PROOF_NONE);
-  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_LOCAL);
+  TEST_ASSERT_EQUAL(c->chain_id, CHAIN_ID_LOCAL);
   TEST_ASSERT_EQUAL(c->request_count, 1);
-  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist[0].url, "rpc.local");
+  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, CHAIN_ID_LOCAL)->nodelist[0].url, "rpc.local");
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":false}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":\"0x123412341234\"}", "expected object");
@@ -523,6 +587,8 @@ int main() {
   in3_register_eth_api();
 
   TESTS_BEGIN();
+  RUN_TEST(test_partial_response);
+  RUN_TEST(test_retry_response);
   RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);
   RUN_TEST(test_configure);

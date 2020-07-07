@@ -1,18 +1,21 @@
 using System;
 using System.Numerics;
+using System.Threading.Tasks;
 using In3;
+using In3.Configuration;
 using In3.Eth1;
+using In3.Utils;
 
 namespace CallSmartContractFunction
 {
     public class Program
     {
-        public static void Main()
+        public static async Task Main()
         {
             // Set it to mainnet
             IN3 mainnetClient = IN3.ForChain(Chain.Mainnet);
             ClientConfiguration cfg = mainnetClient.Configuration;
-            cfg.Proof = Proof.None;
+            cfg.Proof = Proof.Standard;
 
             string contractAddress = "0x2736D225f85740f42D17987100dc8d58e9e16252";
 
@@ -24,7 +27,7 @@ namespace CallSmartContractFunction
             serverCountQuery.Function = "totalServers():uint256";
             serverCountQuery.Params = new object[0];
 
-            string[] serverCountResult = (string[])mainnetClient.Eth1.Call(serverCountQuery, BlockParameter.Latest);
+            string[] serverCountResult = (string[])await mainnetClient.Eth1.Call(serverCountQuery, BlockParameter.Latest);
             BigInteger servers = DataTypeConverter.HexStringToBigint(serverCountResult[0]);
 
             for (int i = 0; i < servers; i++)
@@ -36,8 +39,9 @@ namespace CallSmartContractFunction
                 serverDetailQuery.Function = "servers(uint256):(string,address,uint32,uint256,uint256,address)";
                 serverDetailQuery.Params = new object[] { i }; // index of the server (uint256) as per solidity function signature
 
-                string[] serverDetailResult = (string[])mainnetClient.Eth1.Call(serverDetailQuery, BlockParameter.Latest);
+                string[] serverDetailResult = (string[])await mainnetClient.Eth1.Call(serverDetailQuery, BlockParameter.Latest);
                 Console.Out.WriteLine($"Server url: {serverDetailResult[0]}");
             }
         }
     }
+}

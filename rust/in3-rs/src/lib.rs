@@ -19,6 +19,7 @@ pub mod eth1;
 pub mod in3;
 pub mod ipfs;
 pub mod json_rpc;
+pub mod logging;
 pub mod signer;
 pub mod traits;
 pub mod transport;
@@ -39,4 +40,5 @@ pub mod prelude {
     pub use crate::traits::Client as ClientTrait;
     pub use crate::traits::{Signer, Storage, Transport};
     pub use crate::transport::{HttpTransport, MockJsonTransport, MockTransport};
+    pub use crate::types::*;
 }

@@ -60,7 +60,7 @@
   } while (0)
 
 static void test_filter() {
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
@@ -184,7 +184,7 @@ static void test_filter_from_block_manip() {
 }
 
 static void test_filter_creation() {
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
@@ -212,7 +212,7 @@ static void test_filter_creation() {
 }
 
 static void test_filter_changes() {
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;

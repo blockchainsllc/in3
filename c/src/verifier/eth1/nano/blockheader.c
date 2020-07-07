@@ -106,7 +106,8 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   vhist_t*  vh  = *vhp;
 
   // get validators from contract
-  in3_proof_t proof_     = vc->ctx->client->proof;
+  in3_proof_t proof_ = in3_ctx_get_proof(vc->ctx);
+  // TODO we need to make this async and use "in3":{"verification":"none"}
   vc->ctx->client->proof = PROOF_NONE;
   in3_ctx_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorList", "[]");
   vc->ctx->client->proof = proof_;
@@ -351,7 +352,7 @@ NONULL static void add_verified(int max, in3_chain_t* chain, uint64_t number, by
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
-  if (!header)
+  if (!header || !header->data || !header->len)
     return vc_err(vc, "no header found");
 
   unsigned int i;
@@ -386,7 +387,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   }
 
   // if we expect no signatures ...
-  if (vc->config->signers_length == 0) {
+  if (vc->ctx->signers_length == 0) {
 #ifdef POA
     in3_ret_t res = IN3_OK;
     vhist_t*  vh  = NULL;
@@ -407,7 +408,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     vh_free(vh);
     return res;
 #endif
-  } else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signers_length)
+  } else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->ctx->signers_length)
     // no signatures found,even though we expected some.
     return vc_err(vc, "missing signatures");
   else {
@@ -436,7 +437,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    if (confirmed != (1 << vc->config->signers_length) - 1) // we must collect all signatures!
+    if (confirmed != (1 << vc->ctx->signers_length) - 1) // we must collect all signatures!
       return vc_err(vc, "missing signatures");
 
     // ok, is is verified, so we should add it to the verified hashes

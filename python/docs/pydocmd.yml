@@ -10,7 +10,7 @@ generate:
   - libin3.md:
     - in3.libin3:
       - in3.libin3.runtime.In3Runtime
-      - in3.libin3.lib_loader+
+      - in3.libin3.rpc_api+
   - eth.md:
     - in3.eth:
       - in3.eth.api.EthereumApi+

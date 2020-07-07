@@ -8,7 +8,7 @@
 
 int main() {
   // create new incubed client for BTC
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_BTC);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_BTC);
 
   // the hash of transaction that we want to get
   bytes32_t tx_id;

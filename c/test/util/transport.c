@@ -121,9 +121,6 @@ int add_response_test(char* test, char* needed_params) {
   return params ? 0 : -1;
 }
 
-
-
-
 in3_ret_t test_transport(in3_request_t* req) {
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
@@ -140,8 +137,9 @@ in3_ret_t test_transport(in3_request_t* req) {
   TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
   json_free(r);
 
-  sb_add_chars(&req->results->result, responses->response);
-  response_t* next = responses->next;
+  sb_add_chars(&req->ctx->raw_response->data, responses->response);
+  req->ctx->raw_response->state = IN3_OK;
+  response_t* next              = responses->next;
   _free(responses->response);
   _free(responses);
   responses = next;
@@ -186,7 +184,8 @@ in3_ret_t mock_transport(in3_request_t* req) {
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_params, p);
   json_free(r);
 
-  sb_add_chars(&req->results->result, response_buffer->response);
+  sb_add_chars(&req->ctx->raw_response->data, response_buffer->response);
+  req->ctx->raw_response->state = IN3_OK;
   clean_last_response();
   return IN3_OK;
 }

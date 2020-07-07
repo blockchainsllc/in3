@@ -62,9 +62,7 @@ ENDIF (TRANSPORTS)
 
 add_subdirectory(src/core)
 add_subdirectory(src/verifier)
-add_subdirectory(src/signer/pk-signer)
-add_subdirectory(src/signer/ledger-nano/signer)
-
+add_subdirectory(src/signer)
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)

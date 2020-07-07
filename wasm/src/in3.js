@@ -161,7 +161,8 @@ class IN3 {
 
     // here we are creating the instance lazy, when the first function is called.
     constructor(config) {
-        this.config = config
+        const def = { requestCount: 2 }
+        this.config = config ? { ...def, ...config } : def
         this.needsSetConfig = !!config
         this.ptr = 0;
         this.eth = new EthAPI(this)
@@ -222,6 +223,7 @@ class IN3 {
             }
 
         // create the context
+        let responses = {}
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
 
@@ -240,44 +242,35 @@ class IN3 {
                             return s
                         }
                         return state.result
-                    case 'waiting': {
-                        const req = state.request
-                        try {
-                            switch (req.type) {
+                    case 'waiting':
+                        await getNextResponse(responses, { ...state.request, in3: this })
+                        break
+                    case 'request': {
+                        const req = { ...state.request, in3: this }
+                        switch (req.type) {
+                            case 'sign':
+                                try {
+                                    const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                    if (!this.signer) throw new Error('no signer set to handle signing')
+                                    if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
+                                    setResponse(req.ctx, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                                } catch (ex) {
+                                    setResponse(req.ctx, ex.message || ex, 0, true)
+                                }
+                                break;
 
-                                case 'sign':
-                                    try {
-                                        const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
-                                        if (!this.signer) throw new Error('no signer set to handle signing')
-                                        if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
-                                        setResponse(req, toHex(await this.signer.sign(message, account, true, false)), 0, false)
-                                    } catch (ex) {
-                                        setResponse(req, ex.message || ex, 0, true)
-                                    }
-                                    break;
+                            case 'rpc':
+                                await getNextResponse(responses, req)
+                        }
 
-                                case 'rpc':
-                                    //                            console.log("req to " + req.urls[0], req.payload[0])
-                                    await Promise.all(
-                                        req.urls.map((url, i) =>
-                                            in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000)
-                                                .then(
-                                                    res => setResponse(req, res, i, false),
-                                                    err => setResponse(req, err.message || err, i, true)
-                                                )
-                                        )
-                                    )
-                            }
-                        }
-                        finally {
-                            // we need to free the request
-                            in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
-                        }
                     }
+
                 }
             }
         }
         finally {
+            cleanUpResponses(responses, this.ptr)
+
             // we always need to cleanup
             in3w.ccall('in3_request_free', 'void', ['number'], [r])
         }
@@ -300,6 +293,79 @@ class IN3 {
         }
     }
 }
+
+
+function cleanUpResponses(responses, ptr) {
+    Object.keys(responses).forEach(ctx => responses[ctx].cleanUp(ptr))
+}
+
+function getNextResponse(map, req) {
+    let res = req.urls ? (map[req.ctx + ''] = url_queue(req)) : map[req.ctx + '']
+    return res.getNext()
+}
+
+function url_queue(req) {
+    let counter = 0
+    const promises = [], responses = []
+    if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
+    req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
+        response => {
+            if (req.in3.config.debug) console.log("res (" + req.ctx + "," + url + ") : " + JSON.stringify(JSON.parse(response), null, 2))
+            responses.push({ i, url, response });
+            trigger()
+        },
+        error => {
+            if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + url + ") : " + error)
+            responses.push({ i, url, error });
+            trigger()
+        }
+    ))
+    function trigger() {
+        while (promises.length && responses.length) {
+            const p = promises.shift(), r = responses.shift()
+            if (!req.cleanUp) {
+                if (r.error)
+                    setResponse(req.ctx, r.error.message || r.error, r.i, true)
+                else
+                    setResponse(req.ctx, r.response, r.i, false)
+            }
+            p.resolve(r)
+        }
+    }
+
+    const result = {
+        req,
+        getNext: () => new Promise((resolve, reject) => {
+            counter++
+            if (counter > req.urls.length) throw new Error('no more response available')
+            promises.push({ resolve, reject })
+            trigger()
+        }),
+        cleanUp(ptr) {
+            req.cleanUp = true
+            while (req.urls.length - counter > 0) {
+                this.getNext().then(
+                    r => {
+                        // is the client still alive?
+                        if (!clients['' + ptr]) return
+                        let blacklist = false
+                        try {
+                            blacklist = r.error || !!JSON.parse(r.response)[0].error
+                        }
+                        catch {
+                            blacklist = true
+                        }
+                        if (blacklist) in3w.ccall('in3_blacklist', 'void', ['number', 'string'], [ptr, r.url])
+                    }, () => { }
+                )
+            }
+        }
+    }
+    return result
+}
+
+
+
 // change the transport
 IN3.setTransport = function (fn) {
     in3w.transport = fn
@@ -350,7 +416,7 @@ if (typeof module !== "undefined")
 
 
 // helper functions
-function setResponse(req, msg, i, isError) {
+function setResponse(ctx, msg, i, isError) {
     if (msg.length > 5000) {
         // here we pass the string as pointer using malloc before
         const len = (msg.length << 2) + 1;
@@ -358,11 +424,11 @@ function setResponse(req, msg, i, isError) {
         if (!ptr)
             throw new Error('Could not allocate memory (' + len + ')')
         stringToUTF8(msg, ptr, len);
-        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'number'], [req.ctx, req.ptr, i, isError, ptr])
+        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number'], [ctx, i, isError, ptr])
         in3w.ccall('ifree', 'void', ['number'], [ptr])
 
     }
     else
-        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'string'], [ctx, i, isError, msg])
     //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
 }

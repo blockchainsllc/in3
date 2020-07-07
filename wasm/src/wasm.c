@@ -31,9 +31,11 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#include "../../c/src/core/client/cache.h"
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/client/nodelist.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
@@ -54,6 +56,7 @@
 #endif
 
 #define err_string(msg) (":ERROR:" msg)
+#define BLACKLISTTIME 24 * 3600
 
 static char*    last_error = NULL;
 static uint32_t now() {
@@ -112,74 +115,58 @@ void storage_set_item(void* cptr, const char* key, bytes_t* content) {
 }
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
-  in3_ctx_t *p = ctx, *last_waiting = NULL;
-  sb_t*      sb = sb_new("{\"status\":");
-  switch (in3_ctx_execute(ctx)) {
-    case IN3_EIGNORE:
-      while (p) {
-        if (p->required && p->required->verification_state == IN3_EIGNORE) {
-          last_waiting = p;
-          break;
-        }
-        p = p->required;
-      }
-      if (!last_waiting) {
-        sb_add_chars(sb, "\"error\",\"error\":\"could not find the last ignored context\"");
-        break;
-      } else {
-        ctx_handle_failable(last_waiting);
-        sb_free(sb);
-        return ctx_execute(ctx);
-      }
-    case IN3_OK:
+  in3_ctx_t*     p   = ctx;
+  in3_request_t* req = NULL;
+  sb_t*          sb  = sb_new("{\"status\":");
+
+  switch (in3_ctx_exec_state(ctx)) {
+    case CTX_SUCCESS:
       sb_add_chars(sb, "\"ok\", \"result\":");
       sb_add_chars(sb, ctx->response_context->c);
       break;
-    case IN3_WAITING:
-      sb_add_chars(sb, "\"waiting\"");
-      while (p) {
-        if (!p->raw_response && in3_ctx_state(p) == CTX_WAITING_FOR_RESPONSE)
-          last_waiting = p;
-        p = p->required;
-      }
-      if (!last_waiting)
-        sb_add_chars(sb, ",\"error\":\"could not find the last waiting context\"");
-      break;
-    default:
+    case CTX_ERROR:
       sb_add_chars(sb, "\"error\",\"error\":\"");
       sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
       sb_add_chars(sb, "\"");
+      break;
+    case CTX_WAITING_FOR_RESPONSE:
+      sb_add_chars(sb, "\"waiting\",\"request\":{ \"type\": ");
+      sb_add_chars(sb, ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+      sb_add_chars(sb, ",\"ctx\":");
+      sb_add_int(sb, (unsigned int) in3_ctx_last_waiting(ctx));
+      sb_add_char(sb, '}');
+      break;
+    case CTX_WAITING_TO_SEND:
+      sb_add_chars(sb, "\"request\"");
+      in3_request_t* request = in3_create_request(ctx);
+      if (request == NULL) {
+        sb_add_chars(sb, ",\"error\",\"");
+        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
+        sb_add_char(sb, '"');
+      } else {
+        uint32_t start = now();
+        sb_add_chars(sb, ",\"request\":{ \"type\": ");
+        sb_add_chars(sb, request->ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+        sb_add_chars(sb, ",\"timeout\":");
+        sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
+        sb_add_chars(sb, ",\"payload\":");
+        sb_add_chars(sb, request->payload);
+        sb_add_chars(sb, ",\"urls\":[");
+        for (int i = 0; i < request->urls_len; i++) {
+          request->ctx->raw_response[i].time = start;
+          if (i) sb_add_char(sb, ',');
+          sb_add_char(sb, '"');
+          sb_add_escaped_chars(sb, request->urls[i]);
+          sb_add_char(sb, '"');
+        }
+        sb_add_chars(sb, "],\"ctx\":");
+        sb_add_int(sb, (uint64_t) request->ctx);
+        sb_add_char(sb, '}');
+        request_free(request);
+      }
+      break;
   }
 
-  // create next request
-  if (last_waiting) {
-    in3_request_t* request = in3_create_request(last_waiting);
-    if (request == NULL)
-      sb_add_chars(sb, ",\"error\",\"could not create request, memory?\"");
-    else {
-      request->times = _malloc(sizeof(uint32_t) * request->urls_len);
-      uint32_t start = now();
-      char     tmp[160];
-      sb_add_chars(sb, ",\"request\":{ \"type\": ");
-      sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
-      sb_add_chars(sb, ",\"timeout\":");
-      sprintf(tmp, "%d", (unsigned int) request->timeout);
-      sb_add_chars(sb, tmp);
-      sb_add_chars(sb, ",\"payload\":");
-      sb_add_chars(sb, request->payload);
-      sb_add_chars(sb, ",\"urls\":[");
-      for (int i = 0; i < request->urls_len; i++) {
-        request->times[i] = start;
-        if (i) sb_add_char(sb, ',');
-        sb_add_char(sb, '"');
-        sb_add_escaped_chars(sb, request->urls[i]);
-        sb_add_char(sb, '"');
-      }
-      sb_add_chars(sb, "],\"ptr\":");
-      sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
-      sb_add_chars(sb, tmp);
-    }
-  }
   sb_add_char(sb, '}');
 
   char* r = sb->data;
@@ -192,20 +179,29 @@ void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
-void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
-  request_free(r, ctx, false);
+void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
+  in3_chain_t* chain = in3_find_chain(in3, in3->chain_id);
+  if (!chain) return;
+  for (int i = 0; i < chain->nodelist_length; i++) {
+    if (strcmp(chain->nodelist[i].url, url) == 0) {
+      chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
+      // we don't update weights for local chains.
+      if (!in3->cache || in3->chain_id == CHAIN_ID_LOCAL) return;
+      in3_cache_store_nodelist(in3, chain);
+      return;
+    }
+  }
 }
 
-void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
-  r->times[i] = now() - r->times[i];
-  if (is_error)
-    sb_add_chars(&r->results[i].error, msg);
-  else if (ctx->type == CT_SIGN) {
+void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
+  ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
+  ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
+  if (ctx->type == CT_SIGN && !is_error) {
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
-    sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
+    sb_add_range(&ctx->raw_response[i].data, (char*) sig, 0, 65);
   } else
-    sb_add_chars(&r->results[i].result, msg);
+    sb_add_chars(&ctx->raw_response[i].data, msg);
 }
 #ifdef IPFS
 

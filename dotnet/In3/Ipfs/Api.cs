@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading.Tasks;
 using In3.Utils;
 
 namespace In3.Ipfs
@@ -24,11 +25,11 @@ namespace In3.Ipfs
         /// </summary>
         /// <param name="multihash">The multihash.</param>
         /// <returns>The content that was stored by <see cref="Ipfs.Api.Put(byte[])" /> or <see cref="Ipfs.Api.Put(string)" />.</returns>
-        public byte[] Get(string multihash)
+        public async Task<byte[]> Get(string multihash)
         {
             if (multihash == null) throw new ArgumentException();
 
-            string result = in3.SendRpc(IpfsGet, new object[] { multihash, IpfsEncoding.Base64.Value });
+            string result = await in3.SendRpc(IpfsGet, new object[] { multihash, IpfsEncoding.Base64.Value });
             return RpcHandler.From<byte[]>(result);
         }
 
@@ -37,9 +38,9 @@ namespace In3.Ipfs
         /// </summary>
         /// <param name="content">The content that will be stored via ipfs.</param>
         /// <returns>The multihash.</returns>
-        public string Put(string content)
+        public async Task<string> Put(string content)
         {
-            return Put(content == null ? null : Encoding.UTF8.GetBytes(content));
+            return await Put(content == null ? null : Encoding.UTF8.GetBytes(content));
         }
 
         /// <summary>
@@ -47,12 +48,12 @@ namespace In3.Ipfs
         /// </summary>
         /// <param name="content">The content that will be stored via ipfs.</param>
         /// <returns>The multihash.</returns>
-        public string Put(byte[] content)
+        public async Task<string> Put(byte[] content)
         {
             if (content == null) throw new ArgumentException();
 
             string encodedContent = Convert.ToBase64String(content);
-            string result = in3.SendRpc(IpfsPut, new object[] { encodedContent });
+            string result = await in3.SendRpc(IpfsPut, new object[] { encodedContent });
             return RpcHandler.From<string>(result);
         }
     }

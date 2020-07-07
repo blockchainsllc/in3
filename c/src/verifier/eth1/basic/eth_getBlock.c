@@ -164,7 +164,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
   }
 
   bool include_full_tx = d_get_int_at(d_get(vc->request, K_PARAMS), 1);
-  bool full_proof      = vc->config->use_full_proof;
+  bool full_proof      = vc->client->proof == PROOF_FULL;
 
   if (!include_full_tx) {
     tx_hashs = d_get(vc->result, K_TRANSACTIONS);

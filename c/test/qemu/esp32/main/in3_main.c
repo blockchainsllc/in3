@@ -32,29 +32,28 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-
+#include "block_number.h"
+#include "cJSON.h"
+#include "esp_system.h"
+#include "eth_call.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "freertos/task.h"
+#include "nvs_flash.h"
+#include "sdkconfig.h"
 #include <esp_event.h>
 #include <esp_log.h>
-#include <sys/param.h>
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_system.h"
-#include "cJSON.h"
-#include "sdkconfig.h"
-#include "nvs_flash.h"
-#include "eth_call.h"
-#include "block_number.h"
-#include <in3/client.h>   // the core client
-#include <in3/eth_api.h>  // functions for direct api-access
-#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
-#include <in3/log.h>      // logging functions
-#include <in3/signer.h>   // default signer implementation
-#include <in3/utils.h>
+#include <in3/client.h>        // the core client
+#include <in3/context.h>       // the context
+#include <in3/eth_api.h>       // functions for direct api-access
+#include <in3/in3_init.h>      // if included the verifier will automaticly be initialized.
+#include <in3/log.h>           // logging functions
+#include <in3/signer.h>        // default signer implementation
 #include <in3/stringbuilder.h> // stringbuilder tool for dynamic memory string handling
+#include <in3/utils.h>
+#include <sys/param.h>
 
 static const char* REST_TAG = "esp-rest";
-//buffer to receive data from in3 http transport
-static sb_t* http_in3_buffer = NULL;
 // in3 client
 static in3_t* c;
 
@@ -67,12 +66,13 @@ static const char* TAG = "IN3";
 
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int i = 0; i < urls_len; i++) {
+    result[i].state = IN3_OK;
     if (strstr(payload, "eth_call") != NULL) {
       ESP_LOGI(TAG, "eth_call ...\n");
-      sb_add_range(&(result[i].result), eth_call_res, 0, eth_call_res_len);
+      sb_add_range(&(result[i].data), eth_call_res, 0, eth_call_res_len);
     } else if (strstr(payload, "eth_blockNumber") != NULL) {
       printf("Returning eth_blockNumber ...\n");
-      sb_add_range(&(result[i].result), block_number_res, 0, block_number_res_len);
+      sb_add_range(&(result[i].data), block_number_res, 0, block_number_res_len);
     } else {
       in3_log_debug("Not supported for this mock\n");
     }
@@ -81,11 +81,11 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
 }
 
 in3_ret_t transport_mock(in3_request_t* req) {
-  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->results);
+  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 /* Setup and init in3 */
 void init_in3(void) {
-  c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  c = in3_for_chain(CHAIN_ID_GOERLI);
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
   c->transport     = transport_mock;

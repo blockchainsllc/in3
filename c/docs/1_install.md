@@ -5,9 +5,7 @@ While we provide binaries, you can also build from source:
 ### requirements
 
 - cmake
-- curl : curl is used as transport for command-line tools.
-- optional: libsycrypt, which would be used for unlocking keystore files using `scrypt` as kdf method. if it does not exist you can still build, but not decrypt such keys.   
-  for osx `brew install libscrypt` and for debian `sudo apt-get install libscrypt-dev`
+- curl : curl is used as transport for command-line tools, but you can also compile it without curl (`-DUSE_CURL=false -DCMD=false`), if you want to implement your own transport.
 
 Incubed uses cmake for configuring:
 

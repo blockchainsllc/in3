@@ -47,8 +47,7 @@
 
 int in3_verify_eth_full(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);
-  if (vc->config->verification == VERIFICATION_NEVER)
-    return 0;
+  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)
@@ -72,13 +71,13 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
     bytes_t* result    = NULL;
     uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
-#ifdef DEBUG
+#if defined(DEBUG) && defined(LOGGING)
     in3_log_level_t old = in3_log_get_level();
     in3_log_set_level(LOG_ERROR);
 #endif
 
     int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result);
-#ifdef DEBUG
+#if defined(DEBUG) && defined(LOGGING)
     in3_log_set_level(old);
 #endif
 

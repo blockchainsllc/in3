@@ -60,7 +60,7 @@
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../test/testdata/requests/eth_logs_invalid.json",
+                "../c/test/testdata/requests/in3_invalid_block.json",
                 "-t",
                 "1"
             ],

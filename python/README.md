@@ -30,9 +30,11 @@ in3_client.account  # ethereum account api
 in3_client.contract  # ethereum smart-contract api
 ```
 
-#### Tests
+#### Developing & Tests
+Compile local libraries and run tests
 ```bash
-pytest --pylama
+./buidl_libs.sh
+coverage run -m pytest --pylama
 ```
 
 #### Index

@@ -108,7 +108,7 @@ class EthereumApi:
         Returns:
             tx_receipt: The mined Transaction data including event logs.
         """
-        serialized: dict = self._runtime.execute(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
+        serialized: dict = self._runtime.call(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
         if not serialized:
             raise ClientException('Transaction not found or non-existent.')
         return self._factory.get_tx_receipt(serialized)

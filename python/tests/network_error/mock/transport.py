@@ -5,7 +5,7 @@ Collect mocked responses from `http.py`.
 """
 import hashlib
 
-from in3.libin3.runtime import In3Request, In3Response
+from in3.libin3.transport import In3Request, In3Response
 from tests.network_error.mock import http
 
 

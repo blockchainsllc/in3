@@ -1,38 +1,14 @@
 //! Signer trait implementations.
-use libc::c_char;
 use serde_json::{json, Value};
 
 use async_trait::async_trait;
 
-use crate::error::In3Result;
+use crate::error::{In3Result, SysError};
 use crate::in3::{chain, Client};
 use crate::traits::{Client as ClientTrait, Signer};
 use crate::types::Bytes;
 
-/// Sign data using specified private key using low-level FFI types.
-///
-/// # Panics
-/// This function does not report errors and panics instead.
-///
-/// # Safety
-/// Being a thin wrapper over in3_sys::ec_sign_pk_hash(), this method is unsafe.
-pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> Bytes {
-    let data_ = data as *mut u8;
-    let mut dst = [0u8; 65];
-    let error = in3_sys::ec_sign_pk_hash(
-        data_,
-        len,
-        pk,
-        in3_sys::hasher_t::hasher_sha3k,
-        dst.as_mut_ptr(),
-    );
-    if error < 0 {
-        panic!("Sign error{:?}", error);
-    }
-    dst[0..].into()
-}
-
-/// Signer implementation using IN3 C client's RPC.
+/// Signer implementation using IN3 C code.
 pub struct In3Signer {
     in3: Box<Client>,
     pk: Bytes,
@@ -50,21 +26,21 @@ impl In3Signer {
 
 #[async_trait(? Send)]
 impl Signer for In3Signer {
-    async fn sign(&mut self, msg: Bytes) -> In3Result<Bytes> {
-        let resp_str = self
-            .in3
-            .rpc(
-                serde_json::to_string(&json!({
-                    "method": "in3_signData",
-                    "params": [msg, self.pk]
-                }))
-                .unwrap()
-                .as_str(),
+    async fn sign(&mut self, mut msg: Bytes) -> In3Result<Bytes> {
+        let mut dst = vec![0u8; 65];
+        let error = unsafe {
+            in3_sys::ec_sign_pk_hash(
+                msg.0.as_mut_ptr(),
+                msg.0.len(),
+                self.pk.0.as_mut_ptr(),
+                in3_sys::hasher_t::hasher_sha3k,
+                dst.as_mut_ptr(),
             )
-            .await?;
-        let resp: Value = serde_json::from_str(resp_str.as_str())?;
-        let res: Bytes = serde_json::from_str(resp["result"]["signature"].to_string().as_str())?;
-        Ok(res)
+        };
+        if error < 0 {
+            return Err(SysError::from(error).into());
+        }
+        Ok(dst[0..].into())
     }
 
     async fn prepare(&mut self, msg: Bytes) -> In3Result<Bytes> {
@@ -102,6 +78,6 @@ mod tests {
         let mut s = In3Signer::new(pk.into());
         let signature = async_std::task::block_on(s.sign(msg.into()));
         let sign_str = format!("{:?}", signature.unwrap());
-        assert_eq!(sign_str, "0x349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c");
+        assert_eq!(sign_str, "0x349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc701");
     }
 }

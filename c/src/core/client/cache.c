@@ -134,9 +134,9 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   return IN3_OK;
 }
 
-in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
+in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
   // it is ok not to have a storage
-  if (!ctx->client->cache) return IN3_OK;
+  if (!c->cache) return IN3_OK;
 
   // write to bytes_buffer
   bytes_builder_t* bb = bb_new();
@@ -159,7 +159,7 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   // verified hashes
   int count = 0;
   if (chain->verified_hashes) {
-    count = ctx->client->max_verified_hashes;
+    count = c->max_verified_hashes;
     for (int i = 0; i < count; i++) {
       if (!chain->verified_hashes[i].block_number) {
         count = i;
@@ -176,7 +176,7 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   write_cache_key(key, chain->chain_id, chain->contract->data);
 
   // store it and ignore return value since failing when writing cache should not stop us.
-  ctx->client->cache->set_item(ctx->client->cache->cptr, key, &bb->b);
+  c->cache->set_item(c->cache->cptr, key, &bb->b);
 
   // clear buffer
   bb_free(bb);

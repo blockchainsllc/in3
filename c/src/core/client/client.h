@@ -53,22 +53,24 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define ETH_CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
-#define ETH_CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
-#define ETH_CHAIN_ID_KOVAN 0x2a     /**< chain_id for kovan */
-#define ETH_CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
-#define ETH_CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
-#define ETH_CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
-#define ETH_CHAIN_ID_EWC 0xf6       /**< chain_id for ewc */
-#define ETH_CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
-#define ETH_CHAIN_ID_BTC 0x99       /**< chain_id for btc */
-#define ETH_CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6       /**< default replace_latest_block */
+#define CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
+#define CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
+#define CHAIN_ID_KOVAN 0x2a     /**< chain_id for kovan */
+#define CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
+#define CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
+#define CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
+#define CHAIN_ID_EWC 0xf6       /**< chain_id for ewc */
+#define CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
+#define CHAIN_ID_BTC 0x99       /**< chain_id for btc */
+#define CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6   /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
  */
 typedef uint32_t chain_id_t;
+
+struct in3_ctx;
 
 /** the type of the chain. 
  * 
@@ -94,33 +96,6 @@ typedef enum {
   PROOF_STANDARD = 1, /**< Standard Verification of the important properties */
   PROOF_FULL     = 2  /**< All field will be validated including uncles */
 } in3_proof_t;
-
-/** verification as delivered by the server. 
- * 
- * This will be part of the in3-request and will be generated based on the prooftype.*/
-typedef enum {
-  VERIFICATION_NEVER = 0, /**< No Verifacation */
-  VERIFICATION_PROOF = 1, /**< Includes the proof of the data */
-} in3_verification_t;
-
-/** the configuration as part of each incubed request. 
- * This will be generated for each request based on the client-configuration. the verifier may access this during verification in order to check against the request. 
- * 
- */
-typedef struct in3_request_config {
-  chain_id_t         chain_id;               /**< the chain to be used. this is holding the integer-value of the hexstring. */
-  uint_fast8_t       flags;                  /**< the current flags from the client. */
-  uint8_t            use_full_proof;         /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
-  bytes_t*           verified_hashes;        /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
-  uint16_t           verified_hashes_length; /**< number of verified blockhashes*/
-  uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
-  uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
-  in3_verification_t verification;           /**< Verification-type */
-  bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
-  uint8_t            signers_length;         /**< number or addresses */
-  uint32_t*          times;                  /**< meassured times in ms for the request */
-
-} in3_request_config_t;
 
 /**
  * Node capabilities
@@ -325,7 +300,7 @@ typedef struct sign_ctx {
   bytes_t            account;       /**< the account to use for the signature */
   uint8_t            signature[65]; /**< the resulting signature needs to be writte into these bytes */
   void*              wallet;        /**< the custom wallet-pointer  */
-  void*              ctx;           /**< the context of the request in order report errors */
+  struct in3_ctx*    ctx;           /**< the context of the request in order report errors */
 } in3_sign_ctx_t;
 
 /** 
@@ -345,7 +320,7 @@ typedef in3_ret_t (*in3_sign)(in3_sign_ctx_t* ctx);
  * if the new_tx is not set within the function, it will use the old_tx.
  * 
 */
-typedef in3_ret_t (*in3_prepare_tx)(void* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
+typedef in3_ret_t (*in3_prepare_tx)(struct in3_ctx* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
 
 /**
  * definition of a signer holding funciton-pointers and data.
@@ -363,12 +338,12 @@ typedef struct in3_signer {
  * allows the payment to handle things before the request will be send.
  * 
 */
-typedef in3_ret_t (*in3_pay_prepare)(void* ctx, void* cptr);
+typedef in3_ret_t (*in3_pay_prepare)(struct in3_ctx* ctx, void* cptr);
 
 /** 
  * called after receiving a parseable response with a in3-section.
 */
-typedef in3_ret_t (*in3_pay_follow_up)(void* ctx, void* node, d_token_t* in3, d_token_t* error, void* cptr);
+typedef in3_ret_t (*in3_pay_follow_up)(struct in3_ctx* ctx, void* node, d_token_t* in3, d_token_t* error, void* cptr);
 
 /** 
  * free function for the custom pointer.
@@ -380,7 +355,7 @@ typedef void (*in3_pay_free)(void* cptr);
  * 
  * this function is called when the in3-section of payload of the request is built and allows the handler to add properties. 
 */
-typedef in3_ret_t (*in3_pay_handle_request)(void* ctx, sb_t* sb, in3_request_config_t* rc, void* cptr);
+typedef in3_ret_t (*in3_pay_handle_request)(struct in3_ctx* ctx, sb_t* sb, void* cptr);
 
 /** 
  * the payment handler.
@@ -400,8 +375,9 @@ typedef struct in3_pay {
  * if the error has a length>0 the response will be rejected
  */
 typedef struct in3_response {
-  sb_t error;  /**< a stringbuilder to add any errors! */
-  sb_t result; /**< a stringbuilder to add the result */
+  in3_ret_t state; /**< the state of the response */
+  sb_t      data;  /**< a stringbuilder to add the result */
+  uint32_t  time;  /**< measured time (in ms) which will be used for ajusting the weights */
 } in3_response_t;
 
 /** Incubed Configuration. 
@@ -411,18 +387,26 @@ typedef struct in3_response {
  */
 typedef struct in3_t_ in3_t;
 
+/**
+ * Filter type used internally when managing filters.
+ */
+typedef enum {
+  REQ_ACTION_SEND    = 0, /**< The request should be send */
+  REQ_ACTION_RECEIVE = 1, /**< a response is expected now. the request will not contains the urls anymore! */
+  REQ_ACTION_CLEANUP = 2, /**< the cstptr can perform clean up */
+} in3_req_action_t;
+
 /** request-object. 
  * 
  * represents a RPC-request
  */
 typedef struct in3_request {
-  char*           payload;  /**< the payload to send */
-  char**          urls;     /**< array of urls */
-  int             urls_len; /**< number of urls */
-  in3_response_t* results;  /**< the responses*/
-  uint32_t        timeout;  /**< the timeout 0= no timeout*/
-  uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
-  in3_t*          in3;      /**< pointer to associated IN3 instance */
+  char*            payload;  /**< the payload to send */
+  char**           urls;     /**< array of urls */
+  uint_fast16_t    urls_len; /**< number of urls */
+  in3_req_action_t action;   /**< the action the transport should execute */
+  struct in3_ctx*  ctx;      /**< the current context */
+  void*            cptr;     /**< a custom ptr to hold information during */
 } in3_request_t;
 
 /** the transport function to be implemented by the transport provider.
@@ -485,6 +469,7 @@ struct in3_t_ {
   uint16_t               chains_length;        /**< number of configured chains */
   in3_filter_handler_t*  filters;              /**< filter handler */
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
+  uint_fast16_t          pending;              /**< number of pending requests created with this instance */
 
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
@@ -497,7 +482,7 @@ struct in3_t_ {
 
 /** creates a new Incubes configuration and returns the pointer.
  * 
- * This Method is depricated. you should use `in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)` instead.
+ * This Method is depricated. you should use `in3_for_chain(CHAIN_ID_MULTICHAIN)` instead.
  * 
  * you need to free this instance with `in3_free` after use!
  * 
@@ -522,11 +507,11 @@ struct in3_t_ {
  * 
  * @returns the incubed instance.
  */
-in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)")));
+in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(CHAIN_ID_MULTICHAIN)")));
 
 /** creates a new Incubes configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 
- * but if you pass `ETH_CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
+ * but if you pass `CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
  * 
  * you need to free this instance with `in3_free` after use!
  * 
@@ -538,7 +523,7 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * in3_register_eth_full();
  * 
  * // create new client
- * in3_t* client = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+ * in3_t* client = in3_for_chain(CHAIN_ID_MAINNET);
  * 
  * // configure transport
  * client->transport    = send_curl;
@@ -555,7 +540,7 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
 #define in3_for_chain(chain_id) in3_for_chain_default(chain_id)
 
 in3_t* in3_for_chain_default(
-    chain_id_t chain_id /**< the chain_id (see ETH_CHAIN_ID_... constants). */
+    chain_id_t chain_id /**< the chain_id (see CHAIN_ID_... constants). */
 );
 
 /** sends a request and stores the result in the provided buffer */
@@ -579,18 +564,6 @@ NONULL in3_ret_t in3_client_rpc_raw(
 NONULL char* in3_client_exec_req(
     in3_t* c,  /**< [in] the pointer to the incubed client config. */
     char*  req /**< [in] the request as rpc. */
-);
-
-/**
- * adds a response for a request-object.
- * This function should be used in the transport-function to set the response.
- */
-NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in] the request-pointer passed to the transport-function containing the payload and url */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
@@ -753,7 +726,16 @@ int in3_get_request_urls_len(
 uint32_t in3_get_request_timeout(
     in3_request_t* request /**< request struct */
 );
-
+/**
+ * set the signer on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_signer_t* in3_set_signer(
+    in3_t*         c,          /**< the incubed client */
+    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
+    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+    void*          wallet      /**<custom object whill will be passed to functions */
+);
 /**
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
@@ -766,6 +748,19 @@ in3_storage_handler_t* in3_set_storage_handler(
     in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 );
+
+/**
+ * adds a response for a request-object.
+ * This function should be used in the transport-function to set the response.
+ */
+NONULL void in3_req_add_response(
+    in3_request_t* req,      /**< [in]the the request */
+    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char*    data,     /**<  the data or the the string*/
+    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+);
+
 #ifdef PAY
 /**
   *  configure function for a payment.
