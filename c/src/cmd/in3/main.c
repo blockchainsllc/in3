@@ -119,6 +119,8 @@ void show_help(char* name) {
 -thr           runs test request including health-check when showing in3_weights \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
+-bn            a coma seperated list of urls (or address:url) to be used as boot nodes\n\
 -os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
@@ -533,6 +535,44 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
   }
 }
 
+static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
+  if (!upddate) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
+  char* cpy = alloca(strlen(nodes) + 1);
+  for (unsigned int i = 0; i < c->chains_length; i++) {
+    if (!upddate && c->chains[i].nodelist_upd8_params) {
+      _free(c->chains[i].nodelist_upd8_params);
+      c->chains[i].nodelist_upd8_params = NULL;
+    }
+    memcpy(cpy, nodes, strlen(nodes) + 1);
+    char* s  = NULL;
+    sb_t* sb = sb_new("{\"nodes\":{\"");
+    sb_add_hexuint(sb, c->chains[i].chain_id);
+    sb_add_chars(sb, "\":{\"nodeList\":[");
+    for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
+      if (next != cpy) sb_add_char(sb, ',');
+      str_range_t address = {0}, url = {0};
+
+      if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
+        address = (str_range_t){.data = next, .len = s - next};
+        url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
+      } else {
+        address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
+        url     = (str_range_t){.data = next, .len = strlen(next)};
+      }
+      sb_add_chars(sb, "{\"address\":\"");
+      sb_add_range(sb, address.data, 0, address.len);
+      sb_add_chars(sb, "\",\"url\":\"");
+      sb_add_range(sb, url.data, 0, url.len);
+      sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+    }
+    sb_add_chars(sb, "]}}}");
+    char* err = in3_configure(c, sb->data);
+    if (err)
+      die(err);
+    sb_free(sb);
+  }
+}
+
 static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
@@ -726,6 +766,10 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
+    else if (strcmp(argv[i], "-nl") == 0)
+      set_nodelist(c, argv[++i], false);
+    else if (strcmp(argv[i], "-bn") == 0)
+      set_nodelist(c, argv[++i], true);
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
