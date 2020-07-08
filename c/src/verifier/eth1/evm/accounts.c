@@ -147,7 +147,8 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
     }
   }
 
-  // get storage value from env
+  // get storage value only if this is the same account
+  if (memcmp(evm->address, adr, 20)) return NULL;
   int l = evm->env(evm, EVM_ENV_STORAGE, s_key, s_key_len, &data, 0, 0);
 
   // if it does not exist and we have a value, we set it
