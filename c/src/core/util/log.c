@@ -99,6 +99,10 @@ void in3_log_enable_prefix_() {
   L.enable_prefix = 1;
 }
 
+int in3_log_is_prefix_enabled_() {
+  return L.enable_prefix;
+}
+
 void in3_log_disable_prefix_() {
   L.enable_prefix = 0;
 }

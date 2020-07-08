@@ -73,12 +73,14 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
 #if defined(DEBUG) && defined(LOGGING)
     in3_log_level_t old = in3_log_get_level();
+    in3_log_disable_prefix();
     in3_log_set_level(LOG_ERROR);
 #endif
 
     int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result);
 #if defined(DEBUG) && defined(LOGGING)
     in3_log_set_level(old);
+    in3_log_enable_prefix();
 #endif
 
     switch (ret) {
@@ -109,8 +111,8 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
         b_free(result);
         if (!res) {
           in3_log_debug("mismatching result\n");
-          //          b_print(result);
-          //          b_print(d_bytes(vc->result));
+          b_print(result);
+          b_print(d_bytes(vc->result));
         }
         if (vc->ctx->error) return IN3_EINVAL;
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
