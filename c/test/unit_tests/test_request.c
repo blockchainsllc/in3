@@ -191,7 +191,7 @@ static void test_retry_response() {
   TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
   TEST_ASSERT_NOT_NULL(ctx->raw_response);              // we still keep the raw response
 
-  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"no internet\"}", -1);
+  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"Error:no internet\"}", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
 
   TEST_ASSERT_NULL(ctx->raw_response);
