@@ -723,30 +723,26 @@ static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, 
 
 static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   in3_log_debug("waiting for the next respone ...\n");
-  ctx                      = in3_ctx_last_waiting(ctx);
-  const in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+  ctx = in3_ctx_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
     if (transports->req[i].ctx == ctx) {
       in3_request_t req = {.action = REQ_ACTION_RECEIVE, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       ctx->client->transport(&req);
 #ifdef DEBUG
-      node_match_t* w = ctx->nodes;
-      int           i = 0;
+      const in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+      node_match_t*      w     = ctx->nodes;
+      int                i     = 0;
       for (; w; i++, w = w->next) {
         if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data) {
           in3_node_t* node = ctx_get_node(chain, w);
           char*       data = ctx->raw_response[i].data.data;
-#ifdef DEBUG
-          data = format_json(data);
-#endif
+          data             = format_json(data);
 
           in3_log_trace(ctx->raw_response[i].state
                             ? "... response(%s): \n... " COLOR_RED_STR "\n"
                             : "... response(%s): \n... " COLOR_GREEN_STR "\n",
                         node ? node->url : "intern", data);
-#ifdef DEBUG
           _free(data);
-#endif
         }
       }
 #endif

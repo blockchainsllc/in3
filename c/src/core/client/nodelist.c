@@ -78,8 +78,8 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
   const uint64_t now  = (uint64_t) _now;
 
   // read the nodes
-  d_token_t *nodes = d_get(result, K_NODES), *t;
-  int        len   = d_len(nodes);
+  d_token_t *  nodes = d_get(result, K_NODES), *t;
+  unsigned int len   = d_len(nodes);
 
   if (!nodes || d_type(nodes) != T_ARRAY)
     return ctx_set_error(ctx, "No Nodes in the result", IN3_EINVALDT);
@@ -100,7 +100,7 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
   d_token_t*         node    = NULL;
 
   // set new values
-  for (int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     in3_node_t* n = newList + i;
     node          = node ? d_next(node) : d_get_at(nodes, i);
     if (!node) {
@@ -133,7 +133,7 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
     // restore the nodeweights if the address was known in the old nodeList
     if (chain->nodelist_length <= i || !b_cmp(chain->nodelist[i].address, n->address)) {
       old_index = -1;
-      for (int j = 0; j < chain->nodelist_length; j++) {
+      for (unsigned int j = 0; j < chain->nodelist_length; j++) {
         if (b_cmp(chain->nodelist[j].address, n->address)) {
           old_index = j;
           break;
@@ -175,11 +175,11 @@ NONULL void in3_client_run_chain_whitelisting(in3_chain_t* chain) {
   if (!chain->whitelist)
     return;
 
-  for (int j = 0; j < chain->nodelist_length; ++j)
+  for (unsigned int j = 0; j < chain->nodelist_length; ++j)
     BIT_CLEAR(chain->nodelist[j].attrs, ATTR_WHITELISTED);
 
   for (size_t i = 0; i < chain->whitelist->addresses.len / 20; i += 20) {
-    for (int j = 0; j < chain->nodelist_length; ++j)
+    for (unsigned int j = 0; j < chain->nodelist_length; ++j)
       if (!memcmp(chain->whitelist->addresses.data + i, chain->nodelist[j].address, 20))
         BIT_SET(chain->nodelist[j].attrs, ATTR_WHITELISTED);
   }
@@ -567,7 +567,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
 
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain) {
-  for (int i = 0; i < chain->nodelist_length; i++) {
+  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
     if (chain->nodelist[i].url) _free(chain->nodelist[i].url);
     if (chain->nodelist[i].address) b_free(chain->nodelist[i].address);
   }

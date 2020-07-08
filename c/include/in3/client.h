@@ -615,8 +615,8 @@ NONULL in3_ret_t in3_cache_init(
  * My return NULL if not found.
  */
 NONULL in3_chain_t* in3_find_chain(
-    in3_t*     c /**< the incubed client */,
-    chain_id_t chain_id /**< chain_id */
+    const in3_t* c /**< the incubed client */,
+    chain_id_t   chain_id /**< chain_id */
 );
 
 /**
