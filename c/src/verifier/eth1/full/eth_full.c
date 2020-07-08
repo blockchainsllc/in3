@@ -112,6 +112,7 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
           b_print(result);
           b_print(d_bytes(vc->result));
         }
+        if (vc->ctx->error) return IN3_EINVAL;
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
       case IN3_WAITING:
         return IN3_WAITING;

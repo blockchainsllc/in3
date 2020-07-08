@@ -53,6 +53,19 @@ static d_token_t* get_account(in3_vctx_t* vc, d_token_t* accounts, uint8_t* addr
   vc_err(vc, "The account could not be found!");
   return NULL;
 }
+#ifdef LOGGING
+#define INVALID(msg)              \
+  {                               \
+    vc_err(vc, msg);              \
+    return EVM_ERROR_INVALID_ENV; \
+  }
+#else
+#define INVALID(msg)              \
+  {                               \
+    vc_err(vc, "E");              \
+    return EVM_ERROR_INVALID_ENV; \
+  }
+#endif
 
 int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len) {
   bytes_t*  res = NULL;
@@ -69,40 +82,40 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
   switch (evm_key) {
     case EVM_ENV_BLOCKHEADER:
       if (!(res = d_get_bytesk(vc->proof, K_BLOCK)))
-        return EVM_ERROR_INVALID_ENV;
+        INVALID("no blockheader found")
       *out_data = res->data;
       return res->len;
 
     case EVM_ENV_BALANCE:
       if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), in_data)) || !(t = d_get(t, K_BALANCE)))
-        return EVM_ERROR_INVALID_ENV;
+        INVALID("account not found in proof")
       bytes_t b1 = d_to_bytes(t);
       *out_data  = b1.data;
       return b1.len;
 
     case EVM_ENV_NONCE:
       if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), in_data)) || !(t = d_get(t, K_NONCE)))
-        return EVM_ERROR_INVALID_ENV;
+        INVALID("account not found in proof")
       bytes_t b2 = d_to_bytes(t);
       *out_data  = b2.data;
       return b2.len;
 
     case EVM_ENV_STORAGE:
       if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), evm->address)) || !(t = d_get(t, K_STORAGE_PROOF)))
-        return EVM_ERROR_INVALID_ENV;
+        INVALID("account not found in proof")
 
       for (i = 0, t2 = t + 1; i < d_len(t); i++, t2 = d_next(t2)) {
         bytes_t k = d_to_bytes(d_get(t2, K_KEY));
-        if (!k.data) return EVM_ERROR_INVALID_ENV;
+        if (!k.data) INVALID("no data on storage")
 
         if (big_cmp(in_data, in_len, k.data, k.len) == 0) {
           k = d_to_bytes(d_get(t2, K_VALUE));
-          if (!k.data) return EVM_ERROR_INVALID_ENV;
+          if (!k.data) INVALID("no data on storage")
           *out_data = k.data;
           return k.len;
         }
       }
-      return EVM_ERROR_INVALID_ENV;
+      INVALID("storage not found in proof");
 
     case EVM_ENV_BLOCKHASH:
       return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
