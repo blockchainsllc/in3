@@ -718,11 +718,20 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       node_match_t* w = ctx->nodes;
       int           i = 0;
       for (; w; i++, w = w->next) {
-        if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data)
+        if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data) {
+          char* data = ctx->raw_response[i].data.data;
+#ifdef DEBUG
+          data = format_json(data);
+#endif
+
           in3_log_trace(ctx->raw_response[i].state
                             ? "... response(%i): \n... " COLOR_RED_STR "\n"
                             : "... response(%i): \n... " COLOR_GREEN_STR "\n",
-                        i, ctx->raw_response[i].data.data);
+                        i, data);
+#ifdef DEBUG
+          _free(data);
+#endif
+        }
       }
 #endif
       return;
@@ -756,10 +765,17 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   // debug output
   for (unsigned int i = 0; i < request->urls_len; i++) {
     if (request->ctx->raw_response[i].state != IN3_WAITING) {
+      char* data = request->ctx->raw_response[i].data.data;
+#ifdef DEBUG
+      data = format_json(data);
+#endif
       in3_log_trace(request->ctx->raw_response[i].state
                         ? "... response(%i): \n... " COLOR_RED_STR "\n"
                         : "... response(%i): \n... " COLOR_GREEN_STR "\n",
-                    i, request->ctx->raw_response[i].data.data);
+                    i, data);
+#ifdef DEBUG
+      _free(data);
+#endif
     }
   }
 

@@ -72,5 +72,6 @@ sb_t* sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, 
 sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);                                          /**< add a integer value as hexcoded, 0x-prefixed string*/
 sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars);                                             /**< add chars but escapes all quotes */
 sb_t* sb_add_int(sb_t* sb, uint64_t val);                                                            /**< adds a numeric value to the stringbuilder */
+char* format_json(const char* json);                                                                 /**< format a json string and returns a new string, which needs to be freed */
 
 #endif
