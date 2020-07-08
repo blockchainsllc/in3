@@ -168,6 +168,7 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
     _free(weights);
   }
 
+  chain->dirty = true;
   return res;
 }
 
@@ -574,6 +575,7 @@ void in3_nodelist_clear(in3_chain_t* chain) {
   }
   _free(chain->nodelist);
   _free(chain->weights);
+  chain->dirty = true;
 }
 
 void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint8_t value) {

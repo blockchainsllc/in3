@@ -238,6 +238,7 @@ typedef struct in3_chain {
   in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
   uint16_t             avg_block_time;  /**< average block time (seconds) for this chain (calculated internally) */
   void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
+  bool                 dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
   struct {
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
     uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
