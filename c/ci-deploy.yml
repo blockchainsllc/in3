@@ -97,7 +97,7 @@ release_mac_and_wasm:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -137,7 +137,7 @@ release_x64:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x64.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -174,7 +174,7 @@ release_x86:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x86.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_x86.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -211,7 +211,7 @@ release_arm7:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_arm7.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_arm7.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -252,7 +252,7 @@ release_win:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_windows.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_windows.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
