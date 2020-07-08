@@ -954,7 +954,7 @@ int main(int argc, char* argv[]) {
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
     printf("   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
-    for (int i = 0; i < chain->nodelist_length; i++) {
+    for (unsigned int i = 0; i < chain->nodelist_length; i++) {
       in3_ctx_t* ctx      = NULL;
       char*      health_s = NULL;
       if (run_test_request) {

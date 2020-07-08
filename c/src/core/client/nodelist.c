@@ -410,11 +410,11 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
     if (!first) first = current;
-    current->node   = node_def;
-    current->weight = weight_def;
-    current->next   = NULL;
-    current->s      = weight_sum;
-    current->w      = in3_node_calculate_weight(weight_def, node_def->capacity, now);
+    current->index   = i;
+    current->blocked = false;
+    current->next    = NULL;
+    current->s       = weight_sum;
+    current->w       = in3_node_calculate_weight(weight_def, node_def->capacity, now);
     weight_sum += current->w;
     found++;
     if (prev) prev->next = current;
@@ -537,17 +537,16 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
       // check if we already added it,
       next = first;
       while (next) {
-        if (next->node == current->node) break;
+        if (next->index == current->index) break;
         next = next->next;
       }
 
       if (!next) {
         added++;
-        next         = _calloc(1, sizeof(node_match_t));
-        next->s      = current->s;
-        next->w      = current->w;
-        next->weight = current->weight;
-        next->node   = current->node;
+        next        = _calloc(1, sizeof(node_match_t));
+        next->s     = current->s;
+        next->w     = current->w;
+        next->index = current->index;
 
         if (!first) first = next;
         if (last) {

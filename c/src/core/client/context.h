@@ -62,11 +62,11 @@ typedef enum ctx_type {
  * This will be used when picking the nodes to send the request to. A linked list of these structs desribe the result.
  */
 typedef struct weight {
-  in3_node_t*        node;   /**< the node definition including the url */
-  in3_node_weight_t* weight; /**< the current weight and blacklisting-stats */
-  float              s;      /**< The starting value */
-  float              w;      /**< weight value */
-  struct weight*     next;   /**< next in the linkedlist or NULL if this is the last element*/
+  unsigned int   index;   /**< index of the node in the nodelist */
+  bool           blocked; /**< if true this node has  been blocked for sending wrong responses */
+  uint32_t       s;       /**< The starting value */
+  uint32_t       w;       /**< weight value */
+  struct weight* next;    /**< next in the linkedlist or NULL if this is the last element*/
 } node_match_t;
 
 /**
@@ -444,5 +444,12 @@ NONULL void in3_ctx_add_response(
     const char* data,     /**<  the data or the the string*/
     int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
+
+NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const node_match_t* node) {
+  return node->index < chain->nodelist_length ? chain->nodelist + node->index : NULL;
+}
+NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
+  return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
+}
 
 #endif

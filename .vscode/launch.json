@@ -29,11 +29,15 @@
             "name": "in3 cmd",
             "program": "${workspaceFolder}/build/bin/in3",
             "cwd": "${workspaceFolder}",
+            "externalConsole": true,
             "args": [
-                "-c",
-                "btc",
-                "getblock",
-                "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220",
+                "-ccache",
+                "-a",
+                "3",
+                "call",
+                "totalNodes():uint",
+                "-to",
+                "0x6c095a05764a23156efd9d603eada144a9b1af33",
                 "-debug"
             ]
         },
@@ -60,7 +64,8 @@
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../c/test/testdata/requests/in3_invalid_block.json",
+                "../c/test/testdata/requests/in3_total_nodes.json",
+                "-d",
                 "-t",
                 "1"
             ],
@@ -77,7 +82,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "run rpcapi test",
-            "program": "${workspaceFolder}/build/test/test_rpc_api",
+            "program": "${workspaceFolder}/build/test/test_request",
             "cwd": "${workspaceFolder}/build"
         },
         {

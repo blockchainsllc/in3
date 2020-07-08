@@ -100,7 +100,8 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
 
 NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
 
-  const in3_t* c = ctx->client;
+  const in3_t*       c     = ctx->client;
+  const in3_chain_t* chain = in3_find_chain(c, c->chain_id);
 
   if (in3_ctx_get_proof(ctx) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
@@ -121,9 +122,11 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     ctx->signers_length   = node_count;
     ctx->signers          = _malloc(sizeof(bytes_t) * node_count);
     const node_match_t* w = signer_nodes;
+    in3_node_t*         n = NULL;
     for (int i = 0; i < node_count; i++) {
-      ctx->signers[i].len  = w->node->address->len;
-      ctx->signers[i].data = w->node->address->data;
+      n                    = ctx_get_node(chain, w);
+      ctx->signers[i].len  = n->address->len;
+      ctx->signers[i].data = n->address->data;
       w                    = w->next;
     }
     if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
@@ -296,12 +299,14 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
   return IN3_OK;
 }
 
-NONULL static void blacklist_node(node_match_t* node_weight) {
-  if (node_weight && node_weight->weight) {
+NONULL static void blacklist_node(in3_chain_t* chain, node_match_t* node_weight) {
+  if (node_weight && !node_weight->blocked) {
+    in3_node_weight_t* w = ctx_get_node_weight(chain, node_weight);
+    if (!w) return;
     // blacklist the node
-    node_weight->weight->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
-    node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
-    in3_log_debug("Blacklisting node for unverifiable response: %s\n", node_weight->node->url);
+    w->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
+    node_weight->blocked = true;
+    in3_log_debug("Blacklisting node for unverifiable response: %s\n", ctx_get_node(chain, node_weight)->url);
   }
 }
 
@@ -328,21 +333,23 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
     if (chain->nodelist_upd8_params == NULL)
       chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
-
-    // overwrite old params since we have a newer nodelist update now
-    memcpy(chain->nodelist_upd8_params->node, node->node->address->data, node->node->address->len);
-    chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
-    chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
-                                                                              d_get_longk(response_in3, K_CURRENT_BLOCK),
-                                                                              ctx->client->replace_latest_block,
-                                                                              chain->avg_block_time);
+    in3_node_t* n = ctx_get_node(chain, node);
+    if (n) {
+      // overwrite old params since we have a newer nodelist update now
+      memcpy(chain->nodelist_upd8_params->node, n->address->data, n->address->len);
+      chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
+      chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
+                                                                                d_get_longk(response_in3, K_CURRENT_BLOCK),
+                                                                                ctx->client->replace_latest_block,
+                                                                                chain->avg_block_time);
+    }
   }
 
   if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
     chain->whitelist->needs_update = true;
 }
 
-static inline bool is_blacklisted(const node_match_t* node_weight) { return node_weight && node_weight->weight == NULL; }
+static inline bool is_blacklisted(const node_match_t* node_weight) { return node_weight && node_weight->blocked; }
 
 static bool is_user_error(d_token_t* error, char** err_msg) {
   *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
@@ -351,9 +358,9 @@ static bool is_user_error(d_token_t* error, char** err_msg) {
   return *err_msg && strncmp(*err_msg, "Error:", 6) && strncmp(*err_msg, "TypeError:", 10);
 }
 
-static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response) {
+static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response, in3_chain_t* chain) {
   if (is_blacklisted(node)) return IN3_ERPC;                                                        // already handled
-  if (node) blacklist_node(node);                                                                   // we block this node
+  if (node) blacklist_node(chain, node);                                                            // we block this node
   ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
   if (response->data.data) {                                                                        // free up memory
     // clean up invalid data
@@ -365,13 +372,14 @@ static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_r
   return IN3_ERPC;
 }
 
-static void clean_up_ctx(in3_ctx_t* ctx, node_match_t* node) {
+static void clean_up_ctx(in3_ctx_t* ctx, node_match_t* node, in3_chain_t* chain) {
   if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
   if (ctx->error) _free(ctx->error);
   if (ctx->responses) _free(ctx->responses);
   if (ctx->response_context) json_free(ctx->response_context);
-  ctx->error = NULL;
-  if (node && node->weight) node->weight->blacklisted_until = 0; // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
+  ctx->error           = NULL;
+  in3_node_weight_t* w = node ? ctx_get_node_weight(chain, node) : NULL;
+  if (w) w->blacklisted_until = 0; // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
 }
 
 static in3_ret_t handle_payment(in3_ctx_t* ctx, node_match_t* node, int index) {
@@ -411,22 +419,22 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifie
   in3_ret_t res = IN3_OK;
 
   if (response->state || !response->data.len) // reponse has an error
-    return handle_error_response(ctx, node, response);
+    return handle_error_response(ctx, node, response, chain);
 
   // we need to clean up the previos responses if set
-  clean_up_ctx(ctx, node);
+  clean_up_ctx(ctx, node, chain);
 
   // parse
   if (ctx_parse_response(ctx, response->data.data, response->data.len)) { // in case of an error we get a error-code and error is set in the ctx?
-    if (node) blacklist_node(node);                                       // so we need to block the node.
+    if (node) blacklist_node(chain, node);                                // so we need to block the node.
     return ctx->verification_state;
   }
 
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
 
-    // find the verifier
-    in3_vctx_t vc;
+    in3_node_t* n = node ? ctx_get_node(chain, node) : NULL;
+    in3_vctx_t  vc;
     vc.ctx     = ctx;
     vc.chain   = chain;
     vc.request = ctx->requests[i];
@@ -444,24 +452,24 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifie
     if (!vc.result && ctx->attempt < ctx->client->max_attempts - 1) {
       char* err_msg;
       // if we don't have a result, the node reported an error
-      if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg)) {
-        node->weight = NULL; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
-        in3_log_debug("we have a user-error from %s, so we reject the response, but don't blacklist ..\n", node ? node->node->url : "intern");
+      if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg) || !node) {
+        if (node) node->blocked = true; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
+        in3_log_debug("we have a user-error from %s, so we reject the response, but don't blacklist ..\n", n ? n->url : "intern");
         continue;
       } else {
-        in3_log_debug("we have a system-error from %s, so we block it ..\n", node ? node->node->url : "intern");
-        blacklist_node(node);
+        in3_log_debug("we have a system-error from %s, so we block it ..\n", n ? n->url : "intern");
+        blacklist_node(chain, node);
         return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
       }
     }
 
-    // we have a verifier?
-    if (verifier) {
+    // we only verify, if there is a verifier, but also a node, which means we do not verify internal responses.
+    if (verifier && node) {
       res = ctx->verification_state = verifier->verify(&vc);
       if (res == IN3_WAITING)
         return res;
       if (res) {
-        blacklist_node(node);
+        blacklist_node(chain, node);
         return res;
       }
     }
@@ -471,12 +479,13 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifie
   return (ctx->verification_state = IN3_OK);
 }
 
-static void handle_times(node_match_t* node, in3_response_t* response) {
-  if (node && node->weight && response && response->time) {
-    node->weight->response_count++;
-    node->weight->total_response_time += response->time;
-    response->time = 0; // make sure we count the time only once
-  }
+static void handle_times(in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
+  if (!node || node->blocked || !response || !response->time) return;
+  in3_node_weight_t* w = ctx_get_node_weight(chain, node);
+  if (!w) return;
+  w->response_count++;
+  w->total_response_time += response->time;
+  response->time = 0; // make sure we count the time only once
 }
 
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
@@ -487,18 +496,21 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   // blacklist nodes for missing response
   for (int n = 0; n < nodes_count; n++, node = node ? node->next : NULL) {
 
+    // get the connected node
+    const in3_node_t* node_data = node ? ctx_get_node(chain, node) : NULL;
+
     // if the response is still pending, we skip...
     if (response[n].state == IN3_WAITING) {
       still_pending = true;
-      in3_log_debug("request from node %s is still pending ..\n", node ? node->node->url : "intern");
+      in3_log_debug("request from node %s is still pending ..\n", node_data ? node_data->url : "intern");
       continue;
     }
 
-    handle_times(node, response + n);
+    handle_times(chain, node, response + n);
 
     state = verify_response(ctx, chain, verifier, node, response + n);
     if (state == IN3_OK) {
-      in3_log_debug("accepted response from %s\n", node ? node->node->url : "intern");
+      in3_log_debug("accepted response from %s\n", node_data ? node_data->url : "intern");
       break;
     } else if (state == IN3_WAITING)
       return state;
@@ -564,13 +576,15 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   int           nodes_count = ctx_nodes_len(ctx->nodes);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_match_t* node        = ctx->nodes;
+  in3_chain_t*  chain       = in3_find_chain(ctx->client, ctx->client->chain_id);
   bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
-    urls[n] = node->node->url;
+    in3_node_t* node_data = ctx_get_node(chain, node);
+    urls[n]               = node_data->url;
 
     // if the multichain-prop is set we need to specify the chain_id in the request
-    if (in3_node_props_get(node->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
+    if (in3_node_props_get(node_data->props, NODE_PROP_MULTICHAIN)) multichain = true;
 
     // cif we use_http, we need to malloc a new string, so we also need to free it later!
     if (ctx->client->flags & FLAGS_HTTP) urls[n] = convert_to_http_url(urls[n]);
@@ -709,7 +723,8 @@ static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, 
 
 static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   in3_log_debug("waiting for the next respone ...\n");
-  ctx = in3_ctx_last_waiting(ctx);
+  ctx                      = in3_ctx_last_waiting(ctx);
+  const in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
   for (int i = 0; i < transports->len; i++) {
     if (transports->req[i].ctx == ctx) {
       in3_request_t req = {.action = REQ_ACTION_RECEIVE, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
@@ -719,7 +734,8 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       int           i = 0;
       for (; w; i++, w = w->next) {
         if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data) {
-          char* data = ctx->raw_response[i].data.data;
+          in3_node_t* node = ctx_get_node(chain, w);
+          char*       data = ctx->raw_response[i].data.data;
 #ifdef DEBUG
           data = format_json(data);
 #endif
@@ -727,7 +743,7 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
           in3_log_trace(ctx->raw_response[i].state
                             ? "... response(%s): \n... " COLOR_RED_STR "\n"
                             : "... response(%s): \n... " COLOR_GREEN_STR "\n",
-                        w->node->url, data);
+                        node ? node->url : "intern", data);
 #ifdef DEBUG
           _free(data);
 #endif
@@ -763,17 +779,20 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   ctx->client->transport(request);
 
   // debug output
-  node_match_t* node = request->ctx->nodes;
+  node_match_t*      node  = request->ctx->nodes;
+  const in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->ctx->raw_response[i].state != IN3_WAITING) {
-      char* data = request->ctx->raw_response[i].data.data;
+      char*             data      = request->ctx->raw_response[i].data.data;
+      const in3_node_t* node_data = node ? ctx_get_node(chain, node) : NULL;
 #ifdef DEBUG
       data = format_json(data);
 #endif
       in3_log_trace(request->ctx->raw_response[i].state
                         ? "... response(%s): \n... " COLOR_RED_STR "\n"
                         : "... response(%s): \n... " COLOR_GREEN_STR "\n",
-                    node ? node->node->url : "intern", data);
+                    node_data ? node_data->url : "intern", data);
 #ifdef DEBUG
       _free(data);
 #endif
