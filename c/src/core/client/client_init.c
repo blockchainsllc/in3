@@ -328,6 +328,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
+    chain->dirty                = false;
     chain->conf                 = NULL;
     chain->nodelist             = NULL;
     chain->nodelist_length      = 0;
