@@ -151,6 +151,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+  chain->dirty                = false;
   chain->conf                 = NULL;
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
