@@ -71,6 +71,7 @@
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "../../verifier/in3_init.h"
 #include "in3_storage.h"
+#include "recorder.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
@@ -766,6 +767,10 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
+    else if (strcmp(argv[i], "-fo") == 0)
+      recorder_write_start(c, argv[++i]);
+    else if (strcmp(argv[i], "-fi") == 0)
+      recorder_read_start(c, argv[++i]);
     else if (strcmp(argv[i], "-nl") == 0)
       set_nodelist(c, argv[++i], false);
     else if (strcmp(argv[i], "-bn") == 0)
