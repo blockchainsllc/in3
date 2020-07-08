@@ -708,7 +708,7 @@ static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, 
 }
 
 static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
-  in3_log_debug("waiting for the next response....");
+  in3_log_debug("waiting for the next respone ...\n");
   ctx = in3_ctx_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
     if (transports->req[i].ctx == ctx) {
@@ -725,9 +725,9 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
 #endif
 
           in3_log_trace(ctx->raw_response[i].state
-                            ? "... response(%i): \n... " COLOR_RED_STR "\n"
-                            : "... response(%i): \n... " COLOR_GREEN_STR "\n",
-                        i, data);
+                            ? "... response(%s): \n... " COLOR_RED_STR "\n"
+                            : "... response(%s): \n... " COLOR_GREEN_STR "\n",
+                        w->node->url, data);
 #ifdef DEBUG
           _free(data);
 #endif
@@ -763,16 +763,17 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   ctx->client->transport(request);
 
   // debug output
-  for (unsigned int i = 0; i < request->urls_len; i++) {
+  node_match_t* node = request->ctx->nodes;
+  for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->ctx->raw_response[i].state != IN3_WAITING) {
       char* data = request->ctx->raw_response[i].data.data;
 #ifdef DEBUG
       data = format_json(data);
 #endif
       in3_log_trace(request->ctx->raw_response[i].state
-                        ? "... response(%i): \n... " COLOR_RED_STR "\n"
-                        : "... response(%i): \n... " COLOR_GREEN_STR "\n",
-                    i, data);
+                        ? "... response(%s): \n... " COLOR_RED_STR "\n"
+                        : "... response(%s): \n... " COLOR_GREEN_STR "\n",
+                    node ? node->node->url : "intern", data);
 #ifdef DEBUG
       _free(data);
 #endif
