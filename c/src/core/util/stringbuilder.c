@@ -198,3 +198,31 @@ void sb_free(sb_t* sb) {
   if (sb->data != NULL) _free(sb->data);
   _free(sb);
 }
+
+char* format_json(const char* json) {
+  sb_t  _sb = {0}, level = {0};
+  sb_t* sb = &_sb;
+  sb_add_char(&level, '\n');
+  for (char c = *json; c; c = *(++json)) {
+    switch (c) {
+      case '{':
+        sb_add_char(sb, c);
+        sb_add_chars(&level, "  ");
+        sb_add_range(sb, level.data, 0, level.len);
+        break;
+      case '}':
+        if (level.len > 2) level.len -= 2;
+        sb_add_range(sb, level.data, 0, level.len);
+        sb_add_char(sb, c);
+        break;
+      case ',':
+        sb_add_char(sb, c);
+        sb_add_range(sb, level.data, 0, level.len);
+        break;
+      default:
+        sb_add_char(sb, c);
+    }
+  }
+  _free(level.data);
+  return _sb.data;
+}

@@ -71,6 +71,7 @@
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "../../verifier/in3_init.h"
 #include "in3_storage.h"
+#include "recorder.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
@@ -766,6 +767,10 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
+    else if (strcmp(argv[i], "-fo") == 0)
+      recorder_write_start(c, argv[++i]);
+    else if (strcmp(argv[i], "-fi") == 0)
+      recorder_read_start(c, argv[++i]);
     else if (strcmp(argv[i], "-nl") == 0)
       set_nodelist(c, argv[++i], false);
     else if (strcmp(argv[i], "-bn") == 0)
@@ -954,7 +959,7 @@ int main(int argc, char* argv[]) {
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
     printf("   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
-    for (int i = 0; i < chain->nodelist_length; i++) {
+    for (unsigned int i = 0; i < chain->nodelist_length; i++) {
       in3_ctx_t* ctx      = NULL;
       char*      health_s = NULL;
       if (run_test_request) {
@@ -1251,7 +1256,7 @@ int main(int argc, char* argv[]) {
 
     // if the result is a string, we remove the quotes
     if (result[0] == '"' && result[strlen(result) - 1] == '"') {
-      memmove(result, result + 1, strlen(result) + 1);
+      memmove(result, result + 1, strlen(result));
       result[strlen(result) - 1] = 0;
     }
 
