@@ -2,10 +2,14 @@
 use std::convert;
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::error;
 use crate::traits::Client;
+use json::*;
+
+pub mod json {
+    pub use serde_json::{error, from_reader, from_str, from_value, json, to_string, Value};
+}
 
 /// JSON RPC request.
 #[derive(Serialize)]
@@ -46,9 +50,9 @@ impl Response {
         if let Some(ref res) = self.result {
             Ok(res)
         } else if let Some(ref err) = self.error {
-            Err(Error::ErrorResponse(serde_json::to_string(err).unwrap()).into())
+            Err(Error::ErrorResponse(to_string(err).unwrap()).into())
         } else {
-            Err(Error::InvalidResponse(serde_json::to_string(self).unwrap()).into())
+            Err(Error::InvalidResponse(to_string(self).unwrap()).into())
         }
     }
 }
@@ -63,32 +67,28 @@ pub async fn rpc<T>(client: &mut Box<dyn Client>, request: Request<'_>) -> error
 where
     T: serde::de::DeserializeOwned,
 {
-    let req_str = serde_json::to_string(&request)?;
+    let req_str = to_string(&request)?;
     let resp_str = client.rpc(req_str.as_str()).await?;
 
     //Check for array in or object in the response.
-    let resp_: Vec<Response> = match serde_json::from_str(resp_str.as_str()) {
+    let resp_: Vec<Response> = match from_str(resp_str.as_str()) {
         Result::Ok(val) => val,
         Result::Err(_) => {
             let response = Response {
-                result: Some(serde_json::Value::Null),
-                error: Some(serde_json::Value::Null),
+                result: Some(Value::Null),
+                error: Some(Value::Null),
             };
             vec![response]
         }
     };
 
     //Check array is valid and try once again
-    if resp_[0].result == Some(serde_json::Value::Null) {
+    if resp_[0].result == Some(Value::Null) {
         let resp_single: Response =
-            serde_json::from_str(resp_str.as_str()).expect("response is not valid JSON-RPC result");
-        return Ok(serde_json::from_str(
-            resp_single.to_result()?.to_string().as_str(),
-        )?);
+            from_str(resp_str.as_str()).expect("response is not valid JSON-RPC result");
+        return Ok(from_str(resp_single.to_result()?.to_string().as_str())?);
     } else {
         let resp = resp_.first().expect("empty response");
-        return Ok(serde_json::from_str(
-            resp.to_result()?.to_string().as_str(),
-        )?);
+        return Ok(from_str(resp.to_result()?.to_string().as_str())?);
     }
 }

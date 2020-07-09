@@ -1,9 +1,8 @@
 use std::convert::TryInto;
 
 use async_std::task;
-use serde_json::json;
 
-use in3::json_rpc::Request;
+use in3::json_rpc::{json::*, Request};
 use in3::prelude::*;
 
 fn main() {
@@ -51,7 +50,7 @@ fn main() {
         method: "eth_sendTransaction",
         params: tx,
     };
-    let req_str = serde_json::to_string(&rpc_req).unwrap(); // Serialize `Request` impl cannot fail
+    let req_str = to_string(&rpc_req).unwrap(); // Serialize `Request` impl cannot fail
     match task::block_on(c.rpc(&req_str)) {
         Ok(res) => println!("RESPONSE > {:?}, {:?}", req_str, res),
         Err(err) => println!("Failed with error: {:?}", err),
