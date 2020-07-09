@@ -457,7 +457,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifie
         in3_log_debug("we have a user-error from %s, so we reject the response, but don't blacklist ..\n", n ? n->url : "intern");
         continue;
       } else {
-        in3_log_debug("we have a system-error from %s, so we block it ..\n", n ? n->url : "intern");
+        if (!node->blocked) in3_log_debug("we have a system-error from %s, so we block it ..\n", n ? n->url : "intern");
         blacklist_node(chain, node);
         return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
       }
@@ -733,7 +733,7 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       node_match_t*      w     = ctx->nodes;
       int                i     = 0;
       for (; w; i++, w = w->next) {
-        if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data) {
+        if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data && ctx->raw_response[i].time) {
           in3_node_t* node = ctx_get_node(chain, w);
           char*       data = ctx->raw_response[i].data.data;
           data             = format_json(data);
@@ -912,7 +912,7 @@ in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
 }
 
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
-  in3_ret_t ret;
+  in3_ret_t ret = IN3_OK;
 
   // if there is an error it does not make sense to execute.
   if (ctx->error) return (ctx->verification_state && ctx->verification_state != IN3_WAITING) ? ctx->verification_state : IN3_EUNKNOWN;
@@ -955,17 +955,15 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx) != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           if ((ret = pick_signers(ctx, ctx->requests[0])) < 0)
-            return ctx_set_error(ctx, "error configuring the config for request", ret);
+            return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
 
 #ifdef PAY
-
           // now we have the nodes, we can prepare the payment
           if (ctx->client->pay && ctx->client->pay->prepare && (ret = ctx->client->pay->prepare(ctx, ctx->client->pay->cptr)) != IN3_OK) return ret;
 #endif
-
         } else
           // since we could not get the nodes, we either report it as error or wait.
-          return ctx_set_error(ctx, "could not find any node", ret);
+          return ctx_set_error(ctx, "could not find any node", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
       }
 
       // if we still don't have an response, we keep on waiting
