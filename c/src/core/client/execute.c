@@ -518,7 +518,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     state = verify_response(ctx, chain, verifier, node, response + n);
     if (state == IN3_OK) {
-      in3_log_debug("accepted response from %s\n", node_data ? node_data->url : "intern");
+      in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_stringk(ctx->requests[0], K_METHOD), node_data ? node_data->url : "intern");
       break;
     } else if (state == IN3_WAITING)
       return state;
@@ -939,7 +939,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
   }
 
-  in3_log_debug("ctx_execute %s ... attempt = %i\n", d_get_stringk(ctx->requests[0], K_METHOD), ctx->error, ctx->attempt);
+  in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_stringk(ctx->requests[0], K_METHOD), ctx->attempt + 1);
 
   switch (ctx->type) {
     case CT_RPC: {
