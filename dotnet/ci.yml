@@ -80,7 +80,7 @@ dotnet_arm:
   tags:
     - arm
 
-.disabled-release_nuget:
+release_nuget:
   stage: deploy
   image: docker.slock.it/build-images/dotnet-core-sdk:3.1
   tags:
@@ -93,7 +93,7 @@ dotnet_arm:
     - dotnet_macos
   script:
     - dotnet pack -c Release NuspecFile=${NUSPEC_FILE} -Properties "version=${CI_COMMIT_TAG}"
-    - dotnet nuget push dotnet/In3/bin/Release/Slockit.In3.${CI_COMMIT_TAG}.nupkg -k {NUGET_API_KEY} -s https://api.nuget.org/v3/index.json
+    - dotnet nuget push dotnet/In3/bin/Release/Slockit.In3.${CI_COMMIT_TAG}.nupkg -k {NUGET_GALLERY_API_KEY} -s https://api.nuget.org/v3/index.json
   artifacts:
     paths:
       - dotnet/In3/bin/Release/Slockit.In3.${CI_COMMIT_TAG}.nupkg
