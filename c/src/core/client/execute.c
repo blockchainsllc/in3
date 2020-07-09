@@ -471,11 +471,11 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifie
       if (res) {
         // before we blacklist the node, we remove the data and replace it with the error-message
         // this is needed in case it will be cleared and we don't want to lose the error message
-        if (ctx->error && ctx->raw_response[i].data.data) {
-          _free(ctx->raw_response->data.data);
-          int l                      = strlen(ctx->error);
-          ctx->raw_response[i].state = res;
-          ctx->raw_response[i].data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
+        if (ctx->error && response->data.data) {
+          _free(response->data.data);
+          int l           = strlen(ctx->error);
+          response->state = res;
+          response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
         }
         blacklist_node(chain, node);
         return res;
