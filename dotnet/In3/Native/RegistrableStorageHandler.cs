@@ -45,8 +45,8 @@ namespace In3.Native
         {
             byte[] result = Wrapper.Client.Storage.GetItem(key);
             if (result == null) return IntPtr.Zero;
-            IntPtr unmanagedPointer = Marshal.AllocHGlobal(result.Length);
-            Marshal.Copy(result, 0, unmanagedPointer, result.Length);
+            // This needs to be release on c-side so its needs to be created there as well to prevent heap corruption.
+            IntPtr unmanagedPointer = b_new(result, (uint) result.Length);
             return unmanagedPointer;
         }
 
@@ -60,6 +60,7 @@ namespace In3.Native
             return Wrapper.Client.Storage.Clear();
         }
 
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr b_new([MarshalAs(UnmanagedType.LPArray)] byte[] content, uint len);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_set_storage_handler(IntPtr c, in3_storage_get_item get_item, in3_storage_set_item set_item, in3_storage_clear clear, IntPtr cptr);
     }
 }

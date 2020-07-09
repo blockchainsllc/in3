@@ -1,8 +1,7 @@
 //! Ethereum types' definitions.
-pub use ethereum_types::{Address, Bloom, H256, U256, U64};
 use serde::{Deserialize, Serialize, Serializer};
 
-use crate::types::Bytes;
+use crate::types::*;
 
 /// Hash types representing 32-bytes hashes.
 pub type Hash = H256;

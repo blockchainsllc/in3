@@ -31,7 +31,7 @@
     </None>
     <None Include="Slockit.In3.targets">
       <Pack>true</Pack>
-      <PackagePath>build</PackagePath>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 </Project>

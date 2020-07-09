@@ -1,12 +1,10 @@
 use std::convert::TryInto;
 
 use async_std::task;
-use ethereum_types::{Address, U256};
-
 use in3::eth1::*;
+use in3::json_rpc::json::{from_str, from_value, json};
 use in3::logging;
 use in3::prelude::*;
-use in3::types::Bytes;
 
 fn main() -> In3Result<()> {
     // enable logging
@@ -20,7 +18,7 @@ fn main() -> In3Result<()> {
         .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
 
     // eth_getStorageAt
-    let address: Address = serde_json::from_str(r#""0x0123456789012345678901234567890123456789""#)?;
+    let address: Address = from_str(r#""0x0123456789012345678901234567890123456789""#)?;
     let key: U256 = 0u64.into();
     let storage: u64 = task::block_on(eth_api.get_storage_at(address, key, BlockNumber::Latest))?
         .try_into()
@@ -28,7 +26,7 @@ fn main() -> In3Result<()> {
     println!("Storage value => {:?}", storage);
 
     // eth_getCode
-    let address: Address = serde_json::from_str(r#""0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f""#)?;
+    let address: Address = from_str(r#""0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f""#)?;
     let code: Bytes = task::block_on(eth_api.get_code(address, BlockNumber::Latest))?
         .try_into()
         .expect("cannot convert to Bytes");
@@ -47,7 +45,7 @@ fn main() -> In3Result<()> {
     println!("Gas price => {:?}", gas_price);
 
     // eth_getBalance
-    let address: Address = serde_json::from_str(r#""0x0123456789012345678901234567890123456789""#)?;
+    let address: Address = from_str(r#""0x0123456789012345678901234567890123456789""#)?;
     let balance: u64 = task::block_on(
         eth_api.get_balance(address, BlockNumber::Number((latest_blk_num - 10).into())),
     )?
@@ -60,24 +58,22 @@ fn main() -> In3Result<()> {
     println!("Block => {:?}", block);
 
     // eth_getBlockByHash
-    let hash: Hash = serde_json::from_str(
-        r#""0xa2ad3d67e3a09d016ab72e40fc1e47d6662f9156f16ce1cce62d5805a62ffd02""#,
-    )?;
+    let hash: Hash =
+        from_str(r#""0xa2ad3d67e3a09d016ab72e40fc1e47d6662f9156f16ce1cce62d5805a62ffd02""#)?;
     let block: Block = task::block_on(eth_api.get_block_by_hash(hash, false))?;
     println!("Block => {:?}", block);
 
     // eth_getLogs
-    let logs: Vec<Log> = task::block_on(eth_api.get_logs(serde_json::json!({
+    let logs: Vec<Log> = task::block_on(eth_api.get_logs(json!({
     "blockHash": "0x468f88ed8b40d940528552f093a11e4eb05991c787608139c931b0e9782ec5af",
     "topics": ["0xa61b5dec2abee862ab0841952bfbc161b99ad8c14738afa8ed8d5c522cd03946"]
     })))?;
     println!("Logs => {:?}", logs);
 
     // eth_call
-    let contract: Address =
-        serde_json::from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap(); // cannot fail
+    let contract: Address = from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap(); // cannot fail
     let mut abi = abi::In3EthAbi::new();
-    let params = task::block_on(abi.encode("totalServers():uint256", serde_json::json!([])))
+    let params = task::block_on(abi.encode("totalServers():uint256", json!([])))
         .expect("failed to ABI encode params");
 
     let txn = CallTransaction {
@@ -89,7 +85,7 @@ fn main() -> In3Result<()> {
         task::block_on(eth_api.call(txn, BlockNumber::Latest)).expect("ETH call failed");
     let output =
         task::block_on(abi.decode("uint256", output)).expect("failed to ABI decode output");
-    let total_servers: U256 = serde_json::from_value(output).unwrap(); // cannot fail if ABI decode succeeds
+    let total_servers: U256 = from_value(output).unwrap(); // cannot fail if ABI decode succeeds
     println!("Total servers => {:?}", total_servers);
 
     Ok(())

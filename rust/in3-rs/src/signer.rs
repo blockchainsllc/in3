@@ -1,10 +1,9 @@
 //! Signer trait implementations.
-use serde_json::{json, Value};
-
 use async_trait::async_trait;
 
 use crate::error::{In3Result, SysError};
 use crate::in3::{chain, Client};
+use crate::json_rpc::json::*;
 use crate::traits::{Client as ClientTrait, Signer};
 use crate::types::Bytes;
 
@@ -47,7 +46,7 @@ impl Signer for In3Signer {
         let resp_str = self
             .in3
             .rpc(
-                serde_json::to_string(&json!({
+                to_string(&json!({
                     "method": "in3_prepareTx",
                     "params": [msg]
                 }))
@@ -55,8 +54,8 @@ impl Signer for In3Signer {
                 .as_str(),
             )
             .await?;
-        let resp: Value = serde_json::from_str(resp_str.as_str())?;
-        let res: Bytes = serde_json::from_str(resp["result"].to_string().as_str())?;
+        let resp: Value = from_str(resp_str.as_str())?;
+        let res: Bytes = from_str(resp["result"].to_string().as_str())?;
         Ok(res)
     }
 }

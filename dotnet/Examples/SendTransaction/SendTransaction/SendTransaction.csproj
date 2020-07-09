@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Slockit.In3" />
+      <PackageReference Include="Slockit.In3" Version="*" />
     </ItemGroup>
 
 </Project>
