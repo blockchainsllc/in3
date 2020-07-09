@@ -1256,7 +1256,7 @@ int main(int argc, char* argv[]) {
 
     // if the result is a string, we remove the quotes
     if (result[0] == '"' && result[strlen(result) - 1] == '"') {
-      memmove(result, result + 1, strlen(result) + 1);
+      memmove(result, result + 1, strlen(result) - 1);
       result[strlen(result) - 1] = 0;
     }
 
