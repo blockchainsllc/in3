@@ -197,7 +197,7 @@ void recorder_read_start(in3_t* c, char* file) {
   in3_set_storage_handler(c, rec_get_item_in, rec_set_item_in, rec_clear_in, &rec);
   sb_t             sb    = {0};
   recorder_entry_t entry = read_entry(&sb);
-  rec.time               = atoll(entry.args[0]);
+  rec.time               = entry.argl >= 1 ? atoll(entry.args[0]) : 0;
   entry_free(&entry, &sb);
   in3_set_func_time(static_time);
 }
