@@ -814,7 +814,7 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
       }
     }
     if (index == -1) {
-      transports->req = transports->len ? _realloc(transports->req, sizeof(ctx_req_t) * (transports->len + 1), sizeof(ctx_req_t) * transports->len) : _malloc(sizeof(ctx_req_t) * transports->len);
+      transports->req = transports->len ? _realloc(transports->req, sizeof(ctx_req_t) * (transports->len + 1), sizeof(ctx_req_t) * transports->len) : _malloc(sizeof(ctx_req_t));
       index           = transports->len++;
     }
 

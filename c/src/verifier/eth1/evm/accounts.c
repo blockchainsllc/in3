@@ -68,7 +68,7 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   }
 
   // get balance, nonce and code
-  uint8_t *balance, *nonce, *code_size;
+  uint8_t *balance = NULL, *nonce = NULL, *code_size = NULL;
   int      l_balance   = evm->env(evm, EVM_ENV_BALANCE, adr, 20, &balance, 0, 0);
   int      l_code_size = evm->env(evm, EVM_ENV_CODE_SIZE, adr, 20, &code_size, 0, 0);
   int      l_nonce     = evm->env(evm, EVM_ENV_NONCE, adr, 20, &nonce, 0, 0);
