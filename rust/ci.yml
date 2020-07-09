@@ -46,6 +46,15 @@ rust_linux:
   needs:
     - gcc_legacy
 
+rust_mac:
+  extends: .rust_multiarch
+  variables:
+    TARGET: "x86_64-unknown-linux-gnu"
+    BUILD_DIR: "mac_os"
+  needs:
+    - mac_os
+  
+  
 rust_win:
   allow_failure: true
   extends: .rust_multiarch
@@ -99,9 +108,13 @@ rust:
     - cd rust/
     - export UPDATE_IN3_BINDINGS=1
     - export IN3_MODE="RELEASE"
+    - cargo install cargo2junit 
     - cargo run --example custom_transport --release
-    - RUST_TEST_THREADS=1 cargo test
+    - RUST_TEST_THREADS=1 cargo test -- -Z unstable-options --format json | cargo2junit > ../rust_test.xml
   needs: []
+  artifacts:
+    reports:
+      junit: rust_test.xml
   tags:
     - mac-mini-runner
 
