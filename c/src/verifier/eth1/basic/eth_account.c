@@ -35,6 +35,7 @@
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/bignum.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
@@ -73,7 +74,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   if (!trie_verify_proof(&root, &path, proof, is_not_existened(account) ? NULL : account_raw)) {
     _free(proof);
     b_free(account_raw);
-    return vc_err(vc, "invalid account proof");
+    return vc_err(vc, "invalid account proof where blockheader does not match the rootstate, which might be a microfork");
   }
   _free(proof);
   b_free(account_raw);

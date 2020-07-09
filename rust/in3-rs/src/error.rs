@@ -1,8 +1,8 @@
 //! Errors used throughout the library.
+use crate::json_rpc::{json, Error as JsonRpcError};
 use core::result;
-use std::convert;
-
 use in3_sys::in3_ret_t::*;
+use std::convert;
 
 macro_rules! in3_error_def {
     ( $( $( #[$attr:meta] )* => $rust_variant:ident = $cs_variant:ident; )* ) => {
@@ -83,11 +83,11 @@ pub enum Error {
     /// Errors originating in the C code
     InternalError(SysError),
     /// JSON parser errors
-    JsonError(serde_json::error::Error),
+    JsonError(json::error::Error),
     /// Base64 decoding errors
     Base64Error(base64::DecodeError),
     /// JSON RPC errors
-    JsonRpcError(crate::json_rpc::Error),
+    JsonRpcError(JsonRpcError),
     /// Custom error type for ease of use
     CustomError(String),
 }
@@ -98,8 +98,8 @@ impl convert::From<SysError> for Error {
     }
 }
 
-impl convert::From<serde_json::error::Error> for Error {
-    fn from(err: serde_json::error::Error) -> Self {
+impl convert::From<json::error::Error> for Error {
+    fn from(err: json::error::Error) -> Self {
         Self::JsonError(err)
     }
 }

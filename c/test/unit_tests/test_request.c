@@ -160,8 +160,8 @@ static void test_partial_response() {
   in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
-  TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
-  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
+  TEST_ASSERT_TRUE(ctx->nodes->blocked);                // first node is blacklisted
+  TEST_ASSERT_FALSE(ctx->nodes->next->blocked);         // second node is not blacklisted
 
   // now we have a valid response and should get a accaptable response
   in3_ctx_add_response(req->ctx, 2, false, "{\"result\":\"0x100\"}", -1);
@@ -187,11 +187,11 @@ static void test_retry_response() {
   // first response is an error we expect a waiting since the transport has not passed all responses yet
   in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
-  TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
-  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
+  TEST_ASSERT_TRUE(ctx->nodes->blocked);                // first node is blacklisted
+  TEST_ASSERT_FALSE(ctx->nodes->next->blocked);         // second node is not blacklisted
   TEST_ASSERT_NOT_NULL(ctx->raw_response);              // we still keep the raw response
 
-  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"no internet\"}", -1);
+  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"Error:no internet\"}", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
 
   TEST_ASSERT_NULL(ctx->raw_response);

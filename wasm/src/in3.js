@@ -309,25 +309,25 @@ function url_queue(req) {
     const promises = [], responses = []
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
     req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
-        response => {
-            if (req.in3.config.debug) console.log("res (" + req.ctx + "," + url + ") : " + JSON.stringify(JSON.parse(response), null, 2))
-            responses.push({ i, url, response });
-            trigger()
-        },
-        error => {
-            if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + url + ") : " + error)
-            responses.push({ i, url, error });
-            trigger()
-        }
+        response => { responses.push({ i, url, response }); trigger() },
+        error => { responses.push({ i, url, error }); trigger() }
     ))
     function trigger() {
         while (promises.length && responses.length) {
             const p = promises.shift(), r = responses.shift()
             if (!req.cleanUp) {
-                if (r.error)
+                if (r.error) {
+                    if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + r.url + ") : " + r.error)
                     setResponse(req.ctx, r.error.message || r.error, r.i, true)
-                else
-                    setResponse(req.ctx, r.response, r.i, false)
+                }
+                else {
+                    try {
+                        if (req.in3.config.debug) console.log("res (" + req.ctx + "," + r.url + ") : " + JSON.stringify(JSON.parse(r.response), null, 2))
+                        setResponse(req.ctx, r.response, r.i, false)
+                    } catch (x) {
+                        setResponse(req.ctx, r.error.message || r.error, r.i, true)
+                    }
+                }
             }
             p.resolve(r)
         }

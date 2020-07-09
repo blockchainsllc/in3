@@ -630,7 +630,7 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
 
     jclass jnodeconfigclass = (*jni)->FindClass(jni, "in3/config/NodeConfiguration");
 
-    for (int i = 0; i < chain.nodelist_length; i++) {
+    for (unsigned int i = 0; i < chain.nodelist_length; i++) {
       in3_node_t node            = chain.nodelist[i];
       jobject    jnodeconfigobj  = (*jni)->NewObject(jni, jnodeconfigclass, (*jni)->GetMethodID(jni, jnodeconfigclass, "<init>", "(Lin3/config/ChainConfiguration;)V"), jchainconfigobj);
       jmethodID  set_address_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setAddress", "(Ljava/lang/String;)V");

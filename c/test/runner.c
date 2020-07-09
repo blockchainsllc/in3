@@ -466,9 +466,10 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)
       testIndex = atoi(argv[++i]);
-    else if (strcmp(argv[i], "-d") == 0)
+    else if (strcmp(argv[i], "-d") == 0) {
       in3_log_set_level(LOG_TRACE);
-    else if (strcmp(argv[i], "-m") == 0)
+      in3_log_set_quiet(false);
+    } else if (strcmp(argv[i], "-m") == 0)
       membrk = atoi(argv[++i]);
     else {
       char** t = malloc((size + 1) * sizeof(char*));

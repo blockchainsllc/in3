@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 
+use crate::json_rpc::json::*;
 use crate::logging::LOGGER;
 use crate::traits::Transport;
 
@@ -37,13 +38,10 @@ impl MockJsonTransport {
     /// Read file from path
     ///
     /// Return serde:json Value or Error if file not found
-    pub fn read_file<P: AsRef<Path>>(
-        &mut self,
-        path: P,
-    ) -> Result<serde_json::Value, Box<dyn Error>> {
+    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<Value, Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
-        let u = serde_json::from_reader(reader)?;
+        let u = from_reader(reader)?;
         Ok(u)
     }
 
@@ -105,7 +103,7 @@ impl Transport for MockJsonTransport {
     ///
     /// Read responses from json
     async fn fetch(&mut self, request_: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
-        let request: serde_json::Value = serde_json::from_str(request_).unwrap();
+        let request: Value = from_str(request_).unwrap();
         let method_ = request[0]["method"].as_str();
         let response = self.read_json(String::from(method_.unwrap()));
         vec![Ok(response.to_string())]
@@ -139,7 +137,7 @@ impl Transport for MockTransport<'_> {
     /// Otherwise, returns an error string.
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = self.responses.pop();
-        let request: serde_json::Value = serde_json::from_str(request).unwrap();
+        let request: Value = from_str(request).unwrap();
         unsafe {
             LOGGER.trace(&format!("{:?} ->\n {:?}\n", request, response));
         }
@@ -206,8 +204,6 @@ impl Transport for HttpTransport {
 
 #[cfg(test)]
 mod tests {
-    use ethereum_types::U256;
-
     use crate::json_rpc::Response;
     use crate::prelude::*;
 
@@ -219,9 +215,9 @@ mod tests {
         //Make use of static string literals conversion for mock transport.
         let method = String::from("eth_getTransactionCount");
         let response = transport.read_json(method).to_string();
-        let resp: Vec<Response> = serde_json::from_str(&response)?;
+        let resp: Vec<Response> = from_str(&response)?;
         let result = resp.first().unwrap();
-        let json_str = serde_json::from_str::<U256>(result.to_result()?.to_string().as_str())?;
+        let json_str = from_str::<U256>(result.to_result()?.to_string().as_str())?;
         println!("{:?}", json_str);
         Ok(())
     }
@@ -232,7 +228,7 @@ mod tests {
         //Make use of static string literals conversion for mock transport.
         let method = String::from("eth_getBlockByHash");
         let response = transport.read_json(method).to_string();
-        let resp: Vec<Response> = serde_json::from_str(&response)?;
+        let resp: Vec<Response> = from_str(&response)?;
         let result = resp.first().unwrap();
         let parsed = result.to_result()?;
         println!("{:?}", parsed["number"]);

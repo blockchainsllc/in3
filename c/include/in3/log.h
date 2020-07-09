@@ -41,6 +41,7 @@ typedef enum { LOG_TRACE,
 #define in3_log_set_prefix(prefix) in3_log_set_prefix_(prefix)
 #define in3_log_enable_prefix() in3_log_enable_prefix_()
 #define in3_log_disable_prefix() in3_log_disable_prefix_()
+#define in3_log_is_prefix_enabled() in3_log_is_prefix_enabled_()
 #define in3_log(...) in3_log_(__VA_ARGS__)
 #else
 #define in3_log_trace(...)
@@ -57,6 +58,7 @@ typedef enum { LOG_TRACE,
 #define in3_log_get_level() LOG_TRACE
 #define in3_log_set_quiet(enable)
 #define in3_log_set_prefix(prefix)
+#define in3_log_is_prefix_enabled() 0
 #define in3_log_enable_prefix()
 #define in3_log_disable_prefix()
 #define in3_log(level, file, function, line, ...) \
@@ -82,6 +84,7 @@ void            in3_log_set_quiet_(int enable);
 void            in3_log_set_prefix_(const char* prefix);
 void            in3_log_enable_prefix_();
 void            in3_log_disable_prefix_();
+int             in3_log_is_prefix_enabled_();
 
 /* in3_log() function can be made thread-safe using the in3_log_set_lock() function */
 void in3_log_(in3_log_level_t level, const char* file, const char* function, int line, const char* fmt, ...);

@@ -94,6 +94,7 @@ namespace In3.Context
         {
             IntPtr rspPtr = ctx_get_response_data(_nativeCtx);
             string msg = Marshal.PtrToStringUTF8(rspPtr);
+            // This needs to be freed since it is a copy of the response context.
             Native.Utils._free_(rspPtr);
             return msg;
         }
@@ -140,6 +141,8 @@ namespace In3.Context
         {
             IntPtr rpcPtr = Marshal.StringToHGlobalAnsi(errorMessage);
             ctx_set_error_intern(_nativeCtx, rpcPtr, (int)In3Code.IN3_ERPC);
+            // This needs to be freed since our pointer is copied into the context by the function and needs to be freed this way else it will lead to Heap Corruption and its platform independent.
+            Marshal.FreeHGlobal(rpcPtr);
         }
 
         /// <summary>
@@ -150,6 +153,7 @@ namespace In3.Context
         {
             IntPtr msgPtr = ctx_get_error_rpc(_nativeCtx, 0);
             string msg = Marshal.PtrToStringUTF8(msgPtr);
+            // This needs to be freed since it is a copy of the error context.
             Native.Utils._free_(msgPtr);
             return msg;
         }
