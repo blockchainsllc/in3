@@ -352,7 +352,7 @@ function url_queue(req) {
                         try {
                             blacklist = r.error || !!JSON.parse(r.response)[0].error
                         }
-                        catch {
+                        catch (x) {
                             blacklist = true
                         }
                         if (blacklist) in3w.ccall('in3_blacklist', 'void', ['number', 'string'], [ptr, r.url])
