@@ -111,12 +111,12 @@ static int rand_in(void* s) {
 static in3_ret_t recorder_transport_in(in3_request_t* req) {
 
   if (req->action == REQ_ACTION_SEND) {
-    entry_free(next_entry("requqest", NULL));
+    entry_free(next_entry("request", NULL));
     req->cptr = &rec;
   }
   if (req->action != REQ_ACTION_CLEANUP) {
-    recorder_entry_t* entry = next_entry("response", NULL);
-    in3_response_t*   r     = req->ctx->raw_response + atoi(entry->args[0]);
+    recorder_entry_t* entry = next_entry("response", d_get_stringk(req->ctx->requests[0], K_METHOD));
+    in3_response_t*   r     = req->ctx->raw_response + atoi(entry->args[1]);
     sb_add_chars(&r->data, entry->content.data);
     r->state = atoi(entry->args[3]);
     r->time  = atoi(entry->args[4]);
@@ -141,7 +141,7 @@ static in3_ret_t recorder_transport_out(in3_request_t* req) {
     for (int i = 0; m; i++, m = m->next) {
       in3_response_t* r = req->ctx->raw_response + i;
       if (r->time) {
-        fprintf(rec.f, ":: response %i %s %s %i %i\n", i, d_get_stringk(req->ctx->requests[0], K_METHOD), ctx_get_node(chain, m)->url, r->state, r->time);
+        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, ctx_get_node(chain, m)->url, r->state, r->time);
         char* data = format_json(r->data.data ? r->data.data : "");
         fprintf(rec.f, "%s\n\n", data);
         fflush(rec.f);
@@ -155,9 +155,8 @@ static in3_ret_t recorder_transport_out(in3_request_t* req) {
 bytes_t* rec_get_item_in(void* cptr, const char* key) {
   UNUSED_VAR(cptr);
   UNUSED_VAR(key);
-  sb_t              sb    = {0};
   recorder_entry_t* entry = next_entry("cache", key);
-  bytes_t*          found = atoi(entry->args[1]) ? hex_to_new_bytes(sb.data, sb.len) : NULL;
+  bytes_t*          found = atoi(entry->args[1]) ? hex_to_new_bytes(entry->content.data, entry->content.len) : NULL;
   entry_free(entry);
 
   return found;
@@ -199,13 +198,16 @@ uint64_t static_time(void* t) {
   return rec.time;
 }
 
-void recorder_write_start(in3_t* c, char* file) {
+void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
   rec.file      = file;
   rec.transport = c->transport;
   c->transport  = recorder_transport_out;
   rec.f         = fopen(file, "w");
   rec.cache     = c->cache;
   in3_set_func_rand(rand_out);
+  fprintf(rec.f, ":: cmd");
+  for (int i = 0; i < argc; i++) fprintf(rec.f, " %s", strcmp(argv[i], "-fo") ? argv[i] : "-fi");
+  fprintf(rec.f, "\n\n");
   in3_set_storage_handler(c, rec_get_item_out, rec_set_item_out, rec_clear_out, &rec);
   fprintf(rec.f, ":: time %u\n\n", (uint32_t) in3_time(NULL));
 }
@@ -221,4 +223,18 @@ void recorder_read_start(in3_t* c, char* file) {
   rec.time                = entry->argl >= 1 ? atoll(entry->args[0]) : 0;
   entry_free(entry);
   in3_set_func_time(static_time);
+}
+
+void recorder_update_cmd(char* file, int* argc, char** argv[]) {
+  rec.file                = file;
+  rec.f                   = fopen(file, "r");
+  recorder_entry_t* entry = next_entry("cmd", NULL);
+  *argc                   = entry->argl;
+  *argv                   = entry->args;
+  for (int i = 0; i < entry->argl; i++) {
+    if (strcmp(entry->args[i], "-fi") == 0) entry->args[i + 1] = file;
+  }
+  fclose(rec.f);
+  rec.f     = NULL;
+  rec.queue = NULL;
 }
