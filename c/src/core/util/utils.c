@@ -127,38 +127,30 @@ const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
 #endif
 
 int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
-  if (!buf && len) return -1;
-  if (len == -1) {
-    len = strlen(buf);
-    if (len >= 2 && *buf == '0' && buf[1] == 'x') {
-      buf += 2;
-      len -= 2;
-    }
+  if (!buf || len < -1) return len == 0 ? 0 : -1;
+  if (len == -1) len = strlen(buf);
+  if (buf[0] == '0' && buf[1] == 'x') {
+    buf += 2;
+    len -= 2;
   }
-  int i       = len - 1;
-  int out_len = (len & 1) ? (len + 1) / 2 : len / 2;
-  int j       = out_len - 1;
-
-  if (j > outbuf_size)
-    return -1; /* Output buffer is smaller than need */
-
-  while (i >= 0) {
-    out[j] = hexchar_to_int(buf[i--]);
-    if (i >= 0) {
-      out[j--] |= hexchar_to_int(buf[i--]) << 4;
-    }
+  if (len == 0) return 0;
+  int bytes_len = (len + 1) / 2, i = 0, j = 0;
+  if (bytes_len > outbuf_size) return -1;
+  if (len & 1) {
+    out[0] = hexchar_to_int(buf[0]);
+    j = i = 1;
   }
 
-  return out_len;
+  for (; i < len; i += 2, ++j)
+    out[j] = (hexchar_to_int(buf[i]) << 4) | hexchar_to_int(buf[i + 1]);
+
+  return bytes_len;
 }
 bytes_t* hex_to_new_bytes(const char* buf, int len) {
-  int bytes_len = (len & 1) ? (len + 1) / 2 : len / 2;
-
-  uint8_t* b     = _malloc(bytes_len);
   bytes_t* bytes = _malloc(sizeof(bytes_t));
-  hex_to_bytes(buf, len, b, bytes_len);
-  bytes->data = b;
-  bytes->len  = bytes_len;
+  bytes->len     = (len + 1) / 2;
+  bytes->data    = _malloc(bytes->len);
+  hex_to_bytes(buf, len, bytes->data, bytes->len);
   return bytes;
 }
 
