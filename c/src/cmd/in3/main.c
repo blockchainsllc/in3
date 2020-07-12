@@ -710,6 +710,13 @@ int main(int argc, char* argv[]) {
 #endif
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
+    if (strcmp(argv[i], "-fi") == 0) {
+      recorder_update_cmd(argv[i + 1], &argc, &argv);
+      break;
+    }
+
+  // handle clear cache opt before initializing cache
+  for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
       storage_clear(NULL);
 
@@ -768,7 +775,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
     else if (strcmp(argv[i], "-fo") == 0)
-      recorder_write_start(c, argv[++i]);
+      recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)
       recorder_read_start(c, argv[++i]);
     else if (strcmp(argv[i], "-nl") == 0)

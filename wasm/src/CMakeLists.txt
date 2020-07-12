@@ -32,18 +32,19 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+set(EMC_PROPS "-Oz -s ALLOW_MEMORY_GROWTH=1 -s NODEJS_CATCH_REJECTION=0 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+
 IF (ASMJS)
   set(WASM_EMBED true)
   set(CMAKE_EXECUTABLE_SUFFIX ".js")
-  set(EMC_PROPS "-O2 -s ALLOW_MEMORY_GROWTH=1  -s FINALIZE_ASM_JS=1 -s NODEJS_CATCH_REJECTION=0  -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+  set(EMC_PROPS "${EMC_PROPS} -s FINALIZE_ASM_JS=1  -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 ")
 else(ASMJS)
-  set(EMC_PROPS "-Oz -s ALLOW_MEMORY_GROWTH=1 -s NODEJS_CATCH_REJECTION=0 -s EXPORT_NAME=in3w -s WASM=1  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+  set(EMC_PROPS "${EMC_PROPS} -s WASM=1")
 endif(ASMJS)
 
 
 IF (CMAKE_BUILD_TYPE MATCHES Debug)
-   set(EMC_PROPS "${EMC_PROPS} -g -s SAFE_HEAP=1 -s ASSERTIONS=1 -s STACK_OVERFLOW_CHECK=1 -s RUNTIME_LOGGING=1")
-#   set(EMC_PROPS "${EMC_PROPS} --source-map-base 'http://localhost/build/bin/' --emit-symbol-map -g -s ASSERTIONS=1 ")
+   set(EMC_PROPS "${EMC_PROPS} -g -s SAFE_HEAP=1 -s ASSERTIONS=1 -s STACK_OVERFLOW_CHECK=1 -s RUNTIME_LOGGING=1 ")
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 if (WASM_EMBED)
