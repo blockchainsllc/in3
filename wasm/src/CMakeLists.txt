@@ -32,7 +32,7 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-set(EMC_PROPS "-Oz -s ALLOW_MEMORY_GROWTH=1 -s NODEJS_CATCH_REJECTION=0 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+set(EMC_PROPS "-s ALLOW_MEMORY_GROWTH=1 -s NODEJS_CATCH_REJECTION=0 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
 
 IF (ASMJS)
   set(WASM_EMBED true)
