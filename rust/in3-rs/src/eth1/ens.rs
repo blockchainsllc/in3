@@ -4,9 +4,10 @@ use async_trait::async_trait;
 
 use crate::eth1::Hash;
 use crate::json_rpc::json::*;
+use crate::json_rpc::Error::UnexpectedResponse;
 use crate::prelude::*;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum Query {
     #[serde(rename = "addr")]
@@ -32,6 +33,66 @@ pub trait Resolve {
         query: Query,
         registry: Option<Address>,
     ) -> In3Result<Identifier>;
+
+    async fn resolve_address(
+        &mut self,
+        name: &str,
+        registry: Option<Address>,
+    ) -> In3Result<Address> {
+        let id = self.resolve(name, Query::Address, registry).await?;
+        if let Identifier::Address(val) = id {
+            Ok(val)
+        } else {
+            Err(UnexpectedResponse {
+                actual: format!("{:?}", id),
+                expected: format!("{:?}", Query::Address),
+            }
+            .into())
+        }
+    }
+
+    async fn resolve_resolver(
+        &mut self,
+        name: &str,
+        registry: Option<Address>,
+    ) -> In3Result<Address> {
+        let id = self.resolve(name, Query::Resolver, registry).await?;
+        if let Identifier::Resolver(val) = id {
+            Ok(val)
+        } else {
+            Err(UnexpectedResponse {
+                actual: format!("{:?}", id),
+                expected: format!("{:?}", Query::Resolver),
+            }
+            .into())
+        }
+    }
+
+    async fn resolve_owner(&mut self, name: &str, registry: Option<Address>) -> In3Result<Address> {
+        let id = self.resolve(name, Query::Owner, registry).await?;
+        if let Identifier::Owner(val) = id {
+            Ok(val)
+        } else {
+            Err(UnexpectedResponse {
+                actual: format!("{:?}", id),
+                expected: format!("{:?}", Query::Owner),
+            }
+            .into())
+        }
+    }
+
+    async fn resolve_hash(&mut self, name: &str, registry: Option<Address>) -> In3Result<Hash> {
+        let id = self.resolve(name, Query::Hash, registry).await?;
+        if let Identifier::Hash(val) = id {
+            Ok(val)
+        } else {
+            Err(UnexpectedResponse {
+                actual: format!("{:?}", id),
+                expected: format!("{:?}", Query::Hash),
+            }
+            .into())
+        }
+    }
 }
 
 pub struct In3EnsResolver {
