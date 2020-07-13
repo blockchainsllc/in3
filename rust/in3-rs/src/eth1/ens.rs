@@ -17,7 +17,7 @@ pub enum Query {
     Hash,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Identifier {
     Address(Address),
     Resolver(Address),
@@ -105,6 +105,10 @@ impl In3EnsResolver {
             in3: Client::new(chain),
         }
     }
+
+    pub(crate) fn for_client(client: Box<Client>) -> In3EnsResolver {
+        In3EnsResolver { in3: client }
+    }
 }
 
 #[async_trait(? Send)]
@@ -144,11 +148,56 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_resolve() {
-        let mut ens = In3EnsResolver::new(chain::MAINNET);
-        let addrs =
-            task::block_on(ens.resolve("cryptokitties.eth", Query::Resolver, None)).unwrap();
-        println!("{:?}", addrs);
-        // assert_eq!(params, expected);
+    fn test_ens_resolve() {
+        let responses = vec![
+            (
+                "eth_call",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0xc2c8834632ffec7165e54c485f8df7c1e2382f7f1ebb0b30171a6eecdf791421"}]"#,
+            ),
+            (
+                "eth_call",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x12e3da7ef085ef9e267defa33bec426730379efb"}]"#,
+            ),
+            (
+                "eth_call",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x1da022710df5002339274aadee8d58218e9d6ab5"}]"#,
+            ),
+            (
+                "eth_call",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x06012c8cf97bead5deae237070f9587f8e7a266d"}]"#,
+            ),
+            (
+                "eth_call",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x1da022710df5002339274aadee8d58218e9d6ab5"}]"#,
+            ),
+        ];
+        let transport: Box<dyn Transport> = Box::new(MockTransport { responses });
+
+        let mut client = Client::new(chain::MAINNET);
+        let _ = client.configure(r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"proof":"none","nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        client.set_transport(transport);
+        let mut ens = In3EnsResolver::for_client(client);
+
+        assert_eq!(
+            Identifier::Address(
+                from_str(r#""0x06012c8cf97bead5deae237070f9587f8e7a266d""#).unwrap()
+            ),
+            task::block_on(ens.resolve("cryptokitties.eth", Query::Address, None)).unwrap()
+        );
+        assert_eq!(
+            from_str::<Address>(r#""0x1da022710df5002339274aadee8d58218e9d6ab5""#).unwrap(),
+            task::block_on(ens.resolve_resolver("cryptokitties.eth", None)).unwrap()
+        );
+        assert_eq!(
+            from_str::<Address>(r#""0x12e3da7ef085ef9e267defa33bec426730379efb""#).unwrap(),
+            task::block_on(ens.resolve_owner("cryptokitties.eth", None)).unwrap()
+        );
+        assert_eq!(
+            from_str::<Hash>(
+                r#""0xc2c8834632ffec7165e54c485f8df7c1e2382f7f1ebb0b30171a6eecdf791421""#
+            )
+            .unwrap(),
+            task::block_on(ens.resolve_hash("cryptokitties.eth", None)).unwrap()
+        );
     }
 }
