@@ -34,3 +34,44 @@ pub trait Resolve {
     ) -> In3Result<Identifier>;
 }
 
+pub struct In3EnsResolver {
+    in3: Box<Client>,
+}
+
+impl In3EnsResolver {
+    pub fn new(chain: chain::ChainId) -> In3EnsResolver {
+        In3EnsResolver {
+            in3: Client::new(chain),
+        }
+    }
+}
+
+#[async_trait(? Send)]
+impl Resolve for In3EnsResolver {
+    /// Resolve implementation using IN3's `in3_ens()` RPC.
+    async fn resolve(
+        &mut self,
+        name: &str,
+        query: Query,
+        registry: Option<Address>,
+    ) -> In3Result<Identifier> {
+        let resp_str = self
+            .in3
+            .rpc(
+                to_string(&json!({
+                    "method": "in3_ens",
+                    "params": [name, query, registry]
+                }))
+                .unwrap()
+                .as_str(),
+            )
+            .await?;
+        let resp: Value = from_str(resp_str.as_str())?;
+        Ok(match query {
+            Query::Address => Identifier::Address(from_str(resp["result"].to_string().as_str())?),
+            Query::Resolver => Identifier::Resolver(from_str(resp["result"].to_string().as_str())?),
+            Query::Owner => Identifier::Owner(from_str(resp["result"].to_string().as_str())?),
+            Query::Hash => Identifier::Hash(from_str(resp["result"].to_string().as_str())?),
+        })
+    }
+}
