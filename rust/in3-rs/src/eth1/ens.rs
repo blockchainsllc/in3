@@ -75,3 +75,19 @@ impl Resolve for In3EnsResolver {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use async_std::task;
+
+    use super::*;
+
+    #[test]
+    fn test_resolve() {
+        let mut ens = In3EnsResolver::new(chain::MAINNET);
+        let addrs =
+            task::block_on(ens.resolve("cryptokitties.eth", Query::Resolver, None)).unwrap();
+        println!("{:?}", addrs);
+        // assert_eq!(params, expected);
+    }
+}
