@@ -226,6 +226,7 @@ class IN3 {
         let responses = {}
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
+        this.pending = (this.pending || 0) + 1
 
         try {
             // main async loop
@@ -273,6 +274,9 @@ class IN3 {
 
             // we always need to cleanup
             in3w.ccall('in3_request_free', 'void', ['number'], [r])
+
+            this.pending--
+            if (!this.pending && this.delayFree) this.free()
         }
     }
 
@@ -286,7 +290,8 @@ class IN3 {
     createWeb3Provider() { return this }
 
     free() {
-        if (this.ptr) {
+        if (this.pending) this.delayFree = true
+        else if (this.ptr) {
             delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
             this.ptr = 0
