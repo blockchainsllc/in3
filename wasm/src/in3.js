@@ -243,10 +243,10 @@ class IN3 {
                         }
                         return state.result
                     case 'waiting':
-                        await getNextResponse(responses, { ...state.request, in3: this })
+                        await getNextResponse(responses, { ...state.request, in3: this, root: r })
                         break
                     case 'request': {
-                        const req = { ...state.request, in3: this }
+                        const req = { ...state.request, in3: this, root: r }
                         switch (req.type) {
                             case 'sign':
                                 try {
@@ -315,7 +315,7 @@ function url_queue(req) {
     function trigger() {
         while (promises.length && responses.length) {
             const p = promises.shift(), r = responses.shift()
-            if (!req.cleanUp) {
+            if (!req.cleanUp && req.in3.ptr && in3w.ccall('in3_is_alive', 'number', ['number', 'number'], [req.root, req.ctx])) {
                 if (r.error) {
                     if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + r.url + ") : " + r.error)
                     setResponse(req.ctx, r.error.message || r.error, r.i, true)
