@@ -62,19 +62,19 @@ typedef enum evm_state {
 #define gas_options
 #endif
 
-#define EVM_ERROR_EMPTY_STACK -20 /**< the no more elements on the stack  */
-#define EVM_ERROR_INVALID_OPCODE -21 /**< the opcode is not supported  */
-#define EVM_ERROR_BUFFER_TOO_SMALL -22 /**< reading data from a position, which is not initialized  */
-#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -23 /**< the memory-offset does not exist  */
-#define EVM_ERROR_INVALID_JUMPDEST -24 /**< the jump destination is not marked as valid destination  */
-#define EVM_ERROR_INVALID_PUSH -25 /**< the push data is empy */
+#define EVM_ERROR_EMPTY_STACK -20             /**< the no more elements on the stack  */
+#define EVM_ERROR_INVALID_OPCODE -21          /**< the opcode is not supported  */
+#define EVM_ERROR_BUFFER_TOO_SMALL -22        /**< reading data from a position, which is not initialized  */
+#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -23   /**< the memory-offset does not exist  */
+#define EVM_ERROR_INVALID_JUMPDEST -24        /**< the jump destination is not marked as valid destination  */
+#define EVM_ERROR_INVALID_PUSH -25            /**< the push data is empy */
 #define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -26 /**< error handling the call, usually because static-calls are not allowed to change state  */
-#define EVM_ERROR_TIMEOUT -27 /**< the evm ran into a loop  */
-#define EVM_ERROR_INVALID_ENV -28 /**< the enviroment could not deliver the data  */
-#define EVM_ERROR_OUT_OF_GAS -29 /**< not enough gas to exewcute the opcode  */
-#define EVM_ERROR_BALANCE_TOO_LOW -30 /**< not enough funds to transfer the requested value.  */
-#define EVM_ERROR_STACK_LIMIT -31 /**< stack limit reached  */
-#define EVM_ERROR_SUCCESS_CONSUME_GAS -32 /**< write success but consume all gas */
+#define EVM_ERROR_TIMEOUT -27                 /**< the evm ran into a loop  */
+#define EVM_ERROR_INVALID_ENV -28             /**< the enviroment could not deliver the data  */
+#define EVM_ERROR_OUT_OF_GAS -29              /**< not enough gas to exewcute the opcode  */
+#define EVM_ERROR_BALANCE_TOO_LOW -30         /**< not enough funds to transfer the requested value.  */
+#define EVM_ERROR_STACK_LIMIT -31             /**< stack limit reached  */
+#define EVM_ERROR_SUCCESS_CONSUME_GAS -32     /**< write success but consume all gas */
 
 #define EVM_PROP_FRONTIER 1
 #define EVM_PROP_EIP150 2
