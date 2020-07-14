@@ -107,8 +107,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
-                                                                                      : 0;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -305,7 +304,10 @@ NONULL static void blacklist_node(in3_chain_t* chain, node_match_t* node_weight)
     in3_node_weight_t* w = ctx_get_node_weight(chain, node_weight);
     if (!w) return;
     // blacklist the node
-    w->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
+    uint64_t blacklisted_until_ = in3_time(NULL) + BLACKLISTTIME;
+    if (w->blacklisted_until != blacklisted_until_)
+      chain->dirty = true;
+    w->blacklisted_until = blacklisted_until_;
     node_weight->blocked = true;
     in3_log_debug("Blacklisting node for unverifiable response: %s\n", ctx_get_node(chain, node_weight)->url);
   }

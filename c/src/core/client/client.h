@@ -237,8 +237,8 @@ typedef struct in3_chain {
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
   uint16_t             avg_block_time;  /**< average block time (seconds) for this chain (calculated internally) */
-  void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
   bool                 dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
+  void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
   struct {
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
     uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
@@ -281,10 +281,10 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1 /**< return value used by the signer if the the signature-request was rejected. */
+#define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3 /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR -4 /**< return value used by the signer for unspecified errors. */
+#define IN3_SIGN_ERR_INVALID_MESSAGE -3   /**< return value used by the signer if the message was invalid. */
+#define IN3_SIGN_ERR_GENERAL_ERROR -4     /**< return value used by the signer for unspecified errors. */
 
 /** type of the requested signature */
 typedef enum {
