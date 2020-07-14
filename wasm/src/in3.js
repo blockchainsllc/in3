@@ -226,11 +226,12 @@ class IN3 {
         let responses = {}
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
+        this.pending = (this.pending || 0) + 1
 
         try {
             // main async loop
             // we repeat it until we have a result
-            while (true) {
+            while (this.ptr && !this.delayFree) {
                 const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
                 switch (state.status) {
                     case 'error':
@@ -243,10 +244,10 @@ class IN3 {
                         }
                         return state.result
                     case 'waiting':
-                        await getNextResponse(responses, { ...state.request, in3: this })
+                        await getNextResponse(responses, { ...state.request, in3: this, root: r })
                         break
                     case 'request': {
-                        const req = { ...state.request, in3: this }
+                        const req = { ...state.request, in3: this, root: r }
                         switch (req.type) {
                             case 'sign':
                                 try {
@@ -267,12 +268,16 @@ class IN3 {
 
                 }
             }
+            throw new Error('Request canceled by calling free on the client')
         }
         finally {
             cleanUpResponses(responses, this.ptr)
 
             // we always need to cleanup
             in3w.ccall('in3_request_free', 'void', ['number'], [r])
+
+            this.pending--
+            if (!this.pending && this.delayFree) this.free()
         }
     }
 
@@ -286,7 +291,9 @@ class IN3 {
     createWeb3Provider() { return this }
 
     free() {
-        if (this.ptr) {
+        if (this.pending)
+            this.delayFree = true
+        else if (this.ptr) {
             delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
             this.ptr = 0
@@ -309,25 +316,25 @@ function url_queue(req) {
     const promises = [], responses = []
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
     req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
-        response => {
-            if (req.in3.config.debug) console.log("res (" + req.ctx + "," + url + ") : " + JSON.stringify(JSON.parse(response), null, 2))
-            responses.push({ i, url, response });
-            trigger()
-        },
-        error => {
-            if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + url + ") : " + error)
-            responses.push({ i, url, error });
-            trigger()
-        }
+        response => { responses.push({ i, url, response }); trigger() },
+        error => { responses.push({ i, url, error }); trigger() }
     ))
     function trigger() {
         while (promises.length && responses.length) {
             const p = promises.shift(), r = responses.shift()
-            if (!req.cleanUp) {
-                if (r.error)
+            if (!req.cleanUp && req.in3.ptr && in3w.ccall('in3_is_alive', 'number', ['number', 'number'], [req.root, req.ctx])) {
+                if (r.error) {
+                    if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + r.url + ") : " + r.error)
                     setResponse(req.ctx, r.error.message || r.error, r.i, true)
-                else
-                    setResponse(req.ctx, r.response, r.i, false)
+                }
+                else {
+                    try {
+                        if (req.in3.config.debug) console.log("res (" + req.ctx + "," + r.url + ") : " + JSON.stringify(JSON.parse(r.response), null, 2))
+                        setResponse(req.ctx, r.response, r.i, false)
+                    } catch (x) {
+                        setResponse(req.ctx, r.error.message || r.error, r.i, true)
+                    }
+                }
             }
             p.resolve(r)
         }
@@ -352,7 +359,7 @@ function url_queue(req) {
                         try {
                             blacklist = r.error || !!JSON.parse(r.response)[0].error
                         }
-                        catch {
+                        catch (x) {
                             blacklist = true
                         }
                         if (blacklist) in3w.ccall('in3_blacklist', 'void', ['number', 'string'], [ptr, r.url])

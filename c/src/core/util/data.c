@@ -96,7 +96,7 @@ d_key_t keyn(const char* c, const size_t len) {
       return kn->key;
     kn = kn->next;
   }
-  val        = __keynames_len;
+  val = __keynames_len;
 #endif
   return val;
 }
