@@ -231,7 +231,7 @@ class IN3 {
         try {
             // main async loop
             // we repeat it until we have a result
-            while (true) {
+            while (this.ptr && !this.delayFree) {
                 const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
                 switch (state.status) {
                     case 'error':
@@ -268,6 +268,7 @@ class IN3 {
 
                 }
             }
+            throw new Error('Request canceled by calling free on the client')
         }
         finally {
             cleanUpResponses(responses, this.ptr)
@@ -290,7 +291,8 @@ class IN3 {
     createWeb3Provider() { return this }
 
     free() {
-        if (this.pending) this.delayFree = true
+        if (this.pending)
+            this.delayFree = true
         else if (this.ptr) {
             delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
