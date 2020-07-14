@@ -310,7 +310,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   return IN3_OK;
 }
 
-in3_chain_t* in3_find_chain(in3_t* c, chain_id_t chain_id) {
+in3_chain_t* in3_find_chain(const in3_t* c, chain_id_t chain_id) {
   // shortcut for single chain
   if (c->chains_length == 1)
     return c->chains->chain_id == chain_id ? c->chains : NULL;
@@ -374,7 +374,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   if (!chain) return IN3_EFIND;
   in3_node_t* node       = NULL;
   int         node_index = chain->nodelist_length;
-  for (int i = 0; i < chain->nodelist_length; i++) {
+  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
     if (memcmp(chain->nodelist[i].address->data, address, 20) == 0) {
       node       = chain->nodelist + i;
       node_index = i;
@@ -385,9 +385,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights = chain->weights
-                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights  = chain->weights
+                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -414,7 +414,7 @@ in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t addres
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
   int node_index = -1;
-  for (int i = 0; i < chain->nodelist_length; i++) {
+  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
     if (memcmp(chain->nodelist[i].address->data, address, 20) == 0) {
       node_index = i;
       break;
@@ -426,7 +426,7 @@ in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t addres
   if (chain->nodelist[node_index].address)
     b_free(chain->nodelist[node_index].address);
 
-  if (node_index < chain->nodelist_length - 1) {
+  if (node_index < ((signed) chain->nodelist_length) - 1) {
     memmove(chain->nodelist + node_index, chain->nodelist + node_index + 1, sizeof(in3_node_t) * (chain->nodelist_length - 1 - node_index));
     memmove(chain->weights + node_index, chain->weights + node_index + 1, sizeof(in3_node_weight_t) * (chain->nodelist_length - 1 - node_index));
   }
@@ -616,7 +616,7 @@ char* in3_get_config(in3_t* c) {
     add_bool(sb, ',', "needsUpdate", chain->nodelist_upd8_params != NULL);
     add_uint(sb, ',', "avgBlockTime", chain->avg_block_time);
     sb_add_chars(sb, ",\"nodeList\":[");
-    for (int j = 0; j < chain->nodelist_length; j++) {
+    for (unsigned int j = 0; j < chain->nodelist_length; j++) {
       if ((chain->nodelist[j].attrs & ATTR_BOOT_NODE) == 0) continue;
       if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
       add_string(sb, '{', "url", chain->nodelist[j].url);

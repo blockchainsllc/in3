@@ -82,11 +82,13 @@ char* ctx_get_error_data(in3_ctx_t* ctx) {
 }
 
 char* ctx_get_response_data(in3_ctx_t* ctx) {
-  str_range_t rr = d_to_json(ctx->responses[0]), rin3;
-  if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {
-    while (*rin3.data != ',' && rin3.data > rr.data) rin3.data--;
-    *rin3.data = '}';
-    rr.len     = rin3.data - rr.data + 1;
+  str_range_t rr    = d_to_json(ctx->responses[0]);
+  char*       start = NULL;
+  if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[0], K_IN3)).data) && start < rr.data + rr.len) {
+    while (*start != ',' && start > rr.data) start--;
+    char* res            = _strdupn(rr.data, start - rr.data + 1);
+    res[start - rr.data] = '}';
+    return res;
   }
   return _strdupn(rr.data, rr.len);
 }

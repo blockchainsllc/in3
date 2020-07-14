@@ -227,7 +227,7 @@ typedef struct in3_chain {
   chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t     type;            /**< chaintype */
   uint64_t             last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  int                  nodelist_length; /**< number of nodes in the nodeList */
+  unsigned int         nodelist_length; /**< number of nodes in the nodeList */
   in3_node_t*          nodelist;        /**< array of nodes */
   in3_node_weight_t*   weights;         /**< stats and weights recorded for each node */
   bytes_t**            init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
@@ -616,8 +616,8 @@ NONULL in3_ret_t in3_cache_init(
  * My return NULL if not found.
  */
 NONULL in3_chain_t* in3_find_chain(
-    in3_t*     c /**< the incubed client */,
-    chain_id_t chain_id /**< chain_id */
+    const in3_t* c /**< the incubed client */,
+    chain_id_t   chain_id /**< chain_id */
 );
 
 /**

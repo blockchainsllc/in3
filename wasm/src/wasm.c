@@ -227,6 +227,14 @@ void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
   in3_free(a);
   in3_set_error(NULL);
 }
+/* frees the references of the client */
+bool EMSCRIPTEN_KEEPALIVE in3_is_alive(in3_ctx_t* root, in3_ctx_t* ctx) {
+  while (root) {
+    if (ctx == root) return true;
+    root = root->required;
+  }
+  return false;
+}
 
 char* EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
   return in3_configure(a, conf);

@@ -147,7 +147,7 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
   bb_write_int(bb, chain->nodelist_length);
   bb_write_raw_bytes(bb, chain->weights, chain->nodelist_length * sizeof(in3_node_weight_t));
 
-  for (int i = 0; i < chain->nodelist_length; i++) {
+  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
     const in3_node_t* n = chain->nodelist + i;
     bb_write_int(bb, n->capacity);
     bb_write_int(bb, n->index);

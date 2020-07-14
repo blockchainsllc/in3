@@ -55,7 +55,7 @@ bytes_t* b_new(const uint8_t* data, uint32_t len) {
 void ba_print(const uint8_t* a, size_t l) {
   size_t i;
   if (!a) return;
-
+  int o = in3_log_is_prefix_enabled();
   in3_log_disable_prefix();
   in3_log_trace(" 0x");
   for (i = 0; i < l; i++) in3_log_trace("%02x", a[i]);
@@ -63,12 +63,13 @@ void ba_print(const uint8_t* a, size_t l) {
   if (l < 9) {
     in3_log_trace(" ( %" PRId64 " ) ", bytes_to_long(a, l));
   }
-  in3_log_enable_prefix();
+  if (o) in3_log_enable_prefix();
 }
 
 void b_print(const bytes_t* a) {
   size_t i;
   if (!a) return;
+  int o = in3_log_is_prefix_enabled();
 #ifdef __ZEPHYR__
   printk("Bytes: ");
   for (i = 0; i < a->len; i++) printk("%02x", a->data[i]);
@@ -78,7 +79,7 @@ void b_print(const bytes_t* a) {
   in3_log_trace("Bytes: ");
   for (i = 0; i < a->len; i++) in3_log_trace("%02x", a->data[i]);
   in3_log_trace("\n");
-  in3_log_enable_prefix();
+  if (o) in3_log_enable_prefix();
 #endif
 }
 
