@@ -11,6 +11,7 @@ pub trait Encode {
     async fn encode(&mut self, fn_sig: &str, params: Value) -> In3Result<Bytes>;
 }
 
+/// Trait definition for ABI decode.
 #[async_trait(? Send)]
 pub trait Decode {
     /// ABI decode the given bytes data using given function signature as JSON.

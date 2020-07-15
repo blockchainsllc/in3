@@ -1,3 +1,4 @@
+//! ENS resolver.
 use serde::Serialize;
 
 use async_trait::async_trait;
@@ -7,6 +8,7 @@ use crate::json_rpc::json::*;
 use crate::json_rpc::Error::UnexpectedResponse;
 use crate::prelude::*;
 
+/// Query type for ENS resolver.
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum Query {
@@ -17,6 +19,7 @@ pub enum Query {
     Hash,
 }
 
+/// Identifier type for ENS resolver.
 #[derive(Debug, PartialEq)]
 pub enum Identifier {
     Address(Address),
@@ -25,8 +28,10 @@ pub enum Identifier {
     Hash(Hash),
 }
 
+/// Trait definition for ENS resolve.
 #[async_trait(? Send)]
 pub trait Resolve {
+    /// Resolves the specified query for given ENS name.
     async fn resolve(
         &mut self,
         name: &str,
@@ -34,6 +39,7 @@ pub trait Resolve {
         registry: Option<Address>,
     ) -> In3Result<Identifier>;
 
+    /// Resolves the address for for given ENS name.
     async fn resolve_address(
         &mut self,
         name: &str,
@@ -51,6 +57,7 @@ pub trait Resolve {
         }
     }
 
+    /// Resolves the resolver for for given ENS name.
     async fn resolve_resolver(
         &mut self,
         name: &str,
@@ -68,6 +75,7 @@ pub trait Resolve {
         }
     }
 
+    /// Resolves the owner for for given ENS name.
     async fn resolve_owner(&mut self, name: &str, registry: Option<Address>) -> In3Result<Address> {
         let id = self.resolve(name, Query::Owner, registry).await?;
         if let Identifier::Owner(val) = id {
@@ -81,6 +89,7 @@ pub trait Resolve {
         }
     }
 
+    /// Resolves the hash for for given ENS name.
     async fn resolve_hash(&mut self, name: &str, registry: Option<Address>) -> In3Result<Hash> {
         let id = self.resolve(name, Query::Hash, registry).await?;
         if let Identifier::Hash(val) = id {
@@ -95,11 +104,13 @@ pub trait Resolve {
     }
 }
 
+/// ENS resolver implementation using IN3's C code.
 pub struct In3EnsResolver {
     in3: Box<Client>,
 }
 
 impl In3EnsResolver {
+    /// Create an In3EnsResolver instance
     pub fn new(chain: chain::ChainId) -> In3EnsResolver {
         In3EnsResolver {
             in3: Client::new(chain),
