@@ -3,7 +3,7 @@
 // function decls
 static in3_ret_t nodeselect_def_pick(in3_nodeselect_t* nodeselect, in3_ctx_t* ctx, int count, in3_node_filter_t filter);
 static void      nodeselect_def_blacklist(in3_nodeselect_t* nodeselect, in3_node_weight_t* node);
-static char*     nodeselect_def_configure(in3_plugin_t* nl, const char* config);
+static char*     nodeselect_def_configure(in3_plugin_t* plugin, const char* config);
 
 // variable defs
 static in3_nodeselect_t nodeselect_def        = {.blacklist = nodeselect_def_blacklist, .pick = nodeselect_def_pick};
