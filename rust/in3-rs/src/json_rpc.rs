@@ -3,9 +3,10 @@ use std::convert;
 
 use serde::{Deserialize, Serialize};
 
+use json::*;
+
 use crate::error;
 use crate::traits::Client;
-use json::*;
 
 pub mod json {
     pub use serde_json::{error, from_reader, from_str, from_value, json, to_string, Value};
@@ -36,6 +37,8 @@ pub enum Error {
     InvalidResponse(String),
     /// `error` field was set in response
     ErrorResponse(String),
+    /// `result` field was set in response, but wasn't as expected
+    UnexpectedResponse { actual: String, expected: String },
 }
 
 impl convert::From<Error> for error::Error {
