@@ -237,6 +237,7 @@ typedef struct in3_chain {
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
   uint16_t             avg_block_time;  /**< average block time (seconds) for this chain (calculated internally) */
+  bool                 dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
   void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
   struct {
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */

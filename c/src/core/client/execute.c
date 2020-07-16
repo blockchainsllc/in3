@@ -305,7 +305,10 @@ NONULL static void blacklist_node(in3_chain_t* chain, node_match_t* node_weight)
     in3_node_weight_t* w = ctx_get_node_weight(chain, node_weight);
     if (!w) return;
     // blacklist the node
-    w->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
+    uint64_t blacklisted_until_ = in3_time(NULL) + BLACKLISTTIME;
+    if (w->blacklisted_until != blacklisted_until_)
+      chain->dirty = true;
+    w->blacklisted_until = blacklisted_until_;
     node_weight->blocked = true;
     in3_log_debug("Blacklisting node for unverifiable response: %s\n", ctx_get_node(chain, node_weight)->url);
   }
