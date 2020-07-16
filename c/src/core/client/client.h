@@ -280,10 +280,10 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1 /**< return value used by the signer if the the signature-request was rejected. */
+#define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3 /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR -4 /**< return value used by the signer for unspecified errors. */
+#define IN3_SIGN_ERR_INVALID_MESSAGE -3   /**< return value used by the signer if the message was invalid. */
+#define IN3_SIGN_ERR_GENERAL_ERROR -4     /**< return value used by the signer for unspecified errors. */
 
 /** type of the requested signature */
 typedef enum {
@@ -439,7 +439,23 @@ typedef struct in3_filter_handler_t_ {
   size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
-/** Incubed Configuration. 
+/**
+ * Plugins
+ */
+typedef enum {
+  PLUGIN_NODESELECT, /** nodeselect module, only one such module can be registered per client */
+} in3_plugin_type_t;
+
+typedef struct in3_plugin {
+  void*             internal;                                        /**< opaque pointer to actual plugin struct */
+  in3_plugin_type_t type;                                            /**< plugin type */
+  char* (*configure)(struct in3_plugin* plugin, const char* config); /**< method to configure plugin using JSON config, Returns NULL on success, and error string on failure */
+  void (*lock)(struct in3_plugin* plugin, bool is_write);            /**< method to lock plugin data for MT-safe read/write access */
+  void (*unlock)(struct in3_plugin* plugin, bool is_write);          /**< method to unlock plugin data for MT-safe read/write access */
+  void (*free)(struct in3_plugin* plugin, bool is_write);            /**< method to release internal resources and cleanup */
+} in3_plugin_t;
+
+/** Incubed Configuration.
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
@@ -617,6 +633,17 @@ NONULL in3_ret_t in3_cache_init(
 NONULL in3_chain_t* in3_find_chain(
     const in3_t* c /**< the incubed client */,
     chain_id_t   chain_id /**< chain_id */
+);
+
+/**
+ * registers specified plugin with client.
+ *
+ * Plugins maybe handled differently based on their type, see `in3_plugin_type_t` for exact rules
+ * Returns IN3_OK on success
+ */
+in3_ret_t in3_register_plugin(
+    in3_t*        c,     /**< the incubed client */
+    in3_plugin_t* plugin /**< plugin to register */
 );
 
 /**
