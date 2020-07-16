@@ -1,6 +1,6 @@
 [package]
 name = "in3"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["slock.it <products@slock.it>"]
 description = "High-level bindings to IN3 library"
 license-file = "LICENSE"
