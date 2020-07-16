@@ -66,6 +66,7 @@ add_subdirectory(src/signer)
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
+add_subdirectory(src/nodeselect)
 add_subdirectory(docs)
 
 link_directories(${CMAKE_BINARY_DIR}/lib/)
