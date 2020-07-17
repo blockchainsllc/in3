@@ -432,6 +432,35 @@ typedef struct in3_filter_t_ {
   void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
 } in3_filter_t;
 
+/** plugin action list */
+typedef enum {
+  PLGN_ACT_INIT, /**< initialize plugin - use for allocating/setting-up internal resources */
+  PLGN_ACT_TERM, /**< terminate plugin - use for releasing internal resources and cleanup */
+} in3_plugin_act_t;
+
+/**
+ * plugin interface definition
+ */
+typedef struct in3_plugin in3_plugin_t;
+struct in3_plugin {
+  void* data;                                                                                /**< opaque pointer to plugin data */
+  in3_ret_t (*action)(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_type_ctx); /**< plugin action handler */
+  in3_plugin_t* next;                                                                        /**< pointer to next plugin in list */
+};
+
+/** plugin execution strategies */
+typedef enum {
+  PLGN_EXC_ALL,      /**< executes all plugins without caring for return types */
+  PLGN_EXC_FIRSTOK,  /**< executes plugins one-by-one - stops as soon as a plugin returns IN3_OK */
+  PLGN_EXC_FIRSTERR, /**< executes plugins one-by-one - stops as soon as a plugin returns one of the error codes (other than IN3_UNKNOWN/IN3_EIGNORE) */
+} in3_plugin_exec_t;
+
+/** executes the plugins based on specified execution strategy */
+in3_ret_t in3_plugin_execute(in3_t* c, in3_plugin_act_t action, in3_plugin_exec_t exec, void* plugin_ctx);
+
+/** registers a plugin with the client */
+void in3_plugin_register(in3_t* c, in3_plugin_t* plugin);
+
 /**
  * Handler which is added to client config in order to handle filter.
  */
