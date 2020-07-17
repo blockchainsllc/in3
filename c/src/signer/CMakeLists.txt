@@ -38,3 +38,7 @@ if (LEDGER_NANO)
   add_subdirectory(ledger-nano/signer)
 endif()
 
+if (MULTISIG)
+  add_subdirectory(multisig)
+endif()
+

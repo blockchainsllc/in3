@@ -281,10 +281,10 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1 /**< return value used by the signer if the the signature-request was rejected. */
+#define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3 /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR -4 /**< return value used by the signer for unspecified errors. */
+#define IN3_SIGN_ERR_INVALID_MESSAGE -3   /**< return value used by the signer if the message was invalid. */
+#define IN3_SIGN_ERR_GENERAL_ERROR -4     /**< return value used by the signer for unspecified errors. */
 
 /** type of the requested signature */
 typedef enum {
@@ -321,7 +321,7 @@ typedef in3_ret_t (*in3_sign)(in3_sign_ctx_t* ctx);
  * if the new_tx is not set within the function, it will use the old_tx.
  * 
 */
-typedef in3_ret_t (*in3_prepare_tx)(struct in3_ctx* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
+typedef in3_ret_t (*in3_prepare_tx)(struct in3_ctx* ctx, void* cptr, bytes_t raw_tx, bytes_t* new_raw_tx);
 
 /**
  * definition of a signer holding funciton-pointers and data.

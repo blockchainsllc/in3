@@ -67,6 +67,7 @@
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
+#include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "../../verifier/in3_init.h"
@@ -118,6 +119,8 @@ void show_help(char* name) {
 -q             quit. no additional output. \n\
 -tr            runs test request when showing in3_weights \n\
 -thr           runs test request including health-check when showing in3_weights \n\
+-ms            adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) \n\
+-sigs          add additional signatures, which will be useds when sending through a multisig! \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
 -nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
@@ -691,6 +694,7 @@ int main(int argc, char* argv[]) {
   char*           name             = NULL;
   call_request_t* req              = NULL;
   bool            json             = false;
+  char*           ms_sigs          = NULL;
   uint64_t        gas_limit        = 100000;
   char*           value            = NULL;
   bool            wait             = false;
@@ -782,7 +786,17 @@ int main(int argc, char* argv[]) {
       set_nodelist(c, argv[++i], false);
     else if (strcmp(argv[i], "-bn") == 0)
       set_nodelist(c, argv[++i], true);
-    else if (strcmp(argv[i], "-eth") == 0)
+    else if (strcmp(argv[i], "-mss") == 0 || strcmp(argv[i], "-sigs") == 0)
+      ms_sigs = argv[++i];
+    else if (strcmp(argv[i], "-ms") == 0) {
+#ifdef MULTISIG
+      address_t adr;
+      if (hex_to_bytes(argv[++i], -1, adr, 20) != 20) die("-ms must be exactly 20 bytes");
+      add_gnosis_safe(c, adr);
+#else
+      die("-ms is not supported. Compile with -DMULTISIG=true")
+#endif
+    } else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
       c->min_deposit = atoll(argv[++i]);
@@ -1228,7 +1242,18 @@ int main(int argc, char* argv[]) {
   in3_chain_t* chain = in3_find_chain(c, c->chain_id);
 
   // send the request
-  in3_client_rpc(c, method, params, &result, &error);
+  sb_t* sb = sb_new("{\"method\":\"");
+  sb_add_chars(sb, method);
+  sb_add_chars(sb, "\",\"params\":");
+  sb_add_chars(sb, params);
+  if (ms_sigs) {
+    sb_add_chars(sb, ",\"in3\":{\"msSigs\":\"");
+    sb_add_chars(sb, ms_sigs);
+    sb_add_chars(sb, "\"}}");
+  } else
+    sb_add_chars(sb, "}");
+
+  in3_client_rpc_raw(c, sb->data, &result, &error);
 
   // Update nodelist if a newer latest block was reported
   if (chain && chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {

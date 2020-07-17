@@ -76,6 +76,7 @@ OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 OPTION(IN3_SERVER "support for proxy server as part of the cmd-tool, which allows to start the cmd-tool with the -p option and listens to the given port for rpc-requests" OFF)
 OPTION(CMD "build the comandline utils" ON)
 OPTION(POA "support POA verification including validatorlist updates" OFF)
+OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
@@ -89,6 +90,10 @@ endif()
 
 if (LOGGING)
   ADD_DEFINITIONS(-DLOGGING)
+endif()
+
+if (MULTISIG)
+  ADD_DEFINITIONS(-DMULTISIG)
 endif()
 
 if(ETH_FULL)

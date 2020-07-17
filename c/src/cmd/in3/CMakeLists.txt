@@ -41,6 +41,10 @@ if (LEDGER_NANO)
     set(LIBS ${LIBS} ledger_signer)
 endif()
 
+if (MULTISIG)
+    set(LIBS ${LIBS} multisig)
+endif()
+
 add_executable(in3 main.c in3_storage.c recorder.c)
 target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
 
