@@ -452,4 +452,7 @@ NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* c
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
 
+/** executes the plugins based on specified execution strategy */
+in3_ret_t in3_plugin_execute_ctx(in3_ctx_t* ctx, in3_plugin_act_t action, in3_plugin_exec_t exec, void* plugin_ctx);
+
 #endif
