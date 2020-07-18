@@ -894,3 +894,56 @@ cleanup:
   json_free(cnf);
   return res;
 }
+
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data) {
+  if (!acts || !action_fn)
+    return IN3_EINVAL;
+
+  // check if plugin is being registered for unknown action
+  for (unsigned int i = PLGN_ACT_LAST; i < sizeof(in3_plugin_supp_acts_t); ++i)
+    if (BIT_CHECK(acts, i))
+      return IN3_EINVAL;
+
+  in3_plugin_t* p = c->plugins;
+  while (p) {
+    // check for action-specific rules here like allowing only one action handler per action, etc.
+    p = p->next;
+  }
+
+  p            = _malloc(sizeof(*p));
+  p->acts      = acts;
+  p->action_fn = action_fn;
+  p->data      = data;
+  p->next      = NULL;
+  return IN3_OK;
+}
+
+in3_ret_t in3_plugin_execute(in3_t* c, in3_plugin_act_t action, in3_plugin_exec_t exec, void* plugin_ctx) {
+  in3_plugin_t* p   = c->plugins;
+  in3_ret_t     ret = IN3_OK;
+
+  while (p) {
+    // check if plugin supports this action
+    if (!BIT_CHECK(p->acts, action))
+      continue;
+
+    ret = p->action_fn(p, action, plugin_ctx);
+    switch (exec) {
+      case PLGN_EXC_ALL: break;
+      case PLGN_EXC_FIRSTOK: {
+        if (ret == IN3_OK)
+          goto STOP;
+        break;
+      }
+      case PLGN_EXC_FIRSTERR: {
+        if (ret != IN3_OK && ret != IN3_EUNKNOWN && ret != IN3_EIGNORE)
+          goto STOP;
+        break;
+      }
+      default: return IN3_ENOTSUP; // unknown execution strategy
+    }
+    p = p->next;
+  }
+STOP:
+  return ret;
+}
