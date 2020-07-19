@@ -405,9 +405,11 @@ in3_ret_t gs_prepare_tx(in3_ctx_t* ctx, void* cptr, bytes_t raw_tx, bytes_t* new
   if (sig_count >= threshold)
     // if we have enough signatures, we execute the the tx
     exec_tx(new_raw_tx, &tx_data, sig_data, sig_count, ms->address);
-  else
+  else if (is_valid(sig_data, owners, ms->signer->default_address, 0, owner_len))
     // if not we simply approve it
     approve_hash(new_raw_tx, &tx_data, tx_hash, ms->address);
+  else
+    return ctx_set_error(ctx, "the account is not an owner and does not have enough signatures to exwecute the transaction!", IN3_EINVAL);
 
   return IN3_OK;
 }
