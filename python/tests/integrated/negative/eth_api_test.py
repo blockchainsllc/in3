@@ -12,7 +12,7 @@ class EthereumNegativeTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_get_block_by_number_client(self):
         for i in range(50):
@@ -55,7 +55,7 @@ class ParsingTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_get_block_by_number(self):
         with self.assertRaises(AssertionError):
@@ -106,14 +106,14 @@ class NegativeGoerliTest(EthereumNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 class NegativeKovanTest(EthereumNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 if __name__ == '__main__':

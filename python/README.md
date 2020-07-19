@@ -10,7 +10,7 @@ Go to our [readthedocs](https://in3.readthedocs.io/) page for more.
 #### Install with pip 
  
 ```shell script
-coverage run -m pytest --pylama --junitxml=report.xml && coverage report && coverage-badge -fo docs/coverage.svg
+pip install in3
 ```
 
 #### In3 Client API
@@ -31,10 +31,16 @@ in3_client.contract  # ethereum smart-contract api
 ```
 
 #### Developing & Tests
-Compile local libraries and run tests
+Install dev dependencies, IDEs should automatically recognize interpreter if done like this.
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+Compile local libraries and run tests. Make sure you have cmake installed.
 ```bash
 ./buidl_libs.sh
-coverage run -m pytest --pylama
+coverage run -m pytest --pylama && coverage report && coverage-badge -fo docs/coverage.svg
 ```
 
 #### Index

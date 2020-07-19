@@ -3,6 +3,8 @@ CWD=$PWD
 BUILDTYPE=$2
 CONTAINER=$1
 TEST=false
+OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DUSE_CURL=true -DTEST=$TEST -DBUILD_DOC=t$TEST -DJAVA=$TEST -DCMAKE_BUILD_TYPE=$BUILDTYPE"
+
 if [ "$CONTAINER" = "debug" ]; then
    BUILDTYPE=debug
    CONTAINER=""
@@ -11,6 +13,16 @@ fi
 if [ "$CONTAINER" = "release" ]; then
    BUILDTYPE=release
    CONTAINER=""
+fi
+if [ "$CONTAINER" = "bindings" ]; then
+   BUILDTYPE=release
+   CONTAINER=""
+#   OPTS="-DUSE_CURL=false"
+fi
+if [ "$CONTAINER" = "bindings-debug" ]; then
+   BUILDTYPE=debug
+   CONTAINER=""
+   OPTS="-DUSE_CURL=false"
 fi
 if [ -z "$BUILDTYPE" ]; then
    BUILDTYPE=DEBUG
@@ -56,7 +68,6 @@ RD=$(pwd)
 mkdir build || echo "using existng build-folder ..."
 rm -rf build/*
 echo "container: $CONTAINER"
-OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DUSE_CURL=true -DTEST=$TEST -DBUILD_DOC=t$TEST -DJAVA=$TEST -DCMAKE_BUILD_TYPE=$BUILDTYPE"
 if [ -z "$CONTAINER" ]; then
   echo "local_build"
   touch build/container.txt
