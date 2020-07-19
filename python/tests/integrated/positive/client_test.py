@@ -2,6 +2,7 @@
 Integrated tests for `in3` module. Doesnt test submodules.
 """
 import unittest
+from pathlib import Path
 
 import in3
 from tests.integrated.mock.config import mock_config
@@ -12,7 +13,7 @@ class MainNetClientTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client()
@@ -42,11 +43,37 @@ class MainNetClientTest(unittest.TestCase):
         self.assertIsNotNone(self.client.ens_namehash('0.eth'))
 
 
+class MainNetClientCacheStoringTest(MainNetClientTest):
+
+    def setUp(self):
+        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+
+
+class MainNetClientCachedTest(MainNetClientTest):
+
+    def setUp(self):
+        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+
+
+# TODO: Issue https://git.slock.it/in3/c/in3-core/-/issues/451
+# class MainNetClientCacheCleaningTest(MainNetClientTest):
+#
+#     def setUp(self):
+#         import pathlib as p
+#         # Corrupt all files to force in3 to clean them
+#         path = p.Path(p.Path(p.Path.home(), '.in3'))
+#         path.mkdir(parents=True, exist_ok=True)
+#         for filepath in [f for f in path.iterdir() if f.is_file()]:
+#             with open(filepath, 'w+b') as file:
+#                 file.write(b'123123123123123123')
+#         self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+
+
 class KovanClientTest(MainNetClientTest):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client('kovan')
@@ -65,7 +92,7 @@ class GoerliClientTest(MainNetClientTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client('goerli')

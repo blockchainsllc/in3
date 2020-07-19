@@ -26,3 +26,8 @@ class HashFormatException(IN3BaseException):
 class ClientException(IN3BaseException):
     """ In3 Request expecetion  """
     pass
+
+
+class TransportException(IN3BaseException):
+    """ In3 Request expecetion  """
+    pass
