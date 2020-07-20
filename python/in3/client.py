@@ -5,7 +5,7 @@ from in3.eth.factory import EthObjectFactory
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
 from in3.model import In3Node, NodeList, ClientConfig, chain_configs
-from in3.transport import http_transport
+from in3.transport import https_transport
 
 
 class Client:
@@ -14,17 +14,22 @@ class Client:
     the network and ask a certain number of the to sign the block header of given list, putting their deposit at stake.
     Once with the latest list at hand, the client can request any other on-chain information using the same scheme.
     Args:
+        chain (str): Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'kovan', 'goerli', 'ewc'.
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
+        cache_enabled (bool): False will disable local storage caching.
+        transport (function): Transport function for custom request routing. Defaults to https.
     """
 
-    def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, transport=http_transport):
-        if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'kovan', 'goerli']:
-            raise AssertionError('Client: Chain name not supported. Try mainnet, kovan, goerli.')
+    def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, cache_enabled: bool = True,
+                 transport=https_transport):
+
+        if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'kovan', 'goerli', 'ewc']:
+            raise AssertionError('Client: Chain name not supported. Try mainnet, kovan, goerli, ewc.')
         # TODO: Clear Chain-configs
         if in3_config and not isinstance(in3_config, ClientConfig):
             raise AssertionError('Client: Use in3.ClientConfig to create a new client configuration instance.')
 
-        self._runtime = In3Runtime(chain_configs[chain.lower()].chain_id, transport)
+        self._runtime = In3Runtime(chain_configs[chain.lower()].chain_id, cache_enabled, transport)
         if in3_config:
             self._configure(in3_config)
         self.eth = EthereumApi(self._runtime)
@@ -47,6 +52,11 @@ class Client:
         return self._factory.get_node_list(node_list_dict)
 
     def config(self) -> dict:
+        """
+        Client configuration dictionary.
+        Returns:
+            config (dict): Client configuration keys and values.
+        """
         # TODO: Marshalling
         return self._runtime.call(In3Methods.GET_CONFIG)
 
