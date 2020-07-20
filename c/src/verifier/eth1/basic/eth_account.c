@@ -103,7 +103,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
     } else {
 
       d_bytes_to(d_get(p, K_KEY), hash, 32);
-      sha3_to(&path, hash);
+      keccak(path, hash);
 
       proof = d_create_bytes_vec(pt);
       if (!proof) return vc_err(vc, "no merkle proof for the storage");
@@ -185,7 +185,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   } else if (strcmp(method, "eth_getCode") == 0) {
     bytes_t data = d_to_bytes(vc->result);
     if (data.len) {
-      if (sha3_to(&data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
+      if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
         return vc_err(vc, "the codehash in the proof is different");
     } else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");

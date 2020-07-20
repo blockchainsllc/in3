@@ -236,11 +236,10 @@ in3_ret_t eth_ledger_set_signer_txn(in3_t* in3, uint8_t* bip_path) {
 
   // generate the address from the key
   uint8_t   public_key[65], sdata[32];
-  bytes_t   pubkey_bytes = {.data = public_key + 1, .len = 64};
   bytes32_t bip32;
   memcpy(bip32, bip_path, 5);
   eth_ledger_get_public_addr(bip32, public_key);
-  sha3_to(&pubkey_bytes, sdata);
+  keccak(bytes(public_key + 1, 64), sdata);
   memcpy(in3->signer->default_address, sdata + 12, 20);
 
   return IN3_OK;
