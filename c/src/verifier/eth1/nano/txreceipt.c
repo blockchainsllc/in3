@@ -123,7 +123,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
         else {
           // after a successfull merkle proof, we want to make sure the transaction hash we asked for matches the hash of the last value.
           uint8_t proofed_hash[32];
-          sha3_to(&raw_transaction, proofed_hash);
+          keccak(raw_transaction, proofed_hash);
           if (memcmp(proofed_hash, tx_hash->data, 32))
             res = vc_err(vc, "The TransactionHash is not the same as expected");
         }

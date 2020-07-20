@@ -151,7 +151,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
       if (t) {
         res = d_to_bytes(d_get(t, K_CODE));
         if (res.data != NULL) {
-          sha3_to(&res, __tmp);
+          keccak(res, __tmp);
           *out_data = __tmp;
           return 32;
         }
@@ -265,7 +265,7 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
       rlp_encode_item(bb, &tmp);
       k.len  = 32;
       k.data = s->key;
-      sha3_to(&k, dst);
+      keccak(k, dst);
       k.data = dst;
       trie_set_value(trie, &k, &bb->b);
       EVM_DEBUG_BLOCK({
