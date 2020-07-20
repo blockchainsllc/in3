@@ -89,7 +89,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
           will_be_null = 1;
       }
       if (props & 2) {
-        sha3_to(&key_bytes, tmp3);
+        keccak(key_bytes, tmp3);
         key_bytes.data = tmp3;
         key_bytes.len  = 32;
       }
@@ -122,7 +122,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
       }
 
       if (props & 2) {
-        sha3_to(&key_bytes, tmp3);
+        keccak(key_bytes, tmp3);
         key_bytes.data = tmp3;
         key_bytes.len  = 32;
       }

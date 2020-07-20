@@ -166,18 +166,9 @@ int bytes_to_hex(const uint8_t* buffer, int len, char* out) {
   return len * 2;
 }
 
-int sha3_to(bytes_t* data, void* dst) {
-  if (data == NULL) return -1;
-  struct SHA3_CTX ctx;
-  sha3_256_Init(&ctx);
-  sha3_Update(&ctx, data->data, data->len);
-  keccak_Final(&ctx, dst);
-  return 0;
-}
 
 /** writes 32 bytes to the pointer. */
 int keccak(bytes_t data, void* dst) {
-  if (data.data == NULL) return -1;
   struct SHA3_CTX ctx;
   sha3_256_Init(&ctx);
   if (data.len) sha3_Update(&ctx, data.data, data.len);

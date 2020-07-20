@@ -263,10 +263,9 @@ void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_ctx_t* ctx) {
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
-  bytes_t  src    = bytes(data, len);
   uint8_t* result = malloc(32);
   if (result)
-    sha3_to(&src, result);
+    keccak(bytes(data, len), result);
   else
     in3_set_error("malloc failed");
 

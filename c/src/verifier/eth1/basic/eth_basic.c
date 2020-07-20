@@ -101,7 +101,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return eth_verify_eth_getLog(vc, d_len(vc->result));
   else if (strcmp(method, "eth_sendRawTransaction") == 0) {
     bytes32_t hash;
-    sha3_to(d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), hash);
+    keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   } else
     return in3_verify_eth_nano(vc);

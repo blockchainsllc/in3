@@ -324,7 +324,7 @@ bytes_t* serialize_ac(evm_t* evm, account_t* ac) {
   tmp.len  = 32;
   rlp_encode_item(rlp, &tmp);
 
-  sha3_to(&ac->code, hash);
+  keccak(ac->code, hash);
   rlp_encode_item(rlp, &tmp);
 
   // clang-format on
@@ -369,7 +369,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
     bytes_t  adr = {.data = ac->address, .len = 20};
     bytes_t* b   = serialize_ac(evm, ac);
 
-    sha3_to(&adr, hash);
+    keccak(adr, hash);
 
     trie_set_value(trie, &hash_bytes, b);
     b_free(b);
@@ -487,11 +487,10 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.call_data  = d_to_bytes(get_test_val(transaction, "data", indexes));
     evm.call_value = d_to_bytes(get_test_val(transaction, "value", indexes));
 
-    uint8_t *pk           = d_get_bytes(transaction, "secretKey")->data, public_key[65], sdata[32];
-    bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
+    uint8_t *pk = d_get_bytes(transaction, "secretKey")->data, public_key[65], sdata[32];
     ecdsa_get_public_key65(&secp256k1, pk, public_key);
     // hash it and return the last 20 bytes as address
-    if (sha3_to(&pubkey_bytes, sdata) == 0)
+    if (keccak(bytes(public_key + 1, 64), sdata) == 0)
       memcpy(caller, sdata + 12, 20);
     else
       printf("\nWrong Hash");
@@ -539,7 +538,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
       }
       rlp_encode_item(bb, &tmp);
       rlp_encode_to_list(bb);
-      sha3_to(&bb->b, hash);
+      keccak(bb->b, hash);
       bb_free(bb);
       memcpy(_to, hash + 12, 20);
 

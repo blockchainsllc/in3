@@ -125,9 +125,6 @@ int bytes_to_hex(const uint8_t* buffer, int len, char* out);
 bytes_t* sha3(const bytes_t* data);
 
 /** writes 32 bytes to the pointer. */
-int sha3_to(bytes_t* data, void* dst);
-
-/** writes 32 bytes to the pointer. */
 int keccak(bytes_t data, void* dst);
 
 /** converts a long to 8 bytes */

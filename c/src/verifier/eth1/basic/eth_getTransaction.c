@@ -58,7 +58,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   uint32_t chain_id = v > 35 ? (v - 35) / 2 : 0;
 
   // check transaction hash
-  if (sha3_to(raw ? raw : d_get_bytesk(tx, K_RAW), &hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32)->data, 32))
+  if (keccak(raw ? *raw : d_to_bytes(d_get(tx, K_RAW)), hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32)->data, 32))
     return vc_err(vc, "wrong transactionHash");
 
   // check raw data
@@ -192,7 +192,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
       return vc_err(vc, "No block hash found");
     else if (hash_ && !b_cmp(blk_hash, hash_))
       return vc_err(vc, "The block hash does not match the required");
-    else if (sha3_to(blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
+    else if (keccak(*blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
       return vc_err(vc, "The block header does not match the required");
   } else if (d_type(blk) == T_INTEGER) {
     uint64_t blk_num = d_long(blk);

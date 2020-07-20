@@ -63,7 +63,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   if (rlp_decode_in_list(header, BLOCKHEADER_STATE_ROOT, &root) != 1) return vc_err(vc, "no state root in the header");
 
   if ((tmp = d_get_byteskl(account, K_ADDRESS, 20)))
-    sha3_to(tmp, hash);
+    keccak(*tmp, hash);
   else
     return vc_err(vc, "no address in the account");
 

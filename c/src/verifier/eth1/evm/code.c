@@ -49,7 +49,7 @@ NONULL static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address,
       bytes_t* code = d_get_bytesk(iter.token, K_CODE);
       if (code) {
         bytes32_t calculated_hash;
-        sha3_to(code, calculated_hash);
+        keccak(*code, calculated_hash);
         if (*code_hash && memcmp((*code_hash)->data, calculated_hash, 32) == 0) {
           *target = code;
           return IN3_OK;

@@ -220,7 +220,7 @@ static in3_ret_t verify_whitelist_data(in3_vctx_t* vc, d_token_t* server_list, d
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it), i += 20)
     memcpy(b->data + i, d_bytesl(it.token, 20)->data, 20);
 
-  sha3_to(b, hash);
+  keccak(*b, hash);
   b_free(b);
   TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, 1, 0, 0, skey), hash));
   return IN3_OK;
@@ -263,7 +263,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
   if (!proof) return vc_err(vc, "no merkle proof for the account");
 
   account_raw = serialize_account(account);
-  sha3_to(contract, hash);
+  keccak(*contract, hash);
   if (!trie_verify_proof(&root, &path, proof, account_raw)) {
     _free(proof);
     b_free(account_raw);
