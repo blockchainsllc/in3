@@ -434,9 +434,8 @@ typedef struct in3_filter_t_ {
 
 /** plugin action list */
 typedef enum {
-  PLGN_ACT_INIT, /**< initialize plugin - use for allocating/setting-up internal resources */
-  PLGN_ACT_TERM, /**< terminate plugin - use for releasing internal resources and cleanup */
-  PLGN_ACT_LAST, /**< marker for internal use (**DO NOT change position**) */
+  PLGN_ACT_INIT = 0x1, /**< initialize plugin - use for allocating/setting-up internal resources */
+  PLGN_ACT_TERM = 0x2, /**< terminate plugin - use for releasing internal resources and cleanup. */
 } in3_plugin_act_t;
 
 /**
