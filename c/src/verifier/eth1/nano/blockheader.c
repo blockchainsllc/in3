@@ -426,7 +426,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     if (vc->chain->version > 1) memcpy(msg_data + 64, vc->chain->registry_id, 32);
 
     // hash it to create the message hash
-    sha3_to(&msg, msg_data);
+    keccak(msg, msg_data);
     msg.data = msg_data;
     msg.len  = 32;
 
