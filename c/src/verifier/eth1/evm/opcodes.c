@@ -602,7 +602,7 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
     }
     rlp_encode_item(bb, &tmp);
     rlp_encode_to_list(bb);
-    sha3_to(&bb->b, hash);
+    keccak(bb->b, hash);
     bb_free(bb);
   } else {
     // CREATE2 is only allowed after CONSTANTINOPL
@@ -613,8 +613,8 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
     buffer[0] = 0xFF;
     memcpy(buffer + 1, evm->address, 20);
     TRY(evm_stack_pop(evm, buffer + 21, 32));
-    sha3_to(&in_data, buffer + 21 + 32);
-    sha3_to(&tmp, hash);
+    keccak(in_data, buffer + 21 + 32);
+    keccak(tmp, hash);
   }
 
   // now execute the call
