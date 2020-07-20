@@ -124,6 +124,8 @@ deploy_rust:
     - rust
   extends: .only_deploy
   before_script:
+    - git config --global user.name "${GITHUB_USER_NAME}"
+    - git config --global user.email "${GITHUB_USER_EMAIL}"
     - cargo install cargo-release
     - cargo login $CARGO_TOKEN
   script:
