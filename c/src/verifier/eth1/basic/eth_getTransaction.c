@@ -105,7 +105,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     rlp_encode_item(bb, &item);
   }
   rlp_encode_to_list(bb);
-  sha3_to(&bb->b, hash);
+  keccak(bb->b, hash);
   bb_free(bb);
 
   // verify signature
@@ -115,7 +115,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey_bytes.data, t->data, t->len) != 0)
     return vc_err(vc, "invalid public Key");
 
-  if ((t = d_getl(tx, K_FROM, 20)) && sha3_to(&pubkey_bytes, &hash) == 0 && memcmp(hash + 12, t->data, 20))
+  if ((t = d_getl(tx, K_FROM, 20)) && keccak(pubkey_bytes, hash) == 0 && memcmp(hash + 12, t->data, 20))
     return vc_err(vc, "invalid from address");
   return IN3_OK;
 }
