@@ -456,9 +456,9 @@ struct in3_plugin {
 
 /** plugin execution strategies */
 typedef enum {
-  PLGN_EXC_ALL,      /**< executes all plugins without caring for return types */
-  PLGN_EXC_FIRSTOK,  /**< executes plugins one-by-one - stops as soon as a plugin returns IN3_OK */
-  PLGN_EXC_FIRSTERR, /**< executes plugins one-by-one - stops as soon as a plugin returns one of the error codes (other than IN3_EUNKNOWN/IN3_EIGNORE) */
+  PLGN_EXC_ALL,            /**< executes all plugins without caring for plugin return values. */
+  PLGN_EXC_FIRST,          /**< executes plugins one-by-one - stops as soon as a plugin returns IN3_OK or IN3_WAITING. Return IN3_ENOTSUP if no plugin can handle the action. */
+  PLGN_EXC_FITRST_OR_NONE, /**< Same as PLGN_EXC_FIRST but returns IN3_OK if no plugin can handle the action. */
 } in3_plugin_exec_t;
 
 /** registers a plugin with the client */
