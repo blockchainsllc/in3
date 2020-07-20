@@ -794,7 +794,7 @@ int main(int argc, char* argv[]) {
       if (hex_to_bytes(argv[++i], -1, adr, 20) != 20) die("-ms must be exactly 20 bytes");
       add_gnosis_safe(c, adr);
 #else
-      die("-ms is not supported. Compile with -DMULTISIG=true")
+      die("-ms is not supported. Compile with -DMULTISIG=true");
 #endif
     } else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
