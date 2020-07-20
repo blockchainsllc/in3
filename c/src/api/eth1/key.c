@@ -73,10 +73,9 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
 
   bytes_t  cipher = bytes(cipher_data, hex_to_bytes(d_get_string(crypto, "ciphertext"), -1, cipher_data, 64));
   uint8_t *msg    = alloca(cipher.len + 16), mac[32];
-  bytes_t  msgb   = bytes(msg, cipher.len + 16);
   memcpy(msg, aeskey + 16, 16);
   memcpy(msg + 16, cipher.data, cipher.len);
-  sha3_to(&msgb, mac);
+  keccak(bytes(msg, cipher.len + 16), mac);
   bytes32_t mac_verify;
   hex_to_bytes(d_get_string(crypto, "mac"), -1, mac_verify, 32);
   if (memcmp(mac, mac_verify, 32)) return IN3_EPASS;

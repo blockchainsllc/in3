@@ -61,7 +61,7 @@ static void srand_zephyr(unsigned int s) {
 static time_func  in3_time_fn  = time_zephyr;
 static rand_func  in3_rand_fn  = rand_zephyr;
 static srand_func in3_srand_fn = srand_zephyr;
-#else /* __ZEPHYR__ */
+#else  /* __ZEPHYR__ */
 static uint64_t time_libc(void* t) {
   UNUSED_VAR(t);
   return time(t);
@@ -171,6 +171,16 @@ int sha3_to(bytes_t* data, void* dst) {
   struct SHA3_CTX ctx;
   sha3_256_Init(&ctx);
   sha3_Update(&ctx, data->data, data->len);
+  keccak_Final(&ctx, dst);
+  return 0;
+}
+
+/** writes 32 bytes to the pointer. */
+int keccak(bytes_t data, void* dst) {
+  if (data.data == NULL) return -1;
+  struct SHA3_CTX ctx;
+  sha3_256_Init(&ctx);
+  if (data.len) sha3_Update(&ctx, data.data, data.len);
   keccak_Final(&ctx, dst);
   return 0;
 }
