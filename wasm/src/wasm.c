@@ -344,9 +344,8 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   uint8_t* dst = malloc(20);
   uint8_t  public_key[65], sdata[32];
-  bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  sha3_to(&pubkey_bytes, sdata);
+  keccak(bytes(public_key + 1, 64), sdata);
   memcpy(dst, sdata + 12, 20);
   return dst;
 }
