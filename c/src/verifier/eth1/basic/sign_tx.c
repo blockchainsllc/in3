@@ -184,7 +184,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   _free(raw);
 
   // do we need to change it?
-  if (ctx->client->signer->prepare_tx) {
+  if (ctx->client->signer && ctx->client->signer->prepare_tx) {
     bytes_t   new_tx   = {0};
     in3_ret_t prep_res = ctx->client->signer->prepare_tx(ctx, ctx->client->signer->wallet, *dst, &new_tx);
     if (prep_res) {
