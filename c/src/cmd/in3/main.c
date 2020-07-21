@@ -1192,9 +1192,8 @@ int main(int argc, char* argv[]) {
     bytes32_t prv_key;
     uint8_t   public_key[65], sdata[32];
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
-    bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-    sha3_to(&pubkey_bytes, sdata);
+    keccak(bytes(public_key + 1, 64), sdata);
     printf("0x");
     for (i = 0; i < 20; i++) printf("%02x", sdata[i + 12]);
     printf("\n");
@@ -1213,7 +1212,6 @@ int main(int argc, char* argv[]) {
     bytes_t   sig = d_to_bytes(d_get_at(rargs->result, 1));
     bytes32_t hash;
     uint8_t   pub[65];
-    bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(msg.len + 30);
       int   l   = sprintf(tmp, "\x19"
@@ -1226,13 +1224,13 @@ int main(int argc, char* argv[]) {
       if (msg.len != 32) die("The message hash must be 32 byte");
       memcpy(hash, msg.data, 32);
     } else
-      sha3_to(&msg, hash);
+      keccak(msg, hash);
     if (sig.len != 65) die("The signature must be 65 bytes");
 
     if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig.data, hash, sig.data[64] >= 27 ? sig.data[64] - 27 : sig.data[64]))
       die("Invalid Signature");
 
-    sha3_to(&pubkey_bytes, hash);
+    keccak(bytes(pub + 1, 64), hash);
     print_hex(hash + 12, 20);
     print_hex(pub + 1, 64);
     return 0;

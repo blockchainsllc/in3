@@ -159,11 +159,10 @@ static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** res
 }
 static in3_ret_t in3_sha3(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
   if (!params) return ctx_set_error(ctx, "no data", IN3_EINVAL);
-  bytes_t data = d_to_bytes(params + 1);
   RESPONSE_START();
   bytes32_t hash;
   bytes_t   hbytes = bytes(hash, 32);
-  sha3_to(&data, hash);
+  keccak(d_to_bytes(params + 1), hash);
   sb_add_bytes(&response[0]->data, NULL, &hbytes, 1, false);
   RESPONSE_END();
   return IN3_OK;
@@ -204,7 +203,7 @@ static in3_ret_t in3_pk2address(in3_ctx_t* ctx, d_token_t* params, in3_response_
   ecdsa_get_public_key65(&secp256k1, pk->data, public_key);
   RESPONSE_START();
   if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "in3_pk2address") == 0) {
-    sha3_to(&pubkey_bytes, sdata);
+    keccak(pubkey_bytes, sdata);
     sb_add_bytes(&response[0]->data, NULL, &addr, 1, false);
   } else
     sb_add_bytes(&response[0]->data, NULL, &pubkey_bytes, 1, false);
@@ -234,14 +233,14 @@ static in3_ret_t in3_ecrecover(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     if (msg.len != 32) return ctx_set_error(ctx, "The message hash must be 32 byte", IN3_EINVAL);
     memcpy(hash, msg.data, 32);
   } else
-    sha3_to(&msg, hash);
+    keccak(msg, hash);
 
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig->data, hash, sig->data[64] >= 27 ? sig->data[64] - 27 : sig->data[64]))
     return ctx_set_error(ctx, "Invalid Signature", IN3_EINVAL);
 
   RESPONSE_START();
   sb_add_char(&response[0]->data, '{');
-  sha3_to(&pubkey_bytes, hash);
+  keccak(pubkey_bytes, hash);
   sb_add_bytes(&response[0]->data, "\"publicKey\":", &pubkey_bytes, 1, false);
   sb_add_char(&response[0]->data, ',');
   pubkey_bytes.data = hash + 12;
@@ -298,7 +297,7 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   if (strcmp(sig_type, "raw") == 0) {
     bytes32_t hash_val;
     bytes_t   hash_bytes = bytes(hash_val, 32);
-    sha3_to(&data, hash_val);
+    keccak(data, hash_val);
     sb_add_bytes(&response[0]->data, "\"messageHash\":", &hash_bytes, 1, false);
   } else
     sb_add_bytes(&response[0]->data, "\"messageHash\":", &data, 1, false);

@@ -204,7 +204,7 @@ call_request_t* parseSignature(char* sig) {
   _free(tokens);
 
   // create input data
-  sha3_to(&signature, hash);
+  keccak(signature, hash);
   bb_write_raw_bytes(req->call_data, hash, 4); // write functionhash
   _free(s);
   return req;

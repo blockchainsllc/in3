@@ -91,10 +91,9 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
 
   // generate the address from the key
   uint8_t public_key[65], sdata[32];
-  bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
 
   ecdsa_get_public_key65(&secp256k1, pk, public_key);
-  sha3_to(&pubkey_bytes, sdata);
+  keccak(bytes(public_key + 1, 64), sdata);
   memcpy(in3->signer->default_address, sdata + 12, 20);
   return IN3_OK;
 }

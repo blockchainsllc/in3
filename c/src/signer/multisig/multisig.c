@@ -47,15 +47,14 @@ bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
 
   // check messagehash
   uint8_t pubkey[65], tmp[32];
-  bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
-  int     v            = sig[64];
+  int     v = sig[64];
 
   // correct v
   if (v >= 27) v -= 27;
 
   // verify signature
   if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sig, hash, v)) return false;
-  sha3_to(&pubkey_bytes, tmp);
+  keccak(bytes(pubkey + 1, 64), tmp);
   memcpy(result, tmp + 12, 20);
   return true;
 }

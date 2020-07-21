@@ -160,7 +160,7 @@ typedef enum evm_state {
           data = ac->code.data;                                \
           l    = ac->code.len;                                 \
         } else if (key == EVM_ENV_CODE_HASH && ac->code.len) { \
-          sha3_to(&ac->code, hash);                            \
+          keccak(ac->code, hash);                              \
           data = hash;                                         \
           l    = 32;                                           \
         }                                                      \

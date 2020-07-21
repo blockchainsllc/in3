@@ -469,9 +469,8 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
   bytes32_t prv_key;
   uint8_t   public_key[65], sdata[32];
   hex_to_bytes((char*) key, -1, prv_key, 32);
-  bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  sha3_to(&pubkey_bytes, sdata);
+  keccak(bytes(public_key + 1, 64), sdata);
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   char tmp[43];
   bytes_to_hex(sdata + 12, 20, tmp + 2);
