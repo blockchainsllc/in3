@@ -188,11 +188,11 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
     bytes_t   new_tx   = {0};
     in3_ret_t prep_res = ctx->client->signer->prepare_tx(ctx, ctx->client->signer->wallet, *dst, &new_tx);
     if (prep_res) {
-      _free(dst->data);
-      *dst = bytes(NULL, 0);
+      if (dst->data) _free(dst->data);
+      if (new_tx.data) _free(new_tx.data);
       return prep_res;
     } else if (new_tx.data) {
-      _free(dst->data);
+      if (dst->data) _free(dst->data);
       *dst = new_tx;
     }
   }
