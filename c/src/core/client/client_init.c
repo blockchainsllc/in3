@@ -929,28 +929,39 @@ in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin
   return ret;
 }
 
+in3_ret_t in3_plugin_execute_ctx(in3_ctx_t* ctx, in3_plugin_act_t action, in3_plugin_exec_t exec, void* plugin_ctx) {
+  if (exec == PLGN_EXC_ALL)
+    return in3_plugin_execute_all(ctx->client, action, plugin_ctx);
+
+  in3_plugin_t* p       = ctx->client->plugins;
+  in3_ret_t     ret     = IN3_OK;
+  bool          handled = false;
+
   while (p) {
-    // check if plugin supports this action
-    if (!BIT_CHECK(p->acts, action))
-      continue;
+    if (!BIT_CHECK(p->acts, action) || !p->action_fn)
+      goto CONTINUE;
 
     ret = p->action_fn(p, action, plugin_ctx);
+
     switch (exec) {
-      case PLGN_EXC_ALL: break;
-      case PLGN_EXC_FIRSTOK: {
-        if (ret == IN3_OK)
+      case PLGN_EXC_FIRST:
+      case PLGN_EXC_FITRST_OR_NONE:
+        if (ret != IN3_EIGNORE) {
+          handled = true;
           goto STOP;
+        }
         break;
-      }
-      case PLGN_EXC_FIRSTERR: {
-        if (ret != IN3_OK && ret != IN3_EUNKNOWN && ret != IN3_EIGNORE)
-          goto STOP;
-        break;
-      }
-      default: return IN3_ENOTSUP; // unknown execution strategy
+      default: return IN3_EPLGN_EXC; // unknown execution strategy
     }
+
+  CONTINUE:
     p = p->next;
   }
+
 STOP:
-  return ret;
+  if (exec == PLGN_EXC_FIRST && handled == false) {
+    return IN3_EPLGN_NONE;
+  } else {
+    return ret;
+  }
 }
