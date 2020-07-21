@@ -464,8 +464,8 @@ typedef enum {
 /** registers a plugin with the client */
 in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data);
 
-/** executes the plugins based on specified execution strategy */
-in3_ret_t in3_plugin_execute(in3_t* c, in3_plugin_act_t action, in3_plugin_exec_t exec, void* plugin_ctx);
+/** executes all plugins irrespective of their return values, returns first error (if any) */
+in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * Handler which is added to client config in order to handle filter.

@@ -918,9 +918,21 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   return IN3_OK;
 }
 
-in3_ret_t in3_plugin_execute(in3_t* c, in3_plugin_act_t action, in3_plugin_exec_t exec, void* plugin_ctx) {
+in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {
   in3_plugin_t* p   = c->plugins;
-  in3_ret_t     ret = IN3_OK;
+  in3_ret_t     ret = IN3_OK, ret_;
+
+  while (p) {
+    if (BIT_CHECK(p->acts, action) && p->action_fn) {
+      ret_ = p->action_fn(p, action, plugin_ctx);
+      if (ret == IN3_OK && ret_ != IN3_OK)
+        ret = ret_; // only record first err
+    }
+    p = p->next;
+  }
+
+  return ret;
+}
 
   while (p) {
     // check if plugin supports this action
