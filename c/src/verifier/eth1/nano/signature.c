@@ -79,7 +79,7 @@ int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig) {
 
   // try to find the signature requested
   for (i = 0; i < vc->ctx->signers_length; i++) {
-    if (b_cmp(vc->ctx->signers + i, addr)) {
+    if (memcmp(vc->ctx->signers + i * 20, addr->data, 20) == 0) {
       // adn set the bit depending on the index.
       res = 1 << i;
       break;

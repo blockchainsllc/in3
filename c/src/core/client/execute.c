@@ -107,8 +107,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
-                                                                                      : 0;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -121,14 +120,13 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     if (ctx->signers) _free(ctx->signers);
     const int node_count  = ctx_nodes_len(signer_nodes);
     ctx->signers_length   = node_count;
-    ctx->signers          = _malloc(sizeof(bytes_t) * node_count);
+    ctx->signers          = _malloc(20 * node_count); // 20 bytes per address
     const node_match_t* w = signer_nodes;
     in3_node_t*         n = NULL;
     for (int i = 0; i < node_count; i++) {
-      n                    = ctx_get_node(chain, w);
-      ctx->signers[i].len  = n->address->len;
-      ctx->signers[i].data = n->address->data;
-      w                    = w->next;
+      n = ctx_get_node(chain, w);
+      memcpy(ctx->signers + i * 20, n->address->data, 20);
+      w = w->next;
     }
     if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
   }
@@ -226,8 +224,12 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
       if (rc->replace_latest_block)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->replace_latest_block));
-      if (c->signers_length)
-        sb_add_bytes(sb, ",\"signers\":", c->signers, c->signers_length, true);
+      if (c->signers_length) {
+        bytes_t* s = alloca(c->signers_length * sizeof(bytes_t));
+        for (int i = 0; i < c->signers_length; i++)
+          s[i] = bytes(c->signers + i * 20, 20);
+        sb_add_bytes(sb, ",\"signers\":", s, c->signers_length, true);
+      }
       if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
       if (proof == PROOF_FULL)
