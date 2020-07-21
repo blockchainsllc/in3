@@ -1,6 +1,6 @@
 [package]
 name = "in3"
-version = "0.1.0"
+version = "<ci-tag>"
 authors = ["slock.it <products@slock.it>"]
 description = "High-level bindings to IN3 library"
 license-file = "LICENSE"
@@ -14,7 +14,7 @@ edition = "2018"
 blocking = ["async-std"]
 
 [dependencies]
-in3-sys = { path = "../in3-sys", version = "*" }
+in3-sys = { path = "../in3-sys", version = "<ci-tag>" }
 libc = { version = "0.2", default-features = false }
 serde_json = "1.0"
 surf = "1.0.3"
