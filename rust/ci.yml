@@ -132,8 +132,12 @@ deploy_rust:
     - mkdir -p rust/in3-sys/in3-core/c
     - cp -r c/CMakeLists.txt c/macro.cmake c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
     - cp CMakeLists.txt rust/in3-sys/in3-core/
-    - cd rust/
-    - cd in3-sys/ && cargo release "${CI_COMMIT_TAG:11}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN || true
+    - cd rust/in3-sys
+    - rm -rf in3-core/c/src/third-party/hidapi/
+    - rm .gitignore
+    - git rm -r --cached .
+    - git add . && git commit -m "Deployment prep (not pushed)"
+    - cargo release "${CI_COMMIT_TAG:11}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN
     - cd ../in3-rs/ && cargo release "${CI_COMMIT_TAG:11}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN
   tags:
     - mac-mini-runner
