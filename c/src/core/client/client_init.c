@@ -899,11 +899,6 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   if (!acts || !action_fn)
     return IN3_EINVAL;
 
-  // check if plugin is being registered for unknown action
-  for (unsigned int i = PLGN_ACT_LAST; i < sizeof(in3_plugin_supp_acts_t); ++i)
-    if (BIT_CHECK(acts, i))
-      return IN3_EINVAL;
-
   in3_plugin_t* p = c->plugins;
   while (p) {
     // check for action-specific rules here like allowing only one action handler per action, etc.
