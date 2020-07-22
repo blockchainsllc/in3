@@ -899,17 +899,17 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   if (!acts || !action_fn)
     return IN3_EINVAL;
 
-  in3_plugin_t* p = c->plugins;
-  while (p) {
+  in3_plugin_t** p = &c->plugins;
+  while (*p) {
     // check for action-specific rules here like allowing only one action handler per action, etc.
-    p = p->next;
+    p = &(*p)->next;
   }
 
-  p            = _malloc(sizeof(*p));
-  p->acts      = acts;
-  p->action_fn = action_fn;
-  p->data      = data;
-  p->next      = NULL;
+  *p              = _malloc(sizeof(in3_plugin_t));
+  (*p)->acts      = acts;
+  (*p)->action_fn = action_fn;
+  (*p)->data      = data;
+  (*p)->next      = NULL;
   return IN3_OK;
 }
 
