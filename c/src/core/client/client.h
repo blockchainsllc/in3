@@ -515,7 +515,7 @@ struct in3_t_ {
   in3_filter_handler_t*  filters;              /**< filter handler */
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
   uint_fast16_t          pending;              /**< number of pending requests created with this instance */
-  in3_plugin_t*          plugins;              /**< list of related plugins */
+  in3_plugin_t*          plugins;              /**< list of registered plugins */
 
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
