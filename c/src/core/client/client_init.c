@@ -945,5 +945,8 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
     p = p->next;
   }
 
-  return handled ? ret : IN3_EPLGN_NONE;
+  if (!handled)
+    return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
+  return ret;
+}
 }
