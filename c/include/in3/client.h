@@ -552,7 +552,7 @@ NONULL in3_ret_t in3_client_rpc(
     char**      result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
-/** sends a request and stores the result in the provided buffer */
+/** sends a request and stores the result in the provided buffer, this method will always return the first, so bulk-requests are not saupported. */
 NONULL in3_ret_t in3_client_rpc_raw(
     in3_t*      c,       /**< [in] the pointer to the incubed client config. */
     const char* request, /**< [in] the rpc request including method and params. */
@@ -560,6 +560,7 @@ NONULL in3_ret_t in3_client_rpc_raw(
     char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
+ * This fuinction also supports sending bulk-requests, but you can not mix internal and external calls, since bulk means all requests will be send to picked nodes.
  * The resulting string must be free by the the caller of this function! 
  */
 NONULL char* in3_client_exec_req(
