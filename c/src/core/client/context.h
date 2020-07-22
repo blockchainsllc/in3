@@ -459,4 +459,9 @@ NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* c
  */
 in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
+/**
+ * same as in3_plugin_execute_first(), but returns IN3_OK even if no plugin could handle specified action
+ */
+in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
+
 #endif

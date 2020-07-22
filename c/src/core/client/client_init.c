@@ -39,6 +39,7 @@
 #include "../util/mem.h"
 #include "cache.h"
 #include "client.h"
+#include "context_internal.h"
 #include "nodelist.h"
 #include "verifier.h"
 #include <assert.h>
@@ -949,4 +950,19 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
     return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
   return ret;
 }
+
+in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_plugin_t* p   = ctx->client->plugins;
+  in3_ret_t     ret = IN3_OK;
+
+  while (p) {
+    if (p->acts & action) {
+      ret = p->action_fn(p, action, plugin_ctx);
+      if (ret != IN3_EIGNORE)
+        break;
+    }
+    p = p->next;
+  }
+
+  return ret;
 }
