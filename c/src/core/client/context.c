@@ -159,9 +159,9 @@ int ctx_nodes_len(node_match_t* node) {
   return all;
 }
 
-in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx) {
+in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {
   if (ctx->requests) {
-    char* verfification = d_get_stringk(d_get(ctx->requests[0], K_IN3), key("verification"));
+    char* verfification = d_get_stringk(d_get(ctx->requests[i], K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;
   }

@@ -103,7 +103,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
   const in3_t*       c     = ctx->client;
   const in3_chain_t* chain = in3_find_chain(c, c->chain_id);
 
-  if (in3_ctx_get_proof(ctx) == PROOF_NONE && !auto_ask_sig(ctx))
+  if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
@@ -170,12 +170,12 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
   char                 temp[100];
   in3_t*               rc       = c->client;
   struct SHA3_CTX*     msg_hash = rc->key ? alloca(sizeof(struct SHA3_CTX)) : NULL;
-  in3_proof_t          proof    = in3_ctx_get_proof(c);
 
   sb_add_char(sb, '[');
 
   for (uint_fast16_t i = 0; i < c->len; i++) {
-    d_token_t *request_token = c->requests[i], *t;
+    d_token_t * request_token = c->requests[i], *t;
+    in3_proof_t proof         = in3_ctx_get_proof(c, i);
     if (msg_hash) sha3_256_Init(msg_hash);
 
     if (i > 0) sb_add_char(sb, ',');
@@ -447,6 +447,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifie
     vc.request = ctx->requests[i];
     vc.result  = d_get(ctx->responses[i], K_RESULT);
     vc.client  = ctx->client;
+    vc.index   = (int) i;
 
     if ((vc.proof = d_get(ctx->responses[i], K_IN3))) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
       if ((res = handle_payment(ctx, node, i))) return res;
@@ -967,7 +968,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
         filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
-        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx) != PROOF_NONE ? NODE_PROP_PROOF : 0);
+        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           if ((ret = pick_signers(ctx, ctx->requests[0])) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);

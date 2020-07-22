@@ -306,7 +306,7 @@ NONULL in3_sign_ctx_t* create_sign_ctx(
 /**
  * returns the type of the request
  */
-ctx_type_t ctx_get_type(
+NONULL ctx_type_t ctx_get_type(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 
@@ -430,7 +430,8 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
  * determines the proof as set in the request.
  */
 NONULL in3_proof_t in3_ctx_get_proof(
-    in3_ctx_t* ctx /**< [in] the current request. */
+    in3_ctx_t* ctx, /**< [in] the current request. */
+    int        i    /**< [in] the index within the request. */
 );
 
 /**

@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -430,7 +430,8 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
  * determines the proof as set in the request.
  */
 NONULL in3_proof_t in3_ctx_get_proof(
-    in3_ctx_t* ctx /**< [in] the current request. */
+    in3_ctx_t* ctx, /**< [in] the current request. */
+    int        i    /**< [in] the index within the request. */
 );
 
 /**
