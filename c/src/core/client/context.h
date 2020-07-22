@@ -453,13 +453,10 @@ NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* c
 }
 
 /**
- * executes the plugins based on specified execution strategy, returns IN3_EPLGN_EXC if execution strategy is not supported
- * for supported execution strategies, behavior is as follows -
- * * PLGN_EXC_ALL - behavior is identical to in3_plugin_execute_all()
- * * PLGN_EXC_FIRST - executes all plugin actions one-by-one, stops when a plugin returns anything other than IN3_EIGNORE
- *                    returns the error returned by plugin or IN3_EPLGN_NONE if no plugin was able to handle specified action
- * * PLGN_EXC_FITRST_OR_NONE - same as PLGN_EXC_FIRST, but returns IN3_OK even if no plugin was able to handle specified action
+ * executes all plugin actions one-by-one, stops when a plugin returns anything other than IN3_EIGNORE.
+ * returns IN3_EPLGN_NONE if no plugin was able to handle specified action, otherwise returns IN3_OK
+ * plugin errors are reported via the in3_ctx_t
  */
-in3_ret_t in3_plugin_execute_ctx(in3_ctx_t* ctx, in3_plugin_act_t action, in3_plugin_exec_t exec, void* plugin_ctx);
+in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
 #endif
