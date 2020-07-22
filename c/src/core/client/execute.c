@@ -288,7 +288,7 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
     // it is a single result
     ctx->responses    = _malloc(sizeof(d_token_t*));
     ctx->responses[0] = ctx->response_context->result;
-    if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_EINVALDT);
+    if (ctx->len != 1) return ctx_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
   } else if (d_type(ctx->response_context->result) == T_ARRAY) {
     int        i;
     d_token_t* t = NULL;
