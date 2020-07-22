@@ -443,6 +443,15 @@ typedef enum {
  */
 typedef struct in3_plugin in3_plugin_t;
 
+/**
+ * plugin action handler
+ *
+ * Implementations of this function must strictly follow the below pattern for return values -
+ * * IN3_OK - successfully handled specified action
+ * * IN3_WAITING - handling specified action, but waiting for more information
+ * * IN3_EIGNORE - could handle specified action, but chose to ignore it so maybe another handler could handle it
+ * * Other errors - handled but failed
+ */
 typedef in3_ret_t (*in3_plugin_act_fn)(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
 
 typedef uint64_t in3_plugin_supp_acts_t;
