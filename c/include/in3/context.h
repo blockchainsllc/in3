@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
-#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -85,7 +85,7 @@ typedef struct in3_ctx {
   d_token_t**     requests;           /**< references to the tokens representring the requests*/
   d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
   in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
-  bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
+  uint8_t*        signers;            /**< the addresses of servers (concated) requested to sign the blockhash */
   uint_fast8_t    signers_length;     /**< number or addresses */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
@@ -306,7 +306,7 @@ NONULL in3_sign_ctx_t* create_sign_ctx(
 /**
  * returns the type of the request
  */
-ctx_type_t ctx_get_type(
+NONULL ctx_type_t ctx_get_type(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 

@@ -67,6 +67,7 @@ typedef struct {
   in3_t*       client;                /**< the client. */
   uint64_t     last_validator_change; /**< Block number of last change of the validator list */
   uint64_t     currentBlock;          /**< Block number of latest block */
+  int          index;                 /**< the index of the request within the bulk */
 } in3_vctx_t;
 
 /**
