@@ -137,7 +137,7 @@ deploy_rust:
     - rm in3-sys/.gitignore
     - git rm -r --cached .
     - git add . && git commit -m "Deployment prep (not pushed)"
-    - cd in3-sys/ && cargo publish
+    - cd in3-sys/ && cargo publish || true 
     - cd ../in3-rs/ && cargo publish
   tags:
     - mac-mini-runner
