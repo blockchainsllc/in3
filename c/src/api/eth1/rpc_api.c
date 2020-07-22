@@ -406,26 +406,6 @@ static in3_ret_t handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 }
 
 static int verify(in3_vctx_t* v) {
-  char* method = d_get_stringk(v->request, K_METHOD);
-  if (!method) return vc_err(v, "no method in the request!");
-
-  if (strcmp(method, "in3_abiEncode") == 0 ||
-      strcmp(method, "in3_abiDecode") == 0 ||
-      strcmp(method, "in3_checksumAddress") == 0 ||
-      strcmp(method, "web3_sha3") == 0 ||
-      strcmp(method, "in3_ens") == 0 ||
-      strcmp(method, "in3_config") == 0 ||
-      strcmp(method, "in3_getConfig") == 0 ||
-      strcmp(method, "in3_pk2address") == 0 ||
-      strcmp(method, "in3_ecrecover") == 0 ||
-      strcmp(method, "in3_signData") == 0 ||
-      strcmp(method, "in3_pk2public") == 0 ||
-      strcmp(method, "in3_decryptKey") == 0 ||
-      strcmp(method, "in3_prepareTx") == 0 ||
-      strcmp(method, "in3_signTx") == 0 ||
-      strcmp(method, "in3_cacheClear") == 0)
-    return IN3_OK;
-
   return parent_verify ? parent_verify(v) : IN3_ENOTSUP;
 }
 
