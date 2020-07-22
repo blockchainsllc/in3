@@ -454,7 +454,7 @@ typedef struct in3_plugin in3_plugin_t;
  */
 typedef in3_ret_t (*in3_plugin_act_fn)(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
 
-typedef uint64_t in3_plugin_supp_acts_t;
+typedef uint32_t in3_plugin_supp_acts_t;
 
 struct in3_plugin {
   in3_plugin_supp_acts_t acts;      /**< bitmask of supported actions this plugin can handle */
