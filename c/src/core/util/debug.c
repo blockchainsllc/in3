@@ -100,6 +100,8 @@ char* in3_errmsg(in3_ret_t err /**< the error code */) {
     case IN3_EPAYMENT_REQUIRED: return "payment required";
     case IN3_ENODEVICE: return "no hardware wallet connected";
     case IN3_EAPDU: return "error in usb communication protocol";
+    case IN3_EPLGN_NONE: return "no plugin could handle specified action";
+    case IN3_EPLGN_EXC: return "unknown plugin execution strategy";
   }
   return NULL;
 #else
