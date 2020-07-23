@@ -896,7 +896,7 @@ cleanup:
   return res;
 }
 
-static bool is_plugin_exclusive(in3_plugin_supp_acts_t acts) {
+static bool is_plugin_act_exclusive(in3_plugin_supp_acts_t acts) {
   if (acts & PLGN_ACT_TRANSPORT)
     return true;
   return false;
@@ -908,7 +908,7 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
 
   in3_plugin_t** p = &c->plugins;
   while (*p) {
-    if ((*p)->acts == acts && is_plugin_exclusive(acts)) {
+    if ((*p)->acts == acts && is_plugin_act_exclusive(acts)) {
       if (replace_ex)
         break;
       else
