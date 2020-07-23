@@ -82,7 +82,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "run rpcapi test",
-            "program": "${workspaceFolder}/build/test/test_request",
+            "program": "${workspaceFolder}/build/test/test_cache",
             "cwd": "${workspaceFolder}/build"
         },
         {
