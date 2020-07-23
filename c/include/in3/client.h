@@ -432,6 +432,50 @@ typedef struct in3_filter_t_ {
   void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
 } in3_filter_t;
 
+/** plugin action list */
+typedef enum {
+  PLGN_ACT_INIT = 0x1, /**< initialize plugin - use for allocating/setting-up internal resources */
+  PLGN_ACT_TERM = 0x2, /**< terminate plugin - use for releasing internal resources and cleanup. */
+} in3_plugin_act_t;
+
+/**
+ * plugin interface definition
+ */
+typedef struct in3_plugin in3_plugin_t;
+
+/**
+ * plugin action handler
+ *
+ * Implementations of this function must strictly follow the below pattern for return values -
+ * * IN3_OK - successfully handled specified action
+ * * IN3_WAITING - handling specified action, but waiting for more information
+ * * IN3_EIGNORE - could handle specified action, but chose to ignore it so maybe another handler could handle it
+ * * Other errors - handled but failed
+ */
+typedef in3_ret_t (*in3_plugin_act_fn)(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
+
+typedef uint32_t in3_plugin_supp_acts_t;
+
+struct in3_plugin {
+  in3_plugin_supp_acts_t acts;      /**< bitmask of supported actions this plugin can handle */
+  void*                  data;      /**< opaque pointer to plugin data */
+  in3_plugin_act_fn      action_fn; /**< plugin action handler */
+  in3_plugin_t*          next;      /**< pointer to next plugin in list */
+};
+
+/** plugin execution strategies, see in3_plugin_execute_ctx() for usage */
+typedef enum {
+  PLGN_EXC_ALL,
+  PLGN_EXC_FIRST,
+  PLGN_EXC_FITRST_OR_NONE,
+} in3_plugin_exec_t;
+
+/** registers a plugin with the client */
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data);
+
+/** executes all plugins irrespective of their return values, returns first error (if any) */
+in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx);
+
 /**
  * Handler which is added to client config in order to handle filter.
  */
@@ -464,13 +508,14 @@ struct in3_t_ {
   chain_id_t             chain_id;             /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
   in3_storage_handler_t* cache;                /**< a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
   in3_signer_t*          signer;               /**< signer-struct managing a wallet */
-  in3_transport_send     transport;            /**< the transporthandler sending requests */
+  in3_transport_send     transport;            /**< the transport handler sending requests */
   uint_fast8_t           flags;                /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
   in3_chain_t*           chains;               /**< chain spec and nodeList definitions*/
   uint16_t               chains_length;        /**< number of configured chains */
   in3_filter_handler_t*  filters;              /**< filter handler */
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
   uint_fast16_t          pending;              /**< number of pending requests created with this instance */
+  in3_plugin_t*          plugins;              /**< list of registered plugins */
 
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
