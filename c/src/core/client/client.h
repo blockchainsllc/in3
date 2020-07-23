@@ -470,7 +470,7 @@ typedef struct in3_plugin in3_plugin_t;
  * * IN3_EIGNORE - could handle specified action, but chose to ignore it so maybe another handler could handle it
  * * Other errors - handled but failed
  */
-typedef in3_ret_t (*in3_plugin_act_fn)(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
+typedef in3_ret_t (*in3_plugin_act_fn)(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 
 typedef uint32_t in3_plugin_supp_acts_t;
 

@@ -933,7 +933,7 @@ in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin
   in3_ret_t     ret = IN3_OK, ret_;
   while (p) {
     if (p->acts & action) {
-      ret_ = p->action_fn(p, action, plugin_ctx);
+      ret_ = p->action_fn(p->data, action, plugin_ctx);
       if (ret == IN3_OK && ret_ != IN3_OK)
         ret = ret_; // only record first err
     }
