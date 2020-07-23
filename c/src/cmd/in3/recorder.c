@@ -209,11 +209,12 @@ static in3_plugin_t* get_transport(in3_t* c) {
 }
 
 void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
-  rec.file                    = file;
-  rec.transport               = get_transport(c)->action_fn;
-  get_transport(c)->action_fn = recorder_transport_out;
-  rec.f                       = fopen(file, "w");
-  rec.cache                   = c->cache;
+  in3_plugin_t* p = get_transport(c);
+  rec.file        = file;
+  rec.transport   = p ? p->action_fn : NULL;
+  rec.f           = fopen(file, "w");
+  rec.cache       = c->cache;
+  if (p) p->action_fn = recorder_transport_out;
   in3_set_func_rand(rand_out);
   fprintf(rec.f, ":: cmd");
   for (int i = 0; i < argc; i++) fprintf(rec.f, " %s", strcmp(argv[i], "-fo") ? argv[i] : "-fi");
@@ -224,9 +225,9 @@ void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
 
 void recorder_read_start(in3_t* c, char* file) {
   in3_plugin_t* p = get_transport(c);
-  rec.file                    = file;
-  rec.transport               = p ? p->action_fn : NULL;
-  rec.f                       = fopen(file, "r");
+  rec.file        = file;
+  rec.transport   = p ? p->action_fn : NULL;
+  rec.f           = fopen(file, "r");
   if (p) p->action_fn = recorder_transport_in;
   in3_set_func_rand(rand_in);
   in3_set_storage_handler(c, rec_get_item_in, rec_set_item_in, rec_clear_in, &rec);
