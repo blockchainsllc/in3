@@ -94,7 +94,6 @@
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: LLVM, AlignConsecutiveAssignments: true, AlignConsecutiveDeclarations: true, AlignTrailingComments: true, AllowShortBlocksOnASingleLine: true, AllowShortCaseLabelsOnASingleLine: true, AllowShortIfStatementsOnASingleLine: true }",
-    "editor.formatOnSave": true,
     "C_Cpp.default.defines": [
         "${default}",
         "EVM_GAS",
