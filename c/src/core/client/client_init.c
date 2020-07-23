@@ -911,13 +911,16 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   (*p)->action_fn = action_fn;
   (*p)->data      = data;
   (*p)->next      = NULL;
+  c->plugin_acts |= acts;
   return IN3_OK;
 }
 
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(c, action))
+    return IN3_OK;
+
   in3_plugin_t* p   = c->plugins;
   in3_ret_t     ret = IN3_OK, ret_;
-
   while (p) {
     if (p->acts & action) {
       ret_ = p->action_fn(p, action, plugin_ctx);
@@ -926,15 +929,16 @@ in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin
     }
     p = p->next;
   }
-
   return ret;
 }
 
 in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(ctx->client, action))
+    return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
+
   in3_plugin_t* p       = ctx->client->plugins;
   in3_ret_t     ret     = IN3_OK;
   bool          handled = false;
-
   while (p) {
     if (p->acts & action) {
       ret = p->action_fn(p, action, plugin_ctx);
@@ -952,9 +956,11 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
 }
 
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(ctx->client, action))
+    return IN3_OK;
+
   in3_plugin_t* p   = ctx->client->plugins;
   in3_ret_t     ret = IN3_OK;
-
   while (p) {
     if (p->acts & action) {
       ret = p->action_fn(p, action, plugin_ctx);
@@ -963,6 +969,5 @@ in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t acti
     }
     p = p->next;
   }
-
   return ret;
 }

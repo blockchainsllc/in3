@@ -488,6 +488,9 @@ typedef enum {
   PLGN_EXC_FITRST_OR_NONE,
 } in3_plugin_exec_t;
 
+/** checks if a plugin for specified action is registered with the client */
+#define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
+
 /** registers a plugin with the client */
 in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data);
 
@@ -523,6 +526,7 @@ struct in3_t_ {
   uint32_t               max_block_cache;      /**< number of number of blocks cached  in memory */
   uint32_t               timeout;              /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
   chain_id_t             chain_id;             /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
+  in3_plugin_supp_acts_t plugin_acts;          /**< bitmask of supported actions of all plugins registered with this client */
   in3_proof_t            proof;                /**< the type of proof used */
   uint64_t               min_deposit;          /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
