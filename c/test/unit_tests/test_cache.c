@@ -178,9 +178,13 @@ static void test_cache() {
   c2->cache = NULL;
   in3_free(c2);
 }
+static in3_ret_t in3_register_test_transport(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
+}
 
 static void test_newchain() {
-  in3_set_default_transport(test_transport);
+
+  in3_set_default_transport(in3_register_test_transport);
 
   in3_t* c    = in3_for_chain(0);
   c->chain_id = 0x8;
