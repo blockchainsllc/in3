@@ -54,7 +54,9 @@
 #include "../../core/util/utils.h"
 #include "in3_http.h"
 
-in3_ret_t send_http(in3_request_t* req) {
+in3_ret_t send_http(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin);
+  in3_request_t* req = plugin_ctx;
   for (int n = 0; n < req->urls_len; n++) {
 
     struct hostent*    server;
@@ -237,6 +239,6 @@ in3_ret_t send_http(in3_request_t* req) {
   return 0;
 }
 
-void in3_register_http() {
-  in3_set_default_transport(send_http);
+in3_ret_t in3_register_http(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, send_http, NULL, true);
 }
