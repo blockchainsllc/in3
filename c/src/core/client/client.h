@@ -700,6 +700,15 @@ typedef in3_ret_t (*plgn_register)(in3_t* c);
 void in3_set_default_transport(
     plgn_register transport /**< the default transport-function. */
 );
+
+typedef in3_ret_t (*in3_transport_legacy)(in3_request_t* request);
+/**
+ * defines a default transport which is used when creating a new client.
+ */
+void in3_set_default_legacy_transport(
+    in3_transport_legacy transport /**< the default transport-function. */
+);
+
 /**
  * defines a default storage handler which is used when creating a new client.
  */

@@ -77,7 +77,7 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) ->
     # ctypes mappings
     _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
     # In3 init and module loading
-    _libin3.in3_set_default_transport(transport_fn)
+    _libin3.in3_set_default_legacy_transport(transport_fn)
     # TODO: in3_set_default_signer
     _libin3.in3_register_eth_full()
     # TODO: IPFS libin3.in3_register_ipfs();

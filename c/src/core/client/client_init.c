@@ -112,13 +112,26 @@ void in3_register_payment(
 #define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
-static plgn_register          default_transport = NULL;
-static in3_storage_handler_t* default_storage   = NULL;
-static in3_signer_t*          default_signer    = NULL; /**
+static plgn_register          default_transport        = NULL;
+static in3_storage_handler_t* default_storage          = NULL;
+static in3_signer_t*          default_signer           = NULL;
+static in3_transport_legacy   default_legacy_transport = NULL;
+static in3_ret_t              handle_legacy_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  return default_legacy_transport((in3_request_t*) plugin_ctx);
+}
+static in3_ret_t register_legacy(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, handle_legacy_transport, NULL, true);
+}
+/**
  * defines a default transport which is used when creating a new client.
  */
-void                          in3_set_default_transport(plgn_register transport) {
+void in3_set_default_transport(plgn_register transport) {
   default_transport = transport;
+}
+
+void in3_set_default_legacy_transport(
+    in3_transport_legacy transport /**< the default transport-function. */
+) {
 }
 
 /**
