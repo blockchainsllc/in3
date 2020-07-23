@@ -56,6 +56,7 @@
 
 in3_ret_t send_http(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin);
+  UNUSED_VAR(action);
   in3_request_t* req = plugin_ctx;
   for (int n = 0; n < req->urls_len; n++) {
 
