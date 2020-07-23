@@ -492,7 +492,7 @@ typedef enum {
 #define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
 
 /** registers a plugin with the client */
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data);
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex);
 
 /** executes all plugins irrespective of their return values, returns first error (if any) */
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx);
