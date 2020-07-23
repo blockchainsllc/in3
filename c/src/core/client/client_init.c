@@ -132,6 +132,7 @@ void in3_set_default_transport(plgn_register transport) {
 void in3_set_default_legacy_transport(
     in3_transport_legacy transport /**< the default transport-function. */
 ) {
+  in3_set_default_transport(register_legacy);
 }
 
 /**
