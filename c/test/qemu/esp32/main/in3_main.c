@@ -79,8 +79,8 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
   }
   return IN3_OK;
 }
-
-in3_ret_t transport_mock(in3_request_t* req) {
+in3_ret_t transport_mock(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req = plugin_ctx;
   return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 /* Setup and init in3 */
@@ -88,7 +88,7 @@ void init_in3(void) {
   c = in3_for_chain(CHAIN_ID_GOERLI);
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
-  c->transport     = transport_mock;
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, transport_mock, NULL, true);
   c->request_count = 1; // number of requests to sendp
   c->max_attempts  = 1;
   c->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist

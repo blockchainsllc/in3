@@ -45,19 +45,12 @@
 /**
  * a transport function using curl.
  * 
- * You can use it by setting the transport-function-pointer in the in3_t->transport to this function:
- * 
- * ```c
- * #include <in3/in3_curl.h>
- * ...
- * c->transport = send_curl;
- * ```
  */
-in3_ret_t send_curl(in3_request_t* req);
+in3_ret_t send_curl(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * registers curl as a default transport.
  */
-void in3_register_curl();
+in3_ret_t in3_register_curl(in3_t* c);
 
 #endif // in3_curl_h__
