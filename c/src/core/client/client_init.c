@@ -491,6 +491,14 @@ void in3_free(in3_t* a) {
     _free(a->pay);
   }
 #endif
+  in3_plugin_t *p = a->plugins, *n;
+  while (p) {
+    if (p->data)
+      p->action_fn(p, PLGN_ACT_TERM, NULL);
+    n = p->next;
+    _free(p);
+    p = n;
+  }
   _free(a);
 }
 
