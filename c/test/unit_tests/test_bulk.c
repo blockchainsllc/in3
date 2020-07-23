@@ -50,10 +50,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static in3_ret_t test_bulk_transport(in3_request_t* req) {
-  char* buffer = NULL;
-  long  length;
-  FILE* f = fopen("../c/test/testdata/mock/get_blocks.json", "r");
+static in3_ret_t test_bulk_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req    = plugin_ctx;
+  char*          buffer = NULL;
+  long           length;
+  FILE*          f = fopen("../c/test/testdata/mock/get_blocks.json", "r");
   if (f) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
@@ -85,9 +86,9 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
 }
 
 static void test_context_bulk() {
-  in3_t* in3     = in3_for_chain(CHAIN_ID_MAINNET);
-  in3->transport = test_bulk_transport;
-  in3->flags     = FLAGS_STATS;
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
+  register_transport(in3, test_bulk_transport);
+  in3->flags = FLAGS_STATS;
   for (int i = 0; i < in3->chains_length; i++) {
     _free(in3->chains[i].nodelist_upd8_params);
     in3->chains[i].nodelist_upd8_params = NULL;

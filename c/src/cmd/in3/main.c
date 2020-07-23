@@ -580,8 +580,10 @@ static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
 static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
-static in3_ret_t debug_transport(in3_request_t* req) {
-  if (req->action == REQ_ACTION_SEND) {
+static in3_ret_t debug_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+
+  in3_request_t* req = plugin_ctx;
+  if (action == PLGN_ACT_TRANSPORT_SEND) {
 #ifndef DEBUG
     if (debug_mode)
       fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
@@ -602,11 +604,11 @@ static in3_ret_t debug_transport(in3_request_t* req) {
     }
   }
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(req);
+  in3_ret_t r = send_curl(plugin, action, plugin_ctx);
 #else
-  in3_ret_t r = send_http(req);
+  in3_ret_t r = send_http(plugin, action, plugin_ctx);
 #endif
-  if (req->action != REQ_ACTION_CLEANUP) {
+  if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
 #ifndef DEBUG
     if (debug_mode) {
@@ -620,11 +622,12 @@ static in3_ret_t debug_transport(in3_request_t* req) {
   return r;
 }
 static char*     test_name = NULL;
-static in3_ret_t test_transport(in3_request_t* req) {
+static in3_ret_t test_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req = plugin_ctx;
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(req);
+  in3_ret_t r = send_curl(plugin, action, plugin_ctx);
 #else
-  in3_ret_t r = send_http(req);
+  in3_ret_t r = send_http(plugin, action, plugin_ctx);
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
@@ -683,7 +686,6 @@ int main(int argc, char* argv[]) {
 
   // create the client
   in3_t* c                         = in3_for_chain(0);
-  c->transport                     = debug_transport;
   c->request_count                 = 2;
   bool            out_response     = false;
   int             run_test_request = 0;
@@ -705,6 +707,7 @@ int main(int argc, char* argv[]) {
   char*           port             = NULL;
   char*           sig_type         = "raw";
   bool            to_eth           = false;
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, debug_transport, NULL, true);
 
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
@@ -809,8 +812,8 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
       gas_limit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-test") == 0) {
-      test_name    = argv[++i];
-      c->transport = test_transport;
+      test_name = argv[++i];
+      in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
     } else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
     else if (strcmp(argv[i], "-q") == 0)
@@ -1009,7 +1012,11 @@ int main(int argc, char* argv[]) {
           r.urls                  = urls;
           r.urls_len              = 1;
           r.payload               = "";
-          c->transport(&r);
+#ifdef USE_CURL
+          send_curl(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
+#else
+          send_http(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
+#endif
           if (ctx.raw_response->state)
             health = 0;
           else {

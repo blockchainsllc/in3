@@ -34,13 +34,12 @@ static void init_verifier() {
   in3_register_pay_eth();
 #endif
 }
-
 static void init_transport() {
 #ifdef TRANSPORTS
 #ifdef USE_CURL
-  in3_register_curl();
+  in3_set_default_transport(in3_register_curl);
 #else
-  in3_register_http();
+  in3_set_default_transport(in3_register_http);
 #endif /* USE_CURL */
 #endif /* TRANSPORTS */
 }

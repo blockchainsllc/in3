@@ -249,16 +249,6 @@ uint8_t* in3_sign_ctx_get_signature(
 }
 
 /**
- * set the transport handler on the client.
- */
-void in3_set_transport(
-    in3_t*             c,   /**< the incubed client */
-    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
-) {
-  c->transport = cptr;
-}
-
-/**
  * getter to retrieve the payload from a in3_request_t struct
  */
 char* in3_get_request_payload(

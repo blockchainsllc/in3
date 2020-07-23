@@ -61,10 +61,10 @@
 
 static void test_filter() {
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
+  register_transport(c, test_transport);
 
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
@@ -185,10 +185,10 @@ static void test_filter_from_block_manip() {
 
 static void test_filter_creation() {
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
+  register_transport(c, test_transport);
 
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
@@ -213,10 +213,10 @@ static void test_filter_creation() {
 
 static void test_filter_changes() {
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
+  register_transport(c, test_transport);
 
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);

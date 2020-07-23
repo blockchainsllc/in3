@@ -60,10 +60,10 @@
 static void test_in3_config() {
 
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
+  register_transport(c, test_transport);
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
      \"chainId\":7,\
@@ -139,11 +139,11 @@ static void test_in3_config() {
 static void test_in3_client_rpc() {
   char * result = NULL, *error = NULL;
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
   c->max_attempts    = 1;
+  register_transport(c, test_transport);
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
     c->chains[i].nodelist_upd8_params = NULL;
@@ -183,9 +183,6 @@ static void test_in3_client_rpc() {
   ctx_free(ctx);
 
   // No transport check
-  c->transport = NULL;
-  TEST_ASSERT_EQUAL(IN3_ECONFIG, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
-  c->transport = test_transport;
   free(result);
   free(error);
 

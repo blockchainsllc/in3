@@ -47,8 +47,8 @@
 #include <core/util/log.h>
 
 static in3_t* in3_init_test() {
-  in3_t* in3     = in3_for_chain(CHAIN_ID_BTC);
-  in3->transport = mock_transport;
+  in3_t* in3 = in3_for_chain(CHAIN_ID_BTC);
+  register_transport(in3, mock_transport);
   in3_configure(in3, "{\"autoUpdateList\":false,\"maxAttempts\":1,\"nodes\":{\"0x99\": {\"needsUpdate\":false}}}");
   return in3;
 }

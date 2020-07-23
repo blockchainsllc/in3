@@ -344,9 +344,12 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
 
   in3_free(in3);
 }
+in3_ret_t Java_in3_IN3_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin);
+  UNUSED_VAR(action);
 
-in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
-  uint64_t start = current_ms();
+  in3_request_t* req   = plugin_ctx;
+  uint64_t       start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
@@ -710,7 +713,7 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
   in3_t* in3 = in3_for_chain_auto_init(jchain);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
-  in3->transport          = Java_in3_IN3_transport;
+  in3_plugin_register(in3, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, Java_in3_IN3_transport, NULL, true);
   in3->signer             = _malloc(sizeof(in3_signer_t));
   in3->signer->sign       = jsign;
   in3->signer->prepare_tx = NULL;

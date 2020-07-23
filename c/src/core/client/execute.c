@@ -107,8 +107,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
-                                                                                      : 0;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -626,7 +625,6 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;
-  request->action        = REQ_ACTION_SEND;
   request->cptr          = NULL;
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
@@ -726,8 +724,8 @@ typedef struct {
 static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, bool free_all) {
   for (int i = 0; i < transports->len; i++) {
     if (free_all || transports->req[i].ctx == ctx) {
-      in3_request_t req = {.action = REQ_ACTION_CLEANUP, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
-      ctx->client->transport(&req);
+      in3_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+      in3_plugin_execute_first_or_none(ctx, PLGN_ACT_TRANSPORT_CLEAN, &req);
       if (!free_all) {
         transports->req[i].ctx = NULL;
         return;
@@ -742,8 +740,8 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
   ctx = in3_ctx_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
     if (transports->req[i].ctx == ctx) {
-      in3_request_t req = {.action = REQ_ACTION_RECEIVE, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
-      ctx->client->transport(&req);
+      in3_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+      in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_RECEIVE, &req);
 #ifdef DEBUG
       const in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
       node_match_t*      w     = ctx->nodes;
@@ -770,12 +768,6 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
 }
 
 void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
-  // error check
-  if (!ctx->client->transport) {
-    ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
-    return;
-  }
-
   // if we can't create the request, this function will put it into error-state
   in3_request_t* request = in3_create_request(ctx);
   if (!request) return;
@@ -788,7 +780,7 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
     in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[i], i == 0 ? request->payload : "");
 
   // handle it
-  ctx->client->transport(request);
+  in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_SEND, request);
 
   // debug output
   node_match_t*      node  = request->ctx->nodes;

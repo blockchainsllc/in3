@@ -54,10 +54,11 @@
 #define REGISTRY_ID "0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea"
 #define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
 
-static in3_ret_t test_transport(in3_request_t* req) {
-  char* buffer = NULL;
-  long  length;
-  FILE* f = fopen("../c/test/testdata/requests/in3_nodeList.json", "r");
+static in3_ret_t test_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req    = plugin_ctx;
+  char*          buffer = NULL;
+  long           length;
+  FILE*          f = fopen("../c/test/testdata/requests/in3_nodeList.json", "r");
   if (f) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
@@ -131,8 +132,8 @@ void static setup_test_cache(in3_t* c) {
 
 static void test_cache() {
   in3_t* c           = in3_for_chain(CHAIN_ID_GOERLI);
-  c->transport       = test_transport;
   c->signature_count = 0;
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
   setup_test_cache(c);
 
   in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_GOERLI);
@@ -153,11 +154,11 @@ static void test_cache() {
   TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
 
   // create a second client...
-  in3_t* c2     = in3_for_chain(0);
-  c2->cache     = c->cache;
-  c2->transport = test_transport;
-  c2->chain_id  = c->chain_id;
+  in3_t* c2    = in3_for_chain(0);
+  c2->cache    = c->cache;
+  c2->chain_id = c->chain_id;
   c2->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
+  in3_plugin_register(c2, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
 
   in3_configure(c2, "{\"chainId\":\"0x5\"}");
   in3_chain_t* chain2 = in3_find_chain(c2, c2->chain_id);

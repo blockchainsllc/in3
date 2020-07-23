@@ -112,14 +112,12 @@ void in3_register_payment(
 #define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
-static in3_transport_send     default_transport = NULL;
+static plgn_register          default_transport = NULL;
 static in3_storage_handler_t* default_storage   = NULL;
-static in3_signer_t*          default_signer    = NULL;
-
-/**
+static in3_signer_t*          default_signer    = NULL; /**
  * defines a default transport which is used when creating a new client.
  */
-void in3_set_default_transport(in3_transport_send transport) {
+void                          in3_set_default_transport(plgn_register transport) {
   default_transport = transport;
 }
 
@@ -386,9 +384,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -508,7 +506,7 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
     return NULL;
   }
 
-  if (default_transport) c->transport = default_transport;
+  if (default_transport) default_transport(c);
   if (default_storage) c->cache = default_storage;
   if (default_signer) c->signer = default_signer;
 
@@ -896,13 +894,17 @@ cleanup:
   return res;
 }
 
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data) {
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_existing) {
   if (!acts || !action_fn)
     return IN3_EINVAL;
 
   in3_plugin_t** p = &c->plugins;
   while (*p) {
     // check for action-specific rules here like allowing only one action handler per action, etc.
+    if (replace_existing && (*p)->acts == acts) {
+      (*p)->action_fn = action_fn;
+      return IN3_OK;
+    }
     p = &(*p)->next;
   }
 

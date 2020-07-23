@@ -388,31 +388,17 @@ typedef struct in3_response {
  */
 typedef struct in3_t_ in3_t;
 
-/**
- * Filter type used internally when managing filters.
- */
-typedef enum {
-  REQ_ACTION_SEND    = 0, /**< The request should be send */
-  REQ_ACTION_RECEIVE = 1, /**< a response is expected now. the request will not contains the urls anymore! */
-  REQ_ACTION_CLEANUP = 2, /**< the cstptr can perform clean up */
-} in3_req_action_t;
-
 /** request-object. 
  * 
  * represents a RPC-request
  */
 typedef struct in3_request {
-  char*            payload;  /**< the payload to send */
-  char**           urls;     /**< array of urls */
-  uint_fast16_t    urls_len; /**< number of urls */
-  in3_req_action_t action;   /**< the action the transport should execute */
-  struct in3_ctx*  ctx;      /**< the current context */
-  void*            cptr;     /**< a custom ptr to hold information during */
+  char*           payload;  /**< the payload to send */
+  char**          urls;     /**< array of urls */
+  uint_fast16_t   urls_len; /**< number of urls */
+  struct in3_ctx* ctx;      /**< the current context */
+  void*           cptr;     /**< a custom ptr to hold information during */
 } in3_request_t;
-
-/** the transport function to be implemented by the transport provider.
- */
-typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
 
 /**
  * Filter type used internally when managing filters.
@@ -490,7 +476,7 @@ typedef enum {
 } in3_plugin_exec_t;
 
 /** registers a plugin with the client */
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data);
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_existing);
 
 /** executes all plugins irrespective of their return values, returns first error (if any) */
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx);
@@ -527,7 +513,6 @@ struct in3_t_ {
   chain_id_t             chain_id;             /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
   in3_storage_handler_t* cache;                /**< a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
   in3_signer_t*          signer;               /**< signer-struct managing a wallet */
-  in3_transport_send     transport;            /**< the transport handler sending requests */
   uint_fast8_t           flags;                /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
   in3_chain_t*           chains;               /**< chain spec and nodeList definitions*/
   uint16_t               chains_length;        /**< number of configured chains */
@@ -705,13 +690,16 @@ NONULL char* in3_get_config(
     in3_t* c /**< the incubed client */
 );
 
+/** a register-function for a plugion.
+ */
+typedef in3_ret_t (*plgn_register)(in3_t* c);
+
 /**
  * defines a default transport which is used when creating a new client.
  */
 void in3_set_default_transport(
-    in3_transport_send transport /**< the default transport-function. */
+    plgn_register transport /**< the default transport-function. */
 );
-
 /**
  * defines a default storage handler which is used when creating a new client.
  */
@@ -755,14 +743,6 @@ bytes_t in3_sign_ctx_get_account(
  */
 uint8_t* in3_sign_ctx_get_signature(
     in3_sign_ctx_t* ctx /**< the signer context */
-);
-
-/**
- * set the transport handler on the client.
- */
-void in3_set_transport(
-    in3_t*             c,   /**< the incubed client */
-    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
 );
 
 /**

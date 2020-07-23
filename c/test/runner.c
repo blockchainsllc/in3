@@ -172,10 +172,10 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   fuzz_pos       = _fuzz_pos;
   _tmp_pos       = 0;
 }
-
-static int send_mock(in3_request_t* req) {
-  int     i;
-  bytes_t response;
+static in3_ret_t send_mock(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req = plugin_ctx;
+  int            i;
+  bytes_t        response;
   if (d_len(_tmp_responses) <= _tmp_pos) {
     for (i = 0; i < req->urls_len; i++) {
       req->ctx->raw_response[i].state = IN3_ECONFIG;
@@ -316,10 +316,10 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     sprintf(temp, "Request #%i", counter);
 
   in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
-  int    j;
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, send_mock, NULL, true);
+  int j;
   c->max_attempts        = 1;
   c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST;
-  c->transport           = send_mock;
   c->cache               = NULL;
   c->finality            = d_get_intkd(test, key("finality"), 0);
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
