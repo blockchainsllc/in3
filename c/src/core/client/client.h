@@ -431,6 +431,8 @@ typedef struct in3_filter_t_ {
   void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
 } in3_filter_t;
 
+#define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
+
 /** plugin action list */
 typedef enum {
   PLGN_ACT_INIT              = 0x1,     /**< initialize plugin - use for allocating/setting-up internal resources */

@@ -897,7 +897,8 @@ cleanup:
 }
 
 static bool is_plugin_exclusive(in3_plugin_supp_acts_t acts) {
-  UNUSED_VAR(acts);
+  if (acts & PLGN_ACT_TRANSPORT)
+    return true;
   return false;
 }
 
