@@ -78,10 +78,6 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) ->
     _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
     # In3 init and module loading
     _libin3.in3_set_default_legacy_transport(transport_fn)
-    # TODO: in3_set_default_signer
-    _libin3.in3_register_eth_full()
-    # TODO: IPFS libin3.in3_register_ipfs();
-    _libin3.in3_register_eth_api()
     global DEBUG
     if DEBUG:
         # set logger level to TRACE
@@ -89,7 +85,13 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) ->
         _libin3.in3_log_set_level_(0)
     _libin3.in3_for_chain_auto_init.argtypes = c.c_int,
     _libin3.in3_for_chain_auto_init.restype = c.c_void_p
+    _libin3.in3_register_eth_full.argtypes = c.c_void_p,
+    _libin3.in3_register_eth_api.argtypes = c.c_void_p,
     instance = _libin3.in3_for_chain_auto_init(chain_id)
+    # TODO: in3_set_default_signer
+    _libin3.in3_register_eth_full(instance)
+    # TODO: IPFS libin3.in3_register_ipfs();
+    _libin3.in3_register_eth_api(instance)
     if cache_enabled:
         _libin3.in3_set_storage_handler.argtypes = c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p
         _libin3.in3_set_storage_handler(instance, get_item, set_item, clear, None)
