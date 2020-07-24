@@ -400,9 +400,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -470,11 +470,13 @@ void in3_free(in3_t* a) {
   if (!a) return;
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    /*
     if (a->chains[i].conf) {
       in3_verifier_t* verifier = in3_get_verifier(a->chains[i].type);
       if (verifier && verifier->free_chain)
         verifier->free_chain(a, a->chains + i);
     }
+    */
     if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
@@ -890,11 +892,11 @@ char* in3_configure(in3_t* c, const char* config) {
 #endif
             }
           } else {
-
+            /*
             // try to delegate the call to the verifier.
             const in3_verifier_t* verifier = in3_get_verifier(chain->type);
             if (verifier && verifier->set_confg && verifier->set_confg(c, cp.token, chain) == IN3_OK) continue;
-
+*/
             EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }

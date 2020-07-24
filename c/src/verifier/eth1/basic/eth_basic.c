@@ -60,6 +60,7 @@
   do { sb_add_char(&response[0]->data, '}'); } while (0)
 
 in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
+  if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
   char* method = d_get_stringk(vc->request, K_METHOD);
 
   // make sure we want to verify
@@ -104,12 +105,13 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   } else
-    return in3_verify_eth_nano(vc);
+    return IN3_EIGNORE;
 }
 
 /** called to see if we can handle the request internally */
 in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  if (ctx->len > 1) return IN3_OK; // internal handling is only possible for single requests (at least for now)
+
+  if (ctx->len > 1 || in3_find_chain(ctx->client, ctx->client->chain_id)->type != CHAIN_ETH) return IN3_EIGNORE; // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
   // check method to handle internally
@@ -137,12 +139,15 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     sb_add_char(&response[0]->data, '"');
     RESPONSE_END();
     return IN3_OK;
+
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_chainId") == 0) {
     RESPONSE_START();
     sb_add_char(&response[0]->data, '"');
     sb_add_hexuint(&response[0]->data, ctx->client->chain_id);
     sb_add_char(&response[0]->data, '"');
     RESPONSE_END();
+    return IN3_OK;
+
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
     in3_ret_t res = filter_add(ctx, FILTER_BLOCK, NULL);
     if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
@@ -152,8 +157,11 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     sb_add_hexuint(&response[0]->data, res);
     sb_add_char(&response[0]->data, '"');
     RESPONSE_END();
+    return IN3_OK;
+
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newPendingTransactionFilter") == 0) {
     return ctx_set_error(ctx, "pending filter not supported", IN3_ENOTSUP);
+
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_uninstallFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
@@ -163,6 +171,8 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     RESPONSE_START();
     sb_add_chars(&response[0]->data, filter_remove(ctx->client, id) ? "true" : "false");
     RESPONSE_END();
+    return IN3_OK;
+
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0 || strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterLogs") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
@@ -179,14 +189,27 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     sb_add_chars(&response[0]->data, sb->data);
     sb_free(sb);
     RESPONSE_END();
+    return IN3_OK;
   }
-  return IN3_OK;
+  return IN3_EIGNORE;
 }
 
-void in3_register_eth_basic() {
-  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  v->type           = CHAIN_ETH;
-  v->pre_handle     = eth_handle_intern;
-  v->verify         = in3_verify_eth_basic;
-  in3_register_verifier(v);
+in3_ret_t handle_basic(void* pdata, in3_plugin_act_t action, void* pctx) {
+  UNUSED_VAR(pdata);
+  switch (action) {
+    case PLGN_ACT_RPC_VERIFY: {
+      in3_vctx_t* vctx = pctx;
+      return in3_verify_eth_basic(vctx);
+    }
+    case PLGN_ACT_RPC_HANDLE: {
+      in3_rpc_handle_ctx_t* rctx = pctx;
+      return eth_handle_intern(rctx->ctx, rctx->response);
+    }
+    default:
+      break;
+  }
+}
+
+in3_ret_t in3_register_eth_basic(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_RPC_HANDLE, handle_basic, NULL, false);
 }

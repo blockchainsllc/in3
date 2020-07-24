@@ -41,8 +41,6 @@
 
 #include "../../../core/client/verifier.h"
 
-/** entry-function to execute the verification context. */
-in3_ret_t in3_verify_eth_basic(in3_vctx_t* v);
 /**
  * verifies internal tx-values.
  */
@@ -76,7 +74,7 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
 /**
  * this function should only be called once and will register the eth-nano verifier.
  */
-void in3_register_eth_basic();
+in3_ret_t in3_register_eth_basic(in3_t* c);
 
 /**
  *  verify logs

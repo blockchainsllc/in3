@@ -66,9 +66,6 @@
     response[0]->state = IN3_OK;          \
   } while (0)
 
-static in3_verify     parent_verify = NULL;
-static in3_pre_handle parent_handle = NULL;
-
 static in3_ret_t in3_abiEncode(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
   RESPONSE_START();
   call_request_t* req = parseSignature(d_get_string_at(params, 0));
@@ -379,10 +376,15 @@ static in3_ret_t in3_signTx(in3_ctx_t* ctx, d_token_t* params, in3_response_t** 
   return IN3_OK;
 }
 
-static in3_ret_t handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  d_token_t* r      = ctx->requests[0];
-  char*      method = d_get_stringk(r, K_METHOD);
-  d_token_t* params = d_get(r, K_PARAMS);
+static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* pctx) {
+  UNUSED_VAR(pdata);
+  UNUSED_VAR(action);
+  in3_rpc_handle_ctx_t* rctx     = pctx;
+  in3_ctx_t*            ctx      = rctx->ctx;
+  in3_response_t**      response = rctx->response;
+  d_token_t*            r        = ctx->requests[0];
+  char*                 method   = d_get_stringk(r, K_METHOD);
+  d_token_t*            params   = d_get(r, K_PARAMS);
   if (ctx->len == 1) {
     // internal handling is only possible for single requests (at least for now)
 
@@ -403,26 +405,9 @@ static in3_ret_t handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (strcmp(method, "in3_signTx") == 0) return in3_signTx(ctx, params, response);
   }
 
-  return parent_handle ? parent_handle(ctx, response) : IN3_OK;
+  return IN3_EIGNORE;
 }
 
-static int verify(in3_vctx_t* v) {
-  return parent_verify ? parent_verify(v) : IN3_ENOTSUP;
-}
-
-void in3_register_eth_api() {
-  in3_verifier_t* v = in3_get_verifier(CHAIN_ETH);
-  if (v && v->pre_handle == handle_intern) return;
-  if (v) {
-    parent_verify = v->verify;
-    parent_handle = v->pre_handle;
-    v->verify     = (in3_verify) verify;
-    v->pre_handle = handle_intern;
-  } else {
-    in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-    v->type           = CHAIN_ETH;
-    v->pre_handle     = handle_intern;
-    v->verify         = (in3_verify) verify;
-    in3_register_verifier(v);
-  }
+in3_ret_t in3_register_eth_api(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE, handle_intern, NULL, false);
 }

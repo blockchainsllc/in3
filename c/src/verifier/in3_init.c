@@ -11,24 +11,24 @@
 
 static bool initialized;
 
-static void init_verifier() {
+static void init_verifier(in3_t* c) {
 #ifdef ETH_FULL
-  in3_register_eth_full();
+  in3_register_eth_full(c);
 #endif
 #ifdef ETH_BASIC
-  in3_register_eth_basic();
+  in3_register_eth_basic(c);
 #endif
 #ifdef ETH_NANO
-  in3_register_eth_nano();
+  in3_register_eth_nano(c);
 #endif
 #ifdef ETH_API
-  in3_register_eth_api();
+  in3_register_eth_api(c);
 #endif
 #ifdef IPFS
-  in3_register_ipfs();
+  in3_register_ipfs(c);
 #endif
 #ifdef BTC
-  in3_register_btc();
+  in3_register_btc(c);
 #endif
 #ifdef PAY_ETH
   in3_register_pay_eth();
@@ -47,8 +47,10 @@ static void init_transport() {
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
   if (!initialized) {
     initialized = true;
-    init_verifier();
     init_transport();
   }
-  return in3_for_chain_default(chain_id);
+  in3_t* c = in3_for_chain_default(chain_id);
+  init_verifier(c);
+
+  return c;
 }

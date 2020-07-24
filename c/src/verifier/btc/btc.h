@@ -8,12 +8,9 @@
 
 #include "../../core/client/verifier.h"
 
-/** entry-function to execute the verification context. */
-in3_ret_t in3_verify_btc(in3_vctx_t* v);
-
 /**
  * this function should only be called once and will register the bitcoin verifier.
  */
-void in3_register_btc();
+in3_ret_t in3_register_btc(in3_t* c);
 
 #endif // in3_btc_h__

@@ -107,8 +107,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
-                                                                                      : 0;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -422,7 +421,7 @@ static in3_ret_t handle_payment(in3_ctx_t* ctx, node_match_t* node, int index) {
   return IN3_OK;
 }
 
-static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifier_t* verifier, node_match_t* node, in3_response_t* response) {
+static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
   in3_ret_t res = IN3_OK;
 
   if (response->state || !response->data.len) // reponse has an error
@@ -471,9 +470,9 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifie
       }
     }
 
-    // we only verify, if there is a verifier, but also a node, which means we do not verify internal responses.
-    if (verifier && node) {
-      res = ctx->verification_state = verifier->verify(&vc);
+    // we only verify, if there is a node, which means we do not verify internal responses.
+    if (node) {
+      res = ctx->verification_state = in3_plugin_execute_first(ctx, PLGN_ACT_RPC_VERIFY, &vc);
       if (res == IN3_WAITING)
         return res;
       if (res) {
@@ -504,7 +503,7 @@ static void handle_times(in3_chain_t* chain, node_match_t* node, in3_response_t*
   response->time = 0; // make sure we count the time only once
 }
 
-static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
+static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain) {
   node_match_t* node          = ctx->nodes;
   bool          still_pending = false;
   in3_ret_t     state         = IN3_ERPC;
@@ -524,7 +523,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     handle_times(chain, node, response + n);
 
-    state = verify_response(ctx, chain, verifier, node, response + n);
+    state = verify_response(ctx, chain, node, response + n);
     if (state == IN3_OK) {
       in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_stringk(ctx->requests[0], K_METHOD), node_data ? node_data->url : "intern");
       break;
@@ -906,8 +905,9 @@ void ctx_free(in3_ctx_t* ctx) {
   if (ctx) ctx_free_intern(ctx, false);
 }
 
-static inline in3_ret_t pre_handle(in3_verifier_t* verifier, in3_ctx_t* ctx) {
-  return verifier->pre_handle ? verifier->pre_handle(ctx, &ctx->raw_response) : IN3_OK;
+static inline in3_ret_t pre_handle(in3_ctx_t* ctx) {
+  in3_rpc_handle_ctx_t vctx = {.ctx = ctx, .response = &ctx->raw_response};
+  return in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
 }
 
 in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
@@ -944,12 +944,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
-      // find the verifier
-      in3_verifier_t* verifier = in3_get_verifier(chain->type);
-      if (verifier == NULL) return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
-
       // do we need to handle it internaly?
-      if (!ctx->raw_response && !ctx->response_context && (ret = pre_handle(verifier, ctx)) < 0)
+      if (!ctx->raw_response && !ctx->response_context && (ret = pre_handle(ctx)) < 0)
         return ctx_set_error(ctx, "The request could not be handled", ret);
 
       // if we don't have a nodelist, we try to get it.
@@ -975,7 +971,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
-      ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, chain, verifier);
+      ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, chain);
 
       // update weights in the cache
       update_nodelist_cache(ctx);
