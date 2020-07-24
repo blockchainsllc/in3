@@ -206,22 +206,6 @@ clean:
 }
 
 /**
- * create a new signer-object to be set on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_create_signer(
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-) {
-  in3_signer_t* signer = _calloc(1, sizeof(in3_signer_t));
-  signer->wallet       = wallet;
-  signer->sign         = sign;
-  signer->prepare_tx   = prepare_tx;
-  return signer;
-}
-
-/**
  * helper function to retrieve the message from a in3_sign_ctx_t
  */
 bytes_t in3_sign_ctx_get_message(
@@ -282,21 +266,6 @@ uint32_t in3_get_request_timeout(
     in3_request_t* request /**< request struct */
 ) {
   return request->ctx->client->timeout;
-}
-
-/**
- * set the signer on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_set_signer(
-    in3_t*         c,          /**< the incubed client */
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-) {
-  in3_signer_t* signer = in3_create_signer(sign, prepare_tx, wallet);
-  c->signer            = signer;
-  return signer;
 }
 
 in3_storage_handler_t* in3_set_storage_handler(

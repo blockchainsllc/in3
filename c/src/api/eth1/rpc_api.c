@@ -256,7 +256,7 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   char*          sig_type = d_get_string_at(params, 2);
   if (!sig_type) sig_type = "raw";
 
-  if (!pk) return ctx_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
+  //  if (!pk) return ctx_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
   if (!data.data) return ctx_set_error(ctx, "Missing message", IN3_EINVAL);
 
   if (strcmp(sig_type, "eth_sign") == 0) {
@@ -271,13 +271,12 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   in3_sign_ctx_t sc;
   sc.ctx     = ctx;
   sc.message = data;
-  sc.account = *pk;
-  sc.wallet  = ctx->client->signer ? ctx->client->signer->wallet : NULL;
+  sc.account = pk ? *pk : bytes(NULL, 0);
   sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 
-  if ((pk->len == 20 || pk->len == 0) && ctx->client->signer && ctx->client->signer->sign) {
-    TRY(ctx->client->signer->sign(&sc));
-  } else if (pk->len == 32) {
+  if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
+    TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sc));
+  } else if (sc.account.len == 32) {
     if (sc.type == SIGN_EC_RAW)
       ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature, sc.signature + 64, NULL);
     else if (strcmp(sig_type, "raw") == 0)

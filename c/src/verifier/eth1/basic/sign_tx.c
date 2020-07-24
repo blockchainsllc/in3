@@ -110,9 +110,11 @@ static in3_ret_t get_from_address(d_token_t* tx, in3_ctx_t* ctx, address_t res) 
   }
 
   // if it is not specified, we rely on the from-address of the signer.
-  if (!ctx->client->signer) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
+  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
-  memcpy(res, ctx->client->signer->default_address, 20);
+  in3_sign_account_ctx_t actx = {.ctx = ctx, .account = {0}};
+  TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
+  memcpy(res, actx.account, 20);
   return IN3_OK;
 }
 
@@ -184,16 +186,17 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   _free(raw);
 
   // do we need to change it?
-  if (ctx->client->signer && ctx->client->signer->prepare_tx) {
-    bytes_t   new_tx   = {0};
-    in3_ret_t prep_res = ctx->client->signer->prepare_tx(ctx, ctx->client->signer->wallet, *dst, &new_tx);
+  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
+    in3_sign_prepare_ctx_t pctx     = {.ctx = ctx, .old_tx = *dst, .new_tx = {0}};
+    in3_ret_t              prep_res = in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
+
     if (prep_res) {
       if (dst->data) _free(dst->data);
-      if (new_tx.data) _free(new_tx.data);
+      if (pctx.new_tx.data) _free(pctx.new_tx.data);
       return prep_res;
-    } else if (new_tx.data) {
+    } else if (pctx.new_tx.data) {
       if (dst->data) _free(dst->data);
-      *dst = new_tx;
+      *dst = pctx.new_tx;
     }
   }
 

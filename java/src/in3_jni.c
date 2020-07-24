@@ -705,6 +705,10 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 }
 #endif
 
+static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
+  return jsign(ctx);
+}
+
 /*
  * Class:     in3_IN3
  * Method:    init
@@ -714,11 +718,8 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_t* in3 = in3_for_chain_auto_init(jchain);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
   in3_plugin_register(in3, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, Java_in3_IN3_transport, NULL, true);
-  in3->signer             = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = jsign;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = in3->cache->cptr;
-  jni                     = env;
+  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, in3->cache->cptr, false);
+  jni = env;
 
   in3_set_jclient_config(in3, ob);
 

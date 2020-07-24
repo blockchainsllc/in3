@@ -107,8 +107,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
-                                                                                      : 0;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -686,7 +685,6 @@ static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->account = d_to_bytes(d_get_at(params, 1));
   sign_ctx->type    = SIGN_EC_HASH;
   sign_ctx->ctx     = ctx;
-  sign_ctx->wallet  = ctx->client->signer ? ctx->client->signer->wallet : NULL;
 }
 
 in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
@@ -696,21 +694,17 @@ in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
 }
 
 in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
-  if (ctx->client->signer) {
-    in3_sign_ctx_t sign_ctx;
-    init_sign_ctx(ctx, &sign_ctx);
-    if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
-    if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+  in3_sign_ctx_t sign_ctx;
+  init_sign_ctx(ctx, &sign_ctx);
+  if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+  if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
-    ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
-    sb_init(&ctx->raw_response[0].data);
-    in3_log_trace("... request to sign ");
-    in3_ret_t res = ctx->client->signer->sign(&sign_ctx);
-    if (res < 0) return ctx_set_error(ctx, ctx->raw_response->data.data, res);
-    sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
-    return IN3_OK;
-  } else
-    return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
+  ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
+  sb_init(&ctx->raw_response[0].data);
+  in3_log_trace("... request to sign ");
+  TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sign_ctx))
+  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
+  return IN3_OK;
 }
 
 typedef struct {

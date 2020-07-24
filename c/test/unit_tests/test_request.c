@@ -608,8 +608,6 @@ static void test_configure_validation() {
  * Main
  */
 int main() {
-  _free(in3_create_signer(NULL, NULL, NULL));
-
   in3_log_set_quiet(true);
   in3_register_eth_basic();
   in3_register_eth_api();

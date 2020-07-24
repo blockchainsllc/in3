@@ -1115,12 +1115,11 @@ int main(int argc, char* argv[]) {
       sig_type = "raw";
     }
 
-    if (!c->signer) die("No private key/path given");
+    if (!in3_plugin_is_registered(c, PLGN_ACT_SIGN)) die("No private key/path given");
     in3_ctx_t ctx;
     ctx.client = c;
     in3_sign_ctx_t sc;
     sc.ctx     = &ctx;
-    sc.wallet  = c->signer->wallet;
     sc.account = bytes(NULL, 0);
     sc.message = *data;
     sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
@@ -1138,13 +1137,14 @@ int main(int argc, char* argv[]) {
       memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
 
       sc.message = *tmp_data;
-      c->signer->sign(&sc);
+      in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
+
       b_free(tmp_data);
     } else {
-      c->signer->sign(&sc);
+      in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
     }
 #else
-    c->signer->sign(&sc);
+    in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
 #endif
 
     sc.signature[64] += 27;

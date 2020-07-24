@@ -179,11 +179,10 @@ static void test_signer() {
   bytes_t*       data     = hex_to_new_bytes(data_str, strlen(data_str));
   in3_sign_ctx_t sc;
   sc.ctx     = ctx;
-  sc.wallet  = c->signer->wallet;
   sc.message = *data;
   sc.type    = SIGN_EC_RAW;
-  sc.account = bytes(NULL, 0),
-  TEST_ASSERT_EQUAL(IN3_OK, eth_sign_pk_ctx(&sc));
+  sc.account = bytes(NULL, 0);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sc));
   TEST_ASSERT_FALSE(memiszero(sc.signature, 65));
   b_free(data);
   ctx_free(ctx);

@@ -114,7 +114,7 @@ void in3_register_payment(
 // set the defaults
 static plgn_register          default_transport        = NULL;
 static in3_storage_handler_t* default_storage          = NULL;
-static in3_signer_t*          default_signer           = NULL;
+static plgn_register          default_signer           = NULL;
 static in3_transport_legacy   default_legacy_transport = NULL;
 static in3_ret_t              handle_legacy_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
@@ -147,7 +147,7 @@ void in3_set_default_storage(in3_storage_handler_t* cacheStorage) {
 /**
  * defines a default signer which is used when creating a new client.
  */
-void in3_set_default_signer(in3_signer_t* signer) {
+void in3_set_default_signer(plgn_register signer) {
   default_signer = signer;
 }
 
@@ -276,7 +276,6 @@ static void init_goerli(in3_chain_t* chain) {
 static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST | FLAGS_BOOT_WEIGHTS;
   c->cache                = NULL;
-  c->signer               = NULL;
   c->cache_timeout        = 0;
   c->chain_id             = chain_id ? chain_id : CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
@@ -401,9 +400,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -482,7 +481,6 @@ void in3_free(in3_t* a) {
     whitelist_free(a->chains[i].whitelist);
     _free(a->chains[i].nodelist_upd8_params);
   }
-  if (a->signer && a->signer != default_signer) _free(a->signer);
   if (a->cache && a->cache != default_storage) _free(a->cache);
   if (a->chains) _free(a->chains);
 
@@ -533,7 +531,7 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
 
   if (default_transport) default_transport(c);
   if (default_storage) c->cache = default_storage;
-  if (default_signer) c->signer = default_signer;
+  if (default_signer) default_signer(c);
 
   return c;
 }
