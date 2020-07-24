@@ -43,8 +43,8 @@ extern "C" {
 void add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
 int  add_response_test(char* test, char* needed_params);
 
-in3_ret_t mock_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
-in3_ret_t test_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 
 static inline in3_ret_t register_transport(in3_t* c, in3_plugin_act_fn fn) {
   return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, fn, NULL, true);

@@ -116,8 +116,8 @@ static plgn_register          default_transport        = NULL;
 static in3_storage_handler_t* default_storage          = NULL;
 static in3_signer_t*          default_signer           = NULL;
 static in3_transport_legacy   default_legacy_transport = NULL;
-static in3_ret_t              handle_legacy_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
-  UNUSED_VAR(plugin);
+static in3_ret_t              handle_legacy_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
   return default_legacy_transport((in3_request_t*) plugin_ctx);
 }

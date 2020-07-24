@@ -54,8 +54,8 @@
 #include "../../core/util/utils.h"
 #include "in3_http.h"
 
-in3_ret_t send_http(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
-  UNUSED_VAR(plugin);
+in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
   in3_request_t* req = plugin_ctx;
   for (unsigned int n = 0; n < req->urls_len; n++) {

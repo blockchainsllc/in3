@@ -54,7 +54,7 @@
  * c->transport = send_http;
  * ```
  */
-in3_ret_t send_http(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 /**
  * registers http as a default transport.
  */

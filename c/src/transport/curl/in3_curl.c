@@ -221,8 +221,8 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
   return IN3_OK;
 }
 
-in3_ret_t send_curl(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
-  UNUSED_VAR(plugin);
+in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
   in3_request_t* req = plugin_ctx;
   // set the init-time
 #ifdef CURL_BLOCKING

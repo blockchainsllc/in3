@@ -120,7 +120,7 @@ int add_response_test(char* test, char* needed_params) {
   _free(buffer);
   return params ? 0 : -1;
 }
-in3_ret_t test_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_request_t* req = plugin_ctx;
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
@@ -146,7 +146,7 @@ in3_ret_t test_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* pl
   return IN3_OK;
 }
 
-in3_ret_t mock_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_request_t* req      = plugin_ctx;
   json_ctx_t*    r        = parse_json(req->payload);
   d_token_t*     request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;

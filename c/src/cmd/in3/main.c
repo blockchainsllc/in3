@@ -580,7 +580,8 @@ static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
 static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
-static in3_ret_t debug_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
 
   in3_request_t* req = plugin_ctx;
   if (action == PLGN_ACT_TRANSPORT_SEND) {
@@ -604,9 +605,9 @@ static in3_ret_t debug_transport(in3_plugin_t* plugin, in3_plugin_act_t action, 
     }
   }
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(plugin, action, plugin_ctx);
+  in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #else
-  in3_ret_t r = send_http(plugin, action, plugin_ctx);
+  in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
@@ -622,12 +623,13 @@ static in3_ret_t debug_transport(in3_plugin_t* plugin, in3_plugin_act_t action, 
   return r;
 }
 static char*     test_name = NULL;
-static in3_ret_t test_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
   in3_request_t* req = plugin_ctx;
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(plugin, action, plugin_ctx);
+  in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #else
-  in3_ret_t r = send_http(plugin, action, plugin_ctx);
+  in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;

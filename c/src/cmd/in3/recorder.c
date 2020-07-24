@@ -108,8 +108,8 @@ static int rand_in(void* s) {
   return r;
 }
 
-static in3_ret_t recorder_transport_in(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
-  UNUSED_VAR(plugin);
+static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
   in3_request_t* req = plugin_ctx;
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     entry_free(next_entry("request", NULL));
@@ -127,11 +127,12 @@ static in3_ret_t recorder_transport_in(in3_plugin_t* plugin, in3_plugin_act_t ac
   return 0;
 }
 
-static in3_ret_t recorder_transport_out(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
   in3_request_t* req   = plugin_ctx;
   in3_chain_t*   chain = in3_find_chain(req->ctx->client, req->ctx->client->chain_id);
   node_match_t*  m     = req->ctx->nodes;
-  in3_ret_t      res   = rec.transport(plugin, action, plugin_ctx);
+  in3_ret_t      res   = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     fprintf(rec.f, ":: request ");
     for (int i = 0; m; i++, m = m->next)

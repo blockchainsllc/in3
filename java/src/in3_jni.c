@@ -344,8 +344,8 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
 
   in3_free(in3);
 }
-in3_ret_t Java_in3_IN3_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
-  UNUSED_VAR(plugin);
+in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
 
   in3_request_t* req   = plugin_ctx;

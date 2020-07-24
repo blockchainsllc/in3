@@ -50,7 +50,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static in3_ret_t test_bulk_transport(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+static in3_ret_t test_bulk_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_request_t* req    = plugin_ctx;
   char*          buffer = NULL;
   long           length;

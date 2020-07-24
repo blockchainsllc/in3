@@ -79,7 +79,7 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
   }
   return IN3_OK;
 }
-in3_ret_t transport_mock(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx) {
+in3_ret_t transport_mock(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_request_t* req = plugin_ctx;
   return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }

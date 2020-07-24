@@ -46,7 +46,7 @@
  * a transport function using curl.
  * 
  */
-in3_ret_t send_curl(in3_plugin_t* plugin, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * registers curl as a default transport.
