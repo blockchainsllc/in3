@@ -500,22 +500,6 @@ typedef struct in3_filter_handler_t_ {
   size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
-/**
- * Plugins
- */
-typedef enum {
-  PLUGIN_NODESELECT, /** nodeselect module, only one such module can be registered per client */
-} in3_plugin_type_t;
-
-typedef struct in3_plugin {
-  void*             internal;                                        /**< opaque pointer to actual plugin struct */
-  in3_plugin_type_t type;                                            /**< plugin type */
-  char* (*configure)(struct in3_plugin* plugin, const char* config); /**< method to configure plugin using JSON config, Returns NULL on success, and error string on failure */
-  void (*lock)(struct in3_plugin* plugin, bool is_write);            /**< method to lock plugin data for MT-safe read/write access */
-  void (*unlock)(struct in3_plugin* plugin, bool is_write);          /**< method to unlock plugin data for MT-safe read/write access */
-  void (*free)(struct in3_plugin* plugin, bool is_write);            /**< method to release internal resources and cleanup */
-} in3_plugin_t;
-
 /** Incubed Configuration.
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
