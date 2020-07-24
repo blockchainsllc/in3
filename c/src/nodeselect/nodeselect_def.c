@@ -1,22 +1,30 @@
 #include "nodeselect_def.h"
 
-// function decls
-static in3_ret_t nodeselect_def_pick(in3_nodeselect_t* nodeselect, in3_ctx_t* ctx, int count, in3_node_filter_t filter);
-static void      nodeselect_def_blacklist(in3_nodeselect_t* nodeselect, in3_node_weight_t* node);
-static char*     nodeselect_def_configure(in3_plugin_t* plugin, const char* config);
-
-// variable defs
-static in3_nodeselect_t nodeselect_def        = {.blacklist = nodeselect_def_blacklist, .pick = nodeselect_def_pick};
-const in3_plugin_t      nodeselect_def_plugin = {.internal = &nodeselect_def, .type = PLUGIN_NODESELECT, .configure = nodeselect_def_configure};
-
-// function defs
-static in3_ret_t nodeselect_def_pick(in3_nodeselect_t* nodeselect, in3_ctx_t* ctx, int count, in3_node_filter_t filter) {
+static in3_ret_t pick_data(void* plugin_data, void* plugin_ctx) {
   return IN3_OK;
 }
 
-static void nodeselect_def_blacklist(in3_nodeselect_t* nodeselect, in3_node_weight_t* node) {
+static in3_ret_t pick_signer(void* plugin_data, void* plugin_ctx) {
+  return IN3_OK;
 }
 
-static char* nodeselect_def_configure(in3_plugin_t* plugin, const char* config) {
-  return NULL;
+static in3_ret_t pick_followup(void* plugin_data, void* plugin_ctx) {
+  return IN3_OK;
+}
+
+static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  switch (action) {
+    case PLGN_ACT_NL_PICK_DATA:
+      return pick_data(plugin_data, plugin_ctx);
+    case PLGN_ACT_NL_PICK_SIGNER:
+      return pick_signer(plugin_data, plugin_ctx);
+    case PLGN_ACT_NL_PICK_FOLLOWUP:
+      return pick_followup(plugin_data, plugin_ctx);
+    default: break;
+  }
+  return IN3_EIGNORE;
+}
+
+in3_ret_t in3_register_nodeselect_def(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_NODELIST, nodeselect, NULL, false);
 }

@@ -432,6 +432,7 @@ typedef struct in3_filter_t_ {
 } in3_filter_t;
 
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
+#define PLGN_ACT_NODELIST (PLGN_ACT_NL_PICK_DATA | PLGN_ACT_NL_PICK_SIGNER | PLGN_ACT_NL_PICK_FOLLOWUP)
 
 /** plugin action list */
 typedef enum {
