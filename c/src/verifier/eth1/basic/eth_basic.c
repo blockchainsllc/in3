@@ -206,7 +206,7 @@ in3_ret_t handle_basic(void* pdata, in3_plugin_act_t action, void* pctx) {
       return eth_handle_intern(rctx->ctx, rctx->response);
     }
     default:
-      break;
+      return IN3_EINVAL;
   }
 }
 

@@ -907,7 +907,8 @@ void ctx_free(in3_ctx_t* ctx) {
 
 static inline in3_ret_t pre_handle(in3_ctx_t* ctx) {
   in3_rpc_handle_ctx_t vctx = {.ctx = ctx, .response = &ctx->raw_response};
-  return in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
+  in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
+  return res == IN3_EIGNORE ? IN3_OK : res;
 }
 
 in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
