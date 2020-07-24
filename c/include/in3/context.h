@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
-#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
