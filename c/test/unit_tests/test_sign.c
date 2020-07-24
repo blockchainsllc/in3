@@ -53,7 +53,6 @@
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 
-#include "../../src/signer/pk-signer/signer-priv.h"
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/third-party/crypto/ecdsa.h"
 #include "../../src/third-party/crypto/secp256k1.h"

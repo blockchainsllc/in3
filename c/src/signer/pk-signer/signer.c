@@ -32,13 +32,13 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "signer.h"
 #include "../../core/client/client.h"
 #include "../../core/client/keys.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/serialize.h"
-#include "signer-priv.h"
 /** hash data with given hasher type and sign the given data with give private key*/
 in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
   if (hasher == hasher_sha3k && ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message, len, dst, dst + 64, NULL) < 0)
