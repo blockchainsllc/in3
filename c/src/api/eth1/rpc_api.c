@@ -159,11 +159,10 @@ static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** res
 }
 static in3_ret_t in3_sha3(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
   if (!params) return ctx_set_error(ctx, "no data", IN3_EINVAL);
-  bytes_t data = d_to_bytes(params + 1);
   RESPONSE_START();
   bytes32_t hash;
   bytes_t   hbytes = bytes(hash, 32);
-  sha3_to(&data, hash);
+  keccak(d_to_bytes(params + 1), hash);
   sb_add_bytes(&response[0]->data, NULL, &hbytes, 1, false);
   RESPONSE_END();
   return IN3_OK;
@@ -204,7 +203,7 @@ static in3_ret_t in3_pk2address(in3_ctx_t* ctx, d_token_t* params, in3_response_
   ecdsa_get_public_key65(&secp256k1, pk->data, public_key);
   RESPONSE_START();
   if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "in3_pk2address") == 0) {
-    sha3_to(&pubkey_bytes, sdata);
+    keccak(pubkey_bytes, sdata);
     sb_add_bytes(&response[0]->data, NULL, &addr, 1, false);
   } else
     sb_add_bytes(&response[0]->data, NULL, &pubkey_bytes, 1, false);
@@ -234,14 +233,14 @@ static in3_ret_t in3_ecrecover(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     if (msg.len != 32) return ctx_set_error(ctx, "The message hash must be 32 byte", IN3_EINVAL);
     memcpy(hash, msg.data, 32);
   } else
-    sha3_to(&msg, hash);
+    keccak(msg, hash);
 
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig->data, hash, sig->data[64] >= 27 ? sig->data[64] - 27 : sig->data[64]))
     return ctx_set_error(ctx, "Invalid Signature", IN3_EINVAL);
 
   RESPONSE_START();
   sb_add_char(&response[0]->data, '{');
-  sha3_to(&pubkey_bytes, hash);
+  keccak(pubkey_bytes, hash);
   sb_add_bytes(&response[0]->data, "\"publicKey\":", &pubkey_bytes, 1, false);
   sb_add_char(&response[0]->data, ',');
   pubkey_bytes.data = hash + 12;
@@ -298,7 +297,7 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   if (strcmp(sig_type, "raw") == 0) {
     bytes32_t hash_val;
     bytes_t   hash_bytes = bytes(hash_val, 32);
-    sha3_to(&data, hash_val);
+    keccak(data, hash_val);
     sb_add_bytes(&response[0]->data, "\"messageHash\":", &hash_bytes, 1, false);
   } else
     sb_add_bytes(&response[0]->data, "\"messageHash\":", &data, 1, false);
@@ -382,51 +381,33 @@ static in3_ret_t in3_signTx(in3_ctx_t* ctx, d_token_t* params, in3_response_t** 
 }
 
 static in3_ret_t handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* r      = ctx->requests[0];
   char*      method = d_get_stringk(r, K_METHOD);
   d_token_t* params = d_get(r, K_PARAMS);
+  if (ctx->len == 1) {
+    // internal handling is only possible for single requests (at least for now)
 
-  if (strcmp(method, "in3_abiEncode") == 0) return in3_abiEncode(ctx, params, response);
-  if (strcmp(method, "in3_abiDecode") == 0) return in3_abiDecode(ctx, params, response);
-  if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(ctx, params, response);
-  if (strcmp(method, "in3_ens") == 0) return in3_ens(ctx, params, response);
-  if (strcmp(method, "web3_sha3") == 0) return in3_sha3(ctx, params, response);
-  if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
-  if (strcmp(method, "in3_getConfig") == 0) return in3_getConfig(ctx, response);
-  if (strcmp(method, "in3_pk2address") == 0) return in3_pk2address(ctx, params, response);
-  if (strcmp(method, "in3_pk2public") == 0) return in3_pk2address(ctx, params, response);
-  if (strcmp(method, "in3_ecrecover") == 0) return in3_ecrecover(ctx, params, response);
-  if (strcmp(method, "in3_signData") == 0) return in3_sign_data(ctx, params, response);
-  if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(ctx, response);
-  if (strcmp(method, "in3_decryptKey") == 0) return in3_decryptKey(ctx, params, response);
-  if (strcmp(method, "in3_prepareTx") == 0) return in3_prepareTx(ctx, params, response);
-  if (strcmp(method, "in3_signTx") == 0) return in3_signTx(ctx, params, response);
+    if (strcmp(method, "in3_abiEncode") == 0) return in3_abiEncode(ctx, params, response);
+    if (strcmp(method, "in3_abiDecode") == 0) return in3_abiDecode(ctx, params, response);
+    if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(ctx, params, response);
+    if (strcmp(method, "in3_ens") == 0) return in3_ens(ctx, params, response);
+    if (strcmp(method, "web3_sha3") == 0) return in3_sha3(ctx, params, response);
+    if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
+    if (strcmp(method, "in3_getConfig") == 0) return in3_getConfig(ctx, response);
+    if (strcmp(method, "in3_pk2address") == 0) return in3_pk2address(ctx, params, response);
+    if (strcmp(method, "in3_pk2public") == 0) return in3_pk2address(ctx, params, response);
+    if (strcmp(method, "in3_ecrecover") == 0) return in3_ecrecover(ctx, params, response);
+    if (strcmp(method, "in3_signData") == 0) return in3_sign_data(ctx, params, response);
+    if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(ctx, response);
+    if (strcmp(method, "in3_decryptKey") == 0) return in3_decryptKey(ctx, params, response);
+    if (strcmp(method, "in3_prepareTx") == 0) return in3_prepareTx(ctx, params, response);
+    if (strcmp(method, "in3_signTx") == 0) return in3_signTx(ctx, params, response);
+  }
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
 }
 
 static int verify(in3_vctx_t* v) {
-  char* method = d_get_stringk(v->request, K_METHOD);
-  if (!method) return vc_err(v, "no method in the request!");
-
-  if (strcmp(method, "in3_abiEncode") == 0 ||
-      strcmp(method, "in3_abiDecode") == 0 ||
-      strcmp(method, "in3_checksumAddress") == 0 ||
-      strcmp(method, "web3_sha3") == 0 ||
-      strcmp(method, "in3_ens") == 0 ||
-      strcmp(method, "in3_config") == 0 ||
-      strcmp(method, "in3_getConfig") == 0 ||
-      strcmp(method, "in3_pk2address") == 0 ||
-      strcmp(method, "in3_ecrecover") == 0 ||
-      strcmp(method, "in3_signData") == 0 ||
-      strcmp(method, "in3_pk2public") == 0 ||
-      strcmp(method, "in3_decryptKey") == 0 ||
-      strcmp(method, "in3_prepareTx") == 0 ||
-      strcmp(method, "in3_signTx") == 0 ||
-      strcmp(method, "in3_cacheClear") == 0)
-    return IN3_OK;
-
   return parent_verify ? parent_verify(v) : IN3_ENOTSUP;
 }
 
@@ -446,15 +427,3 @@ void in3_register_eth_api() {
     in3_register_verifier(v);
   }
 }
-
-// needed rpcs
-/*
-in3_send
-in3_call
-in3_pk2address
-in3_pk2public
-in3_ecrecover
-in3_key
-in3_hash
-
-*/

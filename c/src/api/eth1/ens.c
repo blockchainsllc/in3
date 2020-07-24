@@ -59,13 +59,11 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_
 
 static void ens_hash(const char* domain, bytes32_t dst) {
   uint8_t hash[64];                                                                            // we use the first 32 bytes for the root and the 2nd for the name so we can combine them without copying
-  bytes_t input = bytes(NULL, 0), root = bytes(hash, 64);                                      // bytes-strcuts for root
   int     end = strlen(domain);                                                                // we start with the last token
   memset(hash, 0, 32);                                                                         // clear root
   for (int pos = next_token(domain, end - 1);; end = pos, pos = next_token(domain, pos - 1)) { // we start with the last
-    input = bytes((uint8_t*) (domain + pos + 1), end - pos - 1);                               // and iterate through the tokens
-    sha3_to(&input, hash + 32);                                                                // hash the name
-    sha3_to(&root, hash);                                                                      // hash ( root + name )
+    keccak(bytes((uint8_t*) (domain + pos + 1), end - pos - 1), hash + 32);                    // hash the name
+    keccak(bytes(hash, 64), hash);                                                             // hash ( root + name )
     if (pos < 0) break;                                                                        //  last one?
   }                                                                                            //
   memcpy(dst, hash, 32);                                                                       // we only the first 32 bytes - the root

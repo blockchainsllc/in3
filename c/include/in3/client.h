@@ -237,6 +237,7 @@ typedef struct in3_chain {
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
   uint16_t             avg_block_time;  /**< average block time (seconds) for this chain (calculated internally) */
+  bool                 dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
   void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
   struct {
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
@@ -280,10 +281,10 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
+#define IN3_SIGN_ERR_REJECTED -1 /**< return value used by the signer if the the signature-request was rejected. */
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3   /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR -4     /**< return value used by the signer for unspecified errors. */
+#define IN3_SIGN_ERR_INVALID_MESSAGE -3 /**< return value used by the signer if the message was invalid. */
+#define IN3_SIGN_ERR_GENERAL_ERROR -4 /**< return value used by the signer for unspecified errors. */
 
 /** type of the requested signature */
 typedef enum {
@@ -320,7 +321,7 @@ typedef in3_ret_t (*in3_sign)(in3_sign_ctx_t* ctx);
  * if the new_tx is not set within the function, it will use the old_tx.
  * 
 */
-typedef in3_ret_t (*in3_prepare_tx)(struct in3_ctx* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
+typedef in3_ret_t (*in3_prepare_tx)(struct in3_ctx* ctx, void* cptr, bytes_t raw_tx, bytes_t* new_raw_tx);
 
 /**
  * definition of a signer holding funciton-pointers and data.
@@ -551,7 +552,7 @@ NONULL in3_ret_t in3_client_rpc(
     char**      result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
-/** sends a request and stores the result in the provided buffer */
+/** sends a request and stores the result in the provided buffer, this method will always return the first, so bulk-requests are not saupported. */
 NONULL in3_ret_t in3_client_rpc_raw(
     in3_t*      c,       /**< [in] the pointer to the incubed client config. */
     const char* request, /**< [in] the rpc request including method and params. */
@@ -559,6 +560,7 @@ NONULL in3_ret_t in3_client_rpc_raw(
     char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
+ * This fuinction also supports sending bulk-requests, but you can not mix internal and external calls, since bulk means all requests will be send to picked nodes.
  * The resulting string must be free by the the caller of this function! 
  */
 NONULL char* in3_client_exec_req(

@@ -175,7 +175,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   sprintf(tmp, "%s%u%s{}", result->device->url, d_get_intk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
   sprintf(mhash, "\031Ethereum Signed Message:\n%zu%s", strlen(tmp), tmp);
   bytes_t msg_data = {.data = (uint8_t*) mhash, .len = strlen(mhash)};
-  sha3_to(&msg_data, hash);
+  keccak(msg_data, hash);
   msg_data = bytes(hash, 32);
 
   // get the signature
@@ -199,7 +199,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     bytes_t   action_bytes = d_to_bytes(d_get(msg, K_ACTION));
     memset(calldata, 0, 64);
     memcpy(calldata + 12, signer->data, 20); // the signer
-    sha3_to(&action_bytes, calldata + 32);   // add the hash of the action
+    keccak(action_bytes, calldata + 32);     // add the hash of the action
     memset(calldata + 32 + 4, 0, 28);        // set the rest of the data to 0
 
     in3_ret_t l = exec_eth_call(conf, "a0b0305f", result->device->id, bytes(calldata, 64), access, 32);
@@ -335,7 +335,7 @@ usn_url_t usn_parse_url(char* url) {
   } else
     c = res.contract_name;
   bytes_t name = bytes((uint8_t*) url, c - url);
-  sha3_to(&name, res.device_id);
+  keccak(name, res.device_id);
   long_to_bytes(res.counter, res.device_id + 24);
   res.contract_name++;
   return res;

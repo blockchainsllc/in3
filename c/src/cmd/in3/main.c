@@ -67,6 +67,7 @@
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
+#include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "../../verifier/in3_init.h"
@@ -118,6 +119,8 @@ void show_help(char* name) {
 -q             quit. no additional output. \n\
 -tr            runs test request when showing in3_weights \n\
 -thr           runs test request including health-check when showing in3_weights \n\
+-ms            adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) \n\
+-sigs          add additional signatures, which will be useds when sending through a multisig! \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
 -nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
@@ -691,6 +694,7 @@ int main(int argc, char* argv[]) {
   char*           name             = NULL;
   call_request_t* req              = NULL;
   bool            json             = false;
+  char*           ms_sigs          = NULL;
   uint64_t        gas_limit        = 100000;
   char*           value            = NULL;
   bool            wait             = false;
@@ -782,7 +786,17 @@ int main(int argc, char* argv[]) {
       set_nodelist(c, argv[++i], false);
     else if (strcmp(argv[i], "-bn") == 0)
       set_nodelist(c, argv[++i], true);
-    else if (strcmp(argv[i], "-eth") == 0)
+    else if (strcmp(argv[i], "-mss") == 0 || strcmp(argv[i], "-sigs") == 0)
+      ms_sigs = argv[++i];
+    else if (strcmp(argv[i], "-ms") == 0) {
+#ifdef MULTISIG
+      address_t adr;
+      if (hex_to_bytes(argv[++i], -1, adr, 20) != 20) die("-ms must be exactly 20 bytes");
+      add_gnosis_safe(c, adr);
+#else
+      die("-ms is not supported. Compile with -DMULTISIG=true");
+#endif
+    } else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
       c->min_deposit = atoll(argv[++i]);
@@ -1178,9 +1192,8 @@ int main(int argc, char* argv[]) {
     bytes32_t prv_key;
     uint8_t   public_key[65], sdata[32];
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
-    bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-    sha3_to(&pubkey_bytes, sdata);
+    keccak(bytes(public_key + 1, 64), sdata);
     printf("0x");
     for (i = 0; i < 20; i++) printf("%02x", sdata[i + 12]);
     printf("\n");
@@ -1199,7 +1212,6 @@ int main(int argc, char* argv[]) {
     bytes_t   sig = d_to_bytes(d_get_at(rargs->result, 1));
     bytes32_t hash;
     uint8_t   pub[65];
-    bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(msg.len + 30);
       int   l   = sprintf(tmp, "\x19"
@@ -1212,13 +1224,13 @@ int main(int argc, char* argv[]) {
       if (msg.len != 32) die("The message hash must be 32 byte");
       memcpy(hash, msg.data, 32);
     } else
-      sha3_to(&msg, hash);
+      keccak(msg, hash);
     if (sig.len != 65) die("The signature must be 65 bytes");
 
     if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig.data, hash, sig.data[64] >= 27 ? sig.data[64] - 27 : sig.data[64]))
       die("Invalid Signature");
 
-    sha3_to(&pubkey_bytes, hash);
+    keccak(bytes(pub + 1, 64), hash);
     print_hex(hash + 12, 20);
     print_hex(pub + 1, 64);
     return 0;
@@ -1228,7 +1240,18 @@ int main(int argc, char* argv[]) {
   in3_chain_t* chain = in3_find_chain(c, c->chain_id);
 
   // send the request
-  in3_client_rpc(c, method, params, &result, &error);
+  sb_t* sb = sb_new("{\"method\":\"");
+  sb_add_chars(sb, method);
+  sb_add_chars(sb, "\",\"params\":");
+  sb_add_chars(sb, params);
+  if (ms_sigs) {
+    sb_add_chars(sb, ",\"in3\":{\"msSigs\":\"");
+    sb_add_chars(sb, ms_sigs);
+    sb_add_chars(sb, "\"}}");
+  } else
+    sb_add_chars(sb, "}");
+
+  in3_client_rpc_raw(c, sb->data, &result, &error);
 
   // Update nodelist if a newer latest block was reported
   if (chain && chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {

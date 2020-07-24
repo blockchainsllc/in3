@@ -183,6 +183,20 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   *dst         = *raw;
   _free(raw);
 
+  // do we need to change it?
+  if (ctx->client->signer && ctx->client->signer->prepare_tx) {
+    bytes_t   new_tx   = {0};
+    in3_ret_t prep_res = ctx->client->signer->prepare_tx(ctx, ctx->client->signer->wallet, *dst, &new_tx);
+    if (prep_res) {
+      if (dst->data) _free(dst->data);
+      if (new_tx.data) _free(new_tx.data);
+      return prep_res;
+    } else if (new_tx.data) {
+      if (dst->data) _free(dst->data);
+      *dst = new_tx;
+    }
+  }
+
   // cleanup subcontexts
   TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionCount")))
   TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_gasPrice")))
@@ -279,18 +293,6 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
 
   TRY(get_from_address(tx_params + 1, ctx, from));
   TRY(unsigned_tx.data ? IN3_OK : eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
-
-  // do we want to modify the transaction?
-  if (ctx->client->signer && ctx->client->signer->prepare_tx && !sig_ctx && unsigned_tx.data) {
-    bytes_t   new_tx = bytes(NULL, 0);
-    in3_ret_t res    = ctx->client->signer->prepare_tx(ctx, unsigned_tx, &new_tx);
-
-    if (res || new_tx.data) _free(unsigned_tx.data);
-    TRY(res)
-
-    if (new_tx.data) unsigned_tx = new_tx;
-  }
-
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (!sig_ctx && unsigned_tx.data) _free(unsigned_tx.data);)
 

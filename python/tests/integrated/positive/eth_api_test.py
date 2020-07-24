@@ -12,7 +12,7 @@ class EthereumTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_ethereum_sha3(self):
         digest = self.client.eth.keccak256('0x68656c6c6f20776f726c64')
@@ -68,7 +68,7 @@ class EthereumGoerliTest(EthereumTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_get_block_by_number(self):
         block = self.client.eth.block_by_number(2581719)
@@ -92,7 +92,7 @@ class EthereumKovanTest(EthereumTest):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_get_block_by_number(self):
         block = self.client.eth.block_by_number(18135233)

@@ -99,6 +99,33 @@ static void test_configure_request() {
   in3_free(c);
 }
 
+static void test_bulk_response() {
+  in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
+  c->request_count = 2;
+  c->flags         = 0;
+  _free(c->chains->nodelist_upd8_params);
+  c->chains->nodelist_upd8_params = NULL;
+
+  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  in3_ctx_t* ctx = ctx_new(c, "[{\"method\":\"eth_blockNumber\",\"params\":[]},{\"method\":\"eth_blockNumber\",\"params\":[]}]");
+  TEST_ASSERT_EQUAL(CTX_WAITING_TO_SEND, in3_ctx_exec_state(ctx));
+  in3_request_t* req = in3_create_request(ctx);
+
+  // first response is an error we expect a waiting since the transport has not passed all responses yet
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
+  TEST_ASSERT_EQUAL(CTX_WAITING_FOR_RESPONSE, in3_ctx_exec_state(ctx));
+  in3_ctx_add_response(req->ctx, 1, false, "[{\"result\":\"0x1\"},{\"result\":\"0x2\",\"in3\":{\"currentBlock\":\"0x1\"}}]", -1);
+  request_free(req);
+  TEST_ASSERT_EQUAL(CTX_SUCCESS, in3_ctx_exec_state(ctx));
+
+  char* res = ctx_get_response_data(ctx);
+  TEST_ASSERT_EQUAL_STRING("[{\"result\":\"0x1\"},{\"result\":\"0x2\"}]", res);
+  _free(res);
+
+  ctx_free(ctx);
+  in3_free(c);
+}
+
 static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
   TEST_ASSERT_NULL(in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}"));
@@ -144,6 +171,7 @@ static void test_exec_req() {
 
   in3_free(c);
 }
+
 static void test_partial_response() {
   in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
   c->request_count = 3;
@@ -587,6 +615,7 @@ int main() {
   in3_register_eth_api();
 
   TESTS_BEGIN();
+  RUN_TEST(test_bulk_response);
   RUN_TEST(test_partial_response);
   RUN_TEST(test_retry_response);
   RUN_TEST(test_configure_request);

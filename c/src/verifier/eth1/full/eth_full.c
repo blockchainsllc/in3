@@ -47,7 +47,7 @@
 
 int in3_verify_eth_full(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);
-  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)

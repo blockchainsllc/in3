@@ -82,15 +82,21 @@ char* ctx_get_error_data(in3_ctx_t* ctx) {
 }
 
 char* ctx_get_response_data(in3_ctx_t* ctx) {
-  str_range_t rr    = d_to_json(ctx->responses[0]);
-  char*       start = NULL;
-  if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[0], K_IN3)).data) && start < rr.data + rr.len) {
-    while (*start != ',' && start > rr.data) start--;
-    char* res            = _strdupn(rr.data, start - rr.data + 1);
-    res[start - rr.data] = '}';
-    return res;
+  sb_t sb = {0};
+  if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, '[');
+  for (uint_fast16_t i = 0; i < ctx->len; i++) {
+    if (i) sb_add_char(&sb, ',');
+    str_range_t rr    = d_to_json(ctx->responses[i]);
+    char*       start = NULL;
+    if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[i], K_IN3)).data) && start < rr.data + rr.len) {
+      while (*start != ',' && start > rr.data) start--;
+      sb_add_range(&sb, rr.data, 0, start - rr.data + 1);
+      sb.data[sb.len - 1] = '}';
+    } else
+      sb_add_range(&sb, rr.data, 0, rr.len);
   }
-  return _strdupn(rr.data, rr.len);
+  if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, ']');
+  return sb.data;
 }
 
 ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
@@ -159,9 +165,9 @@ int ctx_nodes_len(node_match_t* node) {
   return all;
 }
 
-in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx) {
+in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {
   if (ctx->requests) {
-    char* verfification = d_get_stringk(d_get(ctx->requests[0], K_IN3), key("verification"));
+    char* verfification = d_get_stringk(d_get(ctx->requests[i], K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;
   }

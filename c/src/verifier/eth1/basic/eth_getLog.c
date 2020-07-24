@@ -219,7 +219,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     bytes_t block = d_to_bytes(d_get(it.token, K_BLOCK)), tx_root, receipt_root;
     int     bl    = i;
     if (!block.len || eth_verify_blockheader(vc, &block, NULL) < 0) return vc_err(vc, "invalid blockheader");
-    sha3_to(&block, receipts[i].block_hash);
+    keccak(block, receipts[i].block_hash);
     rlp_decode(&block, 0, &block);
     if (rlp_decode(&block, BLOCKHEADER_RECEIPT_ROOT, &receipt_root) != 1) return vc_err(vc, "invalid receipt root");
     if (rlp_decode(&block, BLOCKHEADER_TRANSACTIONS_ROOT, &tx_root) != 1) return vc_err(vc, "invalid tx root");
@@ -249,7 +249,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
       // check txhash
 
-      sha3_to(&r->data, r->tx_hash);
+      keccak(r->data, r->tx_hash);
       if (!bytes_cmp(d_to_bytes(d_getl(receipt.token, K_TX_HASH, 32)), bytes(r->tx_hash, 32))) {
         if (path) b_free(path);
         return vc_err(vc, "invalid tx hash");

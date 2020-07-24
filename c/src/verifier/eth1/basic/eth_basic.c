@@ -63,7 +63,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);
 
   // make sure we want to verify
-  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result) {
@@ -101,7 +101,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return eth_verify_eth_getLog(vc, d_len(vc->result));
   else if (strcmp(method, "eth_sendRawTransaction") == 0) {
     bytes32_t hash;
-    sha3_to(d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), hash);
+    keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   } else
     return in3_verify_eth_nano(vc);
@@ -109,7 +109,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 
 /** called to see if we can handle the request internally */
 in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  if (ctx->len > 1) return ctx_set_error(ctx, "bulk-request are not yet supported", IN3_ENOTSUP); // internal handling is only possible for single requests (at least for now)
+  if (ctx->len > 1) return IN3_OK; // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
   // check method to handle internally

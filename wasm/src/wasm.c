@@ -262,11 +262,10 @@ void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_ctx_t* ctx) {
   ctx_free(ctx);
 }
 
-uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
-  bytes_t  src    = bytes(data, len);
+uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
   uint8_t* result = malloc(32);
   if (result)
-    sha3_to(&src, result);
+    keccak(bytes(data, len), result);
   else
     in3_set_error("malloc failed");
 
@@ -344,9 +343,8 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   uint8_t* dst = malloc(20);
   uint8_t  public_key[65], sdata[32];
-  bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  sha3_to(&pubkey_bytes, sdata);
+  keccak(bytes(public_key + 1, 64), sdata);
   memcpy(dst, sdata + 12, 20);
   return dst;
 }

@@ -12,7 +12,7 @@ class ClientNegativeTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         # TODO
@@ -49,7 +49,7 @@ class ClientParsingTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_instantiate(self):
         with self.assertRaises(AssertionError):
@@ -159,29 +159,14 @@ class KovanClientTest(ClientNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
-
-    def test_ens_resolver(self):
-        for i in range(50):
-            with self.assertRaises(in3.ClientException):
-                self.client.ens_resolver('depraz.eth')
-
-    def test_ens_address(self):
-        for i in range(50):
-            with self.assertRaises(in3.ClientException):
-                self.client.ens_address('depraz.eth')
-
-    def test_ens_owner(self):
-        for i in range(50):
-            with self.assertRaises(in3.ClientException):
-                self.client.ens_owner('depraz.eth')
+        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 class GoerliClientTest(ClientNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 if __name__ == '__main__':

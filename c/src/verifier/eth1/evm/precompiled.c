@@ -72,8 +72,7 @@ int pre_ecrecover(evm_t* evm) {
     uint8_t hash[32];
 
     // hash it and return the last 20 bytes as address
-    bytes_t public_key = {.data = pubkey + 1, .len = 64};
-    if (sha3_to(&public_key, hash) == 0)
+    if (keccak(bytes(pubkey + 1, 64), hash) == 0)
       memcpy(evm->return_data.data, hash + 12, 20);
   }
   return 0;

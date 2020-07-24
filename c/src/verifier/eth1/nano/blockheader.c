@@ -106,7 +106,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   vhist_t*  vh  = *vhp;
 
   // get validators from contract
-  in3_proof_t proof_ = in3_ctx_get_proof(vc->ctx);
+  in3_proof_t proof_ = in3_ctx_get_proof(vc->ctx, vc->index);
   // TODO we need to make this async and use "in3":{"verification":"none"}
   vc->ctx->client->proof = PROOF_NONE;
   in3_ctx_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorList", "[]");
@@ -166,7 +166,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
       }
 
       // calculate the blockhash
-      sha3_to(fblk, &hash);
+      keccak(*fblk, &hash);
 
       // next block
       fblk = blocks[++i];
@@ -313,7 +313,7 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
       return vc_err(vc, "the block was signed by the wrong key");
 
     // calculate the blockhash
-    sha3_to(b, &hash);
+    keccak(*b, hash);
 
     // next block
     b = blocks[++i];
@@ -362,7 +362,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   bytes_t      temp, *sig_hash;
 
   // generate the blockhash;
-  sha3_to(header, &block_hash);
+  keccak(*header, block_hash);
 
   // if we expect a certain blocknumber, it must match the 8th field in the BlockHeader
   if (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp) == 1)
@@ -426,7 +426,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     if (vc->chain->version > 1) memcpy(msg_data + 64, vc->chain->registry_id, 32);
 
     // hash it to create the message hash
-    sha3_to(&msg, msg_data);
+    keccak(msg, msg_data);
     msg.data = msg_data;
     msg.len  = 32;
 

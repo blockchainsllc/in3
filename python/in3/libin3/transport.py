@@ -97,12 +97,10 @@ def factory(transport_fn):
     Decorates a transport function augmenting its capabilities for native interoperability
     """
 
-    def new(native_request: NativeRequest):
-        request = In3Request(native_request)
-        response = In3Response(native_request)
+    @c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
+    def new(native_payload: NativeRequest or NativeResponse):
+        request = In3Request(native_payload)
+        response = In3Response(native_payload)
         return transport_fn(request, response)
 
-    # the transport function to be implemented by the transport provider.
-    # typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
-    c_transport_fn_interface = c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
-    return c_transport_fn_interface(new)
+    return new

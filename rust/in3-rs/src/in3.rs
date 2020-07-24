@@ -358,7 +358,7 @@ impl ClientTrait for Client {
         loop {
             let res = unsafe { ctx.execute().await };
             if !matches!(res, Err(SysError::TryAgain)) {
-                return res.map_err(|err| Error::InternalError(err));
+                return res.map_err(Error::InternalError);
             }
         }
     }

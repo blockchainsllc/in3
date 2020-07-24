@@ -103,7 +103,7 @@ static uint8_t* as_bytes32(bytes32_t dst, bytes_t b) {
 
 static void create_random_indexes(const uint32_t total_servers, const uint32_t node_limit, bytes_t* src_seed, uint32_t* seed_indexes, uint32_t seed_len, uint32_t* indexes) {
   bytes32_t seed_data;
-  bytes_t   seed = {.data = seed_data, .len = 32};
+
   memset(seed_data, 0, 32);
   memcpy(seed_data + 32 - src_seed->len, src_seed->data, src_seed->len);
   uint32_t len  = seed_len, i;
@@ -118,7 +118,7 @@ static void create_random_indexes(const uint32_t total_servers, const uint32_t n
       }
     }
     if (exists) {
-      sha3_to(&seed, seed_data);
+      keccak(bytes(seed_data, 32), seed_data);
       step = bytes_to_long(seed_data, 6);
     } else
       indexes[len++] = pos;
@@ -130,8 +130,7 @@ static uint8_t* get_storage_array_key(uint32_t pos, uint32_t array_index, uint32
   memset(dst, 0, 32);
   int_to_bytes(pos, dst + 28);
   if (!struct_size) return dst;
-  bytes_t p = bytes(dst, 32);
-  sha3_to(&p, dst);
+  keccak(bytes(dst, 32), dst);
 
   uint8_t tmp[4];
   int_to_bytes(array_index * struct_size + struct_pos, tmp);
@@ -153,7 +152,7 @@ _NOINLINE_ static void create_node_hash(d_token_t* t, bytes32_t dst) {
   if ((val = d_to_bytes(d_get(t, K_ADDRESS))).data && val.len < 21) memcpy(buffer + 72 + 20 - val.len, val.data, val.len);
   if (url.data && url.len) memcpy(buffer + 92, url.data, url.len);
 
-  sha3_to(&data, dst);
+  keccak(data, dst);
 }
 
 static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses, d_token_t* server_list, d_token_t* storage_proofs) {
@@ -221,7 +220,7 @@ static in3_ret_t verify_whitelist_data(in3_vctx_t* vc, d_token_t* server_list, d
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it), i += 20)
     memcpy(b->data + i, d_bytesl(it.token, 20)->data, 20);
 
-  sha3_to(b, hash);
+  keccak(*b, hash);
   b_free(b);
   TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, 1, 0, 0, skey), hash));
   return IN3_OK;
@@ -264,7 +263,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
   if (!proof) return vc_err(vc, "no merkle proof for the account");
 
   account_raw = serialize_account(account);
-  sha3_to(contract, hash);
+  keccak(*contract, hash);
   if (!trie_verify_proof(&root, &path, proof, account_raw)) {
     _free(proof);
     b_free(account_raw);
@@ -283,7 +282,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
   for (d_iterator_t it = d_iter(*storage_proof); it.left; d_iter_next(&it)) {
     // prepare the key
     d_bytes_to(d_get(it.token, K_KEY), hash, 32);
-    sha3_to(&path, hash);
+    keccak(path, hash);
 
     proof = d_create_bytes_vec(d_get(it.token, K_PROOF));
     if (!proof) return vc_err(vc, "no merkle proof for the storage");

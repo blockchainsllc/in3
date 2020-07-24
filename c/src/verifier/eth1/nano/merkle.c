@@ -173,7 +173,7 @@ int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
   size_t depth = 0;
   for (; *proof; proof += 1) {
     // create and check the hash of node
-    if (!(res = sha3_to(*proof, node_hash) == 0 && memcmp(expected_hash, node_hash, 32) == 0)) break;
+    if (!(res = keccak(*(*proof), node_hash) == 0 && memcmp(expected_hash, node_hash, 32) == 0)) break;
     // check embedded nodes and find the next expected hash
     if (!(res = check_node(*proof, &key, expectedValue, *(proof + 1) == NULL, &last_value, expected_hash, &depth))) break;
   }
