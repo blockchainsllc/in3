@@ -386,9 +386,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -493,6 +493,14 @@ void in3_free(in3_t* a) {
     _free(a->pay);
   }
 #endif
+  in3_plugin_t *p = a->plugins, *n;
+  while (p) {
+    if (p->data)
+      p->action_fn(p->data, PLGN_ACT_TERM, NULL);
+    n = p->next;
+    _free(p);
+    p = n;
+  }
   _free(a);
 }
 
@@ -952,7 +960,7 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
   bool          handled = false;
   while (p) {
     if (p->acts & action) {
-      ret = p->action_fn(p, action, plugin_ctx);
+      ret = p->action_fn(p->data, action, plugin_ctx);
       if (ret != IN3_EIGNORE) {
         handled = true;
         break;
@@ -974,7 +982,7 @@ in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t acti
   in3_ret_t     ret = IN3_OK;
   while (p) {
     if (p->acts & action) {
-      ret = p->action_fn(p, action, plugin_ctx);
+      ret = p->action_fn(p->data, action, plugin_ctx);
       if (ret != IN3_EIGNORE)
         break;
     }

@@ -483,13 +483,6 @@ struct in3_plugin {
   in3_plugin_t*          next;      /**< pointer to next plugin in list */
 };
 
-/** plugin execution strategies, see in3_plugin_execute_ctx() for usage */
-typedef enum {
-  PLGN_EXC_ALL,
-  PLGN_EXC_FIRST,
-  PLGN_EXC_FITRST_OR_NONE,
-} in3_plugin_exec_t;
-
 /** checks if a plugin for specified action is registered with the client */
 #define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
 
