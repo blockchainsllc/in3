@@ -75,18 +75,18 @@ typedef struct weight {
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
 typedef struct in3_ctx {
+  uint_fast8_t    signers_length;     /**< number or addresses */
+  uint_fast16_t   len;                /**< the number of requests */
+  uint_fast16_t   attempt;            /**< the number of attempts */
   ctx_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */
   char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
-  uint_fast16_t   len;                /**< the number of requests */
-  uint_fast16_t   attempt;            /**< the number of attempts */
   json_ctx_t*     request_context;    /**< the result of the json-parser for the request.*/
   json_ctx_t*     response_context;   /**< the result of the json-parser for the response.*/
   d_token_t**     requests;           /**< references to the tokens representring the requests*/
   d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
   in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
-  uint8_t*        signers;            /**< the addresses of servers (concated) requested to sign the blockhash */
-  uint_fast8_t    signers_length;     /**< number or addresses */
+  uint8_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */

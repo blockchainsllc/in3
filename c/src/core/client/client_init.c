@@ -401,9 +401,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -511,7 +511,7 @@ void in3_free(in3_t* a) {
   in3_plugin_t *p = a->plugins, *n;
   while (p) {
     if (p->data)
-      p->action_fn(p, PLGN_ACT_TERM, NULL);
+      p->action_fn(p->data, PLGN_ACT_TERM, NULL);
     n = p->next;
     _free(p);
     p = n;
@@ -919,15 +919,17 @@ cleanup:
   return res;
 }
 
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_existing) {
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
   if (!acts || !action_fn)
     return IN3_EINVAL;
 
   in3_plugin_t** p = &c->plugins;
   while (*p) {
     // check for action-specific rules here like allowing only one action handler per action, etc.
-    if (replace_existing && (*p)->acts == acts) {
+    if (replace_ex && (*p)->acts == acts) {
+      if ((*p)->data) (*p)->action_fn((*p)->data, PLGN_ACT_TERM, NULL);
       (*p)->action_fn = action_fn;
+      (*p)->data      = data;
       return IN3_OK;
     }
     p = &(*p)->next;
@@ -938,33 +940,37 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   (*p)->action_fn = action_fn;
   (*p)->data      = data;
   (*p)->next      = NULL;
+  c->plugin_acts |= acts;
   return IN3_OK;
 }
 
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(c, action))
+    return IN3_OK;
+
   in3_plugin_t* p   = c->plugins;
   in3_ret_t     ret = IN3_OK, ret_;
-
   while (p) {
     if (p->acts & action) {
-      ret_ = p->action_fn(p, action, plugin_ctx);
+      ret_ = p->action_fn(p->data, action, plugin_ctx);
       if (ret == IN3_OK && ret_ != IN3_OK)
         ret = ret_; // only record first err
     }
     p = p->next;
   }
-
   return ret;
 }
 
 in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(ctx->client, action))
+    return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
+
   in3_plugin_t* p       = ctx->client->plugins;
   in3_ret_t     ret     = IN3_OK;
   bool          handled = false;
-
   while (p) {
     if (p->acts & action) {
-      ret = p->action_fn(p, action, plugin_ctx);
+      ret = p->action_fn(p->data, action, plugin_ctx);
       if (ret != IN3_EIGNORE) {
         handled = true;
         break;
@@ -979,17 +985,18 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
 }
 
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(ctx->client, action))
+    return IN3_OK;
+
   in3_plugin_t* p   = ctx->client->plugins;
   in3_ret_t     ret = IN3_OK;
-
   while (p) {
     if (p->acts & action) {
-      ret = p->action_fn(p, action, plugin_ctx);
+      ret = p->action_fn(p->data, action, plugin_ctx);
       if (ret != IN3_EIGNORE)
         break;
     }
     p = p->next;
   }
-
   return ret;
 }
