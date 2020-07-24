@@ -510,7 +510,7 @@ void in3_free(in3_t* a) {
 #endif
   in3_plugin_t *p = a->plugins, *n;
   while (p) {
-    if (p->data)
+    if (p->acts & PLGN_ACT_TERM)
       p->action_fn(p->data, PLGN_ACT_TERM, NULL);
     n = p->next;
     _free(p);
