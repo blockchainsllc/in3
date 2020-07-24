@@ -281,10 +281,10 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1 /**< return value used by the signer if the the signature-request was rejected. */
+#define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3 /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR -4 /**< return value used by the signer for unspecified errors. */
+#define IN3_SIGN_ERR_INVALID_MESSAGE -3   /**< return value used by the signer if the message was invalid. */
+#define IN3_SIGN_ERR_GENERAL_ERROR -4     /**< return value used by the signer for unspecified errors. */
 
 /** type of the requested signature */
 typedef enum {
@@ -678,6 +678,11 @@ NONULL char* in3_get_config(
 /** a register-function for a plugion.
  */
 typedef in3_ret_t (*plgn_register)(in3_t* c);
+
+/**
+ * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
+ */
+void in3_register_default(plgn_register reg_fn);
 
 /**
  * defines a default transport which is used when creating a new client.

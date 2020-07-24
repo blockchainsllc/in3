@@ -9,6 +9,7 @@
 #include "../../third-party/multihash/multihash.h"
 #include "../../third-party/nanopb/pb_decode.h"
 #include "../../third-party/nanopb/pb_encode.h"
+#include "../../verifier/eth1/nano/eth_nano.h"
 #include "ipfs.pb.h"
 #include <stdio.h>
 
@@ -169,5 +170,6 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* pctx) {
     return IN3_EIGNORE;
 }
 in3_ret_t in3_register_ipfs(in3_t* c) {
+  in3_register_eth_nano(c);
   return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_ipfs, NULL, false);
 }

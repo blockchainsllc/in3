@@ -55,7 +55,7 @@
                              "W50IGluIGN1bHBhIHF1aSBvZmZpY2lhIGRlc2VydW50IG1vbGxpdCBhbmltIGlkIGVzdCBsYWJvcnVtLg=="
 
 static in3_t* in3_init_test(chain_id_t chain) {
-  in3_t* in3     = in3_for_chain(chain);
+  in3_t* in3 = in3_for_chain(chain);
   register_transport(in3, test_transport);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x7d0\": {\"needsUpdate\":false}}}");
   return in3;
@@ -101,7 +101,7 @@ void test_in3_ipfs_api_long() {
  * Main
  */
 int main() {
-  in3_register_ipfs();
+  in3_register_default(in3_register_ipfs);
   in3_log_set_quiet(true);
 
   TESTS_BEGIN();

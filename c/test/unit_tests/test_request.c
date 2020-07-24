@@ -609,8 +609,8 @@ static void test_configure_validation() {
  */
 int main() {
   in3_log_set_quiet(true);
-  in3_register_eth_basic();
-  in3_register_eth_api();
+  in3_register_default(in3_register_eth_basic);
+  in3_register_default(in3_register_eth_api);
 
   TESTS_BEGIN();
   RUN_TEST(test_bulk_response);

@@ -112,7 +112,13 @@ void in3_register_payment(
 #define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
-static plgn_register          default_transport        = NULL;
+typedef struct default_fn {
+  plgn_register      fn;
+  struct default_fn* next;
+} default_fn_t;
+
+static default_fn_t* default_registry = NULL;
+
 static in3_storage_handler_t* default_storage          = NULL;
 static plgn_register          default_signer           = NULL;
 static in3_transport_legacy   default_legacy_transport = NULL;
@@ -124,18 +130,22 @@ static in3_ret_t              handle_legacy_transport(void* plugin_data, in3_plu
 static in3_ret_t register_legacy(in3_t* c) {
   return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, handle_legacy_transport, NULL, true);
 }
-/**
- * defines a default transport which is used when creating a new client.
- */
-void in3_set_default_transport(plgn_register transport) {
-  default_transport = transport;
-}
 
 void in3_set_default_legacy_transport(
     in3_transport_legacy transport /**< the default transport-function. */
 ) {
   default_legacy_transport = transport;
-  in3_set_default_transport(register_legacy);
+  in3_register_default(register_legacy);
+}
+void in3_register_default(plgn_register reg_fn) {
+  // check if it already exists
+  default_fn_t** d = &default_registry;
+  for (; *d; d = &(*d)->next) {
+    if ((*d)->fn == reg_fn) return;
+  }
+
+  (*d)     = _calloc(1, sizeof(default_fn_t));
+  (*d)->fn = reg_fn;
 }
 
 /**
@@ -531,9 +541,12 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
     return NULL;
   }
 
-  if (default_transport) default_transport(c);
+  // init from defaults
+
+  for (default_fn_t* d = default_registry; d; d = d->next)
+    d->fn(c);
+
   if (default_storage) c->cache = default_storage;
-  if (default_signer) default_signer(c);
 
   return c;
 }
@@ -932,6 +945,11 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
       (*p)->data      = data;
       return IN3_OK;
     }
+
+    // we don't allow 2 plugins with the same fn with no extra data
+    // TODO maybe we can have a rule based filter instead of onlly repllace_ex
+    if ((*p)->action_fn == action_fn && data == NULL && (*p)->data == NULL) return IN3_OK;
+
     p = &(*p)->next;
   }
 

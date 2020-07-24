@@ -701,7 +701,7 @@ static void test_nodelist_update_8() {
 int main() {
   TESTS_BEGIN();
   in3_log_set_quiet(true);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
   in3_set_func_time(mock_time);
   in3_set_func_rand(mock_rand);
   RUN_TEST(test_capabilities);

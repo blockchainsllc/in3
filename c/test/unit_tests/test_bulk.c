@@ -123,7 +123,7 @@ static void test_context_bulk() {
 int main() {
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
 
   // now run tests
   TESTS_BEGIN();

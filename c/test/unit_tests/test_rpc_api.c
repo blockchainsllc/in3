@@ -318,8 +318,8 @@ static void test_in3_client_context() {
  * Main
  */
 int main() {
-  in3_register_eth_full();
-  in3_register_eth_api();
+  in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_eth_api);
   in3_log_set_quiet(true);
 
   // now run tests

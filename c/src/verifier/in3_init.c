@@ -11,35 +11,35 @@
 
 static bool initialized;
 
-static void init_verifier(in3_t* c) {
+static void init_verifier() {
 #ifdef ETH_FULL
-  in3_register_eth_full(c);
+  in3_register_default(in3_register_eth_full);
 #endif
 #ifdef ETH_BASIC
-  in3_register_eth_basic(c);
+  in3_register_default(in3_register_eth_basic);
 #endif
 #ifdef ETH_NANO
-  in3_register_eth_nano(c);
+  in3_register_default(in3_register_eth_nano);
 #endif
 #ifdef ETH_API
-  in3_register_eth_api(c);
+  in3_register_default(in3_register_eth_api);
 #endif
 #ifdef IPFS
-  in3_register_ipfs(c);
+  in3_register_default(in3_register_ipfs);
 #endif
 #ifdef BTC
-  in3_register_btc(c);
+  in3_register_default(in3_register_btc);
 #endif
 #ifdef PAY_ETH
-  in3_register_pay_eth();
+  in3_register_default(in3_register_pay_eth);
 #endif
 }
 static void init_transport() {
 #ifdef TRANSPORTS
 #ifdef USE_CURL
-  in3_set_default_transport(in3_register_curl);
+  in3_register_default(in3_register_curl);
 #else
-  in3_set_default_transport(in3_register_http);
+  in3_register_default(in3_register_http);
 #endif /* USE_CURL */
 #endif /* TRANSPORTS */
 }
@@ -48,9 +48,7 @@ in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
   if (!initialized) {
     initialized = true;
     init_transport();
+    init_verifier();
   }
-  in3_t* c = in3_for_chain_default(chain_id);
-  init_verifier(c);
-
-  return c;
+  return in3_for_chain_default(chain_id);
 }

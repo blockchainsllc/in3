@@ -454,10 +454,10 @@ int runRequests(char** names, int test_index, int mem_track) {
 int main(int argc, char* argv[]) {
   use_color = 1;
   in3_log_set_level(LOG_INFO);
-  in3_register_eth_full();
-  in3_register_eth_api();
-  in3_register_ipfs();
-  in3_register_btc();
+  in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_eth_api);
+  in3_register_default(in3_register_ipfs);
+  in3_register_default(in3_register_btc);
 
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;

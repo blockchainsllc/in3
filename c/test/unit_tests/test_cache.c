@@ -184,7 +184,7 @@ static in3_ret_t in3_register_test_transport(in3_t* c) {
 
 static void test_newchain() {
 
-  in3_set_default_transport(in3_register_test_transport);
+  in3_register_default(in3_register_test_transport);
 
   in3_t* c    = in3_for_chain(0);
   c->chain_id = 0x8;
@@ -324,7 +324,8 @@ static void test_whitelist_cache() {
  * Main
  */
 int main() {
-  in3_register_eth_nano();
+  in3_register_default(in3_register_eth_nano);
+
   in3_log_set_udata_(NULL);
   in3_log_set_lock_(NULL);
   in3_log_set_fp_(NULL);

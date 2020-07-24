@@ -196,7 +196,7 @@ void test_btc_api_get_block() {
  * Main
  */
 int main() {
-  in3_register_btc();
+  in3_register_default(in3_register_btc);
   in3_log_set_quiet(true);
 
   TESTS_BEGIN();

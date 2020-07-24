@@ -283,7 +283,7 @@ static void test_filter_changes() {
 int main() {
   in3_log_set_quiet(true);
   TESTS_BEGIN();
-  in3_register_eth_basic();
+  in3_register_default(in3_register_eth_basic);
   RUN_TEST(test_filter_changes);
   RUN_TEST(test_filter);
   RUN_TEST(test_filter_opt_validation);

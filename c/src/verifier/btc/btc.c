@@ -2,6 +2,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "../../verifier/eth1/nano/eth_nano.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
 #include "btc_target.h"
@@ -446,6 +447,7 @@ in3_ret_t in3_verify_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
   return IN3_EIGNORE;
 }
 in3_ret_t in3_register_btc(in3_t* c) {
+  in3_register_eth_nano(c);
   return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_btc, NULL, false);
 }
 /*

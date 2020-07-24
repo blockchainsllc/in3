@@ -618,7 +618,7 @@ static void test_send_raw_tx(void) {
 int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
 
   // now run tests
   TESTS_BEGIN();
