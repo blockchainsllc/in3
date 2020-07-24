@@ -131,12 +131,13 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     memcpy(chain->verified_hashes, b->data + pos, sizeof(in3_verified_hash_t) * (min(hashes, c->max_verified_hashes)));
 
   b_free(b);
+  chain->dirty = false;
   return IN3_OK;
 }
 
 in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
   // it is ok not to have a storage
-  if (!c->cache) return IN3_OK;
+  if (!c->cache || !chain->dirty) return IN3_OK;
 
   // write to bytes_buffer
   bytes_builder_t* bb = bb_new();
@@ -177,6 +178,8 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
 
   // store it and ignore return value since failing when writing cache should not stop us.
   c->cache->set_item(c->cache->cptr, key, &bb->b);
+
+  chain->dirty = false;
 
   // clear buffer
   bb_free(bb);

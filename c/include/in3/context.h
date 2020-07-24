@@ -75,18 +75,18 @@ typedef struct weight {
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
 typedef struct in3_ctx {
+  uint_fast8_t    signers_length;     /**< number or addresses */
+  uint_fast16_t   len;                /**< the number of requests */
+  uint_fast16_t   attempt;            /**< the number of attempts */
   ctx_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */
   char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
-  uint_fast16_t   len;                /**< the number of requests */
-  uint_fast16_t   attempt;            /**< the number of attempts */
   json_ctx_t*     request_context;    /**< the result of the json-parser for the request.*/
   json_ctx_t*     response_context;   /**< the result of the json-parser for the response.*/
   d_token_t**     requests;           /**< references to the tokens representring the requests*/
   d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
   in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
   bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
-  uint_fast8_t    signers_length;     /**< number or addresses */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
@@ -451,5 +451,17 @@ NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const no
 NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
+
+/**
+ * executes all plugin actions one-by-one, stops when a plugin returns anything other than IN3_EIGNORE.
+ * returns IN3_EPLGN_NONE if no plugin was able to handle specified action, otherwise returns IN3_OK
+ * plugin errors are reported via the in3_ctx_t
+ */
+in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
+
+/**
+ * same as in3_plugin_execute_first(), but returns IN3_OK even if no plugin could handle specified action
+ */
+in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
 #endif

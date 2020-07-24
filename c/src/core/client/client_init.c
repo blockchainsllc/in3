@@ -39,6 +39,7 @@
 #include "../util/mem.h"
 #include "cache.h"
 #include "client.h"
+#include "context_internal.h"
 #include "nodelist.h"
 #include "verifier.h"
 #include <assert.h>
@@ -151,6 +152,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+  chain->dirty                = false;
   chain->conf                 = NULL;
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
@@ -327,6 +329,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
+    chain->dirty                = false;
     chain->conf                 = NULL;
     chain->nodelist             = NULL;
     chain->nodelist_length      = 0;
@@ -383,9 +386,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -490,6 +493,14 @@ void in3_free(in3_t* a) {
     _free(a->pay);
   }
 #endif
+  in3_plugin_t *p = a->plugins, *n;
+  while (p) {
+    if (p->data)
+      p->action_fn(p->data, PLGN_ACT_TERM, NULL);
+    n = p->next;
+    _free(p);
+    p = n;
+  }
   _free(a);
 }
 
@@ -891,4 +902,91 @@ char* in3_configure(in3_t* c, const char* config) {
 cleanup:
   json_free(cnf);
   return res;
+}
+
+static bool is_plugin_act_exclusive(in3_plugin_supp_acts_t acts) {
+  if (acts & PLGN_ACT_TRANSPORT)
+    return true;
+  return false;
+}
+
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
+  if (!acts || !action_fn)
+    return IN3_EINVAL;
+
+  in3_plugin_t** p = &c->plugins;
+  while (*p) {
+    if ((*p)->acts == acts && is_plugin_act_exclusive(acts)) {
+      if (replace_ex)
+        break;
+      else
+        return IN3_ELIMIT;
+    }
+    p = &(*p)->next;
+  }
+
+  *p              = _malloc(sizeof(in3_plugin_t));
+  (*p)->acts      = acts;
+  (*p)->action_fn = action_fn;
+  (*p)->data      = data;
+  (*p)->next      = NULL;
+  c->plugin_acts |= acts;
+  return IN3_OK;
+}
+
+in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(c, action))
+    return IN3_OK;
+
+  in3_plugin_t* p   = c->plugins;
+  in3_ret_t     ret = IN3_OK, ret_;
+  while (p) {
+    if (p->acts & action) {
+      ret_ = p->action_fn(p->data, action, plugin_ctx);
+      if (ret == IN3_OK && ret_ != IN3_OK)
+        ret = ret_; // only record first err
+    }
+    p = p->next;
+  }
+  return ret;
+}
+
+in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(ctx->client, action))
+    return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
+
+  in3_plugin_t* p       = ctx->client->plugins;
+  in3_ret_t     ret     = IN3_OK;
+  bool          handled = false;
+  while (p) {
+    if (p->acts & action) {
+      ret = p->action_fn(p->data, action, plugin_ctx);
+      if (ret != IN3_EIGNORE) {
+        handled = true;
+        break;
+      }
+    }
+    p = p->next;
+  }
+
+  if (!handled)
+    return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
+  return ret;
+}
+
+in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  if (!in3_plugin_is_registered(ctx->client, action))
+    return IN3_OK;
+
+  in3_plugin_t* p   = ctx->client->plugins;
+  in3_ret_t     ret = IN3_OK;
+  while (p) {
+    if (p->acts & action) {
+      ret = p->action_fn(p->data, action, plugin_ctx);
+      if (ret != IN3_EIGNORE)
+        break;
+    }
+    p = p->next;
+  }
+  return ret;
 }

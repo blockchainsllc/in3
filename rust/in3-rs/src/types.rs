@@ -82,7 +82,7 @@ impl<'a> Visitor<'a> for BytesVisitor {
     {
         let start = if value.starts_with("0x") { 2 } else { 0 };
         Ok(FromHex::from_hex(&value[start..])
-            .map_err(|e| Error::custom(format!("Invalid hex: {}", e)))?
+            .map_err(Error::custom)?
             .into())
     }
 }

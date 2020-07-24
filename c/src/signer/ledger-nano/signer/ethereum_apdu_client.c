@@ -102,8 +102,7 @@ in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
 
             memcpy(sc->signature, response.data + 1, 64);
 
-
-            recid             = get_recid_from_pub_key(&secp256k1, public_key, sc->signature, hash);
+            recid = get_recid_from_pub_key(&secp256k1, public_key, sc->signature, hash);
 
             sc->signature[64] = recid;
             in3_log_debug("recid %d\n", recid);
