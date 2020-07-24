@@ -410,9 +410,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);
@@ -984,23 +984,18 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
   if (!in3_plugin_is_registered(ctx->client, action))
     return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
 
-  in3_plugin_t* p       = ctx->client->plugins;
-  in3_ret_t     ret     = IN3_OK;
-  bool          handled = false;
+  in3_plugin_t* p   = ctx->client->plugins;
+  in3_ret_t     ret = IN3_OK;
   while (p) {
     if (p->acts & action) {
       ret = p->action_fn(p->data, action, plugin_ctx);
-      if (ret != IN3_EIGNORE) {
-        handled = true;
-        break;
-      }
+      if (ret != IN3_EIGNORE)
+        return ret;
     }
     p = p->next;
   }
 
-  if (!handled)
-    return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
-  return ret;
+  return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
 }
 
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
