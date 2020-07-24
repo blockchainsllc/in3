@@ -88,7 +88,7 @@ void init_in3(void) {
   c = in3_for_chain(CHAIN_ID_GOERLI);
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
-  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, transport_mock, NULL, true);
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);
   c->request_count = 1; // number of requests to sendp
   c->max_attempts  = 1;
   c->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist

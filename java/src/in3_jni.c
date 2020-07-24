@@ -706,6 +706,8 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 #endif
 
 static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
+  UNUSED_VAR(data);
+  UNUSED_VAR(action);
   return jsign(ctx);
 }
 
