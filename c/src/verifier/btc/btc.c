@@ -399,7 +399,18 @@ in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
 
 in3_ret_t in3_verify_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(pdata);
-  UNUSED_VAR(action);
+  if (action == PLGN_ACT_TERM) {
+    in3_t* c = pctx;
+    for (int i = 0; i < c->chains_length; i++) {
+      if (c->chains[i].type == CHAIN_BTC && c->chains[i].conf) {
+        btc_target_conf_t* tc = c->chains[i].conf;
+        if (tc->data.data) _free(tc->data.data);
+        _free(tc);
+      }
+    }
+    return IN3_OK;
+  }
+  if (action != PLGN_ACT_RPC_VERIFY) return IN3_EIGNORE;
   in3_vctx_t* vc     = pctx;
   char*       method = d_get_stringk(vc->request, K_METHOD);
   d_token_t*  params = d_get(vc->request, K_PARAMS);
@@ -448,7 +459,7 @@ in3_ret_t in3_verify_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
 }
 in3_ret_t in3_register_btc(in3_t* c) {
   in3_register_eth_nano(c);
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_btc, NULL, false);
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY || PLGN_ACT_TERM, in3_verify_btc, NULL, false);
 }
 /*
 void in3_register_btc() {

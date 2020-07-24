@@ -478,6 +478,15 @@ in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
 /* frees the data */
 void in3_free(in3_t* a) {
   if (!a) return;
+  in3_plugin_t *p = a->plugins, *n;
+  while (p) {
+    if (p->acts & PLGN_ACT_TERM)
+      p->action_fn(p->data, PLGN_ACT_TERM, a);
+    n = p->next;
+    _free(p);
+    p = n;
+  }
+
   int i;
   for (i = 0; i < a->chains_length; i++) {
     /*
@@ -518,14 +527,6 @@ void in3_free(in3_t* a) {
     _free(a->pay);
   }
 #endif
-  in3_plugin_t *p = a->plugins, *n;
-  while (p) {
-    if (p->acts & PLGN_ACT_TERM)
-      p->action_fn(p->data, PLGN_ACT_TERM, NULL);
-    n = p->next;
-    _free(p);
-    p = n;
-  }
   _free(a);
 }
 
@@ -940,7 +941,7 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   while (*p) {
     // check for action-specific rules here like allowing only one action handler per action, etc.
     if (replace_ex && (*p)->acts == acts) {
-      if ((*p)->data) (*p)->action_fn((*p)->data, PLGN_ACT_TERM, NULL);
+      if ((*p)->data) (*p)->action_fn((*p)->data, PLGN_ACT_TERM, c);
       (*p)->action_fn = action_fn;
       (*p)->data      = data;
       return IN3_OK;
