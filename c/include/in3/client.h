@@ -680,6 +680,11 @@ NONULL char* in3_get_config(
 typedef in3_ret_t (*plgn_register)(in3_t* c);
 
 /**
+ * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
+ */
+void in3_register_default(plgn_register reg_fn);
+
+/**
  * defines a default transport which is used when creating a new client.
  */
 void in3_set_default_transport(

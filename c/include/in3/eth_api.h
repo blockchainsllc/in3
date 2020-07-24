@@ -183,6 +183,6 @@ void              eth_tx_receipt_free(eth_tx_receipt_t* txr);                   
 /**
  * this function should only be called once and will register the eth-API verifier.
  */
-void in3_register_eth_api();
+in3_ret_t in3_register_eth_api(in3_t* c);
 
 #endif
