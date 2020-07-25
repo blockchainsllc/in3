@@ -120,7 +120,6 @@ typedef struct default_fn {
 static default_fn_t* default_registry = NULL;
 
 static in3_storage_handler_t* default_storage          = NULL;
-static plgn_register          default_signer           = NULL;
 static in3_transport_legacy   default_legacy_transport = NULL;
 static in3_ret_t              handle_legacy_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
@@ -139,9 +138,19 @@ void in3_set_default_legacy_transport(
 }
 void in3_register_default(plgn_register reg_fn) {
   // check if it already exists
-  default_fn_t** d = &default_registry;
+  default_fn_t** d   = &default_registry;
+  default_fn_t** pre = NULL;
   for (; *d; d = &(*d)->next) {
-    if ((*d)->fn == reg_fn) return;
+    if ((*d)->fn == reg_fn) pre = d;
+  }
+  if (pre) {
+    if ((*pre)->next) { // we are not the last one, so we need to make it the last
+      default_fn_t* p = *pre;
+      *pre            = p->next;
+      *d              = p;
+      p->next         = NULL;
+    }
+    return;
   }
 
   (*d)     = _calloc(1, sizeof(default_fn_t));
@@ -153,12 +162,6 @@ void in3_register_default(plgn_register reg_fn) {
  */
 void in3_set_default_storage(in3_storage_handler_t* cacheStorage) {
   default_storage = cacheStorage;
-}
-/**
- * defines a default signer which is used when creating a new client.
- */
-void in3_set_default_signer(plgn_register signer) {
-  default_signer = signer;
 }
 
 static void whitelist_free(in3_whitelist_t* wl) {
@@ -410,9 +413,9 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     chain->nodelist = chain->nodelist
                           ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
                           : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    chain->weights  = chain->weights
-                          ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new(address, 20);

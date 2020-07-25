@@ -68,10 +68,10 @@ in3_t* init_in3(plgn_register custom_transport, chain_id_t chain) {
   //int    err;
   in3_log_set_quiet(0);
   in3_log_set_level(LOG_DEBUG);
-  in3_register_eth_basic();
+  in3_register_default( in3_register_eth_basic );
   in3 = in3_for_chain(chain);
   if (custom_transport)
-    in3_plugin_register(in3, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, custom_transport, NULL, true);
+    in3_plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
   in3->request_count = 1; // number of requests to sendp
   in3->max_attempts  = 1;
   in3->request_count = 1; // number of requests to sendp
