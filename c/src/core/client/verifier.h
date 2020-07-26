@@ -70,13 +70,6 @@ typedef struct {
   int          index;                 /**< the index of the request within the bulk */
 } in3_vctx_t;
 
-/**
- * verification context holding the pointers to all relevant toknes.
- */
-typedef struct {
-  in3_ctx_t*       ctx;      /**< Request context. */
-  in3_response_t** response; /**< the responses which a prehandle-method should set*/
-} in3_rpc_handle_ctx_t;
 
 #ifdef LOGGING
 NONULL

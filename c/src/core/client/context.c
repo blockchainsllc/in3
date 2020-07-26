@@ -203,3 +203,30 @@ void in3_ctx_add_response(
   else
     sb_add_range(&response->data, data, 0, data_len);
 }
+
+sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
+  *hctx->response = _calloc(1, sizeof(in3_response_t));
+  return sb_add_chars(&(*hctx->response)->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":");
+}
+in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx) {
+  sb_add_char(&(*hctx->response)->data, '}');
+  return IN3_OK;
+}
+
+in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
+  sb_add_bytes(in3_rpc_handle_start(hctx), NULL, &data, 1, false);
+  return in3_rpc_handle_finish(hctx);
+}
+
+in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
+  sb_add_chars(in3_rpc_handle_start(hctx), data);
+  return in3_rpc_handle_finish(hctx);
+}
+
+in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
+  uint8_t val[8];
+  long_to_bytes(value, val);
+  bytes_t b = bytes(val, 8);
+  b_optimize_len(&b);
+  return in3_rpc_handle_with_bytes(hctx, b);
+}

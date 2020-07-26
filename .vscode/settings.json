@@ -109,5 +109,6 @@
     "mocha.requires": [],
     "mocha.env": {
         "CI": true
-    }
+    },
+    "editor.formatOnSave": true
 }
