@@ -127,7 +127,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     in3_node_t*         n = NULL;
     for (int i = 0; i < node_count; i++) {
       n = ctx_get_node(chain, w);
-      memcpy(ctx->signers + i * 20, n->address->data, 20);
+      memcpy(ctx->signers + i * 20, n->address, 20);
       w = w->next;
     }
     if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
@@ -347,7 +347,7 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
     in3_node_t* n = ctx_get_node(chain, node);
     if (n) {
       // overwrite old params since we have a newer nodelist update now
-      memcpy(chain->nodelist_upd8_params->node, n->address->data, n->address->len);
+      memcpy(chain->nodelist_upd8_params->node, n->address, 20);
       chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
       chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
                                                                                 d_get_longk(response_in3, K_CURRENT_BLOCK),

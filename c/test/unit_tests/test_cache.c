@@ -50,8 +50,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define CONTRACT_ADDRS "0x5f51e413581dd76759e9eed51e63d14c8d1379c8"
-#define REGISTRY_ID "0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea"
+#define CONTRACT_ADDRS           "0x5f51e413581dd76759e9eed51e63d14c8d1379c8"
+#define REGISTRY_ID              "0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea"
 #define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
 
 static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
@@ -67,11 +67,13 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
     fread(buffer, 1, length, f);
     buffer[length] = 0;
     fclose(f);
-  } else {
+  }
+  else {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
       printf("Current working dir: %s\n", cwd);
-    } else {
+    }
+    else {
       perror("getcwd() error");
       return 1;
     }
@@ -242,7 +244,7 @@ static void test_newchain() {
   // the nodeList should have 7 nodes now
   TEST_ASSERT_EQUAL_INT32(7, chain2->nodelist_length);
 
-  in3_client_remove_node(c2, c2->chain_id, chain2->nodelist->address->data);
+  in3_client_remove_node(c2, c2->chain_id, chain2->nodelist->address);
   TEST_ASSERT_EQUAL_INT32(6, chain2->nodelist_length);
   in3_client_clear_nodes(c2, c2->chain_id);
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);

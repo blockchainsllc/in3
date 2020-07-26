@@ -61,11 +61,11 @@
   } while (0)
 #define TEST_ASSERT_CONFIGURE_PASS(in3, config) \
   TEST_ASSERT_NULL(in3_configure(in3, config))
-#define CONTRACT_ADDRS "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
-#define REGISTRY_ID "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb"
+#define CONTRACT_ADDRS           "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+#define REGISTRY_ID              "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb"
 #define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
-#define NODE_URL "rpc.node"
-#define NODE_ADDRS "0x8904b9813c9ada123f9fccb9123659088dacd477"
+#define NODE_URL                 "rpc.node"
+#define NODE_ADDRS               "0x8904b9813c9ada123f9fccb9123659088dacd477"
 
 static void test_configure_request() {
   in3_t* c                = in3_for_chain(0);
@@ -585,7 +585,7 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL_STRING(chain->nodelist[0].url, NODE_URL);
   TEST_ASSERT_EQUAL(chain->nodelist[0].props, 0xffff);
   hex_to_bytes(NODE_ADDRS, -1, addr, 20);
-  TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address->data, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address, addr, 20);
 
   TEST_ASSERT_EQUAL(0x234ad3, chain->verified_hashes[0].block_number);
   hex_to_bytes("0x1230980495039470913820938019274231230980495039470913820938019274", -1, b256, 32);

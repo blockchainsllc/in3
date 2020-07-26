@@ -145,13 +145,13 @@ typedef uint8_t in3_node_attr_t;
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  bytes_t*         address;  /**< address of the server */
+  address_t        address;  /**< address of the server */
   uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
-  uint32_t         capacity; /**< the maximal capacity able to handle */
+  uint_fast16_t    index;    /**< index within the nodelist, also used in the contract as key */
+  uint_fast16_t    capacity; /**< the maximal capacity able to handle */
   in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;      /**< the url of the node */
-  uint8_t          attrs;    /**< bitmask of internal attributes */
+  uint_fast8_t     attrs;    /**< bitmask of internal attributes */
 } in3_node_t;
 
 /**

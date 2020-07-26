@@ -152,7 +152,8 @@ static str_range_t find_prop_name(char* p, char* start) {
   for (i = 0; i > offset; i--) {
     if (!prop) {
       if (p[i] == ':') prop = 1;
-    } else if (p[i] == '"') {
+    }
+    else if (p[i] == '"') {
       if (!end)
         end = i;
       else {
@@ -195,7 +196,8 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
       mod_hex(sb->data + fuzz_pos + 1);
     response = bytes((uint8_t*) sb->data, sb->len);
     _free(sb);
-  } else {
+  }
+  else {
     bytes_builder_t* bb = bb_new();
     d_serialize_binary(bb, _tmp_responses + _tmp_pos + 1);
     response = bb->b;
@@ -268,8 +270,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     _free(err);
     _free(res);
     return -1;
-
-  } else if (err) {
+  }
+  else if (err) {
     if (success) {
       print_error("Failed");
       printf(":%s", err);
@@ -286,7 +288,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     print_success("OK");
     _free(err);
     return 0;
-  } else if (res || is_bin) {
+  }
+  else if (res || is_bin) {
     if (!success) {
       print_error("Should have Failed");
       if (!is_bin) _free(res);
@@ -295,7 +298,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     print_success("OK");
     if (!is_bin) _free(res);
     return 0;
-  } else {
+  }
+  else {
     print_error("NO Error and no Result");
     return -1;
   }
@@ -312,7 +316,8 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
       sprintf(temp, "  ...  manipulate #%s", fuzz_prop);
     else
       strcpy(temp, descr);
-  } else
+  }
+  else
     sprintf(temp, "Request #%i", counter);
 
   in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
@@ -344,7 +349,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
       if (c->chains[j].chain_id == c->chain_id) {
         for (i = 0; i < c->chains[j].nodelist_length; i++) {
           if (i < c->signature_count)
-            memcpy(c->chains[j].nodelist[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
+            memcpy(c->chains[j].nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
           else
             c->chains[j].weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
         }
@@ -469,7 +474,8 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-d") == 0) {
       in3_log_set_level(LOG_TRACE);
       in3_log_set_quiet(false);
-    } else if (strcmp(argv[i], "-m") == 0)
+    }
+    else if (strcmp(argv[i], "-m") == 0)
       membrk = atoi(argv[++i]);
     else {
       char** t = malloc((size + 1) * sizeof(char*));
