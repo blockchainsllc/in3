@@ -17,7 +17,7 @@ BinPackArguments: true
 BinPackParameters: true
 BraceWrapping:
   AfterCaseLabel: false
-  AfterControlStatement: false
+  AfterControlStatement: Never
   AfterStruct: false
   BeforeElse: true
 PointerAlignment: Left
@@ -27,5 +27,5 @@ SpaceBeforeAssignmentOperators: true
 ColumnLimit: 0
 IndentCaseLabels: true
 AllowAllArgumentsOnNextLine: false
-AllowShortEnumsOnASingleLine: true
 AlwaysBreakBeforeMultilineStrings: false
+BreakBeforeTernaryOperators: true

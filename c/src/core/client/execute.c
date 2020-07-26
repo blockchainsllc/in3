@@ -107,8 +107,9 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
-                                                                                      : 0;
+  uint8_t total_sig_cnt = c->signature_count
+                              ? c->signature_count
+                              : (auto_ask_sig(ctx) ? 1 : 0);
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
