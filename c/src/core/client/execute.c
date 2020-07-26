@@ -107,8 +107,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
-                                                                                      : 0;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -437,6 +436,9 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
     return ctx->verification_state;
   }
 
+  // this was a internal response, so we don't need to verify the response
+  if (!node) return (ctx->verification_state = IN3_OK);
+
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
 
@@ -471,24 +473,28 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
       }
     }
 
-    // we only verify, if there is a node, which means we do not verify internal responses.
-    if (node) {
-      res = ctx->verification_state = in3_plugin_execute_first(ctx, PLGN_ACT_RPC_VERIFY, &vc);
-      if (res == IN3_WAITING)
-        return res;
-      if (res) {
-        // before we blacklist the node, we remove the data and replace it with the error-message
-        // this is needed in case it will be cleared and we don't want to lose the error message
-        if (ctx->error && response->data.data) {
-          _free(response->data.data);
-          int l           = strlen(ctx->error);
-          response->state = res;
-          response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
-        }
-        blacklist_node(chain, node);
-        return res;
+    // verify the response
+    res = ctx->verification_state = in3_plugin_execute_first(ctx, PLGN_ACT_RPC_VERIFY, &vc);
+
+    // Waiting is ok, but we stop here
+    if (res == IN3_WAITING)
+      return res;
+
+    // if this is an error, we blacklist the node and return the error.
+    if (res) {
+      // before we blacklist the node, we remove the data and replace it with the error-message
+      // this is needed in case it will be cleared and we don't want to lose the error message
+      if (ctx->error && response->data.data) {
+        _free(response->data.data);
+        int l           = strlen(ctx->error);
+        response->state = res;
+        response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
       }
+      blacklist_node(chain, node);
+      return res;
     }
+
+    // if it was ok, we continue to verify the other responses.
   }
 
   // all is ok
