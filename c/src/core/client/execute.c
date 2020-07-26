@@ -127,7 +127,7 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     in3_node_t*         n = NULL;
     for (int i = 0; i < node_count; i++) {
       n = ctx_get_node(chain, w);
-      memcpy(ctx->signers + i * 20, n->address, 20);
+      if (n) memcpy(ctx->signers + i * 20, n->address, 20);
       w = w->next;
     }
     if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
