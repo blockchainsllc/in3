@@ -35,6 +35,7 @@
 #include "block_number.h"
 #include "eth_api.h"   //wrapper for easier use
 #include "eth_basic.h" // the full ethereum verifier containing the EVM
+#include "plugin.h"
 #include "receipt.h"
 #include "util/log.h"
 #include "util/mem.h"
@@ -48,10 +49,12 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
       printk("Returning eth_getTransactionReceipt ...\n");
       sb_add_range(&(result[i].data), mock_tx_receipt, 0, mock_tx_receipt_len);
-    } else if (strstr(payload, "eth_blockNumber") != NULL) {
+    }
+    else if (strstr(payload, "eth_blockNumber") != NULL) {
       printk("Returning eth_blockNumber ...\n");
       sb_add_range(&(result[i].data), block_number_res, 0, block_number_res_len);
-    } else {
+    }
+    else {
       in3_log_debug("Not supported for this mock\n");
     }
   }
@@ -68,7 +71,7 @@ in3_t* init_in3(plgn_register custom_transport, chain_id_t chain) {
   //int    err;
   in3_log_set_quiet(0);
   in3_log_set_level(LOG_DEBUG);
-  in3_register_default( in3_register_eth_basic );
+  in3_register_default(in3_register_eth_basic);
   in3 = in3_for_chain(chain);
   if (custom_transport)
     in3_plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
@@ -104,7 +107,8 @@ void main() {
     printk("status: %d ", txr->status);
     printk("gas: %lld ", txr->gas_used);
     printk("IN3 TEST PASSED OK !\n");
-  } else {
+  }
+  else {
     printk("IN3 TEST FAILED !\n");
   }
   eth_tx_receipt_free(txr);

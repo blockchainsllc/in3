@@ -44,10 +44,10 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include <in3/client.h>        // the core client
-#include <in3/context.h>       // the context
 #include <in3/eth_api.h>       // functions for direct api-access
 #include <in3/in3_init.h>      // if included the verifier will automaticly be initialized.
 #include <in3/log.h>           // logging functions
+#include <in3/plugin.h>        // the context
 #include <in3/signer.h>        // default signer implementation
 #include <in3/stringbuilder.h> // stringbuilder tool for dynamic memory string handling
 #include <in3/utils.h>
@@ -70,10 +70,12 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
     if (strstr(payload, "eth_call") != NULL) {
       ESP_LOGI(TAG, "eth_call ...\n");
       sb_add_range(&(result[i].data), eth_call_res, 0, eth_call_res_len);
-    } else if (strstr(payload, "eth_blockNumber") != NULL) {
+    }
+    else if (strstr(payload, "eth_blockNumber") != NULL) {
       printf("Returning eth_blockNumber ...\n");
       sb_add_range(&(result[i].data), block_number_res, 0, block_number_res_len);
-    } else {
+    }
+    else {
       in3_log_debug("Not supported for this mock\n");
     }
   }
@@ -107,7 +109,8 @@ void eth_call(void) {
     ESP_LOGI(REST_TAG, "Could not get the response: %s", eth_last_error());
     ESP_LOGI(REST_TAG, "IN3 TEST FAILED !\n");
     exit(1);
-  } else {
+  }
+  else {
     // convert the response to a uint32_t,
     uint8_t access = d_int(response->result);
     ESP_LOGI(TAG, "Access granted Success ? : %d \n", access);
