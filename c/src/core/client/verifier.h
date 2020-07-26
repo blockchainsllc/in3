@@ -70,7 +70,6 @@ typedef struct {
   int          index;                 /**< the index of the request within the bulk */
 } in3_vctx_t;
 
-
 #ifdef LOGGING
 NONULL
 #endif
