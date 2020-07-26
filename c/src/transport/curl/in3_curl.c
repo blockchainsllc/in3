@@ -88,7 +88,8 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
       sb_add_chars(&r->data, (char*) curl_easy_strerror((CURLcode) res));
       r->state = IN3_ERPC;
     }
-  } else {
+  }
+  else {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ECONFIG;
   }
@@ -115,7 +116,8 @@ in3_ret_t receive_next(in3_request_t* req) {
           sb_add_chars(&response->data, "Invalid response:");
           sb_add_chars(&response->data, (char*) curl_easy_strerror((CURLcode) res));
           response->state = IN3_ERPC;
-        } else if (response_code > 100 && response_code < 400)
+        }
+        else if (response_code > 100 && response_code < 400)
           response->state = IN3_OK;
         else {
           if (!response->data.len)
@@ -196,13 +198,15 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
       sb_add_chars(&r->data, "Invalid response:");
       sb_add_chars(&r->data, (char*) curl_easy_strerror(res));
       r->state = IN3_ERPC;
-    } else
+    }
+    else
       r->state = IN3_OK;
 
     curl_slist_free_all(headers);
     /* always cleanup */
     curl_easy_cleanup(curl);
-  } else {
+  }
+  else {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ERPC;
   }

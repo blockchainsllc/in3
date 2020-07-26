@@ -198,7 +198,8 @@ int big_mul(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res, wlen_t m
   if (i > max) {
     memcpy(res, p + i - max, max);
     i = max;
-  } else
+  }
+  else
     memcpy(res, p, i);
   return i;
 }
@@ -245,7 +246,8 @@ int big_exp(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res) {
     }
     if (p != res) memmove(res, p, l);
     return l;
-  } else {
+  }
+  else {
     uint8_t mod[33];
     memset(mod + 1, 0, 32);
     *mod = 1;
@@ -325,7 +327,8 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
       ur = (ur << 8) | n[i];
       if (ur < ud) {
         if (j >= 0) q[++j] = 0;
-      } else {
+      }
+      else {
         q[++j] = ur / ud;
         ur     = ur % ud;
       }
@@ -339,7 +342,8 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
       *remain_len = l;
     }
     return 0;
-  } else {
+  }
+  else {
     size_t ql, rl;
 
     mp_int mq, mr, mn, md;
@@ -508,7 +512,8 @@ int big_mod(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* r
         return lb;
       }
     }
-  } else {
+  }
+  else {
     uint8_t _a[32], _b[32];
     wlen_t  sa, sb;
     sa = big_signed(a, la, _a);

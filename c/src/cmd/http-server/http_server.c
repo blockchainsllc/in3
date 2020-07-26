@@ -99,15 +99,16 @@ static void respond(int s, in3_t* in3) {
             }
             range.len = strlen(range.data);
             printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %i\r\n\r\n%s\r\n", (int) range.len, range.data);
-          } else if (ctx->error)
+          }
+          else if (ctx->error)
             printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", ctx->error);
           else
             printf("HTTP/1.1 500 Not Handled\r\n\r\nCould not execute\r\n");
         }
         if (ctx)
           ctx_free(ctx);
-
-      } else
+      }
+      else
         rest = NULL;
     }
 
@@ -178,7 +179,8 @@ void http_run_server(const char* port, in3_t* in3) {
 
     if (clients[s] < 0) {
       perror("accept() error");
-    } else {
+    }
+    else {
       if (fork() == 0) {
         respond(s, in3);
         exit(0);

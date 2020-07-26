@@ -246,7 +246,8 @@ int op_shift(evm_t* evm, uint8_t left) {
     if (left == 2 && l == 32 && (*b & 128)) { //signed number return max NUMBER as fault
       memset(res, 0xFF, 32);
       return evm_stack_push(evm, res, 32);
-    } else {
+    }
+    else {
       res[0] = 0;
       return evm_stack_push(evm, res, 1);
     }
@@ -332,7 +333,8 @@ int op_dataload(evm_t* evm) {
     if (evm->call_data.len - pos) {
       memcpy(buffer, evm->call_data.data + pos, evm->call_data.len - pos);
       return evm_stack_push(evm, buffer, 32);
-    } else
+    }
+    else
       return evm_stack_push_int(evm, 0);
   }
 }
@@ -445,7 +447,8 @@ int op_jump(evm_t* evm, uint8_t cond) {
           list[p++] = i;
         }
         jumpl--;
-      } else if (op >= 0x60 && op <= 0x7F) // PUSH
+      }
+      else if (op >= 0x60 && op <= 0x7F) // PUSH
         jumpl = op - 0x5F;
     }
     list[p]               = 0xFFFFFFFF;
@@ -493,12 +496,14 @@ int op_swap(evm_t* evm, uint8_t pos) {
     memcpy(data, a, l1);
     memcpy(a, b, l1);
     memcpy(b, data, l1);
-  } else if (l2 > l1) {
+  }
+  else if (l2 > l1) {
     memcpy(data, b, l2 + 1); // keep old b + len
     memcpy(b, a, l1 + 1);
     if (pos > 2) memmove(b + l1 + 1, b + l2 + 1, a - b - l2 - 1);
     memcpy(a + l1 - l2, data, l2 + 1);
-  } else {
+  }
+  else {
     memcpy(data, a, l1 + 1); // keep old b + len
     memcpy(a + l1 - l2, b, l2 + 1);
     if (pos > 2) memmove(b + l1 + 1, b + l2 + 1, a - b - l2 - 1);
@@ -604,7 +609,8 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
     rlp_encode_to_list(bb);
     keccak(bb->b, hash);
     bb_free(bb);
-  } else {
+  }
+  else {
     // CREATE2 is only allowed after CONSTANTINOPL
     if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0) return EVM_ERROR_INVALID_OPCODE;
     uint8_t buffer[85]; // 1 +20 +32+32
@@ -711,7 +717,8 @@ int op_sstore(evm_t* evm) {
 
     if (!changed) {
       subgas(GAS_CC_NET_SSTORE_NOOP_GAS);
-    } else if (big_cmp(original, l_original, s->value, 32) == 0) {
+    }
+    else if (big_cmp(original, l_original, s->value, 32) == 0) {
       if (l_original == 0) {
         subgas(GAS_CC_NET_SSTORE_INIT_GAS);
       }
@@ -720,7 +727,8 @@ int op_sstore(evm_t* evm) {
       }
 
       subgas(GAS_CC_NET_SSTORE_CLEAN_GAS);
-    } else {
+    }
+    else {
       if (l_original) {
         if (l_current == 0)
           evm->gas -= GAS_CC_NET_SSTORE_CLEAR_REFUND;
@@ -736,15 +744,19 @@ int op_sstore(evm_t* evm) {
       }
       subgas(GAS_CC_NET_SSTORE_DIRTY_GAS);
     }
-  } else {
+  }
+  else {
     if (el == 0 && created) {
       subgas(G_SRESET);
-    } else if (el == 0 && !created) {
+    }
+    else if (el == 0 && !created) {
       subgas(G_SRESET);
       evm->refund += R_SCLEAR;
-    } else if (el && created) {
+    }
+    else if (el && created) {
       subgas(G_SSET);
-    } else if (el && !created) {
+    }
+    else if (el && !created) {
       subgas(G_SRESET);
     }
   }

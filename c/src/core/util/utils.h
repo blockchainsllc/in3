@@ -77,7 +77,7 @@
  * printf("Using default value of " STR(SOME_CONST_UINT));
  */
 #define STR_IMPL_(x) #x
-#define STR(x) STR_IMPL_(x)
+#define STR(x)       STR_IMPL_(x)
 
 /** converts the bytes to a unsigned long (at least the last max len bytes) */
 uint64_t bytes_to_long(const uint8_t* data, int len);
@@ -92,7 +92,8 @@ static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
       case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
       default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
     }
-  } else
+  }
+  else
     return 0;
 }
 /** converts a character into a uint64_t*/

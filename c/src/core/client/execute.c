@@ -107,7 +107,8 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1
+                                                                                      : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -262,7 +263,8 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
       }
 #endif
       sb_add_range(sb, "}}", 0, 2);
-    } else
+    }
+    else
       sb_add_char(sb, '}');
   }
   sb_add_char(sb, ']');
@@ -288,7 +290,8 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
     ctx->responses    = _malloc(sizeof(d_token_t*));
     ctx->responses[0] = ctx->response_context->result;
     if (ctx->len != 1) return ctx_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
-  } else if (d_type(ctx->response_context->result) == T_ARRAY) {
+  }
+  else if (d_type(ctx->response_context->result) == T_ARRAY) {
     int        i;
     d_token_t* t = NULL;
     if (d_len(ctx->response_context->result) != (int) ctx->len)
@@ -296,7 +299,8 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
     ctx->responses = _malloc(sizeof(d_token_t*) * ctx->len);
     for (i = 0, t = ctx->response_context->result + 1; i < (int) ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
-  } else
+  }
+  else
     return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
 
   return IN3_OK;
@@ -409,8 +413,8 @@ static in3_ret_t handle_payment(in3_ctx_t* ctx, node_match_t* node, int index) {
       ctx->response_context = NULL;
       ctx->responses        = NULL;
       return res;
-
-    } else if (res)
+    }
+    else if (res)
       return ctx_set_error(ctx, "Error following up the payment data", res);
   }
 #else
@@ -466,7 +470,8 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
         if (node) node->blocked = true; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
         in3_log_debug("we have a user-error from %s, so we reject the response, but don't blacklist ..\n", n ? n->url : "intern");
         continue;
-      } else {
+      }
+      else {
         if (!node->blocked) in3_log_debug("we have a system-error from %s, so we block it ..\n", n ? n->url : "intern");
         blacklist_node(chain, node);
         return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
@@ -534,7 +539,8 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     if (state == IN3_OK) {
       in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_stringk(ctx->requests[0], K_METHOD), node_data ? node_data->url : "intern");
       break;
-    } else if (state == IN3_WAITING)
+    }
+    else if (state == IN3_WAITING)
       return state;
     // in case of an error, we keep on trying....
   }
@@ -572,7 +578,8 @@ NONULL static char* convert_to_http_url(char* src_url) {
     url[2] = 't';
     url[3] = 'p';
     return url;
-  } else
+  }
+  else
     return _strdupn(src_url, l);
 }
 
@@ -912,8 +919,8 @@ void ctx_free(in3_ctx_t* ctx) {
   if (ctx) ctx_free_intern(ctx, false);
 }
 
-static inline in3_ret_t pre_handle(in3_ctx_t* ctx) {
-  if (ctx->len != 1) return IN3_OK;
+static inline in3_ret_t handle_internally(in3_ctx_t* ctx) {
+  if (ctx->len != 1) return IN3_OK; //  currently we do not support bulk requests forr internal calls
   in3_rpc_handle_ctx_t vctx = {.ctx = ctx, .response = &ctx->raw_response, .request = ctx->requests[0]};
   in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
   return res == IN3_EIGNORE ? IN3_OK : res;
@@ -954,7 +961,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
       // do we need to handle it internaly?
-      if (!ctx->raw_response && !ctx->response_context && (ret = pre_handle(ctx)) < 0)
+      if (!ctx->raw_response && !ctx->response_context && (ret = handle_internally(ctx)) < 0)
         return ctx_set_error(ctx, "The request could not be handled", ret);
 
       // if we don't have a nodelist, we try to get it.
@@ -970,7 +977,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
           // now we have the nodes, we can prepare the payment
           if (ctx->client->pay && ctx->client->pay->prepare && (ret = ctx->client->pay->prepare(ctx, ctx->client->pay->cptr)) != IN3_OK) return ret;
 #endif
-        } else
+        }
+        else
           // since we could not get the nodes, we either report it as error or wait.
           return ctx_set_error(ctx, "could not find any node", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
       }
@@ -1003,7 +1011,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         ctx->verification_state = IN3_WAITING;
         // now try again, which should end in waiting for the next request.
         return in3_ctx_execute(ctx);
-      } else {
+      }
+      else {
         if (ctx_is_allowed_to_fail(ctx)) {
           ret                     = IN3_EIGNORE;
           ctx->verification_state = IN3_EIGNORE;

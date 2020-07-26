@@ -193,7 +193,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
         // coinbase
         hex = d_get_stringk(iter.token, key("coinbase"));
         if (!hex || !equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid coinbase");
-      } else {
+      }
+      else {
         // txid
         hex = d_get_stringk(iter.token, key("txid"));
         if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
@@ -230,14 +231,16 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
       if (d_type(value) == T_STRING) {
         if (parse_float_val(d_string(value), 8) != (int64_t) tx_out.value)
           return vc_err(vc, "wrong value in txout found!");
-      } else if (d_type(value) == T_INTEGER || d_type(value) == T_BYTES) {
+      }
+      else if (d_type(value) == T_INTEGER || d_type(value) == T_BYTES) {
         if (d_long(value) * 10e8 != tx_out.value)
           return vc_err(vc, "wrong value in txout found!");
-      } else
+      }
+      else
         return vc_err(vc, "wrong type of value!");
     }
-
-  } else {
+  }
+  else {
 
     // here we expect the raw serialized transaction
     if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
@@ -331,8 +334,8 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
       if (difficulty >> 2 != d_get_long(vc->result, "difficulty") >> 2) return vc_err(vc, "Wrong difficulty");                        // which must match the one in the json
       if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, "hash"))) return vc_err(vc, "Wrong blockhash in json");         // check the requested hash
       if (d_get_int(vc->result, "nTx") != (int32_t) tx_count) return vc_err(vc, "Wrong nTx");                                         // check the nuumber of transactions
-
-    } else {
+    }
+    else {
       char*    block_hex  = d_string(vc->result);
       uint8_t* block_data = _malloc(strlen(block_hex) / 2);
       bytes_t  block      = bytes(block_data, strlen(block_hex) / 2);

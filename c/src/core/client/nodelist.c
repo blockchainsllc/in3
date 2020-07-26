@@ -47,10 +47,10 @@
 #include <string.h>
 #include <time.h>
 
-#define DAY 24 * 3600
+#define DAY              24 * 3600
 #define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
-#define BLACKLISTTIME DAY
-#define BLACKLISTWEIGHT 7 * DAY
+#define BLACKLISTTIME    DAY
+#define BLACKLISTWEIGHT  7 * DAY
 
 NONULL static void free_nodeList(in3_node_t* nodelist, int count) {
   // clean chain..
@@ -163,7 +163,8 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
     chain->nodelist        = newList;
     chain->nodelist_length = len;
     chain->weights         = weights;
-  } else {
+  }
+  else {
     free_nodeList(newList, len);
     _free(weights);
   }
@@ -311,7 +312,8 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t
           in3_client_run_chain_whitelisting(chain);
           ctx_remove_required(parent_ctx, ctx);
           return IN3_OK;
-        } else
+        }
+        else
           return ctx_set_error(parent_ctx, "Error updating white_list", ctx_check_response_error(ctx, 0));
       }
     }
@@ -553,7 +555,8 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
         if (last) {
           last->next = next;
           last       = last->next;
-        } else
+        }
+        else
           last = first;
       }
     }
@@ -581,7 +584,8 @@ void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type
   if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {
     const uint64_t dp_ = value;
     *node_props        = (*node_props & 0xFFFFFFFF) | (dp_ << 32U);
-  } else {
+  }
+  else {
     (value != 0) ? ((*node_props) |= type) : ((*node_props) &= ~type);
   }
 }

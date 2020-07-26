@@ -1,6 +1,7 @@
 BasedOnStyle: LLVM
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
 AlignTrailingComments: true
 AlignAfterOpenBracket: Align
 AlignEscapedNewlines: Right
@@ -11,14 +12,20 @@ AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterReturnType: None
+BreakBeforeBraces: Custom
 BinPackArguments: true
 BinPackParameters: true
 BraceWrapping:
+  AfterCaseLabel: false
   AfterControlStatement: false
   AfterStruct: false
+  BeforeElse: true
 PointerAlignment: Left
 SortIncludes: true
 SpaceAfterCStyleCast: true
 SpaceBeforeAssignmentOperators: true
 ColumnLimit: 0
 IndentCaseLabels: true
+AllowAllArgumentsOnNextLine: false
+AllowShortEnumsOnASingleLine: true
+AlwaysBreakBeforeMultilineStrings: false

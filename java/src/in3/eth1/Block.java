@@ -266,7 +266,8 @@ public class Block {
     if (data == null) {
       if (other.data != null)
         return false;
-    } else if (!data.equals(other.data))
+    }
+    else if (!data.equals(other.data))
       return false;
     return true;
   }

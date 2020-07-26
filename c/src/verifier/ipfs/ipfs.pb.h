@@ -49,8 +49,8 @@ typedef struct _PBLink {
 } PBLink;
 
 /* Helper constants for enums */
-#define _Data_DataType_MIN Data_DataType_Raw
-#define _Data_DataType_MAX Data_DataType_HAMTShard
+#define _Data_DataType_MIN       Data_DataType_Raw
+#define _Data_DataType_MAX       Data_DataType_HAMTShard
 #define _Data_DataType_ARRAYSIZE ((Data_DataType)(Data_DataType_HAMTShard + 1))
 
 /* Initializer values for message structs */
@@ -72,17 +72,17 @@ typedef struct _PBLink {
   }
 
 /* Field tags (for use in manual encoding/decoding) */
-#define PBNode_Links_tag 2
-#define PBNode_Data_tag 1
-#define Data_Type_tag 1
-#define Data_Data_tag 2
-#define Data_filesize_tag 3
+#define PBNode_Links_tag    2
+#define PBNode_Data_tag     1
+#define Data_Type_tag       1
+#define Data_Data_tag       2
+#define Data_filesize_tag   3
 #define Data_blocksizes_tag 4
-#define Data_hashType_tag 5
-#define Data_fanout_tag 6
-#define PBLink_Hash_tag 1
-#define PBLink_Name_tag 2
-#define PBLink_Tsize_tag 3
+#define Data_hashType_tag   5
+#define Data_fanout_tag     6
+#define PBLink_Hash_tag     1
+#define PBLink_Name_tag     2
+#define PBLink_Tsize_tag    3
 
 /* Struct field encoding specification for nanopb */
 #define Data_FIELDLIST(X, a)                      \
@@ -93,20 +93,20 @@ typedef struct _PBLink {
   X(a, STATIC, OPTIONAL, UINT64, hashType, 5)     \
   X(a, STATIC, OPTIONAL, UINT64, fanout, 6)
 #define Data_CALLBACK pb_default_field_callback
-#define Data_DEFAULT NULL
+#define Data_DEFAULT  NULL
 
 #define PBLink_FIELDLIST(X, a)              \
   X(a, CALLBACK, OPTIONAL, BYTES, Hash, 1)  \
   X(a, CALLBACK, OPTIONAL, STRING, Name, 2) \
   X(a, STATIC, OPTIONAL, UINT64, Tsize, 3)
 #define PBLink_CALLBACK pb_default_field_callback
-#define PBLink_DEFAULT NULL
+#define PBLink_DEFAULT  NULL
 
 #define PBNode_FIELDLIST(X, a)             \
   X(a, CALLBACK, OPTIONAL, BYTES, Data, 1) \
   X(a, CALLBACK, REPEATED, MESSAGE, Links, 2)
-#define PBNode_CALLBACK pb_default_field_callback
-#define PBNode_DEFAULT NULL
+#define PBNode_CALLBACK      pb_default_field_callback
+#define PBNode_DEFAULT       NULL
 #define PBNode_Links_MSGTYPE PBLink
 
 extern const pb_msgdesc_t Data_msg;
@@ -114,7 +114,7 @@ extern const pb_msgdesc_t PBLink_msg;
 extern const pb_msgdesc_t PBNode_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
-#define Data_fields &Data_msg
+#define Data_fields   &Data_msg
 #define PBLink_fields &PBLink_msg
 #define PBNode_fields &PBNode_msg
 

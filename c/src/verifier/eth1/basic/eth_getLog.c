@@ -58,9 +58,11 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
   d_token_t* jaddrs = d_getl(tx_params, K_ADDRESS, 20);
   if (jaddrs == NULL) {
     return true; // address param is optional
-  } else if (d_type(jaddrs) == T_BYTES) {
+  }
+  else if (d_type(jaddrs) == T_BYTES) {
     return !!bytes_cmp(addrs, d_to_bytes(jaddrs));
-  } else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
+  }
+  else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
     for (d_iterator_t it = d_iter(jaddrs); it.left; d_iter_next(&it)) {
       if (bytes_cmp(addrs, d_to_bytes(it.token))) return true;
     }
@@ -115,7 +117,8 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
       for (d_iterator_t it_ = d_iter(it1.token); it_.left; d_iter_next(&it_)) {
         if (d_type(it_.token) != T_BYTES) {
           return false;
-        } else if (bytes_cmp(d_to_bytes(it_.token), d_to_bytes(it2.token))) {
+        }
+        else if (bytes_cmp(d_to_bytes(it_.token), d_to_bytes(it2.token))) {
           found = true;
           break;
         }
@@ -132,13 +135,16 @@ bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blo
   if (!matches_filter_address(tx_params + 1, addrs)) {
     in3_log_error("filter address mismatch\n");
     return false;
-  } else if (!matches_filter_range(tx_params + 1, blockno, blockhash)) {
+  }
+  else if (!matches_filter_range(tx_params + 1, blockno, blockhash)) {
     in3_log_error("filter range mismatch\n");
     return false;
-  } else if (!matches_filter_topics(tx_params + 1, topics)) {
+  }
+  else if (!matches_filter_topics(tx_params + 1, topics)) {
     in3_log_error("filter topics mismatch\n");
     return false;
-  } else {
+  }
+  else {
     return true;
   }
 }
@@ -179,11 +185,13 @@ static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr
   if (from_latest && to_latest) {
     // Both fromBlock and toBlock are both latest
     return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  } else if (from_latest) {
+  }
+  else if (from_latest) {
     // only fromBlock is latest
     // unlikely as this doesn't make much sense, but valid if "toBlock" is approx(curr_blk)
     return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  } else if (to_latest) {
+  }
+  else if (to_latest) {
     // only toBlock is latest
     if (last)
       // last log in result, so blk should be greater than (or equal to) fromBlock and abs diff of blk and curr_blk shoud NOT be more than error
@@ -191,7 +199,8 @@ static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr
     else
       // intermediate log, so blk should be greater than (or equal to) fromBlock and lesser (or equal to) than currentBlock + error
       return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  } else {
+  }
+  else {
     // No latest
     return IN3_OK;
   }

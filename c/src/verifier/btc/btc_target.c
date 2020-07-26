@@ -99,7 +99,8 @@ btc_get_conf(in3_t* c, in3_chain_t* chain) {
     if (cached) {
       tc->data = *cached;
       _free(cached);
-    } else {
+    }
+    else {
       const char*        btc_targets = BTC_TARGETS;
       const unsigned int len         = strlen(btc_targets);
       tc->data                       = bytes(_malloc(len >> 1), len >> 1);

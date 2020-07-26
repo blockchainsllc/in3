@@ -81,7 +81,8 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
           // we have a result, so write it back to the dst
           *dst = d_to_bytes(r);
           return IN3_OK;
-        } else
+        }
+        else
           // or check the error and report it
           return ctx_check_response_error(parent, 0);
       }
@@ -194,7 +195,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
       if (dst->data) _free(dst->data);
       if (pctx.new_tx.data) _free(pctx.new_tx.data);
       return prep_res;
-    } else if (pctx.new_tx.data) {
+    }
+    else if (pctx.new_tx.data) {
       if (dst->data) _free(dst->data);
       *dst = pctx.new_tx;
     }

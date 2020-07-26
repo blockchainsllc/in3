@@ -64,14 +64,16 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
       ctx->requests    = _malloc(sizeof(d_token_t*));
       ctx->requests[0] = ctx->request_context->result;
       ctx->len         = 1;
-    } else if (d_type(ctx->request_context->result) == T_ARRAY) {
+    }
+    else if (d_type(ctx->request_context->result) == T_ARRAY) {
       // we have an array, so we need to store the request-data as array
       d_token_t* t  = ctx->request_context->result + 1;
       ctx->len      = d_len(ctx->request_context->result);
       ctx->requests = _malloc(sizeof(d_token_t*) * ctx->len);
       for (uint_fast16_t i = 0; i < ctx->len; i++, t = d_next(t))
         ctx->requests[i] = t;
-    } else
+    }
+    else
       ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
   }
   return ctx;
@@ -92,7 +94,8 @@ char* ctx_get_response_data(in3_ctx_t* ctx) {
       while (*start != ',' && start > rr.data) start--;
       sb_add_range(&sb, rr.data, 0, start - rr.data + 1);
       sb.data[sb.len - 1] = '}';
-    } else
+    }
+    else
       sb_add_range(&sb, rr.data, 0, rr.len);
   }
   if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, ']');
@@ -113,7 +116,8 @@ in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
     strncpy(req, s.data, s.len);
     req[s.len] = '\0';
     return ctx_set_error(c, req, IN3_ERPC);
-  } else
+  }
+  else
     return ctx_set_error(c, d_string(r), IN3_ERPC);
 }
 
@@ -129,13 +133,15 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       dst[l] = ':';
       strcpy(dst + l + 1, ctx->error);
       _free(ctx->error);
-    } else {
+    }
+    else {
       dst = _malloc(l + 1);
       strcpy(dst, message);
     }
     ctx->error = dst;
     in3_log_trace("Intermediate error -> %s\n", message);
-  } else if (!ctx->error) {
+  }
+  else if (!ctx->error) {
     ctx->error    = _malloc(2);
     ctx->error[0] = 'E';
     ctx->error[1] = 0;

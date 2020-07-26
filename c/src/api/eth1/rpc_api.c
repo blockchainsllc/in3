@@ -204,7 +204,8 @@ static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   if (strcmp(d_get_stringk(ctx->ctx->requests[0], K_METHOD), "in3_pk2address") == 0) {
     keccak(bytes(public_key + 1, 64), sdata);
     return in3_rpc_handle_with_bytes(ctx, bytes(sdata + 12, 20));
-  } else
+  }
+  else
     return in3_rpc_handle_with_bytes(ctx, bytes(public_key + 1, 64));
 }
 
@@ -229,7 +230,8 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   if (strcmp(sig_type, "hash") == 0) {
     if (msg.len != 32) return ctx_set_error(ctx->ctx, "The message hash must be 32 byte", IN3_EINVAL);
     memcpy(hash, msg.data, 32);
-  } else
+  }
+  else
     keccak(msg, hash);
 
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig->data, hash, sig->data[64] >= 27 ? sig->data[64] - 27 : sig->data[64]))
@@ -274,14 +276,16 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->ctx->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->ctx, PLGN_ACT_SIGN, &sc));
-  } else if (sc.account.len == 32) {
+  }
+  else if (sc.account.len == 32) {
     if (sc.type == SIGN_EC_RAW)
       ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature, sc.signature + 64, NULL);
     else if (strcmp(sig_type, "raw") == 0)
       ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature, sc.signature + 64, NULL);
     else
       return ctx_set_error(ctx->ctx, "unsupported sigType", IN3_EINVAL);
-  } else
+  }
+  else
     return ctx_set_error(ctx->ctx, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
   bytes_t sig_bytes = bytes(sc.signature, 65);
@@ -296,7 +300,8 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     bytes_t   hash_bytes = bytes(hash_val, 32);
     keccak(data, hash_val);
     sb_add_bytes(sb, "\"messageHash\":", &hash_bytes, 1, false);
-  } else
+  }
+  else
     sb_add_bytes(sb, "\"messageHash\":", &data, 1, false);
   sb_add_char(sb, ',');
   sb_add_bytes(sb, "\"signature\":", &sig_bytes, 1, false);

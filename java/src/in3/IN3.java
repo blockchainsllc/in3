@@ -240,7 +240,8 @@ public class IN3 {
           p += s;
         else
           p += "\"" + s + "\"";
-      } else
+      }
+      else
         p += JSON.toJson(params[i]);
     }
     return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
@@ -259,7 +260,8 @@ public class IN3 {
           p += s;
         else
           p += "\"" + s + "\"";
-      } else
+      }
+      else
         p += JSON.toJson(params[i]);
     }
 

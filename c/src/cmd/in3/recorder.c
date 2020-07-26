@@ -58,7 +58,8 @@ static recorder_entry_t* read_one_entry() {
         entry->args                = entry->argl ? _realloc(entry->args, sizeof(char*) * (entry->argl + 1), sizeof(char*) * entry->argl) : _malloc(sizeof(char*));
         entry->args[entry->argl++] = _strdupn(ptr, -1);
       }
-    } else
+    }
+    else
       sb_add_chars(&entry->content, buffer);
   }
   return entry;
@@ -184,7 +185,8 @@ bytes_t* rec_get_item_out(void* cptr, const char* key) {
     char* hex = alloca(found->len * 2 + 1);
     bytes_to_hex(found->data, found->len, hex);
     fprintf(rec.f, "%s\n\n", hex);
-  } else
+  }
+  else
     fprintf(rec.f, "\n");
 
   return found;

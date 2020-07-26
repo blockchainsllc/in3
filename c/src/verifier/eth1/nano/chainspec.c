@@ -72,7 +72,8 @@ static void           fill_aura(d_token_t* validators, consensus_transition_t* t
     t->contract = _calloc(20, 1);
     bytes_t bb  = d_to_bytes(contract);
     memcpy(t->contract + 20 - bb.len, bb.data, bb.len);
-  } else
+  }
+  else
     t->contract = NULL;
   t->validators.len  = 0;
   t->validators.data = NULL;
@@ -181,10 +182,11 @@ chainspec_t* chainspec_create_from_json(d_token_t* data) {
       spec->consensus_transitions     = _realloc(spec->consensus_transitions, sizeof(consensus_transition_t) * spec->consensus_transitions_len, sizeof(consensus_transition_t));
       for (d_iterator_t iter = d_iter(multi); iter.left; d_iter_next(&iter))
         fill_aura(iter.token, spec->consensus_transitions + (n++), d_get_keystr(iter.token->key));
-    } else
+    }
+    else
       fill_aura(params, spec->consensus_transitions, NULL);
-
-  } else if (d_get(d_get(engine, key("clique")), key("params"))) {
+  }
+  else if (d_get(d_get(engine, key("clique")), key("params"))) {
     bytes_t* extra = d_get_bytes(genesis, "extraData");
     if (!extra) return log_error("no extra data in the genesis-block");
     spec->consensus_transitions->type            = ETH_POA_CLIQUE;

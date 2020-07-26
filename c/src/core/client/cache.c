@@ -43,10 +43,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#define NODE_LIST_KEY "nodelist_%d"
+#define NODE_LIST_KEY   "nodelist_%d"
 #define WHITTE_LIST_KEY "_0x%s"
-#define CACHE_VERSION 6
-#define MAX_KEYLEN 200
+#define CACHE_VERSION   6
+#define MAX_KEYLEN      200
 
 /**
  * generates and writes the cachekey
@@ -56,7 +56,8 @@ static void write_cache_key(char* key, chain_id_t chain_id, const address_t whit
     char contract_[41];                                               // currently we have a max with of 40 which is more than the chain_id could hold
     bytes_to_hex(whitelist_contract, 20, contract_);                  // contract is appended as hex
     sprintf(key, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_); // we need to append both to be unique
-  } else
+  }
+  else
     sprintf(key, NODE_LIST_KEY, chain_id);
 }
 
@@ -169,7 +170,8 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
     }
     bb_write_int(bb, count);
     bb_write_raw_bytes(bb, chain->verified_hashes, count * sizeof(in3_verified_hash_t));
-  } else
+  }
+  else
     bb_write_int(bb, 0);
 
   // create key

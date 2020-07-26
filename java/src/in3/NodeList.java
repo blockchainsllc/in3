@@ -36,7 +36,8 @@ class NodeList {
     Object obj = data.get("nodes");
     if (obj != null) {
       return IN3Node.asIN3Nodes(obj);
-    } else {
+    }
+    else {
       return new IN3Node[] {};
     }
   }

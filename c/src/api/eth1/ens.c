@@ -39,7 +39,8 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_
           *result = d_bytes(rpc_result);
           //          ctx_remove_required(parent, ctx);
           return IN3_OK;
-        } else
+        }
+        else
           return ctx_set_error(parent, "could not get the resolver", IN3_EFIND);
       }
       case CTX_ERROR:
@@ -47,7 +48,8 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_
       default:
         return IN3_WAITING;
     }
-  } else {
+  }
+  else {
     // create request
     char* req = _malloc(250);
     char  data[73];
@@ -110,7 +112,8 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
     calldata[1] = 0x57;
     calldata[2] = 0x1b;
     calldata[3] = 0xe3;
-  } else {
+  }
+  else {
     // resolver(bytes32)
     calldata[0] = 0x01;
     calldata[1] = 0x78;
@@ -125,7 +128,8 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
     bytes_to_hex(registry, 20, registry_address + 2);
     registry_address[0] = '0';
     registry_address[1] = 'x';
-  } else
+  }
+  else
     switch (parent->client->chain_id) {
       case CHAIN_ID_MAINNET:
       case CHAIN_ID_GOERLI:
@@ -154,7 +158,8 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
     calldata[1] = 0x3b;
     calldata[2] = 0x57;
     calldata[3] = 0xde;
-  } else if (type == ENS_NAME) {
+  }
+  else if (type == ENS_NAME) {
     /// name(bytes32) = 0x691f3431f2842c92f
     calldata[0] = 0x69;
     calldata[1] = 0x1f;

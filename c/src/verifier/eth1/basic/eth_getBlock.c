@@ -218,8 +218,8 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
     // verify uncles
     if (res == IN3_OK && full_proof)
       return eth_verify_uncles(vc, d_get_bytesk(vc->result, K_SHA3_UNCLES)->data, d_get(vc->proof, K_UNCLES), d_get(vc->result, K_UNCLES));
-
-  } else
+  }
+  else
     res = vc_err(vc, "Missing transaction-properties");
 
   return res;

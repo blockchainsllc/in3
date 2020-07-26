@@ -408,7 +408,8 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     vh_free(vh);
     return res;
 #endif
-  } else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->ctx->signers_length)
+  }
+  else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->ctx->signers_length)
     // no signatures found,even though we expected some.
     return vc_err(vc, "missing signatures");
   else {

@@ -208,7 +208,8 @@ uint64_t char_to_long(const char* a, int l) {
     for (int i = l - 1; i > 1; i--)
       val |= ((uint64_t) hexchar_to_int(a[i])) << (4 * (l - 1 - i));
     return val;
-  } else if (l < 12) {
+  }
+  else if (l < 12) {
     char temp[12];
     strncpy(temp, a, l);
     temp[l] = 0;

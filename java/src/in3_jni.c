@@ -196,20 +196,23 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
           str_range_t s = d_to_json(r);
           strncpy(error, s.data, s.len);
           error[s.len] = '\0';
-        } else {
+        }
+        else {
           strncpy(error, d_string(r), d_len(r));
           error[d_len(r)] = '\0';
         }
-      } else if (ctx->error)
+      }
+      else if (ctx->error)
         strcpy(error, ctx->error);
       else
         strcpy(error, "No Result and also no error");
-
-    } else if (ctx->error)
+    }
+    else if (ctx->error)
       strcpy(error, ctx->error);
     else
       strcpy(error, "Error sending the request");
-  } else
+  }
+  else
     strcpy(error, ctx->error);
 
   //need to release this string when done with it in order to
@@ -221,7 +224,8 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
     js = (*env)->NewStringUTF(env, result);
     _free(result);
     return js;
-  } else {
+  }
+  else {
     jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
     (*env)->ThrowNew(env, Exception, error);
   }
@@ -300,20 +304,23 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
           str_range_t s = d_to_json(r);
           strncpy(error, s.data, s.len);
           error[s.len] = '\0';
-        } else {
+        }
+        else {
           strncpy(error, d_string(r), d_len(r));
           error[d_len(r)] = '\0';
         }
-      } else if (ctx->error)
+      }
+      else if (ctx->error)
         strcpy(error, ctx->error);
       else
         strcpy(error, "No Result and also no error");
-
-    } else if (ctx->error)
+    }
+    else if (ctx->error)
       strcpy(error, ctx->error);
     else
       strcpy(error, "Error sending the request");
-  } else
+  }
+  else
     strcpy(error, ctx->error);
 
   //need to release this string when done with it in order to
@@ -374,7 +381,8 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
       sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
       req->ctx->raw_response[i].state = IN3_OK;
       _free(bytes);
-    } else {
+    }
+    else {
       sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
       req->ctx->raw_response[i].state = IN3_ERPC;
     }
@@ -564,7 +572,8 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jfieldID  jproof        = (*jni)->GetStaticFieldID(jni, jproofcls, "full", "Lin3/Proof;");
   if (c->proof == PROOF_NONE) {
     jproof = (*jni)->GetStaticFieldID(jni, jproofcls, "none", "Lin3/Proof;");
-  } else if (c->proof == PROOF_STANDARD) {
+  }
+  else if (c->proof == PROOF_STANDARD) {
     jproof = (*jni)->GetStaticFieldID(jni, jproofcls, "standard", "Lin3/Proof;");
   }
 

@@ -234,7 +234,8 @@ public class JSON {
     if (map == null) {
       if (other.map != null)
         return false;
-    } else if (!map.equals(other.map))
+    }
+    else if (!map.equals(other.map))
       return false;
     return true;
   }

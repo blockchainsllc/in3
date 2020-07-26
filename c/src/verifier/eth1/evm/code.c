@@ -113,7 +113,8 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           if (vc->ctx->client->cache)
             vc->ctx->client->cache->set_item(vc->ctx->client->cache->cptr, cache_key, *target);
           return IN3_OK;
-        } else
+        }
+        else
           return vc_err(vc, ctx->error ? ctx->error : "Missing result");
       }
       case CTX_ERROR:

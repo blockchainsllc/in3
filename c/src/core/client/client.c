@@ -58,7 +58,8 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
     ctx->error = NULL;
-  } else
+  }
+  else
     ctx->verification_state = ret;
 
   return ctx; // return context and hope the calle will clean it.
@@ -107,7 +108,8 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
     else if (d_type(r) == T_OBJECT) {
       char* msg = d_get_stringk(r, K_MESSAGE);
       *error    = msg ? _strdupn(msg, -1) : d_create_json(r);
-    } else
+    }
+    else
       *error = d_create_json(r);
     res = IN3_ERPC;
     goto clean;

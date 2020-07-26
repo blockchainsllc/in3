@@ -63,12 +63,13 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
 #else
     return IN3_ENOTSUP;
 #endif
-
-  } else if (strcmp(kdf, "pbkdf2") == 0) {
+  }
+  else if (strcmp(kdf, "pbkdf2") == 0) {
     if (!kdf_params || strcmp(d_get_string(kdf_params, "prf"), "hmac-sha256")) return IN3_ENOTSUP;
     if (strcmp(d_get_string(crypto, "cipher"), "aes-128-ctr")) return IN3_ENOTSUP;
     pbkdf2_hmac_sha256((const uint8_t*) password, strlen(password), salt.data, salt.len, d_get_int(kdf_params, "c"), aeskey, klen);
-  } else
+  }
+  else
     return IN3_ENOTSUP;
 
   bytes_t  cipher = bytes(cipher_data, hex_to_bytes(d_get_string(crypto, "ciphertext"), -1, cipher_data, 64));

@@ -39,9 +39,9 @@
 #include <assert.h>
 #include <limits.h>
 
-#define UDIV_UP(a, b) (((a) + (b) -1) / (b))
-#define ALIGN_UP(a, b) (UDIV_UP(a, b) * (b))
-#define ALIGN_UP8(a) (ALIGN_UP(a, 8))
+#define UDIV_UP(a, b)    (((a) + (b) -1) / (b))
+#define ALIGN_UP(a, b)   (UDIV_UP(a, b) * (b))
+#define ALIGN_UP8(a)     (ALIGN_UP(a, 8))
 #define IS_ON_HEAP(_bs_) (_bs_->len > BS_MAX)
 
 static bool bs_growp(bitset_t* bs, size_t pos) {
@@ -60,7 +60,8 @@ in3_ret_t bs_modify(bitset_t* bs, size_t pos, bs_op_t op) {
   if (pos >= BS_MAX) {
     if (IS_ON_HEAP(bs)) {
       if (!bs_growp(bs, pos)) return IN3_ENOMEM;
-    } else {
+    }
+    else {
       uintbs_t cpy = bs->bits.b;
       bs->bits.p   = NULL;
       if (!bs_growp(bs, pos)) return IN3_ENOMEM;
@@ -87,7 +88,8 @@ in3_ret_t bs_modify(bitset_t* bs, size_t pos, bs_op_t op) {
       default:
         return IN3_ENOTSUP;
     }
-  } else {
+  }
+  else {
     switch (op) {
       case BS_SET:
         BIT_SET(bs->bits.b, pos);
@@ -114,7 +116,8 @@ bitset_t* bs_new(size_t len) {
       _free(bs);
       return NULL;
     }
-  } else {
+  }
+  else {
     bs->len    = BS_MAX;
     bs->bits.b = 0ULL;
   }
@@ -131,7 +134,8 @@ bool bs_isset(bitset_t* bs, size_t pos) {
   if (pos >= bs->len) return false;
   if (IS_ON_HEAP(bs)) {
     return BIT_CHECK(bs->bits.p[pos / 8], pos % 8);
-  } else {
+  }
+  else {
     return BIT_CHECK(bs->bits.b, pos);
   }
 }
@@ -141,7 +145,8 @@ bool bs_isempty(bitset_t* bs) {
     for (size_t i = 0; i < (bs->len / 8); ++i)
       if (bs->bits.p[i] != 0) return false;
     return true;
-  } else {
+  }
+  else {
     return bs->bits.b == 0;
   }
 }
@@ -151,7 +156,8 @@ bitset_t* bs_clone(bitset_t* bs) {
   if (IS_ON_HEAP(bs)) {
     nbs->bits.p = _malloc(bs->len / 8);
     memcpy(nbs->bits.p, bs->bits.p, bs->len / 8);
-  } else {
+  }
+  else {
     nbs->bits.b = bs->bits.b;
   }
   nbs->len = bs->len;

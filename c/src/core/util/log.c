@@ -110,7 +110,8 @@ void in3_log_disable_prefix_() {
 void in3_log_(in3_log_level_t level, const char* filename, const char* function, int line, const char* fmt, ...) {
   if (level < L.level) {
     return;
-  } else if (L.quiet && !L.fp) {
+  }
+  else if (L.quiet && !L.fp) {
     return;
   }
 
@@ -137,7 +138,8 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
 #else
         fprintf(stderr, "%s %-5s %s:%d:%s(): ", buf, level_names[level], file, line, function);
 #endif
-      } else {
+      }
+      else {
         fprintf(stderr, "%s", L.prefix);
       }
     }
@@ -158,7 +160,8 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
 #else
       printk("%s %-5s %s:%d:%s(): ", buf, level_names[level], file, line, function);
 #endif
-    } else {
+    }
+    else {
       printk("%s", L.prefix);
     }
     va_start(args, fmt);

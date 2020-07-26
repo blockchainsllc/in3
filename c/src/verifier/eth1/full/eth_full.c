@@ -125,7 +125,8 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
       default:
         return ctx_set_error(vc->ctx, "General Error during execution", (in3_ret_t) ret);
     }
-  } else
+  }
+  else
     return IN3_EIGNORE;
 }
 
