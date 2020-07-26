@@ -339,7 +339,7 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   d_token_t* tx = d_get_at(params, 0);
   bytes_t    dst;
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_prepare_unsigned_tx(tx, ctx, &dst))
+  TRY(eth_prepare_unsigned_tx(tx, ctx->ctx, &dst))
 #else
   if (params || tx || ctx) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
