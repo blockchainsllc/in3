@@ -368,18 +368,21 @@ static bool is_user_error(d_token_t* error, char** err_msg) {
   // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
   return *err_msg && strncmp(*err_msg, "Error:", 6) && strncmp(*err_msg, "TypeError:", 10);
 }
-
-static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response, in3_chain_t* chain) {
-  if (is_blacklisted(node)) return IN3_ERPC;                                                        // already handled
-  if (node) blacklist_node(chain, node);                                                            // we block this node
-  ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
-  if (response->data.data) {                                                                        // free up memory
+NONULL static void clear_response(in3_response_t* response) {
+  if (response->data.data) { // free up memory
     // clean up invalid data
     _free(response->data.data);
     response->data.data     = NULL;
     response->data.allocted = 0;
     response->data.len      = 0;
   }
+}
+
+static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response, in3_chain_t* chain) {
+  if (is_blacklisted(node)) return IN3_ERPC;                                                        // already handled
+  if (node) blacklist_node(chain, node);                                                            // we block this node
+  ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
+  clear_response(response);                                                                         // free up memory
   return IN3_ERPC;
 }
 
@@ -438,6 +441,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   // parse
   if (ctx_parse_response(ctx, response->data.data, response->data.len)) { // in case of an error we get a error-code and error is set in the ctx?
     if (node) blacklist_node(chain, node);                                // so we need to block the node.
+    clear_response(response);                                             // we want to save memory and free the invalid response
     return ctx->verification_state;
   }
 
@@ -464,10 +468,10 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
     }
 
     // no result?
-    if (!vc.result && ctx->attempt < ctx->client->max_attempts - 1) {
+    if (!vc.result) {
       char* err_msg;
       // if we don't have a result, the node reported an error
-      if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg) || !node) {
+      if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg)) {
         if (node) node->blocked = true; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
         in3_log_debug("we have a user-error from %s, so we reject the response, but don't blacklist ..\n", n ? n->url : "intern");
         continue;
@@ -1014,10 +1018,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         return in3_ctx_execute(ctx);
       }
       else {
-        if (ctx_is_allowed_to_fail(ctx)) {
-          ret                     = IN3_EIGNORE;
-          ctx->verification_state = IN3_EIGNORE;
-        }
+        if (ctx_is_allowed_to_fail(ctx))
+          ctx->verification_state = ret = IN3_EIGNORE;
         // we give up
         return ctx->error ? (ret ? ret : IN3_ERPC) : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
       }
