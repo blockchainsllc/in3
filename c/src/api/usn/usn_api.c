@@ -353,9 +353,10 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
       return 0;
     }
   }
-  device->bookings       = device->bookings
-                               ? _realloc(device->bookings, sizeof(usn_booking_t) * (device->num_bookings + 1), sizeof(usn_booking_t) * device->num_bookings)
-                               : _malloc(sizeof(usn_booking_t) * device->num_bookings + 1);
+  device->bookings = device->bookings
+                         ? _realloc(device->bookings, sizeof(usn_booking_t) * (device->num_bookings + 1), sizeof(usn_booking_t) * device->num_bookings)
+                         : _malloc(sizeof(usn_booking_t) * device->num_bookings + 1);
+
   usn_booking_t* booking = device->bookings + device->num_bookings;
   booking->rented_from   = rented_from;
   booking->rented_until  = rented_until;
