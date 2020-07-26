@@ -2,6 +2,7 @@
 #include "../../core/client/cache.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 #include "btc_serialize.h"
 

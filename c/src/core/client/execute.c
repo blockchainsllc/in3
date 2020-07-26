@@ -45,6 +45,7 @@
 #include "context_internal.h"
 #include "keys.h"
 #include "nodelist.h"
+#include "plugin.h"
 #include "verifier.h"
 #include <stdint.h>
 #include <string.h>

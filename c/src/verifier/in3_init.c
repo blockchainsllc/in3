@@ -1,4 +1,5 @@
 #include "in3_init.h"
+#include "../core/client/plugin.h"
 #include "../api/eth1/eth_api.h"
 #include "../pay/eth/pay_eth.h"
 #include "../transport/curl/in3_curl.h"

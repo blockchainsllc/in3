@@ -40,6 +40,7 @@
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
+#include "plugin.h"
 #include <stdio.h>
 #include <string.h>
 

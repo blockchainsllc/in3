@@ -281,46 +281,6 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED          -1 /**< return value used by the signer if the the signature-request was rejected. */
-#define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE   -3 /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR     -4 /**< return value used by the signer for unspecified errors. */
-
-/** type of the requested signature */
-typedef enum {
-  SIGN_EC_RAW  = 0, /**< sign the data directly */
-  SIGN_EC_HASH = 1, /**< hash and sign the data */
-} d_signature_type_t;
-
-/**
- * signing context. This Context is passed to the signer-function. 
- */
-typedef struct sign_ctx {
-  uint8_t            signature[65]; /**< the resulting signature needs to be writte into these bytes */
-  d_signature_type_t type;          /**< the type of signature*/
-  struct in3_ctx*    ctx;           /**< the context of the request in order report errors */
-  bytes_t            message;       /**< the message to sign*/
-  bytes_t            account;       /**< the account to use for the signature */
-} in3_sign_ctx_t;
-
-/**
- * action context when retrieving the account of a signer.
- */
-typedef struct sign_account_ctx {
-  struct in3_ctx* ctx;     /**< the context of the request in order report errors */
-  address_t       account; /**< the account to use for the signature */
-} in3_sign_account_ctx_t;
-/**
- * action context when retrieving the account of a signer.
- */
-typedef struct sign_prepare_ctx {
-  struct in3_ctx* ctx;     /**< the context of the request in order report errors */
-  address_t       account; /**< the account to use for the signature */
-  bytes_t         old_tx;
-  bytes_t         new_tx;
-
-} in3_sign_prepare_ctx_t;
-
 /** 
  * payment prepearation function.
  * 
@@ -375,18 +335,6 @@ typedef struct in3_response {
  * 
  */
 typedef struct in3_t_ in3_t;
-
-/** request-object. 
- * 
- * represents a RPC-request
- */
-typedef struct in3_request {
-  char*           payload;  /**< the payload to send */
-  char**          urls;     /**< array of urls */
-  uint_fast16_t   urls_len; /**< number of urls */
-  struct in3_ctx* ctx;      /**< the current context */
-  void*           cptr;     /**< a custom ptr to hold information during */
-} in3_request_t;
 
 /**
  * Filter type used internally when managing filters.
@@ -457,15 +405,6 @@ struct in3_plugin {
   in3_plugin_act_fn      action_fn; /**< plugin action handler */
   in3_plugin_t*          next;      /**< pointer to next plugin in list */
 };
-
-/** checks if a plugin for specified action is registered with the client */
-#define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
-
-/** registers a plugin with the client */
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex);
-
-/** executes all plugins irrespective of their return values, returns first error (if any) */
-in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * Handler which is added to client config in order to handle filter.
@@ -680,85 +619,10 @@ NONULL char* in3_get_config(
 typedef in3_ret_t (*plgn_register)(in3_t* c);
 
 /**
- * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
- */
-void in3_register_default(plgn_register reg_fn);
-
-/**
- * defines a default transport which is used when creating a new client.
- */
-void in3_set_default_transport(
-    plgn_register transport /**< the default transport-function. */
-);
-
-typedef in3_ret_t (*in3_transport_legacy)(in3_request_t* request);
-/**
- * defines a default transport which is used when creating a new client.
- */
-void in3_set_default_legacy_transport(
-    in3_transport_legacy transport /**< the default transport-function. */
-);
-
-/**
  * defines a default storage handler which is used when creating a new client.
  */
 void in3_set_default_storage(
     in3_storage_handler_t* cacheStorage /**< pointer to the handler-struct */
-);
-/**
- * defines a default signer which is used when creating a new client.
- */
-void in3_set_default_signer(
-    plgn_register signer /**< default signer-function. */
-);
-
-/**
- * helper function to retrieve and message from a in3_sign_ctx_t
- */
-bytes_t in3_sign_ctx_get_message(
-    in3_sign_ctx_t* ctx /**< the signer context */
-);
-
-/**
- * helper function to retrieve and account from a in3_sign_ctx_t
- */
-bytes_t in3_sign_ctx_get_account(
-    in3_sign_ctx_t* ctx /**< the signer context */
-);
-
-/**
- * helper function to retrieve the signature from a in3_sign_ctx_t
- */
-uint8_t* in3_sign_ctx_get_signature(
-    in3_sign_ctx_t* ctx /**< the signer context */
-);
-
-/**
- * getter to retrieve the payload from a in3_request_t struct
- */
-char* in3_get_request_payload(
-    in3_request_t* request /**< request struct */
-);
-
-/**
- * getter to retrieve the urls list from a in3_request_t struct
- */
-char** in3_get_request_urls(
-    in3_request_t* request /**< request struct */
-);
-
-/**
- * getter to retrieve the urls list length from a in3_request_t struct
- */
-int in3_get_request_urls_len(
-    in3_request_t* request /**< request struct */
-);
-
-/**
- * getter to retrieve the urls list length from a in3_request_t struct
- */
-uint32_t in3_get_request_timeout(
-    in3_request_t* request /**< request struct */
 );
 
 /**
@@ -772,18 +636,6 @@ in3_storage_handler_t* in3_set_storage_handler(
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
-);
-
-/**
- * adds a response for a request-object.
- * This function should be used in the transport-function to set the response.
- */
-NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in]the the request */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
 #ifdef PAY

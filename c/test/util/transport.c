@@ -1,7 +1,7 @@
 #include "transport.h"
 #include "../../src/core/client/cache.h"
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/nodelist.h"
+#include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
@@ -44,11 +44,13 @@ char*              read_json_response_buffer(char* path) {
     response_buffer[length] = 0;
     fclose(f);
     return response_buffer;
-  } else {
+  }
+  else {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
       printf("Current working dir: %s\n", cwd);
-    } else {
+    }
+    else {
       perror("getcwd() error");
     }
     printf("Error coudl not find the testdata %s\n", path);
@@ -93,7 +95,8 @@ int add_response_test(char* test, char* needed_params) {
     res    = d_to_json(d_get_at(d_get(mock->result, key("response")), 0));
     req    = d_get_at(d_get(mock->result, key("request")), 0);
     params = d_create_json(d_get(req, key("params")));
-  } else if (d_type(mock->result) == T_ARRAY) {
+  }
+  else if (d_type(mock->result) == T_ARRAY) {
     for (d_iterator_t iter = d_iter(mock->result); iter.left; d_iter_next(&iter)) {
       res    = d_to_json(d_get_at(d_get(iter.token, key("response")), 0));
       req    = d_get_at(d_get(iter.token, key("request")), 0);
@@ -102,7 +105,8 @@ int add_response_test(char* test, char* needed_params) {
       if (strcmp(params, needed_params)) {
         _free(params);
         params = NULL;
-      } else
+      }
+      else
         break;
     }
   }

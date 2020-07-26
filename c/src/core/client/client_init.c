@@ -644,6 +644,9 @@ char* in3_get_config(in3_t* c) {
   if (c->chain_id == CHAIN_ID_LOCAL && chain)
     add_string(sb, ',', "rpc", chain->nodelist->url);
 
+  in3_get_config_ctx_t cctx = {.client = c, .sb = sb};
+  in3_plugin_execute_all(c, PLGN_ACT_GET_CONFIG, &cctx);
+
   sb_add_chars(sb, ",\"nodes\":{");
   for (int i = 0; i < c->chains_length; i++) {
     chain = c->chains + i;
@@ -957,7 +960,21 @@ char* in3_configure(in3_t* c, const char* config) {
       }
     }
     else {
-      EXPECT_TOK(token, false, "unsupported config option!");
+      in3_configure_ctx_t cctx    = {.client = c, .token = token};
+      bool                handled = false;
+      for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+        if (p->acts & PLGN_ACT_SET_CONFIG) {
+          in3_ret_t r = p->action_fn(p->data, PLGN_ACT_SET_CONFIG, &cctx);
+          if (r != IN3_EIGNORE)
+            continue;
+          else if (r != IN3_OK)
+            EXPECT_TOK(token, false, "error configuring this option!");
+          handled = true;
+          break;
+        }
+      }
+
+      if (!handled) EXPECT_TOK(token, false, "unsupported config option!");
     }
   }
 

@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-#include "../../src/core/client/client.h"
+#include "../../src/core/client/plugin.h"
 void add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
 int  add_response_test(char* test, char* needed_params);
 

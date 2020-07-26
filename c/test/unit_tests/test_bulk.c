@@ -38,8 +38,8 @@
 #define DEBUG
 #endif
 
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
@@ -63,11 +63,13 @@ static in3_ret_t test_bulk_transport(void* plugin_data, in3_plugin_act_t action,
     fread(buffer, 1, length, f);
     buffer[length] = 0;
     fclose(f);
-  } else {
+  }
+  else {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
       printf("Current working dir: %s\n", cwd);
-    } else {
+    }
+    else {
       perror("getcwd() error");
       return 1;
     }

@@ -34,7 +34,7 @@
 
 #include "in3_curl.h"
 #include "../../core/client/client.h"
-#include "../../core/client/context.h"
+#include "../../core/client/plugin.h"
 #include "../../core/client/version.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"

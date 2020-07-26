@@ -1,6 +1,7 @@
 
 #include "ipfs.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/base58.h"
 #include "../../third-party/crypto/sha2.h"

@@ -37,7 +37,7 @@
 #endif
 #include "../src/api/eth1/eth_api.h"
 #include "../src/core/client/client.h"
-#include "../src/core/client/context.h"
+#include "../src/core/client/plugin.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
 #include "../src/verifier/btc/btc.h"
