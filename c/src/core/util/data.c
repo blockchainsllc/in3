@@ -80,25 +80,23 @@ d_key_t key(const char* c) {
 #endif
 
 d_key_t keyn(const char* c, const size_t len) {
-  d_key_t val = 0;
 #ifndef IN3_DONT_HASH_KEYS
-  size_t i = 0;
+  d_key_t val = 0;
+  size_t  i   = 0;
   for (; i < len; i++) {
     if (*c == 0) return val;
     val ^= *c | val << 7;
     c += 1;
   }
+  return val;
 #else
-  keyname_t* kn = __keynames;
-  while (kn) {
+  for (keyname_t* kn = __keynames; kn; kn = kn->next) {
     // input is not expected to be nul terminated
     if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
       return kn->key;
-    kn = kn->next;
   }
-  val = __keynames_len;
+  return __keynames_len;
 #endif
-  return val;
 }
 
 void add_keyname(const char* name, d_key_t value, size_t len) {
