@@ -981,7 +981,7 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   while (*p) {
     // check for action-specific rules here like allowing only one action handler per action, etc.
     if (replace_ex && (*p)->acts == acts) {
-      if ((*p)->data) (*p)->action_fn((*p)->data, PLGN_ACT_TERM, c);
+      if ((*p)->acts & PLGN_ACT_TERM) (*p)->action_fn((*p)->data, PLGN_ACT_TERM, c);
       (*p)->action_fn = action_fn;
       (*p)->data      = data;
       return IN3_OK;
@@ -994,6 +994,7 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
     p = &(*p)->next;
   }
 
+  // didn't find any existing, so we add a new ...
   *p              = _malloc(sizeof(in3_plugin_t));
   (*p)->acts      = acts;
   (*p)->action_fn = action_fn;
@@ -1024,15 +1025,11 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
   if (!in3_plugin_is_registered(ctx->client, action))
     return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
 
-  in3_plugin_t* p   = ctx->client->plugins;
-  in3_ret_t     ret = IN3_OK;
-  while (p) {
+  for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->acts & action) {
-      ret = p->action_fn(p->data, action, plugin_ctx);
-      if (ret != IN3_EIGNORE)
-        return ret;
+      in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
+      if (ret != IN3_EIGNORE) return ret;
     }
-    p = p->next;
   }
 
   return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
@@ -1042,15 +1039,12 @@ in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t acti
   if (!in3_plugin_is_registered(ctx->client, action))
     return IN3_OK;
 
-  in3_plugin_t* p   = ctx->client->plugins;
-  in3_ret_t     ret = IN3_OK;
-  while (p) {
+  for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->acts & action) {
-      ret = p->action_fn(p->data, action, plugin_ctx);
-      if (ret != IN3_EIGNORE)
-        break;
+      in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
+      if (ret != IN3_EIGNORE) return ret;
     }
-    p = p->next;
   }
-  return ret;
+
+  return IN3_OK;
 }
