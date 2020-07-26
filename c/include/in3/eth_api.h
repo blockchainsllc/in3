@@ -47,10 +47,10 @@
 #include <stdarg.h>
 
 /** Initializer macros for eth_blknum_t */
-#define BLKNUM(blk) ((eth_blknum_t){.u64 = blk, .is_u64 = true})
-#define BLKNUM_LATEST() ((eth_blknum_t){.def = BLK_LATEST, .is_u64 = false})
+#define BLKNUM(blk)       ((eth_blknum_t){.u64 = blk, .is_u64 = true})
+#define BLKNUM_LATEST()   ((eth_blknum_t){.def = BLK_LATEST, .is_u64 = false})
 #define BLKNUM_EARLIEST() ((eth_blknum_t){.def = BLK_EARLIEST, .is_u64 = false})
-#define BLKNUM_PENDING() ((eth_blknum_t){.def = BLK_PENDING, .is_u64 = false})
+#define BLKNUM_PENDING()  ((eth_blknum_t){.def = BLK_PENDING, .is_u64 = false})
 
 /**< The current error or null if all is ok */
 #define eth_last_error() api_last_error()

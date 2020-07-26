@@ -53,17 +53,17 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
-#define CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
-#define CHAIN_ID_KOVAN 0x2a     /**< chain_id for kovan */
-#define CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
-#define CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
-#define CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
-#define CHAIN_ID_EWC 0xf6       /**< chain_id for ewc */
-#define CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
-#define CHAIN_ID_BTC 0x99       /**< chain_id for btc */
-#define CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6   /**< default replace_latest_block */
+#define CHAIN_ID_MULTICHAIN 0x0    /**< chain_id working with all known chains */
+#define CHAIN_ID_MAINNET    0x01   /**< chain_id for mainnet */
+#define CHAIN_ID_KOVAN      0x2a   /**< chain_id for kovan */
+#define CHAIN_ID_TOBALABA   0x44d  /**< chain_id for tobalaba */
+#define CHAIN_ID_GOERLI     0x5    /**< chain_id for goerlii */
+#define CHAIN_ID_EVAN       0x4b1  /**< chain_id for evan */
+#define CHAIN_ID_EWC        0xf6   /**< chain_id for ewc */
+#define CHAIN_ID_IPFS       0x7d0  /**< chain_id for ipfs */
+#define CHAIN_ID_BTC        0x99   /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0xFFFF /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6      /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -145,13 +145,13 @@ typedef uint8_t in3_node_attr_t;
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  bytes_t*         address;  /**< address of the server */
+  address_t        address;  /**< address of the server */
   uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
-  uint32_t         capacity; /**< the maximal capacity able to handle */
+  uint_fast16_t    index;    /**< index within the nodelist, also used in the contract as key */
+  uint_fast16_t    capacity; /**< the maximal capacity able to handle */
   in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;      /**< the url of the node */
-  uint8_t          attrs;    /**< bitmask of internal attributes */
+  uint_fast8_t     attrs;    /**< bitmask of internal attributes */
 } in3_node_t;
 
 /**
@@ -281,10 +281,10 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1 /**< return value used by the signer if the the signature-request was rejected. */
+#define IN3_SIGN_ERR_REJECTED          -1 /**< return value used by the signer if the the signature-request was rejected. */
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3 /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR -4 /**< return value used by the signer for unspecified errors. */
+#define IN3_SIGN_ERR_INVALID_MESSAGE   -3 /**< return value used by the signer if the message was invalid. */
+#define IN3_SIGN_ERR_GENERAL_ERROR     -4 /**< return value used by the signer for unspecified errors. */
 
 /** type of the requested signature */
 typedef enum {

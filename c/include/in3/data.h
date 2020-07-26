@@ -203,17 +203,17 @@ static inline bool d_iter_next(d_iterator_t* const iter) {
 
 #ifdef __ZEPHYR__
 
-#define printX printk
-#define fprintX fprintf // (kg): fprintk caused link-problems!
+#define printX   printk
+#define fprintX  fprintf // (kg): fprintk caused link-problems!
 #define snprintX snprintk
-#define vprintX vprintk
+#define vprintX  vprintk
 
 #else
 
-#define printX printf
-#define fprintX fprintf
+#define printX   printf
+#define fprintX  fprintf
 #define snprintX snprintf
-#define vprintX vprintf
+#define vprintX  vprintf
 
 #endif
 
