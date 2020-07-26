@@ -49,7 +49,7 @@
 #include <sys/socket.h> /* socket, connect */
 #endif
 #include "../../core/client/client.h"
-#include "../../core/client/context.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "in3_http.h"
