@@ -452,8 +452,10 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
 
+#ifdef LOGGING
     in3_node_t* n = node ? ctx_get_node(chain, node) : NULL;
-    in3_vctx_t  vc;
+#endif
+    in3_vctx_t vc;
     vc.ctx     = ctx;
     vc.chain   = chain;
     vc.request = ctx->requests[i];
