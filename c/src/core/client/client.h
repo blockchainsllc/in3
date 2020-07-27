@@ -224,26 +224,13 @@ typedef struct in3_verified_hash {
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  bool                 dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
   uint8_t              version;         /**< version of the chain */
-  unsigned int         nodelist_length; /**< number of nodes in the nodeList */
-  uint16_t             avg_block_time;  /**< average block time (seconds) for this chain (calculated internally) */
   chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t     type;            /**< chaintype */
-  uint64_t             last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  in3_node_t*          nodelist;        /**< array of nodes */
-  in3_node_weight_t*   weights;         /**< stats and weights recorded for each node */
-  bytes_t**            init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
   bytes_t*             contract;        /**< the address of the registry contract */
   bytes32_t            registry_id;     /**< the identifier of the registry */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
-  in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
   void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
-  struct {
-    uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
-    uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
-    address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
-  } * nodelist_upd8_params;
 } in3_chain_t;
 
 /** 
