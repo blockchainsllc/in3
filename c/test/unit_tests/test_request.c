@@ -166,7 +166,7 @@ static void test_exec_req() {
   _free(result);
 
   result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"The request could not be handled:No storage set\"}}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-21,\"message\":\"The request could not be handled:no plugin found that handled the cache_clear action\"}}", result);
   _free(result);
 
   in3_free(c);
@@ -370,34 +370,6 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"stats\":false}");
   TEST_ASSERT_EQUAL(0, c->flags & FLAGS_STATS);
-
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"-1\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":false}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0x1203030230\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":1}");
-  TEST_ASSERT_EQUAL(c->max_block_cache, 1);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":0}");
-  TEST_ASSERT_EQUAL(c->max_block_cache, 0);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":4294967295}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_block_cache, 4294967295U);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":\"0xffffffff\"}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_block_cache, 0xffffffff);
-
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"-1\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"0\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":false}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"0x1203030230\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":1}");
-  TEST_ASSERT_EQUAL(c->max_code_cache, 1);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":0}");
-  TEST_ASSERT_EQUAL(c->max_code_cache, 0);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":4294967295}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_code_cache, 4294967295U);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":\"0xffffffff\"}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_code_cache, 0xffffffff);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"-1\"}", "expected uint32");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"\"}", "expected uint32");

@@ -261,4 +261,51 @@ typedef struct in3_get_config_ctx {
   sb_t*  sb;     /**< stringbuilder to add json-config*/
 } in3_get_config_ctx_t;
 
+// -------- CACHE ---------
+/** 
+ * storage handler function for reading from cache.
+ * @returns the found result. if the key is found this function should return the values as bytes otherwise `NULL`.
+ **/
+typedef bytes_t* (*in3_storage_get_item)(
+    void*       cptr, /**< a custom pointer as set in the storage handler*/
+    const char* key   /**< the key to search in the cache */
+);
+
+/** 
+ * storage handler function for writing to the cache.
+ **/
+typedef void (*in3_storage_set_item)(
+    void*       cptr, /**< a custom pointer as set in the storage handler*/
+    const char* key,  /**< the key to store the value.*/
+    bytes_t*    value /**< the value to store.*/
+);
+
+/**
+ * storage handler function for clearing the cache.
+ **/
+typedef void (*in3_storage_clear)(
+    void* cptr /**< a custom pointer as set in the storage handler*/
+);
+/**
+ * context used during get config
+ */
+typedef struct in3_cache_ctx {
+  in3_ctx_t* ctx; /**< the request context  */
+  char*      key;
+  bytes_t*   content;
+} in3_cache_ctx_t;
+
+/**
+ * create a new storage handler-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+NONULL_FOR((1, 2, 3, 4))
+void in3_set_storage_handler(
+    in3_t*               c,        /**< the incubed client */
+    in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
+    in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
+    void*                cptr      /**< custom pointer which will will be passed to functions */
+);
+
 #endif

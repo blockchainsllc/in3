@@ -89,17 +89,18 @@ btc_get_conf(in3_t* c, in3_chain_t* chain) {
   if (tc == NULL) {
     char cache_key[50];
     set_cachekey(c->chain_id, cache_key);
+    in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = cache_key};
+    in3_plugin_execute_all(c, PLGN_ACT_CACHE_GET, &cctx);
 
-    tc              = _malloc(sizeof(btc_target_conf_t));
-    chain->conf     = tc;
-    tc->max_daps    = 20;
-    tc->max_diff    = 10;
-    tc->dap_limit   = 20;
-    bytes_t* cached = c->cache ? c->cache->get_item(c->cache->cptr, cache_key) : NULL;
+    tc            = _malloc(sizeof(btc_target_conf_t));
+    chain->conf   = tc;
+    tc->max_daps  = 20;
+    tc->max_diff  = 10;
+    tc->dap_limit = 20;
 
-    if (cached) {
-      tc->data = *cached;
-      _free(cached);
+    if (cctx.content) {
+      tc->data = *cctx.content;
+      _free(cctx.content);
     }
     else {
       const char*        btc_targets = BTC_TARGETS;
@@ -150,11 +151,10 @@ void btc_set_target(in3_vctx_t* vc, uint32_t dap, uint8_t* difficulty) {
   memcpy(p + 2, difficulty, 4);
 
   // add to cache
-  if (vc->ctx->client->cache) {
-    char cache_key[50];
-    set_cachekey(vc->chain->chain_id, cache_key);
-    vc->ctx->client->cache->set_item(vc->ctx->client->cache->cptr, cache_key, &tc->data);
-  }
+  char cache_key[50];
+  set_cachekey(vc->chain->chain_id, cache_key);
+  in3_cache_ctx_t cctx = {.ctx = NULL, .content = &tc->data, .key = cache_key};
+  in3_plugin_execute_first_or_none(vc->ctx, PLGN_ACT_CACHE_SET, &cctx);
 }
 
 uint32_t btc_get_closest_target(in3_vctx_t* vc, uint32_t dap, uint8_t* target) {

@@ -274,7 +274,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
 }
 NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
-  if (!ctx->client->cache || ctx->client->chain_id == CHAIN_ID_LOCAL) return;
+  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET) || ctx->client->chain_id == CHAIN_ID_LOCAL) return;
   in3_cache_store_nodelist(ctx->client, in3_get_chain(ctx->client));
 }
 

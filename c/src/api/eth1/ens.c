@@ -1,7 +1,7 @@
 #include "ens.h"
-#include "../../core/client/client.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
@@ -84,13 +84,14 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
   bytes_t dst_bytes = bytes(dst, *res_len);
 
   //check cache
-  if (parent->client->cache) {
+  if (in3_plugin_is_registered(parent->client, PLGN_ACT_CACHE)) {
     cachekey = alloca(strlen(name) + 5);
     sprintf(cachekey, "ens:%s:%i", name, type);
-    bytes_t* cached = parent->client->cache->get_item(parent->client->cache->cptr, cachekey);
-    if (cached) {
-      memcpy(dst, cached->data, 20);
-      b_free(cached);
+    in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = NULL};
+    TRY(in3_plugin_execute_first(parent, PLGN_ACT_CACHE_GET, &cctx))
+    if (cctx.content) {
+      memcpy(dst, cctx.content->data, 20);
+      b_free(cctx.content);
       return IN3_OK;
     }
   }
@@ -147,8 +148,8 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
 
   if (type == ENS_RESOLVER || type == ENS_OWNER) {
     memcpy(dst, resolver, 20);
-    if (parent->client->cache)
-      parent->client->cache->set_item(parent->client->cache->cptr, cachekey, &dst_bytes);
+    in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = &dst_bytes};
+    in3_plugin_execute_all(parent->client, PLGN_ACT_CACHE_SET, &cctx);
     return IN3_OK;
   }
 
@@ -183,7 +184,7 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
   else if (type == ENS_NAME) {
   }
 
-  if (parent->client->cache)
-    parent->client->cache->set_item(parent->client->cache->cptr, cachekey, &dst_bytes);
+  in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = &dst_bytes};
+  in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_SET, &cctx);
   return IN3_OK;
 }

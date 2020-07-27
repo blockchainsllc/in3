@@ -135,7 +135,7 @@ void static setup_test_cache(in3_t* c) {
 static void test_cache() {
   in3_t* c           = in3_for_chain(CHAIN_ID_GOERLI);
   c->signature_count = 0;
-  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
   setup_test_cache(c);
 
   in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_GOERLI);
@@ -153,21 +153,20 @@ static void test_cache() {
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(7, chain->nodelist_length);
   // ..and the cache one entry
-  TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
+  TEST_ASSERT_TRUE(cache.keys != NULL);
 
   // create a second client...
   in3_t* c2    = in3_for_chain(0);
-  c2->cache    = c->cache;
   c2->chain_id = c->chain_id;
   c2->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
-  in3_plugin_register(c2, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
+  in3_plugin_register(c2, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
 
   in3_configure(c2, "{\"chainId\":\"0x5\"}");
   in3_chain_t* chain2 = in3_get_chain(c2);
 
   // the nodeList should have 2 nodes still
   TEST_ASSERT_EQUAL_INT32(2, chain2->nodelist_length);
-  in3_cache_init(c2);
+  in3_set_storage_handler(c2, cache_get_item, cache_set_item, NULL, &cache);
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(7, chain2->nodelist_length);
 
@@ -177,11 +176,10 @@ static void test_cache() {
   TEST_ASSERT(ctx && ctx->error == NULL);
   ctx_free(ctx);
   in3_free(c);
-  c2->cache = NULL;
   in3_free(c2);
 }
 static in3_ret_t in3_register_test_transport(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
 }
 
 static void test_newchain() {
@@ -192,8 +190,6 @@ static void test_newchain() {
   c->chain_id = 0x8;
   c->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
   setup_test_cache(c);
-
-  in3_set_default_storage(c->cache); // the default cache will not be freed when freeing a in3-instance
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chains_length; i++) {
@@ -225,12 +221,12 @@ static void test_newchain() {
   // the nodeList should have 7 nodes now
   TEST_ASSERT_EQUAL_INT32(7, chain->nodelist_length);
   // ..and the cache one entry
-  TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
+  TEST_ASSERT_TRUE(cache.keys != NULL);
 
   // create a second client...
   in3_t* c2    = in3_for_chain(0);
   c2->chain_id = c->chain_id;
-  c2->cache    = c->cache;
+  in3_set_storage_handler(c2, cache_get_item, cache_set_item, NULL, &cache);
 
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
   in3_chain_t* chain2 = NULL;
@@ -249,9 +245,7 @@ static void test_newchain() {
   in3_client_clear_nodes(c2, c2->chain_id);
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
 
-  in3_set_default_storage(NULL);
   in3_free(c);
-  c2->cache = NULL;
   in3_free(c2);
 }
 
@@ -278,7 +272,6 @@ static void test_whitelist_cache() {
   in3_t* c    = in3_for_chain(0);
   c->chain_id = 0x8;
   setup_test_cache(c);
-  in3_set_default_storage(c->cache);
   char* tmp = NULL;
 
   TEST_ASSERT_EQUAL_STRING("cannot specify manual whiteList and whiteListContract together!",
@@ -312,7 +305,7 @@ static void test_whitelist_cache() {
 
   in3_t* c2    = in3_for_chain(0);
   c2->chain_id = c->chain_id;
-  in3_set_storage_handler(c2, cache_get_item, cache_set_item, NULL, c->cache->cptr);
+  in3_set_storage_handler(c2, cache_get_item, cache_set_item, NULL, &cache);
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, wlc);
   TEST_ASSERT_EQUAL(IN3_OK, in3_cache_update_whitelist(c2, in3_find_chain(c2, 0x8)));
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c2, 0x8)->whitelist->contract, wlc, 20);

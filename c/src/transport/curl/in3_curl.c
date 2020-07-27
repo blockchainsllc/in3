@@ -254,5 +254,5 @@ in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
  * registers curl as a default transport.
  */
 in3_ret_t in3_register_curl(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, send_curl, NULL, true);
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_curl, NULL, true);
 }

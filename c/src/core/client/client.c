@@ -32,7 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "client.h"
 #include "../util/data.h"
 #include "../util/mem.h"
 #include "context.h"
@@ -271,19 +270,50 @@ uint32_t in3_get_request_timeout(
   return request->ctx->client->timeout;
 }
 
-in3_storage_handler_t* in3_set_storage_handler(
+/** 
+ * storage handler to handle cache.
+ **/
+typedef struct in3_storage_handler {
+  in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
+  in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
+  in3_storage_clear    clear;    /**< function pointer clearing all contents of cache.*/
+  void*                cptr;     /**< custom pointer which will be passed to functions */
+} in3_storage_handler_t;
+
+static in3_ret_t handle_cache(void* data, in3_plugin_act_t action, void* arg) {
+  in3_cache_ctx_t*       ctx     = arg;
+  in3_storage_handler_t* handler = data;
+  switch (action) {
+    case PLGN_ACT_CACHE_GET:
+      return (ctx->content = handler->get_item(handler->cptr, ctx->key)) ? IN3_OK : IN3_EIGNORE;
+    case PLGN_ACT_CACHE_SET: {
+      handler->set_item(handler->cptr, ctx->key, ctx->content);
+      return IN3_OK;
+    }
+    case PLGN_ACT_CACHE_CLEAR: {
+      if (handler->clear) handler->clear(handler->cptr);
+      return IN3_OK;
+    }
+    case PLGN_ACT_TERM: {
+      _free(data);
+      return IN3_OK;
+    }
+    default: return IN3_EINVAL;
+  }
+}
+void in3_set_storage_handler(
     in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 ) {
+
   in3_storage_handler_t* handler = _calloc(1, sizeof(in3_storage_handler_t));
   handler->cptr                  = cptr;
   handler->get_item              = get_item;
   handler->set_item              = set_item;
   handler->clear                 = clear;
-  c->cache                       = handler;
+  in3_plugin_register(c, PLGN_ACT_CACHE | PLGN_ACT_TERM, handle_cache, handler, true);
   in3_cache_init(c);
-  return handler;
 }

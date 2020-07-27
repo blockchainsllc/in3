@@ -14,12 +14,12 @@ typedef struct recorder_entry {
 } recorder_entry_t;
 
 typedef struct {
-  char*                  file;
-  in3_plugin_act_fn      transport;
-  FILE*                  f;
-  in3_storage_handler_t* cache;
-  uint64_t               time;
-  recorder_entry_t*      queue;
+  char*             file;
+  in3_plugin_act_fn transport;
+  FILE*             f;
+  in3_plugin_act_fn cache;
+  uint64_t          time;
+  recorder_entry_t* queue;
 } recorder_t;
 
 static recorder_t rec = {
@@ -157,83 +157,81 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
   return res;
 }
 
-bytes_t* rec_get_item_in(void* cptr, const char* key) {
-  UNUSED_VAR(cptr);
-  UNUSED_VAR(key);
-  recorder_entry_t* entry = next_entry("cache", key);
-  bytes_t*          found = atoi(entry->args[1]) ? hex_to_new_bytes(entry->content.data, entry->content.len) : NULL;
-  entry_free(entry);
-
-  return found;
-}
-
-void rec_set_item_in(void* cptr, const char* key, bytes_t* content) {
-  UNUSED_VAR(cptr);
-  UNUSED_VAR(key);
-  UNUSED_VAR(content);
-}
-
-void rec_clear_in(void* cptr) {
-  UNUSED_VAR(cptr);
-}
-
-bytes_t* rec_get_item_out(void* cptr, const char* key) {
-  if (!rec.cache) return NULL;
-  bytes_t* found = rec.cache->get_item(cptr, key);
-  fprintf(rec.f, ":: cache %s %i\n", key, found ? 1 : 0);
-  if (found) {
-    char* hex = alloca(found->len * 2 + 1);
-    bytes_to_hex(found->data, found->len, hex);
-    fprintf(rec.f, "%s\n\n", hex);
+in3_ret_t storage_in(void* data, in3_plugin_act_t action, void* arg) {
+  UNUSED_VAR(data);
+  switch (action) {
+    case PLGN_ACT_CACHE_CLEAR:
+    case PLGN_ACT_CACHE_SET:
+      return IN3_OK;
+    case PLGN_ACT_CACHE_GET: {
+      in3_cache_ctx_t*  ctx   = arg;
+      recorder_entry_t* entry = next_entry("cache", ctx->key);
+      ctx->content            = atoi(entry->args[1]) ? hex_to_new_bytes(entry->content.data, entry->content.len) : NULL;
+      entry_free(entry);
+      return ctx->content ? IN3_OK : IN3_EIGNORE;
+    }
+    default:
+      return IN3_EINVAL;
   }
-  else
-    fprintf(rec.f, "\n");
-
-  return found;
 }
 
-void rec_set_item_out(void* cptr, const char* key, bytes_t* content) {
-  if (rec.cache) rec.cache->set_item(cptr, key, content);
+in3_ret_t storage_out(void* data, in3_plugin_act_t action, void* arg) {
+  in3_ret_t ret = rec.cache ? rec.cache(data, action, arg) : IN3_EIGNORE;
+  if (rec.cache && action == PLGN_ACT_CACHE_GET) {
+    in3_cache_ctx_t* ctx   = arg;
+    bytes_t*         found = ctx->content;
+    fprintf(rec.f, ":: cache %s %i\n", ctx->key, found ? 1 : 0);
+    if (found) {
+      char* hex = alloca(found->len * 2 + 1);
+      bytes_to_hex(found->data, found->len, hex);
+      fprintf(rec.f, "%s\n\n", hex);
+    }
+    else
+      fprintf(rec.f, "\n");
+  }
+  return ret;
 }
 
-void rec_clear_out(void* cptr) {
-  if (rec.cache) rec.cache->clear(cptr);
-}
 uint64_t static_time(void* t) {
   UNUSED_VAR(t);
   return rec.time;
 }
 
-static in3_plugin_t* get_transport(in3_t* c) {
+static in3_plugin_t* get_plugin(in3_t* c, in3_plugin_act_t action) {
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
-    if (p->acts & PLGN_ACT_TRANSPORT_SEND) return p;
+    if (p->acts & action) return p;
   }
   return NULL;
 }
 
 void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
-  in3_plugin_t* p = get_transport(c);
+  in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
   rec.file        = file;
   rec.transport   = p ? p->action_fn : NULL;
   rec.f           = fopen(file, "w");
-  rec.cache       = c->cache;
   if (p) p->action_fn = recorder_transport_out;
+  p = get_plugin(c, PLGN_ACT_CACHE_GET);
+  if (p) {
+    rec.cache    = p->action_fn;
+    p->action_fn = storage_out;
+  }
   in3_set_func_rand(rand_out);
   fprintf(rec.f, ":: cmd");
   for (int i = 0; i < argc; i++) fprintf(rec.f, " %s", strcmp(argv[i], "-fo") ? argv[i] : "-fi");
   fprintf(rec.f, "\n\n");
-  in3_set_storage_handler(c, rec_get_item_out, rec_set_item_out, rec_clear_out, &rec);
   fprintf(rec.f, ":: time %u\n\n", (uint32_t) in3_time(NULL));
 }
 
 void recorder_read_start(in3_t* c, char* file) {
-  in3_plugin_t* p = get_transport(c);
+  in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
   rec.file        = file;
   rec.transport   = p ? p->action_fn : NULL;
   rec.f           = fopen(file, "r");
   if (p) p->action_fn = recorder_transport_in;
+  p = get_plugin(c, PLGN_ACT_CACHE_GET);
+  if (p)
+    p->action_fn = storage_in;
   in3_set_func_rand(rand_in);
-  in3_set_storage_handler(c, rec_get_item_in, rec_set_item_in, rec_clear_in, &rec);
   recorder_entry_t* entry = next_entry("time", NULL);
   rec.time                = entry->argl >= 1 ? atoll(entry->args[0]) : 0;
   entry_free(entry);

@@ -119,15 +119,14 @@ typedef struct default_fn {
 
 static default_fn_t* default_registry = NULL;
 
-static in3_storage_handler_t* default_storage          = NULL;
-static in3_transport_legacy   default_legacy_transport = NULL;
-static in3_ret_t              handle_legacy_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+static in3_transport_legacy default_legacy_transport = NULL;
+static in3_ret_t            handle_legacy_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
   return default_legacy_transport((in3_request_t*) plugin_ctx);
 }
 static in3_ret_t register_legacy(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, handle_legacy_transport, NULL, true);
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, handle_legacy_transport, NULL, true);
 }
 
 void in3_set_default_legacy_transport(
@@ -155,13 +154,6 @@ void in3_register_default(plgn_register reg_fn) {
 
   (*d)     = _calloc(1, sizeof(default_fn_t));
   (*d)->fn = reg_fn;
-}
-
-/**
- * defines a default storage handler which is used when creating a new client.
- */
-void in3_set_default_storage(in3_storage_handler_t* cacheStorage) {
-  default_storage = cacheStorage;
 }
 
 static void whitelist_free(in3_whitelist_t* wl) {
@@ -288,14 +280,11 @@ static void init_goerli(in3_chain_t* chain) {
 
 static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST | FLAGS_BOOT_WEIGHTS;
-  c->cache                = NULL;
   c->cache_timeout        = 0;
   c->chain_id             = chain_id ? chain_id : CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
   c->finality             = 0;
   c->max_attempts         = 7;
-  c->max_block_cache      = 0;
-  c->max_code_cache       = 0;
   c->max_verified_hashes  = 5;
   c->min_deposit          = 0;
   c->node_limit           = 0;
@@ -516,7 +505,6 @@ void in3_free(in3_t* a) {
     whitelist_free(a->chains[i].whitelist);
     _free(a->chains[i].nodelist_upd8_params);
   }
-  if (a->cache && a->cache != default_storage) _free(a->cache);
   if (a->chains) _free(a->chains);
 
   if (a->filters) {
@@ -560,8 +548,6 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
 
   for (default_fn_t* d = default_registry; d; d = d->next)
     d->fn(c);
-
-  if (default_storage) c->cache = default_storage;
 
   return c;
 }
@@ -638,8 +624,6 @@ char* in3_get_config(in3_t* c) {
   add_bool(sb, ',', "stats", c->flags & FLAGS_STATS);
   add_bool(sb, ',', "useBinary", c->flags & FLAGS_BINARY);
   add_bool(sb, ',', "useHttp", c->flags & FLAGS_HTTP);
-  add_uint(sb, ',', "maxBlockCache", c->max_block_cache);
-  add_uint(sb, ',', "maxCodeCache", c->max_code_cache);
   add_uint(sb, ',', "maxVerifiedHashes", c->max_verified_hashes);
   add_uint(sb, ',', "timeout", c->timeout);
   add_uint(sb, ',', "minDeposit", c->min_deposit);
@@ -761,14 +745,6 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == key("useHttp")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_HTTP, (d_int(token) ? true : false));
-    }
-    else if (token->key == key("maxBlockCache")) {
-      EXPECT_TOK_U32(token);
-      c->max_block_cache = d_long(token);
-    }
-    else if (token->key == key("maxCodeCache")) {
-      EXPECT_TOK_U32(token);
-      c->max_code_cache = d_long(token);
     }
     else if (token->key == key("key")) {
       EXPECT_TOK_B256(token);

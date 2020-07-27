@@ -247,41 +247,6 @@ typedef struct in3_chain {
 } in3_chain_t;
 
 /** 
- * storage handler function for reading from cache.
- * @returns the found result. if the key is found this function should return the values as bytes otherwise `NULL`.
- **/
-typedef bytes_t* (*in3_storage_get_item)(
-    void*       cptr, /**< a custom pointer as set in the storage handler*/
-    const char* key   /**< the key to search in the cache */
-);
-
-/** 
- * storage handler function for writing to the cache.
- **/
-typedef void (*in3_storage_set_item)(
-    void*       cptr, /**< a custom pointer as set in the storage handler*/
-    const char* key,  /**< the key to store the value.*/
-    bytes_t*    value /**< the value to store.*/
-);
-
-/**
- * storage handler function for clearing the cache.
- **/
-typedef void (*in3_storage_clear)(
-    void* cptr /**< a custom pointer as set in the storage handler*/
-);
-
-/** 
- * storage handler to handle cache.
- **/
-typedef struct in3_storage_handler {
-  in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
-  in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
-  in3_storage_clear    clear;    /**< function pointer clearing all contents of cache.*/
-  void*                cptr;     /**< custom pointer which will be passed to functions */
-} in3_storage_handler_t;
-
-/** 
  * payment prepearation function.
  * 
  * allows the payment to handle things before the request will be send.
@@ -354,6 +319,7 @@ typedef struct in3_filter_t_ {
 } in3_filter_t;
 
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
+#define PLGN_ACT_CACHE     (PLGN_ACT_CACHE_SET | PLGN_ACT_CACHE_GET | PLGN_ACT_CACHE_CLEAR)
 
 /** plugin action list */
 typedef enum {
@@ -431,8 +397,6 @@ struct in3_t_ {
   uint_fast16_t          max_verified_hashes;  /**< max number of verified hashes to cache */
   uint_fast16_t          pending;              /**< number of pending requests created with this instance */
   uint32_t               cache_timeout;        /**< number of seconds requests can be cached. */
-  uint32_t               max_code_cache;       /**< number of max bytes used to cache the code in memory */
-  uint32_t               max_block_cache;      /**< number of number of blocks cached  in memory */
   uint32_t               timeout;              /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
   chain_id_t             chain_id;             /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
   in3_plugin_supp_acts_t plugin_acts;          /**< bitmask of supported actions of all plugins registered with this client */
@@ -440,7 +404,6 @@ struct in3_t_ {
   uint64_t               min_deposit;          /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
   void*                  key;                  /**< the client key to sign requests (pointer to 32bytes private key seed) */
-  in3_storage_handler_t* cache;                /**< a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
   in3_chain_t*           chains;               /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;              /**< filter handler */
   in3_plugin_t*          plugins;              /**< list of registered plugins */
@@ -624,26 +587,6 @@ NONULL char* in3_get_config(
 /** a register-function for a plugion.
  */
 typedef in3_ret_t (*plgn_register)(in3_t* c);
-
-/**
- * defines a default storage handler which is used when creating a new client.
- */
-void in3_set_default_storage(
-    in3_storage_handler_t* cacheStorage /**< pointer to the handler-struct */
-);
-
-/**
- * create a new storage handler-object to be set on the client.
- * the caller will need to free this pointer after usage.
- */
-NONULL_FOR((1, 2, 3, 4))
-in3_storage_handler_t* in3_set_storage_handler(
-    in3_t*               c,        /**< the incubed client */
-    in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
-    in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
-    in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
-    void*                cptr      /**< custom pointer which will will be passed to functions */
-);
 
 #ifdef PAY
 /**

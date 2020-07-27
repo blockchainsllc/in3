@@ -305,10 +305,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 }
 
 static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
-  in3_storage_handler_t* cache = ctx->ctx->client->cache;
-  if (!cache || !cache->clear)
-    return ctx_set_error(ctx->ctx, "No storage set", IN3_ECONFIG);
-  cache->clear(cache->cptr);
+  TRY(in3_plugin_execute_first(ctx->ctx, PLGN_ACT_CACHE_CLEAR, NULL));
   return in3_rpc_handle_with_string(ctx, "true");
 }
 

@@ -72,8 +72,6 @@ static void test_in3_config() {
      \"includeCode\":true,\
      \"bootWeights\":true,\
      \"maxAttempts\":99,\
-     \"maxBlockCache\":98,\
-     \"maxCodeCache\":97,\
      \"minDeposit\":96,\
      \"keepIn3\":true,\
      \"nodeLimit\":95,\
@@ -105,8 +103,6 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(50, c->finality);
   TEST_ASSERT_EQUAL(FLAGS_INCLUDE_CODE, c->flags & FLAGS_INCLUDE_CODE);
   TEST_ASSERT_EQUAL(99, c->max_attempts);
-  TEST_ASSERT_EQUAL(98, c->max_block_cache);
-  TEST_ASSERT_EQUAL(97, c->max_code_cache);
   TEST_ASSERT_EQUAL(96, c->min_deposit);
   TEST_ASSERT_EQUAL(PROOF_FULL, c->proof);
   TEST_ASSERT_EQUAL(95, c->node_limit);

@@ -36,7 +36,6 @@
 #include "../../c/src/api/eth1/abi.h"
 #include "../../c/src/api/eth1/eth_api.h"
 #include "../../c/src/core/client/cache.h"
-#include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/plugin.h"
 #include "../../c/src/core/client/version.h"
@@ -53,6 +52,13 @@
 #include "../../c/src/third-party/libb64/cencode.h"
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
+
+static void* get_java_obj_ptr(in3_t* c) {
+  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+    if (p->acts & PLGN_ACT_CACHE_GET) return p->data;
+  }
+  return NULL;
+}
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   if (obj == NULL || env == NULL || (*env)->GetObjectClass(env, obj) == NULL) return NULL;
@@ -346,8 +352,9 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_t* in3 = get_in3(env, ob);
   if (!in3) return;
-  if (in3->cache && in3->cache->cptr)
-    (*env)->DeleteGlobalRef(env, (jobject) in3->cache->cptr);
+  void* jp = get_java_obj_ptr(in3);
+  if (jp)
+    (*env)->DeleteGlobalRef(env, (jobject) jp);
 
   in3_free(in3);
 }
@@ -530,9 +537,10 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 //in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
   in3_ctx_t* ctx    = (in3_ctx_t*) sc->ctx;
-  jclass     cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
+  void*      jp     = get_java_obj_ptr(ctx->client);
+  jclass     cls    = (*jni)->GetObjectClass(jni, jp);
   jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
-  jobject    signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
+  jobject    signer = (*jni)->CallObjectMethod(jni, jp, mid);
 
   if (!signer) return -1;
 
@@ -601,9 +609,6 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jmethodID set_stats_mid = (*jni)->GetMethodID(jni, jconfigclass, "setStats", "(Z)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_stats_mid, (jboolean)(c->flags & FLAGS_STATS) != 0);
 
-  jmethodID set_max_code_cache_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxCodeCache", "(J)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_code_cache_mid, (jlong) c->max_code_cache);
-
   jmethodID set_timeout_mid = (*jni)->GetMethodID(jni, jconfigclass, "setTimeout", "(J)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_timeout_mid, (jlong) c->timeout);
 
@@ -618,9 +623,6 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
 
   jmethodID set_replace_latest_block_mid = (*jni)->GetMethodID(jni, jconfigclass, "setReplaceLatestBlock", "(I)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_replace_latest_block_mid, (jint) c->replace_latest_block);
-
-  jmethodID set_max_block_cache_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxBlockCache", "(J)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_block_cache_mid, (jlong) c->max_block_cache);
 
   for (int i = 0; i < c->chains_length; i++) {
     char        tmp[67]         = {'0', 'x'};
@@ -728,8 +730,8 @@ static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
   in3_t* in3 = in3_for_chain_auto_init(jchain);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
-  in3_plugin_register(in3, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, Java_in3_IN3_transport, NULL, true);
-  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, in3->cache->cptr, false);
+  in3_plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
+  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, get_java_obj_ptr(in3), false);
   jni = env;
 
   in3_set_jclient_config(in3, ob);
