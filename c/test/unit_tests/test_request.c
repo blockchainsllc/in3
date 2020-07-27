@@ -40,16 +40,16 @@
 #endif
 
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/cache.h"
 #include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
 #include <stdio.h>
 #include <unistd.h>
 

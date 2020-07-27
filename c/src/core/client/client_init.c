@@ -32,15 +32,15 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../nodeselect/cache.h"
+#include "../../nodeselect/nodelist.h"
 #include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "../util/mem.h"
-#include "cache.h"
 #include "client.h"
 #include "context_internal.h"
-#include "nodelist.h"
 #include "verifier.h"
 #include <assert.h>
 #include <stdlib.h>

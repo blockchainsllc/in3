@@ -37,9 +37,9 @@
  * 
  * */
 
-#include "../util/mem.h"
-#include "client.h"
-#include "context.h"
+#include "../core/client/client.h"
+#include "../core/client/context.h"
+#include "../core/util/mem.h"
 #include <time.h>
 
 #ifndef NODELIST_H

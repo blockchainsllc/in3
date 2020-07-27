@@ -32,6 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../nodeselect/cache.h"
+#include "../../nodeselect/nodelist.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/crypto/sha3.h"
@@ -40,11 +42,9 @@
 #include "../util/mem.h"
 #include "../util/stringbuilder.h"
 #include "../util/utils.h"
-#include "cache.h"
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
-#include "nodelist.h"
 #include "plugin.h"
 #include "verifier.h"
 #include <stdint.h>

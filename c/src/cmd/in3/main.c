@@ -54,12 +54,12 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
-#include "../../core/client/cache.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/nodelist.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
+#include "../../nodeselect/cache.h"
+#include "../../nodeselect/nodelist.h"
 
 #if defined(LEDGER_NANO)
 #include "../../signer/ledger-nano/signer/ethereum_apdu_client.h"

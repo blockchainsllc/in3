@@ -33,11 +33,11 @@
  *******************************************************************************/
 
 #include "cache.h"
-#include "../util/bitset.h"
-#include "../util/log.h"
-#include "../util/mem.h"
-#include "../util/utils.h"
-#include "context.h"
+#include "../core/client/context.h"
+#include "../core/util/bitset.h"
+#include "../core/util/log.h"
+#include "../core/util/mem.h"
+#include "../core/util/utils.h"
 #include "nodelist.h"
 #include "stdio.h"
 #include <inttypes.h>

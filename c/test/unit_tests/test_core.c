@@ -39,14 +39,14 @@
 #define DEBUG
 #endif
 
-#include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/debug.h"
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 #include "../test_utils.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
 #include <stdio.h>
 #include <unistd.h>
 

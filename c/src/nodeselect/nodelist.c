@@ -33,16 +33,16 @@
  *******************************************************************************/
 
 #include "nodelist.h"
-#include "../util/bitset.h"
-#include "../util/data.h"
-#include "../util/debug.h"
-#include "../util/log.h"
-#include "../util/mem.h"
-#include "../util/utils.h"
+#include "../core/client/client.h"
+#include "../core/client/context_internal.h"
+#include "../core/client/keys.h"
+#include "../core/util/bitset.h"
+#include "../core/util/data.h"
+#include "../core/util/debug.h"
+#include "../core/util/log.h"
+#include "../core/util/mem.h"
+#include "../core/util/utils.h"
 #include "cache.h"
-#include "client.h"
-#include "context_internal.h"
-#include "keys.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

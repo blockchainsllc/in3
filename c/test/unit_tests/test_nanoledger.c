@@ -41,10 +41,8 @@
 
 #include "../../include/in3/error.h"
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/bytes.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -52,6 +50,8 @@
 #include "../../src/core/util/scache.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
 
 #if defined(LEDGER_NANO)
 #include "../../src/signer/ledger-nano/signer/ethereum_apdu_client.h"

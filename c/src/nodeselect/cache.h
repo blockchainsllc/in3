@@ -39,9 +39,9 @@
  * If no storage handler is specified nothing will be cached.
  * */
 
-#include "../util/bytes.h"
-#include "client.h"
-#include "context.h"
+#include "../core/client/client.h"
+#include "../core/client/context.h"
+#include "../core/util/bytes.h"
 
 #ifndef CACHE_H
 #define CACHE_H

@@ -31,13 +31,13 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#include "../../c/src/core/client/cache.h"
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
-#include "../../c/src/core/client/nodelist.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
+#include "../../c/src/nodeselect/cache.h"
+#include "../../c/src/nodeselect/nodelist.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/in3_init.h"
