@@ -111,7 +111,11 @@ static in3_ret_t nl_cache_set(void* plugin_data, void* plugin_ctx) {
 }
 
 static in3_ret_t nl_cache_get(void* plugin_data, void* plugin_ctx) {
-  return IN3_OK;
+  in3_configure_ctx_t*  ctx  = plugin_ctx;
+  in3_nodeselect_def_t* data = plugin_data;
+  if (data->whitelist)
+    in3_cache_update_whitelist(ctx->client, data);
+  return in3_cache_update_nodelist(ctx->client, data);
 }
 
 static in3_ret_t nl_cache_clear(void* plugin_data, void* plugin_ctx) {

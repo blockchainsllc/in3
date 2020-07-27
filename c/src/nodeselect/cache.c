@@ -128,11 +128,11 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
     BIT_CLEAR(n->attrs, ATTR_WHITELISTED);
   }
 
-  // read verified hashes
-  const unsigned int hashes = b_read_int(b, &pos);
-  if (!data->verified_hashes && hashes) data->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
-  if (hashes)
-    memcpy(data->verified_hashes, b->data + pos, sizeof(in3_verified_hash_t) * (min(hashes, c->max_verified_hashes)));
+//  // read verified hashes
+//  const unsigned int hashes = b_read_int(b, &pos);
+//  if (!data->verified_hashes && hashes) data->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+//  if (hashes)
+//    memcpy(data->verified_hashes, b->data + pos, sizeof(in3_verified_hash_t) * (min(hashes, c->max_verified_hashes)));
 
   b_free(b);
   data->dirty = false;
@@ -162,21 +162,21 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
     bb_write_chars(bb, n->url, strlen(n->url));
   }
 
-  // verified hashes
-  int count = 0;
-  if (data->verified_hashes) {
-    count = c->max_verified_hashes;
-    for (int i = 0; i < count; i++) {
-      if (!data->verified_hashes[i].block_number) {
-        count = i;
-        break;
-      }
-    }
-    bb_write_int(bb, count);
-    bb_write_raw_bytes(bb, data->verified_hashes, count * sizeof(in3_verified_hash_t));
-  }
-  else
-    bb_write_int(bb, 0);
+//  // verified hashes
+//  int count = 0;
+//  if (data->verified_hashes) {
+//    count = c->max_verified_hashes;
+//    for (int i = 0; i < count; i++) {
+//      if (!data->verified_hashes[i].block_number) {
+//        count = i;
+//        break;
+//      }
+//    }
+//    bb_write_int(bb, count);
+//    bb_write_raw_bytes(bb, data->verified_hashes, count * sizeof(in3_verified_hash_t));
+//  }
+//  else
+//    bb_write_int(bb, 0);
 
   // create key
   char key[200];
