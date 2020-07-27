@@ -53,11 +53,27 @@ typedef struct {
   d_token_t*       nodes;
 } in3_node_filter_t;
 
+typedef struct {
+  bool               dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
+  uint16_t           avg_block_time;  /**< average block time (seconds) for this data (calculated internally) */
+  unsigned int       nodelist_length; /**< number of nodes in the nodeList */
+  uint64_t           last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  in3_node_t*        nodelist;        /**< array of nodes */
+  in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
+  bytes_t**          init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
+  in3_whitelist_t*   whitelist;       /**< if set the whitelist of the addresses. */
+  struct {
+    uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
+    uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
+    address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
+  } * nodelist_upd8_params;
+} in3_nodeselect_def_t;
+
 /** removes all nodes and their weights from the nodelist */
-NONULL void in3_nodelist_clear(in3_chain_t* chain);
+NONULL void in3_nodelist_clear(in3_nodeselect_def_t* data);
 
 /** updates all whitelisted flags in the nodelist */
-NONULL void in3_client_run_chain_whitelisting(in3_chain_t* chain);
+NONULL void in3_client_run_chain_whitelisting(in3_nodeselect_def_t* data);
 
 /** check if the nodelist is up to date.
  * 
@@ -82,23 +98,23 @@ NONULL in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, 
 /**
  * forces the client to update the nodelist
  */
-in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain);
+in3_ret_t update_nodes(in3_t* c, in3_nodeselect_def_t* data);
 
-NONULL static inline bool nodelist_first_upd8(const in3_chain_t* chain) {
-  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block == 0);
+NONULL static inline bool nodelist_first_upd8(const in3_nodeselect_def_t* data) {
+  return (data->nodelist_upd8_params != NULL && data->nodelist_upd8_params->exp_last_block == 0);
 }
 
-NONULL static inline bool nodelist_not_first_upd8(const in3_chain_t* chain) {
-  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != 0);
+NONULL static inline bool nodelist_not_first_upd8(const in3_nodeselect_def_t* data) {
+  return (data->nodelist_upd8_params != NULL && data->nodelist_upd8_params->exp_last_block != 0);
 }
 
-NONULL static inline void blacklist_node_addr(in3_chain_t* chain, const address_t node_addr, uint64_t secs_from_now) {
-  for (unsigned int i = 0; i < chain->nodelist_length; ++i) {
-    if (!memcmp(chain->nodelist[i].address, node_addr, 20)) {
+NONULL static inline void blacklist_node_addr(in3_nodeselect_def_t* data, const address_t node_addr, uint64_t secs_from_now) {
+  for (unsigned int i = 0; i < data->nodelist_length; ++i) {
+    if (!memcmp(data->nodelist[i].address, node_addr, 20)) {
       uint64_t blacklisted_until_ = in3_time(NULL) + secs_from_now;
-      if (chain->weights[i].blacklisted_until != blacklisted_until_)
-        chain->dirty = true;
-      chain->weights[i].blacklisted_until = blacklisted_until_;
+      if (data->weights[i].blacklisted_until != blacklisted_until_)
+        data->dirty = true;
+      data->weights[i].blacklisted_until = blacklisted_until_;
     }
   }
 }

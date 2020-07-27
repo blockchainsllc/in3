@@ -99,7 +99,7 @@ static in3_ret_t nl_config_set(void* plugin_data, void* plugin_ctx) {
           EXPECT_TOK(cp.token, false, "unsupported config option!");
         }
       }
-      in3_client_run_chain_whitelisting(data->whitelist, data->nodelist, data->nodelist_length);
+      in3_client_run_chain_whitelisting(data);
     }
   }
 cleanup:
