@@ -88,7 +88,7 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
     cachekey = alloca(strlen(name) + 5);
     sprintf(cachekey, "ens:%s:%i", name, type);
     in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = NULL};
-    TRY(in3_plugin_execute_first(parent, PLGN_ACT_CACHE_GET, &cctx))
+    TRY(in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_GET, &cctx))
     if (cctx.content) {
       memcpy(dst, cctx.content->data, 20);
       b_free(cctx.content);
