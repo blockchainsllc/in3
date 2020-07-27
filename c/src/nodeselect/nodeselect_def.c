@@ -101,10 +101,6 @@ cleanup:
   return IN3_OK;
 }
 
-static in3_ret_t nl_config_get(void* plugin_data, void* plugin_ctx) {
-  return IN3_OK;
-}
-
 static in3_ret_t nl_cache_set(void* plugin_data, void* plugin_ctx) {
   return IN3_OK;
 }
@@ -133,8 +129,6 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
   switch (action) {
     case PLGN_ACT_CONFIG_SET:
       return nl_config_set(plugin_data, plugin_ctx);
-    case PLGN_ACT_CONFIG_GET:
-      return nl_config_get(plugin_data, plugin_ctx);
     case PLGN_ACT_CACHE_SET:
       return nl_cache_set(plugin_data, plugin_ctx);
     case PLGN_ACT_CACHE_GET:
@@ -153,5 +147,5 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
 }
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_NODELIST | PLGN_ACT_CACHE | PLGN_ACT_CONFIG, nodeselect, NULL, false);
+  return in3_plugin_register(c, PLGN_ACT_NODELIST | PLGN_ACT_CACHE | PLGN_ACT_CONFIG_SET, nodeselect, NULL, false);
 }
