@@ -370,8 +370,8 @@ typedef enum {
   PLGN_ACT_CACHE_SET         = 0x400,    /**< stores data to be reused later - the plgn_ctx will be a in3_cache_ctx_t containing the data */
   PLGN_ACT_CACHE_GET         = 0x800,    /**< reads data to be previously stored - the plgn_ctx will be a in3_cache_ctx_t containing the key. if the data was found the data-property needs to be set. */
   PLGN_ACT_CACHE_CLEAR       = 0x1000,   /**< clears alls stored data - plgn_ctx will be NULL  */
-  PLGN_ACT_SET_CONFIG        = 0x2000,   /**< gets a config-token and reads data from it */
-  PLGN_ACT_GET_CONFIG        = 0x4000,   /**< gets a stringbuilder and adds all config to it. */
+  PLGN_ACT_CONFIG_SET        = 0x2000,   /**< gets a config-token and reads data from it */
+  PLGN_ACT_CONFIG_GET        = 0x4000,   /**< gets a stringbuilder and adds all config to it. */
   PLGN_ACT_PAY_PREPARE       = 0x8000,   /**< prerpares a payment */
   PLGN_ACT_PAY_FOLLOWUP      = 0x10000,  /**< called after a requeest to update stats. */
   PLGN_ACT_PAY_HANDLE        = 0x20000,  /**< handles the payment */
@@ -582,6 +582,13 @@ NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config
  */
 NONULL in3_ret_t in3_cache_init(
     in3_t* c /**< the incubed client */
+);
+
+/**
+ * returns the chain-config for the current chain_id.
+ */
+NONULL in3_chain_t* in3_get_chain(
+    const in3_t* c /**< the incubed client */
 );
 
 /**

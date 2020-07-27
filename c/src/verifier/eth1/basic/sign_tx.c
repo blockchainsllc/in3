@@ -84,7 +84,7 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
         }
         else
           // or check the error and report it
-          return ctx_check_response_error(parent, 0);
+          return ctx_check_response_error(ctx, 0);
       }
     }
   }

@@ -163,7 +163,7 @@ static void test_cache() {
   in3_plugin_register(c2, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
 
   in3_configure(c2, "{\"chainId\":\"0x5\"}");
-  in3_chain_t* chain2 = in3_find_chain(c2, c2->chain_id);
+  in3_chain_t* chain2 = in3_get_chain(c2);
 
   // the nodeList should have 2 nodes still
   TEST_ASSERT_EQUAL_INT32(2, chain2->nodelist_length);

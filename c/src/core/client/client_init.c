@@ -337,7 +337,17 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   }
   return IN3_OK;
 }
+in3_chain_t* in3_get_chain(const in3_t* c) {
+  // shortcut for single chain
+  if (c->chains_length == 1)
+    return c->chains->chain_id == c->chain_id ? c->chains : NULL;
 
+  // search for multi chain
+  for (int i = 0; i < c->chains_length; i++) {
+    if (c->chains[i].chain_id == c->chain_id) return &c->chains[i];
+  }
+  return NULL;
+}
 in3_chain_t* in3_find_chain(const in3_t* c, chain_id_t chain_id) {
   // shortcut for single chain
   if (c->chains_length == 1)
@@ -616,7 +626,7 @@ static void add_hex(sb_t* sb, char prefix, const char* property, bytes_t value) 
 
 char* in3_get_config(in3_t* c) {
   sb_t*        sb    = sb_new("");
-  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+  in3_chain_t* chain = in3_get_chain(c);
   add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
   add_uint(sb, ',', "chainId", c->chain_id);
   add_uint(sb, ',', "signatureCount", c->signature_count);
@@ -645,7 +655,7 @@ char* in3_get_config(in3_t* c) {
     add_string(sb, ',', "rpc", chain->nodelist->url);
 
   in3_get_config_ctx_t cctx = {.client = c, .sb = sb};
-  in3_plugin_execute_all(c, PLGN_ACT_GET_CONFIG, &cctx);
+  in3_plugin_execute_all(c, PLGN_ACT_CONFIG_GET, &cctx);
 
   sb_add_chars(sb, ",\"nodes\":{");
   for (int i = 0; i < c->chains_length; i++) {
@@ -766,7 +776,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
-      in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      in3_chain_t* chain = in3_get_chain(c);
       EXPECT_CFG(chain, "chain not found");
       if (c->max_verified_hashes < d_long(token)) {
         chain->verified_hashes = _realloc(chain->verified_hashes,
@@ -828,7 +838,7 @@ char* in3_configure(in3_t* c, const char* config) {
       c->proof           = PROOF_NONE;
       c->chain_id        = CHAIN_ID_LOCAL;
       c->request_count   = 1;
-      in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      in3_chain_t* chain = in3_get_chain(c);
       in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
       n->url = _malloc(d_len(token) + 1);
@@ -847,7 +857,7 @@ char* in3_configure(in3_t* c, const char* config) {
         bytes_t*     contract    = d_get_byteskl(ct.token, key("contract"), 20);
         bytes_t*     registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
         bytes_t*     wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
-        in3_chain_t* chain       = in3_find_chain(c, chain_id);
+        in3_chain_t* chain       = in3_get_chain(c);
 
         if (!chain) {
           EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
@@ -963,8 +973,8 @@ char* in3_configure(in3_t* c, const char* config) {
       in3_configure_ctx_t cctx    = {.client = c, .token = token};
       bool                handled = false;
       for (in3_plugin_t* p = c->plugins; p; p = p->next) {
-        if (p->acts & PLGN_ACT_SET_CONFIG) {
-          in3_ret_t r = p->action_fn(p->data, PLGN_ACT_SET_CONFIG, &cctx);
+        if (p->acts & PLGN_ACT_CONFIG_SET) {
+          in3_ret_t r = p->action_fn(p->data, PLGN_ACT_CONFIG_SET, &cctx);
           if (r != IN3_EIGNORE)
             continue;
           else if (r != IN3_OK)
@@ -983,7 +993,7 @@ char* in3_configure(in3_t* c, const char* config) {
     c->replace_latest_block = DEF_REPL_LATEST_BLK;
   }
 
-  EXPECT_CFG(in3_find_chain(c, c->chain_id), "chain corresponding to chain id not initialized!");
+  EXPECT_CFG(in3_get_chain(c), "chain corresponding to chain id not initialized!");
 
 cleanup:
   json_free(cnf);
@@ -1037,19 +1047,50 @@ in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin
   }
   return ret;
 }
+#ifdef LOGGING
 
+static char* action_name(in3_plugin_act_t action) {
+  switch (action) {
+    case PLGN_ACT_INIT: return "init";
+    case PLGN_ACT_TERM: return "terrm";
+    case PLGN_ACT_TRANSPORT_SEND: return "transport_send";
+    case PLGN_ACT_TRANSPORT_RECEIVE: return "transport_receive";
+    case PLGN_ACT_TRANSPORT_CLEAN: return "transport_clean";
+    case PLGN_ACT_SIGN_ACCOUNT: return "sign_account";
+    case PLGN_ACT_SIGN_PREPARE: return "sign_prepare";
+    case PLGN_ACT_SIGN: return "sign";
+    case PLGN_ACT_RPC_HANDLE: return "rpc_handle";
+    case PLGN_ACT_RPC_VERIFY: return "rpc_verrify";
+    case PLGN_ACT_CACHE_SET: return "cache_set";
+    case PLGN_ACT_CACHE_GET: return "cache_get";
+    case PLGN_ACT_CACHE_CLEAR: return "cache_clear";
+    case PLGN_ACT_CONFIG_SET: return "config_set";
+    case PLGN_ACT_CONFIG_GET: return "config_get";
+    case PLGN_ACT_PAY_PREPARE: return "pay_prepare";
+    case PLGN_ACT_PAY_FOLLOWUP: return "pay_followup";
+    case PLGN_ACT_PAY_HANDLE: return "pay_handle";
+    case PLGN_ACT_NL_PICK_DATA: return "nl_pick_data";
+    case PLGN_ACT_NL_PICK_SIGNER: return "nl_pick_signer";
+    case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";
+  }
+  return "unknown";
+}
+#endif
 in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
-  if (!in3_plugin_is_registered(ctx->client, action))
-    return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
-
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->acts & action) {
       in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
       if (ret != IN3_EIGNORE) return ret;
     }
   }
-
-  return ctx_set_error(ctx, "no plugin could handle specified action", IN3_EPLGN_NONE);
+#ifdef LOGGING
+  char* name = action_name(action);
+  char* msg  = alloca(strlen(name) + 60);
+  sprintf(msg, "no plugin found that handled the %s action", name);
+#else
+  char* msg = "E";
+#endif
+  return ctx_set_error(ctx, msg, IN3_EPLGN_NONE);
 }
 
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {

@@ -417,7 +417,7 @@ uint64_t getchain_id(char* name) {
 void set_chain_id(in3_t* c, char* id) {
   c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
   if (c->chain_id == 0xFFFFL) {
-    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    in3_chain_t* chain = in3_get_chain(c);
     if (strstr(id, "://")) // its a url
       chain->nodelist[0].url = id;
     if (chain->nodelist_upd8_params) {
@@ -1001,7 +1001,7 @@ int main(int argc, char* argv[]) {
     uint32_t block = 0, b = 0;
     BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     uint64_t     now   = in3_time(NULL);
-    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    in3_chain_t* chain = in3_get_chain(c);
     char*        more  = "WEIGHT";
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
@@ -1280,7 +1280,7 @@ int main(int argc, char* argv[]) {
   }
 
   in3_log_debug("..sending request %s %s\n", method, params);
-  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+  in3_chain_t* chain = in3_get_chain(c);
 
   // send the request
   sb_t* sb = sb_new("{\"method\":\"");

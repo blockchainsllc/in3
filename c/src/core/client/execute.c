@@ -102,7 +102,7 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
 NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
 
   const in3_t*       c     = ctx->client;
-  const in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+  const in3_chain_t* chain = in3_get_chain(c);
 
   if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
@@ -210,7 +210,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
-      const in3_chain_t* chain = in3_find_chain(rc, c->client->chain_id);
+      const in3_chain_t* chain = in3_get_chain(rc);
       if (chain->whitelist) {
         const bytes_t adr = bytes(chain->whitelist->contract, 20);
         sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
@@ -276,7 +276,7 @@ NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
   if (!ctx->client->cache || ctx->client->chain_id == CHAIN_ID_LOCAL) return;
   chain_id_t chain_id = ctx->client->chain_id;
-  in3_cache_store_nodelist(ctx->client, in3_find_chain(ctx->client, chain_id));
+  in3_cache_store_nodelist(ctx->client, in3_get_chain(ctx->client));
 }
 
 NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
@@ -615,7 +615,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   int           nodes_count = ctx_nodes_len(ctx->nodes);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_match_t* node        = ctx->nodes;
-  in3_chain_t*  chain       = in3_find_chain(ctx->client, ctx->client->chain_id);
+  in3_chain_t*  chain       = in3_get_chain(ctx->client);
   bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
@@ -677,7 +677,7 @@ NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
 
   // blacklist node that gave us an error response for nodelist (if not first update)
   // and clear nodelist params
-  in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+  in3_chain_t* chain = in3_get_chain(ctx->client);
 
   if (nodelist_not_first_upd8(chain))
     blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
@@ -762,7 +762,7 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       in3_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_RECEIVE, &req);
 #ifdef DEBUG
-      const in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+      const in3_chain_t* chain = in3_get_chain(ctx->client);
       node_match_t*      w     = ctx->nodes;
       int                i     = 0;
       for (; w; i++, w = w->next) {
@@ -803,7 +803,7 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
 
   // debug output
   node_match_t*      node  = request->ctx->nodes;
-  const in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+  const in3_chain_t* chain = in3_get_chain(ctx->client);
 
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->ctx->raw_response[i].state != IN3_WAITING) {
@@ -967,7 +967,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     case CT_RPC: {
 
       // check chain_id
-      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+      in3_chain_t* chain = in3_get_chain(ctx->client);
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
       // do we need to handle it internaly?

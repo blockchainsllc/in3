@@ -53,19 +53,6 @@
 #define ETH_SIGN_PREFIX "\x19" \
                         "Ethereum Signed Message:\n%u"
 
-#define RESPONSE_START()                                                           \
-  do {                                                                             \
-    *response = _malloc(sizeof(in3_response_t));                                   \
-    sb_init(&response[0]->data);                                                   \
-    sb_add_chars(&response[0]->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
-  } while (0)
-
-#define RESPONSE_END()                    \
-  do {                                    \
-    sb_add_char(&response[0]->data, '}'); \
-    response[0]->state = IN3_OK;          \
-  } while (0)
-
 static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   in3_ret_t       ret  = IN3_OK;
   call_request_t* req  = parseSignature(d_get_string_at(params, 0));

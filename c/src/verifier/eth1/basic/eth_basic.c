@@ -48,17 +48,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define RESPONSE_START()                                                           \
-  do {                                                                             \
-    *response          = _malloc(sizeof(in3_response_t));                          \
-    response[0]->state = IN3_OK;                                                   \
-    sb_init(&response[0]->data);                                                   \
-    sb_add_chars(&response[0]->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
-  } while (0)
-
-#define RESPONSE_END() \
-  do { sb_add_char(&response[0]->data, '}'); } while (0)
-
 in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
   char* method = d_get_stringk(vc->request, K_METHOD);
@@ -119,7 +108,7 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
   d_token_t* params = d_get(rctx->request, K_PARAMS);
 
   // we only support ETH in this module
-  if (in3_find_chain(ctx->client, ctx->client->chain_id)->type != CHAIN_ETH) return IN3_EIGNORE;
+  if (in3_get_chain(ctx->client)->type != CHAIN_ETH) return IN3_EIGNORE;
 
   // check method to handle internally
   if (strcmp(method, "eth_sendTransaction") == 0)
@@ -177,15 +166,9 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
 in3_ret_t handle_basic(void* pdata, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(pdata);
   switch (action) {
-    case PLGN_ACT_RPC_VERIFY: {
-      in3_vctx_t* vctx = pctx;
-      return in3_verify_eth_basic(vctx);
-    }
-    case PLGN_ACT_RPC_HANDLE: {
-      return eth_handle_intern(pctx);
-    }
-    default:
-      return IN3_EINVAL;
+    case PLGN_ACT_RPC_VERIFY: return in3_verify_eth_basic(pctx);
+    case PLGN_ACT_RPC_HANDLE: return eth_handle_intern(pctx);
+    default: return IN3_EINVAL;
   }
 }
 
