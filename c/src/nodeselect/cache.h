@@ -42,6 +42,7 @@
 #include "../core/client/client.h"
 #include "../core/client/context.h"
 #include "../core/util/bytes.h"
+#include "nodelist.h"
 
 #ifndef CACHE_H
 #define CACHE_H
@@ -54,8 +55,8 @@
  * If you call `in3_set_storage_handler` there is no need to call this explicitly.
  */
 in3_ret_t in3_cache_update_nodelist(
-    in3_t*       c,    /**< the incubed client */
-    in3_chain_t* chain /**< chain to configure */
+    in3_t*                c,   /**< the incubed client */
+    in3_nodeselect_def_t* data /**< data to configure */
 );
 
 /**
@@ -65,8 +66,8 @@ in3_ret_t in3_cache_update_nodelist(
  * 
  */
 in3_ret_t in3_cache_store_nodelist(
-    in3_t*       c,    /**< the client */
-    in3_chain_t* chain /**< the chain upating to cache */
+    in3_t*                c,   /**< the client */
+    in3_nodeselect_def_t* data /**< the data upating to cache */
 );
 
 /**
@@ -77,8 +78,8 @@ in3_ret_t in3_cache_store_nodelist(
  * If you call `in3_set_storage_handler` there is no need to call this explicitly.
  */
 in3_ret_t in3_cache_update_whitelist(
-    in3_t*       c,    /**< the incubed client */
-    in3_chain_t* chain /**< chain to configure */
+    in3_t*                c,   /**< the incubed client */
+    in3_nodeselect_def_t* data /**< data to configure */
 );
 
 /**
@@ -88,8 +89,8 @@ in3_ret_t in3_cache_update_whitelist(
  *
  */
 in3_ret_t in3_cache_store_whitelist(
-    in3_ctx_t*   ctx,  /**< the current incubed context */
-    in3_chain_t* chain /**< the chain upating to cache */
+    in3_ctx_t*            ctx, /**< the current incubed context */
+    in3_nodeselect_def_t* data /**< the data upating to cache */
 );
 
 #endif

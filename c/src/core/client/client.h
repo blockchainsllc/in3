@@ -340,6 +340,7 @@ typedef struct in3_filter_t_ {
   void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
 } in3_filter_t;
 
+#define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
 #define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK_DATA | PLGN_ACT_NL_PICK_SIGNER | PLGN_ACT_NL_PICK_FOLLOWUP)
 #define PLGN_ACT_CACHE     (PLGN_ACT_CACHE_SET | PLGN_ACT_CACHE_GET | PLGN_ACT_CACHE_CLEAR)
