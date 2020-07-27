@@ -6,7 +6,7 @@
 #ifndef in3_btc_h__
 #define in3_btc_h__
 
-#include "verifier.h"
+#include "plugin.h"
 
 /**
  * this function should only be called once and will register the bitcoin verifier.

@@ -39,7 +39,7 @@
 #ifndef in3_eth_full_h__
 #define in3_eth_full_h__
 
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 
 /**
  * this function should only be called once and will register the eth-full verifier.

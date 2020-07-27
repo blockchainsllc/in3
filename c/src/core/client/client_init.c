@@ -41,7 +41,7 @@
 #include "client.h"
 #include "context_internal.h"
 #include "nodelist.h"
-#include "verifier.h"
+#include "plugin.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>

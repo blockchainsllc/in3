@@ -35,7 +35,7 @@
 #include "serialize.h"
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 #include "../../../core/util/bytes.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"

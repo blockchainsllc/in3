@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 #include "../../../core/util/mem.h"
 #include "big.h"
 #include "evm.h"

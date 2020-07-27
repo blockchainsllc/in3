@@ -308,4 +308,39 @@ void in3_set_storage_handler(
     void*                cptr      /**< custom pointer which will will be passed to functions */
 );
 
+// ----------- VERIFY --------------
+
+#ifdef LOGGING
+#define vc_err(vc, msg) vc_set_error(vc, msg)
+#else
+#define vc_err(vc, msg) vc_set_error(vc, NULL)
+#endif
+
+/**
+ * verification context holding the pointers to all relevant toknes.
+ */
+typedef struct {
+  in3_ctx_t*   ctx;                   /**< Request context. */
+  in3_chain_t* chain;                 /**< the chain definition. */
+  d_token_t*   result;                /**< the result to verify */
+  d_token_t*   request;               /**< the request sent. */
+  d_token_t*   proof;                 /**< the delivered proof. */
+  in3_t*       client;                /**< the client. */
+  uint64_t     last_validator_change; /**< Block number of last change of the validator list */
+  uint64_t     currentBlock;          /**< Block number of latest block */
+  int          index;                 /**< the index of the request within the bulk */
+} in3_vctx_t;
+
+#ifdef LOGGING
+NONULL
+#endif
+
+/*
+ * creates an error attaching it to the context and returns -1. 
+ */
+in3_ret_t vc_set_error(
+    in3_vctx_t* vc, /**< the verification context. */
+    char*       msg /**< the error message. */
+);
+
 #endif

@@ -39,7 +39,7 @@
 #ifndef in3_eth_nano_h__
 #define in3_eth_nano_h__
 
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 
 /** entry-function to execute the verification context. */
 NONULL in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx);

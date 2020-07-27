@@ -32,10 +32,10 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "verifier.h"
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
+#include "plugin.h"
 
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
 #ifdef LOGGING

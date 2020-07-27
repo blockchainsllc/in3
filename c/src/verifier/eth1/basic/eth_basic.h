@@ -39,7 +39,7 @@
 #ifndef in3_eth_basic_h__
 #define in3_eth_basic_h__
 
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 
 /**
  * verifies internal tx-values.

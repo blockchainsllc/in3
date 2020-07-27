@@ -38,7 +38,7 @@
 #ifndef IN3_IPFS_H
 #define IN3_IPFS_H
 
-#include "../../core/client/verifier.h"
+#include "../../core/client/plugin.h"
 
 /** verifies an IPFS hash. Supported encoding schemes - hex, utf8 and base64 */
 in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char* requsted_hash);

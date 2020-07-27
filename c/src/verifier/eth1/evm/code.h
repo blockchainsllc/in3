@@ -39,7 +39,7 @@
 #ifndef in3_codecache_h__
 #define in3_codecache_h__
 
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 /**
  * fetches the code and adds it to the context-cache as cache_entry.
  * So calling this function a second time will take the result from cache.

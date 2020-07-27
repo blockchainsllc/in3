@@ -1,7 +1,7 @@
 #ifndef _BTC_TARGET_H
 #define _BTC_TARGET_H
 
-#include "../../core/client/verifier.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
 #include "../../core/util/error.h"
