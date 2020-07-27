@@ -354,6 +354,8 @@ typedef struct in3_filter_t_ {
 } in3_filter_t;
 
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
+#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK_DATA | PLGN_ACT_NL_PICK_SIGNER | PLGN_ACT_NL_PICK_FOLLOWUP)
+#define PLGN_ACT_CACHE     (PLGN_ACT_CACHE_SET | PLGN_ACT_CACHE_GET | PLGN_ACT_CACHE_CLEAR)
 
 /** plugin action list */
 typedef enum {
@@ -414,7 +416,7 @@ typedef struct in3_filter_handler_t_ {
   size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
-/** Incubed Configuration. 
+/** Incubed Configuration.
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
@@ -599,6 +601,17 @@ NONULL in3_chain_t* in3_get_chain(
 NONULL in3_chain_t* in3_find_chain(
     const in3_t* c /**< the incubed client */,
     chain_id_t   chain_id /**< chain_id */
+);
+
+/**
+ * registers specified plugin with client.
+ *
+ * Plugins maybe handled differently based on their type, see `in3_plugin_type_t` for exact rules
+ * Returns IN3_OK on success
+ */
+in3_ret_t in3_register_plugin(
+    in3_t*        c,     /**< the incubed client */
+    in3_plugin_t* plugin /**< plugin to register */
 );
 
 /**
