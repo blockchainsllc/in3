@@ -89,7 +89,7 @@ in3_ret_t in3_cache_update_whitelist(
  *
  */
 in3_ret_t in3_cache_store_whitelist(
-    in3_ctx_t*            ctx, /**< the current incubed context */
+    in3_t*                c,   /**< the incubed client */
     in3_nodeselect_def_t* data /**< the data upating to cache */
 );
 

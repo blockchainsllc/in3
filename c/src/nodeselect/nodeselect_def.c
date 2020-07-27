@@ -2,6 +2,7 @@
 #include "../core/client/plugin.h"
 #include "../core/util/bitset.h"
 #include "../core/util/debug.h"
+#include "cache.h"
 
 static in3_ret_t nl_config_set(void* plugin_data, void* plugin_ctx) {
   char*                 res   = NULL;
@@ -102,7 +103,11 @@ cleanup:
 }
 
 static in3_ret_t nl_cache_set(void* plugin_data, void* plugin_ctx) {
-  return IN3_OK;
+  in3_configure_ctx_t*  ctx  = plugin_ctx;
+  in3_nodeselect_def_t* data = plugin_data;
+  if (data->whitelist)
+    in3_cache_store_whitelist(ctx->client, data);
+  return in3_cache_store_nodelist(ctx->client, data);
 }
 
 static in3_ret_t nl_cache_get(void* plugin_data, void* plugin_ctx) {

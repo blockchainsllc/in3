@@ -180,7 +180,7 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // create key
   char key[200];
-  write_cache_key(key, data->chain_id, data->whitelist ? data->whitelist->contract: NULL);
+  write_cache_key(key, c->chain_id, data->whitelist ? data->whitelist->contract: NULL);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   c->cache->set_item(c->cache->cptr, key, &bb->b);
@@ -200,7 +200,7 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-  write_cache_key(key, data->chain_id, wl->contract);
+  write_cache_key(key, c->chain_id, wl->contract);
 
   // get from cache
   bytes_t* cached_data = c->cache->get_item(c->cache->cptr, key);
@@ -226,9 +226,9 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
   return IN3_OK;
 }
 
-in3_ret_t in3_cache_store_whitelist(in3_ctx_t* ctx, in3_nodeselect_def_t* data) {
+in3_ret_t in3_cache_store_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
   // write to bytes_buffer
-  if (!ctx->client->cache || !data->whitelist) return IN3_OK;
+  if (!c->cache || !data->whitelist) return IN3_OK;
 
   const in3_whitelist_t* wl = data->whitelist;
   bytes_builder_t*       bb = bb_new();
@@ -239,10 +239,10 @@ in3_ret_t in3_cache_store_whitelist(in3_ctx_t* ctx, in3_nodeselect_def_t* data) 
 
   // create key
   char key[MAX_KEYLEN];
-  write_cache_key(key, data->chain_id, wl->contract);
+  write_cache_key(key, c->chain_id, wl->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
-  ctx->client->cache->set_item(ctx->client->cache->cptr, key, &bb->b);
+  c->cache->set_item(c->cache->cptr, key, &bb->b);
 
   // clear buffer
   bb_free(bb);
