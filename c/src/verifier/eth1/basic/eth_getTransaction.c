@@ -58,7 +58,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   uint32_t chain_id = v > 35 ? (v - 35) / 2 : 0;
 
   // check transaction hash
-  if (sha3_to(raw ? raw : d_get_bytesk(tx, K_RAW), &hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32)->data, 32))
+  if (keccak(raw ? *raw : d_to_bytes(d_get(tx, K_RAW)), hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32)->data, 32))
     return vc_err(vc, "wrong transactionHash");
 
   // check raw data
@@ -105,7 +105,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     rlp_encode_item(bb, &item);
   }
   rlp_encode_to_list(bb);
-  sha3_to(&bb->b, hash);
+  keccak(bb->b, hash);
   bb_free(bb);
 
   // verify signature
@@ -115,7 +115,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey_bytes.data, t->data, t->len) != 0)
     return vc_err(vc, "invalid public Key");
 
-  if ((t = d_getl(tx, K_FROM, 20)) && sha3_to(&pubkey_bytes, &hash) == 0 && memcmp(hash + 12, t->data, 20))
+  if ((t = d_getl(tx, K_FROM, 20)) && keccak(pubkey_bytes, hash) == 0 && memcmp(hash + 12, t->data, 20))
     return vc_err(vc, "invalid from address");
   return IN3_OK;
 }
@@ -147,7 +147,7 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
         res = vc_err(vc, "Could not verify the tx proof");
       else {
         uint8_t proofed_hash[32];
-        sha3_to(&raw_transaction, proofed_hash);
+        keccak(raw_transaction, proofed_hash);
         if (memcmp(proofed_hash, tx_hash->data, 32))
           res = vc_err(vc, "The TransactionHash is not the same as expected");
       }
@@ -192,9 +192,10 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
       return vc_err(vc, "No block hash found");
     else if (hash_ && !b_cmp(blk_hash, hash_))
       return vc_err(vc, "The block hash does not match the required");
-    else if (sha3_to(blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
+    else if (keccak(*blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
       return vc_err(vc, "The block header does not match the required");
-  } else if (d_type(blk) == T_INTEGER) {
+  }
+  else if (d_type(blk) == T_INTEGER) {
     uint64_t blk_num = d_long(blk);
     bytes_t  number_in_header;
     if (!blk_num)
@@ -203,9 +204,11 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
       return vc_err(vc, "The block number does not match the required");
     else if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &number_in_header) != 1 || bytes_to_long(number_in_header.data, number_in_header.len) != blk_num)
       return vc_err(vc, "The block number in the header does not match the required");
-  } else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
+  }
+  else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
     // fall-through to continue verification
-  } else {
+  }
+  else {
     return vc_err(vc, "No block hash & number found");
   }
 
@@ -223,7 +226,8 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
     else {
       if (!proof) {
         res = vc_err(vc, "No merkle proof");
-      } else {
+      }
+      else {
         int verified = trie_verify_proof(&root, path, proof, d_type(vc->result) == T_NULL ? NULL : &raw_transaction);
         if (d_type(vc->result) == T_NULL && !verified)
           res = vc_err(vc, "Could not prove non-existence of transaction");

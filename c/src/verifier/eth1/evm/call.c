@@ -150,7 +150,8 @@ int evm_prepare_evm(evm_t*      evm,
     // copy the code or return error
     l = env(evm, EVM_ENV_CODE_COPY, account, 20, &evm->code.data, 0, 0);
     return l < 0 ? l : 0;
-  } else
+  }
+  else
     return 0;
 }
 

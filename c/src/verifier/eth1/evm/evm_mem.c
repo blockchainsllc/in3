@@ -92,7 +92,8 @@ int evm_mem_readi(evm_t* evm, uint32_t off, uint8_t* dst, uint32_t len) {
     if (max_len < len) {
       memset(dst + max_len, 0, len - max_len);
       memcpy(dst, src, max_len);
-    } else
+    }
+    else
       memcpy(dst, src, len);
   }
   return 0;

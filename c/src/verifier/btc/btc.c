@@ -1,7 +1,9 @@
 #include "btc.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "../../verifier/eth1/nano/eth_nano.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
 #include "btc_target.h"
@@ -27,13 +29,6 @@ static bool equals_hex_rev(bytes_t data, char* hex) {
     if (data.data[data.len - i - 1] != ((hexchar_to_int(hex[i << 1]) << 4) | (hexchar_to_int(hex[(i << 1) + 1])))) return false; // cancel on first difference
   }
   return true;
-}
-
-// handle the request before sending it out the the node.
-// not needed yet.
-static in3_ret_t btc_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  if (ctx->len > 1 || !response) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
-  return IN3_OK;
 }
 
 // extract the blocknumber from the proof based on BIP 34
@@ -199,7 +194,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
         // coinbase
         hex = d_get_stringk(iter.token, key("coinbase"));
         if (!hex || !equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid coinbase");
-      } else {
+      }
+      else {
         // txid
         hex = d_get_stringk(iter.token, key("txid"));
         if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
@@ -236,14 +232,16 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
       if (d_type(value) == T_STRING) {
         if (parse_float_val(d_string(value), 8) != (int64_t) tx_out.value)
           return vc_err(vc, "wrong value in txout found!");
-      } else if (d_type(value) == T_INTEGER || d_type(value) == T_BYTES) {
+      }
+      else if (d_type(value) == T_INTEGER || d_type(value) == T_BYTES) {
         if (d_long(value) * 10e8 != tx_out.value)
           return vc_err(vc, "wrong value in txout found!");
-      } else
+      }
+      else
         return vc_err(vc, "wrong type of value!");
     }
-
-  } else {
+  }
+  else {
 
     // here we expect the raw serialized transaction
     if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
@@ -337,8 +335,8 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
       if (difficulty >> 2 != d_get_long(vc->result, "difficulty") >> 2) return vc_err(vc, "Wrong difficulty");                        // which must match the one in the json
       if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, "hash"))) return vc_err(vc, "Wrong blockhash in json");         // check the requested hash
       if (d_get_int(vc->result, "nTx") != (int32_t) tx_count) return vc_err(vc, "Wrong nTx");                                         // check the nuumber of transactions
-
-    } else {
+    }
+    else {
       char*    block_hex  = d_string(vc->result);
       uint8_t* block_data = _malloc(strlen(block_hex) / 2);
       bytes_t  block      = bytes(block_data, strlen(block_hex) / 2);
@@ -403,25 +401,35 @@ in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
   return IN3_OK;
 }
 
-in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
-  char*      method = d_get_stringk(vc->request, K_METHOD);
-  d_token_t* params = d_get(vc->request, K_PARAMS);
-  bytes32_t  hash;
+in3_ret_t in3_verify_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
+  UNUSED_VAR(pdata);
+  if (action == PLGN_ACT_TERM) {
+    in3_t* c = pctx;
+    for (int i = 0; i < c->chains_length; i++) {
+      if (c->chains[i].type == CHAIN_BTC && c->chains[i].conf) {
+        btc_target_conf_t* tc = c->chains[i].conf;
+        if (tc->data.data) _free(tc->data.data);
+        _free(tc);
+      }
+    }
+    return IN3_OK;
+  }
+  if (action != PLGN_ACT_RPC_VERIFY) return IN3_EIGNORE;
+  in3_vctx_t* vc     = pctx;
+  char*       method = d_get_stringk(vc->request, K_METHOD);
+  d_token_t*  params = d_get(vc->request, K_PARAMS);
+  bytes32_t   hash;
+  // we only verify BTC
+  if (vc->chain->type != CHAIN_BTC) return IN3_EIGNORE;
 
   // make sure we want to verify
-  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we support this request?
   if (!method) return vc_err(vc, "No Method in request defined!");
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
-
-  if (strcmp(method, "in3_nodeList") == 0) {
-    in3_verifier_t* eth_verifier = in3_get_verifier(CHAIN_ETH);
-    return eth_verifier ? eth_verifier->verify(vc)
-                        : vc_err(vc, "No Eth-Verifier found to check the nodelist!");
-  }
 
   if (strcmp(method, "getblock") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
@@ -451,9 +459,13 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
     if (block_hash) hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_tx(vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
-  return vc_err(vc, "Unsupported method");
+  return IN3_EIGNORE;
 }
-
+in3_ret_t in3_register_btc(in3_t* c) {
+  in3_register_eth_nano(c);
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM, in3_verify_btc, NULL, false);
+}
+/*
 void in3_register_btc() {
   in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
   v->type           = CHAIN_BTC;
@@ -463,7 +475,7 @@ void in3_register_btc() {
   v->free_chain     = btc_vc_free;
   in3_register_verifier(v);
 }
-
+*/
 /*
 static void print_hex(char* prefix, uint8_t* data, int len) {
   printf("%s0x", prefix);

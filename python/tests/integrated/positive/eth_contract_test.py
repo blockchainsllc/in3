@@ -12,7 +12,7 @@ class MainNetContractTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_eth_call(self):
         tx = {
@@ -98,7 +98,7 @@ class GoerliContractTest(MainNetContractTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_eth_call(self):
         tx = {
@@ -122,7 +122,7 @@ class KovanContractTest(MainNetContractTest):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_eth_call(self):
         # TODO: Future

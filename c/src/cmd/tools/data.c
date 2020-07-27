@@ -73,20 +73,20 @@ bytes_t read_from_stdin(FILE* file) {
   return bytes(buffer, len);
 }
 
-#define C_RED "0;31"
-#define C_GREEN "0;32"
-#define C_ORANGE "0;33"
-#define C_BLUE "0;34"
-#define C_PURPLE "0;35"
-#define C_CYAN "0;36"
-#define C_LGRAY "0;37"
-#define C_DGRAY "1;30"
-#define C_LRED "1;31"
-#define C_LGREEN "1;32"
-#define C_YELLOW "1;33"
-#define C_LBLUE "1;34"
+#define C_RED     "0;31"
+#define C_GREEN   "0;32"
+#define C_ORANGE  "0;33"
+#define C_BLUE    "0;34"
+#define C_PURPLE  "0;35"
+#define C_CYAN    "0;36"
+#define C_LGRAY   "0;37"
+#define C_DGRAY   "1;30"
+#define C_LRED    "1;31"
+#define C_LGREEN  "1;32"
+#define C_YELLOW  "1;33"
+#define C_LBLUE   "1;34"
 #define C_LPURPLE "1;35"
-#define C_LCYAN "1;36"
+#define C_LCYAN   "1;36"
 
 static inline d_key_t keyhash(const char* c) {
   uint16_t val = 0;
@@ -265,7 +265,8 @@ int main(int argc, char* argv[]) {
       input.data = malloc(strlen(argv[i]) / 2);
       input.len  = hex_to_bytes(argv[i], -1, input.data, strlen(argv[i]) / 2);
       format     = "json";
-    } else
+    }
+    else
       format = "hex";
   }
 
@@ -293,7 +294,8 @@ int main(int argc, char* argv[]) {
     if (strcmp(format, "hex") == 0) {
       for (i = 0; i < (int) bb->b.len; i++) printf("%02x", bb->b.data[i]);
       printf("\n");
-    } else if (strcmp(format, "cstr") == 0) {
+    }
+    else if (strcmp(format, "cstr") == 0) {
       unsigned char c = 0, is_hex = 0;
 
       for (i = 0; i < (int) bb->b.len; i++) {
@@ -302,11 +304,12 @@ int main(int argc, char* argv[]) {
         printf(is_hex ? "\\x%02x" : "%c", c);
       }
       printf("\n len = %u\n", bb->b.len);
-    } else if (strcmp(format, "bin") == 0) {
+    }
+    else if (strcmp(format, "bin") == 0) {
       for (uint32_t i = 0; i < bb->b.len; i++)
         putchar(bb->b.data[i]);
-
-    } else {
+    }
+    else {
       printf("unsuported output format %s!\n", format);
       return 1;
     }

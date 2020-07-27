@@ -1,6 +1,7 @@
 
 #include "ipfs.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/base58.h"
 #include "../../third-party/crypto/sha2.h"
@@ -9,6 +10,7 @@
 #include "../../third-party/multihash/multihash.h"
 #include "../../third-party/nanopb/pb_decode.h"
 #include "../../third-party/nanopb/pb_encode.h"
+#include "../../verifier/eth1/nano/eth_nano.h"
 #include "ipfs.pb.h"
 #include <stdio.h>
 
@@ -118,7 +120,8 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
     uint8_t* data = base64_decode(content, &l);
     buf           = b_new(data, l);
     free(data);
-  } else
+  }
+  else
     return IN3_ENOTSUP;
 
   if (buf == NULL)
@@ -134,11 +137,15 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
   return ret;
 }
 
-in3_ret_t in3_verify_ipfs(in3_vctx_t* vc) {
-  char*      method = NULL;
-  d_token_t* params = d_get(vc->request, K_PARAMS);
+in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* pctx) {
+  UNUSED_VAR(pdata);
+  UNUSED_VAR(action);
+  in3_vctx_t* vc     = pctx;
+  char*       method = NULL;
+  d_token_t*  params = d_get(vc->request, K_PARAMS);
+  if (vc->chain->type != CHAIN_IPFS) return IN3_EIGNORE;
 
-  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)
@@ -162,12 +169,9 @@ in3_ret_t in3_verify_ipfs(in3_vctx_t* vc) {
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_string(vc->result));
   else
-    return vc_err(vc, "method cannot be verified with ipfs verifier!");
+    return IN3_EIGNORE;
 }
-
-void in3_register_ipfs() {
-  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  v->type           = CHAIN_IPFS;
-  v->verify         = in3_verify_ipfs;
-  in3_register_verifier(v);
+in3_ret_t in3_register_ipfs(in3_t* c) {
+  in3_register_eth_nano(c);
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_ipfs, NULL, false);
 }

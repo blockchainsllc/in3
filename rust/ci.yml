@@ -53,8 +53,7 @@ rust_mac:
     BUILD_DIR: "mac_os"
   needs:
     - mac_os
-  
-  
+
 rust_win:
   allow_failure: true
   extends: .rust_multiarch
@@ -108,7 +107,7 @@ rust:
     - cd rust/
     - export UPDATE_IN3_BINDINGS=1
     - export IN3_MODE="RELEASE"
-    - cargo install cargo2junit 
+    - cargo install cargo2junit
     - cargo run --example custom_transport --release
     - RUST_TEST_THREADS=1 cargo test -- -Z unstable-options --format json | cargo2junit > ../rust_test.xml
   needs: []
@@ -116,7 +115,7 @@ rust:
     reports:
       junit: rust_test.xml
   tags:
-    - mac-mini-runner
+    - mac-os
 
 deploy_rust:
   stage: deploy
@@ -134,4 +133,4 @@ deploy_rust:
     - cd in3-sys/ && cargo release "${CI_COMMIT_TAG:1}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN || true
     - cd ../in3-rs/ && cargo release "${CI_COMMIT_TAG:1}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN
   tags:
-    - mac-mini-runner
+    - mac-os

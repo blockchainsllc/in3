@@ -93,22 +93,28 @@ int add_token(bytes_builder_t* bb, char* start, unsigned int len, int tuple) {
   if (strcmp(name, "address") == 0) {
     atype    = A_ADDRESS;
     type_len = 20;
-  } else if (strncmp(name, "uint", 4) == 0) {
+  }
+  else if (strncmp(name, "uint", 4) == 0) {
     atype    = A_UINT;
     type_len = strlen(name) == 4 ? 32 : (atoi(name + 4) / 8);
-  } else if (strncmp(name, "int", 3) == 0) {
+  }
+  else if (strncmp(name, "int", 3) == 0) {
     atype    = A_INT;
     type_len = strlen(name) == 3 ? 32 : (atoi(name + 3) / 8);
-  } else if (strcmp(name, "bool") == 0) {
+  }
+  else if (strcmp(name, "bool") == 0) {
     atype    = A_BOOL;
     type_len = 1;
-  } else if (strncmp(name, "bytes", 5) == 0) {
+  }
+  else if (strncmp(name, "bytes", 5) == 0) {
     atype    = A_BYTES;
     type_len = len > 5 ? atoi(name + 5) : 0;
-  } else if (strcmp(name, "string") == 0) {
+  }
+  else if (strcmp(name, "string") == 0) {
     atype    = A_STRING;
     type_len = 0;
-  } else
+  }
+  else
     return -1;
 
   var_t* t     = token(bb, next_token(bb, atype));
@@ -126,7 +132,8 @@ char* parse_tuple(bytes_builder_t* bb, char* c) {
     if (*c == '(') {
       c = parse_tuple(bb, c + 1);
       if (!c || *c != ')') return NULL;
-    } else if (*c == ')') {
+    }
+    else if (*c == ')') {
       if (add_token(bb, start, c - start, tuple) < 0) return NULL;
       if (c[1] == '[') {
         char* end = strchr(c, ']');
@@ -140,7 +147,8 @@ char* parse_tuple(bytes_builder_t* bb, char* c) {
         }
       }
       return c;
-    } else if (*c == ',') {
+    }
+    else if (*c == ',') {
       if (add_token(bb, start, c - start, tuple) < 0) return NULL;
       start = c + 1;
     }
@@ -204,7 +212,7 @@ call_request_t* parseSignature(char* sig) {
   _free(tokens);
 
   // create input data
-  sha3_to(&signature, hash);
+  keccak(signature, hash);
   bb_write_raw_bytes(req->call_data, hash, 4); // write functionhash
   _free(s);
   return req;
@@ -252,7 +260,8 @@ static int head_size(var_t* t, bool single) {
     a        = 0;
     var_t* s = NULL;
     for (i = 0, s = t + 1; i < t->type_len; i++, s = t_next(s)) a += head_size(s, false);
-  } else if (t->type == A_BYTES || t->type == A_STRING)
+  }
+  else if (t->type == A_BYTES || t->type == A_STRING)
     a = word_size(t->type_len) * 32;
   return single ? a : (a * f);
 }
@@ -334,7 +343,8 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
   if (array_len) {
     if (array_len != d_len(data) || d_type(data) != T_ARRAY) return add_error(req, "wrong array_size!");
     d = data + 1;
-  } else
+  }
+  else
     array_len = 1;
 
   for (int i = 0; i < array_len; i++, d = d_next(d)) {
@@ -404,7 +414,8 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
       dst = bytes_to_int(data.data + dst + 28, 4);
       len = bytes_to_int(data.data + dst + 28, 4);
       dst += 32;
-    } else
+    }
+    else
       len = t->array_len;
 
     int ol       = t->array_len; // we store the old array-indentifier
@@ -471,7 +482,8 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
         strncpy(tmp, (char*) (data.data + dst), len);
         tmp[len] = '\0';
         res      = json_create_string(ctx, tmp);
-      } else
+      }
+      else
         res = json_create_bytes(ctx, bytes(data.data + dst, len));
       *offset += t->type_len ? (word_size(len) << 5) : 32;
 

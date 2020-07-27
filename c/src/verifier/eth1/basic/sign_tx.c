@@ -81,9 +81,10 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
           // we have a result, so write it back to the dst
           *dst = d_to_bytes(r);
           return IN3_OK;
-        } else
+        }
+        else
           // or check the error and report it
-          return ctx_check_response_error(parent, 0);
+          return ctx_check_response_error(ctx, 0);
       }
     }
   }
@@ -110,9 +111,11 @@ static in3_ret_t get_from_address(d_token_t* tx, in3_ctx_t* ctx, address_t res) 
   }
 
   // if it is not specified, we rely on the from-address of the signer.
-  if (!ctx->client->signer) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
+  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
-  memcpy(res, ctx->client->signer->default_address, 20);
+  in3_sign_account_ctx_t actx = {.ctx = ctx, .account = {0}};
+  TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
+  memcpy(res, actx.account, 20);
   return IN3_OK;
 }
 
@@ -182,6 +185,22 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(ctx), bytes(NULL, 0), bytes(NULL, 0));
   *dst         = *raw;
   _free(raw);
+
+  // do we need to change it?
+  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
+    in3_sign_prepare_ctx_t pctx     = {.ctx = ctx, .old_tx = *dst, .new_tx = {0}};
+    in3_ret_t              prep_res = in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
+
+    if (prep_res) {
+      if (dst->data) _free(dst->data);
+      if (pctx.new_tx.data) _free(pctx.new_tx.data);
+      return prep_res;
+    }
+    else if (pctx.new_tx.data) {
+      if (dst->data) _free(dst->data);
+      *dst = pctx.new_tx;
+    }
+  }
 
   // cleanup subcontexts
   TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionCount")))
@@ -279,18 +298,6 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
 
   TRY(get_from_address(tx_params + 1, ctx, from));
   TRY(unsigned_tx.data ? IN3_OK : eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
-
-  // do we want to modify the transaction?
-  if (ctx->client->signer && ctx->client->signer->prepare_tx && !sig_ctx && unsigned_tx.data) {
-    bytes_t   new_tx = bytes(NULL, 0);
-    in3_ret_t res    = ctx->client->signer->prepare_tx(ctx, unsigned_tx, &new_tx);
-
-    if (res || new_tx.data) _free(unsigned_tx.data);
-    TRY(res)
-
-    if (new_tx.data) unsigned_tx = new_tx;
-  }
-
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (!sig_ctx && unsigned_tx.data) _free(unsigned_tx.data);)
 

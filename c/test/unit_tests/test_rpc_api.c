@@ -60,10 +60,10 @@
 static void test_in3_config() {
 
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
+  register_transport(c, test_transport);
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
      \"chainId\":7,\
@@ -128,7 +128,7 @@ static void test_in3_config() {
 
   bytes_to_hex(chain->whitelist->contract, 20, tmp);
   TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
-  bytes_to_hex(chain->nodelist->address->data, chain->nodelist->address->len, tmp);
+  bytes_to_hex(chain->nodelist->address, 20, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   TEST_ASSERT_EQUAL_STRING("#1", chain->nodelist->url);
   TEST_ASSERT_EQUAL(0xffff, chain->nodelist->props);
@@ -139,11 +139,11 @@ static void test_in3_config() {
 static void test_in3_client_rpc() {
   char * result = NULL, *error = NULL;
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
   c->max_attempts    = 1;
+  register_transport(c, test_transport);
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
     c->chains[i].nodelist_upd8_params = NULL;
@@ -163,7 +163,7 @@ static void test_in3_client_rpc() {
 
   // Error response obj without message
   add_response("eth_blockNumber", "[]", NULL, "{\"Failure\":\"Undefined\"}", NULL);
-  TEST_ASSERT_EQUAL(IN3_ERPC, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
   free(result);
   free(error);
 
@@ -181,13 +181,6 @@ static void test_in3_client_rpc() {
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_blockNumber", "[\"]");
   TEST_ASSERT_NOT_NULL(ctx->error);
   ctx_free(ctx);
-
-  // No transport check
-  c->transport = NULL;
-  TEST_ASSERT_EQUAL(IN3_ECONFIG, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
-  c->transport = test_transport;
-  free(result);
-  free(error);
 
   // test in3_client_exec_req() with keep_in3 set to true
   c->flags |= FLAGS_KEEP_IN3;
@@ -325,8 +318,8 @@ static void test_in3_client_context() {
  * Main
  */
 int main() {
-  in3_register_eth_full();
-  in3_register_eth_api();
+  in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_eth_api);
   in3_log_set_quiet(true);
 
   // now run tests

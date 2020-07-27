@@ -43,10 +43,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#define NODE_LIST_KEY "nodelist_%d"
+#define NODE_LIST_KEY   "nodelist_%d"
 #define WHITTE_LIST_KEY "_0x%s"
-#define CACHE_VERSION 6
-#define MAX_KEYLEN 200
+#define CACHE_VERSION   6
+#define MAX_KEYLEN      200
 
 /**
  * generates and writes the cachekey
@@ -56,7 +56,8 @@ static void write_cache_key(char* key, chain_id_t chain_id, const address_t whit
     char contract_[41];                                               // currently we have a max with of 40 which is more than the chain_id could hold
     bytes_to_hex(whitelist_contract, 20, contract_);                  // contract is appended as hex
     sprintf(key, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_); // we need to append both to be unique
-  } else
+  }
+  else
     sprintf(key, NODE_LIST_KEY, chain_id);
 }
 
@@ -119,8 +120,9 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     n->index      = b_read_int(b, &pos);
     n->deposit    = b_read_long(b, &pos);
     n->props      = b_read_long(b, &pos);
-    n->address    = b_new_fixed_bytes(b, &pos, 20);
-    n->url        = b_new_chars(b, &pos);
+    memcpy(n->address, b->data + pos, 20);
+    pos += 20;
+    n->url = b_new_chars(b, &pos);
     BIT_CLEAR(n->attrs, ATTR_WHITELISTED);
   }
 
@@ -148,12 +150,13 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
   bb_write_raw_bytes(bb, chain->weights, chain->nodelist_length * sizeof(in3_node_weight_t));
 
   for (unsigned int i = 0; i < chain->nodelist_length; i++) {
-    const in3_node_t* n = chain->nodelist + i;
+    in3_node_t* n    = chain->nodelist + i;
+    bytes_t     addr = bytes(n->address, 20);
     bb_write_int(bb, n->capacity);
     bb_write_int(bb, n->index);
     bb_write_long(bb, n->deposit);
     bb_write_long(bb, n->props);
-    bb_write_fixed_bytes(bb, n->address);
+    bb_write_fixed_bytes(bb, &addr);
     bb_write_chars(bb, n->url, strlen(n->url));
   }
 
@@ -169,7 +172,8 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
     }
     bb_write_int(bb, count);
     bb_write_raw_bytes(bb, chain->verified_hashes, count * sizeof(in3_verified_hash_t));
-  } else
+  }
+  else
     bb_write_int(bb, 0);
 
   // create key

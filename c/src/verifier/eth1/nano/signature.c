@@ -48,10 +48,9 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
   if (sig_msg_hash && !b_cmp(sig_msg_hash, msg_hash)) return NULL;
 
   uint8_t  pubkey[65], sdata[64];
-  bytes_t  pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
-  bytes_t* r            = d_get_byteskl(sig, K_R, 32);
-  bytes_t* s            = d_get_byteskl(sig, K_S, 32);
-  int      v            = d_get_intk(sig, K_V);
+  bytes_t* r = d_get_byteskl(sig, K_R, 32);
+  bytes_t* s = d_get_byteskl(sig, K_S, 32);
+  int      v = d_get_intk(sig, K_V);
 
   // correct v
   if (v >= 27) v -= 27;
@@ -65,7 +64,7 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
   // verify signature
   if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, msg_hash->data, v) == 0)
     // hash it and return the last 20 bytes as address
-    return sha3_to(&pubkey_bytes, sdata) == 0 ? b_new(sdata + 12, 20) : NULL;
+    return keccak(bytes(pubkey + 1, 64), sdata) == 0 ? b_new(sdata + 12, 20) : NULL;
   else
     return NULL;
 }
@@ -80,7 +79,7 @@ int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig) {
 
   // try to find the signature requested
   for (i = 0; i < vc->ctx->signers_length; i++) {
-    if (b_cmp(vc->ctx->signers + i, addr)) {
+    if (memcmp(vc->ctx->signers + i * 20, addr->data, 20) == 0) {
       // adn set the bit depending on the index.
       res = 1 << i;
       break;

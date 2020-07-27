@@ -49,13 +49,16 @@
 #include <sys/socket.h> /* socket, connect */
 #endif
 #include "../../core/client/client.h"
-#include "../../core/client/context.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "in3_http.h"
 
-in3_ret_t send_http(in3_request_t* req) {
-  for (int n = 0; n < req->urls_len; n++) {
+in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
+  UNUSED_VAR(action);
+  in3_request_t* req = plugin_ctx;
+  for (unsigned int n = 0; n < req->urls_len; n++) {
 
     struct hostent*    server;
     struct sockaddr_in serv_addr;
@@ -237,6 +240,6 @@ in3_ret_t send_http(in3_request_t* req) {
   return 0;
 }
 
-void in3_register_http() {
-  in3_set_default_transport(send_http);
+in3_ret_t in3_register_http(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, send_http, NULL, true);
 }

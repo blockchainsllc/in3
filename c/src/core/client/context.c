@@ -40,6 +40,7 @@
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
+#include "plugin.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -64,14 +65,16 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
       ctx->requests    = _malloc(sizeof(d_token_t*));
       ctx->requests[0] = ctx->request_context->result;
       ctx->len         = 1;
-    } else if (d_type(ctx->request_context->result) == T_ARRAY) {
+    }
+    else if (d_type(ctx->request_context->result) == T_ARRAY) {
       // we have an array, so we need to store the request-data as array
       d_token_t* t  = ctx->request_context->result + 1;
       ctx->len      = d_len(ctx->request_context->result);
       ctx->requests = _malloc(sizeof(d_token_t*) * ctx->len);
       for (uint_fast16_t i = 0; i < ctx->len; i++, t = d_next(t))
         ctx->requests[i] = t;
-    } else
+    }
+    else
       ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
   }
   return ctx;
@@ -82,15 +85,22 @@ char* ctx_get_error_data(in3_ctx_t* ctx) {
 }
 
 char* ctx_get_response_data(in3_ctx_t* ctx) {
-  str_range_t rr    = d_to_json(ctx->responses[0]);
-  char*       start = NULL;
-  if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[0], K_IN3)).data) && start < rr.data + rr.len) {
-    while (*start != ',' && start > rr.data) start--;
-    char* res            = _strdupn(rr.data, start - rr.data + 1);
-    res[start - rr.data] = '}';
-    return res;
+  sb_t sb = {0};
+  if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, '[');
+  for (uint_fast16_t i = 0; i < ctx->len; i++) {
+    if (i) sb_add_char(&sb, ',');
+    str_range_t rr    = d_to_json(ctx->responses[i]);
+    char*       start = NULL;
+    if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[i], K_IN3)).data) && start < rr.data + rr.len) {
+      while (*start != ',' && start > rr.data) start--;
+      sb_add_range(&sb, rr.data, 0, start - rr.data + 1);
+      sb.data[sb.len - 1] = '}';
+    }
+    else
+      sb_add_range(&sb, rr.data, 0, rr.len);
   }
-  return _strdupn(rr.data, rr.len);
+  if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, ']');
+  return sb.data;
 }
 
 ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
@@ -107,7 +117,8 @@ in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
     strncpy(req, s.data, s.len);
     req[s.len] = '\0';
     return ctx_set_error(c, req, IN3_ERPC);
-  } else
+  }
+  else
     return ctx_set_error(c, d_string(r), IN3_ERPC);
 }
 
@@ -123,13 +134,15 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       dst[l] = ':';
       strcpy(dst + l + 1, ctx->error);
       _free(ctx->error);
-    } else {
+    }
+    else {
       dst = _malloc(l + 1);
       strcpy(dst, message);
     }
     ctx->error = dst;
     in3_log_trace("Intermediate error -> %s\n", message);
-  } else if (!ctx->error) {
+  }
+  else if (!ctx->error) {
     ctx->error    = _malloc(2);
     ctx->error[0] = 'E';
     ctx->error[1] = 0;
@@ -159,9 +172,9 @@ int ctx_nodes_len(node_match_t* node) {
   return all;
 }
 
-in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx) {
+in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {
   if (ctx->requests) {
-    char* verfification = d_get_stringk(d_get(ctx->requests[0], K_IN3), key("verification"));
+    char* verfification = d_get_stringk(d_get(ctx->requests[i], K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;
   }
@@ -196,4 +209,31 @@ void in3_ctx_add_response(
     sb_add_chars(&response->data, data);
   else
     sb_add_range(&response->data, data, 0, data_len);
+}
+
+sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
+  *hctx->response = _calloc(1, sizeof(in3_response_t));
+  return sb_add_chars(&(*hctx->response)->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":");
+}
+in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx) {
+  sb_add_char(&(*hctx->response)->data, '}');
+  return IN3_OK;
+}
+
+in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
+  sb_add_bytes(in3_rpc_handle_start(hctx), NULL, &data, 1, false);
+  return in3_rpc_handle_finish(hctx);
+}
+
+in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
+  sb_add_chars(in3_rpc_handle_start(hctx), data);
+  return in3_rpc_handle_finish(hctx);
+}
+
+in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
+  uint8_t val[8];
+  long_to_bytes(value, val);
+  bytes_t b = bytes(val, 8);
+  b_optimize_len(&b);
+  return in3_rpc_handle_with_bytes(hctx, b);
 }

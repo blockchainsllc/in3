@@ -35,6 +35,7 @@
 #define CONTEXT_INTERNAL_H
 
 #include "context.h"
+#include "plugin.h"
 
 #ifdef LOGGING
 #define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)

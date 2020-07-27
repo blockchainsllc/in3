@@ -206,7 +206,8 @@ void copy_state(evm_t* dst, evm_t* src) {
       // next item...
       sa = prv == NULL ? src->accounts : prv->next;
       continue;
-    } else {
+    }
+    else {
       // clone data
       memcpy(da->balance, sa->balance, 32);
       memcpy(da->nonce, sa->nonce, 32);

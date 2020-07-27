@@ -62,54 +62,54 @@ typedef enum evm_state {
 #define gas_options
 #endif
 
-#define EVM_ERROR_EMPTY_STACK -20 /**< the no more elements on the stack  */
-#define EVM_ERROR_INVALID_OPCODE -21 /**< the opcode is not supported  */
-#define EVM_ERROR_BUFFER_TOO_SMALL -22 /**< reading data from a position, which is not initialized  */
-#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -23 /**< the memory-offset does not exist  */
-#define EVM_ERROR_INVALID_JUMPDEST -24 /**< the jump destination is not marked as valid destination  */
-#define EVM_ERROR_INVALID_PUSH -25 /**< the push data is empy */
+#define EVM_ERROR_EMPTY_STACK             -20 /**< the no more elements on the stack  */
+#define EVM_ERROR_INVALID_OPCODE          -21 /**< the opcode is not supported  */
+#define EVM_ERROR_BUFFER_TOO_SMALL        -22 /**< reading data from a position, which is not initialized  */
+#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS   -23 /**< the memory-offset does not exist  */
+#define EVM_ERROR_INVALID_JUMPDEST        -24 /**< the jump destination is not marked as valid destination  */
+#define EVM_ERROR_INVALID_PUSH            -25 /**< the push data is empy */
 #define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -26 /**< error handling the call, usually because static-calls are not allowed to change state  */
-#define EVM_ERROR_TIMEOUT -27 /**< the evm ran into a loop  */
-#define EVM_ERROR_INVALID_ENV -28 /**< the enviroment could not deliver the data  */
-#define EVM_ERROR_OUT_OF_GAS -29 /**< not enough gas to exewcute the opcode  */
-#define EVM_ERROR_BALANCE_TOO_LOW -30 /**< not enough funds to transfer the requested value.  */
-#define EVM_ERROR_STACK_LIMIT -31 /**< stack limit reached  */
-#define EVM_ERROR_SUCCESS_CONSUME_GAS -32 /**< write success but consume all gas */
+#define EVM_ERROR_TIMEOUT                 -27 /**< the evm ran into a loop  */
+#define EVM_ERROR_INVALID_ENV             -28 /**< the enviroment could not deliver the data  */
+#define EVM_ERROR_OUT_OF_GAS              -29 /**< not enough gas to exewcute the opcode  */
+#define EVM_ERROR_BALANCE_TOO_LOW         -30 /**< not enough funds to transfer the requested value.  */
+#define EVM_ERROR_STACK_LIMIT             -31 /**< stack limit reached  */
+#define EVM_ERROR_SUCCESS_CONSUME_GAS     -32 /**< write success but consume all gas */
 
-#define EVM_PROP_FRONTIER 1
-#define EVM_PROP_EIP150 2
-#define EVM_PROP_EIP158 4
+#define EVM_PROP_FRONTIER      1
+#define EVM_PROP_EIP150        2
+#define EVM_PROP_EIP158        4
 #define EVM_PROP_CONSTANTINOPL 16
-#define EVM_PROP_ISTANBUL 32
-#define EVM_PROP_NO_FINALIZE 32768
-#define EVM_PROP_STATIC 256
+#define EVM_PROP_ISTANBUL      32
+#define EVM_PROP_NO_FINALIZE   32768
+#define EVM_PROP_STATIC        256
 
-#define EVM_ENV_BALANCE 1
-#define EVM_ENV_CODE_SIZE 2
-#define EVM_ENV_CODE_COPY 3
-#define EVM_ENV_BLOCKHASH 4
-#define EVM_ENV_STORAGE 5
+#define EVM_ENV_BALANCE     1
+#define EVM_ENV_CODE_SIZE   2
+#define EVM_ENV_CODE_COPY   3
+#define EVM_ENV_BLOCKHASH   4
+#define EVM_ENV_STORAGE     5
 #define EVM_ENV_BLOCKHEADER 6
-#define EVM_ENV_CODE_HASH 7
-#define EVM_ENV_NONCE 8
+#define EVM_ENV_CODE_HASH   7
+#define EVM_ENV_NONCE       8
 
-#define MATH_ADD 1
-#define MATH_SUB 2
-#define MATH_MUL 3
-#define MATH_DIV 4
-#define MATH_SDIV 5
-#define MATH_MOD 6
-#define MATH_SMOD 7
-#define MATH_EXP 8
+#define MATH_ADD     1
+#define MATH_SUB     2
+#define MATH_MUL     3
+#define MATH_DIV     4
+#define MATH_SDIV    5
+#define MATH_MOD     6
+#define MATH_SMOD    7
+#define MATH_EXP     8
 #define MATH_SIGNEXP 9
 
-#define CALL_CALL 0
-#define CALL_CODE 1
+#define CALL_CALL     0
+#define CALL_CODE     1
 #define CALL_DELEGATE 2
-#define CALL_STATIC 3
-#define OP_AND 0
-#define OP_OR 1
-#define OP_XOR 2
+#define CALL_STATIC   3
+#define OP_AND        0
+#define OP_OR         1
+#define OP_XOR        2
 
 #if defined(DEBUG)
 #define EVM_DEBUG_BLOCK(_code_block_) \
@@ -141,49 +141,52 @@ typedef enum evm_state {
     }                                                             \
   } while (0)
 
-#define OP_ACCOUNT_GAS(evm, key, address, data, l)             \
-  do {                                                         \
-    if (key != EVM_ENV_BLOCKHASH) {                            \
-      account_t* ac = evm_get_account(evm, address, 0);        \
-      uint8_t    tmp[4];                                       \
-      uint8_t    hash[32];                                     \
-      if (ac) {                                                \
-        data = NULL;                                           \
-        if (key == EVM_ENV_BALANCE) {                          \
-          data = ac->balance;                                  \
-          l    = 32;                                           \
-        } else if (key == EVM_ENV_CODE_SIZE && ac->code.len) { \
-          int_to_bytes(ac->code.len, tmp);                     \
-          data = tmp;                                          \
-          l    = 4;                                            \
-        } else if (key == EVM_ENV_CODE_COPY && ac->code.len) { \
-          data = ac->code.data;                                \
-          l    = ac->code.len;                                 \
-        } else if (key == EVM_ENV_CODE_HASH && ac->code.len) { \
-          sha3_to(&ac->code, hash);                            \
-          data = hash;                                         \
-          l    = 32;                                           \
-        }                                                      \
-        if (data) {                                            \
-          while (data[0] == 0 && l > 1) {                      \
-            l--;                                               \
-            data++;                                            \
-          }                                                    \
-          return evm_stack_push(evm, data, l);                 \
-        }                                                      \
-      }                                                        \
-    }                                                          \
+#define OP_ACCOUNT_GAS(evm, key, address, data, l)           \
+  do {                                                       \
+    if (key != EVM_ENV_BLOCKHASH) {                          \
+      account_t* ac = evm_get_account(evm, address, 0);      \
+      uint8_t    tmp[4];                                     \
+      uint8_t    hash[32];                                   \
+      if (ac) {                                              \
+        data = NULL;                                         \
+        if (key == EVM_ENV_BALANCE) {                        \
+          data = ac->balance;                                \
+          l    = 32;                                         \
+        }                                                    \
+        else if (key == EVM_ENV_CODE_SIZE && ac->code.len) { \
+          int_to_bytes(ac->code.len, tmp);                   \
+          data = tmp;                                        \
+          l    = 4;                                          \
+        }                                                    \
+        else if (key == EVM_ENV_CODE_COPY && ac->code.len) { \
+          data = ac->code.data;                              \
+          l    = ac->code.len;                               \
+        }                                                    \
+        else if (key == EVM_ENV_CODE_HASH && ac->code.len) { \
+          keccak(ac->code, hash);                            \
+          data = hash;                                       \
+          l    = 32;                                         \
+        }                                                    \
+        if (data) {                                          \
+          while (data[0] == 0 && l > 1) {                    \
+            l--;                                             \
+            data++;                                          \
+          }                                                  \
+          return evm_stack_push(evm, data, l);               \
+        }                                                    \
+      }                                                      \
+    }                                                        \
   } while (0)
 
 #define OP_CREATE(evm, use_salt) op_create(evm, use_salt)
-#define OP_SELFDESTRUCT(evm) op_selfdestruct(evm)
-#define OP_LOG(evm, len) op_log(evm, len)
-#define OP_SSTORE(evm) op_sstore(evm)
+#define OP_SELFDESTRUCT(evm)     op_selfdestruct(evm)
+#define OP_LOG(evm, len)         op_log(evm, len)
+#define OP_SSTORE(evm)           op_sstore(evm)
 #else
 #define OP_LOG(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
 #define OP_SLOAD_GAS(...)
-#define OP_CREATE(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
-#define OP_ACCOUNT_GAS(...) exit_zero()
+#define OP_CREATE(...)       EVM_ERROR_UNSUPPORTED_CALL_OPCODE
+#define OP_ACCOUNT_GAS(...)  exit_zero()
 #define OP_SELFDESTRUCT(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
 #define OP_EXTCODECOPY_GAS(evm)
 #define OP_SSTORE(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
@@ -270,10 +273,10 @@ int     evm_stack_pop_byte(evm_t* evm, uint8_t* dst);
 int32_t evm_stack_pop_int(evm_t* evm);
 
 int evm_run(evm_t* evm, address_t code_address);
-#define EVM_CALL_MODE_STATIC 1
+#define EVM_CALL_MODE_STATIC   1
 #define EVM_CALL_MODE_DELEGATE 2
 #define EVM_CALL_MODE_CALLCODE 3
-#define EVM_CALL_MODE_CALL 4
+#define EVM_CALL_MODE_CALL     4
 
 int evm_sub_call(evm_t*   parent,
                  uint8_t  address[20],

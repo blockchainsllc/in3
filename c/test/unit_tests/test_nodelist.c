@@ -222,10 +222,10 @@ static void test_capabilities(void) {
 }
 
 static in3_t* in3_init_test(chain_id_t chain) {
-  in3_t* in3     = in3_for_chain(chain);
-  in3->chain_id  = chain;
-  in3->transport = test_transport;
-  in3->flags     = FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
+  in3_t* in3    = in3_for_chain(chain);
+  in3->chain_id = chain;
+  in3->flags    = FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
+  register_transport(in3, test_transport);
   if (chain == CHAIN_ID_MAINNET) {
     // use a predefined nodelist
     /*
@@ -701,7 +701,7 @@ static void test_nodelist_update_8() {
 int main() {
   TESTS_BEGIN();
   in3_log_set_quiet(true);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
   in3_set_func_time(mock_time);
   in3_set_func_rand(mock_rand);
   RUN_TEST(test_capabilities);

@@ -23,7 +23,7 @@
         {
             "type": "shell",
             "label": "make",
-            "command": "make",
+            "command": "${workspaceRoot}/scripts/make.sh",
             "args": [
                 "-j",
                 "8"

@@ -12,7 +12,7 @@ class EthAccountGoerliTestCase(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_checksum_address(self):
         missing_0x_address = '1fe2e9bf29AA1938859aF64C413361227d04059A'
@@ -82,7 +82,7 @@ class EthAccountKovanTestCase(EthAccountGoerliTestCase):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_get_transaction_count(self):
         rpc = self.client.eth.account.transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
@@ -110,7 +110,7 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_get_transaction_count(self):
         rpc = self.client.eth.account.transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')

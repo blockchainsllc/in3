@@ -34,7 +34,7 @@
 
 #include "in3_curl.h"
 #include "../../core/client/client.h"
-#include "../../core/client/context.h"
+#include "../../core/client/plugin.h"
 #include "../../core/client/version.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
@@ -88,7 +88,8 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
       sb_add_chars(&r->data, (char*) curl_easy_strerror((CURLcode) res));
       r->state = IN3_ERPC;
     }
-  } else {
+  }
+  else {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ECONFIG;
   }
@@ -115,7 +116,8 @@ in3_ret_t receive_next(in3_request_t* req) {
           sb_add_chars(&response->data, "Invalid response:");
           sb_add_chars(&response->data, (char*) curl_easy_strerror((CURLcode) res));
           response->state = IN3_ERPC;
-        } else if (response_code > 100 && response_code < 400)
+        }
+        else if (response_code > 100 && response_code < 400)
           response->state = IN3_OK;
         else {
           if (!response->data.len)
@@ -196,13 +198,15 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
       sb_add_chars(&r->data, "Invalid response:");
       sb_add_chars(&r->data, (char*) curl_easy_strerror(res));
       r->state = IN3_ERPC;
-    } else
+    }
+    else
       r->state = IN3_OK;
 
     curl_slist_free_all(headers);
     /* always cleanup */
     curl_easy_cleanup(curl);
-  } else {
+  }
+  else {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ERPC;
   }
@@ -221,7 +225,9 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
   return IN3_OK;
 }
 
-in3_ret_t send_curl(in3_request_t* req) {
+in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
+  in3_request_t* req = plugin_ctx;
   // set the init-time
 #ifdef CURL_BLOCKING
   in3_ret_t res;
@@ -231,12 +237,12 @@ in3_ret_t send_curl(in3_request_t* req) {
   for (int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = t;
   return res;
 #else
-  switch (req->action) {
-    case REQ_ACTION_SEND:
+  switch (action) {
+    case PLGN_ACT_TRANSPORT_SEND:
       return send_curl_nonblocking(req);
-    case REQ_ACTION_RECEIVE:
+    case PLGN_ACT_TRANSPORT_RECEIVE:
       return receive_next(req);
-    case REQ_ACTION_CLEANUP:
+    case PLGN_ACT_TRANSPORT_CLEAN:
       return cleanup(req->cptr);
     default:
       return IN3_EINVAL;
@@ -247,6 +253,6 @@ in3_ret_t send_curl(in3_request_t* req) {
 /**
  * registers curl as a default transport.
  */
-void in3_register_curl() {
-  in3_set_default_transport(send_curl);
+in3_ret_t in3_register_curl(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, send_curl, NULL, true);
 }

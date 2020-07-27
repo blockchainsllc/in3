@@ -53,17 +53,17 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
-#define CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
-#define CHAIN_ID_KOVAN 0x2a     /**< chain_id for kovan */
-#define CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
-#define CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
-#define CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
-#define CHAIN_ID_EWC 0xf6       /**< chain_id for ewc */
-#define CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
-#define CHAIN_ID_BTC 0x99       /**< chain_id for btc */
-#define CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6   /**< default replace_latest_block */
+#define CHAIN_ID_MULTICHAIN 0x0    /**< chain_id working with all known chains */
+#define CHAIN_ID_MAINNET    0x01   /**< chain_id for mainnet */
+#define CHAIN_ID_KOVAN      0x2a   /**< chain_id for kovan */
+#define CHAIN_ID_TOBALABA   0x44d  /**< chain_id for tobalaba */
+#define CHAIN_ID_GOERLI     0x5    /**< chain_id for goerlii */
+#define CHAIN_ID_EVAN       0x4b1  /**< chain_id for evan */
+#define CHAIN_ID_EWC        0xf6   /**< chain_id for ewc */
+#define CHAIN_ID_IPFS       0x7d0  /**< chain_id for ipfs */
+#define CHAIN_ID_BTC        0x99   /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0xFFFF /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6      /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -145,13 +145,13 @@ typedef uint8_t in3_node_attr_t;
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  bytes_t*         address;  /**< address of the server */
+  address_t        address;  /**< address of the server */
   uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
-  uint32_t         capacity; /**< the maximal capacity able to handle */
+  uint_fast16_t    index;    /**< index within the nodelist, also used in the contract as key */
+  uint_fast16_t    capacity; /**< the maximal capacity able to handle */
   in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;      /**< the url of the node */
-  uint8_t          attrs;    /**< bitmask of internal attributes */
+  uint_fast8_t     attrs;    /**< bitmask of internal attributes */
 } in3_node_t;
 
 /**
@@ -281,58 +281,6 @@ typedef struct in3_storage_handler {
   void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1 /**< return value used by the signer if the the signature-request was rejected. */
-#define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3 /**< return value used by the signer if the message was invalid. */
-#define IN3_SIGN_ERR_GENERAL_ERROR -4 /**< return value used by the signer for unspecified errors. */
-
-/** type of the requested signature */
-typedef enum {
-  SIGN_EC_RAW  = 0, /**< sign the data directly */
-  SIGN_EC_HASH = 1, /**< hash and sign the data */
-} d_signature_type_t;
-
-/**
- * signing context. This Context is passed to the signer-function. 
- */
-typedef struct sign_ctx {
-  uint8_t            signature[65]; /**< the resulting signature needs to be writte into these bytes */
-  d_signature_type_t type;          /**< the type of signature*/
-  void*              wallet;        /**< the custom wallet-pointer  */
-  struct in3_ctx*    ctx;           /**< the context of the request in order report errors */
-  bytes_t            message;       /**< the message to sign*/
-  bytes_t            account;       /**< the account to use for the signature */
-} in3_sign_ctx_t;
-
-/** 
- * signing function.
- * 
- * signs the given data and write the signature to dst.
- * the return value must be the number of bytes written to dst.
- * In case of an error a negativ value must be returned. It should be one of the IN3_SIGN_ERR... values.
- * 
-*/
-typedef in3_ret_t (*in3_sign)(in3_sign_ctx_t* ctx);
-
-/** 
- * transform transaction function.
- * 
- * for multisigs, we need to change the transaction to gro through the ms.
- * if the new_tx is not set within the function, it will use the old_tx.
- * 
-*/
-typedef in3_ret_t (*in3_prepare_tx)(struct in3_ctx* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
-
-/**
- * definition of a signer holding funciton-pointers and data.
- */
-typedef struct in3_signer {
-  in3_sign       sign;            /**< function pointer returning a stored value for the given key.*/
-  in3_prepare_tx prepare_tx;      /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-  void*          wallet;          /**< custom object whill will be passed to functions */
-  address_t      default_address; /**< the address in case no address is assigned*/
-} in3_signer_t;
-
 /** 
  * payment prepearation function.
  * 
@@ -392,32 +340,6 @@ typedef struct in3_t_ in3_t;
  * Filter type used internally when managing filters.
  */
 typedef enum {
-  REQ_ACTION_SEND    = 0, /**< The request should be send */
-  REQ_ACTION_RECEIVE = 1, /**< a response is expected now. the request will not contains the urls anymore! */
-  REQ_ACTION_CLEANUP = 2, /**< the cstptr can perform clean up */
-} in3_req_action_t;
-
-/** request-object. 
- * 
- * represents a RPC-request
- */
-typedef struct in3_request {
-  char*            payload;  /**< the payload to send */
-  char**           urls;     /**< array of urls */
-  uint_fast16_t    urls_len; /**< number of urls */
-  in3_req_action_t action;   /**< the action the transport should execute */
-  struct in3_ctx*  ctx;      /**< the current context */
-  void*            cptr;     /**< a custom ptr to hold information during */
-} in3_request_t;
-
-/** the transport function to be implemented by the transport provider.
- */
-typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
-
-/**
- * Filter type used internally when managing filters.
- */
-typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
   FILTER_BLOCK   = 1, /**< Block filter */
   FILTER_PENDING = 2, /**< Pending filter (Unsupported) */
@@ -435,26 +357,27 @@ typedef struct in3_filter_t_ {
 
 /** plugin action list */
 typedef enum {
-  PLGN_ACT_INIT              = 0x1,     /**< initialize plugin - use for allocating/setting-up internal resources */
-  PLGN_ACT_TERM              = 0x2,     /**< terminate plugin - use for releasing internal resources and cleanup. */
-  PLGN_ACT_TRANSPORT_SEND    = 0x4,     /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more resonses. */
-  PLGN_ACT_TRANSPORT_RECEIVE = 0x8,     /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
-  PLGN_ACT_TRANSPORT_CLEAN   = 0x10,    /**< freeup transport resources - the transport plugin will receive a request_t as plgn_ctx if the cptr was set.*/
-  PLGN_ACT_SIGN_PREPARE      = 0x20,    /**< allowes a wallet to manipulate the payload before signing - the plgn_ctx will be in3_sign_ctx_t. This way a tx can be send through a multisig */
-  PLGN_ACT_SIGN              = 0x40,    /**<  signs the payload - the plgn_ctx will be in3_sign_ctx_t.  */
-  PLGN_ACT_RPC_HANDLE        = 0x80,    /**< a plugin may respond to a rpc-request directly (without sending it to the node). */
-  PLGN_ACT_RPC_VERIFY        = 0x100,   /**< verifies the response. the plgn_ctx will be a in3_vctx_t holding all data */
-  PLGN_ACT_CACHE_SET         = 0x200,   /**< stores data to be reused later - the plgn_ctx will be a in3_cache_ctx_t containing the data */
-  PLGN_ACT_CACHE_GET         = 0x400,   /**< reads data to be previously stored - the plgn_ctx will be a in3_cache_ctx_t containing the key. if the data was found the data-property needs to be set. */
-  PLGN_ACT_CACHE_CLEAR       = 0x800,   /**< clears alls stored data - plgn_ctx will be NULL  */
-  PLGN_ACT_SET_CONFIG        = 0x1000,  /**< gets a config-token and reads data from it */
-  PLGN_ACT_GET_CONFIG        = 0x2000,  /**< gets a stringbuilder and adds all config to it. */
-  PLGN_ACT_PAY_PREPARE       = 0x4000,  /**< prerpares a payment */
-  PLGN_ACT_PAY_FOLLOWUP      = 0x8000,  /**< called after a requeest to update stats. */
-  PLGN_ACT_PAY_HANDLE        = 0x10000, /**< handles the payment */
-  PLGN_ACT_NL_PICK_DATA      = 0x20000, /**< picks the data nodes */
-  PLGN_ACT_NL_PICK_SIGNER    = 0x40000, /**< picks the signer nodes */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x80000, /**< called after receiving a response in order to decide whether a update is needed. */
+  PLGN_ACT_INIT              = 0x1,      /**< initialize plugin - use for allocating/setting-up internal resources */
+  PLGN_ACT_TERM              = 0x2,      /**< terminate plugin - use for releasing internal resources and cleanup. */
+  PLGN_ACT_TRANSPORT_SEND    = 0x4,      /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more resonses. */
+  PLGN_ACT_TRANSPORT_RECEIVE = 0x8,      /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
+  PLGN_ACT_TRANSPORT_CLEAN   = 0x10,     /**< freeup transport resources - the transport plugin will receive a request_t as plgn_ctx if the cptr was set.*/
+  PLGN_ACT_SIGN_ACCOUNT      = 0x20,     /**<  returns the default account of the signer */
+  PLGN_ACT_SIGN_PREPARE      = 0x40,     /**< allowes a wallet to manipulate the payload before signing - the plgn_ctx will be in3_sign_ctx_t. This way a tx can be send through a multisig */
+  PLGN_ACT_SIGN              = 0x80,     /**<  signs the payload - the plgn_ctx will be in3_sign_ctx_t.  */
+  PLGN_ACT_RPC_HANDLE        = 0x100,    /**< a plugin may respond to a rpc-request directly (without sending it to the node). */
+  PLGN_ACT_RPC_VERIFY        = 0x200,    /**< verifies the response. the plgn_ctx will be a in3_vctx_t holding all data */
+  PLGN_ACT_CACHE_SET         = 0x400,    /**< stores data to be reused later - the plgn_ctx will be a in3_cache_ctx_t containing the data */
+  PLGN_ACT_CACHE_GET         = 0x800,    /**< reads data to be previously stored - the plgn_ctx will be a in3_cache_ctx_t containing the key. if the data was found the data-property needs to be set. */
+  PLGN_ACT_CACHE_CLEAR       = 0x1000,   /**< clears alls stored data - plgn_ctx will be NULL  */
+  PLGN_ACT_CONFIG_SET        = 0x2000,   /**< gets a config-token and reads data from it */
+  PLGN_ACT_CONFIG_GET        = 0x4000,   /**< gets a stringbuilder and adds all config to it. */
+  PLGN_ACT_PAY_PREPARE       = 0x8000,   /**< prerpares a payment */
+  PLGN_ACT_PAY_FOLLOWUP      = 0x10000,  /**< called after a requeest to update stats. */
+  PLGN_ACT_PAY_HANDLE        = 0x20000,  /**< handles the payment */
+  PLGN_ACT_NL_PICK_DATA      = 0x40000,  /**< picks the data nodes */
+  PLGN_ACT_NL_PICK_SIGNER    = 0x80000,  /**< picks the signer nodes */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x100000, /**< called after receiving a response in order to decide whether a update is needed. */
 
 } in3_plugin_act_t;
 
@@ -482,22 +405,6 @@ struct in3_plugin {
   in3_plugin_act_fn      action_fn; /**< plugin action handler */
   in3_plugin_t*          next;      /**< pointer to next plugin in list */
 };
-
-/** plugin execution strategies, see in3_plugin_execute_ctx() for usage */
-typedef enum {
-  PLGN_EXC_ALL,
-  PLGN_EXC_FIRST,
-  PLGN_EXC_FITRST_OR_NONE,
-} in3_plugin_exec_t;
-
-/** checks if a plugin for specified action is registered with the client */
-#define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
-
-/** registers a plugin with the client */
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex);
-
-/** executes all plugins irrespective of their return values, returns first error (if any) */
-in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * Handler which is added to client config in order to handle filter.
@@ -534,8 +441,6 @@ struct in3_t_ {
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
   void*                  key;                  /**< the client key to sign requests (pointer to 32bytes private key seed) */
   in3_storage_handler_t* cache;                /**< a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
-  in3_signer_t*          signer;               /**< signer-struct managing a wallet */
-  in3_transport_send     transport;            /**< the transport handler sending requests */
   in3_chain_t*           chains;               /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;              /**< filter handler */
   in3_plugin_t*          plugins;              /**< list of registered plugins */
@@ -620,7 +525,7 @@ NONULL in3_ret_t in3_client_rpc(
     char**      result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
-/** sends a request and stores the result in the provided buffer */
+/** sends a request and stores the result in the provided buffer, this method will always return the first, so bulk-requests are not saupported. */
 NONULL in3_ret_t in3_client_rpc_raw(
     in3_t*      c,       /**< [in] the pointer to the incubed client config. */
     const char* request, /**< [in] the rpc request including method and params. */
@@ -628,6 +533,7 @@ NONULL in3_ret_t in3_client_rpc_raw(
     char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
+ * This fuinction also supports sending bulk-requests, but you can not mix internal and external calls, since bulk means all requests will be send to picked nodes.
  * The resulting string must be free by the the caller of this function! 
  */
 NONULL char* in3_client_exec_req(
@@ -679,6 +585,13 @@ NONULL in3_ret_t in3_cache_init(
 );
 
 /**
+ * returns the chain-config for the current chain_id.
+ */
+NONULL in3_chain_t* in3_get_chain(
+    const in3_t* c /**< the incubed client */
+);
+
+/**
  * finds the chain-config for the given chain_id.
  * 
  * My return NULL if not found.
@@ -708,12 +621,9 @@ NONULL char* in3_get_config(
     in3_t* c /**< the incubed client */
 );
 
-/**
- * defines a default transport which is used when creating a new client.
+/** a register-function for a plugion.
  */
-void in3_set_default_transport(
-    in3_transport_send transport /**< the default transport-function. */
-);
+typedef in3_ret_t (*plgn_register)(in3_t* c);
 
 /**
  * defines a default storage handler which is used when creating a new client.
@@ -721,90 +631,7 @@ void in3_set_default_transport(
 void in3_set_default_storage(
     in3_storage_handler_t* cacheStorage /**< pointer to the handler-struct */
 );
-/**
- * defines a default signer which is used when creating a new client.
- */
-void in3_set_default_signer(
-    in3_signer_t* signer /**< default signer-function. */
-);
 
-/**
- * create a new signer-object to be set on the client.
- * the caller will need to free this pointer after usage.
- */
-NONULL_FOR((1))
-in3_signer_t* in3_create_signer(
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-);
-
-/**
- * helper function to retrieve and message from a in3_sign_ctx_t
- */
-bytes_t in3_sign_ctx_get_message(
-    in3_sign_ctx_t* ctx /**< the signer context */
-);
-
-/**
- * helper function to retrieve and account from a in3_sign_ctx_t
- */
-bytes_t in3_sign_ctx_get_account(
-    in3_sign_ctx_t* ctx /**< the signer context */
-);
-
-/**
- * helper function to retrieve the signature from a in3_sign_ctx_t
- */
-uint8_t* in3_sign_ctx_get_signature(
-    in3_sign_ctx_t* ctx /**< the signer context */
-);
-
-/**
- * set the transport handler on the client.
- */
-void in3_set_transport(
-    in3_t*             c,   /**< the incubed client */
-    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
-);
-
-/**
- * getter to retrieve the payload from a in3_request_t struct
- */
-char* in3_get_request_payload(
-    in3_request_t* request /**< request struct */
-);
-
-/**
- * getter to retrieve the urls list from a in3_request_t struct
- */
-char** in3_get_request_urls(
-    in3_request_t* request /**< request struct */
-);
-
-/**
- * getter to retrieve the urls list length from a in3_request_t struct
- */
-int in3_get_request_urls_len(
-    in3_request_t* request /**< request struct */
-);
-
-/**
- * getter to retrieve the urls list length from a in3_request_t struct
- */
-uint32_t in3_get_request_timeout(
-    in3_request_t* request /**< request struct */
-);
-/**
- * set the signer on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_set_signer(
-    in3_t*         c,          /**< the incubed client */
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-);
 /**
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
@@ -816,18 +643,6 @@ in3_storage_handler_t* in3_set_storage_handler(
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
-);
-
-/**
- * adds a response for a request-object.
- * This function should be used in the transport-function to set the response.
- */
-NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in]the the request */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
 #ifdef PAY

@@ -98,7 +98,7 @@ NONULL static inline bool nodelist_not_first_upd8(const in3_chain_t* chain) {
 
 NONULL static inline void blacklist_node_addr(in3_chain_t* chain, const address_t node_addr, uint64_t secs_from_now) {
   for (unsigned int i = 0; i < chain->nodelist_length; ++i) {
-    if (!memcmp(chain->nodelist[i].address->data, node_addr, chain->nodelist[i].address->len)) {
+    if (!memcmp(chain->nodelist[i].address, node_addr, 20)) {
       uint64_t blacklisted_until_ = in3_time(NULL) + secs_from_now;
       if (chain->weights[i].blacklisted_until != blacklisted_until_)
         chain->dirty = true;

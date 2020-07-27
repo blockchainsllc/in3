@@ -3,18 +3,19 @@ Load libin3 shared library for the current system, map function ABI, sets in3 ne
 """
 import ctypes as c
 import platform
-
 from pathlib import Path
+
+from in3.libin3.storage import get_item, set_item, clear
 
 DEBUG = False
 
 
-def _load_shared_library():
+def _load_shared_library() -> c.CDLL:
     """
     Loads library depending on host system.
     """
 
-    def platform_selector(prefix: str, lib_path: str) -> str:
+    def platform_selector(prefix: str, lib_path: str) -> c.CDLL:
         system, node, release, version, machine, processor = platform.uname()
 
         global DEBUG
@@ -36,9 +37,9 @@ def _load_shared_library():
                 suffix += ".dylib"
         if not suffix:
             raise OSError()
-        return str(Path(lib_path, "{}.{}".format(prefix, suffix)))
+        return c.cdll.LoadLibrary(str(Path(lib_path, "{}.{}".format(prefix, suffix))))
 
-    def fallback_platform_selector(search_string: str):
+    def fallback_platform_selector(search_string: str) -> c.CDLL:
         import glob
 
         system, node, release, version, machine, processor = platform.uname()
@@ -53,7 +54,7 @@ def _load_shared_library():
 
     path = Path(Path(__file__).parent, "shared")
     try:
-        return c.cdll.LoadLibrary(platform_selector('libin3', path))
+        return platform_selector('libin3', path)
     except OSError:
         return fallback_platform_selector(str(path) + '/*')
 
@@ -61,41 +62,40 @@ def _load_shared_library():
 _libin3 = _load_shared_library()
 
 
-def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE) -> int:
+def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) -> int:
     """
     Instantiate new In3 Client instance.
     Args:
         chain_id (int): Chain id as integer
+        cache_enabled (bool): False will disable local storage cache.
         transport_fn: Transport function for the in3 network requests
         storage_fn: Cache Storage function for node list and requests caching
     Returns:
          instance (int): Memory address of the client instance, return value from libin3_new
     """
-
-    def map_function_signatures():
-        # =================== LIBIN3 SHARED LIBRARY MAPPING ===================
-        _libin3.in3_for_chain_auto_init.argtypes = c.c_int,
-        _libin3.in3_for_chain_auto_init.restype = c.c_void_p
-        _libin3.in3_free.argtypes = c.c_void_p,
-        _libin3.eth_set_pk_signer_hex.argtypes = c.c_void_p, c.c_char_p
-        _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(
-            c.c_char_p)
-        _libin3.in3_client_rpc.restype = c.c_int
-        _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
-
     assert isinstance(chain_id, int)
-    map_function_signatures()
-    _libin3.in3_set_default_transport(transport_fn)
-    # TODO: in3_set_default_signer
-    _libin3.in3_register_eth_full()
-    # TODO: IPFS libin3.in3_register_ipfs();
-    _libin3.in3_register_eth_api()
+    # ctypes mappings
+    _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
+    # In3 init and module loading
+    _libin3.in3_set_default_legacy_transport(transport_fn)
     global DEBUG
     if DEBUG:
         # set logger level to TRACE
         _libin3.in3_log_set_quiet_(False)
         _libin3.in3_log_set_level_(0)
-    return _libin3.in3_for_chain_auto_init(chain_id)
+    _libin3.in3_for_chain_auto_init.argtypes = c.c_int,
+    _libin3.in3_for_chain_auto_init.restype = c.c_void_p
+    _libin3.in3_register_eth_full.argtypes = c.c_void_p,
+    _libin3.in3_register_eth_api.argtypes = c.c_void_p,
+    instance = _libin3.in3_for_chain_auto_init(chain_id)
+    # TODO: in3_set_default_signer
+    _libin3.in3_register_eth_full(instance)
+    # TODO: IPFS libin3.in3_register_ipfs();
+    _libin3.in3_register_eth_api(instance)
+    if cache_enabled:
+        _libin3.in3_set_storage_handler.argtypes = c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p
+        _libin3.in3_set_storage_handler(instance, get_item, set_item, clear, None)
+    return instance
 
 
 def libin3_free(instance: int):
@@ -104,6 +104,7 @@ def libin3_free(instance: int):
     Args:
         instance (int): Memory address of the client instance, return value from libin3_new
     """
+    _libin3.in3_free.argtypes = c.c_void_p,
     _libin3.in3_free(instance)
 
 
@@ -119,6 +120,8 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     """
     response = c.c_char_p()
     error = c.c_char_p()
+    _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char_p)
+    _libin3.in3_client_rpc.restype = c.c_int
     result = _libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
     return result, response.value, error.value
 
@@ -130,6 +133,7 @@ def libin3_set_pk(instance: int, private_key: bytes):
         instance (int): Memory address of the client instance, return value from libin3_new
         private_key: 256 bit number.
     """
+    _libin3.eth_set_pk_signer_hex.argtypes = c.c_void_p, c.c_char_p
     _libin3.eth_set_pk_signer_hex(instance, private_key)
 
 
@@ -140,3 +144,17 @@ def libin3_in3_req_add_response(*args):
         *args:
     """
     _libin3.in3_req_add_response(*args)
+
+
+def libin3_new_bytes_t(value: bytes, length: int) -> int:
+    """
+    C Bytes struct
+    Args:
+        length: byte array length
+        value: byte array
+    Returns:
+        ptr_addr: address of the instance of this struct
+    """
+    _libin3.b_new.argtypes = c.c_char_p, c.c_uint
+    _libin3.b_new.restype = c.c_void_p
+    return _libin3.b_new(value, length)

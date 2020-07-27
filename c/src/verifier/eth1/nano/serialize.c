@@ -65,7 +65,8 @@ static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
     b.len  = ml;
     rlp_encode_item(rlp, &b);
     _free(tmp);
-  } else
+  }
+  else
     rlp_encode_item(rlp, &b);
 
   return 0;
@@ -99,11 +100,11 @@ int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
   return rlp_add_bytes(rlp, b, ml);
 }
 
-#define UINT 0
-#define BYTES -1
+#define UINT    0
+#define BYTES   -1
 #define ADDRESS -20
-#define HASH 32
-#define BLOOM 256
+#define HASH    32
+#define BLOOM   256
 
 bytes_t* serialize_account(d_token_t* a) {
   bytes_builder_t* rlp = bb_new();

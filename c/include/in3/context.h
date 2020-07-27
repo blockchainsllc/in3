@@ -86,7 +86,7 @@ typedef struct in3_ctx {
   d_token_t**     requests;           /**< references to the tokens representring the requests*/
   d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
   in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
-  bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
+  uint8_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
@@ -297,16 +297,9 @@ char* ctx_get_response_data(
 );
 
 /**
- * creates a signer ctx to be used for async signing.
- */
-NONULL in3_sign_ctx_t* create_sign_ctx(
-    in3_ctx_t* ctx /**< [in] the rpc context */
-);
-
-/**
  * returns the type of the request
  */
-ctx_type_t ctx_get_type(
+NONULL ctx_type_t ctx_get_type(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 
@@ -430,7 +423,8 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
  * determines the proof as set in the request.
  */
 NONULL in3_proof_t in3_ctx_get_proof(
-    in3_ctx_t* ctx /**< [in] the current request. */
+    in3_ctx_t* ctx, /**< [in] the current request. */
+    int        i    /**< [in] the index within the request. */
 );
 
 /**
@@ -451,17 +445,5 @@ NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const no
 NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
-
-/**
- * executes all plugin actions one-by-one, stops when a plugin returns anything other than IN3_EIGNORE.
- * returns IN3_EPLGN_NONE if no plugin was able to handle specified action, otherwise returns IN3_OK
- * plugin errors are reported via the in3_ctx_t
- */
-in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
-
-/**
- * same as in3_plugin_execute_first(), but returns IN3_OK even if no plugin could handle specified action
- */
-in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
 #endif

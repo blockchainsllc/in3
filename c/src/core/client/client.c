@@ -37,6 +37,7 @@
 #include "../util/mem.h"
 #include "context.h"
 #include "keys.h"
+#include "plugin.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,7 +59,8 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
     ctx->error = NULL;
-  } else
+  }
+  else
     ctx->verification_state = ret;
 
   return ctx; // return context and hope the calle will clean it.
@@ -107,7 +109,8 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
     else if (d_type(r) == T_OBJECT) {
       char* msg = d_get_stringk(r, K_MESSAGE);
       *error    = msg ? _strdupn(msg, -1) : d_create_json(r);
-    } else
+    }
+    else
       *error = d_create_json(r);
     res = IN3_ERPC;
     goto clean;
@@ -140,22 +143,27 @@ in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char*
   return ctx_rpc(in3_client_rpc_ctx_raw(c, request), result, error);
 }
 
-static char* create_rpc_error(uint32_t id, int code, char* error) {
-  sb_t* sb = sb_new("{\"id\":");
-  sb_add_int(sb, id);
-  sb_add_chars(sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
-  sb_add_int(sb, code);
-  sb_add_chars(sb, ",\"message\":\"");
-  sb_add_escaped_chars(sb, error);
-  sb_add_chars(sb, "\"}}");
-  char* res = sb->data;
-  _free(sb);
-  return res;
+static char* create_rpc_error(in3_ctx_t* ctx, int code, char* error) {
+  sb_t          sb       = {0};
+  bool          is_array = ctx && ctx->request_context && d_type(ctx->request_context->result) == T_ARRAY;
+  uint_fast16_t len      = (ctx && ctx->len) ? ctx->len : 1;
+  if (is_array) sb_add_char(&sb, '[');
+  for (uint_fast16_t i = 0; i < len; i++) {
+    if (i) sb_add_char(&sb, ',');
+    sb_add_chars(&sb, "{\"id\":");
+    sb_add_int(&sb, (ctx && ctx->requests && i < ctx->len) ? d_get_intk(ctx->requests[i], K_ID) : 0);
+    sb_add_chars(&sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
+    sb_add_int(&sb, code);
+    sb_add_chars(&sb, ",\"message\":\"");
+    sb_add_escaped_chars(&sb, error);
+    sb_add_chars(&sb, "\"}}");
+  }
+  if (is_array) sb_add_char(&sb, ']');
+  return sb.data;
 }
 
 char* ctx_get_error_rpc(in3_ctx_t* ctx, in3_ret_t ret) {
-  uint32_t id = d_get_intk(ctx->requests[0], K_ID);
-  return create_rpc_error(id, ret ? ret : ctx->verification_state, ctx->error);
+  return create_rpc_error(ctx, ret ? ret : ctx->verification_state, ctx->error);
 }
 
 char* in3_client_exec_req(
@@ -173,12 +181,11 @@ char* in3_client_exec_req(
   // make sure result & error are clean
   // check parse-errors
   if (ctx->error) {
-    res = create_rpc_error(0, -32700, ctx->error);
+    res = create_rpc_error(ctx, -32700, ctx->error);
     goto clean;
   }
 
-  uint32_t id = d_get_intk(ctx->requests[0], K_ID);
-  ret         = in3_send_ctx(ctx);
+  ret = in3_send_ctx(ctx);
 
   // do we have an error?
   if (ctx->error) {
@@ -188,7 +195,7 @@ char* in3_client_exec_req(
 
   // no error message, but an error-code?
   if (ret != IN3_OK) {
-    res = create_rpc_error(id, ret, in3_errmsg(ret));
+    res = create_rpc_error(ctx, ret, in3_errmsg(ret));
     goto clean;
   }
 
@@ -199,22 +206,6 @@ clean:
 
   ctx_free(ctx);
   return res;
-}
-
-/**
- * create a new signer-object to be set on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_create_signer(
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-) {
-  in3_signer_t* signer = _calloc(1, sizeof(in3_signer_t));
-  signer->wallet       = wallet;
-  signer->sign         = sign;
-  signer->prepare_tx   = prepare_tx;
-  return signer;
 }
 
 /**
@@ -242,16 +233,6 @@ uint8_t* in3_sign_ctx_get_signature(
     in3_sign_ctx_t* ctx /**< the signer context */
 ) {
   return ctx->signature;
-}
-
-/**
- * set the transport handler on the client.
- */
-void in3_set_transport(
-    in3_t*             c,   /**< the incubed client */
-    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
-) {
-  c->transport = cptr;
 }
 
 /**
@@ -288,21 +269,6 @@ uint32_t in3_get_request_timeout(
     in3_request_t* request /**< request struct */
 ) {
   return request->ctx->client->timeout;
-}
-
-/**
- * set the signer on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_set_signer(
-    in3_t*         c,          /**< the incubed client */
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-) {
-  in3_signer_t* signer = in3_create_signer(sign, prepare_tx, wallet);
-  c->signer            = signer;
-  return signer;
 }
 
 in3_storage_handler_t* in3_set_storage_handler(

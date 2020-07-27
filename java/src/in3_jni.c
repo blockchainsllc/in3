@@ -37,8 +37,8 @@
 #include "../../c/src/api/eth1/eth_api.h"
 #include "../../c/src/core/client/cache.h"
 #include "../../c/src/core/client/client.h"
-#include "../../c/src/core/client/context.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/client/plugin.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
@@ -196,20 +196,23 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
           str_range_t s = d_to_json(r);
           strncpy(error, s.data, s.len);
           error[s.len] = '\0';
-        } else {
+        }
+        else {
           strncpy(error, d_string(r), d_len(r));
           error[d_len(r)] = '\0';
         }
-      } else if (ctx->error)
+      }
+      else if (ctx->error)
         strcpy(error, ctx->error);
       else
         strcpy(error, "No Result and also no error");
-
-    } else if (ctx->error)
+    }
+    else if (ctx->error)
       strcpy(error, ctx->error);
     else
       strcpy(error, "Error sending the request");
-  } else
+  }
+  else
     strcpy(error, ctx->error);
 
   //need to release this string when done with it in order to
@@ -221,7 +224,8 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
     js = (*env)->NewStringUTF(env, result);
     _free(result);
     return js;
-  } else {
+  }
+  else {
     jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
     (*env)->ThrowNew(env, Exception, error);
   }
@@ -300,20 +304,23 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
           str_range_t s = d_to_json(r);
           strncpy(error, s.data, s.len);
           error[s.len] = '\0';
-        } else {
+        }
+        else {
           strncpy(error, d_string(r), d_len(r));
           error[d_len(r)] = '\0';
         }
-      } else if (ctx->error)
+      }
+      else if (ctx->error)
         strcpy(error, ctx->error);
       else
         strcpy(error, "No Result and also no error");
-
-    } else if (ctx->error)
+    }
+    else if (ctx->error)
       strcpy(error, ctx->error);
     else
       strcpy(error, "Error sending the request");
-  } else
+  }
+  else
     strcpy(error, ctx->error);
 
   //need to release this string when done with it in order to
@@ -344,9 +351,12 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
 
   in3_free(in3);
 }
+in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
+  UNUSED_VAR(action);
 
-in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
-  uint64_t start = current_ms();
+  in3_request_t* req   = plugin_ctx;
+  uint64_t       start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
@@ -371,7 +381,8 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
       req->ctx->raw_response[i].state = IN3_OK;
       _free(bytes);
-    } else {
+    }
+    else {
       sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
       req->ctx->raw_response[i].state = IN3_ERPC;
     }
@@ -469,9 +480,8 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
   bytes32_t prv_key;
   uint8_t   public_key[65], sdata[32];
   hex_to_bytes((char*) key, -1, prv_key, 32);
-  bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  sha3_to(&pubkey_bytes, sdata);
+  keccak(bytes(public_key + 1, 64), sdata);
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   char tmp[43];
   bytes_to_hex(sdata + 12, 20, tmp + 2);
@@ -562,7 +572,8 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jfieldID  jproof        = (*jni)->GetStaticFieldID(jni, jproofcls, "full", "Lin3/Proof;");
   if (c->proof == PROOF_NONE) {
     jproof = (*jni)->GetStaticFieldID(jni, jproofcls, "none", "Lin3/Proof;");
-  } else if (c->proof == PROOF_STANDARD) {
+  }
+  else if (c->proof == PROOF_STANDARD) {
     jproof = (*jni)->GetStaticFieldID(jni, jproofcls, "standard", "Lin3/Proof;");
   }
 
@@ -634,7 +645,7 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
       in3_node_t node            = chain.nodelist[i];
       jobject    jnodeconfigobj  = (*jni)->NewObject(jni, jnodeconfigclass, (*jni)->GetMethodID(jni, jnodeconfigclass, "<init>", "(Lin3/config/ChainConfiguration;)V"), jchainconfigobj);
       jmethodID  set_address_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setAddress", "(Ljava/lang/String;)V");
-      bytes_to_hex(node.address->data, node.address->len, tmp + 2);
+      bytes_to_hex(node.address, 20, tmp + 2);
       (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_address_mid, (*jni)->NewStringUTF(jni, tmp));
       jmethodID set_url_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setUrl", "(Ljava/lang/String;)V");
       (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_url_mid, (*jni)->NewStringUTF(jni, node.url));
@@ -703,6 +714,12 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 }
 #endif
 
+static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
+  UNUSED_VAR(data);
+  UNUSED_VAR(action);
+  return jsign(ctx);
+}
+
 /*
  * Class:     in3_IN3
  * Method:    init
@@ -711,12 +728,9 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
   in3_t* in3 = in3_for_chain_auto_init(jchain);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
-  in3->transport          = Java_in3_IN3_transport;
-  in3->signer             = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = jsign;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = in3->cache->cptr;
-  jni                     = env;
+  in3_plugin_register(in3, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, Java_in3_IN3_transport, NULL, true);
+  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, in3->cache->cptr, false);
+  jni = env;
 
   in3_set_jclient_config(in3, ob);
 

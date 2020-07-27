@@ -55,9 +55,9 @@
 #include "../http-server/http_server.h"
 #endif
 #include "../../core/client/cache.h"
-#include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/nodelist.h"
+#include "../../core/client/plugin.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
 
@@ -67,6 +67,7 @@
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
+#include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "../../verifier/in3_init.h"
@@ -118,6 +119,8 @@ void show_help(char* name) {
 -q             quit. no additional output. \n\
 -tr            runs test request when showing in3_weights \n\
 -thr           runs test request including health-check when showing in3_weights \n\
+-ms            adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) \n\
+-sigs          add additional signatures, which will be useds when sending through a multisig! \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
 -nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
@@ -235,7 +238,8 @@ char* get_wei(char* val) {
     else if (strcmp(unit, "wei"))
       die("unsupported unit in value!");
     value *= f;
-  } else
+  }
+  else
     value = atof(val);
 
   value = floor(value); // make sure it is a integer value
@@ -257,7 +261,8 @@ char* get_wei(char* val) {
   if (p == res + 199) {
     res[2] = '0';
     res[3] = 0;
-  } else {
+  }
+  else {
     memmove(res + 2, p, res + 199 - p);
     res[res + 201 - p] = 0;
   }
@@ -308,7 +313,8 @@ static void execute(in3_t* c, FILE* f) {
             str_range_t rr  = d_to_json(ctx->responses[0]);
             rr.data[rr.len] = 0;
             printf("%s\n", rr.data);
-          } else {
+          }
+          else {
             d_token_t* result = d_get(ctx->responses[0], K_RESULT);
             d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
             char*      r      = d_create_json(result ? result : error);
@@ -318,7 +324,8 @@ static void execute(in3_t* c, FILE* f) {
               printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
             _free(r);
           }
-        } else
+        }
+        else
           printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
       ctx_free(ctx);
@@ -410,7 +417,7 @@ uint64_t getchain_id(char* name) {
 void set_chain_id(in3_t* c, char* id) {
   c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
   if (c->chain_id == 0xFFFFL) {
-    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    in3_chain_t* chain = in3_get_chain(c);
     if (strstr(id, "://")) // its a url
       chain->nodelist[0].url = id;
     if (chain->nodelist_upd8_params) {
@@ -445,7 +452,8 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
       bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
       sb_add_bytes(params, "", &bb, 1, false);
       _free(full);
-    } else if (req)
+    }
+    else if (req)
       sb_add_bytes(params, "", &req->call_data->b, 1, false);
     else if (data)
       sb_add_bytes(params, "", data, 1, false);
@@ -455,7 +463,8 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
     sb_add_chars(params, "},\"");
     sb_add_chars(params, block_number);
     sb_add_chars(params, "\"]");
-  } else {
+  }
+  else {
     if (value) {
       sb_add_chars(params, ", \"value\":\"");
       sb_add_chars(params, value);
@@ -531,7 +540,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
       bytes_to_hex(pk_seed, 32, tmp);
       printf("0x%s\n", tmp);
       exit(0);
-    } else
+    }
+    else
       eth_set_pk_signer(c, pk_seed);
   }
 }
@@ -556,7 +566,8 @@ static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
       if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
         address = (str_range_t){.data = next, .len = s - next};
         url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
-      } else {
+      }
+      else {
         address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
         url     = (str_range_t){.data = next, .len = strlen(next)};
       }
@@ -577,8 +588,11 @@ static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
 static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
-static in3_ret_t debug_transport(in3_request_t* req) {
-  if (req->action == REQ_ACTION_SEND) {
+static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
+
+  in3_request_t* req = plugin_ctx;
+  if (action == PLGN_ACT_TRANSPORT_SEND) {
 #ifndef DEBUG
     if (debug_mode)
       fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
@@ -599,11 +613,11 @@ static in3_ret_t debug_transport(in3_request_t* req) {
     }
   }
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(req);
+  in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #else
-  in3_ret_t r = send_http(req);
+  in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
-  if (req->action != REQ_ACTION_CLEANUP) {
+  if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
 #ifndef DEBUG
     if (debug_mode) {
@@ -617,11 +631,13 @@ static in3_ret_t debug_transport(in3_request_t* req) {
   return r;
 }
 static char*     test_name = NULL;
-static in3_ret_t test_transport(in3_request_t* req) {
+static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
+  in3_request_t* req = plugin_ctx;
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(req);
+  in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #else
-  in3_ret_t r = send_http(req);
+  in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
@@ -680,7 +696,6 @@ int main(int argc, char* argv[]) {
 
   // create the client
   in3_t* c                         = in3_for_chain(0);
-  c->transport                     = debug_transport;
   c->request_count                 = 2;
   bool            out_response     = false;
   int             run_test_request = 0;
@@ -691,6 +706,7 @@ int main(int argc, char* argv[]) {
   char*           name             = NULL;
   call_request_t* req              = NULL;
   bool            json             = false;
+  char*           ms_sigs          = NULL;
   uint64_t        gas_limit        = 100000;
   char*           value            = NULL;
   bool            wait             = false;
@@ -701,6 +717,7 @@ int main(int argc, char* argv[]) {
   char*           port             = NULL;
   char*           sig_type         = "raw";
   bool            to_eth           = false;
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, debug_transport, NULL, true);
 
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
@@ -739,9 +756,11 @@ int main(int argc, char* argv[]) {
         hex_to_bytes(argv[++i], -1, pk, 32);
 
         eth_set_pk_signer(c, pk);
-      } else
+      }
+      else
         pk_file = argv[++i];
-    } else if (strcmp(argv[i], "-path") == 0) {
+    }
+    else if (strcmp(argv[i], "-path") == 0) {
 #if defined(LEDGER_NANO)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, path, 5);
@@ -750,7 +769,8 @@ int main(int argc, char* argv[]) {
 #else
       die("path option not supported currently ");
 #endif
-    } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
+    }
+    else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
     else if (strcmp(argv[i], "-ccache") == 0) // NOOP - should have been handled earlier
       ;
@@ -766,7 +786,8 @@ int main(int argc, char* argv[]) {
         data            = hex_to_new_bytes((char*) content.data + 2, content.len - 2);
         fclose(f);
       }
-    } else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
+    }
+    else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
@@ -782,6 +803,17 @@ int main(int argc, char* argv[]) {
       set_nodelist(c, argv[++i], false);
     else if (strcmp(argv[i], "-bn") == 0)
       set_nodelist(c, argv[++i], true);
+    else if (strcmp(argv[i], "-mss") == 0 || strcmp(argv[i], "-sigs") == 0)
+      ms_sigs = argv[++i];
+    else if (strcmp(argv[i], "-ms") == 0) {
+#ifdef MULTISIG
+      address_t adr;
+      if (hex_to_bytes(argv[++i], -1, adr, 20) != 20) die("-ms must be exactly 20 bytes");
+      add_gnosis_safe(c, adr);
+#else
+      die("-ms is not supported. Compile with -DMULTISIG=true");
+#endif
+    }
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
@@ -795,9 +827,10 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
       gas_limit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-test") == 0) {
-      test_name    = argv[++i];
-      c->transport = test_transport;
-    } else if (strcmp(argv[i], "-pwd") == 0)
+      test_name = argv[++i];
+      in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
+    }
+    else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
     else if (strcmp(argv[i], "-q") == 0)
       in3_log_set_level(LOG_FATAL);
@@ -831,7 +864,8 @@ int main(int argc, char* argv[]) {
       if (argc <= i + 1 || strlen(argv[i + 1]) > 66) die("Invalid signer key");
       c->key = _calloc(32, 1);
       hex_to_bytes(argv[++i], -1, c->key, 32);
-    } else if (strcmp(argv[i], "-np") == 0)
+    }
+    else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;
     else if (strcmp(argv[i], "-ns") == 0)
       c->flags ^= FLAGS_STATS;
@@ -841,7 +875,8 @@ int main(int argc, char* argv[]) {
       in3_log_set_quiet(false);
       in3_log_set_level(LOG_TRACE);
       debug_mode = true;
-    } else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
+    }
+    else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signature_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
       if (strcmp(argv[i + 1], "none") == 0)
@@ -863,7 +898,8 @@ int main(int argc, char* argv[]) {
       else if (strcmp(method, "sign") == 0 && !data) {
 
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      } else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
+      }
+      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
         // otherwise we add it to the params
@@ -912,7 +948,8 @@ int main(int argc, char* argv[]) {
   if (strcmp(method, "call") == 0) {
     req    = prepare_tx(sig, resolve(c, to), params, block_number, 0, NULL, data);
     method = "eth_call";
-  } else if (strcmp(method, "abi_encode") == 0) {
+  }
+  else if (strcmp(method, "abi_encode") == 0) {
     if (!sig) die("missing signature");
     req = parseSignature(sig);
     if (req && req->in_data->type == A_TUPLE) {
@@ -922,7 +959,8 @@ int main(int argc, char* argv[]) {
     if (!req || !req->call_data) die("missing call data");
     print_hex(req->call_data->b.data, req->call_data->b.len);
     return 0;
-  } else if (strcmp(method, "abi_decode") == 0) {
+  }
+  else if (strcmp(method, "abi_decode") == 0) {
     if (!sig) die("missing signature");
     if (!strchr(sig, ':')) {
       char* tmp = malloc(strlen(sig) + 5);
@@ -937,7 +975,8 @@ int main(int argc, char* argv[]) {
       print_val(res->result);
     return 0;
 #ifdef IPFS
-  } else if (strcmp(method, "ipfs_get") == 0) {
+  }
+  else if (strcmp(method, "ipfs_get") == 0) {
     c->chain_id = CHAIN_ID_IPFS;
     int size    = strlen(params);
     if (p == 1 || params[1] != '"' || size < 20 || strstr(params + 2, "\"") == NULL) die("missing ipfs has");
@@ -947,8 +986,8 @@ int main(int argc, char* argv[]) {
     fwrite(content->data, content->len, 1, stdout);
     fflush(stdout);
     return 0;
-
-  } else if (strcmp(method, "ipfs_put") == 0) {
+  }
+  else if (strcmp(method, "ipfs_put") == 0) {
     c->chain_id         = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
@@ -956,12 +995,13 @@ int main(int argc, char* argv[]) {
     return 0;
 
 #endif
-  } else if (strcmp(method, "in3_weights") == 0) {
+  }
+  else if (strcmp(method, "in3_weights") == 0) {
     c->max_attempts = 1;
     uint32_t block = 0, b = 0;
     BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     uint64_t     now   = in3_time(NULL);
-    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    in3_chain_t* chain = in3_get_chain(c);
     char*        more  = "WEIGHT";
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
@@ -972,7 +1012,7 @@ int main(int argc, char* argv[]) {
       if (run_test_request) {
         char req[300];
         char adr[41];
-        bytes_to_hex((chain->nodelist + i)->address->data, 20, adr);
+        bytes_to_hex((chain->nodelist + i)->address, 20, adr);
         sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
         ctx = ctx_new(c, req);
         if (ctx) in3_send_ctx(ctx);
@@ -995,7 +1035,11 @@ int main(int argc, char* argv[]) {
           r.urls                  = urls;
           r.urls_len              = 1;
           r.payload               = "";
-          c->transport(&r);
+#ifdef USE_CURL
+          send_curl(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
+#else
+          send_http(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
+#endif
           if (ctx.raw_response->state)
             health = 0;
           else {
@@ -1034,7 +1078,8 @@ int main(int argc, char* argv[]) {
           d_token_t* msg = d_get(ctx->responses[0], K_ERROR);
           if (d_type(msg) == T_OBJECT) msg = d_get(msg, K_MESSAGE);
           sprintf((warning = tr), "%s", msg ? d_string(msg) : "Error-Response!");
-        } else if (!ctx->error) {
+        }
+        else if (!ctx->error) {
           b = d_get_intk(ctx->responses[0], K_RESULT);
           if (block < b) block = b;
 
@@ -1047,7 +1092,8 @@ int main(int argc, char* argv[]) {
                     d_get_intk(ctx->responses[0], K_RESULT) - d_get_intk(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
           else
             sprintf(tr, "#%i", b);
-        } else if (!strlen(node->url) || !node->props)
+        }
+        else if (!strlen(node->url) || !node->props)
           sprintf((warning = tr), "No URL spcified anymore props = %i ", (int) (node->props & 0xFFFFFF));
         else if ((node->props & NODE_PROP_DATA) == 0)
           sprintf((warning = tr), "The node is marked as not supporting Data-Providing");
@@ -1075,10 +1121,12 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
-  } else if (strcmp(method, "send") == 0) {
+  }
+  else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
-  } else if (strcmp(method, "sign") == 0) {
+  }
+  else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
     if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
       data = hex_to_new_bytes((char*) data->data + 2, data->len - 2);
@@ -1092,12 +1140,11 @@ int main(int argc, char* argv[]) {
       sig_type = "raw";
     }
 
-    if (!c->signer) die("No private key/path given");
+    if (!in3_plugin_is_registered(c, PLGN_ACT_SIGN)) die("No private key/path given");
     in3_ctx_t ctx;
     ctx.client = c;
     in3_sign_ctx_t sc;
     sc.ctx     = &ctx;
-    sc.wallet  = c->signer->wallet;
     sc.account = bytes(NULL, 0);
     sc.message = *data;
     sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
@@ -1115,24 +1162,28 @@ int main(int argc, char* argv[]) {
       memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
 
       sc.message = *tmp_data;
-      c->signer->sign(&sc);
+      in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
+
       b_free(tmp_data);
-    } else {
-      c->signer->sign(&sc);
+    }
+    else {
+      in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
     }
 #else
-    c->signer->sign(&sc);
+    in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
 #endif
 
     sc.signature[64] += 27;
     print_hex(sc.signature, 65);
     return 0;
-  } else if (strcmp(method, "chainspec") == 0) {
+  }
+  else if (strcmp(method, "chainspec") == 0) {
     char* json;
     if (strlen(params) > 2) {
       params[strlen(params) - 2] = 0;
       json                       = (char*) readFile(fopen(params + 2, "r")).data;
-    } else
+    }
+    else
       json = (char*) readFile(stdin).data;
     d_track_keynames(1);
     json_ctx_t*  j    = parse_json(json);
@@ -1164,42 +1215,45 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
-  } else if (strcmp(method, "autocompletelist") == 0) {
+  }
+  else if (strcmp(method, "autocompletelist") == 0) {
     printf("send call abi_encode abi_decode ipfs_get ipfs_put ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
     return 0;
-  } else if (strcmp(method, "createkey") == 0) {
+  }
+  else if (strcmp(method, "createkey") == 0) {
     time_t t;
     srand((unsigned) time(&t));
     printf("0x");
     for (i = 0; i < 32; i++) printf("%02x", rand() % 256);
     printf("\n");
     return 0;
-  } else if (strcmp(method, "pk2address") == 0) {
+  }
+  else if (strcmp(method, "pk2address") == 0) {
     bytes32_t prv_key;
     uint8_t   public_key[65], sdata[32];
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
-    bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-    sha3_to(&pubkey_bytes, sdata);
+    keccak(bytes(public_key + 1, 64), sdata);
     printf("0x");
     for (i = 0; i < 20; i++) printf("%02x", sdata[i + 12]);
     printf("\n");
     return 0;
-  } else if (strcmp(method, "pk2public") == 0) {
+  }
+  else if (strcmp(method, "pk2public") == 0) {
     bytes32_t prv_key;
     uint8_t   public_key[65];
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     print_hex(public_key + 1, 64);
     return 0;
-  } else if (strcmp(method, "ecrecover") == 0) {
+  }
+  else if (strcmp(method, "ecrecover") == 0) {
     json_ctx_t* rargs = parse_json(params);
     if (!rargs || d_len(rargs->result) < 2) die("Invalid arguments for recovery args must be : <message> <signature> ");
     bytes_t   msg = d_to_bytes(d_get_at(rargs->result, 0));
     bytes_t   sig = d_to_bytes(d_get_at(rargs->result, 1));
     bytes32_t hash;
     uint8_t   pub[65];
-    bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(msg.len + 30);
       int   l   = sprintf(tmp, "\x19"
@@ -1211,24 +1265,37 @@ int main(int argc, char* argv[]) {
     if (strcmp(sig_type, "hash") == 0) {
       if (msg.len != 32) die("The message hash must be 32 byte");
       memcpy(hash, msg.data, 32);
-    } else
-      sha3_to(&msg, hash);
+    }
+    else
+      keccak(msg, hash);
     if (sig.len != 65) die("The signature must be 65 bytes");
 
     if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig.data, hash, sig.data[64] >= 27 ? sig.data[64] - 27 : sig.data[64]))
       die("Invalid Signature");
 
-    sha3_to(&pubkey_bytes, hash);
+    keccak(bytes(pub + 1, 64), hash);
     print_hex(hash + 12, 20);
     print_hex(pub + 1, 64);
     return 0;
   }
 
   in3_log_debug("..sending request %s %s\n", method, params);
-  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+  in3_chain_t* chain = in3_get_chain(c);
 
   // send the request
-  in3_client_rpc(c, method, params, &result, &error);
+  sb_t* sb = sb_new("{\"method\":\"");
+  sb_add_chars(sb, method);
+  sb_add_chars(sb, "\",\"params\":");
+  sb_add_chars(sb, params);
+  if (ms_sigs) {
+    sb_add_chars(sb, ",\"in3\":{\"msSigs\":\"");
+    sb_add_chars(sb, ms_sigs);
+    sb_add_chars(sb, "\"}}");
+  }
+  else
+    sb_add_chars(sb, "}");
+
+  in3_client_rpc_raw(c, sb->data, &result, &error);
 
   // Update nodelist if a newer latest block was reported
   if (chain && chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
@@ -1279,11 +1346,13 @@ int main(int argc, char* argv[]) {
           print_val(res->result);
       }
       // if not we simply print the result
-    } else {
+    }
+    else {
       if (to_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
         double val = char_to_long(result, strlen(result));
         printf("%.3f\n", val / 1000000000000000000L);
-      } else if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
+      }
+      else if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
         printf("%" PRIu64 "\n", char_to_long(result, strlen(result)));
       else
         printf("%s\n", result);

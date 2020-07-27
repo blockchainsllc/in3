@@ -58,6 +58,7 @@ typedef enum {
   hasher_overwinter_preimage,
   hasher_sapling_preimage,
 } hasher_t;
+
 /**
  * simply signer with one private key.
  * 

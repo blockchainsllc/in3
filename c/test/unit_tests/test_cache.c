@@ -40,8 +40,8 @@
 #endif
 
 #include "../../src/core/client/cache.h"
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/nodelist.h"
+#include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/scache.h"
@@ -50,14 +50,15 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define CONTRACT_ADDRS "0x5f51e413581dd76759e9eed51e63d14c8d1379c8"
-#define REGISTRY_ID "0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea"
+#define CONTRACT_ADDRS           "0x5f51e413581dd76759e9eed51e63d14c8d1379c8"
+#define REGISTRY_ID              "0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea"
 #define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
 
-static in3_ret_t test_transport(in3_request_t* req) {
-  char* buffer = NULL;
-  long  length;
-  FILE* f = fopen("../c/test/testdata/requests/in3_nodeList.json", "r");
+static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req    = plugin_ctx;
+  char*          buffer = NULL;
+  long           length;
+  FILE*          f = fopen("../c/test/testdata/requests/in3_nodeList.json", "r");
   if (f) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
@@ -66,11 +67,13 @@ static in3_ret_t test_transport(in3_request_t* req) {
     fread(buffer, 1, length, f);
     buffer[length] = 0;
     fclose(f);
-  } else {
+  }
+  else {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
       printf("Current working dir: %s\n", cwd);
-    } else {
+    }
+    else {
       perror("getcwd() error");
       return 1;
     }
@@ -131,8 +134,8 @@ void static setup_test_cache(in3_t* c) {
 
 static void test_cache() {
   in3_t* c           = in3_for_chain(CHAIN_ID_GOERLI);
-  c->transport       = test_transport;
   c->signature_count = 0;
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
   setup_test_cache(c);
 
   in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_GOERLI);
@@ -153,14 +156,14 @@ static void test_cache() {
   TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
 
   // create a second client...
-  in3_t* c2     = in3_for_chain(0);
-  c2->cache     = c->cache;
-  c2->transport = test_transport;
-  c2->chain_id  = c->chain_id;
+  in3_t* c2    = in3_for_chain(0);
+  c2->cache    = c->cache;
+  c2->chain_id = c->chain_id;
   c2->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
+  in3_plugin_register(c2, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
 
   in3_configure(c2, "{\"chainId\":\"0x5\"}");
-  in3_chain_t* chain2 = in3_find_chain(c2, c2->chain_id);
+  in3_chain_t* chain2 = in3_get_chain(c2);
 
   // the nodeList should have 2 nodes still
   TEST_ASSERT_EQUAL_INT32(2, chain2->nodelist_length);
@@ -177,9 +180,13 @@ static void test_cache() {
   c2->cache = NULL;
   in3_free(c2);
 }
+static in3_ret_t in3_register_test_transport(in3_t* c) {
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, test_transport, NULL, true);
+}
 
 static void test_newchain() {
-  in3_set_default_transport(test_transport);
+
+  in3_register_default(in3_register_test_transport);
 
   in3_t* c    = in3_for_chain(0);
   c->chain_id = 0x8;
@@ -237,7 +244,7 @@ static void test_newchain() {
   // the nodeList should have 7 nodes now
   TEST_ASSERT_EQUAL_INT32(7, chain2->nodelist_length);
 
-  in3_client_remove_node(c2, c2->chain_id, chain2->nodelist->address->data);
+  in3_client_remove_node(c2, c2->chain_id, chain2->nodelist->address);
   TEST_ASSERT_EQUAL_INT32(6, chain2->nodelist_length);
   in3_client_clear_nodes(c2, c2->chain_id);
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
@@ -319,7 +326,8 @@ static void test_whitelist_cache() {
  * Main
  */
 int main() {
-  in3_register_eth_nano();
+  in3_register_default(in3_register_eth_nano);
+
   in3_log_set_udata_(NULL);
   in3_log_set_lock_(NULL);
   in3_log_set_fp_(NULL);

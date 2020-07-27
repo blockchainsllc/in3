@@ -35,8 +35,8 @@
 #ifndef IN3_VERSION_H
 #define IN3_VERSION_H
 
-#define IN3_COPYRIGHT "2018 - 2018-2020 slock.it, <info@slock.it>."
-#define IN3_VERSION_BITS(x, y, z) ((x) << 16 | (y) << 8 | (z))
+#define IN3_COPYRIGHT                 "2018 - 2018-2020 slock.it, <info@slock.it>."
+#define IN3_VERSION_BITS(x, y, z)     ((x) << 16 | (y) << 8 | (z))
 #define IN3_AT_LEAST_VERSION(x, y, z) (IN3_VERSION_NUM >= IN3_VERSION_BITS(x, y, z))
 
 // Below defines are obtained from cmake

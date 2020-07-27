@@ -133,7 +133,8 @@ static void rm_recurs(const char* path) {
       if ((sub_dir = opendir(abs_path))) {
         closedir(sub_dir);
         rm_recurs(abs_path);
-      } else {
+      }
+      else {
         if ((file = fopen(abs_path, "r"))) {
           fclose(file);
           remove(abs_path);

@@ -45,12 +45,15 @@ in3_ret_t is_ledger_device_connected() {
 
   return ret;
 }
-
-in3_ret_t eth_ledger_sign(in3_sign_ctx_t* sc) {
-  // void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst
-  uint8_t* bip_path_bytes = sc->wallet;
-
-  uint8_t bip_data[5];
+in3_ret_t eth_ledger_sign(void* p_data, in3_plugin_act_t action, void* p_ctx) {
+  if (action == PLGN_ACT_TERM) {
+    _free(p_data);
+    return IN3_OK;
+  }
+  in3_ledger_t*   ledger_data    = p_data;
+  in3_sign_ctx_t* sc             = p_ctx;
+  uint8_t*        bip_path_bytes = ledger_data->path;
+  uint8_t         bip_data[5];
 
   int       res = 0;
   in3_ret_t ret;
@@ -144,7 +147,7 @@ in3_ret_t eth_ledger_sign(in3_sign_ctx_t* sc) {
     return IN3_ENODEVICE;
   }
 
-  return 65;
+  return IN3_OK;
 }
 
 in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) {
@@ -197,21 +200,17 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
 
 in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path) {
 
-  if (in3->signer) free(in3->signer);
-  in3->signer             = malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = eth_ledger_sign;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = bip_path;
+  in3_ledger_t* data = _malloc(sizeof(in3_ledger_t));
+  memcpy(data->path, bip_path, 5);
+
   // generate the address from the key
   uint8_t   public_key[65], sdata[32];
-  bytes_t   pubkey_bytes = {.data = public_key + 1, .len = 64};
   bytes32_t bip32;
   memcpy(bip32, bip_path, 5);
   eth_ledger_get_public_key(bip32, public_key);
-  sha3_to(&pubkey_bytes, sdata);
-  memcpy(in3->signer->default_address, sdata + 12, 20);
-
-  return IN3_OK;
+  keccak(bytes(public_key + 1, 64), sdata);
+  memcpy(data->adr, sdata + 12, 20);
+  return in3_plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign, data, false);
 }
 
 void set_command_params() {

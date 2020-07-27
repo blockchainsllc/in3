@@ -3,17 +3,24 @@
 #include "../../../core/util/log.h"
 #include "device_apdu_commands.h"
 #include "ethereum_apdu_client_priv.h"
+#include "ledger_signer_priv.h"
 #include "types.h"
 #include "utility.h"
 
 static uint8_t public_key[65];
 static int     is_public_key_assigned = false;
 
-in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
+in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx) {
   in3_log_debug("eth_ledger_sign_txn:enter\n");
-  uint8_t* bip_path_bytes = sc->wallet;
-  uint8_t  bip_data[5];
-  bool     is_msg = false;
+  if (action == PLGN_ACT_TERM) {
+    _free(p_data);
+    return IN3_OK;
+  }
+  in3_ledger_t*   ledger_data    = p_data;
+  in3_sign_ctx_t* sc             = p_ctx;
+  uint8_t*        bip_path_bytes = ledger_data->path;
+  uint8_t         bip_data[5];
+  bool            is_msg = false;
 
   in3_ret_t ret;
   uint8_t   apdu[256];
@@ -228,22 +235,15 @@ void read_bip32_path(uint8_t path_length, const uint8_t* path, uint32_t* bip32_p
 }
 
 in3_ret_t eth_ledger_set_signer_txn(in3_t* in3, uint8_t* bip_path) {
-  if (in3->signer) free(in3->signer);
-  in3->signer             = malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = eth_ledger_sign_txn;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = bip_path;
-
-  // generate the address from the key
-  uint8_t   public_key[65], sdata[32];
-  bytes_t   pubkey_bytes = {.data = public_key + 1, .len = 64};
-  bytes32_t bip32;
+  uint8_t       public_key[65], sdata[32];
+  bytes32_t     bip32;
+  in3_ledger_t* data = _malloc(sizeof(in3_ledger_t));
+  memcpy(data->path, bip_path, 5);
   memcpy(bip32, bip_path, 5);
   eth_ledger_get_public_addr(bip32, public_key);
-  sha3_to(&pubkey_bytes, sdata);
-  memcpy(in3->signer->default_address, sdata + 12, 20);
-
-  return IN3_OK;
+  keccak(bytes(public_key + 1, 64), sdata);
+  memcpy(data->adr, sdata + 12, 20);
+  return in3_plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign_txn, data, false);
 }
 
 void set_command_params_eth() {

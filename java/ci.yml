@@ -133,7 +133,7 @@ java_macos:
     - cd java; cp test/build_test.gradle build.gradle
     - ./gradlew test
   tags:
-    - mac-mini-runner
+    - mac-os
 
 java_win:
   stage: java
