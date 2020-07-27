@@ -241,5 +241,5 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
 }
 
 in3_ret_t in3_register_http(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, send_http, NULL, true);
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_http, NULL, true);
 }

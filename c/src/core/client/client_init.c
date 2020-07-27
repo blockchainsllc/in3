@@ -98,7 +98,7 @@ static in3_ret_t              handle_legacy_transport(void* plugin_data, in3_plu
   return default_legacy_transport((in3_request_t*) plugin_ctx);
 }
 static in3_ret_t register_legacy(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN, handle_legacy_transport, NULL, true);
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, handle_legacy_transport, NULL, true);
 }
 
 void in3_set_default_legacy_transport(
