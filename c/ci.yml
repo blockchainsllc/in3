@@ -145,7 +145,7 @@ mac_os:
       - mac_build/lib
       - mac_build/bin
   tags:
-    - mac-mini-runner
+    - mac-os
 
 docker:
   stage: bindings
@@ -212,7 +212,6 @@ test_qemu_xtensaesp32:
     - cp -avi flash_image.bin /opt/qemu
     - cd /opt/qemu
     - ./qemu_xtensa.sh
-      
 
 examples_linux:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -257,4 +256,4 @@ examples_macos:
     - cd wasm/examples
     - ./build.sh
   tags:
-    - mac-mini-runner
+    - mac-os

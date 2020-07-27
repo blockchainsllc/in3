@@ -163,13 +163,6 @@ NONULL void in3_req_add_response(
     int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
-/**
- * defines a default transport which is used when creating a new client.
- */
-void in3_set_default_transport(
-    plgn_register transport /**< the default transport-function. */
-);
-
 typedef in3_ret_t (*in3_transport_legacy)(in3_request_t* request);
 /**
  * defines a default transport which is used when creating a new client.
