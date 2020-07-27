@@ -53,9 +53,19 @@
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
 
+typedef struct in3_storage_handler {
+  in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
+  in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
+  in3_storage_clear    clear;    /**< function pointer clearing all contents of cache.*/
+  void*                cptr;     /**< custom pointer which will be passed to functions */
+} in3_storage_handler_t;
+
 static void* get_java_obj_ptr(in3_t* c) {
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
-    if (p->acts & PLGN_ACT_CACHE_GET) return p->data;
+    if (p->acts & PLGN_ACT_CACHE_GET) {
+      in3_storage_handler_t* st = p->data;
+      return st->cptr;
+    }
   }
   return NULL;
 }
@@ -729,13 +739,13 @@ static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
   in3_t* in3 = in3_for_chain_auto_init(jchain);
-  in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
+  void*  p   = (*env)->NewGlobalRef(env, ob);
+  in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, p);
   in3_plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
-  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, get_java_obj_ptr(in3), false);
+  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
   jni = env;
 
   in3_set_jclient_config(in3, ob);
-
   return (jlong)(size_t) in3;
 }
 
