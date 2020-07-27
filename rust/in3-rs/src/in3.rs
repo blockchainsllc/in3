@@ -236,8 +236,6 @@ impl ClientTrait for Client {
     /// 	"stats": true,
     /// 	"useBinary": false,
     /// 	"useHttp": false,
-    /// 	"maxBlockCache": 0,
-    /// 	"maxCodeCache": 0,
     /// 	"maxVerifiedHashes": 5,
     /// 	"timeout": 10000,
     /// 	"minDeposit": 0,
@@ -342,7 +340,7 @@ impl ClientTrait for Client {
         self.storage = Some(storage);
         if no_storage {
             unsafe {
-                (*self.ptr).cache = in3_sys::in3_set_storage_handler(
+                in3_sys::in3_set_storage_handler(
                     self.ptr,
                     Some(Client::in3_rust_storage_get),
                     Some(Client::in3_rust_storage_set),
