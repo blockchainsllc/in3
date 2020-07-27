@@ -129,13 +129,6 @@ export declare interface IN3Config {
     stats?: boolean
 
     /**
-     * number of max bytes used to cache the code in memory.
-     * 
-     * default: 0
-     */
-    maxCodeCache?: number
-
-    /**
      * specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
      * 
      * default: 5000
