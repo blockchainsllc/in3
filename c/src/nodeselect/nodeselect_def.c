@@ -4,12 +4,10 @@
 #include "../core/util/debug.h"
 #include "cache.h"
 
-static in3_ret_t nl_config_set(void* plugin_data, void* plugin_ctx) {
-  char*                 res   = NULL;
-  in3_configure_ctx_t*  ctx   = plugin_ctx;
-  in3_nodeselect_def_t* data  = plugin_data;
-  d_token_t*            token = ctx->token;
-  in3_t*                c     = ctx->client;
+static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
+  char*      res   = NULL;
+  d_token_t* token = ctx->token;
+  in3_t*     c     = ctx->client;
 
   if (token->key == key("servers") || token->key == key("nodes")) {
     for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
@@ -102,54 +100,49 @@ cleanup:
   return IN3_OK;
 }
 
-static in3_ret_t nl_cache_set(void* plugin_data, void* plugin_ctx) {
-  in3_configure_ctx_t*  ctx  = plugin_ctx;
-  in3_nodeselect_def_t* data = plugin_data;
-  if (data->whitelist)
-    in3_cache_store_whitelist(ctx->client, data);
-  return in3_cache_store_nodelist(ctx->client, data);
-}
-
-static in3_ret_t nl_cache_get(void* plugin_data, void* plugin_ctx) {
-  in3_configure_ctx_t*  ctx  = plugin_ctx;
-  in3_nodeselect_def_t* data = plugin_data;
-  if (data->whitelist)
-    in3_cache_update_whitelist(ctx->client, data);
-  return in3_cache_update_nodelist(ctx->client, data);
-}
-
-static in3_ret_t nl_cache_clear(void* plugin_data, void* plugin_ctx) {
+static in3_ret_t nl_cache_clear(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t nl_pick_data(void* plugin_data, void* plugin_ctx) {
+static in3_ret_t nl_pick_data(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t nl_pick_signer(void* plugin_data, void* plugin_ctx) {
+static in3_ret_t nl_pick_signer(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t nl_pick_followup(void* plugin_data, void* plugin_ctx) {
+static in3_ret_t nl_pick_followup(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
 static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_nodeselect_def_t* data = plugin_data;
+  in3_configure_ctx_t*  ctx  = plugin_ctx;
   switch (action) {
+    case PLGN_ACT_INIT:
+      return IN3_OK;
+    case PLGN_ACT_TERM:
+      in3_whitelist_clear(data->whitelist);
+      in3_nodelist_clear(data);
+      _free(data);
+      return IN3_OK;
     case PLGN_ACT_CONFIG_SET:
-      return nl_config_set(plugin_data, plugin_ctx);
+      return nl_config_set(data, ctx);
     case PLGN_ACT_CACHE_SET:
-      return nl_cache_set(plugin_data, plugin_ctx);
+      in3_cache_store_whitelist(ctx->client, data);
+      return in3_cache_store_nodelist(ctx->client, data);
     case PLGN_ACT_CACHE_GET:
-      return nl_cache_get(plugin_data, plugin_ctx);
+      in3_cache_update_whitelist(ctx->client, data);
+      return in3_cache_update_nodelist(ctx->client, data);
     case PLGN_ACT_CACHE_CLEAR:
-      return nl_cache_clear(plugin_data, plugin_ctx);
+      return nl_cache_clear(data, ctx);
     case PLGN_ACT_NL_PICK_DATA:
-      return nl_pick_data(plugin_data, plugin_ctx);
+      return nl_pick_data(data, ctx);
     case PLGN_ACT_NL_PICK_SIGNER:
-      return nl_pick_signer(plugin_data, plugin_ctx);
+      return nl_pick_signer(data, ctx);
     case PLGN_ACT_NL_PICK_FOLLOWUP:
-      return nl_pick_followup(plugin_data, plugin_ctx);
+      return nl_pick_followup(data, ctx);
     default: break;
   }
   return IN3_EIGNORE;
@@ -157,5 +150,5 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-  return in3_plugin_register(c, PLGN_ACT_NODELIST | PLGN_ACT_CACHE | PLGN_ACT_CONFIG_SET, nodeselect, data, false);
+  return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CACHE | PLGN_ACT_CONFIG_SET, nodeselect, data, false);
 }
