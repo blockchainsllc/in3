@@ -1,4 +1,5 @@
 #include "nodeselect_def.h"
+#include "../core/client/plugin.h"
 
 static in3_ret_t nl_pick_data(void* plugin_data, void* plugin_ctx) {
   return IN3_OK;
