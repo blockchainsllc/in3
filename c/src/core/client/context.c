@@ -163,6 +163,15 @@ in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   return IN3_OK;
 }
 
+void in3_ctx_free_nodes(node_match_t* node) {
+  node_match_t* last_node = NULL;
+  while (node) {
+    last_node = node;
+    node      = node->next;
+    _free(last_node);
+  }
+}
+
 int ctx_nodes_len(node_match_t* node) {
   int all = 0;
   while (node) {
@@ -170,6 +179,11 @@ int ctx_nodes_len(node_match_t* node) {
     node = node->next;
   }
   return all;
+}
+
+bool ctx_is_method(const in3_ctx_t* ctx, const char* method) {
+  const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
+  return (required_method && strcmp(required_method, method) == 0);
 }
 
 in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {

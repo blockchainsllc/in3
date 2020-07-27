@@ -328,15 +328,6 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t
   return ctx_add_required(parent_ctx, ctx_new(c, req));
 }
 
-NONULL void in3_ctx_free_nodes(node_match_t* node) {
-  node_match_t* last_node = NULL;
-  while (node) {
-    last_node = node;
-    node      = node->next;
-    _free(last_node);
-  }
-}
-
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
   ctx->client    = c;
@@ -427,11 +418,6 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   *total_weight = weight_sum;
   *total_found  = found;
   return first;
-}
-
-bool ctx_is_method(const in3_ctx_t* ctx, const char* method) {
-  const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
-  return (required_method && strcmp(required_method, method) == 0);
 }
 
 static bool update_in_progress(const in3_ctx_t* ctx) {

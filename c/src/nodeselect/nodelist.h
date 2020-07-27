@@ -83,10 +83,6 @@ NONULL in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, 
  * forces the client to update the nodelist
  */
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain);
-// weights
-NONULL void in3_ctx_free_nodes(node_match_t* c);
-int         ctx_nodes_len(node_match_t* root);
-NONULL bool ctx_is_method(const in3_ctx_t* ctx, const char* method);
 
 NONULL static inline bool nodelist_first_upd8(const in3_chain_t* chain) {
   return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block == 0);
