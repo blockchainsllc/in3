@@ -63,6 +63,4 @@ mock_config = ClientConfig(node_list_auto_update=False,
                            node_signature_consensus=2,
                            node_signatures=2,
                            request_retries=1,
-                           in3_registry=_registry,
-                           cached_blocks=0,
-                           cached_code_bytes=0)
+                           in3_registry=_registry)
