@@ -3,12 +3,6 @@
 #include "../core/util/bitset.h"
 #include "../core/util/debug.h"
 
-static void whitelist_free(in3_whitelist_t* wl) {
-  if (!wl) return;
-  if (wl->addresses.data) _free(wl->addresses.data);
-  _free(wl);
-}
-
 static in3_ret_t nl_config_set(void* plugin_data, void* plugin_ctx) {
   char*                 res   = NULL;
   in3_configure_ctx_t*  ctx   = plugin_ctx;
@@ -37,7 +31,7 @@ static in3_ret_t nl_config_set(void* plugin_data, void* plugin_ctx) {
           EXPECT_TOK_ADDR(cp.token);
           EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
           has_wlc = true;
-          whitelist_free(data->whitelist);
+          in3_whitelist_clear(data->whitelist);
           data->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
           data->whitelist->needs_update = true;
           memcpy(data->whitelist->contract, cp.token->data, 20);
@@ -47,7 +41,7 @@ static in3_ret_t nl_config_set(void* plugin_data, void* plugin_ctx) {
           EXPECT_CFG(!has_wlc, "cannot specify manual whiteList and whiteListContract together!");
           has_man_wl = true;
           int len = d_len(cp.token), i = 0;
-          whitelist_free(data->whitelist);
+          in3_whitelist_clear(data->whitelist);
           data->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
           data->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
           for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
@@ -55,7 +49,7 @@ static in3_ret_t nl_config_set(void* plugin_data, void* plugin_ctx) {
             const uint8_t* whitelist_address = d_bytes(n.token)->data;
             for (uint32_t j = 0; j < data->whitelist->addresses.len; j += 20) {
               if (!memcmp(whitelist_address, data->whitelist->addresses.data + j, 20)) {
-                whitelist_free(data->whitelist);
+                in3_whitelist_clear(data->whitelist);
                 data->whitelist = NULL;
                 EXPECT_TOK(cp.token, false, "duplicate address!");
               }

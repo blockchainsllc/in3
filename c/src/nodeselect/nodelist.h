@@ -72,6 +72,9 @@ typedef struct {
 /** removes all nodes and their weights from the nodelist */
 NONULL void in3_nodelist_clear(in3_nodeselect_def_t* data);
 
+/** removes all nodes and their weights from the nodelist */
+NONULL void in3_whitelist_clear(in3_whitelist_t* data);
+
 /** updates all whitelisted flags in the nodelist */
 NONULL void in3_client_run_chain_whitelisting(in3_nodeselect_def_t* data);
 

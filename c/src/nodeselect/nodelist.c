@@ -566,6 +566,12 @@ void in3_nodelist_clear(in3_nodeselect_def_t* data) {
   data->dirty = true;
 }
 
+void in3_whitelist_clear(in3_whitelist_t* wl) {
+  if (!wl) return;
+  if (wl->addresses.data) _free(wl->addresses.data);
+  _free(wl);
+}
+
 void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint8_t value) {
   if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {
     const uint64_t dp_ = value;
