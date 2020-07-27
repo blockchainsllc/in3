@@ -857,7 +857,7 @@ char* in3_configure(in3_t* c, const char* config) {
         bytes_t*     contract    = d_get_byteskl(ct.token, key("contract"), 20);
         bytes_t*     registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
         bytes_t*     wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
-        in3_chain_t* chain       = in3_get_chain(c);
+        in3_chain_t* chain       = in3_find_chain(c, chain_id);
 
         if (!chain) {
           EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
