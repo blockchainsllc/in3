@@ -40,6 +40,7 @@ cat <<EOF >../c/include/in3.rs.h
 #include "in3/bytes.h"
 #include "in3/client.h"
 #include "in3/context.h"
+#include "in3/plugin.h"
 #include "in3/error.h"
 #include "in3/eth_api.h"
 #include "in3/in3_curl.h"
