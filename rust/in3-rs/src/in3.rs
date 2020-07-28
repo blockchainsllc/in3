@@ -113,6 +113,7 @@ impl Ctx {
                             false,
                             res_str.0.as_mut_ptr() as *const c_char,
                             65,
+                            0,
                         );
                         in3_sys::request_free(request);
                         Err(SysError::TryAgain)
@@ -148,6 +149,7 @@ impl Ctx {
                                         true,
                                         err_str.as_ptr(),
                                         -1i32,
+                                        0,
                                     );
                                 }
                                 Ok(res) => {
@@ -158,6 +160,7 @@ impl Ctx {
                                         false,
                                         res_str.as_ptr(),
                                         -1i32,
+                                        0,
                                     );
                                 }
                             }

@@ -181,14 +181,15 @@ in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {
   if (ctx->signers_length && !ctx->client->proof) return PROOF_STANDARD;
   return ctx->client->proof;
 }
+
 NONULL void in3_req_add_response(
     in3_request_t* req,      /**< [in]the the request */
     int            index,    /**< [in] the index of the url, since this request could go out to many urls */
     bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
     const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-) {
-  in3_ctx_add_response(req->ctx, index, is_error, data, data_len);
+    int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    uint32_t       time) {
+  in3_ctx_add_response(req->ctx, index, is_error, data, data_len, time);
 }
 
 void in3_ctx_add_response(
@@ -196,13 +197,14 @@ void in3_ctx_add_response(
     int         index,    /**< [in] the index of the url, since this request could go out to many urls */
     bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
     const char* data,     /**<  the data or the the string*/
-    int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-) {
+    int         data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    uint32_t    time) {
   if (!ctx->raw_response) {
     ctx_set_error(ctx, "no request created yet!", IN3_EINVAL);
     return;
   }
   in3_response_t* response = ctx->raw_response + index;
+  response->time += time;
   if (response->state == IN3_OK && is_error) response->data.len = 0;
   response->state = is_error ? IN3_ERPC : IN3_OK;
   if (data_len == -1)

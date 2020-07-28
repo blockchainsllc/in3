@@ -148,10 +148,13 @@ in3_ret_t cleanup(in3_curl_t* c) {
 
 in3_ret_t send_curl_nonblocking(in3_request_t* req) {
 
+  // init the cptr
   in3_curl_t* c = _malloc(sizeof(in3_curl_t));
-  req->cptr     = c;
   c->cm         = curl_multi_init();
   c->start      = current_ms();
+  req->cptr     = c;
+
+  // define headers
   curl_multi_setopt(c->cm, CURLMOPT_MAXCONNECTS, (long) CURL_MAX_PARALLEL);
   struct curl_slist* headers = curl_slist_append(NULL, "Accept: application/json");
   if (req->payload && *req->payload)
@@ -160,7 +163,9 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
   c->headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
 
   // create requests
-  for (unsigned int i = 0; i < req->urls_len; i++) readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout);
+  for (unsigned int i = 0; i < req->urls_len; i++)
+    readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout);
+
   in3_ret_t res = receive_next(req);
   if (req->urls_len == 1) {
     cleanup(c);

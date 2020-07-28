@@ -75,7 +75,7 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) ->
     """
     assert isinstance(chain_id, int)
     # ctypes mappings
-    _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
+    _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int, c.c_uint32
     # In3 init and module loading
     _libin3.in3_set_default_legacy_transport(transport_fn)
     global DEBUG

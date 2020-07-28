@@ -72,7 +72,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
 
     // parse url
     if (strncmp(url, "http://", 7)) {
-      in3_ctx_add_response(req->ctx, n, true, "invalid url must sart with http", -1);
+      in3_ctx_add_response(req->ctx, n, true, "invalid url must sart with http", -1, 0);
       continue;
     }
 
@@ -102,13 +102,13 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
     SOCKET  s;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-      in3_ctx_add_response(req->ctx, n, true, "no socket available", -1);
+      in3_ctx_add_response(req->ctx, n, true, "no socket available", -1, 0);
       continue;
     }
 
     //Create a socket
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
-      in3_ctx_add_response(req->ctx, n, true, "could not create the socket", -1);
+      in3_ctx_add_response(req->ctx, n, true, "could not create the socket", -1, 0);
       continue;
     }
 
@@ -122,24 +122,24 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
     //Connect to remote server
     if (connect(s, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
-      in3_ctx_add_response(req->ctx, n, true, "Connection failed", -1);
+      in3_ctx_add_response(req->ctx, n, true, "Connection failed", -1, 0);
       continue;
     }
 
     if (send(s, message, strlen(message), 0) < 0) {
-      in3_ctx_add_response(req->ctx, n, true, "Send failed", -1);
+      in3_ctx_add_response(req->ctx, n, true, "Send failed", -1, 0);
       continue;
     }
 
     //Receive a reply from the server
     if ((received = recv(s, response, 2000, 0)) == SOCKET_ERROR) {
-      in3_ctx_add_response(req->ctx, n, true, "Receive failed", -1);
+      in3_ctx_add_response(req->ctx, n, true, "Receive failed", -1, 0);
       continue;
     }
 
     //Add a NULL terminating character to make it a proper string before printing
     response[received] = '\0';
-    in3_ctx_add_response(req->ctx, n, false, response, -1);
+    in3_ctx_add_response(req->ctx, n, false, response, -1, 0);
 
     closesocket(s);
     WSACleanup();
@@ -147,12 +147,12 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
     int sockfd;
     server = gethostbyname(host);
     if (server == NULL) {
-      in3_ctx_add_response(req->ctx, n, true, "no such host", -1);
+      in3_ctx_add_response(req->ctx, n, true, "no such host", -1, 0);
       continue;
     }
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-      in3_ctx_add_response(req->ctx, n, true, "ERROR opening socket", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR opening socket", -1, 0);
       continue;
     }
     /* fill in the structreq->ure */
@@ -162,7 +162,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr_list[0], server->h_length);
     /* connect the socket */
     if (connect(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
-      in3_ctx_add_response(req->ctx, n, true, "ERROR connecting", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR connecting", -1, 0);
       continue;
     }
     /* send the request */
@@ -171,7 +171,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
     do {
       bytes = write(sockfd, message + sent, total - sent);
       if (bytes < 0) {
-        in3_ctx_add_response(req->ctx, n, true, "ERROR writing message to socket", -1);
+        in3_ctx_add_response(req->ctx, n, true, "ERROR writing message to socket", -1, 0);
         continue;
       }
       if (bytes == 0)
@@ -186,17 +186,17 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
       memset(response, 0, sizeof(response));
       bytes = recv(sockfd, response, 1024, 0);
       if (bytes < 0) {
-        in3_ctx_add_response(req->ctx, n, true, "ERROR reading response from socket", -1);
+        in3_ctx_add_response(req->ctx, n, true, "ERROR reading response from socket", -1, 0);
         continue;
       }
       if (bytes == 0)
         break;
-      in3_ctx_add_response(req->ctx, n, false, response, -1);
+      in3_ctx_add_response(req->ctx, n, false, response, -1, 0);
       received += bytes;
     } while (1);
 
     if (received == total) {
-      in3_ctx_add_response(req->ctx, n, true, "ERROR storing complete response from socket", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR storing complete response from socket", -1, 0);
       continue;
     }
 
@@ -211,25 +211,25 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
 
     char *res = req->ctx->raw_response[n].data.data, *header = strstr(res, "\r\n\r\n"), *body = header + 4;
     if (!header) {
-      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid response", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid response", -1, 0);
       continue;
     }
     *header = 0;
     header  = strstr(res, "\r\n");
     if (!header) {
-      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid response", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid response", -1, 0);
       continue;
     }
     *header = 0;
     header  = strtok(res, " ");
     if (header == NULL || (strcmp(header, "HTTP/1.1") && strcmp(header, "HTTP/1.0"))) {
-      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid HTTP Version", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid HTTP Version", -1, 0);
       continue;
     }
     header     = strtok(NULL, " ");
     int status = header ? atoi(header) : 0;
     if (status < 200 || status >= 400) {
-      in3_ctx_add_response(req->ctx, n, true, "ERROR failed request", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR failed request", -1, 0);
       continue;
     }
 

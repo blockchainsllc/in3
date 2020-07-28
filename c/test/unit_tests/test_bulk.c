@@ -80,7 +80,7 @@ static in3_ret_t test_bulk_transport(void* plugin_data, in3_plugin_act_t action,
   // now parse the json
   json_ctx_t* res  = parse_json(buffer);
   str_range_t json = d_to_json(d_get(d_get_at(res->result, 0), key("response")));
-  in3_ctx_add_response(req->ctx, 0, false, json.data, json.len);
+  in3_ctx_add_response(req->ctx, 0, false, json.data, json.len, 0);
 
   json_free(res);
   if (buffer) _free(buffer);

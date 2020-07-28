@@ -160,7 +160,21 @@ NONULL void in3_req_add_response(
     int            index,    /**< [in] the index of the url, since this request could go out to many urls */
     bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
     const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    uint32_t       time      /**<  the time this request took in ms or 0 if not possible (it will be used to calculate the weights)*/
+);
+
+/**
+ * adds a response to a context.
+ * This function should be used in the transport-function to set the response.
+ */
+NONULL void in3_ctx_add_response(
+    in3_ctx_t*  ctx,      /**< [in]the current context */
+    int         index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char* data,     /**<  the data or the the string*/
+    int         data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    uint32_t    time      /**<  the time this request took in ms or 0 if not possible (it will be used to calculate the weights)*/
 );
 
 typedef in3_ret_t (*in3_transport_legacy)(in3_request_t* request);

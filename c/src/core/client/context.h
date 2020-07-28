@@ -427,18 +427,6 @@ NONULL in3_proof_t in3_ctx_get_proof(
     int        i    /**< [in] the index within the request. */
 );
 
-/**
- * adds a response to a context.
- * This function should be used in the transport-function to set the response.
- */
-NONULL void in3_ctx_add_response(
-    in3_ctx_t*  ctx,      /**< [in]the current context */
-    int         index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char* data,     /**<  the data or the the string*/
-    int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-);
-
 NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->nodelist + node->index : NULL;
 }
