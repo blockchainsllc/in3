@@ -275,7 +275,7 @@ typedef enum {
 typedef struct in3_cache_ctx {
   in3_cache_set_type_t type;
   in3_t*               client; /**< client instance whose cache is to be used */
-  void*                data;   /**< stringbuilder to add json-config */
+  void*                data;   /**< pointer to data */
 } in3_cache_ctx_t;
 
 #endif
