@@ -141,39 +141,13 @@ static void whitelist_free(in3_whitelist_t* wl) {
   _free(wl);
 }
 
-static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
-  switch (id) {
-    case CHAIN_ID_MAINNET: return 15;
-    case CHAIN_ID_KOVAN: return 6;
-    case CHAIN_ID_GOERLI: return 15;
-    default: return 5;
-  }
-}
-
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
-  chain->dirty                = false;
   chain->conf                 = NULL;
   chain->chain_id             = chain_id;
-  chain->init_addresses       = NULL;
-  chain->last_block           = 0;
   chain->verified_hashes      = NULL;
   chain->contract             = hex_to_new_bytes(contract, 40);
-  chain->nodelist             = _calloc(boot_node_count, sizeof(in3_node_t));
-  chain->nodelist_length      = boot_node_count;
-  chain->weights              = _calloc(boot_node_count, sizeof(in3_node_weight_t));
   chain->type                 = type;
   chain->version              = version;
-  chain->whitelist            = NULL;
-  chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
-  chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
-  if (wl_contract) {
-    chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
-    chain->whitelist->addresses.data = NULL;
-    chain->whitelist->addresses.len  = 0;
-    chain->whitelist->needs_update   = true;
-    chain->whitelist->last_block     = 0;
-    hex_to_bytes(wl_contract, -1, chain->whitelist->contract, 20);
-  }
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
@@ -331,133 +305,27 @@ in3_chain_t* in3_find_chain(const in3_t* c, chain_id_t chain_id) {
   return NULL;
 }
 
-in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version, address_t wl_contract) {
+in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) {
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
-    chain->dirty                = false;
     chain->conf                 = NULL;
-    chain->nodelist             = NULL;
-    chain->nodelist_length      = 0;
-    chain->weights              = NULL;
-    chain->init_addresses       = NULL;
-    chain->whitelist            = NULL;
-    chain->last_block           = 0;
-    chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
     chain->verified_hashes      = NULL;
-    chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
     c->chains_length++;
   }
   else {
     if (chain->contract)
       b_free(chain->contract);
-    if (chain->whitelist)
-      whitelist_free(chain->whitelist);
   }
 
   chain->chain_id  = chain_id;
   chain->contract  = b_new(contract, 20);
   chain->type      = type;
   chain->version   = version;
-  chain->whitelist = NULL;
   memcpy(chain->registry_id, registry_id, 32);
-  _free(chain->nodelist_upd8_params);
-  chain->nodelist_upd8_params = NULL;
-
-  if (wl_contract) {
-    chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
-    chain->whitelist->addresses.data = NULL;
-    chain->whitelist->addresses.len  = 0;
-    chain->whitelist->needs_update   = true;
-    chain->whitelist->last_block     = 0;
-    memcpy(chain->whitelist->contract, wl_contract, 20);
-  }
-
   return chain->contract ? IN3_OK : IN3_ENOMEM;
-}
-
-in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node_props_t props, address_t address) {
-  in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return IN3_EFIND;
-  in3_node_t* node       = NULL;
-  int         node_index = chain->nodelist_length;
-  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
-    if (memcmp(chain->nodelist[i].address, address, 20) == 0) {
-      node       = chain->nodelist + i;
-      node_index = i;
-      break;
-    }
-  }
-  if (!node) {
-    // init or change the size ofthe nodelist
-    chain->nodelist = chain->nodelist
-                          ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    // the weights always have to have the same size
-    chain->weights = chain->weights
-                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
-    if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
-    node = chain->nodelist + chain->nodelist_length;
-    memcpy(node->address, address, 20);
-    node->index    = chain->nodelist_length;
-    node->capacity = 1;
-    node->deposit  = 0;
-    BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
-    chain->nodelist_length++;
-  }
-  else
-    _free(node->url);
-
-  node->props = props;
-  node->url   = _malloc(strlen(url) + 1);
-  memcpy(node->url, url, strlen(url) + 1);
-
-  in3_node_weight_t* weight   = chain->weights + node_index;
-  weight->blacklisted_until   = 0;
-  weight->response_count      = 0;
-  weight->total_response_time = 0;
-  return IN3_OK;
-}
-
-in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t address) {
-  in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return IN3_EFIND;
-  int node_index = -1;
-  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
-    if (memcmp(chain->nodelist[i].address, address, 20) == 0) {
-      node_index = i;
-      break;
-    }
-  }
-  if (node_index == -1) return IN3_EFIND;
-  if (chain->nodelist[node_index].url)
-    _free(chain->nodelist[node_index].url);
-
-  if (node_index < ((signed) chain->nodelist_length) - 1) {
-    memmove(chain->nodelist + node_index, chain->nodelist + node_index + 1, sizeof(in3_node_t) * (chain->nodelist_length - 1 - node_index));
-    memmove(chain->weights + node_index, chain->weights + node_index + 1, sizeof(in3_node_weight_t) * (chain->nodelist_length - 1 - node_index));
-  }
-  chain->nodelist_length--;
-  if (!chain->nodelist_length) {
-    _free(chain->nodelist);
-    _free(chain->weights);
-    chain->nodelist = NULL;
-    chain->weights  = NULL;
-  }
-  return IN3_OK;
-}
-
-in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
-  in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return IN3_EFIND;
-  in3_nodelist_clear(chain);
-  chain->nodelist        = NULL;
-  chain->weights         = NULL;
-  chain->nodelist_length = 0;
-  return IN3_OK;
 }
 
 /* frees the data */
@@ -819,7 +687,7 @@ char* in3_configure(in3_t* c, const char* config) {
 
         if (!chain) {
           EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-          EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract ? contract->data : chain->contract->data, registry_id ? registry_id->data : chain->registry_id, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
+          EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract ? contract->data : chain->contract->data, registry_id ? registry_id->data : chain->registry_id, 2)) == IN3_OK,
                      "register chain failed");
           chain = in3_find_chain(c, chain_id);
           EXPECT_CFG(chain != NULL, "invalid chain id!");

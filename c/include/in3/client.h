@@ -551,8 +551,7 @@ in3_ret_t in3_client_register_chain(
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
-    uint8_t          version,     /**< [in] the chain version. */
-    address_t        wl_contract  /**< [in] contract of whiteList. */
+    uint8_t          version      /**< [in] the chain version. */
 );
 
 /** adds a node to a chain ore updates a existing node */

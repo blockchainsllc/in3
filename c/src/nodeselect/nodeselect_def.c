@@ -4,6 +4,91 @@
 #include "../core/util/debug.h"
 #include "cache.h"
 
+static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
+  switch (id) {
+    case CHAIN_ID_MAINNET:
+    case CHAIN_ID_GOERLI: return 15;
+    case CHAIN_ID_KOVAN: return 6;
+    default: return 5;
+  }
+}
+
+in3_ret_t in3_client_add_node(in3_nodeselect_def_t* data, char* url, in3_node_props_t props, address_t address) {
+  in3_node_t*  node       = NULL;
+  unsigned int node_index = data->nodelist_length;
+  for (unsigned int i = 0; i < data->nodelist_length; i++) {
+    if (memcmp(data->nodelist[i].address, address, 20) == 0) {
+      node       = data->nodelist + i;
+      node_index = i;
+      break;
+    }
+  }
+  if (!node) {
+    // init or change the size ofthe nodelist
+    data->nodelist = data->nodelist
+                         ? _realloc(data->nodelist, sizeof(in3_node_t) * (data->nodelist_length + 1), sizeof(in3_node_t) * data->nodelist_length)
+                         : _calloc(data->nodelist_length + 1, sizeof(in3_node_t));
+    // the weights always have to have the same size
+    data->weights = data->weights
+                        ? _realloc(data->weights, sizeof(in3_node_weight_t) * (data->nodelist_length + 1), sizeof(in3_node_weight_t) * data->nodelist_length)
+                        : _calloc(data->nodelist_length + 1, sizeof(in3_node_weight_t));
+    if (!data->nodelist || !data->weights) return IN3_ENOMEM;
+    node = data->nodelist + data->nodelist_length;
+    memcpy(node->address, address, 20);
+    node->index    = data->nodelist_length;
+    node->capacity = 1;
+    node->deposit  = 0;
+    BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
+    data->nodelist_length++;
+  }
+  else
+    _free(node->url);
+
+  node->props = props;
+  node->url   = _malloc(strlen(url) + 1);
+  memcpy(node->url, url, strlen(url) + 1);
+
+  in3_node_weight_t* weight   = data->weights + node_index;
+  weight->blacklisted_until   = 0;
+  weight->response_count      = 0;
+  weight->total_response_time = 0;
+  return IN3_OK;
+}
+
+in3_ret_t in3_client_remove_node(in3_nodeselect_def_t* data, address_t address) {
+  int node_index = -1;
+  for (unsigned int i = 0; i < data->nodelist_length; i++) {
+    if (memcmp(data->nodelist[i].address, address, 20) == 0) {
+      node_index = i;
+      break;
+    }
+  }
+  if (node_index == -1) return IN3_EFIND;
+  if (data->nodelist[node_index].url)
+    _free(data->nodelist[node_index].url);
+
+  if (node_index < ((signed) data->nodelist_length) - 1) {
+    memmove(data->nodelist + node_index, data->nodelist + node_index + 1, sizeof(in3_node_t) * (data->nodelist_length - 1 - node_index));
+    memmove(data->weights + node_index, data->weights + node_index + 1, sizeof(in3_node_weight_t) * (data->nodelist_length - 1 - node_index));
+  }
+  data->nodelist_length--;
+  if (!data->nodelist_length) {
+    _free(data->nodelist);
+    _free(data->weights);
+    data->nodelist = NULL;
+    data->weights  = NULL;
+  }
+  return IN3_OK;
+}
+
+in3_ret_t in3_client_clear_nodes(in3_nodeselect_def_t* data) {
+  in3_nodelist_clear(data);
+  data->nodelist        = NULL;
+  data->weights         = NULL;
+  data->nodelist_length = 0;
+  return IN3_OK;
+}
+
 static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
   char*      res   = NULL;
   d_token_t* token = ctx->token;
@@ -73,13 +158,13 @@ static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* 
         }
         else if (cp.token->key == key("nodeList")) {
           EXPECT_TOK_ARR(cp.token);
-          if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
+          if (in3_client_clear_nodes(data) < 0) goto cleanup;
           int i = 0;
           for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
             EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
             EXPECT_TOK_STR(d_get(n.token, key("url")));
             EXPECT_TOK_ADDR(d_get(n.token, key("address")));
-            EXPECT_CFG(in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
+            EXPECT_CFG(in3_client_add_node(data, d_get_string(n.token, "url"),
                                            d_get_longkd(n.token, key("props"), 65535),
                                            d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                        "add node failed");
@@ -121,6 +206,7 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
   in3_configure_ctx_t*  ctx  = plugin_ctx;
   switch (action) {
     case PLGN_ACT_INIT:
+      data->avg_block_time = avg_block_time_for_chain_id(ctx->client->chain_id);
       return IN3_OK;
     case PLGN_ACT_TERM:
       in3_whitelist_clear(data->whitelist);

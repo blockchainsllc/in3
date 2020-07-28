@@ -540,28 +540,8 @@ in3_ret_t in3_client_register_chain(
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
-    uint8_t          version,     /**< [in] the chain version. */
-    address_t        wl_contract  /**< [in] contract of whiteList. */
+    uint8_t          version      /**< [in] the chain version. */
 );
-
-/** adds a node to a chain ore updates a existing node */
-NONULL in3_ret_t in3_client_add_node(
-    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
-    chain_id_t       chain_id, /**< [in] the chain id. */
-    char*            url,      /**< [in] url of the nodes. */
-    in3_node_props_t props,    /**< [in]properties of the node. */
-    address_t        address);        /**< [in] public address of the signer. */
-
-/** removes a node from a nodelist */
-NONULL in3_ret_t in3_client_remove_node(
-    in3_t*     client,   /**< [in] the pointer to the incubed client config. */
-    chain_id_t chain_id, /**< [in] the chain id. */
-    address_t  address);  /**< [in] public address of the signer. */
-
-/** removes all nodes from the nodelist */
-NONULL in3_ret_t in3_client_clear_nodes(
-    in3_t*     client,    /**< [in] the pointer to the incubed client config. */
-    chain_id_t chain_id); /**< [in] the chain id. */
 
 /** frees the references of the client */
 NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
