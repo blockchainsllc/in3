@@ -111,3 +111,34 @@ static inline bool is_hex_str(const char* str) {
     str += 2;
   return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
 }
+
+static inline void add_prop(sb_t* sb, char prefix, const char* property) {
+  sb_add_char(sb, prefix);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, property);
+  sb_add_chars(sb, "\":");
+}
+
+static inline void add_bool(sb_t* sb, char prefix, const char* property, bool value) {
+  add_prop(sb, prefix, property);
+  sb_add_chars(sb, value ? "true" : "false");
+}
+
+static inline void add_string(sb_t* sb, char prefix, const char* property, const char* value) {
+  add_prop(sb, prefix, property);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, value);
+  sb_add_char(sb, '"');
+}
+
+static inline void add_uint(sb_t* sb, char prefix, const char* property, uint64_t value) {
+  add_prop(sb, prefix, property);
+  char tmp[16];
+  sprintf(tmp, "%u", (uint32_t) value);
+  sb_add_chars(sb, tmp);
+}
+
+static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t value) {
+  add_prop(sb, prefix, property);
+  sb_add_bytes(sb, NULL, &value, 1, false);
+}

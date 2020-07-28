@@ -422,35 +422,6 @@ static chain_id_t chain_id(d_token_t* t) {
   return d_long(t);
 }
 
-static void add_prop(sb_t* sb, char prefix, const char* property) {
-  sb_add_char(sb, prefix);
-  sb_add_char(sb, '"');
-  sb_add_chars(sb, property);
-  sb_add_chars(sb, "\":");
-}
-static void add_bool(sb_t* sb, char prefix, const char* property, bool value) {
-  add_prop(sb, prefix, property);
-  sb_add_chars(sb, value ? "true" : "false");
-}
-static void add_string(sb_t* sb, char prefix, const char* property, const char* value) {
-  add_prop(sb, prefix, property);
-  sb_add_char(sb, '"');
-  sb_add_chars(sb, value);
-  sb_add_char(sb, '"');
-}
-
-static void add_uint(sb_t* sb, char prefix, const char* property, uint64_t value) {
-  add_prop(sb, prefix, property);
-  char tmp[16];
-  sprintf(tmp, "%u", (uint32_t) value);
-  sb_add_chars(sb, tmp);
-}
-
-static void add_hex(sb_t* sb, char prefix, const char* property, bytes_t value) {
-  add_prop(sb, prefix, property);
-  sb_add_bytes(sb, NULL, &value, 1, false);
-}
-
 char* in3_get_config(in3_t* c) {
   sb_t*        sb    = sb_new("");
   in3_chain_t* chain = in3_get_chain(c);
@@ -483,39 +454,7 @@ char* in3_get_config(in3_t* c) {
 
   in3_get_config_ctx_t cctx = {.client = c, .sb = sb};
   in3_plugin_execute_all(c, PLGN_ACT_CONFIG_GET, &cctx);
-
-  sb_add_chars(sb, ",\"nodes\":{");
-  for (int i = 0; i < c->chains_length; i++) {
-    chain = c->chains + i;
-    if (i) sb_add_char(sb, ',');
-    sb_add_char(sb, '"');
-    sb_add_hexuint(sb, chain->chain_id);
-    sb_add_chars(sb, "\":");
-    add_hex(sb, '{', "contract", *chain->contract);
-    if (chain->whitelist)
-      add_hex(sb, ',', "whiteListContract", bytes(chain->whitelist->contract, 20));
-    add_hex(sb, ',', "registryId", bytes(chain->registry_id, 32));
-    add_bool(sb, ',', "needsUpdate", chain->nodelist_upd8_params != NULL);
-    add_uint(sb, ',', "avgBlockTime", chain->avg_block_time);
-    sb_add_chars(sb, ",\"nodeList\":[");
-    for (unsigned int j = 0; j < chain->nodelist_length; j++) {
-      if ((chain->nodelist[j].attrs & ATTR_BOOT_NODE) == 0) continue;
-      if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
-      add_string(sb, '{', "url", chain->nodelist[j].url);
-      add_uint(sb, ',', "props", chain->nodelist[j].props);
-      add_hex(sb, ',', "address", bytes(chain->nodelist[j].address, 20));
-      sb_add_char(sb, '}');
-    }
-    if (sb->data[sb->len - 1] == '[') {
-      sb->len -= 13;
-      sb_add_char(sb, '}');
-    }
-    else
-      sb_add_chars(sb, "]}");
-  }
-  sb_add_chars(sb, "}}");
-
-  // TODO pay
+  sb_add_chars(sb, "}");
 
   char* r = sb->data;
   _free(sb);

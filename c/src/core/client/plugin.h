@@ -247,9 +247,9 @@ NONULL in3_sign_ctx_t* create_sign_ctx(
  * context used during configure
  */
 typedef struct in3_configure_ctx {
-  in3_t*      client; /**< the client to configure */
-  d_token_t*  token;  /**< the token not handled yet*/
-  char* err;    /**< the error string to return to user */
+  in3_t*     client; /**< the client to configure */
+  d_token_t* token;  /**< the token not handled yet*/
+  char*      err;    /**< the error string to return to user */
 } in3_configure_ctx_t;
 
 // -------- GET_CONFIG ---------
@@ -261,5 +261,21 @@ typedef struct in3_get_config_ctx {
   in3_t* client; /**< the client to configure */
   sb_t*  sb;     /**< stringbuilder to add json-config*/
 } in3_get_config_ctx_t;
+
+// -------- CACHE_SET ---------
+
+typedef enum {
+  CACHE_NODELIST,
+  CACHE_WHITELIST,
+  CACHE_VER_HASHES,
+} in3_cache_set_type_t;
+/**
+ * context used during cache actions
+ */
+typedef struct in3_cache_ctx {
+  in3_cache_set_type_t type;
+  in3_t*               client; /**< client instance whose cache is to be used */
+  void*                data;   /**< stringbuilder to add json-config */
+} in3_cache_ctx_t;
 
 #endif
