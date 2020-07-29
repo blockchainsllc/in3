@@ -41,6 +41,11 @@
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include <string.h>
+
+typedef struct key {
+  bytes32_t key;
+} key_t;
+
 /** hash data with given hasher type and sign the given data with give private key*/
 in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
   if (hasher == hasher_sha3k && ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message, len, dst, dst + 64, NULL) < 0)
@@ -93,10 +98,58 @@ in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
       return IN3_ENOTSUP;
   }
 }
+in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
+  key_t* pk = data;
+  switch (action) {
+    case PLGN_ACT_PAY_SIGN_REQ: {
+      in3_pay_sign_req_ctx_t* ctx = action_ctx;
+      return ec_sign_pk_raw(ctx->request_hash, pk->key, ctx->signature);
+    }
+
+    case PLGN_ACT_TERM: {
+      _free(pk);
+      return IN3_OK;
+    }
+
+    case PLGN_ACT_CONFIG_SET: {
+      in3_configure_ctx_t* ctx = action_ctx;
+      if (ctx->token->key == key("key")) {
+        if (d_type(ctx->token) != T_BYTES || d_len(ctx->token) != 32) {
+          ctx->error_msg = "invalid key-length, must be 32";
+          return IN3_EINVAL;
+        }
+        memcpy(pk->key, ctx->token->data, 32);
+        return IN3_OK;
+      }
+      return IN3_EIGNORE;
+    }
+
+    case PLGN_ACT_CONFIG_GET: {
+      in3_get_config_ctx_t* ctx = action_ctx;
+      bytes_t               k   = bytes(pk->key, 32);
+      sb_add_bytes(ctx->sb, ",\"key\"=", &k, 1, false);
+      return IN3_OK;
+    }
+
+    default:
+      return IN3_ENOTSUP;
+  }
+}
 
 /** sets the signer and a pk to the client*/
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN, eth_sign_pk, pk, false);
+}
+
+/** sets the signer and a pk to the client*/
+in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
+  key_t* k = _malloc(sizeof(key_t));
+  if (pk) memcpy(k->key, pk, 32);
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, eth_sign_req, k, true);
+}
+
+in3_ret_t eth_register_request_signer(in3_t* in3) {
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, eth_sign_req, _calloc(1, sizeof(key_t)), true);
 }
 
 /** sets the signer and a pk to the client*/

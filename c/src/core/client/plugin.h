@@ -261,8 +261,9 @@ NONULL in3_sign_ctx_t* create_sign_ctx(
  * context used during configure
  */
 typedef struct in3_configure_ctx {
-  in3_t*     client; /**< the client to configure */
-  d_token_t* token;  /**< the token not handled yet*/
+  in3_t*     client;    /**< the client to configure */
+  d_token_t* token;     /**< the token not handled yet*/
+  char*      error_msg; /**< message in case of an incorrect config */
 } in3_configure_ctx_t;
 
 // -------- SET_CONFIG ---------
@@ -357,4 +358,12 @@ in3_ret_t vc_set_error(
     char*       msg /**< the error message. */
 );
 
+// ---- PAY_SIGN_REQ -----------
+
+typedef struct {
+  in3_ctx_t* ctx;           /**< Request context. */
+  d_token_t* request;       /**< the request sent. */
+  bytes32_t  request_hash;  /**< the hash to sign */
+  uint8_t    signature[65]; /**< the signature */
+} in3_pay_sign_req_ctx_t;
 #endif

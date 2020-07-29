@@ -862,8 +862,9 @@ int main(int argc, char* argv[]) {
       json = true;
     else if (strcmp(argv[i], "-k") == 0) {
       if (argc <= i + 1 || strlen(argv[i + 1]) > 66) die("Invalid signer key");
-      c->key = _calloc(32, 1);
-      hex_to_bytes(argv[++i], -1, c->key, 32);
+      bytes32_t k;
+      hex_to_bytes(argv[++i], -1, k, 32);
+      eth_set_request_signer(c, k);
     }
     else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;

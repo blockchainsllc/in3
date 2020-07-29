@@ -94,34 +94,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
 
 /*
  * Class:     in3_IN3
- * Method:    getKey
- * Signature: ()[B
- */
-JNIEXPORT jbyteArray JNICALL Java_in3_IN3_getKey(JNIEnv* env, jobject ob) {
-  bytes_t* k = get_in3(env, ob)->key;
-  if (!k) return NULL;
-  jbyteArray res = (*env)->NewByteArray(env, k->len);
-  (*env)->SetByteArrayRegion(env, res, 0, k->len, (jbyte*) k->data);
-  return res;
-}
-/*
- * Class:     in3_IN3
- * Method:    setKey
- * Signature: ([B)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray val) {
-  in3_t* in3 = get_in3(env, ob);
-  if (in3->key) b_free(in3->key);
-  in3->key = NULL;
-  if (val == NULL) return;
-  int len = (*env)->GetArrayLength(env, val);
-  if (len > 32) (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), "Invalid Signer key!");
-  in3->key = _calloc(1, 32);
-  (*env)->GetByteArrayRegion(env, val, 0, len, (jbyte*) in3->key);
-}
-
-/*
- * Class:     in3_IN3
  * Method:    getChainId
  * Signature: ()J
  */

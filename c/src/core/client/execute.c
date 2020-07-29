@@ -170,7 +170,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
   static unsigned long rpc_id_counter = 1;
   char                 temp[100];
   in3_t*               rc       = c->client;
-  struct SHA3_CTX*     msg_hash = rc->key ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  struct SHA3_CTX*     msg_hash = in3_plugin_is_registered(c->client, PLGN_ACT_PAY_SIGN_REQ) ? alloca(sizeof(struct SHA3_CTX)) : NULL;
 
   sb_add_char(sb, '[');
 
@@ -215,11 +215,10 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
         sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
       }
       if (msg_hash) {
-        uint8_t sig[65], hash[32];
-        bytes_t sig_bytes = bytes(sig, 65);
-        keccak_Final(msg_hash, hash);
-        if (ecdsa_sign_digest(&secp256k1, c->client->key, hash, sig, sig + 64, NULL) < 0)
-          return ctx_set_error(c, "could not sign the request", IN3_EINVAL);
+        in3_pay_sign_req_ctx_t sctx      = {.ctx = c, .request = request_token, .signature = {0}};
+        bytes_t                sig_bytes = bytes(sctx.signature, 65);
+        keccak_Final(msg_hash, sctx.request_hash);
+        TRY(in3_plugin_execute_first(c, PLGN_ACT_PAY_SIGN_REQ, &sctx))
         sb_add_bytes(sb, ",\"sig\":", &sig_bytes, 1, false);
       }
       if (rc->finality)

@@ -281,7 +281,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST | FLAGS_BOOT_WEIGHTS;
   c->cache_timeout        = 0;
   c->chain_id             = chain_id ? chain_id : CHAIN_ID_MAINNET; // mainnet
-  c->key                  = NULL;
   c->finality             = 0;
   c->max_attempts         = 7;
   c->max_verified_hashes  = 5;
@@ -514,7 +513,6 @@ void in3_free(in3_t* a) {
     _free(a->filters->array);
     _free(a->filters);
   }
-  if (a->key) _free(a->key);
 
 #ifdef PAY
   if (a->pay) {
@@ -628,8 +626,6 @@ char* in3_get_config(in3_t* c) {
   add_uint(sb, ',', "nodeProps", c->node_props);
   add_uint(sb, ',', "nodeLimit", c->node_limit);
   add_string(sb, ',', "proof", (c->proof == PROOF_NONE) ? "none" : (c->proof == PROOF_STANDARD ? "standard" : "full"));
-  if (c->key)
-    add_hex(sb, ',', "key", bytes(c->key, 32));
   if (c->replace_latest_block)
     add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
   add_uint(sb, ',', "requestCount", c->request_count);
@@ -743,10 +739,6 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == key("useHttp")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_HTTP, (d_int(token) ? true : false));
-    }
-    else if (token->key == key("key")) {
-      EXPECT_TOK_B256(token);
-      memcpy(c->key = _calloc(32, 1), token->data, token->len);
     }
     else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
@@ -944,7 +936,7 @@ char* in3_configure(in3_t* c, const char* config) {
       }
     }
     else {
-      in3_configure_ctx_t cctx    = {.client = c, .token = token};
+      in3_configure_ctx_t cctx    = {.client = c, .token = token, .error_msg = NULL};
       bool                handled = false;
       for (in3_plugin_t* p = c->plugins; p; p = p->next) {
         if (p->acts & PLGN_ACT_CONFIG_SET) {
@@ -952,7 +944,7 @@ char* in3_configure(in3_t* c, const char* config) {
           if (r != IN3_EIGNORE)
             continue;
           else if (r != IN3_OK)
-            EXPECT_TOK(token, false, "error configuring this option!");
+            EXPECT_TOK(token, false, cctx.error_msg ? cctx.error_msg : "error configuring this option!");
           handled = true;
           break;
         }
@@ -1043,6 +1035,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_PAY_PREPARE: return "pay_prepare";
     case PLGN_ACT_PAY_FOLLOWUP: return "pay_followup";
     case PLGN_ACT_PAY_HANDLE: return "pay_handle";
+    case PLGN_ACT_PAY_SIGN_REQ: return "pay_sign_req";
     case PLGN_ACT_NL_PICK_DATA: return "nl_pick_data";
     case PLGN_ACT_NL_PICK_SIGNER: return "nl_pick_signer";
     case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";

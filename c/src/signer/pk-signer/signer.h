@@ -66,6 +66,10 @@ typedef enum {
  */
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
 
+/** sets the signer and a pk to the client*/
+in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk);
+
+in3_ret_t eth_register_request_signer(in3_t* in3);
 /**
  * simply signer with one private key as hex.
  */

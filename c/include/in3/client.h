@@ -340,9 +340,10 @@ typedef enum {
   PLGN_ACT_PAY_PREPARE       = 0x8000,   /**< prerpares a payment */
   PLGN_ACT_PAY_FOLLOWUP      = 0x10000,  /**< called after a requeest to update stats. */
   PLGN_ACT_PAY_HANDLE        = 0x20000,  /**< handles the payment */
-  PLGN_ACT_NL_PICK_DATA      = 0x40000,  /**< picks the data nodes */
-  PLGN_ACT_NL_PICK_SIGNER    = 0x80000,  /**< picks the signer nodes */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x100000, /**< called after receiving a response in order to decide whether a update is needed. */
+  PLGN_ACT_PAY_SIGN_REQ      = 0x40000,  /**< signs a request */
+  PLGN_ACT_NL_PICK_DATA      = 0x80000,  /**< picks the data nodes */
+  PLGN_ACT_NL_PICK_SIGNER    = 0x100000, /**< picks the signer nodes */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000, /**< called after receiving a response in order to decide whether a update is needed. */
 
 } in3_plugin_act_t;
 
@@ -402,7 +403,6 @@ struct in3_t_ {
   in3_proof_t            proof;                /**< the type of proof used */
   uint64_t               min_deposit;          /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
-  void*                  key;                  /**< the client key to sign requests (pointer to 32bytes private key seed) */
   in3_chain_t*           chains;               /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;              /**< filter handler */
   in3_plugin_t*          plugins;              /**< list of registered plugins */

@@ -47,6 +47,7 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
+#include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
@@ -266,6 +267,7 @@ static void test_configure() {
 
 static void test_configure_validation() {
   in3_t* c = in3_for_chain(0);
+  eth_register_request_signer(c);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
 
@@ -345,14 +347,16 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"keepIn3\":true}");
   TEST_ASSERT_EQUAL(FLAGS_KEEP_IN3, c->flags & FLAGS_KEEP_IN3);
 
+  bytes32_t b256;
+  hex_to_bytes("0x1234567890123456789012345678901234567890123456789012345678901234", -1, b256, 32);
+
+  /*
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":1}", "expected 256 bit data");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":\"1\"}", "expected 256 bit data");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":\"0x00000\"}", "expected 256 bit data");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
-  bytes32_t b256;
-  hex_to_bytes("0x1234567890123456789012345678901234567890123456789012345678901234", -1, b256, 32);
   TEST_ASSERT_EQUAL_MEMORY(c->key, b256, 32);
-
+*/
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":1}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"0x00000\"}", "expected boolean");

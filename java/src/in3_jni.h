@@ -58,20 +58,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
 
 /*
  * Class:     in3_IN3
- * Method:    getKey
- * Signature: ()[B
- */
-JNIEXPORT jbyteArray JNICALL Java_in3_IN3_getKey(JNIEnv*, jobject);
-
-/*
- * Class:     in3_IN3
- * Method:    setKey
- * Signature: ([B)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv*, jobject, jbyteArray);
-
-/*
- * Class:     in3_IN3
  * Method:    getChainId
  * Signature: ()J
  */
