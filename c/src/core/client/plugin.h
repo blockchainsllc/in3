@@ -304,9 +304,9 @@ typedef void (*in3_storage_clear)(
  * context used during get config
  */
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx; /**< the request context  */
-  char*      key;
-  bytes_t*   content;
+  in3_ctx_t* ctx;     /**< the request context  */
+  char*      key;     /**< the key to fetch */
+  bytes_t*   content; /**< the content to set */
 } in3_cache_ctx_t;
 
 /**

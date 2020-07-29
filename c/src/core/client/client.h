@@ -238,7 +238,6 @@ typedef struct in3_chain {
   bytes32_t            registry_id;     /**< the identifier of the registry */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
-  void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
   struct {
     uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
     uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */

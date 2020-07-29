@@ -100,7 +100,7 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
   return final_blocks.len == p ? IN3_OK : vc_err(vc, "too many final headers");
 }
 
-in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* block_hash) {
+in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* block_hash) {
   bytes_t    data, merkle_data, header, tmp;
   bytes32_t  hash, expected_block_hash, block_target, hash2;
   d_token_t *t, *list;
@@ -279,7 +279,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
   if (!in_active_chain) return IN3_OK;
   if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
-  if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
+  if ((ret = btc_check_target(conf, vc, block_number, block_target, finality_headers, header))) return ret;
 
   return IN3_OK;
 }
@@ -287,7 +287,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
 /**
  * check a block
  */
-in3_ret_t btc_verify_blockcount(in3_vctx_t* vc) {
+in3_ret_t btc_verify_blockcount(btc_target_conf_t* conf, in3_vctx_t* vc) {
+  UNUSED_VAR(conf);
   // verify the blockheader
   //TODO verify the proof
   return vc->proof ? IN3_OK : vc_err(vc, "missing the proof");
@@ -296,7 +297,7 @@ in3_ret_t btc_verify_blockcount(in3_vctx_t* vc) {
 /**
  * check a block
  */
-in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bool full_block) {
+in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t block_hash, int verbose, bool full_block) {
   uint8_t   block_header[80];
   bytes32_t block_target, hash, tmp, tmp2;
   in3_ret_t ret              = IN3_OK;
@@ -311,7 +312,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
   // verify the blockheader
   if ((ret = btc_verify_header(vc, block_header, hash, block_target, &block_number, NULL, vc->proof))) return ret;
   if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
-  if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, bytes(block_header, 80)))) return ret;
+  if ((ret = btc_check_target(conf, vc, block_number, block_target, finality_headers, bytes(block_header, 80)))) return ret;
 
   // check blockhash
   if (memcmp(hash, block_hash, 32)) return vc_err(vc, "Invalid blockhash");
@@ -377,12 +378,11 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
   return IN3_OK;
 }
 
-in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
+in3_ret_t btc_verify_target_proof(btc_target_conf_t* conf, in3_vctx_t* vc, d_token_t* params) {
   if (d_len(params) != 5) return vc_err(vc, "must have 5 params!");
-  bytes32_t          hash, block_target;
-  in3_ret_t          ret          = IN3_OK;
-  btc_target_conf_t* conf         = btc_get_config(vc);
-  uint32_t           block_number = 0;
+  bytes32_t hash, block_target;
+  in3_ret_t ret          = IN3_OK;
+  uint32_t  block_number = 0;
   if (conf->max_diff != (uint_fast16_t) d_get_int_at(params, 2)) return vc_err(vc, "invalid max_diff");
   if (conf->max_daps != (uint_fast16_t) d_get_int_at(params, 3)) return vc_err(vc, "invalid max_daps");
   //  if (conf->dap_limit != (uint_fast16_t) d_get_int_at(params, 4)) return vc_err(vc, "invalid dap_limit");
@@ -395,30 +395,16 @@ in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
 
     if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, iter.token))) return ret;
     if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
-    if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
+    if ((ret = btc_check_target(conf, vc, block_number, block_target, finality_headers, header))) return ret;
   }
 
   return IN3_OK;
 }
 
-in3_ret_t in3_verify_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
-  UNUSED_VAR(pdata);
-  if (action == PLGN_ACT_TERM) {
-    in3_t* c = pctx;
-    for (int i = 0; i < c->chains_length; i++) {
-      if (c->chains[i].type == CHAIN_BTC && c->chains[i].conf) {
-        btc_target_conf_t* tc = c->chains[i].conf;
-        if (tc->data.data) _free(tc->data.data);
-        _free(tc);
-      }
-    }
-    return IN3_OK;
-  }
-  if (action != PLGN_ACT_RPC_VERIFY) return IN3_EIGNORE;
-  in3_vctx_t* vc     = pctx;
-  char*       method = d_get_stringk(vc->request, K_METHOD);
-  d_token_t*  params = d_get(vc->request, K_PARAMS);
-  bytes32_t   hash;
+static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
+  char*      method = d_get_stringk(vc->request, K_METHOD);
+  d_token_t* params = d_get(vc->request, K_PARAMS);
+  bytes32_t  hash;
   // we only verify BTC
   if (vc->chain->type != CHAIN_BTC) return IN3_EIGNORE;
 
@@ -431,23 +417,26 @@ in3_ret_t in3_verify_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
 
+  // make sure the conf is filled with data from the cache
+  btc_check_conf(vc->client, conf);
+
   if (strcmp(method, "getblock") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
-    return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, true);
+    return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, true);
   }
   if (strcmp(method, "getblockcount") == 0) {
-    return btc_verify_blockcount(vc);
+    return btc_verify_blockcount(conf, vc);
   }
   if (strcmp(method, "getblockheader") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid blockhash");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
-    return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, false);
+    return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, false);
   }
   if (strcmp(method, "in3_proofTarget") == 0) {
-    return btc_verify_target_proof(vc, params);
+    return btc_verify_target_proof(conf, vc, params);
   }
   if (strcmp(method, "getrawtransaction") == 0) {
     d_token_t* tx_id      = d_get_at(params, 0);
@@ -457,25 +446,53 @@ in3_ret_t in3_verify_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
     bytes32_t tx_hash_bytes;
     hex_to_bytes(d_string(tx_id), 64, tx_hash_bytes, 32);
     if (block_hash) hex_to_bytes(d_string(block_hash), 64, hash, 32);
-    return btc_verify_tx(vc, tx_hash_bytes, json, block_hash ? hash : NULL);
+    return btc_verify_tx(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
   return IN3_EIGNORE;
 }
+
+static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
+  btc_target_conf_t* conf = pdata;
+  switch (action) {
+    case PLGN_ACT_TERM: {
+      if (conf->data.data) _free(conf->data.data);
+      _free(conf);
+      return IN3_OK;
+    }
+    case PLGN_ACT_CONFIG_GET: {
+      in3_get_config_ctx_t* cctx = pctx;
+      sb_add_chars(cctx->sb, ",\"maxDAP\":");
+      sb_add_int(cctx->sb, conf->max_daps);
+      sb_add_chars(cctx->sb, ",\"maxDiff\":");
+      sb_add_int(cctx->sb, conf->max_diff);
+      return IN3_OK;
+    }
+    case PLGN_ACT_CONFIG_SET: {
+      in3_configure_ctx_t* cctx = pctx;
+      if (cctx->token->key == key("maxDAP"))
+        conf->max_daps = d_int(cctx->token);
+      else if (cctx->token->key == key("maxDiff"))
+        conf->max_diff = d_int(cctx->token);
+      else
+        return IN3_EIGNORE;
+      return IN3_OK;
+    }
+    case PLGN_ACT_RPC_VERIFY:
+      return in3_verify_btc(conf, pctx);
+    default:
+      return IN3_ENOTSUP;
+  }
+}
+
 in3_ret_t in3_register_btc(in3_t* c) {
   in3_register_eth_nano(c);
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM, in3_verify_btc, NULL, false);
+  // init the config
+  btc_target_conf_t* tc = _calloc(1, sizeof(btc_target_conf_t));
+  tc->max_daps          = 20;
+  tc->max_diff          = 10;
+  tc->dap_limit         = 20;
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
 }
-/*
-void in3_register_btc() {
-  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  v->type           = CHAIN_BTC;
-  v->pre_handle     = btc_handle_intern;
-  v->verify         = in3_verify_btc;
-  v->set_confg      = btc_vc_set_config;
-  v->free_chain     = btc_vc_free;
-  in3_register_verifier(v);
-}
-*/
 /*
 static void print_hex(char* prefix, uint8_t* data, int len) {
   printf("%s0x", prefix);

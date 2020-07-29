@@ -173,7 +173,6 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
   chain->dirty                = false;
-  chain->conf                 = NULL;
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
   chain->last_block           = 0;
@@ -356,7 +355,6 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
     chain->dirty                = false;
-    chain->conf                 = NULL;
     chain->nodelist             = NULL;
     chain->nodelist_length      = 0;
     chain->weights              = NULL;

@@ -169,8 +169,10 @@ void storage_clear(void* cptr) {
 in3_ret_t handle_storage(void* data, in3_plugin_act_t action, void* arg) {
   in3_cache_ctx_t* ctx = arg;
   switch (action) {
-    case PLGN_ACT_CACHE_GET:
-      return (ctx->content = storage_get_item(data, ctx->key)) ? IN3_OK : IN3_EIGNORE;
+    case PLGN_ACT_CACHE_GET: {
+      ctx->content = storage_get_item(data, ctx->key);
+      return ctx->content ? IN3_OK : IN3_EIGNORE;
+    }
     case PLGN_ACT_CACHE_SET: {
       storage_set_item(data, ctx->key, ctx->content);
       return IN3_OK;
