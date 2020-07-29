@@ -9,18 +9,33 @@ While the core is kept as small as possible, we defined actions, which can be im
 
 Each plugin needs to define those 3 things:
 
-1. Actions
-    Which actions do I want handle. This is a bitmask with the actions set. You can use any combination.
-2. Custom data
-    This optional data object may contain configurations or other data. If you don't need to hold any data, you may pass `NULL`
-3. Exec-function
-    This is a function pointer to a function with the following signature:
+1. **Actions** - Which actions do I want handle. This is a bitmask with the actions set. You can use any combination.
+2. **Custom data** - This optional data object may contain configurations or other data. If you don't need to hold any data, you may pass `NULL`
+3. **Exec-function** - This is a function pointer to a function which will be called whenever the plugin is used.
 
-    ```c
-    in3_ret_t handle(void* custom_data, in3_plugin, in3_plugin_act_t action, void* arguments);
-    ```
 
-    while the `custom_data` is just the pointer to your data-object, the `arguments` contain a pointer to a context object. This object depends on the action you are reacting.
+With these 3 things you can register a plugin with the `in3_plugin_register()` -function:
+
+```c
+return in3_plugin_register(c,                   // the client
+         PLGN_ACT_TERM | PLGN_ACT_RPC_HANDLE,   // the actions to register for
+         handle_rpc,                            // the plugin-function
+         cutom_data,                            // the custom data (if needed)
+         false);                                // a bool indicating whether it should always add or replace a plugin with the exact same actions.
+```
+
+#### The Plugin-function
+
+Each Plugin must provide a PLugin-function to execute with the following signature:
+
+```c
+in3_ret_t handle(
+  void*            custom_data,  // the custom data as passed in the register-function
+  in3_plugin_act_t action,       // the action to execute
+  void*            arguments);   // the arguments (depending on the action)
+```
+
+While the `custom_data` is just the pointer to your data-object, the `arguments` contain a pointer to a context object. This object depends on the action you are reacting.
 
 All plugins are stored in a linked list and when we want to trigger a specific actions we will loop through all, but only execute the function if the required action is set in the bitmask. 
 Except for `PLGN_ACT_TERM` we will loop until the first plugin handles it. The handle-function must return a return code indicating this:
@@ -30,17 +45,17 @@ Except for `PLGN_ACT_TERM` we will loop until the first plugin handles it. The h
 - `IN3_EIGNORE` - the plugin did **NOT** handle the action and we should continue with the other plugins.
 - `IN3_E...` - the plugin did handle it, but raised a error and returned the error-code. In addition you should always use the current `in3_ctx_t`to report a detailed error-message (using `ctx_set_error()`)
 
-
-
-### Actions
-
-The following actions are available:
+### Lifecycle
 
 #### PLGN_ACT_TERM
 
 This action will be triggered during `in3_free` and must be used to free up resources which were allocated.
 
 `arguments` : `in3_t*` - the in3-instance will be passed as argument.
+
+### Transport 
+
+For Transport implementations you should always register for those 3 `PLGN_ACT_TRANSPORT_SEND` | `PLGN_ACT_TRANSPORT_RECEIVE` | `PLGN_ACT_TRANSPORT_CLEAN`. This is why you can also use the macro combining those as `PLGN_ACT_TRANSPORT`
 
 #### PLGN_ACT_TRANSPORT_SEND
 
@@ -50,11 +65,11 @@ Send will be triggered only if the request is executed synchron, whenever a new 
 
 ```c
 typedef struct in3_request {
-  char*           payload;  /**< the payload to send */
-  char**          urls;     /**< array of urls */
-  uint_fast16_t   urls_len; /**< number of urls */
-  struct in3_ctx* ctx;      /**< the current context */
-  void*           cptr;     /**< a custom ptr to hold information during */
+  char*           payload;  // the payload to send 
+  char**          urls;     // array of urls 
+  uint_fast16_t   urls_len; // number of urls 
+  in3_ctx_t*      ctx;      // the current context 
+  void*           cptr;     // a custom ptr to hold information during 
 } in3_request_t;
 ```
 
@@ -111,12 +126,12 @@ The plugin needs to wait until the first response was received ( or runs into a 
 
 ```c
 void in3_req_add_response(
-    in3_request_t* req,      /**< [in]the the request */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string of the response*/
-    int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-    uint32_t       time      /**<  the time (in ms) this request took in ms or 0 if not possible (it will be used to calculate the weights)*/    
+    in3_request_t* req,      //  the the request 
+    int            index,    //  the index of the url, since this request could go out to many urls 
+    bool           is_error, //  if true this will be reported as error. the message should then be the error-message 
+    const char*    data,     //  the data or the the string of the response
+    int            data_len, //  the length of the data or the the string (use -1 if data is a null terminated string)
+    uint32_t       time      //  the time (in ms) this request took in ms or 0 if not possible (it will be used to calculate the weights)    
 );
 ```
 
@@ -138,50 +153,10 @@ If a previous `PLGN_ACT_TRANSPORT_SEND` has set a `cptr` this will be triggered 
 
 `arguments` : `in3_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
 
-#### PLGN_ACT_SIGN_ACCOUNT
+### Signing
 
-if we are about to sign data and need to know the address of the account abnout to sign, this action will be triggered in order to find out. This is needed if you want to send a transaction without specifying the `from` address, we will still need to get the nonce for this account before signing.
-
-`arguments` : `in3_sign_account_ctx_t*` - the account context will hold those data:
-
-```c
-typedef struct sign_account_ctx {
-  in3_ctx_t* ctx;     /**< the context of the request in order report errors */
-  address_t  account; /**< the account to use for the signature */
-} in3_sign_account_ctx_t;
-```
-
-The implementation should return a status code ´IN3_OK` if it successfully wrote the address of the account into the content:
-
-Example:
-
-```c
-in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* args) {
-  // the data are our pk
-  uint8_t* pk = data; 
-
-  switch (action) {
-
-    case PLGN_ACT_SIGN_ACCOUNT: {
-      // cast the context
-      in3_sign_account_ctx_t* ctx = args;
-
-      // generate the address from the key
-      // and write it into account
-      get_address(pk, ctx->account);
-      return IN3_OK;
-    }
-
-    // handle other actions ...
-
-    default:
-      return IN3_ENOTSUP;
-  }
-}
-
-
-```
-
+For Signing we have three different action. 
+While `PLGN_ACT_SIGN` should alos react to `PLGN_ACT_SIGN_ACCOUNT`, `PLGN_ACT_SIGN_PREPARE` can also be completly independent.
 
 #### PLGN_ACT_SIGN
 
@@ -192,11 +167,11 @@ This action is triggered as a request to sign data.
 ```c
 
 typedef struct sign_ctx {
-  uint8_t            signature[65]; /**< the resulting signature needs to be writte into these bytes */
-  d_signature_type_t type;          /**< the type of signature*/
-  in3_ctx_t*         ctx;           /**< the context of the request in order report errors */
-  bytes_t            message;       /**< the message to sign*/
-  bytes_t            account;       /**< the account to use for the signature  (if set)*/
+  uint8_t            signature[65]; // the resulting signature needs to be writte into these bytes 
+  d_signature_type_t type;          // the type of signature
+  in3_ctx_t*         ctx;           // the context of the request in order report errors 
+  bytes_t            message;       // the message to sign
+  bytes_t            account;       // the account to use for the signature  (if set)
 } in3_sign_ctx_t;
 ```
 
@@ -260,11 +235,54 @@ in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* args) {
   }
 }
 
-/** sets the signer and a pk to the client*/
+
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   // we register for both ACCOUNT and SIGN
   return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN, eth_sign_pk, pk, false);
 }
+
+```
+#### PLGN_ACT_SIGN_ACCOUNT
+
+if we are about to sign data and need to know the address of the account abnout to sign, this action will be triggered in order to find out. This is needed if you want to send a transaction without specifying the `from` address, we will still need to get the nonce for this account before signing.
+
+`arguments` : `in3_sign_account_ctx_t*` - the account context will hold those data:
+
+```c
+typedef struct sign_account_ctx {
+  in3_ctx_t* ctx;     // the context of the request in order report errors 
+  address_t  account; // the account to use for the signature 
+} in3_sign_account_ctx_t;
+```
+
+The implementation should return a status code ´IN3_OK` if it successfully wrote the address of the account into the content:
+
+Example:
+
+```c
+in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* args) {
+  // the data are our pk
+  uint8_t* pk = data; 
+
+  switch (action) {
+
+    case PLGN_ACT_SIGN_ACCOUNT: {
+      // cast the context
+      in3_sign_account_ctx_t* ctx = args;
+
+      // generate the address from the key
+      // and write it into account
+      get_address(pk, ctx->account);
+      return IN3_OK;
+    }
+
+    // handle other actions ...
+
+    default:
+      return IN3_ENOTSUP;
+  }
+}
+
 
 ```
 
@@ -277,10 +295,10 @@ The Prepare-action is triggered before signing and gives a plugin the chance to 
 ```c
 
 typedef struct sign_prepare_ctx {
-  struct in3_ctx* ctx;     /**< the context of the request in order report errors */
-  address_t       account; /**< the account to use for the signature */
-  bytes_t         old_tx;  /**< the data to sign */
-  bytes_t         new_tx;  /**< the new data to be set */
+  struct in3_ctx* ctx;     // the context of the request in order report errors 
+  address_t       account; // the account to use for the signature 
+  bytes_t         old_tx;  // the data to sign 
+  bytes_t         new_tx;  // the new data to be set 
 
 } in3_sign_prepare_ctx_t;
 ```
@@ -292,7 +310,8 @@ In order to decode the data you must use rlp.h:
 
 ```c
 #define decode(data,index,dst,msg) if (rlp_decode_in_list(data, index, dst) != 1) return ctx_set_error(ctx, "invalid" msg "in txdata", IN3_EINVAL);
-static in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
+
+in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
   decode(&raw, 0, &result->nonce    , "nonce");
   decode(&raw, 1, &result->gas_price, "gas_price");
   decode(&raw, 2, &result->gas      , "gas");
@@ -307,6 +326,7 @@ static in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
 
 and of course once the data has changes you need to encode it again and set it as `nex_tx``
 
+### RPC Handling
 
 #### PLGN_ACT_RPC_HANDLE
 
@@ -316,9 +336,9 @@ Triggered for each rpc-request in order to give plugins a chance to directly han
 
 ```c
 typedef struct {
-  in3_ctx_t*       ctx;      /**< Request context. */
-  d_token_t*       request;  /**< request */
-  in3_response_t** response; /**< the response which a prehandle-method should set*/
+  in3_ctx_t*       ctx;      // Request context. 
+  d_token_t*       request;  // request 
+  in3_response_t** response; // the response which a prehandle-method should set
 } in3_rpc_handle_ctx_t;
 ```
 
@@ -326,33 +346,33 @@ the steps to add a new custom rpc-method will be the following.
 
 1. get the method and params:
 
-    ```c
-    char* method      = d_get_stringk(rpc->request, K_METHOD);
-    d_token_t* params = d_get(rpc->request, K_PARAMS);
-    ```
+```c
+char* method      = d_get_stringk(rpc->request, K_METHOD);
+d_token_t* params = d_get(rpc->request, K_PARAMS);
+```
 2. check if you can handle it
 3. handle it and set the result
-    ```c
-    in3_rpc_handle_with_int(rpc,result);
-    ```
+```c
+in3_rpc_handle_with_int(rpc,result);
+```
 
-    for setting the result you should use one of the `in3_rpc_handle_...` methods. Those will create the response and build the JSON-string with the result.
-    WHile most of those expect the result as a sngle value you can also return a complex JSON-Object. In this case you have to create a string builder:
+for setting the result you should use one of the `in3_rpc_handle_...` methods. Those will create the response and build the JSON-string with the result.
+While most of those expect the result as a sngle value you can also return a complex JSON-Object. In this case you have to create a string builder:
 
-    ```c
-    sb_t* writer = in3_rpc_handle_start(rpc);
-    sb_add_chars(writer, "{\"raw\":\"");
-    sb_add_escaped_chars(writer, raw_string);
-    // ... more data
-    sb_add_chars(writer, "}");
-    return in3_rpc_handle_finish(rpc);
-    ```
+```c
+sb_t* writer = in3_rpc_handle_start(rpc);
+sb_add_chars(writer, "{\"raw\":\"");
+sb_add_escaped_chars(writer, raw_string);
+// ... more data
+sb_add_chars(writer, "}");
+return in3_rpc_handle_finish(rpc);
+```
 
 4. In case of an error, simply set the error in the context, with the right message and error-code:
 
-    ```c
-    if (d_len(params)<1) return ctx_set_error(rpc->ctx, "Not enough parameters", IN3_EINVAL);
-    ```
+```c
+if (d_len(params)<1) return ctx_set_error(rpc->ctx, "Not enough parameters", IN3_EINVAL);
+```
 
 If the reequest needs additional subrequests, you need to follow the pattern of sending a request asynchron in a state machine:
 
@@ -450,15 +470,15 @@ This plugin reprresents a verifier. It will be triggered after we have received 
 
 ```c
 typedef struct {
-  in3_ctx_t*   ctx;                   /**< Request context. */
-  in3_chain_t* chain;                 /**< the chain definition. */
-  d_token_t*   result;                /**< the result to verify */
-  d_token_t*   request;               /**< the request sent. */
-  d_token_t*   proof;                 /**< the delivered proof. */
-  in3_t*       client;                /**< the client. */
-  uint64_t     last_validator_change; /**< Block number of last change of the validator list */
-  uint64_t     currentBlock;          /**< Block number of latest block */
-  int          index;                 /**< the index of the request within the bulk */
+  in3_ctx_t*   ctx;                   // Request context. 
+  in3_chain_t* chain;                 // the chain definition. 
+  d_token_t*   result;                // the result to verify 
+  d_token_t*   request;               // the request sent. 
+  d_token_t*   proof;                 // the delivered proof. 
+  in3_t*       client;                // the client. 
+  uint64_t     last_validator_change; // Block number of last change of the validator list 
+  uint64_t     currentBlock;          // Block number of latest block 
+  int          index;                 // the index of the request within the bulk 
 } in3_vctx_t;
 ```
 
@@ -499,6 +519,10 @@ in3_ret_t in3_register_ipfs(in3_t* c) {
 
 ```
 
+### Cache/Storage
+
+For Cache implementations you also need to register all 3 actions.
+
 #### PLGN_ACT_CACHE_SET
 
 This action will be triggered whenever there is something worth putting in a cache. If no plugin picks it up, it is ok, since the cache is optional.
@@ -507,9 +531,9 @@ This action will be triggered whenever there is something worth putting in a cac
 
 ```c
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx;     /**< the request context  */
-  char*      key;     /**< the key to fetch */
-  bytes_t*   content; /**< the content to set */
+  in3_ctx_t* ctx;     // the request context  
+  char*      key;     // the key to fetch 
+  bytes_t*   content; // the content to set 
 } in3_cache_ctx_t;
 ```
 
@@ -553,9 +577,9 @@ This action will be triggered whenever we access the cache in order to get value
 
 ```c
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx;     /**< the request context  */
-  char*      key;     /**< the key to fetch */
-  bytes_t*   content; /**< the content to set */
+  in3_ctx_t* ctx;     // the request context  
+  char*      key;     // the key to fetch 
+  bytes_t*   content; // the content to set 
 } in3_cache_ctx_t;
 ```
 
@@ -576,7 +600,92 @@ This action will clear all stored values in the cache.
 
 `arguments` :NULL - so no argument will be passed.
 
+### Configuration
+
+For Configuration there are 2 actions for getting and setting. You should always implement both.
+
+
+Example:
+
+```c
+static in3_ret_t handle_btc(void* custom_data, in3_plugin_act_t action, void* args) {
+  btc_target_conf_t* conf = custom_data;
+  switch (action) {
+    // clean up
+    case PLGN_ACT_TERM: {
+      if (conf->data.data) _free(conf->data.data);
+      _free(conf);
+      return IN3_OK;
+    }
+
+    // read config
+    case PLGN_ACT_CONFIG_GET: {
+      in3_get_config_ctx_t* cctx = args;
+      sb_add_chars(cctx->sb, ",\"maxDAP\":");
+      sb_add_int(cctx->sb, conf->max_daps);
+      sb_add_chars(cctx->sb, ",\"maxDiff\":");
+      sb_add_int(cctx->sb, conf->max_diff);
+      return IN3_OK;
+    }
+
+    // configure
+    case PLGN_ACT_CONFIG_SET: {
+      in3_configure_ctx_t* cctx = args;
+      if (cctx->token->key == key("maxDAP"))
+        conf->max_daps = d_int(cctx->token);
+      else if (cctx->token->key == key("maxDiff"))
+        conf->max_diff = d_int(cctx->token);
+      else
+        return IN3_EIGNORE;
+      return IN3_OK;
+    }
+
+    case PLGN_ACT_RPC_VERIFY:
+      return in3_verify_btc(conf, pctx);
+
+    default:
+      return IN3_ENOTSUP;
+  }
+}
+
+
+in3_ret_t in3_register_btc(in3_t* c) {
+  // init the config with defaults
+  btc_target_conf_t* tc = _calloc(1, sizeof(btc_target_conf_t));
+  tc->max_daps          = 20;
+  tc->max_diff          = 10;
+  tc->dap_limit         = 20;
+
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
+}
+```
+
+
 #### PLGN_ACT_CONFIG_GET
+
+This action will be triggered during `in3_get_config()`and should dump all config from all plugins.
+
+`arguments` : `in3_get_config_ctx_t*` - the config context will hold those data:
+
+```c
+typedef struct in3_get_config_ctx {
+  in3_t* client; /**< the client to configure */
+  sb_t*  sb;     /**< stringbuilder to add json-config*/
+} in3_get_config_ctx_t;
+```
+
+if you are using any configuration you should use the `sb` field and add your values to it. Each property must start with a comma.
+
+```c
+in3_get_config_ctx_t* cctx = args;
+sb_add_chars(cctx->sb, ",\"maxDAP\":");
+sb_add_int(cctx->sb, conf->max_daps);
+sb_add_chars(cctx->sb, ",\"maxDiff\":");
+sb_add_int(cctx->sb, conf->max_diff);
+```
+
+
+#### PLGN_ACT_CONFIG_SET
 
 This action will be triggered during the configuration-process. While going through all config-properties, it will ask the plugins in case a config was not handled. So this action may be triggered multiple times. And the plugin should only return `IN3_OK` if it was handled. If no plugin handles it, a error will be thrown.
 
@@ -584,20 +693,34 @@ This action will be triggered during the configuration-process. While going thro
 
 ```c
 typedef struct in3_configure_ctx {
-  in3_t*     client; /**< the client to configure */
-  d_token_t* token;  /**< the token not handled yet*/
+  in3_t*     client; // the client to configure 
+  d_token_t* token;  // the token not handled yet
 } in3_configure_ctx_t;
 ```
 
-in order
+In order to check if the token is relevant for you, you simply check the name of the property and handle its value:
+
+```c
+in3_configure_ctx_t* cctx = pctx;
+if (cctx->token->key == key("maxDAP"))
+  conf->max_daps = d_int(cctx->token);
+else if (cctx->token->key == key("maxDiff"))
+  conf->max_diff = d_int(cctx->token);
+else
+  return IN3_EIGNORE;
+return IN3_OK;
+```
 
 
 
-  PLGN_ACT_CONFIG_SET        = 0x2000,   /**< gets a config-token and reads data from it */
-  PLGN_ACT_CONFIG_GET        = 0x4000,   /**< gets a stringbuilder and adds all config to it. */
-  PLGN_ACT_PAY_PREPARE       = 0x8000,   /**< prerpares a payment */
-  PLGN_ACT_PAY_FOLLOWUP      = 0x10000,  /**< called after a requeest to update stats. */
-  PLGN_ACT_PAY_HANDLE        = 0x20000,  /**< handles the payment */
-  PLGN_ACT_NL_PICK_DATA      = 0x40000,  /**< picks the data nodes */
-  PLGN_ACT_NL_PICK_SIGNER    = 0x80000,  /**< picks the signer nodes */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x100000, /**< called after receiving a response in order to decide whether a update is needed. */
+### Payment
+
+#### PLGN_ACT_PAY_PREPARE
+#### PLGN_ACT_PAY_FOLLOWUP
+#### PLGN_ACT_PAY_HANDLE
+
+### Nodelist
+
+#### PLGN_ACT_NL_PICK_DATA
+#### PLGN_ACT_NL_PICK_SIGNER
+#### PLGN_ACT_NL_PICK_FOLLOWUP
