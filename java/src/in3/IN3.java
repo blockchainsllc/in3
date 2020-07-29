@@ -107,7 +107,6 @@ public class IN3 {
     return config;
   }
 
-
   /**
    * sets the signer or wallet.
    */
