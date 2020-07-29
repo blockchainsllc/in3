@@ -941,7 +941,7 @@ char* in3_configure(in3_t* c, const char* config) {
       for (in3_plugin_t* p = c->plugins; p; p = p->next) {
         if (p->acts & PLGN_ACT_CONFIG_SET) {
           in3_ret_t r = p->action_fn(p->data, PLGN_ACT_CONFIG_SET, &cctx);
-          if (r != IN3_EIGNORE)
+          if (r == IN3_EIGNORE)
             continue;
           else if (r != IN3_OK)
             EXPECT_TOK(token, false, cctx.error_msg ? cctx.error_msg : "error configuring this option!");

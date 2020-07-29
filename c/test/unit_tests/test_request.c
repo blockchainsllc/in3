@@ -129,7 +129,9 @@ static void test_bulk_response() {
 
 static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}"));
+  eth_register_request_signer(c);
+  char* err = in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
+  TEST_ASSERT_NULL_MESSAGE(err, err);
   c->flags = FLAGS_INCLUDE_CODE;
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
@@ -589,6 +591,7 @@ int main() {
   in3_register_default(in3_register_eth_api);
 
   TESTS_BEGIN();
+  RUN_TEST(test_configure_signed_request);
   RUN_TEST(test_bulk_response);
   RUN_TEST(test_partial_response);
   RUN_TEST(test_retry_response);
@@ -596,6 +599,5 @@ int main() {
   RUN_TEST(test_exec_req);
   RUN_TEST(test_configure);
   RUN_TEST(test_configure_validation);
-  RUN_TEST(test_configure_signed_request);
   return TESTS_END();
 }
