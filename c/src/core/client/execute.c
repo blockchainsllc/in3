@@ -691,7 +691,7 @@ NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
     if (nodelist_first_upd8(chain))
       res = ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
 
-    if (res == IN3_OK) res = ctx_remove_required(ctx, ctx->required);
+    if (res == IN3_OK) res = ctx_remove_required(ctx, ctx->required, true);
   }
 
   return res;
@@ -900,14 +900,16 @@ in3_ret_t ctx_add_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
   return in3_ctx_execute(ctx);
 }
 
-in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
+in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx, bool rec) {
   if (!ctx) return IN3_OK;
   in3_ctx_t* p = parent;
   while (p) {
     if (p->required == ctx) {
       //      printf(" -- remove required %s > %s\n", ctx_name(parent), ctx_name(ctx));
-      p->required = NULL; //ctx->required;
+      in3_ctx_t* next = rec ? NULL : ctx->required;
+      if (!rec) ctx->required = NULL;
       ctx_free_intern(ctx, true);
+      p->required = next;
       return IN3_OK;
     }
     p = p->required;

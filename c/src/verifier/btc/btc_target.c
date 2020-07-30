@@ -179,10 +179,10 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
         return ctx_set_error(vc->ctx, "Error verifying the target", ctx_set_error(vc->ctx, ctx->error, IN3_ERPC)); // so we report it!
       case CTX_WAITING_FOR_RESPONSE:                                                                               // for an response
       case CTX_WAITING_TO_SEND:
-        return IN3_WAITING;                                                                                  // we keep on waiting.
-      case CTX_SUCCESS:                                                                                      // if it was successful,
-        if (ctx_remove_required(vc->ctx, ctx)) return vc_err(vc, "could not clean up proofTarget-request!"); //  we remove it,
-        break;                                                                                               // since gthe verification already added the verified targets.
+        return IN3_WAITING;                                                                                         // we keep on waiting.
+      case CTX_SUCCESS:                                                                                             // if it was successful,
+        if (ctx_remove_required(vc->ctx, ctx, false)) return vc_err(vc, "could not clean up proofTarget-request!"); //  we remove it,
+        break;                                                                                                      // since gthe verification already added the verified targets.
     }
 
   // let's see if we can find a verifiied target.

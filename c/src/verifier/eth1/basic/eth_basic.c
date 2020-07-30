@@ -114,6 +114,48 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
   if (strcmp(method, "eth_sendTransaction") == 0)
     return handle_eth_sendTransaction(ctx, rctx->request);
 
+  else if (strcmp(method, "eth_sendTransactionAndWait") == 0) {
+    d_token_t * tx_hash, *tx_receipt;
+    str_range_t r       = d_to_json(params + 1);
+    char*       tx_data = alloca(r.len + 1);
+    memcpy(tx_data, r.data, r.len);
+    tx_data[r.len] = 0;
+    TRY(ctx_send_sub_request(ctx, "eth_sendTransaction", tx_data, NULL, &tx_hash))
+    // tx was sent, we have a tx_hash
+    char tx_hash_hex[69];
+    tx_hash_hex[0] = tx_hash_hex[67] = '"';
+    tx_hash_hex[1]                   = '0';
+    tx_hash_hex[2]                   = 'x';
+    bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
+    tx_hash_hex[68] = 0;
+
+    // get the tx_receipt
+    TRY(ctx_send_sub_request(ctx, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
+
+    if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
+      // no tx yet
+      // we remove it and try again
+      in3_ctx_t* last_r = ctx_find_required(ctx, "eth_getTransactionReceipt");
+      uint32_t   wait   = d_get_intk(d_get(last_r->requests[0], K_IN3), K_WAIT);
+      wait              = wait ? wait * 2 : 1000;
+      ctx_remove_required(ctx, last_r, false);
+      if (wait > 120000) // more than 2 minutes is too long, so we stop here
+        return ctx_set_error(ctx, "Waited too long for the transaction to be minded", IN3_ELIMIT);
+      char in3[20];
+      sprintf(in3, "{\"wait\":%d}", wait);
+
+      return ctx_send_sub_request(ctx, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
+    }
+    else {
+      // we have a result and we keep it
+      str_range_t r = d_to_json(tx_receipt);
+      sb_add_range(in3_rpc_handle_start(rctx), r.data, 0, r.len);
+      ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionReceipt"), false);
+      ctx_remove_required(ctx, ctx_find_required(ctx, "eth_sendRawTransaction"), false);
+      return in3_rpc_handle_finish(rctx);
+    }
+  }
+
   else if (strcmp(method, "eth_newFilter") == 0) {
     if (!params || d_type(params) != T_ARRAY || !d_len(params) || d_type(params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid type of params, expected object", IN3_EINVAL);

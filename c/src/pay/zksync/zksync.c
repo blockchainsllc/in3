@@ -42,11 +42,91 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+static in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account) {
+  if (!conf->account) {
+    in3_sign_account_ctx_t sctx = {.ctx = ctx, .account = {0}};
+    if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx)) return ctx_set_error(ctx, "No account configured or signer set", IN3_ECONFIG);
+    memcpy(conf->account = _malloc(20), sctx.account, 20);
+  }
+
+  if (account) *account = conf->account;
+  return IN3_OK;
+}
+
+static in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main) {
+  if (!conf->main_contract) {
+    d_token_t* result;
+    TRY(send_provider_request(ctx, conf, "contract_address", "", &result))
+    bytes_t* main_contract = d_get_bytesk(result, key("mainContract"));
+    if (!main_contract || main_contract->len != 20) return ctx_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
+    memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
+    // clean up
+    ctx_remove_required(ctx, ctx_find_required(ctx, "contract_address"), false);
+  }
+
+  if (main) *main = conf->main_contract;
+  return IN3_OK;
+}
+static bool is_eth(d_token_t* t) {
+  if (!t) return true;
+  if (d_type(t) == T_STRING && strcmp(d_string(t), "ETH") == 0) return true;
+  if (d_type(t) == T_BYTES && t->len == 20 && memiszero(t->data, 20)) return true;
+  if (d_type(t) == T_INTEGER && d_int(t) == 0) return true;
+  return false;
+}
+
+//static in3_ret_t payin_approve()
+
+static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* tx) {
+  d_token_t* tmp;
+
+  // make sure we have an account
+  uint8_t* account = conf->account;
+  if ((tmp = d_get(tx, key("depositTo")))) {
+    if (tmp->len != 20) return ctx_set_error(ctx->ctx, "invalid depositTo", IN3_ERPC);
+    account = tmp->data;
+  }
+  else if (!account)
+    TRY(zksync_get_account(conf, ctx->ctx, &account))
+
+  //  amount
+  bytes_t    amount        = d_to_bytes(d_get(tx, key("amount")));
+  d_token_t* token         = d_get(tx, key("token"));
+  bool       approve       = d_get_intk(tx, key("approveDepositAmountForERC20"));
+  uint8_t*   main_contract = conf->main_contract;
+  if (!main_contract) TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
+
+  bytes32_t amount32 = {0};
+  memcpy(((uint8_t*) amount32) + 32 - amount.len, amount.data, amount.len);
+
+  d_token_t* tx_receipt;
+  if (is_eth(token)) {
+    sb_t sb = {0};
+    sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 0);
+    sb_add_rawbytes(&sb, "\",\"data\":\"0x2d2da806", bytes(account, 20), 32);
+    sb_add_rawbytes(&sb, "\",\"value\":\"0x", amount, 0);
+    sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
+
+    in3_ret_t res = send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt);
+    _free(sb.data);
+    if (res) return res;
+
+    // we have a transactionhash
+  }
+  else {
+    if (approve) {
+    }
+  }
+
+  return IN3_OK;
+}
 
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   char*      method = d_get_stringk(ctx->ctx->requests[0], K_METHOD);
   d_token_t* params = d_get(ctx->ctx->requests[0], K_PARAMS);
   if (strncmp(method, "zksync_", 7)) return IN3_EIGNORE;
+
+  if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0) return payin(conf, ctx, params + 1);
 
   // do we have a provider?
   if (!conf->provider_url) {
@@ -63,6 +143,18 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   char*       param_string = alloca(p.len - 1);
   memcpy(param_string, p.data + 1, p.len - 2);
   param_string[p.len - 2] = 0;
+
+  if (strcmp(method, "zksync_account_info") == 0 && *param_string == 0) {
+    TRY(zksync_get_account(conf, ctx->ctx, NULL))
+    param_string    = alloca(45);
+    param_string[0] = '"';
+    param_string[1] = '0';
+    param_string[2] = 'x';
+    bytes_to_hex(conf->account, 20, param_string + 3);
+    param_string[43] = '"';
+    param_string[44] = 0;
+  }
+
   d_token_t* result;
   TRY(send_provider_request(ctx->ctx, conf, method + 7, param_string, &result))
 
@@ -85,7 +177,12 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
       in3_get_config_ctx_t* ctx = arg;
       sb_add_chars(ctx->sb, ",\"zksync\":{\"provider_url\":\"");
       sb_add_chars(ctx->sb, conf->provider_url ? conf->provider_url : "");
-      sb_add_chars(ctx->sb, "\"}");
+      sb_add_char(ctx->sb, '\"');
+      if (conf->account) {
+        bytes_t ac = bytes(conf->account, 20);
+        sb_add_bytes(ctx->sb, ",\"account\"=", &ac, 1, false);
+      }
+      sb_add_char(ctx->sb, '}');
       return IN3_OK;
     }
 
@@ -94,6 +191,8 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
       if (ctx->token->key == key("zksync")) {
         char* provider = d_get_string(ctx->token, "provider_url");
         if (provider) conf->provider_url = _strdupn(provider, -1);
+        bytes_t* account = d_get_bytes(ctx->token, "account");
+        if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
         return IN3_OK;
       }
       return IN3_EIGNORE;

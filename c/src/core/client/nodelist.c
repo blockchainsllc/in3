@@ -254,7 +254,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t*
           return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
         else if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET))
           in3_cache_store_nodelist(ctx->client, chain);
-        ctx_remove_required(parent_ctx, ctx);
+        ctx_remove_required(parent_ctx, ctx, true);
         in3_client_run_chain_whitelisting(chain);
         return IN3_OK;
       }
@@ -308,7 +308,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t
           else if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET))
             in3_cache_store_whitelist(ctx, chain);
           in3_client_run_chain_whitelisting(chain);
-          ctx_remove_required(parent_ctx, ctx);
+          ctx_remove_required(parent_ctx, ctx, true);
           return IN3_OK;
         }
         else

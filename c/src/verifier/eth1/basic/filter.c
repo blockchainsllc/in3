@@ -195,7 +195,7 @@ in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
         if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
           return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
         current_block = d_get_longk(block_ctx->responses[0], K_RESULT);
-        TRY(ctx_remove_required(ctx, block_ctx));
+        TRY(ctx_remove_required(ctx, block_ctx, false));
     }
   }
 

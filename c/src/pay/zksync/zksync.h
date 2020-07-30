@@ -45,7 +45,10 @@
 #include "../../core/client/client.h"
 
 typedef struct {
-  char* provider_url;
+  char*    provider_url;
+  uint8_t* account;
+  uint8_t* main_contract;
+  uint8_t* gov_contract;
 
 } zksync_config_t;
 

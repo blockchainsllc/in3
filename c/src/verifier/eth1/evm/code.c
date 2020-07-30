@@ -97,7 +97,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           keccak(code, calculated_code_hash);
           if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");
-            ctx_remove_required(vc->ctx, ctx);
+            ctx_remove_required(vc->ctx, ctx, false);
             return IN3_EINVAL;
           }
 
@@ -167,8 +167,8 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   if (code) {
     bytes_t key = bytes(_malloc(20), 20);
     memcpy(key.data, address, 20);
-    *target              = in3_cache_add_entry(&vc->ctx->cache, key, *code);
-    (*target)->must_free = must_free;
+    *target          = in3_cache_add_entry(&vc->ctx->cache, key, *code);
+    (*target)->props = must_free;
 
     // we also store the length into the 4 bytes buffer, so we can reference it later on.
     int_to_bytes(code->len, (*target)->buffer);

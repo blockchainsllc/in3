@@ -239,3 +239,65 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   b_optimize_len(&b);
   return in3_rpc_handle_with_bytes(hctx, b);
 }
+
+in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result) {
+  bool use_cache = strcmp(method,"eth_sendTransaction")==0;
+  if (params == NULL) params = "";
+  char* req = NULL;
+  if (use_cache) {
+    req = alloca(strlen(params) + strlen(method) + 20 + (in3 ? 5 + strlen(in3) : 0));
+    if (in3)
+      sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);
+    else
+      sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
+  }
+
+  in3_ctx_t* ctx = parent->required;
+  for (; ctx; ctx = ctx->required) {
+    if (use_cache) {
+      // only check first entry
+      bool found = false;
+      for (cache_entry_t* e = ctx->cache; e && !found; e = e->next) {
+        if (e->props & CACHE_PROP_SRC_REQ) {
+          if (strcmp((char*) e->value.data, req) == 0) found = true;
+        }
+      }
+      if (!found)
+        continue;
+    }
+    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method)) continue;
+    d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
+    if (!t) continue;
+    str_range_t p = d_to_json(t);
+    if (strncmp(params, p.data + 1, p.len - 2) == 0) break;
+  }
+
+  if (ctx)
+    switch (in3_ctx_state(ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
+      case CTX_SUCCESS:
+        *result = d_get(ctx->responses[0], K_RESULT);
+        if (!*result) {
+          char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+          return ctx_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
+        }
+        return IN3_OK;
+      case CTX_WAITING_TO_SEND:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+    }
+
+  // create the call
+  req = use_cache ? _strdupn(req, -1) : _malloc(strlen(params) + strlen(method) + 20 + (in3 ? 5 + strlen(in3) : 0));
+  if (!use_cache) {
+    if (in3)
+      sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);
+    else
+      sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
+  }
+  ctx = ctx_new(parent->client, req);
+  if (use_cache)
+    in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
+  return ctx_add_required(parent, ctx);
+}

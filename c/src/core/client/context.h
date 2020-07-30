@@ -380,7 +380,8 @@ NONULL in3_ctx_t* ctx_find_required(
  */
 NONULL in3_ret_t ctx_remove_required(
     in3_ctx_t* parent, /**< [in] the current request context. */
-    in3_ctx_t* ctx     /**< [in] the request context to remove. */
+    in3_ctx_t* ctx,    /**< [in] the request context to remove. */
+    bool       rec     /**< [in] if true all sub contexts will aösp be removed*/
 );
 /**
  * check if the response contains a error-property and reports this as error in the context.
@@ -433,5 +434,7 @@ NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const no
 NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
+NONULL_FOR((1, 2, 3, 5))
+in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
 
 #endif

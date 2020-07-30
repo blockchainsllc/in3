@@ -203,8 +203,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   }
 
   // cleanup subcontexts
-  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionCount")))
-  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_gasPrice")))
+  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionCount"), false))
+  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_gasPrice"), false))
 
   return IN3_OK;
 }
@@ -278,7 +278,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
   *dst = rlp->b;
 
   _free(rlp);
-  ctx_remove_required(ctx, c);
+  ctx_remove_required(ctx, c, false);
   return IN3_OK;
 }
 
