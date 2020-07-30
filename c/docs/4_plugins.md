@@ -719,6 +719,33 @@ return IN3_OK;
 #### PLGN_ACT_PAY_FOLLOWUP
 #### PLGN_ACT_PAY_HANDLE
 
+#### PLGN_ACT_PAY_SIGN_REQ
+
+this will be triggered in order to sign a request. It will provide a request_hash and expects a signature.
+
+`arguments` : `in3_pay_sign_req_ctx_t*` - the sign context will hold those data:
+
+```c
+typedef struct {
+  in3_ctx_t* ctx;           /**< Request context. */
+  d_token_t* request;       /**< the request sent. */
+  bytes32_t  request_hash;  /**< the hash to sign */
+  uint8_t    signature[65]; /**< the signature */
+} in3_pay_sign_req_ctx_t;
+```
+
+It is expected that the plugin will create a signature and write it into the context.
+
+Example:
+
+```c
+in3_pay_sign_req_ctx_t* ctx = args;
+return ec_sign_pk_raw(ctx->request_hash, pk->key, ctx->signature);
+```
+
+
+
+
 ### Nodelist
 
 #### PLGN_ACT_NL_PICK_DATA
