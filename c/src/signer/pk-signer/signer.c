@@ -44,7 +44,7 @@
 
 typedef struct key {
   bytes32_t key;
-} key_t;
+} signer_key_t;
 
 /** hash data with given hasher type and sign the given data with give private key*/
 in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
@@ -99,7 +99,7 @@ in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
   }
 }
 in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
-  key_t* pk = data;
+  signer_key_t* pk = data;
   switch (action) {
     case PLGN_ACT_PAY_SIGN_REQ: {
       in3_pay_sign_req_ctx_t* ctx = action_ctx;
@@ -143,13 +143,13 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
 
 /** sets the signer and a pk to the client*/
 in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
-  key_t* k = _malloc(sizeof(key_t));
+  signer_key_t* k = _malloc(sizeof(signer_key_t));
   if (pk) memcpy(k->key, pk, 32);
   return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, eth_sign_req, k, true);
 }
 
 in3_ret_t eth_register_request_signer(in3_t* in3) {
-  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, eth_sign_req, _calloc(1, sizeof(key_t)), true);
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, eth_sign_req, _calloc(1, sizeof(signer_key_t)), true);
 }
 
 /** sets the signer and a pk to the client*/
