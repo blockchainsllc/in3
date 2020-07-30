@@ -3,7 +3,8 @@ const fs = require('fs')
 const axios = require('axios')
 const Client = IN3
 let responses = {}
-function test_transport(url, data) {
+
+function testTransport(_url, data) {
     try {
         return Promise.resolve(JSON.stringify(JSON.parse(data).map(r => {
             const names = responses[r.method]
@@ -88,7 +89,7 @@ function createClient(config = {}, recordName) {
         })
 
     else
-        IN3.setTransport(test_transport)
+        IN3.setTransport(testTransport)
     return c
 }
 
@@ -96,6 +97,6 @@ module.exports = {
     createClient,
     mockResponse,
     IN3,
-    beforeTest
-
+    beforeTest,
+    testTransport
 }

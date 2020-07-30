@@ -523,8 +523,6 @@ class EthAPI {
         const d = toHex(data)
         return keccak('0x19' + toHex('Ethereum Signed Message:\n' + (d.length / 2 - 1)) + d.substr(2))
     }
-
-
 }
 
 async function confirm(txHash, api, gasPaid, confirmations, timeout = 10) {
