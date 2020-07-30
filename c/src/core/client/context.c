@@ -241,7 +241,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
 }
 
 in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result) {
-  bool use_cache = strcmp(method,"eth_sendTransaction")==0;
+  bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
   if (params == NULL) params = "";
   char* req = NULL;
   if (use_cache) {

@@ -96,9 +96,6 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
   uint8_t*   main_contract = conf->main_contract;
   if (!main_contract) TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
 
-  bytes32_t amount32 = {0};
-  memcpy(((uint8_t*) amount32) + 32 - amount.len, amount.data, amount.len);
-
   d_token_t* tx_receipt;
   if (is_eth(token)) {
     sb_t sb = {0};
@@ -110,23 +107,63 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
     in3_ret_t res = send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt);
     _free(sb.data);
     if (res) return res;
-
-    // we have a transactionhash
   }
   else {
+    if (d_type(token) != T_BYTES || d_len(token) != 20) return ctx_set_error(ctx->ctx, "invalid token format, use a eth address with 0x prefix!", IN3_ECONFIG);
+
     if (approve) {
+
+      sb_t sb = {0};
+      sb_add_rawbytes(&sb, "{\"to\":\"0x", d_to_bytes(token), 20);
+      sb_add_rawbytes(&sb, "\",\"data\":\"0x095ea7b3", bytes(main_contract, 20), 32);
+      sb_add_rawbytes(&sb, NULL, amount, 32);
+      sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
+
+      in3_ret_t res = send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt);
+      _free(sb.data);
+      if (res) return res;
+    }
+
+    sb_t sb = {0};
+    sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 20);
+    sb_add_rawbytes(&sb, "\",\"data\":\"0xe17376b5", d_to_bytes(token), 32);
+    sb_add_rawbytes(&sb, NULL, amount, 32);
+    sb_add_rawbytes(&sb, NULL, bytes(account, 20), 32);
+    sb_add_chars(&sb, "\",\"gas\":\"0xffd40\"}");
+
+    in3_ret_t res = send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt);
+    _free(sb.data);
+    if (res) return res;
+  }
+
+  // now that we the receipt, we need to find the opId in the log
+  bytes32_t event_hash;
+  hex_to_bytes("d0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830", -1, event_hash, 32);
+  for (d_iterator_t iter = d_iter(d_get(tx_receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
+    bytes_t* ev = d_get_bytes_at(d_get(iter.token, K_TOPICS), 0);
+    if (ev && ev->len == 32 && memcmp(event_hash, ev->data, 32) == 0) {
+      bytes_t* data = d_get_bytesk(iter.token, K_DATA);
+      if (data && data->len > 64) {
+        str_range_t r  = d_to_json(tx_receipt);
+        sb_t*       sb = in3_rpc_handle_start(ctx);
+        sb_add_chars(sb, "{\"receipt\":");
+        sb_add_range(sb, r.data, 0, r.len);
+        sb_add_chars(sb, ",\"priorityOpId\":");
+        sb_add_int(sb, bytes_to_long(data->data + 64 - 8, 8));
+        sb_add_chars(sb, "}");
+        ctx_remove_required(ctx->ctx, ctx_find_required(ctx->ctx, "eth_sendTransactionAndWait"), true);
+        return in3_rpc_handle_finish(ctx);
+      }
     }
   }
 
-  return IN3_OK;
+  return ctx_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
 }
 
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   char*      method = d_get_stringk(ctx->ctx->requests[0], K_METHOD);
   d_token_t* params = d_get(ctx->ctx->requests[0], K_PARAMS);
   if (strncmp(method, "zksync_", 7)) return IN3_EIGNORE;
-
-  if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0) return payin(conf, ctx, params + 1);
 
   // do we have a provider?
   if (!conf->provider_url) {
@@ -138,6 +175,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
         return ctx_set_error(ctx->ctx, "no provider_url in config", IN3_EINVAL);
     }
   }
+  if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0) return payin(conf, ctx, params + 1);
 
   str_range_t p            = d_to_json(params);
   char*       param_string = alloca(p.len - 1);
@@ -169,6 +207,8 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
   switch (action) {
     case PLGN_ACT_TERM: {
       if (conf->provider_url) _free(conf->provider_url);
+      if (conf->main_contract) _free(conf->main_contract);
+      if (conf->account) _free(conf->account);
       _free(conf);
       return IN3_OK;
     }

@@ -261,6 +261,7 @@ class IN3 {
                                 break;
 
                             case 'rpc':
+                                if (req.wait) await new Promise(r => setTimeout(r, req.wait))
                                 await getNextResponse(responses, req)
                         }
 

@@ -121,6 +121,7 @@ typedef struct in3_request {
   uint_fast16_t   urls_len; /**< number of urls */
   struct in3_ctx* ctx;      /**< the current context */
   void*           cptr;     /**< a custom ptr to hold information during */
+  uint32_t        wait;     /**< time in ms to wait before sending out the request */
 } in3_request_t;
 
 /**

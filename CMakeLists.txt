@@ -211,6 +211,7 @@ IF (WASM)
   set(IN3_LIB false)
   set(CMD false)
   set(USE_CURL false)
+  ADD_DEFINITIONS(-DWASM)
   add_subdirectory(wasm/src)
 ENDIF (WASM)
 

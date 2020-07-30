@@ -49,6 +49,11 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#if defined(_WIN32) || defined(WIN32)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #define WAIT_TIME_CAP 3600
 #define BLACKLISTTIME 24 * 3600
@@ -651,6 +656,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   request->urls_len      = nodes_count;
   request->urls          = urls;
   request->cptr          = NULL;
+  request->wait          = d_get_intk(d_get(ctx->requests[0], K_IN3), K_WAIT);
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
   ctx->raw_response = _calloc(sizeof(in3_response_t), nodes_count);
@@ -791,6 +797,17 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   // if we can't create the request, this function will put it into error-state
   in3_request_t* request = in3_create_request(ctx);
   if (!request) return;
+
+  // do we need to wait?
+  if (request->wait) {
+#if defined(_WIN32) || defined(WIN32)
+    Sleep(request->wait);
+#elif defined(__ZEPHYR__)
+    k_sleep(request->wait);
+#elif !defined(WASM)
+    nanosleep((const struct timespec[]){{request->wait / 1000, ((long) request->wait % 1000) * 1000000L}}, NULL);
+#endif
+  }
 
   // in case there is still a old cptr we need to cleanup since this means this is a retry!
   transport_cleanup(ctx, transports, false);

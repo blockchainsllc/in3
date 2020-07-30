@@ -1125,7 +1125,7 @@ int main(int argc, char* argv[]) {
   }
   else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
-    method = "eth_sendTransaction";
+    method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
@@ -1283,6 +1283,8 @@ int main(int argc, char* argv[]) {
   in3_log_debug("..sending request %s %s\n", method, params);
   in3_chain_t* chain = in3_get_chain(c);
 
+  if (wait && strcmp(method, "eth_sendTransaction") == 0) method = "eth_sendTransactionAndWait";
+
   // send the request
   sb_t* sb = sb_new("{\"method\":\"");
   sb_add_chars(sb, method);
@@ -1305,14 +1307,6 @@ int main(int argc, char* argv[]) {
       in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
     //    else if (chain->type == CHAIN_BTC)
     //     in3_client_rpc(c, "getblockcount", "[]", &r, &e);
-  }
-
-  // if we need to wait
-  if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
-    bytes32_t txHash;
-    hex_to_bytes(result + 3, 64, txHash, 32);
-    result = eth_wait_for_receipt(c, txHash);
-    if (!result) die("Error waiting for the confirmation of the transaction");
   }
 
   if (error)

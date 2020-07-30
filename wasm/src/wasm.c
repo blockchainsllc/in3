@@ -150,6 +150,8 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         sb_add_chars(sb, request->ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
         sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
+        sb_add_chars(sb, ",\"wait\":");
+        sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
         sb_add_chars(sb, request->payload);
         sb_add_chars(sb, ",\"urls\":[");
