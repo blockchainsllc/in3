@@ -166,17 +166,17 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
   }
 }
 
-NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
+NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain, bool no_in3) {
   static unsigned long rpc_id_counter = 1;
   char                 temp[100];
   in3_t*               rc       = c->client;
-  struct SHA3_CTX*     msg_hash = in3_plugin_is_registered(c->client, PLGN_ACT_PAY_SIGN_REQ) ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  struct SHA3_CTX*     msg_hash = !no_in3 && in3_plugin_is_registered(c->client, PLGN_ACT_PAY_SIGN_REQ) ? alloca(sizeof(struct SHA3_CTX)) : NULL;
 
   sb_add_char(sb, '[');
 
   for (uint_fast16_t i = 0; i < c->len; i++) {
     d_token_t * request_token = c->requests[i], *t;
-    in3_proof_t proof         = in3_ctx_get_proof(c, i);
+    in3_proof_t proof         = no_in3 ? PROOF_NONE : in3_ctx_get_proof(c, i);
     if (msg_hash) sha3_256_Init(msg_hash);
 
     if (i > 0) sb_add_char(sb, ',');
@@ -609,28 +609,32 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   }
 
   in3_ret_t     res;
-  int           nodes_count = ctx_nodes_len(ctx->nodes);
+  char*         rpc         = d_get_stringk(d_get(ctx->requests[0], K_IN3), K_RPC);
+  int           nodes_count = rpc ? 1 : ctx_nodes_len(ctx->nodes);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_match_t* node        = ctx->nodes;
   in3_chain_t*  chain       = in3_get_chain(ctx->client);
   bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
-    in3_node_t* node_data = ctx_get_node(chain, node);
-    urls[n]               = node_data->url;
-
-    // if the multichain-prop is set we need to specify the chain_id in the request
-    if (in3_node_props_get(node_data->props, NODE_PROP_MULTICHAIN)) multichain = true;
+    in3_node_t* node_data = rpc ? NULL : ctx_get_node(chain, node);
+    urls[n]               = rpc ? rpc : node_data->url;
 
     // cif we use_http, we need to malloc a new string, so we also need to free it later!
     if (ctx->client->flags & FLAGS_HTTP) urls[n] = convert_to_http_url(urls[n]);
+
+    // this is all we need to do if we have a rpc-node
+    if (rpc) break;
+
+    // if the multichain-prop is set we need to specify the chain_id in the request
+    if (in3_node_props_get(node_data->props, NODE_PROP_MULTICHAIN)) multichain = true;
 
     node = node->next;
   }
 
   // prepare the payload
   sb_t* payload = sb_new(NULL);
-  res           = ctx_create_payload(ctx, payload, multichain);
+  res           = ctx_create_payload(ctx, payload, multichain, rpc != NULL);
   if (res < 0) {
     // we clean up
     sb_free(payload);
@@ -972,7 +976,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         return ctx_set_error(ctx, "The request could not be handled", ret);
 
       // if we don't have a nodelist, we try to get it.
-      if (!ctx->raw_response && !ctx->nodes) {
+      if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC)) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
         filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);

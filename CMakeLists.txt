@@ -77,6 +77,7 @@ OPTION(IN3_SERVER "support for proxy server as part of the cmd-tool, which allow
 OPTION(CMD "build the comandline utils" ON)
 OPTION(POA "support POA verification including validatorlist updates" OFF)
 OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
+OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" OFF)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
@@ -96,6 +97,12 @@ if (MULTISIG)
   ADD_DEFINITIONS(-DMULTISIG)
 endif()
 
+if (ZKSYNC)
+  ADD_DEFINITIONS(-DZKSYNC)
+  set(IN3_API ${IN3_API} zksync)
+endif()
+
+
 if(ETH_FULL)
     ADD_DEFINITIONS(-DETH_FULL)
     set(IN3_VERIFIER eth_full)
@@ -112,7 +119,7 @@ endif()
 
 if(IN3API)
     ADD_DEFINITIONS(-DETH_API)
-    set(IN3_API eth_api)
+    set(IN3_API ${IN3_API} eth_api)
 endif()
 
 if (ESP_IDF)

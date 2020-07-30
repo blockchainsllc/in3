@@ -33,11 +33,13 @@
 ###############################################################################
 
 
-IF (PAY_ETH)
-    add_subdirectory(eth)
-ENDIF (PAY_ETH)
+add_static_library(
+  NAME     zksync 
+  
+  SOURCES 
+    zksync.c
+    provider.c
 
-IF (ZKSYNC)
-    add_subdirectory(zksync)
-ENDIF (ZKSYNC)
-
+  DEPENDS 
+    eth_basic
+)

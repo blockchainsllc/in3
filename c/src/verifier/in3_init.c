@@ -2,6 +2,7 @@
 #include "../api/eth1/eth_api.h"
 #include "../core/client/plugin.h"
 #include "../pay/eth/pay_eth.h"
+#include "../pay/zksync/zksync.h"
 #include "../transport/curl/in3_curl.h"
 #include "../transport/http/in3_http.h"
 #include "../verifier/btc/btc.h"
@@ -33,6 +34,9 @@ static void init_verifier() {
 #endif
 #ifdef PAY_ETH
   in3_register_default(in3_register_pay_eth);
+#endif
+#ifdef ZKSYNC
+  in3_register_default(in3_register_zksync);
 #endif
 }
 static void init_transport() {
