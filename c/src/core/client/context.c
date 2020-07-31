@@ -297,6 +297,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
   ctx = ctx_new(parent->client, req);
+  if (!ctx) return ctx_set_error(parent, "Invalid request!", IN3_ERPC);
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   return ctx_add_required(parent, ctx);
