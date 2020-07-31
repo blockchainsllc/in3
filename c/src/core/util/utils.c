@@ -51,6 +51,10 @@
 #include <posix/sys/time.h>
 #endif
 
+#ifdef ESP_IDF
+#include <unistd.h>
+#endif
+
 #ifdef __ZEPHYR__
 static uint64_t time_zephyr(void* t) {
   UNUSED_VAR(t);
