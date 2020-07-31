@@ -262,8 +262,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
           if (strcmp((char*) e->value.data, req) == 0) found = true;
         }
       }
-      if (!found)
-        continue;
+      if (found) break;
     }
     if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method)) continue;
     d_token_t* t = d_get(ctx->requests[0], K_PARAMS);

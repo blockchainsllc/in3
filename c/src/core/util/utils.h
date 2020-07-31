@@ -42,7 +42,6 @@
 
 #include "bytes.h"
 #include <stdint.h>
-#include <time.h>
 
 #ifdef __ZEPHYR__
 #include <zephyr.h>

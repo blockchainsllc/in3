@@ -95,7 +95,7 @@ void in3_sleep(uint32_t ms) {
   UNUSED_VAR(ms);
 #else
   struct timespec ts;
-  ts.tv_sec  = ms / 1e6;              // whole seconds
+  ts.tv_sec  = ms / 1000;             // whole seconds
   ts.tv_nsec = (ms % 1000000) * 1000; // remainder, in nanoseconds
   nanosleep(&ts, NULL);
 #endif

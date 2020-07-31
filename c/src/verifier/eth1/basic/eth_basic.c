@@ -123,11 +123,11 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
     TRY(ctx_send_sub_request(ctx, "eth_sendTransaction", tx_data, NULL, &tx_hash))
     // tx was sent, we have a tx_hash
     char tx_hash_hex[69];
+    bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
     tx_hash_hex[0] = tx_hash_hex[67] = '"';
     tx_hash_hex[1]                   = '0';
     tx_hash_hex[2]                   = 'x';
-    bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
-    tx_hash_hex[68] = 0;
+    tx_hash_hex[68]                  = 0;
 
     // get the tx_receipt
     TRY(ctx_send_sub_request(ctx, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
