@@ -90,7 +90,7 @@ void in3_sleep(uint32_t ms) {
 #elif defined(__ZEPHYR__)
   k_sleep(ms);
 #elif defined(ESP_IDF)
-  UNUSED_VAR(ms);
+  usleep(ms);
 #elif defined(WASM)
   UNUSED_VAR(ms);
 #else
