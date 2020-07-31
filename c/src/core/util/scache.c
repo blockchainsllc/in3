@@ -41,11 +41,11 @@ bytes_t* in3_cache_get_entry(cache_entry_t* cache, bytes_t* key) {
   }
   return NULL;
 }
-void in3_cache_free(cache_entry_t* cache) {
+void in3_cache_free(cache_entry_t* cache, bool is_external) {
   cache_entry_t* p = NULL;
   while (cache) {
     if (cache->key.data) _free(cache->key.data);
-    if (cache->props & CACHE_PROP_MUST_FREE)
+    if (cache->props & CACHE_PROP_MUST_FREE && ((cache->props & CACHE_PROP_ONLY_EXTERNAL) == 0 || is_external))
       _free(cache->value.data);
     p     = cache;
     cache = cache->next;

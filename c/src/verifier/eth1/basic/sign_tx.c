@@ -313,10 +313,10 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   json_free(ctx->request_context);
 
   // set the new RPC-Request.
-  ctx->request_context = parse_json(sb->data);
-  ctx->requests[0]     = ctx->request_context->result;
-  in3_cache_add_ptr(&ctx->cache, sb->data); // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-  _free(sb);                                // and we only free the stringbuilder, but not the data itself.
+  ctx->request_context                            = parse_json(sb->data);
+  ctx->requests[0]                                = ctx->request_context->result;
+  in3_cache_add_ptr(&ctx->cache, sb->data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+  _free(sb);                                                                                         // and we only free the stringbuilder, but not the data itself.
   return IN3_OK;
 }
 

@@ -280,7 +280,7 @@ int  in3_rand(void* s);
 typedef void (*srand_func)(unsigned int s);
 void in3_set_func_srand(srand_func fn);
 void in3_srand(unsigned int s);
-
+void in3_sleep(uint32_t ms);
 /**
  * parses a float-string and returns the value as int
  */
