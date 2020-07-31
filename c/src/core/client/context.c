@@ -237,7 +237,16 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   long_to_bytes(value, val);
   bytes_t b = bytes(val, 8);
   b_optimize_len(&b);
-  return in3_rpc_handle_with_bytes(hctx, b);
+  char* s = alloca(b.len * 2 + 5);
+  bytes_to_hex(b.data, b.len, s + 3);
+  if (s[3] == '0') s++;
+  int l    = strlen(s + 3) + 3;
+  s[0]     = '"';
+  s[1]     = '0';
+  s[2]     = 'x';
+  s[l]     = '"';
+  s[l + 1] = 0;
+  return in3_rpc_handle_with_string(hctx, s);
 }
 
 in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result) {

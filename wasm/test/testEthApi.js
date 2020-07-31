@@ -327,13 +327,13 @@ describe('EthAPI-Tests', () => {
 */
     })
 
-    it('eth.chainId()', () => {
-        const supportedChains = ['0x7d0', '0x1', '0xf6', '0x99', '0x2a', '0x5']
-        supportedChains.forEach(async chainId => {
-            let client = createClient({ chainId })
+    it('eth.chainId()', async () => {
+        const supportedChains = ['0x1', '0xf6', '0x2a', '0x5']
+        for (const c of supportedChains) {
+            let client = createClient({ chainId: c })
             let connectedChain = await client.eth.chainId()
-            assert.equal(chainId, connectedChain)
-        })
+            assert.equal(c, connectedChain)
+        }
     })
 
     it('eth.getFilterChanges()', async () => {
