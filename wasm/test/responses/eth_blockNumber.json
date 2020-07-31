@@ -10,5 +10,13 @@
   "0x834B77": {
     "jsonrpc": "2.0",
     "result": "0x834B77"
+  },
+  "0x8e4daa": {
+    "jsonrpc": "2.0",
+    "result": "0x8e4daa"
+  },
+  "0x1f4a2f": {
+    "jsonrpc": "2.0",
+    "result": "0x1f4a2f"
   }
 }
