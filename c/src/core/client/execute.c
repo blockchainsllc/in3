@@ -49,11 +49,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
-#if defined(_WIN32) || defined(WIN32)
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
 
 #define WAIT_TIME_CAP 3600
 #define BLACKLISTTIME 24 * 3600
@@ -799,16 +794,8 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   if (!request) return;
 
   // do we need to wait?
-  if (request->wait) {
-#if defined(_WIN32) || defined(WIN32)
-    Sleep(request->wait);
-#elif defined(__ZEPHYR__)
-    k_sleep(request->wait);
-#elif !defined(WASM)
-    nanosleep((const struct timespec[]){{request->wait / 1000, ((long) request->wait % 1000) * 1000000L}}, NULL);
-#endif
-  }
-
+  if (request->wait)
+    in3_sleep(request->wait);
   // in case there is still a old cptr we need to cleanup since this means this is a retry!
   transport_cleanup(ctx, transports, false);
 

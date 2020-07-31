@@ -31,7 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
+#define _POSIX_C_SOURCE 199309L
 #include "utils.h"
 #include "../../third-party/crypto/sha3.h"
 #include "bytes.h"
@@ -40,6 +40,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#if defined(_WIN32) || defined(WIN32)
+#include <windows.h>
+#endif
+
 #ifndef __ZEPHYR__
 #include <sys/time.h>
 #else
@@ -78,6 +83,19 @@ static time_func  in3_time_fn  = time_libc;
 static rand_func  in3_rand_fn  = rand_libc;
 static srand_func in3_srand_fn = srand_libc;
 #endif /* __ZEPHYR__ */
+
+void in3_sleep(uint32_t ms) {
+#if defined(_WIN32) || defined(WIN32)
+  Sleep(ms);
+#elif defined(__ZEPHYR__)
+  k_sleep(ms);
+#elif !defined(WASM)
+  struct timespec ts;
+  ts.tv_sec  = ms / 1e6;              // whole seconds
+  ts.tv_nsec = (ms % 1000000) * 1000; // remainder, in nanoseconds
+  nanosleep(&ts, NULL);
+#endif
+}
 
 void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst) {
   if (src_len < 32) memset(dst, 0, 32 - src_len);
