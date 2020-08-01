@@ -21,7 +21,6 @@
 #define __SHA3_H__
 
 #include <stdint.h>
-#include <stddef.h>
 #include "options.h"
 
 #ifdef __cplusplus

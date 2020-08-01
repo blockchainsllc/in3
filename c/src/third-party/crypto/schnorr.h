@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Tomas Dzetkulic
- * Copyright (c) 2013-2014 Pavol Rusnak
+ * Copyright (c) 2019 Anatolii Kurotych
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -21,18 +20,32 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __SECP256K1_H__
-#define __SECP256K1_H__
+#ifndef __SCHNORR_H__
+#define __SCHNORR_H__
 
-#include <stdint.h>
-
-#include "bip32.h"
 #include "ecdsa.h"
 
-extern const ecdsa_curve secp256k1;
-extern const curve_info secp256k1_info;
-extern const curve_info secp256k1_decred_info;
-extern const curve_info secp256k1_groestl_info;
-extern const curve_info secp256k1_smart_info;
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+// result of sign operation
+typedef struct {
+  uint8_t r[32];
+  uint8_t s[32];
+} schnorr_sign_pair;
+
+// sign/verify returns 0 if operation succeeded
+
+// k is a random from [1, ..., order-1]
+int schnorr_sign(const ecdsa_curve* curve, const uint8_t* priv_key,
+                 const bignum256* k, const uint8_t* msg, const uint32_t msg_len,
+                 schnorr_sign_pair* result);
+int schnorr_verify(const ecdsa_curve* curve, const uint8_t* pub_key,
+                   const uint8_t* msg, const uint32_t msg_len,
+                   const schnorr_sign_pair* sign);
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif

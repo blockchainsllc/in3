@@ -39,6 +39,7 @@ set(CRYPTO_SRC
   secp256k1.c
   memzero.c
   sha3.c
+  hmac_drbg.c
   ripemd160.c
   base58.c
   hasher.c
@@ -47,6 +48,8 @@ set(CRYPTO_SRC
   blake2b.c
   groestl.c
   pbkdf2.c
+  schnorr.c
+  rfc6979.c
   aes/aes_modes.c
   aes/aescrypt.c
   aes/aeskey.c
