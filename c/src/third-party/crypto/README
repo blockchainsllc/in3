@@ -4,3 +4,4 @@
   - files mostly imported on an as-needed basis
   - base58.c:35 we need to include zephyr header file for it to enable alloca.h header
   - schnorr.c and schnorr.h are copied from a pending MR ( https://github.com/trezor/trezor-firmware/pull/93 )
+  - rand.c removed the pragma warning
