@@ -42,16 +42,42 @@
 #ifndef ZKSYNC_H
 #define ZKSYNC_H
 
-#include "../../core/client/client.h"
+#include "../../core/client/plugin.h"
+#ifdef ETH_FULL
+// #define ZKSYNC_256
+#endif
+typedef struct {
+  uint16_t  id;
+  char      symbol[8];
+  uint8_t   decimals;
+  address_t address;
+} zksync_token_t;
 
 typedef struct {
-  char*    provider_url;
-  uint8_t* account;
-  uint8_t* main_contract;
-  uint8_t* gov_contract;
+  char*           provider_url;
+  uint8_t*        account;
+  uint8_t*        main_contract;
+  uint8_t*        gov_contract;
+  uint64_t        account_id;
+  uint16_t        token_len;
+  zksync_token_t* tokens;
 
 } zksync_config_t;
+typedef struct {
+  uint32_t        account_id;
+  address_t       from;
+  address_t       to;
+  zksync_token_t* token;
+#ifdef ZKSYNC_256
+  bytes32_t amount;
+  bytes32_t fee;
+#else
+  uint64_t amount;
+  uint64_t fee;
+#endif
+  uint32_t nonce;
+} zksync_tx_data_t;
 
 in3_ret_t in3_register_zksync(in3_t* c);
-
+in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx);
 #endif
