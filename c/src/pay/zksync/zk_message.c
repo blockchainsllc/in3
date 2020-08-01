@@ -196,5 +196,8 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx)
   create_human_readable_tx_info(&msg, data);
   create_signed_bytes(&msg);
   TRY(get_signature(ctx, signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+
+  // TODO create result
+  UNUSED_VAR(sb);
   return IN3_OK;
 }
