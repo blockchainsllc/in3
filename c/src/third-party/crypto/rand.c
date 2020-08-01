@@ -54,7 +54,7 @@ uint32_t random32(void) {
 // The following code is platform independent
 //
 
-void __attribute__((weak)) random_buffer(uint8_t* buf, size_t len) {
+void __attribute__((weak)) random_buffer(uint8_t *buf, size_t len) {
   uint32_t r = 0;
   for (size_t i = 0; i < len; i++) {
     if (i % 4 == 0) {
@@ -71,9 +71,9 @@ uint32_t random_uniform(uint32_t n) {
   return x / (max / n);
 }
 
-void random_permute(char* str, size_t len) {
+void random_permute(char *str, size_t len) {
   for (int i = len - 1; i >= 1; i--) {
-    int  j = random_uniform(i + 1);
+    int j = random_uniform(i + 1);
     char t = str[j];
     str[j] = str[i];
     str[i] = t;
