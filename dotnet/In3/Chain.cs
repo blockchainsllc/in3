@@ -21,6 +21,9 @@ namespace In3
         /// <summary>Bitcoin chain.</summary>
         Btc = 0x99,
 
+        /// <summary>Ewf chain.</summary>
+        Ewc = 0xf6,
+
         /// <summary>Evan testnet.</summary>
         Evan = 0x4b1,
 
