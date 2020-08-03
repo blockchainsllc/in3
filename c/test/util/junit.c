@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-
+#define _GNU_SOURCE
 static char* trim(char* data) {
   char *s = NULL, *e = NULL;
   for (; *data; data++) {
@@ -23,7 +23,7 @@ static char* trim(char* data) {
   return s ? s : data;
 }
 #define TYPE_JSON 0
-#define TYPE_EVM 1
+#define TYPE_EVM  1
 #define TYPE_UNIT 2
 
 typedef struct suite {
@@ -98,6 +98,60 @@ static bool start_with_number(char* c) {
   return false;
 }
 
+#if defined(_WIN32)
+size_t getline(char** lineptr, size_t* n, FILE* stream) {
+  char*  bufptr = NULL;
+  char*  p      = bufptr;
+  size_t size;
+  int    c;
+
+  if (lineptr == NULL) {
+    return -1;
+  }
+  if (stream == NULL) {
+    return -1;
+  }
+  if (n == NULL) {
+    return -1;
+  }
+  bufptr = *lineptr;
+  size   = *n;
+
+  c = fgetc(stream);
+  if (c == EOF) {
+    return -1;
+  }
+  if (bufptr == NULL) {
+    bufptr = malloc(128);
+    if (bufptr == NULL) {
+      return -1;
+    }
+    size = 128;
+  }
+  p = bufptr;
+  while (c != EOF) {
+    if ((p - bufptr) > (size - 1)) {
+      size   = size + 128;
+      bufptr = realloc(bufptr, size);
+      if (bufptr == NULL) {
+        return -1;
+      }
+    }
+    *p++ = c;
+    if (c == '\n') {
+      break;
+    }
+    c = fgetc(stream);
+  }
+
+  *p++     = '\0';
+  *lineptr = bufptr;
+  *n       = size;
+
+  return p - bufptr - 1;
+}
+#endif
+
 int main(int argc, char* argv[]) {
   char*  full_line = NULL;
   size_t line_n    = 0;
@@ -134,9 +188,11 @@ int main(int argc, char* argv[]) {
       suite.index = atoi(current);
       total++;
       sprintf(start_string, "Start %5i", suite.index);
-    } else if (strncmp(line, start_string, 6) == 0) {
+    }
+    else if (strncmp(line, start_string, 6) == 0) {
       last_suite->name = strdup(strstr(line, ":") ? strstr(line, ":") + 2 : (line + strlen(start_string) + 2));
-    } else if (*line >= '0' && *line <= '9' && line[strlen(current)] == ':') {
+    }
+    else if (*line >= '0' && *line <= '9' && line[strlen(current)] == ':') {
       char* out = line + strlen(current) + 2;
       if (strncmp(out, "Test command:", 13) == 0) {
         if (strstr(out, "/vmrunner"))
@@ -148,7 +204,8 @@ int main(int argc, char* argv[]) {
         sb_add_chars(&last_suite->props, "      <property name=\"test_command\" value=\"");
         escape(&last_suite->props, out + 14);
         sb_add_chars(&last_suite->props, "\"/>\n");
-      } else {
+      }
+      else {
 
         if (last_suite->out.len) sb_add_char(&last_suite->out, '\n');
         escape(&last_suite->out, out);
@@ -164,18 +221,21 @@ int main(int argc, char* argv[]) {
           char* pass  = strtok(NULL, ":");
           char* error = (pass && strcmp(pass, "FAIL") == 0) ? pass + 6 : NULL;
           add_testcase(last_suite, name, file, error);
-        } else if (last_suite->type == TYPE_JSON && out[p] == ':' && start_with_number(out)) {
+        }
+        else if (last_suite->type == TYPE_JSON && out[p] == ':' && start_with_number(out)) {
           char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
           out[65]     = 0;
           char* name  = trim(out + p + 1);
           if (*name == '.') {
             sprintf(tmp, "%s%s", last_json_test, name);
             add_testcase(last_suite, tmp, "runner", error);
-          } else {
+          }
+          else {
             strcpy(last_json_test, name);
             add_testcase(last_suite, name, "runner", error);
           }
-        } else if (last_suite->type == TYPE_EVM && out[p] == ':' && start_with_number(out)) {
+        }
+        else if (last_suite->type == TYPE_EVM && out[p] == ':' && start_with_number(out)) {
           char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
           out[65]     = 0;
           char* name  = trim(out + p + 1);
@@ -186,7 +246,8 @@ int main(int argc, char* argv[]) {
           add_testcase(last_suite, name, "runner", error);
         }
       }
-    } else if (*line >= '0' && *line <= '9' && line[strlen(current)] == '/') {
+    }
+    else if (*line >= '0' && *line <= '9' && line[strlen(current)] == '/') {
       if (strstr(line, "***Failed"))
         failed++;
       else

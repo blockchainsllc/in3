@@ -32,9 +32,16 @@ typedef struct response_s {
 static response_t* response_buffer = NULL;
 static response_t* responses;
 char*              read_json_response_buffer(char* path) {
+  int   pl          = strlen(path);
+  char* path_native = alloca(pl + 1);
+#ifdef WIN32
+  for (int i = 0; i < pl + 1; i++) path_native[i] = path[i] == '/' ? '\\' : path[i];
+#else
+  memcpy(path_native, path, pl + 1);
+#endif
   char* response_buffer;
   long  length;
-  FILE* f = fopen(path, "r");
+  FILE* f = fopen(path_native, "r");
   if (f) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
@@ -53,7 +60,7 @@ char*              read_json_response_buffer(char* path) {
     else {
       perror("getcwd() error");
     }
-    printf("Error coudl not find the testdata %s\n", path);
+    printf("Error coudl not find the testdata %s\n", path_native);
     return NULL;
   }
 }

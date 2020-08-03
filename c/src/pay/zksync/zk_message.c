@@ -128,47 +128,6 @@ void create_signed_bytes(sb_t* sb) {
   memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
 }
 
-static in3_ret_t get_signature(in3_ctx_t* ctx, uint8_t* sig, bytes_t raw_data, bytes_t from) {
-  bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &raw_data);
-  if (cached_sig) {
-    memcpy(sig, cached_sig->data, 65);
-    return IN3_OK;
-  }
-
-  // get the signature from required
-  in3_ctx_t* c = ctx_find_required(ctx, "sign_ec_hash");
-  if (c)
-    switch (in3_ctx_state(c)) {
-      case CTX_ERROR:
-        return ctx_set_error(ctx, c->error, IN3_ERPC);
-      case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_SEND:
-        return IN3_WAITING;
-      case CTX_SUCCESS: {
-        if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len == 65) {
-          in3_cache_add_entry(&ctx->cache, cloned_bytes(raw_data), cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, 65)));
-          memcpy(sig, c->raw_response->data.data, 65);
-          ctx_remove_required(ctx, c, false);
-          return IN3_OK;
-        }
-        else if (c->raw_response && c->raw_response->state)
-          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
-        else
-          return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
-      }
-    }
-  else {
-    sb_t req = {0};
-    sb_add_bytes(&req, "{\"method\":\"sign_ec_hash\",\"params\":[", &raw_data, 1, false);
-    sb_add_chars(&req, ",");
-    sb_add_bytes(&req, NULL, &from, 1, false);
-    sb_add_chars(&req, "]}");
-    c       = ctx_new(ctx->client, req.data);
-    c->type = CT_SIGN;
-    return ctx_add_required(ctx, c);
-  }
-}
-
 in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx) {
   uint8_t  raw[58];
   char     dec[70];
@@ -185,7 +144,6 @@ in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx) {
   TRY(pack(dec, 11, 5, raw + 52, ctx))     // 52: amount packed (2)
   int_to_bytes(data->nonce, raw + 54);     // 54: nonce(4)
 
-  
   return IN3_OK;
 }
 
@@ -195,7 +153,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx)
   sb_t    msg = sb_stack(msg_data);
   create_human_readable_tx_info(&msg, data);
   create_signed_bytes(&msg);
-  TRY(get_signature(ctx, signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+  TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
 
   // TODO create result
   UNUSED_VAR(sb);

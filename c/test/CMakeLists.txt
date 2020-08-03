@@ -34,6 +34,12 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
+if (MSVC OR MSYS OR MINGW)
+  set(WINE "wine")
+else()
+  set(WINE "")
+endif()
+
 include_directories(. ../src)
 
 # handle codecoverage
@@ -48,8 +54,6 @@ if (CODE_COVERAGE)
   # we exclude all headers, tests and thridparty-code
   set(coverage_excludes "EXCLUDE" "c/test/*" "*.h" "c/src/third-party/*"  "../c/src/third-party/*")
 endif()
-
-
 # first we build the runners
 add_executable(runner runner.c)
 target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API})
@@ -78,7 +82,7 @@ foreach (file ${files})
 
      add_test(
                 NAME "in3_${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
+                COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
       set_tests_properties("in3_${testname}" PROPERTIES 
@@ -95,7 +99,7 @@ foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "in3_${testname}"
-            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
+            COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
     )
     set_tests_properties("in3_${testname}" PROPERTIES 
@@ -189,7 +193,7 @@ foreach (testdir
         get_filename_component(testname "${file}" NAME_WE)
         add_test(
                 NAME "evm/${testdir}/${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file} ${EVMARG}
+                COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file} ${EVMARG}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 

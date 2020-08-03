@@ -310,3 +310,46 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   return ctx_add_required(parent, ctx);
 }
+
+in3_ret_t ctx_require_signature(in3_ctx_t* ctx, char* method, uint8_t* sig, bytes_t raw_data, bytes_t from) {
+  bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &raw_data);
+  if (cached_sig) {
+    memcpy(sig, cached_sig->data, 65);
+    return IN3_OK;
+  }
+
+  // get the signature from required
+  in3_ctx_t* c = ctx_find_required(ctx, method);
+  if (c)
+    switch (in3_ctx_state(c)) {
+      case CTX_ERROR:
+        return ctx_set_error(ctx, c->error, IN3_ERPC);
+      case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_SEND:
+        return IN3_WAITING;
+      case CTX_SUCCESS: {
+        if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len == 65) {
+          in3_cache_add_entry(&ctx->cache, cloned_bytes(raw_data), cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, 65)));
+          memcpy(sig, c->raw_response->data.data, 65);
+          ctx_remove_required(ctx, c, false);
+          return IN3_OK;
+        }
+        else if (c->raw_response && c->raw_response->state)
+          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
+        else
+          return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
+      }
+    }
+  else {
+    sb_t req = {0};
+    sb_add_chars(&req, "{\"method\":\"");
+    sb_add_chars(&req, method);
+    sb_add_bytes(&req, "\",\"params\":[", &raw_data, 1, false);
+    sb_add_chars(&req, ",");
+    sb_add_bytes(&req, NULL, &from, 1, false);
+    sb_add_chars(&req, "]}");
+    c       = ctx_new(ctx->client, req.data);
+    c->type = CT_SIGN;
+    return ctx_add_required(ctx, c);
+  }
+}

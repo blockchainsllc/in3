@@ -79,6 +79,25 @@ static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, ui
   return IN3_OK;
 }
 
+static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key) {
+  if (!memiszero(conf->sync_key, 32)) {
+    memcpy(sync_key, conf->sync_key, 32);
+    return IN3_OK;
+  }
+  uint8_t *account, signature[65];
+  char*    message = "\x19"
+                  "Ethereum Signed Message:\n68"
+                  "Access zkSync account.\n\nOnly sign this message for a trusted client!";
+  TRY(zksync_get_account(conf, ctx, &account))
+  TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
+
+  // /TODO now generate nthe private key ot of it,....
+
+  //  if (account_id) *account_id = conf->account_id;
+  memcpy(sync_key, conf->sync_key, 32);
+  return IN3_OK;
+}
+
 static in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main) {
   if (!conf->main_contract) {
     d_token_t* result;
@@ -301,7 +320,8 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
 }
 
 static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-
+  bytes32_t sync_key;
+  TRY(zksync_get_sync_key(conf, ctx->ctx, &sync_key));
   // prepare tx data
   zksync_tx_data_t tx_data = {0};
   bytes_t          to      = d_to_bytes(params_get(params, K_TO, 0));

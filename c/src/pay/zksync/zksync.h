@@ -60,6 +60,7 @@ typedef struct {
   uint8_t*        gov_contract;
   uint64_t        account_id;
   uint16_t        token_len;
+  bytes32_t       sync_key;
   zksync_token_t* tokens;
 
 } zksync_config_t;
