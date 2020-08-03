@@ -338,6 +338,9 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, char* method, uint8_t* sig, byte
           return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
         else
           return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
+
+        default:
+          return ctx_set_error(ctx, "invalid state", IN3_EINVAL);
       }
     }
   else {
