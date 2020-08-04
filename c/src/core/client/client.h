@@ -62,7 +62,7 @@
 #define CHAIN_ID_EWC        0xf6   /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0  /**< chain_id for ipfs */
 #define CHAIN_ID_BTC        0x99   /**< chain_id for btc */
-#define CHAIN_ID_LOCAL      0xFFFF /**< chain_id for local chain */
+#define CHAIN_ID_LOCAL      0x11 /**< chain_id for local chain */
 #define DEF_REPL_LATEST_BLK 6      /**< default replace_latest_block */
 
 /**
