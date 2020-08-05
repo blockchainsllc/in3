@@ -739,6 +739,7 @@ int main(int argc, char* argv[]) {
 
   // use the storagehandler to cache data in .in3
   in3_register_file_storage(c);
+  
 
   // check env
   if (getenv("IN3_PK")) {
@@ -930,6 +931,9 @@ int main(int argc, char* argv[]) {
   (void) (port);
 #endif
 
+  // load nodelist from cache
+  in3_cache_init(c);
+  
   // handle private key
   if (pk_file) read_pk(pk_file, pwd, c, method);
 
