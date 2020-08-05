@@ -37,7 +37,6 @@
 #endif
 
 #endif
-
 const char b58digits_ordered[] =
     "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const int8_t b58digits_map[] = {
@@ -56,6 +55,9 @@ typedef uint32_t b58_almostmaxint_t;
 static const b58_almostmaxint_t b58_almostmaxint_mask =
     ((((b58_maxint_t)1) << b58_almostmaxint_bits) - 1);
 
+// Decodes a null-terminated Base58 string `b58` to binary and writes the result
+// at the end of the buffer `bin` of size `*binszp`. On success `*binszp` is set
+// to the number of valid bytes at the end of the buffer.
 bool b58tobin(void *bin, size_t *binszp, const char *b58) {
   size_t binsz = *binszp;
 
@@ -78,7 +80,7 @@ bool b58tobin(void *bin, size_t *binszp, const char *b58) {
 
   size_t b58sz = strlen(b58);
 
-  memzero(outi, sizeof(outi));
+  memzero(outi, sizeof(b58_almostmaxint_t) * outisz);
 
   // Leading zeros, just count
   for (i = 0; i < b58sz && b58u[i] == '1'; ++i) ++zerocount;
@@ -118,20 +120,18 @@ bool b58tobin(void *bin, size_t *binszp, const char *b58) {
     }
   }
 
-  // Count canonical base58 byte count
+  // locate the most significant byte
   binu = bin;
   for (i = 0; i < binsz; ++i) {
-    if (binu[i]) {
-      if (zerocount > i) {
-        /* result too large */
-        return false;
-      }
-
-      break;
-    }
-    --*binszp;
+    if (binu[i]) break;
   }
-  *binszp += zerocount;
+
+  // prepend the correct number of null-bytes
+  if (zerocount > i) {
+    /* result too large */
+    return false;
+  }
+  *binszp = binsz - i + zerocount;
 
   return true;
 }
