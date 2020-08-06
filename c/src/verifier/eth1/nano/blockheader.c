@@ -337,6 +337,7 @@ NONULL static void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, b
   if (!c->max_verified_hashes) return;
   if (!chain->verified_hashes) chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
 
+  // get index of verified hash with oldest blocknumber
   int      oldest_index  = 0;
   uint64_t oldest_number = UINT64_MAX;
   for (int i = 0; i < c->max_verified_hashes; i++) {
@@ -347,6 +348,8 @@ NONULL static void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, b
     }
   }
 
+  // if client pending is set and verified hashes are already full, we increase `max_verified_hashes`
+  // to accommodate new hash
   if (chain->verified_hashes[oldest_index].block_number != 0 && c->pending) {
     chain->verified_hashes = _realloc(chain->verified_hashes,
                                       (c->max_verified_hashes + 1) * sizeof(in3_verified_hash_t),
