@@ -346,6 +346,15 @@ NONULL static void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, b
       if (oldest_number == 0) break;
     }
   }
+
+  if (chain->verified_hashes[oldest_index].block_number != 0 && c->pending) {
+    chain->verified_hashes = _realloc(chain->verified_hashes,
+                                      (c->max_verified_hashes + 1) * sizeof(in3_verified_hash_t),
+                                      c->max_verified_hashes * sizeof(in3_verified_hash_t));
+    oldest_index           = c->max_verified_hashes;
+    c->max_verified_hashes += 1;
+  }
+
   chain->verified_hashes[oldest_index].block_number = number;
   memcpy(chain->verified_hashes[oldest_index].hash, hash, 32);
 }
