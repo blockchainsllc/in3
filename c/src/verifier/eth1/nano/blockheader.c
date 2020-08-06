@@ -333,12 +333,13 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
 }
 #endif
 
-NONULL static void add_verified(int max, in3_chain_t* chain, uint64_t number, bytes32_t hash) {
-  if (!max) return;
-  if (!chain->verified_hashes) chain->verified_hashes = _calloc(max, sizeof(in3_verified_hash_t));
+NONULL static void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, bytes32_t hash) {
+  if (!c->max_verified_hashes) return;
+  if (!chain->verified_hashes) chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+
   int      oldest_index  = 0;
-  uint64_t oldest_number = 0xFFFFFFFFFFFFFFFFLL;
-  for (int i = 0; i < max; i++) {
+  uint64_t oldest_number = UINT64_MAX;
+  for (int i = 0; i < c->max_verified_hashes; i++) {
     if (chain->verified_hashes[i].block_number < oldest_number) {
       oldest_index  = i;
       oldest_number = chain->verified_hashes[i].block_number;
@@ -442,7 +443,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       return vc_err(vc, "missing signatures");
 
     // ok, is is verified, so we should add it to the verified hashes
-    add_verified(vc->ctx->client->max_verified_hashes, vc->chain, header_number, block_hash);
+    add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
   }
 
   return IN3_OK;
