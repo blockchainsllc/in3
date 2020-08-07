@@ -311,7 +311,7 @@ IN3_IMPORT_TEST NONULL void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
 
 static uint16_t vh_size(in3_verified_hash_t* hashes, uint16_t max) {
   uint16_t sz = 0;
-  while (hashes && (sz <= max && hashes[sz].block_number != 0)) sz++;
+  while (hashes && (sz < max && hashes[sz].block_number != 0)) sz++;
   return sz;
 }
 
@@ -352,6 +352,7 @@ static void test_in3_verified_hashes() {
 
   uint64_t hashes[] = {508, 506, 507, 509, 505};
   TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes, sizeof(hashes) / sizeof(*hashes)));
+  _free(chain.verified_hashes);
 }
 
 /*
@@ -369,5 +370,6 @@ int main() {
   RUN_TEST(test_in3_checksum_rpc);
   RUN_TEST(test_in3_client_chain);
   RUN_TEST(test_in3_client_context);
+  RUN_TEST(test_in3_verified_hashes);
   return TESTS_END();
 }
