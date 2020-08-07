@@ -340,7 +340,7 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
   // get index of verified hash with oldest blocknumber
   int      oldest_index  = 0;
   uint64_t oldest_number = UINT64_MAX;
-  for (int i = 0; i < c->max_verified_hashes; i++) {
+  for (uint_fast16_t i = 0; i < c->max_verified_hashes; i++) {
     if (chain->verified_hashes[i].block_number < oldest_number) {
       oldest_index  = i;
       oldest_number = chain->verified_hashes[i].block_number;
