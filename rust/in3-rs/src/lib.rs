@@ -41,7 +41,17 @@ pub mod prelude {
     pub use crate::types::*;
 }
 
-
+/// Initializes the in3 library
+///
+/// This function is called automatically in the following scenarios:
+/// - Creating a new [`Client`][in3::Client] handle.
+/// - At program startup on Windows, macOS, Linux, Android, or FreeBSD systems
+///
+/// This should be sufficient for most applications and scenarios, but in any
+/// other case, it is strongly recommended that you call this function manually
+/// as soon as your program starts.
+///
+/// Calling this function more than once is harmless and has no effect.
 #[inline]
 pub fn init() {
     use std::sync::Once;
