@@ -51,7 +51,7 @@
  * Note: This function is not MT-safe and is expected to be called early during
  *       during program startup (i.e. in main()) before other threads are spawned.
  */
-void   in3_init();
+void in3_init();
 
 /**
  * Auto-init fallback for easy client initialization meant for single-threaded apps.
