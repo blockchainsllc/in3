@@ -401,7 +401,7 @@ impl Client {
         crate::init();
         unsafe {
             let mut c = Box::new(Client {
-                ptr: in3_sys::in3_for_chain_auto_init(chain_id),
+                ptr: in3_sys::in3_for_chain_default(chain_id),
                 transport: Box::new(HttpTransport {}),
                 signer: None,
                 storage: None,
