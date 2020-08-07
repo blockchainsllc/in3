@@ -37,9 +37,6 @@
  * logs debug data only if the DEBUG-flag is set.
  * */
 
-#ifndef IN3_EXPORT_TEST
-#define IN3_EXPORT_TEST static
-#endif
 #include <assert.h>
 
 #ifdef DEBUG

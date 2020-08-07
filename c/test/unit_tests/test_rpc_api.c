@@ -51,9 +51,6 @@
 #include "../util/transport.h"
 #include <stdio.h>
 #include <unistd.h>
-#ifndef IN3_IMPORT_TEST
-#define IN3_IMPORT_TEST
-#endif
 
 #define err_string(msg) ("Error:" msg)
 
