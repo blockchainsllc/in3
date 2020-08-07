@@ -49,11 +49,15 @@ static void init_transport() {
 #endif /* TRANSPORTS */
 }
 
-in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
+void in3_init() {
   if (!initialized) {
     initialized = true;
     init_transport();
     init_verifier();
   }
+}
+
+in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
+  in3_init();
   return in3_for_chain_default(chain_id);
 }

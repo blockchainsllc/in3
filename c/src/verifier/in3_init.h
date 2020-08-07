@@ -46,6 +46,20 @@
 #define in3_for_chain(chain_id) in3_for_chain_auto_init(chain_id)
 #endif
 
+/**
+ * Global initialization for the in3 lib.
+ * Note: This function is not MT-safe and is expected to be called early during
+ *       during program startup (i.e. in main()) before other threads are spawned.
+ */
+void   in3_init();
+
+/**
+ * Auto-init fallback for easy client initialization meant for single-threaded apps.
+ * This function automatically calls `in3_init()` before calling `in3_for_chain_default()`.
+ * To enable this feature, make sure you include this header file (i.e. `in3_init.h`)
+ * before `client.h`. Doing so will replace the call to `in3_for_chain()` with this
+ * function.
+ */
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id);
 
 #endif //IN3_IN3_INIT_H
