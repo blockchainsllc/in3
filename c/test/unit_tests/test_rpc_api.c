@@ -310,6 +310,53 @@ static void test_in3_client_context() {
   in3_free(c);
 }
 
+IN3_IMPORT_TEST NONULL void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, bytes32_t hash);
+
+static uint16_t vh_size(in3_verified_hash_t* hashes, uint16_t max) {
+  uint16_t sz = 0;
+  while (hashes && (sz <= max && hashes[sz].block_number != 0)) sz++;
+  return sz;
+}
+
+static uint16_t vh_equals(in3_verified_hash_t* hashes, const uint64_t blocknumbers[], uint16_t max) {
+  uint16_t i = 0;
+  while (hashes && (i < max && hashes[i].block_number == blocknumbers[i])) i++;
+  return i == max;
+}
+
+static void test_in3_verified_hashes() {
+  in3_t       c     = {.max_verified_hashes = 3, .pending = 0};
+  in3_chain_t chain = {0};
+  bytes32_t   hash  = {0};
+  add_verified(&c, &chain, 500, hash);
+  TEST_ASSERT_EQUAL(1, vh_size(chain.verified_hashes, c.max_verified_hashes));
+  add_verified(&c, &chain, 501, hash);
+  TEST_ASSERT_EQUAL(2, vh_size(chain.verified_hashes, c.max_verified_hashes));
+  add_verified(&c, &chain, 502, hash);
+  TEST_ASSERT_EQUAL(3, vh_size(chain.verified_hashes, c.max_verified_hashes));
+  add_verified(&c, &chain, 503, hash);
+  TEST_ASSERT_EQUAL(3, vh_size(chain.verified_hashes, c.max_verified_hashes));
+
+  c.pending = 1;
+  add_verified(&c, &chain, 504, hash);
+  TEST_ASSERT_EQUAL(4, vh_size(chain.verified_hashes, c.max_verified_hashes));
+  add_verified(&c, &chain, 505, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.max_verified_hashes));
+
+  c.pending = 0;
+  add_verified(&c, &chain, 506, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.max_verified_hashes));
+  add_verified(&c, &chain, 507, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.max_verified_hashes));
+  add_verified(&c, &chain, 508, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.max_verified_hashes));
+  add_verified(&c, &chain, 509, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.max_verified_hashes));
+
+  uint64_t hashes[] = {508, 506, 507, 509, 505};
+  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes, sizeof(hashes) / sizeof(*hashes)));
+}
+
 /*
  * Main
  */

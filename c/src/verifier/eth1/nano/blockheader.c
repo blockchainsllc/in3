@@ -333,7 +333,7 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
 }
 #endif
 
-NONULL static void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, bytes32_t hash) {
+NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, bytes32_t hash) {
   if (!c->max_verified_hashes) return;
   if (!chain->verified_hashes) chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
 
