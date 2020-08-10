@@ -394,7 +394,8 @@ struct in3_t_ {
   uint16_t               finality;             /**< the number of signatures in percent required for the request*/
   uint16_t               chains_length;        /**< number of configured chains */
   uint_fast16_t          max_attempts;         /**< the max number of attempts before giving up*/
-  uint_fast16_t          max_verified_hashes;  /**< max number of verified hashes to cache */
+  uint_fast16_t          max_verified_hashes;  /**< max number of verified hashes to cache (actual number may temporarily exceed this value due to pending requests) */
+  uint_fast16_t          curr_verified_hashes; /**< number of currently allocated verified hashes */
   uint_fast16_t          pending;              /**< number of pending requests created with this instance */
   uint32_t               cache_timeout;        /**< number of seconds requests can be cached. */
   uint32_t               timeout;              /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */

@@ -284,6 +284,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->finality             = 0;
   c->max_attempts         = 7;
   c->max_verified_hashes  = 5;
+  c->curr_verified_hashes = 0;
   c->min_deposit          = 0;
   c->node_limit           = 0;
   c->proof                = PROOF_STANDARD;
@@ -751,7 +752,8 @@ char* in3_configure(in3_t* c, const char* config) {
         // clear newly allocated memory
         memset(chain->verified_hashes + c->max_verified_hashes, 0, (d_long(token) - c->max_verified_hashes) * sizeof(in3_verified_hash_t));
       }
-      c->max_verified_hashes = d_long(token);
+      c->max_verified_hashes  = d_long(token);
+      c->curr_verified_hashes = c->max_verified_hashes;
     }
     else if (token->key == key("timeout")) {
       EXPECT_TOK_U32(token);
@@ -905,6 +907,7 @@ char* in3_configure(in3_t* c, const char* config) {
               chain->verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
               memcpy(chain->verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
             }
+            c->curr_verified_hashes = c->max_verified_hashes;
           }
           else if (cp.token->key == key("nodeList")) {
             EXPECT_TOK_ARR(cp.token);
