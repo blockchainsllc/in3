@@ -336,14 +336,14 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
 NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, bytes32_t hash) {
   if (!c->max_verified_hashes) return;
   if (!chain->verified_hashes) {
-    chain->verified_hashes  = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
-    c->curr_verified_hashes = c->max_verified_hashes;
+    chain->verified_hashes   = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+    c->alloc_verified_hashes = c->max_verified_hashes;
   }
 
   // get index of verified hash with oldest blocknumber
   int      oldest_index  = 0;
   uint64_t oldest_number = UINT64_MAX;
-  for (uint_fast16_t i = 0; i < c->curr_verified_hashes; i++) {
+  for (uint_fast16_t i = 0; i < c->alloc_verified_hashes; i++) {
     if (chain->verified_hashes[i].block_number < oldest_number) {
       oldest_index  = i;
       oldest_number = chain->verified_hashes[i].block_number;
@@ -354,10 +354,10 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
   // if client pending is set and verified hashes are already full, we realloc to accommodate new hash
   if (chain->verified_hashes[oldest_index].block_number != 0 && c->pending) {
     chain->verified_hashes = _realloc(chain->verified_hashes,
-                                      (c->curr_verified_hashes + 1) * sizeof(in3_verified_hash_t),
-                                      c->curr_verified_hashes * sizeof(in3_verified_hash_t));
-    oldest_index           = c->curr_verified_hashes;
-    c->curr_verified_hashes += 1;
+                                      (c->alloc_verified_hashes + 1) * sizeof(in3_verified_hash_t),
+                                      c->alloc_verified_hashes * sizeof(in3_verified_hash_t));
+    oldest_index           = c->alloc_verified_hashes;
+    c->alloc_verified_hashes += 1;
   }
 
   chain->verified_hashes[oldest_index].block_number = number;
