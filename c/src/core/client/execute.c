@@ -91,6 +91,15 @@ NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   if (ctx->cache) in3_cache_free(ctx->cache, !is_sub);
   if (ctx->required) ctx_free_intern(ctx->required, true);
 
+  // shrink verified hashes to max_verified_hashes
+  if (ctx->client->pending == 1 && ctx->client->alloc_verified_hashes > ctx->client->max_verified_hashes) {
+    in3_chain_t* chain                 = in3_get_chain(ctx->client);
+    chain->verified_hashes             = _realloc(chain->verified_hashes,
+                                      ctx->client->max_verified_hashes * sizeof(in3_verified_hash_t),
+                                      ctx->client->alloc_verified_hashes * sizeof(in3_verified_hash_t));
+    ctx->client->alloc_verified_hashes = ctx->client->max_verified_hashes;
+  }
+
   _free(ctx);
 }
 
