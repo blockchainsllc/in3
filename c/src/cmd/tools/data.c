@@ -39,8 +39,8 @@
 #include "../../core/util/data.h"
 #include "../../core/util/colors.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/used_keys.h"
 #include "../../core/util/utils.h"
-#include "used_keys.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

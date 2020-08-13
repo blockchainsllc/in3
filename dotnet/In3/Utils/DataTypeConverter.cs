@@ -57,7 +57,7 @@ namespace In3.Utils
             if (source == 0) return "0x0";
             bool isPositive = source >= 0;
             BigInteger toConvert = isPositive ? source : source * -1;
-            return isPositive ? $"0x{toConvert.ToString("X").TrimStart(charsToTrim)}" : $"-0x{toConvert.ToString("X").TrimStart(charsToTrim)}";
+            return (isPositive ? $"0x{toConvert.ToString("X").TrimStart(charsToTrim)}" : $"-0x{toConvert.ToString("X").TrimStart(charsToTrim)}").ToLower();
         }
 
         internal static string AddHexPrefixer(string integerString)

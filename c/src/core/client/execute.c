@@ -46,6 +46,7 @@
 #include "keys.h"
 #include "nodelist.h"
 #include "plugin.h"
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
@@ -54,6 +55,8 @@
 #define BLACKLISTTIME 24 * 3600
 
 NONULL static void response_free(in3_ctx_t* ctx) {
+  assert_in3_ctx(ctx);
+
   int nodes_count = 1;
   if (ctx->nodes) {
     nodes_count = ctx_nodes_len(ctx->nodes);
@@ -74,9 +77,11 @@ NONULL static void response_free(in3_ctx_t* ctx) {
   ctx->raw_response     = NULL;
   ctx->nodes            = NULL;
   ctx->signers          = NULL;
+  ctx->signers_length   = 0;
 }
 
 NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
+  assert_in3_ctx(ctx);
   // only for intern requests, we actually free the original request-string
   if (is_sub)
     _free(ctx->request_context->c);
@@ -99,6 +104,7 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
 }
 
 NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
+  assert_in3_ctx(ctx);
 
   const in3_t*       c     = ctx->client;
   const in3_chain_t* chain = in3_get_chain(c);
@@ -145,6 +151,7 @@ static void free_urls(char** urls, int len, bool free_items) {
 }
 
 static int add_bytes_to_hash(struct SHA3_CTX* msg_hash, void* data, int len) {
+  assert(data);
   if (msg_hash) sha3_Update(msg_hash, data, len);
   return len;
 }
@@ -167,6 +174,9 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
 }
 
 NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain, bool no_in3) {
+  assert_in3_ctx(c);
+  assert(sb);
+
   static unsigned long rpc_id_counter = 1;
   char                 temp[100];
   in3_t*               rc       = c->client;
@@ -277,10 +287,12 @@ NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
 }
 
 NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
+  assert_in3_ctx(ctx);
+  assert(response_data);
+  assert(len);
 
-  d_track_keynames(1);
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
-  d_track_keynames(0);
+
   if (!ctx->response_context)
     return ctx_set_error(ctx, "Error in JSON-response : ", ctx_set_error(ctx, str_remove_html(response_data), IN3_EINVALDT));
 
@@ -306,6 +318,8 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
 }
 
 NONULL static void blacklist_node(in3_chain_t* chain, node_match_t* node_weight) {
+  assert(chain);
+
   if (node_weight && !node_weight->blocked) {
     in3_node_weight_t* w = ctx_get_node_weight(chain, node_weight);
     if (!w) return;
@@ -332,6 +346,8 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
 }
 
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
+  assert_in3_ctx(ctx);
+  assert(chain);
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
 
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
@@ -367,6 +383,8 @@ static bool is_user_error(d_token_t* error, char** err_msg) {
   return *err_msg && strncmp(*err_msg, "Error:", 6) && strncmp(*err_msg, "TypeError:", 10);
 }
 NONULL static void clear_response(in3_response_t* response) {
+  assert_in3_response(response);
+
   if (response->data.data) { // free up memory
     // clean up invalid data
     _free(response->data.data);
@@ -377,6 +395,8 @@ NONULL static void clear_response(in3_response_t* response) {
 }
 
 static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response, in3_chain_t* chain) {
+  assert_in3_ctx(ctx);
+  assert_in3_response(response);
   if (is_blacklisted(node)) return IN3_ERPC;                                                        // already handled
   if (node) blacklist_node(chain, node);                                                            // we block this node
   ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
@@ -385,6 +405,9 @@ static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_r
 }
 
 static void clean_up_ctx(in3_ctx_t* ctx, node_match_t* node, in3_chain_t* chain) {
+  assert_in3_ctx(ctx);
+  assert(chain);
+
   if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
   if (ctx->error) _free(ctx->error);
   if (ctx->responses) _free(ctx->responses);
@@ -428,6 +451,10 @@ static in3_ret_t handle_payment(in3_ctx_t* ctx, node_match_t* node, int index) {
 }
 
 static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
+  assert_in3_ctx(ctx);
+  assert(chain);
+  assert_in3_response(response);
+
   in3_ret_t res = IN3_OK;
 
   if (response->state || !response->data.len) // reponse has an error

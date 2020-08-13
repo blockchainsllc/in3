@@ -41,10 +41,13 @@
 #include "context_internal.h"
 #include "keys.h"
 #include "plugin.h"
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
 in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
+  assert_in3(client);
+  assert(req_data);
 
   if (client->pending == 0xFFFF) return NULL; // avoid overflows by not creating any new ctx anymore
   in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
@@ -81,10 +84,12 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
 }
 
 char* ctx_get_error_data(in3_ctx_t* ctx) {
-  return ctx->error;
+  return ctx ? ctx->error : "No request context";
 }
 
 char* ctx_get_response_data(in3_ctx_t* ctx) {
+  assert_in3_ctx(ctx);
+
   sb_t sb = {0};
   if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, '[');
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
@@ -104,10 +109,13 @@ char* ctx_get_response_data(in3_ctx_t* ctx) {
 }
 
 ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
+  assert_in3_ctx(ctx);
   return ctx->type;
 }
 
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
+  assert_in3_ctx(c);
+
   d_token_t* r = d_get(c->responses[i], K_ERROR);
   if (!r)
     return IN3_OK;
@@ -123,6 +131,8 @@ in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
 }
 
 in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumber) {
+  assert(ctx);
+
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING) return errnumber;
   if (message) {
@@ -199,6 +209,10 @@ void in3_ctx_add_response(
     const char* data,     /**<  the data or the the string*/
     int         data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
     uint32_t    time) {
+
+  assert_in3_ctx(ctx);
+  assert(data);
+
   if (!ctx->raw_response) {
     ctx_set_error(ctx, "no request created yet!", IN3_EINVAL);
     return;
@@ -214,6 +228,11 @@ void in3_ctx_add_response(
 }
 
 sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
+  assert(hctx);
+  assert_in3_ctx(hctx->ctx);
+  assert(hctx->request);
+  assert(hctx->response);
+
   *hctx->response = _calloc(1, sizeof(in3_response_t));
   return sb_add_chars(&(*hctx->response)->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":");
 }
