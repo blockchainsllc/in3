@@ -46,6 +46,7 @@
 #include "keys.h"
 #include "nodelist.h"
 #include "plugin.h"
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
@@ -54,6 +55,8 @@
 #define BLACKLISTTIME 24 * 3600
 
 NONULL static void response_free(in3_ctx_t* ctx) {
+  assert_in3_ctx(ctx);
+
   int nodes_count = 1;
   if (ctx->nodes) {
     nodes_count = ctx_nodes_len(ctx->nodes);
@@ -74,6 +77,7 @@ NONULL static void response_free(in3_ctx_t* ctx) {
   ctx->raw_response     = NULL;
   ctx->nodes            = NULL;
   ctx->signers          = NULL;
+  ctx->signers_length   = 0;
 }
 
 NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
