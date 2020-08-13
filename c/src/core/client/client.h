@@ -283,16 +283,6 @@ typedef struct in3_pay {
   void*                  cptr;           /**< custom object whill will be passed to functions */
 } in3_pay_t;
 
-/** response-object. 
- * 
- * if the error has a length>0 the response will be rejected
- */
-typedef struct in3_response {
-  uint32_t  time;  /**< measured time (in ms) which will be used for ajusting the weights */
-  in3_ret_t state; /**< the state of the response */
-  sb_t      data;  /**< a stringbuilder to add the result */
-} in3_response_t;
-
 /** Incubed Configuration. 
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.

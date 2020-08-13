@@ -104,4 +104,8 @@ in3_ret_t ctx_handle_failable(
   assert(!ctx->len || ctx->requests[ctx->len - 1]);                                            \
   assert(ctx->error ? (ctx->verification_state < 0) : (ctx->verification_state == IN3_OK || ctx->verification_state == IN3_WAITING));
 
+#define assert_in3_response(r) \
+  assert(r);                   \
+  assert(r->state != IN3_OK || r->data.data);
+
 #endif // CONTEXT_INTERNAL_H
