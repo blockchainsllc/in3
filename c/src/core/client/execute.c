@@ -290,9 +290,9 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
   assert_in3_ctx(ctx);
   assert(response_data);
   assert(len);
-  d_track_keynames(1);
+
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
-  d_track_keynames(0);
+
   if (!ctx->response_context)
     return ctx_set_error(ctx, "Error in JSON-response : ", ctx_set_error(ctx, str_remove_html(response_data), IN3_EINVALDT));
 
