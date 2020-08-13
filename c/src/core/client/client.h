@@ -602,4 +602,16 @@ void in3_register_payment(
 );
 #endif
 
+#define assert_in3(c)                              \
+  assert(c);                                       \
+  assert(c->chain_id);                             \
+  assert(c->plugins);                              \
+  assert(c->chains);                               \
+  assert(c->request_count > 0);                    \
+  assert(c->chains_length > 0);                    \
+  assert(c->chains_length < 10);                   \
+  assert(c->max_attempts > 0);                     \
+  assert(c->proof >= 0 && c->proof <= PROOF_FULL); \
+  assert(c->proof >= 0 && c->proof <= PROOF_FULL);
+
 #endif

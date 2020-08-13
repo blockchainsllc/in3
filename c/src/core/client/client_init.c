@@ -755,6 +755,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("maxAttempts")) {
       EXPECT_TOK_U16(token);
+      EXPECT_CFG(d_int(token), "maxAttempts must be at least 1");
       c->max_attempts = d_int(token);
     }
     else if (token->key == key("keepIn3")) {
@@ -838,6 +839,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("requestCount")) {
       EXPECT_TOK_U8(token);
+      EXPECT_CFG(d_int(token), "requestCount must be at least 1");
       c->request_count = (uint8_t) d_int(token);
     }
     else if (token->key == key("rpc")) {
@@ -1001,7 +1003,7 @@ char* in3_configure(in3_t* c, const char* config) {
   }
 
   EXPECT_CFG(in3_get_chain(c), "chain corresponding to chain id not initialized!");
-
+  assert_in3(c);
 cleanup:
   json_free(cnf);
   return res;
@@ -1085,6 +1087,7 @@ static char* action_name(in3_plugin_act_t action) {
 }
 #endif
 in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  assert(ctx);
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->acts & action) {
       in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
@@ -1102,6 +1105,7 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
 }
 
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+  assert(ctx);
   if (!in3_plugin_is_registered(ctx->client, action))
     return IN3_OK;
 
