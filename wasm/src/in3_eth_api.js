@@ -376,7 +376,7 @@ class EthAPI {
                             return api.sendTransaction(tx)
                         },
                         encodeABI: () => toHex(abiEncode(signature, args)),
-                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: abiEncode(signature, ...args) }).then(toNumber))
+                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
                     })
                     break
                 case 'event':
