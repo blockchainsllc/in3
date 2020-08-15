@@ -360,6 +360,9 @@ struct in3_plugin {
   void*                  data;      /**< opaque pointer to plugin data */
   in3_plugin_act_fn      action_fn; /**< plugin action handler */
   in3_plugin_t*          next;      /**< pointer to next plugin in list */
+#ifdef LOGGING
+  const char* name; /**< name of the plugin */
+#endif
 };
 
 /**

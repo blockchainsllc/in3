@@ -46,6 +46,10 @@
 #define in3_for_chain(chain_id) in3_for_chain_auto_init(chain_id)
 #endif
 
+/** creates a client but initializes the the default plugins if not done yet */
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id);
+
+/** initializes the the default plugins if not done yet. this should be called after loading the library */
+void in3_init();
 
 #endif //IN3_IN3_INIT_H
