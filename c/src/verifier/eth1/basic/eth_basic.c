@@ -216,5 +216,5 @@ in3_ret_t handle_basic(void* pdata, in3_plugin_act_t action, void* pctx) {
 
 in3_ret_t in3_register_eth_basic(in3_t* c) {
   in3_register_eth_nano(c);
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_RPC_HANDLE, handle_basic, NULL, false);
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_RPC_HANDLE, handle_basic, NULL, false);
 }

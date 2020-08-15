@@ -248,16 +248,19 @@ static in3_ret_t fill_signature(in3_ctx_t* ctx, bytes_t* signatures, uint32_t* s
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].address = signatures->data + i + 12;
       sig_data[index].data    = bytes(signatures->data + offset, 32 + bytes_to_int(signatures->data + offset + 32 - 4, 4));
-    } else if (v == 1) {
+    }
+    else if (v == 1) {
       memset(sig_data + index, 0, sizeof(sig_data_t));
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].address = signatures->data + i + 12;
       sig_data[index].data    = bytes(NULL, 0);
-    } else if (v > 26) {
+    }
+    else if (v > 26) {
       if (!ecrecover_sig(tx_hash, signatures->data + i, sig_data[index].address)) return ctx_set_error(ctx, "could not recover the signature", IN3_EINVAL);
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].data = bytes(NULL, 0);
-    } else
+    }
+    else
       return ctx_set_error(ctx, "invalid signature (v-value)", IN3_EINVAL);
     if (is_valid(sig_data, owners, sig_data[index].address, index, owner_len)) index++;
   }
@@ -362,7 +365,8 @@ in3_ret_t gs_prepare_tx(void* plugin_data, in3_plugin_act_t action, void* pctx) 
   if (ret == IN3_OK) {
     if (tmp->len != 32) return ctx_set_error(ctx, "invalid threshold result", IN3_ERPC);
     threshold = bytes_to_int(tmp->data + 28, 4);
-  } else if (ret != IN3_WAITING)
+  }
+  else if (ret != IN3_WAITING)
     return ret;
 
   // get nonce
@@ -370,7 +374,8 @@ in3_ret_t gs_prepare_tx(void* plugin_data, in3_plugin_act_t action, void* pctx) 
   if (ret2 == IN3_OK) {
     if (tmp->len != 32) return ctx_set_error(ctx, "invalid nonce result", IN3_ERPC);
     nonce = bytes_to_long(tmp->data + 24, 8);
-  } else if (ret2 != IN3_WAITING)
+  }
+  else if (ret2 != IN3_WAITING)
     return ret2;
   else
     ret = IN3_WAITING;
@@ -426,5 +431,5 @@ in3_ret_t add_gnosis_safe(in3_t* in3, address_t adr) {
   multisig_t* ms = _malloc(sizeof(multisig_t));
   ms->type       = MS_GNOSIS_SAFE;
   memcpy(ms->address, adr, 20);
-  return in3_plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM, gs_prepare_tx, ms, false);
+  return plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM, gs_prepare_tx, ms, false);
 }

@@ -80,5 +80,5 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
 }
 
 in3_ret_t in3_register_eth_nano(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_eth_nano, NULL, false);
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_eth_nano, NULL, false);
 }

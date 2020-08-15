@@ -491,7 +491,7 @@ in3_ret_t in3_register_btc(in3_t* c) {
   tc->max_daps          = 20;
   tc->max_diff          = 10;
   tc->dap_limit         = 20;
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
 }
 /*
 static void print_hex(char* prefix, uint8_t* data, int len) {

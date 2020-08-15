@@ -52,7 +52,10 @@
 
 /** registers a plugin with the client */
 in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex);
+/** registers a plugin with the client */
+in3_ret_t in3_plugin_register_with_name(const char* name, in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex);
 
+#define plugin_register(c, acts, action_fn, data, replace_ex) in3_plugin_register_with_name(__func__ ":" #action_fn, c, acts, action_fn, data, replace_ex)
 /**
  * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
  */

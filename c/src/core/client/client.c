@@ -323,6 +323,6 @@ void in3_set_storage_handler(
   handler->get_item              = get_item;
   handler->set_item              = set_item;
   handler->clear                 = clear;
-  in3_plugin_register(c, PLGN_ACT_CACHE | PLGN_ACT_TERM, handle_cache, handler, true);
+  plugin_register(c, PLGN_ACT_CACHE | PLGN_ACT_TERM, handle_cache, handler, true);
   in3_cache_init(c);
 }

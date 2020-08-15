@@ -128,7 +128,7 @@ static in3_ret_t            handle_legacy_transport(void* plugin_data, in3_plugi
 }
 static in3_ret_t register_legacy(in3_t* c) {
   assert(c);
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, handle_legacy_transport, NULL, true);
+  return plugin_register(c, PLGN_ACT_TRANSPORT, handle_legacy_transport, NULL, true);
 }
 
 void in3_set_default_legacy_transport(
@@ -1009,7 +1009,7 @@ cleanup:
   return res;
 }
 
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
+in3_ret_t in3_plugin_register_with_name(const char* name, in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
   if (!acts || !action_fn)
     return IN3_EINVAL;
 
@@ -1020,6 +1020,9 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
       if ((*p)->acts & PLGN_ACT_TERM) (*p)->action_fn((*p)->data, PLGN_ACT_TERM, c);
       (*p)->action_fn = action_fn;
       (*p)->data      = data;
+#ifdef LOGGING
+      (*p)->name = name;
+#endif
       return IN3_OK;
     }
 
@@ -1036,8 +1039,14 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
   (*p)->action_fn = action_fn;
   (*p)->data      = data;
   (*p)->next      = NULL;
+#ifdef LOGGING
+  (*p)->name = name;
+#endif
   c->plugin_acts |= acts;
   return IN3_OK;
+}
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
+  return in3_plugin_register_with_name(NULL, c, acts, action_fn, data, replace_ex);
 }
 
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {
