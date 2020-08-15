@@ -30,6 +30,7 @@
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - export CROSS_DOCKER_IN_DOCKER=false
     - export RUST_BACKTRACE=1
+    - export RUST_TEST_THREADS=1
     - export OPENSSL_DIR=/usr/lib/ssl
     - mkdir -p rust/in3-sys/in3-core/c
     - cp -r c/CMakeLists.txt c/macro.cmake c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
