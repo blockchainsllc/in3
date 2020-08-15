@@ -1009,7 +1009,7 @@ cleanup:
   return res;
 }
 
-in3_ret_t in3_plugin_register_with_name(const char* name, in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
+in3_ret_t in3_plugin_register(const char* name, in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
   if (!acts || !action_fn)
     return IN3_EINVAL;
 
@@ -1044,9 +1044,6 @@ in3_ret_t in3_plugin_register_with_name(const char* name, in3_t* c, in3_plugin_s
 #endif
   c->plugin_acts |= acts;
   return IN3_OK;
-}
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
-  return in3_plugin_register_with_name(NULL, c, acts, action_fn, data, replace_ex);
 }
 
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {

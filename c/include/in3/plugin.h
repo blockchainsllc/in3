@@ -51,11 +51,17 @@
 #define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
 
 /** registers a plugin with the client */
-in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex);
-/** registers a plugin with the client */
-in3_ret_t in3_plugin_register_with_name(const char* name, in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex);
+in3_ret_t in3_plugin_register(
+    const char*            name,      /**< the name of the plugin (optional), which is ignored if LOGGIN is not defined */
+    in3_t*                 c,         /**< the client */
+    in3_plugin_supp_acts_t acts,      /**< the actions to register for combined with OR */
+    in3_plugin_act_fn      action_fn, /**< the plugin action function */
+    void*                  data,      /**< an optional data or config struct which will be passed to the action function when executed */
+    bool                   replace_ex /**< if this is true and an plugin with the same action is already registered, it will replace it */
+);
 
-#define plugin_register(c, acts, action_fn, data, replace_ex) in3_plugin_register_with_name(#action_fn, c, acts, action_fn, data, replace_ex)
+/** registers a plugin and uses the function name as plugin name */
+#define plugin_register(c, acts, action_fn, data, replace_ex) in3_plugin_register(#action_fn, c, acts, action_fn, data, replace_ex)
 /**
  * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
  */
