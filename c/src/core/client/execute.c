@@ -79,7 +79,20 @@ NONULL static void response_free(in3_ctx_t* ctx) {
   ctx->signers          = NULL;
   ctx->signers_length   = 0;
 }
-
+NONULL void in3_check_verified_hashes(in3_t* c) {
+  // shrink verified hashes to max_verified_hashes
+  if (c->pending <= 1 && c->alloc_verified_hashes > c->max_verified_hashes) {
+    in3_chain_t* chain = in3_get_chain(c);
+    // we want to keep the newest entries, so we move them overriding the oldest
+    memmove(chain->verified_hashes,
+            chain->verified_hashes + (c->alloc_verified_hashes - c->max_verified_hashes),
+            sizeof(in3_verified_hash_t) * c->max_verified_hashes);
+    chain->verified_hashes   = _realloc(chain->verified_hashes,
+                                      c->max_verified_hashes * sizeof(in3_verified_hash_t),
+                                      c->alloc_verified_hashes * sizeof(in3_verified_hash_t));
+    c->alloc_verified_hashes = c->max_verified_hashes;
+  }
+}
 NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   assert_in3_ctx(ctx);
   // only for intern requests, we actually free the original request-string
@@ -95,15 +108,7 @@ NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   if (ctx->cache) in3_cache_free(ctx->cache, !is_sub);
   if (ctx->required) ctx_free_intern(ctx->required, true);
 
-  // shrink verified hashes to max_verified_hashes
-  if (ctx->client->pending == 1 && ctx->client->alloc_verified_hashes > ctx->client->max_verified_hashes) {
-    in3_chain_t* chain                 = in3_get_chain(ctx->client);
-    chain->verified_hashes             = _realloc(chain->verified_hashes,
-                                      ctx->client->max_verified_hashes * sizeof(in3_verified_hash_t),
-                                      ctx->client->alloc_verified_hashes * sizeof(in3_verified_hash_t));
-    ctx->client->alloc_verified_hashes = ctx->client->max_verified_hashes;
-  }
-
+  in3_check_verified_hashes(ctx->client);
   _free(ctx);
 }
 

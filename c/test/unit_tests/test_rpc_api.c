@@ -308,6 +308,7 @@ static void test_in3_client_context() {
 }
 
 IN3_IMPORT_TEST NONULL void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, bytes32_t hash);
+void                        in3_check_verified_hashes(in3_t* c);
 
 static uint16_t vh_size(in3_verified_hash_t* hashes, uint16_t max) {
   uint16_t sz = 0;
@@ -322,36 +323,33 @@ static uint16_t vh_equals(in3_verified_hash_t* hashes, const uint64_t blocknumbe
 }
 
 static void test_in3_verified_hashes() {
-  in3_t       c     = {.max_verified_hashes = 3, .pending = 0};
-  in3_chain_t chain = {0};
+  in3_chain_t chain = {.chain_id = 1};
   bytes32_t   hash  = {0};
+  in3_t       c     = {.max_verified_hashes = 3, .chains_length = 1, .chain_id = 1, .pending = 0, .chains = &chain};
   add_verified(&c, &chain, 500, hash);
   TEST_ASSERT_EQUAL(1, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
   add_verified(&c, &chain, 501, hash);
   TEST_ASSERT_EQUAL(2, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
   add_verified(&c, &chain, 502, hash);
   TEST_ASSERT_EQUAL(3, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+
   add_verified(&c, &chain, 503, hash);
-  TEST_ASSERT_EQUAL(3, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-
-  c.pending = 1;
-  add_verified(&c, &chain, 504, hash);
   TEST_ASSERT_EQUAL(4, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &chain, 504, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
   add_verified(&c, &chain, 505, hash);
-  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  TEST_ASSERT_EQUAL(6, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
 
-  c.pending = 0;
-  add_verified(&c, &chain, 506, hash);
-  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-  add_verified(&c, &chain, 507, hash);
-  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-  add_verified(&c, &chain, 508, hash);
-  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-  add_verified(&c, &chain, 509, hash);
-  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  uint64_t hashes1[] = {500, 501, 502, 503, 504, 505};
+  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
+  c.pending = 2;
+  in3_check_verified_hashes(&c);
+  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
+  c.pending = 1;
+  in3_check_verified_hashes(&c);
 
-  uint64_t hashes[] = {508, 506, 507, 509, 505};
-  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes, sizeof(hashes) / sizeof(*hashes)));
+  uint64_t hashes2[] = {503, 504, 505};
+  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes2, sizeof(hashes2) / sizeof(*hashes2)));
   _free(chain.verified_hashes);
 }
 

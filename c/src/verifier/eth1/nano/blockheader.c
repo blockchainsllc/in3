@@ -340,28 +340,28 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
     c->alloc_verified_hashes = c->max_verified_hashes;
   }
 
-  // get index of verified hash with oldest blocknumber
-  int      oldest_index  = 0;
-  uint64_t oldest_number = UINT64_MAX;
-  for (uint_fast16_t i = 0; i < c->alloc_verified_hashes; i++) {
-    if (chain->verified_hashes[i].block_number < oldest_number) {
-      oldest_index  = i;
-      oldest_number = chain->verified_hashes[i].block_number;
-      if (oldest_number == 0) break;
+  int last_free = -1;
+  for (int i = 0; last_free == -1 && i < (int) c->alloc_verified_hashes; i++) {
+    if (chain->verified_hashes[i].block_number == 0)
+      last_free = i;
+    else if (chain->verified_hashes[i].block_number == number) {
+      if (memcmp(chain->verified_hashes[i].hash, hash, 32))
+        last_free = i;
+      else
+        return;
     }
   }
 
-  // if client pending is set and verified hashes are already full, we realloc to accommodate new hash
-  if (chain->verified_hashes[oldest_index].block_number != 0 && c->pending) {
-    chain->verified_hashes = _realloc(chain->verified_hashes,
-                                      (c->alloc_verified_hashes + 1) * sizeof(in3_verified_hash_t),
-                                      c->alloc_verified_hashes * sizeof(in3_verified_hash_t));
-    oldest_index           = c->alloc_verified_hashes;
+  if (last_free == -1) {
+    last_free = c->alloc_verified_hashes;
     c->alloc_verified_hashes += 1;
+    chain->verified_hashes = _realloc(chain->verified_hashes,
+                                      c->alloc_verified_hashes * sizeof(in3_verified_hash_t),
+                                      last_free * sizeof(in3_verified_hash_t));
   }
 
-  chain->verified_hashes[oldest_index].block_number = number;
-  memcpy(chain->verified_hashes[oldest_index].hash, hash, 32);
+  chain->verified_hashes[last_free].block_number = number;
+  memcpy(chain->verified_hashes[last_free].hash, hash, 32);
 }
 
 /** verify the header */
