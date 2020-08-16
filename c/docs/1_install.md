@@ -75,13 +75,6 @@ Default-Value: `-DCOLOR=ON`
 Default-Value: `-DDEV_NO_INTRN_PTR=ON`
 
 
-#### ERR_MSG
-
-  if set human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)
-
-Default-Value: `-DERR_MSG=ON`
-
-
 #### ESP_IDF
 
   include support for ESP-IDF microcontroller framework
@@ -180,6 +173,20 @@ Default-Value: `-DJAVA=OFF`
 Default-Value: `-DLEDGER_NANO=OFF`
 
 
+#### LOGGING
+
+  if set logging and human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)
+
+Default-Value: `-DLOGGING=ON`
+
+
+#### MULTISIG
+
+  add capapbility to sign with a multig. Currrently only gnosis safe is supported
+
+Default-Value: `-DMULTISIG=OFF`
+
+
 #### PAY_ETH
 
   support for direct Eth-Payment
@@ -276,5 +283,12 @@ Default-Value: `-DWASM_EMMALLOC=ON`
   intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)
 
 Default-Value: `-DWASM_SYNC=OFF`
+
+
+#### ZKSYNC
+
+  add RPC-functioin to handle zksync-payments
+
+Default-Value: `-DZKSYNC=OFF`
 
 
