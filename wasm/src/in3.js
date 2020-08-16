@@ -388,6 +388,7 @@ IN3.freeAll = function () {
     Object.keys(clients).forEach(_ => clients[_].free())
 }
 
+
 // the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
 IN3.onInit = function (fn) {
     return new Promise((resolve, reject) => {
@@ -439,4 +440,8 @@ function setResponse(ctx, msg, i, isError) {
     else
         in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'string'], [ctx, i, isError, msg])
     //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
+}
+
+function check_ready() {
+    if (_in3_listeners) throw new Error('The Incubed wasm runtime is not initialized yet! Please use onInit() to execute it when ready.')
 }
