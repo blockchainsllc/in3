@@ -1,3 +1,4 @@
+# runs only if java-sources where changes or develop or master
 .only_java:
   rules:
     - changes:
