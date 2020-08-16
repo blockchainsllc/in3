@@ -287,6 +287,13 @@ describe('EthAPI-Tests', () => {
         assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].log.address)
     })
 
+
+    it('eth.erc777()', async () => {
+        const erc = createClient().eth.web3ContractAt(require('./abi/erc777.json'), '0x003add2e145a20b5d85658d03f7107c51989d300')
+        const data = erc.methods.mint("0x60cca2a21be53153bd68ab21e835ad739a94fabd", 1, "", "").encodeABI()
+        assert.equal('0xdcdc7dd000000000000000000000000060cca2a21be53153bd68ab21e835ad739a94fabd0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', data) // uint8 -> number
+    })
+
     it('eth.web3ContractAt()', async () => {
         //        let w = createClient({}, ['weth.Transfer', 'WETH']).eth.contractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
         mockResponse('eth_call', 'weth.name')
