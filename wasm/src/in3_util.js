@@ -22,6 +22,7 @@ if (typeof (_free) == 'undefined') _free = function (ptr) {
  * @param  {...any} params_values 
  */
 function call_string(name, ...params_values) {
+    check_ready()
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
     const result = UTF8ToString(res)
@@ -31,6 +32,7 @@ function call_string(name, ...params_values) {
 }
 
 function call_buffer(name, len, ...params_values) {
+    check_ready()
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
     const result = HEAPU8.slice(res, res + len)
@@ -124,7 +126,7 @@ function toBigInt(val) {
 function keccak(val) {
     if (!val) return val
     val = toUint8Array(val)
-    return toBuffer(call_buffer('keccak', 32, val, val.byteLength))
+    return toBuffer(call_buffer('hash_keccak', 32, val, val.byteLength))
 }
 
 function toChecksumAddress(val, chainId = 0) {

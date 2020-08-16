@@ -55,8 +55,8 @@
 #endif
 #if defined(__clang_analyzer__) || defined(GCC_ANALYZER)
 #define NONULL_FOR(args) __attribute__((nonnull args))
-#define NONULL __attribute__((nonnull))
-#define RETURNS_NONULL __attribute__((returns_nonnull))
+#define NONULL           __attribute__((nonnull))
+#define RETURNS_NONULL   __attribute__((returns_nonnull))
 #else
 #define NONULL_FOR(args)
 #define NONULL
@@ -88,9 +88,9 @@
 #endif /* __ZEPHYR__ */
 
 #ifdef TEST
-#define _malloc(s) t_malloc(s, __FILE__, __func__, __LINE__)
-#define _calloc(n, s) t_calloc(n, s, __FILE__, __func__, __LINE__)
-#define _free(p) t_free(p, __FILE__, __func__, __LINE__)
+#define _malloc(s)        t_malloc(s, __FILE__, __func__, __LINE__)
+#define _calloc(n, s)     t_calloc(n, s, __FILE__, __func__, __LINE__)
+#define _free(p)          t_free(p, __FILE__, __func__, __LINE__)
 #define _realloc(p, s, o) t_realloc(p, s, o, __FILE__, __func__, __LINE__)
 size_t mem_get_max_heap();
 void*  t_malloc(size_t size, char* file, const char* func, int line);
@@ -102,14 +102,14 @@ void   mem_reset(int cnt);
 void   memstack();
 #else /* TEST */
 #ifdef LOGGING
-#define _malloc(s) _malloc_(s, __FILE__, __func__, __LINE__)
-#define _calloc(n, s) _calloc_(n, s, __FILE__, __func__, __LINE__)
-#define _free(p) _free_(p)
+#define _malloc(s)        _malloc_(s, __FILE__, __func__, __LINE__)
+#define _calloc(n, s)     _calloc_(n, s, __FILE__, __func__, __LINE__)
+#define _free(p)          _free_(p)
 #define _realloc(p, s, o) _realloc_(p, s, o, __FILE__, __func__, __LINE__)
 #else
-#define _malloc(s) _malloc_(s, "F", "F", 0)
-#define _calloc(n, s) _calloc_(n, s, "F", "F", 0)
-#define _free(p) _free_(p)
+#define _malloc(s)        _malloc_(s, "F", "F", 0)
+#define _calloc(n, s)     _calloc_(n, s, "F", "F", 0)
+#define _free(p)          _free_(p)
 #define _realloc(p, s, o) _realloc_(p, s, o, "F", "F", 0)
 #endif
 RETURNS_NONULL void* _malloc_(size_t size, char* file, const char* func, int line);

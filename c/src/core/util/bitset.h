@@ -54,13 +54,13 @@ typedef uint32_t uintbs_t;
 #endif
 
 // Helper macros
-#define BIT_SET(_a_, _b_) ((_a_) |= (1ULL << (_b_)))
-#define BIT_CLEAR(_a_, _b_) ((_a_) &= ~(1ULL << (_b_)))
-#define BIT_FLIP(_a_, _b_) ((_a_) ^= (1ULL << (_b_)))
-#define BIT_CHECK(_a_, _b_) (!!((_a_) & (1ULL << (_b_))))
-#define BITMASK_SET(_x_, _y_) ((_x_) |= (_y_))
-#define BITMASK_CLEAR(_x_, _y_) ((_x_) &= (~(_y_)))
-#define BITMASK_FLIP(_x_, _y_) ((_x_) ^= (_y_))
+#define BIT_SET(_a_, _b_)           ((_a_) |= (1ULL << (_b_)))
+#define BIT_CLEAR(_a_, _b_)         ((_a_) &= ~(1ULL << (_b_)))
+#define BIT_FLIP(_a_, _b_)          ((_a_) ^= (1ULL << (_b_)))
+#define BIT_CHECK(_a_, _b_)         (!!((_a_) & (1ULL << (_b_))))
+#define BITMASK_SET(_x_, _y_)       ((_x_) |= (_y_))
+#define BITMASK_CLEAR(_x_, _y_)     ((_x_) &= (~(_y_)))
+#define BITMASK_FLIP(_x_, _y_)      ((_x_) ^= (_y_))
 #define BITMASK_CHECK_ALL(_x_, _y_) (((_x_) & (_y_)) == (_y_))
 #define BITMASK_CHECK_ANY(_x_, _y_) ((_x_) & (_y_))
 #define BITMASK_SET_BOOL(_x_, _y_, _v_) \
@@ -68,8 +68,8 @@ typedef uint32_t uintbs_t;
 #define BITS_MSB(x, b) ((x) >> (b))
 #define BITS_LSB(x, b) ((x) << (b))
 
-#define bs_set(_bs_, _pos_) bs_modify(_bs_, _pos_, BS_SET)
-#define bs_clear(_bs_, _pos_) bs_modify(_bs_, _pos_, BS_CLEAR)
+#define bs_set(_bs_, _pos_)    bs_modify(_bs_, _pos_, BS_SET)
+#define bs_clear(_bs_, _pos_)  bs_modify(_bs_, _pos_, BS_CLEAR)
 #define bs_toggle(_bs_, _pos_) bs_modify(_bs_, _pos_, BS_TOGGLE)
 
 typedef struct {

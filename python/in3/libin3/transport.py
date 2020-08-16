@@ -78,7 +78,7 @@ class In3Response:
             index (int): Positional argument related to which url on the `In3Request` list this response is associated with. Use `In3Request#url_at` to get the url. The value of both parameters are shared
             msg (str): The actual response to be returned to in3 client
         """
-        libin3_in3_req_add_response(self.in3_response, index, False, msg, len(msg))
+        libin3_in3_req_add_response(self.in3_response, index, False, msg, len(msg), 0)
 
     def failure(self, index: int, msg: bytes):
         """
@@ -87,7 +87,7 @@ class In3Response:
             index (int): Positional argument related to which url on the `In3Request` list this response is associated with. Use `In3Request#url_at` to get the url. The value of both parameters are shared.
             msg (str): The actual response to be returned to in3 client.
         """
-        libin3_in3_req_add_response(self.in3_response, index, True, msg, len(msg))
+        libin3_in3_req_add_response(self.in3_response, index, True, msg, len(msg), 0)
 
 
 # TODO: Move to a OO perspective
@@ -97,12 +97,10 @@ def factory(transport_fn):
     Decorates a transport function augmenting its capabilities for native interoperability
     """
 
-    def new(native_request: NativeRequest):
-        request = In3Request(native_request)
-        response = In3Response(native_request)
+    @c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
+    def new(native_payload: NativeRequest or NativeResponse):
+        request = In3Request(native_payload)
+        response = In3Response(native_payload)
         return transport_fn(request, response)
 
-    # the transport function to be implemented by the transport provider.
-    # typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
-    c_transport_fn_interface = c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
-    return c_transport_fn_interface(new)
+    return new

@@ -40,3 +40,49 @@ pub mod prelude {
     pub use crate::transport::{HttpTransport, MockJsonTransport, MockTransport};
     pub use crate::types::*;
 }
+
+/// Initializes the in3 library
+///
+/// This function is called automatically in the following scenarios:
+/// - Creating a new [`Client`][in3::Client] handle.
+/// - At program startup on Windows, macOS, Linux, Android, or FreeBSD systems
+///
+/// This should be sufficient for most applications and scenarios, but in any
+/// other case, it is strongly recommended that you call this function manually
+/// as soon as your program starts.
+///
+/// Calling this function more than once is harmless and has no effect.
+#[inline]
+pub fn init() {
+    use std::sync::Once;
+
+    /// Used to prevent concurrent or duplicate initialization.
+    static INIT: Once = Once::new();
+
+    /// An exported constructor function. On supported platforms, this will be
+    /// invoked automatically before the program's `main` is called.
+    #[cfg_attr(
+    any(target_os = "linux", target_os = "freebsd", target_os = "android"),
+    link_section = ".init_array"
+    )]
+    #[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
+    #[cfg_attr(target_os = "windows", link_section = ".CRT$XCU")]
+    static INIT_CTOR: extern "C" fn() = init_inner;
+
+    /// This is the body of our constructor function.
+    #[cfg_attr(
+    any(target_os = "linux", target_os = "android"),
+    link_section = ".text.startup"
+    )]
+    extern "C" fn init_inner() {
+        INIT.call_once(|| {
+            unsafe {
+                in3_sys::in3_init();
+            }
+        });
+    }
+
+    // We invoke our init function through our static to ensure the symbol isn't
+    // optimized away by a bug: https://github.com/rust-lang/rust/issues/47384
+    INIT_CTOR();
+}

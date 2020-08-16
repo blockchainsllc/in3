@@ -23,14 +23,12 @@ public class ClientConfiguration implements Configuration {
   private Boolean bootWeights;
   private Boolean keepIn3;
   private Boolean useHttp;
-  private Long    maxCodeCache;
   private Long    timeout;
   private Long    minDeposit;
   private Long    nodeProps;
   private Long    nodeLimit;
   private Integer replaceLatestBlock;
   private String  rpc;
-  private Long    maxBlockCache;
   private Boolean stats;
 
   private String serialzedState;
@@ -149,15 +147,6 @@ public class ClientConfiguration implements Configuration {
     this.useHttp = useHttp;
   }
 
-  public Long getMaxCodeCache() {
-    return maxCodeCache;
-  }
-
-  /** sets number of max bytes used to cache the code in memory */
-  public void setMaxCodeCache(long maxCodeCache) {
-    this.maxCodeCache = maxCodeCache;
-  }
-
   public Long getTimeout() {
     return timeout;
   }
@@ -221,15 +210,6 @@ public class ClientConfiguration implements Configuration {
     this.rpc = rpc;
   }
 
-  public Long getMaxBlockCache() {
-    return maxBlockCache;
-  }
-
-  /** sets the number of blocks cached in memory */
-  public void setMaxBlockCache(long maxBlockCache) {
-    this.maxBlockCache = maxBlockCache;
-  }
-
   public HashMap<Long, ChainConfiguration> getNodesConfig() {
     return chainsConfig;
   }
@@ -291,9 +271,6 @@ public class ClientConfiguration implements Configuration {
     if (isUseHttp() != null) {
       JSON.appendKey(sb, "useHttp", isUseHttp());
     }
-    if (getMaxCodeCache() != null) {
-      JSON.appendKey(sb, "maxCodeCache", getMaxCodeCache());
-    }
     if (getTimeout() != null) {
       JSON.appendKey(sb, "timeout", getTimeout());
     }
@@ -311,9 +288,6 @@ public class ClientConfiguration implements Configuration {
     }
     if (getRpc() != null) {
       JSON.appendKey(sb, "rpc", getRpc());
-    }
-    if (getMaxBlockCache() != null) {
-      JSON.appendKey(sb, "maxBlockCache", getMaxBlockCache());
     }
 
     if (!chainsConfig.isEmpty()) {

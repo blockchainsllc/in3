@@ -39,11 +39,26 @@
 extern "C" {
 #endif
 
-#include "../../src/core/client/client.h"
-void      add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
-int       add_response_test(char* test, char* needed_params);
-in3_ret_t test_transport(in3_request_t* req);
-in3_ret_t mock_transport(in3_request_t* req);
+#include "../../src/core/client/plugin.h"
+void add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
+int  add_response_test(char* test, char* needed_params);
+
+in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
+
+static inline in3_ret_t register_transport(in3_t* c, in3_plugin_act_fn fn) {
+  return plugin_register(c, PLGN_ACT_TRANSPORT, fn, NULL, true);
+}
+
+static inline void replace_transport(in3_t* c, in3_plugin_act_fn custom_transport) {
+  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+    if (p->acts & PLGN_ACT_TRANSPORT_SEND) {
+      p->action_fn = custom_transport;
+      return;
+    }
+  }
+  plugin_register(c, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
+}
 
 #ifdef __cplusplus
 }

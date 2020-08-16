@@ -38,9 +38,8 @@ typedef enum {
 } ms_type_t;
 
 typedef struct ms {
-  in3_signer_t* signer;
-  ms_type_t     type;
-  address_t     address;
+  ms_type_t type;
+  address_t address;
 } multisig_t;
 
-void add_gnosis_safe(in3_t* in3, address_t adr);
+in3_ret_t add_gnosis_safe(in3_t* in3, address_t adr);

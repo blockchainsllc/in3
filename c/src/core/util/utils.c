@@ -31,7 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
+#define _POSIX_C_SOURCE 199309L
 #include "utils.h"
 #include "../../third-party/crypto/sha3.h"
 #include "bytes.h"
@@ -40,10 +40,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#if defined(_WIN32) || defined(WIN32)
+#include <windows.h>
+#endif
+
 #ifndef __ZEPHYR__
 #include <sys/time.h>
 #else
 #include <posix/sys/time.h>
+#endif
+
+#ifdef ESP_IDF
+#include <unistd.h>
 #endif
 
 #ifdef __ZEPHYR__
@@ -61,7 +70,8 @@ static void srand_zephyr(unsigned int s) {
 static time_func  in3_time_fn  = time_zephyr;
 static rand_func  in3_rand_fn  = rand_zephyr;
 static srand_func in3_srand_fn = srand_zephyr;
-#else /* __ZEPHYR__ */
+#else
+/* __ZEPHYR__ */
 static uint64_t time_libc(void* t) {
   UNUSED_VAR(t);
   return time(t);
@@ -77,6 +87,23 @@ static time_func  in3_time_fn  = time_libc;
 static rand_func  in3_rand_fn  = rand_libc;
 static srand_func in3_srand_fn = srand_libc;
 #endif /* __ZEPHYR__ */
+
+void in3_sleep(uint32_t ms) {
+#if defined(_WIN32) || defined(WIN32)
+  Sleep(ms);
+#elif defined(__ZEPHYR__)
+  k_sleep(ms);
+#elif defined(ESP_IDF)
+  usleep(ms);
+#elif defined(WASM)
+  UNUSED_VAR(ms);
+#else
+  struct timespec ts;
+  ts.tv_sec  = ms / 1000;             // whole seconds
+  ts.tv_nsec = (ms % 1000000) * 1000; // remainder, in nanoseconds
+  nanosleep(&ts, NULL);
+#endif
+}
 
 void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst) {
   if (src_len < 32) memset(dst, 0, 32 - src_len);
@@ -166,11 +193,11 @@ int bytes_to_hex(const uint8_t* buffer, int len, char* out) {
   return len * 2;
 }
 
-int sha3_to(bytes_t* data, void* dst) {
-  if (data == NULL) return -1;
+/** writes 32 bytes to the pointer. */
+int keccak(bytes_t data, void* dst) {
   struct SHA3_CTX ctx;
   sha3_256_Init(&ctx);
-  sha3_Update(&ctx, data->data, data->len);
+  if (data.len) sha3_Update(&ctx, data.data, data.len);
   keccak_Final(&ctx, dst);
   return 0;
 }
@@ -208,7 +235,8 @@ uint64_t char_to_long(const char* a, int l) {
     for (int i = l - 1; i > 1; i--)
       val |= ((uint64_t) hexchar_to_int(a[i])) << (4 * (l - 1 - i));
     return val;
-  } else if (l < 12) {
+  }
+  else if (l < 12) {
     char temp[12];
     strncpy(temp, a, l);
     temp[l] = 0;

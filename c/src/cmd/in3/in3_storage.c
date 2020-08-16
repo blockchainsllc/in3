@@ -34,7 +34,7 @@
  *******************************************************************************/
 
 #include "in3_storage.h"
-#include "../../core/client/client.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 
 #include <stdio.h>
@@ -133,7 +133,8 @@ static void rm_recurs(const char* path) {
       if ((sub_dir = opendir(abs_path))) {
         closedir(sub_dir);
         rm_recurs(abs_path);
-      } else {
+      }
+      else {
         if ((file = fopen(abs_path, "r"))) {
           fclose(file);
           remove(abs_path);
@@ -163,4 +164,26 @@ void storage_clear(void* cptr) {
   free(_HOME_DIR);
   _HOME_DIR = NULL;
   get_storage_dir();
+}
+
+in3_ret_t handle_storage(void* data, in3_plugin_act_t action, void* arg) {
+  in3_cache_ctx_t* ctx = arg;
+  switch (action) {
+    case PLGN_ACT_CACHE_GET: {
+      ctx->content = storage_get_item(data, ctx->key);
+      return ctx->content ? IN3_OK : IN3_EIGNORE;
+    }
+    case PLGN_ACT_CACHE_SET: {
+      storage_set_item(data, ctx->key, ctx->content);
+      return IN3_OK;
+    }
+    case PLGN_ACT_CACHE_CLEAR: {
+      storage_clear(data);
+      return IN3_OK;
+    }
+    default: return IN3_EINVAL;
+  }
+}
+in3_ret_t in3_register_file_storage(in3_t* c) {
+  return plugin_register(c, PLGN_ACT_CACHE, handle_storage, NULL, true);
 }

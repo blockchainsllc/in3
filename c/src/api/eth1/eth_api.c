@@ -51,7 +51,8 @@ static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
   else if (data.len) {
     memcpy(dst + len - data.len, data.data, data.len);
     memset(dst, 0, len - data.len);
-  } else
+  }
+  else
     memset(dst, 0, len);
 }
 
@@ -73,7 +74,8 @@ static void params_add_number(sb_t* sb, uint64_t num) {
 static void params_add_blk_num_t(sb_t* sb, eth_blknum_t bn) {
   if (bn.is_u64) {
     params_add_number(sb, bn.u64);
-  } else {
+  }
+  else {
     if (sb->len > 1) sb_add_chars(sb, ", \"");
     switch (bn.def) {
       case BLK_LATEST:
@@ -159,9 +161,10 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       if (include_tx) {
         for (d_iterator_t it = d_iter(txs); it.left; d_iter_next(&it))
           s += get_tx_size(it.token); // add all struct-size for each transaction
-      } else                          // or
-        s += 32 * d_len(txs);         // just the transaction hashes
-      s += align(extra.len);          // extra-data
+      }
+      else                    // or
+        s += 32 * d_len(txs); // just the transaction hashes
+      s += align(extra.len);  // extra-data
       for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
         bytes_t t = d_to_bytes(sf.token);
         rlp_decode(&t, 0, &t);
@@ -368,7 +371,8 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     sb_add_bytes(params, "", &req->call_data->b, 1, false);
     sb_add_char(params, '}');
     params_add_blk_num_t(params, block);
-  } else {
+  }
+  else {
     api_set_error(0, req->error ? req->error : "Error parsing the request-data");
     sb_free(params);
     req_free(req);
@@ -379,7 +383,8 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     if (only_estimate) {
       req_free(req);
       rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
-    } else {
+    }
+    else {
       rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
     }
   }
@@ -402,11 +407,13 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
         nanosleep((const struct timespec[]){{timeout / 1000, ((long) timeout % 1000) * 1000000L}}, NULL);
 #endif
         return wait_for_receipt(in3, params, timeout + timeout, count - 1);
-      } else {
+      }
+      else {
         api_set_error(1, "timeout waiting for the receipt");
         return NULL;
       }
-    } else {
+    }
+    else {
       //
       char* c = d_create_json(result);
       ctx_free(ctx);
@@ -481,12 +488,14 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
           if (blk) {
             memcpy((*block_hashes)[j], blk->hash, 32);
             free(blk);
-          } else
+          }
+          else
             return IN3_EFIND;
         }
         f->last_block = blkno;
         return (int) blkcount;
-      } else {
+      }
+      else {
         *block_hashes = NULL;
         return 0;
       }
@@ -695,10 +704,9 @@ in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {
   char tmp[64], msg[41], *hexadr;
   int  p = chain_id ? sprintf(tmp, "%i0x", (uint32_t) chain_id) : 0;
   bytes_to_hex(adr, 20, tmp + p);
-  bytes_t hash_data = bytes((uint8_t*) tmp, p + 40);
-  hexadr            = tmp + p;
+  hexadr = tmp + p;
   bytes32_t hash;
-  sha3_to(&hash_data, hash);
+  keccak(bytes((uint8_t*) tmp, p + 40), hash);
   bytes_to_hex(hash, 20, msg);
   out[0]  = '0';
   out[1]  = 'x';

@@ -58,9 +58,11 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
   d_token_t* jaddrs = d_getl(tx_params, K_ADDRESS, 20);
   if (jaddrs == NULL) {
     return true; // address param is optional
-  } else if (d_type(jaddrs) == T_BYTES) {
+  }
+  else if (d_type(jaddrs) == T_BYTES) {
     return !!bytes_cmp(addrs, d_to_bytes(jaddrs));
-  } else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
+  }
+  else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
     for (d_iterator_t it = d_iter(jaddrs); it.left; d_iter_next(&it)) {
       if (bytes_cmp(addrs, d_to_bytes(it.token))) return true;
     }
@@ -115,7 +117,8 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
       for (d_iterator_t it_ = d_iter(it1.token); it_.left; d_iter_next(&it_)) {
         if (d_type(it_.token) != T_BYTES) {
           return false;
-        } else if (bytes_cmp(d_to_bytes(it_.token), d_to_bytes(it2.token))) {
+        }
+        else if (bytes_cmp(d_to_bytes(it_.token), d_to_bytes(it2.token))) {
           found = true;
           break;
         }
@@ -132,13 +135,16 @@ bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blo
   if (!matches_filter_address(tx_params + 1, addrs)) {
     in3_log_error("filter address mismatch\n");
     return false;
-  } else if (!matches_filter_range(tx_params + 1, blockno, blockhash)) {
+  }
+  else if (!matches_filter_range(tx_params + 1, blockno, blockhash)) {
     in3_log_error("filter range mismatch\n");
     return false;
-  } else if (!matches_filter_topics(tx_params + 1, topics)) {
+  }
+  else if (!matches_filter_topics(tx_params + 1, topics)) {
     in3_log_error("filter topics mismatch\n");
     return false;
-  } else {
+  }
+  else {
     return true;
   }
 }
@@ -179,11 +185,13 @@ static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr
   if (from_latest && to_latest) {
     // Both fromBlock and toBlock are both latest
     return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  } else if (from_latest) {
+  }
+  else if (from_latest) {
     // only fromBlock is latest
     // unlikely as this doesn't make much sense, but valid if "toBlock" is approx(curr_blk)
     return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  } else if (to_latest) {
+  }
+  else if (to_latest) {
     // only toBlock is latest
     if (last)
       // last log in result, so blk should be greater than (or equal to) fromBlock and abs diff of blk and curr_blk shoud NOT be more than error
@@ -191,7 +199,8 @@ static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr
     else
       // intermediate log, so blk should be greater than (or equal to) fromBlock and lesser (or equal to) than currentBlock + error
       return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  } else {
+  }
+  else {
     // No latest
     return IN3_OK;
   }
@@ -201,6 +210,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   in3_ret_t  res = IN3_OK, i = 0;
   receipt_t* receipts = alloca(sizeof(receipt_t) * l_logs);
   bytes_t    logddata, tmp, tops;
+  char       xtmp[12];
 
   // invalid result-token
   if (!vc->result || d_type(vc->result) != T_ARRAY) return vc_err(vc, "The result must be an array");
@@ -211,15 +221,16 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   if (d_len(d_get(vc->proof, K_LOG_PROOF)) > l_logs) return vc_err(vc, "too many proofs");
 
   for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
+    sprintf(xtmp, "0x%" PRIx64, d_get_longk(it.token, K_NUMBER));
     // verify that block number matches key
-    if (d_get_longk(it.token, K_NUMBER) != _strtoull(d_get_keystr(it.token->key), NULL, 16))
+    if (key(xtmp) != it.token->key)
       return vc_err(vc, "block number mismatch");
 
     // verify the blockheader of the log entry
     bytes_t block = d_to_bytes(d_get(it.token, K_BLOCK)), tx_root, receipt_root;
     int     bl    = i;
     if (!block.len || eth_verify_blockheader(vc, &block, NULL) < 0) return vc_err(vc, "invalid blockheader");
-    sha3_to(&block, receipts[i].block_hash);
+    keccak(block, receipts[i].block_hash);
     rlp_decode(&block, 0, &block);
     if (rlp_decode(&block, BLOCKHEADER_RECEIPT_ROOT, &receipt_root) != 1) return vc_err(vc, "invalid receipt root");
     if (rlp_decode(&block, BLOCKHEADER_TRANSACTIONS_ROOT, &tx_root) != 1) return vc_err(vc, "invalid tx root");
@@ -249,7 +260,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
       // check txhash
 
-      sha3_to(&r->data, r->tx_hash);
+      keccak(r->data, r->tx_hash);
       if (!bytes_cmp(d_to_bytes(d_getl(receipt.token, K_TX_HASH, 32)), bytes(r->tx_hash, 32))) {
         if (path) b_free(path);
         return vc_err(vc, "invalid tx hash");

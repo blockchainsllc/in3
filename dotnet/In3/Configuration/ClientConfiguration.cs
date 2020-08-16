@@ -135,16 +135,6 @@ namespace In3.Configuration
         }
 
         /// <summary>
-        /// Maximum number of bytes used to cache EVM code in memory.
-        /// </summary>
-        [JsonPropertyName("maxCodeCache")]
-        public ulong MaxCodeCache
-        {
-            get => (ulong)GetState("maxCodeCache");
-            set => SetState("maxCodeCache", value);
-        }
-
-        /// <summary>
         /// Milliseconds before a request times out.
         /// </summary>
         [JsonPropertyName("timeout")]
@@ -199,16 +189,6 @@ namespace In3.Configuration
         {
             get => (uint?)GetState("replaceLatestBlock");
             set => SetState("replaceLatestBlock", value);
-        }
-
-        /// <summary>
-        /// Maximum blocks kept in memory.
-        /// </summary>
-        [JsonPropertyName("maxBlockCache")]
-        public ulong MaxBlockCache
-        {
-            get => (ulong)GetState("maxBlockCache");
-            set => SetState("maxBlockCache", value);
         }
 
         /// <summary>

@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 #include "../../../core/client/keys.h"
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 #include "big.h"
 #include "code.h"
 #include "evm.h"

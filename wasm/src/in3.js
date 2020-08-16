@@ -226,11 +226,12 @@ class IN3 {
         let responses = {}
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
+        this.pending = (this.pending || 0) + 1
 
         try {
             // main async loop
             // we repeat it until we have a result
-            while (true) {
+            while (this.ptr && !this.delayFree) {
                 const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
                 switch (state.status) {
                     case 'error':
@@ -243,10 +244,10 @@ class IN3 {
                         }
                         return state.result
                     case 'waiting':
-                        await getNextResponse(responses, { ...state.request, in3: this })
+                        await getNextResponse(responses, { ...state.request, in3: this, root: r })
                         break
                     case 'request': {
-                        const req = { ...state.request, in3: this }
+                        const req = { ...state.request, in3: this, root: r }
                         switch (req.type) {
                             case 'sign':
                                 try {
@@ -260,6 +261,7 @@ class IN3 {
                                 break;
 
                             case 'rpc':
+                                if (req.wait) await new Promise(r => setTimeout(r, req.wait))
                                 await getNextResponse(responses, req)
                         }
 
@@ -267,12 +269,16 @@ class IN3 {
 
                 }
             }
+            throw new Error('Request canceled by calling free on the client')
         }
         finally {
             cleanUpResponses(responses, this.ptr)
 
             // we always need to cleanup
             in3w.ccall('in3_request_free', 'void', ['number'], [r])
+
+            this.pending--
+            if (!this.pending && this.delayFree) this.free()
         }
     }
 
@@ -286,7 +292,9 @@ class IN3 {
     createWeb3Provider() { return this }
 
     free() {
-        if (this.ptr) {
+        if (this.pending)
+            this.delayFree = true
+        else if (this.ptr) {
             delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
             this.ptr = 0
@@ -315,7 +323,7 @@ function url_queue(req) {
     function trigger() {
         while (promises.length && responses.length) {
             const p = promises.shift(), r = responses.shift()
-            if (!req.cleanUp) {
+            if (!req.cleanUp && req.in3.ptr && in3w.ccall('in3_is_alive', 'number', ['number', 'number'], [req.root, req.ctx])) {
                 if (r.error) {
                     if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + r.url + ") : " + r.error)
                     setResponse(req.ctx, r.error.message || r.error, r.i, true)
@@ -380,6 +388,7 @@ IN3.freeAll = function () {
     Object.keys(clients).forEach(_ => clients[_].free())
 }
 
+
 // the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
 IN3.onInit = function (fn) {
     return new Promise((resolve, reject) => {
@@ -431,4 +440,8 @@ function setResponse(ctx, msg, i, isError) {
     else
         in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'string'], [ctx, i, isError, msg])
     //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
+}
+
+function check_ready() {
+    if (_in3_listeners) throw new Error('The Incubed wasm runtime is not initialized yet! Please use onInit() to execute it when ready.')
 }

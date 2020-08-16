@@ -32,32 +32,10 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "verifier.h"
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
-
-static in3_verifier_t* verifiers = NULL;
-
-void in3_register_verifier(in3_verifier_t* verifier) {
-  in3_verifier_t* existing = in3_get_verifier(verifier->type);
-  if (existing) {
-    existing->pre_handle = verifier->pre_handle;
-    existing->verify     = verifier->verify;
-  } else {
-    verifier->next = verifiers;
-    verifiers      = verifier;
-  }
-}
-
-in3_verifier_t* in3_get_verifier(in3_chain_type_t type) {
-  in3_verifier_t* v = verifiers;
-  while (v) {
-    if (v->type == type) return v;
-    v = v->next;
-  }
-  return NULL;
-}
+#include "plugin.h"
 
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
 #ifdef LOGGING

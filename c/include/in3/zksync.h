@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -32,14 +32,26 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#ifndef in3_signer_priv_h__
-#define in3_signer_priv_h__
-#include "../../core/client/context_internal.h"
-#include "../../signer/pk-signer/signer.h"
+// @PUBLIC_HEADER
+/** @file
+ * ZKSync API.
+ * 
+ * This header-file registers zksync api functions.
+ * */
 
-/** Sign message with given private key either raw or hashing the msg given as parameters*/
-in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
-/** Signs the given data */
-in3_ret_t eth_sign_pk_ctx(in3_sign_ctx_t* ctx);
+#ifndef ZKSYNC_H
+#define ZKSYNC_H
+
+#include "client.h"
+
+typedef struct {
+  char*    provider_url;
+  uint8_t* account;
+  uint8_t* main_contract;
+  uint8_t* gov_contract;
+
+} zksync_config_t;
+
+in3_ret_t in3_register_zksync(in3_t* c);
 
 #endif

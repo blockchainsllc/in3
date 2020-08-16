@@ -84,7 +84,7 @@
   } while (0)
 
 #define params_add_first_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, false)
-#define params_add_next_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, true)
+#define params_add_next_pair(params, key, sb_add_func, quote_val)  params_add_key_pair(params, key, sb_add_func, quote_val, true)
 
 void api_set_error(int err, const char* msg);
 

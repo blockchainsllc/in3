@@ -38,8 +38,8 @@
 #define DEBUG
 #endif
 
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
@@ -50,10 +50,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static in3_ret_t test_bulk_transport(in3_request_t* req) {
-  char* buffer = NULL;
-  long  length;
-  FILE* f = fopen("../c/test/testdata/mock/get_blocks.json", "r");
+static in3_ret_t test_bulk_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req    = plugin_ctx;
+  char*          buffer = NULL;
+  long           length;
+  FILE*          f = fopen("../c/test/testdata/mock/get_blocks.json", "r");
   if (f) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
@@ -62,11 +63,13 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
     fread(buffer, 1, length, f);
     buffer[length] = 0;
     fclose(f);
-  } else {
+  }
+  else {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
       printf("Current working dir: %s\n", cwd);
-    } else {
+    }
+    else {
       perror("getcwd() error");
       return 1;
     }
@@ -77,7 +80,7 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
   // now parse the json
   json_ctx_t* res  = parse_json(buffer);
   str_range_t json = d_to_json(d_get(d_get_at(res->result, 0), key("response")));
-  in3_ctx_add_response(req->ctx, 0, false, json.data, json.len);
+  in3_ctx_add_response(req->ctx, 0, false, json.data, json.len, 0);
 
   json_free(res);
   if (buffer) _free(buffer);
@@ -85,9 +88,9 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
 }
 
 static void test_context_bulk() {
-  in3_t* in3     = in3_for_chain(CHAIN_ID_MAINNET);
-  in3->transport = test_bulk_transport;
-  in3->flags     = FLAGS_STATS;
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
+  plugin_register(in3, PLGN_ACT_TRANSPORT, test_bulk_transport, NULL, true);
+  in3->flags = FLAGS_STATS;
   for (int i = 0; i < in3->chains_length; i++) {
     _free(in3->chains[i].nodelist_upd8_params);
     in3->chains[i].nodelist_upd8_params = NULL;
@@ -122,7 +125,7 @@ static void test_context_bulk() {
 int main() {
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
 
   // now run tests
   TESTS_BEGIN();

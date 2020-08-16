@@ -129,13 +129,6 @@ export declare interface IN3Config {
     stats?: boolean
 
     /**
-     * number of max bytes used to cache the code in memory.
-     * 
-     * default: 0
-     */
-    maxCodeCache?: number
-
-    /**
      * specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
      * 
      * default: 5000
@@ -774,6 +767,9 @@ export type TxRequest = {
 
     /**  number of block to wait before confirming*/
     confirmations?: number
+
+    /** number of seconds to wait for confirmations before giving up. Default: 10 */
+    timeout?: number
 }
 
 export interface Web3Event {

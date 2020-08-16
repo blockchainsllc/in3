@@ -71,6 +71,7 @@ typedef enum {
   IN3_EPAYMENT_REQUIRED = -18, /**< payment required */
   IN3_ENODEVICE         = -19, /**< harware wallet device not connected */
   IN3_EAPDU             = -20, /**< error in hardware wallet communication  */
+  IN3_EPLGN_NONE        = -21, /**< no plugin could handle specified action */
 } in3_ret_t;
 
 /** Optional type similar to C++ std::optional

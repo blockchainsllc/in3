@@ -113,6 +113,7 @@ impl Ctx {
                             false,
                             res_str.0.as_mut_ptr() as *const c_char,
                             65,
+                            0,
                         );
                         in3_sys::request_free(request);
                         Err(SysError::TryAgain)
@@ -148,6 +149,7 @@ impl Ctx {
                                         true,
                                         err_str.as_ptr(),
                                         -1i32,
+                                        0,
                                     );
                                 }
                                 Ok(res) => {
@@ -158,6 +160,7 @@ impl Ctx {
                                         false,
                                         res_str.as_ptr(),
                                         -1i32,
+                                        0,
                                     );
                                 }
                             }
@@ -236,8 +239,6 @@ impl ClientTrait for Client {
     /// 	"stats": true,
     /// 	"useBinary": false,
     /// 	"useHttp": false,
-    /// 	"maxBlockCache": 0,
-    /// 	"maxCodeCache": 0,
     /// 	"maxVerifiedHashes": 5,
     /// 	"timeout": 10000,
     /// 	"minDeposit": 0,
@@ -342,7 +343,7 @@ impl ClientTrait for Client {
         self.storage = Some(storage);
         if no_storage {
             unsafe {
-                (*self.ptr).cache = in3_sys::in3_set_storage_handler(
+                in3_sys::in3_set_storage_handler(
                     self.ptr,
                     Some(Client::in3_rust_storage_get),
                     Some(Client::in3_rust_storage_set),
@@ -358,7 +359,7 @@ impl ClientTrait for Client {
         loop {
             let res = unsafe { ctx.execute().await };
             if !matches!(res, Err(SysError::TryAgain)) {
-                return res.map_err(|err| Error::InternalError(err));
+                return res.map_err(Error::InternalError);
             }
         }
     }
@@ -397,9 +398,10 @@ impl Client {
     /// let client = Client::new(chain::MAINNET);
     /// ```
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
+        crate::init();
         unsafe {
             let mut c = Box::new(Client {
-                ptr: in3_sys::in3_for_chain_auto_init(chain_id),
+                ptr: in3_sys::in3_for_chain_default(chain_id),
                 transport: Box::new(HttpTransport {}),
                 signer: None,
                 storage: None,

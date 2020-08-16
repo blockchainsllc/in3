@@ -37,7 +37,7 @@
 #endif
 #include "../src/api/eth1/eth_api.h"
 #include "../src/core/client/client.h"
-#include "../src/core/client/context.h"
+#include "../src/core/client/plugin.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
 #include "../src/verifier/btc/btc.h"
@@ -152,7 +152,8 @@ static str_range_t find_prop_name(char* p, char* start) {
   for (i = 0; i > offset; i--) {
     if (!prop) {
       if (p[i] == ':') prop = 1;
-    } else if (p[i] == '"') {
+    }
+    else if (p[i] == '"') {
       if (!end)
         end = i;
       else {
@@ -172,10 +173,10 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   fuzz_pos       = _fuzz_pos;
   _tmp_pos       = 0;
 }
-
-static int send_mock(in3_request_t* req) {
-  int     i;
-  bytes_t response;
+static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req = plugin_ctx;
+  int            i;
+  bytes_t        response;
   if (d_len(_tmp_responses) <= _tmp_pos) {
     for (i = 0; i < req->urls_len; i++) {
       req->ctx->raw_response[i].state = IN3_ECONFIG;
@@ -195,7 +196,8 @@ static int send_mock(in3_request_t* req) {
       mod_hex(sb->data + fuzz_pos + 1);
     response = bytes((uint8_t*) sb->data, sb->len);
     _free(sb);
-  } else {
+  }
+  else {
     bytes_builder_t* bb = bb_new();
     d_serialize_binary(bb, _tmp_responses + _tmp_pos + 1);
     response = bb->b;
@@ -268,8 +270,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     _free(err);
     _free(res);
     return -1;
-
-  } else if (err) {
+  }
+  else if (err) {
     if (success) {
       print_error("Failed");
       printf(":%s", err);
@@ -286,7 +288,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     print_success("OK");
     _free(err);
     return 0;
-  } else if (res || is_bin) {
+  }
+  else if (res || is_bin) {
     if (!success) {
       print_error("Should have Failed");
       if (!is_bin) _free(res);
@@ -295,7 +298,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     print_success("OK");
     if (!is_bin) _free(res);
     return 0;
-  } else {
+  }
+  else {
     print_error("NO Error and no Result");
     return -1;
   }
@@ -312,15 +316,15 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
       sprintf(temp, "  ...  manipulate #%s", fuzz_prop);
     else
       strcpy(temp, descr);
-  } else
+  }
+  else
     sprintf(temp, "Request #%i", counter);
 
   in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
-  int    j;
+  plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
+  int j;
   c->max_attempts        = 1;
   c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST;
-  c->transport           = send_mock;
-  c->cache               = NULL;
   c->finality            = d_get_intkd(test, key("finality"), 0);
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
@@ -344,7 +348,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
       if (c->chains[j].chain_id == c->chain_id) {
         for (i = 0; i < c->chains[j].nodelist_length; i++) {
           if (i < c->signature_count)
-            memcpy(c->chains[j].nodelist[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
+            memcpy(c->chains[j].nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
           else
             c->chains[j].weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
         }
@@ -454,10 +458,10 @@ int runRequests(char** names, int test_index, int mem_track) {
 int main(int argc, char* argv[]) {
   use_color = 1;
   in3_log_set_level(LOG_INFO);
-  in3_register_eth_full();
-  in3_register_eth_api();
-  in3_register_ipfs();
-  in3_register_btc();
+  in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_eth_api);
+  in3_register_default(in3_register_ipfs);
+  in3_register_default(in3_register_btc);
 
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
@@ -469,7 +473,8 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-d") == 0) {
       in3_log_set_level(LOG_TRACE);
       in3_log_set_quiet(false);
-    } else if (strcmp(argv[i], "-m") == 0)
+    }
+    else if (strcmp(argv[i], "-m") == 0)
       membrk = atoi(argv[++i]);
     else {
       char** t = malloc((size + 1) * sizeof(char*));

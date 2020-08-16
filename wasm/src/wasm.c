@@ -56,7 +56,7 @@
 #endif
 
 #define err_string(msg) (":ERROR:" msg)
-#define BLACKLISTTIME 24 * 3600
+#define BLACKLISTTIME   24 * 3600
 
 static char*    last_error = NULL;
 static uint32_t now() {
@@ -143,12 +143,15 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         sb_add_chars(sb, ",\"error\",\"");
         sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
         sb_add_char(sb, '"');
-      } else {
+      }
+      else {
         uint32_t start = now();
         sb_add_chars(sb, ",\"request\":{ \"type\": ");
         sb_add_chars(sb, request->ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
         sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
+        sb_add_chars(sb, ",\"wait\":");
+        sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
         sb_add_chars(sb, request->payload);
         sb_add_chars(sb, ",\"urls\":[");
@@ -180,13 +183,13 @@ void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
-  in3_chain_t* chain = in3_find_chain(in3, in3->chain_id);
+  in3_chain_t* chain = in3_get_chain(in3);
   if (!chain) return;
   for (int i = 0; i < chain->nodelist_length; i++) {
     if (strcmp(chain->nodelist[i].url, url) == 0) {
       chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
       // we don't update weights for local chains.
-      if (!in3->cache || in3->chain_id == CHAIN_ID_LOCAL) return;
+      if (in3->chain_id == CHAIN_ID_LOCAL) return;
       in3_cache_store_nodelist(in3, chain);
       return;
     }
@@ -200,7 +203,8 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, 
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
     sb_add_range(&ctx->raw_response[i].data, (char*) sig, 0, 65);
-  } else
+  }
+  else
     sb_add_chars(&ctx->raw_response[i].data, msg);
 }
 #ifdef IPFS
@@ -226,6 +230,14 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
 void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
   in3_free(a);
   in3_set_error(NULL);
+}
+/* frees the references of the client */
+bool EMSCRIPTEN_KEEPALIVE in3_is_alive(in3_ctx_t* root, in3_ctx_t* ctx) {
+  while (root) {
+    if (ctx == root) return true;
+    root = root->required;
+  }
+  return false;
 }
 
 char* EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
@@ -254,11 +266,10 @@ void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_ctx_t* ctx) {
   ctx_free(ctx);
 }
 
-uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
-  bytes_t  src    = bytes(data, len);
+uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
   uint8_t* result = malloc(32);
   if (result)
-    sha3_to(&src, result);
+    keccak(bytes(data, len), result);
   else
     in3_set_error("malloc failed");
 
@@ -336,9 +347,8 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   uint8_t* dst = malloc(20);
   uint8_t  public_key[65], sdata[32];
-  bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  sha3_to(&pubkey_bytes, sdata);
+  keccak(bytes(public_key + 1, 64), sdata);
   memcpy(dst, sdata + 12, 20);
   return dst;
 }

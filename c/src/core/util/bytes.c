@@ -47,7 +47,8 @@ bytes_t* b_new(const uint8_t* data, uint32_t len) {
   if (data) {
     b->data = _malloc(len);
     memcpy(b->data, data, len);
-  } else
+  }
+  else
     b->data = _calloc(1, len);
   return b;
 }
@@ -188,6 +189,7 @@ void bb_write_chars(bytes_builder_t* bb, char* c, int len) {
 }
 
 void bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src) {
+  if (!src->len) return;
   bb_check_size(bb, src->len);
   memcpy(bb->b.data + bb->b.len, src->data, src->len);
   bb->b.len += src->len;

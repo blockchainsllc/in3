@@ -73,7 +73,8 @@ static bool filter_topics_valid(d_token_t* topics) {
         else
           return false;
       }
-    } else
+    }
+    else
       return false;
   }
   return true;
@@ -82,35 +83,47 @@ static bool filter_topics_valid(d_token_t* topics) {
 bool filter_opt_valid(d_token_t* tx_params) {
   d_token_t* frmblk = d_get(tx_params, K_FROM_BLOCK);
   if (!frmblk) { /* Optional */
-  } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
-  } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
-  } else
+  }
+  else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
+  }
+  else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
+  }
+  else
     return false;
 
   d_token_t* toblk = d_get(tx_params, K_TO_BLOCK);
   if (!toblk) { /* Optional */
-  } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
-  } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
-  } else
+  }
+  else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
+  }
+  else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
+  }
+  else
     return false;
 
   d_token_t* blockhash = d_getl(tx_params, K_BLOCK_HASH, 32);
   if (blockhash == NULL) { /* Optional */
-  } else if ((d_type(blockhash) == T_BYTES && d_len(blockhash) == 32) && !frmblk && !toblk) {
+  }
+  else if ((d_type(blockhash) == T_BYTES && d_len(blockhash) == 32) && !frmblk && !toblk) {
     /* If blockHash is present, then neither fromBlock nor toBlock are allowed. */
-  } else
+  }
+  else
     return false;
 
   d_token_t* addrs = d_getl(tx_params, K_ADDRESS, 20);
   if (addrs == NULL) { /* Optional */
-  } else if (filter_addrs_valid(addrs)) {
-  } else
+  }
+  else if (filter_addrs_valid(addrs)) {
+  }
+  else
     return false;
 
   d_token_t* topics = d_get(tx_params, K_TOPICS);
   if (topics == NULL) { /* Optional */
-  } else if (filter_topics_valid(topics)) {
-  } else
+  }
+  else if (filter_topics_valid(topics)) {
+  }
+  else
     return false;
 
   return true;
@@ -126,7 +139,8 @@ char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock, bool should_overw
     pos = fopt - tok + 1;
     len = 0;
     return str_replace_pos(fopt, pos, len, blockstr);
-  } else if (should_overwrite) {
+  }
+  else if (should_overwrite) {
     sprintf(blockstr, "0x%" PRIx64 "", fromBlock);
     tok = str_find(str_find(tok + 1, ":") + 1, "\"");
     pos = tok - fopt + 1;
@@ -181,7 +195,7 @@ in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
         if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
           return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
         current_block = d_get_longk(block_ctx->responses[0], K_RESULT);
-        TRY(ctx_remove_required(ctx, block_ctx));
+        TRY(ctx_remove_required(ctx, block_ctx, false));
     }
   }
 
@@ -318,8 +332,8 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         // no new blocks
         sb_add_chars(result, "[]");
         return IN3_OK;
-
-      } else {
+      }
+      else {
         sb_add_char(result, '[');
         for (uint64_t i = f->last_block + 1; i <= blkno; i++) {
           in3_ctx_t* block_ctx = ctx_find_required_for_block(ctx, i);
@@ -328,7 +342,8 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
             char* req = _malloc(150);
             sprintf(req, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
             res = ctx_add_required(ctx, ctx_new(ctx->client, req));
-          } else {
+          }
+          else {
             // check existing ctx
             switch (in3_ctx_state(block_ctx)) {
               case CTX_ERROR:

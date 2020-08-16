@@ -1,7 +1,7 @@
 #ifndef _BTC_TARGET_H
 #define _BTC_TARGET_H
 
-#include "../../core/client/verifier.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
 #include "../../core/util/error.h"
@@ -22,6 +22,7 @@ typedef struct btc_target_conf {
   uint_fast16_t max_daps;
   uint_fast16_t max_diff;
   uint_fast16_t dap_limit;
+  chain_id_t    chain_id;
 } btc_target_conf_t;
 
 /**
@@ -37,18 +38,12 @@ in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t n
 /**
  *  sets a target in the cache
  */
-void btc_set_target(in3_vctx_t* vc, uint32_t dap, uint8_t* difficulty);
+void btc_set_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t dap, uint8_t* difficulty);
 
-uint32_t btc_get_closest_target(in3_vctx_t* vc, uint32_t dap, uint8_t* difficulty);
+uint32_t btc_get_closest_target(btc_target_conf_t* tc, uint32_t dap, uint8_t* difficulty);
 
-in3_ret_t btc_vc_set_config(in3_t* c, d_token_t* conf, in3_chain_t* chain);
+in3_ret_t btc_check_conf(in3_t* c, btc_target_conf_t* conf);
 
-btc_target_conf_t* btc_get_conf(in3_t* c, in3_chain_t* chain);
-
-void btc_vc_free(in3_t* c, in3_chain_t* chain);
-
-btc_target_conf_t* btc_get_config(in3_vctx_t* vc);
-
-in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final, bytes_t header);
+in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final, bytes_t header);
 
 #endif

@@ -16,9 +16,9 @@ namespace Test.Utils
             BigInteger n3 = 15;
             BigInteger n4 = 17;
 
-            Assert.That(DataTypeConverter.BigIntToPrefixedHex(n1), Is.EqualTo("-0xC5F387CA52B8F"));
+            Assert.That(DataTypeConverter.BigIntToPrefixedHex(n1), Is.EqualTo("-0xc5f387ca52b8f"));
             Assert.That(DataTypeConverter.BigIntToPrefixedHex(n2), Is.EqualTo("0x0"));
-            Assert.That(DataTypeConverter.BigIntToPrefixedHex(n3), Is.EqualTo("0xF"));
+            Assert.That(DataTypeConverter.BigIntToPrefixedHex(n3), Is.EqualTo("0xf"));
             Assert.That(DataTypeConverter.BigIntToPrefixedHex(n4), Is.EqualTo("0x11"));
         }
 

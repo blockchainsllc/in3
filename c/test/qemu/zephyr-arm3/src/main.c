@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "block_number.h"
+#include "client/plugin.h"
 #include "eth_api.h"   //wrapper for easier use
 #include "eth_basic.h" // the full ethereum verifier containing the EVM
 #include "receipt.h"
@@ -48,30 +49,33 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
       printk("Returning eth_getTransactionReceipt ...\n");
       sb_add_range(&(result[i].data), mock_tx_receipt, 0, mock_tx_receipt_len);
-    } else if (strstr(payload, "eth_blockNumber") != NULL) {
+    }
+    else if (strstr(payload, "eth_blockNumber") != NULL) {
       printk("Returning eth_blockNumber ...\n");
       sb_add_range(&(result[i].data), block_number_res, 0, block_number_res_len);
-    } else {
+    }
+    else {
       in3_log_debug("Not supported for this mock\n");
     }
   }
   return IN3_OK;
 }
 
-in3_ret_t transport_mock(in3_request_t* req) {
+in3_ret_t transport_mock(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req = plugin_ctx;
   return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 
-in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
+in3_t* init_in3(plgn_register custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   //int    err;
   in3_log_set_quiet(0);
   in3_log_set_level(LOG_DEBUG);
-  in3_register_eth_basic();
+  in3_register_default(in3_register_eth_basic);
   in3 = in3_for_chain(chain);
   if (custom_transport)
-    in3->transport = custom_transport; // use curl to handle the requests
-  in3->request_count = 1;              // number of requests to sendp
+    plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
+  in3->request_count = 1; // number of requests to sendp
   in3->max_attempts  = 1;
   in3->request_count = 1; // number of requests to sendp
   in3->chain_id      = chain;
@@ -103,7 +107,8 @@ void main() {
     printk("status: %d ", txr->status);
     printk("gas: %lld ", txr->gas_used);
     printk("IN3 TEST PASSED OK !\n");
-  } else {
+  }
+  else {
     printk("IN3 TEST FAILED !\n");
   }
   eth_tx_receipt_free(txr);

@@ -35,7 +35,7 @@
 #include "eth_nano.h"
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "merkle.h"
@@ -46,20 +46,22 @@
 #define MAX_METHODS 25
 char* ALLOWED_METHODS[MAX_METHODS] = {"eth_chainId", "in3_stats", "eth_blockNumber", "web3_clientVersion", "web3_sha3", "net_version", "net_peerCount", "net_listening", "eth_protocolVersion", "eth_syncing", "eth_coinbase", "eth_mining", "eth_hashrate", "eth_gasPrice", "eth_accounts", "eth_sign", "eth_sendRawTransaction", "eth_estimateGas", "eth_getCompilers", "eth_compileLLL", "eth_compileSolidity", "eth_compileSerpent", "eth_getWork", "eth_submitWork", "eth_submitHashrate"};
 
-in3_ret_t in3_verify_eth_nano(in3_vctx_t* vc) {
-  char*      method = NULL;
-  d_token_t* params = d_get(vc->request, K_PARAMS);
-  int        i;
-  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
+in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx) {
+  UNUSED_VAR(p_data);
+  UNUSED_VAR(action);
+  in3_vctx_t* vc     = pctx;
+  char*       method = NULL;
+  d_token_t*  params = d_get(vc->request, K_PARAMS);
+  int         i;
+  // do we support this request?
+  if (!(method = d_get_stringk(vc->request, K_METHOD)))
+    return vc_err(vc, "No Method in request defined!");
+  if (vc->chain->type != CHAIN_ETH && strcmp(method, "in3_nodeList")) return IN3_EIGNORE;
+  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)
     return IN3_OK;
-
-  // do we support this request?
-  if (!(method = d_get_stringk(vc->request, K_METHOD)))
-    return vc_err(vc, "No Method in request defined!");
-
   // check if this call is part of the not verifieable calls
   for (i = 0; i < MAX_METHODS; i++) {
     if (strcmp(ALLOWED_METHODS[i], method) == 0)
@@ -74,12 +76,9 @@ in3_ret_t in3_verify_eth_nano(in3_vctx_t* vc) {
   else if (strcmp(method, "in3_whiteList") == 0)
     return eth_verify_in3_whitelist(vc);
   else
-    return vc_err(vc, "The Method cannot be verified with eth_nano!");
+    return IN3_EIGNORE;
 }
 
-void in3_register_eth_nano() {
-  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  v->type           = CHAIN_ETH;
-  v->verify         = in3_verify_eth_nano;
-  in3_register_verifier(v);
+in3_ret_t in3_register_eth_nano(in3_t* c) {
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_eth_nano, NULL, false);
 }

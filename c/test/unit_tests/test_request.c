@@ -47,6 +47,7 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
+#include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
@@ -61,11 +62,11 @@
   } while (0)
 #define TEST_ASSERT_CONFIGURE_PASS(in3, config) \
   TEST_ASSERT_NULL(in3_configure(in3, config))
-#define CONTRACT_ADDRS "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
-#define REGISTRY_ID "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb"
+#define CONTRACT_ADDRS           "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+#define REGISTRY_ID              "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb"
 #define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
-#define NODE_URL "rpc.node"
-#define NODE_ADDRS "0x8904b9813c9ada123f9fccb9123659088dacd477"
+#define NODE_URL                 "rpc.node"
+#define NODE_ADDRS               "0x8904b9813c9ada123f9fccb9123659088dacd477"
 
 static void test_configure_request() {
   in3_t* c                = in3_for_chain(0);
@@ -99,9 +100,38 @@ static void test_configure_request() {
   in3_free(c);
 }
 
+static void test_bulk_response() {
+  in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
+  c->request_count = 2;
+  c->flags         = 0;
+  _free(c->chains->nodelist_upd8_params);
+  c->chains->nodelist_upd8_params = NULL;
+
+  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  in3_ctx_t* ctx = ctx_new(c, "[{\"method\":\"eth_blockNumber\",\"params\":[]},{\"method\":\"eth_blockNumber\",\"params\":[]}]");
+  TEST_ASSERT_EQUAL(CTX_WAITING_TO_SEND, in3_ctx_exec_state(ctx));
+  in3_request_t* req = in3_create_request(ctx);
+
+  // first response is an error we expect a waiting since the transport has not passed all responses yet
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1, 0);
+  TEST_ASSERT_EQUAL(CTX_WAITING_FOR_RESPONSE, in3_ctx_exec_state(ctx));
+  in3_ctx_add_response(req->ctx, 1, false, "[{\"result\":\"0x1\"},{\"result\":\"0x2\",\"in3\":{\"currentBlock\":\"0x1\"}}]", -1, 0);
+  request_free(req);
+  TEST_ASSERT_EQUAL(CTX_SUCCESS, in3_ctx_exec_state(ctx));
+
+  char* res = ctx_get_response_data(ctx);
+  TEST_ASSERT_EQUAL_STRING("[{\"result\":\"0x1\"},{\"result\":\"0x2\"}]", res);
+  _free(res);
+
+  ctx_free(ctx);
+  in3_free(c);
+}
+
 static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}"));
+  eth_register_request_signer(c);
+  char* err = in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
+  TEST_ASSERT_NULL_MESSAGE(err, err);
   c->flags = FLAGS_INCLUDE_CODE;
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
@@ -139,11 +169,12 @@ static void test_exec_req() {
   _free(result);
 
   result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"The request could not be handled:No storage set\"}}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-21,\"message\":\"The request could not be handled:no plugin found that handled the cache_clear action\"}}", result);
   _free(result);
 
   in3_free(c);
 }
+
 static void test_partial_response() {
   in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
   c->request_count = 3;
@@ -157,14 +188,14 @@ static void test_partial_response() {
   in3_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
-  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1, 0);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
   TEST_ASSERT_TRUE(ctx->nodes->blocked);                // first node is blacklisted
   TEST_ASSERT_FALSE(ctx->nodes->next->blocked);         // second node is not blacklisted
 
   // now we have a valid response and should get a accaptable response
-  in3_ctx_add_response(req->ctx, 2, false, "{\"result\":\"0x100\"}", -1);
+  in3_ctx_add_response(req->ctx, 2, false, "{\"result\":\"0x100\"}", -1, 0);
   TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
 
   request_free(req);
@@ -185,13 +216,13 @@ static void test_retry_response() {
   in3_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
-  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1, 0);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
   TEST_ASSERT_TRUE(ctx->nodes->blocked);                // first node is blacklisted
   TEST_ASSERT_FALSE(ctx->nodes->next->blocked);         // second node is not blacklisted
   TEST_ASSERT_NOT_NULL(ctx->raw_response);              // we still keep the raw response
 
-  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"Error:no internet\"}", -1);
+  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"Error:no internet\"}", -1, 0);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
 
   TEST_ASSERT_NULL(ctx->raw_response);
@@ -201,7 +232,7 @@ static void test_retry_response() {
   req = in3_create_request(ctx);
   TEST_ASSERT_NOT_NULL(ctx->raw_response); // now the raw response is set
 
-  in3_ctx_add_response(req->ctx, 0, false, "{\"result\":\"0x100\"}", -1);
+  in3_ctx_add_response(req->ctx, 0, false, "{\"result\":\"0x100\"}", -1, 0);
   TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
 
   request_free(req);
@@ -238,6 +269,7 @@ static void test_configure() {
 
 static void test_configure_validation() {
   in3_t* c = in3_for_chain(0);
+  eth_register_request_signer(c);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
 
@@ -306,7 +338,8 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"0x123412341234\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"value\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":65536}", "expected uint16");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":0}");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":0}", "maxAttempts must be at least 1");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":1}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":65535}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":\"0xffff\"}");
   TEST_ASSERT_EQUAL(c->max_attempts, 65535);
@@ -317,14 +350,16 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"keepIn3\":true}");
   TEST_ASSERT_EQUAL(FLAGS_KEEP_IN3, c->flags & FLAGS_KEEP_IN3);
 
+  bytes32_t b256;
+  hex_to_bytes("0x1234567890123456789012345678901234567890123456789012345678901234", -1, b256, 32);
+
+  /*
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":1}", "expected 256 bit data");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":\"1\"}", "expected 256 bit data");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":\"0x00000\"}", "expected 256 bit data");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
-  bytes32_t b256;
-  hex_to_bytes("0x1234567890123456789012345678901234567890123456789012345678901234", -1, b256, 32);
   TEST_ASSERT_EQUAL_MEMORY(c->key, b256, 32);
-
+*/
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":1}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"0x00000\"}", "expected boolean");
@@ -342,34 +377,6 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"stats\":false}");
   TEST_ASSERT_EQUAL(0, c->flags & FLAGS_STATS);
-
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"-1\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":false}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0x1203030230\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":1}");
-  TEST_ASSERT_EQUAL(c->max_block_cache, 1);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":0}");
-  TEST_ASSERT_EQUAL(c->max_block_cache, 0);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":4294967295}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_block_cache, 4294967295U);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":\"0xffffffff\"}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_block_cache, 0xffffffff);
-
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"-1\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"0\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":false}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"0x1203030230\"}", "expected uint32");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":1}");
-  TEST_ASSERT_EQUAL(c->max_code_cache, 1);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":0}");
-  TEST_ASSERT_EQUAL(c->max_code_cache, 0);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":4294967295}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_code_cache, 4294967295U);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":\"0xffffffff\"}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->max_code_cache, 0xffffffff);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"-1\"}", "expected uint32");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"\"}", "expected uint32");
@@ -450,7 +457,8 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"0x123412341234\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"value\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":65536}", "expected uint8");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":0}");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":0}", "requestCount must be at least 1");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":1}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":255}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":\"0xff\"}");
   TEST_ASSERT_EQUAL(c->request_count, 255);
@@ -557,7 +565,7 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL_STRING(chain->nodelist[0].url, NODE_URL);
   TEST_ASSERT_EQUAL(chain->nodelist[0].props, 0xffff);
   hex_to_bytes(NODE_ADDRS, -1, addr, 20);
-  TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address->data, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address, addr, 20);
 
   TEST_ASSERT_EQUAL(0x234ad3, chain->verified_hashes[0].block_number);
   hex_to_bytes("0x1230980495039470913820938019274231230980495039470913820938019274", -1, b256, 32);
@@ -580,19 +588,18 @@ static void test_configure_validation() {
  * Main
  */
 int main() {
-  _free(in3_create_signer(NULL, NULL, NULL));
-
   in3_log_set_quiet(true);
-  in3_register_eth_basic();
-  in3_register_eth_api();
+  in3_register_default(in3_register_eth_basic);
+  in3_register_default(in3_register_eth_api);
 
   TESTS_BEGIN();
+  RUN_TEST(test_configure_signed_request);
+  RUN_TEST(test_bulk_response);
   RUN_TEST(test_partial_response);
   RUN_TEST(test_retry_response);
   RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);
   RUN_TEST(test_configure);
   RUN_TEST(test_configure_validation);
-  RUN_TEST(test_configure_signed_request);
   return TESTS_END();
 }

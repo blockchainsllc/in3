@@ -33,12 +33,16 @@
  *******************************************************************************/
 
 require('mocha')
-const { assert } = require('chai')
-const { createClient, mockResponse, IN3, beforeTest } = require('./util/mocker')
+const chai = require('chai')
+const spies = require('chai-spies')
+const { createClient, mockResponse, IN3, beforeTest, testTransport } = require('./util/mocker')
+
+const { assert, expect } = chai
+chai.use(spies)
 
 const contractCode = require('./responses/eth_getCode.json')
 
-describe('API-Tests', () => {
+describe('EthAPI-Tests', () => {
     beforeEach(beforeTest)
     afterEach(IN3.freeAll)
 
@@ -55,14 +59,14 @@ describe('API-Tests', () => {
         assert.equal(res[3], 0xffffn)
 
         mockResponse('eth_call', 'WETH.totalSupply')
-        mockResponse('eth_getCode', 'WETH',)
+        mockResponse('eth_getCode', 'WETH')
         res = await c.eth.callFn('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', 'totalSupply():uint')
         assert.equal(2156081965638983079156868n, res)
 
 
     })
 
-    it('send_transaction', async () => {
+    it('eth.sendTransaction()', async () => {
         mockResponse('eth_gasPrice', 'default')
         mockResponse('eth_estimateGas', '1M')
         mockResponse('eth_getTransactionCount', 'default')
@@ -85,8 +89,7 @@ describe('API-Tests', () => {
 
     })
 
-
-    it('eth.sign', async () => {
+    it('eth.sign()', async () => {
         const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
         const msg = '0x9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465'
         assert.equal(IN3.util.toHex(IN3.util.ecSign(pk, msg, false))
@@ -119,11 +122,19 @@ describe('API-Tests', () => {
     })
 
     it('requestCount', async () => {
+        const requestCount = 3
+        let c = createClient({ requestCount })
+        // This is dangerous as it changes a static reference, if anything is every wrong with the test transport, this should be the first suspicion
+        // Another way to do that is to either make sure that you only override a single reference with transport or make the transport method public so you can do something like chai.spy.on(c, 'transport')
+        // as of right now, the actual reference of in3w is in the constructor function scope hidden by js module pattern
+        let spy = chai.spy(testTransport)
+        IN3.setTransport(spy)
         mockResponse('eth_blockNumber', '0x1')
-        const res = await createClient({ requestCount: 3 }).eth.blockNumber()
-        assert.equal(res, 3220)
-    })
 
+        const res = await c.eth.blockNumber()
+
+        expect(spy).to.have.been.called.exactly(requestCount)
+    })
 
     it('eth.gasPrice()', async () => {
         mockResponse('eth_gasPrice', 'gas')
@@ -133,11 +144,10 @@ describe('API-Tests', () => {
 
     it('eth.call()', async () => {
         mockResponse('eth_call', 'WETH.totalSupply')
-        mockResponse('eth_getCode', 'WETH',)
+        mockResponse('eth_getCode', 'WETH')
         const res = await createClient().eth.call({ "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "data": "0x18160ddd" })
         assert.equal("0x00000000000000000000000000000000000000000001c8917003f0d0d9d7dc84", res)
     })
-
 
     it('eth.estimateGas()', async () => {
         mockResponse('eth_estimateGas', 'WETH.totalSupply')
@@ -145,14 +155,12 @@ describe('API-Tests', () => {
         assert.equal(22007, res)
     })
 
-
     it('eth.getBalance()', async () => {
         mockResponse('eth_getBalance', 'balance')
         const res = await createClient().eth.getBalance("0x4144FFD5430a8518fa2d84ef5606Fd7e1921cE27")
         assert.equal(res, 3646260000000000000)
 
     })
-
 
     it('eth.getLogs()', async () => {
         mockResponse('eth_getLogs', 'logs')
@@ -193,7 +201,6 @@ describe('API-Tests', () => {
 
     })
 
-
     it('eth.getBlockByHash()', async () => {
         mockResponse('eth_getBlockByHash', 'main')
         const res = await createClient().eth.getBlockByHash("0x0c0728467cee3a0b1b1322e88596d0f9f2a8fa2018fc5447d5072805d3bf9d13")
@@ -210,14 +217,12 @@ describe('API-Tests', () => {
 
     })
 
-
     it('eth.getBlockTransactionCountByHash()', async () => {
         mockResponse('eth_getBlockTransactionCountByHash', 'main')
         const res = await createClient().eth.getBlockTransactionCountByHash("0x0c0728467cee3a0b1b1322e88596d0f9f2a8fa2018fc5447d5072805d3bf9d13")
         assert.equal(0xcc, res)
 
     })
-
 
     it('eth.getBlockTransactionCountByNumber()', async () => {
         mockResponse('eth_getBlockTransactionCountByNumber', 'main')
@@ -226,7 +231,6 @@ describe('API-Tests', () => {
 
     })
 
-
     it('eth.getTransactionByBlockNumberAndIndex()', async () => {
         mockResponse('eth_getTransactionByBlockNumberAndIndex', 'main')
         const res = await createClient().eth.getTransactionByBlockNumberAndIndex(10317465, 2)
@@ -234,7 +238,6 @@ describe('API-Tests', () => {
         assert.equal('0xea674fdde714fd979de3edf0f56aa9716b898ec8', res.from)
 
     })
-
 
     it('eth.getTransactionByBlockHashAndIndex()', async () => {
         mockResponse('eth_getTransactionByBlockHashAndIndex', 'main')
@@ -263,12 +266,8 @@ describe('API-Tests', () => {
         assert.equal('0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2', res)
     })
 
-
     it('eth.contractAt()', async () => {
         //        let w = createClient({}, ['weth.Transfer', 'WETH']).eth.contractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
-
-
-
         mockResponse('eth_call', 'weth.name')
         mockResponse('eth_getCode', 'WETH')
         mockResponse('eth_call', 'weth.decimals')
@@ -286,24 +285,35 @@ describe('API-Tests', () => {
         assert.equal('Transfer', logs[0].event.event)
         assert.equal(74573366884515930470n, logs[0].wad)
         assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].log.address)
-
-
     })
 
 
+    it('eth.erc777()', async () => {
+        mockResponse('eth_getCode', 'erc777')
+        mockResponse('eth_call', 'erc777.balance')
+        const c = createClient()//{ chainId: '0x5' }, ['erc777.code', 'erc777.balance'])
+        const erc = c.eth.web3ContractAt(require('./abi/erc777.json'), '0x003add2e145a20b5d85658d03f7107c51989d300')
+        const data = erc.methods.mint("0x60cca2a21be53153bd68ab21e835ad739a94fabd", 1, "", "").encodeABI()
+        assert.equal('0xdcdc7dd000000000000000000000000060cca2a21be53153bd68ab21e835ad739a94fabd0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', data)
+        const erc2 = c.eth.contractAt(require('./abi/erc777.json'), '0x003add2e145a20b5d85658d03f7107c51989d300')
+        const balance = await erc2.balanceOf('0x003add2e145a20b5d85658d03f7107c51989d300')
+        assert.equal(0n, balance)
+
+    })
+
     it('eth.web3ContractAt()', async () => {
         //        let w = createClient({}, ['weth.Transfer', 'WETH']).eth.contractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
-
-
-
         mockResponse('eth_call', 'weth.name')
         mockResponse('eth_getCode', 'WETH')
         mockResponse('eth_call', 'weth.decimals')
+        mockResponse('eth_estimateGas', 'weth.decimals')
         mockResponse('eth_call', 'weth.balanceOf')
         const weth = createClient().eth.web3ContractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
+        assert.equal(22208, await weth.methods.decimals().estimateGas()) // uint8 -> number
         assert.equal('Wrapped Ether', await weth.methods.name().call()) // string
         assert.equal(18, await weth.methods.decimals().call()) // uint8 -> number
         assert.equal(860298690748n, await weth.methods.balanceOf('0xb958a8f59ac6145851729f73c7a6968311d8b633').call()) // uint8 -> number
+
 
         mockResponse('eth_getLogs', 'weth.Transfer')
         let logs = await weth.getPastEvents('Transfer', { fromBlock: 10317749, toBlock: 10317749 })
@@ -334,26 +344,134 @@ describe('API-Tests', () => {
 */
     })
 
+    it('eth.chainId()', async () => {
+        const supportedChains = ['0x1', '0xf6', '0x2a', '0x5']
+        for (const c of supportedChains) {
+            let client = createClient({ chainId: c })
+            let connectedChain = await client.eth.chainId()
+            assert.equal(c, connectedChain)
+        }
+    })
 
+    it('eth.getFilterChanges()', async () => {
+        mockResponse('eth_blockNumber', '0x1f4a2f')
+        mockResponse('eth_blockNumber', '0x1f4a2f')
+        mockResponse('eth_blockNumber', '0x1f4a2f')
+        mockResponse('eth_getLogs', 'logs2')
+        let client = createClient({ proof: 'none' })
 
-
-    /*
-        it('eth.newFilter()', async () => {
-            mockResponse('eth_getLogs', 'logs')
-            mockResponse('eth_blockNumber', '0x834B77')
-            const c = createClient()
-            const id = await c.eth.newFilter({ "fromBlock": "0x834B77", "toBlock": "0x834B77", "address": "0xdac17f958d2ee523a2206206994597c13d831ec7" })
-            assert.isTrue(id > 0)
-    
-            const res = await c.eth.getFilterChanges(id)
-            assert.isArray(res)
-            assert.equal(res[0].data, "0x0000000000000000000000000000000000000000000000000000000349d05c5c")
-            assert.equal(res[0].transactionHash, "0x20be6d27ed6a4c99c5dbeeb9081e114a9b400c52b80c4d10096c94ad7d3c1af6")
-    
-            await c.eth.uninstallFilter(id)
-    
-    
+        let filterId = await client.eth.newFilter({
+            address: "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455",
+            fromBlock: 2050343
         })
-    */
 
+        assert.equal("0x1", filterId)
+
+        let logs1 = await client.eth.getFilterChanges(filterId)
+
+        assert.isAbove(logs1.length, 0)
+
+        let logs2 = await client.eth.getFilterChanges(filterId)
+
+        assert.equal(logs2.length, 0)
+    })
+
+    it('eth.getFilterLogs()', async () => {
+        mockResponse('eth_blockNumber', '0x1f4a2f')
+        mockResponse('eth_blockNumber', '0x1f4a2f')
+        mockResponse('eth_blockNumber', '0x1f4a2f')
+        mockResponse('eth_getLogs', 'logs2')
+        let client = createClient({ proof: 'none' })
+
+        let filterId = await client.eth.newFilter({
+            address: "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455",
+            fromBlock: 2050343
+        })
+
+        assert.equal("0x1", filterId)
+
+        let logs1 = await client.eth.getFilterLogs(filterId)
+
+        assert.isAbove(logs1.length, 0)
+
+        let logs2 = await client.eth.getFilterLogs(filterId)
+
+        assert.equal(logs2.length, 0)
+    })
+
+    it('eth.getUncleByBlockHashAndIndex()', async () => {
+        mockResponse('eth_getUncleByBlockHashAndIndex', '0x310541c7cfd2e636ed54424177474b263b0f3f66babe751db2cf2ed0adce2335')
+        let client = createClient({ proof: 'none' })
+
+        let uncle = await client.eth.getUncleByBlockHashAndIndex(9317999, 0)
+
+        assert.equal(uncle.hash, '0x310541c7cfd2e636ed54424177474b263b0f3f66babe751db2cf2ed0adce2335')
+        assert.equal(uncle.size, 37088)
+    })
+
+    it('eth.getUncleByBlockNumberAndIndex()', async () => {
+        mockResponse('eth_getUncleByBlockNumberAndIndex', '0x8e2e6e')
+        let client = createClient({ proof: 'none' })
+
+        let uncle = await client.eth.getUncleByBlockNumberAndIndex(9317999, 0);
+
+        assert.equal(uncle.number, 9317998)
+        assert.equal(37088, uncle.size)
+    })
+
+    it('eth.getUncleCountByBlockHash()', async () => {
+        mockResponse('eth_getUncleCountByBlockHash', '0x884aaab2f9116742e693ced034a2dff840b45f21709025f7d69cde26d071068b')
+        let client = createClient({ proof: 'none' })
+
+        let uncleCount = await client.eth.getUncleCountByBlockHash("0x884aaab2f9116742e693ced034a2dff840b45f21709025f7d69cde26d071068b");
+
+        assert.equal(1, uncleCount)
+    })
+
+    it('eth.getUncleCountByBlockNumber()', async () => {
+        mockResponse('eth_getUncleCountByBlockNumber', '9830239')
+        let client = createClient({ proof: 'none' })
+
+        let uncleCount = await client.eth.getUncleCountByBlockNumber(9830239)
+
+        assert.equal(uncleCount, 1)
+    })
+
+    it('eth.newBlockFilter()', async () => {
+        mockResponse('eth_blockNumber', '0x8e4daa')
+        let client = createClient()
+
+        let filterId = await client.eth.newBlockFilter()
+
+        assert.equal(filterId, "0x1")
+    })
+
+    it('eth.newFilter()', async () => {
+        mockResponse('eth_blockNumber', '0x8e4daa')
+        let client = createClient()
+
+        let filterId = await client.eth.newFilter({ address: "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455" })
+
+        assert.equal("0x1", filterId)
+    })
+
+    it('eth.uninstallFilter()', async () => {
+        mockResponse('eth_blockNumber', '0x8e4daa')
+        let client = createClient()
+
+        let filterId = await client.eth.newFilter({ address: "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455" })
+
+        let filterUninstalled = await client.eth.uninstallFilter(filterId);
+        assert.isOk(filterUninstalled)
+    })
+
+    it('eth.resolveENS()', async () => {
+        mockResponse('eth_call', 'cryptokitties.eth')
+        mockResponse('eth_call', 'cryptokitties.eth')
+        let client = createClient({ proof: 'none' })
+
+        let address = await client.eth.resolveENS("cryptokitties.eth")
+
+        assert.equal(address, "0x06012c8cf97bead5deae237070f9587f8e7a266d")
+    })
 })

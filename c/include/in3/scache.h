@@ -44,6 +44,11 @@
 #ifndef UTIL_SCACHE_H
 #define UTIL_SCACHE_H
 
+typedef enum cache_props {
+  CACHE_PROP_MUST_FREE     = 0x1, /**< indicates the content must be freed*/
+  CACHE_PROP_SRC_REQ       = 0x2, /**< the value holds the src-request */
+  CACHE_PROP_ONLY_EXTERNAL = 0x4  /**< should only be freed if the context is external */
+} cache_props_t;
 /**
  * represents a single cache entry in a linked list.
  * These are used within a request context to cache values and automaticly free them.
@@ -52,7 +57,7 @@ typedef struct cache_entry {
   bytes_t             key;       /**<  an optional key of the entry*/
   bytes_t             value;     /**< the value */
   uint8_t             buffer[4]; /**< the buffer is used to store extra data, which will be cleaned when freed. */
-  bool                must_free; /**< if true, the cache-entry will be freed when the request context is cleaned up. */
+  cache_props_t       props;     /**< if true, the cache-entry will be freed when the request context is cleaned up. */
   struct cache_entry* next;      /**< pointer to the next entry.*/
 } cache_entry_t;
 
@@ -77,7 +82,8 @@ cache_entry_t* in3_cache_add_entry(
  * clears all entries in the linked list.
  */
 void in3_cache_free(
-    cache_entry_t* cache /**< the root entry of the linked list. */
+    cache_entry_t* cache,      /**< the root entry of the linked list. */
+    bool           is_external /**< true if this is the root context or an external. */
 );
 
 /**

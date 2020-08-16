@@ -43,6 +43,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef LOGGING
+#include "used_keys.h"
+#endif
 // Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
 verify(sizeof(void*) >= 4);
 
@@ -53,7 +56,7 @@ static uint8_t __track_keys = 1;
 #endif
 
 // number of tokens to allocate memory for when parsing
-#define JSON_INIT_TOKENS 10
+#define JSON_INIT_TOKENS        10
 #define JSON_MAX_ALLOWED_TOKENS 1000000
 
 /** internal type declared here to assist with key() optimization */
@@ -80,25 +83,23 @@ d_key_t key(const char* c) {
 #endif
 
 d_key_t keyn(const char* c, const size_t len) {
-  d_key_t val = 0;
 #ifndef IN3_DONT_HASH_KEYS
-  size_t i = 0;
+  d_key_t val = 0;
+  size_t  i   = 0;
   for (; i < len; i++) {
     if (*c == 0) return val;
     val ^= *c | val << 7;
     c += 1;
   }
+  return val;
 #else
-  keyname_t* kn = __keynames;
-  while (kn) {
+  for (keyname_t* kn = __keynames; kn; kn = kn->next) {
     // input is not expected to be nul terminated
     if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
       return kn->key;
-    kn = kn->next;
   }
-  val = __keynames_len;
+  return __keynames_len;
 #endif
-  return val;
 }
 
 void add_keyname(const char* name, d_key_t value, size_t len) {
@@ -456,11 +457,13 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
             // empty byte array
             item->len  = 0;
             item->data = NULL;
-          } else if (l < 10 && !(l > 3 && start[2] == '0' && start[3] == '0')) { // we can accept up to 3,4 bytes as integer
+          }
+          else if (l < 10 && !(l > 3 && start[2] == '0' && start[3] == '0')) { // we can accept up to 3,4 bytes as integer
             item->len = T_INTEGER << 28;
             for (i = 2; i < l; i++)
               item->len |= hexchar_to_int(start[i]) << ((l - i - 1) << 2);
-          } else {
+          }
+          else {
             // we need to allocate bytes for it. and so set the type to bytes
             item->len  = ((l & 1) ? l - 1 : l - 2) >> 1;
             item->data = _malloc(item->len);
@@ -469,11 +472,13 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
             for (i = l - 2, n = l; i < item->len; i++, n += 2)
               item->data[i] = hexchar_to_int(start[n]) << 4 | hexchar_to_int(start[n + 1]);
           }
-        } else if (l == 6 && *start == '\\' && start[1] == 'u') {
+        }
+        else if (l == 6 && *start == '\\' && start[1] == 'u') {
           item->len   = 1;
           item->data  = _malloc(1);
           *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
-        } else {
+        }
+        else {
           if (*(start - 1) == '\'') {
             // this is a escape-sequence which forces this to handled as string
             // here we do change or fix the input string because this would be an invalid string otherwise.
@@ -553,21 +558,24 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         parsed_next_item(jp, T_BOOLEAN, key, parent)->len |= 1;
         jp->c += 3;
         return 0;
-      } else
+      }
+      else
         return -2;
     case 'f':
       if (strncmp(jp->c, "alse", 4) == 0) {
         parsed_next_item(jp, T_BOOLEAN, key, parent);
         jp->c += 4;
         return 0;
-      } else
+      }
+      else
         return -2;
     case 'n':
       if (strncmp(jp->c, "ull", 3) == 0) {
         parsed_next_item(jp, T_NULL, key, parent);
         jp->c += 3;
         return 0;
-      } else
+      }
+      else
         return -2;
     case '0':
     case '1':
@@ -648,7 +656,8 @@ char* d_create_json(d_token_t* item) {
         dst = _malloc(s.len + 1);
         memcpy(dst, s.data, s.len);
         dst[s.len] = 0;
-      } else {
+      }
+      else {
         sb_t* sb = sb_new(d_type(item) == T_ARRAY ? "[" : "{");
         for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
           char* p = d_create_json(it.token);
@@ -659,7 +668,8 @@ char* d_create_json(d_token_t* item) {
               sb_add_char(sb, '"');
               sb_add_chars(sb, kn);
               sb_add_chars(sb, "\":");
-            } else {
+            }
+            else {
               char tmp[8];
               sprintf(tmp, "\"%04x\":", (uint32_t) it.token->key);
               sb_add_chars(sb, tmp);
@@ -706,7 +716,8 @@ str_range_t d_to_json(const d_token_t* item) {
   if (item) {
     s.data = (char*) item->data;
     s.len  = find_end(s.data);
-  } else {
+  }
+  else {
     s.data = NULL;
     s.len  = 0;
   }
@@ -719,7 +730,8 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
   if (jp->allocated == 0) {
     jp->result    = _malloc(10 * sizeof(d_token_t));
     jp->allocated = 10;
-  } else if (jp->len + 1 > jp->allocated) {
+  }
+  else if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
   }
@@ -749,12 +761,13 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
     len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3]; // 31 = 4 bytes length
   *p += l;                                                            // jump to the data
 
-  if (type == T_NULL && len > 0) {                                                                      // special token giving the number of tokens, so we can allocate the exact number
-    if (len > JSON_MAX_ALLOWED_TOKENS) return -4;                                                       // security check so we are not allocating too much memory
-    if (jp->allocated == 0) {                                                                           // first time?
-      jp->result    = _malloc(sizeof(d_token_t) * len);                                                 // use malloc
-      jp->allocated = len;                                                                              //
-    } else if (len > jp->allocated) {                                                                   // otherwise
+  if (type == T_NULL && len > 0) {                      // special token giving the number of tokens, so we can allocate the exact number
+    if (len > JSON_MAX_ALLOWED_TOKENS) return -4;       // security check so we are not allocating too much memory
+    if (jp->allocated == 0) {                           // first time?
+      jp->result    = _malloc(sizeof(d_token_t) * len); // use malloc
+      jp->allocated = len;                              //
+    }
+    else if (len > jp->allocated) {                                                                     // otherwise
       jp->result    = _realloc(jp->result, len * sizeof(d_token_t), jp->allocated * sizeof(d_token_t)); // realloc
       jp->allocated = len;
     }
@@ -824,7 +837,8 @@ json_ctx_t* parse_binary(const bytes_t* data) {
     _free(jp->result);
     _free(jp);
     jp = NULL;
-  } else
+  }
+  else
     // we use the allocated as marker for binary.
     // allocated == 0 means we don't need to free the bytes and strings in json_free()
     jp->allocated = 0;
@@ -933,6 +947,12 @@ char* d_get_keystr(d_key_t k) {
     if (kn->key == k) return kn->name;
     kn = kn->next;
   }
+#ifdef LOGGING
+  for (int i = 0; USED_KEYS[i]; i++) {
+    if (key(USED_KEYS[i]) == k) return USED_KEYS[i];
+  }
+#endif
+
   return NULL;
 }
 

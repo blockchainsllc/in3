@@ -45,9 +45,13 @@
 #include "../evm/evm.h"
 #include <string.h>
 
-int in3_verify_eth_full(in3_vctx_t* vc) {
-  char* method = d_get_stringk(vc->request, K_METHOD);
-  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
+in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) {
+  UNUSED_VAR(pdata);
+  UNUSED_VAR(action);
+  in3_vctx_t* vc     = pctx;
+  char*       method = d_get_stringk(vc->request, K_METHOD);
+  if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
+  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)
@@ -121,14 +125,12 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
       default:
         return ctx_set_error(vc->ctx, "General Error during execution", (in3_ret_t) ret);
     }
-  } else
-    return in3_verify_eth_basic(vc);
+  }
+  else
+    return IN3_EIGNORE;
 }
 
-void in3_register_eth_full() {
-  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  v->type           = CHAIN_ETH;
-  v->pre_handle     = eth_handle_intern;
-  v->verify         = (in3_verify) in3_verify_eth_full;
-  in3_register_verifier(v);
+in3_ret_t in3_register_eth_full(in3_t* c) {
+  in3_register_eth_basic(c);
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_eth_full, NULL, false);
 }

@@ -137,7 +137,7 @@ static void test_signer() {
 int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
   TESTS_BEGIN();
 #if defined(LEDGER_NANO)
   RUN_TEST(test_tx);

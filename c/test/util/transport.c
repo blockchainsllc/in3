@@ -1,7 +1,7 @@
 #include "transport.h"
 #include "../../src/core/client/cache.h"
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/nodelist.h"
+#include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
@@ -44,11 +44,13 @@ char*              read_json_response_buffer(char* path) {
     response_buffer[length] = 0;
     fclose(f);
     return response_buffer;
-  } else {
+  }
+  else {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
       printf("Current working dir: %s\n", cwd);
-    } else {
+    }
+    else {
       perror("getcwd() error");
     }
     printf("Error coudl not find the testdata %s\n", path);
@@ -93,7 +95,8 @@ int add_response_test(char* test, char* needed_params) {
     res    = d_to_json(d_get_at(d_get(mock->result, key("response")), 0));
     req    = d_get_at(d_get(mock->result, key("request")), 0);
     params = d_create_json(d_get(req, key("params")));
-  } else if (d_type(mock->result) == T_ARRAY) {
+  }
+  else if (d_type(mock->result) == T_ARRAY) {
     for (d_iterator_t iter = d_iter(mock->result); iter.left; d_iter_next(&iter)) {
       res    = d_to_json(d_get_at(d_get(iter.token, key("response")), 0));
       req    = d_get_at(d_get(iter.token, key("request")), 0);
@@ -102,7 +105,8 @@ int add_response_test(char* test, char* needed_params) {
       if (strcmp(params, needed_params)) {
         _free(params);
         params = NULL;
-      } else
+      }
+      else
         break;
     }
   }
@@ -120,8 +124,8 @@ int add_response_test(char* test, char* needed_params) {
   _free(buffer);
   return params ? 0 : -1;
 }
-
-in3_ret_t test_transport(in3_request_t* req) {
+in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req = plugin_ctx;
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
@@ -146,13 +150,14 @@ in3_ret_t test_transport(in3_request_t* req) {
   return IN3_OK;
 }
 
-in3_ret_t mock_transport(in3_request_t* req) {
-  json_ctx_t* r        = parse_json(req->payload);
-  d_token_t*  request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
-  char*       method   = d_get_string(request, "method");
-  str_range_t params   = d_to_json(d_get(request, key("params")));
-  char*       p        = alloca(params.len + 1);
-  sb_t*       filename = sb_new(method);
+in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_request_t* req      = plugin_ctx;
+  json_ctx_t*    r        = parse_json(req->payload);
+  d_token_t*     request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  char*          method   = d_get_string(request, "method");
+  str_range_t    params   = d_to_json(d_get(request, key("params")));
+  char*          p        = alloca(params.len + 1);
+  sb_t*          filename = sb_new(method);
   for (d_iterator_t iter = d_iter(d_get(request, key("params"))); iter.left; d_iter_next(&iter)) {
     switch (d_type(iter.token)) {
       case T_BOOLEAN:
