@@ -89,7 +89,7 @@ static in3_ret_t test_bulk_transport(void* plugin_data, in3_plugin_act_t action,
 
 static void test_context_bulk() {
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_plugin_register(in3, PLGN_ACT_TRANSPORT, test_bulk_transport, NULL, true);
+  plugin_register(in3, PLGN_ACT_TRANSPORT, test_bulk_transport, NULL, true);
   in3->flags = FLAGS_STATS;
   for (int i = 0; i < in3->chains_length; i++) {
     _free(in3->chains[i].nodelist_upd8_params);

@@ -40,6 +40,7 @@
 #include "nodelist.h"
 #include "plugin.h"
 #include "stdio.h"
+#include <assert.h>
 #include <inttypes.h>
 #include <string.h>
 
@@ -52,6 +53,9 @@
  * generates and writes the cachekey
  */
 static void write_cache_key(char* key, chain_id_t chain_id, const address_t whitelist_contract) {
+  assert(key);
+  assert(chain_id > 0);
+
   if (whitelist_contract) {                                           //  only  whitelistnodelists contain the address.
     char contract_[41];                                               // currently we have a max with of 40 which is more than the chain_id could hold
     bytes_to_hex(whitelist_contract, 20, contract_);                  // contract is appended as hex
@@ -65,6 +69,7 @@ static void write_cache_key(char* key, chain_id_t chain_id, const address_t whit
  * initializes the cache by trying to read the nodelist and whitelist.
  */
 in3_ret_t in3_cache_init(in3_t* c) {
+  assert_in3(c);
   for (int i = 0; i < c->chains_length; i++) {
     // the reason why we ignore the error here, is because we want to ignore errors if the cache is able to update.
     if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) { in3_log_debug("Failed to update cached nodelist\n"); }
@@ -78,6 +83,9 @@ in3_ret_t in3_cache_init(in3_t* c) {
  * updates the nodlist from the cache.
  */
 in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
+  assert_in3(c);
+  assert(chain);
+
   // it is ok not to have a storage
   if (!in3_plugin_is_registered(c, PLGN_ACT_CACHE_GET)) return IN3_OK;
 
@@ -140,6 +148,9 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 }
 
 in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
+  assert_in3(c);
+  assert(chain);
+
   // it is ok not to have a storage
   if (!in3_plugin_is_registered(c, PLGN_ACT_CACHE_SET) || !chain->dirty) return IN3_OK;
 
@@ -194,6 +205,9 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_chain_t* chain) {
 }
 
 in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
+  assert_in3(c);
+  assert(chain);
+
   // it is ok not to have a storage
   if (!in3_plugin_is_registered(c, PLGN_ACT_CACHE_SET) || !chain->whitelist) return IN3_OK;
 
@@ -230,6 +244,10 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
 }
 
 in3_ret_t in3_cache_store_whitelist(in3_ctx_t* ctx, in3_chain_t* chain) {
+  assert(ctx);
+  assert_in3(ctx->client);
+  assert(chain);
+
   // write to bytes_buffer
   if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET) || !chain->whitelist) return IN3_OK;
 

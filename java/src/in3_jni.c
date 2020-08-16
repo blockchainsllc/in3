@@ -713,8 +713,8 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_t* in3 = in3_for_chain_auto_init(jchain);
   void*  p   = (*env)->NewGlobalRef(env, ob);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, p);
-  in3_plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
-  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
+  plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
+  plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
   jni = env;
 
   in3_set_jclient_config(in3, ob);

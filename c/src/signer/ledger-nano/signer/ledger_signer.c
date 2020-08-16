@@ -36,7 +36,8 @@ in3_ret_t is_ledger_device_connected() {
     in3_log_debug("product: %ls\n", wstr);
 
     ret = IN3_OK;
-  } else {
+  }
+  else {
     ret = IN3_ENODEVICE;
   }
 
@@ -126,8 +127,8 @@ in3_ret_t eth_ledger_sign(void* p_data, in3_plugin_act_t action, void* p_ctx) {
           in3_log_debug("printing signature returned by device with recid value\n");
           ba_print(sc->signature, 65);
 #endif
-
-        } else {
+        }
+        else {
           in3_log_fatal("error in apdu execution \n");
           free(response.data);
           close_device(handle);
@@ -142,7 +143,8 @@ in3_ret_t eth_ledger_sign(void* p_data, in3_plugin_act_t action, void* p_ctx) {
       default:
         return IN3_ENOTSUP;
     }
-  } else {
+  }
+  else {
     in3_log_fatal("no ledger device connected \n");
     return IN3_ENODEVICE;
   }
@@ -182,7 +184,8 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
     if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
       ret = IN3_OK;
       memcpy(o_public_key, response.data, response.len - 2);
-    } else {
+    }
+    else {
       free(response.data);
       close_device(handle);
       return IN3_EAPDU;
@@ -190,8 +193,8 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
 
     free(response.data);
     close_device(handle);
-
-  } else {
+  }
+  else {
     return IN3_ENODEVICE;
   }
 
@@ -210,7 +213,7 @@ in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path) {
   eth_ledger_get_public_key(bip32, public_key);
   keccak(bytes(public_key + 1, 64), sdata);
   memcpy(data->adr, sdata + 12, 20);
-  return in3_plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign, data, false);
+  return plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign, data, false);
 }
 
 void set_command_params() {

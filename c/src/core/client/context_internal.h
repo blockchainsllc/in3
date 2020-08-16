@@ -91,4 +91,21 @@ in3_ret_t ctx_handle_failable(
     in3_ctx_t* ctx /**< [in] the current request context. */
 );
 
+#define assert_in3_ctx(ctx)                                                                    \
+  assert(ctx);                                                                                 \
+  assert_in3(ctx->client);                                                                     \
+  assert(ctx->signers_length <= (ctx->type == CT_RPC ? ctx->client->signature_count + 1 : 0)); \
+  assert(ctx->signers_length ? (ctx->signers != NULL) : (ctx->signers == NULL));               \
+  assert(ctx->len >= 1 || ctx->error);                                                         \
+  assert(ctx->attempt <= ctx->client->max_attempts);                                           \
+  assert(!ctx->len || ctx->request_context);                                                   \
+  assert(!ctx->len || ctx->requests);                                                          \
+  assert(!ctx->len || ctx->requests[0]);                                                       \
+  assert(!ctx->len || ctx->requests[ctx->len - 1]);                                            \
+  assert(ctx->error ? (ctx->verification_state < 0) : (ctx->verification_state == IN3_OK || ctx->verification_state == IN3_WAITING));
+
+#define assert_in3_response(r) \
+  assert(r);                   \
+  assert(r->state != IN3_OK || r->data.data);
+
 #endif // CONTEXT_INTERNAL_H

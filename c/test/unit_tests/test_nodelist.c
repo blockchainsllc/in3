@@ -628,7 +628,7 @@ static void test_nodelist_update_8() {
   in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
-  c->max_attempts         = 0;
+  c->max_attempts         = 1;
 
   // start time
   uint64_t t = 1;

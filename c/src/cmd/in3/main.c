@@ -418,8 +418,11 @@ void set_chain_id(in3_t* c, char* id) {
   c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
   if (c->chain_id == 0xFFFFL) {
     in3_chain_t* chain = in3_get_chain(c);
-    if (strstr(id, "://")) // its a url
+    if (strstr(id, "://")) { // its a url
+      if (!chain->nodelist)
+        chain->nodelist = _calloc(1, sizeof(in3_node_t));
       chain->nodelist[0].url = id;
+    }
     if (chain->nodelist_upd8_params) {
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
@@ -717,7 +720,7 @@ int main(int argc, char* argv[]) {
   char*           port             = NULL;
   char*           sig_type         = "raw";
   bool            to_eth           = false;
-  in3_plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
+  plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
@@ -828,7 +831,7 @@ int main(int argc, char* argv[]) {
       gas_limit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-test") == 0) {
       test_name = argv[++i];
-      in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+      plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
     }
     else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];

@@ -767,6 +767,9 @@ export type TxRequest = {
 
     /**  number of block to wait before confirming*/
     confirmations?: number
+
+    /** number of seconds to wait for confirmations before giving up. Default: 10 */
+    timeout?: number
 }
 
 export interface Web3Event {

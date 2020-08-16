@@ -74,7 +74,8 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
         if (is_msg == true) { // final apdu lenghts will be adjusted differenly for message and transaction`
 
           apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 5 + (sc->message.len - strlen(prefix));
-        } else {
+        }
+        else {
           apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1 + sc->message.len;
         }
 
@@ -89,7 +90,8 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
           apdu[index_counter++] = sc->message.len - strlen(prefix);
           memcpy(apdu + index_counter, sc->message.data + strlen(prefix), sc->message.len - strlen(prefix));
           index_counter += sc->message.len - strlen(prefix);
-        } else {
+        }
+        else {
           memcpy(apdu + index_counter, sc->message.data, sc->message.len);
           index_counter += sc->message.len;
         }
@@ -121,14 +123,15 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
 
             ba_print(sc->signature, 65);
 #endif
-
-          } else {
+          }
+          else {
             in3_log_fatal("error in apdu execution \n");
             close_device(handle);
             free(response.data);
             return IN3_EAPDU;
           }
-        } else {
+        }
+        else {
           in3_log_fatal("error in apdu execution \n");
           close_device(handle);
           free(response.data);
@@ -143,8 +146,8 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
       default:
         return IN3_ENOTSUP;
     }
-
-  } else {
+  }
+  else {
     in3_log_fatal("no ledger device connected \n");
     return IN3_ENODEVICE;
   }
@@ -200,13 +203,15 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
         memcpy(public_key, response.data + 1, 65);
         memcpy(o_public_key, public_key, 65);
         is_public_key_assigned = true;
-      } else {
+      }
+      else {
         in3_log_fatal("error in apdu execution \n");
         free(response.data);
         close_device(handle);
         return IN3_EAPDU;
       }
-    } else {
+    }
+    else {
       in3_log_fatal("error in apdu execution \n");
       free(response.data);
       close_device(handle);
@@ -215,7 +220,8 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
 
     free(response.data);
     close_device(handle);
-  } else {
+  }
+  else {
 
     return IN3_ENODEVICE;
   }
@@ -243,7 +249,7 @@ in3_ret_t eth_ledger_set_signer_txn(in3_t* in3, uint8_t* bip_path) {
   eth_ledger_get_public_addr(bip32, public_key);
   keccak(bytes(public_key + 1, 64), sdata);
   memcpy(data->adr, sdata + 12, 20);
-  return in3_plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign_txn, data, false);
+  return plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign_txn, data, false);
 }
 
 void set_command_params_eth() {
