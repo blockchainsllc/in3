@@ -450,7 +450,7 @@ class EthAPI {
         const api = this, ob = { _address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
             const method = def.name + createSignature(def.inputs)
-            if (def.constant) {
+            if (def.constant || def.stateMutability == 'view' || def.stateMutability == 'pure') {
                 const signature = method + ':' + createSignature(def.outputs)
                 ob[def.name] = function (...args) {
                     return api.callFn(address, signature, ...args)
