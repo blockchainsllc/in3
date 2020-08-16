@@ -40,7 +40,7 @@ project(in3)
 
 # options
 option(BUILD_DOC "generates the documenation with doxygen." OFF)
-option(TAG_VERSION "the tagged version, which should be used" 2.0.0)
+option(TAG_VERSION "the tagged version, which should be used" 3.0.0)
 option(ETH_NANO "build minimal eth verification.(eth_getTransactionReceipt)" ON)
 option(ETH_BASIC "build basic eth verification.(all rpc-calls except eth_call)" ON)
 option(ETH_FULL "build full eth verification.(including eth_call)" ON)
@@ -182,7 +182,7 @@ endif()
 if (TAG_VERSION)
    set(PROJECT_VERSION "${TAG_VERSION}")
 else(TAG_VERSION)
-   set(PROJECT_VERSION "2.2.2-local")
+   set(PROJECT_VERSION "3.0.0-local")
 endif(TAG_VERSION)
 
 MESSAGE(STATUS "Building version ${PROJECT_VERSION}")

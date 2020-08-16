@@ -99,7 +99,7 @@ describe('Util-Tests', () => {
 
     it('getVersion', async () => {
         const res = IN3.util.getVersion()
-        assert.match(res, /2\.[0-9]+\.[0-9]+/)
+        assert.match(res, /3\.[0-9]+\.[0-9]+/)
     })
 
     it('getAddress', async () => {
