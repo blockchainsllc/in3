@@ -2,8 +2,8 @@
 
 xtensa_run() {
     # kill xtensa processes 
-    pids=$(ps aux | grep -i xtensa |awk '{print $2}')
-    for pi in $pids; do kill -9  $pi > /dev/null 2>&1 ; done
+    pids=$(ps aux | grep "[q]emu-system-xtensa" |awk '{print $2}')
+    for pi in $pids; do kill -9  $pi; done
     # run qemu with timeout 
     timeout --foreground 100s xtensa-softmmu/qemu-system-xtensa -nographic -semihosting -machine esp32 -drive file=flash_image.bin,if=mtd,format=raw -nographic -vga none -net none  -global driver=timer.esp32.timg,property=wdt_disable,value=true -no-reboot | tee test.txt
     # search for the result of the test
