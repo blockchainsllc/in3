@@ -330,7 +330,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
     init_ewf(chain++);
 
   if (!chain_id || chain_id == CHAIN_ID_LOCAL) {
-    initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
+    initChain(chain, 0x11, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
     initNode(chain++, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
   }
   if (chain_id && chain == c->chains) {
