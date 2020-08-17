@@ -408,7 +408,6 @@ static void test_eth_getblock_txcount_hash(void) {
 static void test_eth_getblock_hash(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   bytes32_t blk_hash;
-  // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex_to_bytes("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
 
   //eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
