@@ -32,10 +32,16 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-IF (USE_CURL)
-    add_subdirectory(curl)
-elseif(USE_WINHTTP)
-    add_subdirectory(winhttp)
-else ()
-    add_subdirectory(http)
-ENDIF ()
+# add lib
+add_static_library(
+  NAME     transport_winhttp 
+  
+  SOURCES 
+    in3_winhttp.c
+
+  DEPENDS 
+    core
+    winhttp
+)
+
+

@@ -48,6 +48,8 @@
 #include "../../third-party/crypto/secp256k1.h"
 #ifdef USE_CURL
 #include "../../transport/curl/in3_curl.h"
+#elif USE_WINHTTP
+#include "../../transport/winhttp/in3_winhttp.h"
 #else
 #include "../../transport/http/in3_http.h"
 #endif
@@ -617,6 +619,8 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
+#elif USE_WINHTTP
+  in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
 #else
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
@@ -639,6 +643,8 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
   in3_request_t* req = plugin_ctx;
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
+#elif USE_WINHTTP
+  in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
 #else
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
@@ -722,11 +728,8 @@ int main(int argc, char* argv[]) {
   bool            to_eth           = false;
   plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
-#ifdef __MINGW32__
-  c->flags |= FLAGS_HTTP;
-#endif
-#ifndef USE_CURL
-  c->flags |= FLAGS_HTTP;
+#ifndef USE_WINHTTP
+  c->request_count = 1;
 #endif
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
@@ -1044,6 +1047,8 @@ int main(int argc, char* argv[]) {
           r.payload               = "";
 #ifdef USE_CURL
           send_curl(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
+#elif USE_WINHTTP
+          send_winhttp(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #else
           send_http(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #endif
