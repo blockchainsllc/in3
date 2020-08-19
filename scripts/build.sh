@@ -46,6 +46,7 @@ if [ "$CONTAINER" = "--help" ]; then
    echo "     - clang9"
    echo "     - clang50"
    echo "     - gcc10"
+   echo "     - gcc8-x86"
    echo "     - gcc8"
    echo "     - gcc8-armv7"
    echo "     - gcc8-armv7hf"
