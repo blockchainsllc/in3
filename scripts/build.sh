@@ -78,7 +78,7 @@ elif [ "$CONTAINER" = "win" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:gcc7-mingw
   echo $CONTAINER > build/container.txt
   docker run  --rm -v $RD:$RD  $CONTAINER \
-    /bin/bash -c "cd $RD/build; cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=false -DLEDGER_NANO=true -DUSE_CURL=true -DLIBCURL_LINKTYPE=static .. && make -j8"
+    /bin/bash -c "cd $RD/build; cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=false -DLEDGER_NANO=false -DUSE_CURL=false -DUSE_WINHTTP=true .. && make -j8"
 elif [ "$CONTAINER" = "cortexm3" ]; then
   CONTAINER=docker.io/zephyrprojectrtos/zephyr-build:v0.12
   echo $CONTAINER > build/container.txt
