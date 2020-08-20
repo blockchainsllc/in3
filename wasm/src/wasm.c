@@ -32,10 +32,10 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "../../c/src/core/client/cache.h"
-#include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/nodelist.h"
+#include "../../c/src/core/client/plugin.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
@@ -95,6 +95,7 @@ EM_JS(void, in3_cache_set, (const char* key, char* val), {
   Module.in3_cache.set(UTF8ToString(key),UTF8ToString(val));
 })
 
+
 char* EMSCRIPTEN_KEEPALIVE  in3_version() {
     return IN3_VERSION;
 }
@@ -112,6 +113,63 @@ void storage_set_item(void* cptr, const char* key, bytes_t* content) {
   char buffer[content->len * 2 + 1];
   bytes_to_hex(content->data, content->len, buffer);
   in3_cache_set(key, buffer);
+}
+
+EM_JS(int, plgn_exec_term, (in3_t * c, int index), {
+  var client = Module.clients[c];
+  var plgn   = client && client.plugins[index];
+  if (!plgn) return -4;
+  return plgn.term() || 0;
+})
+
+EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req), {
+  var client = Module.clients[c];
+  var plgn   = client && client.plugins[index];
+  if (!plgn) return -4;
+  try {
+    var json = JSON.parse(UTF8ToString(req));
+    var val  = plgn.handleRPC(json);
+    if (typeof(val) == "undefined") return -17;
+    if (!val.then) val = Promise.resolve(val);
+    var id                 = ++in3w.promiseCount;
+    in3w.promises["" + id] = val;
+    json.in3               = {rpc : "promise://" + id};
+    in3w.ccall("wasm_set_request_ctx", "void", [ "number", "string" ], [ ctx, JSON.stringify(json) ]);
+  } catch (x) {
+    // TODO add error
+  }
+})
+
+in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
+  in3_ret_t ret   = IN3_OK;
+  int       index = (int) data;
+  switch (action) {
+    case PLGN_ACT_INIT: return IN3_OK;
+    case PLGN_ACT_TERM: return plgn_exec_term(ctx, index);
+    case PLGN_ACT_RPC_HANDLE: {
+      in3_rpc_handle_ctx_t* rc  = ctx;
+      str_range_t           sr  = d_to_json(rc->request);
+      char*                 req = alloca(sr.len + 1);
+      memcpy(req, sr.data, sr.len);
+      req[sr.len] = 0;
+      return plgn_exec_rpc_handle(rc->ctx->client, rc->ctx, req);
+    }
+    default: break;
+  }
+  return IN3_ENOTSUP;
+}
+
+void EMSCRIPTEN_KEEPALIVE wasm_register_plugin(in3_t* c, in3_plugin_act_t action, int index) {
+  in3_plugin_register(NULL, c, action, wasm_plgn, (void*) index, false);
+}
+
+void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_ctx_t* ctx, char* req) {
+  if (!ctx->request_context) return;
+  char* src = ctx->request_context->c;
+  json_free(ctx->request_context);
+  ctx->request_context    = parse_json(req);
+  ctx->requests[0]        = ctx->request_context->result;
+  ctx->request_context->c = src;
 }
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {

@@ -123,7 +123,9 @@ function getVersion() {
 }
 
 // keep track of all created client instances
-const clients = {}
+const clients = in3w.clients = {}
+in3w.promises = {}
+in3w.promiseCount = 0;
 
 // create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
@@ -157,6 +159,7 @@ class IN3 {
         if (chainId === 'ewc') chainId = '0xf6'
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
+        this.plugins.forEach(_ => this.registerPlugin(_))
     }
 
     // here we are creating the instance lazy, when the first function is called.
@@ -168,6 +171,7 @@ class IN3 {
         this.eth = new EthAPI(this)
         this.ipfs = new IpfsAPI(this)
         this.btc = new BtcAPI(this)
+        this.plugins = []
     }
 
     /**
@@ -202,6 +206,25 @@ class IN3 {
             p.then(_ => callback(null, _), err => callback(err, null))
         else
             return p
+    }
+
+    registerPlugin(plgn) {
+        let action = 0
+        if (plgn.term) action |= 0x2
+        if (plgn.getAccount) action |= 0x20
+        if (plgn.handleRPC) action |= 0x100
+        if (plgn.verifyRPC) action |= 0x200
+        if (plgn.cacheGet) action |= 0x800
+        if (plgn.cacheSet) action |= 0x400
+        if (plgn.cacheClear) action |= 0x1000
+        let index = this.plugins.indexOf(plgn)
+        if (index == -1) {
+            index = this.plugins.length
+            this.plugins.push(plgn)
+        }
+
+        if (this.ptr)
+            in3w.ccall('wasm_register_plugin', 'number', ['number', 'number', 'number'], [this.ptr, action, index]);
     }
 
 
@@ -445,3 +468,4 @@ function setResponse(ctx, msg, i, isError) {
 function check_ready() {
     if (_in3_listeners) throw new Error('The Incubed wasm runtime is not initialized yet! Please use onInit() to execute it when ready.')
 }
+
