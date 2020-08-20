@@ -119,16 +119,16 @@ EM_JS(int, plgn_exec_term, (in3_t * c, int index), {
   var client = Module.clients[c];
   var plgn   = client && client.plugins[index];
   if (!plgn) return -4;
-  return plgn.term() || 0;
+  return plgn.term(client) || 0;
 })
 
-EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req), {
+EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req, int index), {
   var client = Module.clients[c];
   var plgn   = client && client.plugins[index];
   if (!plgn) return -4;
   try {
     var json = JSON.parse(UTF8ToString(req));
-    var val  = plgn.handleRPC(json);
+    var val  = plgn.handleRPC(client, json);
     if (typeof(val) == "undefined") return -17;
     if (!val.then) val = Promise.resolve(val);
     var id                 = ++in3w.promiseCount;
@@ -152,7 +152,7 @@ in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
       char*                 req = alloca(sr.len + 1);
       memcpy(req, sr.data, sr.len);
       req[sr.len] = 0;
-      return plgn_exec_rpc_handle(rc->ctx->client, rc->ctx, req);
+      return plgn_exec_rpc_handle(rc->ctx->client, rc->ctx, req, index);
     }
     default: break;
   }

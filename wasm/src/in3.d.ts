@@ -378,6 +378,34 @@ export declare interface RPCResponse {
     result?: any
 }
 
+/**
+ * a Incubed plugin.
+ * 
+ * Depending on the methods this will register for those actions.
+ */
+interface IN3Plugin {
+    /**
+     * this is called when the client is cleaned up.
+     * @param client the client object
+     */
+    term?(client: IN3Generic)
+
+    /**
+     * returns address
+     * @param client 
+     */
+    getAccount?(client: IN3Generic)
+
+    /**
+     * called for each request. 
+     * If the plugin wants to handle the request, this function should return the value or a Promise for the value.
+     * If the plugin does not want to handle it, it should rreturn undefined.
+     * @param client the current client
+     * @param request the rpc-request
+     */
+    handleRPC?(client: IN3Generic, request: RPCRequest): undefined | Promise<any>
+}
+
 export default class IN3Generic<BigIntType, BufferType> {
     /**
      * IN3 config
@@ -481,6 +509,12 @@ export default class IN3Generic<BigIntType, BufferType> {
      * collection of util-functions.
      */
     public util: Utils<BufferType>
+
+    /**
+     * rregisters a plugin. The plugin may define methods which will be called by the client.
+     * @param plugin the plugin-object to register
+     */
+    public registerPlugin(plugin: IN3Plugin): void
 
     /**
      * collection of util-functions.

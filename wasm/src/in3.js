@@ -285,7 +285,10 @@ class IN3 {
 
                             case 'rpc':
                                 if (req.wait) await new Promise(r => setTimeout(r, req.wait))
-                                await getNextResponse(responses, req)
+                                if (req.urls[0].startsWith("promise://"))
+                                    await resolvePromises(req.ctx, req.urls[0])
+                                else
+                                    await getNextResponse(responses, req)
                         }
 
                     }
@@ -306,7 +309,7 @@ class IN3 {
     }
 
 
-    async sendRPC(method, params) {
+    async sendRPC(method, params = []) {
         const res = await this.sendRequest({ method, params })
         if (res.error) throw new Error(res.error.message || res.error)
         return res.result
@@ -318,13 +321,25 @@ class IN3 {
         if (this.pending)
             this.delayFree = true
         else if (this.ptr) {
-            delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
+            delete clients['' + this.ptr]
             this.ptr = 0
         }
     }
 }
 
+async function resolvePromises(ctx, url) {
+    const pid = url.substr(10)
+    const p = in3w.promises[pid]
+    if (!p)
+        setResponse(ctx, 'could not find the requested proomise', 0, true)
+    else {
+        delete in3w.promises[pid]
+        return p
+            .then(r => setResponse(ctx, JSON.stringify({ result: r }), 0, false))
+            .catch(e => setResponse(ctx, e.message, 0, true))
+    }
+}
 
 function cleanUpResponses(responses, ptr) {
     Object.keys(responses).forEach(ctx => responses[ctx].cleanUp(ptr))
