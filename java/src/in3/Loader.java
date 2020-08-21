@@ -137,4 +137,6 @@ public class Loader {
       throw new RuntimeException("Could not load the native library ", ex);
     }
   }
+
+  IN3.load();
 }

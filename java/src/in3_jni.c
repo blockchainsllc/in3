@@ -710,7 +710,7 @@ static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_t* in3 = in3_for_chain_auto_init(jchain);
+  in3_t* in3 = in3_for_chain_default(jchain);
   void*  p   = (*env)->NewGlobalRef(env, ob);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, p);
   plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
@@ -719,6 +719,15 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
 
   in3_set_jclient_config(in3, ob);
   return (jlong)(size_t) in3;
+}
+
+/*
+ * Class:     in3_IN3
+ * Method:    libInit
+ * Signature: ()J
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_lib_init(JNIEnv* env, jobject ob) {
+  in3_init();
 }
 
 JNIEXPORT jstring JNICALL Java_in3_IN3_getVersion(JNIEnv* env, jclass c) {

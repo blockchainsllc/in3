@@ -113,6 +113,14 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject, jlong);
+
+/*
+ * Class:     in3_IN3
+ * Method:    libInit
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_lib_init(JNIEnv*, jobject);
+
 /*
  * Class:     in3_IN3
  * Method:    initcache
