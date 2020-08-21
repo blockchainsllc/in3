@@ -167,9 +167,11 @@ void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_ctx_t* ctx, char* req) {
   if (!ctx->request_context) return;
   char* src = ctx->request_context->c;
   json_free(ctx->request_context);
-  ctx->request_context    = parse_json(req);
-  ctx->requests[0]        = ctx->request_context->result;
-  ctx->request_context->c = src;
+  char* r                                  = _strdupn(req, -1);
+  ctx->request_context                     = parse_json(r);
+  ctx->requests[0]                         = ctx->request_context->result;
+  ctx->request_context->c                  = src;
+  in3_cache_add_ptr(&ctx->cache, r)->props = CACHE_PROP_MUST_FREE;
 }
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
