@@ -34,6 +34,7 @@
 
 package in3;
 
+import in3.IN3;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -43,7 +44,6 @@ import java.io.OutputStream;
 import java.net.*;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import in3.IN3;
 
 public class Loader {
 
@@ -140,5 +140,4 @@ public class Loader {
 
     IN3.load();
   }
-
 }
