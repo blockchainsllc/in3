@@ -383,18 +383,18 @@ export declare interface RPCResponse {
  * 
  * Depending on the methods this will register for those actions.
  */
-interface IN3Plugin {
+interface IN3Plugin<BigIntType, BufferType> {
     /**
      * this is called when the client is cleaned up.
      * @param client the client object
      */
-    term?(client: IN3Generic)
+    term?(client: IN3Generic<BigIntType, BufferType>)
 
     /**
      * returns address
      * @param client 
      */
-    getAccount?(client: IN3Generic)
+    getAccount?(client: IN3Generic<BigIntType, BufferType>)
 
     /**
      * called for each request. 
@@ -403,7 +403,7 @@ interface IN3Plugin {
      * @param client the current client
      * @param request the rpc-request
      */
-    handleRPC?(client: IN3Generic, request: RPCRequest): undefined | Promise<any>
+    handleRPC?(client: IN3Generic<BigIntType, BufferType>, request: RPCRequest): undefined | Promise<any>
 }
 
 export default class IN3Generic<BigIntType, BufferType> {
@@ -514,7 +514,7 @@ export default class IN3Generic<BigIntType, BufferType> {
      * rregisters a plugin. The plugin may define methods which will be called by the client.
      * @param plugin the plugin-object to register
      */
-    public registerPlugin(plugin: IN3Plugin): void
+    public registerPlugin(plugin: IN3Plugin<BigIntType, BufferType>): void
 
     /**
      * collection of util-functions.
