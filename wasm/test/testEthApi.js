@@ -95,12 +95,18 @@ describe('EthAPI-Tests', () => {
             handleRPC(client, req) {
                 if (req.method === 'rpc_test')
                     return "test"
+                if (req.method === 'rpc_error')
+                    throw new Error('RPCERROR')
+                if (req.method === 'rpc_error2')
+                    return Promise.reject(new Error('RPCERROR2'))
 
             }
         })
 
         assert.equal('test', await c.sendRPC('rpc_test'))
         assert.equal(true, await c.sendRPC('test2').catch(() => true))
+        assert.equal('RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
+        assert.equal('RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
 
     })
 

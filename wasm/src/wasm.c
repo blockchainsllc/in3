@@ -136,8 +136,9 @@ EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req, int inde
     json.in3               = {rpc : "promise://" + id};
     in3w.ccall("wasm_set_request_ctx", "void", [ "number", "string" ], [ ctx, JSON.stringify(json) ]);
   } catch (x) {
-    // TODO add error
+    setResponse(ctx, JSON.stringify({error : {message : x.message || x}}), 0, false)
   }
+  return 0
 })
 
 in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
@@ -257,6 +258,7 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
+  if (!ctx->raw_response) ctx->raw_response = _calloc(sizeof(in3_response_t), i + 1);
   ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
   ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
   if (ctx->type == CT_SIGN && !is_error) {

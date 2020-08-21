@@ -255,7 +255,14 @@ class IN3 {
             // main async loop
             // we repeat it until we have a result
             while (this.ptr && !this.delayFree) {
-                const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+                const js = call_string('ctx_execute', r).replace(/\n/g, ' > ')
+                let state;
+                try {
+                    state = JSON.parse(js)
+                }
+                catch (x) {
+                    throw new Error("Invalid json:", js)
+                }
                 switch (state.status) {
                     case 'error':
                         throw new Error(state.error || 'Unknown error')
@@ -332,12 +339,12 @@ async function resolvePromises(ctx, url) {
     const pid = url.substr(10)
     const p = in3w.promises[pid]
     if (!p)
-        setResponse(ctx, 'could not find the requested proomise', 0, true)
+        setResponse(ctx, JSON.stringify({ error: { message: 'could not find the requested proomise' } }), 0, false)
     else {
         delete in3w.promises[pid]
         return p
             .then(r => setResponse(ctx, JSON.stringify({ result: r }), 0, false))
-            .catch(e => setResponse(ctx, e.message, 0, true))
+            .catch(e => setResponse(ctx, JSON.stringify({ error: { message: e.message || e } }), 0, false))
     }
 }
 
