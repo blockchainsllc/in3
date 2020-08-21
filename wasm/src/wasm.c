@@ -138,16 +138,22 @@ EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req, int inde
   } catch (x) {
     setResponse(ctx, JSON.stringify({error : {message : x.message || x}}), 0, false)
   }
-  return 0
+  return 0;
 })
 
+/**
+ * the main plgn-function which is called for each js-plugin,
+ * delegating it depending on the action.
+ */
 in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
-  in3_ret_t ret   = IN3_OK;
-  int       index = (int) data;
+  // we use the custom data pointer of the plugin as index within the clients plugin array
+  int index = (int) data;
+
   switch (action) {
     case PLGN_ACT_INIT: return IN3_OK;
     case PLGN_ACT_TERM: return plgn_exec_term(ctx, index);
     case PLGN_ACT_RPC_HANDLE: {
+      // extract the request as string, so we can pass it to js
       in3_rpc_handle_ctx_t* rc  = ctx;
       str_range_t           sr  = d_to_json(rc->request);
       char*                 req = alloca(sr.len + 1);
@@ -161,20 +167,30 @@ in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
 }
 
 void EMSCRIPTEN_KEEPALIVE wasm_register_plugin(in3_t* c, in3_plugin_act_t action, int index) {
+  // the index is used as the custom void* or data for the plugin.
+  // This way we can cast it backward in order doing the call to js to find the plugin
+  // if a js-plugin needs custom data, the it should do this in js withihn its own plugin object
   in3_plugin_register(NULL, c, action, wasm_plgn, (void*) index, false);
 }
 
+/**
+ * repareses the request for the context with a new input.
+ */
 void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_ctx_t* ctx, char* req) {
   if (!ctx->request_context) return;
-  char* src = ctx->request_context->c;
-  json_free(ctx->request_context);
-  char* r                                  = _strdupn(req, -1);
-  ctx->request_context                     = parse_json(r);
-  ctx->requests[0]                         = ctx->request_context->result;
-  ctx->request_context->c                  = src;
-  in3_cache_add_ptr(&ctx->cache, r)->props = CACHE_PROP_MUST_FREE;
+  char* src = ctx->request_context->c;                                     // we keep the old pointer since this may be an internal request where this needs to be freed.
+  json_free(ctx->request_context);                                         // throw away the old pares context
+  char* r                                  = _strdupn(req, -1);            // need to copy, because req is on the stack and the pointers of the tokens need to point to valid memory
+  ctx->request_context                     = parse_json(r);                // parse the new
+  ctx->requests[0]                         = ctx->request_context->result; //since we don't support bulks in custom rpc, requests must be allocated with len=1
+  ctx->request_context->c                  = src;                          // set the old pointer, so the memory management will clean it correctly
+  in3_cache_add_ptr(&ctx->cache, r)->props = CACHE_PROP_MUST_FREE;         // but add the copy to be cleaned when freeing ctx to avoid memory leaks.
 }
 
+/**
+ * main execute function which generates a json representing the status and all required data to be handled in js.
+ * The resulting string needs to be freed by the caller!
+ */
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   in3_ctx_t*     p   = ctx;
   in3_request_t* req = NULL;
