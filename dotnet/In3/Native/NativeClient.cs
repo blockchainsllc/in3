@@ -21,7 +21,7 @@ namespace In3.Native
             Client = in3;
             NativeHandlers.Add(new RegistrableStorageHandler(this));
 
-            Pointer = in3_for_chain_auto_init(chainId);
+            Pointer = in3_for_chain_default(chainId);
             NativeHandlers.ForEach(handler => handler.RegisterNativeHandler());
         }
 
@@ -52,6 +52,6 @@ namespace In3.Native
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_init();
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_free(IntPtr ptr);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_for_chain_auto_init(Chain chainId);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_for_chain_default(Chain chainId);
     }
 }
