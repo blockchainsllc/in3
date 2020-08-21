@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 /*Term colors*/
-
+#pragma GCC diagnostic ignored "-Wformat-zero-length"
 #ifdef LOG_USE_COLOR
 #define COLORT_RESET           "\033[0m"
 #define COLORT_BOLD            "\033[1m"
