@@ -256,6 +256,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
 void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
   _free(ptr);
 }
+void EMSCRIPTEN_KEEPALIVE wasm_init() {
+  in3_init();
+}
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }

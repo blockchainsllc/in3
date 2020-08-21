@@ -130,6 +130,7 @@ in3w.promiseCount = 0;
 // create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
 in3w.onRuntimeInitialized = _ => {
+    in3w.ccall('wasm_init', 'void', [], []);
     const o = _in3_listeners
     _in3_listeners = undefined
     o.forEach(_ => _(true))
