@@ -126,6 +126,7 @@ function getVersion() {
 const clients = in3w.clients = {}
 in3w.promises = {}
 in3w.promiseCount = 0;
+in3w.extensions = []
 
 // create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
@@ -169,9 +170,7 @@ class IN3 {
         this.config = config ? { ...def, ...config } : def
         this.needsSetConfig = !!config
         this.ptr = 0;
-        this.eth = new EthAPI(this)
-        this.ipfs = new IpfsAPI(this)
-        this.btc = new BtcAPI(this)
+        in3w.extensions.forEach(_ => _(this))
         this.plugins = []
     }
 
