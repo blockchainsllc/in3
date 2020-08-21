@@ -43,6 +43,7 @@ import java.io.OutputStream;
 import java.net.*;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import in3.IN3;
 
 public class Loader {
 
@@ -136,7 +137,8 @@ public class Loader {
     } catch (Exception ex) {
       throw new RuntimeException("Could not load the native library ", ex);
     }
+
+    IN3.load();
   }
 
-  IN3.load();
 }

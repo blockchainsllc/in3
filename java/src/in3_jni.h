@@ -119,7 +119,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject, jlong);
  * Method:    libInit
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_in3_IN3_lib_init(JNIEnv*, jobject);
+JNIEXPORT void JNICALL Java_in3_IN3_lib_init(JNIEnv*, jclass);
 
 /*
  * Class:     in3_IN3

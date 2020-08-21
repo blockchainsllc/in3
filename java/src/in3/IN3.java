@@ -73,8 +73,8 @@ public class IN3 {
     ptr = init(chainAlias);
   }
 
-  private static load() {
-    return libInit();
+  public static void load() {
+    libInit();
   }
 
   /**
@@ -287,6 +287,8 @@ public class IN3 {
   private native void free();
 
   private native long init(long chainId);
+
+  private static native void libInit();
 
   private native void initcache();
 
