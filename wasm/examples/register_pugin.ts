@@ -28,9 +28,7 @@ class Sha256Plugin {
 
 async function registerPlugin() {
   // create new incubed instance
-  const client = new IN3({
-    chainId: 'goerli'
-  })
+  const client = new IN3()
 
   // register the plugin
   client.registerPlugin(new Sha256Plugin())
