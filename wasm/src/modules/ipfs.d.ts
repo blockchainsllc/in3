@@ -15,3 +15,6 @@ export declare interface IpfsAPI<BufferType> {
      */
     put(content: BufferType): Promise<string>
 }
+/*
+public ipfs:IpfsAPI<BufferType>
+ */
