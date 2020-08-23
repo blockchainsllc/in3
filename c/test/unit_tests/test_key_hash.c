@@ -38,10 +38,16 @@
 
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/mem.h"
+#include "../../src/core/util/used_keys.h"
 #include <stdio.h>
 #include <string.h>
 
 #include "../test_utils.h"
+
+typedef struct {
+  uint16_t k;
+  char*    name;
+} key_hash_t;
 
 static void test_key_hash_collisions();
 
@@ -62,85 +68,48 @@ int main() {
   return TESTS_END();
 }
 
-static char* substr(char* s, char* delim1, char* delim2) {
-  char *target, *start, *end;
-  target = start = end = NULL;
-
-  if ((start = strstr(s, delim1))) {
-    start += strlen(delim1);
-    if ((end = strstr(start, delim2))) {
-      target = start;
-      *end   = '\0';
-    }
-  }
-  return target;
-}
-
 static int compare(const void* a, const void* b) {
-  return (*(uint16_t*) a - *(uint16_t*) b);
+  return (((key_hash_t*) a)->k - ((key_hash_t*) b)->k);
 }
 
-static uint16_t collision(uint16_t* hashes, size_t sz) {
+static bool is_allowed(char* a, char* b) {
+  // this function may contains exceptions which are ok
+
+  if (strcmp(a, "autoUpdateList") == 0 && strcmp(b, "params") == 0) return true; // params and autoupdateList will not appear in the same object
+  return false;
+}
+
+static int collision(key_hash_t* hashes, size_t sz) {
   bool dup = false;
   int  i   = 1;
   for (; i < sz; ++i) {
-    if (hashes[i] && hashes[i] == hashes[i - 1]) {
+    if (hashes[i].k == hashes[i - 1].k) {
+      if (is_allowed(hashes[i - 1].name, hashes[i].name)) continue;
+
+      printf("Collision :%s <-> %s : [%u]\n", hashes[i - 1].name, hashes[i].name, hashes[i].k);
       dup = true;
       break;
     }
   }
-  return dup ? hashes[i] : 0;
-}
-
-static char* filetostr(const char* filename) {
-  char* buffer = NULL;
-  long  length;
-  FILE* f = fopen(filename, "r");
-  if (f) {
-    fseek(f, 0, SEEK_END);
-    length = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    buffer         = _malloc(length + 1);
-    buffer[length] = 0;
-    fread(buffer, 1, length, f);
-    fclose(f);
-  }
-  return buffer;
+  return dup ? i : 0;
 }
 
 void test_key_hash_collisions() {
-  size_t    cap    = 10;
-  uint16_t* hashes = _malloc(cap * sizeof(*hashes));
+  size_t      cap    = 10;
+  key_hash_t* hashes = _malloc(cap * sizeof(key_hash_t));
   TEST_ASSERT(hashes != NULL);
-
-  const char* delim      = "\n";
-  char*       keyfilestr = filetostr("../c/src/core/client/keys.h");
-  TEST_ASSERT_MESSAGE(keyfilestr != NULL, "File keys.h not found!");
-  // skip legal header
-  char* keys = strstr(keyfilestr, "*/");
-  keys       = keys ? keys + 3 : keyfilestr;
-
-  char* tok = strtok(keys, delim);
-  int   i   = 0;
-  for (; tok != NULL; i++, tok = strtok(NULL, delim)) {
+  int key_total = 0;
+  for (int i = 0; USED_KEYS[i]; i++) {
+    key_total++;
     if (i == cap) {
-      hashes = _realloc(hashes, cap * 2 * sizeof(*hashes), cap);
+      hashes = _realloc(hashes, cap * 2 * sizeof(key_hash_t), cap);
       cap *= 2;
     }
-    char* kstr = substr(tok, "key(\"", "\")");
-    if (kstr) {
-      hashes[i] = key_(kstr);
-#ifdef DEBUG
-//      printf("\"%s\" => [%u]\n", kstr, hashes[i]);
-#endif
-    } else {
-      hashes[i] = 0;
-    }
+    hashes[i].name = USED_KEYS[i];
+    hashes[i].k    = key_(USED_KEYS[i]);
   }
-  uint16_t nc = -1;
-  qsort(hashes, i, sizeof(uint16_t), compare);
-  nc = collision(hashes, i);
+  qsort(hashes, key_total, sizeof(key_hash_t), compare);
+  int nc = collision(hashes, key_total);
   TEST_ASSERT_EQUAL(0, nc);
-  _free(keyfilestr);
   _free(hashes);
 }

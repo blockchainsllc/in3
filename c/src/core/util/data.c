@@ -43,6 +43,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef LOGGING
+#include "used_keys.h"
+#endif
 // Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
 verify(sizeof(void*) >= 4);
 
@@ -944,6 +947,12 @@ char* d_get_keystr(d_key_t k) {
     if (kn->key == k) return kn->name;
     kn = kn->next;
   }
+#ifdef LOGGING
+  for (int i = 0; USED_KEYS[i]; i++) {
+    if (key(USED_KEYS[i]) == k) return USED_KEYS[i];
+  }
+#endif
+
   return NULL;
 }
 

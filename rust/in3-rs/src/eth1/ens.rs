@@ -117,6 +117,7 @@ impl In3EnsResolver {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn for_client(client: Box<Client>) -> In3EnsResolver {
         In3EnsResolver { in3: client }
     }

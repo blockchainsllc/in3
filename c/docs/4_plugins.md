@@ -17,7 +17,8 @@ Each plugin needs to define those 3 things:
 With these 3 things you can register a plugin with the `in3_plugin_register()` -function:
 
 ```c
-return in3_plugin_register(c,                   // the client
+return in3_plugin_register("myplugin"           // the plugin name
+         c,                                     // the client
          PLGN_ACT_TERM | PLGN_ACT_RPC_HANDLE,   // the actions to register for
          handle_rpc,                            // the plugin-function
          cutom_data,                            // the custom data (if needed)
@@ -238,7 +239,7 @@ in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* args) {
 
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   // we register for both ACCOUNT and SIGN
-  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN, eth_sign_pk, pk, false);
+  return plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN, eth_sign_pk, pk, false);
 }
 
 ```
@@ -458,7 +459,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* args)
 }
 
 in3_ret_t in3_register_rpc_handler(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE, handle_intern, NULL, false);
+  return plugin_register(c, PLGN_ACT_RPC_HANDLE, handle_intern, NULL, false);
 }
 ```
 
@@ -514,7 +515,7 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* args) {
 }
 
 in3_ret_t in3_register_ipfs(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_ipfs, NULL, false);
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_ipfs, NULL, false);
 }
 
 ```
@@ -564,7 +565,7 @@ in3_ret_t handle_storage(void* data, in3_plugin_act_t action, void* arg) {
 }
 
 in3_ret_t in3_register_file_storage(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_CACHE, handle_storage, NULL, true);
+  return plugin_register(c, PLGN_ACT_CACHE, handle_storage, NULL, true);
 }
 ```
 
@@ -656,7 +657,7 @@ in3_ret_t in3_register_btc(in3_t* c) {
   tc->max_diff          = 10;
   tc->dap_limit         = 20;
 
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
 }
 ```
 

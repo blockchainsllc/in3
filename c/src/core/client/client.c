@@ -37,12 +37,15 @@
 #include "context.h"
 #include "keys.h"
 #include "plugin.h"
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
+  assert_in3(c);
+  assert(req);
   // create a new context by parsing the request
   in3_ctx_t* ctx = ctx_new(c, req);
 
@@ -66,6 +69,10 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
 }
 
 in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) {
+  assert_in3(c);
+  assert(method);
+  assert(params);
+
   // generate the rpc-request
   const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
   const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
@@ -79,6 +86,8 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
 }
 
 static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
+  assert(ctx);
+  assert_in3(ctx->client);
   if (result) result[0] = 0;
   *error = NULL;
 
@@ -314,6 +323,6 @@ void in3_set_storage_handler(
   handler->get_item              = get_item;
   handler->set_item              = set_item;
   handler->clear                 = clear;
-  in3_plugin_register(c, PLGN_ACT_CACHE | PLGN_ACT_TERM, handle_cache, handler, true);
+  plugin_register(c, PLGN_ACT_CACHE | PLGN_ACT_TERM, handle_cache, handler, true);
   in3_cache_init(c);
 }

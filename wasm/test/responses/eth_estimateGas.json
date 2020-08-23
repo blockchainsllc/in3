@@ -15,5 +15,19 @@
       "currentBlock": 10316353,
       "version": "2.1.0"
     }
+  },
+  "weth.decimals": {
+    "jsonrpc": "2.0",
+    "result": "0x56c0",
+    "id": 1,
+    "in3": {
+      "lastValidatorChange": 0,
+      "lastNodeList": 10660808,
+      "execTime": 43,
+      "rpcTime": 42,
+      "rpcCount": 1,
+      "currentBlock": 10665805,
+      "version": "2.1.0"
+    }
   }
 }

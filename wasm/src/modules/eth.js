@@ -1,3 +1,5 @@
+in3w.extensions.push(c => c.eth = new EthAPI(c))
+
 class EthAPI {
 
     constructor(client) { this.client = client }
@@ -328,7 +330,7 @@ class EthAPI {
         if (args.confirmations === undefined) args.confirmations = 1
 
         // send it
-        return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations) : txHash
+        return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations, args.timeout || 60) : txHash
     }
 
     web3ContractAt(abi, address, options = {}) {
@@ -375,8 +377,8 @@ class EthAPI {
                             tx.to = address
                             return api.sendTransaction(tx)
                         },
-                        encodeABI: () => toHex(abiEncode(signature, args)),
-                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: abiEncode(signature, ...args) }).then(toNumber))
+                        encodeABI: () => toHex(abiEncode(signature, ...args)),
+                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
                     })
                     break
                 case 'event':
@@ -443,14 +445,11 @@ class EthAPI {
     }
 
 
-
-
-
     contractAt(abi, address) {
         const api = this, ob = { _address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
             const method = def.name + createSignature(def.inputs)
-            if (def.constant) {
+            if (def.constant || def.stateMutability == 'view' || def.stateMutability == 'pure') {
                 const signature = method + ':' + createSignature(def.outputs)
                 ob[def.name] = function (...args) {
                     return api.callFn(address, signature, ...args)
@@ -539,7 +538,7 @@ async function confirm(txHash, api, gasPaid, confirmations, timeout = 10) {
             if (confirmations > 1) {
                 const start = parseInt(receipt.blockNumber)
                 while (start + confirmations - 1 > await api.blockNumber())
-                    await new Promise(_ => setTimeout(_, 10))
+                    await new Promise(_ => setTimeout(_, 2000))
 
                 return api.getTransactionReceipt(txHash)
             }
@@ -547,7 +546,7 @@ async function confirm(txHash, api, gasPaid, confirmations, timeout = 10) {
         }
 
         // wait a second and try again
-        await new Promise(_ => setTimeout(_, Math.min(timeout * 200, steps *= 2)))
+        await new Promise(_ => setTimeout(_, Math.min(timeout * 400, steps *= 2)))
     }
 
     throw new Error('Error waiting for the transaction to confirm')

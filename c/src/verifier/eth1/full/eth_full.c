@@ -132,5 +132,5 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
 
 in3_ret_t in3_register_eth_full(in3_t* c) {
   in3_register_eth_basic(c);
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_eth_full, NULL, false);
+  return plugin_register(c, PLGN_ACT_RPC_VERIFY, in3_verify_eth_full, NULL, false);
 }

@@ -89,6 +89,28 @@ describe('EthAPI-Tests', () => {
 
     })
 
+    it('plugin._handlRPC', async () => {
+        const c = createClient();
+        c.registerPlugin({
+            handleRPC(client, req) {
+                if (req.method === 'rpc_test')
+                    return "test"
+                if (req.method === 'rpc_error')
+                    throw new Error('RPCERROR')
+                if (req.method === 'rpc_error2')
+                    return Promise.reject(new Error('RPCERROR2'))
+
+            }
+        })
+
+        assert.equal('test', await c.sendRPC('rpc_test'))
+        assert.equal(true, await c.sendRPC('test2').catch(() => true))
+        assert.equal('RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
+        assert.equal('RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
+
+    })
+
+
     it('eth.sign()', async () => {
         const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
         const msg = '0x9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465'
@@ -287,16 +309,33 @@ describe('EthAPI-Tests', () => {
         assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].log.address)
     })
 
+
+    it('eth.erc777()', async () => {
+        mockResponse('eth_getCode', 'erc777')
+        mockResponse('eth_call', 'erc777.balance')
+        const c = createClient()//{ chainId: '0x5' }, ['erc777.code', 'erc777.balance'])
+        const erc = c.eth.web3ContractAt(require('./abi/erc777.json'), '0x003add2e145a20b5d85658d03f7107c51989d300')
+        const data = erc.methods.mint("0x60cca2a21be53153bd68ab21e835ad739a94fabd", 1, "", "").encodeABI()
+        assert.equal('0xdcdc7dd000000000000000000000000060cca2a21be53153bd68ab21e835ad739a94fabd0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', data)
+        const erc2 = c.eth.contractAt(require('./abi/erc777.json'), '0x003add2e145a20b5d85658d03f7107c51989d300')
+        const balance = await erc2.balanceOf('0x003add2e145a20b5d85658d03f7107c51989d300')
+        assert.equal(0n, balance)
+
+    })
+
     it('eth.web3ContractAt()', async () => {
         //        let w = createClient({}, ['weth.Transfer', 'WETH']).eth.contractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
         mockResponse('eth_call', 'weth.name')
         mockResponse('eth_getCode', 'WETH')
         mockResponse('eth_call', 'weth.decimals')
+        mockResponse('eth_estimateGas', 'weth.decimals')
         mockResponse('eth_call', 'weth.balanceOf')
         const weth = createClient().eth.web3ContractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
+        assert.equal(22208, await weth.methods.decimals().estimateGas()) // uint8 -> number
         assert.equal('Wrapped Ether', await weth.methods.name().call()) // string
         assert.equal(18, await weth.methods.decimals().call()) // uint8 -> number
         assert.equal(860298690748n, await weth.methods.balanceOf('0xb958a8f59ac6145851729f73c7a6968311d8b633').call()) // uint8 -> number
+
 
         mockResponse('eth_getLogs', 'weth.Transfer')
         let logs = await weth.getPastEvents('Transfer', { fromBlock: 10317749, toBlock: 10317749 })

@@ -37,9 +37,6 @@
  * logs debug data only if the DEBUG-flag is set.
  * */
 
-#ifndef IN3_EXPORT_TEST
-#define IN3_EXPORT_TEST static
-#endif
 #include <assert.h>
 
 #ifdef DEBUG
@@ -64,9 +61,3 @@ void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...);
 extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 
 //#define assunme(var,expr)
-
-#if defined(ASSERTIONS) || defined(DEBUG)
-#define _assert(exp) assert(exp)
-#else
-#define _assert(exp)
-#endif

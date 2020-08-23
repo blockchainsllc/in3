@@ -53,17 +53,17 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MULTICHAIN 0x0    /**< chain_id working with all known chains */
-#define CHAIN_ID_MAINNET    0x01   /**< chain_id for mainnet */
-#define CHAIN_ID_KOVAN      0x2a   /**< chain_id for kovan */
-#define CHAIN_ID_TOBALABA   0x44d  /**< chain_id for tobalaba */
-#define CHAIN_ID_GOERLI     0x5    /**< chain_id for goerlii */
-#define CHAIN_ID_EVAN       0x4b1  /**< chain_id for evan */
-#define CHAIN_ID_EWC        0xf6   /**< chain_id for ewc */
-#define CHAIN_ID_IPFS       0x7d0  /**< chain_id for ipfs */
-#define CHAIN_ID_BTC        0x99   /**< chain_id for btc */
-#define CHAIN_ID_LOCAL      0xFFFF /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6      /**< default replace_latest_block */
+#define CHAIN_ID_MULTICHAIN 0x0   /**< chain_id working with all known chains */
+#define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
+#define CHAIN_ID_KOVAN      0x2a  /**< chain_id for kovan */
+#define CHAIN_ID_TOBALABA   0x44d /**< chain_id for tobalaba */
+#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
+#define CHAIN_ID_EVAN       0x4b1 /**< chain_id for evan */
+#define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
+#define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
+#define CHAIN_ID_BTC        0x99  /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0x11  /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6     /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -283,16 +283,6 @@ typedef struct in3_pay {
   void*                  cptr;           /**< custom object whill will be passed to functions */
 } in3_pay_t;
 
-/** response-object. 
- * 
- * if the error has a length>0 the response will be rejected
- */
-typedef struct in3_response {
-  uint32_t  time;  /**< measured time (in ms) which will be used for ajusting the weights */
-  in3_ret_t state; /**< the state of the response */
-  sb_t      data;  /**< a stringbuilder to add the result */
-} in3_response_t;
-
 /** Incubed Configuration. 
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
@@ -370,6 +360,9 @@ struct in3_plugin {
   void*                  data;      /**< opaque pointer to plugin data */
   in3_plugin_act_fn      action_fn; /**< plugin action handler */
   in3_plugin_t*          next;      /**< pointer to next plugin in list */
+#ifdef LOGGING
+  const char* name; /**< name of the plugin */
+#endif
 };
 
 /**
@@ -386,26 +379,27 @@ typedef struct in3_filter_handler_t_ {
  * 
  */
 struct in3_t_ {
-  uint8_t                request_count;        /**< the number of request send when getting a first answer */
-  uint8_t                signature_count;      /**< the number of signatures used to proof the blockhash. */
-  uint8_t                replace_latest_block; /**< if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
-  uint_fast8_t           flags;                /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
-  uint16_t               node_limit;           /**< the limit of nodes to store in the client. */
-  uint16_t               finality;             /**< the number of signatures in percent required for the request*/
-  uint16_t               chains_length;        /**< number of configured chains */
-  uint_fast16_t          max_attempts;         /**< the max number of attempts before giving up*/
-  uint_fast16_t          max_verified_hashes;  /**< max number of verified hashes to cache */
-  uint_fast16_t          pending;              /**< number of pending requests created with this instance */
-  uint32_t               cache_timeout;        /**< number of seconds requests can be cached. */
-  uint32_t               timeout;              /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
-  chain_id_t             chain_id;             /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
-  in3_plugin_supp_acts_t plugin_acts;          /**< bitmask of supported actions of all plugins registered with this client */
-  in3_proof_t            proof;                /**< the type of proof used */
-  uint64_t               min_deposit;          /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
-  in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
-  in3_chain_t*           chains;               /**< chain spec and nodeList definitions*/
-  in3_filter_handler_t*  filters;              /**< filter handler */
-  in3_plugin_t*          plugins;              /**< list of registered plugins */
+  uint8_t                request_count;         /**< the number of request send when getting a first answer */
+  uint8_t                signature_count;       /**< the number of signatures used to proof the blockhash. */
+  uint8_t                replace_latest_block;  /**< if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
+  uint_fast8_t           flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
+  uint16_t               node_limit;            /**< the limit of nodes to store in the client. */
+  uint16_t               finality;              /**< the number of signatures in percent required for the request*/
+  uint16_t               chains_length;         /**< number of configured chains */
+  uint_fast16_t          max_attempts;          /**< the max number of attempts before giving up*/
+  uint_fast16_t          max_verified_hashes;   /**< max number of verified hashes to cache (actual number may temporarily exceed this value due to pending requests) */
+  uint_fast16_t          alloc_verified_hashes; /**< number of currently allocated verified hashes */
+  uint_fast16_t          pending;               /**< number of pending requests created with this instance */
+  uint32_t               cache_timeout;         /**< number of seconds requests can be cached. */
+  uint32_t               timeout;               /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
+  chain_id_t             chain_id;              /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
+  in3_plugin_supp_acts_t plugin_acts;           /**< bitmask of supported actions of all plugins registered with this client */
+  in3_proof_t            proof;                 /**< the type of proof used */
+  uint64_t               min_deposit;           /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
+  in3_node_props_t       node_props;            /**< used to identify the capabilities of the node. */
+  in3_chain_t*           chains;                /**< chain spec and nodeList definitions*/
+  in3_filter_handler_t*  filters;               /**< filter handler */
+  in3_plugin_t*          plugins;               /**< list of registered plugins */
 
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
@@ -601,5 +595,17 @@ void in3_register_payment(
     pay_configure handler /**< pointer to the handler- */
 );
 #endif
+
+#define assert_in3(c)                              \
+  assert(c);                                       \
+  assert(c->chain_id);                             \
+  assert(c->plugins);                              \
+  assert(c->chains);                               \
+  assert(c->request_count > 0);                    \
+  assert(c->chains_length > 0);                    \
+  assert(c->chains_length < 10);                   \
+  assert(c->max_attempts > 0);                     \
+  assert(c->proof >= 0 && c->proof <= PROOF_FULL); \
+  assert(c->proof >= 0 && c->proof <= PROOF_FULL);
 
 #endif

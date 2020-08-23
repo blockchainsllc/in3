@@ -69,6 +69,16 @@ typedef struct weight {
   struct weight* next;    /**< next in the linkedlist or NULL if this is the last element*/
 } node_match_t;
 
+/** response-object. 
+ * 
+ * if the error has a length>0 the response will be rejected
+ */
+typedef struct in3_response {
+  uint32_t  time;  /**< measured time (in ms) which will be used for ajusting the weights */
+  in3_ret_t state; /**< the state of the response */
+  sb_t      data;  /**< a stringbuilder to add the result */
+} in3_response_t;
+
 /**
  * The Request config.
  * 
@@ -76,7 +86,7 @@ typedef struct weight {
  * */
 typedef struct in3_ctx {
   uint_fast8_t    signers_length;     /**< number or addresses */
-  uint_fast16_t   len;                /**< the number of requests */
+  uint16_t        len;                /**< the number of requests */
   uint_fast16_t   attempt;            /**< the number of attempts */
   ctx_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */

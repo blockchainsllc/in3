@@ -22,6 +22,7 @@ if (typeof (_free) == 'undefined') _free = function (ptr) {
  * @param  {...any} params_values 
  */
 function call_string(name, ...params_values) {
+    check_ready()
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
     const result = UTF8ToString(res)
@@ -31,6 +32,7 @@ function call_string(name, ...params_values) {
 }
 
 function call_buffer(name, len, ...params_values) {
+    check_ready()
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
     const result = HEAPU8.slice(res, res + len)
@@ -406,20 +408,19 @@ function padEnd(val, minLength, fill = ' ') {
 }
 
 function soliditySha3(...args) {
-
-    const abiCoder = new AbiCoder()
-    return toHex(keccak(abiCoder.encode(args.map(_ => {
+    return toHex(keccak('0x' + toHex(abiEncode('_(' + args.map(_ => {
         switch (typeof (_)) {
             case 'number':
+            case 'bigint':
                 return _ < 0 ? 'int256' : 'uint256'
             case 'string':
                 return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
             case 'boolean':
                 return 'bool'
             default:
-                return BN.isBN(_) ? 'uint256' : 'bytes'
+                return 'bytes'
         }
-    }), args.map(encodeEtheresBN))))
+    }).join() + ')', args)).substr(10)))
 }
 
 function createSignatureHash(def) {

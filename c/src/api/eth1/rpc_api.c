@@ -382,5 +382,5 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 }
 
 in3_ret_t in3_register_eth_api(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE, handle_intern, NULL, false);
+  return plugin_register(c, PLGN_ACT_RPC_HANDLE, handle_intern, NULL, false);
 }

@@ -86,7 +86,7 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
   //check cache
   if (in3_plugin_is_registered(parent->client, PLGN_ACT_CACHE)) {
     cachekey = alloca(strlen(name) + 5);
-    sprintf(cachekey, "ens:%s:%i", name, type);
+    sprintf(cachekey, "ens:%s:%i:%d", name, type, (int) parent->client->chain_id);
     in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = NULL};
     TRY(in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_GET, &cctx))
     if (cctx.content) {

@@ -210,6 +210,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   in3_ret_t  res = IN3_OK, i = 0;
   receipt_t* receipts = alloca(sizeof(receipt_t) * l_logs);
   bytes_t    logddata, tmp, tops;
+  char       xtmp[12];
 
   // invalid result-token
   if (!vc->result || d_type(vc->result) != T_ARRAY) return vc_err(vc, "The result must be an array");
@@ -220,8 +221,13 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   if (d_len(d_get(vc->proof, K_LOG_PROOF)) > l_logs) return vc_err(vc, "too many proofs");
 
   for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
+    sprintf(xtmp, "0x%" PRIx64, d_get_longk(it.token, K_NUMBER));
+    if (strlen(xtmp) % 2) {
+      memmove(xtmp + 3, xtmp + 2, strlen(xtmp) - 1);
+      xtmp[2] = '0';
+    }
     // verify that block number matches key
-    if (d_get_longk(it.token, K_NUMBER) != _strtoull(d_get_keystr(it.token->key), NULL, 16))
+    if (key(xtmp) != it.token->key)
       return vc_err(vc, "block number mismatch");
 
     // verify the blockheader of the log entry

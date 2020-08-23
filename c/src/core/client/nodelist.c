@@ -338,8 +338,10 @@ NONULL void in3_ctx_free_nodes(node_match_t* node) {
 }
 
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
-  in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
-  ctx->client    = c;
+  in3_ctx_t* ctx          = _calloc(1, sizeof(in3_ctx_t));
+  ctx->verification_state = IN3_EIGNORE;
+  ctx->error              = _calloc(1, 1);
+  ctx->client             = c;
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;

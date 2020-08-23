@@ -185,5 +185,5 @@ in3_ret_t handle_storage(void* data, in3_plugin_act_t action, void* arg) {
   }
 }
 in3_ret_t in3_register_file_storage(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_CACHE, handle_storage, NULL, true);
+  return plugin_register(c, PLGN_ACT_CACHE, handle_storage, NULL, true);
 }

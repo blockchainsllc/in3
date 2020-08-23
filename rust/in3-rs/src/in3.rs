@@ -20,23 +20,25 @@ pub mod chain {
     pub type ChainId = u32;
 
     /// Chain Id representing set of all supported chains
-    pub const MULTICHAIN: u32 = 0x0;
+    pub const MULTICHAIN: u32 = in3_sys::CHAIN_ID_MULTICHAIN;
     /// Chain Id for mainnet
-    pub const MAINNET: u32 = 0x01;
+    pub const MAINNET: u32 = in3_sys::CHAIN_ID_MAINNET;
     /// Chain Id for kovan
-    pub const KOVAN: u32 = 0x2a;
+    pub const KOVAN: u32 = in3_sys::CHAIN_ID_KOVAN;
     /// Chain Id for tobalaba
-    pub const TOBALABA: u32 = 0x44d;
+    pub const TOBALABA: u32 = in3_sys::CHAIN_ID_TOBALABA;
     /// Chain Id for goerli
-    pub const GOERLI: u32 = 0x5;
+    pub const GOERLI: u32 = in3_sys::CHAIN_ID_GOERLI;
     /// Chain Id for evan
-    pub const EVAN: u32 = 0x4b1;
+    pub const EVAN: u32 = in3_sys::CHAIN_ID_EVAN;
+    /// Chain Id for EWC
+    pub const EWC: u32 = in3_sys::CHAIN_ID_EWC;
     /// Chain Id for IPFS
-    pub const IPFS: u32 = 0x7d0;
+    pub const IPFS: u32 = in3_sys::CHAIN_ID_IPFS;
     /// Chain Id for bitcoin
-    pub const BTC: u32 = 0x99;
+    pub const BTC: u32 = in3_sys::CHAIN_ID_BTC;
     /// Chain Id for local chains
-    pub const LOCAL: u32 = 0xffff;
+    pub const LOCAL: u32 = in3_sys::CHAIN_ID_LOCAL;
 }
 
 struct Ctx {
@@ -398,9 +400,10 @@ impl Client {
     /// let client = Client::new(chain::MAINNET);
     /// ```
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
+        crate::init();
         unsafe {
             let mut c = Box::new(Client {
-                ptr: in3_sys::in3_for_chain_auto_init(chain_id),
+                ptr: in3_sys::in3_for_chain_default(chain_id),
                 transport: Box::new(HttpTransport {}),
                 signer: None,
                 storage: None,

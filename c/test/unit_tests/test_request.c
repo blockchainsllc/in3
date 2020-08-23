@@ -338,7 +338,8 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"0x123412341234\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"value\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":65536}", "expected uint16");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":0}");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":0}", "maxAttempts must be at least 1");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":1}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":65535}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":\"0xffff\"}");
   TEST_ASSERT_EQUAL(c->max_attempts, 65535);
@@ -456,7 +457,8 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"0x123412341234\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"value\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":65536}", "expected uint8");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":0}");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":0}", "requestCount must be at least 1");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":1}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":255}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":\"0xff\"}");
   TEST_ASSERT_EQUAL(c->request_count, 255);

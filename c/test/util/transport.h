@@ -47,7 +47,7 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
 in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 
 static inline in3_ret_t register_transport(in3_t* c, in3_plugin_act_fn fn) {
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, fn, NULL, true);
+  return plugin_register(c, PLGN_ACT_TRANSPORT, fn, NULL, true);
 }
 
 static inline void replace_transport(in3_t* c, in3_plugin_act_fn custom_transport) {
@@ -57,7 +57,7 @@ static inline void replace_transport(in3_t* c, in3_plugin_act_fn custom_transpor
       return;
     }
   }
-  in3_plugin_register(c, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
+  plugin_register(c, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
 }
 
 #ifdef __cplusplus

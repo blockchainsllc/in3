@@ -135,7 +135,7 @@ void static setup_test_cache(in3_t* c) {
 static void test_cache() {
   in3_t* c           = in3_for_chain(CHAIN_ID_GOERLI);
   c->signature_count = 0;
-  in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+  plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
   setup_test_cache(c);
 
   in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_GOERLI);
@@ -159,7 +159,7 @@ static void test_cache() {
   in3_t* c2    = in3_for_chain(0);
   c2->chain_id = c->chain_id;
   c2->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
-  in3_plugin_register(c2, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+  plugin_register(c2, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
 
   in3_configure(c2, "{\"chainId\":\"0x5\"}");
   in3_chain_t* chain2 = in3_get_chain(c2);
@@ -179,7 +179,7 @@ static void test_cache() {
   in3_free(c2);
 }
 static in3_ret_t in3_register_test_transport(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+  return plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
 }
 
 static void test_newchain() {

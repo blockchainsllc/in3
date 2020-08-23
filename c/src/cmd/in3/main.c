@@ -48,6 +48,8 @@
 #include "../../third-party/crypto/secp256k1.h"
 #ifdef USE_CURL
 #include "../../transport/curl/in3_curl.h"
+#elif USE_WINHTTP
+#include "../../transport/winhttp/in3_winhttp.h"
 #else
 #include "../../transport/http/in3_http.h"
 #endif
@@ -418,8 +420,11 @@ void set_chain_id(in3_t* c, char* id) {
   c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
   if (c->chain_id == 0xFFFFL) {
     in3_chain_t* chain = in3_get_chain(c);
-    if (strstr(id, "://")) // its a url
+    if (strstr(id, "://")) { // its a url
+      if (!chain->nodelist)
+        chain->nodelist = _calloc(1, sizeof(in3_node_t));
       chain->nodelist[0].url = id;
+    }
     if (chain->nodelist_upd8_params) {
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
@@ -614,6 +619,8 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
+#elif USE_WINHTTP
+  in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
 #else
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
@@ -636,6 +643,8 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
   in3_request_t* req = plugin_ctx;
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
+#elif USE_WINHTTP
+  in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
 #else
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
@@ -717,13 +726,10 @@ int main(int argc, char* argv[]) {
   char*           port             = NULL;
   char*           sig_type         = "raw";
   bool            to_eth           = false;
-  in3_plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
+  plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
-#ifdef __MINGW32__
-  c->flags |= FLAGS_HTTP;
-#endif
-#ifndef USE_CURL
-  c->flags |= FLAGS_HTTP;
+#ifndef USE_WINHTTP
+  c->request_count = 1;
 #endif
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
@@ -828,7 +834,7 @@ int main(int argc, char* argv[]) {
       gas_limit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-test") == 0) {
       test_name = argv[++i];
-      in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+      plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
     }
     else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
@@ -929,6 +935,9 @@ int main(int argc, char* argv[]) {
 #else
   (void) (port);
 #endif
+
+  // load nodelist from cache
+  in3_cache_init(c);
 
   // handle private key
   if (pk_file) read_pk(pk_file, pwd, c, method);
@@ -1038,6 +1047,8 @@ int main(int argc, char* argv[]) {
           r.payload               = "";
 #ifdef USE_CURL
           send_curl(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
+#elif USE_WINHTTP
+          send_winhttp(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #else
           send_http(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #endif

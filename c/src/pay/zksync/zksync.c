@@ -432,5 +432,5 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
 }
 
 in3_ret_t in3_register_zksync(in3_t* c) {
-  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_zksync, _calloc(sizeof(zksync_config_t), 1), false);
+  return plugin_register(c, PLGN_ACT_RPC_HANDLE | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_zksync, _calloc(sizeof(zksync_config_t), 1), false);
 }

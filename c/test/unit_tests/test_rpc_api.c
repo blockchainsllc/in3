@@ -51,9 +51,6 @@
 #include "../util/transport.h"
 #include <stdio.h>
 #include <unistd.h>
-#ifndef IN3_IMPORT_TEST
-#define IN3_IMPORT_TEST
-#endif
 
 #define err_string(msg) ("Error:" msg)
 
@@ -310,6 +307,52 @@ static void test_in3_client_context() {
   in3_free(c);
 }
 
+IN3_IMPORT_TEST NONULL void add_verified(in3_t* c, in3_chain_t* chain, uint64_t number, bytes32_t hash);
+void                        in3_check_verified_hashes(in3_t* c);
+
+static uint16_t vh_size(in3_verified_hash_t* hashes, uint16_t max) {
+  uint16_t sz = 0;
+  while (hashes && (sz < max && hashes[sz].block_number != 0)) sz++;
+  return sz;
+}
+
+static uint16_t vh_equals(in3_verified_hash_t* hashes, const uint64_t blocknumbers[], uint16_t max) {
+  uint16_t i = 0;
+  while (hashes && (i < max && hashes[i].block_number == blocknumbers[i])) i++;
+  return i == max;
+}
+
+static void test_in3_verified_hashes() {
+  in3_chain_t chain = {.chain_id = 1};
+  bytes32_t   hash  = {0};
+  in3_t       c     = {.max_verified_hashes = 3, .chains_length = 1, .chain_id = 1, .pending = 0, .chains = &chain};
+  add_verified(&c, &chain, 500, hash);
+  TEST_ASSERT_EQUAL(1, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &chain, 501, hash);
+  TEST_ASSERT_EQUAL(2, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &chain, 502, hash);
+  TEST_ASSERT_EQUAL(3, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+
+  add_verified(&c, &chain, 503, hash);
+  TEST_ASSERT_EQUAL(4, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &chain, 504, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &chain, 505, hash);
+  TEST_ASSERT_EQUAL(6, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+
+  uint64_t hashes1[] = {500, 501, 502, 503, 504, 505};
+  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
+  c.pending = 2;
+  in3_check_verified_hashes(&c);
+  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
+  c.pending = 1;
+  in3_check_verified_hashes(&c);
+
+  uint64_t hashes2[] = {503, 504, 505};
+  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes2, sizeof(hashes2) / sizeof(*hashes2)));
+  _free(chain.verified_hashes);
+}
+
 /*
  * Main
  */
@@ -325,5 +368,6 @@ int main() {
   RUN_TEST(test_in3_checksum_rpc);
   RUN_TEST(test_in3_client_chain);
   RUN_TEST(test_in3_client_context);
+  RUN_TEST(test_in3_verified_hashes);
   return TESTS_END();
 }
