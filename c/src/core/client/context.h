@@ -88,7 +88,6 @@ typedef struct in3_ctx {
   uint_fast8_t    signers_length;     /**< number or addresses */
   uint_fast16_t   len;                /**< the number of requests */
   uint_fast16_t   attempt;            /**< the number of attempts */
-  uint32_t        id;                 /**< JSON RPC id of request at index 0 */
   ctx_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */
   char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
@@ -102,6 +101,10 @@ typedef struct in3_ctx {
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
   in3_t*          client;             /**< reference to the client*/
+
+#ifdef DEV_INC_RPC_ID
+  uint32_t id; /**< JSON RPC id of request at index 0 */
+#endif
 } in3_ctx_t;
 
 /**

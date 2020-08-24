@@ -196,8 +196,12 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
 
   sb_add_char(sb, '[');
 
+#ifdef DEV_INC_RPC_ID
   c->id = rc->id_count;
   rc->id_count += c->len;
+#else
+  static unsigned long rpc_id_counter = 1;
+#endif
 
   for (uint_fast16_t i = 0; i < c->len; i++) {
     d_token_t * request_token = c->requests[i], *t;
@@ -207,7 +211,11 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
     if (i > 0) sb_add_char(sb, ',');
     sb_add_char(sb, '{');
     if ((t = d_get(request_token, K_ID)) == NULL)
+#ifdef DEV_INC_RPC_ID
       sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%u", c->id + i)), false);
+#else
+      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%lu", rpc_id_counter++)), false);
+#endif
     else if (d_type(t) == T_INTEGER)
       sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%i", d_int(t))), false);
     else
