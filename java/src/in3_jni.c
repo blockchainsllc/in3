@@ -726,7 +726,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
  * Method:    libInit
  * Signature: ()J
  */
-JNIEXPORT void JNICALL Java_in3_IN3_lib_init(JNIEnv* env, jclass c) {
+JNIEXPORT void JNICALL Java_in3_IN3_libInit(JNIEnv* env, jclass c) {
   UNUSED_VAR(env);
   UNUSED_VAR(c);
   in3_init();
