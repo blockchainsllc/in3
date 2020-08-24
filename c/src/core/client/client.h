@@ -392,6 +392,7 @@ struct in3_t_ {
   uint_fast16_t          pending;               /**< number of pending requests created with this instance */
   uint32_t               cache_timeout;         /**< number of seconds requests can be cached. */
   uint32_t               timeout;               /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
+  uint32_t               id_count;              /**< counter for use as JSON RPC id - incremented for every request */
   chain_id_t             chain_id;              /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
   in3_plugin_supp_acts_t plugin_acts;           /**< bitmask of supported actions of all plugins registered with this client */
   in3_proof_t            proof;                 /**< the type of proof used */
