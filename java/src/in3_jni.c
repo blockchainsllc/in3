@@ -721,18 +721,18 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   return (jlong)(size_t) in3;
 }
 
-/*
- * Class:     in3_IN3
- * Method:    libInit
- * Signature: ()J
- */
-JNIEXPORT void JNICALL Java_in3_IN3_libInit(JNIEnv* env, jclass c) {
-  UNUSED_VAR(env);
-  UNUSED_VAR(c);
-  in3_init();
-}
-
 JNIEXPORT jstring JNICALL Java_in3_IN3_getVersion(JNIEnv* env, jclass c) {
   UNUSED_VAR(c);
   return (*env)->NewStringUTF(env, IN3_VERSION);
+}
+
+/*
+ * Class:     in3_Loader
+ * Method:    libInit
+ * Signature: ()J
+ */
+JNIEXPORT void JNICALL Java_in3_Loader_libInit(JNIEnv* env, jclass c) {
+  UNUSED_VAR(env);
+  UNUSED_VAR(c);
+  in3_init();
 }

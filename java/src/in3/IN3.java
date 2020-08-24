@@ -73,10 +73,6 @@ public class IN3 {
     ptr = init(chainAlias);
   }
 
-  public static void load() {
-    libInit();
-  }
-
   /**
    * create a Incubed client using the chain-config. if chainId is
    * Chain.MULTICHAIN, the client can later be switched between different chains,
@@ -287,8 +283,6 @@ public class IN3 {
   private native void free();
 
   private native long init(long chainId);
-
-  private static native void libInit();
 
   private native void initcache();
 

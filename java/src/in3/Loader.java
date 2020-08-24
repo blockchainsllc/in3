@@ -34,7 +34,6 @@
 
 package in3;
 
-import in3.IN3;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -82,6 +81,12 @@ public class Loader {
       is.close();
     }
   }
+
+  private static void loadIn3() {
+    libInit();
+  }
+
+  private static native void libInit();
 
   public static void loadLibrary() {
     if (loaded)
@@ -138,6 +143,6 @@ public class Loader {
       throw new RuntimeException("Could not load the native library ", ex);
     }
 
-    IN3.load();
+    loadIn3();
   }
 }

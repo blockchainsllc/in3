@@ -116,13 +116,6 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject, jlong);
 
 /*
  * Class:     in3_IN3
- * Method:    libInit
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_libInit(JNIEnv*, jclass);
-
-/*
- * Class:     in3_IN3
  * Method:    initcache
  * Signature: ()V
  */
@@ -191,6 +184,14 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv*, jclass, j
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv*, jclass, jstring, jstring);
+
+/*
+ * Class:     in3_Loader
+ * Method:    libInit
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_in3_Loader_libInit(JNIEnv*, jclass);
+
 #ifdef __cplusplus
 }
 #endif
