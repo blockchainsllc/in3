@@ -190,12 +190,14 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
   assert_in3_ctx(c);
   assert(sb);
 
-  static unsigned long rpc_id_counter = 1;
-  char                 temp[100];
-  in3_t*               rc       = c->client;
-  struct SHA3_CTX*     msg_hash = !no_in3 && in3_plugin_is_registered(c->client, PLGN_ACT_PAY_SIGN_REQ) ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  char             temp[100];
+  in3_t*           rc       = c->client;
+  struct SHA3_CTX* msg_hash = !no_in3 && in3_plugin_is_registered(rc, PLGN_ACT_PAY_SIGN_REQ) ? alloca(sizeof(struct SHA3_CTX)) : NULL;
 
   sb_add_char(sb, '[');
+
+  c->id = rc->id_count;
+  rc->id_count += c->len;
 
   for (uint_fast16_t i = 0; i < c->len; i++) {
     d_token_t * request_token = c->requests[i], *t;
@@ -205,7 +207,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
     if (i > 0) sb_add_char(sb, ',');
     sb_add_char(sb, '{');
     if ((t = d_get(request_token, K_ID)) == NULL)
-      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%lu", rpc_id_counter++)), false);
+      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%u", c->id + i)), false);
     else if (d_type(t) == T_INTEGER)
       sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%i", d_int(t))), false);
     else
