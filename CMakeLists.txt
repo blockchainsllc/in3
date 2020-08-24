@@ -100,6 +100,7 @@ endif()
 
 if (ZKSYNC)
   ADD_DEFINITIONS(-DZKSYNC)
+  set(WASM_MODULES ${WASM_MODULES} zksync)
   set(IN3_API ${IN3_API} zksync)
 endif()
 

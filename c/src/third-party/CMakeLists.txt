@@ -48,6 +48,10 @@ if (IPFS)
   add_subdirectory( libb64 )
 endif()
 
+if (ZKSYNC)
+  add_subdirectory( zkcrypto )
+endif()
+
 if (LEDGER_NANO)
   add_subdirectory( hidapi )
 endif()

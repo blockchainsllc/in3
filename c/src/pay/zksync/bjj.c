@@ -302,6 +302,7 @@ in3_ret_t bjj_create_pk_from_seed(bytes_t seed, bytes32_t pk) {
 }
 
 in3_ret_t bjj_sign_musig(in3_ctx_t* ctx, bytes_t data, bytes32_t pk) {
+  UNUSED_VAR(data);
 
   //  print_bn(bignum_from_dec(12436184717236109307ULL, 3962172157175319849ULL, 7381016538464732718ULL, 1011752739694698287ULL));
 

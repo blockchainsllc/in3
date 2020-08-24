@@ -3,6 +3,7 @@
 #include "../core/client/plugin.h"
 #include "../pay/eth/pay_eth.h"
 #include "../pay/zksync/zksync.h"
+#include "../third-party/zkcrypto/lib.h"
 #ifdef USE_CURL
 #include "../transport/curl/in3_curl.h"
 #elif USE_WINHTTP
@@ -60,6 +61,10 @@ void in3_init() {
     initialized = true;
     init_transport();
     init_verifier();
+
+#ifdef ZKSYNC
+    zkcrypto_initialize();
+#endif
   }
 }
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {

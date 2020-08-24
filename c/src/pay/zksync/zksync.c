@@ -37,6 +37,7 @@
 #include "../../core/client/plugin.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/zkcrypto/lib.h"
 #include "provider.h"
 #include <assert.h>
 #include <inttypes.h>
@@ -91,6 +92,7 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
   TRY(zksync_get_account(conf, ctx, &account))
   TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
 
+  zkcrypto_pk_from_seed(bytes(signature, 65), conf->sync_key);
   // /TODO now generate nthe private key ot of it,....
 
   //  if (account_id) *account_id = conf->account_id;
@@ -321,7 +323,7 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
 
 static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   bytes32_t sync_key;
-  TRY(zksync_get_sync_key(conf, ctx->ctx, &sync_key));
+  TRY(zksync_get_sync_key(conf, ctx->ctx, sync_key));
   // prepare tx data
   zksync_tx_data_t tx_data = {0};
   bytes_t          to      = d_to_bytes(params_get(params, K_TO, 0));
