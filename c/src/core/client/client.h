@@ -401,7 +401,7 @@ struct in3_t_ {
   in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
 
-#ifdef DEV_INC_RPC_ID
+#ifndef DEV_NO_INC_RPC_ID
   uint32_t id_count; /**< counter for use as JSON RPC id - incremented for every request */
 #endif
 
