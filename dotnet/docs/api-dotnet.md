@@ -22,6 +22,6 @@ For more information, see [Rid Catalog](https://docs.microsoft.com/en-us/dotnet/
 ### Install with nuget
 
 ```sh
-dotnet add package Slockit.In3
+dotnet add package Blockchains.In3
 ```
 

@@ -13,7 +13,7 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     </ItemGroup>
 
-    <Import Project="..\In3\Slockit.In3.targets" />
+    <Import Project="..\In3\Blockchains.In3.targets" />
 
     <ItemGroup>
       <ProjectReference Include="..\In3\In3.csproj" />
