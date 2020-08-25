@@ -51,3 +51,8 @@ endif()
 if (LEDGER_NANO)
   add_subdirectory( hidapi )
 endif()
+
+if (IN3SENTRY)
+  #  ADD_DEFINITIONS(-DBUILD_SHARED_LIBS=false)
+   add_subdirectory( sentry-native )
+endif()

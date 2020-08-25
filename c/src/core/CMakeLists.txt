@@ -64,6 +64,9 @@ add_static_library(
   DEPENDS 
     crypto
 )
+if (IN3SENTRY)
+target_link_libraries(core sentry)
+ENDIF (IN3SENTRY)
 
 
 add_static_library(

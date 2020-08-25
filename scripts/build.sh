@@ -9,6 +9,12 @@ if [ "$CONTAINER" = "debug" ]; then
    CONTAINER=""
    TEST=true
 fi
+if [ "$CONTAINER" = "sentry" ]; then
+   BUILDTYPE=debug
+   CONTAINER=""
+   TEST=true
+   OPTS="-DIN3SENTRY=true -DJAVA=false -DSENTRY_BACKEND=inproc -DBUILD_SHARED_LIBS=false"
+fi
 if [ "$CONTAINER" = "release" ]; then
    BUILDTYPE=release
    CONTAINER=""
