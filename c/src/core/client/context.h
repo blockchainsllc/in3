@@ -86,7 +86,7 @@ typedef struct in3_response {
  * */
 typedef struct in3_ctx {
   uint_fast8_t    signers_length;     /**< number or addresses */
-  uint_fast16_t   len;                /**< the number of requests */
+  uint16_t        len;                /**< the number of requests */
   uint_fast16_t   attempt;            /**< the number of attempts */
   ctx_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */
