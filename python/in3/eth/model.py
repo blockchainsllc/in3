@@ -191,6 +191,16 @@ class TransactionReceipt(DataTransferObject):
         self.to = to
         self.contractAddress = contractAddress
 
+    def to_dict(self, int_to_hex: bool = False) -> dict:
+        base_dict = super(TransactionReceipt, self).to_dict()
+        logs = [log.to_dict() for log in base_dict['logs']]
+        base_dict['logs'] = logs
+        return base_dict
+
+    def __str__(self):
+        return str(self.to_dict())
+
+
 
 class Account(DataTransferObject):
     """
