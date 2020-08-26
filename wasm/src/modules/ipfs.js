@@ -1,3 +1,5 @@
+in3w.extensions.push(c => c.ipfs = new IpfsAPI(c))
+
 class IpfsAPI {
   constructor(client) {
     this.client = client

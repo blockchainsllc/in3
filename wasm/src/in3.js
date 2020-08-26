@@ -123,11 +123,15 @@ function getVersion() {
 }
 
 // keep track of all created client instances
-const clients = {}
+const clients = in3w.clients = {}
+in3w.promises = {}
+in3w.promiseCount = 0;
+in3w.extensions = []
 
 // create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
 in3w.onRuntimeInitialized = _ => {
+    in3w.ccall('wasm_init', 'void', [], []);
     const o = _in3_listeners
     _in3_listeners = undefined
     o.forEach(_ => _(true))
@@ -157,6 +161,7 @@ class IN3 {
         if (chainId === 'ewc') chainId = '0xf6'
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
+        this.plugins.forEach(_ => this.registerPlugin(_))
     }
 
     // here we are creating the instance lazy, when the first function is called.
@@ -165,9 +170,8 @@ class IN3 {
         this.config = config ? { ...def, ...config } : def
         this.needsSetConfig = !!config
         this.ptr = 0;
-        this.eth = new EthAPI(this)
-        this.ipfs = new IpfsAPI(this)
-        this.btc = new BtcAPI(this)
+        in3w.extensions.forEach(_ => _(this))
+        this.plugins = []
     }
 
     /**
@@ -204,6 +208,25 @@ class IN3 {
             return p
     }
 
+    registerPlugin(plgn) {
+        let action = 0
+        if (plgn.term) action |= 0x2
+        if (plgn.getAccount) action |= 0x20
+        if (plgn.handleRPC) action |= 0x100
+        if (plgn.verifyRPC) action |= 0x200
+        if (plgn.cacheGet) action |= 0x800
+        if (plgn.cacheSet) action |= 0x400
+        if (plgn.cacheClear) action |= 0x1000
+        let index = this.plugins.indexOf(plgn)
+        if (index == -1) {
+            index = this.plugins.length
+            this.plugins.push(plgn)
+        }
+
+        if (this.ptr)
+            in3w.ccall('wasm_register_plugin', 'number', ['number', 'number', 'number'], [this.ptr, action, index]);
+    }
+
 
     /**
      * sends a request and returns the response.
@@ -232,7 +255,14 @@ class IN3 {
             // main async loop
             // we repeat it until we have a result
             while (this.ptr && !this.delayFree) {
-                const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+                const js = call_string('ctx_execute', r).replace(/\n/g, ' > ')
+                let state;
+                try {
+                    state = JSON.parse(js)
+                }
+                catch (x) {
+                    throw new Error("Invalid json:", js)
+                }
                 switch (state.status) {
                     case 'error':
                         throw new Error(state.error || 'Unknown error')
@@ -262,7 +292,10 @@ class IN3 {
 
                             case 'rpc':
                                 if (req.wait) await new Promise(r => setTimeout(r, req.wait))
-                                await getNextResponse(responses, req)
+                                if (req.urls[0].startsWith("promise://"))
+                                    await resolvePromises(req.ctx, req.urls[0])
+                                else
+                                    await getNextResponse(responses, req)
                         }
 
                     }
@@ -283,7 +316,7 @@ class IN3 {
     }
 
 
-    async sendRPC(method, params) {
+    async sendRPC(method, params = []) {
         const res = await this.sendRequest({ method, params })
         if (res.error) throw new Error(res.error.message || res.error)
         return res.result
@@ -295,13 +328,25 @@ class IN3 {
         if (this.pending)
             this.delayFree = true
         else if (this.ptr) {
-            delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
+            delete clients['' + this.ptr]
             this.ptr = 0
         }
     }
 }
 
+async function resolvePromises(ctx, url) {
+    const pid = url.substr(10)
+    const p = in3w.promises[pid]
+    if (!p)
+        setResponse(ctx, JSON.stringify({ error: { message: 'could not find the requested proomise' } }), 0, false)
+    else {
+        delete in3w.promises[pid]
+        return p
+            .then(r => setResponse(ctx, JSON.stringify({ result: r }), 0, false))
+            .catch(e => setResponse(ctx, JSON.stringify({ error: { message: e.message || e } }), 0, false))
+    }
+}
 
 function cleanUpResponses(responses, ptr) {
     Object.keys(responses).forEach(ctx => responses[ctx].cleanUp(ptr))
@@ -445,3 +490,4 @@ function setResponse(ctx, msg, i, isError) {
 function check_ready() {
     if (_in3_listeners) throw new Error('The Incubed wasm runtime is not initialized yet! Please use onInit() to execute it when ready.')
 }
+
