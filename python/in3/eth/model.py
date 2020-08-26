@@ -201,7 +201,6 @@ class TransactionReceipt(DataTransferObject):
         return str(self.to_dict())
 
 
-
 class Account(DataTransferObject):
     """
     An Ethereum account.
