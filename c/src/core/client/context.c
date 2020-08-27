@@ -273,7 +273,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
   if (params == NULL) params = "";
   char* req = NULL;
   if (use_cache) {
-    req = alloca(strlen(params) + strlen(method) + 20 + (in3 ? 5 + strlen(in3) : 0));
+    req = alloca(strlen(params) + strlen(method) + 20 + (in3 ? 10 + strlen(in3) : 0));
     if (in3)
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);
     else
@@ -316,7 +316,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
     }
 
   // create the call
-  req = use_cache ? _strdupn(req, -1) : _malloc(strlen(params) + strlen(method) + 20 + (in3 ? 5 + strlen(in3) : 0));
+  req = req ? _strdupn(req, -1) : _malloc(strlen(params) + strlen(method) + 20 + (in3 ? 10 + strlen(in3) : 0));
   if (!use_cache) {
     if (in3)
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);
