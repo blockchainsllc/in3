@@ -244,7 +244,13 @@ sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
   assert(hctx->response);
 
   *hctx->response = _calloc(1, sizeof(in3_response_t));
-  return sb_add_chars(&(*hctx->response)->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":");
+  sb_add_chars(&(*hctx->response)->data, "{\"id\":");
+#ifndef DEV_NO_INC_RPC_ID
+  sb_add_int(&(*hctx->response)->data, hctx->ctx->id);
+#else
+  sb_add_int(&(*hctx->response)->data, 1);
+#endif
+  return sb_add_chars(&(*hctx->response)->data, ",\"jsonrpc\":\"2.0\",\"result\":");
 }
 in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx) {
   sb_add_char(&(*hctx->response)->data, '}');
