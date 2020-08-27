@@ -205,7 +205,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token
     for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it), i++) {
       conf->tokens[i].id       = d_get_intk(it.token, K_ID);
       conf->tokens[i].decimals = d_get_intk(it.token, key("decimals"));
-      char* name               = d_get_stringk(it.token, key("name"));
+      char* name               = d_get_stringk(it.token, key("symbol"));
       if (!name || strlen(name) > 7) return ctx_set_error(ctx, "invalid token name", IN3_EINVAL);
       strcpy(conf->tokens[i].symbol, name);
       bytes_t* adr = d_get_bytesk(it.token, K_ADDRESS);
