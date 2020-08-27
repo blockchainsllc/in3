@@ -388,16 +388,16 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   memcpy(tx_data.to, to.data, 20);
 
 #ifdef ZKSYNC_256
-  bytes_t amount = d_to_bytes(params_get(params, key("amount"), 2));
+  bytes_t amount = d_to_bytes(params_get(params, key("amount"), 1));
   if (amount.len > 33) return ctx_set_error(ctx->ctx, "invalid to amount", IN3_EINVAL);
   memcpy(tx_data.amount + 32 - amount.len, amount.data, amount.len);
 #else
-  tx_data.amount = d_long(params_get(params, key("amount"), 2));
+  tx_data.amount = d_long(params_get(params, key("amount"), 1));
 #endif
 
   // prepare tx_data
   TRY(zksync_get_account_id(conf, ctx->ctx, &tx_data.account_id))
-  TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 1), &tx_data.token))
+  TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 2), &tx_data.token))
   TRY(zksync_get_nonce(conf, ctx->ctx, params_get(params, K_NONCE, 4), &tx_data.nonce))
   TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 1), "Transfer", &tx_data.fee))
   memcpy(tx_data.from, conf->account, 20);
@@ -437,8 +437,8 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
         return ctx_set_error(ctx->ctx, "no provider_url in config", IN3_EINVAL);
     }
   }
-  if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0) return payin(conf, ctx, params);
-  if (strcmp(method, "zksync_syncTransfer") == 0) return transfer(conf, ctx, params);
+  if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0 || strcmp(method, "zksync_deposit") == 0) return payin(conf, ctx, params);
+  if (strcmp(method, "zksync_syncTransfer") == 0 || strcmp(method, "zksync_transfer") == 0) return transfer(conf, ctx, params);
   if (strcmp(method, "zksync_syncKey") == 0) {
     bytes32_t k;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
