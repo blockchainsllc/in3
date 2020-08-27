@@ -76,7 +76,11 @@ static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, ui
     ctx_remove_required(ctx, ctx_find_required(ctx, "account_info"), false);
   }
 
-  if (account_id) *account_id = conf->account_id;
+  if (!conf->account_id)
+    return ctx_set_error(ctx, "This user has no account yet!", IN3_EFIND);
+
+  if (account_id)
+    *account_id = conf->account_id;
   return IN3_OK;
 }
 

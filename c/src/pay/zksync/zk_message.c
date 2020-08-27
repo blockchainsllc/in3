@@ -181,9 +181,9 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
 
   sb_add_chars(sb, "[{\"type\":\"Transfer\",\"accountId\":");
   sb_add_int(sb, data->account_id);
-  sb_add_rawbytes(sb, ",\"from\":", bytes(data->from, 20), 0);
-  sb_add_rawbytes(sb, ",\"to\":", bytes(data->to, 20), 0);
-  sb_add_chars(sb, ",\"token\":");
+  sb_add_rawbytes(sb, ",\"from\":\"0x", bytes(data->from, 20), 0);
+  sb_add_rawbytes(sb, "\",\"to\":\"0x", bytes(data->to, 20), 0);
+  sb_add_chars(sb, "\",\"token\":");
   sb_add_int(sb, data->token->id);
   sb_add_chars(sb, ",\"amount\":");
   sb_add_int(sb, data->amount);
@@ -191,9 +191,9 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_int(sb, data->fee);
   sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, data->nonce);
-  sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":", bytes(sig, 32), 0);
-  sb_add_rawbytes(sb, ",\"signature\":", bytes(sig + 32, 64), 0);
-  sb_add_rawbytes(sb, "}},{\"type\":\"EthereumSignature\",\"signature\":",bytes(signature,65),0);
-  sb_add_chars(sb, "}]");
+  sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"0x", bytes(sig, 32), 0);
+  sb_add_rawbytes(sb, "\",\"signature\":\"0x", bytes(sig + 32, 64), 0);
+  sb_add_rawbytes(sb, "\"}},{\"type\":\"EthereumSignature\",\"signature\":\"0x", bytes(signature, 65), 0);
+  sb_add_chars(sb, "\"}]");
   return IN3_OK;
 }

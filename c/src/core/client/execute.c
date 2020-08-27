@@ -1019,7 +1019,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // do we need to handle it internaly?
       if (!ctx->raw_response && !ctx->response_context && (ret = handle_internally(ctx)) < 0)
-        return ctx_set_error(ctx, "The request could not be handled", ret);
+        return ctx->error ? ret : ctx_set_error(ctx, "The request could not be handled", ret);
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC)) {
