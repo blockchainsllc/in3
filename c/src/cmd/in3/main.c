@@ -797,6 +797,14 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
+#ifdef ZKSYNC
+    else if (strcmp(argv[i], "-zks") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+#endif
     else if (strcmp(argv[i], "-tr") == 0)
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
