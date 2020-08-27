@@ -196,10 +196,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
 
   sb_add_char(sb, '[');
 
-#ifndef DEV_NO_INC_RPC_ID
-  c->id = rc->id_count;
-  rc->id_count += c->len;
-#else
+#ifdef DEV_NO_INC_RPC_ID
   static unsigned long rpc_id_counter = 1;
 #endif
 
