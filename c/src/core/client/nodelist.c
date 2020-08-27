@@ -276,7 +276,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t*
 
   // create request
   char* req = _malloc(350);
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]%s],\"in3\":%s}",
+  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"params\":[%i,\"%s\",[]%s],\"in3\":%s}",
           c->node_limit, seed,
           ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(chain)) ? ",true" : "",
           sb_add_char(in3_sec, '}')->data);
@@ -322,7 +322,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t
   char* req     = _malloc(300);
   char  tmp[41] = {0};
   bytes_to_hex(chain->whitelist->contract, 20, tmp);
-  sprintf(req, "{\"method\":\"in3_whiteList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\"]}", tmp);
+  sprintf(req, "{\"method\":\"in3_whiteList\",\"jsonrpc\":\"2.0\",\"params\":[\"0x%s\"]}", tmp);
 
   // new client
   return ctx_add_required(parent_ctx, ctx_new(c, req));
