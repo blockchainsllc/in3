@@ -36,6 +36,15 @@ const fs = require('fs')
 const IN3 = require('./in3/index.js')
 const { util } = require('in3-common')
 const Client = IN3.default
+const apis = {}
+function hasAPI(api) {
+    if (apis[api] === undefined) {
+        const c = new IN3()
+        apis[api] = !!c[api]
+        c.free();
+    }
+    return apis[api]
+}
 
 require('mocha')
 const { assert } = require('chai')
@@ -111,6 +120,7 @@ async function run_test(files, filter) {
     let c = 0
     for (const file of files) {
         for (const test of JSON.parse(fs.readFileSync(file, 'utf8'))) {
+            if (test.api && !hasAPI(test.api)) continue
             c++
             if (filter < 0 || c == filter) {
                 const result = await runSingleTest(test, c)

@@ -1,5 +1,6 @@
 [
   {
+    "api": "btc",
     "descr": "btc getrawtransaction",
     "chainId": "0x99",
     "fuzzer": true,
@@ -105,6 +106,7 @@
     ]
   },
   {
+    "api": "btc",
     "descr": "btc getrawtransaction segwit",
     "chainId": "0x99",
     "fuzzer": true,

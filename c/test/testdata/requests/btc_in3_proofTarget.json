@@ -1,5 +1,6 @@
 [
   {
+    "api": "btc",
     "descr": "in3_proofTarget",
     "chainId": "0x99",
     "fuzzer": true,
