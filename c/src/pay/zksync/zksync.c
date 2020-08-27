@@ -93,9 +93,7 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
   TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
 
   zkcrypto_pk_from_seed(bytes(signature, 65), conf->sync_key);
-  // /TODO now generate nthe private key ot of it,....
 
-  //  if (account_id) *account_id = conf->account_id;
   memcpy(sync_key, conf->sync_key, 32);
   return IN3_OK;
 }
@@ -366,7 +364,11 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   }
   if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0) return payin(conf, ctx, params);
   if (strcmp(method, "zksync_syncTransfer") == 0) return transfer(conf, ctx, params);
-
+  if (strcmp(method, "zksync_syncKey") == 0) {
+    bytes32_t k;
+    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+    return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
+  }
   str_range_t p            = d_to_json(params);
   char*       param_string = alloca(p.len - 1);
   memcpy(param_string, p.data + 1, p.len - 2);

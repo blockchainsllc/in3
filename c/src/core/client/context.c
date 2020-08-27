@@ -370,7 +370,8 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, char* method, uint8_t* sig, byte
     sb_add_chars(&req, ",");
     sb_add_bytes(&req, NULL, &from, 1, false);
     sb_add_chars(&req, "]}");
-    c       = ctx_new(ctx->client, req.data);
+    c = ctx_new(ctx->client, req.data);
+    if (!c) return IN3_ECONFIG;
     c->type = CT_SIGN;
     return ctx_add_required(ctx, c);
   }
