@@ -99,12 +99,45 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
 }
 
 static in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main) {
+
+  char* cache_name = NULL;
+  if (!conf->main_contract) {
+    // check cache first
+    if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+      cache_name = alloca(100);
+      sprintf(cache_name, "zksync_contracts_%x", key(conf->provider_url));
+      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
+      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
+      if (cctx.content) {
+        conf->main_contract = _malloc(20);
+        conf->gov_contract  = _malloc(20);
+        memcpy(conf->main_contract, cctx.content->data, 20);
+        memcpy(conf->gov_contract, cctx.content->data + 20, 20);
+        b_free(cctx.content);
+      }
+    }
+  }
+
   if (!conf->main_contract) {
     d_token_t* result;
     TRY(send_provider_request(ctx, conf, "contract_address", "", &result))
     bytes_t* main_contract = d_get_bytesk(result, key("mainContract"));
     if (!main_contract || main_contract->len != 20) return ctx_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
     memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
+
+    bytes_t* gov_contract = d_get_bytesk(result, key("govContract"));
+    if (!gov_contract || gov_contract->len != 20) return ctx_set_error(ctx, "could not get the gov_contract from provider", IN3_ERPC);
+    memcpy(conf->gov_contract = _malloc(20), gov_contract->data, 20);
+
+    if (cache_name) {
+      uint8_t data[40];
+      bytes_t content = bytes(data, 40);
+      memcpy(data, main_contract->data, 20);
+      memcpy(data + 20, gov_contract->data, 20);
+      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &content};
+      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
+    }
+
     // clean up
     ctx_remove_required(ctx, ctx_find_required(ctx, "contract_address"), false);
   }
@@ -192,10 +225,28 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token
     default:
       break;
   }
-  if (is_eth) {
+  if (is_eth && token_dst) {
     *token_dst = NULL;
     return IN3_OK;
   }
+
+  char* cache_name = NULL;
+  if (!conf->token_len) {
+    // check cache first
+    if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+      cache_name = alloca(100);
+      sprintf(cache_name, "zksync_tokens_%x", key(conf->provider_url));
+      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
+      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
+      if (cctx.content) {
+        conf->token_len = cctx.content->len / sizeof(zksync_token_t);
+        conf->tokens    = (void*) cctx.content->data;
+        _free(cctx.content);
+      }
+    }
+  }
+
+  // still no tokenlist?
   if (!conf->token_len) {
     d_token_t* result;
     TRY(send_provider_request(ctx, conf, "tokens", "", &result))
@@ -215,7 +266,15 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token
 
     // clean up
     ctx_remove_required(ctx, ctx_find_required(ctx, "tokens"), false);
+
+    if (cache_name) {
+      bytes_t         data = bytes((void*) conf->tokens, conf->token_len * sizeof(zksync_token_t));
+      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &data};
+      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
+    }
   }
+
+  if (!token_dst) return IN3_OK;
 
   for (unsigned int i = 0; i < conf->token_len; i++) {
     if (d_type(token_src) == T_STRING) {
@@ -384,6 +443,35 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     bytes32_t k;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
     return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
+  }
+  if (strcmp(method, "zksync_contract_address") == 0) {
+    uint8_t* adr;
+    TRY(zksync_get_contracts(conf, ctx->ctx, &adr))
+    sb_t* sb = in3_rpc_handle_start(ctx);
+    sb_add_rawbytes(sb, "{\"govContract\":\"0x", bytes(conf->gov_contract, 20), 0);
+    sb_add_rawbytes(sb, "\",\"mainContract\":\"0x", bytes(conf->main_contract, 20), 0);
+    sb_add_chars(sb, "\"}");
+    return in3_rpc_handle_finish(ctx);
+  }
+  if (strcmp(method, "zksync_tokens") == 0) {
+    TRY(resolve_tokens(conf, ctx->ctx, NULL, NULL))
+    sb_t* sb = in3_rpc_handle_start(ctx);
+    sb_add_char(sb, '{');
+    for (unsigned int i = 0; i < conf->token_len; i++) {
+      if (i) sb_add_char(sb, ',');
+      sb_add_char(sb, '\"');
+      sb_add_chars(sb, conf->tokens[i].symbol);
+      sb_add_rawbytes(sb, "\":{\"address\":\"0x", bytes(conf->tokens[i].address, 20), 0);
+      sb_add_chars(sb, "\",\"decimals\":");
+      sb_add_int(sb, conf->tokens[i].decimals);
+      sb_add_chars(sb, ",\"id\":");
+      sb_add_int(sb, conf->tokens[i].id);
+      sb_add_chars(sb, ",\"symbol\":\"");
+      sb_add_chars(sb, conf->tokens[i].symbol);
+      sb_add_chars(sb, "\"}");
+    }
+    sb_add_char(sb, '}');
+    return in3_rpc_handle_finish(ctx);
   }
   str_range_t p            = d_to_json(params);
   char*       param_string = alloca(p.len - 1);
