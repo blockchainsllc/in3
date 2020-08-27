@@ -77,19 +77,21 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
       for (uint_fast16_t i = 0; i < ctx->len; i++, t = d_next(t))
         ctx->requests[i] = t;
     }
-    else
+    else {
       ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
-  }
+      return ctx;
+    }
 
 #ifndef DEV_NO_INC_RPC_ID
-  d_token_t* t = d_get(ctx->request_context->result, K_ID);
-  if (t == NULL) {
-    ctx->id = client->id_count;
-    client->id_count += ctx->len;
-  }
-  else if (d_type(t) == T_INTEGER)
-    ctx->id = d_int(t);
+    d_token_t* t = d_get(ctx->request_context->result, K_ID);
+    if (t == NULL) {
+      ctx->id = client->id_count;
+      client->id_count += ctx->len;
+    }
+    else if (d_type(t) == T_INTEGER)
+      ctx->id = d_int(t);
 #endif
+  }
   return ctx;
 }
 
