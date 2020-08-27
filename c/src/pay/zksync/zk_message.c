@@ -1,5 +1,6 @@
 #include "../../core/client/context_internal.h"
 #include "../../core/client/plugin.h"
+#include "../../third-party/zkcrypto/lib.h"
 #include "zksync.h"
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
@@ -128,8 +129,7 @@ void create_signed_bytes(sb_t* sb) {
   memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
 }
 
-in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx) {
-  uint8_t  raw[58];
+in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
   char     dec[70];
   uint16_t tid = data->token ? data->token->id : 0;
   raw[0]       = 5;                        // 0: type(1)
@@ -144,10 +144,30 @@ in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx) {
   TRY(pack(dec, 11, 5, raw + 52, ctx))     // 52: amount packed (2)
   int_to_bytes(data->nonce, raw + 54);     // 54: nonce(4)
 
+  // sign data
+  TRY(zkcrypto_sign_musig(sync_key, bytes(raw, 58), sig));
+  /**
+   {
+      type: "Transfer",
+      accountId: transfer.accountId,
+      from: transfer.from,
+      to: transfer.to,
+      token: transfer.tokenId,
+      amount: utils.bigNumberify(transfer.amount).toString(),
+      fee: utils.bigNumberify(transfer.fee).toString(),
+      nonce: transfer.nonce,
+     signature: {
+        pubKey,
+        signature
+     }
+   }
+   * 
+   */
+
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx) {
+in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key) {
   char    msg_data[200];
   uint8_t signature[65];
   sb_t    msg = sb_stack(msg_data);
@@ -155,7 +175,25 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx)
   create_signed_bytes(&msg);
   TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
 
-  // TODO create result
-  UNUSED_VAR(sb);
+  // now create the packed sync transfer
+  uint8_t raw[58], sig[96];
+  TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
+
+  sb_add_chars(sb, "[{\"type\":\"Transfer\",\"accountId\":");
+  sb_add_int(sb, data->account_id);
+  sb_add_rawbytes(sb, ",\"from\":", bytes(data->from, 20), 0);
+  sb_add_rawbytes(sb, ",\"to\":", bytes(data->to, 20), 0);
+  sb_add_chars(sb, ",\"token\":");
+  sb_add_int(sb, data->token->id);
+  sb_add_chars(sb, ",\"amount\":");
+  sb_add_int(sb, data->amount);
+  sb_add_chars(sb, ",\"fee\":");
+  sb_add_int(sb, data->fee);
+  sb_add_chars(sb, ",\"nonce\":");
+  sb_add_int(sb, data->nonce);
+  sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":", bytes(sig, 32), 0);
+  sb_add_rawbytes(sb, ",\"signature\":", bytes(sig + 32, 64), 0);
+  sb_add_rawbytes(sb, "}},{\"type\":\"EthereumSignature\",\"signature\":",bytes(signature,65),0);
+  sb_add_chars(sb, "}]");
   return IN3_OK;
 }

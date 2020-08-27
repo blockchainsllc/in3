@@ -80,5 +80,5 @@ typedef struct {
 } zksync_tx_data_t;
 
 in3_ret_t in3_register_zksync(in3_t* c);
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx);
+in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
 #endif

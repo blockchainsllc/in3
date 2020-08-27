@@ -295,7 +295,7 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
     TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
   }
 
-  // now that we the receipt, we need to find the opId in the log
+  // now that we have the receipt, we need to find the opId in the log
   bytes32_t event_hash;
   hex_to_bytes("d0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830", -1, event_hash, 32);
   for (d_iterator_t iter = d_iter(d_get(tx_receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
@@ -336,15 +336,31 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   tx_data.amount = d_long(params_get(params, key("amount"), 2));
 #endif
 
+  // prepare tx_data
   TRY(zksync_get_account_id(conf, ctx->ctx, &tx_data.account_id))
   TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 1), &tx_data.token))
   TRY(zksync_get_nonce(conf, ctx->ctx, params_get(params, K_NONCE, 4), &tx_data.nonce))
   TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 1), "Transfer", &tx_data.fee))
   memcpy(tx_data.from, conf->account, 20);
 
-  // TODO handle signing
-
-  return IN3_OK;
+  // create payload
+  sb_t       sb     = {0};
+  d_token_t* result = NULL;
+  in3_ret_t  ret    = zksync_sign_transfer(&sb, &tx_data, ctx->ctx, sync_key);
+  if (ret && sb.data) _free(sb.data);
+  TRY(ret)
+  ret = send_provider_request(ctx->ctx, conf, "tx_submit", sb.data, &result);
+  if (ret == IN3_OK) {
+    char*   signed_tx = sb.data + 1;
+    int     l         = strlen(signed_tx) - 176;
+    char*   p         = signed_tx + l + sprintf(signed_tx + l, ",\"txHash\":\"0x");
+    bytes_t tx_hash   = d_to_bytes(result);
+    p += bytes_to_hex(tx_hash.data, tx_hash.len, p);
+    strcpy(p, "\"}");
+    ret = in3_rpc_handle_with_string(ctx, signed_tx);
+  }
+  _free(sb.data);
+  return ret;
 }
 
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {

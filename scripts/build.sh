@@ -34,7 +34,7 @@ if [ "$BUILDTYPE" = "debug" ]; then
    BUILDTYPE=DEBUG
    TEST=true
 fi
-OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
+OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DZKSYNC=true -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
 
 if [ "$CONTAINER" = "--help" ]; then
    echo "usage $0 <TARGET> <DEBUG|MINSIZEREL|RELEASE|debug|release> "
@@ -92,7 +92,7 @@ elif [ "$CONTAINER" = "esp" ]; then
 elif [ "$CONTAINER" = "wasm_local" ]; then
   cd build
   source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
-  emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true  -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
+  emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true -DIPFS=false -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
   make -j8 in3_wasm
 elif [ "$CONTAINER" = "wasm" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:clang11
