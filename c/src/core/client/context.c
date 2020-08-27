@@ -40,8 +40,8 @@
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
-#include "version.h"
 #include "plugin.h"
+#include "version.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -155,7 +155,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
     ctx->error = dst;
 #ifdef IN3SENTRY
     sentry_value_t event = sentry_value_new_message_event(
-          SENTRY_LEVEL_ERROR, IN3_VERSION, message);
+        SENTRY_LEVEL_ERROR, IN3_VERSION, message);
     // sentry_event_value_add_stacktrace(event, NULL, 0);
     sentry_capture_event(event);
     in3_log_info("sentry-event-sent\n");

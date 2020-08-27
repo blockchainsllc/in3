@@ -144,7 +144,7 @@ void in3_set_default_legacy_transport(
 void in3_register_default(plgn_register reg_fn) {
 #ifdef IN3SENTRY
   in3_log_debug("Sentry-initialize");
-  sentry_options_t *options = sentry_options_new();
+  sentry_options_t* options = sentry_options_new();
   sentry_options_set_database_path(options, ".sentry-native");
   sentry_options_set_debug(options, 1);
   sentry_options_set_dsn(options, DSN_SENTRY);
