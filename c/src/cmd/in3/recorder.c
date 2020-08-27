@@ -153,8 +153,9 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
     int   l   = rpc ? 1 : ctx_nodes_len(m);
     for (int i = 0; i < l; i++, m = m ? m->next : NULL) {
       in3_response_t* r = req->ctx->raw_response + i;
-      if (r->time) {
-        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, rpc ? rpc : ctx_get_node(chain, m)->url, r->state, r->time);
+      if (m) rpc = ctx_get_node(chain, m)->url;
+      if (r->time && m) {
+        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, rpc, r->state, r->time);
         char* data = format_json(r->data.data ? r->data.data : "");
         fprintf(rec.f, "%s\n\n", data);
         fflush(rec.f);
