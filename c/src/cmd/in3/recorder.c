@@ -1,6 +1,7 @@
 #include "recorder.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/nodelist.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -136,17 +137,24 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
   in3_ret_t      res   = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     fprintf(rec.f, ":: request ");
-    for (int i = 0; m; i++, m = m->next)
-      fprintf(rec.f, "%s ", ctx_get_node(chain, m)->url);
+    char* rpc = d_get_stringk(d_get(req->ctx->requests[0], K_IN3), K_RPC);
+    if (rpc)
+      fprintf(rec.f, "%s ", rpc);
+    else {
+      for (int i = 0; m; i++, m = m->next)
+        fprintf(rec.f, "%s ", ctx_get_node(chain, m)->url);
+    }
     fprintf(rec.f, "\n     %s\n\n", req->payload);
     fflush(rec.f);
   }
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
-    m = req->ctx->nodes;
-    for (int i = 0; m; i++, m = m->next) {
+    m         = req->ctx->nodes;
+    char* rpc = d_get_stringk(d_get(req->ctx->requests[0], K_IN3), K_RPC);
+    int   l   = rpc ? 1 : ctx_nodes_len(m);
+    for (int i = 0; i < l; i++, m = m ? m->next : NULL) {
       in3_response_t* r = req->ctx->raw_response + i;
       if (r->time) {
-        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, ctx_get_node(chain, m)->url, r->state, r->time);
+        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, rpc ? rpc : ctx_get_node(chain, m)->url, r->state, r->time);
         char* data = format_json(r->data.data ? r->data.data : "");
         fprintf(rec.f, "%s\n\n", data);
         fflush(rec.f);
