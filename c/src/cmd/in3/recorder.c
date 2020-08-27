@@ -50,7 +50,12 @@ static recorder_entry_t* read_one_entry() {
     int l = strlen(buffer);
     if (buffer[l - 1] == '\n')
       buffer[--l] = 0;
-    if (!l) break;
+    if (!l) {
+      if (entry)
+        break;
+      else
+        continue;
+    }
     if (!entry) {
       entry       = _calloc(sizeof(recorder_entry_t), 1);
       char* ptr   = strtok(buffer + 3, " ");
