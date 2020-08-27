@@ -76,7 +76,7 @@ static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, ui
     ctx_remove_required(ctx, ctx_find_required(ctx, "account_info"), false);
   }
 
-  if (!conf->account_id)
+  if (!conf->account_id) // conf->account_id = 1;
     return ctx_set_error(ctx, "This user has no account yet!", IN3_EFIND);
 
   if (account_id)
@@ -187,6 +187,7 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
   sb_add_char(&sb, '"');
   sb_add_chars(&sb, type);
   sb_add_bytes(&sb, "\",", &to, 1, false);
+  sb_add_char(&sb, ',');
   switch (d_type(token)) {
     case T_BYTES:
       sb_add_bytes(&sb, ",", d_bytes(token), 1, false);
@@ -403,18 +404,28 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   TRY(zksync_get_account_id(conf, ctx->ctx, &tx_data.account_id))
   TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 2), &tx_data.token))
   TRY(zksync_get_nonce(conf, ctx->ctx, params_get(params, K_NONCE, 4), &tx_data.nonce))
-  TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 1), "Transfer", &tx_data.fee))
+  TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 2), "Transfer", &tx_data.fee))
   memcpy(tx_data.from, conf->account, 20);
 
   // create payload
-  sb_t       sb     = {0};
+  cache_entry_t* cached = ctx->ctx->cache;
+  while (cached) {
+    if (cached->props & 0x10) break;
+    cached = cached->next;
+  }
+  if (!cached) {
+    sb_t      sb  = {0};
+    in3_ret_t ret = zksync_sign_transfer(&sb, &tx_data, ctx->ctx, sync_key);
+    if (ret && sb.data) _free(sb.data);
+    TRY(ret)
+    cached        = in3_cache_add_entry(&ctx->ctx->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)));
+    cached->props = CACHE_PROP_MUST_FREE | 0x10;
+  }
+
   d_token_t* result = NULL;
-  in3_ret_t  ret    = zksync_sign_transfer(&sb, &tx_data, ctx->ctx, sync_key);
-  if (ret && sb.data) _free(sb.data);
-  TRY(ret)
-  ret = send_provider_request(ctx->ctx, conf, "tx_submit", sb.data, &result);
+  in3_ret_t  ret    = send_provider_request(ctx->ctx, conf, "tx_submit", (void*) cached->value.data, &result);
   if (ret == IN3_OK) {
-    char*   signed_tx = sb.data + 1;
+    char*   signed_tx = (void*) cached->value.data + 1;
     int     l         = strlen(signed_tx) - 176;
     char*   p         = signed_tx + l + sprintf(signed_tx + l, ",\"txHash\":\"0x");
     bytes_t tx_hash   = d_to_bytes(result);
@@ -422,7 +433,6 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
     strcpy(p, "\"}");
     ret = in3_rpc_handle_with_string(ctx, signed_tx);
   }
-  _free(sb.data);
   return ret;
 }
 

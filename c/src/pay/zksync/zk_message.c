@@ -59,7 +59,8 @@ static void shift_left(uint8_t* a, int bits) {
 
 static int bitlen(uint64_t val) {
   for (int i = 63; i >= 0; --i) {
-    if ((val >> i) & 1) return 64 - i;
+    if ((val >> i) & 1)
+      return i;
   }
   return 0;
 }
@@ -179,7 +180,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   uint8_t raw[58], sig[96];
   TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
 
-  sb_add_chars(sb, "[{\"type\":\"Transfer\",\"accountId\":");
+  sb_add_chars(sb, "{\"type\":\"Transfer\",\"accountId\":");
   sb_add_int(sb, data->account_id);
   sb_add_rawbytes(sb, ",\"from\":\"0x", bytes(data->from, 20), 0);
   sb_add_rawbytes(sb, "\",\"to\":\"0x", bytes(data->to, 20), 0);
@@ -194,6 +195,6 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"0x", bytes(sig, 32), 0);
   sb_add_rawbytes(sb, "\",\"signature\":\"0x", bytes(sig + 32, 64), 0);
   sb_add_rawbytes(sb, "\"}},{\"type\":\"EthereumSignature\",\"signature\":\"0x", bytes(signature, 65), 0);
-  sb_add_chars(sb, "\"}]");
+  sb_add_chars(sb, "\"}");
   return IN3_OK;
 }
