@@ -114,7 +114,9 @@ NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
 
   in3_check_verified_hashes(ctx->client);
   _free(ctx);
+#ifdef IN3SENTRY
   sentry_shutdown();
+#endif
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
