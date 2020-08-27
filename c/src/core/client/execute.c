@@ -51,6 +51,10 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef IN3SENTRY
+#include "sentry.h"
+#endif
+
 #define WAIT_TIME_CAP 3600
 #define BLACKLISTTIME 24 * 3600
 
@@ -110,6 +114,7 @@ NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
 
   in3_check_verified_hashes(ctx->client);
   _free(ctx);
+  sentry_shutdown();
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {

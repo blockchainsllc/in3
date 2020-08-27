@@ -50,6 +50,10 @@
 #endif
 #include <time.h>
 
+#ifdef IN3SENTRY
+#include "sentry.h"
+#endif
+
 #ifdef PAY
 typedef struct payment {
   d_key_t         name;
@@ -138,6 +142,15 @@ void in3_set_default_legacy_transport(
   in3_register_default(register_legacy);
 }
 void in3_register_default(plgn_register reg_fn) {
+#ifdef IN3SENTRY
+  in3_log_debug("Sentry-initialize");
+  sentry_options_t *options = sentry_options_new();
+  sentry_options_set_database_path(options, ".sentry-native");
+  sentry_options_set_debug(options, 1);
+  sentry_options_set_dsn(options, DSN_SENTRY);
+  sentry_init(options);
+#endif
+
   assert(reg_fn);
   // check if it already exists
   default_fn_t** d   = &default_registry;
