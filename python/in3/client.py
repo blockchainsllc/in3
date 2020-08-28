@@ -69,7 +69,7 @@ class Client:
             node (str): Formatted string referred as `node` in ENS documentation
         """
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise AssertionError('Client: ENS domain name must end with .eth')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'hash')
 
     def ens_address(self, domain_name: str, registry: str = None) -> str:
@@ -101,7 +101,7 @@ class Client:
         if registry:
             registry = self._factory.get_address(registry)
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise AssertionError('Client: ENS domain name must end with .eth')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'owner', registry)
 
     def ens_resolver(self, domain_name: str, registry: str = None) -> str:
@@ -116,7 +116,7 @@ class Client:
         if registry:
             registry = self._factory.get_address(registry)
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise AssertionError('Client: ENS domain name must end with .eth')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'resolver', registry)
 
 
