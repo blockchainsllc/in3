@@ -169,7 +169,7 @@ static void test_exec_req() {
   _free(result);
 
   result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-21,\"message\":\"The request could not be handled:no plugin found that handled the cache_clear action\"}}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-21,\"message\":\"no plugin found that handled the cache_clear action\"}}", result);
   _free(result);
 
   in3_free(c);
