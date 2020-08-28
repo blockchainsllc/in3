@@ -86,7 +86,7 @@ class Client:
         if registry:
             registry = self._factory.get_address(registry)
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise AssertionError('Client: ENS domain name must end with .eth')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'addr', registry)
 
     def ens_owner(self, domain_name: str, registry: str = None) -> str:
