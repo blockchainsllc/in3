@@ -109,7 +109,7 @@ static char* abi_decode(char* sig, char* hex_data) {
   req_free(req);
   if (!res)
     return strdup(err_string("the input data can not be decoded"));
-  char* result = d_create_json(res->result);
+  char* result = d_create_json(res, res->result);
   json_free(res);
   // Enclose output in square brackets if not already the case
   if (result[0] != '[') {

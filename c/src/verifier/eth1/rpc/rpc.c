@@ -16,7 +16,7 @@ static verify_res_t report(char* msg, d_token_t* value, char* prefix) {
     else
       memcpy(m, msg, strlen(msg) + 1);
   }
-  verify_res_t r = {.src = value ? d_create_json(value) : NULL, .msg = m, .valid = false};
+  verify_res_t r = {.src = value ? d_create_json(NULL,value) : NULL, .msg = m, .valid = false};
   return r;
 }
 #define prop_error(msg, ob) report(msg, ob, prop);

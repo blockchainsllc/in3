@@ -415,7 +415,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
     }
     else {
       //
-      char* c = d_create_json(result);
+      char* c = d_create_json(ctx->response_context, result);
       ctx_free(ctx);
       return c;
     }
@@ -436,7 +436,7 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
 in3_ret_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
   rpc_init;
   if (options) {
-    char* p = d_create_json(options->result);
+    char* p = d_create_json(options, options->result);
     sb_add_chars(params, p);
     _free(p);
   }

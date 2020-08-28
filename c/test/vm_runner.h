@@ -45,9 +45,9 @@ void print_error(char* msg);
 void print_success(char* msg);
 #define ERROR(s) printf("Error: %s", s)
 
-int test_evm(d_token_t* test, uint32_t props, uint64_t* ms);
-int test_trie(d_token_t* test, uint32_t props, uint64_t* ms);
-int test_rlp(d_token_t* test, uint32_t props, uint64_t* ms);
+int test_evm(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms);
+int test_trie(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms);
+int test_rlp(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms);
 
 #ifdef __cplusplus
 }

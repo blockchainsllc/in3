@@ -148,8 +148,6 @@ NONULL d_token_t* json_array_add_value(d_token_t* object, d_token_t* value);
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
 char* d_get_keystr(d_key_t k);     /**< returns the string for a key. This only works track_keynames was activated before! */
-void  d_track_keynames(uint8_t v); /**< activates the keyname-cache, which stores the string for the keys when parsing. */
-void  d_clear_keynames();          /**< delete the cached keynames */
 
 #ifndef IN3_DONT_HASH_KEYS
 NONULL static inline d_key_t key(const char* c) {

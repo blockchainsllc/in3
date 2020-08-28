@@ -413,7 +413,7 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   req_free(req);
   if (!res)
     return err_string("the input data can not be decoded");
-  char* result = d_create_json(res->result);
+  char* result = d_create_json(res, res->result);
   json_free(res);
   return result;
 #else

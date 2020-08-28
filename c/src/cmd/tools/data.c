@@ -88,18 +88,6 @@ bytes_t read_from_stdin(FILE* file) {
 #define C_LPURPLE "1;35"
 #define C_LCYAN   "1;36"
 
-static inline d_key_t keyhash(const char* c) {
-  uint16_t val = 0;
-  size_t   l   = strlen(c);
-  for (; l; l--, c++) val ^= *c | val << 7;
-  return val;
-}
-
-static void init_keys() {
-  for (int i = 0; USED_KEYS[i]; i++)
-    add_keyname(USED_KEYS[i], keyhash(USED_KEYS[i]), strlen(USED_KEYS[i]));
-}
-
 static void print_hex(uint8_t* d, uint32_t l, char* color) {
   if (color) printf(COLORT_SELECT, color);
   for (uint32_t i = 0; i < l; i++)
@@ -146,7 +134,7 @@ static int read_token(uint8_t* d, size_t* p, int level, int* index, int keyval) 
 
   for (int i = 0; i < level; i++) printf(COLORT_BBLACK "." COLORT_RESET);
   if (keyval >= 0) {
-    char* keyname = d_get_keystr((d_key_t) keyval);
+    char* keyname = d_get_keystr(NULL, (d_key_t) keyval);
     if (keyname)
       printf(COLORT_RMAGENTA "%s" COLORT_RESET, keyname);
     else {
@@ -241,7 +229,6 @@ int main(int argc, char* argv[]) {
   bool    debug  = false;
 
   int i;
-  init_keys();
   // fill from args
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-f") == 0)
@@ -280,7 +267,7 @@ int main(int argc, char* argv[]) {
       printf("Invalid binary data!\n");
       return 1;
     }
-    printf("%s\n", d_create_json(ctx->result));
+    printf("%s\n", d_create_json(ctx, ctx->result));
     return 0;
   }
 

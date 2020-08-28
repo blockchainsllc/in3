@@ -163,7 +163,7 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
       return ctx_set_error(ctx, "filter option parsing failed", IN3_EINVAL);
     if (!params->data) return ctx_set_error(ctx, "binary request are not supported!", IN3_ENOTSUP);
 
-    char*     fopt = d_create_json(params + 1);
+    char*     fopt = d_create_json(ctx->request_context, params + 1);
     in3_ret_t res  = filter_add(ctx, FILTER_EVENT, fopt);
     if (res < 0) {
       _free(fopt);

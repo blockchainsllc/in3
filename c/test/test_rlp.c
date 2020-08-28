@@ -62,11 +62,11 @@ void append_rlp(bytes_builder_t* bb, d_token_t* in) {
   rlp_encode_item(bb, &b);
 }
 
-int test_rlp(d_token_t* test, uint32_t props, uint64_t* ms) {
+int test_rlp(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms) {
   uint64_t   start = clock();
   int        res   = 0;
-  d_token_t* in    = d_get(test, key("in"));
-  bytes_t    out   = d_to_bytes(d_get(test, key("out")));
+  d_token_t* in    = d_get(test, ikey(jc, "in"));
+  bytes_t    out   = d_to_bytes(d_get(test, ikey(jc, "out")));
   if (d_type(in) == T_STRING && d_len(in) > 0 && *in->data == '#') return 0;
   bytes_builder_t* bb = bb_new();
   append_rlp(bb, in);
