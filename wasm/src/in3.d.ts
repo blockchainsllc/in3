@@ -38,6 +38,13 @@
  */
 export declare interface IN3Config {
     /**
+     * sets the transport-function.
+     * 
+     * @param fn the function to fetch the response for the given url
+     */
+    transport?: (url: string, payload: string, timeout?: number) => Promise<string>
+
+    /**
      * if true the nodelist will be automaticly updated if the lastBlock is newer.
      * 
      * default: true
@@ -462,7 +469,7 @@ export default class IN3Generic<BigIntType, BufferType> {
 
 
     /**
-     * changes the transport-function.
+     * changes the default transport-function.
      * 
      * @param fn the function to fetch the response for the given url
      */

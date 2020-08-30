@@ -185,6 +185,10 @@ class IN3 {
         }
         this.needsSetConfig = !this.ptr
         if (this.ptr) {
+            if (this.config.transport) {
+                this.transport = this.config.transport
+                delete this.config.transport
+            }
             const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
             if (r) {
                 const ex = new Error(UTF8ToString(r))
@@ -361,7 +365,8 @@ function url_queue(req) {
     let counter = 0
     const promises = [], responses = []
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
-    req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
+    const transport = req.in3.transport || in3w.transport
+    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))
