@@ -95,13 +95,13 @@ class ClientParsingTest(unittest.TestCase):
             self.client.ens_owner('depraz.eth', True)
         with self.assertRaises(in3.EthAddressFormatException):
             self.client.ens_owner('depraz.eth', '123')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_owner('depraz')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_owner('depraz.')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_owner('depraz.etho')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_owner('.eth')
 
     def test_ens_resolver(self):
@@ -115,13 +115,13 @@ class ClientParsingTest(unittest.TestCase):
             self.client.ens_resolver('depraz.eth', True)
         with self.assertRaises(in3.EthAddressFormatException):
             self.client.ens_resolver('depraz.eth', '123')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_resolver('depraz')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_resolver('depraz.')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_resolver('depraz.etho')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_resolver('.eth')
 
     def test_ens_address(self):
@@ -135,23 +135,23 @@ class ClientParsingTest(unittest.TestCase):
             self.client.ens_address('depraz.eth', True)
         with self.assertRaises(in3.EthAddressFormatException):
             self.client.ens_address('depraz.eth', '123')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_address('depraz')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_address('depraz.')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_address('depraz.etho')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_address('.eth')
 
     def test_ens_namehash(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_namehash('depraz')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_namehash('depraz.')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_namehash('depraz.etho')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(in3.exception.EnsDomainFormatException):
             self.client.ens_namehash('.eth')
 
 
