@@ -32,10 +32,7 @@ def https_transport(in3_request: In3Request, in3_response: In3Response):
                 if not response.status == 200:
                     raise TransportException('Request failed with status: {}'.format(str(response.status)))
                 msg = response.read()
-                if 'error' in str(msg, 'utf8'):
-                    in3_response.failure(i, msg)
-                else:
-                    in3_response.success(i, msg)
+                in3_response.success(i, msg)
         except Exception as err:
             in3_response.failure(i, str(err).encode('utf8'))
     return 0

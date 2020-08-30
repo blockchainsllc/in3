@@ -34,6 +34,8 @@
 
 IF (USE_CURL)
     add_subdirectory(curl)
+elseif(USE_WINHTTP)
+    add_subdirectory(winhttp)
 else ()
     add_subdirectory(http)
 ENDIF ()

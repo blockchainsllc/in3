@@ -32,47 +32,16 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-set(EMC_PROPS "-s ALLOW_MEMORY_GROWTH=1 -s NODEJS_CATCH_REJECTION=0 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+# add lib
+add_static_library(
+  NAME     transport_winhttp 
+  
+  SOURCES 
+    in3_winhttp.c
 
-IF (ASMJS)
-  set(WASM_EMBED true)
-  set(CMAKE_EXECUTABLE_SUFFIX ".js")
-  set(EMC_PROPS "${EMC_PROPS} -s FINALIZE_ASM_JS=1  -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 ")
-else(ASMJS)
-  set(EMC_PROPS "${EMC_PROPS} -s WASM=1")
-endif(ASMJS)
-
-
-IF (CMAKE_BUILD_TYPE MATCHES Debug)
-   set(EMC_PROPS "${EMC_PROPS} -g -s SAFE_HEAP=1 -s ASSERTIONS=1 -s STACK_OVERFLOW_CHECK=1 -s RUNTIME_LOGGING=1 ")
-ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
-
-if (WASM_EMBED)
-   set(EMC_PROPS "${EMC_PROPS} -s SINGLE_FILE=1")
-endif(WASM_EMBED)
-
-if (WASM_EMMALLOC)
-   set(EMC_PROPS "${EMC_PROPS} -s MALLOC=emmalloc")
-endif(WASM_EMMALLOC)
-
-if (WASM_SYNC)
-   set(EMC_PROPS "${EMC_PROPS} -s WASM_ASYNC_COMPILATION=0")
-endif(WASM_SYNC)
-
-add_executable(in3w wasm.c)
-target_link_libraries(in3w init)
-set_target_properties(in3w PROPERTIES LINK_FLAGS "${EMC_PROPS}")
-
-
-add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/bin/in3.js
-    DEPENDS in3w  in3.js modules/eth.js modules/btc.js modules/ipfs.js in3_util.js in3.d.ts modules/btc.d.ts modules/ipfs.d.ts modules/eth.d.ts
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-    COMMAND  ${CMAKE_CURRENT_SOURCE_DIR}/build_js.sh ${CMAKE_CURRENT_SOURCE_DIR} ${ASMJS} ${WASM_MODULES}
+  DEPENDS 
+    core
+    winhttp
 )
 
-add_custom_target(in3_wasm ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/in3.js)
-add_custom_target(test 
-   COMMAND npm test 
-   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../test
-)
+
