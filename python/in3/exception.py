@@ -31,3 +31,8 @@ class ClientException(IN3BaseException):
 class TransportException(IN3BaseException):
     """ In3 Request exception  """
     pass
+
+
+class EnsDomainFormatAssertionError(AssertionError):
+    def __init__(self):
+        super().__init__('Client: ENS domain name must end with .eth')
