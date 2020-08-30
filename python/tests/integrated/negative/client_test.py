@@ -42,7 +42,7 @@ class ClientNegativeTest(unittest.TestCase):
     def test_ens_namehash(self):
         for i in range(50):
             with self.assertRaises(in3.ClientException):
-                self.client.ens_namehash('0x0.eth')
+                self.client.ens_namehash('0x0.ens')
 
 
 class ClientParsingTest(unittest.TestCase):
