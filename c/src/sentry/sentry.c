@@ -41,5 +41,5 @@ in3_ret_t in3_register_sentry(in3_t* c) {
   sc->db            = ".sentry-native";
   sc->debug         = 1;
   sc->stack         = 20;
-  return plugin_register(c, PLGN_ACT_SENTRY_INIT | PLGN_ACT_SENTRY_SEND | PLGN_ACT_TERM, handle_sentry, sc, false);
+  return plugin_register(c, PLGN_ACT_SENTRY_INIT | PLGN_ACT_SENTRY_SEND | PLGN_ACT_SENTRY_END, handle_sentry, sc, false);
 }
