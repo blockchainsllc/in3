@@ -172,7 +172,7 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
 
     return in3_rpc_handle_with_int(rctx, (uint64_t) res);
   }
-  else if (strcmp(method, "eth_chainId") == 0)
+  else if (strcmp(method, "eth_chainId") == 0 && ctx->client->chain_id != CHAIN_ID_LOCAL)
     return in3_rpc_handle_with_int(rctx, ctx->client->chain_id);
   else if (strcmp(method, "eth_newBlockFilter") == 0) {
     in3_ret_t res = filter_add(ctx, FILTER_BLOCK, NULL);
