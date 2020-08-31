@@ -11,7 +11,7 @@
 #include <string.h>
 
 /**
- * the security- configuration which is stored within the chain_t - object.
+ * the sentry- configuration - object.
  */
 typedef struct sentry_conf {
   const char* dsn;
