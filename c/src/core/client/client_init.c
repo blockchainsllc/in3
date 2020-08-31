@@ -94,7 +94,7 @@ void in3_register_payment(
   goto cleanup;                              \
 })
 #define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
-#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(token->key), err))
+#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(cnf, token->key), err))
 #define EXPECT_TOK_BOOL(token)        EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
 #define EXPECT_TOK_STR(token)         EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
 #define EXPECT_TOK_ARR(token)         EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")
@@ -109,7 +109,7 @@ void in3_register_payment(
 #define EXPECT_TOK_U16(token)         EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
 #define EXPECT_TOK_U32(token)         EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
 #define EXPECT_TOK_U64(token)         EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value")
-#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
+#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(cnf, token->key)), "expected hex str")
 
 // set the defaults
 typedef struct default_fn {
@@ -611,12 +611,14 @@ static chain_id_t chain_id(d_token_t* t) {
 }
 
 static inline char* config_err(const char* keyname, const char* err) {
+  if (!keyname) keyname = "unknown";
   char* s = _malloc(strlen(keyname) + strlen(err) + 4);
   sprintf(s, "%s: %s!", keyname, err);
   return s;
 }
 
 static inline bool is_hex_str(const char* str) {
+  if (!str) return false;
   if (str[0] == '0' && str[1] == 'x')
     str += 2;
   return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
