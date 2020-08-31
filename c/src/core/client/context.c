@@ -150,8 +150,10 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error        = dst;
+#ifdef SENTRY
     sentry_ctx_t sctx = {.msg = message};
     in3_plugin_execute(ctx->client, PLGN_ACT_SENTRY_SEND, &sctx);
+#endif
     in3_log_trace("Intermediate error -> %s\n", message);
   }
   else if (!ctx->error) {
