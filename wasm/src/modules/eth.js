@@ -1,3 +1,5 @@
+in3w.extensions.push(c => c.eth = new EthAPI(c))
+
 class EthAPI {
 
     constructor(client) { this.client = client }
@@ -441,9 +443,6 @@ class EthAPI {
         return ob
 
     }
-
-
-
 
 
     contractAt(abi, address) {

@@ -10,13 +10,10 @@ async function showLatestBlock() {
         chainId: 0x5 // use goerli
     })
 
-    // send raw RPC-Request
-    const lastBlockResponse = await c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+    // send raw RPC-Request (this would throw if the response contains an error)
+    const lastBlockResponse = await c.sendRPC('eth_getBlockByNumber', ['latest', false])
 
-    if (lastBlockResponse.error)
-        console.error("Error getting the latest block : ", lastBlockResponse.error)
-    else
-        console.log("latest Block: ", JSON.stringify(lastBlockResponse.result, null, 2))
+    console.log("latest Block: ", JSON.stringify(lastBlockResponse, null, 2))
 
     // clean up
     c.free()

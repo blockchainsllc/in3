@@ -89,6 +89,28 @@ describe('EthAPI-Tests', () => {
 
     })
 
+    it('plugin._handlRPC', async () => {
+        const c = createClient();
+        c.registerPlugin({
+            handleRPC(client, req) {
+                if (req.method === 'rpc_test')
+                    return "test"
+                if (req.method === 'rpc_error')
+                    throw new Error('RPCERROR')
+                if (req.method === 'rpc_error2')
+                    return Promise.reject(new Error('RPCERROR2'))
+
+            }
+        })
+
+        assert.equal('test', await c.sendRPC('rpc_test'))
+        assert.equal(true, await c.sendRPC('test2').catch(() => true))
+        assert.equal('RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
+        assert.equal('RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
+
+    })
+
+
     it('eth.sign()', async () => {
         const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
         const msg = '0x9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465'
