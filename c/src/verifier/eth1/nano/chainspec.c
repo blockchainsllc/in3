@@ -56,10 +56,10 @@ static void* log_error(char* msg) {
 
 // supported EIPS
 static const uint32_t EIPS[] = {145, 155, 150, 160, 170, 140, 196, 197, 198, 211, 214, 658, 145, 1014, 1052, 1283, 0}; // all const
-static void           fill_aura(d_token_t* validators, consensus_transition_t* t, char* block) {
-  d_token_t* contract = d_get(validators, key("contract"));
-  d_token_t* list     = d_get(validators, key("list"));
-  if (!contract) contract = d_get(validators, key("safeContract"));
+static void           fill_aura(json_ctx_t* ctx, d_token_t* validators, consensus_transition_t* t, char* block) {
+  d_token_t* contract = d_get(validators, ikey(ctx, "contract"));
+  d_token_t* list     = d_get(validators, ikey(ctx, "list"));
+  if (!contract) contract = d_get(validators, ikey(ctx, "safeContract"));
 
 #ifndef __ZEPHYR__
   if (block) t->transition_block = atoll(block);
@@ -88,7 +88,7 @@ static void           fill_aura(d_token_t* validators, consensus_transition_t* t
   }
 }
 
-static uint64_t fill_transition(d_token_t* params, uint64_t b, eip_t* eip) {
+static uint64_t fill_transition(json_ctx_t* ctx, d_token_t* params, uint64_t b, eip_t* eip) {
   uint64_t   next_block = b;
   d_token_t *start, *end;
   char       tmp[200];
@@ -96,9 +96,9 @@ static uint64_t fill_transition(d_token_t* params, uint64_t b, eip_t* eip) {
 
   for (int n = 0; EIPS[n]; n++) {
     sprintf(tmp, "eip%iTransition", EIPS[n]);
-    start = d_get(params, key(tmp));
+    start = d_get(params, ikey(ctx, tmp));
     sprintf(tmp, "eip%iDisableTransition", EIPS[n]);
-    end = d_get(params, key(tmp));
+    end = d_get(params, ikey(ctx, tmp));
     if (start && d_long(start) > b && (next_block == b || d_long(start) < next_block)) next_block = d_long(start);
     if (end && d_long(end) > b && (next_block == b || d_long(end) < next_block)) next_block = d_long(end);
     if (start && d_long(start) <= b && (!end || d_long(end) > b)) {
@@ -132,13 +132,14 @@ static uint64_t fill_transition(d_token_t* params, uint64_t b, eip_t* eip) {
   return next_block;
 }
 
-chainspec_t* chainspec_create_from_json(d_token_t* data) {
+chainspec_t* chainspec_create_from_json(json_ctx_t* ctx) {
+  d_token_t*   data   = ctx->result;
   chainspec_t* spec   = _malloc(sizeof(chainspec_t));
-  d_token_t*   params = d_get(data, key("params"));
+  d_token_t*   params = d_get(data, ikey(ctx, "params"));
   if (!params) return log_error("no params-tag in data");
 
-  spec->network_id          = d_get_long(params, "networkID");
-  spec->account_start_nonce = d_get_long(params, "accountStartNonce");
+  spec->network_id          = d_get_longk(params, ikey(ctx, "networkID"));
+  spec->account_start_nonce = d_get_longk(params, ikey(ctx, "accountStartNonce"));
 
   // find all eip transitions
   unsigned int allocated                  = 3;
@@ -147,14 +148,14 @@ chainspec_t* chainspec_create_from_json(d_token_t* data) {
   spec->eip_transitions->transition_block = 0;
   memset(&spec->eip_transitions->eips, 0, sizeof(eip_t));
 
-  for (uint64_t b = 0, next_b = fill_transition(params, 0, &spec->eip_transitions->eips); b < next_b;) {
+  for (uint64_t b = 0, next_b = fill_transition(ctx, params, 0, &spec->eip_transitions->eips); b < next_b;) {
     if (spec->eip_transitions_len == allocated) {
       spec->eip_transitions = _realloc(spec->eip_transitions, (allocated + 3) * sizeof(eip_transition_t), allocated * sizeof(eip_transition_t));
       allocated += 3;
     }
     b                                                                 = next_b;
     spec->eip_transitions[spec->eip_transitions_len].transition_block = b;
-    next_b                                                            = fill_transition(params, b, &spec->eip_transitions[spec->eip_transitions_len].eips);
+    next_b                                                            = fill_transition(ctx, params, b, &spec->eip_transitions[spec->eip_transitions_len].eips);
     spec->eip_transitions_len++;
   }
 
@@ -166,28 +167,28 @@ chainspec_t* chainspec_create_from_json(d_token_t* data) {
   spec->consensus_transitions->validators.data  = NULL;
   spec->consensus_transitions->contract         = NULL;
 
-  d_token_t* engine = d_get(data, key("engine"));
+  d_token_t* engine = d_get(data, ikey(ctx, "engine"));
   if (!engine) return log_error("no engine specified");
-  d_token_t* genesis = d_get(data, key("genesis"));
+  d_token_t* genesis = d_get(data, ikey(ctx, "genesis"));
   if (!genesis) return log_error("no genesis specified");
 
-  if (d_get(d_get(engine, key("Ethash")), key("params")))
+  if (d_get(d_get(engine, ikey(ctx, "Ethash")), ikey(ctx, "params")))
     spec->consensus_transitions->type = ETH_POW;
-  else if ((params = d_get(d_get(d_get(engine, key("authorityRound")), key("params")), key("validators")))) {
+  else if ((params = d_get(d_get(d_get(engine, ikey(ctx, "authorityRound")), ikey(ctx, "params")), ikey(ctx, "validators")))) {
     spec->consensus_transitions->type = ETH_POA_AURA;
-    d_token_t* multi                  = d_get(params, key("multi"));
+    d_token_t* multi                  = d_get(params, ikey(ctx, "multi"));
     if (multi) {
       int n                           = 0;
       spec->consensus_transitions_len = d_len(multi);
       spec->consensus_transitions     = _realloc(spec->consensus_transitions, sizeof(consensus_transition_t) * spec->consensus_transitions_len, sizeof(consensus_transition_t));
       for (d_iterator_t iter = d_iter(multi); iter.left; d_iter_next(&iter))
-        fill_aura(iter.token, spec->consensus_transitions + (n++), d_get_keystr(iter.token->key));
+        fill_aura(ctx, iter.token, spec->consensus_transitions + (n++), d_get_keystr(ctx, iter.token->key));
     }
     else
-      fill_aura(params, spec->consensus_transitions, NULL);
+      fill_aura(ctx, params, spec->consensus_transitions, NULL);
   }
-  else if (d_get(d_get(engine, key("clique")), key("params"))) {
-    bytes_t* extra = d_get_bytes(genesis, "extraData");
+  else if (d_get(d_get(engine, ikey(ctx, "clique")), ikey(ctx, "params"))) {
+    bytes_t* extra = d_get_bytesk(genesis, ikey(ctx, "extraData"));
     if (!extra) return log_error("no extra data in the genesis-block");
     spec->consensus_transitions->type            = ETH_POA_CLIQUE;
     spec->consensus_transitions->validators.data = _malloc(extra->len - 32 - 65);

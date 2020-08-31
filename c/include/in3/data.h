@@ -93,6 +93,8 @@ typedef struct json_parser {
   size_t     allocated; /**< amount of tokens allocated result */
   size_t     len;       /**< number of tokens in result */
   size_t     depth;     /**< max depth of tokens in result */
+  uint8_t*   keys;      // key-data
+  size_t     keys_last; // points to the position of the last key.
 } json_ctx_t;
 
 /**
@@ -121,19 +123,21 @@ static inline int      d_len(const d_token_t* item) {                           
 }
 bool           d_eq(const d_token_t* a, const d_token_t* b); /**< compares 2 token and if the value is equal */
 NONULL d_key_t keyn(const char* c, const size_t len);        /**< generates the keyhash for the given stringrange as defined by len */
+d_key_t        ikey(json_ctx_t* ctx, const char* name);      /**<  returnes the indexed key for the given name. */
 
 d_token_t* d_get(d_token_t* item, const uint16_t key);                          /**< returns the token with the given propertyname (only if item is a object) */
 d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
 
-NONULL void d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
-NONULL json_ctx_t* parse_binary(const bytes_t* data);              /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_binary_str(const char* data, int len);    /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json(const char* js);                     /**< parses json-data, which needs to be freed after usage! */
-NONULL void        json_free(json_ctx_t* parser_ctx);              /**< frees the parse-context after usage */
-NONULL str_range_t d_to_json(const d_token_t* item);               /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
-NONULL char*       d_create_json(d_token_t* item);                 /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
+NONULL void d_serialize_binary(bytes_builder_t* bb, d_token_t* t);  /**< write the token as binary data into the builder */
+NONULL json_ctx_t* parse_binary(const bytes_t* data);               /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_binary_str(const char* data, int len);     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json(const char* js);                      /**< parses json-data, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json_indexed(const char* js);              /**< parses json-data, which needs to be freed after usage! */
+NONULL void        json_free(json_ctx_t* parser_ctx);               /**< frees the parse-context after usage */
+NONULL str_range_t d_to_json(const d_token_t* item);                /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+NONULL char*       d_create_json(json_ctx_t* ctx, d_token_t* item); /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
 json_ctx_t* json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
@@ -147,20 +151,14 @@ NONULL d_token_t* json_object_add_prop(d_token_t* object, d_key_t key, d_token_t
 NONULL d_token_t* json_array_add_value(d_token_t* object, d_token_t* value);
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
-char* d_get_keystr(d_key_t k);     /**< returns the string for a key. This only works track_keynames was activated before! */
-void  d_track_keynames(uint8_t v); /**< activates the keyname-cache, which stores the string for the keys when parsing. */
-void  d_clear_keynames();          /**< delete the cached keynames */
+char* d_get_keystr(json_ctx_t* json, d_key_t k); /**< returns the string for a key. This only works for index keys or known keys! */
 
-#ifndef IN3_DONT_HASH_KEYS
 NONULL static inline d_key_t key(const char* c) {
   uint16_t val = 0;
   size_t   l   = strlen(c);
   for (; l; l--, c++) val ^= *c | val << 7;
   return val;
 }
-#else
-d_key_t key(const char* c);
-#endif
 
 static inline char*    d_get_stringk(d_token_t* r, d_key_t k) { return d_string(d_get(r, k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string(d_token_t* r, char* k) { return d_get_stringk(r, key(k)); }              /**< reads token of a property as string. */

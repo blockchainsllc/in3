@@ -49,41 +49,12 @@
 // Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
 verify(sizeof(void*) >= 4);
 
-#ifndef IN3_DONT_HASH_KEYS
-static uint8_t __track_keys = 0;
-#else
-static uint8_t __track_keys = 1;
-#endif
-
 // number of tokens to allocate memory for when parsing
 #define JSON_INIT_TOKENS        10
+#define JSON_INDEXD_PAGE        128
 #define JSON_MAX_ALLOWED_TOKENS 1000000
 
-/** internal type declared here to assist with key() optimization */
-typedef struct keyname {
-  char*           name;
-  d_key_t         key;
-  struct keyname* next;
-} keyname_t;
-
-static keyname_t* __keynames = NULL;
-#ifdef IN3_DONT_HASH_KEYS
-static size_t     __keynames_len = 0;
-static keyname_t* __last_keyname = NULL;
-
-d_key_t key(const char* c) {
-  keyname_t* kn = __keynames;
-  while (kn) {
-    if (!strcmp(kn->name, c))
-      return kn->key;
-    kn = kn->next;
-  }
-  return __keynames_len;
-}
-#endif
-
 d_key_t keyn(const char* c, const size_t len) {
-#ifndef IN3_DONT_HASH_KEYS
   d_key_t val = 0;
   size_t  i   = 0;
   for (; i < len; i++) {
@@ -92,47 +63,40 @@ d_key_t keyn(const char* c, const size_t len) {
     c += 1;
   }
   return val;
-#else
-  for (keyname_t* kn = __keynames; kn; kn = kn->next) {
-    // input is not expected to be nul terminated
-    if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
-      return kn->key;
-  }
-  return __keynames_len;
-#endif
 }
 
-void add_keyname(const char* name, d_key_t value, size_t len) {
-  keyname_t* kn = malloc(sizeof(keyname_t));
-#ifdef IN3_DONT_HASH_KEYS
-  __keynames_len++;
-  kn->next = NULL;
-  if (__last_keyname)
-    __last_keyname->next = kn;
-  else
-    __keynames = kn;
-  __last_keyname = kn;
-#else
-  kn->next   = __keynames;
-  __keynames = kn;
-#endif
-
-  kn->key  = value;
-  kn->name = malloc(len + 1);
-  memcpy(kn->name, name, len);
-  kn->name[len] = 0;
+static d_key_t get_key(json_ctx_t* ctx, const char* name, size_t len) {
+  if (!ctx->keys) return keyn(name, len);
+  if (len == 0) len = strlen(name);
+  for (unsigned int p = 0; p < ctx->keys_last;) {
+    size_t l = ctx->keys[p];
+    if (l == len + 2 && strncmp(name, (char*) ctx->keys + p + 1, len) == 0) return p + 1;
+    p += l;
+  }
+  return 0;
 }
 
-static d_key_t add_key(const char* c, size_t len) {
-  d_key_t k = keyn(c, len);
-  if (!__track_keys) return k;
-  keyname_t* kn = __keynames;
-  while (kn) {
-    if (kn->key == k) return k;
-    kn = kn->next;
-  }
-  add_keyname(c, k, len);
-  return k;
+d_key_t ikey(json_ctx_t* ctx, const char* name) {
+  return get_key(ctx, name, 0);
+}
+
+static char* get_key_str(json_ctx_t* ctx, d_key_t k) {
+  return !ctx || !ctx->keys || !k || k > ctx->keys_last ? NULL : ((char*) ctx->keys + (int) k);
+}
+
+static d_key_t add_key(json_ctx_t* ctx, const char* name, size_t len) {
+  if (!ctx->keys) return keyn(name, len);
+  d_key_t found = get_key(ctx, name, len);
+  if (found) return found;
+  int k        = ctx->keys_last;
+  int old_page = k / JSON_INDEXD_PAGE;
+  int new_page = (k + len + 2) / JSON_INDEXD_PAGE;
+  if (new_page != old_page) ctx->keys = _realloc(ctx->keys, (new_page + 1) * JSON_INDEXD_PAGE, (old_page + 1) * JSON_INDEXD_PAGE);
+  uint8_t* p            = ctx->keys + k;
+  p[len + 1]            = 0;
+  ctx->keys_last += * p = len + 2;
+  memcpy(p + 1, name, len);
+  return (d_key_t) k + 1;
 }
 
 static size_t d_token_size(const d_token_t* item) {
@@ -384,7 +348,7 @@ NONULL int parse_key(json_ctx_t* jp) {
     switch (*(jp->c++)) {
       case 0: return -2;
       case '"':
-        r = add_key(start, jp->c - start - 1);
+        r = add_key(jp, start, jp->c - start - 1);
         return next_char(jp) == ':' ? r : -2;
       case '\\':
         jp->c++;
@@ -604,14 +568,13 @@ void json_free(json_ctx_t* jp) {
         _free(jp->result[i].data);
     }
   }
+  if (jp->keys) _free(jp->keys);
   _free(jp->result);
   _free(jp);
 }
 
 json_ctx_t* parse_json(const char* js) {
-  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));                   // new parser
-  parser->len        = 0;                                             // initial length
-  parser->depth      = 0;                                             //  initial depth
+  json_ctx_t* parser = _calloc(1, sizeof(json_ctx_t));                // new parser
   parser->c          = (char*) js;                                    // the pointer to the string to parse
   parser->allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
   parser->result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
@@ -621,6 +584,21 @@ json_ctx_t* parse_json(const char* js) {
     return NULL;                                                      // and return null
   }                                                                   //
   parser->c = (char*) js;                                             // since this pointer changed during parsing, we set it back to the original string
+  return parser;
+}
+
+json_ctx_t* parse_json_indexed(const char* js) {
+  json_ctx_t* parser = _calloc(1, sizeof(json_ctx_t));                // new parser
+  parser->c          = (char*) js;                                    // the pointer to the string to parse
+  parser->allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
+  parser->result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
+  parser->keys       = _malloc(JSON_INDEXD_PAGE);
+  const int res      = parse_object(parser, -1, 0); // now parse starting without parent (-1)
+  if (res < 0) {                                    // error parsing?
+    json_free(parser);                              // clean up
+    return NULL;                                    // and return null
+  }                                                 //
+  parser->c = (char*) js;                           // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 
@@ -644,7 +622,7 @@ static int find_end(const char* str) {
   return c - str;
 }
 
-char* d_create_json(d_token_t* item) {
+char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
   char*       dst = NULL;
   int         l   = d_len(item);
   str_range_t s;
@@ -660,10 +638,10 @@ char* d_create_json(d_token_t* item) {
       else {
         sb_t* sb = sb_new(d_type(item) == T_ARRAY ? "[" : "{");
         for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
-          char* p = d_create_json(it.token);
+          char* p = d_create_json(ctx, it.token);
           if (sb->len > 1) sb_add_char(sb, ',');
           if (d_type(item) == T_OBJECT) {
-            char* kn = d_get_keystr(it.token->key);
+            char* kn = d_get_keystr(ctx, it.token->key);
             if (kn) {
               sb_add_char(sb, '"');
               sb_add_chars(sb, kn);
@@ -940,40 +918,45 @@ void d_serialize_binary(bytes_builder_t* bb, d_token_t* t) {
   write_token_count(bb, d_token_size(t));
   write_token(bb, t);
 }
+static const char _hex[] = "0123456789abcdef";
+static char       _tmp[7];
 
-char* d_get_keystr(d_key_t k) {
-  keyname_t* kn = __keynames;
-  while (kn) {
-    if (kn->key == k) return kn->name;
-    kn = kn->next;
-  }
+char* d_get_keystr(json_ctx_t* ctx, d_key_t k) {
+  if (ctx && ctx->keys) return get_key_str(ctx, k);
 #ifdef LOGGING
   for (int i = 0; USED_KEYS[i]; i++) {
     if (key(USED_KEYS[i]) == k) return USED_KEYS[i];
   }
 #endif
 
-  return NULL;
-}
-
-void d_track_keynames(uint8_t v) {
-#ifndef IN3_DONT_HASH_KEYS
-  __track_keys = v;
-#else
-  UNUSED_VAR(v);
-#endif
-}
-
-void d_clear_keynames() {
-#ifndef IN3_DONT_HASH_KEYS
-  keyname_t* kn = NULL;
-  while (__keynames) {
-    kn = __keynames;
-    free(kn->name);
-    __keynames = kn->next;
-    free(kn);
+  _tmp[0] = '0';
+  _tmp[1] = 'x';
+  for (int i = 0; i < 0xFFFF; i++) {
+    if (i <= 0xF) {
+      _tmp[2] = _hex[i];
+      _tmp[3] = 0;
+    }
+    else if (i <= 0xFF) {
+      _tmp[2] = _hex[i >> 4];
+      _tmp[3] = _hex[i & 0xf];
+      _tmp[4] = 0;
+    }
+    else if (i <= 0xFFF) {
+      _tmp[2] = _hex[i >> 8];
+      _tmp[3] = _hex[i >> 4 & 0xf];
+      _tmp[4] = _hex[i & 0xf];
+      _tmp[5] = 0;
+    }
+    else {
+      _tmp[2] = _hex[i >> 12 & 0xf];
+      _tmp[3] = _hex[i >> 8 & 0xf];
+      _tmp[4] = _hex[i >> 4 & 0xf];
+      _tmp[5] = _hex[i & 0xf];
+      _tmp[6] = 0;
+    }
+    if (key(_tmp) == k) return _tmp;
   }
-#endif
+  return NULL;
 }
 
 bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
