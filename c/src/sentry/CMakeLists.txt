@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -32,27 +32,15 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory( crypto )
-if(USE_SCRYPT)
-  add_subdirectory( libscrypt )
-endif()
-if (ETH_FULL)
-  add_subdirectory( tommath )
-endif()
 
-if (USE_SEGGER_RTT)
-  add_subdirectory( segger_rtt )
-endif()
+add_static_library(
+  NAME     in3_sentry 
+  
+  SOURCES 
+    sentry.c 
 
-if (IPFS)
-  add_subdirectory( libb64 )
-endif()
+  DEPENDS 
+    sentry
+    core
+)
 
-if (LEDGER_NANO)
-  add_subdirectory( hidapi )
-endif()
-
-if (SENTRY)
-  #  ADD_DEFINITIONS(-DBUILD_SHARED_LIBS=false)
-   add_subdirectory( sentry-native )
-endif()

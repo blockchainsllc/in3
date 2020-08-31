@@ -13,7 +13,7 @@ if [ "$CONTAINER" = "sentry" ]; then
    BUILDTYPE=debug
    CONTAINER=""
    TEST=true
-   OPTS="-DLOGGING=true -DIN3SENTRY=true -DJAVA=false -DSENTRY_BACKEND=inproc -DBUILD_SHARED_LIBS=false"
+   OPTS="-DLOGGING=true -DSENTRY=true -DJAVA=false -DSENTRY_BACKEND=inproc -DBUILD_SHARED_LIBS=false"
 fi
 if [ "$CONTAINER" = "release" ]; then
    BUILDTYPE=release

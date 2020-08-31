@@ -82,6 +82,11 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
  */
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
+/**
+ * same as in3_plugin_execute_first() using the client instead of context, but returns IN3_OK even if no plugin could handle specified action
+ */
+in3_ret_t in3_plugin_execute(in3_t* client, in3_plugin_act_t action, void* plugin_ctx);
+
 // ----------- RPC HANDLE -----------
 
 /**
@@ -376,4 +381,11 @@ typedef struct {
   bytes32_t  request_hash;  /**< the hash to sign */
   uint8_t    signature[65]; /**< the signature */
 } in3_pay_sign_req_ctx_t;
+
+#ifdef SENTRY
+typedef struct {
+  char* msg; /**< the error message. */
+} sentry_ctx_t;
+#endif
+
 #endif

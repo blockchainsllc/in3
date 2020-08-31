@@ -45,9 +45,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef IN3SENTRY
-#include "sentry.h"
-#endif
 in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
@@ -152,14 +149,9 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       dst = _malloc(l + 1);
       strcpy(dst, message);
     }
-    ctx->error = dst;
-#ifdef IN3SENTRY
-    sentry_value_t event = sentry_value_new_message_event(
-        SENTRY_LEVEL_ERROR, IN3_VERSION, message);
-    // sentry_event_value_add_stacktrace(event, NULL, 0);
-    sentry_capture_event(event);
-    in3_log_info("sentry-event-sent\n");
-#endif
+    ctx->error        = dst;
+    sentry_ctx_t sctx = {.msg = message};
+    in3_plugin_execute(ctx->client, PLGN_ACT_SENTRY_SEND, &sctx);
     in3_log_trace("Intermediate error -> %s\n", message);
   }
   else if (!ctx->error) {

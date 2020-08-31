@@ -50,10 +50,6 @@
 #endif
 #include <time.h>
 
-#ifdef IN3SENTRY
-#include "sentry.h"
-#endif
-
 #ifdef PAY
 typedef struct payment {
   d_key_t         name;
@@ -142,14 +138,6 @@ void in3_set_default_legacy_transport(
   in3_register_default(register_legacy);
 }
 void in3_register_default(plgn_register reg_fn) {
-#ifdef IN3SENTRY
-  in3_log_debug("Sentry-initialize");
-  sentry_options_t* options = sentry_options_new();
-  sentry_options_set_database_path(options, ".sentry-native");
-  sentry_options_set_debug(options, 1);
-  sentry_options_set_dsn(options, DSN_SENTRY);
-  sentry_init(options);
-#endif
 
   assert(reg_fn);
   // check if it already exists
@@ -350,6 +338,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
     c->chains_length = 0;
     return IN3_ECONFIG;
   }
+  in3_plugin_execute(c, PLGN_ACT_SENTRY_INIT, NULL);
   return IN3_OK;
 }
 in3_chain_t* in3_get_chain(const in3_t* c) {
@@ -1104,6 +1093,9 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_NL_PICK_DATA: return "nl_pick_data";
     case PLGN_ACT_NL_PICK_SIGNER: return "nl_pick_signer";
     case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";
+    case PLGN_ACT_SENTRY_INIT: return "sentry_init";
+    case PLGN_ACT_SENTRY_END: return "sentry_end";
+    case PLGN_ACT_SENTRY_SEND: return "sentry_send";
   }
   return "unknown";
 }
@@ -1132,6 +1124,21 @@ in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t acti
     return IN3_OK;
 
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
+    if (p->acts & action) {
+      in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
+      if (ret != IN3_EIGNORE) return ret;
+    }
+  }
+
+  return IN3_OK;
+}
+
+in3_ret_t in3_plugin_execute(in3_t* client, in3_plugin_act_t action, void* plugin_ctx) {
+  assert(client);
+  if (!in3_plugin_is_registered(client, action))
+    return IN3_OK;
+
+  for (in3_plugin_t* p = client->plugins; p; p = p->next) {
     if (p->acts & action) {
       in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
       if (ret != IN3_EIGNORE) return ret;

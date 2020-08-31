@@ -79,7 +79,7 @@ OPTION(CMD "build the comandline utils" ON)
 OPTION(POA "support POA verification including validatorlist updates" OFF)
 OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
 OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" OFF)
-OPTION(IN3SENTRY "Enable Sentry" OFF)
+OPTION(SENTRY "Enable Sentry" OFF)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
@@ -180,8 +180,8 @@ if (DEV_NO_INTRN_PTR)
     ADD_DEFINITIONS(-DDEV_NO_INTRN_PTR)
 endif()
 
-if (IN3SENTRY)
-  ADD_DEFINITIONS(-DIN3SENTRY)
+if (SENTRY)
+  ADD_DEFINITIONS(-DSENTRY)
 endif()
 
 # handle version
