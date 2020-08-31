@@ -338,7 +338,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
     c->chains_length = 0;
     return IN3_ECONFIG;
   }
-  in3_plugin_execute(c, PLGN_ACT_SENTRY_INIT, NULL);
   return IN3_OK;
 }
 in3_chain_t* in3_get_chain(const in3_t* c) {
@@ -1093,9 +1092,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_NL_PICK_DATA: return "nl_pick_data";
     case PLGN_ACT_NL_PICK_SIGNER: return "nl_pick_signer";
     case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";
-    case PLGN_ACT_SENTRY_INIT: return "sentry_init";
-    case PLGN_ACT_SENTRY_END: return "sentry_end";
-    case PLGN_ACT_SENTRY_SEND: return "sentry_send";
+    case PLGN_ACT_LOG_ERROR: return "sentry_error";
   }
   return "unknown";
 }
@@ -1124,21 +1121,6 @@ in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t acti
     return IN3_OK;
 
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
-    if (p->acts & action) {
-      in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
-      if (ret != IN3_EIGNORE) return ret;
-    }
-  }
-
-  return IN3_OK;
-}
-
-in3_ret_t in3_plugin_execute(in3_t* client, in3_plugin_act_t action, void* plugin_ctx) {
-  assert(client);
-  if (!in3_plugin_is_registered(client, action))
-    return IN3_OK;
-
-  for (in3_plugin_t* p = client->plugins; p; p = p->next) {
     if (p->acts & action) {
       in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
       if (ret != IN3_EIGNORE) return ret;

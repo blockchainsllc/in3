@@ -3,7 +3,7 @@
 static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
   sentry_conf_t* conf = cptr;
   switch (action) {
-    case PLGN_ACT_SENTRY_INIT: {
+    case PLGN_ACT_INIT: {
       sentry_options_t* options = sentry_options_new();
       sentry_options_set_database_path(options, conf->db);
       sentry_options_set_debug(options, conf->debug);
@@ -13,7 +13,7 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
       return IN3_OK;
     }
 
-    case PLGN_ACT_SENTRY_SEND: {
+    case PLGN_ACT_LOG_ERROR: {
       sentry_ctx_t*  t     = arg;
       sentry_value_t event = sentry_value_new_message_event(
           SENTRY_LEVEL_ERROR, IN3_VERSION, t->msg);
@@ -23,7 +23,7 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
       return IN3_OK;
     }
 
-    case PLGN_ACT_SENTRY_END: {
+    case PLGN_ACT_TERM: {
       sentry_shutdown();
       return IN3_EIGNORE;
     }
@@ -41,5 +41,5 @@ in3_ret_t in3_register_sentry(in3_t* c) {
   sc->db            = ".sentry-native";
   sc->debug         = 1;
   sc->stack         = 20;
-  return plugin_register(c, PLGN_ACT_SENTRY_INIT | PLGN_ACT_SENTRY_SEND | PLGN_ACT_SENTRY_END, handle_sentry, sc, false);
+  return plugin_register(c, PLGN_ACT_INIT | PLGN_ACT_LOG_ERROR | PLGN_ACT_TERM, handle_sentry, sc, false);
 }

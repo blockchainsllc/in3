@@ -109,7 +109,6 @@ NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   if (ctx->required) ctx_free_intern(ctx->required, true);
 
   in3_check_verified_hashes(ctx->client);
-  in3_plugin_execute(ctx->client, PLGN_ACT_SENTRY_END, NULL);
   _free(ctx);
 }
 
