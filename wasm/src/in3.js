@@ -142,6 +142,8 @@ function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
     if (er) throw new Error(er + (in3w.sign_js.last_sign_error ? (' : ' + in3w.sign_js.last_sign_error) : ''))
 }
+const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5', ewc: '0xf6', btc: '0x99' }
+
 
 /**
  * The incubed client.
@@ -154,11 +156,7 @@ class IN3 {
         if (_in3_listeners)
             await new Promise(r => _in3_listeners.push(r))
         let chainId = this.config && this.config.chainId
-        if (chainId === 'kovan') chainId = '0x2a'
-        if (chainId === 'goerli') chainId = '0x5'
-        if (chainId === 'mainnet') chainId = '0x1'
-        if (chainId === 'btc') chainId = '0x99'
-        if (chainId === 'ewc') chainId = '0xf6'
+        if (chainId && aliases[chainId]) chainId = aliases[chainId]
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
         this.plugins.forEach(_ => this.registerPlugin(_))
@@ -167,9 +165,8 @@ class IN3 {
     // here we are creating the instance lazy, when the first function is called.
     constructor(config) {
         const def = { requestCount: 2 }
-        this.config = config ? { ...def, ...config } : def
-        this.needsSetConfig = !!config
         this.ptr = 0;
+        this.setConfig(config ? { ...def, ...config } : def)
         in3w.extensions.forEach(_ => _(this))
         this.plugins = []
     }
@@ -179,12 +176,22 @@ class IN3 {
      */
     setConfig(conf) {
         if (conf) {
-            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5', ewc: '0xf6', btc: '0x99' }
-            if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
+            if (conf.chainId && aliases[conf.chainId]) {
+                if (conf.nodes && conf.nodes[conf.chainId]) {
+                    const nl = conf.nodes[conf.chainId]
+                    delete conf.nodes[conf.chainId]
+                    conf.nodes[aliases[conf.chainId]] = nl
+                }
+                conf.chainId = aliases[conf.chainId]
+            }
             this.config = { ...this.config, ...conf }
         }
         this.needsSetConfig = !this.ptr
         if (this.ptr) {
+            if (this.config.transport) {
+                this.transport = this.config.transport
+                delete this.config.transport
+            }
             const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
             if (r) {
                 const ex = new Error(UTF8ToString(r))
@@ -269,7 +276,7 @@ class IN3 {
                     case 'ok':
                         if (Array.isArray(state.result)) {
                             const s = state.result[0]
-                            delete s.in3
+                            if (!this.config || !this.config.keepIn3) delete s.in3
                             return s
                         }
                         return state.result
@@ -361,7 +368,8 @@ function url_queue(req) {
     let counter = 0
     const promises = [], responses = []
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
-    req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
+    const transport = req.in3.transport || in3w.transport
+    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))

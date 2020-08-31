@@ -63,7 +63,7 @@ bytes_t get_bytes(d_token_t* t, uint8_t* tmp, uint8_t is_hex) {
   return res;
 }
 
-int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
+int test_trie(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms) {
 
   if (props & 2) {
     EVM_DEBUG_BLOCK({
@@ -72,8 +72,8 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
   }
   uint64_t   start  = clock();
   trie_t*    trie   = trie_new();
-  d_token_t *in     = d_get(test, key("in")), *t, *el;
-  uint8_t    is_hex = d_get_int(test, "hexEncoded"), i, tmp[64], tmp2[64], tmp3[32], res = 0;
+  d_token_t *in     = d_get(test, ikey(jc, "in")), *t, *el;
+  uint8_t    is_hex = d_get_intk(test, ikey(jc, "hexEncoded")), i, tmp[64], tmp2[64], tmp3[32], res = 0;
 
   if (d_type(in) == T_ARRAY) {
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t)) {
@@ -108,15 +108,17 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
       trie_dump(trie, 0);
 #endif
     }
-  } else {
+  }
+  else {
 
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t)) {
-      char*   k = d_get_keystr(t->key);
+      char*   k = d_get_keystr(jc, t->key);
       bytes_t key_bytes, value_bytes = get_bytes(t, tmp, is_hex);
       if (k[0] == '0' && k[1] == 'x') {
         key_bytes.data = tmp;
         key_bytes.len  = hex_to_bytes(k + 2, strlen(k) - 2, tmp, 64);
-      } else {
+      }
+      else {
         key_bytes.data = (uint8_t*) k;
         key_bytes.len  = strlen(k);
       }
@@ -138,7 +140,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
 #endif
     }
   }
-  bytes_t root_bytes = d_to_bytes(d_get(test, key("root")));
+  bytes_t root_bytes = d_to_bytes(d_get(test, ikey(jc, "root")));
   if (root_bytes.len == 32 && memcmp(root_bytes.data, trie->root, 32)) {
     EVM_DEBUG_BLOCK({
       in3_log_trace("\n expected : ");

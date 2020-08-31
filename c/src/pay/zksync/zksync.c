@@ -501,7 +501,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   d_token_t* result;
   TRY(send_provider_request(ctx->ctx, conf, method + 7, param_string, &result))
 
-  char* json = d_create_json(result);
+  char* json = d_create_json(NULL, result);
   in3_rpc_handle_with_string(ctx, json);
   _free(json);
   return IN3_OK;
