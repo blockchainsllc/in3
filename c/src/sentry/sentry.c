@@ -37,9 +37,9 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
 
 in3_ret_t in3_register_sentry(in3_t* c) {
   sentry_conf_t* sc = _calloc(1, sizeof(sentry_conf_t));
-  sc->dsn = getenv("DSN_SENTRY");
-  sc->db         = ".sentry-native";
-  sc->debug      = 0;
-  sc->stack      = 20;
+  sc->dsn           = getenv("DSN_SENTRY");
+  sc->db            = ".sentry-native";
+  sc->debug         = 1;
+  sc->stack         = 20;
   return plugin_register(c, PLGN_ACT_SENTRY_INIT | PLGN_ACT_SENTRY_SEND | PLGN_ACT_TERM, handle_sentry, sc, false);
 }

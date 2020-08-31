@@ -149,7 +149,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       dst = _malloc(l + 1);
       strcpy(dst, message);
     }
-    ctx->error        = dst;
+    ctx->error = dst;
 #ifdef SENTRY
     sentry_ctx_t sctx = {.msg = message};
     in3_plugin_execute(ctx->client, PLGN_ACT_SENTRY_SEND, &sctx);
