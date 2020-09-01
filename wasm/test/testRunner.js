@@ -34,7 +34,7 @@
 
 const fs = require('fs')
 const target_platform = process.env.IN3_TARGET || 'index'
-const IN3 = require('../in3/' + target_platform + '.js')
+const IN3 = require('./in3/' + target_platform + '.js')
 const { util } = require('in3-common')
 const Client = IN3.default
 const apis = {}
