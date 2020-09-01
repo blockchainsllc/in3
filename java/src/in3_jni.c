@@ -178,7 +178,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
     if (res >= 0) {
       d_token_t* r = d_get(ctx->responses[0], K_RESULT);
       if (r)
-        result = d_create_json(r);
+        result = d_create_json(ctx->response_context, r);
       else if ((r = d_get(ctx->responses[0], K_ERROR))) {
         if (d_type(r) == T_OBJECT) {
           str_range_t s = d_to_json(r);

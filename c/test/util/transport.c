@@ -101,13 +101,13 @@ int add_response_test(char* test, char* needed_params) {
   if (d_type(mock->result) == T_OBJECT) {
     res    = d_to_json(d_get_at(d_get(mock->result, key("response")), 0));
     req    = d_get_at(d_get(mock->result, key("request")), 0);
-    params = d_create_json(d_get(req, key("params")));
+    params = d_create_json(mock, d_get(req, key("params")));
   }
   else if (d_type(mock->result) == T_ARRAY) {
     for (d_iterator_t iter = d_iter(mock->result); iter.left; d_iter_next(&iter)) {
       res    = d_to_json(d_get_at(d_get(iter.token, key("response")), 0));
       req    = d_get_at(d_get(iter.token, key("request")), 0);
-      params = d_create_json(d_get(req, key("params")));
+      params = d_create_json(mock, d_get(req, key("params")));
       clean_json_str(params);
       if (strcmp(params, needed_params)) {
         _free(params);

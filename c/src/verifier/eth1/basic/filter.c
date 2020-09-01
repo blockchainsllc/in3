@@ -320,7 +320,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
       }
       d_token_t* r = d_get(logs_ctx->responses[0], K_RESULT);
       if (!r) return ctx_set_error(logs_ctx, "no result in filter response", IN3_ERPC);
-      char* jr = d_create_json(r);
+      char* jr = d_create_json(logs_ctx->response_context, r);
       sb_add_chars(result, jr);
       _free(jr);
       f->last_block     = blkno + 1;

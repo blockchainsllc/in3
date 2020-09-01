@@ -100,7 +100,7 @@ typedef struct chainspec_ {
   consensus_transition_t* consensus_transitions;
 } chainspec_t;
 
-chainspec_t*            chainspec_create_from_json(d_token_t* data);
+chainspec_t*            chainspec_create_from_json(json_ctx_t* data);
 eip_t                   chainspec_get_eip(chainspec_t* spec, uint64_t block_number);
 consensus_transition_t* chainspec_get_consensus(chainspec_t* spec, uint64_t block_number);
 in3_ret_t               chainspec_to_bin(chainspec_t* spec, bytes_builder_t* bb);

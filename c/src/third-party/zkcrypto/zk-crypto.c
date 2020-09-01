@@ -22,7 +22,7 @@
        : TRAP(CALL_INDIRECT))
 
 #define MEMCHECK(mem, a, t)  \
-  if (UNLIKELY((a) + sizeof(t) > mem->size)) TRAP(OOB)
+//  if (UNLIKELY((a) + sizeof(t) > mem->size)) TRAP(OOB)
 
 #define DEFINE_LOAD(name, t1, t2, t3)              \
   static inline t3 name(wasm_rt_memory_t* mem, u64 addr) {   \
