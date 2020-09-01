@@ -1,10 +1,10 @@
-#define __USE_XOPEN_EXTENDED 1
-#define __USE_XOPEN          1
 #include "../core/client/client.h"
 #include "../core/client/plugin.h"
 #include "../core/client/version.h"
 #include "../core/util/log.h"
 #include "../core/util/mem.h"
+#define __USE_XOPEN_EXTENDED
+#define __USE_XOPEN          
 #include "../third-party/sentry-native/include/sentry.h"
 #include <stdio.h>
 #include <stdlib.h>
