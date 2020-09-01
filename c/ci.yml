@@ -175,7 +175,7 @@ test_c:
   script:
     - mkdir testbuild
     - cd testbuild
-    - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
+    - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DZKSYNC=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
     - make
     - ctest -V | tee ../mac_test_c.log | test/junit > ../mac_test_c.xml
   artifacts:
