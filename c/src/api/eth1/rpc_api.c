@@ -325,8 +325,8 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 }
 
 static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  d_token_t* tx = d_get_at(params, 0);
-  bytes_t    dst;
+  d_token_t* tx  = d_get_at(params, 0);
+  bytes_t    dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   TRY(eth_prepare_unsigned_tx(tx, ctx->ctx, &dst))
 #else
@@ -343,11 +343,11 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   address_t from;
   memset(from, 0, 20);
   if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
-  bytes_t dst;
+  bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   TRY(eth_sign_raw_tx(*data, ctx->ctx, from, &dst))
 #else
-  if (data || ctx || from || params) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+  if (data || ctx || from[0] || params) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
