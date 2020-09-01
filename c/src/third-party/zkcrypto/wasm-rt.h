@@ -22,6 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define WASM_RT_MEMCHECK_SIGNAL_HANDLER 0
 
 /** Maximum stack depth before trapping. This can be configured by defining
  * this symbol before including wasm-rt when building the generated c files,

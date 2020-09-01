@@ -432,7 +432,7 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
     bytes_t tx_hash   = d_to_bytes(result);
     p += bytes_to_hex(tx_hash.data, tx_hash.len, p);
     strcpy(p, "\"}");
-    ret = in3_rpc_handle_with_string(ctx, signed_tx);
+    ret = in3_rpc_handle_with_string(ctx, (void*) cached->value.data);
   }
   return ret;
 }

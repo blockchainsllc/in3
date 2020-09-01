@@ -43,4 +43,4 @@ add_static_library(
     core
 )
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-value -Wno-unused-function")
