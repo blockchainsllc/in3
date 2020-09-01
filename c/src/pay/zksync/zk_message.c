@@ -2,6 +2,7 @@
 #include "../../core/client/plugin.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zksync.h"
+#include "../../core/util/log.h"
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
 
@@ -25,19 +26,28 @@ static void add_amount(sb_t* sb, zksync_token_t* token,
 ) {
   int  dec = token ? token->decimals : 0;
   char tmp[60]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  char* sep=NULL;
   int  l = to_dec(tmp, val);
 
   if (dec) {
     if (l > dec) {
       memmove(tmp + l - dec + 1, tmp + l - dec, dec + 1);
       tmp[l - dec] = '.';
+      sep=tmp+l-dec+2;
     }
     else {
       memmove(tmp + dec - l + 2, tmp, l + 1);
       memset(tmp, '0', dec - l + 2);
       tmp[1] = '.';
+      sep=tmp+3;
     }
   }
+  l=strlen(sep);
+  while (l && sep[l-1]=='0') {
+    l--;
+    sep[l]=0;
+  }
+
   sb_add_chars(sb, tmp);
 }
 
@@ -115,6 +125,7 @@ void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data) {
   sb_add_chars(sb, data->token->symbol);
   sb_add_chars(sb, "\nAccount Id: ");
   sb_add_int(sb, data->account_id);
+  printf("human readable %s\n",sb->data);
 }
 
 void create_signed_bytes(sb_t* sb) {
@@ -174,8 +185,12 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_t    msg = sb_stack(msg_data);
   create_human_readable_tx_info(&msg, data);
   create_signed_bytes(&msg);
+  printf("sign \n%s\n",msg_data);
+  in3_log_set_level(LOG_TRACE);
+  ba_print((uint8_t*)msg_data, msg.len);
   TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
 
+  signature[64] += 27; //because EIP155 chainID = 0
   // now create the packed sync transfer
   uint8_t raw[58], sig[96];
   TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
@@ -192,8 +207,8 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_int(sb, data->fee);
   sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, data->nonce);
-  sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"0x", bytes(sig, 32), 0);
-  sb_add_rawbytes(sb, "\",\"signature\":\"0x", bytes(sig + 32, 64), 0);
+  sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
+  sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
   sb_add_rawbytes(sb, "\"}},{\"type\":\"EthereumSignature\",\"signature\":\"0x", bytes(signature, 65), 0);
   sb_add_chars(sb, "\"}");
   return IN3_OK;

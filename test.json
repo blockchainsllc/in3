@@ -1,0 +1,27 @@
+[
+    {
+        "id": 4,
+        "jsonrpc": "2.0",
+        "method": "tx_submit",
+        "params": [
+            {
+                "type": "Transfer",
+                "accountId": 1,
+                "from": "0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+                "to": "0xa3f7a73c9fb4c32a9de67c1298ecb678f560e35a",
+                "token": 0,
+                "amount": 10,
+                "fee": 121400000000000,
+                "nonce": 0,
+                "signature": {
+                    "pubKey": "6385389cd9f8550774ed8bdee391cd83d0d752d89948ce67d1016d1f420c1c11",
+                    "signature": "6e56462f71070f339b707d0f4a93f7772439a34a7cd692d2d7360ba997e5ae228a31070da945da4d5274130bf7a9d8c776b1c167d70af5c3602dbd133a91a000"
+                }
+            },
+            {
+                "type": "EthereumSignature",
+                "signature": "0xc547e8d3d0d887b447d79c03c6d95189edafaefc5c6326305c0fa8ac79a2c5b6405e1d16af380ad5522d987df90194661fd47a53d99abd94be40ec0ef70ed19f00"
+            }
+        ]
+    }
+]

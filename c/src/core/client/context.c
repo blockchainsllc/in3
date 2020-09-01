@@ -57,6 +57,7 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   client->pending++;
 
   if (req_data != NULL) {
+    printf("parse %s \n",req_data);
     ctx->request_context = parse_json(req_data);
     if (!ctx->request_context) {
       ctx_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);

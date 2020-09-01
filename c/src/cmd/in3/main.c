@@ -417,8 +417,10 @@ uint64_t getchain_id(char* name) {
 
 // set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
-  c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
-  if (c->chain_id == 0xFFFFL) {
+  c->chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
+  if (c->chain_id == CHAIN_ID_LOCAL) {
+    c->proof=PROOF_NONE;
+    if (c->flags & FLAGS_AUTO_UPDATE_LIST) BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     in3_chain_t* chain = in3_get_chain(c);
     if (strstr(id, "://")) { // its a url
       if (!chain->nodelist)

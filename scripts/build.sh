@@ -25,7 +25,7 @@ if [ "$CONTAINER" = "bindings-debug" ]; then
 fi
 if [ -z "$BUILDTYPE" ]; then
    BUILDTYPE=DEBUG
-   TEST=true
+   #TEST=true
 fi
 if [ "$BUILDTYPE" = "release" ]; then
    BUILDTYPE=MINSIZEREL

@@ -161,7 +161,7 @@ static in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token
   TRY(zksync_get_account(conf, ctx, &account))
   set_quoted_address(adr, account);
   TRY(send_provider_request(ctx, conf, "account_info", adr, &result))
-  *nonce = d_get_intk(d_get(result, key("commited")), K_NONCE);
+  *nonce = d_get_intk(d_get(result, key("committed")), K_NONCE); //make committed obtainable from config
   return IN3_OK;
 }
 
@@ -212,6 +212,7 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
 }
 
 in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst) {
+/*
   bool is_eth = false;
   switch (d_type(token_src)) {
     case T_STRING:
@@ -234,7 +235,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token
     *token_dst = NULL;
     return IN3_OK;
   }
-
+*/
   char* cache_name = NULL;
   if (!conf->token_len) {
     // check cache first
@@ -329,7 +330,7 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
   zksync_token_t* token_conf = NULL;
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_conf))
 
-  if (!token_conf) { // is eth
+  if (memiszero(token_conf->address,20)) { // is eth
     sb_t sb = {0};
     sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 0);
     sb_add_rawbytes(&sb, "\",\"data\":\"0x2d2da806", bytes(account, 20), 32);
@@ -422,6 +423,7 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
     cached->props = CACHE_PROP_MUST_FREE | 0x10;
   }
 
+  printf("JSON-request: %s\n",(void*) cached->value.data);
   d_token_t* result = NULL;
   in3_ret_t  ret    = send_provider_request(ctx->ctx, conf, "tx_submit", (void*) cached->value.data, &result);
   if (ret == IN3_OK) {
@@ -497,6 +499,8 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     param_string = alloca(45);
     set_quoted_address(param_string, conf->account);
   }
+  if (strcmp(method, "zksync_ethop_info") == 0) 
+    sprintf(param_string,"%i",d_get_int_at(params,0));
 
   d_token_t* result;
   TRY(send_provider_request(ctx->ctx, conf, method + 7, param_string, &result))
