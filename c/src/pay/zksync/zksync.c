@@ -212,30 +212,6 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
 }
 
 in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst) {
-  /*
-  bool is_eth = false;
-  switch (d_type(token_src)) {
-    case T_STRING:
-      is_eth = strcmp(d_string(token_src), "ETH") == 0;
-      break;
-    case T_BYTES:
-      is_eth = token_src->len == 20 && memiszero(token_src->data, 20);
-      break;
-    case T_NULL:
-      is_eth = true;
-      break;
-    case T_INTEGER:
-      is_eth = d_int(token_src) == 0;
-      break;
-
-    default:
-      break;
-  }
-  if (is_eth && token_dst) {
-    *token_dst = NULL;
-    return IN3_OK;
-  }
-*/
   char* cache_name = NULL;
   if (!conf->token_len) {
     // check cache first
