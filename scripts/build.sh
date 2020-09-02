@@ -8,6 +8,7 @@ if [ "$CONTAINER" = "debug" ]; then
    BUILDTYPE=debug
    CONTAINER=""
    TEST=true
+  #  OPTS="-DRECORDER=true"
 fi
 if [ "$CONTAINER" = "release" ]; then
    BUILDTYPE=release

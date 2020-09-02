@@ -37,6 +37,7 @@
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "../util/mem.h"
+#include "../util/recorder.h"
 #include "cache.h"
 #include "client.h"
 #include "context_internal.h"
@@ -574,7 +575,7 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
 #ifdef TEST_OUT
   char file[16];
   sprintf(file, "%s%s.txt", "test_record", IN3_VERSION);
-  recorder_write_start(c, file, NULL, NULL);
+  init_recorder(c, file);
 #endif
   return c;
 }

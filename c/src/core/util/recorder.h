@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+void init_recorder(in3_t* c, char* file);
 void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]);
 void recorder_read_start(in3_t* c, char* file);
 void recorder_update_cmd(char* file, int* argc, char** argv[]);
