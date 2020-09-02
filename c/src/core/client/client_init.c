@@ -574,9 +574,10 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   for (default_fn_t* d = default_registry; d; d = d->next)
     d->fn(c);
 #ifdef TEST_OUT
-  char file[16];
-  sprintf(file, "%s%s.txt", "test_record", IN3_VERSION);
-  init_recorder(c, file);
+  char file_record[32];
+  sprintf(file_record, "%s_%s.txt", "test_record", IN3_VERSION);
+  printf("%s", file_record);
+  init_recorder(c, file_record);
 #endif
   return c;
 }
