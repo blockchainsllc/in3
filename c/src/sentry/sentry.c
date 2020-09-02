@@ -4,9 +4,6 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
   sentry_conf_t* conf = cptr;
   switch (action) {
     case PLGN_ACT_INIT: {
-#ifndef SENTRY_INIT
-#define SENTRY_INIT
-#endif
       sentry_options_t* options = sentry_options_new();
       in3_log_info("sentry-init\n");
       sentry_options_set_database_path(options, conf->db);
@@ -28,7 +25,9 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
     }
 
     case PLGN_ACT_TERM: {
+      in3_log_info("sentry-shutdown\n");
       sentry_shutdown();
+      _free(conf);
       return IN3_EIGNORE;
     }
 
