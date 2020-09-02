@@ -204,10 +204,11 @@ static in3_plugin_t* get_plugin(in3_t* c, in3_plugin_act_t action) {
   return NULL;
 }
 
-void recorder_write_cmd(recorder_t rec, int argc, char* argv[]) { 
+void recorder_write_cmd(recorder_t rec, int argc, char* argv[]) {
   fprintf(rec.f, ":: cmd");
-  for (int i = 0; i < argc; i++){ fprintf(rec.f, " %s", strcmp(argv[i], "-fo") ? argv[i] : "-fi");
-      printf("> %s", argv[i]);
+  for (int i = 0; i < argc; i++) {
+    fprintf(rec.f, " %s", strcmp(argv[i], "-fo") ? argv[i] : "-fi");
+    printf("> %s", argv[i]);
   }
   fprintf(rec.f, "\n\n");
   fprintf(rec.f, ":: time %u\n\n", (uint32_t) in3_time(NULL));
@@ -229,8 +230,6 @@ void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
   recorder_write_cmd(rec, argc, argv);
 #endif
 }
-
-
 
 void recorder_read_start(in3_t* c, char* file) {
   in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
