@@ -42,6 +42,7 @@
 #include "context_internal.h"
 #include "nodelist.h"
 #include "plugin.h"
+#include "version.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -570,7 +571,11 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   // init from default plugins
   for (default_fn_t* d = default_registry; d; d = d->next)
     d->fn(c);
-
+#ifdef TEST_OUT
+  char file[16];
+  sprintf(file, "%s%s.txt", "test_record", IN3_VERSION);
+  recorder_write_start(c, file, NULL, NULL);
+#endif
   return c;
 }
 

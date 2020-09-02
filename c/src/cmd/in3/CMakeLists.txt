@@ -45,7 +45,7 @@ if (MULTISIG)
     set(LIBS ${LIBS} multisig)
 endif()
 
-add_executable(in3 main.c in3_storage.c recorder.c)
+add_executable(in3 main.c in3_storage.c ../../core/util/recorder.c)
 target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
 
 target_link_libraries(in3 init pk_signer ${LIBS} -lm)

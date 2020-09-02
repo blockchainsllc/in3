@@ -52,6 +52,7 @@ add_static_library(
     client/execute.c
     client/client_init.c
     util/debug.c
+    util/recorder.c
     util/bytes.c
     util/utils.c
     util/scache.c
