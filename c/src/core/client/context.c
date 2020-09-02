@@ -152,7 +152,10 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
     ctx->error = dst;
 #ifdef SENTRY
     sentry_ctx_t sctx = {.msg = message, .error = errnumber};
-    in3_plugin_execute_first_or_none(ctx, PLGN_ACT_INIT, &sctx);
+    if (!SENTRY_INIT) {
+      in3_plugin_execute_first_or_none(ctx, PLGN_ACT_INIT, &sctx);
+      SENTRY_INIT = 1;
+    }
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
 #endif
     in3_log_trace("Intermediate error -> %s\n", message);
