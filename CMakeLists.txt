@@ -80,6 +80,7 @@ OPTION(RECORDER "enable recording for reproduce executions" OFF)
 OPTION(POA "support POA verification including validatorlist updates" OFF)
 OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
 OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" OFF)
+OPTION(SENTRY "Enable Sentry" OFF)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
@@ -189,6 +190,10 @@ endif(RECORDER)
 
 if (DEV_NO_INTRN_PTR)
     ADD_DEFINITIONS(-DDEV_NO_INTRN_PTR)
+endif()
+
+if (SENTRY)
+  ADD_DEFINITIONS(-DSENTRY)
 endif()
 
 # handle version

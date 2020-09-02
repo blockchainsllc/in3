@@ -41,10 +41,10 @@
 #include "context_internal.h"
 #include "keys.h"
 #include "plugin.h"
+#include "version.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-
 in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
@@ -150,6 +150,14 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error = dst;
+#ifdef SENTRY
+    sentry_ctx_t sctx = {.msg = message, .error = errnumber};
+    if (!SENTRY_INIT) {
+      in3_plugin_execute_first_or_none(ctx, PLGN_ACT_INIT, &sctx);
+      SENTRY_INIT = 1;
+    }
+    in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
+#endif
     in3_log_trace("Intermediate error -> %s\n", message);
   }
   else if (!ctx->error) {

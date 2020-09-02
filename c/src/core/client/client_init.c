@@ -140,6 +140,7 @@ void in3_set_default_legacy_transport(
   in3_register_default(register_legacy);
 }
 void in3_register_default(plgn_register reg_fn) {
+
   assert(reg_fn);
   // check if it already exists
   default_fn_t** d   = &default_registry;
@@ -1099,6 +1100,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_NL_PICK_DATA: return "nl_pick_data";
     case PLGN_ACT_NL_PICK_SIGNER: return "nl_pick_signer";
     case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";
+    case PLGN_ACT_LOG_ERROR: return "sentry_error";
   }
   return "unknown";
 }
