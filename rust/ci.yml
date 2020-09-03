@@ -135,8 +135,8 @@ deploy_rust:
     - cd rust/
     - rm -rf in3-sys/in3-core/c/src/third-party/hidapi/
     - rm in3-sys/.gitignore
-    - cd in3-sys/ && cargo publish || true
+    - cd in3-sys/ && cargo --allow-dirty publish
     - sleep 30
-    - cd ../in3-rs/ && cargo publish
+    - cd ../in3-rs/ && cargo --allow-dirty publish
   tags:
     - mac-os
