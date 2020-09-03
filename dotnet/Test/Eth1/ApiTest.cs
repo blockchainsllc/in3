@@ -382,7 +382,7 @@ namespace Test.Eth1
             };
             IN3 in3 = _builder.ConstructClient(mockedResponses);
 
-            TransactionRequest request = new TransactionRequest {To = "0x2736D225f85740f42D17987100dc8d58e9e16252"};
+            TransactionRequest request = new TransactionRequest { To = "0x2736D225f85740f42D17987100dc8d58e9e16252" };
             ;
             request.Function = "totalServers():(uint256)";
             request.Params = new object[] { };
@@ -551,7 +551,7 @@ namespace Test.Eth1
         }
 
         [Test]
-        public async Task Ens()
+        public async Task Ens_1()
         {
             string[][] mockedResponses = {
                 new[] {"eth_call", "eth_call_3.json"}
@@ -561,6 +561,37 @@ namespace Test.Eth1
             string result = await in3.Eth1.Ens("cryptokitties.eth");
 
             Assert.That(result, Is.EqualTo("0x06012c8cf97bead5deae237070f9587f8e7a266d"));
+        }
+
+        [Test]
+        public async Task SendTransactionAndWait()
+        {
+            string[][] mockedResponses = {
+                new[] {"eth_gasPrice", "eth_gasPrice.json"},
+                new[] {"eth_estimateGas", "eth_estimateGas.json"},
+                new[] {"eth_getTransactionCount", "eth_getTransactionCount.json"},
+                new[] {"eth_sendRawTransaction", "eth_sendRawTransaction.json"},
+                new[] {"eth_getTransactionReceipt", "eth_getTransactionReceipt.json"}
+            };
+            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            string expectedHash = "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38";
+            string pk = "0x0829B3C639A3A8F2226C8057F100128D4F7AE8102C92048BA6DE38CF4D3BC6F1";
+            SimpleWallet sw = (SimpleWallet)in3.Signer;
+            string from = sw.AddRawKey(pk);
+
+            TransactionRequest request = new TransactionRequest
+            {
+                From = @from,
+                To = "0x3940256B93c4BE0B1d5931A6A036608c25706B0c",
+                Gas = 21000,
+                Value = 100000000
+            };
+
+            TransactionReceipt receipt = await in3.Eth1.SendTransactionAndWait(request);
+
+            Assert.That(receipt.To, Is.EqualTo("0x5b8174e20996ec743f01d3b55a35dd376429c596"));
+            Assert.That(receipt.Status);
+            Assert.That(receipt.Logs[0].Address, Is.EqualTo("0x5b8174e20996ec743f01d3b55a35dd376429c596"));
         }
     }
 }
