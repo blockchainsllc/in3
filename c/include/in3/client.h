@@ -573,7 +573,7 @@ NONULL char* in3_configure(
  */
 NONULL void in3_record(
     in3_t* c,    /**< the incubed client */
-    char*  file, /**< file to read or write to record run */
+    char*  file, /**< file to read or write to record run (max file name length 31)  */
     bool   in    /**< indicates wether to read a recorded run or start a new recording */
 );
 #endif
