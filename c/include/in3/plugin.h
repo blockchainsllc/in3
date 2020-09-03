@@ -382,5 +382,7 @@ typedef struct {
   uint16_t error; /**< error code. */
 } sentry_ctx_t;
 
+#ifdef SENTRY
 static uint8_t SENTRY_INIT = 0;
+#endif
 #endif

@@ -66,11 +66,11 @@ add_static_library(
 )
 
 if (SENTRY)
-target_link_libraries(core in3_sentry)
+  target_link_libraries(core in3_sentry)
 ENDIF (SENTRY)
 
 if (RECORDER)
-target_link_libraries(core recorder)
+  target_link_libraries(core recorder)
 ENDIF (RECORDER)
 
 add_static_library(

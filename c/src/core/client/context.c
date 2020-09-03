@@ -41,7 +41,6 @@
 #include "context_internal.h"
 #include "keys.h"
 #include "plugin.h"
-#include "version.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
