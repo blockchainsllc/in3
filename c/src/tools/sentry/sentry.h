@@ -20,5 +20,5 @@ typedef struct sentry_conf {
   uint8_t     stack;
 
 } sentry_conf_t;
-// static uint8_t SENTRY_INIT = 0;
+
 in3_ret_t in3_register_sentry(in3_t* c);

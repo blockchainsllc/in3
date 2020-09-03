@@ -382,5 +382,4 @@ typedef struct {
   uint16_t error; /**< error code. */
 } error_log_ctx_t;
 
-
 #endif
