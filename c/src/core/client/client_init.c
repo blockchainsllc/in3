@@ -31,9 +31,6 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#ifdef RECORDER
-#include "../../utils/recorder.h"
-#endif
 #include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/debug.h"
@@ -723,19 +720,6 @@ char* in3_get_config(in3_t* c) {
   _free(sb);
   return r;
 }
-
-#ifdef RECORDER
-void in3_record(in3_t* c, char* file, bool in) {
-  char file_record[32];
-  sprintf(file_record, "%s_%s.txt", file, IN3_VERSION);
-  if (!in) {
-    init_recorder(c, file_record);
-  }
-  else {
-    recorder_read_start(c, file_record);
-  }
-}
-#endif
 
 char* in3_configure(in3_t* c, const char* config) {
   json_ctx_t* cnf = parse_json((char*) config);

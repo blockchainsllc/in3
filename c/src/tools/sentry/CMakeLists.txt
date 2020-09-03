@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -31,48 +31,13 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-# main incubed module defining the interfaces for transport, verifier and storage. 
-#
-# This module does not have any dependencies and cannot be used without additional modules providing verification and transport.
-OPTION(IN3_STAGING "if true, the client will use the staging-network instead of the live ones" OFF)
-IF (IN3_STAGING)
-    ADD_DEFINITIONS(-DIN3_STAGING)
-ENDIF (IN3_STAGING)
 
 
 add_static_library(
-  NAME     core 
-  
+  NAME     in3_sentry   
   SOURCES 
-    client/context.c
-    client/client.c
-    client/cache.c
-    client/nodelist.c
-    client/verifier.c
-    client/execute.c
-    client/client_init.c
-    util/debug.c
-    util/bytes.c
-    util/utils.c
-    util/scache.c
-    util/data.c
-    util/log.c
-    util/mem.c
-    util/stringbuilder.c
-    util/bitset.c
-
+    sentry.c
   DEPENDS 
-    crypto
-)
-
-add_static_library(
-  NAME     init 
-  
-  SOURCES 
-    ../verifier/in3_init.c
-
-  DEPENDS 
-    ${IN3_VERIFIER} 
-    ${IN3_API} 
-    ${IN3_TRANSPORT}
+    sentry
+    core
 )

@@ -1,6 +1,6 @@
 #include "recorder.h"
-#include "../core/client/context_internal.h"
-#include "../core/client/keys.h"
+#include "../../core/client/context_internal.h"
+#include "../../core/client/keys.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -14,7 +14,6 @@ typedef struct recorder_entry {
 } recorder_entry_t;
 
 typedef struct {
-  char*             file;
   in3_plugin_act_fn transport;
   FILE*             f;
   in3_plugin_act_fn cache;
@@ -23,7 +22,6 @@ typedef struct {
 } recorder_t;
 
 static recorder_t rec = {
-    .file      = NULL,
     .transport = NULL,
     .f         = NULL,
     .cache     = NULL,
@@ -204,9 +202,19 @@ static in3_plugin_t* get_plugin(in3_t* c, in3_plugin_act_t action) {
   return NULL;
 }
 
+void in3_record(in3_t* c, char* file, bool in) {
+  char file_record[32];
+  sprintf(file_record, "%s_%s.txt", file, IN3_VERSION);
+  if (!in) {
+    init_recorder(c, file_record);
+  }
+  else {
+    recorder_read_start(c, file_record);
+  }
+}
+
 void init_recorder(in3_t* c, char* file) {
   in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
-  rec.file        = file;
   rec.transport   = p ? p->action_fn : NULL;
   rec.f           = fopen(file, "w");
   if (p) p->action_fn = recorder_transport_out;
@@ -221,7 +229,6 @@ void init_recorder(in3_t* c, char* file) {
 
 void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
   in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
-  rec.file        = file;
   rec.transport   = p ? p->action_fn : NULL;
   rec.f           = fopen(file, "w");
   if (p) p->action_fn = recorder_transport_out;
@@ -240,7 +247,6 @@ void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
 
 void recorder_read_start(in3_t* c, char* file) {
   in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
-  rec.file        = file;
   rec.transport   = p ? p->action_fn : NULL;
   rec.f           = fopen(file, "r");
   if (p) p->action_fn = recorder_transport_in;
@@ -255,7 +261,6 @@ void recorder_read_start(in3_t* c, char* file) {
 }
 
 void recorder_update_cmd(char* file, int* argc, char** argv[]) {
-  rec.file                = file;
   rec.f                   = fopen(file, "r");
   recorder_entry_t* entry = next_entry("cmd", NULL);
   *argc                   = entry->argl;

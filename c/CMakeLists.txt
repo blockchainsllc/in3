@@ -69,10 +69,8 @@ add_subdirectory(src/signer)
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
+add_subdirectory(src/tools)
 
-if (SENTRY OR RECORDER)
-   add_subdirectory(src/utils)
-endif()
 add_subdirectory(docs)
 
 link_directories(${CMAKE_BINARY_DIR}/lib/)
@@ -88,8 +86,10 @@ if (IN3_LIB)
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
     if( LEDGER_NANO)
         target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+    elseif(SENTRY)
+        target_link_libraries(in3_lib ${IN3_TRANSPORT} sentry) 
     else()
-        target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
+        target_link_libraries(in3_lib ${IN3_TRANSPORT})  
     endif()
 
     # install

@@ -16,7 +16,7 @@
 #include "../verifier/eth1/nano/eth_nano.h"
 #include "../verifier/ipfs/ipfs.h"
 #ifdef SENTRY
-#include "../utils/sentry.h"
+#include "../tools/sentry/sentry.h"
 #endif
 
 static bool initialized;

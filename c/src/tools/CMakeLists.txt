@@ -33,22 +33,10 @@
 ###############################################################################
 
 if(SENTRY)
-add_static_library(
-  NAME     in3_sentry   
-  SOURCES 
-    sentry.c
-  DEPENDS 
-    sentry
-    core
-)
+  add_subdirectory(sentry)
 endif()
 
+
 if(RECORDER)
-add_static_library(
-  NAME     recorder 
-  SOURCES 
-    recorder.c
-  DEPENDS 
-    core
-)
+  add_subdirectory(recorder)
 endif()

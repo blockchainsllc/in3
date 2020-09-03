@@ -43,6 +43,7 @@
 #include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/debug.h"
+#include "../../src/tools/recorder/recorder.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
