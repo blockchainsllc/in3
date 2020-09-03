@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using System.Threading.Tasks;
 using In3.Crypto;
+using In3.Error;
 using In3.Utils;
 
 namespace In3.Eth1
@@ -503,11 +504,11 @@ namespace In3.Eth1
         public async Task<string> SendTransaction(TransactionRequest tx)
         {
             if (_in3.Signer == null)
-                throw new SystemException("No Signer set. This is needed in order to sign transaction.");
+                throw new InvalidSignerException("No Signer set. This is needed in order to sign transaction.");
             if (tx.From == null)
-                throw new SystemException("No from address set");
+                throw new InvalidTransactionRequestException("No from address set");
             if (!_in3.Signer.CanSign(tx.From))
-                throw new SystemException("The from address is not supported by the signer");
+                throw new InvalidSignerException("The from address is not supported by the signer");
             tx = _in3.Signer.PrepareTransaction(tx);
 
             string jsonResponse = await _in3.SendRpc(EthSendTransaction, new object[] { await MapTransactionToRpc(tx) });

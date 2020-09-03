@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using In3.Error;
 using In3.Rpc;
 
 namespace In3.Utils
@@ -12,7 +13,7 @@ namespace In3.Utils
             Response<T> response = JsonSerializer.Deserialize<Response<T>>(json);
             if (response.Error != null)
             {
-                throw new SystemException(response.Error.Message);
+                throw new RpcException(response.Error.Code, response.Error.Message);
             }
             return response.Result;
         }

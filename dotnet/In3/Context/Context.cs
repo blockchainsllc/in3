@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using In3.Context.Action;
-using In3.Exceptions;
+using In3.Error;
 using In3.Native;
 
 namespace In3.Context
@@ -43,7 +43,7 @@ namespace In3.Context
         /// <param name="nativeIn3Ptr">Native client pointer.</param>
         /// <param name="rpc">The rpc request</param>
         /// <returns>Native rpc pointer</returns>
-        /// <exception cref="RpcException"></exception>
+        /// <exception cref="ContextException"></exception>
         private static IntPtr CreateNativeCtx(IntPtr nativeIn3Ptr, string rpc)
         {
             IntPtr rpcPtr = Marshal.StringToHGlobalAnsi(rpc);
@@ -52,7 +52,7 @@ namespace In3.Context
             if (!String.IsNullOrEmpty(err))
             {
                 ctx_free(context);
-                throw new RpcException(err);
+                throw new ContextException(err);
             }
             return context;
         }
