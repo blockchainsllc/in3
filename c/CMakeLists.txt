@@ -69,8 +69,9 @@ add_subdirectory(src/signer)
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
-if (SENTRY)
-   add_subdirectory(src/sentry)
+
+if (SENTRY OR RECORDER)
+   add_subdirectory(src/utils)
 endif()
 add_subdirectory(docs)
 

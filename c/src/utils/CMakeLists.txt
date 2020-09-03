@@ -32,15 +32,23 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
+if(SENTRY)
 add_static_library(
-  NAME     in3_sentry 
-  
+  NAME     in3_sentry   
   SOURCES 
-    sentry.c 
-
+    sentry.c
   DEPENDS 
     sentry
     core
 )
+endif()
 
+if(RECORDER)
+add_static_library(
+  NAME     recorder 
+  SOURCES 
+    recorder.c
+  DEPENDS 
+    core
+)
+endif()

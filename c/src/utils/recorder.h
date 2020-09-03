@@ -1,8 +1,8 @@
-#include "../client/client.h"
-#include "data.h"
-#include "debug.h"
-#include "log.h"
-#include "mem.h"
+#include "../core/client/client.h"
+#include "../core/util/data.h"
+#include "../core/util/debug.h"
+#include "../core/util/log.h"
+#include "../core/util/mem.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>

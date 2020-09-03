@@ -1,6 +1,6 @@
 #include "recorder.h"
-#include "../client/context_internal.h"
-#include "../client/keys.h"
+#include "../core/client/context_internal.h"
+#include "../core/client/keys.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -216,6 +216,7 @@ void init_recorder(in3_t* c, char* file) {
     p->action_fn = storage_out;
   }
   in3_set_func_rand(rand_out);
+  fprintf(rec.f, ":: time %u\n\n", (uint32_t) in3_time(NULL));
 }
 
 void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {

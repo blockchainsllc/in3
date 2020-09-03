@@ -52,7 +52,6 @@ add_static_library(
     client/execute.c
     client/client_init.c
     util/debug.c
-    util/recorder.c
     util/bytes.c
     util/utils.c
     util/scache.c
@@ -65,10 +64,14 @@ add_static_library(
   DEPENDS 
     crypto
 )
+
 if (SENTRY)
 target_link_libraries(core in3_sentry)
 ENDIF (SENTRY)
 
+if (RECORDER)
+target_link_libraries(core recorder)
+ENDIF (RECORDER)
 
 add_static_library(
   NAME     init 
