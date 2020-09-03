@@ -140,7 +140,7 @@ void test_json() {
   json_array_add_value(json->result, json_create_bytes(json, bytes((uint8_t*) data, 3)));
   json_array_add_value(json->result, json_create_string(json, data));
   json_array_add_value(json->result, json_create_int(json, 10));
-  char* jdata = d_create_json(json->result);
+  char* jdata = d_create_json(json, json->result);
   TEST_ASSERT_EQUAL_STRING("[true,null,{},\"0x616263\",\"abc\",\"0xa\"]", jdata);
   free(jdata);
   json_free(json);

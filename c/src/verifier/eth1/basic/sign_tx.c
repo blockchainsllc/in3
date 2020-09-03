@@ -158,8 +158,8 @@ static void add_req_id(sb_t* sb, uint64_t id) {
 }
 
 /** gets the v-value from the chain_id */
-static uint64_t get_v(in3_ctx_t* ctx) {
-  uint64_t v = ctx->client->chain_id;
+static inline uint64_t get_v(chain_id_t chain) {
+  uint64_t v = chain;
   if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
   return v;
 }
@@ -178,11 +178,18 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
           nonce     = get(tx, K_NONCE),
           gas_price = get(tx, K_GAS_PRICE);
 
+  // make sure, we have the correct chain_id
+  chain_id_t chain_id = ctx->client->chain_id;
+  if (chain_id == CHAIN_ID_LOCAL) {
+    d_token_t* r = NULL;
+    TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    chain_id = d_long(r);
+  }
   TRY(get_from_address(tx, ctx, from))
   TRY(get_nonce_and_gasprice(&nonce, &gas_price, ctx, from))
 
   // create raw without signature
-  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(ctx), bytes(NULL, 0), bytes(NULL, 0));
+  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(chain_id), bytes(NULL, 0), bytes(NULL, 0));
   *dst         = *raw;
   _free(raw);
 
@@ -214,6 +221,14 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
  */
 in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_t* dst) {
   uint8_t sig[65];
+
+  // make sure, we have the correct chain_id
+  chain_id_t chain_id = ctx->client->chain_id;
+  if (chain_id == CHAIN_ID_LOCAL) {
+    d_token_t* r = NULL;
+    TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    chain_id = d_long(r);
+  }
 
   // get the signature from required
   in3_ctx_t* c = ctx_find_required(ctx, "sign_ec_hash");
@@ -250,7 +265,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
   // if we reached that point we have a valid signature in sig
   // create raw transaction with signature
   bytes_t  data, last;
-  uint32_t v = 27 + sig[64] + (get_v(ctx) ? (get_v(ctx) * 2 + 8) : 0);
+  uint32_t v = 27 + sig[64] + (get_v(chain_id) ? (get_v(chain_id) * 2 + 8) : 0);
   EXPECT_EQ(rlp_decode(&raw_tx, 0, &data), 2)                           // the raw data must be a list(2)
   EXPECT_EQ(rlp_decode(&data, 5, &last), 1)                             // the last element (data) must be an item (1)
   bytes_builder_t* rlp = bb_newl(raw_tx.len + 68);                      // we try to make sure, we don't have to reallocate
