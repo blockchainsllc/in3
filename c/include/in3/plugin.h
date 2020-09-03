@@ -380,9 +380,6 @@ typedef struct {
 typedef struct {
   char*    msg;   /**< the error message. */
   uint16_t error; /**< error code. */
-} sentry_ctx_t;
+} error_log_ctx_t;
 
-#ifdef SENTRY
-static uint8_t SENTRY_INIT = 0;
-#endif
 #endif

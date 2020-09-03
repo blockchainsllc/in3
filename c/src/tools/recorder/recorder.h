@@ -7,18 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-void in3_record(in3_t* c, char* file, bool in);
+/** Record runs of client in a file to reproduce errors.
+ */
+void in3_record(
+    in3_t* c,    /**< the incubed client */
+    char*  file, /**< file to read or write to record run (max file name length 31)  */
+    bool   in    /**< indicates wether to read a recorded run or start a new recording */
+);
 void init_recorder(in3_t* c, char* file);
 void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]);
 void recorder_read_start(in3_t* c, char* file);
 void recorder_update_cmd(char* file, int* argc, char** argv[]);
-
-// #ifdef RECORDER
-// /** Record runs of client in a file to reproduce errors.
-//  */
-// NONULL void in3_record(
-//     in3_t* c,    /**< the incubed client */
-//     char*  file, /**< file to read or write to record run (max file name length 31)  */
-//     bool   in    /**< indicates wether to read a recorded run or start a new recording */
-// );
-// #endif
