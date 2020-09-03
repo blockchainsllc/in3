@@ -47,16 +47,15 @@
 #include <string.h>
 #include <time.h>
 
-#define DAY 24 * 3600
+#define DAY              24 * 3600
 #define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
-#define BLACKLISTTIME DAY
-#define BLACKLISTWEIGHT 7 * DAY
+#define BLACKLISTTIME    DAY
+#define BLACKLISTWEIGHT  7 * DAY
 
 NONULL static void free_nodeList(in3_node_t* nodelist, int count) {
   // clean chain..
   for (int i = 0; i < count; i++) {
     if (nodelist[i].url) _free(nodelist[i].url);
-    if (nodelist[i].address) b_free(nodelist[i].address);
   }
   _free(nodelist);
 }
@@ -108,13 +107,19 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
       break;
     }
 
-    int old_index = i;
-    n->capacity   = d_get_intkd(node, K_CAPACITY, 1);
-    n->index      = d_get_intkd(node, K_INDEX, i);
-    n->deposit    = d_get_longk(node, K_DEPOSIT);
-    n->props      = d_get_longkd(node, K_PROPS, 65535);
-    n->url        = d_get_stringk(node, K_URL);
-    n->address    = d_get_byteskl(node, K_ADDRESS, 20);
+    int old_index      = i;
+    n->capacity        = d_get_intkd(node, K_CAPACITY, 1);
+    n->index           = d_get_intkd(node, K_INDEX, i);
+    n->deposit         = d_get_longk(node, K_DEPOSIT);
+    n->props           = d_get_longkd(node, K_PROPS, 65535);
+    n->url             = d_get_stringk(node, K_URL);
+    bytes_t* adr_bytes = d_get_byteskl(node, K_ADDRESS, 20);
+    if (adr_bytes && adr_bytes->len == 20)
+      memcpy(n->address, adr_bytes->data, 20);
+    else {
+      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
+      break;
+    }
     BIT_CLEAR(n->attrs, ATTR_BOOT_NODE); // nodes are considered boot nodes only until first nodeList update succeeds
 
     if ((ctx->client->flags & FLAGS_BOOT_WEIGHTS) && (t = d_get(node, K_PERFORMANCE))) {
@@ -123,18 +128,11 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
       weights[i].total_response_time = d_get_intk(t, K_TOTAL);
     }
 
-    if (n->address)
-      n->address = b_dup(n->address); // create a copy since the src will be freed.
-    else {
-      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
-      break;
-    }
-
     // restore the nodeweights if the address was known in the old nodeList
-    if (chain->nodelist_length <= i || !b_cmp(chain->nodelist[i].address, n->address)) {
+    if (chain->nodelist_length <= i || memcmp(chain->nodelist[i].address, n->address, 20)) {
       old_index = -1;
       for (unsigned int j = 0; j < chain->nodelist_length; j++) {
-        if (b_cmp(chain->nodelist[j].address, n->address)) {
+        if (memcmp(chain->nodelist[j].address, n->address, 20) == 0) {
           old_index = j;
           break;
         }
@@ -163,7 +161,8 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
     chain->nodelist        = newList;
     chain->nodelist_length = len;
     chain->weights         = weights;
-  } else {
+  }
+  else {
     free_nodeList(newList, len);
     _free(weights);
   }
@@ -253,9 +252,9 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t*
         const in3_ret_t res = fill_chain(chain, ctx, r);
         if (res < 0)
           return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
-        else if (c->cache)
+        else if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET))
           in3_cache_store_nodelist(ctx->client, chain);
-        ctx_remove_required(parent_ctx, ctx);
+        ctx_remove_required(parent_ctx, ctx, true);
         in3_client_run_chain_whitelisting(chain);
         return IN3_OK;
       }
@@ -306,12 +305,13 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t
           const in3_ret_t res = in3_client_fill_chain_whitelist(chain, ctx, result);
           if (res < 0)
             return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, res));
-          else if (c->cache)
+          else if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET))
             in3_cache_store_whitelist(ctx, chain);
           in3_client_run_chain_whitelisting(chain);
-          ctx_remove_required(parent_ctx, ctx);
+          ctx_remove_required(parent_ctx, ctx, true);
           return IN3_OK;
-        } else
+        }
+        else
           return ctx_set_error(parent_ctx, "Error updating white_list", ctx_check_response_error(ctx, 0));
       }
     }
@@ -338,8 +338,10 @@ NONULL void in3_ctx_free_nodes(node_match_t* node) {
 }
 
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
-  in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
-  ctx->client    = c;
+  in3_ctx_t* ctx          = _calloc(1, sizeof(in3_ctx_t));
+  ctx->verification_state = IN3_EIGNORE;
+  ctx->error              = _calloc(1, 1);
+  ctx->client             = c;
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;
@@ -363,9 +365,12 @@ IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t np_config, cons
 }
 
 uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t now) {
-  const uint32_t avg              = (n->response_count > 4 && n->total_response_time)
-                                        ? (n->total_response_time / n->response_count)
-                                        : (10000 / (max(capa, 100) + 100));
+  // calculate the averge response time
+  const uint32_t avg = (n->response_count > 4 && n->total_response_time)
+                           ? (n->total_response_time / n->response_count)
+                           : (10000 / (max(capa, 100) + 100));
+
+  // and the weights based factore
   const uint32_t blacklist_factor = ((now - n->blacklisted_until) < BLACKLISTWEIGHT)
                                         ? ((now - n->blacklisted_until) * 100 / (BLACKLISTWEIGHT))
                                         : 100;
@@ -394,7 +399,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
     if (filter.nodes != NULL) {
       bool in_filter_nodes = false;
       for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
-        if (b_cmp(d_bytesl(it.token, 20), node_def->address)) {
+        if (memcmp(d_bytesl(it.token, 20)->data, node_def->address, 20) == 0) {
           in_filter_nodes = true;
           break;
         }
@@ -553,7 +558,8 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
         if (last) {
           last->next = next;
           last       = last->next;
-        } else
+        }
+        else
           last = first;
       }
     }
@@ -570,7 +576,6 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
 void in3_nodelist_clear(in3_chain_t* chain) {
   for (unsigned int i = 0; i < chain->nodelist_length; i++) {
     if (chain->nodelist[i].url) _free(chain->nodelist[i].url);
-    if (chain->nodelist[i].address) b_free(chain->nodelist[i].address);
   }
   _free(chain->nodelist);
   _free(chain->weights);
@@ -581,7 +586,8 @@ void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type
   if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {
     const uint64_t dp_ = value;
     *node_props        = (*node_props & 0xFFFFFFFF) | (dp_ << 32U);
-  } else {
+  }
+  else {
     (value != 0) ? ((*node_props) |= type) : ((*node_props) &= ~type);
   }
 }

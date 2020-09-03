@@ -69,24 +69,34 @@ typedef struct weight {
   struct weight* next;    /**< next in the linkedlist or NULL if this is the last element*/
 } node_match_t;
 
+/** response-object. 
+ * 
+ * if the error has a length>0 the response will be rejected
+ */
+typedef struct in3_response {
+  uint32_t  time;  /**< measured time (in ms) which will be used for ajusting the weights */
+  in3_ret_t state; /**< the state of the response */
+  sb_t      data;  /**< a stringbuilder to add the result */
+} in3_response_t;
+
 /**
  * The Request config.
  * 
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
 typedef struct in3_ctx {
+  uint_fast8_t    signers_length;     /**< number or addresses */
+  uint16_t        len;                /**< the number of requests */
+  uint_fast16_t   attempt;            /**< the number of attempts */
   ctx_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */
   char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
-  uint_fast16_t   len;                /**< the number of requests */
-  uint_fast16_t   attempt;            /**< the number of attempts */
   json_ctx_t*     request_context;    /**< the result of the json-parser for the request.*/
   json_ctx_t*     response_context;   /**< the result of the json-parser for the response.*/
   d_token_t**     requests;           /**< references to the tokens representring the requests*/
   d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
   in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
-  uint8_t*        signers;            /**< the addresses of servers (concated) requested to sign the blockhash */
-  uint_fast8_t    signers_length;     /**< number or addresses */
+  uint8_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
@@ -297,13 +307,6 @@ char* ctx_get_response_data(
 );
 
 /**
- * creates a signer ctx to be used for async signing.
- */
-NONULL in3_sign_ctx_t* create_sign_ctx(
-    in3_ctx_t* ctx /**< [in] the rpc context */
-);
-
-/**
  * returns the type of the request
  */
 NONULL ctx_type_t ctx_get_type(
@@ -387,7 +390,8 @@ NONULL in3_ctx_t* ctx_find_required(
  */
 NONULL in3_ret_t ctx_remove_required(
     in3_ctx_t* parent, /**< [in] the current request context. */
-    in3_ctx_t* ctx     /**< [in] the request context to remove. */
+    in3_ctx_t* ctx,    /**< [in] the request context to remove. */
+    bool       rec     /**< [in] if true all sub contexts will aösp be removed*/
 );
 /**
  * check if the response contains a error-property and reports this as error in the context.
@@ -434,23 +438,13 @@ NONULL in3_proof_t in3_ctx_get_proof(
     int        i    /**< [in] the index within the request. */
 );
 
-/**
- * adds a response to a context.
- * This function should be used in the transport-function to set the response.
- */
-NONULL void in3_ctx_add_response(
-    in3_ctx_t*  ctx,      /**< [in]the current context */
-    int         index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char* data,     /**<  the data or the the string*/
-    int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-);
-
 NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->nodelist + node->index : NULL;
 }
 NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
+NONULL_FOR((1, 2, 3, 5))
+in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
 
 #endif

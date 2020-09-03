@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/plugin.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/bignum.h"
@@ -45,7 +45,7 @@
 #include "../../../verifier/eth1/nano/serialize.h"
 #include <string.h>
 
-static uint8_t* secp256k1n_2 = (uint8_t*) "\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x5D\x57\x6E\x73\x57\xA4\x50\x1D\xDF\xE9\x2F\x46\x68\x1B\x20\xA0";
+static const uint8_t* secp256k1n_2 = (uint8_t*) "\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x5D\x57\x6E\x73\x57\xA4\x50\x1D\xDF\xE9\x2F\x46\x68\x1B\x20\xA0";
 
 in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   d_token_t* t = NULL;
@@ -194,7 +194,8 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
       return vc_err(vc, "The block hash does not match the required");
     else if (keccak(*blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
       return vc_err(vc, "The block header does not match the required");
-  } else if (d_type(blk) == T_INTEGER) {
+  }
+  else if (d_type(blk) == T_INTEGER) {
     uint64_t blk_num = d_long(blk);
     bytes_t  number_in_header;
     if (!blk_num)
@@ -203,9 +204,11 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
       return vc_err(vc, "The block number does not match the required");
     else if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &number_in_header) != 1 || bytes_to_long(number_in_header.data, number_in_header.len) != blk_num)
       return vc_err(vc, "The block number in the header does not match the required");
-  } else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
+  }
+  else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
     // fall-through to continue verification
-  } else {
+  }
+  else {
     return vc_err(vc, "No block hash & number found");
   }
 
@@ -223,7 +226,8 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
     else {
       if (!proof) {
         res = vc_err(vc, "No merkle proof");
-      } else {
+      }
+      else {
         int verified = trie_verify_proof(&root, path, proof, d_type(vc->result) == T_NULL ? NULL : &raw_transaction);
         if (d_type(vc->result) == T_NULL && !verified)
           res = vc_err(vc, "Could not prove non-existence of transaction");

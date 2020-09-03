@@ -32,17 +32,20 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "client.h"
 #include "../util/data.h"
 #include "../util/mem.h"
 #include "context.h"
 #include "keys.h"
+#include "plugin.h"
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
+  assert_in3(c);
+  assert(req);
   // create a new context by parsing the request
   in3_ctx_t* ctx = ctx_new(c, req);
 
@@ -58,13 +61,18 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
     ctx->error = NULL;
-  } else
+  }
+  else
     ctx->verification_state = ret;
 
   return ctx; // return context and hope the calle will clean it.
 }
 
 in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) {
+  assert_in3(c);
+  assert(method);
+  assert(params);
+
   // generate the rpc-request
   const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
   const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
@@ -78,6 +86,8 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
 }
 
 static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
+  assert(ctx);
+  assert_in3(ctx->client);
   if (result) result[0] = 0;
   *error = NULL;
 
@@ -106,9 +116,10 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
       char* msg = d_get_stringk(r, K_MESSAGE);
-      *error    = msg ? _strdupn(msg, -1) : d_create_json(r);
-    } else
-      *error = d_create_json(r);
+      *error    = msg ? _strdupn(msg, -1) : d_create_json(ctx->response_context, r);
+    }
+    else
+      *error = d_create_json(ctx->response_context, r);
     res = IN3_ERPC;
     goto clean;
   }
@@ -121,7 +132,7 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   }
 
   // we have a result and copy it
-  if (result) *result = d_create_json(r);
+  if (result) *result = d_create_json(ctx->response_context, r);
 
 clean:
   ctx_free(ctx);
@@ -206,22 +217,6 @@ clean:
 }
 
 /**
- * create a new signer-object to be set on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_create_signer(
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-) {
-  in3_signer_t* signer = _calloc(1, sizeof(in3_signer_t));
-  signer->wallet       = wallet;
-  signer->sign         = sign;
-  signer->prepare_tx   = prepare_tx;
-  return signer;
-}
-
-/**
  * helper function to retrieve the message from a in3_sign_ctx_t
  */
 bytes_t in3_sign_ctx_get_message(
@@ -246,16 +241,6 @@ uint8_t* in3_sign_ctx_get_signature(
     in3_sign_ctx_t* ctx /**< the signer context */
 ) {
   return ctx->signature;
-}
-
-/**
- * set the transport handler on the client.
- */
-void in3_set_transport(
-    in3_t*             c,   /**< the incubed client */
-    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
-) {
-  c->transport = cptr;
 }
 
 /**
@@ -294,34 +279,50 @@ uint32_t in3_get_request_timeout(
   return request->ctx->client->timeout;
 }
 
-/**
- * set the signer on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_set_signer(
-    in3_t*         c,          /**< the incubed client */
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-) {
-  in3_signer_t* signer = in3_create_signer(sign, prepare_tx, wallet);
-  c->signer            = signer;
-  return signer;
-}
+/** 
+ * storage handler to handle cache.
+ **/
+typedef struct in3_storage_handler {
+  in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
+  in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
+  in3_storage_clear    clear;    /**< function pointer clearing all contents of cache.*/
+  void*                cptr;     /**< custom pointer which will be passed to functions */
+} in3_storage_handler_t;
 
-in3_storage_handler_t* in3_set_storage_handler(
+static in3_ret_t handle_cache(void* data, in3_plugin_act_t action, void* arg) {
+  in3_cache_ctx_t*       ctx     = arg;
+  in3_storage_handler_t* handler = data;
+  switch (action) {
+    case PLGN_ACT_CACHE_GET:
+      return (ctx->content = handler->get_item(handler->cptr, ctx->key)) ? IN3_OK : IN3_EIGNORE;
+    case PLGN_ACT_CACHE_SET: {
+      handler->set_item(handler->cptr, ctx->key, ctx->content);
+      return IN3_OK;
+    }
+    case PLGN_ACT_CACHE_CLEAR: {
+      if (handler->clear) handler->clear(handler->cptr);
+      return IN3_OK;
+    }
+    case PLGN_ACT_TERM: {
+      _free(data);
+      return IN3_OK;
+    }
+    default: return IN3_EINVAL;
+  }
+}
+void in3_set_storage_handler(
     in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 ) {
+
   in3_storage_handler_t* handler = _calloc(1, sizeof(in3_storage_handler_t));
   handler->cptr                  = cptr;
   handler->get_item              = get_item;
   handler->set_item              = set_item;
   handler->clear                 = clear;
-  c->cache                       = handler;
+  plugin_register(c, PLGN_ACT_CACHE | PLGN_ACT_TERM, handle_cache, handler, true);
   in3_cache_init(c);
-  return handler;
 }

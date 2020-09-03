@@ -74,5 +74,7 @@ NONULL sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);              
 NONULL sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars);                                  /**< add chars but escapes all quotes */
 NONULL sb_t* sb_add_int(sb_t* sb, uint64_t val);                                                 /**< adds a numeric value to the stringbuilder */
 NONULL char* format_json(const char* json);                                                      /**< format a json string and returns a new string, which needs to be freed */
+NONULL_FOR((1))
+sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size);
 
 #endif

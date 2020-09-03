@@ -110,7 +110,8 @@ static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retv
   err = MP_OKAY;
   if ((mp_cmp(&x3, &y2) == MP_EQ) && !mp_iszero(&y2)) {
     *retval = 1;
-  } else {
+  }
+  else {
     *retval = 0;
   }
 
@@ -153,7 +154,8 @@ static bool ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
     int oncurve = 0;
     ecc_is_point_on_curve(P, modulus, b, &oncurve);
     return oncurve != 0;
-  } else if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
+  }
+  else if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
     return true;
   }
   return false;
@@ -308,7 +310,8 @@ static int ecc_point_mul(const mp_int* k, const ecc_point* P, ecc_point* Q, mp_i
   if (mp_cmp(k, &t1) == MP_EQ) {
     err = ecc_copy_point(P, Q);
     goto done;
-  } else if (mp_iseven(k)) {
+  }
+  else if (mp_iseven(k)) {
     ecc_point* R = ecc_new_point();
     err          = ecc_point_double(P, R, modulus);
     if (err == MP_OKAY) {
@@ -317,7 +320,8 @@ static int ecc_point_mul(const mp_int* k, const ecc_point* P, ecc_point* Q, mp_i
         err = ecc_point_mul(&t1, R, Q, modulus);
     }
     ecc_del_point(R);
-  } else {
+  }
+  else {
     ecc_point* R = ecc_new_point();
     err          = ecc_point_double(P, R, modulus);
     if (err == MP_OKAY) {
@@ -362,7 +366,8 @@ int pre_ec_add(evm_t* evm) {
   if (mp_iszero(&p1->x) && mp_iszero(&p1->y) && mp_iszero(&p2->x) && mp_iszero(&p2->y)) {
     err = EVM_ERROR_SUCCESS_CONSUME_GAS;
     goto done;
-  } else if (!ecc_point_validate(p1, &modulus, &b) || !ecc_point_validate(p2, &modulus, &b)) {
+  }
+  else if (!ecc_point_validate(p1, &modulus, &b) || !ecc_point_validate(p2, &modulus, &b)) {
     err = EVM_ERROR_INVALID_ENV;
     goto done;
   }
@@ -407,7 +412,8 @@ int pre_ec_mul(evm_t* evm) {
   if (mp_iszero(&p1->x) && mp_iszero(&p1->y)) {
     err = EVM_ERROR_SUCCESS_CONSUME_GAS;
     goto done;
-  } else if (!ecc_point_validate(p1, &modulus, &b)) {
+  }
+  else if (!ecc_point_validate(p1, &modulus, &b)) {
     err = EVM_ERROR_INVALID_ENV;
     goto done;
   }

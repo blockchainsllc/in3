@@ -154,7 +154,7 @@
      Use a template type to work around the problem.  */
 
 /* Concatenate two preprocessor tokens.  */
-#define _GL_CONCAT(x, y) _GL_CONCAT0(x, y)
+#define _GL_CONCAT(x, y)  _GL_CONCAT0(x, y)
 #define _GL_CONCAT0(x, y) x##y
 
 /* _GL_COUNTER is an integer, preferably one that changes each time we

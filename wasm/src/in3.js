@@ -123,11 +123,15 @@ function getVersion() {
 }
 
 // keep track of all created client instances
-const clients = {}
+const clients = in3w.clients = {}
+in3w.promises = {}
+in3w.promiseCount = 0;
+in3w.extensions = []
 
 // create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
 in3w.onRuntimeInitialized = _ => {
+    in3w.ccall('wasm_init', 'void', [], []);
     const o = _in3_listeners
     _in3_listeners = undefined
     o.forEach(_ => _(true))
@@ -138,6 +142,8 @@ function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
     if (er) throw new Error(er + (in3w.sign_js.last_sign_error ? (' : ' + in3w.sign_js.last_sign_error) : ''))
 }
+const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5', ewc: '0xf6', btc: '0x99' }
+
 
 /**
  * The incubed client.
@@ -150,24 +156,19 @@ class IN3 {
         if (_in3_listeners)
             await new Promise(r => _in3_listeners.push(r))
         let chainId = this.config && this.config.chainId
-        if (chainId === 'kovan') chainId = '0x2a'
-        if (chainId === 'goerli') chainId = '0x5'
-        if (chainId === 'mainnet') chainId = '0x1'
-        if (chainId === 'btc') chainId = '0x99'
-        if (chainId === 'ewc') chainId = '0xf6'
+        if (chainId && aliases[chainId]) chainId = aliases[chainId]
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
+        this.plugins.forEach(_ => this.registerPlugin(_))
     }
 
     // here we are creating the instance lazy, when the first function is called.
     constructor(config) {
         const def = { requestCount: 2 }
-        this.config = config ? { ...def, ...config } : def
-        this.needsSetConfig = !!config
         this.ptr = 0;
-        this.eth = new EthAPI(this)
-        this.ipfs = new IpfsAPI(this)
-        this.btc = new BtcAPI(this)
+        this.setConfig(config ? { ...def, ...config } : def)
+        in3w.extensions.forEach(_ => _(this))
+        this.plugins = []
     }
 
     /**
@@ -175,12 +176,22 @@ class IN3 {
      */
     setConfig(conf) {
         if (conf) {
-            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5', ewc: '0xf6', btc: '0x99' }
-            if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
+            if (conf.chainId && aliases[conf.chainId]) {
+                if (conf.nodes && conf.nodes[conf.chainId]) {
+                    const nl = conf.nodes[conf.chainId]
+                    delete conf.nodes[conf.chainId]
+                    conf.nodes[aliases[conf.chainId]] = nl
+                }
+                conf.chainId = aliases[conf.chainId]
+            }
             this.config = { ...this.config, ...conf }
         }
         this.needsSetConfig = !this.ptr
         if (this.ptr) {
+            if (this.config.transport) {
+                this.transport = this.config.transport
+                delete this.config.transport
+            }
             const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
             if (r) {
                 const ex = new Error(UTF8ToString(r))
@@ -202,6 +213,25 @@ class IN3 {
             p.then(_ => callback(null, _), err => callback(err, null))
         else
             return p
+    }
+
+    registerPlugin(plgn) {
+        let action = 0
+        if (plgn.term) action |= 0x2
+        if (plgn.getAccount) action |= 0x20
+        if (plgn.handleRPC) action |= 0x100
+        if (plgn.verifyRPC) action |= 0x200
+        if (plgn.cacheGet) action |= 0x800
+        if (plgn.cacheSet) action |= 0x400
+        if (plgn.cacheClear) action |= 0x1000
+        let index = this.plugins.indexOf(plgn)
+        if (index == -1) {
+            index = this.plugins.length
+            this.plugins.push(plgn)
+        }
+
+        if (this.ptr)
+            in3w.ccall('wasm_register_plugin', 'number', ['number', 'number', 'number'], [this.ptr, action, index]);
     }
 
 
@@ -232,14 +262,21 @@ class IN3 {
             // main async loop
             // we repeat it until we have a result
             while (this.ptr && !this.delayFree) {
-                const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+                const js = call_string('ctx_execute', r).replace(/\n/g, ' > ')
+                let state;
+                try {
+                    state = JSON.parse(js)
+                }
+                catch (x) {
+                    throw new Error("Invalid json:", js)
+                }
                 switch (state.status) {
                     case 'error':
                         throw new Error(state.error || 'Unknown error')
                     case 'ok':
                         if (Array.isArray(state.result)) {
                             const s = state.result[0]
-                            delete s.in3
+                            if (!this.config || !this.config.keepIn3) delete s.in3
                             return s
                         }
                         return state.result
@@ -261,7 +298,11 @@ class IN3 {
                                 break;
 
                             case 'rpc':
-                                await getNextResponse(responses, req)
+                                if (req.wait) await new Promise(r => setTimeout(r, req.wait))
+                                if (req.urls[0].startsWith("promise://"))
+                                    await resolvePromises(req.ctx, req.urls[0])
+                                else
+                                    await getNextResponse(responses, req)
                         }
 
                     }
@@ -282,7 +323,7 @@ class IN3 {
     }
 
 
-    async sendRPC(method, params) {
+    async sendRPC(method, params = []) {
         const res = await this.sendRequest({ method, params })
         if (res.error) throw new Error(res.error.message || res.error)
         return res.result
@@ -294,13 +335,25 @@ class IN3 {
         if (this.pending)
             this.delayFree = true
         else if (this.ptr) {
-            delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
+            delete clients['' + this.ptr]
             this.ptr = 0
         }
     }
 }
 
+async function resolvePromises(ctx, url) {
+    const pid = url.substr(10)
+    const p = in3w.promises[pid]
+    if (!p)
+        setResponse(ctx, JSON.stringify({ error: { message: 'could not find the requested proomise' } }), 0, false)
+    else {
+        delete in3w.promises[pid]
+        return p
+            .then(r => setResponse(ctx, JSON.stringify({ result: r }), 0, false))
+            .catch(e => setResponse(ctx, JSON.stringify({ error: { message: e.message || e } }), 0, false))
+    }
+}
 
 function cleanUpResponses(responses, ptr) {
     Object.keys(responses).forEach(ctx => responses[ctx].cleanUp(ptr))
@@ -315,7 +368,8 @@ function url_queue(req) {
     let counter = 0
     const promises = [], responses = []
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
-    req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
+    const transport = req.in3.transport || in3w.transport
+    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))
@@ -387,6 +441,7 @@ IN3.freeAll = function () {
     Object.keys(clients).forEach(_ => clients[_].free())
 }
 
+
 // the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
 IN3.onInit = function (fn) {
     return new Promise((resolve, reject) => {
@@ -439,3 +494,8 @@ function setResponse(ctx, msg, i, isError) {
         in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'string'], [ctx, i, isError, msg])
     //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
 }
+
+function check_ready() {
+    if (_in3_listeners) throw new Error('The Incubed wasm runtime is not initialized yet! Please use onInit() to execute it when ready.')
+}
+

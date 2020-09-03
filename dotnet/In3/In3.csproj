@@ -4,8 +4,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>In3</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Authors>slock.it</Authors>
-    <Owners>slock.it</Owners>
+    <Authors>Blockchains LLC</Authors>
+    <Owners>Blockchains LLC</Owners>
     <Title>In3</Title>
     <Description>Incubed client and provider for web3. Based on in3-c runtime.</Description>
     <RuntimeIdentifiers>osx-x64;linux-x64;win-x64;linux-arm64</RuntimeIdentifiers>

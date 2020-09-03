@@ -43,7 +43,11 @@ namespace In3
         /// <summary>Gets <see cref="ClientConfiguration"/> object. Any changes in the object will be automaticaly applied to the client before each method invocation.</summary>
         public ClientConfiguration Configuration { get; }
 
-        private IN3(Chain chainId)
+        /// <summary>
+        /// Standard constructor, use <see cref="IN3.ForChain"/> instead.
+        /// </summary>
+        /// <param name="chainId">The chainId to connect to.</param>
+        protected IN3(Chain chainId)
         {
             // Starting to get convoluted. Need to think of a better way.
             Transport = new DefaultTransport();
@@ -75,7 +79,14 @@ namespace In3
             return new IN3(chain);
         }
 
-        internal Task<string> SendRpc(string method, object[] args, Dictionary<string, object> in3 = null)
+        /// <summary>
+        /// Method used to communicate with the client. In general, its preferably to use the API.
+        /// </summary>
+        /// <param name="method">Rpc method.</param>
+        /// <param name="args">Arguments to the operation.</param>
+        /// <param name="in3">Internal parameters to be repassed to the server or to change the client behavior.</param>
+        /// <returns>The result of the Rpc operation as JSON.</returns>
+        public Task<string> SendRpc(string method, object[] args, Dictionary<string, object> in3 = null)
         {
             if (Configuration.HasChanged())
             {

@@ -53,7 +53,6 @@
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 
-#include "../../src/signer/pk-signer/signer-priv.h"
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/third-party/crypto/ecdsa.h"
 #include "../../src/third-party/crypto/secp256k1.h"
@@ -65,11 +64,11 @@
 #define ETH_PRIVATE_KEY "0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
 static void test_sign() {
   in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
   c->chain_id        = 0x1;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
+  register_transport(c, test_transport);
 
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
@@ -99,7 +98,7 @@ static void test_tx() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
-  in3->transport = test_transport;
+  replace_transport(in3, test_transport);
   add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
                "\"0x309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f\"", NULL, NULL);
 
@@ -137,10 +136,10 @@ static void test_tx() {
 
 static void test_sign_hex() {
 
-  in3_t* c     = in3_for_chain(CHAIN_ID_MAINNET);
-  c->transport = test_transport;
-  c->proof     = PROOF_NONE;
-  c->flags     = FLAGS_STATS;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  c->proof = PROOF_NONE;
+  c->flags = FLAGS_STATS;
+  replace_transport(c, test_transport);
 
   for (int i = 0; i < c->chains_length; i++) {
     _free(c->chains[i].nodelist_upd8_params);
@@ -179,11 +178,10 @@ static void test_signer() {
   bytes_t*       data     = hex_to_new_bytes(data_str, strlen(data_str));
   in3_sign_ctx_t sc;
   sc.ctx     = ctx;
-  sc.wallet  = c->signer->wallet;
   sc.message = *data;
   sc.type    = SIGN_EC_RAW;
-  sc.account = bytes(NULL, 0),
-  TEST_ASSERT_EQUAL(IN3_OK, eth_sign_pk_ctx(&sc));
+  sc.account = bytes(NULL, 0);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sc));
   TEST_ASSERT_FALSE(memiszero(sc.signature, 65));
   b_free(data);
   ctx_free(ctx);
@@ -243,7 +241,7 @@ static void test_signer_prepare_tx() {
 int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
   TESTS_BEGIN();
   RUN_TEST(test_tx);
   RUN_TEST(test_sign);

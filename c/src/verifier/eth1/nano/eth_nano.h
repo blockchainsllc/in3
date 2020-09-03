@@ -39,10 +39,10 @@
 #ifndef in3_eth_nano_h__
 #define in3_eth_nano_h__
 
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 
 /** entry-function to execute the verification context. */
-NONULL in3_ret_t in3_verify_eth_nano(in3_vctx_t* v);
+NONULL in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx);
 
 /** verifies a blockheader. */
 NONULL_FOR((1, 2))
@@ -81,7 +81,7 @@ NONULL in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc);
 /**
  * this function should only be called once and will register the eth-nano verifier.
  */
-void in3_register_eth_nano();
+NONULL in3_ret_t in3_register_eth_nano(in3_t* c);
 
 /**
  * helper function to rlp-encode the transaction_index.

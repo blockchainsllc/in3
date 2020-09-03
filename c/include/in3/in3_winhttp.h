@@ -32,14 +32,20 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#ifndef in3_signer_priv_h__
-#define in3_signer_priv_h__
-#include "../../core/client/context_internal.h"
-#include "../../signer/pk-signer/signer.h"
+// @PUBLIC_HEADER
+/** @file 
+ * transport-handler using simple http.
+ */
 
-/** Sign message with given private key either raw or hashing the msg given as parameters*/
-in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
-/** Signs the given data */
-in3_ret_t eth_sign_pk_ctx(in3_sign_ctx_t* ctx);
+#ifndef in3_winhttp_h__
+#define in3_winhttp_h__
 
-#endif
+#include "client.h"
+in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
+
+/**
+ * registers http as a default transport.
+ */
+in3_ret_t in3_register_winhttp(in3_t* c);
+
+#endif // in3_http_h__

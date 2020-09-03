@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "api_utils.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
 #include "api_utils_priv.h"
 
@@ -99,7 +100,8 @@ d_token_t* get_result(in3_ctx_t* ctx) {
   if (ctx->error) {                       // error means something went wrong during verification or a timeout occured.
     api_set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;
-  } else if (!ctx->responses) {
+  }
+  else if (!ctx->responses) {
     api_set_error(IN3_ERPC, "No response");
     return NULL;
   }

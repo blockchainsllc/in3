@@ -32,26 +32,19 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../core/client/client.h"
+#include "signer.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/serialize.h"
-#include "signer-priv.h"
+#include <string.h>
 
-/**  in3 utiliy to sign the given data with give private key with option to hash data or not */
-in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst) {
-  switch (type) {
-    case SIGN_EC_RAW:
-      return ec_sign_pk_raw(message.data, pk, dst);
-    case SIGN_EC_HASH:
-      return ec_sign_pk_hash(message.data, message.len, pk, hasher_sha3k, dst);
-    default:
-      return IN3_ENOTSUP;
-  }
-  return IN3_OK;
-}
+typedef struct key {
+  bytes32_t key;
+} signer_key_t;
 
 /** hash data with given hasher type and sign the given data with give private key*/
 in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
@@ -67,35 +60,96 @@ in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst) {
   return IN3_OK;
 }
 
-/** signs the given data */
-in3_ret_t eth_sign_pk_ctx(in3_sign_ctx_t* ctx) {
-  uint8_t* pk = ctx->wallet;
-  switch (ctx->type) {
-    case SIGN_EC_RAW:
-      return ec_sign_pk_raw(ctx->message.data, pk, ctx->signature);
-    case SIGN_EC_HASH:
-      return ec_sign_pk_hash(ctx->message.data, ctx->message.len, pk, hasher_sha3k, ctx->signature);
+static void get_address(uint8_t* pk, uint8_t* address) {
+  uint8_t public_key[65], sdata[32];
+  ecdsa_get_public_key65(&secp256k1, pk, public_key);
+  keccak(bytes(public_key + 1, 64), sdata);
+  memcpy(address, sdata + 12, 20);
+}
+in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
+  uint8_t* pk = data;
+  switch (action) {
+    case PLGN_ACT_SIGN: {
+      in3_sign_ctx_t* ctx = action_ctx;
+      if (ctx->account.len == 20) {
+        address_t adr;
+        get_address(pk, adr);
+        if (memcmp(adr, ctx->account.data, 20)) return IN3_EIGNORE;
+      }
+
+      switch (ctx->type) {
+        case SIGN_EC_RAW:
+          return ec_sign_pk_raw(ctx->message.data, pk, ctx->signature);
+        case SIGN_EC_HASH:
+          return ec_sign_pk_hash(ctx->message.data, ctx->message.len, pk, hasher_sha3k, ctx->signature);
+        default:
+          return IN3_ENOTSUP;
+      }
+    }
+
+    case PLGN_ACT_SIGN_ACCOUNT: {
+      // generate the address from the key
+      in3_sign_account_ctx_t* ctx = action_ctx;
+      get_address(pk, ctx->account);
+      return IN3_OK;
+    }
+
     default:
       return IN3_ENOTSUP;
   }
-  return IN3_OK;
+}
+in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
+  signer_key_t* pk = data;
+  switch (action) {
+    case PLGN_ACT_PAY_SIGN_REQ: {
+      in3_pay_sign_req_ctx_t* ctx = action_ctx;
+      return ec_sign_pk_raw(ctx->request_hash, pk->key, ctx->signature);
+    }
+
+    case PLGN_ACT_TERM: {
+      _free(pk);
+      return IN3_OK;
+    }
+
+    case PLGN_ACT_CONFIG_SET: {
+      in3_configure_ctx_t* ctx = action_ctx;
+      if (ctx->token->key == key("key")) {
+        if (d_type(ctx->token) != T_BYTES || d_len(ctx->token) != 32) {
+          ctx->error_msg = "invalid key-length, must be 32";
+          return IN3_EINVAL;
+        }
+        memcpy(pk->key, ctx->token->data, 32);
+        return IN3_OK;
+      }
+      return IN3_EIGNORE;
+    }
+
+    case PLGN_ACT_CONFIG_GET: {
+      in3_get_config_ctx_t* ctx = action_ctx;
+      bytes_t               k   = bytes(pk->key, 32);
+      sb_add_bytes(ctx->sb, ",\"key\"=", &k, 1, false);
+      return IN3_OK;
+    }
+
+    default:
+      return IN3_ENOTSUP;
+  }
 }
 
 /** sets the signer and a pk to the client*/
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
-  if (in3->signer) _free(in3->signer);
-  in3->signer             = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = eth_sign_pk_ctx;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = pk;
+  return plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN, eth_sign_pk, pk, false);
+}
 
-  // generate the address from the key
-  uint8_t public_key[65], sdata[32];
+/** sets the signer and a pk to the client*/
+in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
+  signer_key_t* k = _malloc(sizeof(signer_key_t));
+  if (pk) memcpy(k->key, pk, 32);
+  return plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, eth_sign_req, k, true);
+}
 
-  ecdsa_get_public_key65(&secp256k1, pk, public_key);
-  keccak(bytes(public_key + 1, 64), sdata);
-  memcpy(in3->signer->default_address, sdata + 12, 20);
-  return IN3_OK;
+in3_ret_t eth_register_request_signer(in3_t* in3) {
+  return plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, eth_sign_req, _calloc(1, sizeof(signer_key_t)), true);
 }
 
 /** sets the signer and a pk to the client*/

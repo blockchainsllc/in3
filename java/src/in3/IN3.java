@@ -90,12 +90,6 @@ public class IN3 {
   /** sets config object in the client */
   private native void setConfig(String val);
 
-  /** the client key to sign requests */
-  public native byte[] getKey();
-
-  /** sets the client key to sign requests */
-  public native void setKey(byte[] val);
-
   protected void setConfig(ClientConfiguration config) {
     this.config = config;
   }
@@ -111,18 +105,6 @@ public class IN3 {
    */
   public ClientConfiguration getConfig() {
     return config;
-  }
-
-  /** sets the client key as hexstring to sign requests */
-  public void setKey(String val) {
-    if (val == null)
-      setKey((byte[]) null);
-    else {
-      byte[] key = new byte[32];
-      for (int i = 0; i < 32; i++)
-        key[i] = (byte) ((Character.digit(val.charAt(i * 2 + 2), 16) << 4) | Character.digit(val.charAt(i * 2 + 3), 16));
-      setKey(key);
-    }
   }
 
   /**
@@ -240,7 +222,8 @@ public class IN3 {
           p += s;
         else
           p += "\"" + s + "\"";
-      } else
+      }
+      else
         p += JSON.toJson(params[i]);
     }
     return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
@@ -259,7 +242,8 @@ public class IN3 {
           p += s;
         else
           p += "\"" + s + "\"";
-      } else
+      }
+      else
         p += JSON.toJson(params[i]);
     }
 

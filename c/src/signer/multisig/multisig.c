@@ -248,16 +248,19 @@ static in3_ret_t fill_signature(in3_ctx_t* ctx, bytes_t* signatures, uint32_t* s
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].address = signatures->data + i + 12;
       sig_data[index].data    = bytes(signatures->data + offset, 32 + bytes_to_int(signatures->data + offset + 32 - 4, 4));
-    } else if (v == 1) {
+    }
+    else if (v == 1) {
       memset(sig_data + index, 0, sizeof(sig_data_t));
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].address = signatures->data + i + 12;
       sig_data[index].data    = bytes(NULL, 0);
-    } else if (v > 26) {
+    }
+    else if (v > 26) {
       if (!ecrecover_sig(tx_hash, signatures->data + i, sig_data[index].address)) return ctx_set_error(ctx, "could not recover the signature", IN3_EINVAL);
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].data = bytes(NULL, 0);
-    } else
+    }
+    else
       return ctx_set_error(ctx, "invalid signature (v-value)", IN3_EINVAL);
     if (is_valid(sig_data, owners, sig_data[index].address, index, owner_len)) index++;
   }
@@ -336,24 +339,34 @@ static void approve_hash(bytes_t* target, tx_data_t* tx_data, bytes32_t hash, ad
   *target = bb.b;
 }
 
-in3_ret_t gs_prepare_tx(in3_ctx_t* ctx, void* cptr, bytes_t raw_tx, bytes_t* new_raw_tx) {
-  multisig_t* ms        = cptr;
-  bytes_t*    tmp       = NULL;
-  uint32_t    threshold = 0,
-           sig_count    = 0,
-           owner_len    = 0;
-  uint8_t**   owners    = NULL;
-  uint64_t    nonce     = 0;
-  tx_data_t   tx_data   = {0};
-  bytes32_t   tx_hash   = {0};
-  sig_data_t* sig_data  = NULL;
+in3_ret_t gs_prepare_tx(void* plugin_data, in3_plugin_act_t action, void* pctx) {
+  if (action == PLGN_ACT_TERM) {
+    _free(plugin_data);
+    return IN3_OK;
+  }
+  if (action != PLGN_ACT_SIGN_PREPARE) return IN3_ENOTSUP;
+  multisig_t*             ms          = plugin_data;
+  in3_sign_prepare_ctx_t* prepare_ctx = pctx;
+  bytes_t                 raw_tx      = prepare_ctx->old_tx;
+  bytes_t*                new_raw_tx  = &prepare_ctx->new_tx;
+  in3_ctx_t*              ctx         = prepare_ctx->ctx;
+  bytes_t*                tmp         = NULL;
+  uint32_t                threshold   = 0,
+           sig_count                  = 0,
+           owner_len                  = 0;
+  uint8_t**   owners                  = NULL;
+  uint64_t    nonce                   = 0;
+  tx_data_t   tx_data                 = {0};
+  bytes32_t   tx_hash                 = {0};
+  sig_data_t* sig_data                = NULL;
 
   // get Threshold
   in3_ret_t ret = call(ctx, ms->address, bytes((uint8_t*) "\xe7\x52\x35\xb8", 4), &tmp);
   if (ret == IN3_OK) {
     if (tmp->len != 32) return ctx_set_error(ctx, "invalid threshold result", IN3_ERPC);
     threshold = bytes_to_int(tmp->data + 28, 4);
-  } else if (ret != IN3_WAITING)
+  }
+  else if (ret != IN3_WAITING)
     return ret;
 
   // get nonce
@@ -361,7 +374,8 @@ in3_ret_t gs_prepare_tx(in3_ctx_t* ctx, void* cptr, bytes_t raw_tx, bytes_t* new
   if (ret2 == IN3_OK) {
     if (tmp->len != 32) return ctx_set_error(ctx, "invalid nonce result", IN3_ERPC);
     nonce = bytes_to_long(tmp->data + 24, 8);
-  } else if (ret2 != IN3_WAITING)
+  }
+  else if (ret2 != IN3_WAITING)
     return ret2;
   else
     ret = IN3_WAITING;
@@ -380,13 +394,13 @@ in3_ret_t gs_prepare_tx(in3_ctx_t* ctx, void* cptr, bytes_t raw_tx, bytes_t* new
   for (unsigned int i = 0; i < owner_len; i++) owners[i] = tmp->data + i * 32 + 64 + 12;
 
   // if we are one of the owners, we add our signature first (maybe in the future we should check if we are a initiator)
-  if (is_valid(sig_data, owners, ms->signer->default_address, sig_count, owner_len)) {
-    memset(sig_data->sig, 0, 65);                                // clear
-    memcpy(sig_data->sig + 12, ms->signer->default_address, 20); // we use the address as constant part
-    sig_data->address = ms->signer->default_address;             // keep address of the owner
-    sig_data->data    = bytes(NULL, 0);                          // no data needed for sig-type 1
-    sig_data->sig[64] = 1;                                       // mark as pre approved
-    sig_count++;                                                 // we have at least one signature now.
+  if (is_valid(sig_data, owners, prepare_ctx->account, sig_count, owner_len)) {
+    memset(sig_data->sig, 0, 65);                         // clear
+    memcpy(sig_data->sig + 12, prepare_ctx->account, 20); // we use the address as constant part
+    sig_data->address = prepare_ctx->account;             // keep address of the owner
+    sig_data->data    = bytes(NULL, 0);                   // no data needed for sig-type 1
+    sig_data->sig[64] = 1;                                // mark as pre approved
+    sig_count++;                                          // we have at least one signature now.
   }
 
   // get the tx values from the raw tx
@@ -404,7 +418,7 @@ in3_ret_t gs_prepare_tx(in3_ctx_t* ctx, void* cptr, bytes_t raw_tx, bytes_t* new
   if (sig_count >= threshold)
     // if we have enough signatures, we execute the the tx
     exec_tx(new_raw_tx, &tx_data, sig_data, sig_count, ms->address);
-  else if (is_valid(sig_data, owners, ms->signer->default_address, 0, owner_len))
+  else if (is_valid(sig_data, owners, prepare_ctx->account, 0, owner_len))
     // if not we simply approve it
     approve_hash(new_raw_tx, &tx_data, tx_hash, ms->address);
   else
@@ -412,29 +426,10 @@ in3_ret_t gs_prepare_tx(in3_ctx_t* ctx, void* cptr, bytes_t raw_tx, bytes_t* new
 
   return IN3_OK;
 }
-in3_ret_t delegate_sign(in3_sign_ctx_t* sc) {
-  multisig_t* ms = sc->wallet;
-  sc->wallet     = ms->signer->wallet;
-  in3_ret_t res  = ms->signer->sign(sc);
-  sc->wallet     = ms;
 
-  return res;
-}
-
-in3_signer_t* create_gnosis_safe_signer(address_t adr, in3_signer_t* old_signer) {
+in3_ret_t add_gnosis_safe(in3_t* in3, address_t adr) {
   multisig_t* ms = _malloc(sizeof(multisig_t));
   ms->type       = MS_GNOSIS_SAFE;
-  ms->signer     = old_signer;
   memcpy(ms->address, adr, 20);
-
-  in3_signer_t* signer = _malloc(sizeof(in3_signer_t));
-  signer->prepare_tx   = gs_prepare_tx;
-  signer->sign         = delegate_sign;
-  signer->wallet       = ms;
-  memcpy(signer->default_address, old_signer->default_address, 20);
-  return signer;
-}
-
-void add_gnosis_safe(in3_t* in3, address_t adr) {
-  in3->signer = create_gnosis_safe_signer(adr, in3->signer);
+  return plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM, gs_prepare_tx, ms, false);
 }

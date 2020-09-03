@@ -36,9 +36,8 @@
 #include "../../c/src/api/eth1/abi.h"
 #include "../../c/src/api/eth1/eth_api.h"
 #include "../../c/src/core/client/cache.h"
-#include "../../c/src/core/client/client.h"
-#include "../../c/src/core/client/context.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/client/plugin.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
@@ -53,6 +52,23 @@
 #include "../../c/src/third-party/libb64/cencode.h"
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
+
+typedef struct in3_storage_handler {
+  in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
+  in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
+  in3_storage_clear    clear;    /**< function pointer clearing all contents of cache.*/
+  void*                cptr;     /**< custom pointer which will be passed to functions */
+} in3_storage_handler_t;
+
+static void* get_java_obj_ptr(in3_t* c) {
+  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+    if (p->acts & PLGN_ACT_CACHE_GET) {
+      in3_storage_handler_t* st = p->data;
+      return st->cptr;
+    }
+  }
+  return NULL;
+}
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   if (obj == NULL || env == NULL || (*env)->GetObjectClass(env, obj) == NULL) return NULL;
@@ -74,34 +90,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
     (*env)->ThrowNew(env, IllegalArgumentException, error);
     _free(error);
   }
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getKey
- * Signature: ()[B
- */
-JNIEXPORT jbyteArray JNICALL Java_in3_IN3_getKey(JNIEnv* env, jobject ob) {
-  bytes_t* k = get_in3(env, ob)->key;
-  if (!k) return NULL;
-  jbyteArray res = (*env)->NewByteArray(env, k->len);
-  (*env)->SetByteArrayRegion(env, res, 0, k->len, (jbyte*) k->data);
-  return res;
-}
-/*
- * Class:     in3_IN3
- * Method:    setKey
- * Signature: ([B)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray val) {
-  in3_t* in3 = get_in3(env, ob);
-  if (in3->key) b_free(in3->key);
-  in3->key = NULL;
-  if (val == NULL) return;
-  int len = (*env)->GetArrayLength(env, val);
-  if (len > 32) (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), "Invalid Signer key!");
-  in3->key = _calloc(1, 32);
-  (*env)->GetByteArrayRegion(env, val, 0, len, (jbyte*) in3->key);
 }
 
 /*
@@ -190,26 +178,29 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
     if (res >= 0) {
       d_token_t* r = d_get(ctx->responses[0], K_RESULT);
       if (r)
-        result = d_create_json(r);
+        result = d_create_json(ctx->response_context, r);
       else if ((r = d_get(ctx->responses[0], K_ERROR))) {
         if (d_type(r) == T_OBJECT) {
           str_range_t s = d_to_json(r);
           strncpy(error, s.data, s.len);
           error[s.len] = '\0';
-        } else {
+        }
+        else {
           strncpy(error, d_string(r), d_len(r));
           error[d_len(r)] = '\0';
         }
-      } else if (ctx->error)
+      }
+      else if (ctx->error)
         strcpy(error, ctx->error);
       else
         strcpy(error, "No Result and also no error");
-
-    } else if (ctx->error)
+    }
+    else if (ctx->error)
       strcpy(error, ctx->error);
     else
       strcpy(error, "Error sending the request");
-  } else
+  }
+  else
     strcpy(error, ctx->error);
 
   //need to release this string when done with it in order to
@@ -221,7 +212,8 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
     js = (*env)->NewStringUTF(env, result);
     _free(result);
     return js;
-  } else {
+  }
+  else {
     jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
     (*env)->ThrowNew(env, Exception, error);
   }
@@ -300,20 +292,23 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
           str_range_t s = d_to_json(r);
           strncpy(error, s.data, s.len);
           error[s.len] = '\0';
-        } else {
+        }
+        else {
           strncpy(error, d_string(r), d_len(r));
           error[d_len(r)] = '\0';
         }
-      } else if (ctx->error)
+      }
+      else if (ctx->error)
         strcpy(error, ctx->error);
       else
         strcpy(error, "No Result and also no error");
-
-    } else if (ctx->error)
+    }
+    else if (ctx->error)
       strcpy(error, ctx->error);
     else
       strcpy(error, "Error sending the request");
-  } else
+  }
+  else
     strcpy(error, ctx->error);
 
   //need to release this string when done with it in order to
@@ -339,14 +334,18 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_t* in3 = get_in3(env, ob);
   if (!in3) return;
-  if (in3->cache && in3->cache->cptr)
-    (*env)->DeleteGlobalRef(env, (jobject) in3->cache->cptr);
+  void* jp = get_java_obj_ptr(in3);
+  if (jp)
+    (*env)->DeleteGlobalRef(env, (jobject) jp);
 
   in3_free(in3);
 }
+in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+  UNUSED_VAR(plugin_data);
+  UNUSED_VAR(action);
 
-in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
-  uint64_t start = current_ms();
+  in3_request_t* req   = plugin_ctx;
+  uint64_t       start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
@@ -371,7 +370,8 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
       req->ctx->raw_response[i].state = IN3_OK;
       _free(bytes);
-    } else {
+    }
+    else {
       sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
       req->ctx->raw_response[i].state = IN3_ERPC;
     }
@@ -519,9 +519,10 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 //in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
   in3_ctx_t* ctx    = (in3_ctx_t*) sc->ctx;
-  jclass     cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
+  void*      jp     = get_java_obj_ptr(ctx->client);
+  jclass     cls    = (*jni)->GetObjectClass(jni, jp);
   jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
-  jobject    signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
+  jobject    signer = (*jni)->CallObjectMethod(jni, jp, mid);
 
   if (!signer) return -1;
 
@@ -561,7 +562,8 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jfieldID  jproof        = (*jni)->GetStaticFieldID(jni, jproofcls, "full", "Lin3/Proof;");
   if (c->proof == PROOF_NONE) {
     jproof = (*jni)->GetStaticFieldID(jni, jproofcls, "none", "Lin3/Proof;");
-  } else if (c->proof == PROOF_STANDARD) {
+  }
+  else if (c->proof == PROOF_STANDARD) {
     jproof = (*jni)->GetStaticFieldID(jni, jproofcls, "standard", "Lin3/Proof;");
   }
 
@@ -589,9 +591,6 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jmethodID set_stats_mid = (*jni)->GetMethodID(jni, jconfigclass, "setStats", "(Z)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_stats_mid, (jboolean)(c->flags & FLAGS_STATS) != 0);
 
-  jmethodID set_max_code_cache_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxCodeCache", "(J)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_code_cache_mid, (jlong) c->max_code_cache);
-
   jmethodID set_timeout_mid = (*jni)->GetMethodID(jni, jconfigclass, "setTimeout", "(J)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_timeout_mid, (jlong) c->timeout);
 
@@ -606,9 +605,6 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
 
   jmethodID set_replace_latest_block_mid = (*jni)->GetMethodID(jni, jconfigclass, "setReplaceLatestBlock", "(I)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_replace_latest_block_mid, (jint) c->replace_latest_block);
-
-  jmethodID set_max_block_cache_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxBlockCache", "(J)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_block_cache_mid, (jlong) c->max_block_cache);
 
   for (int i = 0; i < c->chains_length; i++) {
     char        tmp[67]         = {'0', 'x'};
@@ -633,7 +629,7 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
       in3_node_t node            = chain.nodelist[i];
       jobject    jnodeconfigobj  = (*jni)->NewObject(jni, jnodeconfigclass, (*jni)->GetMethodID(jni, jnodeconfigclass, "<init>", "(Lin3/config/ChainConfiguration;)V"), jchainconfigobj);
       jmethodID  set_address_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setAddress", "(Ljava/lang/String;)V");
-      bytes_to_hex(node.address->data, node.address->len, tmp + 2);
+      bytes_to_hex(node.address, 20, tmp + 2);
       (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_address_mid, (*jni)->NewStringUTF(jni, tmp));
       jmethodID set_url_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setUrl", "(Ljava/lang/String;)V");
       (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_url_mid, (*jni)->NewStringUTF(jni, node.url));
@@ -702,6 +698,12 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 }
 #endif
 
+static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
+  UNUSED_VAR(data);
+  UNUSED_VAR(action);
+  return jsign(ctx);
+}
+
 /*
  * Class:     in3_IN3
  * Method:    init
@@ -709,16 +711,13 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
   in3_t* in3 = in3_for_chain_auto_init(jchain);
-  in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
-  in3->transport          = Java_in3_IN3_transport;
-  in3->signer             = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = jsign;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = in3->cache->cptr;
-  jni                     = env;
+  void*  p   = (*env)->NewGlobalRef(env, ob);
+  in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, p);
+  plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
+  plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
+  jni = env;
 
   in3_set_jclient_config(in3, ob);
-
   return (jlong)(size_t) in3;
 }
 

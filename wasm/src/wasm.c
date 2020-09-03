@@ -32,10 +32,10 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "../../c/src/core/client/cache.h"
-#include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/nodelist.h"
+#include "../../c/src/core/client/plugin.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
@@ -56,7 +56,7 @@
 #endif
 
 #define err_string(msg) (":ERROR:" msg)
-#define BLACKLISTTIME 24 * 3600
+#define BLACKLISTTIME   24 * 3600
 
 static char*    last_error = NULL;
 static uint32_t now() {
@@ -95,6 +95,7 @@ EM_JS(void, in3_cache_set, (const char* key, char* val), {
   Module.in3_cache.set(UTF8ToString(key),UTF8ToString(val));
 })
 
+
 char* EMSCRIPTEN_KEEPALIVE  in3_version() {
     return IN3_VERSION;
 }
@@ -114,6 +115,82 @@ void storage_set_item(void* cptr, const char* key, bytes_t* content) {
   in3_cache_set(key, buffer);
 }
 
+EM_JS(int, plgn_exec_term, (in3_t * c, int index), {
+  var client = Module.clients[c];
+  var plgn   = client && client.plugins[index];
+  if (!plgn) return -4;
+  return plgn.term(client) || 0;
+})
+
+EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req, int index), {
+  var client = Module.clients[c];
+  var plgn   = client && client.plugins[index];
+  if (!plgn) return -4;
+  try {
+    var json = JSON.parse(UTF8ToString(req));
+    var val  = plgn.handleRPC(client, json);
+    if (typeof(val) == "undefined") return -17;
+    if (!val.then) val = Promise.resolve(val);
+    var id                 = ++in3w.promiseCount;
+    in3w.promises["" + id] = val;
+    json.in3               = {rpc : "promise://" + id};
+    in3w.ccall("wasm_set_request_ctx", "void", [ "number", "string" ], [ ctx, JSON.stringify(json) ]);
+  } catch (x) {
+    setResponse(ctx, JSON.stringify({error : {message : x.message || x}}), 0, false)
+  }
+  return 0;
+})
+
+/**
+ * the main plgn-function which is called for each js-plugin,
+ * delegating it depending on the action.
+ */
+in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
+  // we use the custom data pointer of the plugin as index within the clients plugin array
+  int index = (int) data;
+
+  switch (action) {
+    case PLGN_ACT_INIT: return IN3_OK;
+    case PLGN_ACT_TERM: return plgn_exec_term(ctx, index);
+    case PLGN_ACT_RPC_HANDLE: {
+      // extract the request as string, so we can pass it to js
+      in3_rpc_handle_ctx_t* rc  = ctx;
+      str_range_t           sr  = d_to_json(rc->request);
+      char*                 req = alloca(sr.len + 1);
+      memcpy(req, sr.data, sr.len);
+      req[sr.len] = 0;
+      return plgn_exec_rpc_handle(rc->ctx->client, rc->ctx, req, index);
+    }
+    default: break;
+  }
+  return IN3_ENOTSUP;
+}
+
+void EMSCRIPTEN_KEEPALIVE wasm_register_plugin(in3_t* c, in3_plugin_act_t action, int index) {
+  // the index is used as the custom void* or data for the plugin.
+  // This way we can cast it backward in order doing the call to js to find the plugin
+  // if a js-plugin needs custom data, the it should do this in js withihn its own plugin object
+  in3_plugin_register(NULL, c, action, wasm_plgn, (void*) index, false);
+}
+
+/**
+ * repareses the request for the context with a new input.
+ */
+void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_ctx_t* ctx, char* req) {
+  if (!ctx->request_context) return;
+  char* src = ctx->request_context->c;                                     // we keep the old pointer since this may be an internal request where this needs to be freed.
+  json_free(ctx->request_context);                                         // throw away the old pares context
+  char* r                                  = _strdupn(req, -1);            // need to copy, because req is on the stack and the pointers of the tokens need to point to valid memory
+  ctx->request_context                     = parse_json(r);                // parse the new
+  ctx->requests[0]                         = ctx->request_context->result; //since we don't support bulks in custom rpc, requests must be allocated with len=1
+  ctx->request_context->c                  = src;                          // set the old pointer, so the memory management will clean it correctly
+  in3_cache_add_ptr(&ctx->cache, r)->props = CACHE_PROP_MUST_FREE;         // but add the copy to be cleaned when freeing ctx to avoid memory leaks.
+}
+
+/**
+ * main execute function which generates a json representing the status and all required data to be handled in js.
+ * The resulting string needs to be freed by the caller!
+ */
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   in3_ctx_t*     p   = ctx;
   in3_request_t* req = NULL;
@@ -143,12 +220,15 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         sb_add_chars(sb, ",\"error\",\"");
         sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
         sb_add_char(sb, '"');
-      } else {
+      }
+      else {
         uint32_t start = now();
         sb_add_chars(sb, ",\"request\":{ \"type\": ");
         sb_add_chars(sb, request->ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
         sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
+        sb_add_chars(sb, ",\"wait\":");
+        sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
         sb_add_chars(sb, request->payload);
         sb_add_chars(sb, ",\"urls\":[");
@@ -176,17 +256,20 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
 void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
   _free(ptr);
 }
+void EMSCRIPTEN_KEEPALIVE wasm_init() {
+  in3_init();
+}
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
-  in3_chain_t* chain = in3_find_chain(in3, in3->chain_id);
+  in3_chain_t* chain = in3_get_chain(in3);
   if (!chain) return;
   for (int i = 0; i < chain->nodelist_length; i++) {
     if (strcmp(chain->nodelist[i].url, url) == 0) {
       chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
       // we don't update weights for local chains.
-      if (!in3->cache || in3->chain_id == CHAIN_ID_LOCAL) return;
+      if (in3->chain_id == CHAIN_ID_LOCAL) return;
       in3_cache_store_nodelist(in3, chain);
       return;
     }
@@ -194,13 +277,15 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
+  if (!ctx->raw_response) ctx->raw_response = _calloc(sizeof(in3_response_t), i + 1);
   ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
   ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
   if (ctx->type == CT_SIGN && !is_error) {
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
     sb_add_range(&ctx->raw_response[i].data, (char*) sig, 0, 65);
-  } else
+  }
+  else
     sb_add_chars(&ctx->raw_response[i].data, msg);
 }
 #ifdef IPFS
@@ -328,7 +413,7 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   req_free(req);
   if (!res)
     return err_string("the input data can not be decoded");
-  char* result = d_create_json(res->result);
+  char* result = d_create_json(res, res->result);
   json_free(res);
   return result;
 #else

@@ -50,7 +50,8 @@ def _load_shared_library() -> c.CDLL:
                 return lib_instance
             except Exception:
                 pass
-        raise OSError('Not available on this platform ({}, {}, {}).'.format(system, processor, machine))
+        raise OSError('Not available on this platform ({}, {}, {}).'.format(
+            system, processor, machine))
 
     path = Path(Path(__file__).parent, "shared")
     try:
@@ -75,13 +76,10 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) ->
     """
     assert isinstance(chain_id, int)
     # ctypes mappings
-    _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
+    _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int, c.c_uint32
+    _libin3.in3_init()
     # In3 init and module loading
-    _libin3.in3_set_default_transport(transport_fn)
-    # TODO: in3_set_default_signer
-    _libin3.in3_register_eth_full()
-    # TODO: IPFS libin3.in3_register_ipfs();
-    _libin3.in3_register_eth_api()
+    _libin3.in3_set_default_legacy_transport(transport_fn)
     global DEBUG
     if DEBUG:
         # set logger level to TRACE
@@ -89,10 +87,17 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) ->
         _libin3.in3_log_set_level_(0)
     _libin3.in3_for_chain_auto_init.argtypes = c.c_int,
     _libin3.in3_for_chain_auto_init.restype = c.c_void_p
+    _libin3.in3_register_eth_full.argtypes = c.c_void_p,
+    _libin3.in3_register_eth_api.argtypes = c.c_void_p,
     instance = _libin3.in3_for_chain_auto_init(chain_id)
+    # TODO: in3_set_default_signer
+    _libin3.in3_register_eth_full(instance)
+    # TODO: IPFS libin3.in3_register_ipfs();
+    _libin3.in3_register_eth_api(instance)
     if cache_enabled:
         _libin3.in3_set_storage_handler.argtypes = c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p
-        _libin3.in3_set_storage_handler(instance, get_item, set_item, clear, None)
+        _libin3.in3_set_storage_handler(
+            instance, get_item, set_item, clear, None)
     return instance
 
 
@@ -118,9 +123,11 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     """
     response = c.c_char_p()
     error = c.c_char_p()
-    _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char_p)
+    _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(
+        c.c_char_p), c.POINTER(c.c_char_p)
     _libin3.in3_client_rpc.restype = c.c_int
-    result = _libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
+    result = _libin3.in3_client_rpc(
+        instance, fn_name, fn_args, c.byref(response), c.byref(error))
     return result, response.value, error.value
 
 

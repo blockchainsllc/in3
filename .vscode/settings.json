@@ -90,11 +90,11 @@
         "eth_basic.h": "c",
         "sha2.h": "c",
         "pb_decode.h": "c",
-        "ios": "c"
+        "ios": "c",
+        "filesystem": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: LLVM, AlignConsecutiveAssignments: true, AlignConsecutiveDeclarations: true, AlignTrailingComments: true, AllowShortBlocksOnASingleLine: true, AllowShortCaseLabelsOnASingleLine: true, AllowShortIfStatementsOnASingleLine: true }",
-    "editor.formatOnSave": true,
     "C_Cpp.default.defines": [
         "${default}",
         "EVM_GAS",
@@ -109,5 +109,6 @@
     "mocha.requires": [],
     "mocha.env": {
         "CI": true
-    }
+    },
+    "editor.formatOnSave": true
 }

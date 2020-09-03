@@ -47,7 +47,8 @@ bytes_t* b_new(const uint8_t* data, uint32_t len) {
   if (data) {
     b->data = _malloc(len);
     memcpy(b->data, data, len);
-  } else
+  }
+  else
     b->data = _calloc(1, len);
   return b;
 }

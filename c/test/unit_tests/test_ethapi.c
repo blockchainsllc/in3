@@ -55,13 +55,13 @@
 #include <stdio.h>
 #include <unistd.h>
 
-in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
+in3_t* init_in3(in3_plugin_act_fn custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   int    err;
   in3 = in3_for_chain(0);
   if (custom_transport)
-    in3->transport = custom_transport; // use curl to handle the requests
-  in3->request_count = 1;              // number of requests to sendp
+    register_transport(in3, custom_transport);
+  in3->request_count = 1; // number of requests to sendp
   in3->max_attempts  = 1;
   in3->request_count = 1; // number of requests to sendp
   in3->chain_id      = chain;
@@ -278,7 +278,7 @@ static void test_get_tx_hash(void) {
   free(tx);
 
   // get non-existent txn
-  in3->transport = test_transport;
+  replace_transport(in3, test_transport);
   add_response("eth_getTransactionByHash", "[\"0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164\"]", "null", NULL, NULL);
   tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NULL(tx);
@@ -309,7 +309,7 @@ static void test_send_tx() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(CHAIN_ID_GOERLI);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x5\": {\"needsUpdate\":false}}}");
-  in3->transport = test_transport;
+  replace_transport(in3, test_transport);
   add_response("eth_sendRawTransaction", "[\"0xf86d01850ee6b28000830668a094930e62afa9ceb9889c2177c858dc28810cedbf5d881bc16d674ec80000002ea0f07f44cd0a600823c392bd9d8a7c32ae99bd04014c451df0ebf4050556fe461ea01dd0cf7597621659eace230b0f0d36017b4ef565e0dbda6f34b9e680326318d3\"]",
                "\"0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a\"", NULL, NULL);
 
@@ -408,7 +408,6 @@ static void test_eth_getblock_txcount_hash(void) {
 static void test_eth_getblock_hash(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   bytes32_t blk_hash;
-  // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex_to_bytes("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
 
   //eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
@@ -618,7 +617,7 @@ static void test_send_raw_tx(void) {
 int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
-  in3_register_eth_full();
+  in3_register_default(in3_register_eth_full);
 
   // now run tests
   TESTS_BEGIN();

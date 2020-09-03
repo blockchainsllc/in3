@@ -30,11 +30,11 @@ namespace In3.Native
                 {
                     string result = await NativeClient.Client.Transport.Handle(urls[i], payload);
                     // This is freed here (by the declartive marshall) and it works because internally this is an sb_add which copies the string (same with error).
-                    in3_req_add_response(reqPtr, i, false, result, result.Length);
+                    in3_req_add_response(reqPtr, i, false, result, result.Length,0);
                 }
                 catch (Exception ex)
                 {
-                    in3_req_add_response(reqPtr, i, true, ex.Message, ex.Message.Length);
+                    in3_req_add_response(reqPtr, i, true, ex.Message, ex.Message.Length,0);
                 }
             });
 
@@ -45,7 +45,7 @@ namespace In3.Native
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_payload(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_urls(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_get_request_urls_len(IntPtr request);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_req_add_response(IntPtr req, int index, bool is_error, string data, int data_len);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_req_add_response(IntPtr req, int index, bool is_error, string data, int data_len, int time);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void request_free(IntPtr req, IntPtr ctx, bool free_response);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_create_request(IntPtr ctx);
     }

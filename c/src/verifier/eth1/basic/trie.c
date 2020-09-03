@@ -143,7 +143,8 @@ static void trie_node_set_item(trie_node_t* t, int index, bytes_t* val, uint8_t 
       rlp_encode_list(bb, val);
     else
       rlp_encode_item(bb, val);
-  } else {
+  }
+  else {
     rlp_decode(&t->items, index - 1, &item);
     bb_write_raw_bytes(bb, t->items.data, item.data + item.len - t->items.data);
     if (is_list)
@@ -277,7 +278,8 @@ static void set_node_target(trie_t* trie, trie_node_t* n, int index, node_key_t 
   if (target.hash) {
     bytes_t tmp = {.data = target.hash, .len = 32};
     trie_node_set_item(n, index, &tmp, false);
-  } else {
+  }
+  else {
     trie_node_set_item(n, index, &target.node->items, true);
     free_node(target.node);
   }
@@ -289,7 +291,8 @@ static trie_node_t* get_node_target(trie_t* trie, trie_node_t* n, int index) {
   if (rlp_decode(&n->items, index, &tmp) == 1) {
     // we have a hash and resolve the node
     return get_node(trie, hash_key(tmp.data));
-  } else {
+  }
+  else {
     bytes_t pre;
     rlp_decode(&n->items, index - 1, &pre);
     return trie_node_new(pre.data + pre.len, tmp.data + tmp.len - pre.data - pre.len, false);
@@ -341,7 +344,8 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path, bytes
         n = b;
         break;
     }
-  } else {
+  }
+  else {
     uint8_t first = *path;
     int     matching;
     switch (n->type) {
@@ -372,14 +376,16 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path, bytes
               n->type = NODE_EXT;                                                                             // we have to change it to a extension
               trie_node_set_path(n, node_path);                                                               // with the same path
               set_node_target(trie, n, 1, update_db(trie, b, false));                                         // but now pointing to the branch as  target
-            } else {                                                                                          // otherwise
-              free_node(n);                                                                                   // we can remove it
-              n = b;                                                                                          // and use the branch as the actual value
-            }                                                                                                 // which will be updaded later
-          } else                                                                                              // the path end here and it is a Leaf:
-            trie_node_set_item(n, 1, value, false);                                                           //  so we can simply replace its value.
-
-        } else {                                                                                          // does not fit, so we need rebuild the trie
+            }
+            else {          // otherwise
+              free_node(n); // we can remove it
+              n = b;        // and use the branch as the actual value
+            }               // which will be updaded later
+          }
+          else                                      // the path end here and it is a Leaf:
+            trie_node_set_item(n, 1, value, false); //  so we can simply replace its value.
+        }
+        else {                                                                                            // does not fit, so we need rebuild the trie
           b        = trie_node_create_branch(trie, NULL);                                                 // we need a branch
           rel_path = path + matching;                                                                     // calculate the relative path to the current leaf
           if (*rel_path == 0xFF)                                                                          //  there is no path the leaf ends right in the branch,
@@ -457,7 +463,8 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
           trie_node_t* t = get_node_target(trie, n, i);
           dump_handle(trie, t, with_hash, level + 1, _prefix);
           _free(t);
-        } else if (tmp.len) {
+        }
+        else if (tmp.len) {
           sprintf(_prefix, "" COLOR_GREEN_X1 " : ", i);
           dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);
         }
@@ -484,7 +491,8 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
         trie_node_t* t = get_node_target(trie, n, 1);
         dump_handle(trie, t, with_hash, level + 1, _prefix);
         _free(t);
-      } else {
+      }
+      else {
         in3_log_trace(" ==> ");
         _prefix[0] = 0;
         dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);

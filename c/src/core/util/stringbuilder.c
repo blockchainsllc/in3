@@ -226,3 +226,20 @@ char* format_json(const char* json) {
   _free(level.data);
   return _sb.data;
 }
+
+sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size) {
+  int l  = prefix ? strlen(prefix) : 0;
+  int bl = b.len * 2;
+  if (fix_size > b.len) bl = fix_size * 2;
+  l += bl;
+  if (l == 0) return sb;
+  check_size(sb, l);
+  if (prefix) memcpy(sb->data + sb->len, prefix, l - bl);
+  sb->len += l;
+  sb->data[sb->len] = 0;
+  int p             = sb->len - bl;
+  for (unsigned int i = b.len; i < fix_size; i++, p += 2)
+    sb->data[p] = sb->data[p + 1] = '0';
+  bytes_to_hex(b.data, b.len, sb->data + p);
+  return sb;
+}

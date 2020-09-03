@@ -227,7 +227,8 @@ void write(bytes_t* data, char* l, char** tt) {
     else if (type < 0) {
       printf("Error: Decoding failed!\n");
       return;
-    } else if (type == 1) {
+    }
+    else if (type == 1) {
       printf("%s", l);
       if (al && tt)
         printf("%-20s : ", tt[(i % al) + 1]);
@@ -276,14 +277,15 @@ void write(bytes_t* data, char* l, char** tt) {
       print_special(t, tt, i);
 
       printf("\n");
-
-    } else if (type == 2) {
+    }
+    else if (type == 2) {
       int    l2 = rlp_decode_len(&t);
       char** t2 = NULL;
       if (tt == CHAINSPEC) {
         if (i == 3) t2 = EIP_TRANSITION;
         if (i == 4) t2 = CONSENSUS_TRANSITION;
-      } else
+      }
+      else
         switch (l2) {
           case 15:
           case 16:
@@ -340,7 +342,8 @@ void add_rlp(bytes_builder_t* bb, char* val) {
     bytes_t* b = hex_to_new_bytes(val + 2, l - 2);
     rlp_encode_item(bb, b);
     b_free(b);
-  } else {
+  }
+  else {
     uint8_t  data[8];
     uint64_t value = _strtoull(val, NULL, 10);
     bytes_t  bytes = {.len = 0, .data = data};
@@ -373,7 +376,8 @@ int main(int argc, char* argv[]) {
     else if (input) {
       input = _realloc(input, strlen(input) + 1 + strlen(argv[i]), strlen(input) + 1);
       strcat(input, argv[i]);
-    } else
+    }
+    else
       input = argv[i];
   }
 
@@ -414,17 +418,20 @@ int main(int argc, char* argv[]) {
       if (input[n] == '\\' && input[n + 1] == 'x') {
         bytes->data[bytes->len++] = hexchar_to_int(input[n + 2]) << 4 | hexchar_to_int(input[n + 3]);
         n += 3;
-      } else
+      }
+      else
         bytes->data[bytes->len++] = input[n];
     }
-  } else if (*input == ':') {
+  }
+  else if (*input == ':') {
     bytes                     = hex_to_new_bytes(input + 1, strlen(input + 1));
     chain_id_t       chain_id = bytes_to_long(bytes->data, bytes->len);
     chainspec_t*     spec     = chainspec_get(chain_id);
     bytes_builder_t* bb       = bb_new();
     chainspec_to_bin(spec, bb);
     bytes = &bb->b;
-  } else
+  }
+  else
     bytes = hex_to_new_bytes(input, strlen(input));
 
   write(bytes, "", NULL);

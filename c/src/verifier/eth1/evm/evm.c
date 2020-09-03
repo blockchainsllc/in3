@@ -108,7 +108,8 @@ int evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len) {
   else if (l < len) {
     memset(dst, 0, len - l);
     memcpy(dst + len - l, evm->stack.b.data + evm->stack.b.len, l);
-  } else
+  }
+  else
     memcpy(dst, evm->stack.b.data + evm->stack.b.len + l - len, len);
   return l;
 }
@@ -143,7 +144,8 @@ int evm_stack_pop_byte(evm_t* evm, uint8_t* dst) {
     for (uint32_t i = evm->stack.b.len; i < evm->stack.b.len + l - 1; i++) {
       if (evm->stack.b.data[i]) return -3;
     }
-  } else if (l == 0)
+  }
+  else if (l == 0)
     return -3;
   *dst = evm->stack.b.data[evm->stack.b.len + l - 1];
   return l;
@@ -175,7 +177,8 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
 
   if (last_gas > evm->gas) {
     in3_log_trace("%" PRIu64 " %03i " COLOR_YELLOW_PRIu64 " %02x : ", evm->gas, pos, last_gas - evm->gas, op);
-  } else {
+  }
+  else {
     in3_log_trace("%" PRIu64 " %03i " COLOR_YELLOW_PRIu64plus " %02x : ", evm->gas, pos, evm->gas - last_gas, op);
   }
 #else
@@ -286,7 +289,8 @@ void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     for (int j = 0; j < l; j++) {
       if (j == 0 && dst[j] < 16) {
         in3_log_trace("%x", dst[j]);
-      } else {
+      }
+      else {
         in3_log_trace("%02x", dst[j]);
       }
     }

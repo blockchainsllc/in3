@@ -42,11 +42,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#define K_MSG_TYPE key("msgType")
-#define K_URL key("url")
-#define K_ACTION key("action")
+#define K_MSG_TYPE        key("msgType")
+#define K_URL             key("url")
+#define K_ACTION          key("action")
 #define K_TRANSACTIONHASH key("transactionHash")
-#define K_SIGNATURE key("signature")
+#define K_SIGNATURE       key("signature")
 #ifdef LOGGING
 #define reject_if(c, m)            \
   if (c) {                         \
@@ -173,7 +173,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   // prepare message hash
   // the timestamp would run out space around 2106, so please make sure we update by then. !
   sprintf(tmp, "%s%u%s{}", result->device->url, d_get_intk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
-  sprintf(mhash, "\031Ethereum Signed Message:\n%zu%s", strlen(tmp), tmp);
+  sprintf(mhash, "\031Ethereum Signed Message:\n%u%s", (int) strlen(tmp), tmp);
   bytes_t msg_data = {.data = (uint8_t*) mhash, .len = strlen(mhash)};
   keccak(msg_data, hash);
   msg_data = bytes(hash, 32);
@@ -205,8 +205,8 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     in3_ret_t l = exec_eth_call(conf, "a0b0305f", result->device->id, bytes(calldata, 64), access, 32);
     rejectp_if(l < 0, "The has_access could not be verified");
     rejectp_if(access + l - 1 == 0, "Access rejected");
-
-  } else {
+  }
+  else {
 
     // we keep the data of the last receipt, so we don't need to verify them again.
     static usn_booking_t last_receipt;
@@ -219,7 +219,8 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     if (memcmp(last_receipt.tx_hash, tx_hash->data, 32) == 0) {
       // same hash, so we can copy the last one
       r = last_receipt;
-    } else {
+    }
+    else {
       // build request
       char params[71];
       strcpy(params, "[\"0x");
@@ -293,10 +294,12 @@ usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
   if (strcmp(msgType, "action") == 0) {
     result.msg_type = USN_ACTION;
     verify_action_message(conf, parsed->result, &result);
-  } else if (strcmp(msgType, "in3Response") == 0) {
+  }
+  else if (strcmp(msgType, "in3Response") == 0) {
     result.msg_type = USN_RESPONSE;
     result.accepted = true;
-  } else
+  }
+  else
     result.error_msg = "Unknown message type";
   json_free(parsed);
 
@@ -332,7 +335,8 @@ usn_url_t usn_parse_url(char* url) {
     strncpy(counter, c + 1, len);
     counter[min((sizeof(counter) - 1), len)] = '\0';
     res.counter                              = atoi(counter);
-  } else
+  }
+  else
     c = res.contract_name;
   bytes_t name = bytes((uint8_t*) url, c - url);
   keccak(name, res.device_id);
@@ -349,9 +353,10 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
       return 0;
     }
   }
-  device->bookings       = device->bookings
-                               ? _realloc(device->bookings, sizeof(usn_booking_t) * (device->num_bookings + 1), sizeof(usn_booking_t) * device->num_bookings)
-                               : _malloc(sizeof(usn_booking_t) * device->num_bookings + 1);
+  device->bookings = device->bookings
+                         ? _realloc(device->bookings, sizeof(usn_booking_t) * (device->num_bookings + 1), sizeof(usn_booking_t) * device->num_bookings)
+                         : _malloc(sizeof(usn_booking_t) * device->num_bookings + 1);
+
   usn_booking_t* booking = device->bookings + device->num_bookings;
   booking->rented_from   = rented_from;
   booking->rented_until  = rented_until;
@@ -411,7 +416,8 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
         device->num_bookings++;
       }
     }
-  } else {
+  }
+  else {
     // look for events
     // build request
     char *params = alloca(conf->len_devices * 70 + 320), *p = params + sprintf(params, "[{\"address\":\"0x");
@@ -421,7 +427,8 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
       p += sprintf(p, "\"0x");
       p += bytes_to_hex(conf->devices->id, 32, p);
       p += sprintf(p, "\"");
-    } else {
+    }
+    else {
       p += sprintf(p, "[");
       for (int k = 0; k < conf->len_devices; k++) {
         if (k) p += sprintf(p, ",");
@@ -531,7 +538,8 @@ static uint64_t check_actions(usn_device_conf_t* conf) {
       if (conf->booking_handler)
         conf->booking_handler(&e);
       usn_event_handled(&e);
-    } else
+    }
+    else
       return e.ts;
   }
 }

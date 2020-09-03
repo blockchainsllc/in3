@@ -104,8 +104,8 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
 
         // check the embedded
         return check_node(&node, key, expectedValue, *(*key + 1) == 0xFF, last_value, next_hash, depth);
-
-      } else if (val.len != 32) // no hash, so we make sure the next hash is an empty hash
+      }
+      else if (val.len != 32) // no hash, so we make sure the next hash is an empty hash
         memset(next_hash, 0, 32);
       else
         memcpy(next_hash, val.data, 32);
@@ -136,15 +136,16 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
 
           // check the embedded node
           return check_node(&node, key, expectedValue, *(key + 1) == NULL, last_value, next_hash, depth);
-
-        } else if (**key == 0xFF) {
+        }
+        else if (**key == 0xFF) {
           // readed the end, if this is the last node, it is ok.
           if (!is_last_node) return 0;
 
           // if we are proven a value which shouldn't exist this must throw an error
           if (expectedValue == NULL && is_leaf)
             return 0;
-        } else if (is_leaf && expectedValue != NULL)
+        }
+        else if (is_leaf && expectedValue != NULL)
           return 0;
       }
 
@@ -187,7 +188,8 @@ int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
         expectedValue->len  = last_value.len;
       }
       // if not we need ensure we have the same last value as expected.
-    } else if (last_value.data == NULL || !b_cmp(expectedValue, &last_value))
+    }
+    else if (last_value.data == NULL || !b_cmp(expectedValue, &last_value))
       res = 0;
   }
 

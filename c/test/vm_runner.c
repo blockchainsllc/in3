@@ -90,7 +90,7 @@ char* readContent(char* name) {
   return buffer;
 }
 
-int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
+int run_test(json_ctx_t* jc, d_token_t* test, int counter, char* name, uint32_t props) {
   char  temp[300];
   char* descr = NULL;
   int   i;
@@ -99,7 +99,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   if (sname) name = sname + 10;
   int l = strlen(name), fail = 0;
   if (name[l - 5] == '.') name[l - 5] = 0;
-  char*    tname = d_get_keystr(test->key);
+  char*    tname = d_get_keystr(jc, test->key);
   uint64_t ms    = 0;
 
   // debug
@@ -114,15 +114,15 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   in3_log_debug("\n%2i : %-80s ", counter, temp);
   fflush(stdout);
 
-  d_token_t* exec        = d_get(test, key("exec"));
-  d_token_t* transaction = d_get(test, key("transaction"));
+  d_token_t* exec        = d_get(test, ikey(jc, "exec"));
+  d_token_t* transaction = d_get(test, ikey(jc, "transaction"));
 
-  if (d_len(test) == 2 && d_get(test, key("in")) && d_get(test, key("out")))
-    fail = test_rlp(test, props, &ms);
-  else if (d_get(test, key("root")) && d_get(test, key("in")))
-    fail = test_trie(test, props | (strstr(name, "secure") ? 2 : 0), &ms);
+  if (d_len(test) == 2 && d_get(test, ikey(jc, "in")) && d_get(test, ikey(jc, "out")))
+    fail = test_rlp(jc, test, props, &ms);
+  else if (d_get(test, ikey(jc, "root")) && d_get(test, ikey(jc, "in")))
+    fail = test_trie(jc, test, props | (strstr(name, "secure") ? 2 : 0), &ms);
   else if (exec || transaction)
-    fail = test_evm(test, props, &ms);
+    fail = test_evm(jc, test, props, &ms);
   else {
     fail = -1;
     print_error("Unknown TestType!");
@@ -150,9 +150,8 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
       print_error("Filename not found!\n");
       return -1;
     }
-    d_track_keynames(1);
 
-    json_ctx_t* parsed = parse_json(content);
+    json_ctx_t* parsed = parse_json_indexed(content);
     if (!parsed) {
       free(content);
       ERROR("Error parsing the requests");
@@ -170,14 +169,13 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
         if (test_index < 0 || count == test_index) {
           total++;
           mem_reset(mem_track);
-          if (run_test(test, count, name, props)) failed++;
+          if (run_test(parsed, test, count, name, props)) failed++;
         }
       }
     }
 
     free(content);
     json_free(parsed);
-    d_clear_keynames();
     name = names[++n];
   }
   in3_log_debug("\n( %i %%)  %2i of %2i successfully tested", total ? ((total - failed) * 100) / total : 0, total - failed, total);

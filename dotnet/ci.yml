@@ -70,7 +70,7 @@ dotnet_macos:
     - .dotnet_test
     - .only_dotnet
   tags:
-    - mac-mini-runner
+    - mac-os
 
 dotnet_arm:
   extends:

@@ -5,44 +5,49 @@ package in3;
  */
 public final class Chain {
   /**
-     * support for multiple chains, a client can then switch between different chains (but consumes more memory)
-     */
+    * support for multiple chains, a client can then switch between different
+    * chains (but consumes more memory)
+    */
   public static final long MULTICHAIN = 0x0;
 
   /**
-     * use mainnet
-     */
+    * use mainnet
+    */
   public static final long MAINNET = 0x01;
   /**
-     * use kovan testnet
-     */
+    * use kovan testnet
+    */
   public static final long KOVAN = 0x2a;
   /**
-     * use tobalaba testnet
-     */
+    * use tobalaba testnet
+    */
   public static final long TOBALABA = 0x44d;
   /**
-     * use goerli testnet
-     */
+    * use goerli testnet
+    */
   public static final long GOERLI = 0x5;
   /**
-     * use evan testnet
-     */
+    * use ewf chain
+    */
+  public static final long EWC = 0xf6;
+  /**
+    * use evan testnet
+    */
   public static final long EVAN = 0x4b1;
   /**
-     * use ipfs
-     */
+    * use ipfs
+    */
   public static final long IPFS = 0x7d0;
   /**
-     * use volta test net
-     */
+    * use volta test net
+    */
   public static final long VOLTA = 0x12046;
   /**
-     * use local client 
-     */
+    * use local client
+    */
   public static final long LOCAL = 0xFFFF;
   /**
-   * use bitcoin client 
-   */
+    * use bitcoin client
+    */
   public static final long BTC = 0x99;
 }

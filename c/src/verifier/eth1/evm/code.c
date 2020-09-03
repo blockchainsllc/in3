@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 #include "../../../core/client/keys.h"
-#include "../../../core/client/verifier.h"
+#include "../../../core/client/plugin.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include <stdio.h>
@@ -97,7 +97,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           keccak(code, calculated_code_hash);
           if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");
-            ctx_remove_required(vc->ctx, ctx);
+            ctx_remove_required(vc->ctx, ctx, false);
             return IN3_EINVAL;
           }
 
@@ -110,10 +110,12 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           *must_free       = 1;
 
           // we always try to cache the code
-          if (vc->ctx->client->cache)
-            vc->ctx->client->cache->set_item(vc->ctx->client->cache->cptr, cache_key, *target);
+          in3_cache_ctx_t cctx = {.ctx = vc->ctx, .key = cache_key, .content = *target};
+          in3_plugin_execute_first_or_none(vc->ctx, PLGN_ACT_CACHE_SET, &cctx);
+
           return IN3_OK;
-        } else
+        }
+        else
           return vc_err(vc, ctx->error ? ctx->error : "Missing result");
       }
       case CTX_ERROR:
@@ -150,9 +152,9 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   in3_ret_t res;
 
   // not cached yet
-  if (vc->ctx->client->cache)
-    code = vc->ctx->client->cache->get_item(vc->ctx->client->cache->cptr, key_str);
-
+  in3_cache_ctx_t cctx = {.ctx = vc->ctx, .key = key_str, .content = NULL};
+  in3_plugin_execute_all(vc->ctx->client, PLGN_ACT_CACHE_GET, &cctx);
+  code = cctx.content;
   in3_log_debug("try to get the code for %s from cache: %p\n", key_str, code);
 
   if (code)
@@ -165,8 +167,8 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   if (code) {
     bytes_t key = bytes(_malloc(20), 20);
     memcpy(key.data, address, 20);
-    *target              = in3_cache_add_entry(&vc->ctx->cache, key, *code);
-    (*target)->must_free = must_free;
+    *target          = in3_cache_add_entry(&vc->ctx->cache, key, *code);
+    (*target)->props = must_free;
 
     // we also store the length into the 4 bytes buffer, so we can reference it later on.
     int_to_bytes(code->len, (*target)->buffer);

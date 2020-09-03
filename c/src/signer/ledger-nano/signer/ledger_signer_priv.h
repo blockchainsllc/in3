@@ -40,9 +40,15 @@
 #include "types.h"
 
 in3_ret_t is_ledger_device_connected();
-in3_ret_t eth_ledger_sign(in3_sign_ctx_t* sc);
-void      set_command_params();
-void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
-int       get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);
+in3_ret_t eth_ledger_sign(void* p_data, in3_plugin_act_t action, void* p_ctx);
+
+void set_command_params();
+void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
+int  get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);
+
+typedef struct ledger {
+  uint8_t   path[5];
+  address_t adr;
+} in3_ledger_t;
 
 #endif

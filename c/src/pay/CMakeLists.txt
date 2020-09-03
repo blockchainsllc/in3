@@ -37,3 +37,7 @@ IF (PAY_ETH)
     add_subdirectory(eth)
 ENDIF (PAY_ETH)
 
+IF (ZKSYNC)
+    add_subdirectory(zksync)
+ENDIF (ZKSYNC)
+

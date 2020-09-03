@@ -83,8 +83,6 @@ class ClientConfig(DataTransferObject):
         response_keep_proof (bool): If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
         transport_binary_format: If true, the client will communicate with the server using a binary payload instead of json.
         transport_ignore_tls: The client usually verify https tls certificates. To communicate over insecure http, turn this on.
-        cached_blocks (int): Maximum blocks kept in memory. example: 100 last requested blocks
-        cached_code_bytes (int): Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
         boot_weights (bool): if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
         in3_registry (dict): In3 Registry Smart Contract configuration data
     """
@@ -105,8 +103,6 @@ class ClientConfig(DataTransferObject):
                  response_keep_proof: bool = None,
                  transport_binary_format: bool = None,
                  transport_ignore_tls: bool = None,
-                 cached_blocks: int = None,
-                 cached_code_bytes: int = None,
                  boot_weights: bool = None,
                  in3_registry: dict = None):
         self.finality: int = chain_finality_threshold
@@ -125,8 +121,6 @@ class ClientConfig(DataTransferObject):
         self.keepIn3: bool = response_keep_proof
         self.useBinary: bool = transport_binary_format
         self.useHttp: bool = transport_ignore_tls
-        self.maxBlockCache: int = cached_blocks
-        self.maxCodeCache: int = cached_code_bytes
         self.nodes: dict = in3_registry
         if self.key:
             warnings.warn(

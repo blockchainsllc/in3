@@ -77,7 +77,8 @@ static in3_ret_t get_storage_value(d_token_t* storage_proofs, uint8_t* skey, byt
       if (tmp.len < 32) {
         memset(value, 0, 32 - tmp.len);
         memcpy(value + 32 - tmp.len, tmp.data, tmp.len);
-      } else
+      }
+      else
         memcpy(value, tmp.data, 32);
       return IN3_OK;
     }
@@ -120,7 +121,8 @@ static void create_random_indexes(const uint32_t total_servers, const uint32_t n
     if (exists) {
       keccak(bytes(seed_data, 32), seed_data);
       step = bytes_to_long(seed_data, 6);
-    } else
+    }
+    else
       indexes[len++] = pos;
     pos = (pos + step) % total_servers;
   }
@@ -193,7 +195,8 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
       uint32_t index = d_get_intk(it.token, K_INDEX);
       if (index != indexes[i]) return vc_err(vc, "wrong index in partial nodelist");
     }
-  } else if ((int) total_servers != d_len(server_list))
+  }
+  else if ((int) total_servers != d_len(server_list))
     return vc_err(vc, "wrong number of nodes in the serverlist");
 
   // now check the content of the nodelist

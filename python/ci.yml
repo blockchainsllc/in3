@@ -121,7 +121,7 @@ python_macos:
     reports:
       junit: python_multilib/report.xml
   tags:
-    - mac-mini-runner
+    - mac-os
 
 python_linux:
   cache:

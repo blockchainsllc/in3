@@ -56,7 +56,7 @@ Explanation of this source code architecture and how it is organized. For more o
 - **in3.eth.api**: Ethereum API.
 - **in3.eth.account**: Ethereum accounts.
 - **in3.eth.contract**: Ethereum smart-contracts API.
-- **in3.eth.model**: MVC Model classes for the Ethereum client module domain. Manages serializaation.
+- **in3.eth.model**: MVC Model classes for the Ethereum client module domain. Manages serialization.
 - **in3.eth.factory**: Ethereum Object Factory. Manages deserialization.
 - **in3.libin3**: Module for the libin3 runtime. Libin3 is written in C and can be found [here](https://github.com/slockit/in3-c).
 - **in3.libin3.shared**: Native shared libraries for multiple operating systems and platforms.

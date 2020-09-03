@@ -172,11 +172,13 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   d_token_t* tmp;
   if ((tmp = d_get(state, K_BYPASS_FINALITY))) {
     blk = d_long(tmp);
-  } else if ((tmp = d_get(d_get(state, K_PROOF), K_FINALITY_BLOCKS)) && d_len(tmp)) {
+  }
+  else if ((tmp = d_get(d_get(state, K_PROOF), K_FINALITY_BLOCKS)) && d_len(tmp)) {
     b = d_get_bytes_at(tmp, d_len(tmp) - 1);
     rlp_decode_in_list(b, BLOCKHEADER_NUMBER, b);
     blk = bytes_to_long(b->data, b->len);
-  } else
+  }
+  else
     blk = d_get_longk(state, K_BLOCK);
 
   bb_write_long(vh->diffs, blk);
@@ -189,7 +191,8 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
       if (ret == IN3_EFIND) {
         bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
         bb_write_fixed_bytes(vh->vldtrs, b);
-      } else {
+      }
+      else {
         bb_write_int(vh->diffs, ret);
       }
       if (d_type(vitr.token) == T_STRING) b_free(b);

@@ -1,3 +1,4 @@
+# runs only if java-sources where changes or develop or master
 .only_java:
   rules:
     - changes:
@@ -133,7 +134,7 @@ java_macos:
     - cd java; cp test/build_test.gradle build.gradle
     - ./gradlew test
   tags:
-    - mac-mini-runner
+    - mac-os
 
 java_win:
   stage: java
@@ -162,4 +163,4 @@ release_maven:
   script:
     - touch settings.xml
     - echo $MAVEN_SETTINGS > settings.xml
-    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.slock  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/slockit/in3-c
+    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.blockchainsllc  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/blockchainsllc/in3-c
