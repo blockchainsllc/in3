@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using In3.Configuration;
 using In3.Context;
@@ -17,6 +19,7 @@ namespace In3
     /// </summary>
     public class IN3
     {
+        private static bool _previouslyInitialized = false;
         private NativeClient NativeClient { get; }
 
         /// <summary>Gets <see cref="In3.Eth1.Api"/> object.</summary>
@@ -76,7 +79,17 @@ namespace In3
         /// </example>
         public static IN3 ForChain(Chain chain)
         {
+            EnsureAssemblyInit();
             return new IN3(chain);
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)] private static void EnsureAssemblyInit()
+        {
+            if (!_previouslyInitialized)
+            {
+                NativeClient.EnsureAssemblyInit();
+                _previouslyInitialized = true;
+            }
         }
 
         /// <summary>
