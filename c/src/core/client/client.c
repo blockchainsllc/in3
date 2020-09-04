@@ -116,10 +116,10 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
       char* msg = d_get_stringk(r, K_MESSAGE);
-      *error    = msg ? _strdupn(msg, -1) : d_create_json(r);
+      *error    = msg ? _strdupn(msg, -1) : d_create_json(ctx->response_context, r);
     }
     else
-      *error = d_create_json(r);
+      *error = d_create_json(ctx->response_context, r);
     res = IN3_ERPC;
     goto clean;
   }
@@ -132,7 +132,7 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   }
 
   // we have a result and copy it
-  if (result) *result = d_create_json(r);
+  if (result) *result = d_create_json(ctx->response_context, r);
 
 clean:
   ctx_free(ctx);

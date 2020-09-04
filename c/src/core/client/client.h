@@ -334,7 +334,7 @@ typedef enum {
   PLGN_ACT_NL_PICK_DATA      = 0x80000,  /**< picks the data nodes */
   PLGN_ACT_NL_PICK_SIGNER    = 0x100000, /**< picks the signer nodes */
   PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000, /**< called after receiving a response in order to decide whether a update is needed. */
-
+  PLGN_ACT_LOG_ERROR         = 0x400000, /**< report an error */
 } in3_plugin_act_t;
 
 /**

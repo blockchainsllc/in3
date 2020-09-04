@@ -161,7 +161,10 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       dst = _malloc(l + 1);
       strcpy(dst, message);
     }
-    ctx->error = dst;
+    ctx->error           = dst;
+    error_log_ctx_t sctx = {.msg = message, .error = -errnumber};
+    in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
+
     in3_log_trace("Intermediate error -> %s\n", message);
   }
   else if (!ctx->error) {
@@ -334,7 +337,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
     }
 
   // create the call
-  req = use_cache ? _strdupn(req, -1) : _malloc(strlen(params) + strlen(method) + 20 + (in3 ? 5 + strlen(in3) : 0));
+  req = use_cache ? _strdupn(req, -1) : _malloc(strlen(params) + strlen(method) + 26 + (in3 ? 7 + strlen(in3) : 0));
   if (!use_cache) {
     if (in3)
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);

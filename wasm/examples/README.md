@@ -7,6 +7,9 @@
 -  [get_block_api](./get_block_api.ts)
    read block with API
 
+-  [register_pugin](./register_pugin.ts)
+   register a custom plugin
+
 -  [use_web3](./use_web3.ts)
    use incubed as Web3Provider in web3js 
 
