@@ -202,18 +202,7 @@ static in3_plugin_t* get_plugin(in3_t* c, in3_plugin_act_t action) {
   return NULL;
 }
 
-void in3_record(in3_t* c, char* file, bool in) {
-  char file_record[32];
-  sprintf(file_record, "%s_%s.txt", file, IN3_VERSION);
-  if (!in) {
-    init_recorder(c, file_record);
-  }
-  else {
-    recorder_read_start(c, file_record);
-  }
-}
-
-void init_recorder(in3_t* c, char* file) {
+static void recorder_init(in3_t* c, char* file) {
   in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
   rec.transport   = p ? p->action_fn : NULL;
   rec.f           = fopen(file, "w");
@@ -225,6 +214,17 @@ void init_recorder(in3_t* c, char* file) {
   }
   in3_set_func_rand(rand_out);
   fprintf(rec.f, ":: time %u\n\n", (uint32_t) in3_time(NULL));
+}
+
+void in3_record(in3_t* c, char* file, bool in) {
+  char file_record[32];
+  sprintf(file_record, "%s_%s.txt", file, IN3_VERSION);
+  if (!in) {
+    recorder_init(c, file_record);
+  }
+  else {
+    recorder_read_start(c, file_record);
+  }
 }
 
 void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
