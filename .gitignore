@@ -47,3 +47,4 @@ c/src/third-party/hidapi/missing
 c/src/third-party/hidapi/depcomp
 c/src/third-party/hidapi/compile
 c/src/third-party/hidapi/aclocal.m4
+c/.clang-format

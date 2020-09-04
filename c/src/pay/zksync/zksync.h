@@ -59,6 +59,8 @@ typedef struct {
   uint8_t*        main_contract;
   uint8_t*        gov_contract;
   uint64_t        account_id;
+  uint64_t        nonce;
+  address_t       pub_key_hash;
   uint16_t        token_len;
   bytes32_t       sync_key;
   zksync_token_t* tokens;
@@ -81,4 +83,6 @@ typedef struct {
 
 in3_ret_t in3_register_zksync(in3_t* c);
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, uint8_t* account, uint32_t account_id);
+
 #endif

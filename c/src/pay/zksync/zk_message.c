@@ -211,3 +211,32 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_chars(sb, "\"}");
   return IN3_OK;
 }
+
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, uint8_t* account, uint32_t account_id) {
+
+  char    msg_data[200];
+  uint8_t signature[65], tmp[8];
+  sb_t    msg = sb_stack(msg_data);
+
+  int_to_bytes(nonce, tmp);
+  int_to_bytes(account_id, tmp + 4);
+  sb_add_rawbytes(&msg, "Register zkSync pubkey:\n\n", bytes(sync_pub_key, 20), 20);
+  sb_add_rawbytes(&msg, "\nnonce: 0x", bytes(tmp, 4), 4);
+  sb_add_rawbytes(&msg, "\naccount id: 0x", bytes(tmp + 4, 4), 4);
+  sb_add_chars(&msg, "\n\nOnly sign this message for a trusted client!");
+  create_signed_bytes(&msg);
+
+  TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(account, 20)))
+
+  signature[64] += 27; //because EIP155 chainID = 0
+
+  sb_add_chars(sb, "{\"type\":\"ChangePubKey\",\"accountId\":");
+  sb_add_int(sb, account_id);
+  sb_add_rawbytes(sb, ",\"account\":\"0x", bytes(account, 20), 0);
+  sb_add_rawbytes(sb, "\",\"newPkHash\":\"0x", bytes(sync_pub_key, 20), 0);
+  sb_add_chars(sb, "\",\"nonce\":");
+  sb_add_int(sb, nonce);
+  sb_add_rawbytes(sb, ",\"ethSignature\":\"0x", bytes(signature, 65), 0);
+  sb_add_chars(sb, "\"}");
+  return IN3_OK;
+}
