@@ -10,3 +10,4 @@ MANIFEST
 .DS_Store
 .coverage
 report.xml
+examples/smart_meter_write.py

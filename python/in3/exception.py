@@ -24,10 +24,15 @@ class HashFormatException(IN3BaseException):
 
 
 class ClientException(IN3BaseException):
-    """ In3 Request expecetion  """
+    """ In3 Request exception  """
     pass
 
 
 class TransportException(IN3BaseException):
-    """ In3 Request expecetion  """
+    """ In3 Request exception  """
     pass
+
+
+class EnsDomainFormatException(IN3BaseException):
+    def __init__(self):
+        super().__init__('Client: ENS domain name must end with .eth')

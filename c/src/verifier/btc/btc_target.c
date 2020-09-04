@@ -172,7 +172,7 @@ static uint8_t* get_difficulty(bytes_t header) {
 in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final, bytes_t header) {
 
   // is there a required ctx, which we need to clean up?
-  in3_ctx_t* ctx = ctx_find_required(vc->ctx, "in3_proofTarget");                                                  // do we have an existing required proofTarget-request?
+  in3_ctx_t* ctx = ctx_find_required(vc->ctx, "btc_proofTarget");                                                  // do we have an existing required proofTarget-request?
   if (ctx)                                                                                                         // yes, we do!
     switch (in3_ctx_state(ctx)) {                                                                                  // but what is the state?
       case CTX_ERROR:                                                                                              // there was an error,
@@ -210,6 +210,6 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
 
   // we need more proof, so we create a request
   char* req = _malloc(300);
-  sprintf(req, "{\"method\":\"in3_proofTarget\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, (int) tc->max_diff, (int) tc->max_daps, (int) tc->dap_limit);
+  sprintf(req, "{\"method\":\"btc_proofTarget\",\"jsonrpc\":\"2.0\",\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, (int) tc->max_diff, (int) tc->max_daps, (int) tc->dap_limit);
   return ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
 }

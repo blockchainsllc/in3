@@ -74,10 +74,10 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
   assert(params);
 
   // generate the rpc-request
-  const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
-  const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
-  char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
-  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
+  const int  max  = strlen(method) + strlen(params) + 200;                                     // determine the max length of the request string
+  const bool heap = max > 500;                                                                 // if we need more than 500 bytes, we better put it in the heap
+  char*      req  = heap ? _malloc(max) : alloca(max);                                         // allocate memory in heap or stack
+  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params); // create request
 
   in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
 
@@ -116,10 +116,10 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
       char* msg = d_get_stringk(r, K_MESSAGE);
-      *error    = msg ? _strdupn(msg, -1) : d_create_json(r);
+      *error    = msg ? _strdupn(msg, -1) : d_create_json(ctx->response_context, r);
     }
     else
-      *error = d_create_json(r);
+      *error = d_create_json(ctx->response_context, r);
     res = IN3_ERPC;
     goto clean;
   }
@@ -132,7 +132,7 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   }
 
   // we have a result and copy it
-  if (result) *result = d_create_json(r);
+  if (result) *result = d_create_json(ctx->response_context, r);
 
 clean:
   ctx_free(ctx);

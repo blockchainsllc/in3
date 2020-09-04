@@ -77,6 +77,7 @@ fn main() {
         .define("USE_CURL", "OFF")
         .define("CMD", "OFF")
         .define("DEV_NO_INTRN_PTR", "OFF")
+        .define("DEV_NO_INC_RPC_ID", "OFF")
         .build_target("in3_bundle")
         .build();
 
