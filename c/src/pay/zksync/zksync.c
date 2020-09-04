@@ -404,13 +404,12 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   d_token_t* result = NULL;
   in3_ret_t  ret    = send_provider_request(ctx->ctx, conf, "tx_submit", (void*) cached->value.data, &result);
   if (ret == IN3_OK) {
-    char*   signed_tx = (void*) cached->value.data + 1;
-    int     l         = strlen(signed_tx) - 176;
-    char*   p         = signed_tx + l + sprintf(signed_tx + l, ",\"txHash\":\"0x");
-    bytes_t tx_hash   = d_to_bytes(result);
-    p += bytes_to_hex(tx_hash.data, tx_hash.len, p);
-    strcpy(p, "\"}");
-    ret = in3_rpc_handle_with_string(ctx, (void*) cached->value.data);
+    sb_t* sb = in3_rpc_handle_start(ctx);
+    sb_add_range(sb, (void*) cached->value.data, 0, strlen((void*) cached->value.data) - 177);
+    sb_add_chars(sb, ",\"txHash\":\"");
+    sb_add_chars(sb, d_string(result));
+    sb_add_chars(sb, "\"}");
+    return in3_rpc_handle_finish(ctx);
   }
   return ret;
 }
