@@ -233,7 +233,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   sb_add_chars(sb, "{\"type\":\"ChangePubKey\",\"accountId\":");
   sb_add_int(sb, account_id);
   sb_add_rawbytes(sb, ",\"account\":\"0x", bytes(account, 20), 0);
-  sb_add_rawbytes(sb, "\",\"newPkHash\":\"sync", bytes(sync_pub_key, 20), 0);
+  sb_add_rawbytes(sb, "\",\"newPkHash\":\"sync:", bytes(sync_pub_key, 20), 0);
   sb_add_chars(sb, "\",\"nonce\":");
   sb_add_int(sb, nonce);
   sb_add_rawbytes(sb, ",\"ethSignature\":\"0x", bytes(signature, 65), 0);
