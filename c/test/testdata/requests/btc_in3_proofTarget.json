@@ -1,14 +1,14 @@
 [
   {
+    "descr": "btc_proofTarget",
     "api": "btc",
-    "descr": "in3_proofTarget",
     "chainId": "0x99",
     "fuzzer": true,
     "finality": 7,
     "request": {
       "id": 1,
       "jsonrpc": "2.0",
-      "method": "in3_proofTarget",
+      "method": "btc_proofTarget",
       "params": [
         300,
         200,

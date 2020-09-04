@@ -46,7 +46,8 @@ namespace In3.Eth1
         private const string EthGetLogs = "eth_getLogs";
         private const string EthGetTransactionReceipt = "eth_getTransactionReceipt";
         private const string EthGetUncleByBlockNumberAndIndex = "eth_getUncleByBlockNumberAndIndex";
-        private const string EthENS = "in3_ens";
+        private const string EthSendTransactionAndWait = "eth_sendTransactionAndWait";
+        private const string EthEns = "in3_ens";
 
         internal Api(IN3 in3)
         {
@@ -486,6 +487,35 @@ namespace In3.Eth1
         /// Signs and sends the assigned transaction. The <see cref="Signer" /> used to sign the transaction is the one set by <see cref="IN3.Signer" />.
         /// Transactions change the state of an account, just the balance, or additionally, the storage and the code.
         /// Every transaction has a cost, gas, paid in Wei. The transaction gas is calculated over estimated gas times the gas cost, plus an additional miner fee, if the sender wants to be sure that the transaction will be mined in the latest block.
+        /// In this particular case, the transaction will wait the receipt. See <see cref="Eth1.Api.SendTransaction"/> if that is not desirable.
+        /// </summary>
+        /// <param name="tx">All information needed to perform a transaction.</param>
+        /// <returns>The receipt associated with the performed transaction.</returns>
+        /// <example>
+        ///   <code>
+        ///    SimpleWallet wallet = (SimpleWallet) client.Signer;
+        ///    TransactionRequest tx = new TransactionRequest();
+        ///    tx.From = wallet.AddRawKey(pk);;
+        ///    tx.To = "0x3940256B93c4BE0B1d5931A6A036608c25706B0c";
+        ///    tx.Gas = 21000;
+        ///    tx.Value = 100000000;
+        ///    client.Eth1.SendTransactionAndWait(tx);
+        ///   </code>
+        /// </example>
+        public async Task<TransactionReceipt> SendTransactionAndWait(TransactionRequest tx)
+        {
+            ValidateTransaction(tx);
+            tx = _in3.Signer.PrepareTransaction(tx);
+
+            string jsonResponse = await _in3.SendRpc(EthSendTransactionAndWait, new object[] { await MapTransactionToRpc(tx) });
+            return RpcHandler.From<TransactionReceipt>(jsonResponse);
+        }
+
+        /// <summary>
+        /// Signs and sends the assigned transaction. The <see cref="Signer" /> used to sign the transaction is the one set by <see cref="IN3.Signer" />.
+        /// Transactions change the state of an account, just the balance, or additionally, the storage and the code.
+        /// Every transaction has a cost, gas, paid in Wei. The transaction gas is calculated over estimated gas times the gas cost, plus an additional miner fee, if the sender wants to be sure that the transaction will be mined in the latest block.
+        /// See <see cref="Eth1.Api.SendTransactionAndWait"/> to wait for the <see cref="TransactionReceipt"/> in the same call.
         /// </summary>
         /// <param name="tx">All information needed to perform a transaction.</param>
         /// <returns>Transaction hash, used to get the receipt and check if the transaction was mined.</returns>
@@ -502,12 +532,7 @@ namespace In3.Eth1
         /// </example>
         public async Task<string> SendTransaction(TransactionRequest tx)
         {
-            if (_in3.Signer == null)
-                throw new SystemException("No Signer set. This is needed in order to sign transaction.");
-            if (tx.From == null)
-                throw new SystemException("No from address set");
-            if (!_in3.Signer.CanSign(tx.From))
-                throw new SystemException("The from address is not supported by the signer");
+            ValidateTransaction(tx);
             tx = _in3.Signer.PrepareTransaction(tx);
 
             string jsonResponse = await _in3.SendRpc(EthSendTransaction, new object[] { await MapTransactionToRpc(tx) });
@@ -538,7 +563,7 @@ namespace In3.Eth1
         /// </remarks>
         public async Task<string> Ens(string name, ENSParameter type = null)
         {
-            string jsonResponse = await _in3.SendRpc(EthENS, new object[] { name, type?.Value });
+            string jsonResponse = await _in3.SendRpc(EthEns, new object[] { name, type?.Value });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -587,6 +612,16 @@ namespace In3.Eth1
             }
 
             return result;
+        }
+
+        private void ValidateTransaction(TransactionRequest tx)
+        {
+            if (_in3.Signer == null)
+                throw new SystemException("No Signer set. This is needed in order to sign transaction.");
+            if (tx.From == null)
+                throw new SystemException("No from address set");
+            if (!_in3.Signer.CanSign(tx.From))
+                throw new SystemException("The from address is not supported by the signer");
         }
     }
 }

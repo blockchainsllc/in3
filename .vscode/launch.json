@@ -116,6 +116,13 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "run recorder test",
+            "program": "${workspaceFolder}/build/test/test_recorder",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "run ethapi test",
             "program": "${workspaceFolder}/build/test/test_ethapi",
             "cwd": "${workspaceFolder}/build"

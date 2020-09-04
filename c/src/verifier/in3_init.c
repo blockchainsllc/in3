@@ -16,6 +16,9 @@
 #include "../verifier/eth1/full/eth_full.h"
 #include "../verifier/eth1/nano/eth_nano.h"
 #include "../verifier/ipfs/ipfs.h"
+#ifdef SENTRY
+#include "../tools/sentry/sentry.h"
+#endif
 
 static bool initialized;
 
@@ -43,6 +46,9 @@ static void init_verifier() {
 #endif
 #ifdef ZKSYNC
   in3_register_default(in3_register_zksync);
+#endif
+#ifdef SENTRY
+  in3_register_default(in3_register_sentry);
 #endif
 }
 static void init_transport() {

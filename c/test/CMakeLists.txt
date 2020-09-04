@@ -77,7 +77,7 @@ foreach (file ${files})
      if( LEDGER_NANO )
        target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API})
      else()
-       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ${IN3_API})
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api recorder ${IN3_API})
      endif()
 
      add_test(
