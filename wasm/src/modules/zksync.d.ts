@@ -1,8 +1,39 @@
 
+export declare interface ZKAccountInfo {
+    address: string,
+    committed: {
+        balances: {
+            [name: string]: number
+        },
+        nonce: number,
+        pubKeyHash: string
+    },
+    depositing: {
+        balances: {
+            [name: string]: number
+        }
+    },
+    id: number,
+    verified: {
+        balances: {
+            [name: string]: number
+        },
+        nonce: number,
+        pubKeyHash: string
+    }
+}
+
+
 /**
  * API for zksync.
  */
 export declare interface ZksyncAPI<BufferType> {
+
+    /**
+     * gets current account Infoa and balances.
+     * @param account the address of the account . if not specified, the first signer is used.
+     */
+    getAccountInfo(account?: string): Promise<ZKAccountInfo>
 }
 
 
@@ -11,14 +42,14 @@ export declare interface ZksyncAPI<BufferType> {
  */
 export declare interface zksync_config {
     /**
-     * max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets.
+     * url of the zksync-server
      */
-    maxDAP?: number
+    provider_url?: string
 
     /**
-    * max increase (in percent) of the difference between targets when accepting new targets.
+    * the account to be used. if not specified, the first signer will be used.
     */
-    maxDiff?: number
+    account?: string
 
 }
 
