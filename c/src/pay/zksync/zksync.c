@@ -445,7 +445,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (ret == IN3_OK) {
     sb_t* sb = in3_rpc_handle_start(ctx);
     sb_add_rawbytes(sb, "\"sync:", bytes(pub_hash, 20), 20);
-    sb_add_char(sb, '}');
+    sb_add_chars(sb, '\"');
     return in3_rpc_handle_finish(ctx);
   }
   return ret;
