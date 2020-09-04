@@ -161,7 +161,8 @@ static in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token
     *nonce = d_long(nonce_in);
     return IN3_OK;
   }
-  TRY(zksync_update_account(conf, ctx))
+  if (!conf->account_id)
+    TRY(zksync_update_account(conf, ctx))
   *nonce = conf->nonce;
   return IN3_OK;
 }

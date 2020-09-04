@@ -79,9 +79,9 @@ in3_ret_t zkcrypto_pk_to_pubkey(bytes32_t pk, uint8_t* dst) {
   zkcrypto_Z_private_key_to_pubkey_hashZ_viii(8, sp, 32);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
-  if (r1 == 32) memcpy(dst, mem_ptr(r0), 32);
+  if (r1 == 20) memcpy(dst, mem_ptr(r0), 20);
   wfree(r0, r1);
-  return r1 == 32 ? IN3_OK : IN3_EINVAL;
+  return r1 == 20 ? IN3_OK : IN3_EINVAL;
 }
 
 in3_ret_t zkcrypto_sign_musig(bytes32_t pk, bytes_t msg, uint8_t* dst) {
