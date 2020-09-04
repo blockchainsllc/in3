@@ -54,7 +54,7 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_
     char* req = _malloc(250);
     char  data[73];
     bytes_to_hex(calldata.data, 36, data);
-    sprintf(req, "{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[{\"to\":\"%s\",\"data\":\"0x%s\"},\"latest\"]}", to, data);
+    sprintf(req, "{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"0x%s\"},\"latest\"]}", to, data);
     return ctx_add_required(parent, ctx_new(parent->client, req));
   }
 }

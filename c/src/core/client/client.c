@@ -74,10 +74,10 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
   assert(params);
 
   // generate the rpc-request
-  const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
-  const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
-  char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
-  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
+  const int  max  = strlen(method) + strlen(params) + 200;                                     // determine the max length of the request string
+  const bool heap = max > 500;                                                                 // if we need more than 500 bytes, we better put it in the heap
+  char*      req  = heap ? _malloc(max) : alloca(max);                                         // allocate memory in heap or stack
+  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params); // create request
 
   in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
 
