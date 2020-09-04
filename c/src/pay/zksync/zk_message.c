@@ -237,6 +237,6 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   sb_add_chars(sb, "\",\"nonce\":");
   sb_add_int(sb, nonce);
   sb_add_rawbytes(sb, ",\"ethSignature\":\"0x", bytes(signature, 65), 0);
-  sb_add_chars(sb, "\"}");
+  sb_add_chars(sb, "\"},null");
   return IN3_OK;
 }
