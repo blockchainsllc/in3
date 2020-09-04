@@ -46,12 +46,3 @@ add_static_library(
     zkcrypto
 )
 
-#add_executable(zksync_test 
-#   test.c 
-#   zksync.c
-#   provider.c
-#   zk_message.c
-#   bjj.c
-#)
-
-#target_link_libraries(zksync_test init ${LIBS} -lm)

@@ -104,14 +104,8 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
   for (int i = 0; i < total; i++) dst[i] |= tmp[i];                                  // and copy them to the destination using or since we already have bytes there
   return IN3_OK;
 }
-/*
-        const humanReadableTxInfo =
-            `Transfer ${stringAmount} ${stringToken}\n` +
-            `To: ${transfer.to.toLowerCase()}\n` +
-            `Nonce: ${nonce}\n` +
-            `Fee: ${stringFee} ${stringToken}\n` +
-            `Account Id: ${this.accountId}`;*/
-void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data) {
+
+static void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data) {
   sb_add_chars(sb, "Transfer ");
   add_amount(sb, data->token, data->amount);
   sb_add_chars(sb, " ");
@@ -127,7 +121,7 @@ void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data) {
   sb_add_int(sb, data->account_id);
 }
 
-void create_signed_bytes(sb_t* sb) {
+static void create_signed_bytes(sb_t* sb) {
   char* PREFIX = "\x19"
                  "Ethereum Signed Message:\n";
   char len_num[7];
@@ -140,7 +134,7 @@ void create_signed_bytes(sb_t* sb) {
   memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
 }
 
-in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
+static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
   char     dec[70];
   uint16_t tid = data->token ? data->token->id : 0;
   raw[0]       = 5;                        // 0: type(1)
@@ -157,23 +151,6 @@ in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sy
 
   // sign data
   TRY(zkcrypto_sign_musig(sync_key, bytes(raw, 58), sig));
-  /**
-   {
-      type: "Transfer",
-      accountId: transfer.accountId,
-      from: transfer.from,
-      to: transfer.to,
-      token: transfer.tokenId,
-      amount: utils.bigNumberify(transfer.amount).toString(),
-      fee: utils.bigNumberify(transfer.fee).toString(),
-      nonce: transfer.nonce,
-     signature: {
-        pubKey,
-        signature
-     }
-   }
-   * 
-   */
 
   return IN3_OK;
 }
@@ -184,8 +161,6 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_t    msg = sb_stack(msg_data);
   create_human_readable_tx_info(&msg, data);
   create_signed_bytes(&msg);
-  //  in3_log_set_level(LOG_TRACE);
-  //  ba_print((uint8_t*)msg_data, msg.len);
   TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
 
   signature[64] += 27; //because EIP155 chainID = 0
