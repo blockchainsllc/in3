@@ -71,10 +71,10 @@
 
 #include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
+#include "../../tools/recorder/recorder.h"
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "../../verifier/in3_init.h"
 #include "in3_storage.h"
-#include "recorder.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>

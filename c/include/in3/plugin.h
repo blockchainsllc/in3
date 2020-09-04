@@ -376,4 +376,10 @@ typedef struct {
   bytes32_t  request_hash;  /**< the hash to sign */
   uint8_t    signature[65]; /**< the signature */
 } in3_pay_sign_req_ctx_t;
+
+typedef struct {
+  char*    msg;   /**< the error message. */
+  uint16_t error; /**< error code. */
+} error_log_ctx_t;
+
 #endif

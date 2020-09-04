@@ -1093,6 +1093,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_NL_PICK_DATA: return "nl_pick_data";
     case PLGN_ACT_NL_PICK_SIGNER: return "nl_pick_signer";
     case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";
+    case PLGN_ACT_LOG_ERROR: return "log_error";
   }
   return "unknown";
 }

@@ -76,9 +76,11 @@ option(ASSERTIONS "includes assertions into the code, which help track errors bu
 OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 OPTION(IN3_SERVER "support for proxy server as part of the cmd-tool, which allows to start the cmd-tool with the -p option and listens to the given port for rpc-requests" OFF)
 OPTION(CMD "build the comandline utils" ON)
+OPTION(RECORDER "enable recording option for reproduce executions" ON)
 OPTION(POA "support POA verification including validatorlist updates" OFF)
 OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
 OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" OFF)
+OPTION(SENTRY "Enable Sentry" OFF)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
@@ -182,8 +184,17 @@ if(SEGGER_RTT)
     ADD_DEFINITIONS(-DSEGGER_RTT)
 endif(SEGGER_RTT)
 
+if(RECORDER)
+    ADD_DEFINITIONS(-DRECORDER)
+endif(RECORDER)
+
 if (DEV_NO_INTRN_PTR)
     ADD_DEFINITIONS(-DDEV_NO_INTRN_PTR)
+endif()
+
+if (SENTRY)
+  ADD_DEFINITIONS(-DSENTRY)
+  set(IN3_API ${IN3_API} in3_sentry)
 endif()
 
 # handle version
