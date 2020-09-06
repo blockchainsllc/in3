@@ -82,17 +82,40 @@ static in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
     hex_to_bytes(kh + 5, 40, conf->pub_key_hash, 20);
 
   // clean up
-  ctx_remove_required(ctx, ctx_find_required(ctx, "account_info"), false);
+  //  ctx_remove_required(ctx, ctx_find_required(ctx, "account_info"), false);
   return IN3_OK;
 }
 
 static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id) {
   uint8_t* account;
+  char*    cache_name = NULL;
   TRY(zksync_get_account(conf, ctx, &account))
+
+  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+    cache_name = alloca(60);
+    strcpy(cache_name, "zksync_ac_");
+    bytes_to_hex(account, 20, cache_name + 9);
+    in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
+    TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
+    if (cctx.content) {
+      conf->account_id = bytes_to_int(cctx.content->data, 4);
+      b_free(cctx.content);
+    }
+  }
 
   if (!conf->account_id) TRY(zksync_update_account(conf, ctx))
   if (!conf->account_id) return ctx_set_error(ctx, "This user has no account yet!", IN3_EFIND);
   if (account_id) *account_id = conf->account_id;
+
+  // add to cache
+  if (cache_name) {
+    uint8_t data[4];
+    bytes_t content = bytes(data, 4);
+    int_to_bytes(conf->account_id, data);
+    in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &content};
+    TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
+  }
+
   return IN3_OK;
 }
 
@@ -167,8 +190,7 @@ static in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token
     *nonce = d_long(nonce_in);
     return IN3_OK;
   }
-  if (!conf->account_id)
-    TRY(zksync_update_account(conf, ctx))
+  TRY(zksync_update_account(conf, ctx))
   *nonce = conf->nonce;
   return IN3_OK;
 }
@@ -368,6 +390,33 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
   return ctx_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
 }
 
+static in3_ret_t emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  uint8_t         aid[4];
+  zksync_token_t* token_conf    = NULL;
+  uint8_t*        main_contract = conf->main_contract;
+  uint8_t*        account       = conf->account;
+  uint32_t        account_id    = 0;
+  d_token_t*      tx_receipt    = NULL;
+  sb_t            sb            = {0};
+
+  // check main_contract
+  TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
+  TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 0), &token_conf))
+  TRY(zksync_get_account_id(conf, ctx->ctx, &account_id))
+
+  int_to_bytes(account_id, aid);
+  sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 0);
+  sb_add_rawbytes(&sb, "\",\"data\":\"0x000000e2", bytes(aid, 4), 32);
+  sb_add_rawbytes(&sb, "", bytes(token_conf->address, 20), 32);
+  sb_add_rawbytes(&sb, "\",\"from\":\"0x", bytes(account, 20), 20);
+  sb_add_chars(&sb, "\",\"gas\":\"7a120\"}");
+  TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+  if (d_type(tx_receipt) != T_OBJECT) return ctx_set_error(ctx->ctx, "no txreceipt found, which means the transaction was not succesful", IN3_EFIND);
+  str_range_t r = d_to_json(tx_receipt);
+  r.data[r.len] = 0;
+  return in3_rpc_handle_with_string(ctx, r.data);
+}
+
 static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params, zk_msg_type_t type) {
   bytes32_t sync_key;
   TRY(zksync_get_sync_key(conf, ctx->ctx, sync_key));
@@ -481,6 +530,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(method, "zksync_syncTransfer") == 0 || strcmp(method, "zksync_transfer") == 0) return transfer(conf, ctx, params, ZK_TRANSFER);
   if (strcmp(method, "zksync_withdraw") == 0) return transfer(conf, ctx, params, ZK_WITHDRAW);
   if (strcmp(method, "zksync_setKey") == 0) return set_key(conf, ctx);
+  if (strcmp(method, "zksync_emergencyWithdraw") == 0) return emergency_withdraw(conf, ctx, params);
   if (strcmp(method, "zksync_getKey") == 0) {
     bytes32_t k;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
