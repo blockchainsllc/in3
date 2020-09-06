@@ -53,6 +53,11 @@ typedef struct {
   address_t address;
 } zksync_token_t;
 
+typedef enum zk_msg_type {
+  ZK_TRANSFER = 5,
+  ZK_WITHDRAW = 3
+} zk_msg_type_t;
+
 typedef struct {
   char*           provider_url;
   uint8_t*        account;
@@ -78,10 +83,12 @@ typedef struct {
   uint64_t amount;
   uint64_t fee;
 #endif
-  uint32_t nonce;
+  uint32_t      nonce;
+  zk_msg_type_t type;
 } zksync_tx_data_t;
 
 in3_ret_t in3_register_zksync(in3_t* c);
+
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
 in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, uint8_t* account, uint32_t account_id);
 

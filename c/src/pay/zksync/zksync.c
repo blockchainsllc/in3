@@ -38,7 +38,6 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
-#include "provider.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -49,6 +48,12 @@ static void set_quoted_address(char* c, uint8_t* address) {
   c[1]         = '0';
   c[2]         = 'x';
   c[44]        = 0;
+}
+static in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
+  if (params == NULL) params = "";
+  char* in3 = conf ? alloca(strlen(conf->provider_url) + 26) : NULL;
+  if (in3) sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
+  return ctx_send_sub_request(parent, method, params, in3, result);
 }
 
 static in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account) {
@@ -61,6 +66,7 @@ static in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8
   if (account) *account = conf->account;
   return IN3_OK;
 }
+
 static in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
   uint8_t* account;
   TRY(zksync_get_account(conf, ctx, &account))
@@ -362,14 +368,15 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
   return ctx_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
 }
 
-static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params, zk_msg_type_t type) {
   bytes32_t sync_key;
   TRY(zksync_get_sync_key(conf, ctx->ctx, sync_key));
   // prepare tx data
   zksync_tx_data_t tx_data = {0};
-  bytes_t          to      = d_to_bytes(params_get(params, K_TO, 0));
+  bytes_t          to      = d_to_bytes(params_get(params, type == ZK_WITHDRAW ? key("ethAddress") : K_TO, 0));
   if (!to.data || to.len != 20) return ctx_set_error(ctx->ctx, "invalid to address", IN3_EINVAL);
   memcpy(tx_data.to, to.data, 20);
+  tx_data.type = type,
 
 #ifdef ZKSYNC_256
   bytes_t amount = d_to_bytes(params_get(params, key("amount"), 1));
@@ -383,7 +390,7 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   TRY(zksync_get_account_id(conf, ctx->ctx, &tx_data.account_id))
   TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 2), &tx_data.token))
   TRY(zksync_get_nonce(conf, ctx->ctx, params_get(params, K_NONCE, 4), &tx_data.nonce))
-  TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 2), "Transfer", &tx_data.fee))
+  TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 2), type == ZK_WITHDRAW ? "Withdraw" : "Transfer", &tx_data.fee))
   memcpy(tx_data.from, conf->account, 20);
 
   // create payload
@@ -471,7 +478,8 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     }
   }
   if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0 || strcmp(method, "zksync_deposit") == 0) return payin(conf, ctx, params);
-  if (strcmp(method, "zksync_syncTransfer") == 0 || strcmp(method, "zksync_transfer") == 0) return transfer(conf, ctx, params);
+  if (strcmp(method, "zksync_syncTransfer") == 0 || strcmp(method, "zksync_transfer") == 0) return transfer(conf, ctx, params, ZK_TRANSFER);
+  if (strcmp(method, "zksync_withdraw") == 0) return transfer(conf, ctx, params, ZK_WITHDRAW);
   if (strcmp(method, "zksync_setKey") == 0) return set_key(conf, ctx);
   if (strcmp(method, "zksync_getKey") == 0) {
     bytes32_t k;

@@ -38,7 +38,6 @@ add_static_library(
   
   SOURCES 
     zksync.c
-    provider.c
     zk_message.c
 
   DEPENDS 

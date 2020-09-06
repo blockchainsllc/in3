@@ -105,8 +105,8 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
   return IN3_OK;
 }
 
-static void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data) {
-  sb_add_chars(sb, "Transfer ");
+static void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data, char* type) {
+  sb_add_chars(sb, type);
   add_amount(sb, data->token, data->amount);
   sb_add_chars(sb, " ");
   sb_add_chars(sb, data->token->symbol);
@@ -137,7 +137,7 @@ static void create_signed_bytes(sb_t* sb) {
 static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
   char     dec[70];
   uint16_t tid = data->token ? data->token->id : 0;
-  raw[0]       = 5;                        // 0: type(1)
+  raw[0]       = data->type;               // 0: type(1)
   int_to_bytes(data->account_id, raw + 1); // 1 account_id(4)
   memcpy(raw + 5, data->from, 20);         // 5: from(20)
   memcpy(raw + 25, data->to, 20);          // 25: to(20)
@@ -159,7 +159,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   char    msg_data[200];
   uint8_t signature[65];
   sb_t    msg = sb_stack(msg_data);
-  create_human_readable_tx_info(&msg, data);
+  create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
   create_signed_bytes(&msg);
   TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
 
@@ -167,8 +167,9 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   // now create the packed sync transfer
   uint8_t raw[58], sig[96];
   TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
-
-  sb_add_chars(sb, "{\"type\":\"Transfer\",\"accountId\":");
+  sb_add_chars(sb, "{\"type\":\"");
+  sb_add_chars(sb, data->type == ZK_WITHDRAW ? "Withdraw" : "Transfer");
+  sb_add_chars(sb, "\",\"accountId\":");
   sb_add_int(sb, data->account_id);
   sb_add_rawbytes(sb, ",\"from\":\"0x", bytes(data->from, 20), 0);
   sb_add_rawbytes(sb, "\",\"to\":\"0x", bytes(data->to, 20), 0);
