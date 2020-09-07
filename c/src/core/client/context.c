@@ -362,7 +362,7 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t
   if (c)
     switch (in3_ctx_state(c)) {
       case CTX_ERROR:
-        return ctx_set_error(ctx, c->error, IN3_ERPC);
+        return ctx_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
       case CTX_WAITING_FOR_RESPONSE:
       case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
@@ -377,7 +377,6 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t
           return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
         else
           return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
-
         default:
           return ctx_set_error(ctx, "invalid state", IN3_EINVAL);
       }
