@@ -746,11 +746,12 @@ in3_ctx_t* in3_ctx_last_waiting(in3_ctx_t* ctx) {
 }
 
 static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
-  d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
-  sign_ctx->message = d_to_bytes(d_get_at(params, 0));
-  sign_ctx->account = d_to_bytes(d_get_at(params, 1));
-  sign_ctx->type    = SIGN_EC_HASH;
-  sign_ctx->ctx     = ctx;
+  d_token_t* params   = d_get(ctx->requests[0], K_PARAMS);
+  sign_ctx->message   = d_to_bytes(d_get_at(params, 0));
+  sign_ctx->account   = d_to_bytes(d_get_at(params, 1));
+  sign_ctx->type      = SIGN_EC_HASH;
+  sign_ctx->ctx       = ctx;
+  sign_ctx->signature = bytes(NULL, 0);
 }
 
 in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
@@ -768,9 +769,11 @@ in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
   ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
   sb_init(&ctx->raw_response[0].data);
   in3_log_trace("... request to sign ");
-  TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sign_ctx))
-  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
-  return IN3_OK;
+  in3_ret_t r = in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sign_ctx);
+  if (r == IN3_OK)
+    sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature.data, 0, sign_ctx.signature.len);
+  if (sign_ctx.signature.data) _free(sign_ctx.signature.data);
+  return r;
 }
 
 typedef struct {
@@ -924,7 +927,7 @@ void in3_sign_ctx_set_signature(
     in3_sign_ctx_t* sign_ctx) {
   ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
   sb_init(&ctx->raw_response[0].data);
-  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature, 0, 65);
+  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature.data, 0, sign_ctx->signature.len);
 }
 
 in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {

@@ -116,16 +116,17 @@ in3_ret_t eth_ledger_sign(void* p_data, in3_plugin_act_t action, void* p_ctx) {
 #endif
 
         if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
-          ret = IN3_OK;
+          ret           = IN3_OK;
+          sc->signature = bytes(_malloc(65), 65);
 
           in3_log_debug("apdu executed succesfully \n");
-          extract_signture(response, sc->signature);
-          recid             = get_recid_from_pub_key(&secp256k1, public_key, sc->signature, hash);
-          sc->signature[64] = recid;
+          extract_signture(response, sc->signature.data);
+          recid                  = get_recid_from_pub_key(&secp256k1, public_key, sc->signature.data, hash);
+          sc->signature.data[64] = recid;
 
 #ifdef DEBUG
           in3_log_debug("printing signature returned by device with recid value\n");
-          ba_print(sc->signature, 65);
+          ba_print(sc->signature.data, 65);
 #endif
         }
         else {

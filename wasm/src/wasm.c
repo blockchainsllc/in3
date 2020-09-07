@@ -281,9 +281,11 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, 
   ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
   ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
   if (ctx->type == CT_SIGN && !is_error) {
-    uint8_t sig[65];
-    hex_to_bytes(msg, -1, sig, 65);
-    sb_add_range(&ctx->raw_response[i].data, (char*) sig, 0, 65);
+    int l = (strlen(msg) + 1) / 2;
+    if (l && msg[0] == '0' && msg[1] == 'x') l--;
+    uint8_t* sig = alloca(l);
+    hex_to_bytes(msg, -1, sig, l);
+    sb_add_range(&ctx->raw_response[i].data, (char*) sig, 0, l);
   }
   else
     sb_add_chars(&ctx->raw_response[i].data, msg);

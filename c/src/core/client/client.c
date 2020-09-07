@@ -237,7 +237,7 @@ bytes_t in3_sign_ctx_get_account(
 /**
  * helper function to retrieve the signature from a in3_sign_ctx_t
  */
-uint8_t* in3_sign_ctx_get_signature(
+bytes_t in3_sign_ctx_get_signature(
     in3_sign_ctx_t* ctx /**< the signer context */
 ) {
   return ctx->signature;

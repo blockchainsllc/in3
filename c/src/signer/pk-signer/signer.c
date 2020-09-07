@@ -76,13 +76,15 @@ in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
         get_address(pk, adr);
         if (memcmp(adr, ctx->account.data, 20)) return IN3_EIGNORE;
       }
+      ctx->signature = bytes(_malloc(65), 65);
 
       switch (ctx->type) {
         case SIGN_EC_RAW:
-          return ec_sign_pk_raw(ctx->message.data, pk, ctx->signature);
+          return ec_sign_pk_raw(ctx->message.data, pk, ctx->signature.data);
         case SIGN_EC_HASH:
-          return ec_sign_pk_hash(ctx->message.data, ctx->message.len, pk, hasher_sha3k, ctx->signature);
+          return ec_sign_pk_hash(ctx->message.data, ctx->message.len, pk, hasher_sha3k, ctx->signature.data);
         default:
+          _free(ctx->signature.data);
           return IN3_ENOTSUP;
       }
     }

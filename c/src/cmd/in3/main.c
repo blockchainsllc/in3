@@ -1164,12 +1164,12 @@ int main(int argc, char* argv[]) {
 
     if (!in3_plugin_is_registered(c, PLGN_ACT_SIGN)) die("No private key/path given");
     in3_ctx_t ctx;
-    ctx.client = c;
-    in3_sign_ctx_t sc;
-    sc.ctx     = &ctx;
-    sc.account = bytes(NULL, 0);
-    sc.message = *data;
-    sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+    ctx.client        = c;
+    in3_sign_ctx_t sc = {0};
+    sc.ctx            = &ctx;
+    sc.account        = bytes(NULL, 0);
+    sc.message        = *data;
+    sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 #if defined(LEDGER_NANO)
     if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
       char     prefix[] = "msg";
@@ -1195,8 +1195,8 @@ int main(int argc, char* argv[]) {
     in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
 #endif
 
-    sc.signature[64] += 27;
-    print_hex(sc.signature, 65);
+    if (sc.signature.len == 65) sc.signature.data[64] += 27;
+    print_hex(sc.signature.data, sc.signature.len);
     return 0;
   }
   else if (strcmp(method, "chainspec") == 0) {

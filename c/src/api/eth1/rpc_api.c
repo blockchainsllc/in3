@@ -255,28 +255,32 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     sig_type = "raw";
   }
 
-  in3_sign_ctx_t sc;
-  sc.ctx     = ctx->ctx;
-  sc.message = data;
-  sc.account = pk ? *pk : bytes(NULL, 0);
-  sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+  in3_sign_ctx_t sc = {0};
+  sc.ctx            = ctx->ctx;
+  sc.message        = data;
+  sc.account        = pk ? *pk : bytes(NULL, 0);
+  sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->ctx->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->ctx, PLGN_ACT_SIGN, &sc));
   }
   else if (sc.account.len == 32) {
+    sc.signature = bytes(_malloc(65), 65);
     if (sc.type == SIGN_EC_RAW)
-      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature, sc.signature + 64, NULL);
+      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature.data, sc.signature.data + 64, NULL);
     else if (strcmp(sig_type, "raw") == 0)
-      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature, sc.signature + 64, NULL);
-    else
+      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature.data, sc.signature.data + 64, NULL);
+    else {
+      _free(sc.signature.data);
       return ctx_set_error(ctx->ctx, "unsupported sigType", IN3_EINVAL);
+    }
   }
   else
     return ctx_set_error(ctx->ctx, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
-  bytes_t sig_bytes = bytes(sc.signature, 65);
-  sc.signature[64] += 27;
+  bytes_t sig_bytes = sc.signature;
+  if (sc.signature.len == 65)
+    sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_char(sb, '{');
@@ -292,15 +296,16 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     sb_add_bytes(sb, "\"messageHash\":", &data, 1, false);
   sb_add_char(sb, ',');
   sb_add_bytes(sb, "\"signature\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature, 32);
+  sig_bytes = bytes(sc.signature.data, 32);
   sb_add_char(sb, ',');
   sb_add_bytes(sb, "\"r\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature + 32, 32);
+  sig_bytes = bytes(sc.signature.data + 32, 32);
   sb_add_char(sb, ',');
   sb_add_bytes(sb, "\"s\":", &sig_bytes, 1, false);
   char v[15];
-  sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature[64]);
+  sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature.data[64]);
   sb_add_chars(sb, v);
+  _free(sc.signature.data);
   return in3_rpc_handle_finish(ctx);
 }
 

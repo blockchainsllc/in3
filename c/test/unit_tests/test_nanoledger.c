@@ -125,7 +125,8 @@ static void test_signer() {
   sc.ctx            = ctx;
 
   TEST_ASSERT_EQUAL(IN3_OK, eth_ledger_sign_txn(&sc));
-  TEST_ASSERT_FALSE(memiszero(sc.signature, 65));
+  TEST_ASSERT_FALSE(memiszero(sc.signature.data, 65));
+  _free(sc.signature.data);
   b_free(data);
   in3_free(c);
 #endif

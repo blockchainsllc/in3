@@ -540,7 +540,10 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
 
   if (!jsignature) return -2;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  hex_to_bytes((char*) signature, -1, sc->signature, 65);
+  int         l         = (strlen(signature) + 1) / 2;
+  if (l && signature[0] == '0' && signature[1] == 'x') l--;
+  sc->signature = bytes(_malloc(l), l);
+  hex_to_bytes((char*) signature, -1, sc->signature.data, l);
   (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
   return IN3_OK;
 }
