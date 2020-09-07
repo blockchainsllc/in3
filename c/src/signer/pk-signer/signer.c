@@ -92,6 +92,7 @@ in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
     case PLGN_ACT_SIGN_ACCOUNT: {
       // generate the address from the key
       in3_sign_account_ctx_t* ctx = action_ctx;
+      ctx->signer_type            = SIGNER_ECDSA;
       get_address(pk, ctx->account);
       return IN3_OK;
     }

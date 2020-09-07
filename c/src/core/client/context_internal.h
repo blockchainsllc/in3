@@ -91,6 +91,10 @@ in3_ret_t ctx_handle_failable(
     in3_ctx_t* ctx /**< [in] the current request context. */
 );
 
+NONULL_FOR((1, 2, 3, 5))
+in3_ret_t        ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
+NONULL in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
+
 #define assert_in3_ctx(ctx)                                                                    \
   assert(ctx);                                                                                 \
   assert_in3(ctx->client);                                                                     \

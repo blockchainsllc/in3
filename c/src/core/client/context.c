@@ -333,15 +333,32 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
   return ctx_add_required(parent, ctx);
 }
 
-in3_ret_t ctx_require_signature(in3_ctx_t* ctx, char* method, uint8_t* sig, bytes_t raw_data, bytes_t from) {
-  bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &raw_data);
+in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
+  bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
+  memcpy(cache_key.data, raw_data.data, raw_data.len);
+  if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
+  bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
   if (cached_sig) {
-    memcpy(sig, cached_sig->data, 65);
+    *signature = *cached_sig;
     return IN3_OK;
   }
 
+  // first try internal plugins for signing, before we create an context.
+  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
+    in3_sign_ctx_t sc = {.account = from, .ctx = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
+    in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
+    if (r == IN3_OK && sc.signature.data) {
+      in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);
+      *signature = sc.signature;
+      return IN3_OK;
+    }
+    else if (r != IN3_EIGNORE)
+      return r;
+  }
+
   // get the signature from required
-  in3_ctx_t* c = ctx_find_required(ctx, method);
+  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : "sign_ec_raw";
+  in3_ctx_t*  c      = ctx_find_required(ctx, method);
   if (c)
     switch (in3_ctx_state(c)) {
       case CTX_ERROR:
@@ -351,8 +368,8 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, char* method, uint8_t* sig, byte
         return IN3_WAITING;
       case CTX_SUCCESS: {
         if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len == 65) {
-          in3_cache_add_entry(&ctx->cache, cloned_bytes(raw_data), cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, 65)));
-          memcpy(sig, c->raw_response->data.data, 65);
+          *signature = cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, c->raw_response->data.len));
+          in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), *signature);
           ctx_remove_required(ctx, c, false);
           return IN3_OK;
         }

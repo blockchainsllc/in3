@@ -157,13 +157,14 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint
 
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key) {
   char    msg_data[200];
-  uint8_t signature[65];
+  bytes_t signature;
   sb_t    msg = sb_stack(msg_data);
   create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
   create_signed_bytes(&msg);
-  TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
 
-  signature[64] += 27; //because EIP155 chainID = 0
+  if (signature.len == 65 && signature.data[64] < 27)
+    signature.data[64] += 27; //because EIP155 chainID = 0
   // now create the packed sync transfer
   uint8_t raw[58], sig[96];
   TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
@@ -183,7 +184,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_int(sb, data->nonce);
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
   sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
-  sb_add_rawbytes(sb, "\"}},{\"type\":\"EthereumSignature\",\"signature\":\"0x", bytes(signature, 65), 0);
+  sb_add_rawbytes(sb, "\"}},{\"type\":\"EthereumSignature\",\"signature\":\"0x", signature, 0);
   sb_add_chars(sb, "\"}");
   return IN3_OK;
 }
@@ -191,7 +192,8 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
 in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, uint8_t* account, uint32_t account_id) {
 
   char    msg_data[300];
-  uint8_t signature[65], tmp[8];
+  uint8_t tmp[8];
+  bytes_t signature;
   sb_t    msg = sb_stack(msg_data);
 
   int_to_bytes(nonce, tmp);
@@ -202,9 +204,10 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   sb_add_chars(&msg, "\n\nOnly sign this message for a trusted client!");
   create_signed_bytes(&msg);
 
-  TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) msg_data, msg.len), bytes(account, 20)))
+  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(account, 20)))
 
-  signature[64] += 27; //because EIP155 chainID = 0
+  if (signature.len == 65 && signature.data[64] < 27)
+    signature.data[64] += 27; //because EIP155 chainID = 0
 
   sb_add_chars(sb, "{\"type\":\"ChangePubKey\",\"accountId\":");
   sb_add_int(sb, account_id);
@@ -212,7 +215,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   sb_add_rawbytes(sb, "\",\"newPkHash\":\"sync:", bytes(sync_pub_key, 20), 0);
   sb_add_chars(sb, "\",\"nonce\":");
   sb_add_int(sb, nonce);
-  sb_add_rawbytes(sb, ",\"ethSignature\":\"0x", bytes(signature, 65), 0);
+  sb_add_rawbytes(sb, ",\"ethSignature\":\"0x", signature, 0);
   sb_add_chars(sb, "\"},null");
   return IN3_OK;
 }

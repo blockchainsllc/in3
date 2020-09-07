@@ -124,14 +124,15 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
     memcpy(sync_key, conf->sync_key, 32);
     return IN3_OK;
   }
-  uint8_t *account, signature[65];
+  uint8_t* account;
+  bytes_t  signature;
   char*    message = "\x19"
                   "Ethereum Signed Message:\n68"
                   "Access zkSync account.\n\nOnly sign this message for a trusted client!";
   TRY(zksync_get_account(conf, ctx, &account))
-  TRY(ctx_require_signature(ctx, "sign_ec_hash", signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
+  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
 
-  zkcrypto_pk_from_seed(bytes(signature, 65), conf->sync_key);
+  zkcrypto_pk_from_seed(signature, conf->sync_key);
 
   memcpy(sync_key, conf->sync_key, 32);
   return IN3_OK;
