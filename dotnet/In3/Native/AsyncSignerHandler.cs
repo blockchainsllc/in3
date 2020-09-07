@@ -40,15 +40,14 @@ namespace In3.Native
             string messageStr = DataTypeConverter.BytesToHexString(messageBytes, (int)message.len);
 
             string signedData = await _wrapper.Client.Signer.Sign(messageStr, accountStr);
-            IntPtr dst = in3_sign_ctx_get_signature(signCtx);
-            Utils.hex_to_bytes(signedData, -1, dst, 65);
+            in3_sign_ctx_set_signature_hex(signCtx, signedData);
             in3_sign_ctx_set_signature(ctx, signCtx);
             Utils._free_(signCtx);
         }
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr create_sign_ctx(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_sign_ctx_set_signature(IntPtr ctx, IntPtr signCtx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_sign_ctx_get_signature(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_sign_ctx_set_signature_hex(IntPtr ctx, String sig);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern bytes_t in3_sign_ctx_get_message(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern bytes_t in3_sign_ctx_get_account(IntPtr ctx);
     }

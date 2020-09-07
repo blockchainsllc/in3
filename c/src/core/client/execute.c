@@ -928,6 +928,7 @@ void in3_sign_ctx_set_signature(
   ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
   sb_init(&ctx->raw_response[0].data);
   sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature.data, 0, sign_ctx->signature.len);
+  _free(sign_ctx->signature.data);
 }
 
 in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {

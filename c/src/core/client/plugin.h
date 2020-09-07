@@ -261,8 +261,9 @@ bytes_t in3_sign_ctx_get_account(
 /**
  * helper function to retrieve the signature from a in3_sign_ctx_t
  */
-bytes_t in3_sign_ctx_get_signature(
-    in3_sign_ctx_t* ctx /**< the signer context */
+void in3_sign_ctx_set_signature_hex(
+    in3_sign_ctx_t* ctx,      /**< the signer context */
+    const char*     signature /**< the signature in hex */
 );
 
 /**
