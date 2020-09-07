@@ -445,6 +445,7 @@ NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* c
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
 NONULL_FOR((1, 2, 3, 5))
-in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
+in3_ret_t        ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
+NONULL in3_ret_t ctx_require_signature(in3_ctx_t* ctx, char* method, uint8_t* sig, bytes_t raw_data, bytes_t from);
 
 #endif

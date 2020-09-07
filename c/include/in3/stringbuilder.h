@@ -59,6 +59,11 @@ typedef struct sb {
   size_t allocted; /**< number of bytes currently allocated */
   size_t len;      /**< the current length of the string */
 } sb_t;
+/**
+ * creates a stringbuilder which is allocating any new memory, but uses an existing string and is used directly on the stack. 
+ * Since it will not grow the memory you need to pass a char* which allocated enough memory.
+ */
+NONULL static inline sb_t sb_stack(char* p) { return (sb_t){.allocted = 0xffffff, .len = 0, .data = p}; }
 
 sb_t*  sb_new(const char* chars); /**< creates a new stringbuilder and copies the inital characters into it.*/
 NONULL sb_t* sb_init(sb_t* sb);   /**< initializes a stringbuilder by allocating memory. */

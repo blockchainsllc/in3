@@ -196,13 +196,20 @@ void in3_set_default_legacy_transport(
 );
 
 // --------- SIGN_ACCOUNT --------------------
-
+/**
+ * defines the type of signer used
+ */
+typedef enum {
+  SIGNER_ECDSA   = 1,
+  SIGNER_EIP1271 = 2
+} in3_signer_type_t;
 /**
  * action context when retrieving the account of a signer.
  */
 typedef struct sign_account_ctx {
-  struct in3_ctx* ctx;     /**< the context of the request in order report errors */
-  address_t       account; /**< the account to use for the signature */
+  struct in3_ctx*   ctx;         /**< the context of the request in order report errors */
+  address_t         account;     /**< the account to use for the signature */
+  in3_signer_type_t signer_type; /**< the type of the signer used for this account.*/
 } in3_sign_account_ctx_t;
 
 // ----------- SIGN_PREPARE ---------------
@@ -230,11 +237,11 @@ typedef enum {
  * signing context. This Context is passed to the signer-function. 
  */
 typedef struct sign_ctx {
-  uint8_t            signature[65]; /**< the resulting signature needs to be writte into these bytes */
-  d_signature_type_t type;          /**< the type of signature*/
-  struct in3_ctx*    ctx;           /**< the context of the request in order report errors */
-  bytes_t            message;       /**< the message to sign*/
-  bytes_t            account;       /**< the account to use for the signature */
+  bytes_t            signature; /**< the resulting signature  */
+  d_signature_type_t type;      /**< the type of signature*/
+  struct in3_ctx*    ctx;       /**< the context of the request in order report errors */
+  bytes_t            message;   /**< the message to sign*/
+  bytes_t            account;   /**< the account to use for the signature */
 } in3_sign_ctx_t;
 
 /**
@@ -254,8 +261,9 @@ bytes_t in3_sign_ctx_get_account(
 /**
  * helper function to retrieve the signature from a in3_sign_ctx_t
  */
-uint8_t* in3_sign_ctx_get_signature(
-    in3_sign_ctx_t* ctx /**< the signer context */
+void in3_sign_ctx_set_signature_hex(
+    in3_sign_ctx_t* ctx,      /**< the signer context */
+    const char*     signature /**< the signature in hex */
 );
 
 /**
