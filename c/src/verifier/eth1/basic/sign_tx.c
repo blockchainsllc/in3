@@ -277,6 +277,8 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   address_t  from;
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
 
+  TRY(get_from_address(tx_params + 1, ctx, from));
+
   // is there a pending signature?
   // we get the raw transaction from this request
   in3_ctx_t* sig_ctx = ctx_find_required(ctx, "sign_ec_hash");
@@ -285,28 +287,26 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
     unsigned_tx = bytes(_malloc(raw.len), raw.len);
     memcpy(unsigned_tx.data, raw.data, raw.len);
   }
-
-  TRY(get_from_address(tx_params + 1, ctx, from));
-  TRY(unsigned_tx.data ? IN3_OK : eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
+  else
+    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (unsigned_tx.data) _free(unsigned_tx.data);)
 
   // build the RPC-request
-  sb_t* sb = sb_new("{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[");
-  sb_add_bytes(sb, "", &signed_tx, 1, false);
-  sb_add_chars(sb, "]");
-  add_req_id(sb, d_get_longk(req, K_ID));
-  sb_add_chars(sb, "}");
+  sb_t sb = {0};
+  sb_add_rawbytes(&sb, "{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[\"0x", signed_tx, 0);
+  sb_add_chars(&sb, "\"]");
+  add_req_id(&sb, d_get_longk(req, K_ID));
+  sb_add_chars(&sb, "}");
 
   // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
   _free(signed_tx.data);
   json_free(ctx->request_context);
 
   // set the new RPC-Request.
-  ctx->request_context                            = parse_json(sb->data);
-  ctx->requests[0]                                = ctx->request_context->result;
-  in3_cache_add_ptr(&ctx->cache, sb->data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-  _free(sb);                                                                                         // and we only free the stringbuilder, but not the data itself.
+  ctx->request_context                           = parse_json(sb.data);
+  ctx->requests[0]                               = ctx->request_context->result;
+  in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
   return IN3_OK;
 }
 
