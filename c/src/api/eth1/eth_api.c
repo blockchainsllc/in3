@@ -641,8 +641,8 @@ void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
       eth_log_free(curr);
       curr = next;
     }
-    _free(txr);
   }
+  _free(txr);
 }
 
 eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
