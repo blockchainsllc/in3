@@ -3,6 +3,7 @@ Resolves ENS domains to Ethereum addresses
 ENS is a smart-contract system that registers and resolves `.eth` domains.
 """
 import in3
+from in3.model import Chain
 
 
 def _print():
@@ -16,21 +17,21 @@ domain = 'depraz.eth'
 print('\nEthereum Name Service')
 
 # Instantiate In3 Client for Goerli
-chain = 'goerli'
+chain = Chain.GOERLI
 client = in3.Client(chain, cache_enabled=False)
 address = client.ens_address(domain)
 # owner = client.ens_owner(domain)
 # _print()
 
 # Instantiate In3 Client for Mainnet
-chain = 'mainnet'
+chain = Chain.MAINNET
 client = in3.Client(chain, cache_enabled=False)
 address = client.ens_address(domain)
 owner = client.ens_owner(domain)
 _print()
 
 # Instantiate In3 Client for Kovan
-chain = 'kovan'
+chain = Chain.KOVAN
 client = in3.Client(chain, cache_enabled=True)
 try:
     address = client.ens_address(domain)

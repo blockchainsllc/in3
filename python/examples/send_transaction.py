@@ -5,6 +5,7 @@ Works with included `data` field for smart-contract calls.
 """
 import json
 import in3
+from in3.model import Chain
 import time
 
 
@@ -17,8 +18,8 @@ receiver = input("Receiver address: ")
 #              1000000000 == 1 Gwei Check https://etherscan.io/gasTracker.
 value_in_wei = 1463926659
 # None for Eth mainnet
-chain = 'goerli'
-client = in3.Client(chain if chain else 'mainnet')
+chain = Chain.GOERLI
+client = in3.Client(chain if chain else Chain.MAINNET)
 # A transaction is only final if a certain number of blocks are mined on top of it.
 # This number varies with the chain's consensus algorithm. Time can be calculated over using:
 # wait_time = blocks_for_consensus * avg_block_time_in_secs

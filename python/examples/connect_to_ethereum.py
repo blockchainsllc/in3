@@ -2,6 +2,7 @@
 Connects to Ethereum and fetches attested information from each chain.
 """
 import in3
+from in3.model import Chain
 
 
 print('\nEthereum Main Network')
@@ -11,13 +12,13 @@ gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
 
 print('\nEthereum Kovan Test Network')
-client = in3.Client('kovan')
+client = in3.Client(Chain.KOVAN)
 latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
 
 print('\nEthereum Goerli Test Network')
-client = in3.Client('goerli')
+client = in3.Client(Chain.GOERLI)
 latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
