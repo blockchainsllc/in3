@@ -95,7 +95,7 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   else if (!(res = req_parse_result(req, data)))
     ret = ctx_set_error(ctx->ctx, "the input data can not be decoded", IN3_EINVAL);
   else {
-    char* result = d_create_json(res->result);
+    char* result = d_create_json(res, res->result);
     ret          = in3_rpc_handle_with_string(ctx, result);
     _free(result);
   }

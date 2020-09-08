@@ -48,6 +48,8 @@
 #include "../../third-party/crypto/secp256k1.h"
 #ifdef USE_CURL
 #include "../../transport/curl/in3_curl.h"
+#elif USE_WINHTTP
+#include "../../transport/winhttp/in3_winhttp.h"
 #else
 #include "../../transport/http/in3_http.h"
 #endif
@@ -317,7 +319,7 @@ static void execute(in3_t* c, FILE* f) {
           else {
             d_token_t* result = d_get(ctx->responses[0], K_RESULT);
             d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
-            char*      r      = d_create_json(result ? result : error);
+            char*      r      = d_create_json(ctx->response_context, result ? result : error);
             if (result)
               printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
             else
@@ -415,8 +417,10 @@ uint64_t getchain_id(char* name) {
 
 // set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
-  c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
-  if (c->chain_id == 0xFFFFL) {
+  c->chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
+  if (c->chain_id == CHAIN_ID_LOCAL) {
+    BIT_CLEAR(c->chain_id, FLAGS_AUTO_UPDATE_LIST);
+    c->proof           = PROOF_NONE;
     in3_chain_t* chain = in3_get_chain(c);
     if (strstr(id, "://")) { // its a url
       if (!chain->nodelist)
@@ -617,6 +621,8 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
+#elif USE_WINHTTP
+  in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
 #else
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
@@ -639,6 +645,8 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
   in3_request_t* req = plugin_ctx;
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
+#elif USE_WINHTTP
+  in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
 #else
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #endif
@@ -722,11 +730,8 @@ int main(int argc, char* argv[]) {
   bool            to_eth           = false;
   plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
-#ifdef __MINGW32__
-  c->flags |= FLAGS_HTTP;
-#endif
-#ifndef USE_CURL
-  c->flags |= FLAGS_HTTP;
+#ifndef USE_WINHTTP
+  c->request_count = 1;
 #endif
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
@@ -977,7 +982,7 @@ int main(int argc, char* argv[]) {
     }
     json_ctx_t* res = req_parse_result(parseSignature(sig), d_to_bytes(d_get_at(parse_json(params)->result, 0)));
     if (json)
-      printf("%s\n", d_create_json(res->result));
+      printf("%s\n", d_create_json(res, res->result));
     else
       print_val(res->result);
     return 0;
@@ -1044,6 +1049,8 @@ int main(int argc, char* argv[]) {
           r.payload               = "";
 #ifdef USE_CURL
           send_curl(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
+#elif USE_WINHTTP
+          send_winhttp(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #else
           send_http(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #endif
@@ -1192,9 +1199,8 @@ int main(int argc, char* argv[]) {
     }
     else
       json = (char*) readFile(stdin).data;
-    d_track_keynames(1);
-    json_ctx_t*  j    = parse_json(json);
-    chainspec_t* spec = chainspec_create_from_json(j->result);
+    json_ctx_t*  j    = parse_json_indexed(json);
+    chainspec_t* spec = chainspec_create_from_json(j);
     if (validators) {
       // first PoA without validators-list
       for (uint32_t i = 0; i < spec->consensus_transitions_len; i++) {
@@ -1342,7 +1348,7 @@ int main(int argc, char* argv[]) {
         uint8_t*    tmp = alloca(l + 1);
         json_ctx_t* res = req_parse_result(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)));
         if (json)
-          printf("%s\n", d_create_json(res->result));
+          printf("%s\n", d_create_json(res, res->result));
         else
           print_val(res->result);
       }

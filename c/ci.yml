@@ -54,7 +54,7 @@ win_mingw:
     - .conanbuild
     - .only_full
   variables:
-    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=false"
+    CONAN_OPTS: "-DUSE_CURL=false -DUSE_WINHTTP=true -DJAVA=false"
     BUILD: "win_build"
 
 win_jni:

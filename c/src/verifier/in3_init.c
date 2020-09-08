@@ -3,8 +3,13 @@
 #include "../core/client/plugin.h"
 #include "../pay/eth/pay_eth.h"
 #include "../pay/zksync/zksync.h"
+#ifdef USE_CURL
 #include "../transport/curl/in3_curl.h"
+#elif USE_WINHTTP
+#include "../transport/winhttp/in3_winhttp.h"
+#else
 #include "../transport/http/in3_http.h"
+#endif
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
@@ -43,6 +48,8 @@ static void init_transport() {
 #ifdef TRANSPORTS
 #ifdef USE_CURL
   in3_register_default(in3_register_curl);
+#elif USE_WINHTTP
+  in3_register_default(in3_register_winhttp);
 #else
   in3_register_default(in3_register_http);
 #endif /* USE_CURL */

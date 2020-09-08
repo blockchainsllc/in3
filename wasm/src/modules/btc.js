@@ -1,3 +1,5 @@
+in3w.extensions.push(c => c.btc = new BtcAPI(c))
+
 class BtcAPI {
   constructor(client) {
     this.client = client

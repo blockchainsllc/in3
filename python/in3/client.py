@@ -4,6 +4,7 @@ from in3.eth.api import EthereumApi
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
+from in3.exception import EnsDomainFormatException
 from in3.model import In3Node, NodeList, ClientConfig, chain_configs, Chain
 from in3.transport import https_transport
 
@@ -73,7 +74,7 @@ class Client:
             node (str): Formatted string referred as `node` in ENS documentation
         """
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise EnsDomainFormatException()
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'hash')
 
     def ens_address(self, domain_name: str, registry: str = None) -> str:
@@ -90,7 +91,7 @@ class Client:
         if registry:
             registry = self._factory.get_address(registry)
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise EnsDomainFormatException()
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'addr', registry)
 
     def ens_owner(self, domain_name: str, registry: str = None) -> str:
@@ -105,7 +106,7 @@ class Client:
         if registry:
             registry = self._factory.get_address(registry)
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise EnsDomainFormatException()
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'owner', registry)
 
     def ens_resolver(self, domain_name: str, registry: str = None) -> str:
@@ -120,7 +121,7 @@ class Client:
         if registry:
             registry = self._factory.get_address(registry)
         if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
-            raise AssertionError('Client: ENS domain name must end with .ens')
+            raise EnsDomainFormatException()
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'resolver', registry)
 
 

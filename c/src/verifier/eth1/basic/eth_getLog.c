@@ -222,6 +222,10 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
   for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
     sprintf(xtmp, "0x%" PRIx64, d_get_longk(it.token, K_NUMBER));
+    if (strlen(xtmp) % 2) {
+      memmove(xtmp + 3, xtmp + 2, strlen(xtmp) - 1);
+      xtmp[2] = '0';
+    }
     // verify that block number matches key
     if (key(xtmp) != it.token->key)
       return vc_err(vc, "block number mismatch");
