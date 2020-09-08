@@ -4,6 +4,7 @@ MVC Pattern Model domain classes for the Incubed client module
 import warnings
 
 from in3.eth.model import DataTransferObject, Account
+from in3.eth.constants import Chain
 
 
 class In3Node(DataTransferObject):
@@ -51,15 +52,6 @@ class NodeList(DataTransferObject):
         self.registryId = registryId
         self.lastBlockNumber = lastBlockNumber
         self.totalServers = totalServers
-
-
-class Chain:
-    MAINNET = "mainnet"
-    KOVAN = "kovan"
-    EVAN = "evan"
-    GOERLI = "goerli"
-    IPFS = "ipfs"
-    EWC = "ewc"
 
 
 class ClientConfig(DataTransferObject):

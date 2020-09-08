@@ -4,7 +4,7 @@ Integrated tests for `in3.eth.contract` module.
 import unittest
 
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 from tests.integrated.mock.config import mock_config
 from tests.integrated.mock.transport import mock_transport
 

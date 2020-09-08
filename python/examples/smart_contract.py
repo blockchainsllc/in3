@@ -3,7 +3,7 @@ Manually calling ENS smart-contract
 ![UML Sequence Diagram of how Ethereum Name Service ENS resolves a name.](https://lh5.googleusercontent.com/_OPPzaxTxKggx9HuxloeWtK8ggEfIIBKRCEA6BKMwZdzAfUpIY6cz7NK5CFmiuw7TwknbhFNVRCJsswHLqkxUEJ5KdRzpeNbyg8_H9d2RZdG28kgipT64JyPZUP--bAizozaDcxCq34)
 """
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 
 
 client = in3.Client(Chain.GOERLI)

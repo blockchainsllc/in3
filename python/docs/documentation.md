@@ -77,7 +77,7 @@ source : [in3-c/python/examples/connect_to_ethereum.py](https://github.com/slock
 Connects to Ethereum and fetches attested information from each chain.
 """
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 
 
 print('\nEthereum Main Network')
@@ -126,7 +126,7 @@ source : [in3-c/python/examples/incubed_network.py](https://github.com/slockit/i
 Shows Incubed Network Nodes Stats
 """
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 
 print('\nEthereum Goerli Test Network')
 client = in3.Client(Chain.GOERLI)
@@ -212,7 +212,7 @@ Resolves ENS domains to Ethereum addresses
 ENS is a smart-contract system that registers and resolves `.eth` domains.
 """
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 
 
 def _print():
@@ -276,7 +276,7 @@ Works with included `data` field for smart-contract calls.
 """
 import json
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 import time
 
 
@@ -367,7 +367,7 @@ Manually calling ENS smart-contract
 ![UML Sequence Diagram of how Ethereum Name Service ENS resolves a name.](https://lh5.googleusercontent.com/_OPPzaxTxKggx9HuxloeWtK8ggEfIIBKRCEA6BKMwZdzAfUpIY6cz7NK5CFmiuw7TwknbhFNVRCJsswHLqkxUEJ5KdRzpeNbyg8_H9d2RZdG28kgipT64JyPZUP--bAizozaDcxCq34)
 """
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 
 
 client = in3.Client(Chain.GOERLI)
@@ -423,7 +423,7 @@ import base64
 import json
 
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 import hashlib
 import random
 import time

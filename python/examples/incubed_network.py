@@ -2,7 +2,7 @@
 Shows Incubed Network Nodes Stats
 """
 import in3
-from in3.model import Chain
+from in3.eth.constants import Chain
 
 print('\nEthereum Goerli Test Network')
 client = in3.Client(Chain.GOERLI)
