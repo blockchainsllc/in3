@@ -129,7 +129,7 @@ static void test_bulk_response() {
 
 static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
-  eth_register_request_signer(c);
+  eth_register_pk_signer(c);
   char* err = in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
   TEST_ASSERT_NULL_MESSAGE(err, err);
   c->flags = FLAGS_INCLUDE_CODE;
@@ -269,7 +269,7 @@ static void test_configure() {
 
 static void test_configure_validation() {
   in3_t* c = in3_for_chain(0);
-  eth_register_request_signer(c);
+  eth_register_pk_signer(c);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
 

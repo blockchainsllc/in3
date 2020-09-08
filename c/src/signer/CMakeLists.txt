@@ -31,8 +31,9 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-
-add_subdirectory(pk-signer)
+if (PK_SIGNER)
+  add_subdirectory(pk-signer)
+endif()
 
 if (LEDGER_NANO)
   add_subdirectory(ledger-nano/signer)

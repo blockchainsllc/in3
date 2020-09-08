@@ -81,10 +81,15 @@ OPTION(POA "support POA verification including validatorlist updates" OFF)
 OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
 OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" OFF)
 OPTION(SENTRY "Enable Sentry" OFF)
+OPTION(PK_SIGNER "Enable Signing with private keys" ON)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
 ENDIF (POA)
+
+IF (PK_SIGNER)
+  ADD_DEFINITIONS(-DPK_SIGNER)
+ENDIF (PK_SIGNER)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)

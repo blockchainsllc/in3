@@ -3,6 +3,7 @@
 #include "../core/client/plugin.h"
 #include "../pay/eth/pay_eth.h"
 #include "../pay/zksync/zksync.h"
+#include "../signer/pk-signer/signer.h"
 #include "../third-party/zkcrypto/lib.h"
 #ifdef USE_CURL
 #include "../transport/curl/in3_curl.h"
@@ -49,6 +50,9 @@ static void init_verifier() {
 #endif
 #ifdef SENTRY
   in3_register_default(in3_register_sentry);
+#endif
+#ifdef PK_SIGN
+  in3_register_default(eth_register_pk_signer);
 #endif
 }
 static void init_transport() {

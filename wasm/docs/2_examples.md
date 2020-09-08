@@ -20,13 +20,10 @@ async function showLatestBlock() {
         chainId: 0x5 // use goerli
     })
 
-    // send raw RPC-Request
-    const lastBlockResponse = await c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+    // send raw RPC-Request (this would throw if the response contains an error)
+    const lastBlockResponse = await c.sendRPC('eth_getBlockByNumber', ['latest', false])
 
-    if (lastBlockResponse.error)
-        console.error("Error getting the latest block : ", lastBlockResponse.error)
-    else
-        console.log("latest Block: ", JSON.stringify(lastBlockResponse.result, null, 2))
+    console.log("latest Block: ", JSON.stringify(lastBlockResponse, null, 2))
 
     // clean up
     c.free()
@@ -105,9 +102,7 @@ class Sha256Plugin {
 
 async function registerPlugin() {
   // create new incubed instance
-  const client = new IN3({
-    chainId: 'goerli'
-  })
+  const client = new IN3()
 
   // register the plugin
   client.registerPlugin(new Sha256Plugin())
