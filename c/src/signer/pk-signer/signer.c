@@ -170,7 +170,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
     case PLGN_ACT_RPC_HANDLE: {
       in3_rpc_handle_ctx_t* ctx    = action_ctx;
       char*                 method = d_get_stringk(ctx->request, K_METHOD);
-      if (strcmp(method, "in3_addRawKey")) {
+      if (strcmp(method, "in3_addRawKey") == 0) {
         d_token_t* t = d_get(ctx->request, K_PARAMS);
         if (d_len(t) != 1 || d_type(t + 1) != T_BYTES || d_len(t + 1) != 32)
           return ctx_set_error(ctx->ctx, "one argument with 32 bytes is required!", IN3_EINVAL);
