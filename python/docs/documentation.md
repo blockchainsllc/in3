@@ -77,6 +77,7 @@ source : [in3-c/python/examples/connect_to_ethereum.py](https://github.com/slock
 Connects to Ethereum and fetches attested information from each chain.
 """
 import in3
+from in3.model import Chain
 
 
 print('\nEthereum Main Network')
@@ -86,13 +87,13 @@ gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
 
 print('\nEthereum Kovan Test Network')
-client = in3.Client('kovan')
+client = in3.Client(Chain.KOVAN)
 latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
 
 print('\nEthereum Goerli Test Network')
-client = in3.Client('goerli')
+client = in3.Client(Chain.GOERLI)
 latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
@@ -125,9 +126,10 @@ source : [in3-c/python/examples/incubed_network.py](https://github.com/slockit/i
 Shows Incubed Network Nodes Stats
 """
 import in3
+from in3.model import Chain
 
 print('\nEthereum Goerli Test Network')
-client = in3.Client('goerli')
+client = in3.Client(Chain.GOERLI)
 node_list = client.refresh_node_list()
 print('\nIncubed Registry:')
 print('\ttotal servers:', node_list.totalServers)
@@ -210,6 +212,7 @@ Resolves ENS domains to Ethereum addresses
 ENS is a smart-contract system that registers and resolves `.eth` domains.
 """
 import in3
+from in3.model import Chain
 
 
 def _print():
@@ -223,21 +226,21 @@ domain = 'depraz.eth'
 print('\nEthereum Name Service')
 
 # Instantiate In3 Client for Goerli
-chain = 'goerli'
+chain = Chain.GOERLI
 client = in3.Client(chain, cache_enabled=False)
 address = client.ens_address(domain)
 # owner = client.ens_owner(domain)
 # _print()
 
 # Instantiate In3 Client for Mainnet
-chain = 'mainnet'
+chain = Chain.MAINNET
 client = in3.Client(chain, cache_enabled=False)
 address = client.ens_address(domain)
 owner = client.ens_owner(domain)
 _print()
 
 # Instantiate In3 Client for Kovan
-chain = 'kovan'
+chain = Chain.KOVAN
 client = in3.Client(chain, cache_enabled=True)
 try:
     address = client.ens_address(domain)
@@ -273,6 +276,7 @@ Works with included `data` field for smart-contract calls.
 """
 import json
 import in3
+from in3.model import Chain
 import time
 
 
@@ -285,8 +289,8 @@ receiver = input("Receiver address: ")
 #              1000000000 == 1 Gwei Check https://etherscan.io/gasTracker.
 value_in_wei = 1463926659
 # None for Eth mainnet
-chain = 'goerli'
-client = in3.Client(chain if chain else 'mainnet')
+chain = Chain.GOERLI
+client = in3.Client(chain if chain else Chain.MAINNET)
 # A transaction is only final if a certain number of blocks are mined on top of it.
 # This number varies with the chain's consensus algorithm. Time can be calculated over using:
 # wait_time = blocks_for_consensus * avg_block_time_in_secs
@@ -363,9 +367,10 @@ Manually calling ENS smart-contract
 ![UML Sequence Diagram of how Ethereum Name Service ENS resolves a name.](https://lh5.googleusercontent.com/_OPPzaxTxKggx9HuxloeWtK8ggEfIIBKRCEA6BKMwZdzAfUpIY6cz7NK5CFmiuw7TwknbhFNVRCJsswHLqkxUEJ5KdRzpeNbyg8_H9d2RZdG28kgipT64JyPZUP--bAizozaDcxCq34)
 """
 import in3
+from in3.model import Chain
 
 
-client = in3.Client('goerli')
+client = in3.Client(Chain.GOERLI)
 domain_name = client.ens_namehash('depraz.eth')
 ens_registry_addr = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
 ens_resolver_abi = 'resolver(bytes32):address'
@@ -418,13 +423,14 @@ import base64
 import json
 
 import in3
+from in3.model import Chain
 import hashlib
 import random
 import time
 
 if __name__ == '__main__':
 
-    c = in3.Client(chain='ewc', in3_config=in3.ClientConfig(transport_binary_format=True))
+    c = in3.Client(chain=Chain.EWC, in3_config=in3.ClientConfig(transport_binary_format=True))
 
     smart_meter_registry_addr = '0xf23FF7472FC62C6bEe2F960f5b4170Ab3C1C26d2'
     # meter, bucket, operator, timestamp, data

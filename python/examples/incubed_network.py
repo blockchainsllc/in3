@@ -2,9 +2,10 @@
 Shows Incubed Network Nodes Stats
 """
 import in3
+from in3.model import Chain
 
 print('\nEthereum Goerli Test Network')
-client = in3.Client('goerli')
+client = in3.Client(Chain.GOERLI)
 node_list = client.refresh_node_list()
 print('\nIncubed Registry:')
 print('\ttotal servers:', node_list.totalServers)

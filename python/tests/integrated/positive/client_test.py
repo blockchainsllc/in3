@@ -2,9 +2,9 @@
 Integrated tests for `in3` module. Doesnt test submodules.
 """
 import unittest
-from pathlib import Path
 
 import in3
+from in3.model import Chain
 from tests.integrated.mock.config import mock_config
 from tests.integrated.mock.transport import mock_transport
 
@@ -18,7 +18,7 @@ class MainNetClientTest(unittest.TestCase):
     def test_configure(self):
         client = in3.Client()
         self.assertIsInstance(client, in3.Client)
-        client = in3.Client('mainnet')
+        client = in3.Client(Chain.MAINNET)
         self.assertIsInstance(client, in3.Client)
         client = in3.Client('mainNet')
         self.assertIsInstance(client, in3.Client)
@@ -72,15 +72,15 @@ class MainNetClientCachedTest(MainNetClientTest):
 class KovanClientTest(MainNetClientTest):
 
     def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(Chain.KOVAN, in3_config=mock_config)
+        self.client = in3.Client(Chain.KOVAN, in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
-        client = in3.Client('kovan')
+        client = in3.Client(Chain.KOVAN)
         self.assertIsInstance(client, in3.Client)
         client = in3.Client('koVan')
         self.assertIsInstance(client, in3.Client)
-        client = in3.Client('kovan', in3.model.ClientConfig())
+        client = in3.Client(Chain.KOVAN, in3.model.ClientConfig())
         self.assertIsInstance(client, in3.Client)
 
     def test_ens_resolve(self):
@@ -91,15 +91,15 @@ class KovanClientTest(MainNetClientTest):
 class GoerliClientTest(MainNetClientTest):
 
     def setUp(self):
-        # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(Chain.GOERLI, in3_config=mock_config)
+        self.client = in3.Client(Chain.GOERLI, in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
-        client = in3.Client('goerli')
+        client = in3.Client(Chain.GOERLI)
         self.assertIsInstance(client, in3.Client)
         client = in3.Client('goErli')
         self.assertIsInstance(client, in3.Client)
-        client = in3.Client('goerli', in3.model.ClientConfig())
+        client = in3.Client(Chain.GOERLI, in3.model.ClientConfig())
         self.assertIsInstance(client, in3.Client)
 
     def test_ens_resolve(self):

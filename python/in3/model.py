@@ -53,6 +53,15 @@ class NodeList(DataTransferObject):
         self.totalServers = totalServers
 
 
+class Chain:
+    MAINNET = "mainnet"
+    KOVAN = "kovan"
+    EVAN = "evan"
+    GOERLI = "goerli"
+    IPFS = "ipfs"
+    EWC = "ewc"
+
+
 class ClientConfig(DataTransferObject):
     """
     Determines the behavior of the in3 client, which chain to connect to and how to manage information security policies.
@@ -139,43 +148,43 @@ class ChainConfig:
 
 
 chain_configs = {
-    "mainnet": ChainConfig(
+    Chain.MAINNET: ChainConfig(
         chain_id=int(0x1),
-        chain_id_alias="mainnet",
+        chain_id_alias=Chain.MAINNET,
         client_config=ClientConfig(
             chain_finality_threshold=10,
             latest_block_stall=10,
             node_signatures=2)
     ),
-    "kovan": ChainConfig(
+    Chain.KOVAN: ChainConfig(
         chain_id=int(0x2a),
-        chain_id_alias="kovan",
+        chain_id_alias=Chain.KOVAN,
         client_config=ClientConfig(
             chain_finality_threshold=1,
             latest_block_stall=6,
             node_signatures=1,
             node_signature_consensus=3)
     ),
-    "evan": ChainConfig(
+    Chain.EVAN: ChainConfig(
         chain_id=int(0x4b1),
-        chain_id_alias="evan",
+        chain_id_alias=Chain.EVAN,
         client_config=ClientConfig(
             chain_finality_threshold=1,
             latest_block_stall=6,
             node_signatures=0,
             node_signature_consensus=5)
     ),
-    "goerli": ChainConfig(
+    Chain.GOERLI: ChainConfig(
         chain_id=int(0x5),
-        chain_id_alias="goerli",
+        chain_id_alias=Chain.GOERLI,
         client_config=ClientConfig(
             chain_finality_threshold=1,
             latest_block_stall=6,
             node_signatures=2)
     ),
-    "ipfs": ChainConfig(
+    Chain.IPFS: ChainConfig(
         chain_id=int(0x7d0),
-        chain_id_alias="ipfs",
+        chain_id_alias=Chain.IPFS,
         client_config=ClientConfig(
             chain_finality_threshold=1,
             latest_block_stall=5,
@@ -183,9 +192,9 @@ chain_configs = {
             node_signature_consensus=1
         )
     ),
-    "ewc": ChainConfig(
+    Chain.EWC: ChainConfig(
         chain_id=int(0xf6),
-        chain_id_alias="ewc",
+        chain_id_alias=Chain.EWC,
         client_config=ClientConfig(
             chain_finality_threshold=1,
             latest_block_stall=6,

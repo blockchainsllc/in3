@@ -3,9 +3,10 @@ Manually calling ENS smart-contract
 ![UML Sequence Diagram of how Ethereum Name Service ENS resolves a name.](https://lh5.googleusercontent.com/_OPPzaxTxKggx9HuxloeWtK8ggEfIIBKRCEA6BKMwZdzAfUpIY6cz7NK5CFmiuw7TwknbhFNVRCJsswHLqkxUEJ5KdRzpeNbyg8_H9d2RZdG28kgipT64JyPZUP--bAizozaDcxCq34)
 """
 import in3
+from in3.model import Chain
 
 
-client = in3.Client('goerli')
+client = in3.Client(Chain.GOERLI)
 domain_name = client.ens_namehash('depraz.eth')
 ens_registry_addr = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
 ens_resolver_abi = 'resolver(bytes32):address'

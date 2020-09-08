@@ -4,6 +4,7 @@ Integrated negative tests for `in3` module. Doesnt test submodules.
 import unittest
 
 import in3
+from in3.model import Chain
 from tests.integrated.mock.config import mock_config
 from tests.integrated.mock.transport import mock_transport
 
@@ -158,15 +159,15 @@ class ClientParsingTest(unittest.TestCase):
 class KovanClientTest(ClientNegativeTest):
 
     def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(Chain.KOVAN, in3_config=mock_config)
+        self.client = in3.Client(Chain.KOVAN, in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 class GoerliClientTest(ClientNegativeTest):
 
     def setUp(self):
-        # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(Chain.GOERLI', in3_config=mock_config)
+        self.client = in3.Client(Chain.GOERLI, in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 if __name__ == '__main__':
