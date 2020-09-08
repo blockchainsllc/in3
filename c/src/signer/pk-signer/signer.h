@@ -59,6 +59,17 @@ typedef enum {
   hasher_sapling_preimage,
 } hasher_t;
 
+typedef struct signer_key {
+  bytes32_t pk;
+  address_t account;
+} signer_key_t;
+
+typedef struct signer_conf {
+  signer_key_t* keys;
+  int           len;
+
+} signer_conf_t;
+
 /**
  * simply signer with one private key.
  * 
