@@ -6,7 +6,7 @@
     "author": "Simon Jentzsch",
     "license": "(AGPL-3.0-or-later OR commercial)",
     "scripts": {
-        "doc": "typedoc --includeDeclarations --ignoreCompilerErrors --mode file --excludeExternals --out doc in3.d.ts"
+        "doc": "typedoc --includeDeclarations --ignoreCompilerErrors --mode file --excludeExternals --out doc index.d.ts"
     },
     "devDependencies": {
         "typedoc": "^0.15.0"
