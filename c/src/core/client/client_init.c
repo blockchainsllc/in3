@@ -309,6 +309,10 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->filters               = NULL;
   c->timeout               = 10000;
 
+#ifndef DEV_NO_INC_RPC_ID
+  c->id_count = 1;
+#endif
+
   in3_chain_t* chain = c->chains;
 
   if (!chain_id || chain_id == CHAIN_ID_MAINNET)

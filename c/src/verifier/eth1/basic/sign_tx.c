@@ -95,7 +95,7 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
   // allocate memory for the request-string
   char* req = _malloc(strlen(method) + strlen(params) + 200);
   // create it
-  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params);
   // and add the request context to the parent.
   return ctx_add_required(parent, ctx_new(parent->client, req));
 }
@@ -139,22 +139,6 @@ static in3_ret_t get_nonce_and_gasprice(bytes_t* nonce, bytes_t* gas_price, in3_
   }
 
   return ret;
-}
-
-/** adds the request id to the string if none was found it will generate one */
-static void add_req_id(sb_t* sb, uint64_t id) {
-  if (id) {
-    char tmp[16];
-
-#ifdef __ZEPHYR__
-    char bufTmp[21];
-    snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64_to_str(id, bufTmp, sizeof(bufTmp)));
-#else
-    snprintf(tmp, sizeof(tmp), ", \"id\":%" PRId64 "", id);
-    // sprintf(tmp, ", \"id\":%" PRId64 "", id);
-#endif
-    sb_add_chars(sb, tmp);
-  }
 }
 
 /** gets the v-value from the chain_id */
@@ -296,7 +280,6 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   sb_t sb = {0};
   sb_add_rawbytes(&sb, "{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[\"0x", signed_tx, 0);
   sb_add_chars(&sb, "\"]");
-  add_req_id(&sb, d_get_longk(req, K_ID));
   sb_add_chars(&sb, "}");
 
   // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
