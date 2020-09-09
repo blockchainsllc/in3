@@ -634,11 +634,13 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
 }
 
 void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
-  eth_log_t *curr = txr->logs, *next = NULL;
-  while (curr != NULL) {
-    next = curr->next;
-    eth_log_free(curr);
-    curr = next;
+  if (txr && txr->logs) {
+    eth_log_t *curr = txr->logs, *next = NULL;
+    while (curr != NULL) {
+      next = curr->next;
+      eth_log_free(curr);
+      curr = next;
+    }
   }
   _free(txr);
 }
