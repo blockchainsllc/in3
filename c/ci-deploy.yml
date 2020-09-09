@@ -59,7 +59,8 @@ readthedocs:
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - chmod 777 bin/*
-    - cd ../wasm_build/module
+    - cd ../wasm/src
+    - cp ../../wasm_build/module/index.d.ts .
     - npm --cache .npm i typedoc
     - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json index.d.ts
     - cat doc.json | ../../generator/bin/slockit-docu index.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
