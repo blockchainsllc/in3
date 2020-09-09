@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
  
  ## Contributors welcome!
  
- We at Slock.it believe in the power of the open source community. Feel free to open any issues you may come across, fork
+ We at Blockchains believe in the power of the open source community. Feel free to open any issues you may come across, fork
   the repository and integrate in your own projects. You can reach us on various social media platforms for any questions
   and suggestions.  
  

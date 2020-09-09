@@ -10,9 +10,9 @@
     <Description>Incubed client and provider for web3. Based on in3-c runtime.</Description>
     <RuntimeIdentifiers>osx-x64;linux-x64;win-x64;linux-arm64</RuntimeIdentifiers>
     <Version Condition="'$(version)' != ''">${version}</Version>
-    <RepositoryUrl>https://github.com/slockit/in3-c</RepositoryUrl>
+    <RepositoryUrl>https://github.com/blockchainsllc/in3-c</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageId>Slockit.In3</PackageId>
+    <PackageId>Blockchains.In3</PackageId>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageDocumentation>https://in3.readthedocs.io</PackageDocumentation>
@@ -29,7 +29,7 @@
       <Pack>true</Pack>
       <PackagePath>runtimes</PackagePath>
     </None>
-    <None Include="Slockit.In3.targets">
+    <None Include="Blockchains.In3.targets">
       <Pack>true</Pack>
       <PackagePath>\</PackagePath>
     </None>
