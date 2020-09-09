@@ -51,7 +51,7 @@ static void init_verifier() {
 #ifdef SENTRY
   in3_register_default(in3_register_sentry);
 #endif
-#ifdef PK_SIGN
+#ifdef PK_SIGNER
   in3_register_default(eth_register_pk_signer);
 #endif
 }
