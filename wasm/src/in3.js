@@ -240,7 +240,7 @@ class IN3 {
      */
     async sendRequest(rpc) {
         // ensure we have created the instance.
-        if (!this.ptr) await this._ensure_ptr();
+        if (!this.ptr) await this._ensure_ptr()
         if (this.needsSetConfig) this.setConfig()
 
         // currently we don't handle bulks directly
@@ -325,7 +325,7 @@ class IN3 {
 
     async sendRPC(method, params = []) {
         const res = await this.sendRequest({ method, params })
-        if (res.error) throw new Error(res.error.message || res.error)
+        if (res.error) throw new Error('Error sending ' + method + '(' + params.map(JSON.stringify).join() + '):' + res.error.message || res.error)
         return res.result
     }
 
