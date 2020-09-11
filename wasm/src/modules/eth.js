@@ -1,8 +1,17 @@
 in3w.extensions.push(c => c.eth = new EthAPI(c))
+class AccountAPI {
+    constructor(client) { this.client = client }
 
+    add(pk) {
+        return this.client.sendRPC("in3_addRawKey", [toHex(pk)])
+    }
+}
 class EthAPI {
 
-    constructor(client) { this.client = client }
+    constructor(client) {
+        this.client = client
+        this.accounts = new AccountAPI(client)
+    }
 
     send(name, ...params) {
         return this.client.sendRPC(name, params || [])

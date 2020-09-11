@@ -205,11 +205,40 @@ export interface Web3Event {
 
 }
 
+/**
+ * The Account API
+ */
+export interface AccountAPI<BufferType> {
+
+    /**
+     * adds a private key to sign with.
+     * This method returns address of the pk
+     * @param pk 
+     */
+    add(pk: string | BufferType): Promise<string>
 
 
+}
+
+/**
+ * The API for ethereum operations.
+ */
 export interface EthAPI<BigIntType, BufferType> {
+    /**
+     * the client used.
+     */
     client: IN3Generic<BigIntType, BufferType>;
+
+    /**
+     * a custom signer
+     */
     signer?: Signer<BigIntType, BufferType>;
+
+    /**
+     * accounts-API
+     */
+    accounts: AccountAPI<BufferType>;
+
     constructor(client: IN3Generic<BigIntType, BufferType>);
     /**
      * Returns the number of most recent block. (as number)
@@ -378,8 +407,6 @@ export interface EthAPI<BigIntType, BufferType> {
     /** sends a Transaction */
     sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
 
-
-
     web3ContractAt(abi: ABI[], address?: Address, options?: {
         gasPrice?: string | number | bigint,
         gas?: string | number | bigint,
@@ -482,4 +509,6 @@ export interface EthAPI<BigIntType, BufferType> {
     };
     decodeEventData(log: Log, d: ABI): any;
     hashMessage(data: Data): Hex;
+
+
 }

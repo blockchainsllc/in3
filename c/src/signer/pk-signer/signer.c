@@ -179,6 +179,19 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
         add_key(ctx->ctx->client, d_bytes(t + 1)->data);
         return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
       }
+      if (strcmp(method, "eth_accounts") == 0) {
+        sb_t*                  sb    = in3_rpc_handle_start(ctx);
+        bool                   first = true;
+        in3_sign_account_ctx_t sc    = {0};
+        for (in3_plugin_t* p = ctx->ctx->client->plugins; p; p = p->next) {
+          if (p->acts & PLGN_ACT_SIGN_ACCOUNT && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc) == IN3_OK) {
+            sb_add_rawbytes(sb, first ? "[\"0x" : "\",\"0x", bytes(sc.account, 20), 20);
+            first = false;
+          }
+        }
+        sb_add_chars(sb, first ? "[]" : "\"]");
+        return in3_rpc_handle_finish(ctx);
+      }
       return IN3_EIGNORE;
     }
 
