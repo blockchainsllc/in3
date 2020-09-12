@@ -106,7 +106,7 @@ class ParsingTest(unittest.TestCase):
 class NegativeGoerliTest(EthereumNegativeTest):
 
     def setUp(self):
-        # self.client = in3.Client(Chain.goerli, in3_config=mock_config)
+        # self.client = in3.Client(Chain.GOERLI, in3_config=mock_config)
         self.client = in3.Client(Chain.GOERLI, in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
