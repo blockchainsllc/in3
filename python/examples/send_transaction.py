@@ -5,7 +5,7 @@ Works with included `data` field for smart-contract calls.
 """
 import json
 import in3
-from in3.eth.constants import Chain
+from in3.eth.enums import Chain
 import time
 
 

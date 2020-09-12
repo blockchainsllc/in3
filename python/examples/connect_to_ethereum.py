@@ -2,7 +2,7 @@
 Connects to Ethereum and fetches attested information from each chain.
 """
 import in3
-from in3.eth.constants import Chain
+from in3.eth.enums import Chain
 
 
 print('\nEthereum Main Network')

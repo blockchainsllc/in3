@@ -4,7 +4,7 @@ MVC Pattern Model domain classes for the Incubed client module
 import warnings
 
 from in3.eth.model import DataTransferObject, Account
-from in3.eth.constants import Chain
+from in3.eth.enums import Chain
 
 
 class In3Node(DataTransferObject):

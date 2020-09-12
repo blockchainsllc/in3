@@ -3,7 +3,7 @@ Resolves ENS domains to Ethereum addresses
 ENS is a smart-contract system that registers and resolves `.eth` domains.
 """
 import in3
-from in3.eth.constants import Chain
+from in3.eth.enums import Chain
 
 
 def _print():
