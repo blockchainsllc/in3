@@ -105,8 +105,8 @@ describe('EthAPI-Tests', () => {
 
         assert.equal('test', await c.sendRPC('rpc_test'))
         assert.equal(true, await c.sendRPC('test2').catch(() => true))
-        assert.equal('RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
-        assert.equal('RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
+        assert.equal('Error sending rpc_error():RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
+        assert.equal('Error sending rpc_error():RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
 
     })
 
