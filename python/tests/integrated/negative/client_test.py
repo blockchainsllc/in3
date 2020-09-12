@@ -5,6 +5,7 @@ import unittest
 
 import in3
 from in3.eth.enums import Chain
+from in3.exception import UnsupportedChainException
 from tests.integrated.mock.config import mock_config
 from tests.integrated.mock.transport import mock_transport
 
@@ -53,21 +54,21 @@ class ClientParsingTest(unittest.TestCase):
         self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_instantiate(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client(None)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client(1)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client(-1)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client('œ∑´´†√¨')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client('!@# asd')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client({1: 1})
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client((1))
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(UnsupportedChainException):
             in3.Client([1])
 
     def test_configure(self):
