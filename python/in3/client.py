@@ -4,7 +4,7 @@ from in3.eth.api import EthereumApi
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
-from in3.exception import EnsDomainFormatException
+from in3.exception import EnsDomainFormatException, UnsupportedChainException
 from in3.model import In3Node, NodeList, ClientConfig, chain_configs, Chain
 from in3.transport import https_transport
 
@@ -26,10 +26,7 @@ class Client:
                  transport=https_transport):
 
         if not isinstance(chain, str) or chain.lower() not in [Chain.MAINNET, Chain.KOVAN, Chain.GOERLI, Chain.EWC]:
-            err_text = 'Client: Chain name not supported. Try {}, {}, {}, or {}.'.format(
-                Chain.MAINNET, Chain.KOVAN, Chain.GOERLI, Chain.EWC
-            )
-            raise AssertionError(err_text)
+            raise UnsupportedChainException(chain)
         # TODO: Clear Chain-configs
         if in3_config and not isinstance(in3_config, ClientConfig):
             raise AssertionError('Client: Use in3.ClientConfig to create a new client configuration instance.')

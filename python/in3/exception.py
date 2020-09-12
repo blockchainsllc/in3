@@ -1,3 +1,6 @@
+from in3.eth.enums import Chain
+
+
 class IN3BaseException(Exception):
     """ In3 Base Exception """
     pass
@@ -36,3 +39,8 @@ class TransportException(IN3BaseException):
 class EnsDomainFormatException(IN3BaseException):
     def __init__(self):
         super().__init__('Client: ENS domain name must end with .eth')
+
+
+class UnsupportedChainException(IN3BaseException):
+    def __init__(self, chain):
+        super().__init__("Client: '{}' is not a supported chain. Try one of {}.".format(chain, Chain.options()))
