@@ -25,7 +25,7 @@ class Client:
     def __init__(self, chain: str = Chain.MAINNET, in3_config: ClientConfig = None, cache_enabled: bool = True,
                  transport=https_transport):
 
-        if not isinstance(chain, str) or chain.lower() not in [Chain.MAINNET, Chain.KOVAN, Chain.GOERLI, Chain.EWC]:
+        if not isinstance(chain, str) or chain.lower() not in Chain.options():
             raise UnsupportedChainException(chain)
         # TODO: Clear Chain-configs
         if in3_config and not isinstance(in3_config, ClientConfig):
