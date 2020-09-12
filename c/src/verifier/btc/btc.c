@@ -10,6 +10,23 @@
 #include "btc_types.h"
 #include <stdlib.h>
 #include <string.h>
+#define PRE_BIP_DISTANCE 200
+#ifdef BTC_PRE_BPI34
+#include "pre_bip34.h"
+static in3_ret_t check_pre_bip34(in3_vctx_t* vc, bytes_t finality_headers, uint64_t bn) {
+  bytes32_t blockhash;
+  uint64_t  checkpoint     = bn / PRE_BIP_DISTANCE + 1;
+  uint64_t  p              = checkpoint * PRE_BIP_DISTANCE - bn;
+  uint8_t   start_hash[16] = {0};
+  if (checkpoint * 12 + 12 >= btc_pre_bip34_len) return vc_err(vc, "Blocknumber not before bip34");
+  memcpy(start_hash + 4, btc_pre_bip34 + checkpoint * 12, 12);
+  if (finality_headers.len < p * 80) return vc_err(vc, "Not enough fnialiity headers");
+  btc_hash(bytes(finality_headers.data + (p - 1) * 80, 80), blockhash);
+  if (memcmp(blockhash, start_hash, 16)) return vc_err(vc, "invalid finality header");
+  return IN3_OK;
+}
+
+#endif
 
 // check if 2 byte arrays are equal where one is a bytes while the other one is a hex string (without 0x)
 static bool equals_hex(bytes_t data, char* hex) {
