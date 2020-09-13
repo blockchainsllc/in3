@@ -157,9 +157,9 @@ chain_configs = {
             node_signatures=1,
             node_signature_consensus=3)
     ),
-    "evan": ChainConfig(
+    Chain.EVAN: ChainConfig(
         chain_id=int(0x4b1),
-        chain_id_alias="evan",
+        chain_id_alias=Chain.EVAN,
         client_config=ClientConfig(
             chain_finality_threshold=1,
             latest_block_stall=6,
@@ -174,9 +174,9 @@ chain_configs = {
             latest_block_stall=6,
             node_signatures=2)
     ),
-    "ipfs": ChainConfig(
+    Chain.IPFS: ChainConfig(
         chain_id=int(0x7d0),
-        chain_id_alias="ipfs",
+        chain_id_alias=Chain.IPFS,
         client_config=ClientConfig(
             chain_finality_threshold=1,
             latest_block_stall=5,

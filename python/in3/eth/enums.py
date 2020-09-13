@@ -11,6 +11,8 @@ class Chain:
     KOVAN = "kovan"
     GOERLI = "goerli"
     EWC = "ewc"
+    IPFS = "ipfs"
+    EVAN = "evan"
 
     @staticmethod
     def options():

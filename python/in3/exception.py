@@ -41,6 +41,7 @@ class EnsDomainFormatException(IN3BaseException):
         super().__init__('Client: ENS domain name must end with .eth')
 
 
-class UnsupportedChainException(IN3BaseException):
-    def __init__(self, chain):
-        super().__init__("Client: '{}' is not a supported chain. Try one of {}.".format(chain, Chain.options()))
+class ChainNotFoundException(IN3BaseException):
+    def __init__(self, chain, supported_chains=None):
+        supported_chains = supported_chains or Chain.options()
+        super().__init__("Client: '{}' is not a supported chain. Try one of {}.".format(chain, supported_chains))
