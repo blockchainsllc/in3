@@ -63,7 +63,7 @@ in3_ret_t in3_plugin_register(
 /** registers a plugin and uses the function name as plugin name */
 #define plugin_register(c, acts, action_fn, data, replace_ex) in3_plugin_register(#action_fn, c, acts, action_fn, data, replace_ex)
 /**
- * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
+ * adds a plugin rregister function to the default. All defaults functions will automatically called and registered for every new in3_t instance.
  */
 void in3_register_default(plgn_register reg_fn);
 
