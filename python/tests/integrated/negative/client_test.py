@@ -4,6 +4,8 @@ Integrated negative tests for `in3` module. Doesnt test submodules.
 import unittest
 
 import in3
+from in3.eth.enums import Chain
+from in3.exception import ChainNotFoundException
 from tests.integrated.mock.config import mock_config
 from tests.integrated.mock.transport import mock_transport
 
@@ -52,21 +54,21 @@ class ClientParsingTest(unittest.TestCase):
         self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_instantiate(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client(None)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client(1)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client(-1)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client('œ∑´´†√¨')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client('!@# asd')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client({1: 1})
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client((1))
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ChainNotFoundException):
             in3.Client([1])
 
     def test_configure(self):
@@ -158,15 +160,15 @@ class ClientParsingTest(unittest.TestCase):
 class KovanClientTest(ClientNegativeTest):
 
     def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(Chain.KOVAN, in3_config=mock_config)
+        self.client = in3.Client(Chain.KOVAN, in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 class GoerliClientTest(ClientNegativeTest):
 
     def setUp(self):
-        # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(Chain.GOERLI', in3_config=mock_config)
+        self.client = in3.Client(Chain.GOERLI, in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 if __name__ == '__main__':

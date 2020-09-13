@@ -4,8 +4,8 @@ from in3.eth.api import EthereumApi
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
-from in3.exception import EnsDomainFormatException
-from in3.model import In3Node, NodeList, ClientConfig, chain_configs
+from in3.exception import EnsDomainFormatException, ChainNotFoundException
+from in3.model import In3Node, NodeList, ClientConfig, chain_configs, Chain
 from in3.transport import https_transport
 
 
@@ -16,16 +16,18 @@ class Client:
     Once with the latest list at hand, the client can request any other on-chain information using the same scheme.
     Args:
         chain (str): Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'kovan', 'goerli', 'ewc'.
+            Constants available in in3.model.Chain.
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
         cache_enabled (bool): False will disable local storage caching.
         transport (function): Transport function for custom request routing. Defaults to https.
     """
 
-    def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, cache_enabled: bool = True,
+    def __init__(self, chain: str = Chain.MAINNET, in3_config: ClientConfig = None, cache_enabled: bool = True,
                  transport=https_transport):
 
-        if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'kovan', 'goerli', 'ewc']:
-            raise AssertionError('Client: Chain name not supported. Try mainnet, kovan, goerli, ewc.')
+        supported_chains = [Chain.MAINNET, Chain.EWC, Chain.GOERLI, Chain.KOVAN]
+        if not chain or not isinstance(chain, str) or chain.lower() not in supported_chains:
+            raise ChainNotFoundException(chain, supported_chains)
         # TODO: Clear Chain-configs
         if in3_config and not isinstance(in3_config, ClientConfig):
             raise AssertionError('Client: Use in3.ClientConfig to create a new client configuration instance.')
