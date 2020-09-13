@@ -10,14 +10,14 @@
 #include "btc_types.h"
 #include <stdlib.h>
 #include <string.h>
-#define PRE_BIP_DISTANCE 200
 #ifdef BTC_PRE_BPI34
 #include "pre_bip34.h"
 static in3_ret_t check_pre_bip34(in3_vctx_t* vc, bytes_t finality_headers, uint64_t bn) {
   bytes32_t blockhash;
-  uint64_t  checkpoint     = bn / PRE_BIP_DISTANCE + 1;
-  uint64_t  p              = checkpoint * PRE_BIP_DISTANCE - bn;
+  uint64_t  checkpoint     = bn / PRE_BIP34_DISTANCE + 1;
+  uint64_t  p              = checkpoint * PRE_BIP34_DISTANCE - bn;
   uint8_t   start_hash[16] = {0};
+  if (bn > BIP34_START) return vc_err(vc, "block needs to support BIP34");
   if (checkpoint * 12 + 12 >= btc_pre_bip34_len) return vc_err(vc, "Blocknumber not before bip34");
   memcpy(start_hash + 4, btc_pre_bip34 + checkpoint * 12, 12);
   if (finality_headers.len < p * 80) return vc_err(vc, "Not enough fnialiity headers");
@@ -56,6 +56,15 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
   btc_tx_t    tx_data;
   btc_tx_in_t tx_in;
 
+  if (*header.data == 1 && memiszero(header.data + 1, 3)) {
+    *dst_block_number = (uint32_t) d_get_intk(proof, key("height"));
+    if (!*dst_block_number) return vc_err(vc, "missing height in proof for blocks pre bip34");
+#ifdef BTC_PRE_BPI34
+    return check_pre_bip34(vc, d_to_bytes(d_get(proof, key("final"))), *dst_block_number);
+#else
+    return vc_err(vc, "no pre bip34 support");
+#endif
+  }
   if (header.len != 80) return vc_err(vc, "invalid blockheader");
   if (!merkle_proof.len) return vc_err(vc, "missing merkle proof");
   if (!tx.len) return vc_err(vc, "missing coinbase tx");
@@ -93,10 +102,11 @@ btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, byt
  * verify the finality block.
  */
 in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality, bytes_t final_blocks, bytes32_t expected_target, uint64_t block_nr) {
-  if (!finality) return final_blocks.len == 0 ? IN3_OK : vc_err(vc, "gort finalily headers even though they were not expected");
+  if (!finality) return final_blocks.len == 0 ? IN3_OK : vc_err(vc, "got finalily headers even though they were not expected");
   bytes32_t parent_hash, tmp, target;
   in3_ret_t ret = IN3_OK;
   uint32_t  p   = 0;
+  if (block_nr <= BIP34_START) finality = max(finality, (int) final_blocks.len / 80);                           // for pre bip34 we take all headers, because btc_blocknumber already checked the length
   block_nr++;                                                                                                   // we start with the next block_nr
                                                                                                                 //
   memcpy(target, expected_target, 32);                                                                          // we start with the expected target, but know it may change if cross the dap

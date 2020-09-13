@@ -7,6 +7,9 @@
 #include "../../core/util/error.h"
 #include <stdint.h>
 
+#define PRE_BIP34_DISTANCE 200
+#define BIP34_START        227835
+
 /**
  * calculates the dap (Difficulty Adjustment Period) from the blocknumber
  */
