@@ -419,6 +419,10 @@ function soliditySha3(...args) {
     }).join() + ')', args)).substr(10)))
 }
 
+function isAddress(ad) {
+    return /^0x[0-9a-fA-F]{40}$/g.test(ad)
+}
+
 function createSignatureHash(def) {
     return keccak(def.name + createSignature(def.inputs))
 }
@@ -448,6 +452,7 @@ const util = {
     base64Decode,
     base64Encode,
     checkAddressChecksum,
+    isAddress,
     getVersion
 }
 

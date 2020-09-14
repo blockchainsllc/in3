@@ -696,6 +696,12 @@ export declare interface Utils<BufferType> {
     checkAddressChecksum(address: Address, chainId?: number): boolean
 
     /**
+     * checks whether the given address is a valid hex string with 0x-prefix and 20 bytes
+     * @param address the address (as hex)
+     */
+    isAddress(address: Address): boolean
+
+    /**
      * calculates the keccack hash for the given data.
      * @param data the data as Uint8Array or hex data.
      */
