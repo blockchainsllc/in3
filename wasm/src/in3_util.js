@@ -133,6 +133,9 @@ function private2address(pk) {
     return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength))
 }
 
+function checkAddressChecksum(ad, chain = 0) {
+    return toChecksumAddress(ad, chain = 0) === ad;
+}
 
 function abiEncode(sig, ...params) {
     const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
@@ -444,6 +447,7 @@ const util = {
     toUint8Array,
     base64Decode,
     base64Encode,
+    checkAddressChecksum,
     getVersion
 }
 

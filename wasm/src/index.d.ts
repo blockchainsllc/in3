@@ -688,6 +688,14 @@ export declare interface Utils<BufferType> {
     toChecksumAddress(address: Address, chainId?: number): Address
 
     /**
+     * checks whether the given address is a correct checksumAddress
+     * If the chainId is passed, it will be included accord to EIP 1191
+     * @param address the address (as hex)
+     * @param chainId the chainId (if supported)
+     */
+    checkAddressChecksum(address: Address, chainId?: number): boolean
+
+    /**
      * calculates the keccack hash for the given data.
      * @param data the data as Uint8Array or hex data.
      */
