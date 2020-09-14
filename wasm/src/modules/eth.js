@@ -94,7 +94,7 @@ class EthAPI {
      * Returns the balance of the account of given address in wei ().
      */
     getBalance(address, block = 'latest') {
-        return this.send('eth_getBalance', address, toHexBlock(block)).then(toBigInt)
+        return this.send('eth_getBalance', address, toHexBlock(block)).then(convertBigInt)
     }
 
     /**

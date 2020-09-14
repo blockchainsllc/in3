@@ -180,7 +180,7 @@ function convertType(val, t) {
         case 'uint32':
             return toNumber(val)
         default:
-            return t.startsWith('bytes') ? toHex(val) : toBigInt(val)
+            return t.startsWith('bytes') ? toHex(val) : convertBigInt(val)
     }
 }
 
@@ -433,7 +433,7 @@ const util = {
     toHex,
     toNumber,
     toUtf8,
-    toBigInt,
+    toBigInt: v => convertBigInt(v),
     toBuffer,
     toSimpleHex,
     toMinHex,
