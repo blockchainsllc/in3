@@ -4,14 +4,7 @@ const fixLength = (hex) => hex.length % 2 ? '0' + hex : hex
 let convertBigInt = toBigInt
 let convertBuffer = toUint8Array
 
-// Overriding default convert
-function setConvertBigInt(convertBigFn) {
-    convertBigInt = convertBigFn
-}
 
-function setConvertBuffer(convertBufFn) {
-    convertBuffer = convertBufFn
-}
 
 if (typeof (_free) == 'undefined') _free = function (ptr) {
     in3w.ccall("ifree", 'void', ['number'], [ptr])

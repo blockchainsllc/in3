@@ -465,6 +465,11 @@ IN3.setConvertBuffer = function (fn) {
     convertBuffer = fn
 }
 
+// change the Buffer
+IN3.setConvertBigInt = function (fn) {
+    convertBigInt = fn
+}
+
 // also support ES6-modules
 IN3.default = IN3
 
