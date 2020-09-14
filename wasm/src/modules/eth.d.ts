@@ -261,6 +261,10 @@ export interface EthAPI<BigIntType, BufferType> {
      */
     chainId(): Promise<string>;
     /**
+     * Returns the clientVersion. This may differ in case of an network, depending on the node it communicates with.
+     */
+    clientVersion(): Promise<string>;
+    /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
      */
     estimateGas(tx: Transaction): Promise<number>;

@@ -76,6 +76,12 @@ class EthAPI {
     chainId() {
         return this.send('eth_chainId')
     }
+    /**
+     * Returns the EIP155 chain ID used for transaction signing at the current best block. Null is returned if not available.
+     */
+    clientVersion() {
+        return this.send('web3_clientVersion')
+    }
 
     /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
