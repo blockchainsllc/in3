@@ -361,6 +361,7 @@ class EthAPI {
         const ob = {
             _in3: this.client,
             _eventHashes: {},
+            _address: address,
             options: {
                 ...options,
                 address,
@@ -386,7 +387,7 @@ class EthAPI {
                         data,
                         confirmations: ob.transactionConfirmationBlocks || 1
                     }).then(_ => {
-                        ob.address = _ && _.contractAddress
+                        ob.options.address = ob._address = _ && util.toChecksumAddress(_.contractAddress)
                         return ob
                     }),
                     encodeABI: () => data,

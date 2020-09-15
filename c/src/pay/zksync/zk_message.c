@@ -162,12 +162,20 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
   create_signed_bytes(&msg);
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+  in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
   if (signature.len == 65 && signature.data[64] < 27)
     signature.data[64] += 27; //because EIP155 chainID = 0
   // now create the packed sync transfer
   uint8_t raw[58], sig[96];
   TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
+
+  if (in3_log_level_is(LOG_DEBUG) || in3_log_level_is(LOG_TRACE)) {
+    char* hex = alloca(120);
+    bytes_to_hex(raw, 58, hex);
+    in3_log_debug("zksync_sign_transfer  bin :\n%s\n", hex);
+  }
+
   sb_add_chars(sb, "{\"type\":\"");
   sb_add_chars(sb, data->type == ZK_WITHDRAW ? "Withdraw" : "Transfer");
   sb_add_chars(sb, "\",\"accountId\":");
