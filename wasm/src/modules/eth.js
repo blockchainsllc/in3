@@ -338,7 +338,7 @@ class EthAPI {
 
     /** sends a Transaction */
     async sendTransaction(args) {
-        if (!args.pk && (!this.client.signer || !(await this.client.signer.canSign(args.from)))) throw new Error('missing signer!')
+        //        if (!args.pk && (!this.client.signer || !(await this.client.signer.canSign(args.from)))) throw new Error('missing signer!')
 
         // prepare
         const tx = await prepareTransaction(args, this)
