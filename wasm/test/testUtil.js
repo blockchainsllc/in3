@@ -97,6 +97,20 @@ describe('Util-Tests', () => {
         assert.equal(IN3.util.toHex(res), "0xdab3b69bd378ba16296c2e116cf7395e352699802234ec4e870b4f4b824248ae")
     })
 
+
+    it('isAddress', async () => {
+        assert.equal(IN3.util.isAddress("0x123"), false)
+        assert.equal(IN3.util.isAddress("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561"), true)
+        assert.equal(IN3.util.isAddress("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b15612"), false)
+    })
+
+    it('checkAddressChecksum', async () => {
+        assert.equal(IN3.util.checkAddressChecksum("0x123"), false)
+        assert.equal(IN3.util.checkAddressChecksum("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561"), true)
+        assert.equal(IN3.util.checkAddressChecksum("0x965d1C9987BD2c34e151E63d60AFf8E9dB6b1561"), false)
+        assert.equal(IN3.util.checkAddressChecksum("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b15612"), false)
+    })
+
     it('getVersion', async () => {
         const res = IN3.util.getVersion()
         assert.match(res, /3\.[0-9]+\.[0-9]+/)
