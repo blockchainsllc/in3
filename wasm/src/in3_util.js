@@ -222,7 +222,7 @@ function toHex(val, bytes) {
     if (typeof val === 'string')
         hex = val.startsWith('0x')
             ? val.substr(2)
-            : (parseInt(val[0]) != NaN
+            : (parseInt(val[0])
                 ? BigInt(val).toString(16)
                 : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
             )
