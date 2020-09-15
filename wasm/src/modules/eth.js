@@ -32,6 +32,14 @@ class EthAPI {
     blockNumber() {
         return this.send('eth_blockNumber').then(parseInt)
     }
+
+    /**
+     * Returns the number of most recent block. ()
+     */
+    toWei(val, unit = 'eth') {
+        return this.client.sendSyncRPC('in3_toWei', [val, unit])
+    }
+
     /**
      * Returns the current price per g wei. ()
      */

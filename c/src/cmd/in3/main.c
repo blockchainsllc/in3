@@ -921,7 +921,7 @@ int main(int argc, char* argv[]) {
       else {
         // otherwise we add it to the params
         if (p > 1) params[p++] = ',';
-        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strlen(argv[i]) < 16)
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strlen(argv[i]) < 16 && !strchr(argv[i], '.'))
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,

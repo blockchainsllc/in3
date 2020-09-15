@@ -399,7 +399,11 @@ export interface EthAPI<BigIntType, BufferType> {
      */
     protocolVersion(): Promise<string>;
     /**
-      * Returns the current ethereum protocol version.
+     * Returns the value in wei as hexstring.
+     */
+    toWei(value: string, unit: string): string;
+    /**
+      * Returns the state of the underlying node.
       */
     syncing(): Promise<boolean | {
         startingBlock: Hex;

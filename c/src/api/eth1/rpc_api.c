@@ -49,7 +49,9 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-
+#ifdef ETH_FULL
+#include "../../third-party/tommath/tommath.h"
+#endif
 #define ETH_SIGN_PREFIX "\x19" \
                         "Ethereum Signed Message:\n%u"
 
@@ -152,6 +154,102 @@ static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   bytes32_t hash;
   keccak(d_to_bytes(params + 1), hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+}
+static const char* UNITS[] = {
+    "wei", "",
+    "kwei", "\x03",
+    "Kwei", "\x03",
+    "babbage", "\x03",
+    "femtoether", "\x03",
+    "mwei", "\x06",
+    "Mwei", "\x06",
+    "lovelace", "\x06",
+    "picoether", "\x06",
+    "gwei", "\x09",
+    "Gwei", "\x09",
+    "shannon", "\x09",
+    "nanoether", "\x09",
+    "nano", "\x09",
+    "szabo", "\x0c",
+    "microether", "\x0c",
+    "micro", "\x0c",
+    "finney", "\x0f",
+    "milliether", "\x0f",
+    "milli", "\x0f",
+    "ether", "\x12",
+    "eth", "\x12",
+    "kether", "\x15",
+    "grand", "\x15",
+    "mether", "\x18",
+    "gether", "\x1b",
+    "tether", "\x1e",
+    NULL};
+static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  if (!params || d_len(params) != 2 || d_type(params + 2) != T_STRING) return ctx_set_error(ctx->ctx, "must have 2 params as strings", IN3_EINVAL);
+  char* val = d_get_string_at(params, 0);
+  if (!val) {
+    if (d_type(params + 1) == T_INTEGER) {
+      val = alloca(20);
+      sprintf(val, "%i", d_int(params + 1));
+    }
+    else
+      return ctx_set_error(ctx->ctx, "the value must be a string", IN3_EINVAL);
+  }
+  uint32_t exp = 0;
+  if (d_type(params + 2) == T_INTEGER)
+    exp = d_int(params + 2);
+  else {
+    char* unit = d_get_string_at(params, 1);
+    for (int i = 0; UNITS[i]; i += 2) {
+      if (strcmp(UNITS[i], unit) == 0) {
+        exp = *UNITS[i + 1];
+        break;
+      }
+      else if (!UNITS[i + 2])
+        return ctx_set_error(ctx->ctx, "unknown unit", IN3_EINVAL);
+    }
+  }
+
+#ifdef ETH_FULL
+  int   l = strlen(val), p = 0;
+  char* dst = alloca(l + exp + 10);
+  char* dot = strchr(val, '.');
+  if (!dot)
+    memcpy(dst, val, (p = l) + 1);
+  else if (dot - val != 1 || *val != '0')
+    memcpy(dst, val, (p = dot - val) + 1);
+  dst[p + exp] = 0;
+  if (exp) {
+    if (dot) {
+      dot++;
+      for (unsigned int i = 0; i < exp; i++) {
+        if (*dot) {
+          dst[p + i] = *dot;
+          dot++;
+        }
+        else
+          dst[p + i] = '0';
+      }
+    }
+    else
+      memset(dst + p, '0', exp);
+  }
+  // remove leading zeros
+  while (*dst == '0' && dst[1]) dst++;
+  uint8_t data[32];
+  size_t  s;
+  mp_int  d;
+  mp_init(&d);
+  mp_read_radix(&d, dst, 10);
+  mp_export(data, &s, 1, sizeof(uint8_t), 1, 0, &d);
+  return in3_rpc_handle_with_bytes(ctx, bytes(data, (uint32_t) s));
+#else
+  uint8_t data[8];
+  bytes_t b = bytes(data, 8);
+  long_to_bytes(parse_float_val(val, exp), data);
+  b_optimize_len(&b);
+  return in3_rpc_handle_with_bytes(ctx, b);
+#endif
 }
 
 static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
@@ -372,6 +470,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(rpc_ctx, params);
   if (strcmp(method, "in3_ens") == 0) return in3_ens(rpc_ctx, params);
   if (strcmp(method, "web3_sha3") == 0) return in3_sha3(rpc_ctx, params);
+  if (strcmp(method, "in3_toWei") == 0) return in3_toWei(rpc_ctx, params);
   if (strcmp(method, "in3_config") == 0) return in3_config(rpc_ctx, params);
   if (strcmp(method, "in3_getConfig") == 0) return in3_getConfig(rpc_ctx);
   if (strcmp(method, "in3_pk2address") == 0) return in3_pk2address(rpc_ctx, params);

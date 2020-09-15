@@ -211,6 +211,7 @@ function splitTypes(types, removeBrackets = true) {
     if (types.length > p + 1) res.push(types.substr(p))
     return res
 }
+
 /**
  * converts any value as hex-string
  */
@@ -221,7 +222,7 @@ function toHex(val, bytes) {
     if (typeof val === 'string')
         hex = val.startsWith('0x')
             ? val.substr(2)
-            : (parseInt(val[0])
+            : (parseInt(val[0]) != NaN
                 ? BigInt(val).toString(16)
                 : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
             )

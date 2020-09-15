@@ -448,6 +448,16 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public sendRPC(method: string, params?: any[]): Promise<any>;
 
+
+    /**
+     * sends a RPC-Requests specified by name and params as a sync call. This is only alowed if the request is handled internally, like web3_sha3,
+     * 
+     * if the response contains an error, this will be thrown. if not the result will be returned.
+     * 
+     * @param method the method to call. 
+     */
+    public sendSyncRPC(method: string, params?: any[]): any;
+
     /**
      * disposes the Client. This must be called in order to free allocated memory!
      */

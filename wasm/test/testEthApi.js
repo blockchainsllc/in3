@@ -468,6 +468,13 @@ describe('EthAPI-Tests', () => {
         assert.equal(filterId, "0x1")
     })
 
+
+    it('eth.toWei()', async () => {
+        let client = createClient()
+        const val = client.eth.toWei('20.0009123', 'eth')
+        assert.equal(val, "0x01159183c4793db800")
+    })
+
     it('eth.newFilter()', async () => {
         mockResponse('eth_blockNumber', '0x8e4daa')
         let client = createClient()
