@@ -596,6 +596,7 @@ export type Signature = {
 }
 
 export type ABIField = {
+    internalType?: string
     indexed?: boolean
     name: string
     type: string

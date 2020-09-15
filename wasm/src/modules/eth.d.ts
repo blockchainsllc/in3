@@ -229,6 +229,7 @@ export interface Web3TransactionObject {
     send: (options?: {
         gasPrice?: string | number | bigint,
         gas?: string | number | bigint,
+        nonce?: string | number | bigint,
         from?: Address,
         value?: number | string | bigint
     }) => Promise<any>,
@@ -238,6 +239,47 @@ export interface Web3TransactionObject {
         from?: Address,
     }) => Promise<number>,
     encodeABI: () => Hex
+}
+
+export interface Web3Contract {
+    options: {
+        address: Address,
+        jsonInterface: ABI[],
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+        data?: Hex,
+        transactionConfirmationBlocks: number,
+        transactionPollingTimeout: number
+    },
+    deploy?: (args: {
+        data: string,
+        arguments?: any[]
+    }) => Web3TransactionObject,
+    methods: {
+        [methodName: string]: (...args: any) => Web3TransactionObject
+    },
+
+    once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,
+
+    events: {
+        [eventName: string]: (options?: {
+            fromBlock?: number,
+            topics?: any[],
+            filter?: { [indexedName: string]: any }
+        }) => {
+            on: (ev: 'data' | 'error', handler: (ev: Web3Event | Error) => void) => any
+            once: (ev: 'data', handler: (ev: Web3Event) => void) => any
+            off: (ev: string, handler: (ev: any) => void) => any
+        }
+    },
+
+    getPastEvents(evName: string, options?: {
+        fromBlock?: number,
+        topics?: any[],
+        filter?: { [indexedName: string]: any }
+    }): Promise<Web3Event[]>
+
 }
 
 /**
@@ -440,46 +482,7 @@ export interface EthAPI<BigIntType, BufferType> {
         gas?: string | number | bigint,
         from?: Address,
         data?: Hex
-    }): {
-        options: {
-            address: Address,
-            jsonInterface: ABI[],
-            gasPrice?: string | number | bigint,
-            gas?: string | number | bigint,
-            from?: Address,
-            data?: Hex,
-            transactionConfirmationBlocks: number,
-            transactionPollingTimeout: number
-        },
-        deploy?: (args: {
-            data: string,
-            arguments?: any[]
-        }) => Web3TransactionObject,
-        methods: {
-            [methodName: string]: (...args: any) => Web3TransactionObject
-        },
-
-        once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,
-
-        events: {
-            [eventName: string]: (options?: {
-                fromBlock?: number,
-                topics?: any[],
-                filter?: { [indexedName: string]: any }
-            }) => {
-                on: (ev: 'data' | 'error', handler: (ev: Web3Event | Error) => void) => any
-                once: (ev: 'data', handler: (ev: Web3Event) => void) => any
-                off: (ev: string, handler: (ev: any) => void) => any
-            }
-        },
-
-        getPastEvents(evName: string, options?: {
-            fromBlock?: number,
-            topics?: any[],
-            filter?: { [indexedName: string]: any }
-        }): Promise<Web3Event[]>
-
-    }
+    }): Web3Contract
 
     contractAt(abi: ABI[], address?: Address): {
         [methodName: string]: any;
