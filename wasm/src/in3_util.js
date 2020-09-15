@@ -232,8 +232,8 @@ function toHex(val, bytes) {
         hex = val.toString(16)
         if (hex.startsWith('-')) {
             let n = new Array(hex.length - 1), o = 0;
-            for (let i = hex.length - 1; i > 0; i--) n[i - 1] = parseInt(hex[i], 16)
-            hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).join(''), (bytes || 32) * 2, 'f')
+            for (let i = hex.length - 1; i > 0; i--) n[hex.length - i] = parseInt(hex[i], 16)
+            hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).reverse().join(''), (bytes || 32) * 2, 'f')
         }
     }
     else if (val && val._isBigNumber) // BigNumber
