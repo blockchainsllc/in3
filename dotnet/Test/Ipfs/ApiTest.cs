@@ -18,8 +18,8 @@ namespace Test.Ipfs
                 new[] {"ipfs_put", "ipfs_put.json"}
             };
 
-            ClientBuilder builder = new ClientBuilder(Chain.Ipfs); ;
-            _in3 = builder.ConstructClient(mockedResponses);
+            ClientFactory factory = new NoProofFactory(Chain.Ipfs); ;
+            _in3 = factory.CreateIn3(mockedResponses);
         }
 
         [Test]

@@ -13,8 +13,8 @@ namespace Test.Crypto
         [SetUp]
         public void Setup()
         {
-            ClientBuilder _builder = new ClientBuilder(Chain.Mainnet);
-            in3 = _builder.ConstructClient(new string[][] { });
+            ClientFactory factory = new NoProofFactory(Chain.Mainnet);
+            in3 = factory.CreateIn3(new string[][] { });
         }
 
         [Test]
