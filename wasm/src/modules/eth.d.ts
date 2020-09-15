@@ -447,7 +447,10 @@ export interface EthAPI<BigIntType, BufferType> {
             transactionConfirmationBlocks: number,
             transactionPollingTimeout: number
         },
-        deploy?: () => (...args: any) => Web3TransactionObject
+        deploy?: (args: {
+            data: string,
+            arguments?: any[]
+        }) => Web3TransactionObject,
         methods: {
             [methodName: string]: (...args: any) => Web3TransactionObject
         },
