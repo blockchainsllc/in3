@@ -92,6 +92,15 @@ describe('Util-Tests', () => {
 
     })
 
+    it('soliditySha3', async () => {
+
+        assert.equal(IN3.util.soliditySha3('Hello!%'), "0x661136a4267dba9ccdf6bfddb7c00e714de936674c4bdb065a531cf1cb15c7fc")
+        assert.equal(IN3.util.soliditySha3('234'), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
+        assert.equal(IN3.util.soliditySha3(0xea), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
+        assert.equal(IN3.util.soliditySha3(234n), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
+        assert.equal(IN3.util.soliditySha3('234564535', '0xfff23243', true, -10), "0x3e27a893dc40ef8a7f0841d96639de2f58a132be5ae466d40087a2cfa83b7179")
+    })
+
     it('keccak & toHex', async () => {
         const res = IN3.util.keccak("this is just random string")
         assert.equal(IN3.util.toHex(res), "0xdab3b69bd378ba16296c2e116cf7395e352699802234ec4e870b4f4b824248ae")

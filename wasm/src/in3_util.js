@@ -228,8 +228,14 @@ function toHex(val, bytes) {
             )
     else if (typeof val === 'boolean')
         hex = val ? '01' : '00'
-    else if (typeof val === 'number' || typeof val === 'bigint')
+    else if (typeof val === 'number' || typeof val === 'bigint') {
         hex = val.toString(16)
+        if (hex.startsWith('-')) {
+            let n = new Array(hex.length - 1), o = 0;
+            for (let i = hex.length - 1; i > 0; i--) n[i - 1] = parseInt(hex[i], 16)
+            hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).join(''), (bytes || 32) * 2, 'f')
+        }
+    }
     else if (val && val._isBigNumber) // BigNumber
         hex = val.toHexString()
     else if (val && (val.redIMul || val.readBigInt64BE)) // bn.js or nodejs Buffer
@@ -405,19 +411,29 @@ function padEnd(val, minLength, fill = ' ') {
 }
 
 function soliditySha3(...args) {
-    return toHex(keccak('0x' + toHex(abiEncode('_(' + args.map(_ => {
+    return toHex(keccak('0x' + args.map(_ => {
         switch (typeof (_)) {
+            case 'object': return { t: _.t || _.type, v: _.v || _.value }
             case 'number':
             case 'bigint':
-                return _ < 0 ? 'int256' : 'uint256'
+                return { t: _ < 0 ? 'int256' : 'uint256', v: _ }
             case 'string':
-                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
+                const n = parseInt(_)
+                if (n && !_.startsWith('0x')) return { t: n < 0 ? 'int256' : 'uint256', v: n }
+                return { t: _.substr(0, 2) == '0x' ? 'bytes' : 'string', v: _ }
             case 'boolean':
-                return 'bool'
+                return { t: 'bool', v: _ }
             default:
-                return 'bytes'
+                return { t: 'bytes', v: toHex(_) }
         }
-    }).join() + ')', args)).substr(10)))
+    }).map(({ t, v }) => {
+        if (t == 'bool') t = 'uint8';
+        if (t == 'bytes' || t == 'string') return toHex(v).substr(2)
+        if (t.startsWith('bytes')) return toHex(v, parseInt(t.substr(5))).substr(2)
+        else if (t.startsWith('uint')) return toHex(v, parseInt(t.substr(4)) / 8).substr(2)
+        else if (t.startsWith('int')) return toHex(v, parseInt(t.substr(3)) / 8).substr(2)
+        else throw new Error('Unsupported type ' + t)
+    }).join('')))
 }
 
 function isAddress(ad) {
