@@ -74,6 +74,8 @@ static int bitlen(uint64_t val) {
   }
   return 0;
 }
+const char* MAX_MANTISSA_35 = "34359738368";
+const char* MAX_MANTISSA_11 = "2048";
 
 static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in3_ctx_t* ctx) {
   while (*dec == '0') dec++;                // remove leading zeros (if any)
@@ -81,14 +83,19 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
   int total = (exp_len + mantissa_len) / 8; // the target size in bytes
   int cl    = -1;                           // the content length
   memset(dst, 0, total);                    // clear the target first
-  uint8_t tmp[8];
+  uint8_t     tmp[8];
+  const char* max_matissa = mantissa_len == 35 ? MAX_MANTISSA_35 : MAX_MANTISSA_11;
+  int         max_m_len   = strlen(max_matissa);
 
   if (!l) return IN3_OK;             // this means we had a "0" which was trimmed away
   for (int i = l - 1; i >= 0; i--) { // now we loop backwards
-    if (dec[i] != '0') {             // for the first character, which is not a zero
-      cl = i + 1;                    // now we know how many bytes actually have value
+    if (i + 1 < max_m_len || (i + 1 == max_m_len && memcmp(dec, max_matissa, max_m_len) < 0)) {
+      cl = i + 1; // now we know how many bytes actually have value
       break;
     }
+
+    if (dec[i] != '0')
+      return ctx_set_error(ctx, "The value (mantissa) can not be packed", IN3_EINVAL); // its an error
   }
   dec[cl]    = 0;                                                                    // terminate the string after the value cutting off all zeros
   uint64_t c = strtoull(dec, NULL, 10);                                              // and convert this value
