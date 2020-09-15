@@ -387,7 +387,7 @@ class EthAPI {
                         confirmations: ob.transactionConfirmationBlocks || 1
                     }).then(_ => {
                         ob.address = _ && _.contractAddress
-                        return _
+                        return ob
                     }),
                     encodeABI: () => data,
                     estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { data, ...options }).then(toNumber))
