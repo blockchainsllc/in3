@@ -609,7 +609,7 @@ export type ABI = {
     inputs?: ABIField[],
     outputs?: ABIField[]
     name?: string
-    type: 'event' | 'function' | 'constructor' | 'fallback'
+    type: string
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
