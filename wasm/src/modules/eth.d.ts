@@ -220,6 +220,26 @@ export interface AccountAPI<BufferType> {
 
 }
 
+export interface Web3TransactionObject {
+    call: (options?: {
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+    }) => Promise<any>,
+    send: (options?: {
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+        value?: number | string | bigint
+    }) => Promise<any>,
+    estimateGas: (options?: {
+        value?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+    }) => Promise<number>,
+    encodeABI: () => Hex
+}
+
 /**
  * The API for ethereum operations.
  */
@@ -427,26 +447,9 @@ export interface EthAPI<BigIntType, BufferType> {
             transactionConfirmationBlocks: number,
             transactionPollingTimeout: number
         },
+        deploy?: () => (...args: any) => Web3TransactionObject
         methods: {
-            [methodName: string]: (...args: any) => {
-                call: (options?: {
-                    gasPrice?: string | number | bigint,
-                    gas?: string | number | bigint,
-                    from?: Address,
-                }) => Promise<any>,
-                send: (options?: {
-                    gasPrice?: string | number | bigint,
-                    gas?: string | number | bigint,
-                    from?: Address,
-                    value?: number | string | bigint
-                }) => Promise<any>,
-                estimateGas: (options?: {
-                    value?: string | number | bigint,
-                    gas?: string | number | bigint,
-                    from?: Address,
-                }) => Promise<number>,
-                encodeABI: () => Hex
-            }
+            [methodName: string]: (...args: any) => Web3TransactionObject
         },
 
         once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,

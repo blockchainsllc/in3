@@ -365,6 +365,28 @@ class EthAPI {
             methods: {},
             events: {}
         }
+        if (!address) {
+            const def = abi.find(_ => _.type === 'constructor') || { inputs: [], payable: true, type: 'constructor' }
+            const method = 'ctr' + createSignature(def.inputs)
+            ob.deploy = (opts) => {
+                if ((opts.arguments || []).length != def.inputs.length) throw new Error('Invalid number of arguments for ' + method)
+                if (!opts.data) throw new Error('Missing deployment data')
+                const data = opts.data + toHex(abiEncode(method, ...(opts.arguments || []))).substr(10)
+                return {
+                    send: options => api.sendTransaction({
+                        ...options,
+                        data,
+                        confirmations: ob.transactionConfirmationBlocks || 1
+                    }).then(_ => {
+                        ob.address = _ && _.contractAddress
+                        return _
+                    }),
+                    encodeABI: () => data,
+                    estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { data, ...options }).then(toNumber))
+                }
+            }
+        }
+
 
         const createTopics = (name, options) => options.topics || [ob._eventHashes[name], ...(!options.filter ? [] : ob._eventHashes[ob._eventHashes[name]].inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? toHex(options.filter[d.name], 32) : null))]
 
@@ -374,7 +396,7 @@ class EthAPI {
                     const signature = def.name + createSignature(def.inputs)
                     const sigReturn = signature + ':' + createSignature(def.outputs)
                     ob.methods[def.name] = (...args) => ({
-                        call: (options, block) => api.callFn(address, sigReturn, ...args, block || 'latest')
+                        call: (options, block) => api.callFn(ob.options.address, sigReturn, ...args, block || 'latest')
                             .then(r => {
                                 if (def.outputs.length > 1) {
                                     let o = {}
@@ -389,11 +411,11 @@ class EthAPI {
                             tx.method = signature
                             tx.args = args
                             tx.confirmations = ob.transactionConfirmationBlocks || 1
-                            tx.to = address
+                            tx.to = ob.options.address
                             return api.sendTransaction(tx)
                         },
                         encodeABI: () => toHex(abiEncode(signature, ...args)),
-                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
+                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(ob.options.address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
                     })
                     break
                 case 'event':
@@ -404,7 +426,7 @@ class EthAPI {
                     ob.events[def.name] = options => new LogEmitter(
                         api,
                         {
-                            address,
+                            address: ob.options.address,
                             fromBlock: options.fromBlock || 'latest',
                             topics: createTopics(def.name, options),
                             limit: options.limit || 50
@@ -428,7 +450,7 @@ class EthAPI {
         ob.events.allEvents = options => new LogEmitter(
             api,
             {
-                address,
+                address: ob.options.address,
                 fromBlock: options.fromBlock || 'latest',
                 limit: options.limit || 50
             },
@@ -437,7 +459,7 @@ class EthAPI {
         )
         ob.getPastEvents = (ev, options) => {
             return api.getLogs({
-                address,
+                address: ob.options.address,
                 fromBlock: options.fromBlock || 'latest',
                 toBlock: options.toBlock || 'latest',
                 limit: options.limit || 50,
