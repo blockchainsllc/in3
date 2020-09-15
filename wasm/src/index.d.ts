@@ -604,7 +604,7 @@ export type ABI = {
     anonymous?: boolean
     constant?: boolean
     payable?: boolean
-    stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
+    stateMutability?: string
 
     inputs?: ABIField[],
     outputs?: ABIField[]
