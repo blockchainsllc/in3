@@ -1,6 +1,4 @@
 #include "transport.h"
-#include "../../src/core/client/cache.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -8,6 +6,8 @@
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
 #include <stdio.h>
 #include <unistd.h>
 #define MOCK_PATH "../c/test/testdata/mock/%s.json"

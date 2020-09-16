@@ -108,4 +108,8 @@ in3_ret_t ctx_handle_failable(
   assert(r);                   \
   assert(r->state != IN3_OK || r->data.data);
 
+NONULL void in3_ctx_free_nodes(node_match_t* c);
+int         ctx_nodes_len(node_match_t* root);
+NONULL bool ctx_is_method(const in3_ctx_t* ctx, const char* method);
+
 #endif // CONTEXT_INTERNAL_H

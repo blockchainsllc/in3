@@ -1,9 +1,9 @@
 #include "btc_target.h"
-#include "../../core/client/cache.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
+#include "../../nodeselect/cache.h"
 #include "btc_serialize.h"
 
 in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target) {

@@ -60,4 +60,80 @@ void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...);
 /** dumps the given data as hex coded bytes to stdout */
 extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 
-//#define assunme(var,expr)
+#if defined(ASSERTIONS) || defined(DEBUG)
+#define _assert(exp) assert(exp)
+#else
+#define _assert(exp)
+#endif
+
+#define EXPECT(cond, exit) \
+  do {                     \
+    if (!(cond))           \
+      (exit);              \
+  } while (0)
+
+#define EXPECT_CFG(cond, err) EXPECT(cond, { \
+  res = malloc(strlen(err) + 1);             \
+  if (res) strcpy(res, err);                 \
+  goto cleanup;                              \
+})
+#define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
+#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(token->key), err))
+#define EXPECT_TOK_BOOL(token)        EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
+#define EXPECT_TOK_STR(token)         EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
+#define EXPECT_TOK_ARR(token)         EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")
+#define EXPECT_TOK_OBJ(token)         EXPECT_TOK(token, d_type(token) == T_OBJECT, "expected object")
+#define EXPECT_TOK_ADDR(token)        EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 20, "expected address")
+#define EXPECT_TOK_B256(token)        EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 32, "expected 256 bit data")
+#define IS_D_UINT64(token)            ((d_type(token) == T_INTEGER || (d_type(token) == T_BYTES && d_len(token) <= 8)) && d_long(token) <= UINT64_MAX)
+#define IS_D_UINT32(token)            ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) <= UINT32_MAX)
+#define IS_D_UINT16(token)            (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
+#define IS_D_UINT8(token)             (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
+#define EXPECT_TOK_U8(token)          EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value")
+#define EXPECT_TOK_U16(token)         EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
+#define EXPECT_TOK_U32(token)         EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
+#define EXPECT_TOK_U64(token)         EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value")
+#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
+
+static inline char* config_err(const char* keyname, const char* err) {
+  char* s = _malloc(strlen(keyname) + strlen(err) + 4);
+  sprintf(s, "%s: %s!", keyname, err);
+  return s;
+}
+
+static inline bool is_hex_str(const char* str) {
+  if (str[0] == '0' && str[1] == 'x')
+    str += 2;
+  return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
+}
+
+static inline void add_prop(sb_t* sb, char prefix, const char* property) {
+  sb_add_char(sb, prefix);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, property);
+  sb_add_chars(sb, "\":");
+}
+
+static inline void add_bool(sb_t* sb, char prefix, const char* property, bool value) {
+  add_prop(sb, prefix, property);
+  sb_add_chars(sb, value ? "true" : "false");
+}
+
+static inline void add_string(sb_t* sb, char prefix, const char* property, const char* value) {
+  add_prop(sb, prefix, property);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, value);
+  sb_add_char(sb, '"');
+}
+
+static inline void add_uint(sb_t* sb, char prefix, const char* property, uint64_t value) {
+  add_prop(sb, prefix, property);
+  char tmp[16];
+  sprintf(tmp, "%u", (uint32_t) value);
+  sb_add_chars(sb, tmp);
+}
+
+static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t value) {
+  add_prop(sb, prefix, property);
+  sb_add_bytes(sb, NULL, &value, 1, false);
+}

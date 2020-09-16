@@ -224,25 +224,13 @@ typedef struct in3_verified_hash {
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  bool                 dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
   uint8_t              version;         /**< version of the chain */
-  unsigned int         nodelist_length; /**< number of nodes in the nodeList */
-  uint16_t             avg_block_time;  /**< average block time (seconds) for this chain (calculated internally) */
   chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t     type;            /**< chaintype */
-  uint64_t             last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  in3_node_t*          nodelist;        /**< array of nodes */
-  in3_node_weight_t*   weights;         /**< stats and weights recorded for each node */
-  bytes_t**            init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
   bytes_t*             contract;        /**< the address of the registry contract */
   bytes32_t            registry_id;     /**< the identifier of the registry */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
-  in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
-  struct {
-    uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
-    uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
-    address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
-  } * nodelist_upd8_params;
+  void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
 } in3_chain_t;
 
 /** 
@@ -307,8 +295,11 @@ typedef struct in3_filter_t_ {
   void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
 } in3_filter_t;
 
+#define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
+#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK_DATA | PLGN_ACT_NL_PICK_SIGNER | PLGN_ACT_NL_PICK_FOLLOWUP)
 #define PLGN_ACT_CACHE     (PLGN_ACT_CACHE_SET | PLGN_ACT_CACHE_GET | PLGN_ACT_CACHE_CLEAR)
+#define PLGN_ACT_CONFIG    (PLGN_ACT_CONFIG_SET | PLGN_ACT_CONFIG_GET)
 
 /** plugin action list */
 typedef enum {
@@ -373,7 +364,7 @@ typedef struct in3_filter_handler_t_ {
   size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
-/** Incubed Configuration. 
+/** Incubed Configuration.
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
@@ -509,28 +500,8 @@ in3_ret_t in3_client_register_chain(
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
-    uint8_t          version,     /**< [in] the chain version. */
-    address_t        wl_contract  /**< [in] contract of whiteList. */
+    uint8_t          version      /**< [in] the chain version. */
 );
-
-/** adds a node to a chain ore updates a existing node */
-NONULL in3_ret_t in3_client_add_node(
-    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
-    chain_id_t       chain_id, /**< [in] the chain id. */
-    char*            url,      /**< [in] url of the nodes. */
-    in3_node_props_t props,    /**< [in]properties of the node. */
-    address_t        address);        /**< [in] public address of the signer. */
-
-/** removes a node from a nodelist */
-NONULL in3_ret_t in3_client_remove_node(
-    in3_t*     client,   /**< [in] the pointer to the incubed client config. */
-    chain_id_t chain_id, /**< [in] the chain id. */
-    address_t  address);  /**< [in] public address of the signer. */
-
-/** removes all nodes from the nodelist */
-NONULL in3_ret_t in3_client_clear_nodes(
-    in3_t*     client,    /**< [in] the pointer to the incubed client config. */
-    chain_id_t chain_id); /**< [in] the chain id. */
 
 /** frees the references of the client */
 NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
@@ -559,6 +530,17 @@ NONULL in3_chain_t* in3_get_chain(
 NONULL in3_chain_t* in3_find_chain(
     const in3_t* c /**< the incubed client */,
     chain_id_t   chain_id /**< chain_id */
+);
+
+/**
+ * registers specified plugin with client.
+ *
+ * Plugins maybe handled differently based on their type, see `in3_plugin_type_t` for exact rules
+ * Returns IN3_OK on success
+ */
+in3_ret_t in3_register_plugin(
+    in3_t*        c,     /**< the incubed client */
+    in3_plugin_t* plugin /**< plugin to register */
 );
 
 /**

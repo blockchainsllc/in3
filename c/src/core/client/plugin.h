@@ -276,7 +276,7 @@ typedef struct in3_configure_ctx {
   char*      error_msg; /**< message in case of an incorrect config */
 } in3_configure_ctx_t;
 
-// -------- SET_CONFIG ---------
+// -------- GET_CONFIG ---------
 
 /**
  * context used during get config

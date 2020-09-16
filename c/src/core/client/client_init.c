@@ -32,15 +32,15 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../nodeselect/cache.h"
+#include "../../nodeselect/nodelist.h"
 #include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "../util/mem.h"
-#include "cache.h"
 #include "client.h"
 #include "context_internal.h"
-#include "nodelist.h"
 #include "plugin.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -81,35 +81,6 @@ void in3_register_payment(
 }
 
 #endif
-
-#define EXPECT(cond, exit) \
-  do {                     \
-    if (!(cond))           \
-      (exit);              \
-  } while (0)
-
-#define EXPECT_CFG(cond, err) EXPECT(cond, { \
-  res = malloc(strlen(err) + 1);             \
-  if (res) strcpy(res, err);                 \
-  goto cleanup;                              \
-})
-#define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
-#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(cnf, token->key), err))
-#define EXPECT_TOK_BOOL(token)        EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
-#define EXPECT_TOK_STR(token)         EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
-#define EXPECT_TOK_ARR(token)         EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")
-#define EXPECT_TOK_OBJ(token)         EXPECT_TOK(token, d_type(token) == T_OBJECT, "expected object")
-#define EXPECT_TOK_ADDR(token)        EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 20, "expected address")
-#define EXPECT_TOK_B256(token)        EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 32, "expected 256 bit data")
-#define IS_D_UINT64(token)            ((d_type(token) == T_INTEGER || (d_type(token) == T_BYTES && d_len(token) <= 8)) && d_long(token) <= UINT64_MAX)
-#define IS_D_UINT32(token)            ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) <= UINT32_MAX)
-#define IS_D_UINT16(token)            (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
-#define IS_D_UINT8(token)             (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
-#define EXPECT_TOK_U8(token)          EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value")
-#define EXPECT_TOK_U16(token)         EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
-#define EXPECT_TOK_U32(token)         EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
-#define EXPECT_TOK_U64(token)         EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value")
-#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(cnf, token->key)), "expected hex str")
 
 // set the defaults
 typedef struct default_fn {
@@ -165,42 +136,17 @@ static void whitelist_free(in3_whitelist_t* wl) {
   _free(wl);
 }
 
-static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
-  switch (id) {
-    case CHAIN_ID_MAINNET: return 15;
-    case CHAIN_ID_KOVAN: return 6;
-    case CHAIN_ID_GOERLI: return 15;
-    default: return 5;
-  }
-}
-
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
   assert(chain);
   assert(contract && strlen(contract) == 40);
   assert(chain_id == CHAIN_ID_LOCAL || registry_id);
 
-  chain->dirty                = false;
+  chain->conf                 = NULL;
   chain->chain_id             = chain_id;
-  chain->init_addresses       = NULL;
-  chain->last_block           = 0;
   chain->verified_hashes      = NULL;
   chain->contract             = hex_to_new_bytes(contract, 40);
-  chain->nodelist             = _calloc(boot_node_count, sizeof(in3_node_t));
-  chain->nodelist_length      = boot_node_count;
-  chain->weights              = _calloc(boot_node_count, sizeof(in3_node_weight_t));
   chain->type                 = type;
   chain->version              = version;
-  chain->whitelist            = NULL;
-  chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
-  chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
-  if (wl_contract) {
-    chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
-    chain->whitelist->addresses.data = NULL;
-    chain->whitelist->addresses.len  = 0;
-    chain->whitelist->needs_update   = true;
-    chain->whitelist->last_block     = 0;
-    hex_to_bytes(wl_contract, -1, chain->whitelist->contract, 20);
-  }
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
@@ -370,7 +316,7 @@ in3_chain_t* in3_find_chain(const in3_t* c, chain_id_t chain_id) {
   return NULL;
 }
 
-in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version, address_t wl_contract) {
+in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version) {
   assert(chain_id);
   assert(c);
   assert(contract);
@@ -381,135 +327,21 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
-    chain->dirty                = false;
-    chain->nodelist             = NULL;
-    chain->nodelist_length      = 0;
-    chain->weights              = NULL;
-    chain->init_addresses       = NULL;
-    chain->whitelist            = NULL;
-    chain->last_block           = 0;
-    chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
+    chain->conf                 = NULL;
     chain->verified_hashes      = NULL;
-    chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
     c->chains_length++;
   }
   else {
     if (chain->contract)
       b_free(chain->contract);
-    if (chain->whitelist)
-      whitelist_free(chain->whitelist);
   }
 
   chain->chain_id  = chain_id;
   chain->contract  = b_new(contract, 20);
   chain->type      = type;
   chain->version   = version;
-  chain->whitelist = NULL;
   memcpy(chain->registry_id, registry_id, 32);
-  _free(chain->nodelist_upd8_params);
-  chain->nodelist_upd8_params = NULL;
-
-  if (wl_contract) {
-    chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
-    chain->whitelist->addresses.data = NULL;
-    chain->whitelist->addresses.len  = 0;
-    chain->whitelist->needs_update   = true;
-    chain->whitelist->last_block     = 0;
-    memcpy(chain->whitelist->contract, wl_contract, 20);
-  }
-
   return chain->contract ? IN3_OK : IN3_ENOMEM;
-}
-
-in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node_props_t props, address_t address) {
-  assert(c);
-  assert(url);
-  assert(address);
-
-  in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return IN3_EFIND;
-  in3_node_t* node       = NULL;
-  int         node_index = chain->nodelist_length;
-  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
-    if (memcmp(chain->nodelist[i].address, address, 20) == 0) {
-      node       = chain->nodelist + i;
-      node_index = i;
-      break;
-    }
-  }
-  if (!node) {
-    // init or change the size ofthe nodelist
-    chain->nodelist = chain->nodelist
-                          ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
-                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
-    // the weights always have to have the same size
-    chain->weights = chain->weights
-                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
-                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
-    if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
-    node = chain->nodelist + chain->nodelist_length;
-    memcpy(node->address, address, 20);
-    node->index    = chain->nodelist_length;
-    node->capacity = 1;
-    node->deposit  = 0;
-    BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
-    chain->nodelist_length++;
-  }
-  else
-    _free(node->url);
-
-  node->props = props;
-  node->url   = _malloc(strlen(url) + 1);
-  memcpy(node->url, url, strlen(url) + 1);
-
-  in3_node_weight_t* weight   = chain->weights + node_index;
-  weight->blacklisted_until   = 0;
-  weight->response_count      = 0;
-  weight->total_response_time = 0;
-  return IN3_OK;
-}
-
-in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t address) {
-  assert(c);
-  assert(address);
-
-  in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return IN3_EFIND;
-  int node_index = -1;
-  for (unsigned int i = 0; i < chain->nodelist_length; i++) {
-    if (memcmp(chain->nodelist[i].address, address, 20) == 0) {
-      node_index = i;
-      break;
-    }
-  }
-  if (node_index == -1) return IN3_EFIND;
-  if (chain->nodelist[node_index].url)
-    _free(chain->nodelist[node_index].url);
-
-  if (node_index < ((signed) chain->nodelist_length) - 1) {
-    memmove(chain->nodelist + node_index, chain->nodelist + node_index + 1, sizeof(in3_node_t) * (chain->nodelist_length - 1 - node_index));
-    memmove(chain->weights + node_index, chain->weights + node_index + 1, sizeof(in3_node_weight_t) * (chain->nodelist_length - 1 - node_index));
-  }
-  chain->nodelist_length--;
-  if (!chain->nodelist_length) {
-    _free(chain->nodelist);
-    _free(chain->weights);
-    chain->nodelist = NULL;
-    chain->weights  = NULL;
-  }
-  return IN3_OK;
-}
-
-in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
-  assert(c);
-
-  in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return IN3_EFIND;
-  in3_nodelist_clear(chain);
-  chain->nodelist        = NULL;
-  chain->weights         = NULL;
-  chain->nodelist_length = 0;
-  return IN3_OK;
 }
 
 /* frees the data */
@@ -614,49 +446,6 @@ static chain_id_t chain_id(d_token_t* t) {
   return d_long(t);
 }
 
-static inline char* config_err(const char* keyname, const char* err) {
-  if (!keyname) keyname = "unknown";
-  char* s = _malloc(strlen(keyname) + strlen(err) + 4);
-  sprintf(s, "%s: %s!", keyname, err);
-  return s;
-}
-
-static inline bool is_hex_str(const char* str) {
-  if (!str) return false;
-  if (str[0] == '0' && str[1] == 'x')
-    str += 2;
-  return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
-}
-
-static void add_prop(sb_t* sb, char prefix, const char* property) {
-  sb_add_char(sb, prefix);
-  sb_add_char(sb, '"');
-  sb_add_chars(sb, property);
-  sb_add_chars(sb, "\":");
-}
-static void add_bool(sb_t* sb, char prefix, const char* property, bool value) {
-  add_prop(sb, prefix, property);
-  sb_add_chars(sb, value ? "true" : "false");
-}
-static void add_string(sb_t* sb, char prefix, const char* property, const char* value) {
-  add_prop(sb, prefix, property);
-  sb_add_char(sb, '"');
-  sb_add_chars(sb, value);
-  sb_add_char(sb, '"');
-}
-
-static void add_uint(sb_t* sb, char prefix, const char* property, uint64_t value) {
-  add_prop(sb, prefix, property);
-  char tmp[16];
-  sprintf(tmp, "%u", (uint32_t) value);
-  sb_add_chars(sb, tmp);
-}
-
-static void add_hex(sb_t* sb, char prefix, const char* property, bytes_t value) {
-  add_prop(sb, prefix, property);
-  sb_add_bytes(sb, NULL, &value, 1, false);
-}
-
 char* in3_get_config(in3_t* c) {
   sb_t*        sb    = sb_new("");
   in3_chain_t* chain = in3_get_chain(c);
@@ -685,39 +474,7 @@ char* in3_get_config(in3_t* c) {
 
   in3_get_config_ctx_t cctx = {.client = c, .sb = sb};
   in3_plugin_execute_all(c, PLGN_ACT_CONFIG_GET, &cctx);
-
-  sb_add_chars(sb, ",\"nodes\":{");
-  for (int i = 0; i < c->chains_length; i++) {
-    chain = c->chains + i;
-    if (i) sb_add_char(sb, ',');
-    sb_add_char(sb, '"');
-    sb_add_hexuint(sb, chain->chain_id);
-    sb_add_chars(sb, "\":");
-    add_hex(sb, '{', "contract", *chain->contract);
-    if (chain->whitelist)
-      add_hex(sb, ',', "whiteListContract", bytes(chain->whitelist->contract, 20));
-    add_hex(sb, ',', "registryId", bytes(chain->registry_id, 32));
-    add_bool(sb, ',', "needsUpdate", chain->nodelist_upd8_params != NULL);
-    add_uint(sb, ',', "avgBlockTime", chain->avg_block_time);
-    sb_add_chars(sb, ",\"nodeList\":[");
-    for (unsigned int j = 0; j < chain->nodelist_length; j++) {
-      if ((chain->nodelist[j].attrs & ATTR_BOOT_NODE) == 0) continue;
-      if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
-      add_string(sb, '{', "url", chain->nodelist[j].url);
-      add_uint(sb, ',', "props", chain->nodelist[j].props);
-      add_hex(sb, ',', "address", bytes(chain->nodelist[j].address, 20));
-      sb_add_char(sb, '}');
-    }
-    if (sb->data[sb->len - 1] == '[') {
-      sb->len -= 13;
-      sb_add_char(sb, '}');
-    }
-    else
-      sb_add_chars(sb, "]}");
-  }
-  sb_add_chars(sb, "}}");
-
-  // TODO pay
+  sb_add_chars(sb, "}");
 
   char* r = sb->data;
   _free(sb);
@@ -873,73 +630,26 @@ char* in3_configure(in3_t* c, const char* config) {
         chain_id_t   chain_id    = get_chain_from_key(ct.token->key);
         bytes_t*     contract    = d_get_byteskl(ct.token, key("contract"), 20);
         bytes_t*     registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-        bytes_t*     wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
         in3_chain_t* chain       = in3_find_chain(c, chain_id);
 
         if (!chain) {
           EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-          EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract ? contract->data : chain->contract->data, registry_id ? registry_id->data : chain->registry_id, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
+          EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract ? contract->data : chain->contract->data, registry_id ? registry_id->data : chain->registry_id, 2)) == IN3_OK,
                      "register chain failed");
           chain = in3_find_chain(c, chain_id);
           EXPECT_CFG(chain != NULL, "invalid chain id!");
         }
 
         // chain_props
-        bool has_wlc = false, has_man_wl = false;
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
           if (cp.token->key == key("contract")) {
             EXPECT_TOK_ADDR(cp.token);
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
           }
-          else if (cp.token->key == key("whiteListContract")) {
-            EXPECT_TOK_ADDR(cp.token);
-            EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
-            has_wlc = true;
-            whitelist_free(chain->whitelist);
-            chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
-            chain->whitelist->needs_update = true;
-            memcpy(chain->whitelist->contract, cp.token->data, 20);
-          }
-          else if (cp.token->key == key("whiteList")) {
-            EXPECT_TOK_ARR(cp.token);
-            EXPECT_CFG(!has_wlc, "cannot specify manual whiteList and whiteListContract together!");
-            has_man_wl = true;
-            int len = d_len(cp.token), i = 0;
-            whitelist_free(chain->whitelist);
-            chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
-            chain->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
-            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
-              EXPECT_TOK_ADDR(n.token);
-              const uint8_t* whitelist_address = d_bytes(n.token)->data;
-              for (uint32_t j = 0; j < chain->whitelist->addresses.len; j += 20) {
-                if (!memcmp(whitelist_address, chain->whitelist->addresses.data + j, 20)) {
-                  whitelist_free(chain->whitelist);
-                  chain->whitelist = NULL;
-                  EXPECT_TOK(cp.token, false, "duplicate address!");
-                }
-              }
-              d_bytes_to(n.token, chain->whitelist->addresses.data + i, 20);
-            }
-          }
           else if (cp.token->key == key("registryId")) {
             EXPECT_TOK_B256(cp.token);
             bytes_t data = d_to_bytes(cp.token);
             memcpy(chain->registry_id, data.data, 32);
-          }
-          else if (cp.token->key == key("needsUpdate")) {
-            EXPECT_TOK_BOOL(cp.token);
-            if (!d_int(cp.token)) {
-              if (chain->nodelist_upd8_params) {
-                _free(chain->nodelist_upd8_params);
-                chain->nodelist_upd8_params = NULL;
-              }
-            }
-            else if (!chain->nodelist_upd8_params)
-              chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
-          }
-          else if (cp.token->key == key("avgBlockTime")) {
-            EXPECT_TOK_U16(cp.token);
-            chain->avg_block_time = (uint16_t) d_int(cp.token);
           }
           else if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
@@ -958,29 +668,7 @@ char* in3_configure(in3_t* c, const char* config) {
             }
             c->alloc_verified_hashes = c->max_verified_hashes;
           }
-          else if (cp.token->key == key("nodeList")) {
-            EXPECT_TOK_ARR(cp.token);
-            if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
-            int i = 0;
-            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
-              EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
-              EXPECT_TOK_STR(d_get(n.token, key("url")));
-              EXPECT_TOK_ADDR(d_get(n.token, key("address")));
-              EXPECT_CFG(in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
-                                             d_get_longkd(n.token, key("props"), 65535),
-                                             d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
-                         "add node failed");
-#ifndef __clang_analyzer__
-              BIT_SET(chain->nodelist[i].attrs, ATTR_BOOT_NODE);
-#endif
-            }
-          }
           else {
-            /*
-            // try to delegate the call to the verifier.
-            const in3_verifier_t* verifier = in3_get_verifier(chain->type);
-            if (verifier && verifier->set_confg && verifier->set_confg(c, cp.token, chain) == IN3_OK) continue;
-*/
             EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }
