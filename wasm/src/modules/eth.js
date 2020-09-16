@@ -404,15 +404,15 @@ class EthAPI {
                 case 'function':
                     const signature = def.name + createSignature(def.inputs)
                     const sigReturn = signature + ':' + createSignature(def.outputs)
-                    ob.methods[def.name] = (...args) => ({
+                    const txOb = (...args) => ({
                         call: (options, block) => api.callFn(ob.options.address, sigReturn, ...args, block || 'latest')
                             .then(r => {
                                 if (def.outputs.length > 1) {
                                     let o = {}
-                                    def.outputs.forEach((d, i) => o[i] = o[d.name] = r[i])
+                                    def.outputs.forEach((d, i) => o[i] = o[d.name] = def.outputs[i].type === 'address' ? util.toChecksumAddress(r[i]) : r[i])
                                     return o;
                                 }
-                                return r
+                                return def.outputs[0].type === 'address' ? util.toChecksumAddress(r) : r
                             }),
                         send: options => {
                             let tx = { ...options }
@@ -426,6 +426,23 @@ class EthAPI {
                         encodeABI: () => toHex(abiEncode(signature, ...args)),
                         estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(ob.options.address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
                     })
+                    txOb._def = def
+                    if (ob.methods[def.name]) {
+                        const ex = ob.methods[def.name]
+                        if (ex._def) {
+                            const defs = [txOb, ex]
+                            ob.methods[def.name] = (...args) => {
+                                const o = defs.find(_ => _._def.inputs.length === args.length)
+                                if (!o) throw new Error('Invalid argument length (' + args.length + ') for ' + def[0].name)
+                                return o(...args)
+                            }
+                            ob.methods[def.name]._defs = defs
+                        }
+                        else
+                            ex._defs.push(txOb)
+                    }
+                    else
+                        ob.methods[def.name] = txOb
                     break
                 case 'event':
                     const evSig = def.name + createSignature(def.inputs)
