@@ -619,6 +619,8 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         if (provider) conf->provider_url = _strdupn(provider, -1);
         bytes_t* account = d_get_bytes(ctx->token, "account");
         if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
+        bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");
+        if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
         return IN3_OK;
       }
       return IN3_EIGNORE;

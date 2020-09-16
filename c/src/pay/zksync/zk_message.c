@@ -142,6 +142,7 @@ static void create_signed_bytes(sb_t* sb) {
 }
 
 static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
+  uint32_t total;
   char     dec[70];
   uint16_t tid = data->token ? data->token->id : 0;
   raw[0]       = data->type;               // 0: type(1)
@@ -150,14 +151,29 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint
   memcpy(raw + 25, data->to, 20);          // 25: to(20)
   raw[45] = (tid >> 8) & 0xff;             // 45: token_id (2)
   raw[46] = tid & 0xff;                    //
-  to_dec(dec, data->amount);               //    create a decimal represntation and pack it
-  TRY(pack(dec, 35, 5, raw + 47, ctx))     // 47: amount packed (5)
-  to_dec(dec, data->fee);                  //    create a decimal represntation and pack it
-  TRY(pack(dec, 11, 5, raw + 52, ctx))     // 52: amount packed (2)
-  int_to_bytes(data->nonce, raw + 54);     // 54: nonce(4)
+  if (data->type == ZK_WITHDRAW) {
+    total = 58;
+#ifdef ZKSYNC_256
+    memcpy(raw + 47, data->amount+16, 16);
+#else 
+    memset(raw+47, 0, 8);
+    long_to_bytes(data->amount, raw + 55);
+#endif
+    to_dec(dec, data->fee);                  //    create a decimal represntation and pack it
+    TRY(pack(dec, 11, 5, raw + 63, ctx))     // 63: amount packed (2)
+    int_to_bytes(data->nonce, raw + 65);     // 65: nonce(4)
+  } else {
+    total = 58;
+    to_dec(dec, data->amount);               //    create a decimal represntation and pack it
+    TRY(pack(dec, 35, 5, raw + 47, ctx))     // 47: amount packed (5)
+    to_dec(dec, data->fee);                  //    create a decimal represntation and pack it
+    TRY(pack(dec, 11, 5, raw + 52, ctx))     // 52: amount packed (2)
+    int_to_bytes(data->nonce, raw + 54);     // 54: nonce(4)
+  }
+
 
   // sign data
-  TRY(zkcrypto_sign_musig(sync_key, bytes(raw, 58), sig));
+  TRY(zkcrypto_sign_musig(sync_key, bytes(raw, total), sig));
 
   return IN3_OK;
 }
@@ -174,12 +190,12 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   if (signature.len == 65 && signature.data[64] < 27)
     signature.data[64] += 27; //because EIP155 chainID = 0
   // now create the packed sync transfer
-  uint8_t raw[58], sig[96];
+  uint8_t raw[69], sig[96];
   TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
 
   if (in3_log_level_is(LOG_DEBUG) || in3_log_level_is(LOG_TRACE)) {
-    char* hex = alloca(120);
-    bytes_to_hex(raw, 58, hex);
+    char* hex = alloca(142);
+    bytes_to_hex(raw, data->type == ZK_WITHDRAW ? 69 : 58, hex);
     in3_log_debug("zksync_sign_transfer  bin :\n%s\n", hex);
   }
 

@@ -103,7 +103,7 @@ elif [ "$CONTAINER" = "wasm_local" ]; then
 elif [ "$CONTAINER" = "wasm" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:clang11
   echo $CONTAINER > build/container.txt
-  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true  -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
+  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
 elif [ "$CONTAINER" = "asmjs_local" ]; then
   cd build
   source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
