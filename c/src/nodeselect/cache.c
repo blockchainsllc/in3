@@ -34,12 +34,12 @@
 
 #include "cache.h"
 #include "../core/client/context.h"
+#include "../core/client/plugin.h"
 #include "../core/util/bitset.h"
 #include "../core/util/log.h"
 #include "../core/util/mem.h"
 #include "../core/util/utils.h"
 #include "nodelist.h"
-#include "plugin.h"
 #include "stdio.h"
 #include <assert.h>
 #include <inttypes.h>
@@ -92,7 +92,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-  write_cache_key(key, data->chain_id, data->whitelist ? data->whitelist->contract : NULL);
+  write_cache_key(key, c->chain_id, data->whitelist ? data->whitelist->contract : NULL);
 
   // get from cache
   in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = key};
@@ -156,7 +156,6 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // it is ok not to have a storage
   if (!in3_plugin_is_registered(c, PLGN_ACT_CACHE_SET) || !data->dirty) return IN3_OK;
-  if (!c->cache || !data->dirty) return IN3_OK;
 
   // write to bytes_buffer
   bytes_builder_t* bb = bb_new();
@@ -214,7 +213,6 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // it is ok not to have a storage
   if (!in3_plugin_is_registered(c, PLGN_ACT_CACHE_SET) || !data->whitelist) return IN3_OK;
-  if (!c->cache || !data->whitelist) return IN3_OK;
 
   in3_whitelist_t* wl = data->whitelist;
 
@@ -225,36 +223,35 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
   // get from cache
   in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = key};
   in3_plugin_execute_all(c, PLGN_ACT_CACHE_GET, &cctx);
-  bytes_t* data = cctx.content;
-  if (data) {
+  bytes_t* cached_data = cctx.content;
+  if (cached_data) {
     size_t pos = 0;
 
     // version check
-    if (b_read_byte(data, &pos) != CACHE_VERSION) {
-      b_free(data);
+    if (b_read_byte(cached_data, &pos) != CACHE_VERSION) {
+      b_free(cached_data);
       return IN3_EVERS;
     }
 
     // clean up old
     if (wl->addresses.data) _free(wl->addresses.data);
 
-    // fill data
-    wl->last_block         = b_read_long(data, &pos);
-    uint32_t adress_length = b_read_int(data, &pos) * 20;
+    // fill cached_data
+    wl->last_block         = b_read_long(cached_data, &pos);
+    uint32_t adress_length = b_read_int(cached_data, &pos) * 20;
     wl->addresses          = bytes(_malloc(adress_length), adress_length);
-    memcpy(wl->addresses.data, data->data + pos, adress_length);
-    b_free(data);
+    memcpy(wl->addresses.data, cached_data->data + pos, adress_length);
+    b_free(cached_data);
   }
   return IN3_OK;
 }
 
 in3_ret_t in3_cache_store_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
-  assert(ctx);
-  assert_in3(ctx->client);
+  assert_in3(c);
   assert(data);
 
   // write to bytes_buffer
-  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET) || !chain->whitelist) return IN3_OK;
+  if (!in3_plugin_is_registered(c, PLGN_ACT_CACHE_SET) || !data->whitelist) return IN3_OK;
 
   const in3_whitelist_t* wl = data->whitelist;
   bytes_builder_t*       bb = bb_new();
@@ -268,8 +265,9 @@ in3_ret_t in3_cache_store_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
   write_cache_key(key, c->chain_id, wl->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
-  in3_cache_ctx_t cctx = {.ctx = ctx, .key = key, .content = &bb->b};
-  in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx);
+  in3_ctx_t       tmp_ctx = {.client = c};
+  in3_cache_ctx_t cctx    = {.ctx = &tmp_ctx, .key = key, .content = &bb->b};
+  in3_plugin_execute_first_or_none(&tmp_ctx, PLGN_ACT_CACHE_SET, &cctx);
 
   // clear buffer
   bb_free(bb);
