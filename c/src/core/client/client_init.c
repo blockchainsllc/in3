@@ -141,12 +141,12 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   assert(contract && strlen(contract) == 40);
   assert(chain_id == CHAIN_ID_LOCAL || registry_id);
 
-  chain->conf                 = NULL;
-  chain->chain_id             = chain_id;
-  chain->verified_hashes      = NULL;
-  chain->contract             = hex_to_new_bytes(contract, 40);
-  chain->type                 = type;
-  chain->version              = version;
+  chain->conf            = NULL;
+  chain->chain_id        = chain_id;
+  chain->verified_hashes = NULL;
+  chain->contract        = hex_to_new_bytes(contract, 40);
+  chain->type            = type;
+  chain->version         = version;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
@@ -326,9 +326,9 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   if (!chain) {
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
-    chain                       = c->chains + c->chains_length;
-    chain->conf                 = NULL;
-    chain->verified_hashes      = NULL;
+    chain                  = c->chains + c->chains_length;
+    chain->conf            = NULL;
+    chain->verified_hashes = NULL;
     c->chains_length++;
   }
   else {
@@ -336,10 +336,10 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
       b_free(chain->contract);
   }
 
-  chain->chain_id  = chain_id;
-  chain->contract  = b_new(contract, 20);
-  chain->type      = type;
-  chain->version   = version;
+  chain->chain_id = chain_id;
+  chain->contract = b_new(contract, 20);
+  chain->type     = type;
+  chain->version  = version;
   memcpy(chain->registry_id, registry_id, 32);
   return chain->contract ? IN3_OK : IN3_ENOMEM;
 }

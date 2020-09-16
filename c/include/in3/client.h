@@ -533,17 +533,6 @@ NONULL in3_chain_t* in3_find_chain(
 );
 
 /**
- * registers specified plugin with client.
- *
- * Plugins maybe handled differently based on their type, see `in3_plugin_type_t` for exact rules
- * Returns IN3_OK on success
- */
-in3_ret_t in3_register_plugin(
-    in3_t*        c,     /**< the incubed client */
-    in3_plugin_t* plugin /**< plugin to register */
-);
-
-/**
  * configures the clent based on a json-config.
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
