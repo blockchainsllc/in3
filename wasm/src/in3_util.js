@@ -222,10 +222,7 @@ function toHex(val, bytes) {
     if (typeof val === 'string')
         hex = val.startsWith('0x')
             ? val.substr(2)
-            : (parseInt(val[0])
-                ? BigInt(val).toString(16)
-                : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
-            )
+            : (parseInt(val[0]) ? BigInt(val).toString(16) : convertUTF82Hex(val))
     else if (typeof val === 'boolean')
         hex = val ? '01' : '00'
     else if (typeof val === 'number' || typeof val === 'bigint') {
@@ -408,6 +405,43 @@ function padEnd(val, minLength, fill = ' ') {
     while (val.length < minLength)
         val = val + fill;
     return val;
+}
+function hexchar(x) {
+    const b = String.fromCharCode(x)
+    let d = ''
+    for (let i = 0; i < b.length; i++) {
+        let h = b[i].charCodeAt(0).toString(16)
+        if (h.length == 1) d += '0'
+        d += h
+    }
+    return d
+}
+
+function convertUTF82Hex(val) {
+    let bstring = ''
+    for (let i = 0; i < val.length; i++) {
+        let x = val.charCodeAt(i)
+        if (x >= 0xD800 && x <= 0xDBFF && i + 1 < val.length && (val.charCodeAt(i + 1) & 0xFC00) == 0xDC00)
+            x = ((x & 0x3FF) << 10) + (val.charCodeAt(++i) & 0x3FF) + 0x10000
+        if ((x & 0xFFFFFF80) == 0) { // 1-byte sequence
+            bstring += hexchar(x);
+            continue
+        }
+        if ((x & 0xFFFFF800) == 0)  // 2-byte sequence
+            bstring += hexchar(((x >> 6) & 0x1F) | 0xC0);
+        else if ((x & 0xFFFF0000) == 0) { // 3-byte sequence
+            if (x >= 0xD800 && x <= 0xDFFF) throw new Error('Invalid utf val')
+            bstring += hexchar(((x >> 12) & 0x0F) | 0xE0)
+            bstring += hexchar(((x >> 6) & 0x3f) | 0x80)
+        }
+        else if ((x & 0xFFE00000) == 0) { // 4-byte sequence
+            bstring += hexchar(((x >> 18) & 0x07) | 0xF0);
+            bstring += hexchar(((x >> 12) & 0x3f) | 0x80)
+            bstring += hexchar(((x >> 6) & 0x3f) | 0x80)
+        }
+        bstring += hexchar((x & 0x3F) | 0x80);
+    }
+    return bstring
 }
 
 function soliditySha3(...args) {

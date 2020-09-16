@@ -142,6 +142,7 @@ describe('Util-Tests', () => {
     })
 
     it('toHex', async () => {
+        assert.equal('0xc384', IN3.util.toHex("Ä"))
         assert.equal('0x0a', IN3.util.toHex("0xA"))
         assert.equal('0x01', IN3.util.toHex(1))
         assert.equal(undefined, IN3.util.toHex(undefined))
@@ -154,6 +155,7 @@ describe('Util-Tests', () => {
         assert.equal('0x616263', IN3.util.toHex("abc"))
         assert.equal('0x616263', IN3.util.toHex(Buffer.from("abc", 'utf8')))
         assert.Throw(() => IN3.util.toHex({}))
+
     })
 
 
