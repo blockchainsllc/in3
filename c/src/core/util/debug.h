@@ -38,6 +38,7 @@
  * */
 
 #include <assert.h>
+#include <stdbool.h>
 
 #ifdef DEBUG
 #define dbg_log(msg, ...)     __dbg_log(0, __FILE__, __func__, __LINE__, msg, ##__VA_ARGS__)
@@ -78,7 +79,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
   goto cleanup;                              \
 })
 #define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
-#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(token->key), err))
+#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(json, token->key), err))
 #define EXPECT_TOK_BOOL(token)        EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
 #define EXPECT_TOK_STR(token)         EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
 #define EXPECT_TOK_ARR(token)         EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")

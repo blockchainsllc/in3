@@ -482,12 +482,12 @@ char* in3_get_config(in3_t* c) {
 }
 
 char* in3_configure(in3_t* c, const char* config) {
-  json_ctx_t* cnf = parse_json((char*) config);
-  char*       res = NULL;
+  json_ctx_t* json = parse_json((char*) config);
+  char*       res  = NULL;
 
-  if (!cnf || !cnf->result) return config_err("in3_configure", "parse error");
+  if (!json || !json->result) return config_err("in3_configure", "parse error");
   if (c->pending) return config_err("in3_configure", "can not change config because there are pending requests!");
-  for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
+  for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter)) {
     d_token_t* token = iter.token;
     if (token->key == key("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);
@@ -676,7 +676,7 @@ char* in3_configure(in3_t* c, const char* config) {
       }
     }
     else {
-      in3_configure_ctx_t cctx    = {.client = c, .token = token, .error_msg = NULL};
+      in3_configure_ctx_t cctx    = {.client = c, .json = json, .token = token, .error_msg = NULL};
       bool                handled = false;
       for (in3_plugin_t* p = c->plugins; p; p = p->next) {
         if (p->acts & PLGN_ACT_CONFIG_SET) {
@@ -702,7 +702,7 @@ char* in3_configure(in3_t* c, const char* config) {
   EXPECT_CFG(in3_get_chain(c), "chain corresponding to chain id not initialized!");
   assert_in3(c);
 cleanup:
-  json_free(cnf);
+  json_free(json);
   return res;
 }
 

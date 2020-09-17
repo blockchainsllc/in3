@@ -99,9 +99,10 @@ static in3_ret_t in3_client_clear_nodes(in3_nodeselect_def_t* data) {
 }
 
 static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
-  char*      res   = NULL;
-  d_token_t* token = ctx->token;
-  in3_t*     c     = ctx->client;
+  char*       res   = NULL;
+  json_ctx_t* json  = ctx->json;
+  d_token_t*  token = ctx->token;
+  in3_t*      c     = ctx->client;
 
   if (token->key == key("servers") || token->key == key("nodes")) {
     for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
@@ -188,7 +189,7 @@ static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* 
     }
   }
 cleanup:
-  ctx->err = res;
+  ctx->error_msg = res;
   return IN3_OK;
 }
 

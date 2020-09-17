@@ -271,9 +271,10 @@ NONULL in3_sign_ctx_t* create_sign_ctx(
  * context used during configure
  */
 typedef struct in3_configure_ctx {
-  in3_t*     client;    /**< the client to configure */
-  d_token_t* token;     /**< the token not handled yet*/
-  char*      error_msg; /**< message in case of an incorrect config */
+  in3_t*      client;    /**< the client to configure */
+  json_ctx_t* json;      /**< the json ctx corresponding to below token */
+  d_token_t*  token;     /**< the token not handled yet*/
+  char*       error_msg; /**< message in case of an incorrect config */
 } in3_configure_ctx_t;
 
 // -------- GET_CONFIG ---------
