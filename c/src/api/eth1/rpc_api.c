@@ -242,6 +242,7 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   mp_init(&d);
   mp_read_radix(&d, dst, 10);
   mp_export(data, &s, 1, sizeof(uint8_t), 1, 0, &d);
+  mp_clear(&d);
   return in3_rpc_handle_with_bytes(ctx, bytes(data, (uint32_t) s));
 #else
   uint8_t data[8];
