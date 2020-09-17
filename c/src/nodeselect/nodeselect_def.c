@@ -4,6 +4,34 @@
 #include "../core/util/debug.h"
 #include "cache.h"
 
+#define BOOT_NODES_MAINNET "{"                                                                \
+                           " \"servers\": {"                                                  \
+                           "  \"0x1\": {"                                                     \
+                           "   \"nodeList\": [{"                                              \
+                           "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\"," \
+                           "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-1\","           \
+                           "    \"props\": \"0xFFFF\""                                        \
+                           "   }, {"                                                          \
+                           "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\"," \
+                           "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-2\","           \
+                           "    \"props\": \"0xFFFF\""                                        \
+                           "   }, {"                                                          \
+                           "    \"address\": \"0x0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d\"," \
+                           "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-3\","           \
+                           "    \"props\": \"0xFFFF\""                                        \
+                           "   }, {"                                                          \
+                           "    \"address\": \"0xccd12a2222995e62eca64426989c2688d828aa47\"," \
+                           "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-4\","           \
+                           "    \"props\": \"0xFFFF\""                                        \
+                           "   }, {"                                                          \
+                           "    \"address\": \"0x510ee7f6f198e018e3529164da2473a96eeb3dc8\"," \
+                           "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-5\","           \
+                           "    \"props\": \"0xFFFF\""                                        \
+                           "   }]"                                                            \
+                           "  }"                                                              \
+                           " }"                                                               \
+                           "}"
+
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
     case CHAIN_ID_MAINNET:
