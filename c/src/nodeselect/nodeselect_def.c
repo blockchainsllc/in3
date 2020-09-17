@@ -255,22 +255,6 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       return nl_config_set(data, (in3_configure_ctx_t*) plugin_ctx);
     case PLGN_ACT_CONFIG_GET:
       return nl_config_get(data, (in3_get_config_ctx_t*) plugin_ctx);
-    case PLGN_ACT_CACHE_SET: {
-      in3_cache_ctx_t* ctx = plugin_ctx;
-      switch (ctx->type) {
-        case CACHE_NODELIST: return in3_cache_store_nodelist(ctx->client, data);
-        case CACHE_WHITELIST: return in3_cache_store_whitelist(ctx->client, data);
-        default: return IN3_EIGNORE;
-      }
-    }
-    case PLGN_ACT_CACHE_GET: {
-      in3_cache_ctx_t* ctx = plugin_ctx;
-      switch (ctx->type) {
-        case CACHE_NODELIST: return in3_cache_update_nodelist(ctx->client, data);
-        case CACHE_WHITELIST: return in3_cache_update_whitelist(ctx->client, data); ;
-        default: return IN3_EIGNORE;
-      }
-    }
     case PLGN_ACT_NL_PICK_DATA:
       return nl_pick_data(data, plugin_ctx);
     case PLGN_ACT_NL_PICK_SIGNER:
@@ -284,5 +268,5 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-  return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CACHE | PLGN_ACT_CONFIG, nodeselect, data, false);
+  return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG, nodeselect, data, false);
 }
