@@ -10,7 +10,7 @@ namespace Test.Eth1
 {
     public class ApiTest
     {
-        private ClientFactory _factory => new NoProofFactory(Chain.Mainnet);
+        private ClientFactory _factory => new ProoflessClientFactory(Chain.Mainnet);
 
         [Test]
         public async Task BlockNumber()
@@ -579,7 +579,7 @@ namespace Test.Eth1
                 new[] {"eth_getCode", "eth_getCode_1.json"},
                 new[] {"eth_call", "eth_call_5.json"}
             };
-            IN3 in3 = new StandardProofFactory(Chain.Mainnet).CreateIn3(mockedResponses);
+            IN3 in3 = new StandardProofClientFactory(Chain.Mainnet).CreateIn3(mockedResponses);
             StubTransport transport = (StubTransport)in3.Transport;
             string cryptoKittiesDomain = "cryptokitties.eth";
 

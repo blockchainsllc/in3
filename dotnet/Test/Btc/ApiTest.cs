@@ -12,7 +12,7 @@ namespace Test.Btc
         [SetUp]
         public void Setup()
         {
-            _factory = new NoProofFactory(Chain.Btc);
+            _factory = new ProoflessClientFactory(Chain.Btc);
         }
 
         [Test]

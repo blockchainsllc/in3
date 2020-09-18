@@ -18,7 +18,7 @@ namespace Test.Ipfs
                 new[] {"ipfs_put", "ipfs_put.json"}
             };
 
-            ClientFactory factory = new NoProofFactory(Chain.Ipfs); ;
+            ClientFactory factory = new ProoflessClientFactory(Chain.Ipfs); ;
             _in3 = factory.CreateIn3(mockedResponses);
         }
 

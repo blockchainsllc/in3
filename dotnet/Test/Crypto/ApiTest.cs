@@ -13,7 +13,7 @@ namespace Test.Crypto
         [SetUp]
         public void Setup()
         {
-            ClientFactory factory = new NoProofFactory(Chain.Mainnet);
+            ClientFactory factory = new ProoflessClientFactory(Chain.Mainnet);
             in3 = factory.CreateIn3(new string[][] { });
         }
 

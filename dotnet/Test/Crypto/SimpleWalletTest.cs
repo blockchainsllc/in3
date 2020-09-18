@@ -12,7 +12,7 @@ namespace Test.Crypto
         [SetUp]
         public void Setup()
         {
-            ClientFactory factory = new NoProofFactory(Chain.Mainnet);
+            ClientFactory factory = new ProoflessClientFactory(Chain.Mainnet);
             IN3 in3 = factory.CreateIn3(new string[][] { });
             _wallet = (SimpleWallet) in3.Signer;
         }
