@@ -104,7 +104,6 @@ static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* 
   char*       res   = NULL;
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
-  in3_t*      c     = ctx->client;
 
   if (token->key == key("servers") || token->key == key("nodes")) {
     for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
@@ -300,7 +299,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
     goto FREE_JSON;
   }
 
-  ret = in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG, nodeselect, data, false);
+  ret = plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG, nodeselect, data, false);
 
 FREE_JSON:
   json_free(json);
