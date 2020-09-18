@@ -189,6 +189,20 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
       in3_client_run_chain_whitelisting(data);
     }
   }
+  else if (token->key == key("rpc")) {
+    in3_t* c = ctx->client;
+    EXPECT_TOK_STR(token);
+    c->proof           = PROOF_NONE;
+    c->chain.chain_id  = CHAIN_ID_LOCAL;
+    c->request_count   = 1;
+    in3_chain_t* chain = in3_get_chain(c);
+    in3_node_t*  n     = &data->nodelist[0];
+    if (n->url) _free(n->url);
+    n->url = _malloc(d_len(token) + 1);
+    strcpy(n->url, d_string(token));
+    _free(data->nodelist_upd8_params);
+    data->nodelist_upd8_params = NULL;
+  }
 cleanup:
   ctx->error_msg = res;
   return IN3_OK;
