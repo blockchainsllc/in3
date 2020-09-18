@@ -15,7 +15,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   }
 }
 
-static in3_ret_t in3_client_add_node(in3_nodeselect_def_t* data, char* url, in3_node_props_t props, address_t address) {
+static in3_ret_t add_node(in3_nodeselect_def_t* data, char* url, in3_node_props_t props, address_t address) {
   assert(data);
   assert(url);
   assert(address);
@@ -61,7 +61,7 @@ static in3_ret_t in3_client_add_node(in3_nodeselect_def_t* data, char* url, in3_
   return IN3_OK;
 }
 
-static in3_ret_t in3_client_remove_node(in3_nodeselect_def_t* data, address_t address) {
+static in3_ret_t remove_node(in3_nodeselect_def_t* data, address_t address) {
   assert(data);
   assert(address);
 
@@ -90,7 +90,7 @@ static in3_ret_t in3_client_remove_node(in3_nodeselect_def_t* data, address_t ad
   return IN3_OK;
 }
 
-static in3_ret_t in3_client_clear_nodes(in3_nodeselect_def_t* data) {
+static in3_ret_t clear_nodes(in3_nodeselect_def_t* data) {
   assert(data);
 
   in3_nodelist_clear(data);
@@ -100,7 +100,7 @@ static in3_ret_t in3_client_clear_nodes(in3_nodeselect_def_t* data) {
   return IN3_OK;
 }
 
-static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
+static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
   char*       res   = NULL;
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
@@ -167,15 +167,15 @@ static in3_ret_t nl_config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* 
         }
         else if (cp.token->key == key("nodeList")) {
           EXPECT_TOK_ARR(cp.token);
-          if (in3_client_clear_nodes(data) < 0) goto cleanup;
+          if (clear_nodes(data) < 0) goto cleanup;
           int i = 0;
           for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
             EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
             EXPECT_TOK_STR(d_get(n.token, key("url")));
             EXPECT_TOK_ADDR(d_get(n.token, key("address")));
-            EXPECT_CFG(in3_client_add_node(data, d_get_string(n.token, "url"),
-                                           d_get_longkd(n.token, key("props"), 65535),
-                                           d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
+            EXPECT_CFG(add_node(data, d_get_string(n.token, "url"),
+                                d_get_longkd(n.token, key("props"), 65535),
+                                d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                        "add node failed");
 #ifndef __clang_analyzer__
             BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
@@ -194,7 +194,7 @@ cleanup:
   return IN3_OK;
 }
 
-static in3_ret_t nl_config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ctx) {
+static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ctx) {
   sb_t*  sb = ctx->sb;
   in3_t* c  = ctx->client;
   sb_add_chars(sb, ",\"nodes\":{");
@@ -230,15 +230,15 @@ static in3_ret_t nl_config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t*
   return IN3_OK;
 }
 
-static in3_ret_t nl_pick_data(in3_nodeselect_def_t* data, void* ctx) {
+static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t nl_pick_signer(in3_nodeselect_def_t* data, void* ctx) {
+static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t nl_pick_followup(in3_nodeselect_def_t* data, void* ctx) {
+static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx) {
   return IN3_OK;
 }
 
@@ -254,15 +254,15 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       _free(data);
       return IN3_OK;
     case PLGN_ACT_CONFIG_SET:
-      return nl_config_set(data, (in3_configure_ctx_t*) plugin_ctx);
+      return config_set(data, (in3_configure_ctx_t*) plugin_ctx);
     case PLGN_ACT_CONFIG_GET:
-      return nl_config_get(data, (in3_get_config_ctx_t*) plugin_ctx);
+      return config_get(data, (in3_get_config_ctx_t*) plugin_ctx);
     case PLGN_ACT_NL_PICK_DATA:
-      return nl_pick_data(data, plugin_ctx);
+      return pick_data(data, plugin_ctx);
     case PLGN_ACT_NL_PICK_SIGNER:
-      return nl_pick_signer(data, plugin_ctx);
+      return pick_signer(data, plugin_ctx);
     case PLGN_ACT_NL_PICK_FOLLOWUP:
-      return nl_pick_followup(data, plugin_ctx);
+      return pick_followup(data, plugin_ctx);
     default: break;
   }
   return IN3_EIGNORE;
@@ -293,7 +293,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   }
 
   in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result, .error_msg = NULL};
-  ret                      = nl_config_set(data, &cctx);
+  ret                      = config_set(data, &cctx);
   if (IN3_OK != ret) {
     in3_log_error("nodeselect config error: %s\n", cctx.error_msg);
     goto FREE_JSON;
