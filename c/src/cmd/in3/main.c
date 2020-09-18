@@ -185,7 +185,7 @@ in3_ens <domain> <field>\n\
                  name);
 }
 
-static void die(char* msg) {
+_Noreturn static void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
   recorder_exit(EXIT_FAILURE);
 }

@@ -319,8 +319,6 @@ static void remove_whitespace(char* c) {
   *cp = 0;
   return;
 
-  //  int l = strlen(c);
-  //  while (l && (c[l - 1] == ' ' || c[l - 1] == '\n')) c[--l] = 0;
 }
 int recorder_exit(int code) {
   if (rec.f && !rec.is_out) {
