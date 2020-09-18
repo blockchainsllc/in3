@@ -62,3 +62,6 @@ add_static_library(
 
 target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
 
+
+add_executable(abi abi2.c)
+target_link_libraries(abi eth_api)
