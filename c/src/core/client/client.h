@@ -53,7 +53,6 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MULTICHAIN 0x0   /**< chain_id working with all known chains */
 #define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
 #define CHAIN_ID_KOVAN      0x2a  /**< chain_id for kovan */
 #define CHAIN_ID_TOBALABA   0x44d /**< chain_id for tobalaba */
@@ -377,19 +376,17 @@ struct in3_t_ {
   uint_fast8_t           flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
   uint16_t               node_limit;            /**< the limit of nodes to store in the client. */
   uint16_t               finality;              /**< the number of signatures in percent required for the request*/
-  uint16_t               chains_length;         /**< number of configured chains */
   uint_fast16_t          max_attempts;          /**< the max number of attempts before giving up*/
   uint_fast16_t          max_verified_hashes;   /**< max number of verified hashes to cache (actual number may temporarily exceed this value due to pending requests) */
   uint_fast16_t          alloc_verified_hashes; /**< number of currently allocated verified hashes */
   uint_fast16_t          pending;               /**< number of pending requests created with this instance */
   uint32_t               cache_timeout;         /**< number of seconds requests can be cached. */
   uint32_t               timeout;               /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
-  chain_id_t             chain_id;              /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
   in3_plugin_supp_acts_t plugin_acts;           /**< bitmask of supported actions of all plugins registered with this client */
   in3_proof_t            proof;                 /**< the type of proof used */
   uint64_t               min_deposit;           /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
   in3_node_props_t       node_props;            /**< used to identify the capabilities of the node. */
-  in3_chain_t*           chains;                /**< chain spec and nodeList definitions*/
+  in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
 
@@ -406,36 +403,7 @@ struct in3_t_ {
 #endif
 };
 
-/** creates a new Incubes configuration and returns the pointer.
- * 
- * This Method is depricated. you should use `in3_for_chain(CHAIN_ID_MULTICHAIN)` instead.
- * 
- * you need to free this instance with `in3_free` after use!
- * 
- * Before using the client you still need to set the tramsport and optional the storage handlers:
- * 
- *  * example of initialization:
- * ```c
- * // register verifiers
- * in3_register_eth_full();
- * 
- * // create new client
- * in3_t* client = in3_new();
- * 
- * // configure transport
- * client->transport    = send_curl;
- *
- * // configure storage
- * in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
- * 
- * // ready to use ...
- * ```
- * 
- * @returns the incubed instance.
- */
-in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(CHAIN_ID_MULTICHAIN)")));
-
-/** creates a new Incubes configuration for a specified chain and returns the pointer.
+/** creates a new Incubed configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 
  * but if you pass `CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
  * 
@@ -517,31 +485,6 @@ NONULL in3_ret_t in3_cache_init(
 );
 
 /**
- * returns the chain-config for the current chain_id.
- */
-NONULL in3_chain_t* in3_get_chain(
-    const in3_t* c /**< the incubed client */
-);
-
-/**
- * sets the chain_id of the in3 client
- */
-NONULL void in3_set_chain_id(
-    in3_t*     c,       /**< the incubed client */
-    chain_id_t chain_id /**< new chain_id */
-);
-
-/**
- * finds the chain-config for the given chain_id.
- * 
- * My return NULL if not found.
- */
-NONULL in3_chain_t* in3_find_chain(
-    const in3_t* c /**< the incubed client */,
-    chain_id_t   chain_id /**< chain_id */
-);
-
-/**
  * configures the clent based on a json-config.
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
@@ -582,12 +525,9 @@ void in3_register_payment(
 
 #define assert_in3(c)                              \
   assert(c);                                       \
-  assert(c->chain_id);                             \
+  assert(c->chain.chain_id);                       \
   assert(c->plugins);                              \
-  assert(c->chains);                               \
   assert(c->request_count > 0);                    \
-  assert(c->chains_length > 0);                    \
-  assert(c->chains_length < 10);                   \
   assert(c->max_attempts > 0);                     \
   assert(c->proof >= 0 && c->proof <= PROOF_FULL); \
   assert(c->proof >= 0 && c->proof <= PROOF_FULL);

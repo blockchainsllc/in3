@@ -94,7 +94,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 #define EXPECT_TOK_U16(token)         EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
 #define EXPECT_TOK_U32(token)         EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
 #define EXPECT_TOK_U64(token)         EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value")
-#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
+#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(json, token->key)), "expected hex str")
 
 static inline char* config_err(const char* keyname, const char* err) {
   char* s = _malloc(strlen(keyname) + strlen(err) + 4);

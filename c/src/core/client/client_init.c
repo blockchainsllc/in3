@@ -32,8 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../nodeselect/cache.h"
-#include "../../nodeselect/nodelist.h"
 #include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/debug.h"
@@ -197,7 +195,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 
   c->flags                 = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST | FLAGS_BOOT_WEIGHTS;
   c->cache_timeout         = 0;
-  c->chain_id              = chain_id ? chain_id : CHAIN_ID_MAINNET; // mainnet
   c->finality              = 0;
   c->max_attempts          = 7;
   c->max_verified_hashes   = 5;
@@ -207,8 +204,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->proof                 = PROOF_STANDARD;
   c->replace_latest_block  = 0;
   c->request_count         = 1;
-  c->chains_length         = chain_id ? 1 : 7;
-  c->chains                = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters               = NULL;
   c->timeout               = 10000;
 
@@ -216,66 +211,22 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->id_count = 1;
 #endif
 
-  in3_chain_t* chain = c->chains;
+  if (chain_id == CHAIN_ID_MAINNET)
+    init_mainnet(&c->chain);
+  else if (chain_id == CHAIN_ID_KOVAN)
+    init_kovan(&c->chain);
+  else if (chain_id == CHAIN_ID_GOERLI)
+    init_goerli(&c->chain);
+  else if (chain_id == CHAIN_ID_IPFS)
+    init_ipfs(&c->chain);
+  else if (chain_id == CHAIN_ID_BTC)
+    init_btc(&c->chain);
+  else if (chain_id == CHAIN_ID_EWC)
+    init_ewf(&c->chain);
+  else if (chain_id == CHAIN_ID_LOCAL)
+    initChain(&c->chain, 0x11, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
 
-  if (!chain_id || chain_id == CHAIN_ID_MAINNET)
-    init_mainnet(chain++);
-
-  if (!chain_id || chain_id == CHAIN_ID_KOVAN)
-    init_kovan(chain++);
-
-  if (!chain_id || chain_id == CHAIN_ID_GOERLI)
-    init_goerli(chain++);
-
-  if (!chain_id || chain_id == CHAIN_ID_IPFS)
-    init_ipfs(chain++);
-
-  if (!chain_id || chain_id == CHAIN_ID_BTC)
-    init_btc(chain++);
-
-  if (!chain_id || chain_id == CHAIN_ID_EWC)
-    init_ewf(chain++);
-
-  if (!chain_id || chain_id == CHAIN_ID_LOCAL) {
-    initChain(chain, 0x11, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
-  }
-  if (chain_id && chain == c->chains) {
-    c->chains_length = 0;
-    return IN3_ECONFIG;
-  }
   return IN3_OK;
-}
-in3_chain_t* in3_get_chain(const in3_t* c) {
-  assert(c);
-
-  // shortcut for single chain
-  if (c->chains_length == 1)
-    return c->chains->chain_id == c->chain_id ? c->chains : NULL;
-
-  // search for multi chain
-  for (int i = 0; i < c->chains_length; i++) {
-    if (c->chains[i].chain_id == c->chain_id) return &c->chains[i];
-  }
-  return NULL;
-}
-
-void in3_set_chain_id(in3_t* c, chain_id_t chain_id) {
-  c->chain_id = chain_id;
-  in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, NULL);
-}
-
-in3_chain_t* in3_find_chain(const in3_t* c, chain_id_t chain_id) {
-  assert(c);
-
-  // shortcut for single chain
-  if (c->chains_length == 1)
-    return c->chains->chain_id == chain_id ? c->chains : NULL;
-
-  // search for multi chain
-  for (int i = 0; i < c->chains_length; i++) {
-    if (c->chains[i].chain_id == chain_id) return &c->chains[i];
-  }
-  return NULL;
 }
 
 in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version) {
@@ -284,26 +235,20 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   assert(contract);
   assert(registry_id);
 
-  in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) {
-    c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
-    if (c->chains == NULL) return IN3_ENOMEM;
-    chain                  = c->chains + c->chains_length;
-    chain->conf            = NULL;
-    chain->verified_hashes = NULL;
-    c->chains_length++;
-  }
-  else {
-    if (chain->contract)
-      b_free(chain->contract);
-  }
-
+  in3_chain_t* chain = &c->chain;
+  if (chain->contract)
+    b_free(chain->contract);
   chain->chain_id = chain_id;
   chain->contract = b_new(contract, 20);
   chain->type     = type;
   chain->version  = version;
   memcpy(chain->registry_id, registry_id, 32);
   return chain->contract ? IN3_OK : IN3_ENOMEM;
+}
+
+static void chain_free(in3_chain_t* chain) {
+  if (chain->verified_hashes) _free(chain->verified_hashes);
+  b_free(chain->contract);
 }
 
 /* frees the data */
@@ -320,11 +265,7 @@ void in3_free(in3_t* a) {
     p = n;
   }
 
-  for (int i = 0; i < a->chains_length; i++) {
-    if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
-    b_free(a->chains[i].contract);
-  }
-  if (a->chains) _free(a->chains);
+  chain_free(&a->chain);
 
   if (a->filters) {
     in3_filter_t* f = NULL;
@@ -369,10 +310,6 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   return c;
 }
 
-in3_t* in3_new() {
-  return in3_for_chain(0);
-}
-
 static chain_id_t get_chain_from_key(d_key_t k) {
   if (k == key("0x1")) return CHAIN_ID_MAINNET;
   if (k == key("0x2a")) return CHAIN_ID_KOVAN;
@@ -406,10 +343,9 @@ static chain_id_t chain_id(d_token_t* t) {
 }
 
 char* in3_get_config(in3_t* c) {
-  sb_t*        sb    = sb_new("");
-  in3_chain_t* chain = in3_get_chain(c);
+  sb_t* sb = sb_new("");
   add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
-  add_uint(sb, ',', "chainId", c->chain_id);
+  add_uint(sb, ',', "chainId", c->chain.chain_id);
   add_uint(sb, ',', "signatureCount", c->signature_count);
   add_uint(sb, ',', "finality", c->finality);
   add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
@@ -428,8 +364,6 @@ char* in3_get_config(in3_t* c) {
   if (c->replace_latest_block)
     add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
   add_uint(sb, ',', "requestCount", c->request_count);
-  if (c->chain_id == CHAIN_ID_LOCAL && chain)
-    add_string(sb, ',', "rpc", chain->nodelist->url);
 
   in3_get_config_ctx_t cctx = {.client = c, .sb = sb};
   in3_plugin_execute_all(c, PLGN_ACT_CONFIG_GET, &cctx);
@@ -454,7 +388,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
-      c->chain_id = chain_id(token);
+      c->chain.chain_id = chain_id(token);
     }
     else if (token->key == key("signatureCount")) {
       EXPECT_TOK_U8(token);
@@ -463,7 +397,7 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == key("finality")) {
       EXPECT_TOK_U16(token);
 #ifdef POA
-      if (c->chain_id == CHAIN_ID_GOERLI || c->chain_id == CHAIN_ID_KOVAN)
+      if (c->chain.chain_id == CHAIN_ID_GOERLI || c->chain.chain_id == CHAIN_ID_KOVAN)
         EXPECT_CFG(d_int(token) > 0 && d_int(token) <= 100, "expected % value");
 #endif
       c->finality = (uint16_t) d_int(token);
@@ -507,14 +441,12 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
-      in3_chain_t* chain = in3_get_chain(c);
-      EXPECT_CFG(chain, "chain not found");
       if (c->max_verified_hashes < d_long(token)) {
-        chain->verified_hashes = _realloc(chain->verified_hashes,
-                                          sizeof(in3_verified_hash_t) * d_long(token),
-                                          sizeof(in3_verified_hash_t) * c->max_verified_hashes);
+        c->chain.verified_hashes = _realloc(c->chain.verified_hashes,
+                                            sizeof(in3_verified_hash_t) * d_long(token),
+                                            sizeof(in3_verified_hash_t) * c->max_verified_hashes);
         // clear newly allocated memory
-        memset(chain->verified_hashes + c->max_verified_hashes, 0, (d_long(token) - c->max_verified_hashes) * sizeof(in3_verified_hash_t));
+        memset(c->chain.verified_hashes + c->max_verified_hashes, 0, (d_long(token) - c->max_verified_hashes) * sizeof(in3_verified_hash_t));
       }
       c->max_verified_hashes   = d_long(token);
       c->alloc_verified_hashes = c->max_verified_hashes;
@@ -566,19 +498,6 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_CFG(d_int(token), "requestCount must be at least 1");
       c->request_count = (uint8_t) d_int(token);
     }
-    else if (token->key == key("rpc")) {
-      EXPECT_TOK_STR(token);
-      c->proof           = PROOF_NONE;
-      c->chain_id        = CHAIN_ID_LOCAL;
-      c->request_count   = 1;
-      in3_chain_t* chain = in3_get_chain(c);
-      in3_node_t*  n     = &chain->nodelist[0];
-      if (n->url) _free(n->url);
-      n->url = _malloc(d_len(token) + 1);
-      strcpy(n->url, d_string(token));
-      _free(chain->nodelist_upd8_params);
-      chain->nodelist_upd8_params = NULL;
-    }
     else if (token->key == key("servers") || token->key == key("nodes")) {
       EXPECT_TOK_OBJ(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
@@ -586,44 +505,42 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK_KEY_HEXSTR(ct.token);
 
         // register chain
-        chain_id_t   chain_id    = get_chain_from_key(ct.token->key);
-        bytes_t*     contract    = d_get_byteskl(ct.token, key("contract"), 20);
-        bytes_t*     registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-        in3_chain_t* chain       = in3_find_chain(c, chain_id);
+        chain_id_t chain_id    = get_chain_from_key(ct.token->key);
+        bytes_t*   contract    = d_get_byteskl(ct.token, key("contract"), 20);
+        bytes_t*   registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
 
-        if (!chain) {
+        if (!c->chain.chain_id) {
           EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-          EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract ? contract->data : chain->contract->data, registry_id ? registry_id->data : chain->registry_id, 2)) == IN3_OK,
+          EXPECT_CFG((in3_client_register_chain(c, chain_id, !c->chain.type, contract ? contract->data : c->chain.contract->data, registry_id ? registry_id->data : c->chain.registry_id, 2)) == IN3_OK,
                      "register chain failed");
-          chain = in3_find_chain(c, chain_id);
-          EXPECT_CFG(chain != NULL, "invalid chain id!");
+          EXPECT_CFG(c->chain.chain_id, "invalid chain id!");
         }
 
         // chain_props
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
           if (cp.token->key == key("contract")) {
             EXPECT_TOK_ADDR(cp.token);
-            memcpy(chain->contract->data, cp.token->data, cp.token->len);
+            memcpy(c->chain.contract->data, cp.token->data, cp.token->len);
           }
           else if (cp.token->key == key("registryId")) {
             EXPECT_TOK_B256(cp.token);
             bytes_t data = d_to_bytes(cp.token);
-            memcpy(chain->registry_id, data.data, 32);
+            memcpy(c->chain.registry_id, data.data, 32);
           }
           else if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
             EXPECT_TOK(cp.token, (unsigned) d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
-            if (!chain->verified_hashes)
-              chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+            if (!c->chain.verified_hashes)
+              c->chain.verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
             else
               // clear extra verified_hashes (preceding ones will be overwritten anyway)
-              memset(chain->verified_hashes + d_len(cp.token), 0, (c->max_verified_hashes - d_len(cp.token)) * sizeof(in3_verified_hash_t));
+              memset(c->chain.verified_hashes + d_len(cp.token), 0, (c->max_verified_hashes - d_len(cp.token)) * sizeof(in3_verified_hash_t));
             int i = 0;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
               EXPECT_TOK_U64(d_get(n.token, key("block")));
               EXPECT_TOK_B256(d_get(n.token, key("hash")));
-              chain->verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
-              memcpy(chain->verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
+              c->chain.verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
+              memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
             }
             c->alloc_verified_hashes = c->max_verified_hashes;
           }
@@ -631,7 +548,6 @@ char* in3_configure(in3_t* c, const char* config) {
             EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }
-        in3_client_run_chain_whitelisting(chain);
       }
     }
     else {
@@ -653,13 +569,14 @@ char* in3_configure(in3_t* c, const char* config) {
     }
   }
 
-  if (c->signature_count && c->chain_id != CHAIN_ID_LOCAL && !c->replace_latest_block) {
+  if (c->signature_count && c->chain.chain_id != CHAIN_ID_LOCAL && !c->replace_latest_block) {
     in3_log_warn("signatureCount > 0 without replaceLatestBlock is bound to fail; using default (" STR(DEF_REPL_LATEST_BLK) ")\n");
     c->replace_latest_block = DEF_REPL_LATEST_BLK;
   }
 
-  EXPECT_CFG(in3_get_chain(c), "chain corresponding to chain id not initialized!");
+  EXPECT_CFG(c->chain.chain_id, "chain corresponding to chain id not initialized!");
   assert_in3(c);
+
 cleanup:
   json_free(json);
   return res;
