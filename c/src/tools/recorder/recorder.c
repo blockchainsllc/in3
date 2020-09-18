@@ -332,9 +332,8 @@ static void remove_whitespace(char* c) {
   }
   *cp = 0;
   return;
-
 }
-int recorder_exit(int code) {
+void recorder_exit(int code) {
   if (rec.f && !rec.is_out) {
     recorder_entry_t* entry = next_entry("result", NULL);
     code                    = EXIT_FAILURE;
@@ -351,5 +350,4 @@ int recorder_exit(int code) {
   }
 
   exit(code);
-  return code;
 }

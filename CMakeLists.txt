@@ -237,6 +237,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 IF (WASM)
   set(TEST false)
+  set(RECORDER false)
   set(TRANSPORTS false)
   set(BUILD_DOC false)
   set(IN3_LIB false)

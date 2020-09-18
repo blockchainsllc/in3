@@ -663,7 +663,7 @@ int main(int argc, char* argv[]) {
   // check for usage
   if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
 
   if (argc >= 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0)) {
@@ -689,7 +689,7 @@ int main(int argc, char* argv[]) {
     recorder_print(0, " -DUSE_CURL=false");
 #endif
     recorder_print(0, "\n(c) " IN3_COPYRIGHT "\n");
-    return recorder_exit(0);
+    recorder_exit(0);
   }
 
   // define vars
@@ -940,7 +940,7 @@ int main(int argc, char* argv[]) {
   // start server
   if (!method && port) {
     http_run_server(port, c);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
 #else
   (void) (port);
@@ -960,7 +960,7 @@ int main(int argc, char* argv[]) {
   if (!method) {
     in3_log_info("in3 " IN3_VERSION " - reading json-rpc from stdin. (exit with ctrl C)\n________________________________________________\n");
     execute(c, stdin);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   if (*method == '-') die("unknown option");
 
@@ -978,7 +978,7 @@ int main(int argc, char* argv[]) {
     }
     if (!req || !req->call_data) die("missing call data");
     print_hex(req->call_data->b.data, req->call_data->b.len);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "abi_decode") == 0) {
     if (!sig) die("missing signature");
@@ -993,7 +993,7 @@ int main(int argc, char* argv[]) {
       recorder_print(0, "%s\n", d_create_json(res, res->result));
     else
       print_val(res->result);
-    return recorder_exit(0);
+    recorder_exit(0);
 #ifdef IPFS
   }
   else if (strcmp(method, "ipfs_get") == 0) {
@@ -1005,14 +1005,14 @@ int main(int argc, char* argv[]) {
     if (!content) die("IPFS hash not found!");
     fwrite(content->data, content->len, 1, stdout);
     fflush(stdout);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "ipfs_put") == 0) {
     c->chain_id         = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
     recorder_print(0, "%s\n", ipfs_put(c, &data));
-    return recorder_exit(0);
+    recorder_exit(0);
 
 #endif
   }
@@ -1142,7 +1142,7 @@ int main(int argc, char* argv[]) {
       if (ctx) ctx_free(ctx);
     }
 
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
@@ -1235,11 +1235,11 @@ int main(int argc, char* argv[]) {
       recorder_print(0, "\"\n");
     }
 
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "autocompletelist") == 0) {
     recorder_print(0, "send call abi_encode abi_decode ipfs_get ipfs_put ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "createkey") == 0) {
     time_t t;
@@ -1247,7 +1247,7 @@ int main(int argc, char* argv[]) {
     recorder_print(0, "0x");
     for (i = 0; i < 32; i++) recorder_print(0, "%02x", rand() % 256);
     recorder_print(0, "\n");
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "pk2address") == 0) {
     bytes32_t prv_key;
@@ -1258,7 +1258,7 @@ int main(int argc, char* argv[]) {
     recorder_print(0, "0x");
     for (i = 0; i < 20; i++) recorder_print(0, "%02x", sdata[i + 12]);
     recorder_print(0, "\n");
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "pk2public") == 0) {
     bytes32_t prv_key;
@@ -1266,7 +1266,7 @@ int main(int argc, char* argv[]) {
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     print_hex(public_key + 1, 64);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "ecrecover") == 0) {
     json_ctx_t* rargs = parse_json(params);
@@ -1297,7 +1297,7 @@ int main(int argc, char* argv[]) {
     keccak(bytes(pub + 1, 64), hash);
     print_hex(hash + 12, 20);
     print_hex(pub + 1, 64);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
 
   in3_log_debug("..sending request %s %s\n", method, params);
@@ -1340,7 +1340,7 @@ int main(int argc, char* argv[]) {
       memcpy(r, last_response->data, last_response->len);
       r[last_response->len] = 0;
       recorder_print(0, "%s\n", r);
-      return recorder_exit(0);
+      recorder_exit(0);
     }
 
     // if the result is a string, we remove the quotes
@@ -1373,5 +1373,5 @@ int main(int argc, char* argv[]) {
         recorder_print(0, "%s\n", result);
     }
   }
-  return recorder_exit(0);
+  recorder_exit(0);
 }
