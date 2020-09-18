@@ -270,6 +270,42 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
 }
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
+  in3_ret_t             ret  = IN3_OK;
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-  return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG, nodeselect, data, false);
+  json_ctx_t*           json = NULL;
+
+  if (c->chain_id == CHAIN_ID_MAINNET)
+    json = parse_json(BOOT_NODES_MAINNET);
+  else if (c->chain_id == CHAIN_ID_KOVAN)
+    json = parse_json(BOOT_NODES_KOVAN);
+  else if (c->chain_id == CHAIN_ID_GOERLI)
+    json = parse_json(BOOT_NODES_GOERLI);
+  else if (c->chain_id == CHAIN_ID_IPFS)
+    json = parse_json(BOOT_NODES_IPFS);
+  else if (c->chain_id == CHAIN_ID_BTC)
+    json = parse_json(BOOT_NODES_BTC);
+  else if (c->chain_id == CHAIN_ID_EWC)
+    json = parse_json(BOOT_NODES_EWC);
+  else if (c->chain_id == CHAIN_ID_LOCAL)
+    json = parse_json(BOOT_NODES_LOCAL);
+  else {
+    ret = IN3_ECONFIG;
+    goto FREE_DATA;
+  }
+
+  in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result, .error_msg = NULL};
+  ret                      = nl_config_set(data, &cctx);
+  if (IN3_OK != ret) {
+    in3_log_error("nodeselect config error: %s\n", cctx.error_msg);
+    goto FREE_JSON;
+  }
+
+  ret = in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG, nodeselect, data, false);
+
+FREE_JSON:
+  json_free(json);
+
+FREE_DATA:
+  _free(data);
+  return ret;
 }
