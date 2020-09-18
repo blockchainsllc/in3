@@ -104,6 +104,21 @@ foreach (file ${files})
 
 endforeach ()
 
+# add cmd--tests
+file(GLOB files "testdata/cmd/*.txt")
+foreach (file ${files})
+    get_filename_component(testname "${file}" NAME_WE)
+    add_test(
+            NAME "cmd_${testname}"
+            COMMAND ${CMAKE_BINARY_DIR}/bin/in3 -fi ${file} 
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
+    )
+    set_tests_properties("cmd_${testname}" PROPERTIES 
+      ENVIRONMENT LLVM_PROFILE_FILE=cmd_${testname}.profraw
+    )
+
+endforeach ()
+
 if (CODE_COVERAGE)
   set (EVMARG "-d")
 endif()

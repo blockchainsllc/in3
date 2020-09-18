@@ -1,6 +1,7 @@
 #include "recorder.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 
@@ -267,7 +268,11 @@ void recorder_read_start(in3_t* c, char* file) {
 }
 
 void recorder_update_cmd(char* file, int* argc, char** argv[]) {
-  rec.f                   = fopen(file, "r");
+  rec.f = fopen(file, "r");
+  if (!rec.f) {
+    fprintf(stderr, "Cannot open %s : %s\n", file, strerror((int) errno));
+    exit(EXIT_FAILURE);
+  }
   recorder_entry_t* entry = next_entry("cmd", NULL);
   *argc                   = entry->argl;
   *argv                   = entry->args;
@@ -303,17 +308,26 @@ void recorder_print(int err, const char* fmt, ...) {
     va_end(args);
   }
 }
-static void trim(char* c) {
+static void remove_whitespace(char* c) {
   if (!c) return;
-  int l = strlen(c);
-  while (l && (c[l - 1] == ' ' || c[l - 1] == '\n')) c[--l] = 0;
+  char* cp = c;
+  for (; *c; c++) {
+    if (*c <= 32) continue;
+    *cp = *c;
+    cp++;
+  }
+  *cp = 0;
+  return;
+
+  //  int l = strlen(c);
+  //  while (l && (c[l - 1] == ' ' || c[l - 1] == '\n')) c[--l] = 0;
 }
 int recorder_exit(int code) {
   if (rec.f && !rec.is_out) {
     recorder_entry_t* entry = next_entry("result", NULL);
     code                    = EXIT_FAILURE;
-    trim(entry->content.data);
-    trim(result ? result->data : NULL);
+    remove_whitespace(entry->content.data);
+    remove_whitespace(result ? result->data : NULL);
     if (entry->content.len && result == NULL)
       fprintf(stderr, "No result resturned, but expected : %s\n", entry->content.data);
     else if (!entry->content.len && (result != NULL && result->len))
