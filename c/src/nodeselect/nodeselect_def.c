@@ -242,6 +242,10 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx) {
   return IN3_OK;
 }
 
+static in3_ret_t chain_change(in3_nodeselect_def_t* data, void* ctx) {
+  return IN3_OK;
+}
+
 static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_nodeselect_def_t* data = plugin_data;
   switch (action) {
@@ -264,6 +268,8 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       return pick_signer(data, plugin_ctx);
     case PLGN_ACT_NL_PICK_FOLLOWUP:
       return pick_followup(data, plugin_ctx);
+    case PLGN_ACT_CHAIN_CHANGE:
+      return chain_change(data, plugin_ctx);
     default: break;
   }
   return IN3_EIGNORE;
@@ -272,23 +278,9 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   in3_ret_t             ret  = IN3_OK;
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-  json_ctx_t*           json = NULL;
 
-  if (c->chain_id == CHAIN_ID_MAINNET)
-    json = parse_json(BOOT_NODES_MAINNET);
-  else if (c->chain_id == CHAIN_ID_KOVAN)
-    json = parse_json(BOOT_NODES_KOVAN);
-  else if (c->chain_id == CHAIN_ID_GOERLI)
-    json = parse_json(BOOT_NODES_GOERLI);
-  else if (c->chain_id == CHAIN_ID_IPFS)
-    json = parse_json(BOOT_NODES_IPFS);
-  else if (c->chain_id == CHAIN_ID_BTC)
-    json = parse_json(BOOT_NODES_BTC);
-  else if (c->chain_id == CHAIN_ID_EWC)
-    json = parse_json(BOOT_NODES_EWC);
-  else if (c->chain_id == CHAIN_ID_LOCAL)
-    json = parse_json(BOOT_NODES_LOCAL);
-  else {
+  json_ctx_t* json = nodeselect_def_cfg(c->chain_id);
+  if (json == NULL) {
     ret = IN3_ECONFIG;
     goto FREE_DATA;
   }
@@ -300,7 +292,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
     goto FREE_JSON;
   }
 
-  ret = plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG, nodeselect, data, false);
+  ret = plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE, nodeselect, data, false);
 
 FREE_JSON:
   json_free(json);

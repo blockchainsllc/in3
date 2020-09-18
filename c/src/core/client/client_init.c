@@ -258,6 +258,12 @@ in3_chain_t* in3_get_chain(const in3_t* c) {
   }
   return NULL;
 }
+
+void in3_set_chain_id(in3_t* c, chain_id_t chain_id) {
+  c->chain_id = chain_id;
+  in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, NULL);
+}
+
 in3_chain_t* in3_find_chain(const in3_t* c, chain_id_t chain_id) {
   assert(c);
 
@@ -712,8 +718,8 @@ in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin
   }
   return ret;
 }
-#ifdef LOGGING
 
+#ifdef LOGGING
 static char* action_name(in3_plugin_act_t action) {
   switch (action) {
     case PLGN_ACT_INIT: return "init";
@@ -743,6 +749,7 @@ static char* action_name(in3_plugin_act_t action) {
   return "unknown";
 }
 #endif
+
 in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
   assert(ctx);
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
