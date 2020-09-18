@@ -329,7 +329,7 @@ void recorder_exit(int code) {
       fprintf(stderr, "No result resturned, but expected : %s\n", entry->content.data);
     else if (!entry->content.len && (result != NULL && result->len))
       fprintf(stderr, "No result expected, but got : %s\n", result->data);
-    else if (entry->content.len && strcmp(result->data, entry->content.data))
+    else if (entry->content.len && result && strcmp(result->data, entry->content.data))
       fprintf(stderr, "wrong result!\nexpected: %s\ngot     : %s\n", entry->content.data, result->data);
     else
       code = EXIT_SUCCESS;
