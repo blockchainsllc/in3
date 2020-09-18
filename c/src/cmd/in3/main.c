@@ -88,7 +88,7 @@
 
 // helpstring
 void show_help(char* name) {
-  printf("Usage: %s <options> method <params> ... \n\
+  recorder_print(0, "Usage: %s <options> method <params> ... \n\
 \n\
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -a             max number of attempts before giving up (default 5)\n\
@@ -182,24 +182,24 @@ in3_weights\n\
 in3_ens <domain> <field>\n\
   resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
 \n",
-         name);
+                 name);
 }
 
 static void die(char* msg) {
-  fprintf(stderr, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
-  exit(EXIT_FAILURE);
+  recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
+  recorder_exit(EXIT_FAILURE);
 }
 
 static bool debug_mode = false;
 static void print_hex(uint8_t* data, int len) {
-  printf("0x");
-  for (int i = 0; i < len; i++) printf("%02x", data[i]);
-  printf("\n");
+  recorder_print(0, "0x");
+  for (int i = 0; i < len; i++) recorder_print(0, "%02x", data[i]);
+  recorder_print(0, "\n");
 }
 // helper to read the password from tty
 void read_pass(char* pw, int pwsize) {
   int i = 0, ch = 0;
-  fprintf(stderr, COLORT_HIDDEN); //conceal typing and save position
+  recorder_print(1, COLORT_HIDDEN); //conceal typing and save position
   while (true) {
     ch = getchar();
     if (ch == '\r' || ch == '\n' || ch == EOF) break; //get characters until CR or NL
@@ -209,7 +209,7 @@ void read_pass(char* pw, int pwsize) {
     }
     i++;
   }
-  fprintf(stderr, COLORT_RESETHIDDEN); //reveal typing
+  recorder_print(1, COLORT_RESETHIDDEN); //reveal typing
 }
 
 // accepts a value as
@@ -281,7 +281,7 @@ static void execute(in3_t* c, FILE* f) {
       if (first)
         die("Invalid json-data from stdin");
       else
-        exit(EXIT_SUCCESS);
+        recorder_exit(EXIT_SUCCESS);
     }
     if (first == 0) {
       if (d == '{')
@@ -300,7 +300,7 @@ static void execute(in3_t* c, FILE* f) {
       // time to execute
       in3_ctx_t* ctx = ctx_new(c, sb->data);
       if (ctx->error)
-        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
+        recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
         in3_ret_t ret = in3_send_ctx(ctx);
         uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
@@ -314,21 +314,21 @@ static void execute(in3_t* c, FILE* f) {
           if (c->flags & FLAGS_KEEP_IN3) {
             str_range_t rr  = d_to_json(ctx->responses[0]);
             rr.data[rr.len] = 0;
-            printf("%s\n", rr.data);
+            recorder_print(0, "%s\n", rr.data);
           }
           else {
             d_token_t* result = d_get(ctx->responses[0], K_RESULT);
             d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
             char*      r      = d_create_json(ctx->response_context, result ? result : error);
             if (result)
-              printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
+              recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
             else
-              printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
+              recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
             _free(r);
           }
         }
         else
-          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
+          recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
       ctx_free(ctx);
       first   = 0;
@@ -498,25 +498,25 @@ void print_val(d_token_t* t) {
         print_val(it.token);
       break;
     case T_BOOLEAN:
-      printf("%s\n", d_int(t) ? "true" : "false");
+      recorder_print(0, "%s\n", d_int(t) ? "true" : "false");
       break;
     case T_INTEGER:
-      printf("%i\n", d_int(t));
+      recorder_print(0, "%i\n", d_int(t));
       break;
     case T_BYTES:
       if (t->len < 9)
-        printf("%" PRId64 "\n", d_long(t));
+        recorder_print(0, "%" PRId64 "\n", d_long(t));
       else {
-        printf("0x");
-        for (int i = 0; i < (int) t->len; i++) printf("%02x", t->data[i]);
-        printf("\n");
+        recorder_print(0, "0x");
+        for (int i = 0; i < (int) t->len; i++) recorder_print(0, "%02x", t->data[i]);
+        recorder_print(0, "\n");
       }
       break;
     case T_NULL:
-      printf("NULL\n");
+      recorder_print(0, "NULL\n");
       break;
     case T_STRING:
-      printf("%s\n", d_string(t));
+      recorder_print(0, "%s\n", d_string(t));
       break;
   }
 }
@@ -524,7 +524,7 @@ void print_val(d_token_t* t) {
 void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
   if (pk_file) {
     if (!pwd) {
-      fprintf(stderr, "Passphrase:\n");
+      recorder_print(1, "Passphrase:\n");
       pwd = malloc(500);
       read_pass(pwd, 500);
     }
@@ -545,8 +545,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
     if (!method || strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0) {
       char tmp[64];
       bytes_to_hex(pk_seed, 32, tmp);
-      printf("0x%s\n", tmp);
-      exit(0);
+      recorder_print(0, "0x%s\n", tmp);
+      recorder_exit(0);
     }
     else
       eth_set_pk_signer(c, pk_seed);
@@ -602,7 +602,7 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
   if (action == PLGN_ACT_TRANSPORT_SEND) {
 #ifndef DEBUG
     if (debug_mode)
-      fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
+      recorder_print(1, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
     if (in_response.len) {
       for (unsigned int i = 0; i < req->urls_len; i++) {
@@ -615,8 +615,8 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
     if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
       char* data         = str_find(req->payload, "0x");
       *strchr(data, '"') = 0;
-      printf("%s\n", data);
-      exit(EXIT_SUCCESS);
+      recorder_print(0, "%s\n", data);
+      recorder_exit(EXIT_SUCCESS);
     }
   }
 #ifdef USE_CURL
@@ -631,9 +631,9 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
 #ifndef DEBUG
     if (debug_mode) {
       if (req->ctx->raw_response[0].state == IN3_OK)
-        fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+        recorder_print(1, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
       else
-        fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+        recorder_print(1, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
     }
 #endif
   }
@@ -652,8 +652,8 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
-    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->ctx->raw_response->data.data);
-    exit(0);
+    recorder_print(0, "[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->ctx->raw_response->data.data);
+    recorder_exit(0);
   }
 
   return r;
@@ -663,33 +663,33 @@ int main(int argc, char* argv[]) {
   // check for usage
   if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
-    return 0;
+    return recorder_exit(0);
   }
 
   if (argc >= 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0)) {
-    printf("in3 " IN3_VERSION "\nbuild " __DATE__ " with");
+    recorder_print(0, "in3 " IN3_VERSION "\nbuild " __DATE__ " with");
 #ifdef TEST
-    printf(" -DTEST=true");
+    recorder_print(0, " -DTEST=true");
 #endif
 #ifdef EVM_GAS
-    printf(" -DEVM_GAS=true");
+    recorder_print(0, " -DEVM_GAS=true");
 #endif
 #ifdef CMD
-    printf(" -DCMD=true");
+    recorder_print(0, " -DCMD=true");
 #endif
 #ifdef IN3_MATH_FAST
-    printf(" -DFAST_MATH=true");
+    recorder_print(0, " -DFAST_MATH=true");
 #endif
 #ifdef IN3_SERVER
-    printf(" -DIN3_SERVER=true");
+    recorder_print(0, " -DIN3_SERVER=true");
 #endif
 #ifdef USE_CURL
-    printf(" -DUSE_CURL=true");
+    recorder_print(0, " -DUSE_CURL=true");
 #else
-    printf(" -DUSE_CURL=false");
+    recorder_print(0, " -DUSE_CURL=false");
 #endif
-    printf("\n(c) " IN3_COPYRIGHT "\n");
-    return 0;
+    recorder_print(0, "\n(c) " IN3_COPYRIGHT "\n");
+    return recorder_exit(0);
   }
 
   // define vars
@@ -940,7 +940,7 @@ int main(int argc, char* argv[]) {
   // start server
   if (!method && port) {
     http_run_server(port, c);
-    return 0;
+    return recorder_exit(0);
   }
 #else
   (void) (port);
@@ -960,7 +960,7 @@ int main(int argc, char* argv[]) {
   if (!method) {
     in3_log_info("in3 " IN3_VERSION " - reading json-rpc from stdin. (exit with ctrl C)\n________________________________________________\n");
     execute(c, stdin);
-    return EXIT_SUCCESS;
+    return recorder_exit(0);
   }
   if (*method == '-') die("unknown option");
 
@@ -978,7 +978,7 @@ int main(int argc, char* argv[]) {
     }
     if (!req || !req->call_data) die("missing call data");
     print_hex(req->call_data->b.data, req->call_data->b.len);
-    return 0;
+    return recorder_exit(0);
   }
   else if (strcmp(method, "abi_decode") == 0) {
     if (!sig) die("missing signature");
@@ -990,10 +990,10 @@ int main(int argc, char* argv[]) {
     }
     json_ctx_t* res = req_parse_result(parseSignature(sig), d_to_bytes(d_get_at(parse_json(params)->result, 0)));
     if (json)
-      printf("%s\n", d_create_json(res, res->result));
+      recorder_print(0, "%s\n", d_create_json(res, res->result));
     else
       print_val(res->result);
-    return 0;
+    return recorder_exit(0);
 #ifdef IPFS
   }
   else if (strcmp(method, "ipfs_get") == 0) {
@@ -1005,14 +1005,14 @@ int main(int argc, char* argv[]) {
     if (!content) die("IPFS hash not found!");
     fwrite(content->data, content->len, 1, stdout);
     fflush(stdout);
-    return 0;
+    return recorder_exit(0);
   }
   else if (strcmp(method, "ipfs_put") == 0) {
     c->chain_id         = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
-    printf("%s\n", ipfs_put(c, &data));
-    return 0;
+    recorder_print(0, "%s\n", ipfs_put(c, &data));
+    return recorder_exit(0);
 
 #endif
   }
@@ -1025,7 +1025,7 @@ int main(int argc, char* argv[]) {
     char*        more  = "WEIGHT";
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
-    printf("   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
+    recorder_print(0, "   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
     for (unsigned int i = 0; i < chain->nodelist_length; i++) {
       in3_ctx_t* ctx      = NULL;
       char*      health_s = NULL;
@@ -1128,21 +1128,21 @@ int main(int argc, char* argv[]) {
         if (strlen(tr) > 100) tr[100] = 0;
       }
       if (blacklisted)
-        printf(COLORT_RED);
+        recorder_print(0, COLORT_RED);
       else if (warning)
-        printf(COLORT_YELLOW);
+        recorder_print(0, COLORT_YELLOW);
       else if (!weight->response_count)
-        printf(COLORT_DARKGRAY);
+        recorder_print(0, COLORT_DARKGRAY);
       else
-        printf(COLORT_GREEN);
-      printf("%2i   %-45s   %7i   %5i   %5i   %5i   %s%s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, health_s ? health_s : "", tr ? tr : "");
-      printf(COLORT_RESET "\n");
+        recorder_print(0, COLORT_GREEN);
+      recorder_print(0, "%2i   %-45s   %7i   %5i   %5i   %5i   %s%s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, health_s ? health_s : "", tr ? tr : "");
+      recorder_print(0, COLORT_RESET "\n");
       if (tr && tr != ctx->error) _free(tr);
       if (health_s) _free(health_s);
       if (ctx) ctx_free(ctx);
     }
 
-    return 0;
+    return recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
@@ -1177,7 +1177,7 @@ int main(int argc, char* argv[]) {
       uint8_t  hash[32];
 
       hasher_Raw(HASHER_SHA2, data->data, data->len, hash);
-      printf("Match the following hash with the message hash on ledger device\n");
+      recorder_print(0, "Match the following hash with the message hash on ledger device\n");
       print_hex(hash, 32);
 
       memcpy(tmp_data->data, prefix, strlen(prefix));
@@ -1197,7 +1197,7 @@ int main(int argc, char* argv[]) {
 
     if (sc.signature.len == 65) sc.signature.data[64] += 27;
     print_hex(sc.signature.data, sc.signature.len);
-    return 0;
+    return recorder_exit(0);
   }
   else if (strcmp(method, "chainspec") == 0) {
     char* json;
@@ -1225,29 +1225,29 @@ int main(int argc, char* argv[]) {
       print_hex(bb->b.data, bb->b.len);
     else {
       bool is_hex = false;
-      printf("#define CHAINSPEC_%s \"", name);
+      recorder_print(0, "#define CHAINSPEC_%s \"", name);
       for (i = 0; i < (int) bb->b.len; i++) {
         uint8_t c = bb->b.data[i];
-        if (is_hex && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) printf("\" \"");
+        if (is_hex && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) recorder_print(0, "\" \"");
         is_hex = c < ' ' || c > 0x7E || c == 0x5C || c == '"';
-        printf(is_hex ? "\\x%02x" : "%c", c);
+        recorder_print(0, is_hex ? "\\x%02x" : "%c", c);
       }
-      printf("\"\n");
+      recorder_print(0, "\"\n");
     }
 
-    return 0;
+    return recorder_exit(0);
   }
   else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode ipfs_get ipfs_put ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
-    return 0;
+    recorder_print(0, "send call abi_encode abi_decode ipfs_get ipfs_put ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
+    return recorder_exit(0);
   }
   else if (strcmp(method, "createkey") == 0) {
     time_t t;
     srand((unsigned) time(&t));
-    printf("0x");
-    for (i = 0; i < 32; i++) printf("%02x", rand() % 256);
-    printf("\n");
-    return 0;
+    recorder_print(0, "0x");
+    for (i = 0; i < 32; i++) recorder_print(0, "%02x", rand() % 256);
+    recorder_print(0, "\n");
+    return recorder_exit(0);
   }
   else if (strcmp(method, "pk2address") == 0) {
     bytes32_t prv_key;
@@ -1255,10 +1255,10 @@ int main(int argc, char* argv[]) {
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     keccak(bytes(public_key + 1, 64), sdata);
-    printf("0x");
-    for (i = 0; i < 20; i++) printf("%02x", sdata[i + 12]);
-    printf("\n");
-    return 0;
+    recorder_print(0, "0x");
+    for (i = 0; i < 20; i++) recorder_print(0, "%02x", sdata[i + 12]);
+    recorder_print(0, "\n");
+    return recorder_exit(0);
   }
   else if (strcmp(method, "pk2public") == 0) {
     bytes32_t prv_key;
@@ -1266,7 +1266,7 @@ int main(int argc, char* argv[]) {
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     print_hex(public_key + 1, 64);
-    return 0;
+    return recorder_exit(0);
   }
   else if (strcmp(method, "ecrecover") == 0) {
     json_ctx_t* rargs = parse_json(params);
@@ -1297,7 +1297,7 @@ int main(int argc, char* argv[]) {
     keccak(bytes(pub + 1, 64), hash);
     print_hex(hash + 12, 20);
     print_hex(pub + 1, 64);
-    return 0;
+    return recorder_exit(0);
   }
 
   in3_log_debug("..sending request %s %s\n", method, params);
@@ -1339,8 +1339,8 @@ int main(int argc, char* argv[]) {
       char* r = alloca(last_response->len + 1);
       memcpy(r, last_response->data, last_response->len);
       r[last_response->len] = 0;
-      printf("%s\n", r);
-      return 0;
+      recorder_print(0, "%s\n", r);
+      return recorder_exit(0);
     }
 
     // if the result is a string, we remove the quotes
@@ -1356,7 +1356,7 @@ int main(int argc, char* argv[]) {
         uint8_t*    tmp = alloca(l + 1);
         json_ctx_t* res = req_parse_result(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)));
         if (json)
-          printf("%s\n", d_create_json(res, res->result));
+          recorder_print(0, "%s\n", d_create_json(res, res->result));
         else
           print_val(res->result);
       }
@@ -1365,13 +1365,13 @@ int main(int argc, char* argv[]) {
     else {
       if (to_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
         double val = char_to_long(result, strlen(result));
-        printf("%.3f\n", val / 1000000000000000000L);
+        recorder_print(0, "%.3f\n", val / 1000000000000000000L);
       }
       else if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
-        printf("%" PRIu64 "\n", char_to_long(result, strlen(result)));
+        recorder_print(0, "%" PRIu64 "\n", char_to_long(result, strlen(result)));
       else
-        printf("%s\n", result);
+        recorder_print(0, "%s\n", result);
     }
   }
-  return EXIT_SUCCESS;
+  return recorder_exit(0);
 }
