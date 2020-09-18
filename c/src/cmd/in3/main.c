@@ -623,8 +623,10 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #elif USE_WINHTTP
   in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
-#else
+#elif TRANSPORTS
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
+#else
+  r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
 #endif
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
@@ -647,8 +649,10 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #elif USE_WINHTTP
   in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
-#else
+#elif TRANSPORTS
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
+#else
+  r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
@@ -1051,7 +1055,7 @@ int main(int argc, char* argv[]) {
           send_curl(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #elif USE_WINHTTP
           send_winhttp(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
-#else
+#elif TRANSPORTS
           send_http(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #endif
           if (ctx.raw_response->state)
