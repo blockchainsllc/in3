@@ -46,8 +46,6 @@ add_static_library(
   SOURCES 
     client/context.c
     client/client.c
-        ../nodeselect/cache.c
-        ../nodeselect/nodelist.c
     client/verifier.c
     client/execute.c
     client/client_init.c

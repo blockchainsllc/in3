@@ -38,6 +38,8 @@ add_static_library(
 
   SOURCES
     nodeselect_def.c
+    nodelist.c
+    cache.c
 
   DEPENDS
     core

@@ -251,6 +251,7 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
     case PLGN_ACT_TERM:
       in3_whitelist_clear(data->whitelist);
       in3_nodelist_clear(data);
+      _free(data->nodelist_upd8_params);
       _free(data);
       return IN3_OK;
     case PLGN_ACT_CONFIG_SET:

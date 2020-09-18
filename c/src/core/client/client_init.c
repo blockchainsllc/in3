@@ -316,10 +316,7 @@ void in3_free(in3_t* a) {
 
   for (int i = 0; i < a->chains_length; i++) {
     if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
-    in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
-    whitelist_free(a->chains[i].whitelist);
-    _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->chains) _free(a->chains);
 
