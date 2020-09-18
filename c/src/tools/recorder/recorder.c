@@ -19,14 +19,19 @@ typedef struct {
   in3_plugin_act_fn cache;
   uint64_t          time;
   recorder_entry_t* queue;
+  bool              has_result;
+  bool              is_out;
 } recorder_t;
 
-static recorder_t rec = {
-    .transport = NULL,
-    .f         = NULL,
-    .cache     = NULL,
-    .queue     = NULL,
-    .time      = 0};
+static sb_t*      result = NULL;
+static recorder_t rec    = {
+    .transport  = NULL,
+    .f          = NULL,
+    .cache      = NULL,
+    .queue      = NULL,
+    .has_result = false,
+    .is_out     = false,
+    .time       = 0};
 
 static int rand_out(void* s) {
   UNUSED_VAR(s);
@@ -231,6 +236,7 @@ void recorder_write_start(in3_t* c, char* file, int argc, char* argv[]) {
   in3_plugin_t* p = get_plugin(c, PLGN_ACT_TRANSPORT_SEND);
   rec.transport   = p ? p->action_fn : NULL;
   rec.f           = fopen(file, "w");
+  rec.is_out      = true;
   if (p) p->action_fn = recorder_transport_out;
   p = get_plugin(c, PLGN_ACT_CACHE_GET);
   if (p) {
@@ -271,4 +277,53 @@ void recorder_update_cmd(char* file, int* argc, char** argv[]) {
   fclose(rec.f);
   rec.f     = NULL;
   rec.queue = NULL;
+}
+
+void recorder_print(int err, const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vfprintf(err ? stderr : stdout, fmt, args);
+  va_end(args);
+
+  if (rec.f && rec.is_out) {
+    if (!rec.has_result) {
+      fprintf(rec.f, ":: result\n");
+      rec.has_result = true;
+    }
+    va_start(args, fmt);
+    vfprintf(rec.f, fmt, args);
+    va_end(args);
+    fflush(rec.f);
+  }
+  else if (rec.f) {
+    if (result == NULL)
+      result = sb_new("");
+    va_start(args, fmt);
+    sb_vprint(result, fmt, args);
+    va_end(args);
+  }
+}
+static void trim(char* c) {
+  if (!c) return;
+  int l = strlen(c);
+  while (l && (c[l - 1] == ' ' || c[l - 1] == '\n')) c[--l] = 0;
+}
+int recorder_exit(int code) {
+  if (rec.f && !rec.is_out) {
+    recorder_entry_t* entry = next_entry("result", NULL);
+    code                    = EXIT_FAILURE;
+    trim(entry->content.data);
+    trim(result ? result->data : NULL);
+    if (entry->content.len && result == NULL)
+      fprintf(stderr, "No result resturned, but expected : %s\n", entry->content.data);
+    else if (!entry->content.len && (result != NULL && result->len))
+      fprintf(stderr, "No result expected, but got : %s\n", result->data);
+    else if (entry->content.len && strcmp(result->data, entry->content.data))
+      fprintf(stderr, "wrong result!\nexpected: %s\ngot     : %s\n", entry->content.data, result->data);
+    else
+      code = EXIT_SUCCESS;
+  }
+
+  exit(code);
+  return code;
 }

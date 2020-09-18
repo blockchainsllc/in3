@@ -41,6 +41,7 @@
 #define __STR_BUILDER_H__
 
 #include "bytes.h"
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -76,5 +77,6 @@ NONULL sb_t* sb_add_int(sb_t* sb, uint64_t val);                                
 NONULL char* format_json(const char* json);                                                      /**< format a json string and returns a new string, which needs to be freed */
 NONULL_FOR((1))
 sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size);
-
+sb_t* sb_print(sb_t* sb, const char* fmt, ...);
+sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args);
 #endif
