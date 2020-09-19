@@ -48,7 +48,6 @@ add_static_library(
   
   SOURCES 
     eth_api.c 
-    abi.c
     abi_parse.c
     abi_encode.c
     abi_decode.c

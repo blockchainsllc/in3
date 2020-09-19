@@ -4,7 +4,8 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "abi2.h"
+#include "abi.h"
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -57,10 +58,22 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
     }
     case ABI_NUMBER: {
       TRY(next_word(&pos, &data, &word, error))
-      if (c->data.number.size <= 64)
-        json_create_int(res, bytes_to_long(word + 24, 8));
-      else
-        json_create_bytes(res, bytes(word + 32 - c->data.number.size / 8, c->data.number.size / 8));
+      int b = c->data.number.size / 8;
+      if (b <= 8) {
+        if (c->data.number.sign && (word[32 - b] & 0x80)) {            // we have a negative number, which we need to convert to a string
+          memset(word, 0xff, 32 - b);                                  // fill all bytes with ff so we can use uint64_t
+          int64_t val = (int64_t) bytes_to_long(word + 24, 8);         // take the value and convert to a signed
+          char    tmp[24];                                             //
+          json_create_string(res, tmp, sprintf(tmp, "%" PRId64, val)); //format the signed as string
+        }
+        else
+          json_create_int(res, bytes_to_long(word + 24, 8));
+      }
+      else {
+        bytes_t r = bytes(word + 32 - b, b);
+        b_optimize_len(&r);
+        json_create_bytes(res, r);
+      }
       break;
     }
     case ABI_TUPLE:
@@ -74,7 +87,7 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       json_create_array(res)->len |= len;
       for (int i = 0; i < len; i++) {
         int r = 0;
-        if (data.len < pos + 32) {
+        if ((int) data.len < pos + 32) {
           *error = "out of data when reading array";
           return IN3_EINVAL;
         }

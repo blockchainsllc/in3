@@ -4,7 +4,7 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "abi2.h"
+#include "abi.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -51,7 +51,7 @@ static abi_coder_t* create_coder(char* token, char** error) {
     start_number            = token + 3;
   }
   else if (strncmp(token, "bytes", 5) == 0) {
-    coder->type  = token[4] ? ABI_FIXED_BYTES : ABI_BYTES;
+    coder->type  = token[5] ? ABI_FIXED_BYTES : ABI_BYTES;
     start_number = token + 5;
   }
   else
@@ -135,10 +135,9 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
     }
 
     if (coder) {
-      if (!tuple->data.tuple.len)
-        tuple->data.tuple.components = tuple->data.tuple.len
-                                           ? _realloc(tuple->data.tuple.components, tuple->data.tuple.len * sizeof(abi_coder_t*), (tuple->data.tuple.len + 1) * sizeof(abi_coder_t*))
-                                           : _malloc(sizeof(abi_coder_t*));
+      tuple->data.tuple.components = tuple->data.tuple.len
+                                         ? _realloc(tuple->data.tuple.components, (tuple->data.tuple.len + 1) * sizeof(abi_coder_t*), tuple->data.tuple.len * sizeof(abi_coder_t*))
+                                         : _malloc(sizeof(abi_coder_t*));
       tuple->data.tuple.components[tuple->data.tuple.len++] = coder;
     }
 
@@ -198,6 +197,7 @@ static void create_fn_hash(char* fn_name, int fn_len, abi_coder_t* arguments, ui
   sb_add_char(&sb, ')');
   keccak(bytes((uint8_t*) sb.data, sb.len), hash);
   memcpy(dst, hash, 4);
+  _free(sb.data);
 }
 
 void abi_sig_free(abi_sig_t* c) {

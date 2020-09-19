@@ -34,41 +34,55 @@
 
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
-
-#if !defined(_ETH_API__ABI_H_)
-#define _ETH_API__ABI_H_
+#ifndef _ETH_API__ABI2_H_
+#define _ETH_API__ABI2_H_
 
 typedef enum {
-  A_UINT    = 1,
-  A_INT     = 2,
-  A_BYTES   = 3,
-  A_BOOL    = 4,
-  A_ADDRESS = 5,
-  A_TUPLE   = 6,
-  A_STRING  = 7
-} atype_t;
+  ABI_TUPLE       = 1,
+  ABI_STRING      = 2,
+  ABI_NUMBER      = 3,
+  ABI_BYTES       = 4,
+  ABI_ADDRESS     = 5,
+  ABI_FIXED_BYTES = 6,
+  ABI_BOOL        = 8,
+  ABI_ARRAY       = 9
 
-typedef struct el {
-  atype_t type;
-  bytes_t data;
-  uint8_t type_len;
-  int     array_len;
-} var_t;
+} abi_coder_type_t;
+
+typedef struct signature {
+  abi_coder_type_t type;
+  union {
+    struct {
+      struct signature** components;
+      int                len;
+    } tuple;
+
+    struct {
+      struct signature* component;
+      int               len;
+    } array;
+
+    struct {
+      bool sign;
+      int  size;
+    } number;
+
+    struct {
+      int len;
+    } fixed;
+
+  } data;
+} abi_coder_t;
 
 typedef struct {
-  var_t*           in_data;
-  var_t*           out_data;
-  bytes_builder_t* call_data;
-  var_t*           current;
-  char*            error;
-  int              data_offset;
-} call_request_t;
+  abi_coder_t* input;
+  abi_coder_t* output;
+  uint8_t      fn_hash[4];
+} abi_sig_t;
 
-call_request_t* parseSignature(char* sig);
-json_ctx_t*     req_parse_result(call_request_t* req, bytes_t data);
-void            req_free(call_request_t* req);
-int             set_data(call_request_t* req, d_token_t* data, var_t* tuple);
-var_t*          t_next(var_t* t);
-int             word_size(int b);
-
+void        abi_sig_free(abi_sig_t* c);
+abi_sig_t*  abi_sig_create(char* signature, char** error);
+bool        abi_is_dynamic(abi_coder_t* coder);
+bytes_t     abi_encode(abi_sig_t* s, d_token_t* src, char** error);
+json_ctx_t* abi_decode(abi_sig_t* s, bytes_t data, char** error);
 #endif // _ETH_API__ABI_H_

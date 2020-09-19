@@ -43,7 +43,6 @@
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
-#include "abi2.h"
 #include "ens.h"
 #include "eth_api.h"
 #include <errno.h>
@@ -75,37 +74,23 @@ static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 }
 
 static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  in3_ret_t   ret  = IN3_OK;
-  json_ctx_t* res  = NULL;
-  char*       sig  = d_get_string_at(params, 0);
-  bytes_t     data = d_to_bytes(d_get_at(params, 1));
+  char*       error = NULL;
+  json_ctx_t* res   = NULL;
+  char*       sig   = d_get_string_at(params, 0);
+  bytes_t     data  = d_to_bytes(d_get_at(params, 1));
   if (!sig) return ctx_set_error(ctx->ctx, "missing signature", IN3_EINVAL);
   if (!data.data) return ctx_set_error(ctx->ctx, "missing data", IN3_EINVAL);
   if (d_len(params) > 2) return ctx_set_error(ctx->ctx, "too many arguments (only 2 alllowed)", IN3_EINVAL);
 
-  // fix signature if only the return part is given
-  char* full_sig = alloca(strlen(sig) + 10);
-  if (strstr(sig, ":"))
-    strcpy(full_sig, sig);
-  else
-    sprintf(full_sig, "test():%s", sig);
-
-  call_request_t* req = parseSignature(full_sig);
-  if (!req)
-    return ctx_set_error(ctx->ctx, "invalid function signature", IN3_EINVAL);
-  else if (req->error)
-    ret = ctx_set_error(ctx->ctx, req->error, IN3_EINVAL);
-  else if (!(res = req_parse_result(req, data)))
-    ret = ctx_set_error(ctx->ctx, "the input data can not be decoded", IN3_EINVAL);
-  else {
-    char* result = d_create_json(res, res->result);
-    ret          = in3_rpc_handle_with_string(ctx, result);
-    _free(result);
-  }
-
-  req_free(req);
+  abi_sig_t* req = abi_sig_create(sig, &error);
+  if (!error) res = abi_decode(req, data, &error);
+  if (req) abi_sig_free(req);
+  if (error) return ctx_set_error(ctx->ctx, error, IN3_EINVAL);
+  char* result = d_create_json(res, res->result);
+  in3_rpc_handle_with_string(ctx, result);
+  _free(result);
   if (res) json_free(res);
-  return ret;
+  return IN3_OK;
 }
 
 static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {

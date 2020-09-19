@@ -4,7 +4,8 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "abi2.h"
+#include "abi.h"
+#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -58,9 +59,33 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       break;
     }
     case ABI_NUMBER: {
-      data = d_to_bytes(src);
+      uint8_t filler = 0;
+      if (d_type(src) == T_STRING) {
+        uint8_t*     tmp = alloca(32);
+        char*        val = d_string(src);
+        unsigned int bl  = coder->data.number.size / 8;
+
+        if (strlen(val) > 18) return encode_error("invalid number string (too big)", error);
+        errno = 0;
+        if (coder->data.number.sign) {
+          int64_t n = strtoll(val, NULL, 10);
+          if (n < 0) filler = 0xff;
+          memset(tmp, filler, 32);
+          long_to_bytes((uint64_t) n, tmp + 24);
+        }
+        else {
+          memset(tmp, 0, 32);
+          uint64_t n = strtoull(val, NULL, 10);
+          long_to_bytes(n, tmp + 24);
+        }
+        if (errno) return encode_error("invalid number value", error);
+        data = bytes(tmp + 32 - bl, bl);
+      }
+      else
+        data = d_to_bytes(src);
       if (data.len > (uint32_t) coder->data.number.size / 8) return encode_error("number too big", error);
       memcpy(b + 32 - data.len, data.data, data.len);
+      if (coder->data.number.sign && data.len < 32) memset(b, filler, 32 - data.len);
       break;
     }
     case ABI_TUPLE:
