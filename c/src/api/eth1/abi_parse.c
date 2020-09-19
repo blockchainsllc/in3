@@ -4,68 +4,20 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "abi2.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
-typedef enum {
-  A_TUPLE       = 1,
-  A_STRING      = 2,
-  A_NUMBER      = 3,
-  A_BYTES       = 4,
-  A_ADDRESS     = 5,
-  A_FIXED_BYTES = 6,
-  A_BOOL        = 8,
-  A_ARRAY       = 9
-
-} abi_coder_type_t;
-
-typedef struct signature {
-  abi_coder_type_t type;
-  union {
-    struct {
-      struct signature** components;
-      int                len;
-    } tuple;
-
-    struct {
-      struct signature* component;
-      int               len;
-    } array;
-
-    struct {
-      bool sign;
-      int  size;
-    } number;
-
-    struct {
-      int len;
-    } fixed;
-
-  } data;
-} abi_coder_t;
-
-typedef struct {
-  abi_coder_t* input;
-  abi_coder_t* output;
-  uint8_t      fn_hash[4];
-} abi_sig_t;
-
-typedef struct {
-  bytes_builder_t static_data;
-  bytes_builder_t synamic_data;
-
-} abi_ctx_t;
-
-void abi_coder_free(abi_coder_t* c) {
+static void abi_coder_free(abi_coder_t* c) {
   switch (c->type) {
-    case A_TUPLE: {
+    case ABI_TUPLE: {
       for (int i = 0; i < c->data.tuple.len; i++)
         abi_coder_free(c->data.tuple.components[i]);
       if (c->data.tuple.components) _free(c->data.tuple.components);
       break;
     }
-    case A_ARRAY: {
+    case ABI_ARRAY: {
       abi_coder_free(c->data.array.component);
       break;
     }
@@ -83,23 +35,23 @@ static abi_coder_t* create_coder(char* token, char** error) {
   abi_coder_t* coder        = _calloc(1, sizeof(abi_coder_t));
   char*        start_number = NULL;
   if (strcmp(token, "address") == 0)
-    coder->type = A_ADDRESS;
+    coder->type = ABI_ADDRESS;
   else if (strcmp(token, "bool") == 0)
-    coder->type = A_BOOL;
+    coder->type = ABI_BOOL;
   else if (strcmp(token, "string") == 0)
-    coder->type = A_STRING;
+    coder->type = ABI_STRING;
   else if (strncmp(token, "uint", 4) == 0) {
-    coder->type             = A_NUMBER;
+    coder->type             = ABI_NUMBER;
     coder->data.number.sign = false;
     start_number            = token + 4;
   }
   else if (strncmp(token, "int", 3) == 0) {
-    coder->type             = A_NUMBER;
+    coder->type             = ABI_NUMBER;
     coder->data.number.sign = true;
     start_number            = token + 3;
   }
   else if (strncmp(token, "bytes", 5) == 0) {
-    coder->type  = token[4] ? A_FIXED_BYTES : A_BYTES;
+    coder->type  = token[4] ? ABI_FIXED_BYTES : ABI_BYTES;
     start_number = token + 5;
   }
   else
@@ -107,7 +59,7 @@ static abi_coder_t* create_coder(char* token, char** error) {
 
   if (start_number) {
     int i = *start_number ? atoi(start_number) : 256;
-    if (coder->type == A_FIXED_BYTES)
+    if (coder->type == ABI_FIXED_BYTES)
       coder->data.fixed.len = i;
     else
       coder->data.number.size = i;
@@ -125,7 +77,7 @@ static abi_coder_t* create_array(char* val, abi_coder_t* el, char** error, char*
     if (val[i] == ']') {
       abi_coder_t* array          = _calloc(1, sizeof(abi_coder_t));
       array->data.array.component = el;
-      array->type                 = A_ARRAY;
+      array->type                 = ABI_ARRAY;
       if (i) {
         char* tmp = alloca(i + 1);
         memcpy(tmp, val, i);
@@ -146,7 +98,7 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
   char         token[40];
   int          tl    = 0;
   abi_coder_t* tuple = _calloc(1, sizeof(abi_coder_t));
-  tuple->type        = A_TUPLE;
+  tuple->type        = ABI_TUPLE;
 
   for (char c = *val; !*error; c = *(++val)) {
     if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
@@ -203,19 +155,26 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
 
 static sb_t* add_fn_sig(sb_t* sb, abi_coder_t* coder) {
   switch (coder->type) {
-    case A_TUPLE: return sb_add_chars(sb, "tuple");
-    case A_ADDRESS: return sb_add_chars(sb, "address");
-    case A_BOOL: return sb_add_chars(sb, "bool");
-    case A_BYTES: return sb_add_chars(sb, "bytes");
-    case A_NUMBER: {
+    case ABI_TUPLE: {
+      sb_add_char(sb, '(');
+      for (int i = 0; i < coder->data.tuple.len; i++) {
+        if (i) sb_add_char(sb, ',');
+        add_fn_sig(sb, coder->data.tuple.components[i]);
+      }
+      return sb_add_char(sb, ')');
+    }
+    case ABI_ADDRESS: return sb_add_chars(sb, "address");
+    case ABI_BOOL: return sb_add_chars(sb, "bool");
+    case ABI_BYTES: return sb_add_chars(sb, "bytes");
+    case ABI_NUMBER: {
       sb_add_chars(sb, coder->data.number.sign ? "int" : "uint");
       return sb_add_int(sb, coder->data.number.size);
     }
-    case A_FIXED_BYTES: {
+    case ABI_FIXED_BYTES: {
       sb_add_chars(sb, "bytes");
       return sb_add_int(sb, coder->data.fixed.len);
     }
-    case A_ARRAY: {
+    case ABI_ARRAY: {
       add_fn_sig(sb, coder->data.array.component);
       sb_add_char(sb, '[');
       if (coder->data.array.len) sb_add_int(sb, coder->data.array.len);
@@ -227,7 +186,7 @@ static sb_t* add_fn_sig(sb_t* sb, abi_coder_t* coder) {
   return sb;
 }
 
-void create_fn_hash(char* fn_name, int fn_len, abi_coder_t* arguments, uint8_t* dst) {
+static void create_fn_hash(char* fn_name, int fn_len, abi_coder_t* arguments, uint8_t* dst) {
   sb_t      sb = {0};
   bytes32_t hash;
   sb_add_range(&sb, fn_name, 0, fn_len);
@@ -246,11 +205,7 @@ void abi_sig_free(abi_sig_t* c) {
   if (c->output) abi_coder_free(c->output);
   _free(c);
 }
-// address
-// (address,uint32)
-// ():uint32
-// ():(uint32)
-// getLength():(uint32)
+
 abi_sig_t* abi_sig_create(char* signature, char** error) {
   *error            = NULL;
   char* input_start = strchr(signature, '(');
@@ -270,16 +225,4 @@ abi_sig_t* abi_sig_create(char* signature, char** error) {
   }
 
   return sig;
-}
-
-// ---------encode ------------------------
-
-bytes_t abi_encode(abi_sig_t* s, d_token_t* src, char** error) {
-  //    s->input
-}
-
-int main() {
-  char*      error;
-  abi_sig_t* s = abi_sig_create("test(uint256[3][]):uint", &error);
-  printf("ERROR: %s\n", error);
 }

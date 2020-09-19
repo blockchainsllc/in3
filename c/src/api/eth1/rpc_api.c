@@ -43,6 +43,7 @@
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
+#include "abi2.h"
 #include "ens.h"
 #include "eth_api.h"
 #include <errno.h>
@@ -56,21 +57,21 @@
                         "Ethereum Signed Message:\n%u"
 
 static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  in3_ret_t       ret  = IN3_OK;
-  call_request_t* req  = parseSignature(d_get_string_at(params, 0));
-  d_token_t*      para = d_get_at(params, 1);
-  if (!req)
-    return ctx_set_error(ctx->ctx, "invalid function signature", IN3_EINVAL);
-  else if (req->error)
-    ret = ctx_set_error(ctx->ctx, req->error, IN3_EINVAL);
-  else if (!para)
-    ret = ctx_set_error(ctx->ctx, "missing json data", IN3_EINVAL);
-  else if (set_data(req, para, req->in_data) < 0)
-    ret = ctx_set_error(ctx->ctx, "invalid input data", IN3_EINVAL);
-  else
-    ret = in3_rpc_handle_with_bytes(ctx, req->call_data->b);
-  if (req) req_free(req);
-  return ret;
+  in3_ret_t  ret   = IN3_OK;
+  bytes_t    data  = {0};
+  char*      error = NULL;
+  char*      sig   = d_get_string_at(params, 0);
+  d_token_t* para  = d_get_at(params, 1);
+  if (!sig) return ctx_set_error(ctx->ctx, "missing signature", IN3_EINVAL);
+  if (!para) return ctx_set_error(ctx->ctx, "missing values", IN3_EINVAL);
+  abi_sig_t* s = abi_sig_create(sig, &error);
+  if (!error)
+    data = abi_encode(s, para, &error);
+  if (!error)
+    ret = in3_rpc_handle_with_bytes(ctx, data);
+  if (s) abi_sig_free(s);
+  if (data.data) _free(data.data);
+  return error ? ctx_set_error(ctx->ctx, error, IN3_EINVAL) : ret;
 }
 
 static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {

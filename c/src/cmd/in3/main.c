@@ -36,6 +36,7 @@
  * simple commandline-util sending in3-requests.
  * */
 #include "../../api/eth1/abi.h"
+#include "../../api/eth1/abi2.h"
 #include "../../api/eth1/eth_api.h"
 #include "../../api/ipfs/ipfs_api.h"
 #include "../../core/util/bitset.h"
@@ -974,29 +975,34 @@ int main(int argc, char* argv[]) {
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
+    char*       error   = NULL;
+    json_ctx_t* in_data = parse_json(params);
+    if (!in_data) die("iinvalid params");
     if (!sig) die("missing signature");
-    req = parseSignature(sig);
-    if (req && req->in_data->type == A_TUPLE) {
-      json_ctx_t* in_data = parse_json(params);
-      if (set_data(req, in_data->result, req->in_data) < 0) die("invalid arguments for given signature");
+    abi_sig_t* s = abi_sig_create(sig, &error);
+    if (s && !error) {
+      bytes_t data = abi_encode(s, in_data->result, &error);
+      if (data.data)
+        print_hex(data.data, data.len);
     }
-    if (!req || !req->call_data) die("missing call data");
-    print_hex(req->call_data->b.data, req->call_data->b.len);
+    if (error) die(error);
     recorder_exit(0);
   }
   else if (strcmp(method, "abi_decode") == 0) {
+    char*       error   = NULL;
+    json_ctx_t* in_data = parse_json(params);
+    if (!in_data) die("iinvalid params");
     if (!sig) die("missing signature");
-    if (!strchr(sig, ':')) {
-      char* tmp = malloc(strlen(sig) + 5);
-      strcpy(tmp, "d():");
-      strcpy(tmp + 4, sig);
-      sig = tmp;
+    abi_sig_t* s = abi_sig_create(sig, &error);
+    if (s && !error) {
+      bytes_t     data = d_to_bytes(d_get_at(parse_json(params)->result, 0));
+      json_ctx_t* res  = abi_decode(s, data, &error);
+      if (json)
+        recorder_print(0, "%s\n", d_create_json(res, res->result));
+      else
+        print_val(res->result);
     }
-    json_ctx_t* res = req_parse_result(parseSignature(sig), d_to_bytes(d_get_at(parse_json(params)->result, 0)));
-    if (json)
-      recorder_print(0, "%s\n", d_create_json(res, res->result));
-    else
-      print_val(res->result);
+    if (error) die(error);
     recorder_exit(0);
 #ifdef IPFS
   }

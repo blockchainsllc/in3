@@ -449,7 +449,7 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
 
       char buf[32];
       sprintf(buf, "%s%llu", neg ? "-" : "", n + 1);
-      res = json_create_string(ctx, buf);
+      res = json_create_string(ctx, buf, -1);
       break;
     }
     case A_UINT:
@@ -481,7 +481,7 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
         char* tmp = alloca(len + 1);
         strncpy(tmp, (char*) (data.data + dst), len);
         tmp[len] = '\0';
-        res      = json_create_string(ctx, tmp);
+        res      = json_create_string(ctx, tmp, -1);
       }
       else
         res = json_create_bytes(ctx, bytes(data.data + dst, len));

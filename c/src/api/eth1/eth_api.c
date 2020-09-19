@@ -343,7 +343,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
           break;
         case A_STRING:
         case A_INT:
-          json_array_add_value(args, json_create_string(in_data, va_arg(ap, char*)));
+          json_array_add_value(args, json_create_string(in_data, va_arg(ap, char*), -1));
           break;
         case A_UINT: {
           if (p->type_len <= 4)
