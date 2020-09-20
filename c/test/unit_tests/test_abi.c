@@ -106,7 +106,8 @@ static char* test_abi_decode(char* sig, char* hex_data) {
   char*      error = NULL;
   abi_sig_t* req   = abi_sig_create(sig, &error);
   if (error) return create_err(error);
-  int     l = strlen(hex_data);
+  req->return_tuple = true;
+  int     l         = strlen(hex_data);
   uint8_t data[l >> 1];
   l = hex_to_bytes(hex_data, -1, data, l >> 1);
 

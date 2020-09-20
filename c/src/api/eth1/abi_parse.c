@@ -213,9 +213,10 @@ abi_sig_t* abi_sig_create(char* signature, char** error) {
   char* output_start = strchr(signature, ':');
   output_start       = output_start && output_start[1] ? output_start + 1 : NULL;
 
-  abi_sig_t* sig = _calloc(1, sizeof(abi_sig_t));
-  sig->input     = create_tuple(input_start, error, NULL);
-  sig->output    = (output_start && !*error) ? create_tuple(output_start, error, NULL) : NULL;
+  abi_sig_t* sig    = _calloc(1, sizeof(abi_sig_t));
+  sig->input        = create_tuple(input_start, error, NULL);
+  sig->output       = (output_start && !*error) ? create_tuple(output_start, error, NULL) : NULL;
+  sig->return_tuple = (output_start && output_start[1] == '(') || (!sig->output && input_start && input_start[1] == '(');
 
   if (!*error && input_start != signature) create_fn_hash(signature, input_start - signature, sig->input, sig->fn_hash);
 

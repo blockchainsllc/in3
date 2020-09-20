@@ -83,7 +83,12 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       }
       else
         data = d_to_bytes(src);
-      if (data.len > (uint32_t) coder->data.number.size / 8) return encode_error("number too big", error);
+      if (data.len > (uint32_t) coder->data.number.size / 8) {
+        if (coder->data.number.sign && data.data[data.len - coder->data.number.size / 8 - 1] == 0xff)
+          data = bytes(data.data + data.len - coder->data.number.size / 8, coder->data.number.size / 8);
+        else
+          return encode_error("number too big", error);
+      }
       memcpy(b + 32 - data.len, data.data, data.len);
       if (coder->data.number.sign && data.len < 32) memset(b, filler, 32 - data.len);
       break;

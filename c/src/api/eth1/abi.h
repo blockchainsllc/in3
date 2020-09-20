@@ -78,6 +78,7 @@ typedef struct {
   abi_coder_t* input;
   abi_coder_t* output;
   uint8_t      fn_hash[4];
+  bool         return_tuple;
 } abi_sig_t;
 
 void        abi_sig_free(abi_sig_t* c);

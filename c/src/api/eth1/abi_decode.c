@@ -53,7 +53,6 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       c->type == ABI_STRING
           ? json_create_string(res, (char*) word + 32, len)
           : json_create_bytes(res, bytes(word + 32, len));
-      //      pos += wl;
       break;
     }
     case ABI_NUMBER: {
@@ -81,8 +80,8 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
     case ABI_ARRAY: {
       int len = c->data.array.len;
       if (!len) {
-        TRY(next_word(&pos, &data, &word, error))
-        len = bytes_to_int(word + 28, 4);
+        TRY(next_word(&pos, &data, &word, error)) // is is a dynamic array, so we need to
+        len = bytes_to_int(word + 28, 4);         // read the length
       }
       bool is_dynamic = abi_is_dynamic(c->data.array.component);
       int  offset     = pos;
@@ -135,8 +134,13 @@ static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res,
 }
 
 json_ctx_t* abi_decode(abi_sig_t* s, bytes_t data, char** error) {
-  json_ctx_t* res = json_create();
-  if (decode_tuple(s->output ? s->output : s->input, data, res, NULL, error))
-    json_free(res);
+  json_ctx_t*  res    = json_create();
+  abi_coder_t* c      = s->output ? s->output : s->input;
+  in3_ret_t    failed = IN3_OK;
+  if (s->return_tuple || c->data.tuple.len != 1)
+    failed = decode_tuple(c, data, res, NULL, error);
+  else
+    failed = decode_value(c->data.tuple.components[0], data, res, NULL, error);
+  if (failed && res) json_free(res);
   return *error ? NULL : res;
 }
