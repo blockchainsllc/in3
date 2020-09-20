@@ -53,7 +53,7 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       c->type == ABI_STRING
           ? json_create_string(res, (char*) word + 32, len)
           : json_create_bytes(res, bytes(word + 32, len));
-      pos += wl;
+      //      pos += wl;
       break;
     }
     case ABI_NUMBER: {
@@ -84,15 +84,17 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
         TRY(next_word(&pos, &data, &word, error))
         len = bytes_to_int(word + 28, 4);
       }
+      bool is_dynamic = abi_is_dynamic(c->data.array.component);
+      int  offset     = pos;
       json_create_array(res)->len |= len;
       for (int i = 0; i < len; i++) {
-        int r = 0;
-        if ((int) data.len < pos + 32) {
-          *error = "out of data when reading array";
-          return IN3_EINVAL;
+        int r = 0, start = pos;
+        if (is_dynamic) {
+          TRY(next_word(&pos, &data, &word, error))
+          start = offset + bytes_to_int(word + 28, 4);
         }
-        TRY(decode_value(c->data.array.component, bytes(data.data + pos, data.len - pos), res, &r, error))
-        pos += r;
+        TRY(decode_value(c->data.array.component, bytes(data.data + start, data.len - start), res, &r, error))
+        if (!is_dynamic) pos += r;
       }
     }
   }

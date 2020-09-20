@@ -111,7 +111,17 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
         int_to_bytes(len, b + 28);
         bb_write_raw_bytes(bb, b, 32);
       }
+      bool is_dynamic = abi_is_dynamic(coder->data.array.component);
+      int  static_pos = bb->b.len;
+      if (is_dynamic) {
+        bb_check_size(bb, 32 * len);
+        bb->b.len += 32 * len;
+      }
       for (int i = 0; i < len; i++) {
+        if (is_dynamic) {
+          memset(bb->b.data + static_pos + i * 32, 0, 32);
+          int_to_bytes(bb->b.len - static_pos, bb->b.data + static_pos + i * 32 + 28);
+        }
         TRY(encode_value(coder->data.array.component, d_get_at(src, i), bb, error))
       }
       return IN3_OK;
