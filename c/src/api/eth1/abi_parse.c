@@ -164,6 +164,7 @@ static sb_t* add_fn_sig(sb_t* sb, abi_coder_t* coder) {
     }
     case ABI_ADDRESS: return sb_add_chars(sb, "address");
     case ABI_BOOL: return sb_add_chars(sb, "bool");
+    case ABI_STRING: return sb_add_chars(sb, "string");
     case ABI_BYTES: return sb_add_chars(sb, "bytes");
     case ABI_NUMBER: {
       sb_add_chars(sb, coder->data.number.sign ? "int" : "uint");

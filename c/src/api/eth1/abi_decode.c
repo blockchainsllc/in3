@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, char** error);
+static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool as_array, char** error);
 
 static in3_ret_t next_word(int* offset, bytes_t* data, uint8_t** dst, char** error) {
   if (*offset + 32 > (int) data->len) {
@@ -76,7 +76,7 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       break;
     }
     case ABI_TUPLE:
-      return decode_tuple(c, data, res, data_read, error);
+      return decode_tuple(c, data, res, data_read, true, error);
     case ABI_ARRAY: {
       int len = c->data.array.len;
       if (!len) {
@@ -102,9 +102,8 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
   return IN3_OK;
 }
 
-static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, char** error) {
-  d_token_t* array = json_create_array(res);
-  array->len |= tuple->data.tuple.len;
+static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool add_array, char** error) {
+  if (add_array) json_create_array(res)->len |= tuple->data.tuple.len;
   uint8_t* word = NULL;
   int      pos  = 0;
   for (int i = 0; i < tuple->data.tuple.len; i++) {
@@ -136,11 +135,7 @@ static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res,
 json_ctx_t* abi_decode(abi_sig_t* s, bytes_t data, char** error) {
   json_ctx_t*  res    = json_create();
   abi_coder_t* c      = s->output ? s->output : s->input;
-  in3_ret_t    failed = IN3_OK;
-  if (s->return_tuple || c->data.tuple.len != 1)
-    failed = decode_tuple(c, data, res, NULL, error);
-  else
-    failed = decode_value(c->data.tuple.components[0], data, res, NULL, error);
+  in3_ret_t    failed = decode_tuple(c, data, res, NULL, s->return_tuple || c->data.tuple.len != 1, error);
   if (failed && res) json_free(res);
   return *error ? NULL : res;
 }
