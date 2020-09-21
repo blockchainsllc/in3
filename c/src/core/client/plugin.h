@@ -397,17 +397,13 @@ typedef struct in3_chain_change_ctx {
 /**
  * context used during nodeselect pick
  */
-typedef struct in3_nl_pick_ctx {
-  in3_ctx_t* ctx; /**< request context */
-} in3_nl_pick_ctx_t;
+typedef in3_ctx_t* in3_nl_pick_ctx_t;
 
 // -------- NL_BLACKLIST ---------
 
 /**
  * context used during nodeselect blacklist
  */
-typedef struct in3_nl_blacklist_ctx {
-  node_match_t * node; /**< request context */
-} in3_nl_blacklist_ctx_t;
+typedef node_match_t* in3_nl_blacklist_ctx_t;
 
 #endif
