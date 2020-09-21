@@ -31,6 +31,7 @@ bool abi_is_dynamic(abi_coder_t* coder) {
       return false;
     }
   }
+  return false;
 }
 
 static in3_ret_t encode_error(char* msg, char** error) {
