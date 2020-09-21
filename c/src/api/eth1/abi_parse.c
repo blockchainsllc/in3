@@ -135,9 +135,9 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
     }
 
     if (coder) {
-      tuple->data.tuple.components = tuple->data.tuple.len
-                                         ? _realloc(tuple->data.tuple.components, (tuple->data.tuple.len + 1) * sizeof(abi_coder_t*), tuple->data.tuple.len * sizeof(abi_coder_t*))
-                                         : _malloc(sizeof(abi_coder_t*));
+      tuple->data.tuple.components                          = tuple->data.tuple.len
+                                                                  ? _realloc(tuple->data.tuple.components, (tuple->data.tuple.len + 1) * sizeof(abi_coder_t*), tuple->data.tuple.len * sizeof(abi_coder_t*))
+                                                                  : _malloc(sizeof(abi_coder_t*));
       tuple->data.tuple.components[tuple->data.tuple.len++] = coder;
     }
 
