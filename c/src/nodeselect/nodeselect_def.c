@@ -8,6 +8,8 @@
 #include "cache.h"
 #include "nodeselect_def_cfg.h"
 
+#define BLACKLISTTIME 24 * 3600
+
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
     case CHAIN_ID_MAINNET:
@@ -251,7 +253,7 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
 }
 
 static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx_) {
-  in3_ctx_t*        ctx    = ((in3_nl_pick_data_ctx_t*) ctx_)->ctx;
+  in3_ctx_t*        ctx    = ((in3_nl_pick_ctx_t*) ctx_)->ctx;
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
   filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
@@ -262,8 +264,16 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
 }
 
+NONULL static in3_node_t* get_node(const in3_nodeselect_def_t* data, const node_match_t* node) {
+  return node->index < data->nodelist_length ? data->nodelist + node->index : NULL;
+}
+
+NONULL static in3_node_weight_t* get_node_weight(const in3_nodeselect_def_t* data, const node_match_t* node) {
+  return node->index < data->nodelist_length ? data->weights + node->index : NULL;
+}
+
 static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
-  in3_ctx_t*   ctx = ((in3_nl_pick_data_ctx_t*) ctx_)->ctx;
+  in3_ctx_t*   ctx = ((in3_nl_pick_ctx_t*) ctx_)->ctx;
   const in3_t* c   = ctx->client;
 
   if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
@@ -279,7 +289,7 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
     in3_node_filter_t filter       = NODE_FILTER_INIT;
     filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
     filter.props                   = c->node_props | NODE_PROP_SIGNER;
-    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
+    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, data, &signer_nodes, total_sig_cnt, filter);
     if (res < 0)
       return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
     if (ctx->signers) _free(ctx->signers);
@@ -289,7 +299,7 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
     const node_match_t* w = signer_nodes;
     in3_node_t*         n = NULL;
     for (int i = 0; i < node_count; i++) {
-      n = ctx_get_node(&c->chain, w);
+      n = get_node(&c->chain, w);
       if (n) memcpy(ctx->signers + i * 20, n->address, 20);
       w = w->next;
     }
@@ -300,6 +310,26 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
 }
 
 static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx) {
+  return IN3_OK;
+}
+
+static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
+  node_match_t* node_weight = ((in3_nl_blacklist_ctx_t*) ctx)->node;
+  if (node_weight && !node_weight->blocked) {
+    in3_node_weight_t* w = get_node_weight(data, node_weight);
+    if (!w) {
+      in3_log_debug("failed to blacklist node: %s\n", get_node(data, node_weight)->url);
+      return IN3_EFIND;
+    }
+
+    // blacklist the node
+    uint64_t blacklisted_until_ = in3_time(NULL) + BLACKLISTTIME;
+    if (w->blacklisted_until != blacklisted_until_)
+      data->dirty = true;
+    w->blacklisted_until = blacklisted_until_;
+    node_weight->blocked = true;
+    in3_log_debug("Blacklisting node for unverifiable response: %s\n", get_node(data, node_weight)->url);
+  }
   return IN3_OK;
 }
 
@@ -342,6 +372,8 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       return pick_signer(data, plugin_ctx);
     case PLGN_ACT_NL_PICK_FOLLOWUP:
       return pick_followup(data, plugin_ctx);
+    case PLGN_ACT_NL_BLACKLIST:
+      return blacklist_node(data, plugin_ctx);
     case PLGN_ACT_CHAIN_CHANGE:
       return chain_change(data, plugin_ctx);
     default: break;

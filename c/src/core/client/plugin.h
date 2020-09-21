@@ -392,13 +392,22 @@ typedef struct in3_chain_change_ctx {
   in3_t* client; /**< the client whose chain_id has been changed */
 } in3_chain_change_ctx_t;
 
-// -------- NL_PICK_DATA ---------
+// -------- NL_PICK_DATA | NL_PICK_SIGNER ---------
 
 /**
- * context used during chain change event
+ * context used during nodeselect pick
  */
-typedef struct in3_nl_pick_data_ctx {
+typedef struct in3_nl_pick_ctx {
   in3_ctx_t* ctx; /**< request context */
-} in3_nl_pick_data_ctx_t;
+} in3_nl_pick_ctx_t;
+
+// -------- NL_BLACKLIST ---------
+
+/**
+ * context used during nodeselect blacklist
+ */
+typedef struct in3_nl_blacklist_ctx {
+  node_match_t * node; /**< request context */
+} in3_nl_blacklist_ctx_t;
 
 #endif

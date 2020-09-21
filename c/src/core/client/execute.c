@@ -52,7 +52,6 @@
 #include <time.h>
 
 #define WAIT_TIME_CAP 3600
-#define BLACKLISTTIME 24 * 3600
 
 NONULL static void response_free(in3_ctx_t* ctx) {
   assert_in3_ctx(ctx);
@@ -258,12 +257,6 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
   return IN3_OK;
 }
 
-NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
-  // we don't update weights for local chains.
-  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET) || ctx->client->chain.chain_id == CHAIN_ID_LOCAL) return;
-  in3_cache_store_nodelist(ctx->client, &ctx->client->chain);
-}
-
 NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   assert_in3_ctx(ctx);
   assert(response_data);
@@ -293,22 +286,6 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
     return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
 
   return IN3_OK;
-}
-
-NONULL static void blacklist_node(in3_chain_t* chain, node_match_t* node_weight) {
-  assert(chain);
-
-  if (node_weight && !node_weight->blocked) {
-    in3_node_weight_t* w = ctx_get_node_weight(chain, node_weight);
-    if (!w) return;
-    // blacklist the node
-    uint64_t blacklisted_until_ = in3_time(NULL) + BLACKLISTTIME;
-    if (w->blacklisted_until != blacklisted_until_)
-      chain->dirty = true;
-    w->blacklisted_until = blacklisted_until_;
-    node_weight->blocked = true;
-    in3_log_debug("Blacklisting node for unverifiable response: %s\n", ctx_get_node(chain, node_weight)->url);
-  }
 }
 
 static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {

@@ -66,7 +66,7 @@ typedef struct weight {
   bool           blocked; /**< if true this node has  been blocked for sending wrong responses */
   uint32_t       s;       /**< The starting value */
   uint32_t       w;       /**< weight value */
-  struct weight* next;    /**< next in the linkedlist or NULL if this is the last element*/
+  struct weight* next;    /**< next in the linked-list or NULL if this is the last element*/
 } node_match_t;
 
 /** response-object. 
@@ -442,12 +442,6 @@ NONULL in3_proof_t in3_ctx_get_proof(
     int        i    /**< [in] the index within the request. */
 );
 
-NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const node_match_t* node) {
-  return node->index < chain->nodelist_length ? chain->nodelist + node->index : NULL;
-}
-NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
-  return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
-}
 NONULL_FOR((1, 2, 3, 5))
 in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
 
