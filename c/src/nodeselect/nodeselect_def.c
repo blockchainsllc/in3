@@ -8,7 +8,7 @@
 #include "cache.h"
 #include "nodeselect_def_cfg.h"
 
-#define BLACKLISTTIME 24 * 3600
+#define BLACKLISTTIME (24 * 3600)
 
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
@@ -253,7 +253,7 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
 }
 
 static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx_) {
-  in3_ctx_t*        ctx    = ((in3_nl_pick_ctx_t*) ctx_)->ctx;
+  in3_ctx_t*        ctx    = ctx_;
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
   filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
@@ -273,7 +273,7 @@ NONULL static in3_node_weight_t* get_node_weight(const in3_nodeselect_def_t* dat
 }
 
 static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
-  in3_ctx_t*   ctx = ((in3_nl_pick_ctx_t*) ctx_)->ctx;
+  in3_ctx_t*   ctx = ctx_;
   const in3_t* c   = ctx->client;
 
   if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))

@@ -352,8 +352,8 @@ NONULL static void clear_response(in3_response_t* response) {
 static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response, in3_chain_t* chain) {
   assert_in3_ctx(ctx);
   assert_in3_response(response);
-  if (is_blacklisted(node)) return IN3_ERPC;                                                        // already handled
-  if (node) blacklist_node(chain, node);                                                            // we block this node
+  // we block this node
+  if (node) in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
   ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
   clear_response(response);                                                                         // free up memory
   return IN3_ERPC;
@@ -419,9 +419,11 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   clean_up_ctx(ctx, node, chain);
 
   // parse
-  if (ctx_parse_response(ctx, response->data.data, response->data.len)) { // in case of an error we get a error-code and error is set in the ctx?
-    if (node) blacklist_node(chain, node);                                // so we need to block the node.
-    clear_response(response);                                             // we want to save memory and free the invalid response
+  if (ctx_parse_response(ctx, response->data.data, response->data.len)) {
+    // in case of an error we get a error-code and error is set in the ctx?
+    // so we need to block the node.
+    if (node) in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
+    clear_response(response); // we want to save memory and free the invalid response
     return ctx->verification_state;
   }
 
@@ -430,10 +432,6 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
 
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
-
-#ifdef LOGGING
-    in3_node_t* n = node ? ctx_get_node(chain, node) : NULL;
-#endif
     in3_vctx_t vc;
     vc.ctx     = ctx;
     vc.chain   = chain;
@@ -455,12 +453,12 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
       // if we don't have a result, the node reported an error
       if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg)) {
         if (node) node->blocked = true; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
-        in3_log_debug("we have a user-error from %s, so we reject the response, but don't blacklist ..\n", n ? n->url : "intern");
+        in3_log_debug("we have a user-error from node, so we reject the response, but don't blacklist ..\n");
         continue;
       }
       else {
-        if (!node->blocked) in3_log_debug("we have a system-error from %s, so we block it ..\n", n ? n->url : "intern");
-        blacklist_node(chain, node);
+        if (!node->blocked) in3_log_debug("we have a system-error from node, so we block it ..\n");
+        in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
         return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
       }
     }
@@ -482,7 +480,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
         response->state = res;
         response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
       }
-      blacklist_node(chain, node);
+      in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
       return res;
     }
 
