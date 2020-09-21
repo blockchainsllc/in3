@@ -19,12 +19,16 @@ static in3_ret_t next_word(int* offset, bytes_t* data, uint8_t** dst, char** err
   }
   *dst = data->data + *offset;
   *offset += 32;
+  if (!*dst) {
+    *error = "no more data";
+    return IN3_EINVAL;
+  }
   return IN3_OK;
 }
 
 static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int* data_read, char** error) {
-  uint8_t* word;
-  int      pos = 0;
+  uint8_t* word = NULL;
+  int      pos  = 0;
   switch (c->type) {
     case ABI_ADDRESS: {
       TRY(next_word(&pos, &data, &word, error))
@@ -58,6 +62,7 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
     }
     case ABI_NUMBER: {
       TRY(next_word(&pos, &data, &word, error))
+
       int b = c->data.number.size / 8;
       if (b <= 8) {
         if (c->data.number.sign && (word[32 - b] & 0x80)) {            // we have a negative number, which we need to convert to a string
