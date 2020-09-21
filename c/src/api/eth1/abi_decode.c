@@ -46,13 +46,14 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       TRY(next_word(&pos, &data, &word, error))
       int len = bytes_to_int(word + 28, 4);
       int wl  = ((len + 31) / 32) * 32;
-      if ((int) data.len < wl + pos) {
+      word += 32;
+      if ((int) data.len < wl + pos || !word) {
         *error = "out of data when reading bytes";
         return IN3_EINVAL;
       }
       c->type == ABI_STRING
-          ? json_create_string(res, (char*) word + 32, len)
-          : json_create_bytes(res, bytes(word + 32, len));
+          ? json_create_string(res, (char*) word, len)
+          : json_create_bytes(res, bytes(word, len));
       break;
     }
     case ABI_NUMBER: {

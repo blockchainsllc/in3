@@ -51,14 +51,14 @@ static abi_coder_t* create_coder(char* token, char** error) {
     start_number            = token + 3;
   }
   else if (strncmp(token, "bytes", 5) == 0) {
-    coder->type  = token[5] ? ABI_FIXED_BYTES : ABI_BYTES;
+    coder->type  = strlen(token) > 5 ? ABI_FIXED_BYTES : ABI_BYTES;
     start_number = token + 5;
   }
   else
     return abi_error(error, "invalid type", coder);
 
   if (start_number) {
-    int i = *start_number ? atoi(start_number) : 256;
+    int i = strlen(start_number) ? atoi(start_number) : 256;
     if (coder->type == ABI_FIXED_BYTES)
       coder->data.fixed.len = i;
     else
@@ -135,9 +135,9 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
     }
 
     if (coder) {
-      tuple->data.tuple.components                          = tuple->data.tuple.len
-                                                                  ? _realloc(tuple->data.tuple.components, (tuple->data.tuple.len + 1) * sizeof(abi_coder_t*), tuple->data.tuple.len * sizeof(abi_coder_t*))
-                                                                  : _malloc(sizeof(abi_coder_t*));
+      tuple->data.tuple.components = tuple->data.tuple.len
+                                         ? _realloc(tuple->data.tuple.components, (tuple->data.tuple.len + 1) * sizeof(abi_coder_t*), tuple->data.tuple.len * sizeof(abi_coder_t*))
+                                         : _malloc(sizeof(abi_coder_t*));
       tuple->data.tuple.components[tuple->data.tuple.len++] = coder;
     }
 

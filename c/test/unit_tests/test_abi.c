@@ -97,6 +97,7 @@ static char* test_abi_encode(char* sig, char* json_params) {
 
   char* result = _malloc(data.len * 2 + 3);
   bytes_to_hex(data.data, data.len, result + 2);
+  if (data.data) _free(data.data);
   result[0] = '0';
   result[1] = 'x';
   return result;

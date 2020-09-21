@@ -39,11 +39,10 @@ static in3_ret_t encode_error(char* msg, char** error) {
   return IN3_EINVAL;
 }
 static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_t* bb, char** error) {
-  bytes32_t b    = {0};
-  bytes_t   data = {0};
+  bytes32_t b = {0};
   switch (coder->type) {
     case ABI_ADDRESS: {
-      data = d_to_bytes(src);
+      bytes_t data = d_to_bytes(src);
       if (data.len != 20) return encode_error("Invalid address-length", error);
       memcpy(b + 12, data.data, 20);
       break;
@@ -54,13 +53,14 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       break;
     }
     case ABI_FIXED_BYTES: {
-      data = d_to_bytes(src);
+      bytes_t data = d_to_bytes(src);
       if (data.len != (unsigned int) coder->data.fixed.len) return encode_error("Invalid bytes-length", error);
       memcpy(b, data.data, data.len);
       break;
     }
     case ABI_NUMBER: {
       uint8_t filler = 0;
+      bytes_t data;
       if (d_type(src) == T_STRING) {
         uint8_t*     tmp = alloca(32);
         char*        val = d_string(src);
@@ -99,7 +99,7 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
     case ABI_STRING:
     case ABI_BYTES: {
       if (d_type(src) != T_STRING && d_type(src) != T_BYTES) return encode_error("invalid bytes or string value", error);
-      data = d_to_bytes(src);
+      bytes_t data = d_to_bytes(src);
       int_to_bytes(data.len, b + 28);
       bb_write_raw_bytes(bb, b, 32);
       for (int i = 0; i < (int) data.len; i += 32) {
