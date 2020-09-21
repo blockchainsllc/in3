@@ -12,7 +12,8 @@ class MainNetContractTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(
+            in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_eth_call(self):
         tx = {
@@ -21,26 +22,30 @@ class MainNetContractTest(unittest.TestCase):
         }
         transaction = in3.eth.NewTransaction(**tx)
         address = self.client.eth.contract.call(transaction)
-        self.assertEqual(address, '0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308')
+        self.assertEqual(
+            address, '0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
     def test_get_storage_at(self):
-        storage = self.client.eth.contract.storage_at("0x3589d05a1ec4Af9f65b0E5554e645707775Ee43C", 1)
-        self.assertEqual(storage, '0x000000000000000000000000000000000000000000000000000000647261676f')
+        storage = self.client.eth.contract.storage_at(
+            "0x3589d05a1ec4Af9f65b0E5554e645707775Ee43C", 1)
+        self.assertEqual(
+            storage, '0x000000000000000000000000000000000000000000000000000000647261676f')
 
     def test_get_code(self):
-        code = self.client.eth.contract.code("0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e")
+        code = self.client.eth.contract.code(
+            "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e")
         self.assertEqual(len(code), 10694)
 
     def test_abi_encode(self):
         params = "(address,string)", "0x1234567890123456789012345678901234567890", "xyz"
         encoded = self.client.eth.contract.encode(*params)
-        expected = "0xdd06c847000000000000000000000000123456789012345678901234567890123456789000000000000000000000" + \
+        expected = "0x000000000000000000000000123456789012345678901234567890123456789000000000000000000000" + \
                    "0000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000" + \
                    "0000000000000378797a0000000000000000000000000000000000000000000000000000000000"
         self.assertEqual(encoded, expected)
         params = "(address,string)", "1234567890123456789012345678901234567890", "xyz"
         encoded = self.client.eth.contract.encode(*params)
-        expected = "0xdd06c847000000000000000000000000000000000000000000000000313233343536373839303132333435363738" + \
+        expected = "0x000000000000000000000000000000000000000000000000313233343536373839303132333435363738" + \
                    "3930313233343536373839303132333435363738393000000000000000000000000000000000000000000000000000" + \
                    "0000000000000378797a0000000000000000000000000000000000000000000000000000000000"
         self.assertEqual(encoded, expected)
@@ -89,7 +94,8 @@ class MainNetContractTest(unittest.TestCase):
                  "0000000000000000000000000000000000378797a000000000000000000000000000000000000000000000000000000" + \
                  "00000000000000000000000000000000000000000000000000000000000000000003616263000000000000000000000" + \
                  "0000000000000000000000000000000000000"
-        expected = ["0x1234567890123456789012345678901234567890", "xyz", "0xff", "abc"]
+        expected = ["0x1234567890123456789012345678901234567890",
+                    "xyz", "0xff", "abc"]
         decoded = self.client.eth.contract.decode(*params)
         self.assertEqual(decoded, expected)
 
@@ -98,7 +104,8 @@ class GoerliContractTest(MainNetContractTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(
+            'goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_eth_call(self):
         tx = {
@@ -107,14 +114,17 @@ class GoerliContractTest(MainNetContractTest):
         }
         transaction = in3.eth.NewTransaction(**tx)
         address = self.client.eth.contract.call(transaction)
-        self.assertEqual(address, '0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308')
+        self.assertEqual(
+            address, '0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
     def test_get_storage_at(self):
-        storage = self.client.eth.contract.storage_at("0x4B1488B7a6B320d2D721406204aBc3eeAa9AD329", 1)
+        storage = self.client.eth.contract.storage_at(
+            "0x4B1488B7a6B320d2D721406204aBc3eeAa9AD329", 1)
         self.assertEqual(storage, '0x0')
 
     def test_get_code(self):
-        code = self.client.eth.contract.code("0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e")
+        code = self.client.eth.contract.code(
+            "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e")
         self.assertEqual(len(code), 10694)
 
 
@@ -122,7 +132,8 @@ class KovanContractTest(MainNetContractTest):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(
+            'kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_eth_call(self):
         # TODO: Future
