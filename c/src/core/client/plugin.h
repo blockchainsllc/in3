@@ -383,4 +383,13 @@ typedef struct {
   uint16_t error; /**< error code. */
 } error_log_ctx_t;
 
+// -------- CHAIN_CHANGE ---------
+
+/**
+ * context used during chain change event
+ */
+typedef struct in3_chain_change_ctx {
+  in3_t* client; /**< the client whose chain_id has been changed */
+} in3_chain_change_ctx_t;
+
 #endif

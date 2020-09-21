@@ -261,6 +261,19 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx) {
 }
 
 static in3_ret_t chain_change(in3_nodeselect_def_t* data, void* ctx) {
+  in3_t*      c    = ((in3_chain_change_ctx_t*) ctx)->client;
+  json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
+  if (json == NULL)
+    return IN3_ECONFIG;
+
+  in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result, .error_msg = NULL};
+  in3_ret_t           ret  = config_set(data, &cctx);
+  json_free(json);
+  if (IN3_OK != ret) {
+    in3_log_error("nodeselect config error: %s\n", cctx.error_msg);
+    return IN3_ECONFIG;
+  }
+
   return IN3_OK;
 }
 
