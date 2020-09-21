@@ -31,7 +31,7 @@ public class APITest {
     Assertions.assertEquals(6, res1.length);
     Assertions.assertEquals("https://in3.slock.it/mainnet/nd-4", res1[0]);
     Assertions.assertEquals("0xbc0ea09c1651a3d5d40bacb4356fb59159a99564", res1[1]);
-    Assertions.assertEquals("0xffff", res1[2]);
+    Assertions.assertEquals(65535, res1[2]);
     Assertions.assertEquals("0xffff", res1[3]);
   }
 
