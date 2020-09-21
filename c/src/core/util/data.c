@@ -850,7 +850,9 @@ d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
 d_token_t* json_create_string(json_ctx_t* jp, char* value, int len) {
   if (len == -1) len = strlen(value);
   d_token_t* r = next_item(jp, T_STRING, len);
-  strncpy((char*) (r->data = _malloc(len + 1)), value, len);
+  r->data      = _malloc(len + 1);
+  memcpy(r->data, value, len);
+  r->data[len] = 0;
   return r;
 }
 d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {
