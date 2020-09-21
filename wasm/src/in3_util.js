@@ -139,7 +139,7 @@ function checkAddressChecksum(ad, chain = 0) {
 
 function abiEncode(sig, ...params) {
     const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
-    return call_string('abi_encode', sig, JSON.stringify(convert(params)))
+    return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params)))
 }
 
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
@@ -151,10 +151,14 @@ function ecSign(pk, data, hashMessage = true, adjustV = true) {
 function abiDecode(sig, data) {
     const types = splitTypes(sig.substr(sig.indexOf(':') + 1))
     data = toUint8Array(data)
-    let res = JSON.parse(call_string('abi_decode', sig, data, data.byteLength))
-    if (types.length == 1) res = [res]
-    if (!res.length) return []
-    return convertTypes(types, res)
+    try {
+        let res = JSON.parse(call_string('wasm_abi_decode', sig, data, data.byteLength))
+        if (types.length == 1) res = [res]
+        if (!res.length) return []
+        return convertTypes(types, res)
+    } catch (x) {
+        throw new Error('Error decoding ' + sig + ' with ' + toHex(data) + ' : ' + x.message)
+    }
 }
 
 function convertType(val, t) {
