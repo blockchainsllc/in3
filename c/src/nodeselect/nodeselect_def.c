@@ -192,11 +192,10 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   else if (token->key == key("rpc")) {
     in3_t* c = ctx->client;
     EXPECT_TOK_STR(token);
-    c->proof           = PROOF_NONE;
-    c->chain.chain_id  = CHAIN_ID_LOCAL;
-    c->request_count   = 1;
-    in3_chain_t* chain = in3_get_chain(c);
-    in3_node_t*  n     = &data->nodelist[0];
+    c->proof          = PROOF_NONE;
+    c->chain.chain_id = CHAIN_ID_LOCAL;
+    c->request_count  = 1;
+    in3_node_t* n     = &data->nodelist[0];
     if (n->url) _free(n->url);
     n->url = _malloc(d_len(token) + 1);
     strcpy(n->url, d_string(token));
@@ -264,7 +263,7 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
   in3_nodeselect_def_t* data = plugin_data;
   switch (action) {
     case PLGN_ACT_INIT:
-      data->avg_block_time = avg_block_time_for_chain_id(((in3_configure_ctx_t*) plugin_ctx)->client->chain_id);
+      data->avg_block_time = avg_block_time_for_chain_id(((in3_configure_ctx_t*) plugin_ctx)->client->chain.chain_id);
       return IN3_OK;
     case PLGN_ACT_TERM:
       in3_whitelist_clear(data->whitelist);
@@ -293,7 +292,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   in3_ret_t             ret  = IN3_OK;
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
 
-  json_ctx_t* json = nodeselect_def_cfg(c->chain_id);
+  json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
   if (json == NULL) {
     ret = IN3_ECONFIG;
     goto FREE_DATA;
