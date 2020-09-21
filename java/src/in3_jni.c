@@ -397,15 +397,16 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
   (*env)->ReleaseStringUTFChars(env, fn, fnc);
   if (error) {
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), error);
-    abi_sig_free(rq);
+    if (rq) abi_sig_free(rq);
     return NULL;
   }
 
   const char* json_data = (*env)->GetStringUTFChars(env, json, 0);
   json_ctx_t* json_ctx  = parse_json((char*) json_data);
+  (*env)->ReleaseStringUTFChars(env, json, json_data);
+
   if (!json_ctx) {
     abi_sig_free(rq);
-    (*env)->ReleaseStringUTFChars(env, json, json_data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error parsing the data");
     return NULL;
   }
@@ -414,16 +415,12 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
   abi_sig_free(rq);
   json_free(json_ctx);
   if (error) {
-    (*env)->ReleaseStringUTFChars(env, json, json_data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), error);
     return NULL;
   }
 
   jstring res = (jstring) toObject(env, (d_token_t*) &data);
-  abi_sig_free(rq);
   _free(data.data);
-  json_free(json_ctx);
-  (*env)->ReleaseStringUTFChars(env, json, json_data);
   return res;
 }
 
@@ -439,7 +436,7 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
   abi_sig_t*  rq    = abi_sig_create((char*) fnc, &error);
   (*env)->ReleaseStringUTFChars(env, fn, fnc);
   if (error) {
-    abi_sig_free(rq);
+    if (rq) abi_sig_free(rq);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), error);
     return NULL;
   }

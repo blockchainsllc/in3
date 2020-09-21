@@ -396,7 +396,7 @@ public class APITest {
         new String[] {"0x03b1815a066ba71eab8e6622afa3e596b80580c2b1056990199dd974db66337e"}, hashList);
   }
 
-  //  @Test
+  @Test
   public void abiEncode() {
     IN3    in3       = builder.constructClient(new String[][] {});
     String signature = "getBalance(address)";
@@ -406,7 +406,7 @@ public class APITest {
     Assertions.assertEquals(expected, result);
   }
 
-  //  @Test
+  @Test
   public void abiDecode() {
     IN3    in3              = builder.constructClient(new String[][] {});
     String signature        = "(address,uint256)";
