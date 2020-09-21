@@ -219,12 +219,15 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   sb_add_hexuint(sb, c->chain.chain_id);
   sb_add_chars(sb, "\":");
   add_hex(sb, '{', "contract", *c->chain.contract);
+
   if (data->whitelist)
     add_hex(sb, ',', "whiteListContract", bytes(data->whitelist->contract, 20));
+
   add_hex(sb, ',', "registryId", bytes(c->chain.registry_id, 32));
   add_bool(sb, ',', "needsUpdate", data->nodelist_upd8_params != NULL);
   add_uint(sb, ',', "avgBlockTime", data->avg_block_time);
   sb_add_chars(sb, ",\"nodeList\":[");
+
   for (unsigned int j = 0; j < data->nodelist_length; j++) {
     if ((data->nodelist[j].attrs & ATTR_BOOT_NODE) == 0) continue;
     if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
@@ -233,12 +236,14 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
     add_hex(sb, ',', "address", bytes(data->nodelist[j].address, 20));
     sb_add_char(sb, '}');
   }
+
   if (sb->data[sb->len - 1] == '[') {
     sb->len -= 13;
     sb_add_char(sb, '}');
   }
   else
     sb_add_chars(sb, "]}");
+
   sb_add_chars(sb, "}");
   return IN3_OK;
 }

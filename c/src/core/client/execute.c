@@ -82,14 +82,13 @@ NONULL static void response_free(in3_ctx_t* ctx) {
 NONULL void in3_check_verified_hashes(in3_t* c) {
   // shrink verified hashes to max_verified_hashes
   if (c->pending <= 1 && c->alloc_verified_hashes > c->max_verified_hashes) {
-    in3_chain_t* chain = in3_get_chain(c);
     // we want to keep the newest entries, so we move them overriding the oldest
-    memmove(chain->verified_hashes,
-            chain->verified_hashes + (c->alloc_verified_hashes - c->max_verified_hashes),
+    memmove(c->chain.verified_hashes,
+            c->chain.verified_hashes + (c->alloc_verified_hashes - c->max_verified_hashes),
             sizeof(in3_verified_hash_t) * c->max_verified_hashes);
-    chain->verified_hashes   = _realloc(chain->verified_hashes,
-                                      c->max_verified_hashes * sizeof(in3_verified_hash_t),
-                                      c->alloc_verified_hashes * sizeof(in3_verified_hash_t));
+    c->chain.verified_hashes = _realloc(c->chain.verified_hashes,
+                                        c->max_verified_hashes * sizeof(in3_verified_hash_t),
+                                        c->alloc_verified_hashes * sizeof(in3_verified_hash_t));
     c->alloc_verified_hashes = c->max_verified_hashes;
   }
 }
@@ -239,9 +238,8 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
-      const in3_chain_t* chain = in3_get_chain(rc);
-      if (chain->whitelist) {
-        const bytes_t adr = bytes(chain->whitelist->contract, 20);
+      if (rc->chain.whitelist) {
+        const bytes_t adr = bytes(rc->chain.whitelist->contract, 20);
         sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
       }
       if (msg_hash) {
@@ -271,17 +269,17 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
         sb_add_chars(sb, ",\"useBinary\":true");
 
       // do we have verified hashes?
-      if (chain->verified_hashes) {
+      if (rc->chain.verified_hashes) {
         uint_fast16_t l = rc->max_verified_hashes;
         for (uint_fast16_t i = 0; i < l; i++) {
-          if (!chain->verified_hashes[i].block_number) {
+          if (!rc->chain.verified_hashes[i].block_number) {
             l = i;
             break;
           }
         }
         if (l) {
           bytes_t* hashes = alloca(sizeof(bytes_t) * l);
-          for (uint_fast16_t i = 0; i < l; i++) hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
+          for (uint_fast16_t i = 0; i < l; i++) hashes[i] = bytes(rc->chain.verified_hashes[i].hash, 32);
           sb_add_bytes(sb, ",\"verifiedHashes\":", hashes, l, true);
         }
       }
@@ -726,12 +724,10 @@ NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
 
   // blacklist node that gave us an error response for nodelist (if not first update)
   // and clear nodelist params
-  in3_chain_t* chain = in3_get_chain(ctx->client);
-
-  if (nodelist_not_first_upd8(chain))
-    blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
-  _free(chain->nodelist_upd8_params);
-  chain->nodelist_upd8_params = NULL;
+  if (nodelist_not_first_upd8(&ctx->client->chain))
+    blacklist_node_addr(ctx->client->chain, ctx->client->chain.nodelist_upd8_params->node, BLACKLISTTIME);
+  _free(ctx->client->chain.nodelist_upd8_params);
+  ctx->client->chain.nodelist_upd8_params = NULL;
 
   if (ctx->required) {
     // if first update return error otherwise return IN3_OK, this is because first update is
@@ -811,12 +807,11 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       in3_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_RECEIVE, &req);
 #ifdef DEBUG
-      const in3_chain_t* chain = in3_get_chain(ctx->client);
-      node_match_t*      w     = ctx->nodes;
-      int                i     = 0;
+      node_match_t* w = ctx->nodes;
+      int           i = 0;
       for (; w; i++, w = w->next) {
         if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data && ctx->raw_response[i].time) {
-          in3_node_t* node = ctx_get_node(chain, w);
+          in3_node_t* node = ctx_get_node(&ctx->client->chain, w);
           char*       data = ctx->raw_response[i].data.data;
           data             = format_json(data);
 
@@ -854,13 +849,11 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_SEND, request);
 
   // debug output
-  node_match_t*      node  = request->ctx->nodes;
-  const in3_chain_t* chain = in3_get_chain(ctx->client);
-
+  node_match_t* node = request->ctx->nodes;
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->ctx->raw_response[i].state != IN3_WAITING) {
       char*             data      = request->ctx->raw_response[i].data.data;
-      const in3_node_t* node_data = node ? ctx_get_node(chain, node) : NULL;
+      const in3_node_t* node_data = node ? ctx_get_node(&ctx->client->chain, node) : NULL;
 #ifdef DEBUG
       data = format_json(data);
 #endif
@@ -1020,10 +1013,6 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   switch (ctx->type) {
     case CT_RPC: {
 
-      // check chain_id
-      in3_chain_t* chain = in3_get_chain(ctx->client);
-      if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
-
       // do we need to handle it internaly?
       if (!ctx->raw_response && !ctx->response_context && (ret = handle_internally(ctx)) < 0)
         return ctx_set_error(ctx, "The request could not be handled", ret);
@@ -1052,7 +1041,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
-      ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, chain);
+      ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain);
 
       // update weights in the cache
       update_nodelist_cache(ctx);

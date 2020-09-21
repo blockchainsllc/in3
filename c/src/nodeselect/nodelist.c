@@ -375,20 +375,18 @@ uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t
   return (0xFFFF / avg) * blacklist_factor / 100;
 }
 
-node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
+node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         int len, uint64_t now, uint32_t* total_weight, int* total_found,
                                         in3_node_filter_t filter) {
 
-  int                found         = 0;
-  uint32_t           weight_sum    = 0;
-  in3_node_t*        node_def      = NULL;
-  in3_node_weight_t* weight_def    = NULL;
-  node_match_t*      prev          = NULL;
-  node_match_t*      current       = NULL;
-  node_match_t*      first         = NULL;
-  *total_found                     = 0;
-  const in3_nodeselect_def_t* data = in3_find_chain(c, chain_id);
-  if (!data) return NULL;
+  int                found      = 0;
+  uint32_t           weight_sum = 0;
+  in3_node_t*        node_def   = NULL;
+  in3_node_weight_t* weight_def = NULL;
+  node_match_t*      prev       = NULL;
+  node_match_t*      current    = NULL;
+  node_match_t*      first      = NULL;
+  *total_found                  = 0;
 
   for (int i = 0; i < len; i++) {
     node_def   = all_nodes + i;
@@ -433,14 +431,8 @@ static bool update_in_progress(const in3_ctx_t* ctx) {
   return ctx_is_method(ctx, "in3_nodeList");
 }
 
-in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights) {
-  in3_ret_t             res  = IN3_EFIND;
-  in3_nodeselect_def_t* data = in3_find_chain(ctx->client, chain_id);
-
-  if (!data) {
-    ctx_set_error(ctx, "invalid chain_id", IN3_EFIND);
-    return IN3_EFIND;
-  }
+in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights) {
+  in3_ret_t res = IN3_EFIND;
 
   // do we need to update the nodelist?
   if (data->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
@@ -471,7 +463,7 @@ SKIP_UPDATE:
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_filter_t filter) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, int request_count, in3_node_filter_t filter) {
 
   // get all nodes from the nodelist
   uint64_t           now       = in3_time(NULL);
@@ -480,13 +472,13 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   uint32_t           total_weight;
   int                all_nodes_len, total_found;
 
-  in3_ret_t res = in3_node_list_get(ctx, ctx->client->chain_id, false, &all_nodes, &all_nodes_len, &weights);
+  in3_ret_t res = in3_node_list_get(ctx, data, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
     return ctx_set_error(ctx, "could not find the data", res);
 
   // filter out nodes
   node_match_t* found = in3_node_list_fill_weight(
-      ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len,
+      ctx->client, data, all_nodes, weights, all_nodes_len,
       now, &total_weight, &total_found, filter);
 
   if (total_found == 0) {
@@ -500,7 +492,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
     if (blacklisted > all_nodes_len / 2) {
       for (int i = 0; i < all_nodes_len; i++)
         weights[i].blacklisted_until = 0;
-      found = in3_node_list_fill_weight(ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter);
+      found = in3_node_list_fill_weight(ctx->client, data, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter);
     }
 
     if (total_found == 0)

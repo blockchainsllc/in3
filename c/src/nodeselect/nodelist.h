@@ -82,12 +82,12 @@ NONULL void in3_client_run_chain_whitelisting(in3_nodeselect_def_t* data);
  * 
  * if not it will fetch a new version first (if the needs_update-flag is set).
  */
-NONULL in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights);
+NONULL in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights);
 
 /**
  * filters and fills the weights on a returned linked list.
  */
-NONULL node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, uint64_t now, uint32_t* total_weight, int* total_found, in3_node_filter_t filter);
+NONULL node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, uint64_t now, uint32_t* total_weight, int* total_found, in3_node_filter_t filter);
 
 /**
  * calculates the weight for a node.
@@ -96,7 +96,7 @@ NONULL uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, u
 /**
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
-NONULL in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_filter_t filter);
+NONULL in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, int request_count, in3_node_filter_t filter);
 
 /**
  * forces the client to update the nodelist
