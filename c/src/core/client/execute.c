@@ -79,6 +79,7 @@ NONULL static void response_free(in3_ctx_t* ctx) {
   ctx->signers          = NULL;
   ctx->signers_length   = 0;
 }
+
 NONULL void in3_check_verified_hashes(in3_t* c) {
   // shrink verified hashes to max_verified_hashes
   if (c->pending <= 1 && c->alloc_verified_hashes > c->max_verified_hashes) {
@@ -92,6 +93,7 @@ NONULL void in3_check_verified_hashes(in3_t* c) {
     c->alloc_verified_hashes = c->max_verified_hashes;
   }
 }
+
 NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   assert_in3_ctx(ctx);
   // only for intern requests, we actually free the original request-string
@@ -109,49 +111,6 @@ NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
 
   in3_check_verified_hashes(ctx->client);
   _free(ctx);
-}
-
-NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
-  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != CHAIN_ID_BTC);
-}
-
-NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
-  assert_in3_ctx(ctx);
-
-  const in3_t*       c     = ctx->client;
-  const in3_chain_t* chain = in3_get_chain(c);
-
-  if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
-    return IN3_OK;
-
-  // For nodeList request, we always ask for proof & atleast one signature
-  uint8_t total_sig_cnt = c->signature_count
-                              ? c->signature_count
-                              : (auto_ask_sig(ctx) ? 1 : 0);
-
-  if (total_sig_cnt) {
-    node_match_t*     signer_nodes = NULL;
-    in3_node_filter_t filter       = NODE_FILTER_INIT;
-    filter.nodes                   = d_get(d_get(request, K_IN3), K_SIGNER_NODES);
-    filter.props                   = c->node_props | NODE_PROP_SIGNER;
-    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
-    if (res < 0)
-      return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-    if (ctx->signers) _free(ctx->signers);
-    const int node_count  = ctx_nodes_len(signer_nodes);
-    ctx->signers_length   = node_count;
-    ctx->signers          = _malloc(20 * node_count); // 20 bytes per address
-    const node_match_t* w = signer_nodes;
-    in3_node_t*         n = NULL;
-    for (int i = 0; i < node_count; i++) {
-      n = ctx_get_node(chain, w);
-      if (n) memcpy(ctx->signers + i * 20, n->address, 20);
-      w = w->next;
-    }
-    if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
-  }
-
-  return IN3_OK;
 }
 
 static void free_urls(char** urls, int len, bool free_items) {
@@ -298,10 +257,11 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
   sb_add_char(sb, ']');
   return IN3_OK;
 }
+
 NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
-  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET) || ctx->client->chain_id == CHAIN_ID_LOCAL) return;
-  in3_cache_store_nodelist(ctx->client, in3_get_chain(ctx->client));
+  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE_SET) || ctx->client->chain.chain_id == CHAIN_ID_LOCAL) return;
+  in3_cache_store_nodelist(ctx->client, &ctx->client->chain);
 }
 
 NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
@@ -1019,11 +979,9 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC)) {
-        in3_node_filter_t filter = NODE_FILTER_INIT;
-        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
-        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
-          if ((ret = pick_signers(ctx, ctx->requests[0])) < 0)
+        in3_nl_pick_data_ctx_t plgn_ctx = {.ctx = ctx};
+        if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_DATA, &plgn_ctx)) == IN3_OK) {
+          if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_SIGNER, &plgn_ctx)) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
 
 #ifdef PAY

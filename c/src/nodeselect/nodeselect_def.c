@@ -1,4 +1,6 @@
 #include "nodeselect_def.h"
+#include "../core/client/context_internal.h"
+#include "../core/client/keys.h"
 #include "../core/client/plugin.h"
 #include "../core/util/bitset.h"
 #include "../core/util/debug.h"
@@ -248,11 +250,52 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   return IN3_OK;
 }
 
-static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx) {
-  return IN3_OK;
+static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx_) {
+  in3_ctx_t*        ctx    = ((in3_nl_pick_data_ctx_t*) ctx_)->ctx;
+  in3_node_filter_t filter = NODE_FILTER_INIT;
+  filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
+  filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
+  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, ctx->client->request_count, filter);
 }
 
-static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx) {
+NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
+  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
+}
+
+static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
+  in3_ctx_t*   ctx = ((in3_nl_pick_data_ctx_t*) ctx_)->ctx;
+  const in3_t* c   = ctx->client;
+
+  if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
+    return IN3_OK;
+
+  // For nodeList request, we always ask for proof & atleast one signature
+  uint8_t total_sig_cnt = c->signature_count
+                              ? c->signature_count
+                              : (auto_ask_sig(ctx) ? 1 : 0);
+
+  if (total_sig_cnt) {
+    node_match_t*     signer_nodes = NULL;
+    in3_node_filter_t filter       = NODE_FILTER_INIT;
+    filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
+    filter.props                   = c->node_props | NODE_PROP_SIGNER;
+    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
+    if (res < 0)
+      return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
+    if (ctx->signers) _free(ctx->signers);
+    const int node_count  = ctx_nodes_len(signer_nodes);
+    ctx->signers_length   = node_count;
+    ctx->signers          = _malloc(20 * node_count); // 20 bytes per address
+    const node_match_t* w = signer_nodes;
+    in3_node_t*         n = NULL;
+    for (int i = 0; i < node_count; i++) {
+      n = ctx_get_node(&c->chain, w);
+      if (n) memcpy(ctx->signers + i * 20, n->address, 20);
+      w = w->next;
+    }
+    if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
+  }
+
   return IN3_OK;
 }
 

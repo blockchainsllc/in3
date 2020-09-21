@@ -392,4 +392,13 @@ typedef struct in3_chain_change_ctx {
   in3_t* client; /**< the client whose chain_id has been changed */
 } in3_chain_change_ctx_t;
 
+// -------- NL_PICK_DATA ---------
+
+/**
+ * context used during chain change event
+ */
+typedef struct in3_nl_pick_data_ctx {
+  in3_ctx_t* ctx; /**< request context */
+} in3_nl_pick_data_ctx_t;
+
 #endif
