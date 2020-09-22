@@ -445,7 +445,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
 
 static void handle_times(in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
   if (!node || node->blocked || !response || !response->time) return;
-  in3_node_weight_t* w = ctx_get_node_weight(chain, node);
+  in3_node_weight_t* w = get_node_weight(chain, node);
   if (!w) return;
   w->response_count++;
   w->total_response_time += response->time;
@@ -459,16 +459,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
   // blacklist nodes for missing response
   for (int n = 0; n < nodes_count; n++, node = node ? node->next : NULL) {
-
-#ifdef LOGGING
-    // get the connected node
-    const in3_node_t* node_data = node ? ctx_get_node(chain, node) : NULL;
-#endif
-
     // if the response is still pending, we skip...
     if (response[n].state == IN3_WAITING) {
       still_pending = true;
-      in3_log_debug("request from node %s is still pending ..\n", node_data ? node_data->url : "intern");
+      in3_log_debug("request from node is still pending ..\n");
       continue;
     }
 
@@ -698,7 +692,7 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       int           i = 0;
       for (; w; i++, w = w->next) {
         if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data && ctx->raw_response[i].time) {
-          in3_node_t* node = ctx_get_node(&ctx->client->chain, w);
+          in3_node_t* node = get_node(&ctx->client->chain, w);
           char*       data = ctx->raw_response[i].data.data;
           data             = format_json(data);
 
@@ -740,7 +734,7 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->ctx->raw_response[i].state != IN3_WAITING) {
       char*             data      = request->ctx->raw_response[i].data.data;
-      const in3_node_t* node_data = node ? ctx_get_node(&ctx->client->chain, node) : NULL;
+      const in3_node_t* node_data = node ? get_node(&ctx->client->chain, node) : NULL;
 #ifdef DEBUG
       data = format_json(data);
 #endif
@@ -906,9 +900,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC)) {
-        in3_nl_pick_data_ctx_t plgn_ctx = {.ctx = ctx};
-        if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_DATA, &plgn_ctx)) == IN3_OK) {
-          if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_SIGNER, &plgn_ctx)) < 0)
+        if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_DATA, ctx)) == IN3_OK) {
+          if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_SIGNER, ctx)) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
 
 #ifdef PAY
