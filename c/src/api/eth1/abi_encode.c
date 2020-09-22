@@ -59,8 +59,8 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       break;
     }
     case ABI_NUMBER: {
-      uint8_t filler = 0;
-      bytes_t data;
+      bytes_t      data;
+      unsigned int bl = coder->data.number.size / 8;
       if (d_type(src) == T_STRING) {
         uint8_t*     tmp = alloca(32);
         char*        val = d_string(src);
@@ -68,10 +68,9 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
 
         if (strlen(val) > 18) return encode_error("invalid number string (too big)", error);
         errno = 0;
-        if (coder->data.number.sign) {
+        if (*val == '-') {
           int64_t n = strtoll(val, NULL, 10);
-          if (n < 0) filler = 0xff;
-          memset(tmp, filler, 32);
+          memset(tmp, 0xff, 32);
           long_to_bytes((uint64_t) n, tmp + 24);
         }
         else {
@@ -82,23 +81,27 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
         if (errno) return encode_error("invalid number value", error);
         data = bytes(tmp + 32 - bl, bl);
       }
-      else
+      else {
         data = d_to_bytes(src);
-      if (data.len > (uint32_t) coder->data.number.size / 8) {
-        if (coder->data.number.sign && data.data[data.len - coder->data.number.size / 8 - 1] == 0xff)
-          data = bytes(data.data + data.len - coder->data.number.size / 8, coder->data.number.size / 8);
-        else
-          return encode_error("number too big", error);
+        if (data.len < bl) {
+          uint8_t* tmp = alloca(bl);
+          memset(tmp, 0, bl);
+          memcpy(tmp + bl - data.len, data.data, data.len);
+          data = bytes(tmp, bl);
+        }
+        else if (data.len > bl)
+          data = bytes(data.data + data.len - bl, bl);
       }
       memcpy(b + 32 - data.len, data.data, data.len);
-      if (coder->data.number.sign && data.len < 32) memset(b, filler, 32 - data.len);
+      if (coder->data.number.sign && data.len < 32 && data.len && data.data[0] & 128) memset(b, 0xff, 32 - data.len);
       break;
     }
     case ABI_TUPLE:
       return encode_tuple(coder, src, bb, error);
     case ABI_STRING:
     case ABI_BYTES: {
-      if (d_type(src) != T_STRING && d_type(src) != T_BYTES) return encode_error("invalid bytes or string value", error);
+      if (d_type(src) != T_STRING && d_type(src) != T_BYTES && d_type(src) != T_INTEGER)
+        return encode_error("invalid bytes or string value", error);
       bytes_t data = d_to_bytes(src);
       int_to_bytes(data.len, b + 28);
       bb_write_raw_bytes(bb, b, 32);

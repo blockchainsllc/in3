@@ -43,6 +43,7 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../test_utils.h"
+#include "../util/transport.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -209,6 +210,72 @@ static void test_abi_tuples() {
   TEST_ABI("bytes32,bool", "[\"0x0000000000000000000000000000000000000000000000001234567890abcdef\",false]",
            "0000000000000000000000000000000000000000000000001234567890abcdef0000000000000000000000000000000000000000000000000000000000000000")
 }
+static void test_json() {
+  char* json_data = read_json_response_buffer("../c/test/testdata/api/abi.json");
+  TEST_ASSERT_NOT_NULL_MESSAGE(json_data, "You must start this test from build-directory");
+  json_ctx_t* jctx = parse_json(json_data);
+  TEST_ASSERT_NOT_NULL_MESSAGE(jctx, "Invalid json");
+  int count = 0;
+  for (d_iterator_t iter = d_iter(jctx->result); iter.left; d_iter_next(&iter)) {
+    count++;
+    char*      error  = NULL;
+    char*      sig    = d_get_string(iter.token, "sig");
+    d_token_t* values = d_get(iter.token, key("values"));
+    printf("%02i ## %s : %s\n", count, d_get_string(iter.token, "name"), sig);
+    abi_sig_t* s = abi_sig_create(sig, &error);
+    TEST_ASSERT_NULL_MESSAGE(error, error);
+    bytes_t expected = d_to_bytes(d_get(iter.token, key("result")));
+    bytes_t data     = abi_encode(s, values, &error);
+    if (error) {
+      // this is just for setting breakpoints
+      printf("   values: %s\n", d_create_json(jctx, values));
+      // for (int n = 0; n < d_len(values); n++) {
+      //   d_token_t* t  = d_get(values, n);
+      //   d_type_t   tt = d_type(t);
+      //   printf("%i:%s\n", n, d_create_json(jctx, t));
+      // }
+      abi_encode(s, values, &error);
+    }
+    TEST_ASSERT_NULL_MESSAGE(error, error);
+    if (data.len != expected.len || memcmp(data.data, expected.data, data.len)) {
+      // this is just for setting breakpoints
+      abi_encode(s, values, &error);
+      printf("   values: %s\n", d_create_json(jctx, values));
+      char tmp[65];
+      for (int i = 0; i < max(data.len, expected.len); i += 32) {
+        printf("%04x: ", i);
+        if (i >= expected.len) {
+          memset(tmp, 32, 64);
+          tmp[64] = 0;
+        }
+        else
+          bytes_to_hex(expected.data + i, 32, tmp);
+
+        printf("%s   ", tmp);
+        if (i >= data.len)
+          printf("\n");
+        else {
+          bytes_to_hex(data.data + i, 32, tmp);
+          if (i < expected.len && memcmp(data.data + i, expected.data + i, 32))
+            printf("%s <***\n", tmp);
+          else
+            printf("%s\n", tmp);
+        }
+      }
+      TEST_FAIL_MESSAGE(" result mismatch");
+    }
+
+    TEST_ASSERT_EQUAL(0, data.len % 32);
+    TEST_ASSERT_EQUAL(0, expected.len % 32);
+    TEST_ASSERT_EQUAL_MESSAGE(expected.len, data.len, "result has a different length!");
+    //    TEST_ASSERT_EACH_EQUAL_MEMORY(expected.data, data.data, 32, data.len / 32);
+    _free(data.data);
+    _free(s);
+  }
+
+  _free(json_data);
+  json_free(jctx);
+}
 
 /*
  * Main
@@ -216,6 +283,7 @@ static void test_abi_tuples() {
 int main() {
   // now run tests
   TESTS_BEGIN();
+  RUN_TEST(test_json);
   RUN_TEST(test_abi_encode_decode);
   RUN_TEST(test_abi_encode_edge_cases);
   RUN_TEST(test_test_abi_decode_edge_cases);
