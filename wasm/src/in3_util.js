@@ -143,7 +143,12 @@ function abiEncode(sig, ...params) {
         : (a && a.__proto__ === Object.prototype)
             ? convert(Object.values(a))
             : toHex(a)
-    return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params)))
+    try {
+        return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params)))
+    }
+    catch (x) {
+        throw new Error("Error trying to abi encode '" + sig + '": ' + x.message + ' with ' + JSON.stringify(params))
+    }
 }
 
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
@@ -182,7 +187,7 @@ function convertType(val, t) {
         case 'bool':
             return !!toNumber(val)
         case 'address':
-            return toHex(val, 20)
+            return toChecksumAddress(toHex(val, 20))
         case 'string':
             return toUtf8(val)
         case 'bytes':

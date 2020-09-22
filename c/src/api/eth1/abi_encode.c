@@ -54,8 +54,8 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
     }
     case ABI_FIXED_BYTES: {
       bytes_t data = d_to_bytes(src);
-      if (data.len != (unsigned int) coder->data.fixed.len) return encode_error("Invalid bytes-length", error);
-      memcpy(b, data.data, data.len);
+      if (data.len > 32) return encode_error("Invalid bytes-length", error);
+      memcpy(b, data.data, min((unsigned) coder->data.fixed.len, data.len));
       break;
     }
     case ABI_NUMBER: {
