@@ -149,13 +149,17 @@ function ecSign(pk, data, hashMessage = true, adjustV = true) {
 }
 
 function abiDecode(sig, data) {
-    const types = splitTypes(sig.substr(sig.indexOf(':') + 1))
+    const types_sig = sig.substr(sig.indexOf(':') + 1)
+    const types = splitTypes(types_sig)
+    const allowOne = types.length == 1 && !types_sig.startsWith('(')
     data = toUint8Array(data)
+    if (!types.length) {
+        if (data.byteLength) throw new Error('the signature ' + sig + ' does not expect any data but ' + data.byteLength + ' were passed')
+        else return []
+    }
     try {
         let res = JSON.parse(call_string('wasm_abi_decode', sig, data, data.byteLength))
-        if (types.length == 1) res = [res]
-        if (!res.length) return []
-        return convertTypes(types, res)
+        return allowOne ? convertType(res, types[0]) : convertTypes(types, res)
     } catch (x) {
         throw new Error('Error decoding ' + sig + ' with ' + toHex(data) + ' : ' + x.message)
     }
@@ -229,14 +233,8 @@ function toHex(val, bytes) {
             : (parseInt(val[0]) ? BigInt(val).toString(16) : convertUTF82Hex(val))
     else if (typeof val === 'boolean')
         hex = val ? '01' : '00'
-    else if (typeof val === 'number' || typeof val === 'bigint') {
+    else if (typeof val === 'number' || typeof val === 'bigint')
         hex = val.toString(16)
-        if (hex.startsWith('-')) {
-            let n = new Array(hex.length - 1), o = 0;
-            for (let i = hex.length - 1; i > 0; i--) n[hex.length - i] = parseInt(hex[i], 16)
-            hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).reverse().join(''), (bytes || 32) * 2, 'f')
-        }
-    }
     else if (val && val._isBigNumber) // BigNumber
         hex = val.toHexString()
     else if (val && (val.redIMul || val.readBigInt64BE)) // bn.js or nodejs Buffer
@@ -246,6 +244,12 @@ function toHex(val, bytes) {
         for (let i = 0; i < val.byteLength; i++) hex += padStart(ar[i].toString(16), 2, '0')
     } else
         throw new Error('Unknown or unsupported type : ' + JSON.stringify(val))
+
+    if (hex.startsWith('-')) {
+        let n = new Array(hex.length - 1), o = 0;
+        for (let i = hex.length - 1; i > 0; i--) n[hex.length - i] = parseInt(hex[i], 16)
+        hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).reverse().join(''), (bytes || 32) * 2, 'f')
+    }
 
     if (bytes)
         hex = padStart(hex, bytes * 2, '0'); // workaround for ts-error in older js
