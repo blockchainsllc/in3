@@ -19,13 +19,20 @@ namespace Test
 
         public Task<string> Handle(string url, string payload)
         {
-            return Task.Run(() =>  Responses[GetMethod(payload)]);
+            return Task.Run(() => Responses[GetMethod(payload)]);
         }
 
         public void AddMockedresponse(string methodName, string filename)
         {
             string content = ReadFile(filename);
-            Responses.Add(methodName, content);
+            if (Responses.ContainsKey(methodName))
+            {
+                Responses[methodName] = content;
+            }
+            else
+            {
+                Responses.Add(methodName, content);
+            }
         }
 
         private string GetMethod(string payload)

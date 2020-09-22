@@ -78,6 +78,8 @@ typedef struct {
 } bytes_builder_t;
 
 RETURNS_NONULL bytes_t* b_new(const uint8_t* data, uint32_t len);    /**< allocates a new byte array with 0 filled */
+uint8_t*                b_get_data(bytes_t* b);                      /**< gets the data field from an input byte array */
+uint32_t                b_get_len(bytes_t* b);                       /**< gets the len field from an input byte array */
 NONULL void             b_print(const bytes_t* a);                   /**< prints a the bytes as hex to stdout */
 NONULL void             ba_print(const uint8_t* a, size_t l);        /**< prints a the bytes as hex to stdout */
 NONULL int              b_cmp(const bytes_t* a, const bytes_t* b);   /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/

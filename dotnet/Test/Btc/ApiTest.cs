@@ -7,12 +7,12 @@ namespace Test.Btc
 {
     public class ApiTest
     {
-        private ClientBuilder _builder;
+        private ClientFactory _factory;
 
         [SetUp]
         public void Setup()
         {
-            _builder = new ClientBuilder(Chain.Btc);
+            _factory = new ProoflessClientFactory(Chain.Btc);
         }
 
         [Test]
@@ -22,7 +22,7 @@ namespace Test.Btc
             {
                 new[] {"getblockheader", "btc_GetBlockHeader_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             BlockHeader result = await in3.Btc.GetBlockHeader("0000000000000000000cd3c5d7638014e78a5fba33be5fa5cb10ef9f03d99e60");
 
@@ -50,7 +50,7 @@ namespace Test.Btc
             {
                 new[] {"getblockheader", "btc_GetBlockHeaderBytes_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             byte[] expectedBytes = new byte[]
             {
@@ -69,7 +69,7 @@ namespace Test.Btc
             {
                 new[] {"getrawtransaction", "btc_GetTransaction_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Transaction result = await in3.Btc.GetTransaction("1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d");
 
@@ -109,7 +109,7 @@ namespace Test.Btc
             {
                 new[] {"getrawtransaction", "btc_GetTransactionBytes_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             byte[] result = await in3.Btc.GetTransactionBytes("1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d");
 
@@ -123,7 +123,7 @@ namespace Test.Btc
             {
                 new[] {"getblock", "btc_GetBlockWithTxIds_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Block<string> result = await in3.Btc.GetBlockWithTxIds("0000000000000000000cd3c5d7638014e78a5fba33be5fa5cb10ef9f03d99e60");
 
@@ -153,7 +153,7 @@ namespace Test.Btc
             {
                 new[] {"getblock", "btc_GetBlockWithTxData_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Block<Transaction> result = await in3.Btc.GetBlockWithTxData("000000000000000000064ba7512ecc70cabd7ed17e31c06f2205d5ecdadd6d22");
 
@@ -182,7 +182,7 @@ namespace Test.Btc
             {
                 new[] {"getblock", "btc_GetBlockBytes_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             byte[] result = await in3.Btc.GetBlockBytes("000000000000000000064ba7512ecc70cabd7ed17e31c06f2205d5ecdadd6d22");
 
