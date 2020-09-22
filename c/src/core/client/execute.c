@@ -288,55 +288,13 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
   return IN3_OK;
 }
 
-static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
-  if (nodelist_block > current_blk)
-    // misbehaving node, so allow to update right away and it'll get blacklisted due to the exp_last_block mechanism
-    return 0;
-
-  uint64_t diff = current_blk - nodelist_block;
-  if (diff >= repl_latest)
-    return 0;
-  // we need to cap wait time as we might end up waiting for too long for chains with higher block time
-  return min((repl_latest - diff) * avg_blktime, WAIT_TIME_CAP);
-}
-
-static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
-  assert_in3_ctx(ctx);
-  assert(chain);
-  if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
-
-  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
-    // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
-    return;
-  }
-
-  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
-    if (chain->nodelist_upd8_params == NULL)
-      chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
-    in3_node_t* n = ctx_get_node(chain, node);
-    if (n) {
-      // overwrite old params since we have a newer nodelist update now
-      memcpy(chain->nodelist_upd8_params->node, n->address, 20);
-      chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
-      chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
-                                                                                d_get_longk(response_in3, K_CURRENT_BLOCK),
-                                                                                ctx->client->replace_latest_block,
-                                                                                chain->avg_block_time);
-    }
-  }
-
-  if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
-    chain->whitelist->needs_update = true;
-}
-
-static inline bool is_blacklisted(const node_match_t* node_weight) { return node_weight && node_weight->blocked; }
-
 static bool is_user_error(d_token_t* error, char** err_msg) {
   *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
   // here we need to find a better way to detect user errors
   // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
   return *err_msg && strncmp(*err_msg, "Error:", 6) && strncmp(*err_msg, "TypeError:", 10);
 }
+
 NONULL static void clear_response(in3_response_t* response) {
   assert_in3_response(response);
 

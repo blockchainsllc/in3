@@ -313,6 +313,8 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx) {
   return IN3_OK;
 }
 
+static inline bool is_blacklisted(const node_match_t* node) { return node && node->blocked; }
+
 static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
   node_match_t* node_weight = ((in3_nl_blacklist_ctx_t*) ctx)->node;
   if (node_weight && !node_weight->blocked) {
@@ -332,6 +334,48 @@ static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
   }
   return IN3_OK;
 }
+
+static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
+  if (nodelist_block > current_blk)
+    // misbehaving node, so allow to update right away and it'll get blacklisted due to the exp_last_block mechanism
+    return 0;
+
+  uint64_t diff = current_blk - nodelist_block;
+  if (diff >= repl_latest)
+    return 0;
+  // we need to cap wait time as we might end up waiting for too long for chains with higher block time
+  return min((repl_latest - diff) * avg_blktime, WAIT_TIME_CAP);
+}
+
+static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
+  assert_in3_ctx(ctx);
+  assert(chain);
+  if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
+
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
+    // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
+    return;
+  }
+
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
+    if (chain->nodelist_upd8_params == NULL)
+      chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
+    in3_node_t* n = ctx_get_node(chain, node);
+    if (n) {
+      // overwrite old params since we have a newer nodelist update now
+      memcpy(chain->nodelist_upd8_params->node, n->address, 20);
+      chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
+      chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
+                                                                                     d_get_longk(response_in3, K_CURRENT_BLOCK),
+                                                                                     ctx->client->replace_latest_block,
+                                                                                     chain->avg_block_time);
+    }
+  }
+
+  if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
+    chain->whitelist->needs_update = true;
+}
+
 
 static in3_ret_t chain_change(in3_nodeselect_def_t* data, void* ctx) {
   in3_t*      c    = ((in3_chain_change_ctx_t*) ctx)->client;
