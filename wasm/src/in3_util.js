@@ -138,7 +138,11 @@ function checkAddressChecksum(ad, chain = 0) {
 }
 
 function abiEncode(sig, ...params) {
-    const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
+    const convert = a => Array.isArray(a)
+        ? a.map(convert)
+        : (a && a.__proto__ === Object.prototype)
+            ? convert(Object.values(a))
+            : toHex(a)
     return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params)))
 }
 

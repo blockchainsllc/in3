@@ -648,6 +648,7 @@ function createSignature(fields) {
         const t = baseType.indexOf('[')
         if (t > 0) baseType = baseType.substr(0, t)
         if (baseType === 'uint' || baseType === 'int') baseType += '256'
+        if (baseType === 'tuple') baseType = createSignature(f.components)
         return baseType + (t < 0 ? '' : f.type.substr(t))
     }).join(',') + ')'
 }
