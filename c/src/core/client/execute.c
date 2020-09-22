@@ -195,11 +195,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
       // add in3
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
       if (multichain)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
-      if (rc->chain.whitelist) {
-        const bytes_t adr = bytes(rc->chain.whitelist->contract, 20);
-        sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
-      }
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain.chain_id));
       if (msg_hash) {
         in3_pay_sign_req_ctx_t sctx      = {.ctx = c, .request = request_token, .signature = {0}};
         bytes_t                sig_bytes = bytes(sctx.signature, 65);
@@ -325,9 +321,7 @@ static void clean_up_ctx(in3_ctx_t* ctx, node_match_t* node, in3_chain_t* chain)
   if (ctx->error) _free(ctx->error);
   if (ctx->responses) _free(ctx->responses);
   if (ctx->response_context) json_free(ctx->response_context);
-  ctx->error           = NULL;
-  in3_node_weight_t* w = node ? ctx_get_node_weight(chain, node) : NULL;
-  if (w) w->blacklisted_until = 0; // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
+  ctx->error = NULL;
 }
 
 static in3_ret_t handle_payment(in3_ctx_t* ctx, node_match_t* node, int index) {
@@ -551,14 +545,13 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   int           nodes_count = rpc ? 1 : ctx_nodes_len(ctx->nodes);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_match_t* node        = ctx->nodes;
-  in3_chain_t*  chain       = in3_get_chain(ctx->client);
   bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
-    in3_node_t* node_data = rpc ? NULL : ctx_get_node(chain, node);
+    in3_node_t* node_data = rpc ? NULL : get_node(chain, node);
     urls[n]               = rpc ? rpc : node_data->url;
 
-    // cif we use_http, we need to malloc a new string, so we also need to free it later!
+    // if we use_http, we need to malloc a new string, so we also need to free it later!
     if (ctx->client->flags & FLAGS_HTTP) urls[n] = convert_to_http_url(urls[n]);
 
     // this is all we need to do if we have a rpc-node
@@ -633,6 +626,7 @@ NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
 
   return res;
 }
+
 in3_ctx_t* in3_ctx_last_waiting(in3_ctx_t* ctx) {
   in3_ctx_t* last = ctx;
   for (; ctx; ctx = ctx->required) {

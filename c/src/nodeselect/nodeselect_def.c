@@ -316,11 +316,14 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx) {
 static inline bool is_blacklisted(const node_match_t* node) { return node && node->blocked; }
 
 static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
-  node_match_t* node_weight = ((in3_nl_blacklist_ctx_t*) ctx)->node;
-  if (node_weight && !node_weight->blocked) {
-    in3_node_weight_t* w = get_node_weight(data, node_weight);
+  node_match_t* node = ctx;
+
+  if (is_blacklisted(node)) return IN3_ERPC; // already handled
+
+  if (node && !node->blocked) {
+    in3_node_weight_t* w = get_node_weight(data, node);
     if (!w) {
-      in3_log_debug("failed to blacklist node: %s\n", get_node(data, node_weight)->url);
+      in3_log_debug("failed to blacklist node: %s\n", get_node(data, node)->url);
       return IN3_EFIND;
     }
 
@@ -329,8 +332,8 @@ static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
     if (w->blacklisted_until != blacklisted_until_)
       data->dirty = true;
     w->blacklisted_until = blacklisted_until_;
-    node_weight->blocked = true;
-    in3_log_debug("Blacklisting node for unverifiable response: %s\n", get_node(data, node_weight)->url);
+    node->blocked        = true;
+    in3_log_debug("Blacklisting node for unverifiable response: %s\n", get_node(data, node)->url);
   }
   return IN3_OK;
 }
