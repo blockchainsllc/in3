@@ -1,4 +1,3 @@
-import { TransactionReceipt } from "./eth";
 
 export declare interface ZKAccountInfo {
     address: string,
