@@ -904,6 +904,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // verify responses and return the node with the correct result.
       ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain);
 
+      in3_plugin_execute_first_or_none(ctx, PLGN_ACT_NL_PICK_FOLLOWUP, ctx);
 
       // we wait or are have successfully verified the response
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;
