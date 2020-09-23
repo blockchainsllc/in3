@@ -441,15 +441,6 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   return (ctx->verification_state = IN3_OK);
 }
 
-static void handle_times(in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
-  if (!node || node->blocked || !response || !response->time) return;
-  in3_node_weight_t* w = get_node_weight(chain, node);
-  if (!w) return;
-  w->response_count++;
-  w->total_response_time += response->time;
-  response->time = 0; // make sure we count the time only once
-}
-
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain) {
   node_match_t* node          = ctx->nodes;
   bool          still_pending = false;
@@ -463,8 +454,6 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
       in3_log_debug("request from node is still pending ..\n");
       continue;
     }
-
-    handle_times(chain, node, response + n);
 
     state = verify_response(ctx, chain, node, response + n);
     if (state == IN3_OK) {

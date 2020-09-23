@@ -379,6 +379,14 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_nodeselect_def_t* data, d
     data->whitelist->needs_update = true;
 }
 
+static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_response_t* response) {
+  if (!node || node->blocked || !response || !response->time) return;
+  in3_node_weight_t* w = get_node_weight(data, node);
+  if (!w) return;
+  w->response_count++;
+  w->total_response_time += response->time;
+  response->time = 0; // make sure we count the time only once
+}
 static in3_ret_t chain_change(in3_nodeselect_def_t* data, void* ctx) {
   in3_t*      c    = ((in3_chain_change_ctx_t*) ctx)->client;
   json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
