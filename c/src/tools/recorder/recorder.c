@@ -129,7 +129,7 @@ static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t actio
 static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
   in3_request_t* req   = plugin_ctx;
-  in3_chain_t*   chain = in3_get_chain(req->ctx->client);
+  in3_chain_t*   chain = &req->ctx->client->chain;
   node_match_t*  m     = req->ctx->nodes;
   in3_ret_t      res   = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {

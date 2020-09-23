@@ -326,15 +326,6 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
   return ctx_add_required(parent_ctx, ctx_new(c, req));
 }
 
-NONULL void in3_ctx_free_nodes(node_match_t* node) {
-  node_match_t* last_node = NULL;
-  while (node) {
-    last_node = node;
-    node      = node->next;
-    _free(last_node);
-  }
-}
-
 in3_ret_t update_nodes(in3_t* c, in3_nodeselect_def_t* data) {
   in3_ctx_t* ctx          = _calloc(1, sizeof(in3_ctx_t));
   ctx->verification_state = IN3_EIGNORE;

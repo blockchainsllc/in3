@@ -108,7 +108,7 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
   d_token_t* params = d_get(rctx->request, K_PARAMS);
 
   // we only support ETH in this module
-  if (in3_get_chain(ctx->client)->type != CHAIN_ETH) return IN3_EIGNORE;
+  if (ctx->client->chain.type != CHAIN_ETH) return IN3_EIGNORE;
 
   // check method to handle internally
   if (strcmp(method, "eth_sendTransaction") == 0)
@@ -172,8 +172,8 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
 
     return in3_rpc_handle_with_int(rctx, (uint64_t) res);
   }
-  else if (strcmp(method, "eth_chainId") == 0 && ctx->client->chain_id != CHAIN_ID_LOCAL)
-    return in3_rpc_handle_with_int(rctx, ctx->client->chain_id);
+  else if (strcmp(method, "eth_chainId") == 0 && ctx->client->chain.chain_id != CHAIN_ID_LOCAL)
+    return in3_rpc_handle_with_int(rctx, ctx->client->chain.chain_id);
   else if (strcmp(method, "eth_newBlockFilter") == 0) {
     in3_ret_t res = filter_add(ctx, FILTER_BLOCK, NULL);
     if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);

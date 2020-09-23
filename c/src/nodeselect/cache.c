@@ -92,7 +92,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-  write_cache_key(key, c->chain_id, data->whitelist ? data->whitelist->contract : NULL);
+  write_cache_key(key, c->chain.chain_id, data->whitelist ? data->whitelist->contract : NULL);
 
   // get from cache
   in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = key};
@@ -194,7 +194,7 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // create key
   char key[200];
-  write_cache_key(key, c->chain_id, data->whitelist ? data->whitelist->contract : NULL);
+  write_cache_key(key, c->chain.chain_id, data->whitelist ? data->whitelist->contract : NULL);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   in3_cache_ctx_t cctx = {.ctx = NULL, .content = &bb->b, .key = key};
@@ -218,7 +218,7 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-  write_cache_key(key, c->chain_id, wl->contract);
+  write_cache_key(key, c->chain.chain_id, wl->contract);
 
   // get from cache
   in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = key};
@@ -262,7 +262,7 @@ in3_ret_t in3_cache_store_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // create key
   char key[MAX_KEYLEN];
-  write_cache_key(key, c->chain_id, wl->contract);
+  write_cache_key(key, c->chain.chain_id, wl->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   in3_ctx_t       tmp_ctx = {.client = c};

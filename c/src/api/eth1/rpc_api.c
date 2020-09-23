@@ -110,7 +110,7 @@ static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx, d_token_t* param
   char     result[45];
   bytes_t* adr = d_get_bytes_at(params, 0);
   if (!adr || adr->len != 20) return ctx_set_error(ctx->ctx, "the address must have 20 bytes", IN3_EINVAL);
-  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->ctx->client->chain_id : 0, result + 1);
+  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->ctx->client->chain.chain_id : 0, result + 1);
   if (res) return ctx_set_error(ctx->ctx, "Could not create the checksum address", res);
   result[0]  = '\'';
   result[43] = '\'';
