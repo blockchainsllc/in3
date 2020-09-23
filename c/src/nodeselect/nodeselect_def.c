@@ -1,7 +1,6 @@
 #include "nodeselect_def.h"
 #include "../core/client/context_internal.h"
 #include "../core/client/keys.h"
-#include "../core/client/plugin.h"
 #include "../core/util/bitset.h"
 #include "../core/util/debug.h"
 #include "../core/util/log.h"
