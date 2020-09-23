@@ -719,6 +719,13 @@ export declare interface Utils<BufferType> {
     keccak(data: BufferType | Data): BufferType
 
     /**
+     * returns a Buffer with strong random bytes.
+     * Thsi will use the browsers crypto-module or in case of nodejs use the crypto-module there.
+     * @param len the number of bytes to generate.
+     */
+    randomBytes(len: number): BufferType
+
+    /**
      * converts any value to a hex string (with prefix 0x).
      * optionally the target length can be specified (in bytes)
      */

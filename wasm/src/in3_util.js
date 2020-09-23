@@ -229,6 +229,24 @@ function splitTypes(types, removeBrackets = true) {
     return res
 }
 
+function randomBytes(len) {
+    const vals = new Uint8Array(len)
+    try {
+        return toBuffer(crypto.getRandomValues(vals))
+    }
+    catch (x) {
+        try {
+            return toBuffer(require('crypto').randomBytes(len))
+        }
+        catch (y) {
+            const seed = keccak(Date.now())
+            for (let i = 0; i < len; i++)
+                vals[i] = seed[i % 32] ^ Math.floor(Math.random() * 256)
+            return toBuffer(vals)
+        }
+    }
+}
+
 /**
  * converts any value as hex-string
  */
@@ -515,6 +533,7 @@ const util = {
     splitSignature,
     private2address,
     soliditySha3,
+    randomBytes,
     createSignatureHash,
     toUint8Array,
     base64Decode,

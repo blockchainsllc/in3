@@ -92,6 +92,11 @@ describe('Util-Tests', () => {
 
     })
 
+    it('randomBytes', async () => {
+        let res = IN3.util.randomBytes(40)
+        assert.equal(res.byteLength, 40)
+    })
+
     it('soliditySha3', async () => {
 
         assert.equal(IN3.util.soliditySha3('Hello!%'), "0x661136a4267dba9ccdf6bfddb7c00e714de936674c4bdb065a531cf1cb15c7fc")
