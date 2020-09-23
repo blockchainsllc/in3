@@ -25,6 +25,12 @@ export type TransactionReceipt = {
     transactionHash: Hash
     /** Integer of the transactions index position in the block. */
     transactionIndex: Quantity
+    /** event objects, which are only added in the web3Contract */
+    events?: {
+        [name: string]: {
+            returnValues: any
+        }
+    }
 }
 export type TransactionDetail = {
     /**  32 Bytes - hash of the transaction. */
@@ -224,18 +230,21 @@ export interface Web3TransactionObject {
     call: (options?: {
         gasPrice?: string | number | bigint,
         gas?: string | number | bigint,
+        to?: Address,
         from?: Address,
     }) => Promise<any>,
     send: (options?: {
         gasPrice?: string | number | bigint,
         gas?: string | number | bigint,
         nonce?: string | number | bigint,
+        to?: Address,
         from?: Address,
         value?: number | string | bigint
     }) => Promise<any>,
     estimateGas: (options?: {
         value?: string | number | bigint,
         gas?: string | number | bigint,
+        to?: Address,
         from?: Address,
     }) => Promise<number>,
     encodeABI: () => Hex
@@ -265,6 +274,7 @@ export interface Web3Contract {
     events: {
         [eventName: string]: (options?: {
             fromBlock?: number,
+            toBlock?: number,
             topics?: any[],
             filter?: { [indexedName: string]: any }
         }) => {
@@ -276,6 +286,7 @@ export interface Web3Contract {
 
     getPastEvents(evName: string, options?: {
         fromBlock?: number,
+        toBlock?: number,
         topics?: any[],
         filter?: { [indexedName: string]: any }
     }): Promise<Web3Event[]>

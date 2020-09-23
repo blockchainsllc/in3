@@ -605,12 +605,13 @@ export type ABI = {
     anonymous?: boolean
     constant?: boolean
     payable?: boolean
-    stateMutability?: string
-
+    stateMutability?: 'pure' | 'view' | 'nonpayable' | 'payable' | string
+    components?: ABIField[],
     inputs?: ABIField[],
-    outputs?: ABIField[]
+    outputs?: ABIField[] | any[]
     name?: string
-    type: string
+    type: 'function' | 'constructor' | 'event' | 'fallback' | string
+    internalType?: string
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */

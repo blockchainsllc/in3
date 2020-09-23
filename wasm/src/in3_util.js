@@ -343,7 +343,7 @@ function toUint8Array(val, len = -1) {
         }
         val = b
     } else if (typeof val == 'number')
-        val = val === 0 && len === 0 ? new Uint8Array(0) : toBuffer(fixLength(val.toString(16)), len);
+        val = val === 0 && len === 0 ? new Uint8Array(0) : toBuffer('0x' + fixLength(val.toString(16)), len);
     else if (val && val.redIMul)
         val = val.toArrayLike(Uint8Array)
     if (!val)
@@ -357,6 +357,11 @@ function toUint8Array(val, len = -1) {
         let b = new Uint8Array(len)
         for (let i = 0; i < val.byteLength; i++)
             b[len - val.byteLength + i] = val[i]
+        return b
+    }
+    if (val.__proto__ !== Uint8Array.prototype) {
+        let b = new Uint8Array(val.byteLength)
+        for (let i = 0; i < val.byteLength; i++) b[i] = val[i]
         return b
     }
     return val;
@@ -399,7 +404,7 @@ function getAddress(pk) {
 }
 /** removes all leading 0 in the hexstring */
 function toMinHex(key) {
-    if (typeof key !== 'string')
+    if (typeof key !== 'string' || !key.startsWith('0x'))
         key = toHex(key)
     if (typeof key === 'number')
         key = toHex(key);
