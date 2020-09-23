@@ -9,6 +9,7 @@
 #include "nodeselect_def_cfg.h"
 
 #define BLACKLISTTIME (24 * 3600)
+#define WAIT_TIME_CAP 3600
 
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
@@ -350,9 +351,9 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
   return min((repl_latest - diff) * avg_blktime, WAIT_TIME_CAP);
 }
 
-static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
+static void check_autoupdate(const in3_ctx_t* ctx, in3_nodeselect_def_t* data, d_token_t* response_in3, node_match_t* node) {
   assert_in3_ctx(ctx);
-  assert(chain);
+  assert(data);
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
 
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
@@ -360,25 +361,24 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
     return;
   }
 
-  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
-    if (chain->nodelist_upd8_params == NULL)
-      chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
-    in3_node_t* n = ctx_get_node(chain, node);
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > data->last_block) {
+    if (data->nodelist_upd8_params == NULL)
+      data->nodelist_upd8_params = _malloc(sizeof(*(data->nodelist_upd8_params)));
+    in3_node_t* n = get_node(data, node);
     if (n) {
       // overwrite old params since we have a newer nodelist update now
-      memcpy(chain->nodelist_upd8_params->node, n->address, 20);
-      chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
-      chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
-                                                                                     d_get_longk(response_in3, K_CURRENT_BLOCK),
-                                                                                     ctx->client->replace_latest_block,
-                                                                                     chain->avg_block_time);
+      memcpy(data->nodelist_upd8_params->node, n->address, 20);
+      data->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
+      data->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
+                                                                               d_get_longk(response_in3, K_CURRENT_BLOCK),
+                                                                               ctx->client->replace_latest_block,
+                                                                               data->avg_block_time);
     }
   }
 
-  if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
-    chain->whitelist->needs_update = true;
+  if (data->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > data->whitelist->last_block)
+    data->whitelist->needs_update = true;
 }
-
 
 static in3_ret_t chain_change(in3_nodeselect_def_t* data, void* ctx) {
   in3_t*      c    = ((in3_chain_change_ctx_t*) ctx)->client;

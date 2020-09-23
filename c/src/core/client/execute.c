@@ -51,8 +51,6 @@
 #include <string.h>
 #include <time.h>
 
-#define WAIT_TIME_CAP 3600
-
 NONULL static void response_free(in3_ctx_t* ctx) {
   assert_in3_ctx(ctx);
 
