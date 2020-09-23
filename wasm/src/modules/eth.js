@@ -502,12 +502,11 @@ class EthAPI {
                 topics: ev === 'allEvents' ? [] : createTopics(ev, options)
             }).then(logs => logs.map(l => {
                 const e = decodeEventData(l, ob)
-                const def = abi.find(_ => _.name === e.event)
-                if (!def) throw new Error('unknown event found!')
+                const def = e && abi.find(_ => _.name === e.event)
+                if (!def) return null
                 delete e.event
                 return { ...l, event: def.name, returnValues: e, signature: def.name + createSignature(def.inputs) }
-            }))
-
+            }).filter(_ => _))
 
         }
 

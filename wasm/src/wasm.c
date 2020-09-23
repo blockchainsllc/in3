@@ -41,7 +41,9 @@
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/in3_init.h"
-
+#ifdef ETH_FULL
+#include "../../c/src/third-party/tommath/tommath.h"
+#endif
 #ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
@@ -428,6 +430,33 @@ char* EMSCRIPTEN_KEEPALIVE wasm_abi_decode(char* sig, uint8_t* data, int len) {
   UNUSED_VAR(len);
   return err_string("ETH_API deactivated!");
 #endif
+}
+
+char* EMSCRIPTEN_KEEPALIVE wasm_to_hex(char* val) {
+  int l = strlen(val);
+  for (int i = 0; i < l; i++) {
+    if (val[i] < '0' || val[i] > '9') return err_string("Invalid character in number");
+  }
+  uint8_t data[32];
+  size_t  s;
+
+#ifdef ETH_FULL
+  mp_int d;
+  mp_init(&d);
+  mp_read_radix(&d, val, 10);
+  mp_export(data, &s, 1, sizeof(uint8_t), 1, 0, &d);
+  mp_clear(&d);
+#else
+  s          = 8;
+  uint8_t* p = data;
+  long_to_bytes(strtoll(val, NULL, 10), p);
+  optimize_len(p, s)
+#endif
+  char* hex = _malloc(s * 2 + 3);
+  hex[0]    = '0';
+  hex[1]    = 'x';
+  bytes_to_hex(data, s, hex);
+  return hex;
 }
 
 /** private key to address */
