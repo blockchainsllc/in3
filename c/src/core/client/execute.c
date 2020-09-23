@@ -482,10 +482,6 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   // if the last state is an error we report this as failed
   if (state) return state;
 
-  // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-  if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
-    check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
-
   return IN3_OK;
 }
 
@@ -908,8 +904,6 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // verify responses and return the node with the correct result.
       ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain);
 
-      // update weights in the cache
-      update_nodelist_cache(ctx);
 
       // we wait or are have successfully verified the response
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;

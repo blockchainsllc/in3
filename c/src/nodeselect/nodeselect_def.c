@@ -309,10 +309,6 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
   return IN3_OK;
 }
 
-static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx) {
-  return IN3_OK;
-}
-
 static inline bool is_blacklisted(const node_match_t* node) { return node && node->blocked; }
 
 static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
@@ -387,6 +383,23 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
   w->total_response_time += response->time;
   response->time = 0; // make sure we count the time only once
 }
+
+static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx_) {
+  in3_ctx_t*    ctx         = ctx_;
+  node_match_t* node        = ctx->nodes;
+  int           nodes_count = ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes);
+
+  for (int n = 0; n < nodes_count; n++, node = node ? node->next : NULL)
+    handle_times(data, node, ctx->raw_response + n);
+
+  // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
+  if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
+    check_autoupdate(ctx, data, d_get(ctx->responses[0], K_IN3), node);
+
+  // update weights in the cache
+  return in3_cache_store_nodelist(ctx->client, data);
+}
+
 static in3_ret_t chain_change(in3_nodeselect_def_t* data, void* ctx) {
   in3_t*      c    = ((in3_chain_change_ctx_t*) ctx)->client;
   json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
