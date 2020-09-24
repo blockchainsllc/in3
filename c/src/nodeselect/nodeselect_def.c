@@ -449,6 +449,13 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       return blacklist_node(data, plugin_ctx);
     case PLGN_ACT_CHAIN_CHANGE:
       return chain_change(data, plugin_ctx);
+    case PLGN_ACT_GET_DATA: {
+      in3_get_data_ctx_t* pctx = plugin_ctx;
+      if (pctx->type == GET_DATA_NODES) {
+        pctx->data = data->nodelist;
+        return IN3_OK;
+      }
+    }
     default: break;
   }
   return IN3_EIGNORE;
@@ -471,7 +478,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
     goto FREE_JSON;
   }
 
-  ret = plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE, nodeselect, data, false);
+  ret = plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA, nodeselect, data, false);
 
 FREE_JSON:
   json_free(json);
