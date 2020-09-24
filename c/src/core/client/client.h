@@ -477,15 +477,6 @@ in3_ret_t in3_client_register_chain(
 NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
 /**
- * inits the cache.
- *
- * this will try to read the nodelist from cache.
- */
-NONULL in3_ret_t in3_cache_init(
-    in3_t* c /**< the incubed client */
-);
-
-/**
  * configures the clent based on a json-config.
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
