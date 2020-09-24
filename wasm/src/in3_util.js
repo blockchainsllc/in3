@@ -340,7 +340,7 @@ function toUint8Array(val, len = -1) {
     if (typeof val == 'string') {
         let b;
         if (val && !val.startsWith('0x') && val.length && (parseInt(val) || val == '0'))
-            val = '0x' + BigInt(val).toString(16)
+            val = toHex(val)
 
         if (val.startsWith('0x')) {
             val = fixLength(val.substr(2))
