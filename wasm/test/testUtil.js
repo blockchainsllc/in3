@@ -148,6 +148,8 @@ describe('Util-Tests', () => {
 
     it('toHex', async () => {
         assert.equal('0xffffffffffffffffffffffffffffffff', IN3.util.toHex("340282366920938463463374607431768211455"))
+        assert.equal('0xffff', IN3.util.toHex("65535"))
+        assert.equal('0xffffffff', IN3.util.toHex("-1", 4))
         assert.equal('0xc384', IN3.util.toHex("Ä"))
         assert.equal('0x0a', IN3.util.toHex("0xA"))
         assert.equal('0x01', IN3.util.toHex(1))

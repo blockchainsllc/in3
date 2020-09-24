@@ -248,14 +248,12 @@ function randomBytes(len) {
 }
 
 function convertInt2Hex(val) {
-    /*
-    try {
-        return BigInt(val).toString(16)
-    }
-    catch (x) {
-        */
-    return call_string('wasm_to_hex', val)
-    //    }
+    if (val.length < 16)
+        return parseInt(val).toString(16)
+    else
+        return val.startsWith('-')
+            ? '-' + call_string('wasm_to_hex', val.substr(1)).substr(2)
+            : call_string('wasm_to_hex', val).substr(2)
 }
 
 /**
@@ -268,7 +266,7 @@ function toHex(val, bytes) {
     if (typeof val === 'string')
         hex = val.startsWith('0x')
             ? val.substr(2)
-            : (!isNaN(parseInt(val[0])) ? convertInt2Hex(val) : convertUTF82Hex(val))
+            : (!isNaN(parseInt(val[val[0] == '-' ? 1 : 0])) ? convertInt2Hex(val) : convertUTF82Hex(val))
     else if (typeof val === 'boolean')
         hex = val ? '01' : '00'
     else if (typeof val === 'number' || typeof val === 'bigint')

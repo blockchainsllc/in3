@@ -455,7 +455,7 @@ char* EMSCRIPTEN_KEEPALIVE wasm_to_hex(char* val) {
   char* hex = _malloc(s * 2 + 3);
   hex[0]    = '0';
   hex[1]    = 'x';
-  bytes_to_hex(data, s, hex);
+  bytes_to_hex(data, s, hex + 2);
   return hex;
 }
 
