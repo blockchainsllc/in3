@@ -327,6 +327,7 @@ typedef enum {
   PLGN_ACT_NL_PICK_FOLLOWUP  = 0x400000,  /**< called after receiving a response in order to decide whether a update is needed. */
   PLGN_ACT_NL_BLACKLIST      = 0x800000,  /**< blacklist a particular node in the nodelist */
   PLGN_ACT_CHAIN_CHANGE      = 0x1000000, /**< chain id change event */
+  PLGN_ACT_GET_DATA          = 0x2000000, /**< get access to plugin data as a void ptr */
 } in3_plugin_act_t;
 
 /**

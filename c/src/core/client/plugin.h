@@ -406,4 +406,16 @@ typedef in3_ctx_t in3_nl_pick_ctx_t;
  */
 typedef node_match_t in3_nl_blacklist_ctx_t;
 
+// -------- GET_DATA ---------
+typedef enum { GET_DATA_NODES } in3_get_data_type_t;
+
+/**
+ * context used during get data
+ */
+typedef struct {
+  bool                must_free; /**< output param set by plugin code - indicates whether data must be freed after use */
+  in3_get_data_type_t type;      /**< type of data that the caller wants. */
+  void*               data;      /**< output param set by plugin code - pointer to data requested */
+} in3_get_data_ctx_t;
+
 #endif
