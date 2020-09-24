@@ -1201,7 +1201,7 @@ int main(int argc, char* argv[]) {
 
     if (sc.signature.len == 65) sc.signature.data[64] += 27;
     print_hex(sc.signature.data, sc.signature.len);
-    return recorder_exit(0);
+    recorder_exit(0);
   }
   else if (strcmp(method, "chainspec") == 0) {
     char* json;
