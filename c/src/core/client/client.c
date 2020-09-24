@@ -324,5 +324,4 @@ void in3_set_storage_handler(
   handler->set_item              = set_item;
   handler->clear                 = clear;
   plugin_register(c, PLGN_ACT_CACHE | PLGN_ACT_TERM, handle_cache, handler, true);
-  in3_cache_init(c);
 }
