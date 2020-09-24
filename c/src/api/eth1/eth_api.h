@@ -148,8 +148,8 @@ typedef struct {
 uint256_t         eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block);      /**< Returns the storage value of a given address.*/
 bytes_t           eth_getCode(in3_t* in3, address_t account, eth_blknum_t block);                          /**< Returns the code of the account of given address. (Make sure you free the data-point of the result after use.) */
 uint256_t         eth_getBalance(in3_t* in3, address_t account, eth_blknum_t block);                       /**< Returns the balance of the account of given address. */
-uint64_t          eth_blockNumber(in3_t* in3);                                                             /**< Returns the current price per gas in wei. */
-uint64_t          eth_gasPrice(in3_t* in3);                                                                /**< Returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
+uint64_t          eth_blockNumber(in3_t* in3);                                                             /**< Returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
+uint64_t          eth_gasPrice(in3_t* in3);                                                                /**< Returns the current price per gas in wei. */
 eth_block_t*      eth_getBlockByNumber(in3_t* in3, eth_blknum_t number, bool include_tx);                  /**< Returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t*      eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                         /**< Returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_log_t*        eth_getLogs(in3_t* in3, char* fopt);                                                     /**< Returns a linked list of logs. If result is null, check eth_last_error()! otherwise make sure to free the log, its topics and data after using it! */

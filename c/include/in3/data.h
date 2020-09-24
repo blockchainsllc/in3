@@ -143,7 +143,7 @@ json_ctx_t* json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
 NONULL d_token_t* json_create_bool(json_ctx_t* jp, bool value);
 NONULL d_token_t* json_create_int(json_ctx_t* jp, uint64_t value);
-NONULL d_token_t* json_create_string(json_ctx_t* jp, char* value);
+NONULL d_token_t* json_create_string(json_ctx_t* jp, char* value, int len);
 NONULL d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value);
 NONULL d_token_t* json_create_object(json_ctx_t* jp);
 NONULL d_token_t* json_create_array(json_ctx_t* jp);
