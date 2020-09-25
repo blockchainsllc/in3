@@ -258,7 +258,7 @@ static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx_) {
   // init cache lazily,
   // this also means we can be sure that all other related plugins are registered by now
   if (data->nodelist == NULL)
-    in3_cache_init(ctx->client);
+    in3_cache_init(ctx->client, data);
 
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
@@ -305,7 +305,7 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
     const node_match_t* w = signer_nodes;
     in3_node_t*         n = NULL;
     for (int i = 0; i < node_count; i++) {
-      n = get_node(&c->chain, w);
+      n = get_node(data, w);
       if (n) memcpy(ctx->signers + i * 20, n->address, 20);
       w = w->next;
     }

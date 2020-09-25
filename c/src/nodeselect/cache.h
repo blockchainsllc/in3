@@ -99,7 +99,8 @@ in3_ret_t in3_cache_store_whitelist(
  * this will try to read the nodelist from cache.
  */
 NONULL in3_ret_t in3_cache_init(
-    in3_t* c /**< the incubed client */
+    in3_t*                c,   /**< the incubed client */
+    in3_nodeselect_def_t* data /**< the data upating to cache */
 );
 
 #endif
