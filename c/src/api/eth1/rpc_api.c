@@ -188,6 +188,7 @@ static const char* UNITS[] = {
 int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
   if (!val) return IN3_EINVAL;
   int l = strlen(val), nl = l, exp = 0, p = 0;
+
   if (l == 1 && val[0] == '0') {
     *target = 0;
     return 1;
@@ -247,10 +248,11 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
   mp_clear(&d);
   return (int) s;
 #else
+  UNUSED_VAR(p);
   bytes_t b = bytes(target, 8);
   long_to_bytes(parse_float_val(nl < l ? strncpy(alloca(nl + 1), val, nl) : val, exp), target);
   b_optimize_len(&b);
-  if (b.len < 8) memmove(target, b.data, b, len);
+  if (b.len < 8) memmove(target, b.data, b.len);
   return (int) b.len;
 #endif
 }
