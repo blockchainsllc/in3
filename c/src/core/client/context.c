@@ -193,6 +193,7 @@ void in3_ctx_free_nodes(node_match_t* node) {
   while (node) {
     last_node = node;
     node      = node->next;
+    _free(last_node->url);
     _free(last_node);
   }
 }

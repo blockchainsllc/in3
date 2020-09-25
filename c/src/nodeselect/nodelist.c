@@ -421,6 +421,8 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
     current->next    = NULL;
     current->s       = weight_sum;
     current->w       = in3_node_calculate_weight(weight_def, node_def->capacity, now);
+    current->url     = (c->flags & FLAGS_HTTP) ? to_http_url(node_def->url) : _strdupn(node_def->url, -1);
+    memcpy(current->address, node_def->address, 20);
     weight_sum += current->w;
     found++;
     if (prev) prev->next = current;
