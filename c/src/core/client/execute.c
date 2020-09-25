@@ -301,7 +301,7 @@ NONULL static void clear_response(in3_response_t* response) {
   }
 }
 
-static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response, in3_chain_t* chain) {
+static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response) {
   assert_in3_ctx(ctx);
   assert_in3_response(response);
   // we block this node
@@ -311,9 +311,8 @@ static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_r
   return IN3_ERPC;
 }
 
-static void clean_up_ctx(in3_ctx_t* ctx, node_match_t* node, in3_chain_t* chain) {
+static void clean_up_ctx(in3_ctx_t* ctx) {
   assert_in3_ctx(ctx);
-  assert(chain);
 
   if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
   if (ctx->error) _free(ctx->error);
@@ -363,10 +362,10 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   in3_ret_t res = IN3_OK;
 
   if (response->state || !response->data.len) // reponse has an error
-    return handle_error_response(ctx, node, response, chain);
+    return handle_error_response(ctx, node, response);
 
   // we need to clean up the previos responses if set
-  clean_up_ctx(ctx, node, chain);
+  clean_up_ctx(ctx);
 
   // parse
   if (ctx_parse_response(ctx, response->data.data, response->data.len)) {
