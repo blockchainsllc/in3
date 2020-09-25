@@ -1,6 +1,7 @@
 #include "../../core/client/context_internal.h"
 #include "../../core/client/plugin.h"
 #include "../../core/util/log.h"
+#include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zksync.h"
 #include <limits.h> /* strtoull */
@@ -8,8 +9,9 @@
 
 #ifdef ZKSYNC_256
 static int to_dec(char* dst, bytes32_t val) {
-  uint64_t l =
-      return sprintf(dst, "%" PRId64, val);
+  bignum256 bn;
+  bn_read_be(val, &bn);
+  return bn_format(&bn, "", "", 0, 0, false, dst, 80);
 }
 #else
 static int to_dec(char* dst, uint64_t val) {
@@ -25,7 +27,7 @@ static void add_amount(sb_t* sb, zksync_token_t* token,
 #endif
 ) {
   int   dec = token ? token->decimals : 0;
-  char  tmp[60]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  char  tmp[80]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
   char* sep = NULL;
   int   l   = to_dec(tmp, val);
 
