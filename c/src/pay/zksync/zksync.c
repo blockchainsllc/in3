@@ -133,9 +133,7 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
   if(signature.len == 65)
     signature.data[64] += 27;
-b_print(&signature);
   zkcrypto_pk_from_seed(signature, conf->sync_key);
-ba_print(conf->sync_key, 32);
   memcpy(sync_key, conf->sync_key, 32);
   return IN3_OK;
 }
@@ -236,8 +234,8 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
   }
   TRY(send_provider_request(ctx, conf, "get_tx_fee", sb.data, &result))
 #ifdef ZKSYNC_256
-  bytes_t b = d_to_bytes(d_get(result, key("totalFee")));
-  memcpy(fee + 32 - b.len, b.data, b.len);
+  memset(fee, 0, 32);
+  long_to_bytes(d_get_longk(result, key("totalFee")), fee + 24);
 #else
   *fee           = d_get_longk(result, key("totalFee"));
 #endif
@@ -443,7 +441,13 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   TRY(zksync_get_account_id(conf, ctx->ctx, &tx_data.account_id))
   TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 2), &tx_data.token))
   TRY(zksync_get_nonce(conf, ctx->ctx, params_get(params, K_NONCE, 4), &tx_data.nonce))
-  TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 2), type == ZK_WITHDRAW ? "Withdraw" : "Transfer", &tx_data.fee))
+  TRY(zksync_get_fee(conf, ctx->ctx, params_get(params, key("fee"), 3), to, params_get(params, key("token"), 2), type == ZK_WITHDRAW ? "Withdraw" : "Transfer",
+#ifdef ZKSYNC_256
+                     tx_data.fee
+#else
+                     &tx_data.fee
+#endif
+                     ))
   memcpy(tx_data.from, conf->account, 20);
 
   // create payload

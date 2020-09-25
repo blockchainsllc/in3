@@ -145,7 +145,7 @@ static void create_signed_bytes(sb_t* sb) {
 
 static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
   uint32_t total;
-  char     dec[70];
+  char     dec[80];
   uint16_t tid = data->token ? data->token->id : 0;
   raw[0]       = data->type;               // 0: type(1)
   int_to_bytes(data->account_id, raw + 1); // 1 account_id(4)
@@ -210,9 +210,18 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_chars(sb, "\",\"token\":");
   sb_add_int(sb, data->token->id);
   sb_add_chars(sb, ",\"amount\":");
+  #ifdef ZKSYNC_256
+  char dec[80];
+  to_dec(dec,data->amount);
+  sb_add_chars(sb,dec);
+  sb_add_chars(sb, ",\"fee\":");
+  to_dec(dec,data->fee);
+  sb_add_chars(sb,dec);
+  #else
   sb_add_int(sb, data->amount);
   sb_add_chars(sb, ",\"fee\":");
   sb_add_int(sb, data->fee);
+  #endif
   sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, data->nonce);
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);

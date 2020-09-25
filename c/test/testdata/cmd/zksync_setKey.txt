@@ -16,12 +16,6 @@
 
 :: cache nodelist_17_0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9 0
 
-:: result
-send request to http://localhost:3030: 
-[0;33m[{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b"]}][0m
-success response 
-[0;32m[{"jsonrpc":"2.0","result":{"address":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","committed":{"balances":{"ETH":"1000000000000000000"},"nonce":0,"pubKeyHash":"sync:0000000000000000000000000000000000000000"},"depositing":{"balances":{}},"id":1,"verified":{"balances":{"ETH":"1000000000000000000"},"nonce":0,"pubKeyHash":"sync:0000000000000000000000000000000000000000"}},"id":2}]
-[0m
 :: request http://localhost:3030 
      [{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b"]}]
 
@@ -54,12 +48,6 @@ success response
   "id":2
 }]
 
-
-send request to http://localhost:3030: 
-[0;33m[{"id":3,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"ChangePubKey","accountId":1,"account":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","newPkHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253","nonce":0,"ethSignature":"0xa998768963aa5842c47bc7d4307a6fbfe4850099ad310d45e5c424d838bf608d5a51a57cb1a9609a6792aa92b79683722bc36af0f022bf4e80613ff61a1e81961c"},null]}][0m
-success response 
-[0;32m[{"jsonrpc":"2.0","result":"sync-tx:b4c87b8078429222e34f6b9d85d38e11a69820cefc5405be5065deb9daae89ec","id":3}]
-[0m
 :: request http://localhost:3030 
      [{"id":3,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"ChangePubKey","accountId":1,"account":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","newPkHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253","nonce":0,"ethSignature":"0xa998768963aa5842c47bc7d4307a6fbfe4850099ad310d45e5c424d838bf608d5a51a57cb1a9609a6792aa92b79683722bc36af0f022bf4e80613ff61a1e81961c"},null]}]
 
@@ -71,4 +59,5 @@ success response
 }]
 
 
+:: result
 sync:20ae0f0ef7780f289ade282a466ad287969a1253

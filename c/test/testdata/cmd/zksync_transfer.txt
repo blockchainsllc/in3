@@ -22,12 +22,6 @@
 :: cache zksync_tokens_69f5 1
 030042415400000000001233c60fe20938da463650e886551b6203dc46d5d2000100444149000000000012450551f930a5ebf022be21873be531428f99b39b0000004554480000000000120000000000000000000000000000000000000000000200774254430000000008809cfdea09c689bed37399dfd7d08bf75d1036c100
 
-:: result
-send request to http://localhost:3030: 
-[0;33m[{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b"]}][0m
-success response 
-[0;32m[{"jsonrpc":"2.0","result":{"address":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","committed":{"balances":{"ETH":"1000000000000000000"},"nonce":1,"pubKeyHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253"},"depositing":{"balances":{}},"id":1,"verified":{"balances":{"ETH":"1000000000000000000"},"nonce":1,"pubKeyHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253"}},"id":2}]
-[0m
 :: request http://localhost:3030 
      [{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b"]}]
 
@@ -64,11 +58,6 @@ success response
 :: cache zksync_ac8a91dc2d28b689474298d91899f0c1baf62cb85b 1
 00000001
 
-send request to http://localhost:3030: 
-[0;33m[{"id":3,"jsonrpc":"2.0","method":"get_tx_fee","params":["Transfer","0x60cca2a21be53153bd68ab21e835ad739a94fabd","ETH"]}][0m
-success response 
-[0;32m[{"jsonrpc":"2.0","result":{"feeType":"TransferToNew","gasFee":"93333333333100","gasPriceWei":"266666666666","gasTxAmount":"350","totalFee":"121500000000000","zkpFee":"28227212051273"},"id":3}]
-[0m
 :: request http://localhost:3030 
      [{"id":3,"jsonrpc":"2.0","method":"get_tx_fee","params":["Transfer","0x60cca2a21be53153bd68ab21e835ad739a94fabd","ETH"]}]
 
@@ -90,11 +79,6 @@ success response
 :: cache zksync_ac8a91dc2d28b689474298d91899f0c1baf62cb85b 1
 00000001
 
-send request to http://localhost:3030: 
-[0;33m[{"id":4,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"Transfer","accountId":1,"from":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","to":"0x60cca2a21be53153bd68ab21e835ad739a94fabd","token":0,"amount":100,"fee":121500000000000,"nonce":1,"signature":{"pubKey":"3746e7a4dbbb25ea36a3d20c2431775f69b737b1e0a173803e9cf74570b5dc86","signature":"4eba79c404677606060787388256bcf317d5bbc344341917057394b7d4ba2d02a635ad65f7a64aae778eab81ba19907c8bf6c48f928ea6b2d28c4d3cc5984104"}},{"type":"EthereumSignature","signature":"0x74ea3cc27826bdf6fdca074e4ee126be6ef09b8d65bb0161deb98a1073e3173d058838a9619ff5406a7cafba21185ef12baa5370db32ec7df4069a5342a089581b"}]}][0m
-success response 
-[0;32m[{"jsonrpc":"2.0","result":"sync-tx:0f7916ce74431dbe129ee4d6cc8e9b7a52897678477aa6237635b7293178ec4a","id":4}]
-[0m
 :: request http://localhost:3030 
      [{"id":4,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"Transfer","accountId":1,"from":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","to":"0x60cca2a21be53153bd68ab21e835ad739a94fabd","token":0,"amount":100,"fee":121500000000000,"nonce":1,"signature":{"pubKey":"3746e7a4dbbb25ea36a3d20c2431775f69b737b1e0a173803e9cf74570b5dc86","signature":"4eba79c404677606060787388256bcf317d5bbc344341917057394b7d4ba2d02a635ad65f7a64aae778eab81ba19907c8bf6c48f928ea6b2d28c4d3cc5984104"}},{"type":"EthereumSignature","signature":"0x74ea3cc27826bdf6fdca074e4ee126be6ef09b8d65bb0161deb98a1073e3173d058838a9619ff5406a7cafba21185ef12baa5370db32ec7df4069a5342a089581b"}]}]
 
@@ -109,4 +93,5 @@ success response
 :: cache zksync_ac8a91dc2d28b689474298d91899f0c1baf62cb85b 1
 00000001
 
+:: result
 {"type":"Transfer","accountId":1,"from":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","to":"0x60cca2a21be53153bd68ab21e835ad739a94fabd","token":0,"amount":100,"fee":121500000000000,"nonce":1,"signature":{"pubKey":"3746e7a4dbbb25ea36a3d20c2431775f69b737b1e0a173803e9cf74570b5dc86","signature":"4eba79c404677606060787388256bcf317d5bbc344341917057394b7d4ba2d02a635ad65f7a64aae778eab81ba19907c8bf6c48f928ea6b2d28c4d3cc5984104"},"txHash":"sync-tx:0f7916ce74431dbe129ee4d6cc8e9b7a52897678477aa6237635b7293178ec4a"}
