@@ -429,7 +429,7 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   bytes_t          to      = d_to_bytes(params_get(params, type == ZK_WITHDRAW ? key("ethAddress") : K_TO, 0));
   if (!to.data || to.len != 20) return ctx_set_error(ctx->ctx, "invalid to address", IN3_EINVAL);
   memcpy(tx_data.to, to.data, 20);
-  tx_data.type = type,
+  tx_data.type = type;
 
 #ifdef ZKSYNC_256
   bytes_t amount = d_to_bytes(params_get(params, key("amount"), 1));
