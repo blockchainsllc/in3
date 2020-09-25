@@ -456,7 +456,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     state = verify_response(ctx, chain, node, response + n);
     if (state == IN3_OK) {
-      in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_stringk(ctx->requests[0], K_METHOD), node_data ? node_data->url : "intern");
+      in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_stringk(ctx->requests[0], K_METHOD), node ? node->url : "intern");
       break;
     }
     else if (state == IN3_WAITING)
@@ -660,14 +660,13 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       int           i = 0;
       for (; w; i++, w = w->next) {
         if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data && ctx->raw_response[i].time) {
-          in3_node_t* node = get_node(&ctx->client->chain, w);
-          char*       data = ctx->raw_response[i].data.data;
-          data             = format_json(data);
+          char* data = ctx->raw_response[i].data.data;
+          data       = format_json(data);
 
           in3_log_trace(ctx->raw_response[i].state
                             ? "... response(%s): \n... " COLOR_RED_STR "\n"
                             : "... response(%s): \n... " COLOR_GREEN_STR "\n",
-                        node ? node->url : "intern", data);
+                        w ? w->url : "intern", data);
           _free(data);
         }
       }
@@ -701,15 +700,14 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   node_match_t* node = request->ctx->nodes;
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->ctx->raw_response[i].state != IN3_WAITING) {
-      char*             data      = request->ctx->raw_response[i].data.data;
-      const in3_node_t* node_data = node ? get_node(&ctx->client->chain, node) : NULL;
+      char* data = request->ctx->raw_response[i].data.data;
 #ifdef DEBUG
       data = format_json(data);
 #endif
       in3_log_trace(request->ctx->raw_response[i].state
                         ? "... response(%s): \n... " COLOR_RED_STR "\n"
                         : "... response(%s): \n... " COLOR_GREEN_STR "\n",
-                    node_data ? node_data->url : "intern", data);
+                    node ? node->url : "intern", data);
 #ifdef DEBUG
       _free(data);
 #endif
