@@ -35,6 +35,7 @@ stages:
   # - release
 trigger_build:
   stage: build
+  image: docker.slock.it/build-images/cmake:in3
   script:
     - "curl -X POST -F token=ac70e1da83b3b0ab6ca1fec0fd19d4 -F ref=develop https://git.slock.it/api/v4/projects/652/trigger/pipeline"
   only:
