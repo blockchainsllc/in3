@@ -131,9 +131,11 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
                   "Access zkSync account.\n\nOnly sign this message for a trusted client!";
   TRY(zksync_get_account(conf, ctx, &account))
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
-
+  if(signature.len == 65)
+    signature.data[64] += 27;
+b_print(&signature);
   zkcrypto_pk_from_seed(signature, conf->sync_key);
-
+ba_print(conf->sync_key, 32);
   memcpy(sync_key, conf->sync_key, 32);
   return IN3_OK;
 }
@@ -404,13 +406,14 @@ static in3_ret_t emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
   TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
   TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 0), &token_conf))
   TRY(zksync_get_account_id(conf, ctx->ctx, &account_id))
+  TRY(zksync_get_account(conf, ctx->ctx, &account))
 
   int_to_bytes(account_id, aid);
   sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 0);
   sb_add_rawbytes(&sb, "\",\"data\":\"0x000000e2", bytes(aid, 4), 32);
   sb_add_rawbytes(&sb, "", bytes(token_conf->address, 20), 32);
   sb_add_rawbytes(&sb, "\",\"from\":\"0x", bytes(account, 20), 20);
-  sb_add_chars(&sb, "\",\"gas\":\"7a120\"}");
+  sb_add_chars(&sb, "\",\"gas\":\"0x7a120\"}");
   TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
   if (d_type(tx_receipt) != T_OBJECT) return ctx_set_error(ctx->ctx, "no txreceipt found, which means the transaction was not succesful", IN3_EFIND);
   str_range_t r = d_to_json(tx_receipt);

@@ -1,0 +1,112 @@
+:: cmd ./in3 -fi ../../c/test/testdata/cmd/zksync_withdraw.txt -zks http://localhost:3030 -c http://localhost:8545 -pk 0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8 zksync_withdraw 0x8A91DC2D28b689474298D91899f0c1baF62cB85b 10 ETH -debug
+
+:: time 1601027833
+
+:: cache nodelist_1_0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f 0
+
+:: cache nodelist_42_0x4c396dcf50ac396e5fdea18163251699b5fcca25 0
+
+:: cache nodelist_5_0x5f51e413581dd76759e9eed51e63d14c8d1379c8 0
+
+:: cache nodelist_2000_0xa93b57289070550c82edb1106e12bb37138948b8 0
+
+:: cache nodelist_153_0xc2c05fbfe76ee7748ae5f5b61b57a46cc4061c32 0
+
+:: cache nodelist_246_0x039562872008f7a76674a6e7842804f0ad37cb13 0
+
+:: cache nodelist_17_0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9 0
+
+:: cache zksync_ac8a91dc2d28b689474298d91899f0c1baf62cb85b 1
+00000001
+
+:: cache zksync_tokens_69f5 1
+030042415400000000001233c60fe20938da463650e886551b6203dc46d5d2000100444149000000000012450551f930a5ebf022be21873be531428f99b39b0000004554480000000000120000000000000000000000000000000000000000000200774254430000000008809cfdea09c689bed37399dfd7d08bf75d1036c100
+
+:: result
+send request to http://localhost:3030: 
+[0;33m[{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b"]}][0m
+success response 
+[0;32m[{"jsonrpc":"2.0","result":{"address":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","committed":{"balances":{"ETH":"999878499999999900"},"nonce":2,"pubKeyHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253"},"depositing":{"balances":{}},"id":1,"verified":{"balances":{"ETH":"999878499999999900"},"nonce":2,"pubKeyHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253"}},"id":2}]
+[0m
+:: request http://localhost:3030 
+     [{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b"]}]
+
+:: response account_info 0 http://localhost:3030 0 35
+[{
+  "jsonrpc":"2.0",
+  "result":{
+    "address":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+    "committed":{
+      "balances":{
+        "ETH":"999878499999999900"
+      },
+      "nonce":2,
+      "pubKeyHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+    },
+    "depositing":{
+      "balances":{
+        
+      }
+    },
+    "id":1,
+    "verified":{
+      "balances":{
+        "ETH":"999878499999999900"
+      },
+      "nonce":2,
+      "pubKeyHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+    }
+  },
+  "id":2
+}]
+
+
+:: cache zksync_ac8a91dc2d28b689474298d91899f0c1baf62cb85b 1
+00000001
+
+send request to http://localhost:3030: 
+[0;33m[{"id":3,"jsonrpc":"2.0","method":"get_tx_fee","params":["Withdraw","0x8a91dc2d28b689474298d91899f0c1baf62cb85b","ETH"]}][0m
+success response 
+[0;32m[{"jsonrpc":"2.0","result":{"feeType":"Withdraw","gasFee":"23999999999940000","gasPriceWei":"266666666666","gasTxAmount":"90000","totalFee":"24000000000000000","zkpFee":"28227212051273"},"id":3}]
+[0m
+:: request http://localhost:3030 
+     [{"id":3,"jsonrpc":"2.0","method":"get_tx_fee","params":["Withdraw","0x8a91dc2d28b689474298d91899f0c1baf62cb85b","ETH"]}]
+
+:: response get_tx_fee 0 http://localhost:3030 0 1
+[{
+  "jsonrpc":"2.0",
+  "result":{
+    "feeType":"Withdraw",
+    "gasFee":"23999999999940000",
+    "gasPriceWei":"266666666666",
+    "gasTxAmount":"90000",
+    "totalFee":"24000000000000000",
+    "zkpFee":"28227212051273"
+  },
+  "id":3
+}]
+
+
+:: cache zksync_ac8a91dc2d28b689474298d91899f0c1baf62cb85b 1
+00000001
+
+send request to http://localhost:3030: 
+[0;33m[{"id":4,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"Withdraw","accountId":1,"from":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","to":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","token":0,"amount":10,"fee":24000000000000000,"nonce":2,"signature":{"pubKey":"3746e7a4dbbb25ea36a3d20c2431775f69b737b1e0a173803e9cf74570b5dc86","signature":"14553a169742547ffec326ff7a657c14e02b589ddd70ed71aeb0b561e373918f49902e143e55aaa31b06302f478dfc6fe20f9733bdbacaab4151bddf15a56c00"}},{"type":"EthereumSignature","signature":"0xce6dcb4ccdbb8f64a3a7a8c743acab3a82562bf29bbc15bb87a4c37a587f30935666d88a298c543b1a1de4be83ea5a5da8631ae40a158abdacdbd6e1569436821c"}]}][0m
+success response 
+[0;32m[{"jsonrpc":"2.0","result":"sync-tx:ed7893c9d43dfe92e81a9c4e9f44b87f3dfea4f0a1139ccaadb74045d1eb1b2d","id":4}]
+[0m
+:: request http://localhost:3030 
+     [{"id":4,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"Withdraw","accountId":1,"from":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","to":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","token":0,"amount":10,"fee":24000000000000000,"nonce":2,"signature":{"pubKey":"3746e7a4dbbb25ea36a3d20c2431775f69b737b1e0a173803e9cf74570b5dc86","signature":"14553a169742547ffec326ff7a657c14e02b589ddd70ed71aeb0b561e373918f49902e143e55aaa31b06302f478dfc6fe20f9733bdbacaab4151bddf15a56c00"}},{"type":"EthereumSignature","signature":"0xce6dcb4ccdbb8f64a3a7a8c743acab3a82562bf29bbc15bb87a4c37a587f30935666d88a298c543b1a1de4be83ea5a5da8631ae40a158abdacdbd6e1569436821c"}]}]
+
+:: response tx_submit 0 http://localhost:3030 0 18
+[{
+  "jsonrpc":"2.0",
+  "result":"sync-tx:ed7893c9d43dfe92e81a9c4e9f44b87f3dfea4f0a1139ccaadb74045d1eb1b2d",
+  "id":4
+}]
+
+
+:: cache zksync_ac8a91dc2d28b689474298d91899f0c1baf62cb85b 1
+00000001
+
+{"type":"Withdraw","accountId":1,"from":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","to":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","token":0,"amount":10,"fee":24000000000000000,"nonce":2,"signature":{"pubKey":"3746e7a4dbbb25ea36a3d20c2431775f69b737b1e0a173803e9cf74570b5dc86","signature":"14553a169742547ffec326ff7a657c14e02b589ddd70ed71aeb0b561e373918f49902e143e55aaa31b06302f478dfc6fe20f9733bdbacaab4151bddf15a56c00"},"txHash":"sync-tx:ed7893c9d43dfe92e81a9c4e9f44b87f3dfea4f0a1139ccaadb74045d1eb1b2d"}

@@ -40,7 +40,7 @@
                 "-pk",
                 "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8",
                 "zksync_deposit",
-                "10000000000",
+                "0x3635C9ADC5DEA00000",
                 "ETH",
                 "false",
                 "-debug"
@@ -54,17 +54,61 @@
             "cwd": "${workspaceFolder}/build/bin",
             "externalConsole": true,
             "args": [
+                "-fi",
+                "transfer.txt",
+                "-debug"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 withdraw",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "cwd": "${workspaceFolder}/build/bin",
+            "externalConsole": true,
+            "args": [
+                "-fi",
+                "debugWithdraw.txt",
+                "-debug"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 setKEy",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "cwd": "${workspaceFolder}/build/bin",
+            "externalConsole": true,
+            "args": [
                 "-fo",
-                "debugTx.txt",
+                "debugSetKey.txt",
                 "-zks",
                 "http://localhost:3030",
                 "-c",
                 "http://localhost:8545",
                 "-pk",
                 "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8",
-                "zksync_transfer",
-                "0xA3F7a73C9fb4c32a9dE67c1298ecB678f560E35A",
-                "1",
+                "zksync_setKey",
+                "-debug"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 emergencyWithdraw",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "cwd": "${workspaceFolder}/build/bin",
+            "externalConsole": true,
+            "args": [
+                "-fo",
+                "emergencyWithdraw.txt",
+                "-zks",
+                "http://localhost:3030",
+                "-c",
+                "http://localhost:8545",
+                "-pk",
+                "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8",
+                "zksync_emergencyWithdraw",
                 "ETH",
                 "-debug"
             ]

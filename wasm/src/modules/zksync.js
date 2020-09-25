@@ -79,7 +79,7 @@ class ZksyncAPI {
 
 
   emergencyWithdraw(token) {
-    return this.send('zksync_token', token)
+    return this.send('zksync_emergencyWithdraw', token)
   }
 
 }

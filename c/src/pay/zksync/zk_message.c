@@ -152,7 +152,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint
   raw[45] = (tid >> 8) & 0xff;             // 45: token_id (2)
   raw[46] = tid & 0xff;                    //
   if (data->type == ZK_WITHDRAW) {
-    total = 58;
+    total = 69;
 #ifdef ZKSYNC_256
     memcpy(raw + 47, data->amount+16, 16);
 #else 
