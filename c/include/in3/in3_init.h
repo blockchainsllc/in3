@@ -43,8 +43,9 @@
 
 #ifdef in3_for_chain
 #undef in3_for_chain
-#define in3_for_chain(chain_id) in3_for_chain_auto_init(chain_id)
 #endif
+
+#define in3_for_chain(chain_id) in3_for_chain_auto_init(chain_id)
 
 /**
  * Global initialization for the in3 lib.

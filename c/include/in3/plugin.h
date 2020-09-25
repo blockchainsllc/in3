@@ -271,9 +271,10 @@ NONULL in3_sign_ctx_t* create_sign_ctx(
  * context used during configure
  */
 typedef struct in3_configure_ctx {
-  in3_t*     client;    /**< the client to configure */
-  d_token_t* token;     /**< the token not handled yet*/
-  char*      error_msg; /**< message in case of an incorrect config */
+  in3_t*      client;    /**< the client to configure */
+  json_ctx_t* json;      /**< the json ctx corresponding to below token */
+  d_token_t*  token;     /**< the token not handled yet*/
+  char*       error_msg; /**< message in case of an incorrect config */
 } in3_configure_ctx_t;
 
 // -------- GET_CONFIG ---------
@@ -381,5 +382,45 @@ typedef struct {
   char*    msg;   /**< the error message. */
   uint16_t error; /**< error code. */
 } error_log_ctx_t;
+
+// -------- CHAIN_CHANGE ---------
+
+/**
+ * context used during chain change event
+ */
+typedef struct in3_chain_change_ctx {
+  in3_t* client; /**< the client whose chain_id has been changed */
+} in3_chain_change_ctx_t;
+
+// -------- NL_PICK_DATA | NL_PICK_SIGNER ---------
+
+/**
+ * context used during nodeselect pick
+ */
+typedef in3_ctx_t in3_nl_pick_ctx_t;
+
+// -------- NL_BLACKLIST ---------
+
+/**
+ * context used during nodeselect blacklist
+ */
+typedef node_match_t in3_nl_blacklist_ctx_t;
+
+// -------- GET_DATA ---------
+typedef enum { GET_DATA_NODES } in3_get_data_type_t;
+
+/**
+ * context used during get data
+ * sample usage -
+ *     in3_get_data_ctx_t dctx = {.type = GET_DATA_NODES};
+ *     in3_plugin_execute_first(ctx, PLGN_ACT_GET_DATA, &dctx);
+ *     // use dctx->data as required
+ *     if (dctx.cleanup) dctx.cleanup(dctx.data);
+ */
+typedef struct {
+  in3_get_data_type_t type; /**< type of data that the caller wants. */
+  void*               data; /**< output param set by plugin code - pointer to data requested. */
+  void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */
+} in3_get_data_ctx_t;
 
 #endif

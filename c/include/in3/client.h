@@ -53,7 +53,6 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MULTICHAIN 0x0   /**< chain_id working with all known chains */
 #define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
 #define CHAIN_ID_KOVAN      0x2a  /**< chain_id for kovan */
 #define CHAIN_ID_TOBALABA   0x44d /**< chain_id for tobalaba */
@@ -297,35 +296,38 @@ typedef struct in3_filter_t_ {
 
 #define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
-#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK_DATA | PLGN_ACT_NL_PICK_SIGNER | PLGN_ACT_NL_PICK_FOLLOWUP)
+#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK_DATA | PLGN_ACT_NL_PICK_SIGNER | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST)
 #define PLGN_ACT_CACHE     (PLGN_ACT_CACHE_SET | PLGN_ACT_CACHE_GET | PLGN_ACT_CACHE_CLEAR)
 #define PLGN_ACT_CONFIG    (PLGN_ACT_CONFIG_SET | PLGN_ACT_CONFIG_GET)
 
 /** plugin action list */
 typedef enum {
-  PLGN_ACT_INIT              = 0x1,      /**< initialize plugin - use for allocating/setting-up internal resources */
-  PLGN_ACT_TERM              = 0x2,      /**< terminate plugin - use for releasing internal resources and cleanup. */
-  PLGN_ACT_TRANSPORT_SEND    = 0x4,      /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more resonses. */
-  PLGN_ACT_TRANSPORT_RECEIVE = 0x8,      /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
-  PLGN_ACT_TRANSPORT_CLEAN   = 0x10,     /**< freeup transport resources - the transport plugin will receive a request_t as plgn_ctx if the cptr was set.*/
-  PLGN_ACT_SIGN_ACCOUNT      = 0x20,     /**<  returns the default account of the signer */
-  PLGN_ACT_SIGN_PREPARE      = 0x40,     /**< allowes a wallet to manipulate the payload before signing - the plgn_ctx will be in3_sign_ctx_t. This way a tx can be send through a multisig */
-  PLGN_ACT_SIGN              = 0x80,     /**<  signs the payload - the plgn_ctx will be in3_sign_ctx_t.  */
-  PLGN_ACT_RPC_HANDLE        = 0x100,    /**< a plugin may respond to a rpc-request directly (without sending it to the node). */
-  PLGN_ACT_RPC_VERIFY        = 0x200,    /**< verifies the response. the plgn_ctx will be a in3_vctx_t holding all data */
-  PLGN_ACT_CACHE_SET         = 0x400,    /**< stores data to be reused later - the plgn_ctx will be a in3_cache_ctx_t containing the data */
-  PLGN_ACT_CACHE_GET         = 0x800,    /**< reads data to be previously stored - the plgn_ctx will be a in3_cache_ctx_t containing the key. if the data was found the data-property needs to be set. */
-  PLGN_ACT_CACHE_CLEAR       = 0x1000,   /**< clears alls stored data - plgn_ctx will be NULL  */
-  PLGN_ACT_CONFIG_SET        = 0x2000,   /**< gets a config-token and reads data from it */
-  PLGN_ACT_CONFIG_GET        = 0x4000,   /**< gets a stringbuilder and adds all config to it. */
-  PLGN_ACT_PAY_PREPARE       = 0x8000,   /**< prerpares a payment */
-  PLGN_ACT_PAY_FOLLOWUP      = 0x10000,  /**< called after a requeest to update stats. */
-  PLGN_ACT_PAY_HANDLE        = 0x20000,  /**< handles the payment */
-  PLGN_ACT_PAY_SIGN_REQ      = 0x40000,  /**< signs a request */
-  PLGN_ACT_NL_PICK_DATA      = 0x80000,  /**< picks the data nodes */
-  PLGN_ACT_NL_PICK_SIGNER    = 0x100000, /**< picks the signer nodes */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000, /**< called after receiving a response in order to decide whether a update is needed. */
-  PLGN_ACT_LOG_ERROR         = 0x400000, /**< report an error */
+  PLGN_ACT_INIT              = 0x1,       /**< initialize plugin - use for allocating/setting-up internal resources */
+  PLGN_ACT_TERM              = 0x2,       /**< terminate plugin - use for releasing internal resources and cleanup. */
+  PLGN_ACT_TRANSPORT_SEND    = 0x4,       /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more resonses. */
+  PLGN_ACT_TRANSPORT_RECEIVE = 0x8,       /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
+  PLGN_ACT_TRANSPORT_CLEAN   = 0x10,      /**< free-up transport resources - the transport plugin will receive a request_t as plgn_ctx if the cptr was set.*/
+  PLGN_ACT_SIGN_ACCOUNT      = 0x20,      /**< returns the default account of the signer */
+  PLGN_ACT_SIGN_PREPARE      = 0x40,      /**< allows a wallet to manipulate the payload before signing - the plgn_ctx will be in3_sign_ctx_t. This way a tx can be send through a multisig */
+  PLGN_ACT_SIGN              = 0x80,      /**< signs the payload - the plgn_ctx will be in3_sign_ctx_t.  */
+  PLGN_ACT_RPC_HANDLE        = 0x100,     /**< a plugin may respond to a rpc-request directly (without sending it to the node). */
+  PLGN_ACT_RPC_VERIFY        = 0x200,     /**< verifies the response. the plgn_ctx will be a in3_vctx_t holding all data */
+  PLGN_ACT_CACHE_SET         = 0x400,     /**< stores data to be reused later - the plgn_ctx will be a in3_cache_ctx_t containing the data */
+  PLGN_ACT_CACHE_GET         = 0x800,     /**< reads data to be previously stored - the plgn_ctx will be a in3_cache_ctx_t containing the key. if the data was found the data-property needs to be set. */
+  PLGN_ACT_CACHE_CLEAR       = 0x1000,    /**< clears all stored data - plgn_ctx will be NULL  */
+  PLGN_ACT_CONFIG_SET        = 0x2000,    /**< gets a config-token and reads data from it */
+  PLGN_ACT_CONFIG_GET        = 0x4000,    /**< gets a string-builder and adds all config to it. */
+  PLGN_ACT_PAY_PREPARE       = 0x8000,    /**< prepares a payment */
+  PLGN_ACT_PAY_FOLLOWUP      = 0x10000,   /**< called after a request to update stats. */
+  PLGN_ACT_PAY_HANDLE        = 0x20000,   /**< handles the payment */
+  PLGN_ACT_PAY_SIGN_REQ      = 0x40000,   /**< signs a request */
+  PLGN_ACT_LOG_ERROR         = 0x80000,   /**< report an error */
+  PLGN_ACT_NL_PICK_DATA      = 0x100000,  /**< picks the data nodes */
+  PLGN_ACT_NL_PICK_SIGNER    = 0x200000,  /**< picks the signer nodes */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x400000,  /**< called after receiving a response in order to decide whether a update is needed. */
+  PLGN_ACT_NL_BLACKLIST      = 0x800000,  /**< blacklist a particular node in the nodelist */
+  PLGN_ACT_CHAIN_CHANGE      = 0x1000000, /**< chain id change event */
+  PLGN_ACT_GET_DATA          = 0x2000000, /**< get access to plugin data as a void ptr */
 } in3_plugin_act_t;
 
 /**
@@ -376,19 +378,17 @@ struct in3_t_ {
   uint_fast8_t           flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
   uint16_t               node_limit;            /**< the limit of nodes to store in the client. */
   uint16_t               finality;              /**< the number of signatures in percent required for the request*/
-  uint16_t               chains_length;         /**< number of configured chains */
   uint_fast16_t          max_attempts;          /**< the max number of attempts before giving up*/
   uint_fast16_t          max_verified_hashes;   /**< max number of verified hashes to cache (actual number may temporarily exceed this value due to pending requests) */
   uint_fast16_t          alloc_verified_hashes; /**< number of currently allocated verified hashes */
   uint_fast16_t          pending;               /**< number of pending requests created with this instance */
   uint32_t               cache_timeout;         /**< number of seconds requests can be cached. */
   uint32_t               timeout;               /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
-  chain_id_t             chain_id;              /**< servers to filter for the given chain. The chain-id based on EIP-155.*/
   in3_plugin_supp_acts_t plugin_acts;           /**< bitmask of supported actions of all plugins registered with this client */
   in3_proof_t            proof;                 /**< the type of proof used */
   uint64_t               min_deposit;           /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
   in3_node_props_t       node_props;            /**< used to identify the capabilities of the node. */
-  in3_chain_t*           chains;                /**< chain spec and nodeList definitions*/
+  in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
 
@@ -405,36 +405,7 @@ struct in3_t_ {
 #endif
 };
 
-/** creates a new Incubes configuration and returns the pointer.
- * 
- * This Method is depricated. you should use `in3_for_chain(CHAIN_ID_MULTICHAIN)` instead.
- * 
- * you need to free this instance with `in3_free` after use!
- * 
- * Before using the client you still need to set the tramsport and optional the storage handlers:
- * 
- *  * example of initialization:
- * ```c
- * // register verifiers
- * in3_register_eth_full();
- * 
- * // create new client
- * in3_t* client = in3_new();
- * 
- * // configure transport
- * client->transport    = send_curl;
- *
- * // configure storage
- * in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
- * 
- * // ready to use ...
- * ```
- * 
- * @returns the incubed instance.
- */
-in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(CHAIN_ID_MULTICHAIN)")));
-
-/** creates a new Incubes configuration for a specified chain and returns the pointer.
+/** creates a new Incubed configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 
  * but if you pass `CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
  * 
@@ -507,32 +478,6 @@ in3_ret_t in3_client_register_chain(
 NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
 /**
- * inits the cache.
- *
- * this will try to read the nodelist from cache.
- */
-NONULL in3_ret_t in3_cache_init(
-    in3_t* c /**< the incubed client */
-);
-
-/**
- * returns the chain-config for the current chain_id.
- */
-NONULL in3_chain_t* in3_get_chain(
-    const in3_t* c /**< the incubed client */
-);
-
-/**
- * finds the chain-config for the given chain_id.
- * 
- * My return NULL if not found.
- */
-NONULL in3_chain_t* in3_find_chain(
-    const in3_t* c /**< the incubed client */,
-    chain_id_t   chain_id /**< chain_id */
-);
-
-/**
  * configures the clent based on a json-config.
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
@@ -573,12 +518,9 @@ void in3_register_payment(
 
 #define assert_in3(c)                              \
   assert(c);                                       \
-  assert(c->chain_id);                             \
+  assert(c->chain.chain_id);                       \
   assert(c->plugins);                              \
-  assert(c->chains);                               \
   assert(c->request_count > 0);                    \
-  assert(c->chains_length > 0);                    \
-  assert(c->chains_length < 10);                   \
   assert(c->max_attempts > 0);                     \
   assert(c->proof >= 0 && c->proof <= PROOF_FULL); \
   assert(c->proof >= 0 && c->proof <= PROOF_FULL);
