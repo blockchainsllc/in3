@@ -78,12 +78,14 @@ typedef struct {
 } bytes_builder_t;
 
 RETURNS_NONULL bytes_t* b_new(const uint8_t* data, uint32_t len);                                               /**< allocates a new byte array with 0 filled */
-NONULL void             b_print(const bytes_t* a);                                                              /**< prints a the bytes as hex to stdout */
-NONULL void             ba_print(const uint8_t* a, size_t l);                                                   /**< prints a the bytes as hex to stdout */
-NONULL int              b_cmp(const bytes_t* a, const bytes_t* b);                                              /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
-int                     bytes_cmp(const bytes_t a, const bytes_t b);                                            /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
-void                    b_free(bytes_t* a);                                                                     /**< frees the data */
-bytes_t                 b_concat(int cnt, ...);                                                                 /**< duplicates the content of bytes*/
+NONULL uint8_t* b_get_data(const bytes_t* b);                                                                   /**< gets the data field from an input byte array */
+NONULL uint32_t b_get_len(const bytes_t* b);                                                                    /**< gets the len field from an input byte array */
+NONULL void     b_print(const bytes_t* a);                                                                      /**< prints a the bytes as hex to stdout */
+NONULL void     ba_print(const uint8_t* a, size_t l);                                                           /**< prints a the bytes as hex to stdout */
+NONULL int      b_cmp(const bytes_t* a, const bytes_t* b);                                                      /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+int             bytes_cmp(const bytes_t a, const bytes_t b);                                                    /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+void            b_free(bytes_t* a);                                                                             /**< frees the data */
+bytes_t         b_concat(int cnt, ...);                                                                         /**< duplicates the content of bytes*/
 NONULL bytes_t* b_dup(const bytes_t* a);                                                                        /**< clones a byte array*/
 NONULL uint8_t  b_read_byte(bytes_t* b, size_t* pos);                                                           /**< reads a byte on the current position and updates the pos afterwards. */
 NONULL uint32_t b_read_int(bytes_t* b, size_t* pos);                                                            /**< reads a integer on the current position and updates the pos afterwards. */
