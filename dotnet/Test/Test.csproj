@@ -80,6 +80,18 @@
       <Content Include="Responses/eth_call_3.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <None Remove="Responses/eth_call_4.json" />
+      <Content Include="Responses/eth_call_4.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_call_5.json" />
+      <Content Include="Responses/eth_call_5.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_call_6.json" />
+      <Content Include="Responses/eth_call_6.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <None Remove="Responses/eth_estimateGas.json" />
       <Content Include="Responses/eth_estimateGas.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -114,6 +126,14 @@
       </Content>
       <None Remove="Responses/eth_getCode.json" />
       <Content Include="Responses/eth_getCode.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getCode_1.json" />
+      <Content Include="Responses/eth_getCode_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getCode_2.json" />
+      <Content Include="Responses/eth_getCode_2.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <None Remove="Responses/eth_getGasPrice.json" />

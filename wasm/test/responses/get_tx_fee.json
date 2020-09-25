@@ -1,0 +1,38 @@
+{
+  "test1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "feeType": "Withdraw",
+      "gasFee": "4041393750000000",
+      "gasPriceWei": "44904375000",
+      "gasTxAmount": "90000",
+      "totalFee": "4070000000000000",
+      "zkpFee": "32489422687419"
+    },
+    "id": 1
+  },
+  "transfer1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "feeType": "TransferToNew",
+      "gasFee": "93333333333100",
+      "gasPriceWei": "266666666666",
+      "gasTxAmount": "350",
+      "totalFee": "122100000000000",
+      "zkpFee": "28787954915252"
+    },
+    "id": 4
+  },
+  "withdraw1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "feeType": "Withdraw",
+      "gasFee": "3757995000000000",
+      "gasPriceWei": "41755500000",
+      "gasTxAmount": "90000",
+      "totalFee": "3780000000000000",
+      "zkpFee": "28237019958025"
+    },
+    "id": 4
+  }
+}

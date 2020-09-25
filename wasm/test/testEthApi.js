@@ -146,16 +146,16 @@ describe('EthAPI-Tests', () => {
     it('requestCount', async () => {
         const requestCount = 3
         let c = createClient({ requestCount })
-        // This is dangerous as it changes a static reference, if anything is every wrong with the test transport, this should be the first suspicion
+        // This is dangerous as it changes a static reference, if anything ever happens to the test transport, this is probably the cause
         // Another way to do that is to either make sure that you only override a single reference with transport or make the transport method public so you can do something like chai.spy.on(c, 'transport')
         // as of right now, the actual reference of in3w is in the constructor function scope hidden by js module pattern
-        let spy = chai.spy(testTransport)
-        IN3.setTransport(spy)
+        let transport = chai.spy(testTransport)
+        IN3.setTransport(transport)
         mockResponse('eth_blockNumber', '0x1')
 
         const res = await c.eth.blockNumber()
 
-        expect(spy).to.have.been.called.exactly(requestCount)
+        expect(transport).to.have.been.called.exactly(requestCount)
     })
 
     it('eth.gasPrice()', async () => {

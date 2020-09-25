@@ -54,6 +54,14 @@ bytes_t* b_new(const uint8_t* data, uint32_t len) {
   return b;
 }
 
+uint32_t b_get_len(const bytes_t* b) {
+  return b->len;
+}
+
+uint8_t* b_get_data(const bytes_t* b) {
+  return b->data;
+}
+
 void ba_print(const uint8_t* a, size_t l) {
   size_t i;
   if (!a) return;

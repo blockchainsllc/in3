@@ -170,34 +170,38 @@ static const char* UNITS[] = {
     "gether", "\x1b",
     "tether", "\x1e",
     NULL};
-static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  if (!params || d_len(params) != 2 || d_type(params + 2) != T_STRING) return ctx_set_error(ctx->ctx, "must have 2 params as strings", IN3_EINVAL);
-  char* val = d_get_string_at(params, 0);
-  if (!val) {
-    if (d_type(params + 1) == T_INTEGER) {
-      val = alloca(20);
-      sprintf(val, "%i", d_int(params + 1));
-    }
-    else
-      return ctx_set_error(ctx->ctx, "the value must be a string", IN3_EINVAL);
+
+int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
+  if (!val) return IN3_EINVAL;
+  int l = strlen(val), nl = l, exp = 0, p = 0;
+
+  if (l == 1 && val[0] == '0') {
+    *target = 0;
+    return 1;
   }
-  uint32_t exp = 0;
-  if (d_type(params + 2) == T_INTEGER)
-    exp = d_int(params + 2);
-  else {
-    char* unit = d_get_string_at(params, 1);
+  if (val[0] == '0' && val[1] == 'x') return unit == NULL ? hex_to_bytes(val + 2, l - 2, target, l) : IN3_EINVAL;
+  if (unit == NULL) {
+    while (nl && val[nl - 1] > '9') nl--;
+    if (nl < l) unit = val + nl;
+  }
+  if (unit) {
     for (int i = 0; UNITS[i]; i += 2) {
       if (strcmp(UNITS[i], unit) == 0) {
         exp = *UNITS[i + 1];
         break;
       }
       else if (!UNITS[i + 2])
-        return ctx_set_error(ctx->ctx, "unknown unit", IN3_EINVAL);
+        return IN3_EINVAL;
     }
   }
-
+  if (!exp && l < 20) {
+    bytes_t b = bytes(target, 8);
+    long_to_bytes(atoll(nl < l ? strncpy(alloca(nl + 1), val, nl) : val), target);
+    b_optimize_len(&b);
+    if (b.len < 8) memmove(target, b.data, b.len);
+    return (int) b.len;
+  }
 #ifdef ETH_FULL
-  int   l = strlen(val), p = 0;
   char* dst = alloca(l + exp + 10);
   char* dot = strchr(val, '.');
   if (!dot)
@@ -208,8 +212,8 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   if (exp) {
     if (dot) {
       dot++;
-      for (unsigned int i = 0; i < exp; i++) {
-        if (*dot) {
+      for (int i = 0; i < exp; i++) {
+        if (*dot && dot - val < nl) {
           dst[p + i] = *dot;
           dot++;
         }
@@ -222,21 +226,39 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   }
   // remove leading zeros
   while (*dst == '0' && dst[1]) dst++;
-  uint8_t data[32];
-  size_t  s;
-  mp_int  d;
+  size_t s;
+  mp_int d;
   mp_init(&d);
   mp_read_radix(&d, dst, 10);
-  mp_export(data, &s, 1, sizeof(uint8_t), 1, 0, &d);
+  mp_export(target, &s, 1, sizeof(uint8_t), 1, 0, &d);
   mp_clear(&d);
-  return in3_rpc_handle_with_bytes(ctx, bytes(data, (uint32_t) s));
+  return (int) s;
 #else
-  uint8_t data[8];
-  bytes_t b = bytes(data, 8);
-  long_to_bytes(parse_float_val(val, exp), data);
+  UNUSED_VAR(p);
+  bytes_t b = bytes(target, 8);
+  long_to_bytes(parse_float_val(nl < l ? strncpy(alloca(nl + 1), val, nl) : val, exp), target);
   b_optimize_len(&b);
-  return in3_rpc_handle_with_bytes(ctx, b);
+  if (b.len < 8) memmove(target, b.data, b.len);
+  return (int) b.len;
 #endif
+}
+
+static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  if (!params || d_len(params) != 2 || d_type(params + 2) != T_STRING) return ctx_set_error(ctx->ctx, "must have 2 params as strings", IN3_EINVAL);
+  char* val = d_get_string_at(params, 0);
+  if (!val) {
+    if (d_type(params + 1) == T_INTEGER) {
+      val = alloca(20);
+      sprintf(val, "%i", d_int(params + 1));
+    }
+    else
+      return ctx_set_error(ctx->ctx, "the value must be a string", IN3_EINVAL);
+  }
+  bytes32_t tmp;
+  int       s = string_val_to_bytes(val, d_get_string_at(params, 1), tmp);
+  return s < 0
+             ? ctx_set_error(ctx->ctx, "invalid number string", IN3_EINVAL)
+             : in3_rpc_handle_with_bytes(ctx, bytes(tmp, (uint32_t) s));
 }
 
 static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {

@@ -1,6 +1,7 @@
 #include "../../core/client/context_internal.h"
 #include "../../core/client/plugin.h"
 #include "../../core/util/log.h"
+#include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zksync.h"
 #include <limits.h> /* strtoull */
@@ -8,8 +9,9 @@
 
 #ifdef ZKSYNC_256
 static int to_dec(char* dst, bytes32_t val) {
-  uint64_t l =
-      return sprintf(dst, "%" PRId64, val);
+  bignum256 bn;
+  bn_read_be(val, &bn);
+  return bn_format(&bn, "", "", 0, 0, false, dst, 80);
 }
 #else
 static int to_dec(char* dst, uint64_t val) {
@@ -25,7 +27,7 @@ static void add_amount(sb_t* sb, zksync_token_t* token,
 #endif
 ) {
   int   dec = token ? token->decimals : 0;
-  char  tmp[60]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  char  tmp[80]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
   char* sep = NULL;
   int   l   = to_dec(tmp, val);
 
@@ -143,7 +145,7 @@ static void create_signed_bytes(sb_t* sb) {
 
 static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
   uint32_t total;
-  char     dec[70];
+  char     dec[80];
   uint16_t tid = data->token ? data->token->id : 0;
   raw[0]       = data->type;               // 0: type(1)
   int_to_bytes(data->account_id, raw + 1); // 1 account_id(4)
@@ -152,7 +154,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint
   raw[45] = (tid >> 8) & 0xff;             // 45: token_id (2)
   raw[46] = tid & 0xff;                    //
   if (data->type == ZK_WITHDRAW) {
-    total = 58;
+    total = 69;
 #ifdef ZKSYNC_256
     memcpy(raw + 47, data->amount+16, 16);
 #else 
@@ -208,9 +210,18 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_chars(sb, "\",\"token\":");
   sb_add_int(sb, data->token->id);
   sb_add_chars(sb, ",\"amount\":");
+  #ifdef ZKSYNC_256
+  char dec[80];
+  to_dec(dec,data->amount);
+  sb_add_chars(sb,dec);
+  sb_add_chars(sb, ",\"fee\":");
+  to_dec(dec,data->fee);
+  sb_add_chars(sb,dec);
+  #else
   sb_add_int(sb, data->amount);
   sb_add_chars(sb, ",\"fee\":");
   sb_add_int(sb, data->fee);
+  #endif
   sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, data->nonce);
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);

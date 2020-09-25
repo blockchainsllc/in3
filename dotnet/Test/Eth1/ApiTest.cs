@@ -10,13 +10,7 @@ namespace Test.Eth1
 {
     public class ApiTest
     {
-        private ClientBuilder _builder;
-
-        [SetUp]
-        public void Setup()
-        {
-            _builder = new ClientBuilder(Chain.Mainnet);
-        }
+        private ClientFactory _factory => new ProoflessClientFactory(Chain.Mainnet);
 
         [Test]
         public async Task BlockNumber()
@@ -25,7 +19,7 @@ namespace Test.Eth1
             {
                 new[] {"eth_blockNumber", "eth_blockNumber.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             BigInteger result = await in3.Eth1.BlockNumber();
 
@@ -38,7 +32,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getBlockByNumber", "eth_getBlockByNumber.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Block latest = await in3.Eth1.GetBlockByNumber(BlockParameter.Earliest);
 
@@ -52,7 +46,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getBlockByHash", "eth_getBlockByHash.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Block latest = await in3.Eth1.GetBlockByHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3");
 
@@ -63,7 +57,7 @@ namespace Test.Eth1
         [Test]
         public async Task AbiEncode()
         {
-            IN3 in3 = _builder.ConstructClient(new string[][] { });
+            IN3 in3 = _factory.CreateIn3(new string[][] { });
 
             string signature = "getBalance(address)";
             string[] args = { "0x1234567890123456789012345678901234567890" };
@@ -77,7 +71,7 @@ namespace Test.Eth1
         [Test]
         public async Task AbiDecode_arityGreaterThen1()
         {
-            IN3 in3 = _builder.ConstructClient(new string[][] { });
+            IN3 in3 = _factory.CreateIn3(new string[][] { });
 
             string signature = "(address,uint256)";
             string encoded = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005";
@@ -91,7 +85,7 @@ namespace Test.Eth1
         [Test]
         public async Task AbiDecode_Arity1()
         {
-            IN3 in3 = _builder.ConstructClient(new string[][] { });
+            IN3 in3 = _factory.CreateIn3(new string[][] { });
 
             string signature = "():uint256";
             string encoded = "0x0000000000000000000000000000000000000000000000000000000000000005";
@@ -108,7 +102,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_gasPrice", "eth_gasPrice.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             BigInteger currentGasPrice = await in3.Eth1.GetGasPrice();
 
@@ -121,7 +115,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_estimateGas", "eth_estimateGas.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Chain currentChain = await in3.Eth1.GetChainId();
             Assert.That(currentChain, Is.EqualTo(Chain.Mainnet));
@@ -133,7 +127,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getCode", "eth_getCode.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             string response = await in3.Eth1.GetCode("0xdAC17F958D2ee523a2206206994597C13D831ec7", BlockParameter.Latest);
 
@@ -146,7 +140,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getStorageAt", "eth_getStorageAt.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             string storage = await in3.Eth1.GetStorageAt("0x862174623bc39e57de552538f424806b947d3d05", 0, BlockParameter.Latest);
 
@@ -159,7 +153,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getBlockTransactionCountByHash", "eth_getBlockTransactionCountByHash.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             long transactionCount = await in3.Eth1
                 .GetBlockTransactionCountByHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3");
@@ -173,7 +167,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getBlockTransactionCountByNumber", "eth_getBlockTransactionCountByNumber.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             long transactionCount = await in3.Eth1
                 .GetBlockTransactionCountByNumber(9298869);
@@ -187,7 +181,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getTransactionByBlockHashAndIndex", "eth_getTransactionByBlockHashAndIndex.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Transaction tx = await in3.Eth1.GetTransactionByBlockHashAndIndex(
                 "0xd03f4a0ce830ce568be08aa37bc0a72374e92da5b388e839b35f24a144a5085d", 1);
@@ -200,7 +194,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getTransactionByBlockNumberAndIndex", "eth_getTransactionByBlockNumberAndIndex.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Transaction tx = await in3.Eth1.GetTransactionByBlockNumberAndIndex(9319093, 1);
 
@@ -214,7 +208,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getTransactionByHash", "eth_getTransactionByHash.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Transaction tx = await in3.Eth1.GetTransactionByHash("0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2");
 
@@ -228,7 +222,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_getTransactionCount", "eth_getTransactionCount.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             string from = "0x7fc7032e731f5bcbd4843406945acaf917087fde";
 
@@ -243,7 +237,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new [] {"eth_sendRawTransaction", "eth_sendRawTransaction_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             string rawTransaction = "0xf8671b8477359400825208943940256b93c4be0b1d5931a6a036608c25706b0c8405f5e100802da0278d2c010a59688fc12a55563d81239b1dc7e3d9c6a535b34600329b0c640ad8a03894daf8d7c25b56caec71b695c5f6b1b6fd903ecfa441b2c4e15fd1c72c54a9";
 
@@ -262,7 +256,7 @@ namespace Test.Eth1
                 new[] {"eth_sendRawTransaction", "eth_sendRawTransaction.json"}
             };
 
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
             string expectedHash = "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38";
             string pk = "0x0829B3C639A3A8F2226C8057F100128D4F7AE8102C92048BA6DE38CF4D3BC6F1";
             SimpleWallet sw = (SimpleWallet)in3.Signer;
@@ -283,7 +277,7 @@ namespace Test.Eth1
         [Test]
         public async Task ChecksumAddress()
         {
-            IN3 in3 = _builder.ConstructClient(new string[][] { });
+            IN3 in3 = _factory.CreateIn3(new string[][] { });
 
             string expectedAddress = "0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564";
             string address = await in3.Eth1.ChecksumAddress("0xbc0ea09c1651a3d5d40bacb4356fb59159a99564");
@@ -297,7 +291,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_getUncleCountByBlockHash", "eth_getUncleCountByBlockHash.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             long uncleCount = await in3.Eth1.GetUncleCountByBlockHash("0x884aaab2f9116742e693ced034a2dff840b45f21709025f7d69cde26d071068b");
 
@@ -310,7 +304,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_getUncleCountByBlockNumber", "eth_getUncleCountByBlockNumber.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             long uncleCount = await in3.Eth1.GetUncleCountByBlockNumber(9830239);
 
@@ -323,7 +317,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_blockNumber", "eth_blockNumber_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             long filterId = await in3.Eth1.NewBlockFilter();
 
@@ -341,7 +335,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_blockNumber", "eth_blockNumber_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             LogFilter filter = new LogFilter { Address = "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455" };
             long filterId = await in3.Eth1.NewLogFilter(filter);
@@ -358,7 +352,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_call", "eth_call_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             TransactionRequest request = new TransactionRequest { To = "0x2736D225f85740f42D17987100dc8d58e9e16252" };
             ;
@@ -380,7 +374,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_call", "eth_call_2.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             TransactionRequest request = new TransactionRequest { To = "0x2736D225f85740f42D17987100dc8d58e9e16252" };
             ;
@@ -399,7 +393,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_getBalance", "eth_getBalance.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             BigInteger expectedBalance = 3646260000000000000;
             string address = "0x4144FFD5430a8518fa2d84ef5606Fd7e1921cE27";
@@ -414,7 +408,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_estimateGas", "eth_estimateGas.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
             string pk = "0x0829B3C639A3A8F2226C8057F100128D4F7AE8102C92048BA6DE38CF4D3BC6F1";
             SimpleWallet wallet = (SimpleWallet)in3.Signer;
             string from = wallet.AddRawKey(pk);
@@ -437,7 +431,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_blockNumber", "eth_blockNumber_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             LogFilter filter = new LogFilter();
             filter.Address = "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455";
@@ -459,7 +453,7 @@ namespace Test.Eth1
                 new[] {"eth_blockNumber", "eth_blockNumber_2.json"},
                 new[] {"eth_getLogs", "eth_getLogs_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             LogFilter filter = new LogFilter
             {
@@ -484,7 +478,7 @@ namespace Test.Eth1
                 new[] {"eth_blockNumber", "eth_blockNumber_2.json"},
                 new[] {"eth_getLogs", "eth_getLogs_1.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             LogFilter filter = new LogFilter
             {
@@ -508,7 +502,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_getLogs", "eth_getLogs.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             LogFilter filter = new LogFilter
             {
@@ -528,7 +522,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_getTransactionReceipt", "eth_getTransactionReceipt.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             TransactionReceipt receipt = await in3.Eth1.GetTransactionReceipt("0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2");
             Assert.That(receipt.To, Is.EqualTo("0x5b8174e20996ec743f01d3b55a35dd376429c596"));
@@ -542,7 +536,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_getUncleByBlockNumberAndIndex", "eth_getUncleByBlockNumberAndIndex.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             Block uncle = await in3.Eth1.GetUncleByBlockNumberAndIndex(9317999, 0);
 
@@ -556,11 +550,47 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_call", "eth_call_3.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
 
             string result = await in3.Eth1.Ens("cryptokitties.eth");
 
             Assert.That(result, Is.EqualTo("0x06012c8cf97bead5deae237070f9587f8e7a266d"));
+        }
+
+        [Test]
+        public async Task Ens_2()
+        {
+            string[][] mockedResponses = {
+                new[] {"eth_call", "eth_call_4.json"}
+            };
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
+
+            string domain = "cure.eth";
+            string owner = await in3.Eth1.Ens(domain, ENSParameter.Owner);
+
+            Assert.That(owner, Is.EqualTo("0x16bfe6111db6c459536dd3a3c1d4b5e0ea8553fa"));
+        }
+
+        [Test]
+        public async Task Ens_3()
+        {
+            string[][] mockedResponses = {
+                new[] {"in3_nodeList", "in3_nodeList.json"},
+                new[] {"eth_getCode", "eth_getCode_1.json"},
+                new[] {"eth_call", "eth_call_5.json"}
+            };
+            IN3 in3 = new StandardProofClientFactory(Chain.Mainnet).CreateIn3(mockedResponses);
+            StubTransport transport = (StubTransport)in3.Transport;
+            string cryptoKittiesDomain = "cryptokitties.eth";
+
+            string resolver = await in3.Eth1.Ens(cryptoKittiesDomain, ENSParameter.Resolver);
+
+            Assert.That(resolver, Is.EqualTo("0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41"));
+
+            transport.AddMockedresponse("eth_call", "eth_call_6.json");
+            string owner = await in3.Eth1.Ens(cryptoKittiesDomain, ENSParameter.Owner);
+            
+            Assert.That(owner, Is.EqualTo("0xfb3ca875955675d091e6f82038a288e97284400f"));
         }
 
         [Test]
@@ -573,8 +603,8 @@ namespace Test.Eth1
                 new[] {"eth_sendRawTransaction", "eth_sendRawTransaction.json"},
                 new[] {"eth_getTransactionReceipt", "eth_getTransactionReceipt.json"}
             };
-            IN3 in3 = _builder.ConstructClient(mockedResponses);
-            string expectedHash = "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38";
+            IN3 in3 = _factory.CreateIn3(mockedResponses);
+
             string pk = "0x0829B3C639A3A8F2226C8057F100128D4F7AE8102C92048BA6DE38CF4D3BC6F1";
             SimpleWallet sw = (SimpleWallet)in3.Signer;
             string from = sw.AddRawKey(pk);

@@ -1,0 +1,14 @@
+{
+  "test1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "block": {
+        "blockNumber": 1,
+        "committed": true,
+        "verified": true
+      },
+      "executed": true
+    },
+    "id": 1
+  }
+}

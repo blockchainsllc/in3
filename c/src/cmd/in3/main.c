@@ -218,56 +218,14 @@ void read_pass(char* pw, int pwsize) {
 // 2.3meth
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;
-  int    l     = strlen(val);
-  double value = 0;
-  if (l > 3 && val[l - 1] > '9') {
-    char unit[4];
-    strcpy(unit, val + l - 3); // we copy the last 3 characters as unit
-    double f = 1;              // and define a modifying factor for the prefix of the unit
-    if (val[l - 4] == 'k')
-      f = 1000;
-    else if (val[l - 4] == 'M')
-      f = 1000000;
-    else if (val[l - 4] == 'm')
-      f = 0.001;
-    val[l - ((f == 1) ? 3 : 4)] = 0;         // so we let the value string end where the unit starts
-    value                       = atof(val); // so we can easily parse the value
-
-    if (strcmp(unit, "eth") == 0)
-      value *= 1000000000000000000l;
-    else if (strcmp(unit, "fin") == 0)
-      value *= 1000000000000000l;
-    else if (strcmp(unit, "wei"))
-      die("unsupported unit in value!");
-    value *= f;
-  }
-  else
-    value = atof(val);
-
-  value = floor(value); // make sure it is a integer value
-  if (value < 0) die("negative values are not allowed");
-
-  // now convert the double into a hexstring
-  // this is no cleaning up the mempry correctly, but since it is a comandline tool
-  // we don't need to clean up
-  char *res = _malloc(200), *p = res + 199;
-  res[199]         = 0;
-  const char hex[] = "0123456789abcdef";
-  while (value > 0.999999) {
-    p--;
-    *p    = hex[(int) (fmod(value, 16))];
-    value = floor(value / 16);
-  }
+  bytes32_t tmp;
+  int       s = string_val_to_bytes(val, NULL, tmp);
+  if (s < 0) die("Invalid numeric value");
+  char* res = _malloc(s * 2 + 3);
+  bytes_to_hex(tmp, s, res + 2);
+  if (res[2] == '0') res++;
   res[0] = '0';
   res[1] = 'x';
-  if (p == res + 199) {
-    res[2] = '0';
-    res[3] = 0;
-  }
-  else {
-    memmove(res + 2, p, res + 199 - p);
-    res[res + 201 - p] = 0;
-  }
   return res;
 }
 static void execute(in3_t* c, FILE* f) {
@@ -700,10 +658,9 @@ int main(int argc, char* argv[]) {
   }
 
   // define vars
-  char *method = NULL, params[50000];
-  params[0]    = '[';
-  params[1]    = 0;
-  int       p  = 1, i;
+  char*     method = NULL;
+  sb_t*     args   = sb_new("[");
+  int       i;
   bytes32_t pk;
 #ifdef LEDGER_NANO
   uint8_t path[5];
@@ -927,20 +884,19 @@ int main(int argc, char* argv[]) {
         sig = argv[i];
       else {
         // otherwise we add it to the params
-        if (p > 1) params[p++] = ',';
-        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strlen(argv[i]) < 16 && !strchr(argv[i], '.'))
-          p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
+        if (args->len > 1) sb_add_char(args, ',');
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei"))
+          sb_print(args, "\"%s\"", get_wei(argv[i]));
         else
-          p += sprintf(params + p,
-                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
-                           ? "%s"
-                           : "\"%s\"",
-                       strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
+          sb_print(args,
+                   (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
+                       ? "%s"
+                       : "\"%s\"",
+                   strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
       }
     }
   }
-  params[p++]  = ']';
-  params[p]    = 0;
+  sb_add_char(args, ']');
   char *result = NULL, *error = NULL;
 
 #ifdef IN3_SERVER
@@ -973,7 +929,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, resolve(c, to), params, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), args->data, block_number, 0, NULL, data);
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
@@ -992,12 +948,12 @@ int main(int argc, char* argv[]) {
   }
   else if (strcmp(method, "abi_decode") == 0) {
     char*       error   = NULL;
-    json_ctx_t* in_data = parse_json(params);
+    json_ctx_t* in_data = parse_json(args->data);
     if (!in_data) die("invalid params");
     if (!sig) die("missing signature");
     abi_sig_t* s = abi_sig_create(sig, &error);
     if (s && !error) {
-      bytes_t     data = d_to_bytes(d_get_at(parse_json(params)->result, 0));
+      bytes_t     data = d_to_bytes(d_get_at(parse_json(args->data)->result, 0));
       json_ctx_t* res  = abi_decode(s, data, &error);
       if (json)
         recorder_print(0, "%s\n", d_create_json(res, res->result));
@@ -1010,10 +966,10 @@ int main(int argc, char* argv[]) {
   }
   else if (strcmp(method, "ipfs_get") == 0) {
     c->chain_id = CHAIN_ID_IPFS;
-    int size    = strlen(params);
-    if (p == 1 || params[1] != '"' || size < 20 || strstr(params + 2, "\"") == NULL) die("missing ipfs has");
-    params[size - 2] = 0;
-    bytes_t* content = ipfs_get(c, params + 2);
+    int size    = args->len;
+    if (size == 2 || args->data[1] != '"' || size < 20 || strstr(args->data + 2, "\"") == NULL) die("missing ipfs hash");
+    args->data[size - 2] = 0;
+    bytes_t* content     = ipfs_get(c, args->data + 2);
     if (!content) die("IPFS hash not found!");
     fwrite(content->data, content->len, 1, stdout);
     fflush(stdout);
@@ -1157,7 +1113,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), args->data, NULL, gas_limit, value, data);
     method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
@@ -1213,9 +1169,9 @@ int main(int argc, char* argv[]) {
   }
   else if (strcmp(method, "chainspec") == 0) {
     char* json;
-    if (strlen(params) > 2) {
-      params[strlen(params) - 2] = 0;
-      json                       = (char*) readFile(fopen(params + 2, "r")).data;
+    if (args->len > 2) {
+      args->data[args->len - 2] = 0;
+      json                      = (char*) readFile(fopen(args->data + 2, "r")).data;
     }
     else
       json = (char*) readFile(stdin).data;
@@ -1281,7 +1237,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "ecrecover") == 0) {
-    json_ctx_t* rargs = parse_json(params);
+    json_ctx_t* rargs = parse_json(args->data);
     if (!rargs || d_len(rargs->result) < 2) die("Invalid arguments for recovery args must be : <message> <signature> ");
     bytes_t   msg = d_to_bytes(d_get_at(rargs->result, 0));
     bytes_t   sig = d_to_bytes(d_get_at(rargs->result, 1));
@@ -1312,7 +1268,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
 
-  in3_log_debug("..sending request %s %s\n", method, params);
+  in3_log_debug("..sending request %s %s\n", method, args->data);
   in3_chain_t* chain = in3_get_chain(c);
 
   if (wait && strcmp(method, "eth_sendTransaction") == 0) method = "eth_sendTransactionAndWait";
@@ -1321,7 +1277,7 @@ int main(int argc, char* argv[]) {
   sb_t* sb = sb_new("{\"method\":\"");
   sb_add_chars(sb, method);
   sb_add_chars(sb, "\",\"params\":");
-  sb_add_chars(sb, params);
+  sb_add_chars(sb, args->data);
   if (ms_sigs) {
     sb_add_chars(sb, ",\"in3\":{\"msSigs\":\"");
     sb_add_chars(sb, ms_sigs);

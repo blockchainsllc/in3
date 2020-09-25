@@ -1,0 +1,12 @@
+{
+  "test1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "block": null,
+      "executed": false,
+      "failReason": null,
+      "success": null
+    },
+    "id": 1
+  }
+}
