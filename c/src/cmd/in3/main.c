@@ -934,7 +934,7 @@ int main(int argc, char* argv[]) {
   }
   else if (strcmp(method, "abi_encode") == 0) {
     char*       error   = NULL;
-    json_ctx_t* in_data = parse_json(params);
+    json_ctx_t* in_data = parse_json(args->data);
     if (!in_data) die("iinvalid params");
     if (!sig) die("missing signature");
     abi_sig_t* s = abi_sig_create(sig, &error);
