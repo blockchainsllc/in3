@@ -39,6 +39,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include "stringbuilder.h"
 
 #ifdef DEBUG
 #define dbg_log(msg, ...)     __dbg_log(0, __FILE__, __func__, __LINE__, msg, ##__VA_ARGS__)
