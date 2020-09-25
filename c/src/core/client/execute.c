@@ -484,20 +484,6 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   return IN3_OK;
 }
 
-NONULL static char* convert_to_http_url(char* src_url) {
-  const int l = strlen(src_url);
-  if (strncmp(src_url, "https://", 8) == 0) {
-    char* url = _malloc(l);
-    strcpy(url, src_url + 1);
-    url[0] = 'h';
-    url[2] = 't';
-    url[3] = 'p';
-    return url;
-  }
-  else
-    return _strdupn(src_url, l);
-}
-
 NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   switch (in3_ctx_state(ctx)) {
     case CTX_ERROR:

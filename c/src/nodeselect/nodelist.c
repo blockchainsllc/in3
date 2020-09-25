@@ -366,6 +366,19 @@ uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t
   return (0xFFFF / avg) * blacklist_factor / 100;
 }
 
+NONULL static char* to_http_url(char* src_url) {
+  const size_t l = strlen(src_url);
+  if (strncmp(src_url, "https://", 8) == 0) {
+    char* url = _malloc(l);
+    strcpy(url, src_url + 1);
+    url[0] = 'h';
+    url[2] = 't';
+    url[3] = 'p';
+    return url;
+  }
+  return _strdupn(src_url, l);
+}
+
 node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         int len, uint64_t now, uint32_t* total_weight, int* total_found,
                                         in3_node_filter_t filter) {
