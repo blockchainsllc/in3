@@ -44,7 +44,7 @@ clangcheck:
 
 cppcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
+  image: docker.slock.it/build-images/cmake:gcc10
   extends: .only_full
   allow_failure: true
   needs: []
@@ -55,7 +55,7 @@ cppcheck:
     - cd _build
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
     - cd ..
-    - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/c/test/unity -i/builds/in3/c/in3-core/c/src/third-party
+    - cppcheck --quiet --project=_build/compile_commands.json -i/builds/in3/c/in3-core/c/test/unity -i/builds/in3/c/in3-core/c/src/third-party
 
 gcc10check:
   stage: analysis
