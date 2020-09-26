@@ -53,22 +53,23 @@ typedef struct signature {
   abi_coder_type_t type;
   union {
     struct {
-      struct signature** components;
-      int                len;
+      struct signature** components; /**< the pointer to an array of ponters to the types */
+      int                len;        /**< the number of componeents in the tuple */
     } tuple;
 
     struct {
-      struct signature* component;
-      int               len;
+      struct signature* component; /**< the pointer to the type of array */
+      int               len;       /**< the length of an array */
     } array;
 
     struct {
-      bool sign;
-      int  size;
+      bool sign; /**< uint or int */
+      int  size; /**< size in bits */
+      int  n;    /**< if n is set it is a fixed type ( fixed128x18 )*/
     } number;
 
     struct {
-      int len;
+      int len; /**< the number of bytes for a fixed bytes-type */
     } fixed;
 
   } data;

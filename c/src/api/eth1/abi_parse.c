@@ -50,6 +50,24 @@ static abi_coder_t* create_coder(char* token, char** error) {
     coder->data.number.sign = true;
     start_number            = token + 3;
   }
+  else if (strncmp(token, "fixed", 5) == 0 || strncmp(token, "ufixed", 6) == 0) {
+    char tmp[4];
+    coder->type             = ABI_NUMBER;
+    coder->data.number.sign = *token == 'f';
+    start_number            = token + (coder->data.number.sign ? 5 : 6);
+    char* x                 = strchr(token, 'x');
+    if (!*start_number) {
+      coder->data.number.n    = 18;
+      coder->data.number.size = 128;
+      start_number            = NULL;
+    }
+    else {
+      if (!x || !(x - start_number) || (x - start_number) > 3) return abi_error(error, "invalid fixed type, must be (u)fixed<M<x<N>", coder);
+      coder->data.number.size = strtol(strncpy(tmp, start_number, x - start_number), NULL, 10);
+      start_number            = x + 1;
+      if (coder->data.number.size % 8) return abi_error(error, "invalid number length", coder);
+    }
+  }
   else if (strncmp(token, "bytes", 5) == 0) {
     coder->type  = strlen(token) > 5 ? ABI_FIXED_BYTES : ABI_BYTES;
     start_number = token + 5;
@@ -61,8 +79,14 @@ static abi_coder_t* create_coder(char* token, char** error) {
     int i = strlen(start_number) ? atoi(start_number) : 256;
     if (coder->type == ABI_FIXED_BYTES)
       coder->data.fixed.len = i;
-    else
-      coder->data.number.size = i;
+    else if (coder->type == ABI_NUMBER) {
+      if (coder->data.number.size)
+        coder->data.number.n = i;
+      else if (i % 8)
+        return abi_error(error, "invalid number length", coder);
+      else
+        coder->data.number.size = i;
+    }
   }
 
   return coder;
@@ -167,8 +191,10 @@ static sb_t* add_fn_sig(sb_t* sb, abi_coder_t* coder) {
     case ABI_STRING: return sb_add_chars(sb, "string");
     case ABI_BYTES: return sb_add_chars(sb, "bytes");
     case ABI_NUMBER: {
-      sb_add_chars(sb, coder->data.number.sign ? "int" : "uint");
-      return sb_add_int(sb, coder->data.number.size);
+      if (coder->data.number.n)
+        return sb_print(sb, "%s%ix%i", coder->data.number.sign ? "fixed" : "ufixed", coder->data.number.size, coder->data.number.n);
+      else
+        return sb_print(sb, "%s%i", coder->data.number.sign ? "int" : "uint", coder->data.number.size);
     }
     case ABI_FIXED_BYTES: {
       sb_add_chars(sb, "bytes");
