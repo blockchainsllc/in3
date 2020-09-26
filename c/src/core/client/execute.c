@@ -665,7 +665,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   for (int n = 0; n < nodes_count; n++) {
     in3_node_t* node_data = rpc ? NULL : ctx_get_node(chain, node);
-    urls[n]               = rpc ? rpc : node_data->url;
+    urls[n]               = node_data ? node_data->url : rpc;
 
     // cif we use_http, we need to malloc a new string, so we also need to free it later!
     if (ctx->client->flags & FLAGS_HTTP) urls[n] = convert_to_http_url(urls[n]);

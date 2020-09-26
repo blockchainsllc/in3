@@ -1042,17 +1042,20 @@ in3_ret_t in3_plugin_register(const char* name, in3_t* c, in3_plugin_supp_acts_t
     p = &(*p)->next;
   }
 
-  // didn't find any existing, so we add a new ...
-  *p              = _malloc(sizeof(in3_plugin_t));
-  (*p)->acts      = acts;
-  (*p)->action_fn = action_fn;
-  (*p)->data      = data;
-  (*p)->next      = NULL;
+  assert(p != NULL);
+  in3_plugin_t* new_p = _malloc(sizeof(in3_plugin_t));
+  *p                  = new_p;
+  new_p->acts         = acts;
+  new_p->action_fn    = action_fn;
+  new_p->data         = data;
+  new_p->next         = NULL;
 #ifdef LOGGING
-  (*p)->name = name;
+  new_p->name = name;
 #endif
-  c->plugin_acts |= acts;
-  return IN3_OK;
+
+ // didn't find any existing, so we add a new ...
+ c->plugin_acts |= acts;
+ return IN3_OK;
 }
 
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {

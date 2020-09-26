@@ -56,7 +56,7 @@ cppcheck:
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
     - sed -i 's/\\\\\\/\\/g' compile_commands.json
     - cd ..
-    - cppcheck --quiet --project=_build/compile_commands.json -i/builds/in3/c/in3-core/c/test -i/builds/in3/c/in3-core/c/src/third-party
+    - cppcheck --quiet --project=_build/compile_commands.json -i/usr/include -i/builds/in3/c/in3-core/c/test -i/builds/in3/c/in3-core/c/src/third-party
 
 gcc10check:
   stage: analysis
