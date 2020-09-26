@@ -1053,9 +1053,9 @@ in3_ret_t in3_plugin_register(const char* name, in3_t* c, in3_plugin_supp_acts_t
   new_p->name = name;
 #endif
 
- // didn't find any existing, so we add a new ...
- c->plugin_acts |= acts;
- return IN3_OK;
+  // didn't find any existing, so we add a new ...
+  c->plugin_acts |= acts;
+  return IN3_OK;
 }
 
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {
