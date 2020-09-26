@@ -667,11 +667,15 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     in3_node_t* node_data = rpc ? NULL : ctx_get_node(chain, node);
     urls[n]               = node_data ? node_data->url : rpc;
 
+    assert(urls[n] != NULL);
+
     // cif we use_http, we need to malloc a new string, so we also need to free it later!
     if (ctx->client->flags & FLAGS_HTTP) urls[n] = convert_to_http_url(urls[n]);
 
     // this is all we need to do if we have a rpc-node
     if (rpc) break;
+
+    assert(node_data != NULL);
 
     // if the multichain-prop is set we need to specify the chain_id in the request
     if (in3_node_props_get(node_data->props, NODE_PROP_MULTICHAIN)) multichain = true;
