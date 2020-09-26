@@ -56,6 +56,9 @@ static abi_coder_t* create_coder(char* token, char** error) {
     coder->data.number.sign = *token == 'f';
     start_number            = token + (coder->data.number.sign ? 5 : 6);
     char* x                 = strchr(token, 'x');
+#ifdef __clang_analyzer__
+    *start_number = 0; // the analyser is able to understand, that start_number can noot point to a garbage-value.
+#endif
     if (!*start_number) {
       coder->data.number.n    = 18;
       coder->data.number.size = 128;
