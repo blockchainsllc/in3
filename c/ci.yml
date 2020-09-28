@@ -270,6 +270,3 @@ integration_longrun:
   image: docker.slock.it/build-images/cmake:in3-integration
   script:
     - "curl -X POST -F token=ac70e1da83b3b0ab6ca1fec0fd19d4 -F ref=master https://git.slock.it/api/v4/projects/652/trigger/pipeline"
-  only:
-    - tags
-    - develop
