@@ -463,28 +463,19 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
 }
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
-  in3_ret_t             ret  = IN3_OK;
-  in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-
   json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
-  if (json == NULL) {
-    ret = IN3_ECONFIG;
-    goto FREE_DATA;
-  }
+  if (json == NULL)
+    return IN3_ECONFIG;
 
-  in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result, .error_msg = NULL};
-  ret                      = config_set(data, &cctx);
-  if (IN3_OK != ret) {
+  in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
+  in3_configure_ctx_t   cctx = {.client = c, .json = json, .token = json->result + 1, .error_msg = NULL};
+  if (IN3_OK != config_set(data, &cctx)) {
     in3_log_error("nodeselect config error: %s\n", cctx.error_msg);
-    goto FREE_JSON;
+    json_free(json);
+    _free(data);
+    return IN3_ECONFIG;
   }
 
-  ret = plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA, nodeselect, data, false);
-
-FREE_JSON:
-  json_free(json);
-
-FREE_DATA:
-  _free(data);
-  return ret;
+  in3_cache_init(c, data);
+  return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA, nodeselect, data, false);
 }
