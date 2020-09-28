@@ -306,9 +306,10 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
 }
 
 in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
-  d_token_t *storage_proof = NULL, *server_list = NULL;
-  in3_ret_t  res = verify_account(vc, vc->chain->whitelist ? vc->chain->whitelist->contract : NULL, &storage_proof, &server_list);
-
+  d_token_t *        storage_proof = NULL, *server_list = NULL;
+  in3_get_data_ctx_t dctx = {.type = GET_DATA_WHITELIST_CONTRACT};
+  in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
+  in3_ret_t res = verify_account(vc, dctx.data, &storage_proof, &server_list);
   return res == IN3_OK ? verify_whitelist_data(vc, server_list, storage_proof) : res;
 }
 
