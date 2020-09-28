@@ -407,7 +407,7 @@ typedef in3_ctx_t in3_nl_pick_ctx_t;
 typedef node_match_t in3_nl_blacklist_ctx_t;
 
 // -------- GET_DATA ---------
-typedef enum { GET_DATA_NODES } in3_get_data_type_t;
+typedef enum { GET_DATA_WHITELIST_CONTRACT } in3_get_data_type_t;
 
 /**
  * context used during get data
