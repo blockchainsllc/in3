@@ -23,44 +23,25 @@ workflow:
 # defines all the stages in the CI, this includes all stages defined inside the included yml files
 stages:
   - build
-  # - bindings
-  # - wasm
-  # - rust
-  # - python
-  # - dotnet
-  # - java
-  # - test
-  # - analysis
-  # - deploy
-  # - release
-checklist:
-  stage: build
-  image: docker.slock.it/build-images/cmake:in3-integration
-  script:
-    - "curl -X POST -F token=ac70e1da83b3b0ab6ca1fec0fd19d4 -F ref=develop https://git.slock.it/api/v4/projects/652/trigger/pipeline"
-  only:
-    - tags
-  except:
-    - master
-    - develop
+  - bindings
+  - wasm
+  - rust
+  - python
+  - dotnet
+  - java
+  - test
+  - analysis
+  - deploy
+  - release
 
-# proj-release:
-#   trigger:
-#     project: my/deployment
-#     branch: stable-11-2
-#   only:
-#     - tags
-#   except:
-#     - master
-  
 # all the CI files to include and run, they are imported before the CI is started
-# include:
-#   - local: "code-quality.gitlab-ci.yml"
-#   - local: "/c/ci.yml"
-#   - local: "/c/ci-analyse.yml"
-#   - local: "/c/ci-deploy.yml"
-#   - local: "/wasm/ci.yml"
-#   - local: "/java/ci.yml"
-#   - local: "/python/ci.yml"
-#   - local: "/dotnet/ci.yml"
-#   - local: "/rust/ci.yml"
+include:
+  - local: "code-quality.gitlab-ci.yml"
+  - local: "/c/ci.yml"
+  - local: "/c/ci-analyse.yml"
+  - local: "/c/ci-deploy.yml"
+  - local: "/wasm/ci.yml"
+  - local: "/java/ci.yml"
+  - local: "/python/ci.yml"
+  - local: "/dotnet/ci.yml"
+  - local: "/rust/ci.yml"

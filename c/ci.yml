@@ -1,3 +1,8 @@
+.only_release:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
 .only_full:
   rules:
     - changes:
@@ -257,3 +262,14 @@ examples_macos:
     - ./build.sh
   tags:
     - mac-os
+
+
+integration_longrun:
+  stage: test
+  extends: .only_release
+  image: docker.slock.it/build-images/cmake:in3-integration
+  script:
+    - "curl -X POST -F token=ac70e1da83b3b0ab6ca1fec0fd19d4 -F ref=master https://git.slock.it/api/v4/projects/652/trigger/pipeline"
+  only:
+    - tags
+    - develop
