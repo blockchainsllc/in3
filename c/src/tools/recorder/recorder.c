@@ -128,14 +128,13 @@ static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t actio
 
 static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req   = plugin_ctx;
-  in3_chain_t*   chain = &req->ctx->client->chain;
-  node_match_t*  m     = req->ctx->nodes;
-  in3_ret_t      res   = rec.transport(NULL, action, plugin_ctx);
+  in3_request_t* req = plugin_ctx;
+  node_match_t*  m   = req->ctx->nodes;
+  in3_ret_t      res = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     fprintf(rec.f, ":: request ");
     for (int i = 0; m; i++, m = m->next)
-      fprintf(rec.f, "%s ", ctx_get_node(chain, m)->url);
+      fprintf(rec.f, "%s ", m->url);
     fprintf(rec.f, "\n     %s\n\n", req->payload);
     fflush(rec.f);
   }
@@ -144,7 +143,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
     for (int i = 0; m; i++, m = m->next) {
       in3_response_t* r = req->ctx->raw_response + i;
       if (r->time) {
-        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, ctx_get_node(chain, m)->url, r->state, r->time);
+        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, m->url, r->state, r->time);
         char* data = format_json(r->data.data ? r->data.data : "");
         fprintf(rec.f, "%s\n\n", data);
         fflush(rec.f);
