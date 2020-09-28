@@ -10,6 +10,7 @@
 #else
 #include "../transport/http/in3_http.h"
 #endif
+#include "../nodeselect/nodeselect_def.h"
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
@@ -61,11 +62,15 @@ static void init_transport() {
 #endif /* USE_CURL */
 #endif /* TRANSPORTS */
 }
+static void init_nodeselect() {
+  in3_register_default(in3_register_nodeselect_def);
+}
 void in3_init() {
   if (!initialized) {
     initialized = true;
     init_transport();
     init_verifier();
+    init_nodeselect();
   }
 }
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
