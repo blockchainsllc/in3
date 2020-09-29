@@ -393,33 +393,36 @@ void set_chain_id(in3_t* c, char* id) {
 }
 
 // prepare a eth_call or eth_sendTransaction
-call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
-  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;                          // only if we have a function signature, we will parse it and create a call_request.
-  if (req && req->error) die(req->error);                                                // parse-error we stop here.
-  if (req && req->in_data->type == A_TUPLE) {                                            // if type is a tuple, it means we have areuments we need to parse.
-    json_ctx_t* in_data = parse_json(args);                                              // the args are passed as a "[]"- json-array string.
-    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data"); // we then set the data, which appends the arguments to the functionhash.
-    json_free(in_data);                                                                  // of course we clean up ;-)
-  }                                                                                      //
-  sb_t* params = sb_new("[{");                                                           // now we create the transactionobject as json-argument.
-  if (to) {                                                                              // if this is a deployment we must not include the to-property
+abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
+  char*      error = NULL;
+  bytes_t    rdata = {0};
+  abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
+  if (error) die(error);                                             // parse-error we stop here.
+  if (req) {                                                         // if type is a tuple, it means we have areuments we need to parse.
+    json_ctx_t* in_data = parse_json(args);                          // the args are passed as a "[]"- json-array string.
+    rdata               = abi_encode(req, in_data->result, &error);  //encode data
+    if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
+    json_free(in_data);                                              // of course we clean up ;-)
+  }                                                                  //
+  sb_t* params = sb_new("[{");                                       // now we create the transactionobject as json-argument.
+  if (to) {                                                          // if this is a deployment we must not include the to-property
     sb_add_chars(params, "\"to\":\"");
     sb_add_chars(params, to);
     sb_add_chars(params, "\" ");
   }
-  if (req || data) {                                                  // if we have a request context or explicitly data we create the data-property
-    if (params->len > 2) sb_add_char(params, ',');                    // add comma if this is not the first argument
-    sb_add_chars(params, "\"data\":");                                // we will have a data-property
-    if (req && data) {                                                // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
-      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len); // in this case we skip the functionsignature.
+  if (req || data) {                                      // if we have a request context or explicitly data we create the data-property
+    if (params->len > 2) sb_add_char(params, ',');        // add comma if this is not the first argument
+    sb_add_chars(params, "\"data\":");                    // we will have a data-property
+    if (req && data) {                                    // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
+      uint8_t* full = _malloc(rdata.len - 4 + data->len); // in this case we skip the functionsignature.
       memcpy(full, data->data, data->len);
-      memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
-      bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
+      memcpy(full + data->len, rdata.data + 4, rdata.len - 4);
+      bytes_t bb = bytes(full, rdata.len - 4 + data->len);
       sb_add_bytes(params, "", &bb, 1, false);
       _free(full);
     }
     else if (req)
-      sb_add_bytes(params, "", &req->call_data->b, 1, false);
+      sb_add_bytes(params, "", &rdata, 1, false);
     else if (data)
       sb_add_bytes(params, "", data, 1, false);
   }
@@ -667,28 +670,28 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                         = in3_for_chain(0);
-  c->request_count                 = 2;
-  bool            out_response     = false;
-  int             run_test_request = 0;
-  bool            force_hex        = false;
-  char*           sig              = NULL;
-  char*           to               = NULL;
-  char*           block_number     = "latest";
-  char*           name             = NULL;
-  call_request_t* req              = NULL;
-  bool            json             = false;
-  char*           ms_sigs          = NULL;
-  uint64_t        gas_limit        = 100000;
-  char*           value            = NULL;
-  bool            wait             = false;
-  char*           pwd              = NULL;
-  char*           pk_file          = NULL;
-  char*           validators       = NULL;
-  bytes_t*        data             = NULL;
-  char*           port             = NULL;
-  char*           sig_type         = "raw";
-  bool            to_eth           = false;
+  in3_t* c                    = in3_for_chain(0);
+  c->request_count            = 2;
+  bool       out_response     = false;
+  int        run_test_request = 0;
+  bool       force_hex        = false;
+  char*      sig              = NULL;
+  char*      to               = NULL;
+  char*      block_number     = "latest";
+  char*      name             = NULL;
+  abi_sig_t* req              = NULL;
+  bool       json             = false;
+  char*      ms_sigs          = NULL;
+  uint64_t   gas_limit        = 100000;
+  char*      value            = NULL;
+  bool       wait             = false;
+  char*      pwd              = NULL;
+  char*      pk_file          = NULL;
+  char*      validators       = NULL;
+  bytes_t*   data             = NULL;
+  char*      port             = NULL;
+  char*      sig_type         = "raw";
+  bool       to_eth           = false;
   plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
 #ifndef USE_WINHTTP
@@ -930,29 +933,34 @@ int main(int argc, char* argv[]) {
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
+    char*       error   = NULL;
+    json_ctx_t* in_data = parse_json(args->data);
+    if (!in_data) die("iinvalid params");
     if (!sig) die("missing signature");
-    req = parseSignature(sig);
-    if (req && req->in_data->type == A_TUPLE) {
-      json_ctx_t* in_data = parse_json(args->data);
-      if (set_data(req, in_data->result, req->in_data) < 0) die("invalid arguments for given signature");
+    abi_sig_t* s = abi_sig_create(sig, &error);
+    if (s && !error) {
+      bytes_t data = abi_encode(s, in_data->result, &error);
+      if (data.data)
+        print_hex(data.data, data.len);
     }
-    if (!req || !req->call_data) die("missing call data");
-    print_hex(req->call_data->b.data, req->call_data->b.len);
+    if (error) die(error);
     recorder_exit(0);
   }
   else if (strcmp(method, "abi_decode") == 0) {
+    char*       error   = NULL;
+    json_ctx_t* in_data = parse_json(args->data);
+    if (!in_data) die("invalid params");
     if (!sig) die("missing signature");
-    if (!strchr(sig, ':')) {
-      char* tmp = malloc(strlen(sig) + 5);
-      strcpy(tmp, "d():");
-      strcpy(tmp + 4, sig);
-      sig = tmp;
+    abi_sig_t* s = abi_sig_create(sig, &error);
+    if (s && !error) {
+      bytes_t     data = d_to_bytes(d_get_at(parse_json(args->data)->result, 0));
+      json_ctx_t* res  = abi_decode(s, data, &error);
+      if (json)
+        recorder_print(0, "%s\n", d_create_json(res, res->result));
+      else
+        print_val(res->result);
     }
-    json_ctx_t* res = req_parse_result(parseSignature(sig), d_to_bytes(d_get_at(parse_json(args->data)->result, 0)));
-    if (json)
-      recorder_print(0, "%s\n", d_create_json(res, res->result));
-    else
-      print_val(res->result);
+    if (error) die(error);
     recorder_exit(0);
 #ifdef IPFS
   }
@@ -1313,8 +1321,10 @@ int main(int argc, char* argv[]) {
     if (req) {
       int l = strlen(result) / 2 - 1;
       if (l) {
-        uint8_t*    tmp = alloca(l + 1);
-        json_ctx_t* res = req_parse_result(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)));
+        char*       error = NULL;
+        uint8_t*    tmp   = alloca(l + 1);
+        json_ctx_t* res   = abi_decode(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)), &error);
+        if (error) die(error);
         if (json)
           recorder_print(0, "%s\n", d_create_json(res, res->result));
         else

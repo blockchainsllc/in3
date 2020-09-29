@@ -138,8 +138,17 @@ function checkAddressChecksum(ad, chain = 0) {
 }
 
 function abiEncode(sig, ...params) {
-    const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
-    return call_string('abi_encode', sig, JSON.stringify(convert(params)))
+    const convert = a => Array.isArray(a)
+        ? a.map(convert)
+        : (a && a.__proto__ === Object.prototype)
+            ? convert(Object.values(a))
+            : toHex(a)
+    try {
+        return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params)))
+    }
+    catch (x) {
+        throw new Error("Error trying to abi encode '" + sig + '": ' + x.message + ' with ' + JSON.stringify(params))
+    }
 }
 
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
@@ -149,12 +158,20 @@ function ecSign(pk, data, hashMessage = true, adjustV = true) {
 }
 
 function abiDecode(sig, data) {
-    const types = splitTypes(sig.substr(sig.indexOf(':') + 1))
+    const types_sig = sig.substr(sig.indexOf(':') + 1)
+    const types = splitTypes(types_sig)
+    const allowOne = types.length == 1 && !types_sig.startsWith('(')
     data = toUint8Array(data)
-    let res = JSON.parse(call_string('abi_decode', sig, data, data.byteLength))
-    if (types.length == 1) res = [res]
-    if (!res.length) return []
-    return convertTypes(types, res)
+    if (!types.length) {
+        if (data.byteLength) throw new Error('the signature ' + sig + ' does not expect any data but ' + data.byteLength + ' were passed')
+        else return []
+    }
+    try {
+        let res = JSON.parse(call_string('wasm_abi_decode', sig, data, data.byteLength))
+        return allowOne ? convertType(res, types[0]) : convertTypes(types, res)
+    } catch (x) {
+        throw new Error('Error decoding ' + sig + ' with ' + toHex(data) + ' : ' + x.message)
+    }
 }
 
 function convertType(val, t) {
@@ -170,7 +187,7 @@ function convertType(val, t) {
         case 'bool':
             return !!toNumber(val)
         case 'address':
-            return toHex(val, 20)
+            return toChecksumAddress(toHex(val, 20))
         case 'string':
             return toUtf8(val)
         case 'bytes':
@@ -212,6 +229,33 @@ function splitTypes(types, removeBrackets = true) {
     return res
 }
 
+function randomBytes(len) {
+    const vals = new Uint8Array(len)
+    try {
+        return toBuffer(crypto.getRandomValues(vals))
+    }
+    catch (x) {
+        try {
+            return toBuffer(require('crypto').randomBytes(len))
+        }
+        catch (y) {
+            const seed = keccak(Date.now())
+            for (let i = 0; i < len; i++)
+                vals[i] = seed[i % 32] ^ Math.floor(Math.random() * 256)
+            return toBuffer(vals)
+        }
+    }
+}
+
+function convertInt2Hex(val) {
+    if (val.length < 16)
+        return parseInt(val).toString(16)
+    else
+        return val.startsWith('-')
+            ? '-' + call_string('wasm_to_hex', val.substr(1)).substr(2)
+            : call_string('wasm_to_hex', val).substr(2)
+}
+
 /**
  * converts any value as hex-string
  */
@@ -222,17 +266,11 @@ function toHex(val, bytes) {
     if (typeof val === 'string')
         hex = val.startsWith('0x')
             ? val.substr(2)
-            : (parseInt(val[0]) ? BigInt(val).toString(16) : convertUTF82Hex(val))
+            : (!isNaN(parseInt(val[val[0] == '-' ? 1 : 0])) ? convertInt2Hex(val) : convertUTF82Hex(val))
     else if (typeof val === 'boolean')
         hex = val ? '01' : '00'
-    else if (typeof val === 'number' || typeof val === 'bigint') {
+    else if (typeof val === 'number' || typeof val === 'bigint')
         hex = val.toString(16)
-        if (hex.startsWith('-')) {
-            let n = new Array(hex.length - 1), o = 0;
-            for (let i = hex.length - 1; i > 0; i--) n[hex.length - i] = parseInt(hex[i], 16)
-            hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).reverse().join(''), (bytes || 32) * 2, 'f')
-        }
-    }
     else if (val && val._isBigNumber) // BigNumber
         hex = val.toHexString()
     else if (val && (val.redIMul || val.readBigInt64BE)) // bn.js or nodejs Buffer
@@ -242,6 +280,12 @@ function toHex(val, bytes) {
         for (let i = 0; i < val.byteLength; i++) hex += padStart(ar[i].toString(16), 2, '0')
     } else
         throw new Error('Unknown or unsupported type : ' + JSON.stringify(val))
+
+    if (hex.startsWith('-')) {
+        let n = new Array(hex.length - 1), o = 0;
+        for (let i = hex.length - 1; i > 0; i--) n[hex.length - i] = parseInt(hex[i], 16)
+        hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).reverse().join(''), (bytes || 32) * 2, 'f')
+    }
 
     if (bytes)
         hex = padStart(hex, bytes * 2, '0'); // workaround for ts-error in older js
@@ -296,7 +340,7 @@ function toUint8Array(val, len = -1) {
     if (typeof val == 'string') {
         let b;
         if (val && !val.startsWith('0x') && val.length && (parseInt(val) || val == '0'))
-            val = '0x' + BigInt(val).toString(16)
+            val = toHex(val)
 
         if (val.startsWith('0x')) {
             val = fixLength(val.substr(2))
@@ -308,7 +352,7 @@ function toUint8Array(val, len = -1) {
         }
         val = b
     } else if (typeof val == 'number')
-        val = val === 0 && len === 0 ? new Uint8Array(0) : toBuffer(fixLength(val.toString(16)), len);
+        val = val === 0 && len === 0 ? new Uint8Array(0) : toBuffer('0x' + fixLength(val.toString(16)), len);
     else if (val && val.redIMul)
         val = val.toArrayLike(Uint8Array)
     if (!val)
@@ -322,6 +366,11 @@ function toUint8Array(val, len = -1) {
         let b = new Uint8Array(len)
         for (let i = 0; i < val.byteLength; i++)
             b[len - val.byteLength + i] = val[i]
+        return b
+    }
+    if (val.__proto__ !== Uint8Array.prototype) {
+        let b = new Uint8Array(val.byteLength)
+        for (let i = 0; i < val.byteLength; i++) b[i] = val[i]
         return b
     }
     return val;
@@ -364,7 +413,7 @@ function getAddress(pk) {
 }
 /** removes all leading 0 in the hexstring */
 function toMinHex(key) {
-    if (typeof key !== 'string')
+    if (typeof key !== 'string' || !key.startsWith('0x'))
         key = toHex(key)
     if (typeof key === 'number')
         key = toHex(key);
@@ -498,6 +547,7 @@ const util = {
     splitSignature,
     private2address,
     soliditySha3,
+    randomBytes,
     createSignatureHash,
     toUint8Array,
     base64Decode,

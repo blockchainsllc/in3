@@ -420,11 +420,19 @@ class EthAPI {
                             tx.method = signature
                             tx.args = args
                             tx.confirmations = ob.transactionConfirmationBlocks || 1
-                            tx.to = ob.options.address
-                            return api.sendTransaction(tx)
+                            tx.to = tx.to || ob.options.address
+                            return api.sendTransaction(tx).then(r => ({
+                                ...r,
+                                events: r.logs.reduce((p, l) => {
+                                    const e = decodeEventData(l, ob)
+                                    const def = abi.find(_ => e && _.name === e.event)
+                                    if (def) p[def.name] = { ...l, returnValues: e }
+                                    return p
+                                }, {})
+                            }))
                         },
                         encodeABI: () => toHex(abiEncode(signature, ...args)),
-                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(ob.options.address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
+                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex((options && options.to) || ob.options.address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
                     })
                     txOb._def = def
                     if (ob.methods[def.name]) {
@@ -454,6 +462,7 @@ class EthAPI {
                         {
                             address: ob.options.address,
                             fromBlock: options.fromBlock || 'latest',
+                            toBlock: options.toBlock || 'latest',
                             topics: createTopics(def.name, options),
                             limit: options.limit || 50
                         },
@@ -478,6 +487,7 @@ class EthAPI {
             {
                 address: ob.options.address,
                 fromBlock: options.fromBlock || 'latest',
+                toBlock: options.toBlock || 'latest',
                 limit: options.limit || 50
             },
             ob.options.transactionPollingTimeout,
@@ -492,12 +502,11 @@ class EthAPI {
                 topics: ev === 'allEvents' ? [] : createTopics(ev, options)
             }).then(logs => logs.map(l => {
                 const e = decodeEventData(l, ob)
-                const def = abi.find(_ => _.name === e.event)
-                if (!def) throw new Error('unknown event found!')
+                const def = e && abi.find(_ => _.name === e.event)
+                if (!def) return null
                 delete e.event
                 return { ...l, event: def.name, returnValues: e, signature: def.name + createSignature(def.inputs) }
-            }))
-
+            }).filter(_ => _))
 
         }
 
@@ -648,6 +657,7 @@ function createSignature(fields) {
         const t = baseType.indexOf('[')
         if (t > 0) baseType = baseType.substr(0, t)
         if (baseType === 'uint' || baseType === 'int') baseType += '256'
+        if (baseType === 'tuple') baseType = createSignature(f.components)
         return baseType + (t < 0 ? '' : f.type.substr(t))
     }).join(',') + ')'
 }
@@ -673,10 +683,10 @@ function decodeEvent(log, d) {
 
     if (indexed.length) {
         let logBufs = appendBuffers(log.topics.slice(1).map(_ => toBuffer(_)))
-        abiDecode(`prefix():${createSignature(indexed)}`, logBufs).forEach((v, i) => r[indexed[i].name] = v)
+        abiDecode(createSignature(indexed), logBufs).forEach((v, i) => r[indexed[i].name] = v)
     }
     if (unindexed.length)
-        abiDecode(`prefix():${createSignature(unindexed)}`, toBuffer(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
+        abiDecode(createSignature(unindexed), toBuffer(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
     return r
 }
 

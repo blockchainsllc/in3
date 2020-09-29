@@ -77,9 +77,9 @@ static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, 
 
   uint8_t* digest     = NULL;
   size_t   digest_len = 0;
+  uint8_t  d_[32]     = {0};
   if (hash == MH_H_SHA2_256) {
-    uint8_t d_[32] = {0};
-    digest_len     = 32;
+    digest_len = 32;
     SHA256_CTX ctx;
     sha256_Init(&ctx);
     sha256_Update(&ctx, buf2, stream.bytes_written);

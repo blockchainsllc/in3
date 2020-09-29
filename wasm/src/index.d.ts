@@ -605,12 +605,13 @@ export type ABI = {
     anonymous?: boolean
     constant?: boolean
     payable?: boolean
-    stateMutability?: string
-
+    stateMutability?: 'pure' | 'view' | 'nonpayable' | 'payable' | string
+    components?: ABIField[],
     inputs?: ABIField[],
-    outputs?: ABIField[]
+    outputs?: ABIField[] | any[]
     name?: string
-    type: string
+    type: 'function' | 'constructor' | 'event' | 'fallback' | string
+    internalType?: string
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
@@ -717,6 +718,13 @@ export declare interface Utils<BufferType> {
      * @param data the data as Uint8Array or hex data.
      */
     keccak(data: BufferType | Data): BufferType
+
+    /**
+     * returns a Buffer with strong random bytes.
+     * Thsi will use the browsers crypto-module or in case of nodejs use the crypto-module there.
+     * @param len the number of bytes to generate.
+     */
+    randomBytes(len: number): BufferType
 
     /**
      * converts any value to a hex string (with prefix 0x).

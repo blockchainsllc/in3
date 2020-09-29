@@ -41,7 +41,9 @@
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/in3_init.h"
-
+#ifdef ETH_FULL
+#include "../../c/src/third-party/tommath/tommath.h"
+#endif
 #ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
@@ -54,6 +56,12 @@
 #include "../../c/src/api/eth1/abi.h"
 #include "../../c/src/api/utils/api_utils.h"
 #endif
+
+static char  err_msg[1000];
+static char* err_string_var(char* msg) {
+  snprintf(err_msg, 1000, ":ERROR:%s", msg);
+  return err_msg;
+}
 
 #define err_string(msg) (":ERROR:" msg)
 #define BLACKLISTTIME   24 * 3600
@@ -373,48 +381,46 @@ char* EMSCRIPTEN_KEEPALIVE to_checksum_address(address_t adr, int chain_id) {
   return result;
 }
 
-char* EMSCRIPTEN_KEEPALIVE abi_encode(char* sig, char* json_params) {
+char* EMSCRIPTEN_KEEPALIVE wasm_abi_encode(char* sig, char* json_params) {
 #ifdef ETH_API
-  call_request_t* req = parseSignature(sig);
-  if (!req) return err_string("invalid function signature");
+  char*      error = NULL;
+  abi_sig_t* req   = abi_sig_create(sig, &error);
+  if (error) return err_string_var(error);
 
   json_ctx_t* params = parse_json(json_params);
   if (!params) {
-    req_free(req);
+    abi_sig_free(req);
+
     return err_string("invalid json data");
   }
 
-  if (set_data(req, params->result, req->in_data) < 0) {
-    req_free(req);
-    json_free(params);
-    return err_string("invalid input data");
-  }
+  bytes_t data = abi_encode(req, params->result, &error);
   json_free(params);
-  char* result = malloc(req->call_data->b.len * 2 + 3);
-  if (!result) {
-    req_free(req);
-    return err_string("malloc failed for the result");
-  }
-  bytes_to_hex(req->call_data->b.data, req->call_data->b.len, result + 2);
+  abi_sig_free(req);
+  if (error) return err_string_var(error);
+  char* result = _malloc(data.len * 2 + 3);
+  bytes_to_hex(data.data, data.len, result + 2);
   result[0] = '0';
   result[1] = 'x';
-  req_free(req);
+  _free(data.data);
   return result;
 #else
   UNUSED_VAR(sig);
   UNUSED_VAR(json_params);
-  return _strdupn(err_string("ETH_API deactivated!"), -1);
+  return err_string("ETH_API deactivated!");
 #endif
 }
 
-char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
+char* EMSCRIPTEN_KEEPALIVE wasm_abi_decode(char* sig, uint8_t* data, int len) {
 #ifdef ETH_API
-  call_request_t* req = parseSignature(sig);
-  if (!req) return err_string("invalid function signature");
-  json_ctx_t* res = req_parse_result(req, bytes(data, len));
-  req_free(req);
-  if (!res)
-    return err_string("the input data can not be decoded");
+  char*      error = NULL;
+  abi_sig_t* req   = abi_sig_create(sig, &error);
+  if (error) return err_string_var(error);
+
+  json_ctx_t* res = abi_decode(req, bytes(data, len), &error);
+  abi_sig_free(req);
+  if (error)
+    return err_string_var(error);
   char* result = d_create_json(res, res->result);
   json_free(res);
   return result;
@@ -422,8 +428,35 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   UNUSED_VAR(sig);
   UNUSED_VAR(data);
   UNUSED_VAR(len);
-  return _strdupn(err_string("ETH_API deactivated!"), -1);
+  return err_string("ETH_API deactivated!");
 #endif
+}
+
+char* EMSCRIPTEN_KEEPALIVE wasm_to_hex(char* val) {
+  int l = strlen(val);
+  for (int i = 0; i < l; i++) {
+    if (val[i] < '0' || val[i] > '9') return err_string("Invalid character in number");
+  }
+  uint8_t data[32];
+  size_t  s;
+
+#ifdef ETH_FULL
+  mp_int d;
+  mp_init(&d);
+  mp_read_radix(&d, val, 10);
+  mp_export(data, &s, 1, sizeof(uint8_t), 1, 0, &d);
+  mp_clear(&d);
+#else
+  s          = 8;
+  uint8_t* p = data;
+  long_to_bytes(strtoll(val, NULL, 10), p);
+  optimize_len(p, s)
+#endif
+  char* hex = _malloc(s * 2 + 3);
+  hex[0]    = '0';
+  hex[1]    = 'x';
+  bytes_to_hex(data, s, hex + 2);
+  return hex;
 }
 
 /** private key to address */

@@ -253,7 +253,7 @@ sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args) {
 
   va_list cpy;
   va_copy(cpy, args);
-  int w = vsnprintf(sb->data + sb->len, n, fmt, args);
+  int w = vsnprintf(sb->data + sb->len, n + 1, fmt, args);
   if (w > n) {
     check_size(sb, w + 1);
     vsprintf(sb->data + sb->len, fmt, cpy);
