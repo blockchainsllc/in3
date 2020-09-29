@@ -476,7 +476,7 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
     case PLGN_ACT_GET_DATA: {
       in3_get_data_ctx_t* pctx = plugin_ctx;
       if (pctx->type == GET_DATA_WHITELIST_CONTRACT) {
-        pctx->data = data->whitelist ? data->whitelist->contract: NULL;
+        pctx->data    = data->whitelist ? data->whitelist->contract : NULL;
         pctx->cleanup = NULL;
         return IN3_OK;
       }
@@ -500,6 +500,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
     return IN3_ECONFIG;
   }
 
+  data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
   in3_cache_init(c, data);
   return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA, nodeselect, data, false);
 }
