@@ -828,7 +828,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   // if we have required-contextes, we need to check them first
   if (ctx->required && (ret = in3_ctx_execute(ctx->required))) {
     if (ret == IN3_EIGNORE)
-      ctx_handle_failable(ctx);
+      in3_plugin_execute_first(ctx, PLGN_ACT_NL_FAILABLE, ctx);
     else
       return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
   }
