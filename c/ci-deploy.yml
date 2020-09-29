@@ -2,6 +2,7 @@
 .only_deploy:
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^release/'
       when: manual
 
 .only_full:

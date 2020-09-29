@@ -32,7 +32,6 @@ gcc8:
   tags:
     - short-jobs
   script:
-    - env
     - mkdir x64_build
     - mkdir x64_jni
     - cd x64_build
