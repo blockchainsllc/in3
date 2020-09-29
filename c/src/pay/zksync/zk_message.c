@@ -43,11 +43,11 @@ static void add_amount(sb_t* sb, zksync_token_t* token,
       tmp[1] = '.';
       sep    = tmp + 3;
     }
-  }
   l = strlen(sep);
   while (l && sep[l - 1] == '0') {
     l--;
     sep[l] = 0;
+  }
   }
 
   sb_add_chars(sb, tmp);
