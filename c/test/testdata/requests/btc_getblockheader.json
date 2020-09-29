@@ -1,5 +1,6 @@
 [
   {
+    "api": "btc",
     "descr": "btc getblockheader true",
     "chainId": "0x99",
     "fuzzer": true,
@@ -49,6 +50,7 @@
     ]
   },
   {
+    "api": "btc",
     "descr": "btc getblockheader false",
     "chainId": "0x99",
     "fuzzer": true,

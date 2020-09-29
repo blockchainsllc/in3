@@ -1,19 +1,34 @@
 {
-    "default": {
-        "result": "0x0"
-    },
-    "gas": {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "result": "0xcce416600",
-        "in3": {
-            "lastValidatorChange": 0,
-            "lastNodeList": 10302455,
-            "execTime": 81,
-            "rpcTime": 80,
-            "rpcCount": 1,
-            "currentBlock": 10316170,
-            "version": "2.1.0"
-        }
+  "default": {
+    "result": "0x0"
+  },
+  "gas": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": "0xcce416600",
+    "in3": {
+      "lastValidatorChange": 0,
+      "lastNodeList": 10302455,
+      "execTime": 81,
+      "rpcTime": 80,
+      "rpcCount": 1,
+      "currentBlock": 10316170,
+      "version": "2.1.0"
     }
+  },
+  "zksync_deposit": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "result": "0x218711a00"
+  },
+  "emergencyWithdraw1": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "result": "0xfb5a4d32c"
+  },
+  "undefined": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "result": "0x137460ac90"
+  }
 }

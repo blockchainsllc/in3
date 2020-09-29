@@ -448,6 +448,16 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public sendRPC(method: string, params?: any[]): Promise<any>;
 
+
+    /**
+     * sends a RPC-Requests specified by name and params as a sync call. This is only alowed if the request is handled internally, like web3_sha3,
+     * 
+     * if the response contains an error, this will be thrown. if not the result will be returned.
+     * 
+     * @param method the method to call. 
+     */
+    public sendSyncRPC(method: string, params?: any[]): any;
+
     /**
      * disposes the Client. This must be called in order to free allocated memory!
      */
@@ -586,6 +596,7 @@ export type Signature = {
 }
 
 export type ABIField = {
+    internalType?: string
     indexed?: boolean
     name: string
     type: string
@@ -594,12 +605,12 @@ export type ABI = {
     anonymous?: boolean
     constant?: boolean
     payable?: boolean
-    stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
+    stateMutability?: string
 
     inputs?: ABIField[],
     outputs?: ABIField[]
     name?: string
-    type: 'event' | 'function' | 'constructor' | 'fallback'
+    type: string
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
@@ -686,6 +697,20 @@ export declare interface Utils<BufferType> {
      * @param chainId the chainId (if supported)
      */
     toChecksumAddress(address: Address, chainId?: number): Address
+
+    /**
+     * checks whether the given address is a correct checksumAddress
+     * If the chainId is passed, it will be included accord to EIP 1191
+     * @param address the address (as hex)
+     * @param chainId the chainId (if supported)
+     */
+    checkAddressChecksum(address: Address, chainId?: number): boolean
+
+    /**
+     * checks whether the given address is a valid hex string with 0x-prefix and 20 bytes
+     * @param address the address (as hex)
+     */
+    isAddress(address: Address): boolean
 
     /**
      * calculates the keccack hash for the given data.

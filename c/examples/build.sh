@@ -20,7 +20,7 @@ fi
 # now build the examples build
 for f in *.c; 
   do
-    if [ "$f" == ledger_sign.c ]; then # skipping ledger_sign compilation as it requires specific dependencies 
+    if [ "$f" = ledger_sign.c ]; then # skipping ledger_sign compilation as it requires specific dependencies 
       continue
     fi
     gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -D_POSIX_C_SOURCE=199309L

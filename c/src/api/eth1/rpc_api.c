@@ -49,7 +49,9 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-
+#ifdef ETH_FULL
+#include "../../third-party/tommath/tommath.h"
+#endif
 #define ETH_SIGN_PREFIX "\x19" \
                         "Ethereum Signed Message:\n%u"
 
@@ -153,6 +155,125 @@ static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   keccak(d_to_bytes(params + 1), hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
+static const char* UNITS[] = {
+    "wei", "",
+    "kwei", "\x03",
+    "Kwei", "\x03",
+    "babbage", "\x03",
+    "femtoether", "\x03",
+    "mwei", "\x06",
+    "Mwei", "\x06",
+    "lovelace", "\x06",
+    "picoether", "\x06",
+    "gwei", "\x09",
+    "Gwei", "\x09",
+    "shannon", "\x09",
+    "nanoether", "\x09",
+    "nano", "\x09",
+    "szabo", "\x0c",
+    "microether", "\x0c",
+    "micro", "\x0c",
+    "finney", "\x0f",
+    "milliether", "\x0f",
+    "milli", "\x0f",
+    "ether", "\x12",
+    "eth", "\x12",
+    "kether", "\x15",
+    "grand", "\x15",
+    "mether", "\x18",
+    "gether", "\x1b",
+    "tether", "\x1e",
+    NULL};
+
+int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
+  if (!val) return IN3_EINVAL;
+  int l = strlen(val), nl = l, exp = 0, p = 0;
+
+  if (l == 1 && val[0] == '0') {
+    *target = 0;
+    return 1;
+  }
+  if (val[0] == '0' && val[1] == 'x') return unit == NULL ? hex_to_bytes(val + 2, l - 2, target, l) : IN3_EINVAL;
+  if (unit == NULL) {
+    while (nl && val[nl - 1] > '9') nl--;
+    if (nl < l) unit = val + nl;
+  }
+  if (unit) {
+    for (int i = 0; UNITS[i]; i += 2) {
+      if (strcmp(UNITS[i], unit) == 0) {
+        exp = *UNITS[i + 1];
+        break;
+      }
+      else if (!UNITS[i + 2])
+        return IN3_EINVAL;
+    }
+  }
+  if (!exp && l < 20) {
+    bytes_t b = bytes(target, 8);
+    long_to_bytes(atoll(nl < l ? strncpy(alloca(nl + 1), val, nl) : val), target);
+    b_optimize_len(&b);
+    if (b.len < 8) memmove(target, b.data, b.len);
+    return (int) b.len;
+  }
+#ifdef ETH_FULL
+  char* dst = alloca(l + exp + 10);
+  char* dot = strchr(val, '.');
+  if (!dot)
+    memcpy(dst, val, (p = l) + 1);
+  else if (dot - val != 1 || *val != '0')
+    memcpy(dst, val, (p = dot - val) + 1);
+  dst[p + exp] = 0;
+  if (exp) {
+    if (dot) {
+      dot++;
+      for (int i = 0; i < exp; i++) {
+        if (*dot && dot - val < nl) {
+          dst[p + i] = *dot;
+          dot++;
+        }
+        else
+          dst[p + i] = '0';
+      }
+    }
+    else
+      memset(dst + p, '0', exp);
+  }
+  // remove leading zeros
+  while (*dst == '0' && dst[1]) dst++;
+  size_t s;
+  mp_int d;
+  mp_init(&d);
+  mp_read_radix(&d, dst, 10);
+  mp_export(target, &s, 1, sizeof(uint8_t), 1, 0, &d);
+  mp_clear(&d);
+  return (int) s;
+#else
+  UNUSED_VAR(p);
+  bytes_t b = bytes(target, 8);
+  long_to_bytes(parse_float_val(nl < l ? strncpy(alloca(nl + 1), val, nl) : val, exp), target);
+  b_optimize_len(&b);
+  if (b.len < 8) memmove(target, b.data, b.len);
+  return (int) b.len;
+#endif
+}
+
+static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  if (!params || d_len(params) != 2 || d_type(params + 2) != T_STRING) return ctx_set_error(ctx->ctx, "must have 2 params as strings", IN3_EINVAL);
+  char* val = d_get_string_at(params, 0);
+  if (!val) {
+    if (d_type(params + 1) == T_INTEGER) {
+      val = alloca(20);
+      sprintf(val, "%i", d_int(params + 1));
+    }
+    else
+      return ctx_set_error(ctx->ctx, "the value must be a string", IN3_EINVAL);
+  }
+  bytes32_t tmp;
+  int       s = string_val_to_bytes(val, d_get_string_at(params, 1), tmp);
+  return s < 0
+             ? ctx_set_error(ctx->ctx, "invalid number string", IN3_EINVAL)
+             : in3_rpc_handle_with_bytes(ctx, bytes(tmp, (uint32_t) s));
+}
 
 static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   if (!params || d_len(params) != 1 || d_type(params + 1) != T_OBJECT) return ctx_set_error(ctx->ctx, "no valid config-object as argument", IN3_EINVAL);
@@ -255,28 +376,32 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     sig_type = "raw";
   }
 
-  in3_sign_ctx_t sc;
-  sc.ctx     = ctx->ctx;
-  sc.message = data;
-  sc.account = pk ? *pk : bytes(NULL, 0);
-  sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+  in3_sign_ctx_t sc = {0};
+  sc.ctx            = ctx->ctx;
+  sc.message        = data;
+  sc.account        = pk ? *pk : bytes(NULL, 0);
+  sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->ctx->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->ctx, PLGN_ACT_SIGN, &sc));
   }
   else if (sc.account.len == 32) {
+    sc.signature = bytes(_malloc(65), 65);
     if (sc.type == SIGN_EC_RAW)
-      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature, sc.signature + 64, NULL);
+      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature.data, sc.signature.data + 64, NULL);
     else if (strcmp(sig_type, "raw") == 0)
-      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature, sc.signature + 64, NULL);
-    else
+      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature.data, sc.signature.data + 64, NULL);
+    else {
+      _free(sc.signature.data);
       return ctx_set_error(ctx->ctx, "unsupported sigType", IN3_EINVAL);
+    }
   }
   else
     return ctx_set_error(ctx->ctx, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
-  bytes_t sig_bytes = bytes(sc.signature, 65);
-  sc.signature[64] += 27;
+  bytes_t sig_bytes = sc.signature;
+  if (sc.signature.len == 65)
+    sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_char(sb, '{');
@@ -292,15 +417,16 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     sb_add_bytes(sb, "\"messageHash\":", &data, 1, false);
   sb_add_char(sb, ',');
   sb_add_bytes(sb, "\"signature\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature, 32);
+  sig_bytes = bytes(sc.signature.data, 32);
   sb_add_char(sb, ',');
   sb_add_bytes(sb, "\"r\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature + 32, 32);
+  sig_bytes = bytes(sc.signature.data + 32, 32);
   sb_add_char(sb, ',');
   sb_add_bytes(sb, "\"s\":", &sig_bytes, 1, false);
   char v[15];
-  sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature[64]);
+  sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature.data[64]);
   sb_add_chars(sb, v);
+  _free(sc.signature.data);
   return in3_rpc_handle_finish(ctx);
 }
 
@@ -325,8 +451,8 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 }
 
 static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  d_token_t* tx = d_get_at(params, 0);
-  bytes_t    dst;
+  d_token_t* tx  = d_get_at(params, 0);
+  bytes_t    dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   TRY(eth_prepare_unsigned_tx(tx, ctx->ctx, &dst))
 #else
@@ -343,11 +469,11 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   address_t from;
   memset(from, 0, 20);
   if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
-  bytes_t dst;
+  bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   TRY(eth_sign_raw_tx(*data, ctx->ctx, from, &dst))
 #else
-  if (data || ctx || from || params) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+  if (data || ctx || from[0] || params) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
@@ -367,6 +493,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(rpc_ctx, params);
   if (strcmp(method, "in3_ens") == 0) return in3_ens(rpc_ctx, params);
   if (strcmp(method, "web3_sha3") == 0) return in3_sha3(rpc_ctx, params);
+  if (strcmp(method, "in3_toWei") == 0) return in3_toWei(rpc_ctx, params);
   if (strcmp(method, "in3_config") == 0) return in3_config(rpc_ctx, params);
   if (strcmp(method, "in3_getConfig") == 0) return in3_getConfig(rpc_ctx);
   if (strcmp(method, "in3_pk2address") == 0) return in3_pk2address(rpc_ctx, params);

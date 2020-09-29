@@ -39,6 +39,10 @@ if (USE_SCRYPT)
   ADD_DEFINITIONS(-DSCRYPT)
 endif()
 
+if (ETH_FULL)
+  set(LIBS ${LIBS} tommath)
+endif()
+
 add_static_library(
   NAME     eth_api 
   

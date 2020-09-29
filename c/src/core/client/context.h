@@ -448,7 +448,5 @@ NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const no
 NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
-NONULL_FOR((1, 2, 3, 5))
-in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
 
 #endif

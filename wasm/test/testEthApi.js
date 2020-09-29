@@ -105,8 +105,8 @@ describe('EthAPI-Tests', () => {
 
         assert.equal('test', await c.sendRPC('rpc_test'))
         assert.equal(true, await c.sendRPC('test2').catch(() => true))
-        assert.equal('RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
-        assert.equal('RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
+        assert.equal('Error sending rpc_error():RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
+        assert.equal('Error sending rpc_error2():RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
 
     })
 
@@ -466,6 +466,13 @@ describe('EthAPI-Tests', () => {
         let filterId = await client.eth.newBlockFilter()
 
         assert.equal(filterId, "0x1")
+    })
+
+
+    it('eth.toWei()', async () => {
+        let client = createClient()
+        const val = client.eth.toWei('20.0009123', 'eth')
+        assert.equal(val, "0x01159183c4793db800")
     })
 
     it('eth.newFilter()', async () => {

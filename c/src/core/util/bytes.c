@@ -38,6 +38,7 @@
 #include "mem.h"
 #include "utils.h"
 #include <inttypes.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -53,11 +54,11 @@ bytes_t* b_new(const uint8_t* data, uint32_t len) {
   return b;
 }
 
-uint32_t b_get_len(bytes_t* b) {
+uint32_t b_get_len(const bytes_t* b) {
   return b->len;
 }
 
-uint8_t* b_get_data(bytes_t* b) {
+uint8_t* b_get_data(const bytes_t* b) {
   return b->data;
 }
 
@@ -107,6 +108,25 @@ void b_free(bytes_t* a) {
 
   _free(a->data);
   _free(a);
+}
+
+bytes_t b_concat(int cnt, ...) {
+  int     len, i;
+  bytes_t b;
+  va_list ap;
+
+  va_start(ap, cnt);
+  for (i = 0, len = 0; i < cnt; i++) len += (va_arg(ap, bytes_t)).len;
+  va_end(ap);
+  bytes_t out = {.len = len, .data = _malloc(len)};
+
+  va_start(ap, cnt);
+  for (i = 0, len = 0; i < cnt; i++, len += b.len) {
+    b = va_arg(ap, bytes_t);
+    memcpy(b.data + len, b.data, b.len);
+  }
+  va_end(ap);
+  return out;
 }
 
 bytes_t* b_dup(const bytes_t* a) {

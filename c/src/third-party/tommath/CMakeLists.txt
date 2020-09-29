@@ -257,6 +257,11 @@ ELSE (FAST_MATH)
         tommath_superclass.h)
 ENDIF (FAST_MATH)
 
+if (IN3API) 
+  ADD_DEFINITIONS(-DBN_MP_READ_RADIX_C -DBN_MP_RADIX_SMAP_C)
+  set(SRC ${SRC} bn_mp_read_radix.c bn_mp_add_d.c bn_mp_sub_d.c bn_mp_radix_smap.c )
+endif()
+
 add_static_library(
   NAME     tommath 
   

@@ -20,10 +20,10 @@ void ed25519_publickey(const ed25519_secret_key sk, ed25519_public_key pk);
 void ed25519_publickey_ext(const ed25519_secret_key sk, const ed25519_secret_key skext, ed25519_public_key pk);
 #endif
 
-int ed25519_sign_open(const unsigned char *m, size_t mlen, const ed25519_public_key pk, const ed25519_signature RS);
-void ed25519_sign(const unsigned char *m, size_t mlen, const ed25519_secret_key sk, const ed25519_public_key pk, ed25519_signature RS);
+int  ed25519_sign_open(const unsigned char* m, size_t mlen, const ed25519_public_key pk, const ed25519_signature RS);
+void ed25519_sign(const unsigned char* m, size_t mlen, const ed25519_secret_key sk, const ed25519_public_key pk, ed25519_signature RS);
 #if USE_CARDANO
-void ed25519_sign_ext(const unsigned char *m, size_t mlen, const ed25519_secret_key sk, const ed25519_secret_key skext, const ed25519_public_key pk, ed25519_signature RS);
+void ed25519_sign_ext(const unsigned char* m, size_t mlen, const ed25519_secret_key sk, const ed25519_secret_key skext, const ed25519_public_key pk, ed25519_signature RS);
 #endif
 
 int ed25519_scalarmult(ed25519_public_key res, const ed25519_secret_key sk, const ed25519_public_key pk);
@@ -37,9 +37,9 @@ void curve25519_scalarmult_basepoint(curve25519_key mypublic, const curve25519_k
 #define CONST
 #endif
 
-int ed25519_cosi_combine_publickeys(ed25519_public_key res, CONST ed25519_public_key *pks, size_t n);
-void ed25519_cosi_combine_signatures(ed25519_signature res, const ed25519_public_key R, CONST ed25519_cosi_signature *sigs, size_t n);
-void ed25519_cosi_sign(const unsigned char *m, size_t mlen, const ed25519_secret_key key, const ed25519_secret_key nonce, const ed25519_public_key R, const ed25519_public_key pk, ed25519_cosi_signature sig);
+int  ed25519_cosi_combine_publickeys(ed25519_public_key res, CONST ed25519_public_key* pks, size_t n);
+void ed25519_cosi_combine_signatures(ed25519_signature res, const ed25519_public_key R, CONST ed25519_cosi_signature* sigs, size_t n);
+void ed25519_cosi_sign(const unsigned char* m, size_t mlen, const ed25519_secret_key key, const ed25519_secret_key nonce, const ed25519_public_key R, const ed25519_public_key pk, ed25519_cosi_signature sig);
 
 #if defined(__cplusplus)
 }

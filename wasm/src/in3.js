@@ -150,16 +150,21 @@ const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', 
  */
 class IN3 {
 
-    // since loading the wasm is async, we always need to check whether the wasm was created before using it.
-    async _ensure_ptr() {
+    _ensure_ptr_sync() {
         if (this.ptr) return
-        if (_in3_listeners)
-            await new Promise(r => _in3_listeners.push(r))
         let chainId = this.config && this.config.chainId
         if (chainId && aliases[chainId]) chainId = aliases[chainId]
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
         this.plugins.forEach(_ => this.registerPlugin(_))
+    }
+
+    // since loading the wasm is async, we always need to check whether the wasm was created before using it.
+    async _ensure_ptr() {
+        if (this.ptr) return
+        if (_in3_listeners)
+            await new Promise(r => _in3_listeners.push(r))
+        return this._ensure_ptr_sync();
     }
 
     // here we are creating the instance lazy, when the first function is called.
@@ -240,7 +245,7 @@ class IN3 {
      */
     async sendRequest(rpc) {
         // ensure we have created the instance.
-        if (!this.ptr) await this._ensure_ptr();
+        if (!this.ptr) await this._ensure_ptr()
         if (this.needsSetConfig) this.setConfig()
 
         // currently we don't handle bulks directly
@@ -325,8 +330,26 @@ class IN3 {
 
     async sendRPC(method, params = []) {
         const res = await this.sendRequest({ method, params })
-        if (res.error) throw new Error(res.error.message || res.error)
+        if (res.error) throw new Error('Error sending ' + method + '(' + params.map(JSON.stringify).join() + '):' + res.error.message || res.error)
         return res.result
+    }
+
+    sendSyncRPC(method, params = []) {
+        this._ensure_ptr_sync();
+        if (this.needsSetConfig) this.setConfig()
+        const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify({ method, params })]);
+        if (!r) throwLastError()
+        let state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+        in3w.ccall('in3_request_free', 'void', ['number'], [r])
+        switch (state.status) {
+            case 'error':
+                throw new Error(state.error || 'Unknown error')
+            case 'ok':
+                if (state.result.error) throw new Error('Error sending ' + method + '(' + params.map(JSON.stringify).join() + '):' + state.result.error.message || state.result.error)
+                return state.result.result
+            default:
+                throw new Error('The method ' + method + ' does not support sync calls!');
+        }
     }
 
     createWeb3Provider() { return this }
@@ -463,6 +486,11 @@ IN3.onInit = function (fn) {
 // change the Buffer
 IN3.setConvertBuffer = function (fn) {
     convertBuffer = fn
+}
+
+// change the Buffer
+IN3.setConvertBigInt = function (fn) {
+    convertBigInt = fn
 }
 
 // also support ES6-modules

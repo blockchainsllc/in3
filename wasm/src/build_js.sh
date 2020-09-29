@@ -44,7 +44,7 @@ mkdir -p ../module
 cp ../../LICENSE.AGPL "$1/package.json" $1/../README.md ../module/
 cp in3.js  ../module/index.js
 
-cat "$1/in3.d.ts" | awk -v "r=$__CONFIG__" '{gsub(/__CONFIG__/,r)}1' | awk -v "r=$__API__" '{gsub(/__API__/,r)}1'  > ../module/index.d.ts
+cat "$1/index.d.ts" | awk -v "r=$__CONFIG__" '{gsub(/__CONFIG__/,r)}1' | awk -v "r=$__API__" '{gsub(/__API__/,r)}1'  > ../module/index.d.ts
 for f in $typedefs; do 
   cat $f >>  ../module/index.d.ts
 done

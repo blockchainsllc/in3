@@ -4,14 +4,7 @@ const fixLength = (hex) => hex.length % 2 ? '0' + hex : hex
 let convertBigInt = toBigInt
 let convertBuffer = toUint8Array
 
-// Overriding default convert
-function setConvertBigInt(convertBigFn) {
-    convertBigInt = convertBigFn
-}
 
-function setConvertBuffer(convertBufFn) {
-    convertBuffer = convertBufFn
-}
 
 if (typeof (_free) == 'undefined') _free = function (ptr) {
     in3w.ccall("ifree", 'void', ['number'], [ptr])
@@ -140,6 +133,9 @@ function private2address(pk) {
     return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength))
 }
 
+function checkAddressChecksum(ad, chain = 0) {
+    return toChecksumAddress(ad, chain = 0) === ad;
+}
 
 function abiEncode(sig, ...params) {
     const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
@@ -184,7 +180,7 @@ function convertType(val, t) {
         case 'uint32':
             return toNumber(val)
         default:
-            return t.startsWith('bytes') ? toHex(val) : toBigInt(val)
+            return t.startsWith('bytes') ? toHex(val) : convertBigInt(val)
     }
 }
 
@@ -215,6 +211,7 @@ function splitTypes(types, removeBrackets = true) {
     if (types.length > p + 1) res.push(types.substr(p))
     return res
 }
+
 /**
  * converts any value as hex-string
  */
@@ -225,14 +222,17 @@ function toHex(val, bytes) {
     if (typeof val === 'string')
         hex = val.startsWith('0x')
             ? val.substr(2)
-            : (parseInt(val[0])
-                ? BigInt(val).toString(16)
-                : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
-            )
+            : (parseInt(val[0]) ? BigInt(val).toString(16) : convertUTF82Hex(val))
     else if (typeof val === 'boolean')
         hex = val ? '01' : '00'
-    else if (typeof val === 'number' || typeof val === 'bigint')
+    else if (typeof val === 'number' || typeof val === 'bigint') {
         hex = val.toString(16)
+        if (hex.startsWith('-')) {
+            let n = new Array(hex.length - 1), o = 0;
+            for (let i = hex.length - 1; i > 0; i--) n[hex.length - i] = parseInt(hex[i], 16)
+            hex = padStart(n.map(_ => ((!o && !_) ? 0 : (16 - _ - (o || (o++)))).toString(16)).reverse().join(''), (bytes || 32) * 2, 'f')
+        }
+    }
     else if (val && val._isBigNumber) // BigNumber
         hex = val.toHexString()
     else if (val && (val.redIMul || val.readBigInt64BE)) // bn.js or nodejs Buffer
@@ -406,21 +406,72 @@ function padEnd(val, minLength, fill = ' ') {
         val = val + fill;
     return val;
 }
+function hexchar(x) {
+    const b = String.fromCharCode(x)
+    let d = ''
+    for (let i = 0; i < b.length; i++) {
+        let h = b[i].charCodeAt(0).toString(16)
+        if (h.length == 1) d += '0'
+        d += h
+    }
+    return d
+}
+
+function convertUTF82Hex(val) {
+    let bstring = ''
+    for (let i = 0; i < val.length; i++) {
+        let x = val.charCodeAt(i)
+        if (x >= 0xD800 && x <= 0xDBFF && i + 1 < val.length && (val.charCodeAt(i + 1) & 0xFC00) == 0xDC00)
+            x = ((x & 0x3FF) << 10) + (val.charCodeAt(++i) & 0x3FF) + 0x10000
+        if ((x & 0xFFFFFF80) == 0) { // 1-byte sequence
+            bstring += hexchar(x);
+            continue
+        }
+        if ((x & 0xFFFFF800) == 0)  // 2-byte sequence
+            bstring += hexchar(((x >> 6) & 0x1F) | 0xC0);
+        else if ((x & 0xFFFF0000) == 0) { // 3-byte sequence
+            if (x >= 0xD800 && x <= 0xDFFF) throw new Error('Invalid utf val')
+            bstring += hexchar(((x >> 12) & 0x0F) | 0xE0)
+            bstring += hexchar(((x >> 6) & 0x3f) | 0x80)
+        }
+        else if ((x & 0xFFE00000) == 0) { // 4-byte sequence
+            bstring += hexchar(((x >> 18) & 0x07) | 0xF0);
+            bstring += hexchar(((x >> 12) & 0x3f) | 0x80)
+            bstring += hexchar(((x >> 6) & 0x3f) | 0x80)
+        }
+        bstring += hexchar((x & 0x3F) | 0x80);
+    }
+    return bstring
+}
 
 function soliditySha3(...args) {
-    return toHex(keccak('0x' + toHex(abiEncode('_(' + args.map(_ => {
+    return toHex(keccak('0x' + args.map(_ => {
         switch (typeof (_)) {
+            case 'object': return { t: _.t || _.type, v: _.v || _.value }
             case 'number':
             case 'bigint':
-                return _ < 0 ? 'int256' : 'uint256'
+                return { t: _ < 0 ? 'int256' : 'uint256', v: _ }
             case 'string':
-                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
+                const n = parseInt(_)
+                if (n && !_.startsWith('0x')) return { t: n < 0 ? 'int256' : 'uint256', v: n }
+                return { t: _.substr(0, 2) == '0x' ? 'bytes' : 'string', v: _ }
             case 'boolean':
-                return 'bool'
+                return { t: 'bool', v: _ }
             default:
-                return 'bytes'
+                return { t: 'bytes', v: toHex(_) }
         }
-    }).join() + ')', args)).substr(10)))
+    }).map(({ t, v }) => {
+        if (t == 'bool') t = 'uint8';
+        if (t == 'bytes' || t == 'string') return toHex(v).substr(2)
+        if (t.startsWith('bytes')) return toHex(v, parseInt(t.substr(5))).substr(2)
+        else if (t.startsWith('uint')) return toHex(v, parseInt(t.substr(4)) / 8).substr(2)
+        else if (t.startsWith('int')) return toHex(v, parseInt(t.substr(3)) / 8).substr(2)
+        else throw new Error('Unsupported type ' + t)
+    }).join('')))
+}
+
+function isAddress(ad) {
+    return /^0x[0-9a-fA-F]{40}$/g.test(ad)
 }
 
 function createSignatureHash(def) {
@@ -433,7 +484,7 @@ const util = {
     toHex,
     toNumber,
     toUtf8,
-    toBigInt,
+    toBigInt: v => convertBigInt(v),
     toBuffer,
     toSimpleHex,
     toMinHex,
@@ -451,6 +502,8 @@ const util = {
     toUint8Array,
     base64Decode,
     base64Encode,
+    checkAddressChecksum,
+    isAddress,
     getVersion
 }
 
