@@ -544,6 +544,8 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
         next->s     = current->s;
         next->w     = current->w;
         next->index = current->index;
+        next->url   = _strdupn(current->url, -1);
+        memcpy(next->address, current->address, 20);
 
         if (!first) first = next;
         if (last) {
