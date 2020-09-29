@@ -48,7 +48,6 @@ set(CRYPTO_SRC
   blake2b.c
   groestl.c
   pbkdf2.c
-  schnorr.c
   rfc6979.c
   aes/aes_modes.c
   aes/aescrypt.c
