@@ -9,7 +9,7 @@
 ###########################################################
 
 variables:
-  COMMIT_IMAGE_TAG: "$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME/\\//_}"
+  COMMIT_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 

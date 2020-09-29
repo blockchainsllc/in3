@@ -144,6 +144,8 @@ vulnerabilities:
     - short-jobs
   image: docker.slock.it/build-images/vulnerability-testing-tools
   script:
+    - export COMMIT_IMAGE_TAG="$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME/\//_}"
+    - echo $COMMIT_IMAGE_TAG
     - export TRIVY_AUTH_URL=$CI_REGISTRY
     - export TRIVY_USERNAME=gitlab-ci-token
     - export TRIVY_PASSWORD=$CI_JOB_TOKEN

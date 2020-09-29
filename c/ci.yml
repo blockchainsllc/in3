@@ -158,6 +158,7 @@ docker:
     - docker:dind
   image: docker.slock.it/build-images/deployment
   script:
+    - export COMMIT_IMAGE_TAG="$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME/\//_}"
     - echo $COMMIT_IMAGE_TAG
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker pull $COMMIT_IMAGE_TAG || true
