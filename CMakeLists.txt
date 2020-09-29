@@ -80,7 +80,7 @@ OPTION(CMD "build the comandline utils" ON)
 OPTION(RECORDER "enable recording option for reproduce executions" ON)
 OPTION(POA "support POA verification including validatorlist updates" OFF)
 OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
-OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" OFF)
+OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" ON)
 OPTION(SENTRY "Enable Sentry" OFF)
 OPTION(PK_SIGNER "Enable Signing with private keys" ON)
 
