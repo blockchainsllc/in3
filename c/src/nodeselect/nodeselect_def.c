@@ -340,6 +340,28 @@ static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
   return IN3_OK;
 }
 
+NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
+  in3_ret_t res = IN3_OK;
+
+  // blacklist node that gave us an error response for nodelist (if not first update)
+  // and clear nodelist params
+  if (nodelist_not_first_upd8(data))
+    blacklist_node(data, data->nodelist_upd8_params->node);
+  _free(data->nodelist_upd8_params);
+  data->nodelist_upd8_params = NULL;
+
+  if (ctx->required) {
+    // if first update return error otherwise return IN3_OK, this is because first update is
+    // always from a boot node which is presumed to be trusted
+    if (nodelist_first_upd8(data))
+      res = ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
+
+    if (res == IN3_OK) res = ctx_remove_required(ctx, ctx->required, true);
+  }
+
+  return res;
+}
+
 static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
   if (nodelist_block > current_blk)
     // misbehaving node, so allow to update right away and it'll get blacklisted due to the exp_last_block mechanism
@@ -447,6 +469,8 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       return pick_followup(data, plugin_ctx);
     case PLGN_ACT_NL_BLACKLIST:
       return blacklist_node(data, plugin_ctx);
+    case PLGN_ACT_NL_FAILABLE:
+      return handle_failable(data, plugin_ctx);
     case PLGN_ACT_CHAIN_CHANGE:
       return chain_change(data, plugin_ctx);
     case PLGN_ACT_GET_DATA: {

@@ -567,28 +567,6 @@ NONULL static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
   return ctx_is_method(ctx, "in3_nodeList");
 }
 
-NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
-  in3_ret_t res = IN3_OK;
-
-  // blacklist node that gave us an error response for nodelist (if not first update)
-  // and clear nodelist params
-  if (nodelist_not_first_upd8(&ctx->client->chain))
-    blacklist_node_addr(ctx->client->chain, ctx->client->chain.nodelist_upd8_params->node, BLACKLISTTIME);
-  _free(ctx->client->chain.nodelist_upd8_params);
-  ctx->client->chain.nodelist_upd8_params = NULL;
-
-  if (ctx->required) {
-    // if first update return error otherwise return IN3_OK, this is because first update is
-    // always from a boot node which is presumed to be trusted
-    if (nodelist_first_upd8(chain))
-      res = ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
-
-    if (res == IN3_OK) res = ctx_remove_required(ctx, ctx->required, true);
-  }
-
-  return res;
-}
-
 in3_ctx_t* in3_ctx_last_waiting(in3_ctx_t* ctx) {
   in3_ctx_t* last = ctx;
   for (; ctx; ctx = ctx->required) {
