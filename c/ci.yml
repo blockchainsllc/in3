@@ -5,7 +5,7 @@
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
-    - if: '$CI_COMMIT_REF_NAME =~ /^release\/v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME =~ /^release.*v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
 
 .conanbuild:
   stage: build
@@ -158,6 +158,7 @@ docker:
     - docker:dind
   image: docker.slock.it/build-images/deployment
   script:
+    - echo $COMMIT_IMAGE_TAG
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker pull $COMMIT_IMAGE_TAG || true
     - docker build --cache-from $COMMIT_IMAGE_TAG -t $COMMIT_IMAGE_TAG .
