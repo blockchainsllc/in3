@@ -120,11 +120,12 @@ static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, ui
 }
 
 static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key) {
+  assert(conf);
   if (!memiszero(conf->sync_key, 32)) {
     memcpy(sync_key, conf->sync_key, 32);
     return IN3_OK;
   }
-  uint8_t* account;
+  uint8_t* account = NULL;
   bytes_t  signature;
   char*    message = "\x19"
                   "Ethereum Signed Message:\n68"
@@ -315,6 +316,7 @@ static d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
 
 static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   d_token_t* tmp;
+  assert(conf);
 
   //  amount
   bytes_t    amount        = d_to_bytes(params_get(params, key("amount"), 0));
