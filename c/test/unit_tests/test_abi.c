@@ -222,7 +222,7 @@ static void test_json() {
     char*      sig        = d_get_string(iter.token, "sig");
     d_token_t* values     = d_get(iter.token, key("values"));
     d_token_t* rev_values = d_get(iter.token, key("revValues"));
-    printf("%02i ## %s : %s\n", count, d_get_string(iter.token, "name"), sig);
+    //    printf("%02i ## %s : %s\n", count, d_get_string(iter.token, "name"), sig);
     abi_sig_t* s = abi_sig_create(sig, &error);
     TEST_ASSERT_NULL_MESSAGE(error, error);
     bytes_t expected = d_to_bytes(d_get(iter.token, key("result")));
