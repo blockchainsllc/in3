@@ -4,6 +4,7 @@
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zksync.h"
+#include <assert.h>
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
 
