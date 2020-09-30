@@ -510,17 +510,14 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
-    in3_node_t* node_data = rpc ? NULL : get_node(chain, node);
-    urls[n]               = rpc ? rpc : node_data->url;
-
-    // if we use_http, we need to malloc a new string, so we also need to free it later!
-    if (ctx->client->flags & FLAGS_HTTP) urls[n] = convert_to_http_url(urls[n]);
+    urls[n] = rpc ? rpc : node->url;
 
     // this is all we need to do if we have a rpc-node
     if (rpc) break;
 
+    // fixme: figure out a way to get node props from nodeselect plugin
     // if the multichain-prop is set we need to specify the chain_id in the request
-    if (in3_node_props_get(node_data->props, NODE_PROP_MULTICHAIN)) multichain = true;
+    //      if (in3_node_props_get(node_data->props, NODE_PROP_MULTICHAIN)) multichain = true;
 
     node = node->next;
   }
