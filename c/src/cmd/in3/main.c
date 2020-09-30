@@ -563,7 +563,7 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
   if (action == PLGN_ACT_TRANSPORT_SEND) {
 #ifndef DEBUG
     if (debug_mode)
-      recorder_print(1, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
+      fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
     if (in_response.len) {
       for (unsigned int i = 0; i < req->urls_len; i++) {
@@ -594,9 +594,9 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
 #ifndef DEBUG
     if (debug_mode) {
       if (req->ctx->raw_response[0].state == IN3_OK)
-        recorder_print(1, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+        fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
       else
-        recorder_print(1, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+        fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
     }
 #endif
   }
