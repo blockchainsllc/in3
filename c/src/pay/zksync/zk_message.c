@@ -127,7 +127,7 @@ static void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data, char
   sb_add_chars(sb, "\nFee: ");
   add_amount(sb, data->token, data->fee);
   sb_add_chars(sb, " ");
-  sb_add_chars(sb, data->token->symbol);
+  if (data->token->symbol) sb_add_chars(sb, data->token->symbol);
   sb_add_chars(sb, "\nAccount Id: ");
   sb_add_int(sb, data->account_id);
 }
