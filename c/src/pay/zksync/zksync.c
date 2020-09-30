@@ -91,7 +91,7 @@ static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, ui
   char*    cache_name = NULL;
   TRY(zksync_get_account(conf, ctx, &account))
 
-  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE) && account) {
     cache_name = alloca(60);
     strcpy(cache_name, "zksync_ac_");
     bytes_to_hex(account, 20, cache_name + 9);
@@ -130,6 +130,7 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
                   "Ethereum Signed Message:\n68"
                   "Access zkSync account.\n\nOnly sign this message for a trusted client!";
   TRY(zksync_get_account(conf, ctx, &account))
+  assert(account);
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
   if(signature.len == 65)
     signature.data[64] += 27;
@@ -460,6 +461,7 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
     sb_t      sb  = {0};
     in3_ret_t ret = zksync_sign_transfer(&sb, &tx_data, ctx->ctx, sync_key);
     if (ret && sb.data) _free(sb.data);
+    if (!sb.data) return IN3_EUNKNOWN;
     TRY(ret)
     cached        = in3_cache_add_entry(&ctx->ctx->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)));
     cached->props = CACHE_PROP_MUST_FREE | 0x10;
@@ -467,7 +469,7 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
 
   d_token_t* result = NULL;
   in3_ret_t  ret    = send_provider_request(ctx->ctx, conf, "tx_submit", (void*) cached->value.data, &result);
-  if (ret == IN3_OK) {
+  if (ret == IN3_OK && cached && cached->value.data) {
     sb_t* sb = in3_rpc_handle_start(ctx);
     sb_add_range(sb, (void*) cached->value.data, 0, strlen((void*) cached->value.data) - 177);
     sb_add_chars(sb, ",\"txHash\":\"");
@@ -498,6 +500,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_t      sb  = {0};
     in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, nonce, conf->account, conf->account_id);
     if (ret && sb.data) _free(sb.data);
+    if (!sb.data) return IN3_EUNKNOWN;
     TRY(ret)
     cached        = in3_cache_add_entry(&ctx->ctx->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)));
     cached->props = CACHE_PROP_MUST_FREE | 0x10;

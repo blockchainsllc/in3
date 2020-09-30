@@ -115,6 +115,7 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
 }
 
 static void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data, char* type) {
+  assert(data->token);
   sb_add_chars(sb, type);
   add_amount(sb, data->token, data->amount);
   sb_add_chars(sb, " ");
