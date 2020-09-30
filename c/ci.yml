@@ -269,3 +269,10 @@ integration_longrun:
   trigger:
     project: qa/long-run
     strategy: depend
+
+integration_longrun:
+  stage: test
+  extends: .only_release
+  trigger:
+    project: in3/ts/browser-test
+    strategy: depend
