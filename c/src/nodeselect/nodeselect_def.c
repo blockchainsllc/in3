@@ -499,6 +499,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
     _free(data);
     return IN3_ECONFIG;
   }
+  json_free(json);
 
   data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
   in3_cache_init(c, data);
