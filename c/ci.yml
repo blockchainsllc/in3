@@ -267,7 +267,7 @@ examples_macos:
 integration_longrun:
   stage: test
 #  extends: .only_release
-  image: docker.slock.it/build-images/cmake:in3-integration
+#  image: docker.slock.it/build-images/cmake:in3-integration
   trigger:
     project: qa/long-run
     strategy: depend
