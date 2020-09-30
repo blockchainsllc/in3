@@ -111,7 +111,7 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
 
   // do we have an error-property in the response?
   d_token_t* r = d_get(ctx->responses[0], K_ERROR);
-  if (r) {
+  if (d_type(r) != T_NULL) {
     if (d_type(r) == T_STRING)
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
