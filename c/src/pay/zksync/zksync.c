@@ -87,7 +87,7 @@ static in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
 }
 
 static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id) {
-  uint8_t* account;
+  uint8_t* account    = NULL;
   char*    cache_name = NULL;
   TRY(zksync_get_account(conf, ctx, &account))
 
@@ -120,7 +120,7 @@ static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, ui
 }
 
 static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key) {
-  assert(conf);
+  if (!conf) return IN3_EUNKNOWN;
   if (!memiszero(conf->sync_key, 32)) {
     memcpy(sync_key, conf->sync_key, 32);
     return IN3_OK;
@@ -315,10 +315,8 @@ static d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
 }
 
 static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  d_token_t* tmp;
-  assert(conf);
-
   //  amount
+  d_token_t* tmp           = NULL;
   bytes_t    amount        = d_to_bytes(params_get(params, key("amount"), 0));
   d_token_t* token         = params_get(params, key("token"), 1);
   bool       approve       = d_int(params_get(params, key("approveDepositAmountForERC20"), 2));
@@ -339,6 +337,7 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
   d_token_t*      tx_receipt = NULL;
   zksync_token_t* token_conf = NULL;
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_conf))
+  if (!token_conf) return IN3_EUNKNOWN;
 
   if (memiszero(token_conf->address, 20)) { // is eth
     sb_t sb = {0};
