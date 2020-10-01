@@ -408,7 +408,7 @@ typedef node_match_t in3_nl_blacklist_ctx_t;
 
 // -------- GET_DATA ---------
 typedef enum {
-  GET_DATA_REGISTRY_ID 
+  GET_DATA_REGISTRY_ID /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
 } in3_get_data_type_t;
 
 /**
