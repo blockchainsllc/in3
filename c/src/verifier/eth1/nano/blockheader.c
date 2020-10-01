@@ -439,7 +439,11 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     memcpy(msg_data, block_hash, 32);
     memset(msg_data + 32, 0, 32);
     long_to_bytes(header_number, msg_data + 56);
-    memcpy(msg_data + 64, vc->chain->registry_id, 32);
+
+    // get registry_id
+    in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
+    in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
+    memcpy(msg_data + 64, dctx.data, 32);
 
     // hash it to create the message hash
     keccak(msg, msg_data);
