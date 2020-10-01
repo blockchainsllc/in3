@@ -254,10 +254,9 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   return IN3_OK;
 }
 
-static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx_) {
-  in3_ctx_t* ctx = ctx_;
 
   // fixme
+static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   // check if chain ids match and nodelist != NULL
 
   // init cache lazily,
@@ -283,9 +282,8 @@ NONULL static in3_node_weight_t* get_node_weight(const in3_nodeselect_def_t* dat
   return node && node->index < data->nodelist_length ? data->weights + node->index : NULL;
 }
 
-static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
-  in3_ctx_t*   ctx = ctx_;
-  const in3_t* c   = ctx->client;
+static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
+  const in3_t* c = ctx->client;
 
   if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
@@ -322,8 +320,7 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
 
 static inline bool is_blacklisted(const node_match_t* node) { return node && node->blocked; }
 
-static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, void* ctx) {
-  node_match_t* node = ctx;
+static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, node_match_t* node) {
 
   if (is_blacklisted(node)) return IN3_ERPC; // already handled
 
@@ -417,8 +414,7 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
   response->time = 0; // make sure we count the time only once
 }
 
-static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx_) {
-  in3_ctx_t*    ctx         = ctx_;
+static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   node_match_t* node        = ctx->nodes;
   int           nodes_count = ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes);
 
@@ -433,8 +429,7 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, void* ctx_) {
   return in3_cache_store_nodelist(ctx->client, data);
 }
 
-static in3_ret_t chain_change(in3_nodeselect_def_t* data, void* ctx) {
-  in3_t*      c    = ((in3_chain_change_ctx_t*) ctx)->client;
+static in3_ret_t chain_change(in3_nodeselect_def_t* data, in3_t* c) {
   json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
   if (json == NULL)
     return IN3_ECONFIG;

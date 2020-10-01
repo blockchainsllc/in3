@@ -383,29 +383,6 @@ typedef struct {
   uint16_t error; /**< error code. */
 } error_log_ctx_t;
 
-// -------- CHAIN_CHANGE ---------
-
-/**
- * context used during chain change event
- */
-typedef struct in3_chain_change_ctx {
-  in3_t* client; /**< the client whose chain_id has been changed */
-} in3_chain_change_ctx_t;
-
-// -------- NL_PICK_DATA | NL_PICK_SIGNER ---------
-
-/**
- * context used during nodeselect pick
- */
-typedef in3_ctx_t in3_nl_pick_ctx_t;
-
-// -------- NL_BLACKLIST ---------
-
-/**
- * context used during nodeselect blacklist
- */
-typedef node_match_t in3_nl_blacklist_ctx_t;
-
 // -------- GET_DATA ---------
 typedef enum {
   GET_DATA_REGISTRY_ID /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
