@@ -222,12 +222,12 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   sb_add_char(sb, '"');
   sb_add_hexuint(sb, c->chain.chain_id);
   sb_add_chars(sb, "\":");
-  add_hex(sb, '{', "contract", *c->chain.contract);
+  add_hex(sb, '{', "contract", bytes(data->contract, 20));
 
   if (data->whitelist)
     add_hex(sb, ',', "whiteListContract", bytes(data->whitelist->contract, 20));
 
-  add_hex(sb, ',', "registryId", bytes(c->chain.registry_id, 32));
+  add_hex(sb, ',', "registryId", bytes(data->registry_id, 32));
   add_bool(sb, ',', "needsUpdate", data->nodelist_upd8_params != NULL);
   add_uint(sb, ',', "avgBlockTime", data->avg_block_time);
   sb_add_chars(sb, ",\"nodeList\":[");

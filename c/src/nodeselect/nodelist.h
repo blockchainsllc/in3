@@ -58,6 +58,8 @@ typedef struct {
   uint16_t           avg_block_time;  /**< average block time (seconds) for this data (calculated internally) */
   unsigned int       nodelist_length; /**< number of nodes in the nodeList */
   uint64_t           last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  address_t          contract;        /**< the address of the registry contract */
+  bytes32_t          registry_id;     /**< the identifier of the registry */
   in3_node_t*        nodelist;        /**< array of nodes */
   in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
   bytes_t**          init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
