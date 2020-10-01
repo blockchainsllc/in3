@@ -226,8 +226,6 @@ typedef struct in3_chain {
   uint8_t              version;         /**< version of the chain */
   chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t     type;            /**< chaintype */
-  bytes_t*             contract;        /**< the address of the registry contract */
-  bytes32_t            registry_id;     /**< the identifier of the registry */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
 } in3_chain_t;
@@ -470,8 +468,6 @@ in3_ret_t in3_client_register_chain(
     in3_t*           client,      /**< [in] the pointer to the incubed client config. */
     chain_id_t       chain_id,    /**< [in] the chain id. */
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
-    address_t        contract,    /**< [in] contract of the registry. */
-    bytes32_t        registry_id, /**< [in] the identifier of the registry. */
     uint8_t          version      /**< [in] the chain version. */
 );
 

@@ -128,49 +128,36 @@ void in3_register_default(plgn_register reg_fn) {
   (*d)->fn = reg_fn;
 }
 
-
-IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, uint8_t version, in3_chain_type_t type) {
   assert(chain);
-  assert(contract && strlen(contract) == 40);
-  assert(chain_id == CHAIN_ID_LOCAL || registry_id);
-
   chain->conf            = NULL;
   chain->chain_id        = chain_id;
   chain->verified_hashes = NULL;
-  chain->contract        = hex_to_new_bytes(contract, 40);
   chain->type            = type;
   chain->version         = version;
-  memset(chain->registry_id, 0, 32);
-  if (version > 1) {
-    int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
-    if (l < 32) {
-      memmove(chain->registry_id + 32 - l, chain->registry_id, l);
-      memset(chain->registry_id, 0, 32 - l);
-    }
-  }
 }
 
 static void init_ipfs(in3_chain_t* chain) {
-  initChain(chain, 0x7d0, "a93b57289070550c82edb1106e12bb37138948b8", "f0162ec6d785ee990e36bad865251f45af0916cf136169540c02b0dd9cb69196", 2, 2, CHAIN_IPFS, NULL);
+  initChain(chain, 0x7d0, 2, CHAIN_IPFS);
 }
 
 static void init_mainnet(in3_chain_t* chain) {
-  initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 4, CHAIN_ETH, NULL);
+  initChain(chain, 0x01, 2, CHAIN_ETH);
 }
 static void init_ewf(in3_chain_t* chain) {
-  initChain(chain, 0xf6, "039562872008f7a76674a6e7842804f0ad37cb13", "313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed75", 2, 2, CHAIN_ETH, NULL);
+  initChain(chain, 0xf6, 2, CHAIN_ETH);
 }
 
 static void init_btc(in3_chain_t* chain) {
-  initChain(chain, 0x99, "c2c05fbfe76ee7748ae5f5b61b57a46cc4061c32", "53786c93e54c21d9852d093c394eee9df8d714d8f2534cdf92f9c9998c528d19", 2, 2, CHAIN_BTC, NULL);
+  initChain(chain, 0x99, 2, CHAIN_BTC);
 }
 static void init_kovan(in3_chain_t* chain) {
 #ifdef IN3_STAGING
   // kovan
-  initChain(chain, 0x2a, "0604014f2a5fdfafce3f2ec10c77c31d8e15ce6f", "d440f01322c8529892c204d3705ae871c514bafbb2f35907832a07322e0dc868", 2, 2, CHAIN_ETH, NULL);
+  initChain(chain, 0x2a, 2, CHAIN_ETH);
 #else
   // kovan
-  initChain(chain, 0x2a, "4c396dcf50ac396e5fdea18163251699b5fcca25", "92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf", 2, 2, CHAIN_ETH, NULL);
+  initChain(chain, 0x2a, 2, CHAIN_ETH);
 #endif
 }
 
@@ -178,10 +165,10 @@ static void init_goerli(in3_chain_t* chain) {
 
 #ifdef IN3_STAGING
   // goerli
-  initChain(chain, 0x05, "814fb2203f9848192307092337340dcf791a3fed", "0f687341e0823fa5288dc9edd8a00950b35cc7e481ad7eaccaf61e4e04a61e08", 2, 2, CHAIN_ETH, NULL);
+  initChain(chain, 0x05, 2, CHAIN_ETH);
 #else
   // goerli
-  initChain(chain, 0x05, "5f51e413581dd76759e9eed51e63d14c8d1379c8", "67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea", 2, 2, CHAIN_ETH, NULL);
+  initChain(chain, 0x05, 2, CHAIN_ETH);
 #endif
 }
 
@@ -219,31 +206,24 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   else if (chain_id == CHAIN_ID_EWC)
     init_ewf(&c->chain);
   else if (chain_id == CHAIN_ID_LOCAL)
-    initChain(&c->chain, 0x11, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
+    initChain(&c->chain, 0x11, 1, CHAIN_ETH);
 
   return IN3_OK;
 }
 
-in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version) {
+in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, uint8_t version) {
   assert(chain_id);
   assert(c);
-  assert(contract);
-  assert(registry_id);
 
   in3_chain_t* chain = &c->chain;
-  if (chain->contract)
-    b_free(chain->contract);
-  chain->chain_id = chain_id;
-  chain->contract = b_new(contract, 20);
-  chain->type     = type;
-  chain->version  = version;
-  memcpy(chain->registry_id, registry_id, 32);
-  return chain->contract ? IN3_OK : IN3_ENOMEM;
+  chain->chain_id    = chain_id;
+  chain->type        = type;
+  chain->version     = version;
+  return IN3_OK;
 }
 
 static void chain_free(in3_chain_t* chain) {
   if (chain->verified_hashes) _free(chain->verified_hashes);
-  b_free(chain->contract);
 }
 
 /* frees the data */
