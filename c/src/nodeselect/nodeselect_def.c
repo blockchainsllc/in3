@@ -6,9 +6,32 @@
 #include "../core/util/log.h"
 #include "cache.h"
 #include "nodeselect_def_cfg.h"
+#include "registry.h"
 
 #define BLACKLISTTIME (24 * 3600)
 #define WAIT_TIME_CAP 3600
+
+static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
+  char*      method = NULL;
+  d_token_t* params = d_get(vc->request, K_PARAMS);
+
+  // do we support this request?
+  if (!(method = d_get_stringk(vc->request, K_METHOD)))
+    return vc_err(vc, "No Method in request defined!");
+  if (vc->chain->type != CHAIN_ETH && strcmp(method, "in3_nodeList")) return IN3_EIGNORE;
+  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+
+  // do we have a result? if not it is a valid error-response
+  if (!vc->result)
+    return IN3_OK;
+
+  if (strcmp(method, "in3_nodeList") == 0)
+    return eth_verify_in3_nodelist(data, vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
+  else if (strcmp(method, "in3_whiteList") == 0)
+    return eth_verify_in3_whitelist(data, vc);
+  else
+    return IN3_EIGNORE;
+}
 
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
@@ -482,6 +505,8 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       _free(data->nodelist_upd8_params);
       _free(data);
       return IN3_OK;
+    case PLGN_ACT_RPC_VERIFY:
+      return rpc_verify(data, (in3_vctx_t*) plugin_ctx);
     case PLGN_ACT_CONFIG_SET:
       return config_set(data, (in3_configure_ctx_t*) plugin_ctx);
     case PLGN_ACT_CONFIG_GET:
@@ -528,5 +553,5 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
 
   data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
   in3_cache_init(c, data);
-  return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA, nodeselect, data, false);
+  return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA, nodeselect, data, false);
 }
