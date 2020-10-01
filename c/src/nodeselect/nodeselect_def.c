@@ -525,8 +525,8 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       return chain_change(data, plugin_ctx);
     case PLGN_ACT_GET_DATA: {
       in3_get_data_ctx_t* pctx = plugin_ctx;
-      if (pctx->type == GET_DATA_WHITELIST_CONTRACT) {
-        pctx->data    = data->whitelist ? data->whitelist->contract : NULL;
+      if (pctx->type == GET_DATA_REGISTRY_ID) {
+        pctx->data    = data->registry_id;
         pctx->cleanup = NULL;
         return IN3_OK;
       }

@@ -407,12 +407,14 @@ typedef in3_ctx_t in3_nl_pick_ctx_t;
 typedef node_match_t in3_nl_blacklist_ctx_t;
 
 // -------- GET_DATA ---------
-typedef enum { GET_DATA_WHITELIST_CONTRACT } in3_get_data_type_t;
+typedef enum {
+  GET_DATA_REGISTRY_ID 
+} in3_get_data_type_t;
 
 /**
  * context used during get data
  * sample usage -
- *     in3_get_data_ctx_t dctx = {.type = GET_DATA_NODES};
+ *     in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
  *     in3_plugin_execute_first(ctx, PLGN_ACT_GET_DATA, &dctx);
  *     // use dctx->data as required
  *     if (dctx.cleanup) dctx.cleanup(dctx.data);
