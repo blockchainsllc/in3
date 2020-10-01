@@ -439,7 +439,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     memcpy(msg_data, block_hash, 32);
     memset(msg_data + 32, 0, 32);
     long_to_bytes(header_number, msg_data + 56);
-    if (vc->chain->version > 1) memcpy(msg_data + 64, vc->chain->registry_id, 32);
+    memcpy(msg_data + 64, vc->chain->registry_id, 32);
 
     // hash it to create the message hash
     keccak(msg, msg_data);
