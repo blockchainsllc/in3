@@ -348,7 +348,7 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   // blacklist node that gave us an error response for nodelist (if not first update)
   // and clear nodelist params
   if (nodelist_not_first_upd8(data))
-    blacklist_node(data, data->nodelist_upd8_params->node);
+    blacklist_node_addr(data, data->nodelist_upd8_params->node, BLACKLISTTIME);
   _free(data->nodelist_upd8_params);
   data->nodelist_upd8_params = NULL;
 
