@@ -110,9 +110,31 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   d_token_t*  token = ctx->token;
 
   if (token->key == key("servers") || token->key == key("nodes")) {
-    for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
-      bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+    EXPECT_TOK_OBJ(token);
 
+    for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
+      EXPECT_TOK_OBJ(ct.token);
+      EXPECT_TOK_KEY_HEXSTR(ct.token);
+
+      bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
+      bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
+      if (!ctx->client->chain.chain_id)
+        EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
+
+      // chain_props
+      for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
+        if (cp.token->key == key("contract")) {
+          EXPECT_TOK_ADDR(cp.token);
+          memcpy(data->contract, cp.token->data, cp.token->len);
+        }
+        else if (cp.token->key == key("registryId")) {
+          EXPECT_TOK_B256(cp.token);
+          bytes_t reg_id = d_to_bytes(cp.token);
+          memcpy(data->registry_id, reg_id.data, 32);
+        }
+      }
+
+      bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
       if (wl_contract && wl_contract->len == 20) {
         data->whitelist                 = _malloc(sizeof(in3_whitelist_t));
         data->whitelist->addresses.data = NULL;
@@ -254,6 +276,9 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
 
 static in3_ret_t pick_data(in3_nodeselect_def_t* data, void* ctx_) {
   in3_ctx_t* ctx = ctx_;
+
+  // fixme
+  // check if chain ids match and nodelist != NULL
 
   // init cache lazily,
   // this also means we can be sure that all other related plugins are registered by now

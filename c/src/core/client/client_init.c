@@ -482,29 +482,16 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK_KEY_HEXSTR(ct.token);
 
         // register chain
-        chain_id_t chain_id    = get_chain_from_key(ct.token->key);
-        bytes_t*   contract    = d_get_byteskl(ct.token, key("contract"), 20);
-        bytes_t*   registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-
+        chain_id_t chain_id = get_chain_from_key(ct.token->key);
         if (!c->chain.chain_id) {
-          EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-          EXPECT_CFG((in3_client_register_chain(c, chain_id, !c->chain.type, contract ? contract->data : c->chain.contract->data, registry_id ? registry_id->data : c->chain.registry_id, 2)) == IN3_OK,
+          EXPECT_CFG((in3_client_register_chain(c, chain_id, !c->chain.type, 2)) == IN3_OK,
                      "register chain failed");
           EXPECT_CFG(c->chain.chain_id, "invalid chain id!");
         }
 
         // chain_props
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
-          if (cp.token->key == key("contract")) {
-            EXPECT_TOK_ADDR(cp.token);
-            memcpy(c->chain.contract->data, cp.token->data, cp.token->len);
-          }
-          else if (cp.token->key == key("registryId")) {
-            EXPECT_TOK_B256(cp.token);
-            bytes_t data = d_to_bytes(cp.token);
-            memcpy(c->chain.registry_id, data.data, 32);
-          }
-          else if (cp.token->key == key("verifiedHashes")) {
+          if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
             EXPECT_TOK(cp.token, (unsigned) d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
             if (!c->chain.verified_hashes)
