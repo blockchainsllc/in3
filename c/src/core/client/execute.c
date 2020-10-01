@@ -141,7 +141,7 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
   }
 }
 
-NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain, bool no_in3) {
+NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) {
   assert_in3_ctx(c);
   assert(sb);
 
@@ -192,8 +192,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
     if (proof || msg_hash) {
       // add in3
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
-      if (multichain)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain.chain_id));
+      sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain.chain_id));
       if (msg_hash) {
         in3_pay_sign_req_ctx_t sctx      = {.ctx = c, .request = request_token, .signature = {0}};
         bytes_t                sig_bytes = bytes(sctx.signature, 65);
@@ -507,7 +506,6 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   int           nodes_count = rpc ? 1 : ctx_nodes_len(ctx->nodes);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_match_t* node        = ctx->nodes;
-  bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
     urls[n] = rpc ? rpc : node->url;
@@ -524,7 +522,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   // prepare the payload
   sb_t* payload = sb_new(NULL);
-  res           = ctx_create_payload(ctx, payload, multichain, rpc != NULL);
+  res           = ctx_create_payload(ctx, payload, rpc != NULL);
   if (res < 0) {
     // we clean up
     sb_free(payload);
