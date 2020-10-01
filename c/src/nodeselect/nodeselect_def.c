@@ -144,7 +144,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
       if (!ctx->client->chain.chain_id)
         EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
 
-      // chain_props
+      bool has_wlc = false, has_man_wl = false;
       for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
         if (cp.token->key == key("contract")) {
           EXPECT_TOK_ADDR(cp.token);
@@ -155,21 +155,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
           bytes_t reg_id = d_to_bytes(cp.token);
           memcpy(data->registry_id, reg_id.data, 32);
         }
-      }
-
-      bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
-      if (wl_contract && wl_contract->len == 20) {
-        data->whitelist                 = _malloc(sizeof(in3_whitelist_t));
-        data->whitelist->addresses.data = NULL;
-        data->whitelist->addresses.len  = 0;
-        data->whitelist->needs_update   = true;
-        data->whitelist->last_block     = 0;
-        memcpy(data->whitelist->contract, wl_contract->data, 20);
-      }
-
-      bool has_wlc = false, has_man_wl = false;
-      for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
-        if (cp.token->key == key("whiteListContract")) {
+        else if (cp.token->key == key("whiteListContract")) {
           EXPECT_TOK_ADDR(cp.token);
           EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
           has_wlc = true;
@@ -253,7 +239,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   }
 cleanup:
   ctx->error_msg = res;
-  return IN3_OK;
+  return ctx->error_msg ? IN3_ECONFIG : IN3_OK;
 }
 
 static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ctx) {
