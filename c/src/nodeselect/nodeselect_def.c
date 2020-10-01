@@ -108,7 +108,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
 
     for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
       EXPECT_TOK_OBJ(ct.token);
-      EXPECT_TOK_KEY_HEXSTR(ct.token);
+      //      EXPECT_TOK_KEY_HEXSTR(ct.token); // fixme
 
       bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
       bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
@@ -488,6 +488,14 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
         return IN3_OK;
       }
     }
+    case PLGN_ACT_ADD_PAYLOAD: {
+      sb_t* payload = plugin_ctx;
+      if (data->whitelist) {
+        const bytes_t adr = bytes(data->whitelist->contract, 20);
+        sb_add_bytes(payload, ",\"whiteListContract\":", &adr, 1, false);
+      }
+      return IN3_OK;
+    }
     default: break;
   }
   return IN3_EIGNORE;
@@ -510,5 +518,5 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
 
   data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
   in3_cache_init(c, data);
-  return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA, nodeselect, data, false);
+  return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, nodeselect, data, false);
 }

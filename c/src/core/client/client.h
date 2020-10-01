@@ -327,6 +327,7 @@ typedef enum {
   PLGN_ACT_NL_FAILABLE       = 0x1000000, /**< handle failable request */
   PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event */
   PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
+  PLGN_ACT_ADD_PAYLOAD       = 0x8000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
 } in3_plugin_act_t;
 
 /**
@@ -465,10 +466,10 @@ NONULL char* in3_client_exec_req(
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
 NONULL_FOR((1, 4))
 in3_ret_t in3_client_register_chain(
-    in3_t*           client,      /**< [in] the pointer to the incubed client config. */
-    chain_id_t       chain_id,    /**< [in] the chain id. */
-    in3_chain_type_t type,        /**< [in] the verification type of the chain. */
-    uint8_t          version      /**< [in] the chain version. */
+    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
+    chain_id_t       chain_id, /**< [in] the chain id. */
+    in3_chain_type_t type,     /**< [in] the verification type of the chain. */
+    uint8_t          version   /**< [in] the chain version. */
 );
 
 /** frees the references of the client */

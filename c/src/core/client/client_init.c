@@ -630,6 +630,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_NL_FAILABLE: return "nl_failable";
     case PLGN_ACT_CHAIN_CHANGE: return "chain_change";
     case PLGN_ACT_GET_DATA: return "get_data";
+    case PLGN_ACT_ADD_PAYLOAD: return "add_payload";
   }
   return "unknown";
 }

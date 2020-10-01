@@ -193,6 +193,10 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
       // add in3
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain.chain_id));
+
+      // allow plugins to add their metadata
+      in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, sb);
+
       if (msg_hash) {
         in3_pay_sign_req_ctx_t sctx      = {.ctx = c, .request = request_token, .signature = {0}};
         bytes_t                sig_bytes = bytes(sctx.signature, 65);
