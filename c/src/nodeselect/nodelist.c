@@ -470,7 +470,6 @@ SKIP_UPDATE:
 }
 
 in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, int request_count, in3_node_filter_t filter) {
-
   // get all nodes from the nodelist
   uint64_t           now       = in3_time(NULL);
   in3_node_t*        all_nodes = NULL;

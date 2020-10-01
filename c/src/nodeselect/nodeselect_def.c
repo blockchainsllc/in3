@@ -305,11 +305,11 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
 }
 
 NONULL static in3_node_t* get_node(const in3_nodeselect_def_t* data, const node_match_t* node) {
-  return node->index < data->nodelist_length ? data->nodelist + node->index : NULL;
+  return node && node->index < data->nodelist_length ? data->nodelist + node->index : NULL;
 }
 
 NONULL static in3_node_weight_t* get_node_weight(const in3_nodeselect_def_t* data, const node_match_t* node) {
-  return node->index < data->nodelist_length ? data->weights + node->index : NULL;
+  return node && node->index < data->nodelist_length ? data->weights + node->index : NULL;
 }
 
 static in3_ret_t pick_signer(in3_nodeselect_def_t* data, void* ctx_) {
