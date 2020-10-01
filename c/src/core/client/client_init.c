@@ -128,11 +128,6 @@ void in3_register_default(plgn_register reg_fn) {
   (*d)->fn = reg_fn;
 }
 
-static void whitelist_free(in3_whitelist_t* wl) {
-  if (!wl) return;
-  if (wl->addresses.data) _free(wl->addresses.data);
-  _free(wl);
-}
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
   assert(chain);
