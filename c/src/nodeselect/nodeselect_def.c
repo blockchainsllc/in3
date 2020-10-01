@@ -88,35 +88,6 @@ static in3_ret_t add_node(in3_nodeselect_def_t* data, char* url, in3_node_props_
   return IN3_OK;
 }
 
-static in3_ret_t remove_node(in3_nodeselect_def_t* data, address_t address) {
-  assert(data);
-  assert(address);
-
-  int node_index = -1;
-  for (unsigned int i = 0; i < data->nodelist_length; i++) {
-    if (memcmp(data->nodelist[i].address, address, 20) == 0) {
-      node_index = i;
-      break;
-    }
-  }
-  if (node_index == -1) return IN3_EFIND;
-  if (data->nodelist[node_index].url)
-    _free(data->nodelist[node_index].url);
-
-  if (node_index < ((signed) data->nodelist_length) - 1) {
-    memmove(data->nodelist + node_index, data->nodelist + node_index + 1, sizeof(in3_node_t) * (data->nodelist_length - 1 - node_index));
-    memmove(data->weights + node_index, data->weights + node_index + 1, sizeof(in3_node_weight_t) * (data->nodelist_length - 1 - node_index));
-  }
-  data->nodelist_length--;
-  if (!data->nodelist_length) {
-    _free(data->nodelist);
-    _free(data->weights);
-    data->nodelist = NULL;
-    data->weights  = NULL;
-  }
-  return IN3_OK;
-}
-
 static in3_ret_t clear_nodes(in3_nodeselect_def_t* data) {
   assert(data);
 
