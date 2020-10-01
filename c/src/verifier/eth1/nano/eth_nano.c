@@ -56,7 +56,6 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
   // do we support this request?
   if (!(method = d_get_stringk(vc->request, K_METHOD)))
     return vc_err(vc, "No Method in request defined!");
-  if (vc->chain->type != CHAIN_ETH && strcmp(method, "in3_nodeList")) return IN3_EIGNORE;
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
@@ -71,10 +70,6 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
   if (strcmp(method, "eth_getTransactionReceipt") == 0)
     // for txReceipt, we need the txhash
     return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(params, 0));
-  else if (strcmp(method, "in3_nodeList") == 0)
-    return eth_verify_in3_nodelist(vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
-  else if (strcmp(method, "in3_whiteList") == 0)
-    return eth_verify_in3_whitelist(vc);
   else
     return IN3_EIGNORE;
 }

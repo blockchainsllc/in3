@@ -68,17 +68,6 @@ NONULL bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig);
 NONULL in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
 
 /**
- * verifies the nodelist.
- */
-NONULL_FOR((1))
-in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses);
-
-/**
- * verifies the nodelist.
- */
-NONULL in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc);
-
-/**
  * this function should only be called once and will register the eth-nano verifier.
  */
 NONULL in3_ret_t in3_register_eth_nano(in3_t* c);
