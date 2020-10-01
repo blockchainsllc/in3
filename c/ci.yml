@@ -269,6 +269,7 @@ integration_longrun:
   trigger:
     project: qa/long-run
     strategy: depend
+    branch: develop
 
 integration_browsertest:
   stage: test
@@ -276,3 +277,4 @@ integration_browsertest:
   trigger:
     project: in3/ts/browser-test
     strategy: depend
+    branch: 2-release-branch-test
