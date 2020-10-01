@@ -1,6 +1,6 @@
 .only_release:
   rules:
-    - if: '$CI_COMMIT_REF == /release\/v([0-9])\.([0-9])\.([0-9])/'
+    - if: '$CI_COMMIT_REF_NAME == /release\/v([0-9])\.([0-9])\.([0-9])/'
 
 .only_full:
   rules:
@@ -272,10 +272,12 @@ integration_longrun:
   trigger:
     project: qa/long-run
     strategy: depend
+    branch: develop
 
-integration_longrun:
+integration_browsertest:
   stage: test
   extends: .only_release
   trigger:
     project: in3/ts/browser-test
     strategy: depend
+    branch: 2-release-branch-test
