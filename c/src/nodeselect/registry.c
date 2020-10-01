@@ -32,13 +32,14 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context.h"
-#include "../../../core/client/keys.h"
-#include "../../../core/util/mem.h"
-#include "../../../verifier/eth1/nano/eth_nano.h"
-#include "../../../verifier/eth1/nano/merkle.h"
-#include "../../../verifier/eth1/nano/rlp.h"
-#include "../../../verifier/eth1/nano/serialize.h"
+#include "registry.h"
+#include "../core/client/context.h"
+#include "../core/client/keys.h"
+#include "../core/util/mem.h"
+#include "../verifier/eth1/nano/eth_nano.h"
+#include "../verifier/eth1/nano/merkle.h"
+#include "../verifier/eth1/nano/rlp.h"
+#include "../verifier/eth1/nano/serialize.h"
 #include <string.h>
 
 #define SERVER_STRUCT_SIZE 6
@@ -305,17 +306,15 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
   return IN3_OK;
 }
 
-in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
-  d_token_t *        storage_proof = NULL, *server_list = NULL;
-  in3_get_data_ctx_t dctx = {.type = GET_DATA_WHITELIST_CONTRACT};
-  in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
-  in3_ret_t res = verify_account(vc, dctx.data, &storage_proof, &server_list);
+in3_ret_t eth_verify_in3_whitelist(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
+  d_token_t *storage_proof = NULL, *server_list = NULL;
+  in3_ret_t  res = verify_account(vc, data->whitelist->contract, &storage_proof, &server_list);
   return res == IN3_OK ? verify_whitelist_data(vc, server_list, storage_proof) : res;
 }
 
-in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses) {
+in3_ret_t eth_verify_in3_nodelist(in3_nodeselect_def_t* data, in3_vctx_t* vc, uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses) {
   d_token_t *storage_proof = NULL, *server_list = NULL;
-  in3_ret_t  res = verify_account(vc, vc->chain->contract->data, &storage_proof, &server_list);
+  in3_ret_t  res = verify_account(vc, data->contract, &storage_proof, &server_list);
 
   // now verify the nodelist
   return res == IN3_OK ? verify_nodelist_data(vc, node_limit, seed, required_addresses, server_list, storage_proof) : res;
