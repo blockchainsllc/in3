@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace In3.Utils
 {
     // This is copied from: https://docs.microsoft.com/en-us/dotnet/api/system.enum.getvalues?view=netframework-4.8
-    // I had to narrow down to a more specific case because we dont want a key.ToString in the json writer.
+    // Had to be narrowed down to a more specific case because since it uses a custom enum as key.
     internal class DictionaryChainObjectConverter : JsonConverterFactory
     {
         public override bool CanConvert(Type typeToConvert)
@@ -43,8 +43,8 @@ namespace In3.Utils
             return converter;
         }
 
-        private class DictionaryEnumConverterInner<Chain, TValue> :
-            JsonConverter<Dictionary<In3.Chain, TValue>> where Chain : struct
+        private class DictionaryEnumConverterInner<TKey, TValue> :
+            JsonConverter<Dictionary<In3.Chain, TValue>> where TKey : Enum
         {
             private readonly JsonConverter<TValue> _valueConverter;
             private Type _keyType;
