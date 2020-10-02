@@ -511,6 +511,9 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   }
   json_free(json);
 
+  for (unsigned int i = 0; i < data->nodelist_length; ++i)
+    BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
+
   data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
   in3_cache_init(c, data);
   return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, nodeselect, data, false);
