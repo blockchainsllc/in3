@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using In3.Configuration;
 
 namespace In3.Native
@@ -12,10 +11,7 @@ namespace In3.Native
             IntPtr jsonPointer = in3_get_config(client);
             string jsonConfig = Marshal.PtrToStringUTF8(jsonPointer);
             Utils._free_(jsonPointer);
-
-            ClientConfiguration clientConf = JsonSerializer.Deserialize<ClientConfiguration>(jsonConfig);
-            clientConf.MarkSynced();
-            return clientConf;
+            return ClientConfiguration.FromJson(jsonConfig);
         }
 
         internal static string SetConfig(IntPtr client, string val)

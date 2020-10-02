@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -19,7 +20,7 @@ namespace In3.Configuration
         /// <summary>
         /// Configuration for the chains. Read-only attribute.
         /// </summary>
-        [JsonPropertyName("nodes"), JsonConverter(typeof(DictionaryChainObjectConverter))]
+        [JsonPropertyName("nodes")]
         public Dictionary<Chain, ChainConfiguration> ChainsConfiguration { get; }
 
         /// <summary>
@@ -206,16 +207,32 @@ namespace In3.Configuration
             ChainsConfiguration = new Dictionary<Chain, ChainConfiguration>();
         }
 
+        internal static ClientConfiguration FromJson(string jsonConfig)
+        {
+            ClientConfiguration clientConf = JsonSerializer.Deserialize<ClientConfiguration>(jsonConfig, GetOptions());
+            using (JsonDocument document = JsonDocument.Parse(jsonConfig))
+            {
+                JsonElement root = document.RootElement;
+
+                bool hasNodeProperty = root.TryGetProperty("nodes", out JsonElement chainsElement);
+                if (hasNodeProperty)
+                {
+                    foreach (JsonProperty chainProp in chainsElement.EnumerateObject())
+                    {
+                        var value = Convert.ToInt32(chainProp.Name, 16);
+                        Chain chain = Enum.Parse<Chain>(value.ToString());
+                        ChainConfiguration chaintConf = JsonSerializer.Deserialize<ChainConfiguration>(chainProp.Value.GetRawText(), GetOptions());
+                        clientConf.AddChainConfiguration(chain, chaintConf);
+                    }
+                }
+            }
+            clientConf.MarkSynced();
+            return clientConf;
+        }
+
         internal string ToJson()
         {
-            JsonSerializerOptions options = new JsonSerializerOptions
-            {
-                IgnoreNullValues = true
-            };
-
-            options.Converters.Add(new DictionaryChainObjectConverter());
-            options.Converters.Add(new ProofConverter());
-            return JsonSerializer.Serialize(this, options);
+            return JsonSerializer.Serialize(this, GetOptions());
         }
 
         internal override bool HasChanged()
@@ -243,6 +260,18 @@ namespace In3.Configuration
             {
                 chainConfiguration.MarkSynced();
             }
+        }
+
+        private static JsonSerializerOptions GetOptions()
+        {
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                IgnoreNullValues = true
+            };
+
+            options.Converters.Add(new ProofConverter());
+            options.Converters.Add(new DictionaryChainObjectConverter());
+            return options;
         }
     }
 }
