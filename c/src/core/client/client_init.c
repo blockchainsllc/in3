@@ -363,7 +363,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
-      c->chain.chain_id           = chain_id(token);
+      c->chain.chain_id = chain_id(token);
       in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
     else if (token->key == key("signatureCount")) {

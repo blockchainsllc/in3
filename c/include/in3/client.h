@@ -226,8 +226,6 @@ typedef struct in3_chain {
   uint8_t              version;         /**< version of the chain */
   chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t     type;            /**< chaintype */
-  bytes_t*             contract;        /**< the address of the registry contract */
-  bytes32_t            registry_id;     /**< the identifier of the registry */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
 } in3_chain_t;
@@ -322,12 +320,14 @@ typedef enum {
   PLGN_ACT_PAY_HANDLE        = 0x20000,   /**< handles the payment */
   PLGN_ACT_PAY_SIGN_REQ      = 0x40000,   /**< signs a request */
   PLGN_ACT_LOG_ERROR         = 0x80000,   /**< report an error */
-  PLGN_ACT_NL_PICK_DATA      = 0x100000,  /**< picks the data nodes */
-  PLGN_ACT_NL_PICK_SIGNER    = 0x200000,  /**< picks the signer nodes */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x400000,  /**< called after receiving a response in order to decide whether a update is needed. */
-  PLGN_ACT_NL_BLACKLIST      = 0x800000,  /**< blacklist a particular node in the nodelist */
-  PLGN_ACT_CHAIN_CHANGE      = 0x1000000, /**< chain id change event */
-  PLGN_ACT_GET_DATA          = 0x2000000, /**< get access to plugin data as a void ptr */
+  PLGN_ACT_NL_PICK_DATA      = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_PICK_SIGNER    = 0x200000,  /**< picks the signer nodes, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x400000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_BLACKLIST      = 0x800000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to node_match_t. */
+  PLGN_ACT_NL_FAILABLE       = 0x1000000, /**< handle failable request, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
+  PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
+  PLGN_ACT_ADD_PAYLOAD       = 0x8000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
 } in3_plugin_act_t;
 
 /**
@@ -466,12 +466,10 @@ NONULL char* in3_client_exec_req(
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
 NONULL_FOR((1, 4))
 in3_ret_t in3_client_register_chain(
-    in3_t*           client,      /**< [in] the pointer to the incubed client config. */
-    chain_id_t       chain_id,    /**< [in] the chain id. */
-    in3_chain_type_t type,        /**< [in] the verification type of the chain. */
-    address_t        contract,    /**< [in] contract of the registry. */
-    bytes32_t        registry_id, /**< [in] the identifier of the registry. */
-    uint8_t          version      /**< [in] the chain version. */
+    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
+    chain_id_t       chain_id, /**< [in] the chain id. */
+    in3_chain_type_t type,     /**< [in] the verification type of the chain. */
+    uint8_t          version   /**< [in] the chain version. */
 );
 
 /** frees the references of the client */
