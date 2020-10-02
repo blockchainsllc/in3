@@ -118,7 +118,8 @@ static void escape(sb_t* sb, char* c) {
       case 27:
         break;
       default:
-        sb_add_char(sb, *c);
+        if ()
+          sb_add_char(sb, (*c < 10 || *c > 128) ? 32 : *c);
         break;
     }
   }
