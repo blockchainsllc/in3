@@ -88,7 +88,7 @@
 
 // helpstring
 void show_help(char* name) {
-  printf("Usage: %s <options> method <params> ... \n\
+  recorder_print(0, "Usage: %s <options> method <params> ... \n\
 \n\
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -a             max number of attempts before giving up (default 5)\n\
@@ -182,24 +182,24 @@ in3_weights\n\
 in3_ens <domain> <field>\n\
   resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
 \n",
-         name);
+                 name);
 }
 
-static void die(char* msg) {
-  fprintf(stderr, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
-  exit(EXIT_FAILURE);
+_Noreturn static void die(char* msg) {
+  recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
+  recorder_exit(EXIT_FAILURE);
 }
 
 static bool debug_mode = false;
 static void print_hex(uint8_t* data, int len) {
-  printf("0x");
-  for (int i = 0; i < len; i++) printf("%02x", data[i]);
-  printf("\n");
+  recorder_print(0, "0x");
+  for (int i = 0; i < len; i++) recorder_print(0, "%02x", data[i]);
+  recorder_print(0, "\n");
 }
 // helper to read the password from tty
 void read_pass(char* pw, int pwsize) {
   int i = 0, ch = 0;
-  fprintf(stderr, COLORT_HIDDEN); //conceal typing and save position
+  recorder_print(1, COLORT_HIDDEN); //conceal typing and save position
   while (true) {
     ch = getchar();
     if (ch == '\r' || ch == '\n' || ch == EOF) break; //get characters until CR or NL
@@ -209,7 +209,7 @@ void read_pass(char* pw, int pwsize) {
     }
     i++;
   }
-  fprintf(stderr, COLORT_RESETHIDDEN); //reveal typing
+  recorder_print(1, COLORT_RESETHIDDEN); //reveal typing
 }
 
 // accepts a value as
@@ -218,56 +218,14 @@ void read_pass(char* pw, int pwsize) {
 // 2.3meth
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;
-  int    l     = strlen(val);
-  double value = 0;
-  if (l > 3 && val[l - 1] > '9') {
-    char unit[4];
-    strcpy(unit, val + l - 3); // we copy the last 3 characters as unit
-    double f = 1;              // and define a modifying factor for the prefix of the unit
-    if (val[l - 4] == 'k')
-      f = 1000;
-    else if (val[l - 4] == 'M')
-      f = 1000000;
-    else if (val[l - 4] == 'm')
-      f = 0.001;
-    val[l - ((f == 1) ? 3 : 4)] = 0;         // so we let the value string end where the unit starts
-    value                       = atof(val); // so we can easily parse the value
-
-    if (strcmp(unit, "eth") == 0)
-      value *= 1000000000000000000l;
-    else if (strcmp(unit, "fin") == 0)
-      value *= 1000000000000000l;
-    else if (strcmp(unit, "wei"))
-      die("unsupported unit in value!");
-    value *= f;
-  }
-  else
-    value = atof(val);
-
-  value = floor(value); // make sure it is a integer value
-  if (value < 0) die("negative values are not allowed");
-
-  // now convert the double into a hexstring
-  // this is no cleaning up the mempry correctly, but since it is a comandline tool
-  // we don't need to clean up
-  char *res = _malloc(200), *p = res + 199;
-  res[199]         = 0;
-  const char hex[] = "0123456789abcdef";
-  while (value > 0.999999) {
-    p--;
-    *p    = hex[(int) (fmod(value, 16))];
-    value = floor(value / 16);
-  }
+  bytes32_t tmp;
+  int       s = string_val_to_bytes(val, NULL, tmp);
+  if (s < 0) die("Invalid numeric value");
+  char* res = _malloc(s * 2 + 3);
+  bytes_to_hex(tmp, s, res + 2);
+  if (res[2] == '0') res++;
   res[0] = '0';
   res[1] = 'x';
-  if (p == res + 199) {
-    res[2] = '0';
-    res[3] = 0;
-  }
-  else {
-    memmove(res + 2, p, res + 199 - p);
-    res[res + 201 - p] = 0;
-  }
   return res;
 }
 static void execute(in3_t* c, FILE* f) {
@@ -281,7 +239,7 @@ static void execute(in3_t* c, FILE* f) {
       if (first)
         die("Invalid json-data from stdin");
       else
-        exit(EXIT_SUCCESS);
+        recorder_exit(EXIT_SUCCESS);
     }
     if (first == 0) {
       if (d == '{')
@@ -300,7 +258,7 @@ static void execute(in3_t* c, FILE* f) {
       // time to execute
       in3_ctx_t* ctx = ctx_new(c, sb->data);
       if (ctx->error)
-        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
+        recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
         in3_ret_t ret = in3_send_ctx(ctx);
         uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
@@ -314,21 +272,21 @@ static void execute(in3_t* c, FILE* f) {
           if (c->flags & FLAGS_KEEP_IN3) {
             str_range_t rr  = d_to_json(ctx->responses[0]);
             rr.data[rr.len] = 0;
-            printf("%s\n", rr.data);
+            recorder_print(0, "%s\n", rr.data);
           }
           else {
             d_token_t* result = d_get(ctx->responses[0], K_RESULT);
             d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
             char*      r      = d_create_json(ctx->response_context, result ? result : error);
             if (result)
-              printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
+              recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
             else
-              printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
+              recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
             _free(r);
           }
         }
         else
-          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
+          recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
       ctx_free(ctx);
       first   = 0;
@@ -435,33 +393,36 @@ void set_chain_id(in3_t* c, char* id) {
 }
 
 // prepare a eth_call or eth_sendTransaction
-call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
-  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;                          // only if we have a function signature, we will parse it and create a call_request.
-  if (req && req->error) die(req->error);                                                // parse-error we stop here.
-  if (req && req->in_data->type == A_TUPLE) {                                            // if type is a tuple, it means we have areuments we need to parse.
-    json_ctx_t* in_data = parse_json(args);                                              // the args are passed as a "[]"- json-array string.
-    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data"); // we then set the data, which appends the arguments to the functionhash.
-    json_free(in_data);                                                                  // of course we clean up ;-)
-  }                                                                                      //
-  sb_t* params = sb_new("[{");                                                           // now we create the transactionobject as json-argument.
-  if (to) {                                                                              // if this is a deployment we must not include the to-property
+abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
+  char*      error = NULL;
+  bytes_t    rdata = {0};
+  abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
+  if (error) die(error);                                             // parse-error we stop here.
+  if (req) {                                                         // if type is a tuple, it means we have areuments we need to parse.
+    json_ctx_t* in_data = parse_json(args);                          // the args are passed as a "[]"- json-array string.
+    rdata               = abi_encode(req, in_data->result, &error);  //encode data
+    if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
+    json_free(in_data);                                              // of course we clean up ;-)
+  }                                                                  //
+  sb_t* params = sb_new("[{");                                       // now we create the transactionobject as json-argument.
+  if (to) {                                                          // if this is a deployment we must not include the to-property
     sb_add_chars(params, "\"to\":\"");
     sb_add_chars(params, to);
     sb_add_chars(params, "\" ");
   }
-  if (req || data) {                                                  // if we have a request context or explicitly data we create the data-property
-    if (params->len > 2) sb_add_char(params, ',');                    // add comma if this is not the first argument
-    sb_add_chars(params, "\"data\":");                                // we will have a data-property
-    if (req && data) {                                                // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
-      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len); // in this case we skip the functionsignature.
+  if (req || data) {                                      // if we have a request context or explicitly data we create the data-property
+    if (params->len > 2) sb_add_char(params, ',');        // add comma if this is not the first argument
+    sb_add_chars(params, "\"data\":");                    // we will have a data-property
+    if (req && data) {                                    // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
+      uint8_t* full = _malloc(rdata.len - 4 + data->len); // in this case we skip the functionsignature.
       memcpy(full, data->data, data->len);
-      memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
-      bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
+      memcpy(full + data->len, rdata.data + 4, rdata.len - 4);
+      bytes_t bb = bytes(full, rdata.len - 4 + data->len);
       sb_add_bytes(params, "", &bb, 1, false);
       _free(full);
     }
     else if (req)
-      sb_add_bytes(params, "", &req->call_data->b, 1, false);
+      sb_add_bytes(params, "", &rdata, 1, false);
     else if (data)
       sb_add_bytes(params, "", data, 1, false);
   }
@@ -498,25 +459,25 @@ void print_val(d_token_t* t) {
         print_val(it.token);
       break;
     case T_BOOLEAN:
-      printf("%s\n", d_int(t) ? "true" : "false");
+      recorder_print(0, "%s\n", d_int(t) ? "true" : "false");
       break;
     case T_INTEGER:
-      printf("%i\n", d_int(t));
+      recorder_print(0, "%i\n", d_int(t));
       break;
     case T_BYTES:
       if (t->len < 9)
-        printf("%" PRId64 "\n", d_long(t));
+        recorder_print(0, "%" PRId64 "\n", d_long(t));
       else {
-        printf("0x");
-        for (int i = 0; i < (int) t->len; i++) printf("%02x", t->data[i]);
-        printf("\n");
+        recorder_print(0, "0x");
+        for (int i = 0; i < (int) t->len; i++) recorder_print(0, "%02x", t->data[i]);
+        recorder_print(0, "\n");
       }
       break;
     case T_NULL:
-      printf("NULL\n");
+      recorder_print(0, "NULL\n");
       break;
     case T_STRING:
-      printf("%s\n", d_string(t));
+      recorder_print(0, "%s\n", d_string(t));
       break;
   }
 }
@@ -524,7 +485,7 @@ void print_val(d_token_t* t) {
 void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
   if (pk_file) {
     if (!pwd) {
-      fprintf(stderr, "Passphrase:\n");
+      recorder_print(1, "Passphrase:\n");
       pwd = malloc(500);
       read_pass(pwd, 500);
     }
@@ -545,8 +506,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
     if (!method || strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0) {
       char tmp[64];
       bytes_to_hex(pk_seed, 32, tmp);
-      printf("0x%s\n", tmp);
-      exit(0);
+      recorder_print(0, "0x%s\n", tmp);
+      recorder_exit(0);
     }
     else
       eth_set_pk_signer(c, pk_seed);
@@ -615,16 +576,18 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
     if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
       char* data         = str_find(req->payload, "0x");
       *strchr(data, '"') = 0;
-      printf("%s\n", data);
-      exit(EXIT_SUCCESS);
+      recorder_print(0, "%s\n", data);
+      recorder_exit(EXIT_SUCCESS);
     }
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #elif USE_WINHTTP
   in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
-#else
+#elif TRANSPORTS
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
+#else
+  in3_ret_t r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
 #endif
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
@@ -647,13 +610,15 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #elif USE_WINHTTP
   in3_ret_t r = send_winhttp(NULL, action, plugin_ctx);
-#else
+#elif TRANSPORTS
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
+#else
+  in3_ret_t r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
-    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->ctx->raw_response->data.data);
-    exit(0);
+    recorder_print(0, "[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->ctx->raw_response->data.data);
+    recorder_exit(0);
   }
 
   return r;
@@ -663,40 +628,39 @@ int main(int argc, char* argv[]) {
   // check for usage
   if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
-    return 0;
+    recorder_exit(0);
   }
 
   if (argc >= 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0)) {
-    printf("in3 " IN3_VERSION "\nbuild " __DATE__ " with");
+    recorder_print(0, "in3 " IN3_VERSION "\nbuild " __DATE__ " with");
 #ifdef TEST
-    printf(" -DTEST=true");
+    recorder_print(0, " -DTEST=true");
 #endif
 #ifdef EVM_GAS
-    printf(" -DEVM_GAS=true");
+    recorder_print(0, " -DEVM_GAS=true");
 #endif
 #ifdef CMD
-    printf(" -DCMD=true");
+    recorder_print(0, " -DCMD=true");
 #endif
 #ifdef IN3_MATH_FAST
-    printf(" -DFAST_MATH=true");
+    recorder_print(0, " -DFAST_MATH=true");
 #endif
 #ifdef IN3_SERVER
-    printf(" -DIN3_SERVER=true");
+    recorder_print(0, " -DIN3_SERVER=true");
 #endif
 #ifdef USE_CURL
-    printf(" -DUSE_CURL=true");
+    recorder_print(0, " -DUSE_CURL=true");
 #else
-    printf(" -DUSE_CURL=false");
+    recorder_print(0, " -DUSE_CURL=false");
 #endif
-    printf("\n(c) " IN3_COPYRIGHT "\n");
-    return 0;
+    recorder_print(0, "\n(c) " IN3_COPYRIGHT "\n");
+    recorder_exit(0);
   }
 
   // define vars
-  char *method = NULL, params[50000];
-  params[0]    = '[';
-  params[1]    = 0;
-  int       p  = 1, i;
+  char*     method = NULL;
+  sb_t*     args   = sb_new("[");
+  int       i;
   bytes32_t pk;
 #ifdef LEDGER_NANO
   uint8_t path[5];
@@ -706,28 +670,28 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                         = in3_for_chain(0);
-  c->request_count                 = 2;
-  bool            out_response     = false;
-  int             run_test_request = 0;
-  bool            force_hex        = false;
-  char*           sig              = NULL;
-  char*           to               = NULL;
-  char*           block_number     = "latest";
-  char*           name             = NULL;
-  call_request_t* req              = NULL;
-  bool            json             = false;
-  char*           ms_sigs          = NULL;
-  uint64_t        gas_limit        = 100000;
-  char*           value            = NULL;
-  bool            wait             = false;
-  char*           pwd              = NULL;
-  char*           pk_file          = NULL;
-  char*           validators       = NULL;
-  bytes_t*        data             = NULL;
-  char*           port             = NULL;
-  char*           sig_type         = "raw";
-  bool            to_eth           = false;
+  in3_t* c                    = in3_for_chain(0);
+  c->request_count            = 2;
+  bool       out_response     = false;
+  int        run_test_request = 0;
+  bool       force_hex        = false;
+  char*      sig              = NULL;
+  char*      to               = NULL;
+  char*      block_number     = "latest";
+  char*      name             = NULL;
+  abi_sig_t* req              = NULL;
+  bool       json             = false;
+  char*      ms_sigs          = NULL;
+  uint64_t   gas_limit        = 100000;
+  char*      value            = NULL;
+  bool       wait             = false;
+  char*      pwd              = NULL;
+  char*      pk_file          = NULL;
+  char*      validators       = NULL;
+  bytes_t*   data             = NULL;
+  char*      port             = NULL;
+  char*      sig_type         = "raw";
+  bool       to_eth           = false;
 
   plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
@@ -800,6 +764,14 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
+#ifdef ZKSYNC
+    else if (strcmp(argv[i], "-zks") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+#endif
     else if (strcmp(argv[i], "-tr") == 0)
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
@@ -913,27 +885,26 @@ int main(int argc, char* argv[]) {
         sig = argv[i];
       else {
         // otherwise we add it to the params
-        if (p > 1) params[p++] = ',';
-        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strlen(argv[i]) < 16)
-          p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
+        if (args->len > 1) sb_add_char(args, ',');
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain_id != CHAIN_ID_BTC)
+          sb_print(args, "\"%s\"", get_wei(argv[i]));
         else
-          p += sprintf(params + p,
-                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
-                           ? "%s"
-                           : "\"%s\"",
-                       strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
+          sb_print(args,
+                   (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
+                       ? "%s"
+                       : "\"%s\"",
+                   strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
       }
     }
   }
-  params[p++]  = ']';
-  params[p]    = 0;
+  sb_add_char(args, ']');
   char *result = NULL, *error = NULL;
 
 #ifdef IN3_SERVER
   // start server
   if (!method && port) {
     http_run_server(port, c);
-    return 0;
+    recorder_exit(0);
   }
 #else
   (void) (port);
@@ -953,59 +924,64 @@ int main(int argc, char* argv[]) {
   if (!method) {
     in3_log_info("in3 " IN3_VERSION " - reading json-rpc from stdin. (exit with ctrl C)\n________________________________________________\n");
     execute(c, stdin);
-    return EXIT_SUCCESS;
+    recorder_exit(0);
   }
   if (*method == '-') die("unknown option");
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, resolve(c, to), params, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), args->data, block_number, 0, NULL, data);
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
+    char*       error   = NULL;
+    json_ctx_t* in_data = parse_json(args->data);
+    if (!in_data) die("iinvalid params");
     if (!sig) die("missing signature");
-    req = parseSignature(sig);
-    if (req && req->in_data->type == A_TUPLE) {
-      json_ctx_t* in_data = parse_json(params);
-      if (set_data(req, in_data->result, req->in_data) < 0) die("invalid arguments for given signature");
+    abi_sig_t* s = abi_sig_create(sig, &error);
+    if (s && !error) {
+      bytes_t data = abi_encode(s, in_data->result, &error);
+      if (data.data)
+        print_hex(data.data, data.len);
     }
-    if (!req || !req->call_data) die("missing call data");
-    print_hex(req->call_data->b.data, req->call_data->b.len);
-    return 0;
+    if (error) die(error);
+    recorder_exit(0);
   }
   else if (strcmp(method, "abi_decode") == 0) {
+    char*       error   = NULL;
+    json_ctx_t* in_data = parse_json(args->data);
+    if (!in_data) die("invalid params");
     if (!sig) die("missing signature");
-    if (!strchr(sig, ':')) {
-      char* tmp = malloc(strlen(sig) + 5);
-      strcpy(tmp, "d():");
-      strcpy(tmp + 4, sig);
-      sig = tmp;
+    abi_sig_t* s = abi_sig_create(sig, &error);
+    if (s && !error) {
+      bytes_t     data = d_to_bytes(d_get_at(parse_json(args->data)->result, 0));
+      json_ctx_t* res  = abi_decode(s, data, &error);
+      if (json)
+        recorder_print(0, "%s\n", d_create_json(res, res->result));
+      else
+        print_val(res->result);
     }
-    json_ctx_t* res = req_parse_result(parseSignature(sig), d_to_bytes(d_get_at(parse_json(params)->result, 0)));
-    if (json)
-      printf("%s\n", d_create_json(res, res->result));
-    else
-      print_val(res->result);
-    return 0;
+    if (error) die(error);
+    recorder_exit(0);
 #ifdef IPFS
   }
   else if (strcmp(method, "ipfs_get") == 0) {
     c->chain_id = CHAIN_ID_IPFS;
-    int size    = strlen(params);
-    if (p == 1 || params[1] != '"' || size < 20 || strstr(params + 2, "\"") == NULL) die("missing ipfs has");
-    params[size - 2] = 0;
-    bytes_t* content = ipfs_get(c, params + 2);
+    int size    = args->len;
+    if (size == 2 || args->data[1] != '"' || size < 20 || strstr(args->data + 2, "\"") == NULL) die("missing ipfs hash");
+    args->data[size - 2] = 0;
+    bytes_t* content     = ipfs_get(c, args->data + 2);
     if (!content) die("IPFS hash not found!");
     fwrite(content->data, content->len, 1, stdout);
     fflush(stdout);
-    return 0;
+    recorder_exit(0);
   }
   else if (strcmp(method, "ipfs_put") == 0) {
     c->chain_id         = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
-    printf("%s\n", ipfs_put(c, &data));
-    return 0;
+    recorder_print(0, "%s\n", ipfs_put(c, &data));
+    recorder_exit(0);
 
 #endif
   }
@@ -1018,7 +994,7 @@ int main(int argc, char* argv[]) {
     char*        more  = "WEIGHT";
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
-    printf("   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
+    recorder_print(0, "   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
     for (unsigned int i = 0; i < chain->nodelist_length; i++) {
       in3_ctx_t* ctx      = NULL;
       char*      health_s = NULL;
@@ -1052,7 +1028,7 @@ int main(int argc, char* argv[]) {
           send_curl(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #elif USE_WINHTTP
           send_winhttp(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
-#else
+#elif TRANSPORTS
           send_http(NULL, PLGN_ACT_TRANSPORT_SEND, &r);
 #endif
           if (ctx.raw_response->state)
@@ -1121,24 +1097,24 @@ int main(int argc, char* argv[]) {
         if (strlen(tr) > 100) tr[100] = 0;
       }
       if (blacklisted)
-        printf(COLORT_RED);
+        recorder_print(0, COLORT_RED);
       else if (warning)
-        printf(COLORT_YELLOW);
+        recorder_print(0, COLORT_YELLOW);
       else if (!weight->response_count)
-        printf(COLORT_DARKGRAY);
+        recorder_print(0, COLORT_DARKGRAY);
       else
-        printf(COLORT_GREEN);
-      printf("%2i   %-45s   %7i   %5i   %5i   %5i   %s%s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, health_s ? health_s : "", tr ? tr : "");
-      printf(COLORT_RESET "\n");
+        recorder_print(0, COLORT_GREEN);
+      recorder_print(0, "%2i   %-45s   %7i   %5i   %5i   %5i   %s%s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, health_s ? health_s : "", tr ? tr : "");
+      recorder_print(0, COLORT_RESET "\n");
       if (tr && tr != ctx->error) _free(tr);
       if (health_s) _free(health_s);
       if (ctx) ctx_free(ctx);
     }
 
-    return 0;
+    recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), args->data, NULL, gas_limit, value, data);
     method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
@@ -1157,12 +1133,12 @@ int main(int argc, char* argv[]) {
 
     if (!in3_plugin_is_registered(c, PLGN_ACT_SIGN)) die("No private key/path given");
     in3_ctx_t ctx;
-    ctx.client = c;
-    in3_sign_ctx_t sc;
-    sc.ctx     = &ctx;
-    sc.account = bytes(NULL, 0);
-    sc.message = *data;
-    sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+    ctx.client        = c;
+    in3_sign_ctx_t sc = {0};
+    sc.ctx            = &ctx;
+    sc.account        = bytes(NULL, 0);
+    sc.message        = *data;
+    sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 #if defined(LEDGER_NANO)
     if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
       char     prefix[] = "msg";
@@ -1170,7 +1146,7 @@ int main(int argc, char* argv[]) {
       uint8_t  hash[32];
 
       hasher_Raw(HASHER_SHA2, data->data, data->len, hash);
-      printf("Match the following hash with the message hash on ledger device\n");
+      recorder_print(0, "Match the following hash with the message hash on ledger device\n");
       print_hex(hash, 32);
 
       memcpy(tmp_data->data, prefix, strlen(prefix));
@@ -1188,15 +1164,15 @@ int main(int argc, char* argv[]) {
     in3_plugin_execute_first(&ctx, PLGN_ACT_SIGN, &sc);
 #endif
 
-    sc.signature[64] += 27;
-    print_hex(sc.signature, 65);
-    return 0;
+    if (sc.signature.len == 65) sc.signature.data[64] += 27;
+    print_hex(sc.signature.data, sc.signature.len);
+    recorder_exit(0);
   }
   else if (strcmp(method, "chainspec") == 0) {
     char* json;
-    if (strlen(params) > 2) {
-      params[strlen(params) - 2] = 0;
-      json                       = (char*) readFile(fopen(params + 2, "r")).data;
+    if (args->len > 2) {
+      args->data[args->len - 2] = 0;
+      json                      = (char*) readFile(fopen(args->data + 2, "r")).data;
     }
     else
       json = (char*) readFile(stdin).data;
@@ -1218,29 +1194,29 @@ int main(int argc, char* argv[]) {
       print_hex(bb->b.data, bb->b.len);
     else {
       bool is_hex = false;
-      printf("#define CHAINSPEC_%s \"", name);
+      recorder_print(0, "#define CHAINSPEC_%s \"", name);
       for (i = 0; i < (int) bb->b.len; i++) {
         uint8_t c = bb->b.data[i];
-        if (is_hex && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) printf("\" \"");
+        if (is_hex && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) recorder_print(0, "\" \"");
         is_hex = c < ' ' || c > 0x7E || c == 0x5C || c == '"';
-        printf(is_hex ? "\\x%02x" : "%c", c);
+        recorder_print(0, is_hex ? "\\x%02x" : "%c", c);
       }
-      printf("\"\n");
+      recorder_print(0, "\"\n");
     }
 
-    return 0;
+    recorder_exit(0);
   }
   else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode ipfs_get ipfs_put ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
-    return 0;
+    recorder_print(0, "send call abi_encode abi_decode ipfs_get ipfs_put ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
+    recorder_exit(0);
   }
   else if (strcmp(method, "createkey") == 0) {
     time_t t;
     srand((unsigned) time(&t));
-    printf("0x");
-    for (i = 0; i < 32; i++) printf("%02x", rand() % 256);
-    printf("\n");
-    return 0;
+    recorder_print(0, "0x");
+    for (i = 0; i < 32; i++) recorder_print(0, "%02x", rand() % 256);
+    recorder_print(0, "\n");
+    recorder_exit(0);
   }
   else if (strcmp(method, "pk2address") == 0) {
     bytes32_t prv_key;
@@ -1248,10 +1224,10 @@ int main(int argc, char* argv[]) {
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     keccak(bytes(public_key + 1, 64), sdata);
-    printf("0x");
-    for (i = 0; i < 20; i++) printf("%02x", sdata[i + 12]);
-    printf("\n");
-    return 0;
+    recorder_print(0, "0x");
+    for (i = 0; i < 20; i++) recorder_print(0, "%02x", sdata[i + 12]);
+    recorder_print(0, "\n");
+    recorder_exit(0);
   }
   else if (strcmp(method, "pk2public") == 0) {
     bytes32_t prv_key;
@@ -1259,10 +1235,10 @@ int main(int argc, char* argv[]) {
     hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     print_hex(public_key + 1, 64);
-    return 0;
+    recorder_exit(0);
   }
   else if (strcmp(method, "ecrecover") == 0) {
-    json_ctx_t* rargs = parse_json(params);
+    json_ctx_t* rargs = parse_json(args->data);
     if (!rargs || d_len(rargs->result) < 2) die("Invalid arguments for recovery args must be : <message> <signature> ");
     bytes_t   msg = d_to_bytes(d_get_at(rargs->result, 0));
     bytes_t   sig = d_to_bytes(d_get_at(rargs->result, 1));
@@ -1290,10 +1266,10 @@ int main(int argc, char* argv[]) {
     keccak(bytes(pub + 1, 64), hash);
     print_hex(hash + 12, 20);
     print_hex(pub + 1, 64);
-    return 0;
+    recorder_exit(0);
   }
 
-  in3_log_debug("..sending request %s %s\n", method, params);
+  in3_log_debug("..sending request %s %s\n", method, args->data);
   in3_chain_t* chain = in3_get_chain(c);
 
   if (wait && strcmp(method, "eth_sendTransaction") == 0) method = "eth_sendTransactionAndWait";
@@ -1302,7 +1278,7 @@ int main(int argc, char* argv[]) {
   sb_t* sb = sb_new("{\"method\":\"");
   sb_add_chars(sb, method);
   sb_add_chars(sb, "\",\"params\":");
-  sb_add_chars(sb, params);
+  sb_add_chars(sb, args->data);
   if (ms_sigs) {
     sb_add_chars(sb, ",\"in3\":{\"msSigs\":\"");
     sb_add_chars(sb, ms_sigs);
@@ -1332,8 +1308,8 @@ int main(int argc, char* argv[]) {
       char* r = alloca(last_response->len + 1);
       memcpy(r, last_response->data, last_response->len);
       r[last_response->len] = 0;
-      printf("%s\n", r);
-      return 0;
+      recorder_print(0, "%s\n", r);
+      recorder_exit(0);
     }
 
     // if the result is a string, we remove the quotes
@@ -1346,10 +1322,12 @@ int main(int argc, char* argv[]) {
     if (req) {
       int l = strlen(result) / 2 - 1;
       if (l) {
-        uint8_t*    tmp = alloca(l + 1);
-        json_ctx_t* res = req_parse_result(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)));
+        char*       error = NULL;
+        uint8_t*    tmp   = alloca(l + 1);
+        json_ctx_t* res   = abi_decode(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)), &error);
+        if (error) die(error);
         if (json)
-          printf("%s\n", d_create_json(res, res->result));
+          recorder_print(0, "%s\n", d_create_json(res, res->result));
         else
           print_val(res->result);
       }
@@ -1358,13 +1336,13 @@ int main(int argc, char* argv[]) {
     else {
       if (to_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
         double val = char_to_long(result, strlen(result));
-        printf("%.3f\n", val / 1000000000000000000L);
+        recorder_print(0, "%.3f\n", val / 1000000000000000000L);
       }
       else if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
-        printf("%" PRIu64 "\n", char_to_long(result, strlen(result)));
+        recorder_print(0, "%" PRIu64 "\n", char_to_long(result, strlen(result)));
       else
-        printf("%s\n", result);
+        recorder_print(0, "%s\n", result);
     }
   }
-  return EXIT_SUCCESS;
+  recorder_exit(0);
 }

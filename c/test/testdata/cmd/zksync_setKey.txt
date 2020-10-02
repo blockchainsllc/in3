@@ -1,0 +1,63 @@
+:: cmd ./in3 -fi ../../c/test/testdata/cmd/zksync_setKey.txt -zks http://localhost:3030 -c http://localhost:8545 -pk 0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8 zksync_setKey -debug
+
+:: time 1601027396
+
+:: cache nodelist_1_0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f 0
+
+:: cache nodelist_42_0x4c396dcf50ac396e5fdea18163251699b5fcca25 0
+
+:: cache nodelist_5_0x5f51e413581dd76759e9eed51e63d14c8d1379c8 0
+
+:: cache nodelist_2000_0xa93b57289070550c82edb1106e12bb37138948b8 0
+
+:: cache nodelist_153_0xc2c05fbfe76ee7748ae5f5b61b57a46cc4061c32 0
+
+:: cache nodelist_246_0x039562872008f7a76674a6e7842804f0ad37cb13 0
+
+:: cache nodelist_17_0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9 0
+
+:: request http://localhost:3030 
+     [{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b"]}]
+
+:: response account_info 0 http://localhost:3030 0 40
+[{
+  "jsonrpc":"2.0",
+  "result":{
+    "address":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+    "committed":{
+      "balances":{
+        "ETH":"1000000000000000000"
+      },
+      "nonce":0,
+      "pubKeyHash":"sync:0000000000000000000000000000000000000000"
+    },
+    "depositing":{
+      "balances":{
+        
+      }
+    },
+    "id":1,
+    "verified":{
+      "balances":{
+        "ETH":"1000000000000000000"
+      },
+      "nonce":0,
+      "pubKeyHash":"sync:0000000000000000000000000000000000000000"
+    }
+  },
+  "id":2
+}]
+
+:: request http://localhost:3030 
+     [{"id":3,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"ChangePubKey","accountId":1,"account":"0x8a91dc2d28b689474298d91899f0c1baf62cb85b","newPkHash":"sync:20ae0f0ef7780f289ade282a466ad287969a1253","nonce":0,"ethSignature":"0xa998768963aa5842c47bc7d4307a6fbfe4850099ad310d45e5c424d838bf608d5a51a57cb1a9609a6792aa92b79683722bc36af0f022bf4e80613ff61a1e81961c"},null]}]
+
+:: response tx_submit 0 http://localhost:3030 0 15
+[{
+  "jsonrpc":"2.0",
+  "result":"sync-tx:b4c87b8078429222e34f6b9d85d38e11a69820cefc5405be5065deb9daae89ec",
+  "id":3
+}]
+
+
+:: result
+sync:20ae0f0ef7780f289ade282a466ad287969a1253

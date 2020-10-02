@@ -92,9 +92,37 @@ describe('Util-Tests', () => {
 
     })
 
+    it('randomBytes', async () => {
+        let res = IN3.util.randomBytes(40)
+        assert.equal(res.byteLength, 40)
+    })
+
+    it('soliditySha3', async () => {
+
+        assert.equal(IN3.util.soliditySha3('Hello!%'), "0x661136a4267dba9ccdf6bfddb7c00e714de936674c4bdb065a531cf1cb15c7fc")
+        assert.equal(IN3.util.soliditySha3('234'), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
+        assert.equal(IN3.util.soliditySha3(0xea), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
+        assert.equal(IN3.util.soliditySha3(234n), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
+        assert.equal(IN3.util.soliditySha3('234564535', '0xfff23243', true, -10), "0x3e27a893dc40ef8a7f0841d96639de2f58a132be5ae466d40087a2cfa83b7179")
+    })
+
     it('keccak & toHex', async () => {
         const res = IN3.util.keccak("this is just random string")
         assert.equal(IN3.util.toHex(res), "0xdab3b69bd378ba16296c2e116cf7395e352699802234ec4e870b4f4b824248ae")
+    })
+
+
+    it('isAddress', async () => {
+        assert.equal(IN3.util.isAddress("0x123"), false)
+        assert.equal(IN3.util.isAddress("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561"), true)
+        assert.equal(IN3.util.isAddress("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b15612"), false)
+    })
+
+    it('checkAddressChecksum', async () => {
+        assert.equal(IN3.util.checkAddressChecksum("0x123"), false)
+        assert.equal(IN3.util.checkAddressChecksum("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561"), true)
+        assert.equal(IN3.util.checkAddressChecksum("0x965d1C9987BD2c34e151E63d60AFf8E9dB6b1561"), false)
+        assert.equal(IN3.util.checkAddressChecksum("0x965D1C9987BD2c34e151E63d60AFf8E9dB6b15612"), false)
     })
 
     it('getVersion', async () => {
@@ -119,6 +147,10 @@ describe('Util-Tests', () => {
     })
 
     it('toHex', async () => {
+        assert.equal('0xffffffffffffffffffffffffffffffff', IN3.util.toHex("340282366920938463463374607431768211455"))
+        assert.equal('0xffff', IN3.util.toHex("65535"))
+        assert.equal('0xffffffff', IN3.util.toHex("-1", 4))
+        assert.equal('0xc384', IN3.util.toHex("Ä"))
         assert.equal('0x0a', IN3.util.toHex("0xA"))
         assert.equal('0x01', IN3.util.toHex(1))
         assert.equal(undefined, IN3.util.toHex(undefined))
@@ -131,6 +163,7 @@ describe('Util-Tests', () => {
         assert.equal('0x616263', IN3.util.toHex("abc"))
         assert.equal('0x616263', IN3.util.toHex(Buffer.from("abc", 'utf8')))
         assert.Throw(() => IN3.util.toHex({}))
+
     })
 
 

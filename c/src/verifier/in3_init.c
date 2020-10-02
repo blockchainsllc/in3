@@ -3,6 +3,8 @@
 #include "../core/client/plugin.h"
 #include "../pay/eth/pay_eth.h"
 #include "../pay/zksync/zksync.h"
+#include "../signer/pk-signer/signer.h"
+#include "../third-party/zkcrypto/lib.h"
 #ifdef USE_CURL
 #include "../transport/curl/in3_curl.h"
 #elif USE_WINHTTP
@@ -50,6 +52,9 @@ static void init_verifier() {
 #ifdef SENTRY
   in3_register_default(in3_register_sentry);
 #endif
+#ifdef PK_SIGNER
+  in3_register_default(eth_register_pk_signer);
+#endif
 }
 static void init_transport() {
 #ifdef TRANSPORTS
@@ -71,6 +76,9 @@ void in3_init() {
     init_transport();
     init_verifier();
     init_nodeselect();
+#ifdef ZKSYNC
+    zkcrypto_initialize();
+#endif
   }
 }
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {

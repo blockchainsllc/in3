@@ -118,8 +118,7 @@ d_token_t* get_result(in3_ctx_t* ctx) {
 }
 
 uint256_t to_uint256(uint64_t value) {
-  uint256_t data;
-  memset(data.data, 0, 32);
+  uint256_t data = {0};
   long_to_bytes(value, data.data + 24);
   return data;
 }

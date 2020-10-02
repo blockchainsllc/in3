@@ -129,7 +129,7 @@ static void test_bulk_response() {
 
 static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
-  eth_register_request_signer(c);
+  eth_register_pk_signer(c);
   char* err = in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
   TEST_ASSERT_NULL_MESSAGE(err, err);
   c->flags = FLAGS_INCLUDE_CODE;
@@ -169,7 +169,7 @@ static void test_exec_req() {
   _free(result);
 
   result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-21,\"message\":\"The request could not be handled:no plugin found that handled the cache_clear action\"}}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-21,\"message\":\"no plugin found that handled the cache_clear action\"}}", result);
   _free(result);
 
   in3_free(c);
@@ -269,7 +269,7 @@ static void test_configure() {
 
 static void test_configure_validation() {
   in3_t* c = in3_for_chain(0);
-  eth_register_request_signer(c);
+  eth_register_pk_signer(c);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
 

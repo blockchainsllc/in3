@@ -474,7 +474,7 @@ static void test_estimate_fn(void) {
                                  contract,
                                  BLKNUM_LATEST(),
                                  "mockMethod(bool,address,string,int8,uint16,bytes):bool",
-                                 false, contract, "Some string", "-26", UINT16_MAX, (bytes_t){.data = contract, .len = 20});
+                                 false, contract, "Some string", -26, UINT16_MAX, (bytes_t){.data = contract, .len = 20});
   TEST_ASSERT_EQUAL_UINT64(0x123123, gas);
   in3_free(in3);
 }

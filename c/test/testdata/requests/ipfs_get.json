@@ -1,5 +1,6 @@
 [
   {
+    "api": "ipfs",
     "descr": "utf8",
     "chainId": "0x7d0",
     "request": {
@@ -20,6 +21,7 @@
     ]
   },
   {
+    "api": "ipfs",
     "descr": "utf8",
     "chainId": "0x7d0",
     "request": {
@@ -40,6 +42,7 @@
     ]
   },
   {
+    "api": "ipfs",
     "descr": "hex",
     "chainId": "0x7d0",
     "request": {
@@ -60,6 +63,7 @@
     ]
   },
   {
+    "api": "ipfs",
     "descr": "hex long",
     "chainId": "0x7d0",
     "request": {
@@ -80,6 +84,7 @@
     ]
   },
   {
+    "api": "ipfs",
     "descr": "base64",
     "chainId": "0x7d0",
     "request": {

@@ -68,13 +68,13 @@ printf "# Examples\n\n" > $README
 
 for f in */;
   do
-    printf "### ${f%/*}\n\nsource : [in3-c/dotnet/Examples/${f%/*}](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/${f%/*}/Program.cs)\n\n" >> $DOC
+    printf "### ${f%/*}\n\nsource : [in3-c/dotnet/Examples/$f/${f%/*}](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/$f/${f%/*}/Program.cs)\n\n" >> $DOC
     printf "\n\n\`\`\`c#\n" >> $DOC
-    cat ${f%/*}/Program.cs >> $DOC
+    cat $f/${f%/*}/Program.cs >> $DOC
     printf "\n\`\`\`\n\n" >> $DOC
 
-    printf "\n-  [${f%/*}](./${f%/*}/Program.cs)\n" >> $README
-    cat ${f%/*}/Program.cs | grep -v // | sed "s/\/\/\/ //g" >> $README
+    printf "\n-  [${f%/*}](./$f/${f%/*}/Program.cs)\n" >> $README
+    cat $f/${f%/*}/Program.cs | grep -v // | sed "s/\/\/\/ //g" >> $README
 done
 
 cat ../../dotnet/docs/build_examples.md_ >> $DOC

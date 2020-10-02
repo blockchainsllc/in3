@@ -1,8 +1,17 @@
 in3w.extensions.push(c => c.eth = new EthAPI(c))
+class AccountAPI {
+    constructor(client) { this.client = client }
 
+    add(pk) {
+        return this.client.sendRPC("in3_addRawKey", [toHex(pk)])
+    }
+}
 class EthAPI {
 
-    constructor(client) { this.client = client }
+    constructor(client) {
+        this.client = client
+        this.accounts = new AccountAPI(client)
+    }
 
     send(name, ...params) {
         return this.client.sendRPC(name, params || [])
@@ -23,6 +32,14 @@ class EthAPI {
     blockNumber() {
         return this.send('eth_blockNumber').then(parseInt)
     }
+
+    /**
+     * Returns the number of most recent block. ()
+     */
+    toWei(val, unit = 'eth') {
+        return this.client.sendSyncRPC('in3_toWei', [val, unit])
+    }
+
     /**
      * Returns the current price per g wei. ()
      */
@@ -67,6 +84,12 @@ class EthAPI {
     chainId() {
         return this.send('eth_chainId')
     }
+    /**
+     * Returns the EIP155 chain ID used for transaction signing at the current best block. Null is returned if not available.
+     */
+    clientVersion() {
+        return this.send('web3_clientVersion')
+    }
 
     /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
@@ -79,7 +102,7 @@ class EthAPI {
      * Returns the balance of the account of given address in wei ().
      */
     getBalance(address, block = 'latest') {
-        return this.send('eth_getBalance', address, toHexBlock(block)).then(toBigInt)
+        return this.send('eth_getBalance', address, toHexBlock(block)).then(convertBigInt)
     }
 
     /**
@@ -315,7 +338,7 @@ class EthAPI {
 
     /** sends a Transaction */
     async sendTransaction(args) {
-        if (!args.pk && (!this.client.signer || !(await this.client.signer.canSign(args.from)))) throw new Error('missing signer!')
+        //        if (!args.pk && (!this.client.signer || !(await this.client.signer.canSign(args.from)))) throw new Error('missing signer!')
 
         // prepare
         const tx = await prepareTransaction(args, this)
@@ -338,6 +361,7 @@ class EthAPI {
         const ob = {
             _in3: this.client,
             _eventHashes: {},
+            _address: address,
             options: {
                 ...options,
                 address,
@@ -350,6 +374,28 @@ class EthAPI {
             methods: {},
             events: {}
         }
+        if (!address) {
+            const def = abi.find(_ => _.type === 'constructor') || { inputs: [], payable: true, type: 'constructor' }
+            const method = 'ctr' + createSignature(def.inputs)
+            ob.deploy = (opts) => {
+                if ((opts.arguments || []).length != def.inputs.length) throw new Error('Invalid number of arguments for ' + method)
+                if (!opts.data) throw new Error('Missing deployment data')
+                const data = opts.data + toHex(abiEncode(method, ...(opts.arguments || []))).substr(10)
+                return {
+                    send: options => api.sendTransaction({
+                        ...options,
+                        data,
+                        confirmations: ob.transactionConfirmationBlocks || 1
+                    }).then(_ => {
+                        ob.options.address = ob._address = _ && util.toChecksumAddress(_.contractAddress)
+                        return ob
+                    }),
+                    encodeABI: () => data,
+                    estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { data, ...options }).then(toNumber))
+                }
+            }
+        }
+
 
         const createTopics = (name, options) => options.topics || [ob._eventHashes[name], ...(!options.filter ? [] : ob._eventHashes[ob._eventHashes[name]].inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? toHex(options.filter[d.name], 32) : null))]
 
@@ -358,15 +404,15 @@ class EthAPI {
                 case 'function':
                     const signature = def.name + createSignature(def.inputs)
                     const sigReturn = signature + ':' + createSignature(def.outputs)
-                    ob.methods[def.name] = (...args) => ({
-                        call: (options, block) => api.callFn(address, sigReturn, ...args, block || 'latest')
+                    const txOb = (...args) => ({
+                        call: (options, block) => api.callFn(ob.options.address, sigReturn, ...args, block || 'latest')
                             .then(r => {
                                 if (def.outputs.length > 1) {
                                     let o = {}
-                                    def.outputs.forEach((d, i) => o[i] = o[d.name] = r[i])
+                                    def.outputs.forEach((d, i) => o[i] = o[d.name] = def.outputs[i].type === 'address' ? util.toChecksumAddress(r[i]) : r[i])
                                     return o;
                                 }
-                                return r
+                                return def.outputs[0].type === 'address' ? util.toChecksumAddress(r) : r
                             }),
                         send: options => {
                             let tx = { ...options }
@@ -374,12 +420,37 @@ class EthAPI {
                             tx.method = signature
                             tx.args = args
                             tx.confirmations = ob.transactionConfirmationBlocks || 1
-                            tx.to = address
-                            return api.sendTransaction(tx)
+                            tx.to = tx.to || ob.options.address
+                            return api.sendTransaction(tx).then(r => ({
+                                ...r,
+                                events: r.logs.reduce((p, l) => {
+                                    const e = decodeEventData(l, ob)
+                                    const def = abi.find(_ => e && _.name === e.event)
+                                    if (def) p[def.name] = { ...l, returnValues: e }
+                                    return p
+                                }, {})
+                            }))
                         },
                         encodeABI: () => toHex(abiEncode(signature, ...args)),
-                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
+                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex((options && options.to) || ob.options.address, 20), data: toHex(abiEncode(signature, ...args)), ...options }).then(toNumber))
                     })
+                    txOb._def = def
+                    if (ob.methods[def.name]) {
+                        const ex = ob.methods[def.name]
+                        if (ex._def) {
+                            const defs = [txOb, ex]
+                            ob.methods[def.name] = (...args) => {
+                                const o = defs.find(_ => _._def.inputs.length === args.length)
+                                if (!o) throw new Error('Invalid argument length (' + args.length + ') for ' + def[0].name)
+                                return o(...args)
+                            }
+                            ob.methods[def.name]._defs = defs
+                        }
+                        else
+                            ex._defs.push(txOb)
+                    }
+                    else
+                        ob.methods[def.name] = txOb
                     break
                 case 'event':
                     const evSig = def.name + createSignature(def.inputs)
@@ -389,8 +460,9 @@ class EthAPI {
                     ob.events[def.name] = options => new LogEmitter(
                         api,
                         {
-                            address,
+                            address: ob.options.address,
                             fromBlock: options.fromBlock || 'latest',
+                            toBlock: options.toBlock || 'latest',
                             topics: createTopics(def.name, options),
                             limit: options.limit || 50
                         },
@@ -413,8 +485,9 @@ class EthAPI {
         ob.events.allEvents = options => new LogEmitter(
             api,
             {
-                address,
+                address: ob.options.address,
                 fromBlock: options.fromBlock || 'latest',
+                toBlock: options.toBlock || 'latest',
                 limit: options.limit || 50
             },
             ob.options.transactionPollingTimeout,
@@ -422,19 +495,18 @@ class EthAPI {
         )
         ob.getPastEvents = (ev, options) => {
             return api.getLogs({
-                address,
+                address: ob.options.address,
                 fromBlock: options.fromBlock || 'latest',
                 toBlock: options.toBlock || 'latest',
                 limit: options.limit || 50,
                 topics: ev === 'allEvents' ? [] : createTopics(ev, options)
             }).then(logs => logs.map(l => {
                 const e = decodeEventData(l, ob)
-                const def = abi.find(_ => _.name === e.event)
-                if (!def) throw new Error('unknown event found!')
+                const def = e && abi.find(_ => _.name === e.event)
+                if (!def) return null
                 delete e.event
                 return { ...l, event: def.name, returnValues: e, signature: def.name + createSignature(def.inputs) }
-            }))
-
+            }).filter(_ => _))
 
         }
 
@@ -585,6 +657,7 @@ function createSignature(fields) {
         const t = baseType.indexOf('[')
         if (t > 0) baseType = baseType.substr(0, t)
         if (baseType === 'uint' || baseType === 'int') baseType += '256'
+        if (baseType === 'tuple') baseType = createSignature(f.components)
         return baseType + (t < 0 ? '' : f.type.substr(t))
     }).join(',') + ')'
 }
@@ -610,10 +683,10 @@ function decodeEvent(log, d) {
 
     if (indexed.length) {
         let logBufs = appendBuffers(log.topics.slice(1).map(_ => toBuffer(_)))
-        abiDecode(`prefix():${createSignature(indexed)}`, logBufs).forEach((v, i) => r[indexed[i].name] = v)
+        abiDecode(createSignature(indexed), logBufs).forEach((v, i) => r[indexed[i].name] = v)
     }
     if (unindexed.length)
-        abiDecode(`prefix():${createSignature(unindexed)}`, toBuffer(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
+        abiDecode(createSignature(unindexed), toBuffer(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
     return r
 }
 

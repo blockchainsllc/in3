@@ -1,0 +1,148 @@
+{
+  "test1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "address": "0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+      "committed": {
+        "balances": {
+          "ETH": "100"
+        },
+        "nonce": 0,
+        "pubKeyHash": "sync:0000000000000000000000000000000000000000"
+      },
+      "depositing": {
+        "balances": {}
+      },
+      "id": 1,
+      "verified": {
+        "balances": {
+          "ETH": "100"
+        },
+        "nonce": 0,
+        "pubKeyHash": "sync:0000000000000000000000000000000000000000"
+      }
+    },
+    "id": 2
+  },
+  "transfer1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "address": "0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+      "committed": {
+        "balances": {
+          "ETH": "9669299999994000"
+        },
+        "nonce": 8,
+        "pubKeyHash": "sync:6bb8f48727b2965d8d71256c57c6be3eeed351bf"
+      },
+      "depositing": {
+        "balances": {}
+      },
+      "id": 1,
+      "verified": {
+        "balances": {
+          "ETH": "9669299999994000"
+        },
+        "nonce": 8,
+        "pubKeyHash": "sync:6bb8f48727b2965d8d71256c57c6be3eeed351bf"
+      }
+    },
+    "id": 2
+  },
+  "withdraw1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "address": "0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+      "committed": {
+        "balances": {
+          "ETH": "972936699999999880"
+        },
+        "nonce": 4,
+        "pubKeyHash": "sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+      },
+      "depositing": {
+        "balances": {}
+      },
+      "id": 1,
+      "verified": {
+        "balances": {
+          "ETH": "972936699999999880"
+        },
+        "nonce": 4,
+        "pubKeyHash": "sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+      }
+    },
+    "id": 2
+  },
+  "setKey1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "address": "0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+      "committed": {
+        "balances": {
+          "ETH": "100"
+        },
+        "nonce": 0,
+        "pubKeyHash": "sync:0000000000000000000000000000000000000000"
+      },
+      "depositing": {
+        "balances": {}
+      },
+      "id": 1,
+      "verified": {
+        "balances": {
+          "ETH": "100"
+        },
+        "nonce": 0,
+        "pubKeyHash": "sync:0000000000000000000000000000000000000000"
+      }
+    },
+    "id": 2
+  },
+  "emergencyWithdraw1": {
+    "jsonrpc": "2.0",
+    "result": {
+      "address": "0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+      "committed": {
+        "balances": {
+          "ETH": "969156699999999870"
+        },
+        "nonce": 5,
+        "pubKeyHash": "sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+      },
+      "depositing": {
+        "balances": {}
+      },
+      "id": 1,
+      "verified": {
+        "balances": {
+          "ETH": "969156699999999870"
+        },
+        "nonce": 5,
+        "pubKeyHash": "sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+      }
+    },
+    "id": 3
+  },
+  "undefined": {
+    "jsonrpc": "2.0",
+    "result": {
+      "address": "0x8a91dc2d28b689474298d91899f0c1baf62cb85b",
+      "committed": {
+        "balances": {},
+        "nonce": 5,
+        "pubKeyHash": "sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+      },
+      "depositing": {
+        "balances": {}
+      },
+      "id": 1,
+      "verified": {
+        "balances": {},
+        "nonce": 5,
+        "pubKeyHash": "sync:20ae0f0ef7780f289ade282a466ad287969a1253"
+      }
+    },
+    "id": 3
+  }
+}

@@ -18,6 +18,13 @@ namespace Test.Configuration
         }
 
         [Test]
+        public void ReadsDefaultConfiguration()
+        {
+            ClientConfiguration clientConfig = _client.Configuration;
+            Assert.That(clientConfig.ChainsConfiguration.Values.Count, Is.AtLeast(1));
+        }
+
+        [Test]
         public void ObjectHierarchy()
         {
             string nodeConfigOutputKey = "nodes";

@@ -309,7 +309,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
   if (params == NULL) params = "";
   char* req = NULL;
   if (use_cache) {
-    req = alloca(strlen(params) + strlen(method) + 20 + (in3 ? 5 + strlen(in3) : 0));
+    req = alloca(strlen(params) + strlen(method) + 20 + (in3 ? 10 + strlen(in3) : 0));
     if (in3)
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);
     else
@@ -364,4 +364,67 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   return ctx_add_required(parent, ctx);
+}
+
+in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
+  bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
+  memcpy(cache_key.data, raw_data.data, raw_data.len);
+  if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
+  bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
+  if (cached_sig) {
+    *signature = *cached_sig;
+    return IN3_OK;
+  }
+
+  // first try internal plugins for signing, before we create an context.
+  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
+    in3_sign_ctx_t sc = {.account = from, .ctx = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
+    in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
+    if (r == IN3_OK && sc.signature.data) {
+      in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);
+      *signature = sc.signature;
+      return IN3_OK;
+    }
+    else if (r != IN3_EIGNORE)
+      return r;
+  }
+
+  // get the signature from required
+  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : "sign_ec_raw";
+  in3_ctx_t*  c      = ctx_find_required(ctx, method);
+  if (c)
+    switch (in3_ctx_state(c)) {
+      case CTX_ERROR:
+        return ctx_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
+      case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_SEND:
+        return IN3_WAITING;
+      case CTX_SUCCESS: {
+        if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len == 65) {
+          *signature = cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, c->raw_response->data.len));
+          in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), *signature);
+          ctx_remove_required(ctx, c, false);
+          return IN3_OK;
+        }
+        else if (c->raw_response && c->raw_response->state)
+          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
+        else
+          return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
+        default:
+          return ctx_set_error(ctx, "invalid state", IN3_EINVAL);
+      }
+    }
+  else {
+    sb_t req = {0};
+    sb_add_chars(&req, "{\"method\":\"");
+    sb_add_chars(&req, method);
+    sb_add_bytes(&req, "\",\"params\":[", &raw_data, 1, false);
+    sb_add_chars(&req, ",");
+    sb_add_bytes(&req, NULL, &from, 1, false);
+    sb_add_chars(&req, "]}");
+    c = ctx_new(ctx->client, req.data);
+    if (!c) return IN3_ECONFIG;
+    c->type = CT_SIGN;
+    return ctx_add_required(ctx, c);
+  }
 }

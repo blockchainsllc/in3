@@ -38,6 +38,7 @@
 #include "mem.h"
 #include "utils.h"
 #include <inttypes.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -51,6 +52,14 @@ bytes_t* b_new(const uint8_t* data, uint32_t len) {
   else
     b->data = _calloc(1, len);
   return b;
+}
+
+uint32_t b_get_len(const bytes_t* b) {
+  return b->len;
+}
+
+uint8_t* b_get_data(const bytes_t* b) {
+  return b->data;
 }
 
 void ba_print(const uint8_t* a, size_t l) {
@@ -99,6 +108,25 @@ void b_free(bytes_t* a) {
 
   _free(a->data);
   _free(a);
+}
+
+bytes_t b_concat(int cnt, ...) {
+  int     len, i;
+  bytes_t b;
+  va_list ap;
+
+  va_start(ap, cnt);
+  for (i = 0, len = 0; i < cnt; i++) len += (va_arg(ap, bytes_t)).len;
+  va_end(ap);
+  bytes_t out = {.len = len, .data = _malloc(len)};
+
+  va_start(ap, cnt);
+  for (i = 0, len = 0; i < cnt; i++, len += b.len) {
+    b = va_arg(ap, bytes_t);
+    memcpy(b.data + len, b.data, b.len);
+  }
+  va_end(ap);
+  return out;
 }
 
 bytes_t* b_dup(const bytes_t* a) {
@@ -165,20 +193,19 @@ void bb_free(bytes_builder_t* bb) {
 
 int bb_check_size(bytes_builder_t* bb, size_t len) {
   if (bb == NULL || len == 0 || bb->b.len + len < bb->bsize) return 0;
+  if (bb->b.data == NULL) {
+    bb->b.data = _malloc(len);
+    bb->bsize  = len;
+  }
 #ifdef __ZEPHYR__
   size_t l = bb->bsize;
 #endif
   while (bb->b.len + len >= bb->bsize) bb->bsize <<= 1;
 #ifdef __ZEPHYR__
-  uint8_t* buffer = _realloc(bb->b.data, bb->bsize, l);
+  bb->b.data = _realloc(bb->b.data, bb->bsize, l);
 #else
-  uint8_t* buffer = _realloc(bb->b.data, bb->bsize, 0);
+  bb->b.data = _realloc(bb->b.data, bb->bsize, 0);
 #endif
-  if (!buffer)
-    return -1;
-  else
-    bb->b.data = buffer;
-
   return 0;
 }
 void bb_write_chars(bytes_builder_t* bb, char* c, int len) {
