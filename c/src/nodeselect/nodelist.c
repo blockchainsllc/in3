@@ -171,6 +171,7 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_ctx_t* ctx, d
   return res;
 }
 
+#ifdef NODESELECT_DEF_WL
 NONULL void in3_client_run_chain_whitelisting(in3_nodeselect_def_t* data) {
   if (!data->whitelist)
     return;
@@ -214,6 +215,7 @@ NONULL static in3_ret_t in3_client_fill_chain_whitelist(in3_nodeselect_def_t* da
   in3_client_run_chain_whitelisting(data);
   return IN3_OK;
 }
+#endif
 
 NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in3_ctx_t* parent_ctx) {
   // is there a useable required ctx?
@@ -254,7 +256,10 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
           return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
         in3_cache_store_nodelist(ctx->client, data);
         ctx_remove_required(parent_ctx, ctx, true);
+
+#ifdef NODESELECT_DEF_WL
         in3_client_run_chain_whitelisting(data);
+#endif
         return IN3_OK;
       }
     }
@@ -285,6 +290,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   return ctx_add_required(parent_ctx, ctx_new(c, req));
 }
 
+#ifdef NODESELECT_DEF_WL
 NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, in3_ctx_t* parent_ctx) {
   // is there a useable required ctx?
   in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_whiteList");
@@ -297,7 +303,6 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
       case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
       case CTX_SUCCESS: {
-
         d_token_t* result = d_get(ctx->responses[0], K_RESULT);
         if (result) {
           // we have a result....
@@ -325,6 +330,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
   // new client
   return ctx_add_required(parent_ctx, ctx_new(c, req));
 }
+#endif
 
 in3_ret_t update_nodes(in3_t* c, in3_nodeselect_def_t* data) {
   in3_ctx_t* ctx          = _calloc(1, sizeof(in3_ctx_t));
@@ -409,7 +415,13 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
     }
     if (weight_def->blacklisted_until > (uint64_t) now) continue;
     if (BIT_CHECK(node_def->attrs, ATTR_BOOT_NODE)) goto SKIP_FILTERING;
+
+#ifdef NODESELECT_DEF_WL
     if (data->whitelist && !BIT_CHECK(node_def->attrs, ATTR_WHITELISTED)) continue;
+#else
+    UNUSED_VAR(data);
+#endif
+
     if (node_def->deposit < c->min_deposit) continue;
     if (!in3_node_props_match(filter.props, node_def->props)) continue;
 
@@ -452,7 +464,9 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, bool upd
   }
 
 SKIP_UPDATE:
-  // do we need to update the whiitelist?
+
+#ifdef NODESELECT_DEF_WL
+  // do we need to update the whitelist?
   if (data->whitelist                                                                         // only if we have a whitelist
       && (data->whitelist->needs_update || update || ctx_find_required(ctx, "in3_whiteList")) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result
       && !memiszero(data->whitelist->contract, 20)) {                                         // and we need to have a contract set, zero-contract = manual whitelist, which will not be updated.
@@ -461,6 +475,7 @@ SKIP_UPDATE:
     res = update_whitelist(ctx->client, data, ctx);
     if (res < 0) return res;
   }
+#endif
 
   // now update the results
   *nodelist_length = data->nodelist_length;
@@ -574,11 +589,13 @@ void in3_nodelist_clear(in3_nodeselect_def_t* data) {
   data->dirty = true;
 }
 
+#ifdef NODESELECT_DEF_WL
 void in3_whitelist_clear(in3_whitelist_t* wl) {
   if (!wl) return;
   if (wl->addresses.data) _free(wl->addresses.data);
   _free(wl);
 }
+#endif
 
 void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint8_t value) {
   if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {

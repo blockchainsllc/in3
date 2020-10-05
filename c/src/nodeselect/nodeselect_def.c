@@ -27,8 +27,10 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
 
   if (strcmp(method, "in3_nodeList") == 0)
     return eth_verify_in3_nodelist(data, vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
+#ifdef NODESELECT_DEF_WL
   else if (strcmp(method, "in3_whiteList") == 0)
     return eth_verify_in3_whitelist(data, vc);
+#endif
   else
     return IN3_EIGNORE;
 }
@@ -114,8 +116,9 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
       bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
       if (!ctx->client->chain.chain_id)
         EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-
+#ifdef NODESELECT_DEF_WL
       bool has_wlc = false, has_man_wl = false;
+#endif
       for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
         if (cp.token->key == key("contract")) {
           EXPECT_TOK_ADDR(cp.token);
@@ -126,6 +129,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
           bytes_t reg_id = d_to_bytes(cp.token);
           memcpy(data->registry_id, reg_id.data, 32);
         }
+#ifdef NODESELECT_DEF_WL
         else if (cp.token->key == key("whiteListContract")) {
           EXPECT_TOK_ADDR(cp.token);
           EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
@@ -156,6 +160,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
             d_bytes_to(n.token, data->whitelist->addresses.data + i, 20);
           }
         }
+#endif
         else if (cp.token->key == key("needsUpdate")) {
           EXPECT_TOK_BOOL(cp.token);
           if (!d_int(cp.token)) {
@@ -192,7 +197,9 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
           EXPECT_TOK(cp.token, false, "unsupported config option!");
         }
       }
+#ifdef NODESELECT_DEF_WL
       in3_client_run_chain_whitelisting(data);
+#endif
     }
   }
   else if (token->key == key("rpc")) {
@@ -225,10 +232,10 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   sb_add_hexuint(sb, c->chain.chain_id);
   sb_add_chars(sb, "\":");
   add_hex(sb, '{', "contract", bytes(data->contract, 20));
-
+#ifdef NODESELECT_DEF_WL
   if (data->whitelist)
     add_hex(sb, ',', "whiteListContract", bytes(data->whitelist->contract, 20));
-
+#endif
   add_hex(sb, ',', "registryId", bytes(data->registry_id, 32));
   add_bool(sb, ',', "needsUpdate", data->nodelist_upd8_params != NULL);
   add_uint(sb, ',', "avgBlockTime", data->avg_block_time);
@@ -416,8 +423,10 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_nodeselect_def_t* data, d
     }
   }
 
+#ifdef NODESELECT_DEF_WL
   if (data->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > data->whitelist->last_block)
     data->whitelist->needs_update = true;
+#endif
 }
 
 static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_response_t* response) {
@@ -467,8 +476,10 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       data->avg_block_time = avg_block_time_for_chain_id(((in3_configure_ctx_t*) plugin_ctx)->client->chain.chain_id);
       return IN3_OK;
     case PLGN_ACT_TERM:
-      in3_whitelist_clear(data->whitelist);
       in3_nodelist_clear(data);
+#ifdef NODESELECT_DEF_WL
+      in3_whitelist_clear(data->whitelist);
+#endif
       _free(data->nodelist_upd8_params);
       _free(data);
       return IN3_OK;
@@ -499,11 +510,13 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       }
     }
     case PLGN_ACT_ADD_PAYLOAD: {
+#ifdef NODESELECT_DEF_WL
       sb_t* payload = plugin_ctx;
       if (data->whitelist) {
         const bytes_t adr = bytes(data->whitelist->contract, 20);
         sb_add_bytes(payload, ",\"whiteListContract\":", &adr, 1, false);
       }
+#endif
       return IN3_OK;
     }
     default: break;

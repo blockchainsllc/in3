@@ -70,6 +70,7 @@ in3_ret_t in3_cache_store_nodelist(
     in3_nodeselect_def_t* data /**< the data upating to cache */
 );
 
+#ifdef NODESELECT_DEF_WL
 /**
  * reads the whitelist from cache.
  *
@@ -92,6 +93,7 @@ in3_ret_t in3_cache_store_whitelist(
     in3_t*                c,   /**< the incubed client */
     in3_nodeselect_def_t* data /**< the data upating to cache */
 );
+#endif
 
 /**
  * inits the cache.

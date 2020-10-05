@@ -83,6 +83,8 @@ OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis s
 OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" ON)
 OPTION(SENTRY "Enable Sentry" OFF)
 OPTION(PK_SIGNER "Enable Signing with private keys" ON)
+OPTION(NODESELECT_DEF "Enable default nodeselect implementation" ON)
+OPTION(NODESELECT_DEF_WL "Enable default nodeselect whitelist implementation" ON)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)

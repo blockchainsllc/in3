@@ -70,8 +70,15 @@ add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
 add_subdirectory(src/tools)
-add_subdirectory(src/nodeselect)
 add_subdirectory(docs)
+
+if (NODESELECT_DEF)
+    ADD_DEFINITIONS(-DNODESELECT_DEF)
+    if (NODESELECT_DEF_WL)
+        ADD_DEFINITIONS(-DNODESELECT_DEF_WL)
+    endif()
+    add_subdirectory(src/nodeselect)
+endif()
 
 link_directories(${CMAKE_BINARY_DIR}/lib/)
 

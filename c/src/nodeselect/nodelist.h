@@ -63,7 +63,11 @@ typedef struct {
   in3_node_t*        nodelist;        /**< array of nodes */
   in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
   bytes_t**          init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
-  in3_whitelist_t*   whitelist;       /**< if set the whitelist of the addresses. */
+
+#ifdef NODESELECT_DEF_WL
+  in3_whitelist_t* whitelist; /**< if set the whitelist of the addresses. */
+#endif
+
   struct {
     uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
     uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
@@ -74,11 +78,13 @@ typedef struct {
 /** removes all nodes and their weights from the nodelist */
 NONULL void in3_nodelist_clear(in3_nodeselect_def_t* data);
 
+#ifdef NODESELECT_DEF_WL
 /** removes all nodes and their weights from the nodelist */
 NONULL void in3_whitelist_clear(in3_whitelist_t* data);
 
 /** updates all whitelisted flags in the nodelist */
 NONULL void in3_client_run_chain_whitelisting(in3_nodeselect_def_t* data);
+#endif
 
 /** check if the nodelist is up to date.
  * 
