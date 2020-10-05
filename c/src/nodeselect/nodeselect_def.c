@@ -266,6 +266,9 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
     return IN3_ECONFIG;
   }
   json_free(json);
+  
+  for (unsigned int i = 0; i < data->nodelist_length; ++i)
+    BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
 
   return in3_cache_init(ctx->client, data);
 }
@@ -510,10 +513,6 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-
-  for (unsigned int i = 0; i < data->nodelist_length; ++i)
-    BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
-
   data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
   return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, nodeselect, data, false);
 }
