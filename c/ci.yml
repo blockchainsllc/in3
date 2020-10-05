@@ -267,14 +267,14 @@ examples_macos:
 
 
 integration_longrun:
-  stage: test
+  stage: build
   extends: .only_release
   trigger:
     project: qa/long-run
     strategy: depend
 
 integration_longrun:
-  stage: test
+  stage: build
   extends: .only_release
   trigger:
     project: in3/ts/browser-test
