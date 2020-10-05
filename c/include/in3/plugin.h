@@ -391,6 +391,17 @@ typedef struct {
   uint16_t error; /**< error code. */
 } error_log_ctx_t;
 
+// -------- NL_PICK ---------
+typedef enum {
+  NL_DATA,  /**< data provider node. */
+  NL_SIGNER /**< signer node. */
+} in3_nl_pick_type_t;
+
+typedef struct {
+  in3_nl_pick_type_t type; /**< type of node to pick. */
+  in3_ctx_t*         ctx;  /**< Request context. */
+} in3_nl_pick_ctx_t;
+
 // -------- GET_DATA ---------
 typedef enum {
   GET_DATA_REGISTRY_ID /* returns a pointer to an internal bytes32_t representation; NO cleanup required */

@@ -294,7 +294,7 @@ typedef struct in3_filter_t_ {
 
 #define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
-#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK_DATA | PLGN_ACT_NL_PICK_SIGNER | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST)
+#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST)
 #define PLGN_ACT_CACHE     (PLGN_ACT_CACHE_SET | PLGN_ACT_CACHE_GET | PLGN_ACT_CACHE_CLEAR)
 #define PLGN_ACT_CONFIG    (PLGN_ACT_CONFIG_SET | PLGN_ACT_CONFIG_GET)
 
@@ -320,14 +320,13 @@ typedef enum {
   PLGN_ACT_PAY_HANDLE        = 0x20000,   /**< handles the payment */
   PLGN_ACT_PAY_SIGN_REQ      = 0x40000,   /**< signs a request */
   PLGN_ACT_LOG_ERROR         = 0x80000,   /**< report an error */
-  PLGN_ACT_NL_PICK_DATA      = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_NL_PICK_SIGNER    = 0x200000,  /**< picks the signer nodes, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x400000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_NL_BLACKLIST      = 0x800000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to node_match_t. */
-  PLGN_ACT_NL_FAILABLE       = 0x1000000, /**< handle failable request, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
-  PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
-  PLGN_ACT_ADD_PAYLOAD       = 0x8000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
+  PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to node_match_t. */
+  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle failable request, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_CHAIN_CHANGE      = 0x1000000, /**< chain id change event, called after setting new chain id */
+  PLGN_ACT_GET_DATA          = 0x2000000, /**< get access to plugin data as a void ptr */
+  PLGN_ACT_ADD_PAYLOAD       = 0x4000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
 } in3_plugin_act_t;
 
 /**
