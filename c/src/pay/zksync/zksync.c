@@ -133,7 +133,7 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
   TRY(zksync_get_account(conf, ctx, &account))
   assert(account);
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
-  if(signature.len == 65)
+  if (signature.len == 65)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);
   memcpy(sync_key, conf->sync_key, 32);
@@ -239,7 +239,7 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
   memset(fee, 0, 32);
   long_to_bytes(d_get_longk(result, key("totalFee")), fee + 24);
 #else
-  *fee           = d_get_longk(result, key("totalFee"));
+  *fee = d_get_longk(result, key("totalFee"));
 #endif
   return IN3_OK;
 }
@@ -530,7 +530,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // do we have a provider?
   if (!conf->provider_url) {
-    switch (ctx->ctx->client->chain_id) {
+    switch (ctx->ctx->client->chain.chain_id) {
       case CHAIN_ID_MAINNET:
         conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
         break;
