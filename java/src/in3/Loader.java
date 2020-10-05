@@ -82,6 +82,12 @@ public class Loader {
     }
   }
 
+  private static void loadIn3() {
+    libInit();
+  }
+
+  private static native void libInit();
+
   public static void loadLibrary() {
     if (loaded)
       return;
@@ -136,5 +142,7 @@ public class Loader {
     } catch (Exception ex) {
       throw new RuntimeException("Could not load the native library ", ex);
     }
+
+    loadIn3();
   }
 }

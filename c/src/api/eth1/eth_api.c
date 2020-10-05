@@ -58,7 +58,7 @@ static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
 
 /** creates a uin256_t from a flexible byte */
 static uint256_t uint256_from_bytes(bytes_t bytes) {
-  uint256_t d;
+  uint256_t d = {0};
   copy_fixed(d.data, 32, bytes);
   return d;
 }
@@ -310,9 +310,15 @@ eth_log_t* eth_getLogs(in3_t* in3, char* fopt) {
   rpc_exec("eth_getLogs", eth_log_t*, parse_logs(result));
 }
 
-static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
-  json_ctx_t* res = req_parse_result(req, d_to_bytes(result));
-  req_free(req);
+static json_ctx_t* parse_call_result(abi_sig_t* req, d_token_t* result) {
+  char*       error = NULL;
+  json_ctx_t* res   = abi_decode(req, d_to_bytes(result), &error);
+  abi_sig_free(req);
+  if (error) {
+    api_set_error(0, error);
+    if (res) json_free(res);
+    return NULL;
+  }
   return res;
 }
 
@@ -324,69 +330,68 @@ static uint64_t* d_to_u64ptr(d_token_t* res) {
 
 static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t block, bool only_estimate, char* fn_sig, va_list ap) {
   rpc_init;
-  int             res = 0;
-  call_request_t* req = parseSignature(fn_sig);
-  if (req->in_data->type == A_TUPLE) {
+  char*      error = NULL;
+  abi_sig_t* req   = abi_sig_create(fn_sig, &error);
+  bytes_t    data  = {0};
+  if (!error) {
     json_ctx_t* in_data = json_create();
     d_token_t*  args    = json_create_array(in_data);
-    var_t*      p       = req->in_data + 1;
-    for (int i = 0; i < req->in_data->type_len; i++, p = t_next(p)) {
+    for (int i = 0; i < req->input->data.tuple.len && !error; i++) {
+      abi_coder_t* p = req->input->data.tuple.components[i];
       switch (p->type) {
-        case A_BOOL:
+        case ABI_BOOL:
           json_array_add_value(args, json_create_bool(in_data, va_arg(ap, int)));
           break;
-        case A_ADDRESS:
+        case ABI_ADDRESS:
           json_array_add_value(args, json_create_bytes(in_data, bytes(va_arg(ap, uint8_t*), 20)));
           break;
-        case A_BYTES:
+        case ABI_BYTES:
           json_array_add_value(args, json_create_bytes(in_data, va_arg(ap, bytes_t)));
           break;
-        case A_STRING:
-        case A_INT:
-          json_array_add_value(args, json_create_string(in_data, va_arg(ap, char*)));
+        case ABI_STRING:
+          json_array_add_value(args, json_create_string(in_data, va_arg(ap, char*), -1));
           break;
-        case A_UINT: {
-          if (p->type_len <= 4)
+        case ABI_NUMBER: {
+          if (p->data.number.size <= 32)
             json_array_add_value(args, json_create_int(in_data, va_arg(ap, uint32_t)));
-          else if (p->type_len <= 8)
+          else if (p->data.number.size <= 64)
             json_array_add_value(args, json_create_int(in_data, va_arg(ap, uint64_t)));
           else
             json_array_add_value(args, json_create_bytes(in_data, bytes(va_arg(ap, uint256_t).data, 32)));
           break;
         }
         default:
-          req->error = "unsuported token-type!";
-          res        = -1;
+          error = "unsuported token-type!";
       }
     }
 
-    if (res >= 0 && (res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
+    if (!error) data = abi_encode(req, args, &error);
     json_free(in_data);
   }
-  if (res >= 0) {
+
+  if (!error) {
     bytes_t to = bytes(contract, 20);
     sb_add_chars(params, "{\"to\":");
     sb_add_bytes(params, "", &to, 1, false);
     sb_add_chars(params, ", \"data\":");
-    sb_add_bytes(params, "", &req->call_data->b, 1, false);
+    sb_add_bytes(params, "", &data, 1, false);
     sb_add_char(params, '}');
     params_add_blk_num_t(params, block);
   }
-  else {
-    api_set_error(0, req->error ? req->error : "Error parsing the request-data");
+  if (data.data) _free(data.data);
+  if (error) {
+    api_set_error(0, error);
     sb_free(params);
-    req_free(req);
+    abi_sig_free(req);
     return NULL;
   }
 
-  if (res >= 0) {
-    if (only_estimate) {
-      req_free(req);
-      rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
-    }
-    else {
-      rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
-    }
+  if (only_estimate) {
+    abi_sig_free(req);
+    rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
+  }
+  else {
+    rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
   }
   return NULL;
 }
@@ -634,11 +639,13 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
 }
 
 void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
-  eth_log_t *curr = txr->logs, *next = NULL;
-  while (curr != NULL) {
-    next = curr->next;
-    eth_log_free(curr);
-    curr = next;
+  if (txr && txr->logs) {
+    eth_log_t *curr = txr->logs, *next = NULL;
+    while (curr != NULL) {
+      next = curr->next;
+      eth_log_free(curr);
+      curr = next;
+    }
   }
   _free(txr);
 }

@@ -107,13 +107,14 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
 
         if (response.len > 1) {
           if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
-            ret = IN3_OK;
+            ret           = IN3_OK;
+            sc->signature = bytes(_malloc(65), 65);
 
-            memcpy(sc->signature, response.data + 1, 64);
+            memcpy(sc->signature.data, response.data + 1, 64);
 
-            recid = get_recid_from_pub_key(&secp256k1, public_key, sc->signature, hash);
+            recid = get_recid_from_pub_key(&secp256k1, public_key, sc->signature.data, hash);
 
-            sc->signature[64] = recid;
+            sc->signature.data[64] = recid;
             in3_log_debug("recid %d\n", recid);
 #ifdef DEBUG
             in3_log_debug("hash value\n");
@@ -121,7 +122,7 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
             in3_log_debug("recid %d\n", recid);
             in3_log_debug("printing signature returned by device with recid value\n");
 
-            ba_print(sc->signature, 65);
+            ba_print(sc->signature.data, 65);
 #endif
           }
           else {

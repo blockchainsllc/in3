@@ -74,10 +74,10 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
   assert(params);
 
   // generate the rpc-request
-  const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
-  const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
-  char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
-  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
+  const int  max  = strlen(method) + strlen(params) + 200;                                     // determine the max length of the request string
+  const bool heap = max > 500;                                                                 // if we need more than 500 bytes, we better put it in the heap
+  char*      req  = heap ? _malloc(max) : alloca(max);                                         // allocate memory in heap or stack
+  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params); // create request
 
   in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
 
@@ -111,7 +111,7 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
 
   // do we have an error-property in the response?
   d_token_t* r = d_get(ctx->responses[0], K_ERROR);
-  if (r) {
+  if (d_type(r) != T_NULL) {
     if (d_type(r) == T_STRING)
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
@@ -237,10 +237,14 @@ bytes_t in3_sign_ctx_get_account(
 /**
  * helper function to retrieve the signature from a in3_sign_ctx_t
  */
-uint8_t* in3_sign_ctx_get_signature(
-    in3_sign_ctx_t* ctx /**< the signer context */
-) {
-  return ctx->signature;
+void in3_sign_ctx_set_signature_hex(
+    in3_sign_ctx_t* ct, /**< the signer context */
+    const char*     sig) {
+
+  int l = (strlen(sig) + 1) / 2;
+  if (l && sig[0] == '0' && sig[1] == 'x') l--;
+  ct->signature = bytes(_malloc(l), l);
+  hex_to_bytes(sig, -1, ct->signature.data, l);
 }
 
 /**

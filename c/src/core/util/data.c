@@ -258,7 +258,10 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
 
 bool d_eq(const d_token_t* a, const d_token_t* b) {
   if (a == NULL || b == NULL) return false;
+  if (d_type(a) == T_BYTES && d_type(b) == T_INTEGER && d_len(a) < 5 && d_int(a) == d_int(b)) return true;
+  if (d_type(b) == T_BYTES && d_type(a) == T_INTEGER && d_len(b) < 5 && d_int(a) == d_int(b)) return true;
   if (a->len != b->len) return false;
+  if (d_type(a) <= T_STRING && a->len == 0) return true;
   if (d_type(a) == T_ARRAY) {
     for (d_iterator_t ia = d_iter((d_token_t*) a), ib = d_iter((d_token_t*) b); ia.left; d_iter_next(&ia), d_iter_next(&ib)) {
       if (!d_eq(ia.token, ib.token)) return false;
@@ -272,6 +275,7 @@ bool d_eq(const d_token_t* a, const d_token_t* b) {
     return true;
   }
   if (d_type(a) == T_STRING) return strcmp((char*) a->data, (char*) b->data) == 0;
+
   return (a->data && b->data && d_type(a) == T_BYTES)
              ? b_cmp(d_bytes(a), d_bytes(b))
              : a->data == NULL && b->data == NULL;
@@ -410,7 +414,8 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
 
   while (true) {
     switch (*(jp->c++)) {
-      case 0: return -2;
+      case 0:
+        return -2;
       case '\'':
       case '"':
         if (start[-1] != jp->c[-1]) continue;
@@ -466,7 +471,8 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
     return -3;
 
   switch (next_char(jp)) {
-    case 0: return -2;
+    case 0:
+      return -2;
     case '{':
       jp->depth++;
       parsed_next_item(jp, T_OBJECT, key, parent)->data = (uint8_t*) jp->c - 1;
@@ -480,7 +486,8 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             jp->depth--;
             return 0;
           }
-          default: return -2; // invalid character or end
+          default:
+            return -2; // invalid character or end
         }
         res = parse_object(jp, p_index, res); // parse the value
         if (res < 0) return res;
@@ -490,7 +497,8 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             jp->depth--;
             return 0; // this was the last property, so we return successfully.
           }
-          default: return -2; // unexpected character, throw.
+          default:
+            return -2; // unexpected character, throw.
         }
       }
     case '[':
@@ -511,7 +519,8 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             jp->depth--;
             return 0; // this was the last element, so we return successfully.
           }
-          default: return -2; // unexpected character, throw.
+          default:
+            return -2; // unexpected character, throw.
         }
       }
     case '"':
@@ -847,9 +856,12 @@ d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
 
   return next_item(jp, T_INTEGER, value);
 }
-d_token_t* json_create_string(json_ctx_t* jp, char* value) {
-  d_token_t* r = next_item(jp, T_STRING, strlen(value));
-  strcpy((char*) (r->data = _malloc(d_len(r) + 1)), value);
+d_token_t* json_create_string(json_ctx_t* jp, char* value, int len) {
+  if (len == -1) len = strlen(value);
+  d_token_t* r = next_item(jp, T_STRING, len);
+  r->data      = _malloc(len + 1);
+  memcpy(r->data, value, len);
+  r->data[len] = 0;
   return r;
 }
 d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {

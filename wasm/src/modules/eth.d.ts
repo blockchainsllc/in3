@@ -25,6 +25,12 @@ export type TransactionReceipt = {
     transactionHash: Hash
     /** Integer of the transactions index position in the block. */
     transactionIndex: Quantity
+    /** event objects, which are only added in the web3Contract */
+    events?: {
+        [name: string]: {
+            returnValues: any
+        }
+    }
 }
 export type TransactionDetail = {
     /**  32 Bytes - hash of the transaction. */
@@ -205,11 +211,107 @@ export interface Web3Event {
 
 }
 
+/**
+ * The Account API
+ */
+export interface AccountAPI<BufferType> {
+
+    /**
+     * adds a private key to sign with.
+     * This method returns address of the pk
+     * @param pk 
+     */
+    add(pk: string | BufferType): Promise<string>
 
 
+}
+
+export interface Web3TransactionObject {
+    call: (options?: {
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        to?: Address,
+        from?: Address,
+    }) => Promise<any>,
+    send: (options?: {
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        nonce?: string | number | bigint,
+        to?: Address,
+        from?: Address,
+        value?: number | string | bigint
+    }) => Promise<any>,
+    estimateGas: (options?: {
+        value?: string | number | bigint,
+        gas?: string | number | bigint,
+        to?: Address,
+        from?: Address,
+    }) => Promise<number>,
+    encodeABI: () => Hex
+}
+
+export interface Web3Contract {
+    options: {
+        address: Address,
+        jsonInterface: ABI[],
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+        data?: Hex,
+        transactionConfirmationBlocks: number,
+        transactionPollingTimeout: number
+    },
+    deploy?: (args: {
+        data: string,
+        arguments?: any[]
+    }) => Web3TransactionObject,
+    methods: {
+        [methodName: string]: (...args: any) => Web3TransactionObject
+    },
+
+    once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,
+
+    events: {
+        [eventName: string]: (options?: {
+            fromBlock?: number,
+            toBlock?: number,
+            topics?: any[],
+            filter?: { [indexedName: string]: any }
+        }) => {
+            on: (ev: 'data' | 'error', handler: (ev: Web3Event | Error) => void) => any
+            once: (ev: 'data', handler: (ev: Web3Event) => void) => any
+            off: (ev: string, handler: (ev: any) => void) => any
+        }
+    },
+
+    getPastEvents(evName: string, options?: {
+        fromBlock?: number,
+        toBlock?: number,
+        topics?: any[],
+        filter?: { [indexedName: string]: any }
+    }): Promise<Web3Event[]>
+
+}
+
+/**
+ * The API for ethereum operations.
+ */
 export interface EthAPI<BigIntType, BufferType> {
+    /**
+     * the client used.
+     */
     client: IN3Generic<BigIntType, BufferType>;
+
+    /**
+     * a custom signer
+     */
     signer?: Signer<BigIntType, BufferType>;
+
+    /**
+     * accounts-API
+     */
+    accounts: AccountAPI<BufferType>;
+
     constructor(client: IN3Generic<BigIntType, BufferType>);
     /**
      * Returns the number of most recent block. (as number)
@@ -231,6 +333,10 @@ export interface EthAPI<BigIntType, BufferType> {
      * Returns the EIP155 chain ID used for transaction signing at the current best block. Null is returned if not available.
      */
     chainId(): Promise<string>;
+    /**
+     * Returns the clientVersion. This may differ in case of an network, depending on the node it communicates with.
+     */
+    clientVersion(): Promise<string>;
     /**
      * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
      */
@@ -346,7 +452,11 @@ export interface EthAPI<BigIntType, BufferType> {
      */
     protocolVersion(): Promise<string>;
     /**
-      * Returns the current ethereum protocol version.
+     * Returns the value in wei as hexstring.
+     */
+    toWei(value: string, unit: string): string;
+    /**
+      * Returns the state of the underlying node.
       */
     syncing(): Promise<boolean | {
         startingBlock: Hex;
@@ -378,67 +488,12 @@ export interface EthAPI<BigIntType, BufferType> {
     /** sends a Transaction */
     sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
 
-
-
     web3ContractAt(abi: ABI[], address?: Address, options?: {
         gasPrice?: string | number | bigint,
         gas?: string | number | bigint,
         from?: Address,
         data?: Hex
-    }): {
-        options: {
-            address: Address,
-            jsonInterface: ABI[],
-            gasPrice?: string | number | bigint,
-            gas?: string | number | bigint,
-            from?: Address,
-            data?: Hex,
-            transactionConfirmationBlocks: number,
-            transactionPollingTimeout: number
-        },
-        methods: {
-            [methodName: string]: (...args: any) => {
-                call: (options?: {
-                    gasPrice?: string | number | bigint,
-                    gas?: string | number | bigint,
-                    from?: Address,
-                }) => Promise<any>,
-                send: (options?: {
-                    gasPrice?: string | number | bigint,
-                    gas?: string | number | bigint,
-                    from?: Address,
-                    value?: number | string | bigint
-                }) => Promise<any>,
-                estimateGas: (options?: {
-                    value?: string | number | bigint,
-                    gas?: string | number | bigint,
-                    from?: Address,
-                }) => Promise<number>,
-                encodeABI: () => Hex
-            }
-        },
-
-        once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,
-
-        events: {
-            [eventName: string]: (options?: {
-                fromBlock?: number,
-                topics?: any[],
-                filter?: { [indexedName: string]: any }
-            }) => {
-                on: (ev: 'data' | 'error', handler: (ev: Web3Event | Error) => void) => any
-                once: (ev: 'data', handler: (ev: Web3Event) => void) => any
-                off: (ev: string, handler: (ev: any) => void) => any
-            }
-        },
-
-        getPastEvents(evName: string, options?: {
-            fromBlock?: number,
-            topics?: any[],
-            filter?: { [indexedName: string]: any }
-        }): Promise<Web3Event[]>
-
-    }
+    }): Web3Contract
 
     contractAt(abi: ABI[], address?: Address): {
         [methodName: string]: any;
@@ -482,4 +537,6 @@ export interface EthAPI<BigIntType, BufferType> {
     };
     decodeEventData(log: Log, d: ABI): any;
     hashMessage(data: Data): Hex;
+
+
 }

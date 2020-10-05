@@ -9,6 +9,12 @@ if [ "$CONTAINER" = "debug" ]; then
    CONTAINER=""
    TEST=true
 fi
+if [ "$CONTAINER" = "sentry" ]; then
+   BUILDTYPE=debug
+   CONTAINER=""
+   TEST=true
+   OPTS="-DLOGGING=true -DRECORDER=true -DSENTRY=true -DJAVA=false -DSENTRY_BACKEND=inproc -DBUILD_SHARED_LIBS=false"
+fi
 if [ "$CONTAINER" = "release" ]; then
    BUILDTYPE=release
    CONTAINER=""
@@ -25,7 +31,7 @@ if [ "$CONTAINER" = "bindings-debug" ]; then
 fi
 if [ -z "$BUILDTYPE" ]; then
    BUILDTYPE=DEBUG
-   TEST=true
+   #TEST=true
 fi
 if [ "$BUILDTYPE" = "release" ]; then
    BUILDTYPE=MINSIZEREL
@@ -34,7 +40,7 @@ if [ "$BUILDTYPE" = "debug" ]; then
    BUILDTYPE=DEBUG
    TEST=true
 fi
-OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
+OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DZKSYNC=true -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
 
 if [ "$CONTAINER" = "--help" ]; then
    echo "usage $0 <TARGET> <DEBUG|MINSIZEREL|RELEASE|debug|release> "
@@ -92,12 +98,12 @@ elif [ "$CONTAINER" = "esp" ]; then
 elif [ "$CONTAINER" = "wasm_local" ]; then
   cd build
   source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
-  emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true  -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
+  emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true -DIPFS=false -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
   make -j8 in3_wasm
 elif [ "$CONTAINER" = "wasm" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:clang11
   echo $CONTAINER > build/container.txt
-  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true  -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
+  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
 elif [ "$CONTAINER" = "asmjs_local" ]; then
   cd build
   source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null

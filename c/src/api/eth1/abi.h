@@ -34,41 +34,127 @@
 
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
+#ifndef _ETH_API__ABI2_H_
+#define _ETH_API__ABI2_H_
 
-#if !defined(_ETH_API__ABI_H_)
-#define _ETH_API__ABI_H_
-
+/**
+ * the type of data structured use in the signature-
+ */
 typedef enum {
-  A_UINT    = 1,
-  A_INT     = 2,
-  A_BYTES   = 3,
-  A_BOOL    = 4,
-  A_ADDRESS = 5,
-  A_TUPLE   = 6,
-  A_STRING  = 7
-} atype_t;
+  ABI_TUPLE       = 1, /**< a series of different data fields or a `struct` in solidity */
+  ABI_STRING      = 2, /**< a dynamic string of characters (`string` in solidity) */
+  ABI_NUMBER      = 3, /**< a number which could be `uint<SIZE>` or `int<SIZE>`or also `fixed<SIZE>x<N>` */
+  ABI_BYTES       = 4, /**< a dynamic array of bytes ( `bytes` in solidity) */
+  ABI_ADDRESS     = 5, /**< a 20 byte long address ( `address`)*/
+  ABI_FIXED_BYTES = 6, /**< a fixed length array of bytes where the length would be 1-32. like  `bytes32` */
+  ABI_BOOL        = 8, /**< a boolean value */
+  ABI_ARRAY       = 9  /**< a dynamic or fixed size array of elements */
+} abi_coder_type_t;
 
-typedef struct el {
-  atype_t type;
-  bytes_t data;
-  uint8_t type_len;
-  int     array_len;
-} var_t;
+/** 
+ * a coder configuration for a specific type.
+ * Depending on the type the config is stored in the union-structs.
+ */
+typedef struct signature {
+  abi_coder_type_t type; /**< the type of the coder */
+  union {
+    struct {
+      struct signature** components; /**< the pointer to an array of ponters to the types */
+      int                len;        /**< the number of componeents in the tuple */
+    } tuple;                         /**< the config used for coder of type `ABI_TUPLE`*/
 
+    struct {
+      struct signature* component; /**< the pointer to the type of array */
+      int               len;       /**< the length of an array */
+    } array;                       /**< the config used for coder of type `ABI_ARRAY`*/
+
+    struct {
+      bool sign; /**< uint or int */
+      int  size; /**< size in bits */
+      int  n;    /**< if n is set it is a fixed type ( fixed128x18 )*/
+    } number;    /**< the config used for coder of type `ABI_NUMBER`*/
+
+    struct {
+      int len; /**< the number of bytes for a fixed bytes-type */
+    } fixed;   /**< the config used for coder of type `ABI_FIXED_BYTES`*/
+
+  } data;
+} abi_coder_t;
+
+/**
+ * defines a ABI-signature of a function or data structure
+ */
 typedef struct {
-  var_t*           in_data;
-  var_t*           out_data;
-  bytes_builder_t* call_data;
-  var_t*           current;
-  char*            error;
-  int              data_offset;
-} call_request_t;
+  abi_coder_t* input;        /**< the tuple-coder for encoding data */
+  abi_coder_t* output;       /**< the tuple-coder for decoding data. If NULL, the `input`is used. This optional field is filled if the signaturestring contains a return-definition. */
+  uint8_t      fn_hash[4];   /**< the function-hash, which is used for calling a solidity function. */
+  bool         return_tuple; /**< if this is true the return-type will be an array representing the decoded value, even if there is only one type returned, other wise it will return a single value in case of an single return type. The parser will set this based on the bracket around the return type. */
+} abi_sig_t;
 
-call_request_t* parseSignature(char* sig);
-json_ctx_t*     req_parse_result(call_request_t* req, bytes_t data);
-void            req_free(call_request_t* req);
-int             set_data(call_request_t* req, d_token_t* data, var_t* tuple);
-var_t*          t_next(var_t* t);
-int             word_size(int b);
+/**
+ * frees a previously creates abi signature.
+ */
+void abi_sig_free(
+    abi_sig_t* c /**< the signature */
+);
 
+/**
+ * parses a ABI signature string and creates the a pointer to the struct, which can be used to encode and decode date
+ * 
+ * The signature string may contain either just a comma separated list of valid solidity types:
+ * 
+ * ```c
+ * "address"           // single type
+ * "address,uint,bool" // tuple
+ * "(uint,int,bool)"   // tuple
+ * "bytes32[]"         // dynamic array
+ * "uint[4]"           // fixed array
+ * "(uint,bool)[]"     // dynamic array of a tuple
+ * ```
+ *  
+ * Optionaly a function name can be prefixed, which will be used when creating the functionhash:
+ * ```c
+ * "execTransaction(bytes,uint,uint)"
+ * ```
+ * 
+ * Optionally a return type can be added which is used when decoding the value:
+ * 
+ * ```c
+ * "isValidSAignature(bytes,bytes):(bytes4)" // return the single type as array with one value
+ * "isValidSAignature(bytes,bytes):bytes4"   // return the single type as single value
+ * ```
+ * 
+ */
+abi_sig_t* abi_sig_create(
+    char*  signature, /**< the abi signature */
+    char** error      /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
+);
+
+/**
+ * internal function to check if the coder is handled dynamicly
+ */
+bool abi_is_dynamic(
+    abi_coder_t* coder /**< the coder to check */
+);
+
+/**
+ * encodes JSON-data to bytes.
+ * The resulting bytes data-field MUST be freed if not NULL! 
+ */
+bytes_t abi_encode(
+    abi_sig_t* s,    /**< the signature to use */
+    d_token_t* src,  /**< the data as json-token, which can be a single value or a array. All data may not contain any objects, but arrays instead. */
+    char**     error /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
+);
+
+/**
+   * decodes bytes to a JSON-structure.
+   * The resulting json_ctx MUST be freed using `json_free` if not NULL.
+   */
+json_ctx_t* abi_decode(
+    abi_sig_t* s,    /**< the signature to use */
+    bytes_t    data, /**< the data to decode */
+    char**     error /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
+
+);
 #endif // _ETH_API__ABI_H_

@@ -309,6 +309,10 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->filters               = NULL;
   c->timeout               = 10000;
 
+#ifndef DEV_NO_INC_RPC_ID
+  c->id_count = 1;
+#endif
+
   in3_chain_t* chain = c->chains;
 
   if (!chain_id || chain_id == CHAIN_ID_MAINNET)
@@ -1038,15 +1042,18 @@ in3_ret_t in3_plugin_register(const char* name, in3_t* c, in3_plugin_supp_acts_t
     p = &(*p)->next;
   }
 
-  // didn't find any existing, so we add a new ...
-  *p              = _malloc(sizeof(in3_plugin_t));
-  (*p)->acts      = acts;
-  (*p)->action_fn = action_fn;
-  (*p)->data      = data;
-  (*p)->next      = NULL;
+  assert(p != NULL);
+  in3_plugin_t* new_p = _malloc(sizeof(in3_plugin_t));
+  *p                  = new_p;
+  new_p->acts         = acts;
+  new_p->action_fn    = action_fn;
+  new_p->data         = data;
+  new_p->next         = NULL;
 #ifdef LOGGING
-  (*p)->name = name;
+  new_p->name = name;
 #endif
+
+  // didn't find any existing, so we add a new ...
   c->plugin_acts |= acts;
   return IN3_OK;
 }
@@ -1093,6 +1100,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_NL_PICK_DATA: return "nl_pick_data";
     case PLGN_ACT_NL_PICK_SIGNER: return "nl_pick_signer";
     case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";
+    case PLGN_ACT_LOG_ERROR: return "log_error";
   }
   return "unknown";
 }

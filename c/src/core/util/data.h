@@ -137,13 +137,12 @@ NONULL json_ctx_t* parse_json(const char* js);                      /**< parses 
 NONULL json_ctx_t* parse_json_indexed(const char* js);              /**< parses json-data, which needs to be freed after usage! */
 NONULL void        json_free(json_ctx_t* parser_ctx);               /**< frees the parse-context after usage */
 NONULL str_range_t d_to_json(const d_token_t* item);                /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
-NONULL char*       d_create_json(json_ctx_t* ctx, d_token_t* item); /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
-
-json_ctx_t* json_create();
+char*              d_create_json(json_ctx_t* ctx, d_token_t* item); /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
+json_ctx_t*        json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
 NONULL d_token_t* json_create_bool(json_ctx_t* jp, bool value);
 NONULL d_token_t* json_create_int(json_ctx_t* jp, uint64_t value);
-NONULL d_token_t* json_create_string(json_ctx_t* jp, char* value);
+NONULL d_token_t* json_create_string(json_ctx_t* jp, char* value, int len);
 NONULL d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value);
 NONULL d_token_t* json_create_object(json_ctx_t* jp);
 NONULL d_token_t* json_create_array(json_ctx_t* jp);

@@ -1,8 +1,16 @@
-const IN3 = require('../in3/index.js')
+const target_platform = process.env.IN3_TARGET || 'index'
+const IN3 = require('../in3/' + target_platform + '.js')
 const fs = require('fs')
 const axios = require('axios')
 const Client = IN3
 let responses = {}
+
+function hasAPI(api) {
+    const c = new IN3()
+    const r = !!c[api]
+    c.free();
+    return r
+}
 
 function testTransport(_url, data) {
     try {
@@ -94,6 +102,7 @@ function createClient(config = {}, recordName) {
 }
 
 module.exports = {
+    hasAPI,
     createClient,
     mockResponse,
     IN3,

@@ -48,6 +48,15 @@ if (IPFS)
   add_subdirectory( libb64 )
 endif()
 
+if (ZKSYNC)
+  add_subdirectory( zkcrypto )
+endif()
+
 if (LEDGER_NANO)
   add_subdirectory( hidapi )
+endif()
+
+if (SENTRY)
+  #  ADD_DEFINITIONS(-DBUILD_SHARED_LIBS=false)
+   add_subdirectory( sentry-native )
 endif()

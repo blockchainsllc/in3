@@ -391,36 +391,36 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
  */
 JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env, jclass clz, jstring fn, jstring json) {
   UNUSED_VAR(clz);
-  const char*     fnc = (*env)->GetStringUTFChars(env, fn, 0);
-  call_request_t* rq  = parseSignature((char*) fnc);
+  char*       error = NULL;
+  const char* fnc   = (*env)->GetStringUTFChars(env, fn, 0);
+  abi_sig_t*  rq    = abi_sig_create((char*) fnc, &error);
   (*env)->ReleaseStringUTFChars(env, fn, fnc);
-  if (rq->error) {
-    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), rq->error);
-    req_free(rq);
+  if (error) {
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), error);
+    if (rq) abi_sig_free(rq);
     return NULL;
   }
 
   const char* json_data = (*env)->GetStringUTFChars(env, json, 0);
   json_ctx_t* json_ctx  = parse_json((char*) json_data);
+  (*env)->ReleaseStringUTFChars(env, json, json_data);
+
   if (!json_ctx) {
-    req_free(rq);
-    (*env)->ReleaseStringUTFChars(env, json, json_data);
+    abi_sig_free(rq);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error parsing the data");
     return NULL;
   }
 
-  if (set_data(rq, json_ctx->result, rq->in_data) < 0) {
-    req_free(rq);
-    json_free(json_ctx);
-    (*env)->ReleaseStringUTFChars(env, json, json_data);
-    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "invalid data for the given signature");
+  bytes_t data = abi_encode(rq, json_ctx->result, &error);
+  abi_sig_free(rq);
+  json_free(json_ctx);
+  if (error) {
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), error);
     return NULL;
   }
 
-  jstring res = (jstring) toObject(env, (d_token_t*) &rq->call_data->b);
-  req_free(rq);
-  json_free(json_ctx);
-  (*env)->ReleaseStringUTFChars(env, json, json_data);
+  jstring res = (jstring) toObject(env, (d_token_t*) &data);
+  _free(data.data);
   return res;
 }
 
@@ -431,12 +431,13 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
  */
 JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env, jclass clz, jstring fn, jstring data) {
   UNUSED_VAR(clz);
-  const char*     fnc = (*env)->GetStringUTFChars(env, fn, 0);
-  call_request_t* rq  = parseSignature((char*) fnc);
+  char*       error = NULL;
+  const char* fnc   = (*env)->GetStringUTFChars(env, fn, 0);
+  abi_sig_t*  rq    = abi_sig_create((char*) fnc, &error);
   (*env)->ReleaseStringUTFChars(env, fn, fnc);
-  if (rq->error) {
-    req_free(rq);
-    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), rq->error);
+  if (error) {
+    if (rq) abi_sig_free(rq);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), error);
     return NULL;
   }
 
@@ -446,13 +447,13 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
   l                 = hex_to_bytes((char*) jdata + 2, l - 2, bdata, l);
   (*env)->ReleaseStringUTFChars(env, data, jdata);
 
-  json_ctx_t* res    = req_parse_result(rq, bytes(bdata, l));
+  json_ctx_t* res    = abi_decode(rq, bytes(bdata, l), &error);
   jobject     result = res ? toObject(env, res->result) : NULL;
-  req_free(rq);
+  abi_sig_free(rq);
   if (res)
     json_free(res);
   else
-    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error decoding the data");
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), error);
 
   return result;
 }
@@ -540,7 +541,10 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
 
   if (!jsignature) return -2;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  hex_to_bytes((char*) signature, -1, sc->signature, 65);
+  int         l         = (strlen(signature) + 1) / 2;
+  if (l && signature[0] == '0' && signature[1] == 'x') l--;
+  sc->signature = bytes(_malloc(l), l);
+  hex_to_bytes((char*) signature, -1, sc->signature.data, l);
   (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
   return IN3_OK;
 }
@@ -710,7 +714,8 @@ static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_t* in3 = in3_for_chain_auto_init(jchain);
+  in3_init();
+  in3_t* in3 = in3_for_chain(jchain);
   void*  p   = (*env)->NewGlobalRef(env, ob);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, p);
   plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
@@ -724,4 +729,15 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
 JNIEXPORT jstring JNICALL Java_in3_IN3_getVersion(JNIEnv* env, jclass c) {
   UNUSED_VAR(c);
   return (*env)->NewStringUTF(env, IN3_VERSION);
+}
+
+/*
+ * Class:     in3_Loader
+ * Method:    libInit
+ * Signature: ()J
+ */
+JNIEXPORT void JNICALL Java_in3_Loader_libInit(JNIEnv* env, jclass c) {
+  UNUSED_VAR(env);
+  UNUSED_VAR(c);
+  in3_init();
 }

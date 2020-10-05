@@ -48,3 +48,4 @@ add_static_library(
   DEPENDS 
     eth_nano
 )
+

@@ -101,6 +101,10 @@ typedef struct in3_ctx {
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
   in3_t*          client;             /**< reference to the client*/
+
+#ifndef DEV_NO_INC_RPC_ID
+  uint32_t id; /**< JSON RPC id of request at index 0 */
+#endif
 } in3_ctx_t;
 
 /**
@@ -444,7 +448,5 @@ NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const no
 NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
   return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
 }
-NONULL_FOR((1, 2, 3, 5))
-in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
 
 #endif

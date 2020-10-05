@@ -12,8 +12,8 @@ namespace Test.Crypto
         [SetUp]
         public void Setup()
         {
-            ClientBuilder builder = new ClientBuilder(Chain.Mainnet);
-            IN3 in3 = builder.ConstructClient(new string[][] { });
+            ClientFactory factory = new ProoflessClientFactory(Chain.Mainnet);
+            IN3 in3 = factory.CreateIn3(new string[][] { });
             _wallet = (SimpleWallet) in3.Signer;
         }
 

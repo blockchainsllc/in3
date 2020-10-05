@@ -34,6 +34,12 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
+if (MSVC OR MSYS OR MINGW)
+  set(WINE "wine")
+else()
+  set(WINE "")
+endif()
+
 include_directories(. ../src)
 
 # handle codecoverage
@@ -48,8 +54,6 @@ if (CODE_COVERAGE)
   # we exclude all headers, tests and thridparty-code
   set(coverage_excludes "EXCLUDE" "c/test/*" "*.h" "c/src/third-party/*"  "../c/src/third-party/*")
 endif()
-
-
 # first we build the runners
 add_executable(runner runner.c)
 target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API})
@@ -73,12 +77,12 @@ foreach (file ${files})
      if( LEDGER_NANO )
        target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API})
      else()
-       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ${IN3_API})
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api recorder ${IN3_API})
      endif()
 
      add_test(
                 NAME "in3_${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
+                COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
       set_tests_properties("in3_${testname}" PROPERTIES 
@@ -95,11 +99,26 @@ foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "in3_${testname}"
-            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
+            COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
     )
     set_tests_properties("in3_${testname}" PROPERTIES 
       ENVIRONMENT LLVM_PROFILE_FILE=in3_${testname}.profraw
+    )
+
+endforeach ()
+
+# add cmd--tests
+file(GLOB files "testdata/cmd/*.txt")
+foreach (file ${files})
+    get_filename_component(testname "${file}" NAME_WE)
+    add_test(
+            NAME "cmd_${testname}"
+            COMMAND ${CMAKE_BINARY_DIR}/bin/in3 -fi ${file} 
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
+    )
+    set_tests_properties("cmd_${testname}" PROPERTIES 
+      ENVIRONMENT LLVM_PROFILE_FILE=cmd_${testname}.profraw
     )
 
 endforeach ()
@@ -189,7 +208,7 @@ foreach (testdir
         get_filename_component(testname "${file}" NAME_WE)
         add_test(
                 NAME "evm/${testdir}/${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file} ${EVMARG}
+                COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file} ${EVMARG}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 

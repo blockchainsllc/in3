@@ -334,7 +334,7 @@ typedef enum {
   PLGN_ACT_NL_PICK_DATA      = 0x80000,  /**< picks the data nodes */
   PLGN_ACT_NL_PICK_SIGNER    = 0x100000, /**< picks the signer nodes */
   PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000, /**< called after receiving a response in order to decide whether a update is needed. */
-
+  PLGN_ACT_LOG_ERROR         = 0x400000, /**< report an error */
 } in3_plugin_act_t;
 
 /**
@@ -400,6 +400,10 @@ struct in3_t_ {
   in3_chain_t*           chains;                /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
+
+#ifndef DEV_NO_INC_RPC_ID
+  uint32_t id_count; /**< counter for use as JSON RPC id - incremented for every request */
+#endif
 
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
