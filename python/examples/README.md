@@ -11,8 +11,6 @@
    
 -  [smart_contract](./smart_contract.py)
    
--  [smart_meter_write](./smart_meter_write.py)
-   
 ### Running the examples
 
 To run an example, you need to install in3 first:

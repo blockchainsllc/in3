@@ -1,6 +1,6 @@
 .only_release:
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /release\/v([0-9])\.([0-9])\.([0-9])/'
+  only:
+    - /^release\/v[0-9]+\.[0-9]+\.[0-9]+$/
 
 .only_full:
   rules:
@@ -272,6 +272,7 @@ integration_longrun:
   trigger:
     project: qa/long-run
     strategy: depend
+    branch: develop
 
 integration_longrun:
   stage: build
@@ -279,3 +280,4 @@ integration_longrun:
   trigger:
     project: in3/ts/browser-test
     strategy: depend
+    branch: 2-release-branch-test
