@@ -203,8 +203,8 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     }
   }
   else if (token->key == key("rpc")) {
-    in3_t* c = ctx->client;
     EXPECT_TOK_STR(token);
+    in3_t* c          = ctx->client;
     c->proof          = PROOF_NONE;
     c->chain.chain_id = CHAIN_ID_LOCAL;
     c->request_count  = 1;
@@ -214,6 +214,10 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     strcpy(n->url, d_string(token));
     _free(data->nodelist_upd8_params);
     data->nodelist_upd8_params = NULL;
+  }
+  else if (token->key == key("replaceLatestBlock")) {
+    EXPECT_TOK_U8(token);
+    in3_node_props_set(&ctx->client->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
   }
 cleanup:
   ctx->error_msg = res;
