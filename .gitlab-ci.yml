@@ -22,8 +22,8 @@ workflow:
 
 # defines all the stages in the CI, this includes all stages defined inside the included yml files
 stages:
-  - build
   - integration
+  - build
   - bindings
   - wasm
   - rust
