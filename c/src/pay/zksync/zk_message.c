@@ -44,11 +44,11 @@ static void add_amount(sb_t* sb, zksync_token_t* token,
       tmp[1] = '.';
       sep    = tmp + 3;
     }
-  l = strlen(sep);
-  while (l && sep[l - 1] == '0') {
-    l--;
-    sep[l] = 0;
-  }
+    l = strlen(sep);
+    while (l && sep[l - 1] == '0') {
+      l--;
+      sep[l] = 0;
+    }
   }
 
   sb_add_chars(sb, tmp);
@@ -161,23 +161,23 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint
   if (data->type == ZK_WITHDRAW) {
     total = 69;
 #ifdef ZKSYNC_256
-    memcpy(raw + 47, data->amount+16, 16);
-#else 
-    memset(raw+47, 0, 8);
+    memcpy(raw + 47, data->amount + 16, 16);
+#else
+    memset(raw + 47, 0, 8);
     long_to_bytes(data->amount, raw + 55);
 #endif
-    to_dec(dec, data->fee);                  //    create a decimal represntation and pack it
-    TRY(pack(dec, 11, 5, raw + 63, ctx))     // 63: amount packed (2)
-    int_to_bytes(data->nonce, raw + 65);     // 65: nonce(4)
-  } else {
-    total = 58;
-    to_dec(dec, data->amount);               //    create a decimal represntation and pack it
-    TRY(pack(dec, 35, 5, raw + 47, ctx))     // 47: amount packed (5)
-    to_dec(dec, data->fee);                  //    create a decimal represntation and pack it
-    TRY(pack(dec, 11, 5, raw + 52, ctx))     // 52: amount packed (2)
-    int_to_bytes(data->nonce, raw + 54);     // 54: nonce(4)
+    to_dec(dec, data->fee);              //    create a decimal represntation and pack it
+    TRY(pack(dec, 11, 5, raw + 63, ctx)) // 63: amount packed (2)
+    int_to_bytes(data->nonce, raw + 65); // 65: nonce(4)
   }
-
+  else {
+    total = 58;
+    to_dec(dec, data->amount);           //    create a decimal represntation and pack it
+    TRY(pack(dec, 35, 5, raw + 47, ctx)) // 47: amount packed (5)
+    to_dec(dec, data->fee);              //    create a decimal represntation and pack it
+    TRY(pack(dec, 11, 5, raw + 52, ctx)) // 52: amount packed (2)
+    int_to_bytes(data->nonce, raw + 54); // 54: nonce(4)
+  }
 
   // sign data
   TRY(zkcrypto_sign_musig(sync_key, bytes(raw, total), sig));
@@ -215,18 +215,18 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_chars(sb, "\",\"token\":");
   sb_add_int(sb, data->token->id);
   sb_add_chars(sb, ",\"amount\":");
-  #ifdef ZKSYNC_256
+#ifdef ZKSYNC_256
   char dec[80];
-  to_dec(dec,data->amount);
-  sb_add_chars(sb,dec);
+  to_dec(dec, data->amount);
+  sb_add_chars(sb, dec);
   sb_add_chars(sb, ",\"fee\":");
-  to_dec(dec,data->fee);
-  sb_add_chars(sb,dec);
-  #else
+  to_dec(dec, data->fee);
+  sb_add_chars(sb, dec);
+#else
   sb_add_int(sb, data->amount);
   sb_add_chars(sb, ",\"fee\":");
   sb_add_int(sb, data->fee);
-  #endif
+#endif
   sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, data->nonce);
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);

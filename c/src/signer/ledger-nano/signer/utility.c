@@ -12,14 +12,16 @@ void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
   if (lr > 0x20) {
     memcpy(o_sig + offset, i_raw_sig.data + 5, lr - 1);
     offset = lr - 1;
-  } else {
+  }
+  else {
     memcpy(o_sig, i_raw_sig.data + 4, lr);
     offset = lr;
   }
 
   if (ls > 0x20) {
     memcpy(o_sig + offset, i_raw_sig.data + lr + 7, ls - 1);
-  } else {
+  }
+  else {
     memcpy(o_sig + offset, i_raw_sig.data + lr + 6, ls);
   }
 }

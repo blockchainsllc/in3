@@ -43,9 +43,11 @@ void wrap_apdu(uint8_t* i_apdu, int len, uint16_t seq, bytes_t* o_wrapped_hid_cm
 
   if (len < 64 - header_len) {
     cmd_len = 64;
-  } else if (len > 64 - header_len && len < 128 - header_len) {
+  }
+  else if (len > 64 - header_len && len < 128 - header_len) {
     cmd_len = 128;
-  } else if (len > 128 - header_len && len < 255 - header_len) {
+  }
+  else if (len > 128 - header_len && len < 255 - header_len) {
     cmd_len = 255;
   }
   uint8_t* cmd = malloc(cmd_len);
@@ -122,7 +124,8 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
         index_counter += (bytes_read - 7);
 
         memcpy(read_buf, read_chunk + 7, bytes_read - 7);
-      } else {
+      }
+      else {
         memcpy(read_buf + index_counter, read_chunk + 5, total_bytes_available - index_counter);
         index_counter += (bytes_read - 5);
       }
@@ -169,7 +172,8 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
         totalBytes -= chunk_size;
         sent += chunk_size;
         seq++;
-      } else {
+      }
+      else {
         len_to_bytes(seq, seq_data);
         memset(chunk, 0, chunk_size);
         memcpy(chunk, header, sizeof(header));
@@ -184,7 +188,8 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
         bufsize += chunk_size;
       }
     }
-  } else {
+  }
+  else {
     hid_write(handle, final_apdu_command.data, final_apdu_command.len);
     bufsize += final_apdu_command.len;
   }
@@ -206,11 +211,12 @@ hid_device* open_device() {
 
       handle = hid_open_path(device_info->path);
       hid_free_enumeration(device_info);
-    } else {
+    }
+    else {
       handle = NULL;
     }
-
-  } else {
+  }
+  else {
     handle = NULL;
   }
 
