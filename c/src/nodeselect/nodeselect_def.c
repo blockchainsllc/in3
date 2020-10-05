@@ -266,7 +266,7 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
     return IN3_ECONFIG;
   }
   json_free(json);
-  
+
   for (unsigned int i = 0; i < data->nodelist_length; ++i)
     BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
 
@@ -478,10 +478,10 @@ static in3_ret_t nodeselect(void* plugin_data, in3_plugin_act_t action, void* pl
       return config_set(data, (in3_configure_ctx_t*) plugin_ctx);
     case PLGN_ACT_CONFIG_GET:
       return config_get(data, (in3_get_config_ctx_t*) plugin_ctx);
-    case PLGN_ACT_NL_PICK_DATA:
-      return pick_data(data, plugin_ctx);
-    case PLGN_ACT_NL_PICK_SIGNER:
-      return pick_signer(data, plugin_ctx);
+    case PLGN_ACT_NL_PICK: {
+      in3_nl_pick_ctx_t* pctx = plugin_ctx;
+      return pctx->type == NL_DATA ? pick_data(data, pctx->ctx) : pick_signer(data, pctx->ctx);
+    }
     case PLGN_ACT_NL_PICK_FOLLOWUP:
       return pick_followup(data, plugin_ctx);
     case PLGN_ACT_NL_BLACKLIST:

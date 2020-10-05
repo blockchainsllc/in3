@@ -844,8 +844,10 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC)) {
-        if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_DATA, ctx)) == IN3_OK) {
-          if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK_SIGNER, ctx)) < 0)
+        in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .ctx = ctx};
+        if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) == IN3_OK) {
+          pctx.type = NL_SIGNER;
+          if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
 
 #ifdef PAY
