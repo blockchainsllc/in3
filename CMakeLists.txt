@@ -211,6 +211,11 @@ if (SENTRY)
   set(IN3_API ${IN3_API} in3_sentry)
 endif()
 
+if (NODESELECT_DEF)
+  ADD_DEFINITIONS(-DNODESELECT_DEF)
+  set(IN3_NODESELECT ${IN3_NODESELECT} nodeselect_def)
+endif()
+
 # handle version
 if (TAG_VERSION)
    set(PROJECT_VERSION "${TAG_VERSION}")

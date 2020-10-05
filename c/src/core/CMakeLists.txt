@@ -74,4 +74,5 @@ add_static_library(
     ${IN3_VERIFIER} 
     ${IN3_API} 
     ${IN3_TRANSPORT}
+    ${IN3_NODESELECT}
 )

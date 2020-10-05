@@ -73,7 +73,7 @@ static void init_transport() {
 
 static void init_nodeselect() {
 #ifdef NODESELECT_DEF
-  in3_register_default(in3_register_nodeselect_def);asd
+  in3_register_default(in3_register_nodeselect_def);
 #endif
 }
 
