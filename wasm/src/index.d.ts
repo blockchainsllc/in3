@@ -456,7 +456,7 @@ export default class IN3Generic<BigIntType, BufferType> {
      * 
      * @param method the method to call. 
      */
-    public sendSyncRPC(method: string, params?: any[]): any;
+    public execLocal(method: string, params?: any[]): any;
 
     /**
      * disposes the Client. This must be called in order to free allocated memory!

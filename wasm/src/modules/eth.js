@@ -37,7 +37,7 @@ class EthAPI {
      * Returns the number of most recent block. ()
      */
     toWei(val, unit = 'eth') {
-        return this.client.sendSyncRPC('in3_toWei', [val, unit])
+        return this.client.execLocal('in3_toWei', [val, unit])
     }
 
     /**
@@ -305,6 +305,11 @@ class EthAPI {
     syncing() {
         return this.send('eth_syncing')
     }
+
+    getAccounts() {
+        return this.send('eth_accounts')
+    }
+
 
 
     /**

@@ -334,7 +334,7 @@ class IN3 {
         return res.result
     }
 
-    sendSyncRPC(method, params = []) {
+    execLocal(method, params = []) {
         this._ensure_ptr_sync();
         if (this.needsSetConfig) this.setConfig()
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify({ method, params })]);
