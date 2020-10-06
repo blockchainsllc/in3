@@ -94,11 +94,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-#ifdef NODESELECT_DEF_WL
-  write_cache_key(key, c->chain.chain_id, data->whitelist ? data->whitelist->contract : NULL);
-#else
-  write_cache_key(key, c->chain.chain_id, NULL);
-#endif
+  write_cache_key(key, c->chain.chain_id, data->contract);
 
   // get from cache
   in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = key};
@@ -119,13 +115,6 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
   // clean up old
   in3_nodelist_clear(data);
   if (data->nodelist_upd8_params) _free(data->nodelist_upd8_params);
-
-#ifdef NODESELECT_DEF_WL
-  in3_whitelist_clear(data->whitelist);
-  // fill data
-  memcpy(data->whitelist->contract, b->data + pos, 20);
-  pos += 20;
-#endif
 
   data->last_block           = b_read_long(b, &pos);
   data->nodelist_length      = (node_count = b_read_int(b, &pos));
@@ -168,9 +157,6 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
   // write to bytes_buffer
   bytes_builder_t* bb = bb_new();
   bb_write_byte(bb, CACHE_VERSION); // Version flag
-#ifdef NODESELECT_DEF_WL
-  bb_write_raw_bytes(bb, data->whitelist->contract, 20); // 20 bytes fixed
-#endif
   bb_write_long(bb, data->last_block);
   bb_write_int(bb, data->nodelist_length);
   bb_write_raw_bytes(bb, data->weights, data->nodelist_length * sizeof(in3_node_weight_t));
@@ -204,11 +190,7 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // create key
   char key[200];
-#ifdef NODESELECT_DEF_WL
-  write_cache_key(key, c->chain.chain_id, data->whitelist ? data->whitelist->contract : NULL);
-#else
-  write_cache_key(key, c->chain.chain_id, NULL);
-#endif
+  write_cache_key(key, c->chain.chain_id, data->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   in3_cache_ctx_t cctx = {.ctx = NULL, .content = &bb->b, .key = key};
