@@ -910,9 +910,6 @@ int main(int argc, char* argv[]) {
   (void) (port);
 #endif
 
-  // load nodelist from cache
-  in3_cache_init(c, in3_nodeselect_def_data(c));
-
   // handle private key
   if (pk_file) read_pk(pk_file, pwd, c, method);
 
