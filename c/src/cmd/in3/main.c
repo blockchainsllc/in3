@@ -69,6 +69,7 @@
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
+#include "../../nodeselect/nodeselect_def.h"
 #include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
@@ -375,19 +376,19 @@ uint64_t getchain_id(char* name) {
 
 // set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
-  c->chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
-  if (c->chain_id == CHAIN_ID_LOCAL) {
-    BIT_CLEAR(c->chain_id, FLAGS_AUTO_UPDATE_LIST);
-    c->proof           = PROOF_NONE;
-    in3_chain_t* chain = in3_get_chain(c);
+  c->chain.chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
+  if (c->chain.chain_id == CHAIN_ID_LOCAL) {
+    BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
+    c->proof                 = PROOF_NONE;
+    in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
     if (strstr(id, "://")) { // its a url
-      if (!chain->nodelist)
-        chain->nodelist = _calloc(1, sizeof(in3_node_t));
-      chain->nodelist[0].url = id;
+      if (!nl->nodelist)
+        nl->nodelist = _calloc(1, sizeof(in3_node_t));
+      nl->nodelist[0].url = id;
     }
-    if (chain->nodelist_upd8_params) {
-      _free(chain->nodelist_upd8_params);
-      chain->nodelist_upd8_params = NULL;
+    if (nl->nodelist_upd8_params) {
+      _free(nl->nodelist_upd8_params);
+      nl->nodelist_upd8_params = NULL;
     }
   }
 }
@@ -514,43 +515,42 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
   }
 }
 
-static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
-  if (!upddate) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
-  char* cpy = alloca(strlen(nodes) + 1);
-  for (unsigned int i = 0; i < c->chains_length; i++) {
-    if (!upddate && c->chains[i].nodelist_upd8_params) {
-      _free(c->chains[i].nodelist_upd8_params);
-      c->chains[i].nodelist_upd8_params = NULL;
-    }
-    memcpy(cpy, nodes, strlen(nodes) + 1);
-    char* s  = NULL;
-    sb_t* sb = sb_new("{\"nodes\":{\"");
-    sb_add_hexuint(sb, c->chains[i].chain_id);
-    sb_add_chars(sb, "\":{\"nodeList\":[");
-    for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
-      if (next != cpy) sb_add_char(sb, ',');
-      str_range_t address, url;
-
-      if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
-        address = (str_range_t){.data = next, .len = s - next};
-        url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
-      }
-      else {
-        address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
-        url     = (str_range_t){.data = next, .len = strlen(next)};
-      }
-      sb_add_chars(sb, "{\"address\":\"");
-      sb_add_range(sb, address.data, 0, address.len);
-      sb_add_chars(sb, "\",\"url\":\"");
-      sb_add_range(sb, url.data, 0, url.len);
-      sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
-    }
-    sb_add_chars(sb, "]}}}");
-    char* err = in3_configure(c, sb->data);
-    if (err)
-      die(err);
-    sb_free(sb);
+static void set_nodelist(in3_t* c, char* nodes, bool update) {
+  if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
+  char*                 cpy = alloca(strlen(nodes) + 1);
+  in3_nodeselect_def_t* nl  = in3_nodeselect_def_data(c);
+  if (!update && nl->nodelist_upd8_params) {
+    _free(nl->nodelist_upd8_params);
+    nl->nodelist_upd8_params = NULL;
   }
+  memcpy(cpy, nodes, strlen(nodes) + 1);
+  char* s  = NULL;
+  sb_t* sb = sb_new("{\"nodes\":{\"");
+  sb_add_hexuint(sb, c->chain.chain_id);
+  sb_add_chars(sb, "\":{\"nodeList\":[");
+  for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
+    if (next != cpy) sb_add_char(sb, ',');
+    str_range_t address, url;
+
+    if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
+      address = (str_range_t){.data = next, .len = s - next};
+      url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
+    }
+    else {
+      address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
+      url     = (str_range_t){.data = next, .len = strlen(next)};
+    }
+    sb_add_chars(sb, "{\"address\":\"");
+    sb_add_range(sb, address.data, 0, address.len);
+    sb_add_chars(sb, "\",\"url\":\"");
+    sb_add_range(sb, url.data, 0, url.len);
+    sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+  }
+  sb_add_chars(sb, "]}}}");
+  char* err = in3_configure(c, sb->data);
+  if (err)
+    die(err);
+  sb_free(sb);
 }
 
 static bytes_t*  last_response;
@@ -886,7 +886,7 @@ int main(int argc, char* argv[]) {
       else {
         // otherwise we add it to the params
         if (args->len > 1) sb_add_char(args, ',');
-        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain_id != CHAIN_ID_BTC)
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain.chain_id != CHAIN_ID_BTC)
           sb_print(args, "\"%s\"", get_wei(argv[i]));
         else
           sb_print(args,
@@ -911,13 +911,13 @@ int main(int argc, char* argv[]) {
 #endif
 
   // load nodelist from cache
-  in3_cache_init(c);
+  in3_cache_init(c, in3_nodeselect_def_data(c));
 
   // handle private key
   if (pk_file) read_pk(pk_file, pwd, c, method);
 
   // no proof for rpc-chain
-  if (c->chain_id == 0xFFFF) c->proof = PROOF_NONE;
+  if (c->chain.chain_id == 0xFFFF) c->proof = PROOF_NONE;
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
@@ -966,8 +966,8 @@ int main(int argc, char* argv[]) {
 #ifdef IPFS
   }
   else if (strcmp(method, "ipfs_get") == 0) {
-    c->chain_id = CHAIN_ID_IPFS;
-    int size    = args->len;
+    c->chain.chain_id = CHAIN_ID_IPFS;
+    int size          = args->len;
     if (size == 2 || args->data[1] != '"' || size < 20 || strstr(args->data + 2, "\"") == NULL) die("missing ipfs hash");
     args->data[size - 2] = 0;
     bytes_t* content     = ipfs_get(c, args->data + 2);
@@ -977,7 +977,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "ipfs_put") == 0) {
-    c->chain_id         = CHAIN_ID_IPFS;
+    c->chain.chain_id   = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
     recorder_print(0, "%s\n", ipfs_put(c, &data));
@@ -989,19 +989,19 @@ int main(int argc, char* argv[]) {
     c->max_attempts = 1;
     uint32_t block = 0, b = 0;
     BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
-    uint64_t     now   = in3_time(NULL);
-    in3_chain_t* chain = in3_get_chain(c);
-    char*        more  = "WEIGHT";
+    uint64_t              now  = in3_time(NULL);
+    char*                 more = "WEIGHT";
+    in3_nodeselect_def_t* nl   = in3_nodeselect_def_data(c);
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
     recorder_print(0, "   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
-    for (unsigned int i = 0; i < chain->nodelist_length; i++) {
+    for (unsigned int i = 0; i < nl->nodelist_length; i++) {
       in3_ctx_t* ctx      = NULL;
       char*      health_s = NULL;
       if (run_test_request) {
         char req[300];
         char adr[41];
-        bytes_to_hex((chain->nodelist + i)->address, 20, adr);
+        bytes_to_hex((nl->nodelist + i)->address, 20, adr);
         sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
         ctx = ctx_new(c, req);
         if (ctx) in3_send_ctx(ctx);
@@ -1014,7 +1014,7 @@ int main(int argc, char* argv[]) {
           char        health_url[500];
           char*       urls[1];
           urls[0] = health_url;
-          sprintf(health_url, "%s/health", chain->nodelist[i].url);
+          sprintf(health_url, "%s/health", nl->nodelist[i].url);
           in3_request_t r;
           in3_ctx_t     ctx       = {0};
           ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
@@ -1058,8 +1058,8 @@ int main(int argc, char* argv[]) {
           if (health_res) json_free(health_res);
         }
       }
-      in3_node_t*        node        = chain->nodelist + i;
-      in3_node_weight_t* weight      = chain->weights + i;
+      in3_node_t*        node        = nl->nodelist + i;
+      in3_node_weight_t* weight      = nl->weights + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity, now);
       char *             tr = NULL, *warning = NULL;
@@ -1270,7 +1270,7 @@ int main(int argc, char* argv[]) {
   }
 
   in3_log_debug("..sending request %s %s\n", method, args->data);
-  in3_chain_t* chain = in3_get_chain(c);
+  in3_chain_t* chain = &c->chain;
 
   if (wait && strcmp(method, "eth_sendTransaction") == 0) method = "eth_sendTransactionAndWait";
 
@@ -1289,8 +1289,9 @@ int main(int argc, char* argv[]) {
 
   in3_client_rpc_raw(c, sb->data, &result, &error);
 
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   // Update nodelist if a newer latest block was reported
-  if (chain && chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
+  if (chain && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
     if (chain->type == CHAIN_ETH)
       in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
