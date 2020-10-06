@@ -37,6 +37,9 @@
  * logs debug data only if the DEBUG-flag is set.
  * */
 
+#ifndef DEBUG_H
+#define DEBUG_H
+
 #include "stringbuilder.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -139,3 +142,5 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
   add_prop(sb, prefix, property);
   sb_add_bytes(sb, NULL, &value, 1, false);
 }
+
+#endif /* DEBUG_H */
