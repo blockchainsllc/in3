@@ -670,7 +670,7 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                    = in3_for_chain(0);
+  in3_t* c                    = in3_for_chain(CHAIN_ID_MAINNET);
   c->request_count            = 2;
   bool       out_response     = false;
   int        run_test_request = 0;
