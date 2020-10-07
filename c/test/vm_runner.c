@@ -209,6 +209,7 @@ int main(int argc, char* argv[]) {
 
   in3_log_set_level(LOG_DEBUG);
   in3_log_set_prefix("");
+  in3_log_set_quiet(false);
 
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)

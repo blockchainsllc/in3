@@ -58,9 +58,12 @@ static in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf,
 
 static in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account) {
   if (!conf->account) {
-    in3_sign_account_ctx_t sctx = {.ctx = ctx, .account = {0}};
-    if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx)) return ctx_set_error(ctx, "No account configured or signer set", IN3_ECONFIG);
-    memcpy(conf->account = _malloc(20), sctx.account, 20);
+    in3_sign_account_ctx_t sctx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
+    if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx) || !sctx.accounts_len) {
+      if (sctx.accounts) _free(sctx.accounts);
+      return ctx_set_error(ctx, "No account configured or signer set", IN3_ECONFIG);
+    }
+    conf->account = (uint8_t*) sctx.accounts;
   }
 
   if (account) *account = conf->account;

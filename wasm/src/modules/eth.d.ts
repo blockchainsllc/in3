@@ -397,6 +397,12 @@ export interface EthAPI<BigIntType, BufferType> {
      * Returns the number of transactions sent from an address. (as number)
      */
     getTransactionCount(address: Address, block?: BlockType): Promise<number>;
+
+    /**
+     * returns the public addresses  accounts 
+     */
+    getAccounts(): Promise<Address[]>
+
     /**
      * Returns the receipt of a transaction by transaction hash.
      * Note That the receipt is available even for pending transactions.

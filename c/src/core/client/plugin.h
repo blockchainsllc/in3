@@ -207,9 +207,10 @@ typedef enum {
  * action context when retrieving the account of a signer.
  */
 typedef struct sign_account_ctx {
-  struct in3_ctx*   ctx;         /**< the context of the request in order report errors */
-  address_t         account;     /**< the account to use for the signature */
-  in3_signer_type_t signer_type; /**< the type of the signer used for this account.*/
+  struct in3_ctx*   ctx;          /**< the context of the request in order report errors */
+  uint8_t*          accounts;     /**< the account to use for the signature */
+  int               accounts_len; /**< number of accounts */
+  in3_signer_type_t signer_type;  /**< the type of the signer used for this account.*/
 } in3_sign_account_ctx_t;
 
 // ----------- SIGN_PREPARE ---------------

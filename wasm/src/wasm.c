@@ -149,6 +149,20 @@ EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req, int inde
   return 0;
 })
 
+EM_JS(int, plgn_exec_sign_accounts, (in3_t * c, in3_sign_account_ctx_t* sctx, int index), {
+  var client = Module.clients[c];
+  var plgn   = client && client.plugins[index];
+  if (!plgn) return -4;
+  try {
+    var val = plgn.getAccounts(client);
+    if (val)
+      in3w.ccall("wasm_set_sign_account", "void", [ "number", "number", "string" ], [ sctx, val.length, '0x' + val.map(function(a){return a.substr(2)}).join("") ]);
+  } catch (x) {
+    return -4;
+  }
+  return 0;
+})
+
 /**
  * the main plgn-function which is called for each js-plugin,
  * delegating it depending on the action.
@@ -160,6 +174,10 @@ in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
   switch (action) {
     case PLGN_ACT_INIT: return IN3_OK;
     case PLGN_ACT_TERM: return plgn_exec_term(ctx, index);
+    case PLGN_ACT_SIGN_ACCOUNT: {
+      in3_sign_account_ctx_t* sctx = ctx;
+      return plgn_exec_sign_accounts(sctx->ctx->client, sctx, index);
+    }
     case PLGN_ACT_RPC_HANDLE: {
       // extract the request as string, so we can pass it to js
       in3_rpc_handle_ctx_t* rc  = ctx;
@@ -193,6 +211,15 @@ void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_ctx_t* ctx, char* req) {
   ctx->requests[0]                         = ctx->request_context->result; //since we don't support bulks in custom rpc, requests must be allocated with len=1
   ctx->request_context->c                  = src;                          // set the old pointer, so the memory management will clean it correctly
   in3_cache_add_ptr(&ctx->cache, r)->props = CACHE_PROP_MUST_FREE;         // but add the copy to be cleaned when freeing ctx to avoid memory leaks.
+}
+
+/**
+ * repareses the request for the context with a new input.
+ */
+void EMSCRIPTEN_KEEPALIVE wasm_set_sign_account(in3_sign_account_ctx_t* ctx, int len, char* addresses) {
+  ctx->accounts_len = len;
+  if (len)
+    hex_to_bytes(addresses, -1, ctx->accounts = _malloc(len * 20), len * 20);
 }
 
 /**

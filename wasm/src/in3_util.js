@@ -568,6 +568,10 @@ class SimpleSigner {
         if (pks) pks.forEach(_ => this.addAccount(_))
     }
 
+    getAccounts() {
+        return Object.keys(this.accounts)
+    }
+
     addAccount(pk) {
         const adr = private2address(pk)
         this.accounts[adr] = toBuffer(pk)
