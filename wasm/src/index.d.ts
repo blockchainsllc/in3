@@ -640,6 +640,9 @@ export declare interface Signer<BigIntType, BufferType> {
     /** returns true if the account is supported (or unlocked) */
     canSign(address: Address): Promise<boolean>
 
+    /** returns all addresses managed by the signer. */
+    getAccounts(): Address[]
+
     /** 
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
@@ -652,6 +655,10 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
         [ac: string]: BufferType;
     };
     constructor(...pks: (Hash | BufferType)[]);
+
+    /** returns all addresses managed by the signer. */
+    getAccounts(): Address[]
+    /** adds a private key to the signer. */
     addAccount(pk: Hash): string;
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>

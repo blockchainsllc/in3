@@ -113,9 +113,11 @@ static in3_ret_t get_from_address(d_token_t* tx, in3_ctx_t* ctx, address_t res) 
   // if it is not specified, we rely on the from-address of the signer.
   if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
-  in3_sign_account_ctx_t actx = {.ctx = ctx, .account = {0}};
+  in3_sign_account_ctx_t actx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
   TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
-  memcpy(res, actx.account, 20);
+  if (!actx.accounts) return ctx_set_error(ctx, "no from address found", IN3_EINVAL);
+  memcpy(res, actx.accounts, 20);
+  _free(actx.accounts);
   return IN3_OK;
 }
 
