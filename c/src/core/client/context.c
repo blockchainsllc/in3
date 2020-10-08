@@ -162,7 +162,11 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error           = dst;
-    error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .ctx_req = ctx->request_context->c, .response = ctx->raw_response->data.data};
+    char *res = _malloc(2 + strlen(ctx->request_context->c));
+    strcpy(res, ctx->request_context->c);
+    char *req = _malloc(2 + ctx->raw_response->data.len);
+    strcpy(req, ctx->raw_response->data.data);
+    error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .ctx_req = req, .response = res};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
 
     in3_log_trace("Intermediate error -> %s\n", message);
