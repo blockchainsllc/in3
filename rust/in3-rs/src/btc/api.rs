@@ -4,7 +4,7 @@ use std::ffi::CString;
 use crate::btc::{BlockHeader, BlockTransactionData, BlockTransactionIds, Transaction};
 use crate::error::In3Result;
 use crate::eth1::Hash;
-use crate::in3::chain::{BTC, MULTICHAIN};
+use crate::in3::chain::BTC;
 use crate::json_rpc::{json::*, rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -18,7 +18,7 @@ impl ApiTrait for Api {
     /// Creates an [`btc::Api`](../btc/struct.Api.html) instance by consuming a
     /// [`Client`](../in3/struct.Client.html).
     fn new(client: Box<dyn ClientTrait>) -> Self {
-        assert!(client.id() == BTC || client.id() == MULTICHAIN);
+        assert_eq!(client.id(), BTC);
         Api { client }
     }
 

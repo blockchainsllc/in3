@@ -19,8 +19,6 @@ use crate::types::Bytes;
 pub mod chain {
     pub type ChainId = u32;
 
-    /// Chain Id representing set of all supported chains
-    pub const MULTICHAIN: u32 = in3_sys::CHAIN_ID_MULTICHAIN;
     /// Chain Id for mainnet
     pub const MAINNET: u32 = in3_sys::CHAIN_ID_MAINNET;
     /// Chain Id for kovan
@@ -221,7 +219,7 @@ pub struct Client {
 #[async_trait(? Send)]
 impl ClientTrait for Client {
     fn id(&self) -> u32 {
-        unsafe { (*self.ptr).chain_id }
+        unsafe { (*self.ptr).chain.chain_id }
     }
 
     /// Configures the IN3 client using a JSON str.
