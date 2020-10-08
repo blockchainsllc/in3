@@ -270,19 +270,6 @@ void EMSCRIPTEN_KEEPALIVE wasm_init() {
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
-void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
-  in3_chain_t* chain = in3_get_chain(in3);
-  if (!chain) return;
-  for (int i = 0; i < chain->nodelist_length; i++) {
-    if (strcmp(chain->nodelist[i].url, url) == 0) {
-      chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
-      // we don't update weights for local chains.
-      if (in3->chain_id == CHAIN_ID_LOCAL) return;
-      in3_cache_store_nodelist(in3, chain);
-      return;
-    }
-  }
-}
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
   if (!ctx->raw_response) ctx->raw_response = _calloc(sizeof(in3_response_t), i + 1);
