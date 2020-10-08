@@ -506,9 +506,6 @@ char* in3_configure(in3_t* c, const char* config) {
             }
             c->alloc_verified_hashes = c->max_verified_hashes;
           }
-          else {
-            EXPECT_TOK(cp.token, false, "unsupported config option!");
-          }
         }
       }
     }
