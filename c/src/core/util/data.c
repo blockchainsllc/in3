@@ -184,6 +184,7 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max_size) {
         return 1;
       case T_INTEGER:
         val = item->len & 0xFFFFFFF;
+        l   = 0;
         if (max == -1) max = val & 0xFF000000 ? 4 : (val & 0xFF0000 ? 3 : (val & 0xFF00 ? 2 : 1));
         for (i = max < 3 ? max : 3; i >= 0; i--) {
           if (val & 0xFF << (i << 3)) {
@@ -197,6 +198,10 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max_size) {
               dst[l - i - 1] = (val >> (i << 3)) & 0xFF;
             return l;
           }
+        }
+        if (l == 0) {
+          memset(dst, 0, max);
+          return 1;
         }
         break;
       default:
