@@ -90,7 +90,7 @@
 void show_help(char* name) {
   recorder_print(0, "Usage: %s <options> method <params> ... \n\
 \n\
--c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
+-c, -chain     the chain to use. (mainnet,ewc,goerli,local or any RPCURL)\n\
 -a             max number of attempts before giving up (default 5)\n\
 -rc            number of request per try (default 1)\n\
 -ns            no stats if set requests will not be part of the official metrics and considered a service request\n\
@@ -359,7 +359,6 @@ bytes_t* get_std_in() {
 // convert the name to a chain_id
 uint64_t getchain_id(char* name) {
   if (strcmp(name, "mainnet") == 0) return CHAIN_ID_MAINNET;
-  if (strcmp(name, "kovan") == 0) return CHAIN_ID_KOVAN;
   if (strcmp(name, "goerli") == 0) return CHAIN_ID_GOERLI;
   if (strcmp(name, "ewc") == 0) return CHAIN_ID_EWC;
   if (strcmp(name, "ipfs") == 0) return CHAIN_ID_IPFS;
