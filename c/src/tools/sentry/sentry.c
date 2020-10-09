@@ -23,7 +23,7 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
       init_sentry_once(conf);
       error_log_ctx_t* t     = arg;
       
-      if(t->t->ctx_req){
+      if(t->ctx_req){
           sentry_value_t crumb_req
             = sentry_value_new_breadcrumb(0, t->ctx_req);
         sentry_add_breadcrumb(crumb_req);
@@ -36,7 +36,7 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
       
       
       sentry_value_t   event = sentry_value_new_message_event(
-          SENTRY_LEVEL_INFO, IN3_VERSION, t->msg);
+          SENTRY_LEVEL_ERROR, IN3_VERSION, t->msg);
       sentry_event_value_add_stacktrace(event, NULL, 64);
       sentry_capture_event(event);
       in3_log_info("sentry-event-sent\n");
