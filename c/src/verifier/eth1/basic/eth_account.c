@@ -197,8 +197,8 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   else if (strcmp(method, "eth_getStorageAt") == 0) {
     uint8_t result[32], proofed_result[32];
     d_bytes_to(vc->result, result, 32);
-    d_token_t* storage = d_get(proofed_account, K_STORAGE_PROOF);
-    d_token_t* skey    = d_get_at(d_get(vc->request, K_PARAMS), 1);
+    d_token_t* storage       = d_get(proofed_account, K_STORAGE_PROOF);
+    d_token_t* skey          = d_get_at(d_get(vc->request, K_PARAMS), 1);
     bytes_t    requested_key = d_to_bytes(skey);
     if (!requested_key.data) return vc_err(vc, "missing key");
     b_optimize_len(&requested_key);
