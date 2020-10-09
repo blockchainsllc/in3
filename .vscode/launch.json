@@ -168,7 +168,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "run request test",
-            "program": "${workspaceFolder}/build/test/test_rpc_api",
+            "program": "${workspaceFolder}/build/test/test_request",
             "cwd": "${workspaceFolder}/build"
         },
         {
