@@ -175,7 +175,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(res, ctx->request_context->c);
     }
     else if (ctx->raw_response) {
-      res = alloca(2 + strlen(ctx->raw_response->data.data));
+      res = alloca(2 + ctx->raw_response->data.len);
       strcpy(res, ctx->raw_response->data.data);
     }
 
