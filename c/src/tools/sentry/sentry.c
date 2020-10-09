@@ -5,7 +5,10 @@ void init_sentry_once(sentry_conf_t* conf) {
   if (!SENTRY_INIT) {
     sentry_options_t* options = sentry_options_new();
     in3_log_info("sentry-init\n");
+    sentry_options_set_environment(options, "Debug");
+    sentry_options_set_release(options, IN3_VERSION);
     sentry_options_set_database_path(options, conf->db);
+    sentry_options_set_handler_path(options, "/tmp/crashpad_handler");
     sentry_options_set_debug(options, conf->debug);
     sentry_options_set_dsn(options, conf->dsn);
     sentry_init(options);
@@ -19,9 +22,37 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
     case PLGN_ACT_LOG_ERROR: {
       init_sentry_once(conf);
       error_log_ctx_t* t     = arg;
+
+      char* res  = NULL;
+      char* req  = NULL;
+      if (t->ctx->request_context) {
+        req = t->ctx->request_context->c;
+      }
+      if (t->ctx->response_context) {
+        res = t->ctx->response_context->c;
+      }
+      else if (t->ctx->raw_response) {
+        res = t->ctx->raw_response->data.data;
+      }
+ 
+      if(req){
+          sentry_value_t crumb_req
+            = sentry_value_new_breadcrumb(0, req);
+        sentry_add_breadcrumb(crumb_req);
+      }
+      if (res){
+          sentry_value_t crumb_res
+            = sentry_value_new_breadcrumb(0, res);
+        sentry_add_breadcrumb(crumb_res);
+      }
+      char* conf = in3_get_config(t->ctx->client);
+      sentry_add_breadcrumb( sentry_value_new_breadcrumb( 0, conf));
+      _free(conf);
+      
+      
       sentry_value_t   event = sentry_value_new_message_event(
           SENTRY_LEVEL_ERROR, IN3_VERSION, t->msg);
-      // sentry_event_value_add_stacktrace(event, NULL, 0);
+      sentry_event_value_add_stacktrace(event, NULL, 64);
       sentry_capture_event(event);
       in3_log_info("sentry-event-sent\n");
       return IN3_OK;
