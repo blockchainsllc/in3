@@ -387,9 +387,9 @@ typedef struct {
 } in3_pay_sign_req_ctx_t;
 
 typedef struct {
-  char*    msg;      /**< the error message. */
-  uint16_t error;    /**< error code. */
-  in3_ctx_t* ctx;  /**< ctx . */
+  char*      msg;   /**< the error message. */
+  uint16_t   error; /**< error code. */
+  in3_ctx_t* ctx;   /**< ctx . */
 } error_log_ctx_t;
 
 #endif

@@ -162,7 +162,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error = dst;
-    
+
     error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .ctx = ctx};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
 
