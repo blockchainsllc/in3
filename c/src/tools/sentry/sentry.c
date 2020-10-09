@@ -25,7 +25,7 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
 
       char* res  = NULL;
       char* req  = NULL;
-      if (ctx->request_context) {
+      if (t->ctx->request_context) {
         req = t->ctx->request_context->c;
       }
       if (t->ctx->response_context) {
