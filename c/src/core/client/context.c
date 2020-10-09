@@ -162,10 +162,23 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error = dst;
-    char* res  = _malloc(2 + strlen(ctx->request_context->c));
-    strcpy(res, ctx->request_context->c);
-    char* req = _malloc(2 + ctx->raw_response->data.len);
-    strcpy(req, ctx->raw_response->data.data);
+    char* res  = NULL;
+    char* req  = NULL;
+
+    if (ctx->response_context) {
+      char* req = alloca(2 + strlen(ctx->request_context->c));
+      strcpy(req, ctx->request_context->c);
+    }
+
+    if (ctx->response_context) {
+      res = alloca(2 + strlen(ctx->response_context->c));
+      strcpy(res, ctx->request_context->c);
+    }
+    else if (ctx->raw_response) {
+      res = alloca(2 + strlen(ctx->raw_response->data.data));
+      strcpy(res, ctx->raw_response->data.data);
+    }
+
     error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .ctx_req = req, .response = res};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
 

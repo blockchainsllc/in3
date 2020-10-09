@@ -22,12 +22,19 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
     case PLGN_ACT_LOG_ERROR: {
       init_sentry_once(conf);
       error_log_ctx_t* t     = arg;
-      sentry_value_t crumb_req
+      
+      if(t->t->ctx_req){
+          sentry_value_t crumb_req
             = sentry_value_new_breadcrumb(0, t->ctx_req);
         sentry_add_breadcrumb(crumb_req);
-      sentry_value_t crumb_res
+      }
+      if (t->response){
+          sentry_value_t crumb_res
             = sentry_value_new_breadcrumb(0, t->response);
         sentry_add_breadcrumb(crumb_res);
+      }
+      
+      
       sentry_value_t   event = sentry_value_new_message_event(
           SENTRY_LEVEL_INFO, IN3_VERSION, t->msg);
       sentry_event_value_add_stacktrace(event, NULL, 64);

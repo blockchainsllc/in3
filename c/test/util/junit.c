@@ -262,7 +262,7 @@ int main(int argc, char* argv[]) {
         escape(&last_suite->props, out + 14);
         sb_add_chars(&last_suite->props, "\"/>\n");
       }
-      else {
+      else {  
 
         if (last_suite->out.len) sb_add_char(&last_suite->out, '\n');
         escape(&last_suite->out, out);
