@@ -389,8 +389,7 @@ typedef struct {
 typedef struct {
   char*    msg;      /**< the error message. */
   uint16_t error;    /**< error code. */
-  char*    ctx_req;  /**< ctx request. */
-  char*    response; /**< response. */
+  in3_ctx_t* ctx;  /**< ctx . */
 } error_log_ctx_t;
 
 #endif
