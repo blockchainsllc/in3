@@ -508,8 +508,10 @@ char* in3_configure(in3_t* c, const char* config) {
           }
         }
       }
+      goto PLGN_CFG;
     }
     else {
+    PLGN_CFG : {
       in3_configure_ctx_t cctx    = {.client = c, .json = json, .token = token, .error_msg = NULL};
       bool                handled = false;
       for (in3_plugin_t* p = c->plugins; p; p = p->next) {
@@ -525,6 +527,7 @@ char* in3_configure(in3_t* c, const char* config) {
       }
 
       if (!handled) EXPECT_TOK(token, false, "unsupported config option!");
+    }
     }
   }
 
