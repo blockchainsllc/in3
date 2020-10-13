@@ -415,6 +415,12 @@ typedef struct {
   in3_ctx_t*         ctx;  /**< Request context. */
 } in3_nl_pick_ctx_t;
 
+// -------- NL_FOLLOWUP ---------
+typedef struct {
+  in3_ctx_t*    ctx;  /**< Request context. */
+  node_match_t* node; /**< Node that gave us a valid response */
+} in3_nl_followop_type_t;
+
 // -------- GET_DATA ---------
 typedef enum {
   GET_DATA_REGISTRY_ID /* returns a pointer to an internal bytes32_t representation; NO cleanup required */

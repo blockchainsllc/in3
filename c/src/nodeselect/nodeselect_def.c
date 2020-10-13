@@ -442,7 +442,9 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
   response->time = 0; // make sure we count the time only once
 }
 
-static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
+static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followop_type_t* fctx) {
+  in3_ctx_t*    ctx         = fctx->ctx;
+  node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;
   int           nodes_count = ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes);
 
@@ -451,7 +453,7 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
 
   // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
   if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
-    check_autoupdate(ctx, data, d_get(ctx->responses[0], K_IN3), node);
+    check_autoupdate(ctx, data, d_get(ctx->responses[0], K_IN3), vnode);
 
   // update weights in the cache
   return in3_cache_store_nodelist(ctx->client, data);

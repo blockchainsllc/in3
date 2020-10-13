@@ -443,7 +443,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   return (ctx->verification_state = IN3_OK);
 }
 
-static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain) {
+static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, node_match_t** vnode) {
   node_match_t* node          = ctx->nodes;
   bool          still_pending = false;
   in3_ret_t     state         = IN3_ERPC;
@@ -484,6 +484,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   // if the last state is an error we report this as failed
   if (state) return state;
 
+  *vnode = node;
   return IN3_OK;
 }
 
@@ -865,9 +866,11 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
-      ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain);
+      node_match_t* node = NULL;
+      ret                = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain, &node);
 
-      in3_plugin_execute_first_or_none(ctx, PLGN_ACT_NL_PICK_FOLLOWUP, ctx);
+      in3_nl_followop_type_t fctx = {.ctx = ctx, .node = node};
+      in3_plugin_execute_first_or_none(ctx, PLGN_ACT_NL_PICK_FOLLOWUP, &fctx);
 
       // we wait or are have successfully verified the response
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;
