@@ -43,6 +43,7 @@
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include "nodeselect/nodelist.h"
+#include "nodeselect/nodeselect_def.h"
 
 #define ADD_RESPONSE_NODELIST_3(last_block) add_response("in3_nodeList",                                                                            \
                                                          "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",           \
@@ -222,9 +223,9 @@ static void test_capabilities(void) {
 }
 
 static in3_t* in3_init_test(chain_id_t chain) {
-  in3_t* in3    = in3_for_chain(chain);
-  in3->chain_id = chain;
-  in3->flags    = FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
+  in3_t* in3 = in3_for_chain(chain);
+  in3_register_nodeselect_def(in3);
+  in3->flags = FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
   register_transport(in3, test_transport);
   if (chain == CHAIN_ID_MAINNET) {
     // use a predefined nodelist
@@ -291,21 +292,21 @@ static void test_nodelist_update_1() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989048);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->exp_last_block, 87989048);
 
   // update must be postponed until block is at least replace_latest_block old
   t = 0;
-  t = in3_time(&t) + (chain->avg_block_time * (c->replace_latest_block - 2)); // store expected update time
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->timestamp, t);
+  t = in3_time(&t) + (nl->avg_block_time * (c->replace_latest_block - 2)); // store expected update time
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->timestamp, t);
   ADD_RESPONSE_BLOCK_NUMBER("87989048", "87989053", "0x53E9B3D");
 
   // another request must not trigger the nodeList update just yet
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
 
   // fast forward to expected update time
   in3_time(&t);
@@ -320,8 +321,8 @@ static void test_nodelist_update_1() {
   ADD_RESPONSE_NODELIST_2("87989048");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 2);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 2);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   in3_free(c);
 }
