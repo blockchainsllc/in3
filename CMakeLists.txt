@@ -152,7 +152,7 @@ if(IPFS)
     ADD_DEFINITIONS(-DIPFS)
     set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
     set(WASM_MODULES ${WASM_MODULES} ipfs)
-    
+
     if(IN3API)
        set(IN3_API ${IN3_API} ipfs_api)
     endif()
@@ -213,6 +213,9 @@ endif()
 
 if (NODESELECT_DEF)
   ADD_DEFINITIONS(-DNODESELECT_DEF)
+  if (NODESELECT_DEF_WL)
+    ADD_DEFINITIONS(-DNODESELECT_DEF_WL)
+  endif()
   set(IN3_NODESELECT ${IN3_NODESELECT} nodeselect_def)
 endif()
 

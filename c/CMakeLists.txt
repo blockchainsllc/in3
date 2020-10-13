@@ -73,9 +73,6 @@ add_subdirectory(src/tools)
 add_subdirectory(docs)
 
 if (NODESELECT_DEF)
-    if (NODESELECT_DEF_WL)
-        ADD_DEFINITIONS(-DNODESELECT_DEF_WL)
-    endif()
     add_subdirectory(src/nodeselect)
 endif()
 
