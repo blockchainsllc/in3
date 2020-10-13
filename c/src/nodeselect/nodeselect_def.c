@@ -479,7 +479,6 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
   in3_nodeselect_def_t* data = plugin_data;
   switch (action) {
     case PLGN_ACT_INIT:
-      data->avg_block_time = avg_block_time_for_chain_id(((in3_configure_ctx_t*) plugin_ctx)->client->chain.chain_id);
       return IN3_OK;
     case PLGN_ACT_TERM:
       in3_nodelist_clear(data);
@@ -532,6 +531,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
+  data->avg_block_time       = avg_block_time_for_chain_id(c->chain.chain_id);
   data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
   return plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_def, data, false);
 }
