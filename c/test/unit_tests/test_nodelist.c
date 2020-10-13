@@ -359,28 +359,28 @@ static void test_nodelist_update_2() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989049);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->exp_last_block, 87989049);
 
   // update must be postponed until block is at least replace_latest_block old
   t = 0;
-  t = in3_time(&t) + (chain->avg_block_time * (c->replace_latest_block - 1)); // store expected update time
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->timestamp, t);
+  t = in3_time(&t) + (nl->avg_block_time * (c->replace_latest_block - 1)); // store expected update time
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->timestamp, t);
 
   ADD_RESPONSE_BLOCK_NUMBER("87989051", "87989053", "0x53E9B3D");
   // another request must not trigger the nodeList update just yet
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
 
   // we are told that the nodelist changed again at 87989051, so reverify wait time and update params
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989051);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->exp_last_block, 87989051);
   t = 0;
-  t = in3_time(&t) + (chain->avg_block_time * (c->replace_latest_block - 2)); // store expected update time
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->timestamp, t);
+  t = in3_time(&t) + (nl->avg_block_time * (c->replace_latest_block - 2)); // store expected update time
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->timestamp, t);
 
   // fast forward to expected update time
   in3_time(&t);
@@ -395,8 +395,8 @@ static void test_nodelist_update_2() {
   ADD_RESPONSE_NODELIST_2("87989048");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 2);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 2);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   in3_free(c);
 }
@@ -428,10 +428,10 @@ static void test_nodelist_update_3() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->exp_last_block, 87989038);
 
   // reset rand to be deterministic
   s = 0;
@@ -442,8 +442,8 @@ static void test_nodelist_update_3() {
   ADD_RESPONSE_NODELIST_2("87989038");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 2);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 2);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   in3_free(c);
 }
@@ -476,10 +476,10 @@ static void test_nodelist_update_4() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->exp_last_block, 87989038);
 
   // reset rand to be deterministic
   s = 0;
@@ -491,12 +491,12 @@ static void test_nodelist_update_4() {
   ADD_RESPONSE_NODELIST_3("87989012");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   bool is_blacklisted = false;
-  for (int i = 0; i < chain->nodelist_length; ++i)
-    if (chain->weights[i].blacklisted_until)
+  for (int i = 0; i < nl->nodelist_length; ++i)
+    if (nl->weights[i].blacklisted_until)
       is_blacklisted = true;
   TEST_ASSERT_TRUE(is_blacklisted);
 
@@ -528,9 +528,9 @@ static void test_nodelist_update_5() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->exp_last_block, 87989038);
 
   // reset rand to be deterministic
   s = 0;
@@ -540,8 +540,8 @@ static void test_nodelist_update_5() {
   ADD_RESPONSE_NODELIST_3("87989038");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   in3_free(c);
 }
@@ -570,9 +570,9 @@ static void test_nodelist_update_6() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_NOT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params->exp_last_block, 87989038);
 
   // reset rand to be deterministic
   s = 0;
@@ -584,8 +584,8 @@ static void test_nodelist_update_6() {
   ADD_RESPONSE_NODELIST_3("87989038");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   in3_free(c);
 }
@@ -613,9 +613,9 @@ static void test_nodelist_update_7() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_EQUAL(nl->nodelist_length, 3);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   in3_free(c);
 }
@@ -666,8 +666,8 @@ static void test_nodelist_update_8() {
                "  \"version\": \"2.0.0\""
                "}");
   TEST_ASSERT_EQUAL(0, eth_blockNumber(c));
-  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
 
   // test that nodelist_upd8_params are not set when we have a response without proof
   c->proof = PROOF_STANDARD;
@@ -690,8 +690,7 @@ static void test_nodelist_update_8() {
   long double balance = as_double(eth_getBalance(c, addr, BLKNUM_LATEST()));
   TEST_ASSERT_EQUAL(0, balance);
 
-  chain = in3_find_chain(c, CHAIN_ID_MAINNET);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_NULL(in3_nodeselect_def_data(c)->nodelist_upd8_params);
 
   in3_free(c);
 }
@@ -701,7 +700,8 @@ static void test_nodelist_update_8() {
  */
 int main() {
   TESTS_BEGIN();
-  in3_log_set_quiet(true);
+  //  in3_log_set_quiet(false);
+  //  in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_full);
   in3_set_func_time(mock_time);
   in3_set_func_rand(mock_rand);
