@@ -308,9 +308,10 @@ static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_r
   assert_in3_ctx(ctx);
   assert_in3_response(response);
   // we block this node
-  if (node) in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
-  ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
-  clear_response(response);                                                                         // free up memory
+  if (node && IN3_OK != in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node)) {
+    ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
+    clear_response(response);                                                                         // free up memory
+  }
   return IN3_ERPC;
 }
 
