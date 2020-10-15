@@ -110,12 +110,11 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
 
     for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
       EXPECT_TOK_OBJ(ct.token);
-      //      EXPECT_TOK_KEY_HEXSTR(ct.token); // fixme
+      EXPECT_TOK_KEY_HEXSTR(ct.token);
 
       bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
       bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-      if (!ctx->client->chain.chain_id)
-        EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
+      EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
 #ifdef NODESELECT_DEF_WL
       bool has_wlc = false, has_man_wl = false;
 #endif
