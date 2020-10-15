@@ -70,17 +70,14 @@
 #define NODE_ADDRS               "0x8904b9813c9ada123f9fccb9123659088dacd477"
 
 static void test_configure_request() {
-  in3_t* c                = in3_for_chain(0);
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
   c->proof                = PROOF_FULL;
   c->signature_count      = 2;
   c->finality             = 10;
-  c->flags                = FLAGS_INCLUDE_CODE | FLAGS_BINARY | FLAGS_HTTP | FLAGS_AUTO_UPDATE_LIST;
+  c->flags                = FLAGS_INCLUDE_CODE | FLAGS_BINARY | FLAGS_HTTP;
   c->replace_latest_block = 6;
 
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
@@ -96,17 +93,15 @@ static void test_configure_request() {
   TEST_ASSERT_EQUAL(2, d_len(signers));
   request_free(request);
   json_free(json);
-  ctx_free(ctx);
+//  ctx_free(ctx);
 
   in3_free(c);
 }
 
 static void test_bulk_response() {
-  in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
-  c->request_count = 2;
-  c->flags         = 0;
-  _free(c->chains->nodelist_upd8_params);
-  c->chains->nodelist_upd8_params = NULL;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
   in3_ctx_t* ctx = ctx_new(c, "[{\"method\":\"eth_blockNumber\",\"params\":[]},{\"method\":\"eth_blockNumber\",\"params\":[]}]");
@@ -130,14 +125,12 @@ static void test_bulk_response() {
 
 static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodes\":{\"0x11\": {\"needsUpdate\":false}}}"));
   eth_register_pk_signer(c);
   char* err = in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
   TEST_ASSERT_NULL_MESSAGE(err, err);
   c->flags = FLAGS_INCLUDE_CODE;
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
+
   in3_ctx_t* ctx = ctx_new(c, "{\"id\":2,\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
@@ -155,6 +148,7 @@ static void test_configure_signed_request() {
   ctx_free(ctx);
   in3_free(c);
 }
+
 static void test_exec_req() {
   in3_t* c      = in3_for_chain(CHAIN_ID_MAINNET);
   char*  result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
@@ -177,11 +171,9 @@ static void test_exec_req() {
 }
 
 static void test_partial_response() {
-  in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
-  c->request_count = 3;
-  c->flags         = 0;
-  _free(c->chains->nodelist_upd8_params);
-  c->chains->nodelist_upd8_params = NULL;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":3,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
@@ -205,11 +197,9 @@ static void test_partial_response() {
 }
 
 static void test_retry_response() {
-  in3_t* c         = in3_for_chain(CHAIN_ID_MAINNET);
-  c->request_count = 2;
-  c->flags         = 0;
-  _free(c->chains->nodelist_upd8_params);
-  c->chains->nodelist_upd8_params = NULL;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
@@ -240,6 +230,7 @@ static void test_retry_response() {
   ctx_free(ctx);
   in3_free(c);
 }
+
 static void test_configure() {
   in3_t* c   = in3_for_chain(CHAIN_ID_MAINNET);
   char*  tmp = NULL;
@@ -476,13 +467,11 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":false}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":\"0x123412341234\"}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":65536}", "expected object");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodes\":{}}");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"n1\":{}}}", "expected hex str");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":null}}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":[]}}", "expected object");
-  TEST_ASSERT_CONFIGURE_FAIL("empty node obj", c, "{\"chainId\":\"0xf1\",\"nodes\":{\"0xf1\":{}}}", "invalid contract/registry!");
-  TEST_ASSERT_CONFIGURE_FAIL("missing registry id", c, "{\"nodes\":{\"0xf1\":{\"contract\":\"0x0123456789012345678901234567890123456789\"}}}", "invalid contract/registry!");
-  TEST_ASSERT_CONFIGURE_FAIL("missing contract", c, "{\"nodes\":{\"0xf1\":{\"registryId\":\"0x0123456789012345678901234567890123456789012345678901234567890123\"}}}", "invalid contract/registry!");
+  TEST_ASSERT_CONFIGURE_FAIL("empty node obj", c, "{\"nodes\":{\"0x1\":{}}}", "chain id mismatch!");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x1\",\"nodes\":{}}");
   TEST_ASSERT_CONFIGURE_FAIL("whiteListContract with manual whiteList",
                              c, "{"
                                 "  \"chainId\":\"0xdeaf\","
@@ -591,17 +580,18 @@ static void test_configure_validation() {
  * Main
  */
 int main() {
-  in3_log_set_quiet(true);
+    in3_log_set_quiet(false);
+    in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_basic);
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_nodeselect_def);
 
   TESTS_BEGIN();
+  RUN_TEST(test_configure_request);
   RUN_TEST(test_configure_signed_request);
   RUN_TEST(test_bulk_response);
   RUN_TEST(test_partial_response);
   RUN_TEST(test_retry_response);
-  RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);
   RUN_TEST(test_configure);
   RUN_TEST(test_configure_validation);
