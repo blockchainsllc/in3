@@ -42,11 +42,9 @@
 #include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
-#include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
-#include "../../src/verifier/eth1/nano/eth_nano.h"
-
 #include "../test_utils.h"
+#include "nodeselect/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -91,10 +89,8 @@ static void test_context_bulk() {
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
   plugin_register(in3, PLGN_ACT_TRANSPORT, test_bulk_transport, NULL, true);
   in3->flags = FLAGS_STATS;
-  for (int i = 0; i < in3->chains_length; i++) {
-    _free(in3->chains[i].nodelist_upd8_params);
-    in3->chains[i].nodelist_upd8_params = NULL;
-  }
+  TEST_ASSERT_NULL(in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+
   uint64_t blkno      = 5;
   sb_t*    req        = sb_new("[");
   char     params[62] = {0};
@@ -126,6 +122,7 @@ int main() {
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_nodeselect_def);
 
   // now run tests
   TESTS_BEGIN();
