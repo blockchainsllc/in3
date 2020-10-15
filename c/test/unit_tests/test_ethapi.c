@@ -47,29 +47,26 @@
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
-
 #include "../test_utils.h"
 #include "../util/transport.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
+#include "nodeselect/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 
 in3_t* init_in3(in3_plugin_act_fn custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   int    err;
-  in3 = in3_for_chain(0);
+  in3 = in3_for_chain(chain);
   if (custom_transport)
     register_transport(in3, custom_transport);
-  in3->request_count = 1; // number of requests to sendp
-  in3->max_attempts  = 1;
-  in3->request_count = 1; // number of requests to sendp
-  in3->chain_id      = chain;
-  in3->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE; // no autoupdate nodelist
-  for (int i = 0; i < in3->chains_length; i++) {
-    _free(in3->chains[i].nodelist_upd8_params);
-    in3->chains[i].nodelist_upd8_params = NULL;
-  }
+  in3->flags   = FLAGS_STATS | FLAGS_INCLUDE_CODE; // no autoupdate nodelist
+  sb_t* config = sb_new("{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodes\":{\"");
+  sb_add_hexuint(config, chain);
+  sb_add_chars(config, "\": {\"needsUpdate\":false}}}");
+  TEST_ASSERT_NULL(in3_configure(in3, config->data));
+  sb_free(config);
   return in3;
 }
 
@@ -618,6 +615,7 @@ int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
   in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_nodeselect_def);
 
   // now run tests
   TESTS_BEGIN();
