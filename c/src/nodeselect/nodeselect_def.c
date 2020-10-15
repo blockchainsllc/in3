@@ -265,23 +265,22 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   return IN3_OK;
 }
 
-static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
-  json_ctx_t* json = nodeselect_def_cfg(ctx->client->chain.chain_id);
+static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c) {
+  json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
   if (json == NULL)
     return IN3_ECONFIG;
 
-  in3_configure_ctx_t cctx = {.client = ctx->client, .json = json, .token = json->result + 1, .error_msg = NULL};
+  in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result + 1, .error_msg = NULL};
+  json_free(json);
   if (IN3_OK != config_set(data, &cctx)) {
     in3_log_error("nodeselect config error: %s\n", cctx.error_msg);
-    json_free(json);
     return IN3_ECONFIG;
   }
-  json_free(json);
 
   for (unsigned int i = 0; i < data->nodelist_length; ++i)
     BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
 
-  return in3_cache_init(ctx->client, data);
+  return in3_cache_init(c, data);
 }
 
 static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
