@@ -101,12 +101,14 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 #define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(json, token->key)), "expected hex str")
 
 static inline char* config_err(const char* keyname, const char* err) {
-  char* s = _malloc(strlen(keyname) + strlen(err) + 4);
-  sprintf(s, "%s: %s!", keyname, err);
+  const char* k = keyname ? keyname : "";
+  char*       s = _malloc(strlen(k) + strlen(err) + 4);
+  sprintf(s, "%s: %s!", k, err);
   return s;
 }
 
 static inline bool is_hex_str(const char* str) {
+  if (!str) return false;
   if (str[0] == '0' && str[1] == 'x')
     str += 2;
   return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
