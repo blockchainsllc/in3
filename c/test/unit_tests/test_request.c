@@ -51,6 +51,7 @@
 #include "../util/transport.h"
 #include "nodeselect/cache.h"
 #include "nodeselect/nodelist.h"
+#include <nodeselect/nodeselect_def.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -593,6 +594,7 @@ int main() {
   in3_log_set_quiet(true);
   in3_register_default(in3_register_eth_basic);
   in3_register_default(in3_register_eth_api);
+  in3_register_default(in3_register_nodeselect_def);
 
   TESTS_BEGIN();
   RUN_TEST(test_configure_signed_request);
