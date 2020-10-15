@@ -240,7 +240,7 @@ static void test_retry_response() {
   in3_free(c);
 }
 static void test_configure() {
-  in3_t* c   = in3_for_chain(CHAIN_ID_MULTICHAIN);
+  in3_t* c   = in3_for_chain(CHAIN_ID_MAINNET);
   char*  tmp = NULL;
 
   // proof
@@ -251,9 +251,9 @@ static void test_configure() {
   // rpc
   tmp = in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
   TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
-  TEST_ASSERT_EQUAL(CHAIN_ID_LOCAL, c->chain_id);
+  TEST_ASSERT_EQUAL(CHAIN_ID_LOCAL, c->chain.chain_id);
   TEST_ASSERT_EQUAL(1, c->request_count);
-  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, CHAIN_ID_LOCAL)->nodelist->url);
+  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_nodeselect_def_data(c)->nodelist->url);
   free(tmp);
 
   // missing registryId and contract
@@ -268,7 +268,7 @@ static void test_configure() {
 }
 
 static void test_configure_validation() {
-  in3_t* c = in3_for_chain(0);
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   eth_register_pk_signer(c);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
@@ -286,11 +286,11 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0x1203030230\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("uinitialized chain: chainId", c, "{\"chainId\":0}", "chain corresponding to chain id not initialized!");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"mainnet\"}");
-  TEST_ASSERT_EQUAL(c->chain_id, 1);
+  TEST_ASSERT_EQUAL(c->chain.chain_id, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":5}");
-  TEST_ASSERT_EQUAL(c->chain_id, CHAIN_ID_GOERLI);
+  TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_GOERLI);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x2a\"}");
-  TEST_ASSERT_EQUAL(c->chain_id, CHAIN_ID_KOVAN);
+  TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_KOVAN);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"0x1234\"}", "expected uint8");
@@ -468,9 +468,9 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":65536}", "expected string");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"rpc\":\"rpc.local\"}");
   TEST_ASSERT_EQUAL(c->proof, PROOF_NONE);
-  TEST_ASSERT_EQUAL(c->chain_id, CHAIN_ID_LOCAL);
+  TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_LOCAL);
   TEST_ASSERT_EQUAL(c->request_count, 1);
-  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, CHAIN_ID_LOCAL)->nodelist[0].url, "rpc.local");
+  TEST_ASSERT_EQUAL_STRING(in3_nodeselect_def_data(c)->nodelist[0].url, "rpc.local");
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":false}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":\"0x123412341234\"}", "expected object");
@@ -479,11 +479,12 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"n1\":{}}}", "expected hex str");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":null}}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":[]}}", "expected object");
-  TEST_ASSERT_CONFIGURE_FAIL("empty node obj", c, "{\"nodes\":{\"0xf1\":{}}}", "invalid contract/registry!");
+  TEST_ASSERT_CONFIGURE_FAIL("empty node obj", c, "{\"chainId\":\"0xf1\",\"nodes\":{\"0xf1\":{}}}", "invalid contract/registry!");
   TEST_ASSERT_CONFIGURE_FAIL("missing registry id", c, "{\"nodes\":{\"0xf1\":{\"contract\":\"0x0123456789012345678901234567890123456789\"}}}", "invalid contract/registry!");
   TEST_ASSERT_CONFIGURE_FAIL("missing contract", c, "{\"nodes\":{\"0xf1\":{\"registryId\":\"0x0123456789012345678901234567890123456789012345678901234567890123\"}}}", "invalid contract/registry!");
   TEST_ASSERT_CONFIGURE_FAIL("whiteListContract with manual whiteList",
                              c, "{"
+                                "  \"chainId\":\"0xdeaf\","
                                 "  \"nodes\":{"
                                 "    \"0xdeaf\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
@@ -508,7 +509,7 @@ static void test_configure_validation() {
                                 "}");
   uint8_t wl[40];
   hex_to_bytes("0x01234567890123456789012345678901234567891234567890123456789012345678901234567890", -1, wl, 40);
-  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0xdeaf)->whitelist->addresses.data, wl, 40);
+  TEST_ASSERT_EQUAL_MEMORY(in3_nodeselect_def_data(c)->whitelist->addresses.data, wl, 40);
   in3_free(c);
 
   c = in3_for_chain(0);
@@ -527,6 +528,7 @@ static void test_configure_validation() {
 
   c = in3_for_chain(0);
   TEST_ASSERT_CONFIGURE_PASS(c, "{"
+                                "  \"chainId\":\"0xdeaf\","
                                 "  \"nodes\":{"
                                 "    \"0xdeaf\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
@@ -549,37 +551,37 @@ static void test_configure_validation() {
                                 "    }"
                                 "  }"
                                 "}");
-  in3_chain_t* chain = in3_find_chain(c, 0xdeaf);
-  TEST_ASSERT_NOT_NULL(chain);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  TEST_ASSERT_NOT_NULL(nl);
 
   address_t addr;
   hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, addr, 20);
-  TEST_ASSERT_EQUAL_MEMORY(chain->whitelist->contract, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(nl->whitelist->contract, addr, 20);
   hex_to_bytes(CONTRACT_ADDRS, -1, addr, 20);
-  TEST_ASSERT_EQUAL_MEMORY(chain->contract->data, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(nl->contract, addr, 20);
 
   hex_to_bytes(REGISTRY_ID, -1, b256, 32);
-  TEST_ASSERT_EQUAL_MEMORY(chain->registry_id, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(nl->registry_id, b256, 32);
 
-  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params != NULL, true);
-  TEST_ASSERT_EQUAL_STRING(chain->nodelist[0].url, NODE_URL);
-  TEST_ASSERT_EQUAL(chain->nodelist[0].props, 0xffff);
+  TEST_ASSERT_EQUAL(nl->nodelist_upd8_params != NULL, true);
+  TEST_ASSERT_EQUAL_STRING(nl->nodelist[0].url, NODE_URL);
+  TEST_ASSERT_EQUAL(nl->nodelist[0].props, 0xffff);
   hex_to_bytes(NODE_ADDRS, -1, addr, 20);
-  TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(nl->nodelist[0].address, addr, 20);
 
-  TEST_ASSERT_EQUAL(0x234ad3, chain->verified_hashes[0].block_number);
+  TEST_ASSERT_EQUAL(0x234ad3, c->chain.verified_hashes[0].block_number);
   hex_to_bytes("0x1230980495039470913820938019274231230980495039470913820938019274", -1, b256, 32);
-  TEST_ASSERT_EQUAL_MEMORY(chain->verified_hashes[0].hash, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(c->chain.verified_hashes[0].hash, b256, 32);
 
-  TEST_ASSERT_EQUAL(0x234a99, chain->verified_hashes[1].block_number);
+  TEST_ASSERT_EQUAL(0x234a99, c->chain.verified_hashes[1].block_number);
   hex_to_bytes("0xda879213bf9834ff2eade0921348dda879213bf9834ff2eade0921348d238130", -1, b256, 32);
-  TEST_ASSERT_EQUAL_MEMORY(chain->verified_hashes[1].hash, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(c->chain.verified_hashes[1].hash, b256, 32);
 
-  TEST_ASSERT_EQUAL(7, chain->avg_block_time);
+  TEST_ASSERT_EQUAL(7, nl->avg_block_time);
 
   // test that all added nodes are marked as boot nodes
-  for (int i = 0; i < chain->nodelist_length; ++i) {
-    TEST_ASSERT_TRUE(!!(chain->nodelist[i].attrs & (1 << ATTR_BOOT_NODE)));
+  for (int i = 0; i < nl->nodelist_length; ++i) {
+    TEST_ASSERT_TRUE(!!(nl->nodelist[i].attrs & (1 << ATTR_BOOT_NODE)));
   }
   in3_free(c);
 }
