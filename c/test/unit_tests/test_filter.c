@@ -49,6 +49,7 @@
 #include "../util/transport.h"
 #include "nodeselect/cache.h"
 #include "nodeselect/nodelist.h"
+#include "nodeselect/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -60,16 +61,10 @@
   } while (0)
 
 static void test_filter() {
-  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->flags           = FLAGS_STATS;
-  c->proof           = PROOF_NONE;
-  c->signature_count = 0;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  c->flags = FLAGS_STATS;
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":none,\"signatureCount\":0,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
   register_transport(c, test_transport);
-
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
 
   char *result = NULL, *error = NULL;
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
@@ -184,16 +179,10 @@ static void test_filter_from_block_manip() {
 }
 
 static void test_filter_creation() {
-  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->flags           = FLAGS_STATS;
-  c->proof           = PROOF_NONE;
-  c->signature_count = 0;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  c->flags = FLAGS_STATS;
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":none,\"signatureCount\":0,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
   register_transport(c, test_transport);
-
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
 
   TEST_ASSERT_FALSE(filter_remove(c, 1));
   TEST_ASSERT_EQUAL(0, eth_newFilter(c, NULL));
@@ -212,16 +201,10 @@ static void test_filter_creation() {
 }
 
 static void test_filter_changes() {
-  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->flags           = FLAGS_STATS;
-  c->proof           = PROOF_NONE;
-  c->signature_count = 0;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  c->flags = FLAGS_STATS;
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":none,\"signatureCount\":0,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
   register_transport(c, test_transport);
-
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
 
   char *result = NULL, *error = NULL;
 
@@ -284,6 +267,7 @@ int main() {
   in3_log_set_quiet(true);
   TESTS_BEGIN();
   in3_register_default(in3_register_eth_basic);
+  in3_register_default(in3_register_nodeselect_def);
   RUN_TEST(test_filter_changes);
   RUN_TEST(test_filter);
   RUN_TEST(test_filter_opt_validation);
