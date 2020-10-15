@@ -215,6 +215,10 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     EXPECT_TOK_U8(token);
     in3_node_props_set(&ctx->client->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
   }
+  else {
+    return IN3_EIGNORE;
+  }
+
 cleanup:
   ctx->error_msg = res;
   return ctx->error_msg ? IN3_ECONFIG : IN3_OK;
