@@ -1,8 +1,6 @@
-<!-- Please refer to our contributing documentation for any questions on submitting a pull request, or let us know here if you need any help: https://ionicframework.com/docs/building/contributing -->
-
 ## Merge request checklist
 
-Please check if your MR fulfills the following requirements:
+Check if your MR fulfills the following requirements:
 - [ ] Tests for the changes have been added (for bug fixes / features)
 - [ ] Docs have been reviewed and added / updated if needed (for bug fixes / features)
 - [ ] Build was run locally and gitlab ci pipeline is green
@@ -12,11 +10,9 @@ Please check if your MR fulfills the following requirements:
 
 ## Merge request type
 
-Please do not submit updates to dependencies unless it fixes an issue. --> 
+Do not submit updates to dependencies unless it fixes an issue. also try to limit your pull request to one type, submit multiple pull requests if needed. 
 
-<!-- Please try to limit your pull request to one type, submit multiple pull requests if needed. 
-
-Please check the type of change your MR introduces:
+Check the type of change your MR introduces:
 - [ ] Bugfix
 - [ ] Feature
 - [ ] Code style update (formatting, renaming)
@@ -27,13 +23,13 @@ Please check the type of change your MR introduces:
 
 
 ## What is the current behavior?
-Please describe the current behavior that you are modifying, or link to a relevant issue.
+Describe the current behavior that you are modifying, or link to a relevant issue.
 
 Issue Number: N/A
 
 
 ## What is the new behavior?
-Please describe the behavior or changes that are being added by this MR.
+Describe the behavior or changes that are being added by this MR.
 
 -
 -

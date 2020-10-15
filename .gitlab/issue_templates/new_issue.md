@@ -10,7 +10,7 @@
 
 ## Example Project
 
-(If possible or relevant, please create an example project here on https://git.slock.it/in3/c that exhibits the problematic behaviour, and link to it here in the bug report)
+(If possible or relevant, please create an example project here on [git.slock.it/in3/c](https://git.slock.it/in3/c) that exhibits the problematic behaviour, and link to it here in the bug report)
 
 
 ## What is the current bug behavior?
@@ -30,9 +30,7 @@ logs, and code as it's very hard to read otherwise.)
 
 ## Is there a issue previously reported at sentry?
 
-Please check if the issue is happening at sentry 
-
-https://sentry.slock.it/organizations/slock-it/issues/?project=37
+Please check if the issue is happening at [incubed-core sentry](https://sentry.slock.it/organizations/slock-it/issues/?project=37)
 
 
 ## Possible fixes
