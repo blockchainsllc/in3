@@ -481,6 +481,7 @@ char* in3_configure(in3_t* c, const char* config) {
 
         // register chain
         chain_id_t chain_id = get_chain_from_key(ct.token->key);
+        EXPECT_CFG(!c->chain.chain_id || c->chain.chain_id == chain_id, "chain id mismatch!");
         if (!c->chain.chain_id) {
           EXPECT_CFG((in3_client_register_chain(c, chain_id, !c->chain.type, 2)) == IN3_OK,
                      "register chain failed");
