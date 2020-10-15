@@ -192,9 +192,6 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
 #endif
           }
         }
-        else {
-          EXPECT_TOK(cp.token, false, "unsupported config option!");
-        }
       }
 #ifdef NODESELECT_DEF_WL
       in3_client_run_chain_whitelisting(data);
