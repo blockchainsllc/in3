@@ -502,6 +502,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
         pctx->cleanup = NULL;
         return IN3_OK;
       }
+      return IN3_EIGNORE;
     }
     case PLGN_ACT_ADD_PAYLOAD: {
 #ifdef NODESELECT_DEF_WL
