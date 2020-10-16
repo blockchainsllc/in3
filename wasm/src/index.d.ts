@@ -379,7 +379,7 @@ export declare interface RPCResponse {
     /**
      * in case of an error this needs to be set
      */
-    error?: string
+    error?: string | { message: string, code: number, data?: any }
     /**
      * the params
      * example: 0xa35bc
@@ -397,13 +397,13 @@ interface IN3Plugin<BigIntType, BufferType> {
      * this is called when the client is cleaned up.
      * @param client the client object
      */
-    term?(client: IN3Generic<BigIntType, BufferType>)
+    term?(client: IN3Generic<BigIntType, BufferType>): void
 
     /**
      * returns address
      * @param client 
      */
-    getAccount?(client: IN3Generic<BigIntType, BufferType>)
+    getAccount?(client: IN3Generic<BigIntType, BufferType>): string
 
     /**
      * called for each request. 
@@ -461,7 +461,7 @@ export default class IN3Generic<BigIntType, BufferType> {
     /**
      * disposes the Client. This must be called in order to free allocated memory!
      */
-    public free();
+    public free(): void;
 
     /**
      * returns a Object, which can be used as Web3Provider.
@@ -531,8 +531,8 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public static util: Utils<any>
 
-    public static setConvertBigInt(convert: (any) => any)
-    public static setConvertBuffer(convert: (any) => any)
+    public static setConvertBigInt(convert: (arg: any) => any): void
+    public static setConvertBuffer(convert: (arg: any) => any): void
     // public static setConvertBuffer<BufferType>(val: any, len?: number) : BufferType
 
     /** supporting both ES6 and UMD usage */
@@ -552,10 +552,8 @@ export class IN3 extends IN3Generic<bigint, Uint8Array> {
  */
     public constructor(config?: Partial<IN3Config>);
 
-
-    public static setConvertBigInt(convert: (any) => any)
-    public static setConvertBuffer(convert: (any) => any)
-
+    public static setConvertBigInt(convert: (arg: any) => any): void
+    public static setConvertBuffer(convert: (arg: any) => any): void
 }
 
 /**
@@ -791,6 +789,4 @@ export declare interface Utils<BufferType> {
      * @param pk the private key.
      */
     private2address(pk: Hex | BufferType): Address
-
 }
-

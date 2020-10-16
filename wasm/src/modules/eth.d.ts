@@ -312,7 +312,7 @@ export interface EthAPI<BigIntType, BufferType> {
      */
     accounts: AccountAPI<BufferType>;
 
-    constructor(client: IN3Generic<BigIntType, BufferType>);
+    constructor(client: IN3Generic<BigIntType, BufferType>): EthAPI<BigIntType, BufferType>;
     /**
      * Returns the number of most recent block. (as number)
      */
