@@ -311,7 +311,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
 #ifdef NODESELECT_DEF_WL
 in3_ret_t eth_verify_in3_whitelist(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
   d_token_t *storage_proof = NULL, *server_list = NULL;
-  in3_ret_t  res = verify_account(vc, data->whitelist->contract, &storage_proof, &server_list);
+  in3_ret_t  res = verify_account(vc, data->whitelist ? data->whitelist->contract : NULL, &storage_proof, &server_list);
   return res == IN3_OK ? verify_whitelist_data(vc, server_list, storage_proof) : res;
 }
 #endif
