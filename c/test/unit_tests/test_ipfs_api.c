@@ -44,6 +44,7 @@
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include <core/util/log.h>
+#include <nodeselect/nodeselect_def.h>
 
 #define LOREM_IPSUM "Lorem ipsum dolor sit amet"
 #define LOREM_IPSUM_LONG "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation " \
@@ -102,6 +103,7 @@ void test_in3_ipfs_api_long() {
  */
 int main() {
   in3_register_default(in3_register_ipfs);
+  in3_register_default(in3_register_nodeselect_def);
   in3_log_set_quiet(true);
 
   TESTS_BEGIN();

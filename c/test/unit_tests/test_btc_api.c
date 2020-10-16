@@ -45,6 +45,7 @@
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include <core/util/log.h>
+#include <nodeselect/nodeselect_def.h>
 
 static in3_t* in3_init_test() {
   in3_t* in3 = in3_for_chain(CHAIN_ID_BTC);
@@ -197,6 +198,7 @@ void test_btc_api_get_block() {
  */
 int main() {
   in3_register_default(in3_register_btc);
+  in3_register_default(in3_register_nodeselect_def);
   in3_log_set_quiet(true);
 
   TESTS_BEGIN();

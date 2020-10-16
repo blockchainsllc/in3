@@ -48,14 +48,17 @@
 #include "../test_utils.h"
 #include "nodeselect/cache.h"
 #include "nodeselect/nodelist.h"
+#include <nodeselect/nodeselect_def.h>
 #include <stdio.h>
 #include <unistd.h>
 
 void test_get_config() {
   in3_register_default(in3_register_eth_nano);
   in3_register_default(in3_register_eth_api);
-  in3_t* c      = in3_for_chain(CHAIN_ID_KOVAN);
-  char * result = NULL, *error = NULL;
+  in3_register_default(in3_register_nodeselect_def);
+  in3_t* c = in3_for_chain(0);
+  in3_configure(c, "{\"chainId\":\"0x2a\"}");
+  char *result = NULL, *error = NULL;
   in3_client_rpc(c, "in3_getConfig", "[]", &result, &error);
   if (error) printf("ERROR: %s\n", error);
   TEST_ASSERT_NULL(error);
