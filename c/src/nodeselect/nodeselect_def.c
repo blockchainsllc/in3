@@ -271,8 +271,9 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c) {
     return IN3_ECONFIG;
 
   in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result + 1, .error_msg = NULL};
+  in3_ret_t           ret  = config_set(data, &cctx);
   json_free(json);
-  if (IN3_OK != config_set(data, &cctx)) {
+  if (IN3_OK != ret) {
     in3_log_error("nodeselect config error: %s\n", cctx.error_msg);
     return IN3_ECONFIG;
   }
@@ -362,7 +363,7 @@ static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, node_match_t* node) 
       data->dirty = true;
     w->blacklisted_until = blacklisted_until_;
     node->blocked        = true;
-    in3_log_debug("Blacklisting node for unverifiable response: %s\n", get_node(data, node)->url);
+    in3_log_debug("Blacklisting node for unverifiable response: %s\n", get_node(data, node) ? get_node(data, node)->url : "");
   }
   return IN3_OK;
 }
