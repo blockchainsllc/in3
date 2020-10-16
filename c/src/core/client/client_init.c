@@ -211,17 +211,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   return IN3_OK;
 }
 
-in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, uint8_t version) {
-  assert(chain_id);
-  assert(c);
-
-  in3_chain_t* chain = &c->chain;
-  chain->chain_id    = chain_id;
-  chain->type        = type;
-  chain->version     = version;
-  return IN3_OK;
-}
-
 static void chain_free(in3_chain_t* chain) {
   if (chain->verified_hashes) _free(chain->verified_hashes);
 }
@@ -363,7 +352,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
-      c->chain.chain_id = chain_id(token);
+      initChain(&c->chain, chain_id(token), 2, !c->chain.type);
       in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
     else if (token->key == key("signatureCount")) {
@@ -482,11 +471,7 @@ char* in3_configure(in3_t* c, const char* config) {
         // register chain
         chain_id_t chain_id = get_chain_from_key(ct.token->key);
         EXPECT_CFG(!c->chain.chain_id || c->chain.chain_id == chain_id, "chain id mismatch!");
-        if (!c->chain.chain_id) {
-          EXPECT_CFG((in3_client_register_chain(c, chain_id, !c->chain.type, 2)) == IN3_OK,
-                     "register chain failed");
-          EXPECT_CFG(c->chain.chain_id, "invalid chain id!");
-        }
+        initChain(&c->chain, chain_id, 2, !c->chain.type);
 
         // chain_props
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {

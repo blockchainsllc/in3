@@ -462,15 +462,6 @@ NONULL char* in3_client_exec_req(
     char*  req /**< [in] the request as rpc. */
 );
 
-/** registers a new chain or replaces a existing (but keeps the nodelist)*/
-NONULL_FOR((1, 4))
-in3_ret_t in3_client_register_chain(
-    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
-    chain_id_t       chain_id, /**< [in] the chain id. */
-    in3_chain_type_t type,     /**< [in] the verification type of the chain. */
-    uint8_t          version   /**< [in] the chain version. */
-);
-
 /** frees the references of the client */
 NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
