@@ -580,8 +580,8 @@ static void test_configure_validation() {
  * Main
  */
 int main() {
-    in3_log_set_quiet(false);
-    in3_log_set_level(LOG_TRACE);
+  //  in3_log_set_quiet(false);
+  //  in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_basic);
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_nodeselect_def);
