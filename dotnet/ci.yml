@@ -96,7 +96,7 @@ release_nuget:
     - cd dotnet
     - export NUGET_VERSION=$(echo "$CI_COMMIT_TAG" | cut -c 2-)
     - dotnet pack -c Release -p:version=${NUGET_VERSION}
-    - dotnet nuget push In3/bin/Release/Blockchains.In3.${NUGET_VERSION}.nupkg -k {NUGET_GALLERY_API_KEY} -s https://api.nuget.org/v3/index.json
+    - dotnet nuget push In3/bin/Release/Blockchains.In3.${NUGET_VERSION}.nupkg -k ${NUGET_GALLERY_API_KEY} -s https://api.nuget.org/v3/index.json
   artifacts:
     paths:
       - dotnet/In3/bin/Release/Blockchains.In3.${NUGET_VERSION}.nupkg
