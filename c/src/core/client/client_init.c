@@ -128,47 +128,38 @@ void in3_register_default(plgn_register reg_fn) {
   (*d)->fn = reg_fn;
 }
 
-IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, uint8_t version, in3_chain_type_t type) {
-  assert(chain);
-  chain->conf            = NULL;
-  chain->chain_id        = chain_id;
-  chain->verified_hashes = NULL;
-  chain->type            = type;
-  chain->version         = version;
+static void init_ipfs(in3_t* c) {
+  in3_client_register_chain(c, 0x7d0, CHAIN_IPFS, 2);
 }
 
-static void init_ipfs(in3_chain_t* chain) {
-  initChain(chain, 0x7d0, 2, CHAIN_IPFS);
+static void init_mainnet(in3_t* c) {
+  in3_client_register_chain(c, 0x01, CHAIN_ETH, 2);
+}
+static void init_ewf(in3_t* c) {
+  in3_client_register_chain(c, 0xf6, CHAIN_ETH, 2);
 }
 
-static void init_mainnet(in3_chain_t* chain) {
-  initChain(chain, 0x01, 2, CHAIN_ETH);
+static void init_btc(in3_t* c) {
+  in3_client_register_chain(c, 0x99, CHAIN_BTC, 2);
 }
-static void init_ewf(in3_chain_t* chain) {
-  initChain(chain, 0xf6, 2, CHAIN_ETH);
-}
-
-static void init_btc(in3_chain_t* chain) {
-  initChain(chain, 0x99, 2, CHAIN_BTC);
-}
-static void init_kovan(in3_chain_t* chain) {
+static void init_kovan(in3_t* c) {
 #ifdef IN3_STAGING
   // kovan
-  initChain(chain, 0x2a, 2, CHAIN_ETH);
+  in3_client_register_chain(c, 0x2a, CHAIN_ETH, 2);
 #else
   // kovan
-  initChain(chain, 0x2a, 2, CHAIN_ETH);
+  in3_client_register_chain(c, 0x2a, CHAIN_ETH, 2);
 #endif
 }
 
-static void init_goerli(in3_chain_t* chain) {
+static void init_goerli(in3_t* c) {
 
 #ifdef IN3_STAGING
   // goerli
-  initChain(chain, 0x05, 2, CHAIN_ETH);
+  in3_client_register_chain(c, 0x05, CHAIN_ETH, 2);
 #else
   // goerli
-  initChain(chain, 0x05, 2, CHAIN_ETH);
+  in3_client_register_chain(c, 0x05, CHAIN_ETH, 2);
 #endif
 }
 
@@ -194,20 +185,32 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 #endif
 
   if (chain_id == CHAIN_ID_MAINNET)
-    init_mainnet(&c->chain);
+    init_mainnet(c);
   else if (chain_id == CHAIN_ID_KOVAN)
-    init_kovan(&c->chain);
+    init_kovan(c);
   else if (chain_id == CHAIN_ID_GOERLI)
-    init_goerli(&c->chain);
+    init_goerli(c);
   else if (chain_id == CHAIN_ID_IPFS)
-    init_ipfs(&c->chain);
+    init_ipfs(c);
   else if (chain_id == CHAIN_ID_BTC)
-    init_btc(&c->chain);
+    init_btc(c);
   else if (chain_id == CHAIN_ID_EWC)
-    init_ewf(&c->chain);
+    init_ewf(c);
   else if (chain_id == CHAIN_ID_LOCAL)
-    initChain(&c->chain, 0x11, 1, CHAIN_ETH);
+    in3_client_register_chain(c, 0x11, CHAIN_ETH, 1);
 
+  return IN3_OK;
+}
+
+in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, uint8_t version) {
+  assert(c);
+
+  in3_chain_t* chain     = &c->chain;
+  chain->conf            = NULL;
+  chain->chain_id        = chain_id;
+  chain->verified_hashes = NULL;
+  chain->type            = type;
+  chain->version         = version;
   return IN3_OK;
 }
 
@@ -352,7 +355,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
-      initChain(&c->chain, chain_id(token), 2, !c->chain.type);
+      in3_client_register_chain(c, chain_id(token), !c->chain.type, 2);
       in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
     else if (token->key == key("signatureCount")) {
@@ -471,7 +474,11 @@ char* in3_configure(in3_t* c, const char* config) {
         // register chain
         chain_id_t chain_id = get_chain_from_key(ct.token->key);
         EXPECT_CFG(!c->chain.chain_id || c->chain.chain_id == chain_id, "chain id mismatch!");
-        initChain(&c->chain, chain_id, 2, !c->chain.type);
+        if (!c->chain.chain_id) {
+          EXPECT_CFG((in3_client_register_chain(c, chain_id, !c->chain.type, 2)) == IN3_OK,
+                     "register chain failed");
+          EXPECT_CFG(c->chain.chain_id, "invalid chain id!");
+        }
 
         // chain_props
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
