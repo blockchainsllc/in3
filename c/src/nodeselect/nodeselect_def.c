@@ -460,6 +460,7 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followop_type_
 }
 
 static in3_ret_t chain_change(in3_nodeselect_def_t* data, in3_t* c) {
+  data->avg_block_time = avg_block_time_for_chain_id(c->chain.chain_id);
   return init_boot_nodes(data, c);
 }
 
