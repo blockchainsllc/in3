@@ -336,30 +336,6 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static inline bool is_blacklisted(const in3_node_t* node) { return node && node->blocked; }
-
-static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, node_match_t* n) {
-  in3_node_t* node = get_node(data, n);
-  if (is_blacklisted(node)) return IN3_ERPC; // already handled
-
-  if (node && !node->blocked) {
-    in3_node_weight_t* w = get_node_weight(data, n);
-    if (!w) {
-      in3_log_debug("failed to blacklist node: %s\n", get_node(data, n)->url);
-      return IN3_EFIND;
-    }
-
-    // blacklist the node
-    uint64_t blacklisted_until_ = in3_time(NULL) + BLACKLISTTIME;
-    if (w->blacklisted_until != blacklisted_until_)
-      data->dirty = true;
-    w->blacklisted_until = blacklisted_until_;
-    node->blocked        = true;
-    in3_log_debug("Blacklisting node for unverifiable response: %s\n", node ? node->url : "");
-  }
-  return IN3_OK;
-}
-
 NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   in3_ret_t res = IN3_OK;
 
@@ -482,7 +458,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_NL_PICK_FOLLOWUP:
       return pick_followup(data, plugin_ctx);
     case PLGN_ACT_NL_BLACKLIST:
-      return blacklist_node(data, plugin_ctx);
+      return blacklist_node(data, ((node_match_t*) plugin_ctx)->index, BLACKLISTTIME);
     case PLGN_ACT_NL_FAILABLE:
       return handle_failable(data, plugin_ctx);
     case PLGN_ACT_CHAIN_CHANGE:

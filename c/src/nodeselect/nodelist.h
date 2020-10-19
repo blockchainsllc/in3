@@ -39,6 +39,7 @@
 
 #include "../core/client/client.h"
 #include "../core/client/context.h"
+#include "../core/util/log.h"
 #include "../core/util/mem.h"
 #include <time.h>
 
@@ -119,23 +120,53 @@ NONULL static inline bool nodelist_not_first_upd8(const in3_nodeselect_def_t* da
   return (data->nodelist_upd8_params != NULL && data->nodelist_upd8_params->exp_last_block != 0);
 }
 
-NONULL static inline void blacklist_node_addr(in3_nodeselect_def_t* data, const address_t node_addr, uint64_t secs_from_now) {
-  for (unsigned int i = 0; i < data->nodelist_length; ++i) {
-    if (!memcmp(data->nodelist[i].address, node_addr, 20)) {
-      uint64_t blacklisted_until_ = in3_time(NULL) + secs_from_now;
-      if (data->weights[i].blacklisted_until != blacklisted_until_)
-        data->dirty = true;
-      data->weights[i].blacklisted_until = blacklisted_until_;
-    }
-  }
+NONULL static inline in3_node_t* get_node_idx(const in3_nodeselect_def_t* data, unsigned int index) {
+  return index < data->nodelist_length ? data->nodelist + index : NULL;
+}
+
+NONULL static inline in3_node_weight_t* get_node_weight_idx(const in3_nodeselect_def_t* data, unsigned int index) {
+  return index < data->nodelist_length ? data->weights + index : NULL;
 }
 
 NONULL static inline in3_node_t* get_node(const in3_nodeselect_def_t* data, const node_match_t* node) {
-  return node && node->index < data->nodelist_length ? data->nodelist + node->index : NULL;
+  return node ? get_node_idx(data, node->index) : NULL;
 }
 
 NONULL static inline in3_node_weight_t* get_node_weight(const in3_nodeselect_def_t* data, const node_match_t* node) {
-  return node && node->index < data->nodelist_length ? data->weights + node->index : NULL;
+  return node ? get_node_weight_idx(data, node->index) : NULL;
+}
+
+static inline bool is_blacklisted(const in3_node_t* node) { return node && node->blocked; }
+
+static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, unsigned int index, uint64_t secs_from_now) {
+  in3_node_t* node = get_node_idx(data, index);
+  if (is_blacklisted(node)) return IN3_ERPC; // already handled
+
+  if (node && !node->blocked) {
+    in3_node_weight_t* w = get_node_weight_idx(data, index);
+    if (!w) {
+      in3_log_debug("failed to blacklist node: %s\n", node->url);
+      return IN3_EFIND;
+    }
+
+    // blacklist the node
+    uint64_t blacklisted_until_ = in3_time(NULL) + secs_from_now;
+    if (w->blacklisted_until != blacklisted_until_)
+      data->dirty = true;
+    w->blacklisted_until = blacklisted_until_;
+    node->blocked        = true;
+    in3_log_debug("Blacklisting node for unverifiable response: %s\n", node ? node->url : "");
+  }
+  return IN3_OK;
+}
+
+NONULL static inline void blacklist_node_addr(in3_nodeselect_def_t* data, const address_t node_addr, uint64_t secs_from_now) {
+  for (unsigned int i = 0; i < data->nodelist_length; ++i) {
+    if (!memcmp(data->nodelist[i].address, node_addr, 20)) {
+      blacklist_node(data, data->nodelist[i].index, secs_from_now);
+      break;
+    }
+  }
 }
 
 #endif
