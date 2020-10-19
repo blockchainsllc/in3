@@ -43,6 +43,7 @@
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/nodeselect/cache.h"
+#include "../../c/src/nodeselect/nodeselect_def.h"
 #include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
@@ -99,7 +100,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->chain_id;
+  return get_in3(env, ob)->chain.chain_id;
 }
 
 /*
@@ -108,7 +109,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong val) {
-  get_in3(env, ob)->chain_id = val;
+  get_in3(env, ob)->chain.chain_id = val;
 }
 
 static JNIEnv* jni = NULL;
@@ -155,7 +156,8 @@ void storage_clear(void* cptr) {
 }
 
 JNIEXPORT void JNICALL Java_in3_IN3_initcache(JNIEnv* env, jobject ob) {
-  in3_cache_init(get_in3(env, ob));
+  in3_t* c = get_in3(env, ob);
+  in3_cache_init(c, in3_nodeselect_def_data(c));
 }
 
 /*
@@ -611,57 +613,54 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jmethodID set_replace_latest_block_mid = (*jni)->GetMethodID(jni, jconfigclass, "setReplaceLatestBlock", "(I)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_replace_latest_block_mid, (jint) c->replace_latest_block);
 
-  for (int i = 0; i < c->chains_length; i++) {
-    char        tmp[67]         = {'0', 'x'};
-    in3_chain_t chain           = c->chains[i];
-    jclass      jchainclass     = (*jni)->FindClass(jni, "in3/config/ChainConfiguration");
-    jobject     jchainconfigobj = (*jni)->NewObject(jni, jchainclass, (*jni)->GetMethodID(jni, jchainclass, "<init>", "(JLin3/config/ClientConfiguration;)V"), (jlong) chain.chain_id, jclientconfigurationobj);
+  //  char    tmp[67]         = {'0', 'x'};
+  //  jclass  jchainclass     = (*jni)->FindClass(jni, "in3/config/ChainConfiguration");
+  //  jobject jchainconfigobj = (*jni)->NewObject(jni, jchainclass, (*jni)->GetMethodID(jni, jchainclass, "<init>", "(JLin3/config/ClientConfiguration;)V"), (jlong) c->chain.chain_id, jclientconfigurationobj);
 
-    jmethodID set_needs_update_mid = (*jni)->GetMethodID(jni, jchainclass, "setNeedsUpdate", "(Z)V");
-    (*jni)->CallVoidMethod(jni, jchainconfigobj, set_needs_update_mid, (jboolean)(chain.nodelist_upd8_params != NULL));
-
-    jmethodID set_contract_mid = (*jni)->GetMethodID(jni, jchainclass, "setContract", "(Ljava/lang/String;)V");
-    bytes_to_hex(chain.contract->data, chain.contract->len, tmp + 2);
-    (*jni)->CallVoidMethod(jni, jchainconfigobj, set_contract_mid, (*jni)->NewStringUTF(jni, tmp));
-
-    jmethodID set_registry_id_mid = (*jni)->GetMethodID(jni, jchainclass, "setRegistryId", "(Ljava/lang/String;)V");
-    bytes_to_hex(chain.registry_id, 32, tmp + 2);
-    (*jni)->CallVoidMethod(jni, jchainconfigobj, set_registry_id_mid, (*jni)->NewStringUTF(jni, tmp));
-
-    jclass jnodeconfigclass = (*jni)->FindClass(jni, "in3/config/NodeConfiguration");
-
-    for (unsigned int i = 0; i < chain.nodelist_length; i++) {
-      in3_node_t node            = chain.nodelist[i];
-      jobject    jnodeconfigobj  = (*jni)->NewObject(jni, jnodeconfigclass, (*jni)->GetMethodID(jni, jnodeconfigclass, "<init>", "(Lin3/config/ChainConfiguration;)V"), jchainconfigobj);
-      jmethodID  set_address_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setAddress", "(Ljava/lang/String;)V");
-      bytes_to_hex(node.address, 20, tmp + 2);
-      (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_address_mid, (*jni)->NewStringUTF(jni, tmp));
-      jmethodID set_url_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setUrl", "(Ljava/lang/String;)V");
-      (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_url_mid, (*jni)->NewStringUTF(jni, node.url));
-      jmethodID set_props_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setProps", "(J)V");
-      (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_props_mid, (jlong) node.props);
-    }
-
-    if (chain.whitelist) {
-      jmethodID set_white_list_contract_mid = (*jni)->GetMethodID(jni, jchainclass, "setWhiteListContract", "(Ljava/lang/String;)V");
-      bytes_to_hex(chain.whitelist->contract, 20, tmp + 2);
-      (*jni)->CallVoidMethod(jni, jchainconfigobj, set_white_list_contract_mid, (*jni)->NewStringUTF(jni, tmp));
-
-      jobjectArray jwhitelist = (jobjectArray)(*jni)->NewObjectArray(
-          jni,
-          chain.whitelist->addresses.len / 20 + 1, // Check if this is the correct length
-          (*jni)->FindClass(jni, "java/lang/String"),
-          NULL);
-
-      for (uint32_t j = 0; j < chain.whitelist->addresses.len; j += 20) {
-        bytes_to_hex(chain.whitelist->addresses.data + j, 20, tmp + 2);
-        (*jni)->SetObjectArrayElement(jni, jwhitelist, j / 20, (*jni)->NewStringUTF(jni, tmp));
-      }
-
-      jmethodID set_white_list_mid = (*jni)->GetMethodID(jni, jconfigclass, "setWhiteList", "([Ljava/lang/String;)V");
-      (*jni)->CallVoidMethod(jni, jchainconfigobj, set_white_list_mid, jwhitelist);
-    }
-  }
+  //      jmethodID set_needs_update_mid = (*jni)->GetMethodID(jni, jchainclass, "setNeedsUpdate", "(Z)V");
+  //  (*jni)->CallVoidMethod(jni, jchainconfigobj, set_needs_update_mid, (jboolean)(chain.nodelist_upd8_params != NULL));
+  //
+  //  jmethodID set_contract_mid = (*jni)->GetMethodID(jni, jchainclass, "setContract", "(Ljava/lang/String;)V");
+  //  bytes_to_hex(chain.contract->data, chain.contract->len, tmp + 2);
+  //  (*jni)->CallVoidMethod(jni, jchainconfigobj, set_contract_mid, (*jni)->NewStringUTF(jni, tmp));
+  //
+  //  jmethodID set_registry_id_mid = (*jni)->GetMethodID(jni, jchainclass, "setRegistryId", "(Ljava/lang/String;)V");
+  //  bytes_to_hex(chain.registry_id, 32, tmp + 2);
+  //  (*jni)->CallVoidMethod(jni, jchainconfigobj, set_registry_id_mid, (*jni)->NewStringUTF(jni, tmp));
+  //
+  //  jclass jnodeconfigclass = (*jni)->FindClass(jni, "in3/config/NodeConfiguration");
+  //
+  //  for (unsigned int i = 0; i < chain.nodelist_length; i++) {
+  //    in3_node_t node            = chain.nodelist[i];
+  //    jobject    jnodeconfigobj  = (*jni)->NewObject(jni, jnodeconfigclass, (*jni)->GetMethodID(jni, jnodeconfigclass, "<init>", "(Lin3/config/ChainConfiguration;)V"), jchainconfigobj);
+  //    jmethodID  set_address_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setAddress", "(Ljava/lang/String;)V");
+  //    bytes_to_hex(node.address, 20, tmp + 2);
+  //    (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_address_mid, (*jni)->NewStringUTF(jni, tmp));
+  //    jmethodID set_url_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setUrl", "(Ljava/lang/String;)V");
+  //    (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_url_mid, (*jni)->NewStringUTF(jni, node.url));
+  //    jmethodID set_props_mid = (*jni)->GetMethodID(jni, jnodeconfigclass, "setProps", "(J)V");
+  //    (*jni)->CallVoidMethod(jni, jnodeconfigobj, set_props_mid, (jlong) node.props);
+  //  }
+  //
+  //  if (chain.whitelist) {
+  //    jmethodID set_white_list_contract_mid = (*jni)->GetMethodID(jni, jchainclass, "setWhiteListContract", "(Ljava/lang/String;)V");
+  //    bytes_to_hex(chain.whitelist->contract, 20, tmp + 2);
+  //    (*jni)->CallVoidMethod(jni, jchainconfigobj, set_white_list_contract_mid, (*jni)->NewStringUTF(jni, tmp));
+  //
+  //    jobjectArray jwhitelist = (jobjectArray)(*jni)->NewObjectArray(
+  //        jni,
+  //        chain.whitelist->addresses.len / 20 + 1, // Check if this is the correct length
+  //        (*jni)->FindClass(jni, "java/lang/String"),
+  //        NULL);
+  //
+  //    for (uint32_t j = 0; j < chain.whitelist->addresses.len; j += 20) {
+  //      bytes_to_hex(chain.whitelist->addresses.data + j, 20, tmp + 2);
+  //      (*jni)->SetObjectArrayElement(jni, jwhitelist, j / 20, (*jni)->NewStringUTF(jni, tmp));
+  //    }
+  //
+  //    jmethodID set_white_list_mid = (*jni)->GetMethodID(jni, jconfigclass, "setWhiteList", "([Ljava/lang/String;)V");
+  //    (*jni)->CallVoidMethod(jni, jchainconfigobj, set_white_list_mid, jwhitelist);
+  //  }
 
   jclass    jclientclass   = (*jni)->GetObjectClass(jni, jclient);
   jmethodID set_config_mid = (*jni)->GetMethodID(jni, jclientclass, "setConfig", "(Lin3/config/ClientConfiguration;)V");
