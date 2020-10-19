@@ -136,7 +136,7 @@ void static setup_test_cache(in3_t* c) {
 
 static void test_cache() {
   in3_t* c = in3_for_chain(0);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"chainId\":\"0x5\",\"signatureCount\":0,\"maxAttempts\":1}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"chainId\":\"0x5\",\"signatureCount\":0}"));
   plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
   setup_test_cache(c);
 
