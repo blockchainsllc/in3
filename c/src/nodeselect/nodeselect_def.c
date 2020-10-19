@@ -204,6 +204,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
 
     if (data->nodelist == NULL)
       data->nodelist = _calloc(1, sizeof(in3_node_t));
+    data->nodelist_length++;
     in3_node_t* n = &data->nodelist[0];
     if (n->url) _free(n->url);
     n->url = _malloc(d_len(token) + 1);
