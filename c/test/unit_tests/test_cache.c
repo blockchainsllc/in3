@@ -342,8 +342,6 @@ int main() {
   in3_log_set_udata_(NULL);
   in3_log_set_lock_(NULL);
   in3_log_set_fp_(NULL);
-  in3_log_set_level(LOG_TRACE);
-  in3_log_set_quiet(false);
 
   // now run tests
   TESTS_BEGIN();
