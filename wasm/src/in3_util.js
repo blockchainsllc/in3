@@ -264,7 +264,7 @@ function toHex(val, bytes) {
         return undefined;
     let hex = ''
     if (typeof val === 'string')
-        hex = val.startsWith('0x')
+        hex = (val.startsWith('0x') || val.startsWith('0X'))
             ? val.substr(2)
             : (!isNaN(parseInt(val[val[0] == '-' ? 1 : 0])) ? convertInt2Hex(val) : convertUTF82Hex(val))
     else if (typeof val === 'boolean')
@@ -566,6 +566,10 @@ class SimpleSigner {
     constructor(...pks) {
         this.accounts = {}
         if (pks) pks.forEach(_ => this.addAccount(_))
+    }
+
+    getAccounts() {
+        return Object.keys(this.accounts)
     }
 
     addAccount(pk) {

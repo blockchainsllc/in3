@@ -75,7 +75,11 @@ static bool add_key(in3_t* c, bytes32_t pk) {
   in3_sign_account_ctx_t ctx = {0};
 
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
-    if (p->acts & (PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &ctx) == IN3_OK && memcmp(ctx.account, address, 20) == 0) return false;
+    if (p->acts & (PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &ctx) == IN3_OK && ctx.accounts_len) {
+      bool is_same_address = memcmp(ctx.accounts, address, 20) == 0;
+      _free(ctx.accounts);
+      if (is_same_address) return false;
+    }
   }
 
   eth_set_pk_signer(c, pk);
@@ -104,7 +108,9 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       // generate the address from the key
       in3_sign_account_ctx_t* ctx = action_ctx;
       ctx->signer_type            = SIGNER_ECDSA;
-      memcpy(ctx->account, k->account, 20);
+      ctx->accounts               = _malloc(20);
+      ctx->accounts_len           = 1;
+      memcpy(ctx->accounts, k->account, 20);
       return IN3_OK;
     }
 
@@ -182,11 +188,17 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       if (strcmp(method, "eth_accounts") == 0) {
         sb_t*                  sb    = in3_rpc_handle_start(ctx);
         bool                   first = true;
-        in3_sign_account_ctx_t sc    = {0};
+        in3_sign_account_ctx_t sc    = {.ctx = ctx->ctx, .accounts = NULL, .accounts_len = 0, .signer_type = 0};
         for (in3_plugin_t* p = ctx->ctx->client->plugins; p; p = p->next) {
           if (p->acts & PLGN_ACT_SIGN_ACCOUNT && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc) == IN3_OK) {
-            sb_add_rawbytes(sb, first ? "[\"0x" : "\",\"0x", bytes(sc.account, 20), 20);
-            first = false;
+            for (int i = 0; i < sc.accounts_len; i++) {
+              sb_add_rawbytes(sb, first ? "[\"0x" : "\",\"0x", bytes(sc.accounts + i * 20, 20), 20);
+              first = false;
+            }
+            if (sc.accounts) {
+              _free(sc.accounts);
+              sc.accounts_len = 0;
+            }
           }
         }
         sb_add_chars(sb, first ? "[]" : "\"]");

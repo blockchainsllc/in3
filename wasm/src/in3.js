@@ -150,6 +150,15 @@ const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', 
  */
 class IN3 {
 
+    set signer(signer) {
+        this._signer = signer
+        if (signer && signer.getAccounts)
+            this.registerPlugin(signer)
+    }
+    get signer() {
+        return this._signer
+    }
+
     _ensure_ptr_sync() {
         if (this.ptr) return
         let chainId = this.config && this.config.chainId
@@ -223,7 +232,7 @@ class IN3 {
     registerPlugin(plgn) {
         let action = 0
         if (plgn.term) action |= 0x2
-        if (plgn.getAccount) action |= 0x20
+        if (plgn.getAccounts) action |= 0x20
         if (plgn.handleRPC) action |= 0x100
         if (plgn.verifyRPC) action |= 0x200
         if (plgn.cacheGet) action |= 0x800
@@ -235,7 +244,7 @@ class IN3 {
             this.plugins.push(plgn)
         }
 
-        if (this.ptr)
+        if (this.ptr) 
             in3w.ccall('wasm_register_plugin', 'number', ['number', 'number', 'number'], [this.ptr, action, index]);
     }
 
@@ -334,7 +343,7 @@ class IN3 {
         return res.result
     }
 
-    sendSyncRPC(method, params = []) {
+    execLocal(method, params = []) {
         this._ensure_ptr_sync();
         if (this.needsSetConfig) this.setConfig()
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify({ method, params })]);
