@@ -287,7 +287,7 @@ static void test_whitelist_cache() {
   setup_test_cache(c);
   char* tmp = NULL;
 
-  TEST_ASSERT_EQUAL_STRING("nodes: cannot specify manual whiteList and whiteListContract together!!",
+  TEST_ASSERT_EQUAL_STRING("cannot specify manual whiteList and whiteListContract together!",
                            (tmp = in3_configure(c, "{"
                                                    "  \"nodes\": {"
                                                    "    \"0x8\": {"
