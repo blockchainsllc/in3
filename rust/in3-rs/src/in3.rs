@@ -229,7 +229,7 @@ impl ClientTrait for Client {
     /// # use in3::prelude::*;
     ///
     /// let mut client = Client::new(chain::MAINNET);
-    /// assert!(client.configure(r#"{
+    /// let err = client.configure(r#"{
     /// 	"autoUpdateList": true,
     /// 	"signatureCount": 0,
     /// 	"finality": 0,
@@ -247,14 +247,15 @@ impl ClientTrait for Client {
     /// 	"proof": "standard",
     /// 	"requestCount": 1,
     /// 	"nodes": {
-    /// 		"0x2a": {
+    /// 		"0x1": {
     /// 			"contract": "0x4c396dcf50ac396e5fdea18163251699b5fcca25",
     /// 			"registryId": "0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf",
     /// 			"needsUpdate": true,
     /// 			"avgBlockTime": 6
     /// 		}
     /// 	}
-    /// }"#).is_ok());
+    /// }"#);
+    /// assert!(err.is_ok());
     /// ```
     fn configure(&mut self, config: &str) -> In3Result<()> {
         unsafe {
