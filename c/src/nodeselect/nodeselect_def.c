@@ -300,14 +300,6 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
 }
 
-NONULL static in3_node_t* get_node(const in3_nodeselect_def_t* data, const node_match_t* node) {
-  return node && node->index < data->nodelist_length ? data->nodelist + node->index : NULL;
-}
-
-NONULL static in3_node_weight_t* get_node_weight(const in3_nodeselect_def_t* data, const node_match_t* node) {
-  return node && node->index < data->nodelist_length ? data->weights + node->index : NULL;
-}
-
 static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   const in3_t* c = ctx->client;
 
@@ -344,16 +336,16 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static inline bool is_blacklisted(const node_match_t* node) { return node && node->blocked; }
+static inline bool is_blacklisted(const in3_node_t* node) { return node && node->blocked; }
 
-static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, node_match_t* node) {
-
+static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, node_match_t* n) {
+  in3_node_t* node = get_node(data, n);
   if (is_blacklisted(node)) return IN3_ERPC; // already handled
 
   if (node && !node->blocked) {
-    in3_node_weight_t* w = get_node_weight(data, node);
+    in3_node_weight_t* w = get_node_weight(data, n);
     if (!w) {
-      in3_log_debug("failed to blacklist node: %s\n", get_node(data, node)->url);
+      in3_log_debug("failed to blacklist node: %s\n", get_node(data, n)->url);
       return IN3_EFIND;
     }
 
@@ -363,7 +355,7 @@ static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, node_match_t* node) 
       data->dirty = true;
     w->blacklisted_until = blacklisted_until_;
     node->blocked        = true;
-    in3_log_debug("Blacklisting node for unverifiable response: %s\n", get_node(data, node) ? get_node(data, node)->url : "");
+    in3_log_debug("Blacklisting node for unverifiable response: %s\n", node ? node->url : "");
   }
   return IN3_OK;
 }
@@ -434,7 +426,7 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_nodeselect_def_t* data, d
 }
 
 static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_response_t* response) {
-  if (!node || node->blocked || !response || !response->time) return;
+  if (!node || get_node(data, node)->blocked || !response || !response->time) return;
   in3_node_weight_t* w = get_node_weight(data, node);
   if (!w) return;
   w->response_count++;
@@ -452,7 +444,7 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followop_type_
     handle_times(data, node, ctx->raw_response + n);
 
   // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-  if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
+  if (!is_blacklisted(get_node(data, node)) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
     check_autoupdate(ctx, data, d_get(ctx->responses[0], K_IN3), vnode);
 
   // update weights in the cache

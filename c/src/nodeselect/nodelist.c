@@ -428,14 +428,14 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
     if (!first) first = current;
-    current->index   = i;
-    current->blocked = false;
-    current->next    = NULL;
-    current->s       = weight_sum;
-    current->w       = in3_node_calculate_weight(weight_def, node_def->capacity, now);
-    current->url     = (c->flags & FLAGS_HTTP) ? to_http_url(node_def->url) : _strdupn(node_def->url, -1);
+    current->index    = i;
+    node_def->blocked = false;
+    current->next     = NULL;
+    node_def->s       = weight_sum;
+    node_def->w       = in3_node_calculate_weight(weight_def, node_def->capacity, now);
+    current->url      = (c->flags & FLAGS_HTTP) ? to_http_url(node_def->url) : _strdupn(node_def->url, -1);
     memcpy(current->address, node_def->address, 20);
-    weight_sum += current->w;
+    weight_sum += node_def->w;
     found++;
     if (prev) prev->next = current;
     prev = current;
@@ -540,7 +540,8 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
     // find the first node matching it.
     current = found;
     while (current) {
-      if (current->s <= r && current->s + current->w >= r) break;
+      in3_node_t* n = get_node(data, current);
+      if (n->s <= r && n->s + n->w >= r) break;
       current = current->next;
     }
 
@@ -555,8 +556,6 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
       if (!next) {
         added++;
         next        = _calloc(1, sizeof(node_match_t));
-        next->s     = current->s;
-        next->w     = current->w;
         next->index = current->index;
         next->url   = _strdupn(current->url, -1);
         memcpy(next->address, current->address, 20);

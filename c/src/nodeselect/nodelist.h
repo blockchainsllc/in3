@@ -130,4 +130,12 @@ NONULL static inline void blacklist_node_addr(in3_nodeselect_def_t* data, const 
   }
 }
 
+NONULL static inline in3_node_t* get_node(const in3_nodeselect_def_t* data, const node_match_t* node) {
+  return node && node->index < data->nodelist_length ? data->nodelist + node->index : NULL;
+}
+
+NONULL static inline in3_node_weight_t* get_node_weight(const in3_nodeselect_def_t* data, const node_match_t* node) {
+  return node && node->index < data->nodelist_length ? data->weights + node->index : NULL;
+}
+
 #endif

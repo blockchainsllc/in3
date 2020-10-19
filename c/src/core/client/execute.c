@@ -404,12 +404,11 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
       char* err_msg;
       // if we don't have a result, the node reported an error
       if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg)) {
-        if (node) node->blocked = true; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
         in3_log_debug("we have a user-error from node, so we reject the response, but don't blacklist ..\n");
         continue;
       }
       else {
-        if (!node->blocked) in3_log_debug("we have a system-error from node, so we block it ..\n");
+        in3_log_debug("we have a system-error from node, so we block it ..\n");
         in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
         return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
       }

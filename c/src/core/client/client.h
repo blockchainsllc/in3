@@ -145,9 +145,12 @@ typedef uint8_t in3_node_attr_t;
  */
 typedef struct in3_node {
   address_t        address;  /**< address of the server */
-  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  bool             blocked;  /**< if true this node has  been blocked for sending wrong responses */
   uint_fast16_t    index;    /**< index within the nodelist, also used in the contract as key */
   uint_fast16_t    capacity; /**< the maximal capacity able to handle */
+  uint32_t         s;        /**< The starting value */
+  uint32_t         w;        /**< weight value */
+  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
   in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;      /**< the url of the node */
   uint_fast8_t     attrs;    /**< bitmask of internal attributes */
