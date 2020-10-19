@@ -277,7 +277,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":false}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0x1203030230\"}", "expected uint32 or string");
-  TEST_ASSERT_CONFIGURE_FAIL("uinitialized chain: chainId", c, "{\"chainId\":0}", "chain corresponding to chain id not initialized!");
+  TEST_ASSERT_CONFIGURE_FAIL("uninitialized chain: chainId", c, "{\"chainId\":0}", "chain corresponding to chain id not initialized!");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"mainnet\"}");
   TEST_ASSERT_EQUAL(c->chain.chain_id, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":5}");
