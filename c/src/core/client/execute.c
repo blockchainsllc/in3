@@ -110,11 +110,10 @@ NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
-static void free_urls(char** urls, int len, bool free_items) {
+static void free_urls(char** urls, int len) {
   if (!urls) return;
-  if (free_items) {
-    for (int i = 0; i < len; i++) _free(urls[i]);
-  }
+  for (int i = 0; i < len; i++)
+    _free(urls[i]);
   _free(urls);
 }
 
@@ -514,7 +513,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   node_match_t* node        = ctx->nodes;
 
   for (int n = 0; n < nodes_count; n++) {
-    urls[n] = rpc ? rpc : node->url;
+    urls[n] = _strdupn(rpc ? rpc : node->url, -1);
     assert(urls[n] != NULL);
 
     // this is all we need to do if we have a rpc-node
@@ -529,7 +528,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   if (res < 0) {
     // we clean up
     sb_free(payload);
-    free_urls(urls, nodes_count, ctx->client->flags & FLAGS_HTTP);
+    free_urls(urls, nodes_count);
     // since we cannot return an error, we set the error in the context and return NULL, indicating the error.
     ctx_set_error(ctx, "could not generate the payload", res);
     return NULL;
@@ -556,7 +555,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
 NONULL void request_free(in3_request_t* req) {
   // free resources
-  free_urls(req->urls, req->urls_len, req->ctx->client->flags & FLAGS_HTTP);
+  free_urls(req->urls, req->urls_len);
   _free(req->payload);
   _free(req);
 }

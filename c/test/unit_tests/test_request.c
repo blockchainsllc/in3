@@ -94,6 +94,7 @@ static void test_configure_request() {
   request_free(request);
   json_free(json);
 //  ctx_free(ctx);
+  ctx_free(ctx);
 
   in3_free(c);
 }
