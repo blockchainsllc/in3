@@ -3,6 +3,18 @@
 (Summarize the bug encountered concisely)
 
 
+## Is there an open issue
+
+Please search if there are open issues (same or related) before creating a new one. 
+
+## What is the expected correct behavior?
+
+(What you should see instead)
+
+## What is the current bug behavior?
+
+(What actually happens)
+
 ## Steps to reproduce
 
 (How one can reproduce the issue - this is very important)
@@ -11,16 +23,6 @@
 ## Example Project
 
 (If possible or relevant, please create an example project here on [git.slock.it/in3/c](https://git.slock.it/in3/c) that exhibits the problematic behaviour, and link to it here in the bug report)
-
-
-## What is the current bug behavior?
-
-(What actually happens)
-
-
-## What is the expected correct behavior?
-
-(What you should see instead)
 
 
 ## Relevant logs and/or screenshots
