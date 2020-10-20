@@ -1,11 +1,18 @@
 ## Merge request checklist
 
 Check if your MR fulfills the following requirements:
+
 - [ ] Tests for the changes have been added (for bug fixes / features)
 - [ ] Docs have been reviewed and added / updated if needed (for bug fixes / features)
-- [ ] Build was run locally and gitlab ci pipeline is green
+- [ ] Build was run locally
+- [ ] Gitlab CI pipeline is green
 - [ ] Lint has passed locally and any fixes were made for failures
-- [ ] Format check clang-format, ran [format_all.sh](https://git.slock.it/in3/c/in3-core/-/blob/develop/scripts/format_all.sh) ?
+- [ ] Format check clang-format, (ran [format_all.sh](https://git.slock.it/in3/c/in3-core/-/blob/develop/scripts/format_all.sh))
+- [ ] Check for private keys or login info and remove them
+- [ ] An example has been added or an existing one has been updated/reviewed if needed (bug fixes / new features / signature changes)
+- [ ] Ran all the examples in your local machine. (ci doesn't run them)
+- [ ] CHANGELOG.md has been updated. Add one if it does not have it. Add a line per MR
+- [ ] Code coverage badge was updated. Add one if it does not have it.
 
 
 ## Merge request type
@@ -19,7 +26,6 @@ Check the type of change your MR introduces:
 - [ ] Refactoring (no functional changes, no api changes)
 - [ ] Build related changes
 - [ ] Documentation content changes
-- [ ] Other (please describe): 
 
 
 ## What is the current behavior?
