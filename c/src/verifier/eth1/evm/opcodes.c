@@ -355,6 +355,31 @@ int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   return res;
 }
 
+// Modified version of op_datacopy
+// TODO: Modify the code to handle 'creation' transactions correctly, so that this modified version
+// will no longer be necessary
+int op_datacopy_mod(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
+  int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm), res = 0;
+  if (mem_pos < 0 || data_len < 0 || data_pos < 0) return EVM_ERROR_EMPTY_STACK;
+  subgas(((data_len + 31) / 32) * G_COPY);
+  bytes_t src_data = {.data = ((uint32_t) data_pos < src->len) ? (src->data + data_pos) : NULL, .len = src->len - data_pos};
+  src_data.len     = src_data.data ? min(src_data.len, ((uint32_t) data_len)) : 0;
+  if (check_size && !src_data.data) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+
+  if (src_data.len < (uint32_t) data_len)
+    res = evm_mem_write(evm, mem_pos + src_data.len, bytes(NULL, 0), data_len - src_data.len);
+
+  if (src_data.len && res == 0) {
+    res = evm_mem_write(evm, mem_pos, src_data, src_data.len);
+    
+    if(evm->properties & EVM_PROP_TXCREATE) {
+      account_t* acc_adr = evm_get_account(evm, evm->account, true);
+      acc_adr->code = src_data;
+    }    
+  }    
+  return res;
+}
+
 int op_extcodecopy(evm_t* evm) {
   address_t address;
   uint8_t*  data = NULL;

@@ -387,7 +387,8 @@ int evm_execute(evm_t* evm) {
     case 0x38: // CODESIZE
       op_exec(evm_stack_push_int(evm, evm->code.len), G_BASE);
     case 0x39: // CODECOPY
-      op_exec(op_datacopy(evm, &evm->code, 0), G_VERY_LOW);
+      //op_exec(op_datacopy(evm, &evm->code, 0), G_VERY_LOW);
+      op_exec(op_datacopy_mod(evm, &evm->code, 0), G_VERY_LOW);
     case 0x3a: // GASPRICE
       op_exec(evm_stack_push(evm, evm->gas_price.data, evm->gas_price.len), G_BASE);
     case 0x3b: // EXTCODESIZE
@@ -496,6 +497,7 @@ int evm_run(evm_t* evm, address_t code_address) {
     // execute the opcode
     res = evm_execute(evm);
     // display the result of the opcode (only if the debug flag is set)
+
 #ifdef EVM_GAS
     // debug gas output
     EVM_DEBUG_BLOCK({ evm_print_stack(evm, last_gas, last); });
@@ -505,6 +507,12 @@ int evm_run(evm_t* evm, address_t code_address) {
   // done...
 
 #ifdef EVM_GAS
+  // check if we executed a creation transaction and deduce gas costs  
+    if(evm->properties & EVM_PROP_TXCREATE) {
+      account_t* acc_adr = evm_get_account(evm, evm->account, true);
+      subgas(acc_adr->code.len * G_CODEDEPOSIT);  
+    }
+
   // debug gas output
   EVM_DEBUG_BLOCK({
     in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);

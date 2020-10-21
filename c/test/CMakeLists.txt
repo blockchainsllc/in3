@@ -152,7 +152,7 @@ foreach (testdir
         #GeneralStateTests/stExtCodeHash
         #GeneralStateTests/stBugs
         GeneralStateTests/stExample
-        #GeneralStateTests/stTransitionTest
+        GeneralStateTests/stTransitionTest
         GeneralStateTests/stCallCodes
         #GeneralStateTests/stPreCompiledContracts2
         #GeneralStateTests/stZeroCallsTest
@@ -201,8 +201,9 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*pairingTest.json$")
     list(FILTER files EXCLUDE REGEX ".*ecmul_0-3_5616_28000_96.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
-
     list(FILTER files EXCLUDE REGEX ".*(pointMulAdd2).json$")
+    list(FILTER files EXCLUDE REGEX ".*createNameRegistratorPerTxsNotEnoughGas(After|At|Before).json$")
+    list(FILTER files EXCLUDE REGEX ".*delegatecall(After|At|Before)Transition.json$")
 
     foreach (file ${files})
         get_filename_component(testname "${file}" NAME_WE)
