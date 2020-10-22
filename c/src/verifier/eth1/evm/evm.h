@@ -83,7 +83,7 @@ typedef enum evm_state {
 #define EVM_PROP_ISTANBUL      32
 #define EVM_PROP_NO_FINALIZE   32768
 #define EVM_PROP_STATIC        256
-#define EVM_PROP_TXCREATE      512      /**< executing a creation transaction > */
+#define EVM_PROP_TXCREATE      512 /**< executing a creation transaction > */
 
 #define EVM_ENV_BALANCE     1
 #define EVM_ENV_CODE_SIZE   2

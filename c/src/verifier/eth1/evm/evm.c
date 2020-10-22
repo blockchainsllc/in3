@@ -387,8 +387,7 @@ int evm_execute(evm_t* evm) {
     case 0x38: // CODESIZE
       op_exec(evm_stack_push_int(evm, evm->code.len), G_BASE);
     case 0x39: // CODECOPY
-      //op_exec(op_datacopy(evm, &evm->code, 0), G_VERY_LOW);
-      op_exec(op_datacopy_mod(evm, &evm->code, 0), G_VERY_LOW);
+      op_exec(op_datacopy(evm, &evm->code, 0), G_VERY_LOW);
     case 0x3a: // GASPRICE
       op_exec(evm_stack_push(evm, evm->gas_price.data, evm->gas_price.len), G_BASE);
     case 0x3b: // EXTCODESIZE
@@ -507,11 +506,11 @@ int evm_run(evm_t* evm, address_t code_address) {
   // done...
 
 #ifdef EVM_GAS
-  // check if we executed a creation transaction and deduce gas costs  
-    if(evm->properties & EVM_PROP_TXCREATE) {
-      account_t* acc_adr = evm_get_account(evm, evm->account, true);
-      subgas(acc_adr->code.len * G_CODEDEPOSIT);  
-    }
+  // check if we executed a creation transaction and deduce gas costs
+  if (evm->properties & EVM_PROP_TXCREATE) {
+    account_t* acc_adr = evm_get_account(evm, evm->account, true);
+    subgas(acc_adr->code.len * G_CODEDEPOSIT);
+  }
 
   // debug gas output
   EVM_DEBUG_BLOCK({
