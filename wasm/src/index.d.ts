@@ -379,7 +379,7 @@ export declare interface RPCResponse {
     /**
      * in case of an error this needs to be set
      */
-    error?: string
+    error?: string | { message: string, code: number, data?: any }
     /**
      * the params
      * example: 0xa35bc
@@ -401,6 +401,12 @@ interface IN3Plugin<BigIntType, BufferType> {
 
     /**
      * returns address
+     * @param client 
+     */
+    getAccount?(client: IN3Generic<BigIntType, BufferType>): string
+
+    /**
+     * returns list of addresses
      * @param client 
      */
     getAccounts?(client: IN3Generic<BigIntType, BufferType>): Address[]
@@ -806,6 +812,4 @@ export declare interface Utils<BufferType> {
      * @param pk the private key.
      */
     private2address(pk: Hex | BufferType): Address
-
 }
-
