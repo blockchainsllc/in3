@@ -95,6 +95,8 @@ int op_dataload(evm_t* evm);
 
 int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size);
 
+int op_datacopy_mod(evm_t* evm, bytes_t* src, uint_fast8_t check_size);
+
 int op_extcodecopy(evm_t* evm);
 
 int op_header(evm_t* evm, uint8_t index);
