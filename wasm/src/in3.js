@@ -32,10 +32,13 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+const isBrowserEnvironment = (function () {
+    return (typeof window !== "undefined") && (this === window);
+}).call();
+
 // implement the transport and storage handlers
 /* istanbul ignore next */
-if (typeof fetch === 'function') {
-
+if (isBrowserEnvironment) {
     // for browsers
     in3w.in3_cache = {
         get: key => window.localStorage.getItem('in3.' + key),
@@ -244,7 +247,7 @@ class IN3 {
             this.plugins.push(plgn)
         }
 
-        if (this.ptr) 
+        if (this.ptr)
             in3w.ccall('wasm_register_plugin', 'number', ['number', 'number', 'number'], [this.ptr, action, index]);
     }
 
