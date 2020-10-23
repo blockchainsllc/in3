@@ -207,8 +207,10 @@ static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {
   else
     return NULL;
 
-  bytes_t* cfg = hex_to_new_bytes(bincfg, strlen(bincfg));
-  return parse_binary(cfg);
+  bytes_t*    cfg  = hex_to_new_bytes(bincfg, strlen(bincfg));
+  json_ctx_t* data = parse_binary(cfg);
+  b_free(cfg);
+  return data;
 }
 
 #endif //IN3_NODE_SELECT_DEF_CFG_H
