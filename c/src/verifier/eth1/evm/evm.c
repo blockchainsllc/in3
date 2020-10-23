@@ -496,6 +496,7 @@ int evm_run(evm_t* evm, address_t code_address) {
     // execute the opcode
     res = evm_execute(evm);
     // display the result of the opcode (only if the debug flag is set)
+
 #ifdef EVM_GAS
     // debug gas output
     EVM_DEBUG_BLOCK({ evm_print_stack(evm, last_gas, last); });
@@ -505,6 +506,12 @@ int evm_run(evm_t* evm, address_t code_address) {
   // done...
 
 #ifdef EVM_GAS
+  // check if we executed a creation transaction and deduce gas costs
+  if (evm->properties & EVM_PROP_TXCREATE) {
+    account_t* acc_adr = evm_get_account(evm, evm->account, true);
+    subgas(acc_adr->code.len * G_CODEDEPOSIT);
+  }
+
   // debug gas output
   EVM_DEBUG_BLOCK({
     in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
