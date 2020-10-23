@@ -7,8 +7,8 @@ DEF=""
 NEWDEF=""
 
 while IFS="" read -r p || [ -n "$p" ]; do
-  if [[ $p == *"#define "*" DECOMPOSE("* ]]; then
-    NEWDEF="${p%DECOMPOSE*}"
+  if [[ $p == "#define "*" JSON_TO_BIN("* ]]; then
+    NEWDEF="${p%JSON_TO_BIN*}"
     if [[ $p != *"\\" ]]; then
       DEF=${p##*(}
       DEF=$(echo "${p##*(}" | tr -d '[:space:]' | sed -e 's/^"//' -e 's/"$//')
@@ -41,7 +41,6 @@ while IFS="" read -r p || [ -n "$p" ]; do
       DEF="$DEF$temp"
       echo -n "$NEWDEF"
       DEF=$(echo -n "$DEF" | sed 's/\\//g' | json)
-      DEF=${DEF:0:$((${#DEF} - 1))}
       echo '"'"${DEF}"'"'
       DEF=""
       NEWDEF=""
