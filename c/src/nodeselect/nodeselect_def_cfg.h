@@ -93,7 +93,7 @@
 //                                      "  }"                                                                                        \
 //                                      " }"                                                                                         \
 //                                      "}")
-#define BOOT_NODES_KOVAN "ce6130f661011b63ce12144c396dcf50ac396e5fdea18163251699b5fcca256eb81c2092eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf1aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2268747470733a2f2f696e332d76322e736c6f636b2e69742f6b6f76616e2f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2268747470733a2f2f696e332d76322e736c6f636b2e69742f6b6f76616e2f6e642d3200416ebdffff"
+#define BOOT_NODES_KOVAN  "ce6130f661011b63ce12144c396dcf50ac396e5fdea18163251699b5fcca256eb81c2092eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf1aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2268747470733a2f2f696e332d76322e736c6f636b2e69742f6b6f76616e2f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2268747470733a2f2f696e332d76322e736c6f636b2e69742f6b6f76616e2f6e642d3200416ebdffff"
 
 // #define BOOT_NODES_GOERLI JSON_TO_BIN("{"                                                                                          \
 //                                       " \"servers\": {"                                                                            \
@@ -131,7 +131,7 @@
 //                                     "  }"                                                                                        \
 //                                     " }"                                                                                         \
 //                                     "}")
-#define BOOT_NODES_IPFS "ce6130f661ce2b63ce1214a93b57289070550c82edb1106e12bb37138948b86eb81c20f0162ec6d785ee990e36bad865251f45af0916cf136169540c02b0dd9cb691961aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2168747470733a2f2f696e332d76322e736c6f636b2e69742f697066732f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2168747470733a2f2f696e332d76322e736c6f636b2e69742f697066732f6e642d3200416ebdffff"
+#define BOOT_NODES_IPFS   "ce6130f661ce2b63ce1214a93b57289070550c82edb1106e12bb37138948b86eb81c20f0162ec6d785ee990e36bad865251f45af0916cf136169540c02b0dd9cb691961aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2168747470733a2f2f696e332d76322e736c6f636b2e69742f697066732f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2168747470733a2f2f696e332d76322e736c6f636b2e69742f697066732f6e642d3200416ebdffff"
 
 // #define BOOT_NODES_BTC JSON_TO_BIN("{"                                                                                          \
 //                                    " \"servers\": {"                                                                            \
@@ -150,7 +150,7 @@
 //                                    "  }"                                                                                        \
 //                                    " }"                                                                                         \
 //                                    "}")
-#define BOOT_NODES_BTC "ce6130f66104c863ce1214c2c05fbfe76ee7748ae5f5b61b57a46cc4061c326eb81c2053786c93e54c21d9852d093c394eee9df8d714d8f2534cdf92f9c9998c528d191aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6274632f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6274632f6e642d3200416ebdffff"
+#define BOOT_NODES_BTC    "ce6130f66104c863ce1214c2c05fbfe76ee7748ae5f5b61b57a46cc4061c326eb81c2053786c93e54c21d9852d093c394eee9df8d714d8f2534cdf92f9c9998c528d191aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6274632f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6274632f6e642d3200416ebdffff"
 
 // #define BOOT_NODES_EWC JSON_TO_BIN("{"                                                                                          \
 //                                    " \"servers\": {"                                                                            \
@@ -169,7 +169,7 @@
 //                                    "  }"                                                                                        \
 //                                    " }"                                                                                         \
 //                                    "}")
-#define BOOT_NODES_EWC "ce6130f6612b1863ce1214039562872008f7a76674a6e7842804f0ad37cb136eb81c20313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed751aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6577632f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6577632f6e642d3200416ebdffff"
+#define BOOT_NODES_EWC    "ce6130f6612b1863ce1214039562872008f7a76674a6e7842804f0ad37cb136eb81c20313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed751aa24263b2f61445d45e6ff99e6c34a235d263965910298985fcfe796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6577632f6e642d3100416ebdffff63b2f6141fe2e9bf29aa1938859af64c413361227d04059a796b3c2068747470733a2f2f696e332d76322e736c6f636b2e69742f6577632f6e642d3200416ebdffff"
 
 // #define BOOT_NODES_LOCAL JSON_TO_BIN("{"                                                                \
 //                                      " \"servers\": {"                                                  \
@@ -183,7 +183,7 @@
 //                                      "  }"                                                              \
 //                                      " }"                                                               \
 //                                      "}")
-#define BOOT_NODES_LOCAL "c96130f66100c862ce1214f0fb87f4757c77ea3416afe87f36acaa0496c7e91aa24163b2f614784bfa9eb182c3a02dbeb5285e3dba92d717e07a796b35687474703a2f2f6c6f63616c686f73743a3835343500416ebdffff"
+#define BOOT_NODES_LOCAL  "c96130f66100c862ce1214f0fb87f4757c77ea3416afe87f36acaa0496c7e91aa24163b2f614784bfa9eb182c3a02dbeb5285e3dba92d717e07a796b35687474703a2f2f6c6f63616c686f73743a3835343500416ebdffff"
 
 #endif /* IN3_STAGING */
 
