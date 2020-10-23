@@ -406,6 +406,12 @@ interface IN3Plugin<BigIntType, BufferType> {
     getAccount?(client: IN3Generic<BigIntType, BufferType>): string
 
     /**
+     * returns list of addresses
+     * @param client 
+     */
+    getAccounts?(client: IN3Generic<BigIntType, BufferType>): Address[]
+
+    /**
      * called for each request. 
      * If the plugin wants to handle the request, this function should return the value or a Promise for the value.
      * If the plugin does not want to handle it, it should rreturn undefined.
@@ -531,9 +537,16 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public static util: Utils<any>
 
-    public static setConvertBigInt(convert: (arg: any) => any): void
-    public static setConvertBuffer(convert: (arg: any) => any): void
-    // public static setConvertBuffer<BufferType>(val: any, len?: number) : BufferType
+    /** sets the convert-function, which converts any kind of type to Type defined for BigInt-operation.
+     * if not set the default type would be bigint.
+     */
+    public static setConvertBigInt(convert: (val: any) => any): void
+
+
+    /** sets the convert-function, which converts any kind of type to Type defined for Buffer or Bytes-operation.
+     * if not set the default type would be UInt8Array.
+     */
+    public static setConvertBuffer(convert: (val: any) => any): void
 
     /** supporting both ES6 and UMD usage */
     public static default: typeof IN3Generic
@@ -552,8 +565,18 @@ export class IN3 extends IN3Generic<bigint, Uint8Array> {
  */
     public constructor(config?: Partial<IN3Config>);
 
-    public static setConvertBigInt(convert: (arg: any) => any): void
-    public static setConvertBuffer(convert: (arg: any) => any): void
+
+    /** sets the convert-function, which converts any kind of type to Type defined for BigInt-operation.
+     * if not set the default type would be bigint.
+     */
+    public static setConvertBigInt(convert: (val: any) => any): void
+
+
+    /** sets the convert-function, which converts any kind of type to Type defined for Buffer or Bytes-operation.
+     * if not set the default type would be UInt8Array.
+     */
+    public static setConvertBuffer(convert: (val: any) => any): void
+
 }
 
 /**
