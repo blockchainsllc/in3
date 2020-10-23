@@ -179,8 +179,7 @@
 #endif /* IN3_STAGING */
 
 static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {
-  json_ctx_t* json   = NULL;
-  char*       bincfg = NULL;
+  char* bincfg = NULL;
 
   if (chain_id == CHAIN_ID_MAINNET)
     bincfg = BOOT_NODES_MAINNET;
@@ -196,10 +195,11 @@ static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {
     bincfg = BOOT_NODES_EWC;
   else if (chain_id == CHAIN_ID_LOCAL)
     bincfg = BOOT_NODES_LOCAL;
+  else
+    return NULL;
 
   bytes_t* cfg = hex_to_new_bytes(bincfg, strlen(bincfg));
-  json         = parse_binary(cfg);
-  return json;
+  return parse_binary(cfg);
 }
 
 #endif //IN3_NODE_SELECT_DEF_CFG_H
