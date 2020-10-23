@@ -16,7 +16,6 @@ while IFS="" read -r p || [ -n "$p" ]; do
       printf '// %s\n' "$p"
       echo -n "$NEWDEF"
       DEF=$(echo -n "$DEF" | sed 's/\\//g' | json)
-      DEF=${DEF:0:$((${#DEF} - 1))}
       echo '"'"${DEF}"'"'
       DEF=""
       NEWDEF=""
