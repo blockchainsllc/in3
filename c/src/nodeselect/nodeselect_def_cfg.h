@@ -179,21 +179,26 @@
 #endif /* IN3_STAGING */
 
 static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {
-  json_ctx_t* json = NULL;
+  json_ctx_t* json   = NULL;
+  char*       bincfg = NULL;
+
   if (chain_id == CHAIN_ID_MAINNET)
-    json = parse_json(BOOT_NODES_MAINNET);
+    bincfg = BOOT_NODES_MAINNET;
   else if (chain_id == CHAIN_ID_KOVAN)
-    json = parse_json(BOOT_NODES_KOVAN);
+    bincfg = BOOT_NODES_KOVAN;
   else if (chain_id == CHAIN_ID_GOERLI)
-    json = parse_json(BOOT_NODES_GOERLI);
+    bincfg = BOOT_NODES_GOERLI;
   else if (chain_id == CHAIN_ID_IPFS)
-    json = parse_json(BOOT_NODES_IPFS);
+    bincfg = BOOT_NODES_IPFS;
   else if (chain_id == CHAIN_ID_BTC)
-    json = parse_json(BOOT_NODES_BTC);
+    bincfg = BOOT_NODES_BTC;
   else if (chain_id == CHAIN_ID_EWC)
-    json = parse_json(BOOT_NODES_EWC);
+    bincfg = BOOT_NODES_EWC;
   else if (chain_id == CHAIN_ID_LOCAL)
-    json = parse_json(BOOT_NODES_LOCAL);
+    bincfg = BOOT_NODES_LOCAL;
+
+  bytes_t* cfg = hex_to_new_bytes(bincfg, strlen(bincfg));
+  json         = parse_binary(cfg);
   return json;
 }
 
