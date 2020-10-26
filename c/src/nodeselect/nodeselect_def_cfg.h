@@ -363,28 +363,25 @@ unsigned int BOOT_NODES_LOCAL_BIN_LEN = 88;
 #endif /* IN3_STAGING */
 
 static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {
-  char* bincfg = NULL;
-
+  bytes_t bincfg;
   if (chain_id == CHAIN_ID_MAINNET)
-    bincfg = BOOT_NODES_MAINNET;
+    bincfg = bytes(BOOT_NODES_MAINNET_BIN, BOOT_NODES_MAINNET_BIN_LEN);
   else if (chain_id == CHAIN_ID_KOVAN)
-    bincfg = BOOT_NODES_KOVAN;
+    bincfg = bytes(BOOT_NODES_KOVAN_BIN, BOOT_NODES_KOVAN_BIN_LEN);
   else if (chain_id == CHAIN_ID_GOERLI)
-    bincfg = BOOT_NODES_GOERLI;
+    bincfg = bytes(BOOT_NODES_GOERLI_BIN, BOOT_NODES_GOERLI_BIN_LEN);
   else if (chain_id == CHAIN_ID_IPFS)
-    bincfg = BOOT_NODES_IPFS;
+    bincfg = bytes(BOOT_NODES_IPFS_BIN, BOOT_NODES_IPFS_BIN_LEN);
   else if (chain_id == CHAIN_ID_BTC)
-    bincfg = BOOT_NODES_BTC;
+    bincfg = bytes(BOOT_NODES_BTC_BIN, BOOT_NODES_BTC_BIN_LEN);
   else if (chain_id == CHAIN_ID_EWC)
-    bincfg = BOOT_NODES_EWC;
+    bincfg = bytes(BOOT_NODES_EWC_BIN, BOOT_NODES_EWC_BIN_LEN);
   else if (chain_id == CHAIN_ID_LOCAL)
-    bincfg = BOOT_NODES_LOCAL;
+    bincfg = bytes(BOOT_NODES_LOCAL_BIN, BOOT_NODES_LOCAL_BIN_LEN);
   else
     return NULL;
 
-  bytes_t*    cfg  = hex_to_new_bytes(bincfg, strlen(bincfg));
-  json_ctx_t* data = parse_binary(cfg);
-  b_free(cfg);
+  json_ctx_t* data = parse_binary(&bincfg);
   return data;
 }
 
