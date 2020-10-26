@@ -8,15 +8,16 @@ NEWDEF=""
 
 while IFS="" read -r p || [ -n "$p" ]; do
   if [[ $p == "#define "*" JSON_TO_BIN("* ]]; then
-    NEWDEF="${p%JSON_TO_BIN*}"
+    NEWDEF=$(echo $p | sed -e 's/#define \(.*\) JSON_TO_BIN\(.*\)/\1/')
     if [[ $p != *"\\" ]]; then
       DEF=${p##*(}
       DEF=$(echo "${p##*(}" | tr -d '[:space:]' | sed -e 's/^"//' -e 's/"$//')
       DEF=${DEF:0:$((${#DEF} - 2))}
       printf '// %s\n' "$p"
-      echo -n "$NEWDEF"
+      echo -n "${NEWDEF} "
       DEF=$(echo -n "$DEF" | sed 's/\\//g' | json)
-      echo '"'"${DEF}"'"'
+      printf "0x${DEF}" | xxd -r -p >"${NEWDEF}"".bin"
+      xxd -i -a -C "${NEWDEF}"".bin"
       DEF=""
       NEWDEF=""
       continue
@@ -38,9 +39,9 @@ while IFS="" read -r p || [ -n "$p" ]; do
       temp=$(echo "$temp" | tr -d '[:space:]' | sed -e 's/^"//' -e 's/"$//')
       temp=${temp:0:$((${#temp} - 2))}
       DEF="$DEF$temp"
-      echo -n "$NEWDEF"
       DEF=$(echo -n "$DEF" | sed 's/\\//g' | json)
-      echo '"'"${DEF}"'"'
+      printf "0x${DEF}" | xxd -r -p >"${NEWDEF}"".bin"
+      xxd -i -a -C "${NEWDEF}"".bin"
       DEF=""
       NEWDEF=""
     else
@@ -54,3 +55,5 @@ while IFS="" read -r p || [ -n "$p" ]; do
     printf '%s\n' "$p"
   fi
 done <$HEADERFILE
+
+rm -f *.bin
