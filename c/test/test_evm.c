@@ -587,8 +587,10 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
   uint64_t start = clock(), gas_before = evm.gas;
 #ifdef EVM_GAS
-  if (transaction && !d_len(d_get(transaction, ikey(jc, "to"))))
-    evm.gas -= G_TXCREATE;
+  if (transaction && !d_len(d_get(transaction, ikey(jc, "to")))) {
+    evm.gas = (G_TXCREATE > evm.gas) ? 0 : evm.gas - G_TXCREATE;
+    evm.properties |= EVM_PROP_TXCREATE;
+  }
 #endif
 
   int fail = evm_run(&evm, evm.account);

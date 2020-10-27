@@ -91,7 +91,7 @@
 void show_help(char* name) {
   recorder_print(0, "Usage: %s <options> method <params> ... \n\
 \n\
--c, -chain     the chain to use. (mainnet,tobalaba,goerli,local or any RPCURL)\n\
+-c, -chain     the chain to use. (mainnet,ewc,goerli,local or any RPCURL)\n\
 -a             max number of attempts before giving up (default 5)\n\
 -rc            number of request per try (default 1)\n\
 -ns            no stats if set requests will not be part of the official metrics and considered a service request\n\
