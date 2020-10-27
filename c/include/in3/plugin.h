@@ -82,6 +82,19 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
  */
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
+/**
+ * get direct access to plugin data (if registered) based on action function
+ */
+static inline void* in3_plugin_get_data(in3_t* c, in3_plugin_act_fn fn) {
+  in3_plugin_t* p = c->plugins;
+  while (p) {
+    if (p->action_fn == fn)
+      return p->data;
+    p = p->next;
+  }
+  return NULL;
+}
+
 // ----------- RPC HANDLE -----------
 
 /**
@@ -388,8 +401,9 @@ typedef struct {
 } in3_pay_sign_req_ctx_t;
 
 typedef struct {
-  char*    msg;   /**< the error message. */
-  uint16_t error; /**< error code. */
+  char*      msg;   /**< the error message. */
+  uint16_t   error; /**< error code. */
+  in3_ctx_t* ctx;   /**< ctx . */
 } error_log_ctx_t;
 
 // -------- NL_PICK ---------
@@ -402,6 +416,12 @@ typedef struct {
   in3_nl_pick_type_t type; /**< type of node to pick. */
   in3_ctx_t*         ctx;  /**< Request context. */
 } in3_nl_pick_ctx_t;
+
+// -------- NL_FOLLOWUP ---------
+typedef struct {
+  in3_ctx_t*    ctx;  /**< Request context. */
+  node_match_t* node; /**< Node that gave us a valid response */
+} in3_nl_followop_type_t;
 
 // -------- GET_DATA ---------
 typedef enum {
@@ -422,4 +442,4 @@ typedef struct {
   void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */
 } in3_get_data_ctx_t;
 
-#endif
+#endif //PLUGIN_H
