@@ -39,7 +39,6 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
     case CHAIN_ID_MAINNET:
     case CHAIN_ID_GOERLI: return 15;
-    case CHAIN_ID_KOVAN: return 6;
     default: return 5;
   }
 }

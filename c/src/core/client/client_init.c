@@ -142,18 +142,8 @@ static void init_ewf(in3_t* c) {
 static void init_btc(in3_t* c) {
   in3_client_register_chain(c, 0x99, CHAIN_BTC, 2);
 }
-static void init_kovan(in3_t* c) {
-#ifdef IN3_STAGING
-  // kovan
-  in3_client_register_chain(c, 0x2a, CHAIN_ETH, 2);
-#else
-  // kovan
-  in3_client_register_chain(c, 0x2a, CHAIN_ETH, 2);
-#endif
-}
 
 static void init_goerli(in3_t* c) {
-
 #ifdef IN3_STAGING
   // goerli
   in3_client_register_chain(c, 0x05, CHAIN_ETH, 2);
@@ -186,8 +176,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 
   if (chain_id == CHAIN_ID_MAINNET)
     init_mainnet(c);
-  else if (chain_id == CHAIN_ID_KOVAN)
-    init_kovan(c);
   else if (chain_id == CHAIN_ID_GOERLI)
     init_goerli(c);
   else if (chain_id == CHAIN_ID_IPFS)
@@ -279,7 +267,6 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
 
 static chain_id_t get_chain_from_key(d_key_t k) {
   if (k == key("0x1")) return CHAIN_ID_MAINNET;
-  if (k == key("0x2a")) return CHAIN_ID_KOVAN;
   if (k == key("0x5")) return CHAIN_ID_GOERLI;
   if (k == key("0xf6")) return CHAIN_ID_EWC;
   if (k == key("0x99")) return CHAIN_ID_BTC;
@@ -297,7 +284,6 @@ static chain_id_t chain_id(d_token_t* t) {
   if (d_type(t) == T_STRING) {
     char* c = d_string(t);
     if (!strcmp(c, "mainnet")) return CHAIN_ID_MAINNET;
-    if (!strcmp(c, "kovan")) return CHAIN_ID_KOVAN;
     if (!strcmp(c, "goerli")) return CHAIN_ID_GOERLI;
     if (!strcmp(c, "ewc")) return CHAIN_ID_EWC;
     if (!strcmp(c, "btc")) return CHAIN_ID_BTC;
@@ -354,7 +340,7 @@ char* in3_configure(in3_t* c, const char* config) {
       BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
     }
     else if (token->key == key("chainId")) {
-      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
+      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
       in3_client_register_chain(c, chain_id(token), !c->chain.type, 2);
       in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
@@ -365,7 +351,7 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == key("finality")) {
       EXPECT_TOK_U16(token);
 #ifdef POA
-      if (c->chain.chain_id == CHAIN_ID_GOERLI || c->chain.chain_id == CHAIN_ID_KOVAN)
+      if (c->chain.chain_id == CHAIN_ID_GOERLI)
         EXPECT_CFG(d_int(token) > 0 && d_int(token) <= 100, "expected % value");
 #endif
       c->finality = (uint16_t) d_int(token);

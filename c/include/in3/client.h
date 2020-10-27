@@ -54,7 +54,6 @@
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
 #define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
-#define CHAIN_ID_KOVAN      0x2a  /**< chain_id for kovan */
 #define CHAIN_ID_TOBALABA   0x44d /**< chain_id for tobalaba */
 #define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
 #define CHAIN_ID_EVAN       0x4b1 /**< chain_id for evan */
