@@ -102,7 +102,7 @@
         "descr": "kovan block with transaction hashes",
         "success": true,
         "fuzzer": true,
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "request": {
             "method": "eth_getBlockByNumber",
             "params": [
@@ -205,7 +205,7 @@
     {
         "descr": "kovan block with wrong transaction hashes",
         "success": false,
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "request": {
             "method": "eth_getBlockByNumber",
             "params": [
@@ -308,7 +308,7 @@
     {
         "descr": "kovan block",
         "success": true,
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "fuzzer": true,
         "request": {
             "method": "eth_getBlockByNumber",
@@ -410,7 +410,7 @@
         "descr": "kovan block with transaction hashes and raw tx in proof",
         "success": true,
         "fuzzer": true,
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "request": {
             "method": "eth_getBlockByNumber",
             "params": [
