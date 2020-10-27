@@ -184,8 +184,12 @@ int evm_sub_call(evm_t*    parent,
   evm.call_value.data = value;
   evm.call_value.len  = l_value;
 
+  // if this is a delecate call, we set the address of the account storage we should use
+  if (mode == EVM_CALL_MODE_DELEGATE) evm.account = parent->account;
+
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
-  if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
+  else if (mode == EVM_CALL_MODE_STATIC)
+    evm.properties |= EVM_PROP_STATIC;
 
   account_t* new_account = NULL;
   UNUSED_VAR(new_account);
