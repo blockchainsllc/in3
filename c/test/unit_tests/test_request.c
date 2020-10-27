@@ -282,8 +282,6 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL(c->chain.chain_id, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":5}");
   TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_GOERLI);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x2a\"}");
-  TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_KOVAN);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"0x1234\"}", "expected uint8");
