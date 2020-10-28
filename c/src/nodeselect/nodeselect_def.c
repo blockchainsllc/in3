@@ -213,6 +213,10 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     return IN3_EIGNORE;
   }
 
+  // for supported chains we will get the registryId & contract from def cfg lazily
+  if (!nodeselect_def_cfg_data(ctx->client->chain.chain_id).data)
+    EXPECT_CFG(!memiszero(data->registry_id, 32) && !memiszero(data->contract, 20), "missing registryId/contract!");
+
 cleanup:
   ctx->error_msg = res;
   return ctx->error_msg ? IN3_ECONFIG : IN3_OK;
