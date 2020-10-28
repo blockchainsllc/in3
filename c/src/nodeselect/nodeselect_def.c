@@ -104,95 +104,90 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
 
-  if (token->key == key("servers") || token->key == key("nodes")) {
+  if (token->key == key("nodeRegistry")) {
     EXPECT_TOK_OBJ(token);
 
-    for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
-      EXPECT_TOK_OBJ(ct.token);
-      EXPECT_TOK_KEY_HEXSTR(ct.token);
-
 #ifdef NODESELECT_DEF_WL
-      bool has_wlc = false, has_man_wl = false;
+    bool has_wlc = false, has_man_wl = false;
 #endif
-      for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
-        if (cp.token->key == key("contract")) {
-          EXPECT_TOK_ADDR(cp.token);
-          memcpy(data->contract, cp.token->data, cp.token->len);
-        }
-        else if (cp.token->key == key("registryId")) {
-          EXPECT_TOK_B256(cp.token);
-          bytes_t reg_id = d_to_bytes(cp.token);
-          memcpy(data->registry_id, reg_id.data, 32);
-        }
-#ifdef NODESELECT_DEF_WL
-        else if (cp.token->key == key("whiteListContract")) {
-          EXPECT_TOK_ADDR(cp.token);
-          EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
-          has_wlc = true;
-          in3_whitelist_clear(data->whitelist);
-          data->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
-          data->whitelist->needs_update = true;
-          memcpy(data->whitelist->contract, cp.token->data, 20);
-        }
-        else if (cp.token->key == key("whiteList")) {
-          EXPECT_TOK_ARR(cp.token);
-          EXPECT_CFG(!has_wlc, "cannot specify manual whiteList and whiteListContract together!");
-          has_man_wl = true;
-          int len = d_len(cp.token), i = 0;
-          in3_whitelist_clear(data->whitelist);
-          data->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
-          data->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
-          for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
-            EXPECT_TOK_ADDR(n.token);
-            const uint8_t* whitelist_address = d_bytes(n.token)->data;
-            for (uint32_t j = 0; j < data->whitelist->addresses.len; j += 20) {
-              if (!memcmp(whitelist_address, data->whitelist->addresses.data + j, 20)) {
-                in3_whitelist_clear(data->whitelist);
-                data->whitelist = NULL;
-                EXPECT_TOK(cp.token, false, "duplicate address!");
-              }
-            }
-            d_bytes_to(n.token, data->whitelist->addresses.data + i, 20);
-          }
-        }
-#endif
-        else if (cp.token->key == key("needsUpdate")) {
-          EXPECT_TOK_BOOL(cp.token);
-          if (!d_int(cp.token)) {
-            if (data->nodelist_upd8_params) {
-              _free(data->nodelist_upd8_params);
-              data->nodelist_upd8_params = NULL;
-            }
-          }
-          else if (!data->nodelist_upd8_params)
-            data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
-        }
-        else if (cp.token->key == key("avgBlockTime")) {
-          EXPECT_TOK_U16(cp.token);
-          data->avg_block_time = (uint16_t) d_int(cp.token);
-        }
-        else if (cp.token->key == key("nodeList")) {
-          EXPECT_TOK_ARR(cp.token);
-          if (clear_nodes(data) < 0) goto cleanup;
-          int i = 0;
-          for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
-            EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
-            EXPECT_TOK_STR(d_get(n.token, key("url")));
-            EXPECT_TOK_ADDR(d_get(n.token, key("address")));
-            EXPECT_CFG(add_node(data, d_get_string(n.token, "url"),
-                                d_get_longkd(n.token, key("props"), 65535),
-                                d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
-                       "add node failed");
-#ifndef __clang_analyzer__
-            BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
-#endif
-          }
-        }
+    for (d_iterator_t cp = d_iter(token); cp.left; d_iter_next(&cp)) {
+      if (cp.token->key == key("contract")) {
+        EXPECT_TOK_ADDR(cp.token);
+        memcpy(data->contract, cp.token->data, cp.token->len);
+      }
+      else if (cp.token->key == key("registryId")) {
+        EXPECT_TOK_B256(cp.token);
+        bytes_t reg_id = d_to_bytes(cp.token);
+        memcpy(data->registry_id, reg_id.data, 32);
       }
 #ifdef NODESELECT_DEF_WL
-      in3_client_run_chain_whitelisting(data);
+      else if (cp.token->key == key("whiteListContract")) {
+        EXPECT_TOK_ADDR(cp.token);
+        EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
+        has_wlc = true;
+        in3_whitelist_clear(data->whitelist);
+        data->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
+        data->whitelist->needs_update = true;
+        memcpy(data->whitelist->contract, cp.token->data, 20);
+      }
+      else if (cp.token->key == key("whiteList")) {
+        EXPECT_TOK_ARR(cp.token);
+        EXPECT_CFG(!has_wlc, "cannot specify manual whiteList and whiteListContract together!");
+        has_man_wl = true;
+        int len = d_len(cp.token), i = 0;
+        in3_whitelist_clear(data->whitelist);
+        data->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
+        data->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
+        for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
+          EXPECT_TOK_ADDR(n.token);
+          const uint8_t* whitelist_address = d_bytes(n.token)->data;
+          for (uint32_t j = 0; j < data->whitelist->addresses.len; j += 20) {
+            if (!memcmp(whitelist_address, data->whitelist->addresses.data + j, 20)) {
+              in3_whitelist_clear(data->whitelist);
+              data->whitelist = NULL;
+              EXPECT_TOK(cp.token, false, "duplicate address!");
+            }
+          }
+          d_bytes_to(n.token, data->whitelist->addresses.data + i, 20);
+        }
+      }
 #endif
+      else if (cp.token->key == key("needsUpdate")) {
+        EXPECT_TOK_BOOL(cp.token);
+        if (!d_int(cp.token)) {
+          if (data->nodelist_upd8_params) {
+            _free(data->nodelist_upd8_params);
+            data->nodelist_upd8_params = NULL;
+          }
+        }
+        else if (!data->nodelist_upd8_params)
+          data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
+      }
+      else if (cp.token->key == key("avgBlockTime")) {
+        EXPECT_TOK_U16(cp.token);
+        data->avg_block_time = (uint16_t) d_int(cp.token);
+      }
+      else if (cp.token->key == key("nodeList")) {
+        EXPECT_TOK_ARR(cp.token);
+        if (clear_nodes(data) < 0) goto cleanup;
+        int i = 0;
+        for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
+          EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
+          EXPECT_TOK_STR(d_get(n.token, key("url")));
+          EXPECT_TOK_ADDR(d_get(n.token, key("address")));
+          EXPECT_CFG(add_node(data, d_get_string(n.token, "url"),
+                              d_get_longkd(n.token, key("props"), 65535),
+                              d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
+                     "add node failed");
+#ifndef __clang_analyzer__
+          BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
+#endif
+        }
+      }
     }
+#ifdef NODESELECT_DEF_WL
+    in3_client_run_chain_whitelisting(data);
+#endif
   }
   else if (token->key == key("rpc")) {
     EXPECT_TOK_STR(token);
@@ -230,10 +225,7 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   if (c->chain.chain_id == CHAIN_ID_LOCAL)
     add_string(sb, ',', "rpc", data->nodelist->url);
 
-  sb_add_chars(sb, ",\"nodes\":{");
-  sb_add_char(sb, '"');
-  sb_add_hexuint(sb, c->chain.chain_id);
-  sb_add_chars(sb, "\":");
+  sb_add_chars(sb, ",\"nodeRegistry\":");
   add_hex(sb, '{', "contract", bytes(data->contract, 20));
 #ifdef NODESELECT_DEF_WL
   if (data->whitelist)
