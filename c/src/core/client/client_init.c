@@ -265,21 +265,6 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   return c;
 }
 
-static chain_id_t get_chain_from_key(d_key_t k) {
-  if (k == key("0x1")) return CHAIN_ID_MAINNET;
-  if (k == key("0x5")) return CHAIN_ID_GOERLI;
-  if (k == key("0xf6")) return CHAIN_ID_EWC;
-  if (k == key("0x99")) return CHAIN_ID_BTC;
-  if (k == key("0x7d0")) return CHAIN_ID_IPFS;
-  if (k == key("0xdeaf")) return 0xdeaf;
-  char tmp[7];
-  for (int i = 2; i < 0xffff; i++) {
-    sprintf(tmp, "0x%x", i);
-    if (k == key(tmp)) return i;
-  }
-  return 0;
-}
-
 static chain_id_t chain_id(d_token_t* t) {
   if (d_type(t) == T_STRING) {
     char* c = d_string(t);
@@ -451,46 +436,24 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_CFG(d_int(token), "requestCount must be at least 1");
       c->request_count = (uint8_t) d_int(token);
     }
-    else if (token->key == key("servers") || token->key == key("nodes")) {
-      EXPECT_TOK_OBJ(token);
-      for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
-        EXPECT_TOK_OBJ(ct.token);
-        EXPECT_TOK_KEY_HEXSTR(ct.token);
-
-        // register chain
-        chain_id_t chain_id = get_chain_from_key(ct.token->key);
-        EXPECT_CFG(!c->chain.chain_id || c->chain.chain_id == chain_id, "chain id mismatch!");
-        if (!c->chain.chain_id) {
-          EXPECT_CFG((in3_client_register_chain(c, chain_id, !c->chain.type, 2)) == IN3_OK,
-                     "register chain failed");
-          EXPECT_CFG(c->chain.chain_id, "invalid chain id!");
-        }
-
-        // chain_props
-        for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
-          if (cp.token->key == key("verifiedHashes")) {
-            EXPECT_TOK_ARR(cp.token);
-            EXPECT_TOK(cp.token, (unsigned) d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
-            if (!c->chain.verified_hashes)
-              c->chain.verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
-            else
-              // clear extra verified_hashes (preceding ones will be overwritten anyway)
-              memset(c->chain.verified_hashes + d_len(cp.token), 0, (c->max_verified_hashes - d_len(cp.token)) * sizeof(in3_verified_hash_t));
-            int i = 0;
-            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
-              EXPECT_TOK_U64(d_get(n.token, key("block")));
-              EXPECT_TOK_B256(d_get(n.token, key("hash")));
-              c->chain.verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
-              memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
-            }
-            c->alloc_verified_hashes = c->max_verified_hashes;
-          }
-        }
+    else if (token->key == key("verifiedHashes")) {
+      EXPECT_TOK_ARR(token);
+      EXPECT_TOK(token, (unsigned) d_len(token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
+      if (!c->chain.verified_hashes)
+        c->chain.verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+      else
+        // clear extra verified_hashes (preceding ones will be overwritten anyway)
+        memset(c->chain.verified_hashes + d_len(token), 0, (c->max_verified_hashes - d_len(token)) * sizeof(in3_verified_hash_t));
+      int i = 0;
+      for (d_iterator_t n = d_iter(token); n.left; d_iter_next(&n), i++) {
+        EXPECT_TOK_U64(d_get(n.token, key("block")));
+        EXPECT_TOK_B256(d_get(n.token, key("hash")));
+        c->chain.verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
+        memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
       }
-      goto PLGN_CFG;
+      c->alloc_verified_hashes = c->max_verified_hashes;
     }
     else {
-    PLGN_CFG : {
       in3_configure_ctx_t cctx    = {.client = c, .json = json, .token = token, .error_msg = NULL};
       bool                handled = false;
       for (in3_plugin_t* p = c->plugins; p; p = p->next) {
@@ -508,7 +471,6 @@ char* in3_configure(in3_t* c, const char* config) {
       }
 
       if (!handled) EXPECT_TOK(token, false, "unsupported config option!");
-    }
     }
   }
 
