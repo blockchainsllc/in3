@@ -71,7 +71,7 @@
 
 static void test_configure_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->proof                = PROOF_FULL;
   c->signature_count      = 2;
   c->finality             = 10;
@@ -101,7 +101,7 @@ static void test_configure_request() {
 
 static void test_bulk_response() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
@@ -126,7 +126,7 @@ static void test_bulk_response() {
 
 static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(CHAIN_ID_LOCAL);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodes\":{\"0x11\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   eth_register_pk_signer(c);
   char* err = in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
   TEST_ASSERT_NULL_MESSAGE(err, err);
@@ -173,7 +173,7 @@ static void test_exec_req() {
 
 static void test_partial_response() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":3,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":3,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
@@ -199,7 +199,7 @@ static void test_partial_response() {
 
 static void test_retry_response() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
@@ -250,11 +250,11 @@ static void test_configure() {
   free(tmp);
 
   // missing registryId and contract
-  TEST_ASSERT_NOT_NULL((tmp = in3_configure(c, "{\"nodes\":{\"0x8\":{}}}")));
+  TEST_ASSERT_NOT_NULL((tmp = in3_configure(c, "{\"chainId\":\"0x3\",\"nodeRegistry\":{}}")));
   free(tmp);
 
   // bad registryId
-  TEST_ASSERT_NOT_NULL((tmp = in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}")));
+  TEST_ASSERT_NOT_NULL((tmp = in3_configure(c, "{\"nodeRegistry\":{\"registryId\":\"0x987\"}}")));
   free(tmp);
 
   in3_free(c);
@@ -463,37 +463,29 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL(c->request_count, 1);
   TEST_ASSERT_EQUAL_STRING(in3_nodeselect_def_data(c)->nodelist[0].url, "rpc.local");
 
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":false}", "expected object");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":\"0x123412341234\"}", "expected object");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":65536}", "expected object");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"n1\":{}}}", "expected hex str");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":null}}", "expected object");
-  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":[]}}", "expected object");
-  TEST_ASSERT_CONFIGURE_FAIL("empty node obj", c, "{\"nodes\":{\"0x1\":{}}}", "chain id mismatch!");
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x1\",\"nodes\":{}}");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":false}", "expected object");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":\"0x123412341234\"}", "expected object");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":65536}", "expected object");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x1\",\"nodeRegistry\":{}}");
   TEST_ASSERT_CONFIGURE_FAIL("whiteListContract with manual whiteList",
                              c, "{"
                                 "  \"chainId\":\"0xdeaf\","
-                                "  \"nodes\":{"
-                                "    \"0xdeaf\":{"
+                                "  \"nodeRegistry\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
                                 "      \"registryId\":\"" REGISTRY_ID "\","
                                 "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
                                 "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
-                                "    }"
                                 "  }"
                                 "}",
                              "cannot specify manual whiteList and whiteListContract together!");
   in3_free(c);
 
-  c = in3_for_chain(0);
+  c = in3_for_chain(CHAIN_ID_LOCAL);
   TEST_ASSERT_CONFIGURE_PASS(c, "{"
-                                "  \"servers\":{"
-                                "    \"0xdeaf\":{"
+                                "  \"nodeRegistry\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
                                 "      \"registryId\":\"" REGISTRY_ID "\","
                                 "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
-                                "    }"
                                 "  }"
                                 "}");
   uint8_t wl[40];
@@ -504,12 +496,10 @@ static void test_configure_validation() {
   c = in3_for_chain(0);
   TEST_ASSERT_CONFIGURE_FAIL("duplicate whiteList addresses",
                              c, "{"
-                                "  \"servers\":{"
-                                "    \"0xdeaf\":{"
+                                "  \"nodeRegistry\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
                                 "      \"registryId\":\"" REGISTRY_ID "\","
                                 "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x0123456789012345678901234567890123456789\"],"
-                                "    }"
                                 "  }"
                                 "}",
                              "duplicate address!");
@@ -518,8 +508,14 @@ static void test_configure_validation() {
   c = in3_for_chain(0);
   TEST_ASSERT_CONFIGURE_PASS(c, "{"
                                 "  \"chainId\":\"0xdeaf\","
-                                "  \"nodes\":{"
-                                "    \"0xdeaf\":{"
+                                "  \"verifiedHashes\":[{"
+                                "    \"block\": \"0x234ad3\","
+                                "    \"hash\": \"0x1230980495039470913820938019274231230980495039470913820938019274\""
+                                "  },{"
+                                "    \"block\": \"0x234a99\","
+                                "    \"hash\": \"0xda879213bf9834ff2eade0921348dda879213bf9834ff2eade0921348d238130\""
+                                "  }],"
+                                "  \"nodeRegistry\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
                                 "      \"registryId\":\"" REGISTRY_ID "\","
                                 "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
@@ -529,15 +525,7 @@ static void test_configure_validation() {
                                 "        \"address\":\"" NODE_ADDRS "\""
                                 "      }],"
                                 "      \"needsUpdate\":true,"
-                                "      \"avgBlockTime\":7,"
-                                "      \"verifiedHashes\":[{"
-                                "        \"block\": \"0x234ad3\","
-                                "        \"hash\": \"0x1230980495039470913820938019274231230980495039470913820938019274\""
-                                "      },{"
-                                "        \"block\": \"0x234a99\","
-                                "        \"hash\": \"0xda879213bf9834ff2eade0921348dda879213bf9834ff2eade0921348d238130\""
-                                "      }]"
-                                "    }"
+                                "      \"avgBlockTime\":7"
                                 "  }"
                                 "}");
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);

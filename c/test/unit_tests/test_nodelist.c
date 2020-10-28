@@ -238,8 +238,7 @@ static in3_t* in3_init_test(chain_id_t chain) {
   initNode(chain, 4, "510ee7f6f198e018e3529164da2473a96eeb3dc8", "https://0001.mainnet.in3.anyblock.tools");
 
 */
-    char* err = in3_configure(in3, "{\"servers\": {"
-                                   "\"0x1\": {"
+    char* err = in3_configure(in3, "{\"nodeRegistry\": {"
                                    "    \"nodeList\": [{"
                                    "                        \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
                                    "                       \"url\": \"https://in3-v2.slock.it/mainnet/nd-1\","
@@ -260,7 +259,7 @@ static in3_t* in3_init_test(chain_id_t chain) {
                                    "                        \"address\": \"0x510ee7f6f198e018e3529164da2473a96eeb3dc8\","
                                    "                       \"url\": \"https://in3-v2.slock.it/mainnet/nd-5\","
                                    "                       \"props\": \"0xFFFF\""
-                                   "  }]}}}");
+                                   "  }]}}");
     if (err) printf("ERR: %s\n", err);
   }
   return in3;

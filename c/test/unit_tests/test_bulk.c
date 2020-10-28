@@ -89,7 +89,7 @@ static void test_context_bulk() {
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
   plugin_register(in3, PLGN_ACT_TRANSPORT, test_bulk_transport, NULL, true);
   in3->flags = FLAGS_STATS;
-  TEST_ASSERT_NULL(in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}"));
 
   uint64_t blkno      = 5;
   sb_t*    req        = sb_new("[");

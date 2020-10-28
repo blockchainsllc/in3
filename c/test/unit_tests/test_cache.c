@@ -200,8 +200,7 @@ static void test_newchain() {
   hex_to_bytes(REGISTRY_ID, -1, registry_id, 32);
   in3_client_register_chain(c, 0x8, CHAIN_ETH, 2);
   TEST_ASSERT_NULL(in3_configure(c, "{"
-                                    "  \"nodes\": {"
-                                    "    \"0x8\": {"
+                                    "  \"nodeRegistry\": {"
                                     "      \"contract\":\"" CONTRACT_ADDRS "\","
                                     "      \"registryId\":\"" REGISTRY_ID "\","
                                     "      \"nodeList\": [{"
@@ -209,7 +208,6 @@ static void test_newchain() {
                                     "       \"url\": \"http://test.com\","
                                     "       \"props\": \"0xFF\""
                                     "      }]"
-                                    "    }"
                                     "  }"
                                     "}"));
 
@@ -235,11 +233,9 @@ static void test_newchain() {
 
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, 2);
   TEST_ASSERT_NULL(in3_configure(c2, "{"
-                                     "  \"nodes\": {"
-                                     "    \"0x8\": {"
+                                     "  \"nodeRegistry\": {"
                                      "      \"contract\":\"" CONTRACT_ADDRS "\","
                                      "      \"registryId\":\"" REGISTRY_ID "\""
-                                     "    }"
                                      "  }"
                                      "}"));
 
@@ -289,24 +285,20 @@ static void test_whitelist_cache() {
 
   TEST_ASSERT_EQUAL_STRING("cannot specify manual whiteList and whiteListContract together!",
                            (tmp = in3_configure(c, "{"
-                                                   "  \"nodes\": {"
-                                                   "    \"0x8\": {"
+                                                   "  \"nodeRegistry\": {"
                                                    "      \"contract\":\"" CONTRACT_ADDRS "\","
                                                    "      \"registryId\":\"" REGISTRY_ID "\","
                                                    "      \"whiteList\": [\"0x1234567890123456789012345678901234567890\", \"0x1234567890123456789000000000000000000000\"],"
                                                    "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
-                                                   "    }"
                                                    "  }"
                                                    "}")));
 
   free(tmp);
   TEST_ASSERT_NULL(in3_configure(c, "{"
-                                    "  \"nodes\": {"
-                                    "    \"0x8\": {"
+                                    "  \"nodeRegistry\": {"
                                     "      \"contract\":\"" CONTRACT_ADDRS "\","
                                     "      \"registryId\":\"" REGISTRY_ID "\","
                                     "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
-                                    "    }"
                                     "  }"
                                     "}"));
 

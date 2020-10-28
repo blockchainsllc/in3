@@ -66,7 +66,7 @@
 static void test_sign() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   c->flags = FLAGS_STATS;
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
 
   bytes32_t pk;
@@ -92,7 +92,7 @@ static void to_checksum_addr(uint8_t* address, chain_id_t chain, char* result) {
 static void test_tx() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
+  in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}");
   replace_transport(in3, test_transport);
   add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
                "\"0x309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f\"", NULL, NULL);
@@ -132,7 +132,7 @@ static void test_tx() {
 static void test_sign_hex() {
 
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = FLAGS_STATS;
   replace_transport(c, test_transport);
 

@@ -63,7 +63,7 @@
 static void test_filter() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   c->flags = FLAGS_STATS;
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
 
   char *result = NULL, *error = NULL;
@@ -181,7 +181,7 @@ static void test_filter_from_block_manip() {
 static void test_filter_creation() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   c->flags = FLAGS_STATS;
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
 
   TEST_ASSERT_FALSE(filter_remove(c, 1));
@@ -203,7 +203,7 @@ static void test_filter_creation() {
 static void test_filter_changes() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   c->flags = FLAGS_STATS;
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
 
   char *result = NULL, *error = NULL;

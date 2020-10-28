@@ -76,8 +76,7 @@ static void test_in3_config() {
      \"replaceLatestBlock\":94,\
      \"requestCount\":93,\
      \"signatureCount\":92,\
-     \"nodes\":{\
-        \"0x7\":{\
+     \"nodeRegistry\":{\
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
            \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
            \"registryId\":\"0x003456789012345678901234567890123456789012345678901234567890ffff\",\
@@ -87,7 +86,6 @@ static void test_in3_config() {
               \"props\":\"0xffff\",\
               \"address\":\"0x1234567890123456789012345678901234567890\"\
            }]\
-       }\
      }\
    }]");
 
@@ -135,7 +133,7 @@ static void test_in3_client_rpc() {
   char * result = NULL, *error = NULL;
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   c->flags = FLAGS_STATS;
-  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
 
   // Error response string

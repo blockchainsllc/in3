@@ -54,7 +54,7 @@ in3_t* init_in3(in3_plugin_act_fn custom_transport, chain_id_t chain) {
   if (custom_transport)
     register_transport(in3, custom_transport);
   in3_register_nodeselect_def(in3);
-  TEST_ASSERT_NULL(in3_configure(in3, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}"));
+  TEST_ASSERT_NULL(in3_configure(in3, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   in3->flags = FLAGS_STATS | FLAGS_INCLUDE_CODE; // no autoupdate nodelist
   return in3;
 }

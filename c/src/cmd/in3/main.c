@@ -524,9 +524,7 @@ static void set_nodelist(in3_t* c, char* nodes, bool update) {
   }
   memcpy(cpy, nodes, strlen(nodes) + 1);
   char* s  = NULL;
-  sb_t* sb = sb_new("{\"nodes\":{\"");
-  sb_add_hexuint(sb, c->chain.chain_id);
-  sb_add_chars(sb, "\":{\"nodeList\":[");
+  sb_t* sb = sb_new("{\"nodeRegistry\":{\"nodeList\":[");
   for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
     if (next != cpy) sb_add_char(sb, ',');
     str_range_t address, url;

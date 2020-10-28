@@ -332,9 +332,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
 
-  sb_t* config = sb_new("{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodes\":{\"");
-  sb_add_hexuint(config, d_get_longkd(test, key("chainId"), 1));
-  sb_add_chars(config, "\": {\"needsUpdate\":false}}}");
+  sb_t* config = sb_new("{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}}");
   in3_configure(c, config->data);
   sb_free(config);
 
