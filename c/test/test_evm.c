@@ -589,13 +589,6 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
       total_gas = tx_intrinsic_gas;
       evm.gas -= total_gas;
     }
-    #ifdef DEBUG
-    else {
-      char* msg;
-      sprintf(msg, "\nERROR: Not enough gas to pay for transaction. Got: %lu. Needed: %lu\n", evm.init_gas, tx_intrinsic_gas);
-      print_error(msg);
-    }
-    #endif
 
 #endif
   }
