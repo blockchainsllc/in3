@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using In3.Utils;
@@ -12,16 +9,16 @@ namespace In3.Configuration
     /// Due to the 1-to-1 relationship with the client, this class should never be instantiated. To obtain a reference of the client configuration use <see cref="IN3.Configuration" /> instead.
     /// </summary>
     /// <remarks>
-    /// Use in conjunction with <see cref="ChainConfiguration" /> and <see cref="NodeConfiguration" />.
+    /// Use in conjunction with <see cref="NodeRegistryConfiguration" /> and <see cref="NodeConfiguration" />.
     /// </remarks>
     public class ClientConfiguration : BaseConfiguration
     {
 
         /// <summary>
-        /// Configuration for the chains. Read-only attribute.
+        /// NodeRegistry for the chain passed to the client constructor.
         /// </summary>
-        [JsonPropertyName("nodes")]
-        public Dictionary<Chain, ChainConfiguration> ChainsConfiguration { get; }
+        [JsonPropertyName("nodeRegistry")]
+        public NodeRegistryConfiguration NodeRegistry { get; set;  }
 
         /// <summary>
         /// Useful when <see cref="SignatureCount" /> is less then <see langword="1" />. The client will check for consensus in responses.
@@ -202,30 +199,9 @@ namespace In3.Configuration
             set => SetState("rpc", value);
         }
 
-        internal ClientConfiguration()
-        {
-            ChainsConfiguration = new Dictionary<Chain, ChainConfiguration>();
-        }
-
         internal static ClientConfiguration FromJson(string jsonConfig)
         {
             ClientConfiguration clientConf = JsonSerializer.Deserialize<ClientConfiguration>(jsonConfig, GetOptions());
-            using (JsonDocument document = JsonDocument.Parse(jsonConfig))
-            {
-                JsonElement root = document.RootElement;
-
-                bool hasNodeProperty = root.TryGetProperty("nodes", out JsonElement chainsElement);
-                if (hasNodeProperty)
-                {
-                    foreach (JsonProperty chainProp in chainsElement.EnumerateObject())
-                    {
-                        var value = Convert.ToInt32(chainProp.Name, 16);
-                        Chain chain = Enum.Parse<Chain>(value.ToString());
-                        ChainConfiguration chaintConf = JsonSerializer.Deserialize<ChainConfiguration>(chainProp.Value.GetRawText(), GetOptions());
-                        clientConf.AddChainConfiguration(chain, chaintConf);
-                    }
-                }
-            }
             clientConf.MarkSynced();
             return clientConf;
         }
@@ -237,29 +213,13 @@ namespace In3.Configuration
 
         internal override bool HasChanged()
         {
-            bool hasChildrenChanged = ChainsConfiguration.Values.Any(configuration => configuration.HasChanged());
-            return IsDirty() || hasChildrenChanged;
-        }
-
-        internal void AddChainConfiguration(Chain chain, ChainConfiguration conf)
-        {
-            if (ChainsConfiguration.ContainsKey(chain))
-            {
-                ChainsConfiguration[chain] = conf;
-            }
-            else
-            {
-                ChainsConfiguration.Add(chain, conf);
-            }
+            return IsDirty() || NodeRegistry.HasChanged();
         }
 
         internal void MarkSynced()
         {
             Clean();
-            foreach (var chainConfiguration in ChainsConfiguration.Values)
-            {
-                chainConfiguration.MarkSynced();
-            }
+            NodeRegistry.MarkSynced();
         }
 
         private static JsonSerializerOptions GetOptions()
@@ -270,7 +230,6 @@ namespace In3.Configuration
             };
 
             options.Converters.Add(new ProofConverter());
-            options.Converters.Add(new DictionaryChainObjectConverter());
             return options;
         }
     }

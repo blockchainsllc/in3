@@ -8,7 +8,7 @@ namespace In3.Configuration
     /// Class that represents part of the configuration to be applied on the <see cref="IN3" /> (in particular to each chain).
     /// This is a child of <see cref="ClientConfiguration" /> and have many <see cref="NodeConfiguration" />.
     /// </summary>
-    public class ChainConfiguration : BaseConfiguration
+    public class NodeRegistryConfiguration : BaseConfiguration
     {
         private List<NodeConfiguration> _nodesConfig { get; set; }
 
@@ -73,24 +73,6 @@ namespace In3.Configuration
         {
             get => (string[])GetState("whiteList");
             set => SetState("whiteList", value);
-        }
-
-
-        internal ChainConfiguration() { }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="chain">One of <see cref="Chain" />. The chain that this configuration is related to.</param>
-        /// <param name="clientConfiguration">The configuration for the client whose the chain configuration belongs to.</param>
-        /// <example>
-        /// <code>
-        /// ChainConfiguration goerliConfiguration = new ChainConfiguration(Chain.Goerli, in3Client.Configuration);
-        /// </code>
-        /// </example>
-        public ChainConfiguration(Chain chain, ClientConfiguration clientConfiguration)
-        {
-            clientConfiguration.AddChainConfiguration(chain, this);
         }
 
         internal void AddNodeConfiguration(NodeConfiguration nodeConfiguration)
