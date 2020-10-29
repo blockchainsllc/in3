@@ -255,8 +255,6 @@ static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ct
   }
   else
     sb_add_chars(sb, "]}");
-
-  sb_add_chars(sb, "}");
   return IN3_OK;
 }
 
