@@ -84,7 +84,7 @@ mod tests {
     fn test_ipfs_put() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::IPFS));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodes":{"0x7d0":{"needsUpdate":false}}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "ipfs_put",
@@ -103,7 +103,7 @@ mod tests {
     fn test_ipfs_get() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::IPFS));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodes":{"0x7d0":{"needsUpdate":false}}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "ipfs_get",

@@ -186,7 +186,7 @@ mod tests {
         let transport: Box<dyn Transport> = Box::new(MockTransport { responses });
 
         let mut client = Client::new(chain::MAINNET);
-        let _ = client.configure(r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"proof":"none","nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        let _ = client.configure(r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"proof":"none","nodeRegistry":{"needsUpdate":false}}}"#);
         client.set_transport(transport);
         let mut ens = In3EnsResolver::for_client(client);
 
