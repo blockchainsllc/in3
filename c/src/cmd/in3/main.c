@@ -913,6 +913,11 @@ int main(int argc, char* argv[]) {
   // no proof for rpc-chain
   if (c->chain.chain_id == 0xFFFF) c->proof = PROOF_NONE;
 
+  // make sure boot nodes are initialized
+  char buf[15 + 11 /* UINT32_MAX */];
+  sprintf(buf, "{\"chainId\":%" PRIu32 "}", c->chain.chain_id);
+  in3_configure(c, buf);
+
   // execute the method
   if (sig && *sig == '-') die("unknown option");
   if (!method) {
