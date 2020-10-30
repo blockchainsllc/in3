@@ -280,6 +280,23 @@ static chain_id_t chain_id(d_token_t* t) {
   return d_long(t);
 }
 
+static in3_chain_type_t chain_type(chain_id_t id) {
+  switch (id) {
+    case CHAIN_ID_MAINNET:
+    case CHAIN_ID_GOERLI:
+    case CHAIN_ID_EWC:
+    case CHAIN_ID_TOBALABA:
+    case CHAIN_ID_EVAN:
+    case CHAIN_ID_LOCAL:
+      return CHAIN_ETH;
+    case CHAIN_ID_IPFS:
+      return CHAIN_IPFS;
+    case CHAIN_ID_BTC:
+      return CHAIN_BTC;
+    default: return CHAIN_GENERIC;
+  }
+}
+
 char* in3_get_config(in3_t* c) {
   sb_t* sb = sb_new("");
   add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
