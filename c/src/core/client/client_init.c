@@ -343,7 +343,18 @@ char* in3_configure(in3_t* c, const char* config) {
     }
     else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
-      in3_client_register_chain(c, chain_id(token), !c->chain.type, 2);
+
+      // check if chainType is set
+      int ct_ = -1;
+      for (d_iterator_t it_ = d_iter(json->result); it_.left; d_iter_next(&it_)) {
+        if (it_.token->key == key("chainType")) {
+          EXPECT_TOK_U8(it_.token);
+          ct_ = d_int(token);
+        }
+      }
+      c->chain.chain_id = chain_id(token);
+      c->chain.type     = (ct_ == -1) ? chain_type(c->chain.chain_id) : ct_;
+      in3_client_register_chain(c, c->chain.chain_id, c->chain.type, 2);
       in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
     else if (token->key == key("signatureCount")) {
