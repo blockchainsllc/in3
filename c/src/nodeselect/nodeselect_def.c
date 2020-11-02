@@ -395,7 +395,8 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_nodeselect_def_t* data, d
 }
 
 static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_response_t* response) {
-  if (!node || get_node(data, node)->blocked || !response || !response->time) return;
+  in3_node_t* n = get_node(data, node);
+  if (!node || (n && n->blocked) || !response || !response->time) return;
   in3_node_weight_t* w = get_node_weight(data, node);
   if (!w) return;
   w->response_count++;
