@@ -341,6 +341,8 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
     }
+    else if (token->key == key("chainType"))
+      ; // Ignore - handled within `chainId` case
     else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
 
@@ -349,11 +351,11 @@ char* in3_configure(in3_t* c, const char* config) {
       for (d_iterator_t it_ = d_iter(json->result); it_.left; d_iter_next(&it_)) {
         if (it_.token->key == key("chainType")) {
           EXPECT_TOK_U8(it_.token);
-          ct_ = d_int(token);
+          ct_ = d_int(it_.token);
         }
       }
       c->chain.chain_id = chain_id(token);
-      c->chain.type     = (ct_ == -1) ? chain_type(c->chain.chain_id) : ct_;
+      c->chain.type     = (ct_ == -1) ? chain_type(c->chain.chain_id) : (uint8_t) ct_;
       in3_client_register_chain(c, c->chain.chain_id, c->chain.type, 2);
       in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
@@ -584,7 +586,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_SIGN_PREPARE: return "sign_prepare";
     case PLGN_ACT_SIGN: return "sign";
     case PLGN_ACT_RPC_HANDLE: return "rpc_handle";
-    case PLGN_ACT_RPC_VERIFY: return "rpc_verrify";
+    case PLGN_ACT_RPC_VERIFY: return "rpc_verify";
     case PLGN_ACT_CACHE_SET: return "cache_set";
     case PLGN_ACT_CACHE_GET: return "cache_get";
     case PLGN_ACT_CACHE_CLEAR: return "cache_clear";
