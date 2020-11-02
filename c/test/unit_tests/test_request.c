@@ -564,11 +564,18 @@ static void test_configure_validation() {
 }
 
 static void test_parallel_signatures() {
-  in3_t* in3 = in3_for_chain(CHAIN_ID_GOERLI);
-  in3_configure(in3, "{\"autoUpdateList\":false,\"signatureCount\":1,\"requestCount\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
+  in3_t* in3 = in3_for_chain(0x34ff);
+  in3_configure(in3, "{\"chainId\":\"0x34ff\",\"chainType\":0,\"autoUpdateList\":false,\"signatureCount\":1,\"requestCount\":1,"
+                     "\"nodeRegistry\":{\"needsUpdate\":false,"
+                     "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","
+                     "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\","
+                     "   \"nodeList\": [{"
+                     "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+                     "    \"url\": \"http://localhost:8545\","
+                     "    \"props\": \"0xFFFF\""
+                     "   }]"
+                     "}}");
   register_transport(in3, test_transport);
-
-  in3_srand(1);
 
   add_response("eth_getTransactionByHash",
                "[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]",
@@ -626,7 +633,6 @@ static void test_parallel_signatures() {
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NOT_NULL(tx);
   TEST_ASSERT_EQUAL_MEMORY(tx->hash, tx_hash, 32);
-
   free(tx);
 
   in3_free(in3);
