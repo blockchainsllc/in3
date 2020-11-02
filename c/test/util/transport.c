@@ -97,7 +97,7 @@ int add_response_test(char* test, char* needed_params) {
   json_ctx_t* mock   = parse_json(buffer);
   str_range_t res;
   d_token_t*  req;
-  char*       params;
+  char*       params = NULL;
   if (d_type(mock->result) == T_OBJECT) {
     res    = d_to_json(d_get_at(d_get(mock->result, key("response")), 0));
     req    = d_get_at(d_get(mock->result, key("request")), 0);

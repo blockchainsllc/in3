@@ -128,7 +128,7 @@ NONULL static inline in3_node_weight_t* get_node_weight_idx(const in3_nodeselect
   return index < data->nodelist_length ? data->weights + index : NULL;
 }
 
-NONULL static inline in3_node_t* get_node(const in3_nodeselect_def_t* data, const node_match_t* node) {
+static inline in3_node_t* get_node(const in3_nodeselect_def_t* data, const node_match_t* node) {
   return node ? get_node_idx(data, node->index) : NULL;
 }
 
