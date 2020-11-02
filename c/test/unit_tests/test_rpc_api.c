@@ -111,7 +111,7 @@ static void test_in3_config() {
 
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
 
-  char tmp[64];
+  char tmp[66];
   bytes_to_hex(nl->contract, 20, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   bytes_to_hex(nl->registry_id, 32, tmp);
