@@ -91,6 +91,13 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv*, jobject, jstr
  */
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv*, jobject);
 
+/*
+ * Class:     in3_IN3
+ * Method:    getDefaultConfig
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_IN3_getDefaultConfig(JNIEnv*, jobject);
+
 #ifdef IPFS
 /*
  * Class:     in3_ipfs_API
