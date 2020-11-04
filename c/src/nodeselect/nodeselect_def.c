@@ -278,8 +278,7 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c) {
 }
 
 static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
-  // init cache lazily,
-  // this also means we can be sure that all other related plugins are registered by now
+  // init cache lazily this also means we can be sure that all other related plugins are registered by now
   if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client))
     return IN3_ECONFIG;
 
