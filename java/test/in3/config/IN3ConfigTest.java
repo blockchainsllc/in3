@@ -6,7 +6,8 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 
 public class IN3ConfigTest {
-  // This class is more akin to integrated tests since, as you can see, it relies on multiple Objects.
+  // This class is more akin to integrated tests since, as you can see, it relies
+  // on multiple Objects.
   private IN3 client;
 
   @BeforeEach
@@ -16,32 +17,21 @@ public class IN3ConfigTest {
 
   @Test
   public void objectHierarchy() {
-    final String nodeConfigOutputKey     = "nodes";
-    final String nodeListConfigOutputKey = "nodeList";
+    final String nodeConfigOutputKey = "nodeRegistry";
+    final String whiteListConfigOutputKey = "whiteListContract";
 
     ClientConfiguration clientConfig = client.getConfig();
 
-    ChainConfiguration nodeConfig = new ChainConfiguration(Chain.GOERLI, clientConfig);
+    NodeRegistryConfiguration nodeConfig = clientConfig.getNodeRegistry();
     nodeConfig.setNeedsUpdate(false);
-    nodeConfig.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     nodeConfig.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
     nodeConfig.setContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
     nodeConfig.setWhiteListContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
 
-    JSONObject jsonObject1 = new JSONObject(clientConfig.toJSON());
+    String json = clientConfig.toJSON();
+    JSONObject jsonObject1 = new JSONObject(json);
     Assertions.assertTrue(jsonObject1.has(nodeConfigOutputKey));
-
-    NodeConfiguration nodeListConfig = new NodeConfiguration(nodeConfig);
-    nodeListConfig.setProps(Long.valueOf(0x0));
-    nodeListConfig.setUrl("scheme://userinfo@host:port/path?query#fragment");
-    nodeListConfig.setAddress("0x0");
-
-    JSONObject jsonObject2 = new JSONObject(clientConfig.toJSON());
-    Assertions.assertTrue(
-        jsonObject2
-            .getJSONObject(nodeConfigOutputKey)
-            .getJSONObject(JSON.asString(Chain.GOERLI))
-            .has(nodeListConfigOutputKey));
+    Assertions.assertTrue(jsonObject1.getJSONObject(nodeConfigOutputKey).has(whiteListConfigOutputKey));
   }
 
   @Test
@@ -49,11 +39,11 @@ public class IN3ConfigTest {
     ClientConfiguration config = client.getConfig();
     Assertions.assertTrue(config.isSynced());
 
-    int     requestCount   = 1;
+    int requestCount = 1;
     boolean autoUpdateList = false;
-    Proof   proof          = Proof.none;
-    int     maxAttempts    = 1;
-    int     signatureCount = 0;
+    Proof proof = Proof.none;
+    int maxAttempts = 1;
+    int signatureCount = 0;
 
     config.setRequestCount(requestCount);
     config.setAutoUpdateList(autoUpdateList);
@@ -67,18 +57,31 @@ public class IN3ConfigTest {
   }
 
   @Test
+  public void addNodeConfiguration() {
+    final String nodesOutputKey = "nodeList";
+    ClientConfiguration config = client.getConfig();
+    NodeRegistryConfiguration nodeRegistryConfig = config.getNodeRegistry();
+    NodeConfiguration nodeConf = new NodeConfiguration(nodeRegistryConfig);
+    nodeConf.setUrl("http://localnode.com");
+    nodeConf.setAddress("0x798b7c7da709d7");
+    nodeConf.setProps(0);
+    Assertions.assertTrue(nodeRegistryConfig.getNodesConfiguration().length > 0);
+
+    Assertions.assertTrue(config.toJSON().contains(nodesOutputKey));
+  }
+
+  @Test
   public void dispatchRequestInvalidConfig() {
     ClientConfiguration config = client.getConfig();
 
-    ChainConfiguration nodeConfig = new ChainConfiguration(Chain.GOERLI, config);
+    NodeRegistryConfiguration nodeConfig = config.getNodeRegistry();
     nodeConfig.setNeedsUpdate(false);
     nodeConfig.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     nodeConfig.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
     nodeConfig.setContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
     nodeConfig.setWhiteListContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
-    nodeConfig.setWhiteList(new String[] {
-        "0x0123456789012345678901234567890123456789",
-        "0x1234567890123456789012345678901234567890"});
+    nodeConfig.setWhiteList(
+        new String[] { "0x0123456789012345678901234567890123456789", "0x1234567890123456789012345678901234567890" });
 
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       client.getEth1API().getGasPrice();
