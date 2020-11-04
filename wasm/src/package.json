@@ -1,7 +1,7 @@
 {
-    "name": "in3-wasm",
+    "name": "in3",
     "version": "0.0.2",
-    "description": "WASM-Version of incubed build from C",
+    "description": "WASM-Version of incubed built from C",
     "main": "index.js",
     "author": "Simon Jentzsch",
     "license": "(AGPL-3.0-or-later OR commercial)",

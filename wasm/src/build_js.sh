@@ -55,8 +55,8 @@ if [ -e in3w.wasm ]
 fi
 if [ $2 == "true" ]
  then
-   cat "$1/package.json" | sed  's/wasm/asmjs/g' > ../module/package.json
-   cat "$1/../README.md" | sed  's/wasm/asmjs/g' > ../module/README.md
+   cat "$1/package.json" | sed  '2s/in3/in3-asmjs/g' > ../module/package.json
+   cat "$1/../README.md" | sed  "s/'in3'/'in3-asmjs'/g" | "s/in3.js/in3-asmjs.js/g" > ../module/README.md
 fi
 if [ -d "$1/../test/in3" ] 
   then 

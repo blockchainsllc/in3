@@ -1,4 +1,4 @@
-# Incubed client as WASM
+# Incubed client
 
 ## Installing
 
@@ -8,7 +8,7 @@ This module has **no** dependencies! All it needs is included inta a wasm of abo
 Installing incubed is as easy as installing any other module:
 
 ```
-npm install --save in3-wasm
+npm install --save in3
 ```
 
 ### Documentation
@@ -23,10 +23,10 @@ In case you want to run incubed within a react native app, you might face issues
 ```js
 
 // import in3-Module
-import In3Client from 'in3-wasm'
+import IN3 from 'in3'
 import * as web3 from 'web3'
 
-const IN3Client c = new IN3Client({
+const IN3Client c = new IN3({
     proof              : 'standard',
     signatureCount     : 1,
     chainId            : 'mainnet',
@@ -55,10 +55,10 @@ For more details see the [API-Doc](https://github.com/slockit/in3/blob/master/do
 ```js
 
 // import in3-Module
-import In3Client from 'in3-wasm'
+import IN3 from 'in3'
 
 // use the In3Client
-const in3 = new In3Client({
+const in3 = new IN3({
     proof              : 'standard',
     signatureCount     : 1,
     chainId            : 'mainnet',
