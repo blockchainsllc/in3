@@ -34,6 +34,7 @@
 
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/util/bitset.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
@@ -42,6 +43,7 @@
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "../../../verifier/eth1/nano/vhist.h"
+#include <limits.h>
 #include <string.h>
 
 #ifdef POA
@@ -364,6 +366,18 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
   memcpy(chain->verified_hashes[last_free].hash, hash, 32);
 }
 
+static in3_ret_t sig_err(in3_vctx_t* vc, unsigned int missing) {
+  const uint8_t        blen = sizeof(missing) * CHAR_BIT;
+  in3_nl_offline_ctx_t octx = {.ctx = vc->ctx};
+  for (unsigned int pos = 0; pos != blen; pos++) {
+    if (BIT_CHECK(missing, pos)) {
+      octx.address = vc->ctx->signers + (pos * 20);
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_OFFLINE, &octx);
+    }
+  }
+  return vc_err(vc, "missing signatures");
+}
+
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
@@ -429,6 +443,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     if (!(signatures = d_get(vc->proof, K_SIGNATURES)))
       return vc_err(vc, "no signatures in proof");
 
+    // prepare the message to be signed
     bytes_t msg;
     uint8_t msg_data[96];
     msg.data = (uint8_t*) &msg_data;
@@ -449,7 +464,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     msg.data = msg_data;
     msg.len  = 32;
 
-    int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
+    unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
     for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
       // only if this signature has the correct blockhash and blocknumber we will verify it.
       if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
@@ -457,7 +472,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     }
 
     if (confirmed != (1 << vc->ctx->signers_length) - 1) // we must collect all signatures!
-      return vc_err(vc, "missing signatures");
+      return sig_err(vc, ((1 << vc->ctx->signers_length) - 1) ^ confirmed);
 
     // ok, is is verified, so we should add it to the verified hashes
     add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
