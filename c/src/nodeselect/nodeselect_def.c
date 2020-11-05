@@ -350,6 +350,23 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return res;
 }
 
+NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
+  ba_print(ctx->address, 20);
+  for (unsigned int i = 0; i < data->nodelist_length; ++i) {
+    if (!memcmp(data->nodelist[i].address, ctx->address, 20)) {
+      if (BIT_CHECK(data->nodelist[i].attrs, ATTR_BOOT_NODE)) {
+        blacklist_node_addr(data, ctx->address, BLACKLISTTIME);
+        BIT_CLEAR(data->nodelist[i].attrs, ATTR_OFFLINE);
+      }
+      else {
+        BIT_SET(data->nodelist[i].attrs, ATTR_OFFLINE);
+      }
+      break;
+    }
+  }
+  return IN3_OK;
+}
+
 static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
   if (nodelist_block > current_blk)
     // misbehaving node, so allow to update right away and it'll get blacklisted due to the exp_last_block mechanism
@@ -454,6 +471,8 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
       return blacklist_node(data, ((node_match_t*) plugin_ctx)->index, BLACKLISTTIME);
     case PLGN_ACT_NL_FAILABLE:
       return handle_failable(data, plugin_ctx);
+    case PLGN_ACT_NL_OFFLINE:
+      return handle_offline(data, plugin_ctx);
     case PLGN_ACT_CHAIN_CHANGE:
       return chain_change(data, plugin_ctx);
     case PLGN_ACT_GET_DATA: {
