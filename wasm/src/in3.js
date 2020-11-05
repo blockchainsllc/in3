@@ -500,7 +500,7 @@ IN3.setConvertBuffer = function (fn) {
     convertBuffer = fn
 }
 
-// change the Buffer
+// change the BigInt
 IN3.setConvertBigInt = function (fn) {
     convertBigInt = fn
 }
