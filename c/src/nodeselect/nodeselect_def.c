@@ -351,10 +351,9 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
 }
 
 NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
-  ba_print(ctx->address, 20);
   for (unsigned int i = 0; i < data->nodelist_length; ++i) {
     if (!memcmp(data->nodelist[i].address, ctx->address, 20)) {
-      if (BIT_CHECK(data->nodelist[i].attrs, ATTR_BOOT_NODE)) {
+      if (BIT_CHECK(data->nodelist[i].attrs, ATTR_OFFLINE)) {
         blacklist_node_addr(data, ctx->address, BLACKLISTTIME);
         BIT_CLEAR(data->nodelist[i].attrs, ATTR_OFFLINE);
       }
