@@ -671,13 +671,13 @@ static void test_parallel_signatures() {
                "    \"rpcCount\":2"
                "}");
 
-  bytes32_t tx_hash;
-  hex_to_bytes("0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7", -1, tx_hash, 32);
-
-  eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
-  TEST_ASSERT_NOT_NULL(tx);
-  TEST_ASSERT_EQUAL_MEMORY(tx->hash, tx_hash, 32);
-  free(tx);
+  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
+                                               "\"method\":\"eth_getTransactionByHash\","
+                                               "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
+                                               "\"in3\":{\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1\",\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\"]}}");
+  TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
+  TEST_ASSERT_TRUE(ctx_get_error(ctx, 0) == IN3_OK);
+  ctx_free(ctx);
 
   in3_free(in3);
 }
