@@ -423,6 +423,12 @@ typedef struct {
   node_match_t* node; /**< Node that gave us a valid response */
 } in3_nl_followup_ctx_t;
 
+// -------- NL_OFFLINE ---------
+typedef struct {
+  in3_ctx_t* ctx;     /**< Request context. */
+  uint8_t*   address; /**< address of node to mark offline */
+} in3_nl_offline_ctx_t;
+
 // -------- GET_DATA ---------
 typedef enum {
   GET_DATA_REGISTRY_ID /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
