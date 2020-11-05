@@ -403,7 +403,7 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
   response->time = 0; // make sure we count the time only once
 }
 
-static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followop_type_t* fctx) {
+static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t* fctx) {
   in3_ctx_t*    ctx         = fctx->ctx;
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;

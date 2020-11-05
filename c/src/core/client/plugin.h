@@ -421,7 +421,7 @@ typedef struct {
 typedef struct {
   in3_ctx_t*    ctx;  /**< Request context. */
   node_match_t* node; /**< Node that gave us a valid response */
-} in3_nl_followop_type_t;
+} in3_nl_followup_ctx_t;
 
 // -------- GET_DATA ---------
 typedef enum {

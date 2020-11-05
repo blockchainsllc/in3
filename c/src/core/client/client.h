@@ -136,8 +136,6 @@ typedef enum {
   ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
 } in3_node_attr_type_t;
 
-typedef uint8_t in3_node_attr_t;
-
 /** incubed node-configuration. 
  * 
  * These information are read from the Registry contract and stored in this struct representing a server or node.
