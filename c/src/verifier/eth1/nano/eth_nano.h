@@ -55,7 +55,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
  * This is based on the signatiures in the request-config.
  * 
  */
-NONULL int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig);
+NONULL unsigned int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig);
 
 /**
  *  returns the address of the signature if the msg_hash is correct
