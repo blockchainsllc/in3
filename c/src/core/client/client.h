@@ -134,7 +134,6 @@ typedef enum {
 typedef enum {
   ATTR_WHITELISTED = 1, /**< indicates if node exists in whiteList */
   ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
-  ATTR_OFFLINE     = 3, /**< used to mark node as possibly offline */
 } in3_node_attr_type_t;
 
 /** incubed node-configuration. 

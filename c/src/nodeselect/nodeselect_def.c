@@ -350,15 +350,56 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return res;
 }
 
+static bool is_offline(in3_nodeselect_def_t* data, uint8_t* address) {
+  node_offline_t* n = data->offlines;
+  while (n) {
+    if (!memcmp(n->offline->address, address, 20))
+      return true;
+    n = n->next;
+  }
+  return false;
+}
+
+static void add_offline(in3_nodeselect_def_t* data, in3_node_t* offline, uint8_t* reporter) {
+  node_offline_t** n = &data->offlines;
+  while (*n)
+    (*n) = (*n)->next;
+  *n             = _malloc(sizeof(node_offline_t));
+  (*n)->offline  = offline;
+  memcpy((*n)->reporter, reporter, 20);
+  (*n)->next = NULL;
+}
+
+static void remove_offline(in3_nodeselect_def_t* data, uint8_t* address) {
+  node_offline_t *curr = data->offlines, *next = NULL;
+  while (curr != NULL) {
+    next = curr->next;
+    if (!memcmp(curr->offline->address, address, 20)) {
+      _free(curr);
+      break;
+    }
+    curr = next;
+  }
+}
+
+static void free_offlines(in3_nodeselect_def_t* data) {
+  node_offline_t *curr = data->offlines, *next = NULL;
+  while (curr != NULL) {
+    next = curr->next;
+    _free(curr);
+    curr = next;
+  }
+}
+
 NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
   for (unsigned int i = 0; i < data->nodelist_length; ++i) {
     if (!memcmp(data->nodelist[i].address, ctx->address, 20)) {
-      if (BIT_CHECK(data->nodelist[i].attrs, ATTR_OFFLINE)) {
+      if (is_offline(data, ctx->address)) {
         blacklist_node_addr(data, ctx->address, BLACKLISTTIME);
-        BIT_CLEAR(data->nodelist[i].attrs, ATTR_OFFLINE);
+        remove_offline(data, ctx->address);
       }
       else {
-        BIT_SET(data->nodelist[i].attrs, ATTR_OFFLINE);
+        add_offline(data, &data->nodelist[i], ctx->vctx->node->address);
       }
       break;
     }
@@ -447,6 +488,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_INIT:
       return IN3_OK;
     case PLGN_ACT_TERM:
+      free_offlines(data);
       in3_nodelist_clear(data);
 #ifdef NODESELECT_DEF_WL
       in3_whitelist_clear(data->whitelist);

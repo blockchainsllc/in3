@@ -54,6 +54,12 @@ typedef struct {
   d_token_t*       nodes;
 } in3_node_filter_t;
 
+typedef struct node_offline_ {
+  in3_node_t*           offline;
+  address_t             reporter;
+  struct node_offline_* next;
+} node_offline_t;
+
 typedef struct {
   bool               dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
   uint16_t           avg_block_time;  /**< average block time (seconds) for this data (calculated internally) */
@@ -64,6 +70,7 @@ typedef struct {
   in3_node_t*        nodelist;        /**< array of nodes */
   in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
   bytes_t**          init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
+  node_offline_t*    offlines;        /**< linked-list of offline nodes */
 
 #ifdef NODESELECT_DEF_WL
   in3_whitelist_t* whitelist; /**< if set the whitelist of the addresses. */

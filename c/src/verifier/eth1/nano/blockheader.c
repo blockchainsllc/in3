@@ -368,10 +368,10 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
 
 static in3_ret_t sig_err(in3_vctx_t* vc, unsigned int missing) {
   const uint8_t        blen = sizeof(missing) * CHAR_BIT;
-  in3_nl_offline_ctx_t octx = {.ctx = vc->ctx};
+  in3_nl_offline_ctx_t octx = {.vctx = vc};
   for (unsigned int pos = 0; pos != blen; pos++) {
     if (BIT_CHECK(missing, pos)) {
-      octx.address = vc->ctx->signers + (pos * 20);
+      memcpy(octx.address, vc->ctx->signers + (pos * 20), 20);
       in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_OFFLINE, &octx);
     }
   }
