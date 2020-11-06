@@ -385,12 +385,14 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
     in3_vctx_t vc;
-    vc.ctx     = ctx;
-    vc.chain   = chain;
-    vc.request = ctx->requests[i];
-    vc.result  = d_get(ctx->responses[i], K_RESULT);
-    vc.client  = ctx->client;
-    vc.index   = (int) i;
+    vc.ctx            = ctx;
+    vc.chain          = chain;
+    vc.request        = ctx->requests[i];
+    vc.result         = d_get(ctx->responses[i], K_RESULT);
+    vc.client         = ctx->client;
+    vc.index          = (int) i;
+    vc.node           = node;
+    vc.dont_blacklist = false;
 
     if ((vc.proof = d_get(ctx->responses[i], K_IN3))) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
       if ((res = handle_payment(ctx, node, i))) return res;
@@ -431,7 +433,8 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
         response->state = res;
         response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
       }
-      in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
+      if (!vc.dont_blacklist)
+        in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node);
       return res;
     }
 

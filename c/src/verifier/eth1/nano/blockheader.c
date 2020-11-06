@@ -375,6 +375,7 @@ static in3_ret_t sig_err(in3_vctx_t* vc, unsigned int missing) {
       in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_OFFLINE, &octx);
     }
   }
+  vc->dont_blacklist = true;
   return vc_err(vc, "missing signatures");
 }
 
