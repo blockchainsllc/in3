@@ -200,9 +200,9 @@ int evm_sub_call(evm_t*    parent,
 
   // put the success in the stack ( in case of a create we add the new address)
   if (!address && success == 0)
-    res = evm_stack_push(parent, evm.account, 20);
+    res = min(res, evm_stack_push(parent, evm.account, 20));
   else
-    res = evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0);
+    res = min(res, evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0));
 
   // if we have returndata we write them into memory
   if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm.return_data.data) {
