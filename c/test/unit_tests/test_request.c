@@ -42,18 +42,16 @@
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
-#include "../../src/core/util/utils.h"
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include "nodeselect/cache.h"
 #include "nodeselect/nodelist.h"
-#include <nodeselect/nodeselect_def.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "nodeselect/nodeselect_def.h"
 
 #define TEST_ASSERT_CONFIGURE_FAIL(desc, in3, config, err_slice) \
   do {                                                           \
@@ -565,7 +563,7 @@ static void test_configure_validation() {
 
 static void test_parallel_signatures() {
   in3_t* in3 = in3_for_chain(0x34ff);
-  in3_configure(in3, "{\"chainId\":\"0x34ff\",\"chainType\":0,\"autoUpdateList\":false,\"signatureCount\":3,\"requestCount\":1,"
+  in3_configure(in3, "{\"chainId\":\"0x34ff\",\"chainType\":0,\"autoUpdateList\":false,\"signatureCount\":3,\"requestCount\":1,\"maxAttempts\":1,"
                      "\"nodeRegistry\":{"
                      "   \"needsUpdate\":false,"
                      "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","
@@ -674,9 +672,19 @@ static void test_parallel_signatures() {
   in3_ctx_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
                                                "\"method\":\"eth_getTransactionByHash\","
                                                "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
-                                               "\"in3\":{\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1\",\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\"]}}");
-  TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
-  TEST_ASSERT_TRUE(ctx_get_error(ctx, 0) == IN3_OK);
+                                               "\"in3\":{\"dataNodes\":[\"0x45d45e6ff99e6c34a235d263965910298985fcfe\"],"
+                                               "\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1\",\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\"]}}");
+  
+  in3_nodeselect_def_t* nl      = in3_nodeselect_def_data(in3);
+  bytes_t*              address = hex_to_new_bytes("45d45e6ff99e6c34a235d263965910298985fcfe", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->reporter, address->data, 20);
+  b_free(address);
+
+  address = hex_to_new_bytes("1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->offline->address, address->data, 20);
+  b_free(address);
+
+  TEST_ASSERT_FALSE(is_blacklisted(&nl->nodelist[0]));
   ctx_free(ctx);
 
   in3_free(in3);
@@ -686,21 +694,21 @@ static void test_parallel_signatures() {
  * Main
  */
 int main() {
-  //  in3_log_set_quiet(false);
-  //  in3_log_set_level(LOG_TRACE);
+  in3_log_set_quiet(false);
+  in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_basic);
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_nodeselect_def);
 
   TESTS_BEGIN();
-  RUN_TEST(test_configure_request);
-  RUN_TEST(test_configure_signed_request);
-  RUN_TEST(test_bulk_response);
-  RUN_TEST(test_partial_response);
-  RUN_TEST(test_retry_response);
-  RUN_TEST(test_exec_req);
-  RUN_TEST(test_configure);
-  RUN_TEST(test_configure_validation);
+  //  RUN_TEST(test_configure_request);
+  //  RUN_TEST(test_configure_signed_request);
+  //  RUN_TEST(test_bulk_response);
+  //  RUN_TEST(test_partial_response);
+  //  RUN_TEST(test_retry_response);
+  //  RUN_TEST(test_exec_req);
+  //  RUN_TEST(test_configure);
+  //  RUN_TEST(test_configure_validation);
   RUN_TEST(test_parallel_signatures);
   return TESTS_END();
 }
