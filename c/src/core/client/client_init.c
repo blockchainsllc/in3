@@ -36,17 +36,12 @@
 #include "../util/data.h"
 #include "../util/debug.h"
 #include "../util/log.h"
-#include "../util/mem.h"
 #include "client.h"
 #include "context_internal.h"
 #include "plugin.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __ZEPHYR__
-#include <sys/time.h>
-#endif
-#include <time.h>
 
 #ifdef PAY
 typedef struct payment {
@@ -77,7 +72,6 @@ void in3_register_payment(
   p->next            = payments;
   payments           = p;
 }
-
 #endif
 
 // set the defaults
@@ -88,24 +82,6 @@ typedef struct default_fn {
 
 static default_fn_t* default_registry = NULL;
 
-static in3_transport_legacy default_legacy_transport = NULL;
-static in3_ret_t            handle_legacy_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
-  UNUSED_VAR(plugin_data);
-  UNUSED_VAR(action);
-  assert(plugin_ctx);
-  return default_legacy_transport((in3_request_t*) plugin_ctx);
-}
-static in3_ret_t register_legacy(in3_t* c) {
-  assert(c);
-  return plugin_register(c, PLGN_ACT_TRANSPORT, handle_legacy_transport, NULL, true);
-}
-
-void in3_set_default_legacy_transport(
-    in3_transport_legacy transport /**< the default transport-function. */
-) {
-  default_legacy_transport = transport;
-  in3_register_default(register_legacy);
-}
 void in3_register_default(plgn_register reg_fn) {
   assert(reg_fn);
   // check if it already exists
@@ -605,8 +581,8 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_CHAIN_CHANGE: return "chain_change";
     case PLGN_ACT_GET_DATA: return "get_data";
     case PLGN_ACT_ADD_PAYLOAD: return "add_payload";
+    default: assert("unknown plugin");
   }
-  return "unknown";
 }
 #endif
 
