@@ -102,13 +102,13 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_ctx_t* ctx, d
       break;
     }
 
-    unsigned int old_index = i;
-    n->capacity            = d_get_intkd(node, K_CAPACITY, 1);
-    n->index               = d_get_intkd(node, K_INDEX, i);
-    n->deposit             = d_get_longk(node, K_DEPOSIT);
-    n->props               = d_get_longkd(node, K_PROPS, 65535);
-    n->url                 = d_get_stringk(node, K_URL);
-    bytes_t* adr_bytes     = d_get_byteskl(node, K_ADDRESS, 20);
+    int old_index      = (int) i;
+    n->capacity        = d_get_intkd(node, K_CAPACITY, 1);
+    n->index           = d_get_intkd(node, K_INDEX, i);
+    n->deposit         = d_get_longk(node, K_DEPOSIT);
+    n->props           = d_get_longkd(node, K_PROPS, 65535);
+    n->url             = d_get_stringk(node, K_URL);
+    bytes_t* adr_bytes = d_get_byteskl(node, K_ADDRESS, 20);
     if (adr_bytes && adr_bytes->len == 20)
       memcpy(n->address, adr_bytes->data, 20);
     else {
@@ -128,7 +128,7 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_ctx_t* ctx, d
       old_index = -1;
       for (unsigned int j = 0; j < data->nodelist_length; j++) {
         if (memcmp(data->nodelist[j].address, n->address, 20) == 0) {
-          old_index = j;
+          old_index = (int) j;
           break;
         }
       }
