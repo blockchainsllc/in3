@@ -55,7 +55,7 @@
 
 #define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
 #define CHAIN_ID_TOBALABA   0x44d /**< chain_id for tobalaba */
-#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
+#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerli */
 #define CHAIN_ID_EVAN       0x4b1 /**< chain_id for evan */
 #define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
@@ -73,12 +73,12 @@ struct in3_ctx;
 /** the type of the chain. 
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
- * Depending on this chain-type the previously registered verifyer will be choosen and used.
+ * Depending on this chain-type the previously registered verifier will be chosen and used.
  */
 typedef enum {
   CHAIN_ETH       = 0, /**< Ethereum chain */
   CHAIN_SUBSTRATE = 1, /**< substrate chain */
-  CHAIN_IPFS      = 2, /**< ipfs verifiaction */
+  CHAIN_IPFS      = 2, /**< ipfs verification */
   CHAIN_BTC       = 3, /**< Bitcoin chain */
   CHAIN_EOS       = 4, /**< EOS chain */
   CHAIN_IOTA      = 5, /**< IOTA chain */
@@ -115,11 +115,11 @@ typedef enum {
 } in3_node_props_type_t;
 
 /**
- * a list of flags definiing the behavior of the incubed client. They should be used as bitmask for the flags-property.
+ * a list of flags defining the behavior of the incubed client. They should be used as bitmask for the flags-property.
  */
 typedef enum {
   FLAGS_KEEP_IN3         = 0x1,  /**< the in3-section with the proof will also returned */
-  FLAGS_AUTO_UPDATE_LIST = 0x2,  /**< the nodelist will be automaticly updated if the last_block is newer  */
+  FLAGS_AUTO_UPDATE_LIST = 0x2,  /**< the nodelist will be automatically updated if the last_block is newer  */
   FLAGS_INCLUDE_CODE     = 0x4,  /**< the code is included when sending eth_call-requests  */
   FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
   FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
@@ -184,7 +184,7 @@ NONULL void in3_node_props_set(in3_node_props_t*     node_props, /**< pointer to
 );
 
 /**
- * returns the value of the specified propertytype.
+ * returns the value of the specified property-type.
  * @return value as a number
  */
 static inline uint32_t in3_node_props_get(in3_node_props_t      np,  /**< property to read from */
@@ -193,7 +193,7 @@ static inline uint32_t in3_node_props_get(in3_node_props_t      np,  /**< proper
 }
 
 /**
- * checkes if the given type is set in the properties
+ * checks if the given type is set in the properties
  * @return true if set
  */
 static inline bool in3_node_props_matches(in3_node_props_t      np,  /**< property to read from */
@@ -225,13 +225,13 @@ typedef struct in3_verified_hash {
 typedef struct in3_chain {
   uint8_t              version;         /**< version of the chain */
   chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
-  in3_chain_type_t     type;            /**< chaintype */
+  in3_chain_type_t     type;            /**< chain-type */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
 } in3_chain_t;
 
 /** 
- * payment prepearation function.
+ * payment preparation function.
  * 
  * allows the payment to handle things before the request will be send.
  * 
@@ -239,7 +239,7 @@ typedef struct in3_chain {
 typedef in3_ret_t (*in3_pay_prepare)(struct in3_ctx* ctx, void* cptr);
 
 /** 
- * called after receiving a parseable response with a in3-section.
+ * called after receiving a parse-able response with a in3-section.
 */
 typedef in3_ret_t (*in3_pay_follow_up)(struct in3_ctx* ctx, void* node, d_token_t* in3, d_token_t* error, void* cptr);
 
@@ -261,11 +261,11 @@ typedef in3_ret_t (*in3_pay_handle_request)(struct in3_ctx* ctx, sb_t* sb, void*
  * if a payment handler is set it will be used when generating the request.
 */
 typedef struct in3_pay {
-  in3_pay_prepare        prepare;        /**< payment prepearation function.*/
+  in3_pay_prepare        prepare;        /**< payment preparation function.*/
   in3_pay_follow_up      follow_up;      /**< payment function to be called after the request.*/
   in3_pay_handle_request handle_request; /**< this function is called when the in3-section of payload of the request is built and allows the handler to add properties. .*/
   in3_pay_free           free;           /**< frees the custom pointer (cptr).*/
-  void*                  cptr;           /**< custom object whill will be passed to functions */
+  void*                  cptr;           /**< custom object which will be passed to functions */
 } in3_pay_t;
 
 /** Incubed Configuration. 
@@ -302,7 +302,7 @@ typedef struct in3_filter_t_ {
 typedef enum {
   PLGN_ACT_INIT              = 0x1,       /**< initialize plugin - use for allocating/setting-up internal resources */
   PLGN_ACT_TERM              = 0x2,       /**< terminate plugin - use for releasing internal resources and cleanup. */
-  PLGN_ACT_TRANSPORT_SEND    = 0x4,       /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more resonses. */
+  PLGN_ACT_TRANSPORT_SEND    = 0x4,       /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more responses. */
   PLGN_ACT_TRANSPORT_RECEIVE = 0x8,       /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
   PLGN_ACT_TRANSPORT_CLEAN   = 0x10,      /**< free-up transport resources - the transport plugin will receive a request_t as plgn_ctx if the cptr was set.*/
   PLGN_ACT_SIGN_ACCOUNT      = 0x20,      /**< returns the default account of the signer */
@@ -323,7 +323,7 @@ typedef enum {
   PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t */
   PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
   PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to node_match_t. */
-  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle failable request, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_ctx_t */
   PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to node_match_t. */
   PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
   PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
@@ -411,7 +411,7 @@ struct in3_t_ {
  * 
  * you need to free this instance with `in3_free` after use!
  * 
- * Before using the client you still need to set the tramsport and optional the storage handlers:
+ * Before using the client you still need to set the transport and optional the storage handlers:
  * 
  *  * example of initialization:
  * ```c
@@ -429,8 +429,7 @@ struct in3_t_ {
  * 
  * // ready to use ...
  * ```
- * ** This Method is depricated. you should use `in3_for_chain` instead.**
- * 
+ *
  * @returns the incubed instance.
  */
 #define in3_for_chain(chain_id) in3_for_chain_default(chain_id)
@@ -442,20 +441,20 @@ in3_t* in3_for_chain_default(
 /** sends a request and stores the result in the provided buffer */
 NONULL in3_ret_t in3_client_rpc(
     in3_t*      c,      /**< [in] the pointer to the incubed client config. */
-    const char* method, /**< [in] the name of the rpc-funcgtion to call. */
+    const char* method, /**< [in] the name of the rpc-function to call. */
     const char* params, /**< [in] docs for input parameter v. */
-    char**      result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
-    char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
+    char**      result, /**< [in] pointer to string which will be set if the request was successful. This will hold the result as json-rpc-string. (make sure you free this after use!) */
+    char**      error /**< [in] pointer to a string containing the error-message. (make sure you free it after use!) */);
 
-/** sends a request and stores the result in the provided buffer, this method will always return the first, so bulk-requests are not saupported. */
+/** sends a request and stores the result in the provided buffer, this method will always return the first, so bulk-requests are not supported. */
 NONULL in3_ret_t in3_client_rpc_raw(
     in3_t*      c,       /**< [in] the pointer to the incubed client config. */
     const char* request, /**< [in] the rpc request including method and params. */
-    char**      result,  /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
-    char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
+    char**      result,  /**< [in] pointer to string which will be set if the request was successful. This will hold the result as json-rpc-string. (make sure you free this after use!) */
+    char**      error /**< [in] pointer to a string containing the error-message. (make sure you free it after use!) */);
 
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
- * This fuinction also supports sending bulk-requests, but you can not mix internal and external calls, since bulk means all requests will be send to picked nodes.
+ * This function also supports sending bulk-requests, but you can not mix internal and external calls, since bulk means all requests will be send to picked nodes.
  * The resulting string must be free by the the caller of this function! 
  */
 NONULL char* in3_client_exec_req(
@@ -476,9 +475,9 @@ in3_ret_t in3_client_register_chain(
 NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
 /**
- * configures the clent based on a json-config.
+ * configures the client based on a json-config.
  * 
- * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
+ * For details about the structure of the config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  * Returns NULL on success, and error string on failure (to be freed by caller) - in which case the client state is undefined
  */
 NONULL char* in3_configure(
@@ -489,13 +488,13 @@ NONULL char* in3_configure(
 /**
  * gets the current config as json.
  * 
- * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
+ * For details about the structure of the config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  */
 NONULL char* in3_get_config(
     in3_t* c /**< the incubed client */
 );
 
-/** a register-function for a plugion.
+/** a register-function for a plugin.
  */
 typedef in3_ret_t (*plgn_register)(in3_t* c);
 
@@ -514,13 +513,13 @@ void in3_register_payment(
 );
 #endif
 
-#define assert_in3(c)                              \
-  assert(c);                                       \
-  assert(c->chain.chain_id);                       \
-  assert(c->plugins);                              \
-  assert(c->request_count > 0);                    \
-  assert(c->max_attempts > 0);                     \
-  assert(c->proof >= 0 && c->proof <= PROOF_FULL); \
-  assert(c->proof >= 0 && c->proof <= PROOF_FULL);
+#define assert_in3(c)                                  \
+  assert(c);                                           \
+  assert((c)->chain.chain_id);                         \
+  assert((c)->plugins);                                \
+  assert((c)->request_count > 0);                      \
+  assert((c)->max_attempts > 0);                       \
+  assert((c)->proof >= 0 && (c)->proof <= PROOF_FULL); \
+  assert((c)->proof >= 0 && (c)->proof <= PROOF_FULL);
 
 #endif
