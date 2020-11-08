@@ -350,22 +350,22 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return res;
 }
 
-static bool is_offline(in3_nodeselect_def_t* data, uint8_t* address) {
+static node_offline_t* get_offline(in3_nodeselect_def_t* data, uint8_t* offline) {
   node_offline_t* n = data->offlines;
   while (n) {
-    if (!memcmp(n->offline->address, address, 20))
-      return true;
+    if (!memcmp(n->offline->address, offline, 20))
+      break;
     n = n->next;
   }
-  return false;
+  return n;
 }
 
 static void add_offline(in3_nodeselect_def_t* data, in3_node_t* offline, uint8_t* reporter) {
   node_offline_t** n = &data->offlines;
   while (*n)
     (*n) = (*n)->next;
-  *n             = _malloc(sizeof(node_offline_t));
-  (*n)->offline  = offline;
+  *n            = _malloc(sizeof(node_offline_t));
+  (*n)->offline = offline;
   memcpy((*n)->reporter, reporter, 20);
   (*n)->next = NULL;
 }
@@ -394,9 +394,13 @@ static void free_offlines(in3_nodeselect_def_t* data) {
 NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
   for (unsigned int i = 0; i < data->nodelist_length; ++i) {
     if (!memcmp(data->nodelist[i].address, ctx->address, 20)) {
-      if (is_offline(data, ctx->address)) {
-        blacklist_node_addr(data, ctx->address, BLACKLISTTIME);
-        remove_offline(data, ctx->address);
+      node_offline_t* n = get_offline(data, ctx->address);
+      if (n) {
+        // only blacklist if reported by another node, ignore otherwise
+        if (memcmp(n->reporter, ctx->vctx->node->address, 20) != 0) {
+          blacklist_node_addr(data, ctx->address, BLACKLISTTIME);
+          remove_offline(data, ctx->address);
+        }
       }
       else {
         add_offline(data, &data->nodelist[i], ctx->vctx->node->address);
