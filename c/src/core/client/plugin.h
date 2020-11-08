@@ -427,8 +427,8 @@ typedef struct {
 
 // -------- NL_OFFLINE ---------
 typedef struct {
-  in3_vctx_t* vctx;    /**< Request context. */
-  address_t   address; /**< address of node to mark offline */
+  in3_vctx_t*  vctx;    /**< Request context. */
+  unsigned int missing; /**< bitmask representing missing signatures */
 } in3_nl_offline_ctx_t;
 
 // -------- GET_DATA ---------

@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "nodeselect_def_cfg.h"
 #include "registry.h"
+#include <limits.h>
 
 #define BLACKLISTTIME (24 * 3600)
 #define WAIT_TIME_CAP 3600
@@ -355,7 +356,7 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return res;
 }
 
-static node_offline_t* offline_get(in3_nodeselect_def_t* data, uint8_t* offline) {
+static node_offline_t* offline_get(in3_nodeselect_def_t* data, const uint8_t* offline) {
   node_offline_t* n = data->offlines;
   while (n) {
     if (!memcmp(n->offline->address, offline, 20))
@@ -365,7 +366,7 @@ static node_offline_t* offline_get(in3_nodeselect_def_t* data, uint8_t* offline)
   return n;
 }
 
-static void offline_add(in3_nodeselect_def_t* data, in3_node_t* offline, uint8_t* reporter) {
+static void offline_add(in3_nodeselect_def_t* data, in3_node_t* offline, const uint8_t* reporter) {
   node_offline_t** n = &data->offlines;
   while (*n)
     (*n) = (*n)->next;
@@ -375,7 +376,7 @@ static void offline_add(in3_nodeselect_def_t* data, in3_node_t* offline, uint8_t
   (*n)->next = NULL;
 }
 
-static void offline_remove(in3_nodeselect_def_t* data, uint8_t* address) {
+static void offline_remove(in3_nodeselect_def_t* data, const uint8_t* address) {
   node_offline_t *curr = data->offlines, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
@@ -397,15 +398,23 @@ static void offline_free(in3_nodeselect_def_t* data) {
 }
 
 NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
-  for (unsigned int i = 0; i < data->nodelist_length; ++i) {
-    if (!memcmp(data->nodelist[i].address, ctx->address, 20)) {
-      node_offline_t* n = offline_get(data, ctx->address);
+  const uint8_t blen = sizeof(ctx->missing) * CHAR_BIT;
+  for (unsigned int pos = 0; pos != blen; pos++) {
+    if (!BIT_CHECK(ctx->missing, pos))
+      continue;
+
+    const uint8_t* address = ctx->vctx->ctx->signers + (pos * 20);
+    for (unsigned int i = 0; i < data->nodelist_length; ++i) {
+      if (memcmp(data->nodelist[i].address, address, 20) != 0)
+        continue;
+
+      node_offline_t* n = offline_get(data, address);
       if (n) {
         // Only blacklist if reported by another node, ignore otherwise
         // This also guarantees there's only one entry per offline address.
         if (memcmp(n->reporter, ctx->vctx->node->address, 20) != 0) {
-          blacklist_node_addr(data, ctx->address, BLACKLISTTIME);
-          offline_remove(data, ctx->address);
+          blacklist_node_addr(data, address, BLACKLISTTIME);
+          offline_remove(data, address);
         }
       }
       else {
