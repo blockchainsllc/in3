@@ -136,8 +136,6 @@ typedef enum {
   ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
 } in3_node_attr_type_t;
 
-typedef uint8_t in3_node_attr_t;
-
 /** incubed node-configuration. 
  * 
  * These information are read from the Registry contract and stored in this struct representing a server or node.
@@ -296,7 +294,7 @@ typedef struct in3_filter_t_ {
 
 #define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
-#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST | PLGN_ACT_NL_FAILABLE)
+#define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST | PLGN_ACT_NL_FAILABLE | PLGN_ACT_NL_OFFLINE)
 #define PLGN_ACT_CACHE     (PLGN_ACT_CACHE_SET | PLGN_ACT_CACHE_GET | PLGN_ACT_CACHE_CLEAR)
 #define PLGN_ACT_CONFIG    (PLGN_ACT_CONFIG_SET | PLGN_ACT_CONFIG_GET)
 
@@ -326,9 +324,10 @@ typedef enum {
   PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
   PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to node_match_t. */
   PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle failable request, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_CHAIN_CHANGE      = 0x1000000, /**< chain id change event, called after setting new chain id */
-  PLGN_ACT_GET_DATA          = 0x2000000, /**< get access to plugin data as a void ptr */
-  PLGN_ACT_ADD_PAYLOAD       = 0x4000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
+  PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to node_match_t. */
+  PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
+  PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
+  PLGN_ACT_ADD_PAYLOAD       = 0x8000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
 } in3_plugin_act_t;
 
 /**
@@ -465,7 +464,7 @@ NONULL char* in3_client_exec_req(
 );
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
-NONULL_FOR((1, 4))
+NONULL_FOR(1)
 in3_ret_t in3_client_register_chain(
     in3_t*           client,   /**< [in] the pointer to the incubed client config. */
     chain_id_t       chain_id, /**< [in] the chain id. */
