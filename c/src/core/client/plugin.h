@@ -428,7 +428,7 @@ typedef struct {
 // -------- NL_OFFLINE ---------
 typedef struct {
   in3_vctx_t*  vctx;    /**< Request context. */
-  unsigned int missing; /**< bitmask representing missing signatures */
+  unsigned int missing; /**< bitmask representing nodes - a reset bit indicates missing signatures */
 } in3_nl_offline_ctx_t;
 
 // -------- GET_DATA ---------
