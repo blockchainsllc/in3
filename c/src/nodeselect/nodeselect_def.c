@@ -350,7 +350,7 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return res;
 }
 
-static node_offline_t* get_offline(in3_nodeselect_def_t* data, uint8_t* offline) {
+static node_offline_t* offline_get(in3_nodeselect_def_t* data, uint8_t* offline) {
   node_offline_t* n = data->offlines;
   while (n) {
     if (!memcmp(n->offline->address, offline, 20))
@@ -360,7 +360,7 @@ static node_offline_t* get_offline(in3_nodeselect_def_t* data, uint8_t* offline)
   return n;
 }
 
-static void add_offline(in3_nodeselect_def_t* data, in3_node_t* offline, uint8_t* reporter) {
+static void offline_add(in3_nodeselect_def_t* data, in3_node_t* offline, uint8_t* reporter) {
   node_offline_t** n = &data->offlines;
   while (*n)
     (*n) = (*n)->next;
@@ -370,7 +370,7 @@ static void add_offline(in3_nodeselect_def_t* data, in3_node_t* offline, uint8_t
   (*n)->next = NULL;
 }
 
-static void remove_offline(in3_nodeselect_def_t* data, uint8_t* address) {
+static void offline_remove(in3_nodeselect_def_t* data, uint8_t* address) {
   node_offline_t *curr = data->offlines, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
@@ -382,7 +382,7 @@ static void remove_offline(in3_nodeselect_def_t* data, uint8_t* address) {
   }
 }
 
-static void free_offlines(in3_nodeselect_def_t* data) {
+static void offline_free(in3_nodeselect_def_t* data) {
   node_offline_t *curr = data->offlines, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
@@ -394,16 +394,17 @@ static void free_offlines(in3_nodeselect_def_t* data) {
 NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
   for (unsigned int i = 0; i < data->nodelist_length; ++i) {
     if (!memcmp(data->nodelist[i].address, ctx->address, 20)) {
-      node_offline_t* n = get_offline(data, ctx->address);
+      node_offline_t* n = offline_get(data, ctx->address);
       if (n) {
-        // only blacklist if reported by another node, ignore otherwise
+        // Only blacklist if reported by another node, ignore otherwise
+        // This also guarantees there's only one entry per offline address.
         if (memcmp(n->reporter, ctx->vctx->node->address, 20) != 0) {
           blacklist_node_addr(data, ctx->address, BLACKLISTTIME);
-          remove_offline(data, ctx->address);
+          offline_remove(data, ctx->address);
         }
       }
       else {
-        add_offline(data, &data->nodelist[i], ctx->vctx->node->address);
+        offline_add(data, &data->nodelist[i], ctx->vctx->node->address);
       }
       break;
     }
@@ -492,7 +493,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_INIT:
       return IN3_OK;
     case PLGN_ACT_TERM:
-      free_offlines(data);
+      offline_free(data);
       in3_nodelist_clear(data);
 #ifdef NODESELECT_DEF_WL
       in3_whitelist_clear(data->whitelist);
