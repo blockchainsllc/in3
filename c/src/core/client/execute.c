@@ -36,12 +36,7 @@
 #include "../../nodeselect/nodelist.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
-#include "../../third-party/crypto/sha3.h"
 #include "../util/data.h"
-#include "../util/log.h"
-#include "../util/mem.h"
-#include "../util/stringbuilder.h"
-#include "../util/utils.h"
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
@@ -49,7 +44,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 
 NONULL static void response_free(in3_ctx_t* ctx) {
   assert_in3_ctx(ctx);
@@ -209,8 +203,8 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->replace_latest_block));
       if (c->signers_length) {
         bytes_t* s = alloca(c->signers_length * sizeof(bytes_t));
-        for (int i = 0; i < c->signers_length; i++)
-          s[i] = bytes(c->signers + i * 20, 20);
+        for (int j = 0; j < c->signers_length; j++)
+          s[j] = bytes(c->signers + j * 20, 20);
         sb_add_bytes(sb, ",\"signers\":", s, c->signers_length, true);
       }
       if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
@@ -225,15 +219,15 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
       // do we have verified hashes?
       if (rc->chain.verified_hashes) {
         uint_fast16_t l = rc->max_verified_hashes;
-        for (uint_fast16_t i = 0; i < l; i++) {
-          if (!rc->chain.verified_hashes[i].block_number) {
-            l = i;
+        for (uint_fast16_t j = 0; j < l; j++) {
+          if (!rc->chain.verified_hashes[j].block_number) {
+            l = j;
             break;
           }
         }
         if (l) {
           bytes_t* hashes = alloca(sizeof(bytes_t) * l);
-          for (uint_fast16_t i = 0; i < l; i++) hashes[i] = bytes(rc->chain.verified_hashes[i].hash, 32);
+          for (uint_fast16_t j = 0; j < l; j++) hashes[j] = bytes(rc->chain.verified_hashes[j].hash, 32);
           sb_add_bytes(sb, ",\"verifiedHashes\":", hashes, l, true);
         }
       }
@@ -288,7 +282,7 @@ static bool is_user_error(d_token_t* error, char** err_msg) {
   *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
   // here we need to find a better way to detect user errors
   // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
-  return *err_msg && strncmp(*err_msg, "Error:", 6) && strncmp(*err_msg, "TypeError:", 10);
+  return *err_msg && strncmp(*err_msg, "Error:", 6) != 0 && strncmp(*err_msg, "TypeError:", 10) != 0;
 }
 
 NONULL static void clear_response(in3_response_t* response) {
@@ -429,7 +423,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
       // this is needed in case it will be cleared and we don't want to lose the error message
       if (ctx->error && response->data.data) {
         _free(response->data.data);
-        int l           = strlen(ctx->error);
+        size_t l        = strlen(ctx->error);
         response->state = res;
         response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
       }
@@ -583,12 +577,6 @@ static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->signature = bytes(NULL, 0);
 }
 
-in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
-  in3_sign_ctx_t* res = _malloc(sizeof(in3_sign_ctx_t));
-  init_sign_ctx(ctx, res);
-  return res;
-}
-
 in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
   in3_sign_ctx_t sign_ctx;
   init_sign_ctx(ctx, &sign_ctx);
@@ -637,13 +625,13 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
       in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_RECEIVE, &req);
 #ifdef DEBUG
       node_match_t* w = ctx->nodes;
-      int           i = 0;
-      for (; w; i++, w = w->next) {
-        if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data && ctx->raw_response[i].time) {
-          char* data = ctx->raw_response[i].data.data;
+      int           j = 0;
+      for (; w; j++, w = w->next) {
+        if (ctx->raw_response[j].state != IN3_WAITING && ctx->raw_response[j].data.data && ctx->raw_response[j].time) {
+          char* data = ctx->raw_response[j].data.data;
           data       = format_json(data);
 
-          in3_log_trace(ctx->raw_response[i].state
+          in3_log_trace(ctx->raw_response[j].state
                             ? "... response(%s): \n... " COLOR_RED_STR "\n"
                             : "... response(%s): \n... " COLOR_GREEN_STR "\n",
                         w ? w->url : "intern", data);
@@ -741,18 +729,6 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
       }
     }
   }
-}
-
-/**
- * helper function to set the signature on the signer context and rpc context
- */
-void in3_sign_ctx_set_signature(
-    in3_ctx_t*      ctx,
-    in3_sign_ctx_t* sign_ctx) {
-  ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
-  sb_init(&ctx->raw_response[0].data);
-  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature.data, 0, sign_ctx->signature.len);
-  _free(sign_ctx->signature.data);
 }
 
 in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {
