@@ -629,7 +629,7 @@ static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, 
 }
 
 static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
-  in3_log_debug("waiting for the next respone ...\n");
+  in3_log_debug("waiting for the next response ...\n");
   ctx = in3_ctx_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
     if (transports->req[i].ctx == ctx) {

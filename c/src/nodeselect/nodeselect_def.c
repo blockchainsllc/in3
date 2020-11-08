@@ -285,7 +285,12 @@ static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
   filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
-  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, ctx->client->request_count, filter);
+
+  // Send parallel requests if signatures have been requested
+  int rc = ctx->client->request_count;
+  if (ctx->client->signature_count && ctx->client->request_count <= 1)
+    rc = 2;
+  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, filter);
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
