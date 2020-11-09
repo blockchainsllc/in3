@@ -465,7 +465,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    if (confirmed != (1 << vc->ctx->signers_length) - 1) // we must collect all signatures!
+    if (confirmed != (1U << vc->ctx->signers_length) - 1) // we must collect all signatures!
       return sig_err(vc, ((1 << vc->ctx->signers_length) - 1) ^ confirmed);
 
     // ok, is is verified, so we should add it to the verified hashes
