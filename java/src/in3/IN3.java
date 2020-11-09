@@ -46,9 +46,9 @@ import in3.utils.StorageProvider;
  *
  */
 public class IN3 {
-  private static final String CONFIG = "in3_config";
-  private static final String NODE_LIST = "in3_nodeList";
-  private static final String SIGN = "in3_sign";
+  private static final String CONFIG      = "in3_config";
+  private static final String NODE_LIST   = "in3_nodeList";
+  private static final String SIGN        = "in3_sign";
   private static final String CACHE_CLEAR = "in3_cacheClear";
 
   private static final String ENS_SUFFIX = ".ETH";
@@ -57,15 +57,15 @@ public class IN3 {
     Loader.loadLibrary();
   }
 
-  private long ptr;
+  private long            ptr;
   private StorageProvider provider;
-  private Signer signer;
+  private Signer          signer;
 
   private static IN3Transport transport = new IN3DefaultTransport();
   private ClientConfiguration config;
 
   private IN3(long chainAlias) {
-    ptr = init(chainAlias);
+    ptr         = init(chainAlias);
     this.config = new ClientConfiguration(this.getDefaultConfig());
   }
 
@@ -218,7 +218,8 @@ public class IN3 {
           p += s;
         else
           p += "\"" + s + "\"";
-      } else
+      }
+      else
         p += JSON.toJson(params[i]);
     }
     return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
@@ -237,7 +238,8 @@ public class IN3 {
           p += s;
         else
           p += "\"" + s + "\"";
-      } else
+      }
+      else
         p += JSON.toJson(params[i]);
     }
 
@@ -323,10 +325,10 @@ public class IN3 {
     if (dataNodeAdresses != null && dataNodeAdresses.length > 0) {
       IN3Props props = new IN3Props();
       props.setDataNodes(dataNodeAdresses);
-      return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, new Object[] { blocks }, props));
+      return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, new Object[] {blocks}, props));
     }
 
-    return SignedBlockHash.asSignedBlockHashs(sendRPCasObject(SIGN, new Object[] { blocks }));
+    return SignedBlockHash.asSignedBlockHashs(sendRPCasObject(SIGN, new Object[] {blocks}));
   }
 
   protected Object[] handleEns(Object[] params) {

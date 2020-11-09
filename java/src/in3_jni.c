@@ -556,10 +556,10 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
 JNIEXPORT jobject Java_in3_IN3_getDefaultConfig(JNIEnv* env, jobject ob) {
   UNUSED_VAR(ob);
 
-  char* ret = in3_get_config(get_in3(env, ob));
+  char*       ret  = in3_get_config(get_in3(env, ob));
   json_ctx_t* json = parse_json(ret);
-  d_token_t* r = &json->result[0];
-  jobject res = toObject(env, r);
+  d_token_t*  r    = &json->result[0];
+  jobject     res  = toObject(env, r);
 
   _free(ret);
   json_free(json);

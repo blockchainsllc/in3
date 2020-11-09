@@ -70,7 +70,7 @@ public class Block {
     if (o == null)
       return null;
     Object[] a = (Object[]) o;
-    Block[] b = new Block[a.length];
+    Block[] b  = new Block[a.length];
     for (int i = 0; i < a.length; i++)
       b[i] = Block.asBlock(a[i]);
     return b;
@@ -247,9 +247,9 @@ public class Block {
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((data == null) ? 0 : data.hashCode());
+    final int prime  = 31;
+    int       result = 1;
+    result           = prime * result + ((data == null) ? 0 : data.hashCode());
     return result;
   }
 
@@ -265,7 +265,8 @@ public class Block {
     if (data == null) {
       if (other.data != null)
         return false;
-    } else if (!data.equals(other.data))
+    }
+    else if (!data.equals(other.data))
       return false;
     return true;
   }

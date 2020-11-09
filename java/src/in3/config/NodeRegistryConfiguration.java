@@ -1,20 +1,19 @@
 package in3.config;
 
-import java.util.ArrayList;
-
 import in3.utils.JSON;
+import java.util.ArrayList;
 
 /**
  * Part of the configuration hierarchy for IN3 Client. Holds the configuration a
  * node group in a particular Chain.
  */
 public class NodeRegistryConfiguration implements Configuration {
-  private JSON data;
-  private boolean dirty;
+  private JSON                     data;
+  private boolean                  dirty;
   private ArrayList<Configuration> nodesConfiguration;
 
   protected NodeRegistryConfiguration(Object json) {
-    this.data = (JSON) json;
+    this.data               = (JSON) json;
     this.nodesConfiguration = new ArrayList<Configuration>();
     markAsSynced();
   }
@@ -117,7 +116,7 @@ public class NodeRegistryConfiguration implements Configuration {
     if (getWhiteListContract() != null) {
       JSON.appendKey(sb, "whiteListContract", getWhiteListContract());
     }
-    
+
     if (getNodesConfiguration().length > 0) {
       JSON.appendKey(sb, "nodeList", getNodesConfiguration());
     }
@@ -126,7 +125,7 @@ public class NodeRegistryConfiguration implements Configuration {
 
     return sb.toString();
   }
-  
+
   protected void addNodeConfiguration(Configuration conf) {
     this.nodesConfiguration.add(conf);
   }

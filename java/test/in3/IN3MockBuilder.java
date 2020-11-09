@@ -1,7 +1,7 @@
 package in3;
 
-import in3.config.NodeRegistryConfiguration;
 import in3.config.ClientConfiguration;
+import in3.config.NodeRegistryConfiguration;
 
 public class IN3MockBuilder {
   private IN3  client;

@@ -6,11 +6,11 @@ import in3.utils.JSON;
  * Configuration Object for Incubed Client. It represents the node of a nodelist.
  */
 public class NodeConfiguration implements Configuration {
-  private String url;
-  private Long   props;
-  private String address;
+  private String  url;
+  private Long    props;
+  private String  address;
   private boolean dirty;
-  
+
   public NodeConfiguration(NodeRegistryConfiguration parent) {
     parent.addNodeConfiguration(this);
   }

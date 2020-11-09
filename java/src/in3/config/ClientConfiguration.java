@@ -10,7 +10,7 @@ import java.math.BigInteger;
  * IN3#getConfig()
  */
 public class ClientConfiguration implements Configuration {
-  private JSON data;
+  private JSON                      data;
   private NodeRegistryConfiguration registryConfiguration;
 
   private boolean dirty;
@@ -286,7 +286,7 @@ public class ClientConfiguration implements Configuration {
   }
 
   private void setNodeRegistry() {
-    JSON data = (JSON) this.data.getObject("nodeRegistry");
+    JSON data                  = (JSON) this.data.getObject("nodeRegistry");
     this.registryConfiguration = new NodeRegistryConfiguration(data);
   }
 }

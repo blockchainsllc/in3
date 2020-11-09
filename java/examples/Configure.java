@@ -18,8 +18,8 @@ public class Configure {
     ClientConfiguration clientConfig = in3.getConfig();
     clientConfig.setReplaceLatestBlock(6); // define that latest will be -6
     clientConfig.setAutoUpdateList(false); // prevents node automatic update
-    clientConfig.setMaxAttempts(1); // sets max attempts to 1 before giving up
-    clientConfig.setProof(Proof.none); // does not require proof (not recommended)
+    clientConfig.setMaxAttempts(1);        // sets max attempts to 1 before giving up
+    clientConfig.setProof(Proof.none);     // does not require proof (not recommended)
 
     // Setup the ChainConfiguration object for the nodes on a certain chain
     NodeRegistryConfiguration chainConfiguration = clientConfig.getNodeRegistry();

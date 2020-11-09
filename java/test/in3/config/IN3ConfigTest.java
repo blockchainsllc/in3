@@ -17,7 +17,7 @@ public class IN3ConfigTest {
 
   @Test
   public void objectHierarchy() {
-    final String nodeConfigOutputKey = "nodeRegistry";
+    final String nodeConfigOutputKey      = "nodeRegistry";
     final String whiteListConfigOutputKey = "whiteListContract";
 
     ClientConfiguration clientConfig = client.getConfig();
@@ -28,7 +28,7 @@ public class IN3ConfigTest {
     nodeConfig.setContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
     nodeConfig.setWhiteListContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
 
-    String json = clientConfig.toJSON();
+    String     json        = clientConfig.toJSON();
     JSONObject jsonObject1 = new JSONObject(json);
     Assertions.assertTrue(jsonObject1.has(nodeConfigOutputKey));
     Assertions.assertTrue(jsonObject1.getJSONObject(nodeConfigOutputKey).has(whiteListConfigOutputKey));
@@ -39,11 +39,11 @@ public class IN3ConfigTest {
     ClientConfiguration config = client.getConfig();
     Assertions.assertTrue(config.isSynced());
 
-    int requestCount = 1;
+    int     requestCount   = 1;
     boolean autoUpdateList = false;
-    Proof proof = Proof.none;
-    int maxAttempts = 1;
-    int signatureCount = 0;
+    Proof   proof          = Proof.none;
+    int     maxAttempts    = 1;
+    int     signatureCount = 0;
 
     config.setRequestCount(requestCount);
     config.setAutoUpdateList(autoUpdateList);
@@ -58,10 +58,10 @@ public class IN3ConfigTest {
 
   @Test
   public void addNodeConfiguration() {
-    final String nodesOutputKey = "nodeList";
-    ClientConfiguration config = client.getConfig();
+    final String              nodesOutputKey     = "nodeList";
+    ClientConfiguration       config             = client.getConfig();
     NodeRegistryConfiguration nodeRegistryConfig = config.getNodeRegistry();
-    NodeConfiguration nodeConf = new NodeConfiguration(nodeRegistryConfig);
+    NodeConfiguration         nodeConf           = new NodeConfiguration(nodeRegistryConfig);
     nodeConf.setUrl("http://localnode.com");
     nodeConf.setAddress("0x798b7c7da709d7");
     nodeConf.setProps(0);
@@ -81,7 +81,7 @@ public class IN3ConfigTest {
     nodeConfig.setContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
     nodeConfig.setWhiteListContract("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab");
     nodeConfig.setWhiteList(
-        new String[] { "0x0123456789012345678901234567890123456789", "0x1234567890123456789012345678901234567890" });
+        new String[] {"0x0123456789012345678901234567890123456789", "0x1234567890123456789012345678901234567890"});
 
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       client.getEth1API().getGasPrice();

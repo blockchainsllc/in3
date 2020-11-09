@@ -108,7 +108,7 @@ public class JSON {
   ) {
     return asLong(get(key));
   }
-  
+
   /**
    * returns the property as BigInteger
    * 
@@ -210,7 +210,6 @@ public class JSON {
       return ((Number) o).intValue();
     return 0;
   }
-  
 
   public static boolean asBoolean(Object o) {
     if (o == null)
