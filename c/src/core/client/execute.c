@@ -577,6 +577,12 @@ static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->signature = bytes(NULL, 0);
 }
 
+in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
+  in3_sign_ctx_t* res = _malloc(sizeof(in3_sign_ctx_t));
+  init_sign_ctx(ctx, res);
+  return res;
+}
+
 in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
   in3_sign_ctx_t sign_ctx;
   init_sign_ctx(ctx, &sign_ctx);
