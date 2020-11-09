@@ -118,6 +118,11 @@ char* ctx_get_response_data(in3_ctx_t* ctx) {
   return sb.data;
 }
 
+ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
+  assert_in3_ctx(ctx);
+  return ctx->type;
+}
+
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
   assert_in3_ctx(c);
 
