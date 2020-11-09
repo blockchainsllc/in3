@@ -380,10 +380,8 @@ static void offline_remove(in3_nodeselect_def_t* data, const uint8_t* address) {
   node_offline_t *curr = data->offlines, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
-    if (!memcmp(curr->offline->address, address, 20)) {
+    if (!memcmp(curr->offline->address, address, 20))
       _free(curr);
-      break;
-    }
     curr = next;
   }
 }
