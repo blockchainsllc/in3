@@ -93,6 +93,10 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   return ctx;
 }
 
+char* ctx_get_error_data(in3_ctx_t* ctx) {
+  return ctx ? ctx->error : "No request context";
+}
+
 char* ctx_get_response_data(in3_ctx_t* ctx) {
   assert_in3_ctx(ctx);
 
