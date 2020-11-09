@@ -367,7 +367,7 @@ describe('EthAPI-Tests', () => {
     })
 
     it('eth.chainId()', async () => {
-        const supportedChains = ['0x1', '0xf6', '0x2a', '0x5']
+        const supportedChains = ['0x1', '0xf6', '0x5']
         for (const c of supportedChains) {
             let client = createClient({ chainId: c })
             let connectedChain = await client.eth.chainId()
