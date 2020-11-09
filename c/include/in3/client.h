@@ -324,7 +324,7 @@ typedef enum {
   PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
   PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to node_match_t. */
   PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to node_match_t. */
+  PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to in3_nl_offline_ctx_t. */
   PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
   PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
   PLGN_ACT_ADD_PAYLOAD       = 0x8000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
