@@ -74,7 +74,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 #define EXPECT(cond, exit) \
   do {                     \
     if (!(cond))           \
-      (exit);              \
+      exit;                \
   } while (0)
 
 #define EXPECT_CFG(cond, err) EXPECT(cond, { \
@@ -83,7 +83,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
   goto cleanup;                              \
 })
 #define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
-#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(json, token->key), err))
+#define EXPECT_TOK(token, cond, err)  EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(json, (token)->key), err))
 #define EXPECT_TOK_BOOL(token)        EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
 #define EXPECT_TOK_STR(token)         EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
 #define EXPECT_TOK_ARR(token)         EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")
@@ -98,7 +98,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 #define EXPECT_TOK_U16(token)         EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
 #define EXPECT_TOK_U32(token)         EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
 #define EXPECT_TOK_U64(token)         EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value")
-#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(json, token->key)), "expected hex str")
+#define EXPECT_TOK_KEY_HEXSTR(token)  EXPECT_TOK(token, is_hex_str(d_get_keystr(json, (token)->key)), "expected hex str")
 
 static inline char* config_err(const char* keyname, const char* err) {
   const char* k = keyname ? keyname : "";

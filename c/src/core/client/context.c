@@ -35,8 +35,6 @@
 #include "context.h"
 #include "../util/debug.h"
 #include "../util/log.h"
-#include "../util/mem.h"
-#include "../util/stringbuilder.h"
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
@@ -95,10 +93,6 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   return ctx;
 }
 
-char* ctx_get_error_data(in3_ctx_t* ctx) {
-  return ctx ? ctx->error : "No request context";
-}
-
 char* ctx_get_response_data(in3_ctx_t* ctx) {
   assert_in3_ctx(ctx);
 
@@ -118,11 +112,6 @@ char* ctx_get_response_data(in3_ctx_t* ctx) {
   }
   if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, ']');
   return sb.data;
-}
-
-ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
-  assert_in3_ctx(ctx);
-  return ctx->type;
 }
 
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
@@ -148,8 +137,8 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING) return errnumber;
   if (message) {
-    const int l   = strlen(message);
-    char*     dst = NULL;
+    const size_t l   = strlen(message);
+    char*        dst = NULL;
     if (ctx->error) {
       dst = _malloc(l + 2 + strlen(ctx->error));
       strcpy(dst, message);
@@ -296,7 +285,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   char* s = alloca(b.len * 2 + 5);
   bytes_to_hex(b.data, b.len, s + 3);
   if (s[3] == '0') s++;
-  int l    = strlen(s + 3) + 3;
+  size_t l = strlen(s + 3) + 3;
   s[0]     = '"';
   s[1]     = '0';
   s[2]     = 'x';
@@ -329,7 +318,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
       }
       if (found) break;
     }
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method)) continue;
+    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method) != 0) continue;
     d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
     if (!t) continue;
     str_range_t p = d_to_json(t);

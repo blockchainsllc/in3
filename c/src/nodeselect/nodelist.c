@@ -33,30 +33,25 @@
  *******************************************************************************/
 
 #include "nodelist.h"
-#include "../core/client/client.h"
 #include "../core/client/context_internal.h"
 #include "../core/client/keys.h"
 #include "../core/util/bitset.h"
 #include "../core/util/data.h"
 #include "../core/util/debug.h"
-#include "../core/util/log.h"
-#include "../core/util/mem.h"
-#include "../core/util/utils.h"
 #include "cache.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
-#define DAY              24 * 3600
-#define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
+#define DAY              (24 * 3600)
+#define DIFFTIME(t1, t0) (double) ((t1) > (t0) ? (t1) - (t0) : 0)
 #define BLACKLISTTIME    DAY
-#define BLACKLISTWEIGHT  7 * DAY
+#define BLACKLISTWEIGHT  (7 * DAY)
 
-NONULL static void free_nodeList(in3_node_t* nodelist, int count) {
+NONULL static void free_nodeList(in3_node_t* nodelist, unsigned int count) {
   // clean data..
-  for (int i = 0; i < count; i++) {
+  for (unsigned int i = 0; i < count; i++)
     if (nodelist[i].url) _free(nodelist[i].url);
-  }
   _free(nodelist);
 }
 
@@ -107,7 +102,7 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_ctx_t* ctx, d
       break;
     }
 
-    int old_index      = i;
+    int old_index      = (int) i;
     n->capacity        = d_get_intkd(node, K_CAPACITY, 1);
     n->index           = d_get_intkd(node, K_INDEX, i);
     n->deposit         = d_get_longk(node, K_DEPOSIT);
@@ -129,11 +124,11 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_ctx_t* ctx, d
     }
 
     // restore the nodeweights if the address was known in the old nodeList
-    if (data->nodelist_length <= i || memcmp(data->nodelist[i].address, n->address, 20)) {
+    if (data->nodelist_length <= i || memcmp(data->nodelist[i].address, n->address, 20) != 0) {
       old_index = -1;
       for (unsigned int j = 0; j < data->nodelist_length; j++) {
         if (memcmp(data->nodelist[j].address, n->address, 20) == 0) {
-          old_index = j;
+          old_index = (int) j;
           break;
         }
       }
@@ -386,7 +381,7 @@ NONULL static char* to_http_url(char* src_url) {
 }
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights,
-                                        int len, uint64_t now, uint32_t* total_weight, int* total_found,
+                                        unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found,
                                         in3_node_filter_t filter) {
 
   int                found      = 0;
@@ -398,7 +393,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
   node_match_t*      first      = NULL;
   *total_found                  = 0;
 
-  for (int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     node_def   = all_nodes + i;
     weight_def = weights + i;
 
@@ -449,8 +444,8 @@ static bool update_in_progress(const in3_ctx_t* ctx) {
   return ctx_is_method(ctx, "in3_nodeList");
 }
 
-in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights) {
-  in3_ret_t res = IN3_EFIND;
+in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, unsigned int* nodelist_length, in3_node_weight_t** weights) {
+  in3_ret_t res;
 
   // do we need to update the nodelist?
   if (data->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
@@ -484,13 +479,13 @@ SKIP_UPDATE:
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, int request_count, in3_node_filter_t filter) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, in3_node_filter_t filter) {
   // get all nodes from the nodelist
   uint64_t           now       = in3_time(NULL);
   in3_node_t*        all_nodes = NULL;
   in3_node_weight_t* weights   = NULL;
   uint32_t           total_weight;
-  int                all_nodes_len, total_found;
+  unsigned int       all_nodes_len, total_found;
 
   in3_ret_t res = in3_node_list_get(ctx, data, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
@@ -503,14 +498,14 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
-    int blacklisted = 0;
-    for (int i = 0; i < all_nodes_len; i++) {
+    unsigned int blacklisted = 0;
+    for (unsigned int i = 0; i < all_nodes_len; i++) {
       if (weights[i].blacklisted_until > (uint64_t) now) blacklisted++;
     }
 
     // if morethan 50% of the nodes are blacklisted, we remove the mark and try again
     if (blacklisted > all_nodes_len / 2) {
-      for (int i = 0; i < all_nodes_len; i++)
+      for (unsigned int i = 0; i < all_nodes_len; i++)
         weights[i].blacklisted_until = 0;
       found = in3_node_list_fill_weight(ctx->client, data, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter);
     }
@@ -519,21 +514,21 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
       return ctx_set_error(ctx, "No nodes found that match the criteria", IN3_EFIND);
   }
 
-  int filled_len = total_found < request_count ? total_found : request_count;
+  unsigned int filled_len = total_found < request_count ? total_found : request_count;
   if (total_found == filled_len) {
     *nodes = found;
     return IN3_OK;
   }
 
   uint32_t      r;
-  int           added   = 0;
+  unsigned int  added   = 0;
   node_match_t* last    = NULL;
   node_match_t* first   = NULL;
   node_match_t* next    = NULL;
   node_match_t* current = NULL;
 
   // we want ot make sure this loop is run only max 10xthe number of requested nodes
-  for (int i = 0; added < filled_len && i < filled_len * 10; i++) {
+  for (unsigned int i = 0; added < filled_len && i < filled_len * 10; i++) {
     // pick a random number
     r = total_weight ? (in3_rand(NULL) % total_weight) : 0;
 

@@ -36,17 +36,12 @@
 #include "../util/data.h"
 #include "../util/debug.h"
 #include "../util/log.h"
-#include "../util/mem.h"
 #include "client.h"
 #include "context_internal.h"
 #include "plugin.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __ZEPHYR__
-#include <sys/time.h>
-#endif
-#include <time.h>
 
 #ifdef PAY
 typedef struct payment {
@@ -77,7 +72,6 @@ void in3_register_payment(
   p->next            = payments;
   payments           = p;
 }
-
 #endif
 
 // set the defaults
@@ -88,24 +82,6 @@ typedef struct default_fn {
 
 static default_fn_t* default_registry = NULL;
 
-static in3_transport_legacy default_legacy_transport = NULL;
-static in3_ret_t            handle_legacy_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
-  UNUSED_VAR(plugin_data);
-  UNUSED_VAR(action);
-  assert(plugin_ctx);
-  return default_legacy_transport((in3_request_t*) plugin_ctx);
-}
-static in3_ret_t register_legacy(in3_t* c) {
-  assert(c);
-  return plugin_register(c, PLGN_ACT_TRANSPORT, handle_legacy_transport, NULL, true);
-}
-
-void in3_set_default_legacy_transport(
-    in3_transport_legacy transport /**< the default transport-function. */
-) {
-  default_legacy_transport = transport;
-  in3_register_default(register_legacy);
-}
 void in3_register_default(plgn_register reg_fn) {
   assert(reg_fn);
   // check if it already exists
@@ -341,6 +317,8 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
     }
+    else if (token->key == key("chainType"))
+      ; // Ignore - handled within `chainId` case
     else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
 
@@ -349,11 +327,11 @@ char* in3_configure(in3_t* c, const char* config) {
       for (d_iterator_t it_ = d_iter(json->result); it_.left; d_iter_next(&it_)) {
         if (it_.token->key == key("chainType")) {
           EXPECT_TOK_U8(it_.token);
-          ct_ = d_int(token);
+          ct_ = d_int(it_.token);
         }
       }
       c->chain.chain_id = chain_id(token);
-      c->chain.type     = (ct_ == -1) ? chain_type(c->chain.chain_id) : ct_;
+      c->chain.type     = (ct_ == -1) ? chain_type(c->chain.chain_id) : (uint8_t) ct_;
       in3_client_register_chain(c, c->chain.chain_id, c->chain.type, 2);
       in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
@@ -584,7 +562,7 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_SIGN_PREPARE: return "sign_prepare";
     case PLGN_ACT_SIGN: return "sign";
     case PLGN_ACT_RPC_HANDLE: return "rpc_handle";
-    case PLGN_ACT_RPC_VERIFY: return "rpc_verrify";
+    case PLGN_ACT_RPC_VERIFY: return "rpc_verify";
     case PLGN_ACT_CACHE_SET: return "cache_set";
     case PLGN_ACT_CACHE_GET: return "cache_get";
     case PLGN_ACT_CACHE_CLEAR: return "cache_clear";
@@ -599,11 +577,14 @@ static char* action_name(in3_plugin_act_t action) {
     case PLGN_ACT_NL_PICK_FOLLOWUP: return "nl_pick_followup";
     case PLGN_ACT_NL_BLACKLIST: return "nl_blacklist";
     case PLGN_ACT_NL_FAILABLE: return "nl_failable";
+    case PLGN_ACT_NL_OFFLINE: return "nl_offline";
     case PLGN_ACT_CHAIN_CHANGE: return "chain_change";
     case PLGN_ACT_GET_DATA: return "get_data";
     case PLGN_ACT_ADD_PAYLOAD: return "add_payload";
+    default:
+      assert("unknown plugin");
+      return "unknown";
   }
-  return "unknown";
 }
 #endif
 

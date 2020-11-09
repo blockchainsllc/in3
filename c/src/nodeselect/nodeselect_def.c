@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "nodeselect_def_cfg.h"
 #include "registry.h"
+#include <limits.h>
 
 #define BLACKLISTTIME (24 * 3600)
 #define WAIT_TIME_CAP 3600
@@ -278,15 +279,19 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c) {
 }
 
 static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
-  // init cache lazily,
-  // this also means we can be sure that all other related plugins are registered by now
+  // init cache lazily this also means we can be sure that all other related plugins are registered by now
   if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client))
     return IN3_ECONFIG;
 
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
   filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
-  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, ctx->client->request_count, filter);
+
+  // Send parallel requests if signatures have been requested
+  int rc = ctx->client->request_count;
+  if (ctx->client->signature_count && ctx->client->request_count <= 1)
+    rc = 2;
+  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, filter);
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
@@ -351,6 +356,76 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   return res;
 }
 
+static node_offline_t* offline_get(in3_nodeselect_def_t* data, const uint8_t* offline) {
+  node_offline_t* n = data->offlines;
+  while (n) {
+    if (!memcmp(n->offline->address, offline, 20))
+      break;
+    n = n->next;
+  }
+  return n;
+}
+
+static void offline_add(in3_nodeselect_def_t* data, in3_node_t* offline, const uint8_t* reporter) {
+  node_offline_t** n = &data->offlines;
+  while (*n)
+    (*n) = (*n)->next;
+  *n            = _malloc(sizeof(node_offline_t));
+  (*n)->offline = offline;
+  memcpy((*n)->reporter, reporter, 20);
+  (*n)->next = NULL;
+}
+
+static void offline_remove(in3_nodeselect_def_t* data, const uint8_t* address) {
+  node_offline_t *curr = data->offlines, *next = NULL;
+  while (curr != NULL) {
+    next = curr->next;
+    if (!memcmp(curr->offline->address, address, 20)) {
+      _free(curr);
+      break;
+    }
+    curr = next;
+  }
+}
+
+static void offline_free(in3_nodeselect_def_t* data) {
+  node_offline_t *curr = data->offlines, *next = NULL;
+  while (curr != NULL) {
+    next = curr->next;
+    _free(curr);
+    curr = next;
+  }
+}
+
+NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
+  const uint8_t blen = sizeof(ctx->missing) * CHAR_BIT;
+  for (unsigned int pos = 0; pos != blen; pos++) {
+    if (!BIT_CHECK(ctx->missing, pos))
+      continue;
+
+    const uint8_t* address = ctx->vctx->ctx->signers + (pos * 20);
+    for (unsigned int i = 0; i < data->nodelist_length; ++i) {
+      if (memcmp(data->nodelist[i].address, address, 20) != 0)
+        continue;
+
+      node_offline_t* n = offline_get(data, address);
+      if (n) {
+        // Only blacklist if reported by another node, ignore otherwise
+        // This also guarantees there's only one entry per offline address.
+        if (memcmp(n->reporter, ctx->vctx->node->address, 20) != 0) {
+          blacklist_node_addr(data, address, BLACKLISTTIME);
+          offline_remove(data, address);
+        }
+      }
+      else {
+        offline_add(data, &data->nodelist[i], ctx->vctx->node->address);
+      }
+      break;
+    }
+  }
+  return IN3_OK;
+}
+
 static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
   if (nodelist_block > current_blk)
     // misbehaving node, so allow to update right away and it'll get blacklisted due to the exp_last_block mechanism
@@ -395,7 +470,8 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_nodeselect_def_t* data, d
 }
 
 static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_response_t* response) {
-  if (!node || get_node(data, node)->blocked || !response || !response->time) return;
+  in3_node_t* n = get_node(data, node);
+  if (!node || (n && n->blocked) || !response || !response->time) return;
   in3_node_weight_t* w = get_node_weight(data, node);
   if (!w) return;
   w->response_count++;
@@ -403,7 +479,7 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
   response->time = 0; // make sure we count the time only once
 }
 
-static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followop_type_t* fctx) {
+static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t* fctx) {
   in3_ctx_t*    ctx         = fctx->ctx;
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;
@@ -431,6 +507,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_INIT:
       return IN3_OK;
     case PLGN_ACT_TERM:
+      offline_free(data);
       in3_nodelist_clear(data);
 #ifdef NODESELECT_DEF_WL
       in3_whitelist_clear(data->whitelist);
@@ -454,6 +531,8 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
       return blacklist_node(data, ((node_match_t*) plugin_ctx)->index, BLACKLISTTIME);
     case PLGN_ACT_NL_FAILABLE:
       return handle_failable(data, plugin_ctx);
+    case PLGN_ACT_NL_OFFLINE:
+      return handle_offline(data, plugin_ctx);
     case PLGN_ACT_CHAIN_CHANGE:
       return chain_change(data, plugin_ctx);
     case PLGN_ACT_GET_DATA: {

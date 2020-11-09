@@ -69,7 +69,7 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
     return NULL;
 }
 
-int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig) {
+unsigned int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig) {
   // recover the signature
   int      res  = 0, i;
   bytes_t* addr = ecrecover_signature(msg_hash, sig);

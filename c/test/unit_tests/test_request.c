@@ -42,18 +42,16 @@
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
-#include "../../src/core/util/utils.h"
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include "nodeselect/cache.h"
 #include "nodeselect/nodelist.h"
-#include <nodeselect/nodeselect_def.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "nodeselect/nodeselect_def.h"
 
 #define TEST_ASSERT_CONFIGURE_FAIL(desc, in3, config, err_slice) \
   do {                                                           \
@@ -563,24 +561,154 @@ static void test_configure_validation() {
   in3_free(c);
 }
 
+static void test_parallel_signatures() {
+  in3_t* in3 = in3_for_chain(0x34ff);
+  in3_configure(in3, "{\"chainId\":\"0x34ff\",\"chainType\":0,\"autoUpdateList\":false,\"signatureCount\":3,\"requestCount\":1,\"maxAttempts\":1,"
+                     "\"nodeRegistry\":{"
+                     "   \"needsUpdate\":false,"
+                     "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","
+                     "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\","
+                     "   \"nodeList\": [{"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-1\","
+                     "      \"address\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-2\","
+                     "      \"address\":\"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-3\","
+                     "      \"address\":\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-4\","
+                     "      \"address\":\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-5\","
+                     "      \"address\":\"0xbcdf4e3e90cc7288b578329efd7bcc90655148d2\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://tincubeth.komputing.org/\","
+                     "      \"address\":\"0xf944d416ebdf7f6e22eaf79a5a53ad1a487ddd9a\","
+                     "      \"props\":\"0x1d7e0000000a\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://h5l45fkzz7oc3gmb.onion/\","
+                     "      \"address\":\"0x56d986deb3b5d14cb230d0f39247cc32416020b6\","
+                     "      \"props\":\"0x21660000000a\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3node.com\","
+                     "      \"address\":\"0x1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1\","
+                     "      \"props\":\"0xa000001d1\""
+                     "    }]"
+                     "}}");
+  register_transport(in3, test_transport);
+
+  add_response("eth_getTransactionByHash",
+               "[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]",
+               "{"
+               "    \"blockHash\":\"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+               "    \"blockNumber\":\"0x37e13e\","
+               "    \"chainId\":\"0x5\","
+               "    \"creates\":null,"
+               "    \"from\":\"0xe6ed92d26573c67af5eca7fb2a49a807fb8f88db\","
+               "    \"gas\":\"0x7a120\","
+               "    \"gasPrice\":\"0xf695\","
+               "    \"hash\":\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\","
+               "    \"input\":\"0x205c287800000000000000000000000030666f5ef83df74980b30e36bc2f65478e9f78d9000000000000000000000000000000000000000000000001c9f78d2893e40000\","
+               "    \"nonce\":\"0xdb68\","
+               "    \"publicKey\":\"0xbc40a37d5ba777b3a681ff12fa77bd34d85a11f1e1bc5b3bd2bbced17d49fdfd7095d2344ae3a62dbe253c41ca1d6733c4d59b80d0b20eeb9717190d74390be3\","
+               "    \"r\":\"0x59c2d85d4ca60d6d0c1c1d29da1d07b1ed7190a02be72f386262baf48c5050f2\","
+               "    \"raw\":\"0xf8a982db6882f6958307a120947abc5f3976a239fd4addb73e2d43449038a7cf2c80b844205c287800000000000000000000000030666f5ef83df74980b30e36bc2f65478e9f78d9000000000000000000000000000000000000000000000001c9f78d2893e400002ea059c2d85d4ca60d6d0c1c1d29da1d07b1ed7190a02be72f386262baf48c5050f2a01d32a1bc5b07edfcc6a42a87841c8097cbed2ae76c90c2367396f8609582cdda\","
+               "    \"s\":\"0x1d32a1bc5b07edfcc6a42a87841c8097cbed2ae76c90c2367396f8609582cdda\","
+               "    \"standardV\":\"0x1\","
+               "    \"to\":\"0x7abc5f3976a239fd4addb73e2d43449038a7cf2c\","
+               "    \"transactionIndex\":\"0x1\","
+               "    \"v\":\"0x2e\","
+               "    \"value\":\"0x0\""
+               "}",
+               NULL,
+               "{"
+               "    \"proof\":{"
+               "      \"type\":\"transactionProof\","
+               "      \"block\":\"0xf9025ca028ec80e2ad66d03b158eb3fce8eed394bd90649551a0e2cca1d22d11e90d3655a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347940000000000000000000000000000000000000000a0ce1395a999dbe04c2090cd7e6440d7272d6f4dad2543989d164ae2a7e50e9391a0157c899d5554d0c3b513d16836cecd040a40c80c77e5a5fd8bfe961823bc97d2a0d61a06c53c3f935052b4dfa7f56b9a9cfc4356eb9abdd931c9a33a07c43b0652b9010000000000000000000000000000000080000040500000000001000000008080000000000001000220000000000000000000004000000040800000400000000002002000000000000000400808000000000004000000000000000000000040000000001000000000200080000000008000000000400000000000000010000000000000000000000000000000000400001000000000100000000000000000000100000000000000000000000000002100000000000000000001000000000000000000000002000000000000000000000008000000000040000000000000000000000000000000000000000000000000000000000000001000030002000000002000018337e13e837a1200834bf487845f9b2a24b861476f65726c6920496e697469617469766520417574686f726974790000000000227e77a2cddac26649a6b765e817ce6275a104da4c76215f15498edc0247679129cde07d0da98f595bc0aa8c10db10c427d74cc8c828a236e2755362fd80844800a00000000000000000000000000000000000000000000000000000000000000000880000000000000000\","
+               "      \"merkleProof\":[\"0xf851a0cc1732b8ace8b4d42b392e17ddd5f4a110a03de206a85882d796dc32cfaf299e80808080808080a096eb62167a629b538b74ba420941f9ce6e928412beee3f241c2982bb12afd7e18080808080808080\","
+               "      \"0xf85180a0a3147f39b9ae6fff129b790c82ad9513606c8bc6f947e1acf2279960b536d323a0fedd07567a67ab98651732388ac714f89981dfcb6689e915909ebd1d157ee7558080808080808080808080808080\","
+               "      \"0xf8ae20b8abf8a982db6882f6958307a120947abc5f3976a239fd4addb73e2d43449038a7cf2c80b844205c287800000000000000000000000030666f5ef83df74980b30e36bc2f65478e9f78d9000000000000000000000000000000000000000000000001c9f78d2893e400002ea059c2d85d4ca60d6d0c1c1d29da1d07b1ed7190a02be72f386262baf48c5050f2a01d32a1bc5b07edfcc6a42a87841c8097cbed2ae76c90c2367396f8609582cdda\"],"
+               "      \"txIndex\":1,"
+               "      \"signatures\":[{"
+               "        \"blockHash\":\"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+               "        \"block\":3662142,"
+               "        \"r\":\"0x389656b8924ab3b0f05b5d618e14a6b561cc85023bde9a96f1b78487eb1872a4\","
+               "        \"s\":\"0x49c00342564b30e8b17488941aa3afde8bc85728d2a2814094c0afb7ce84c926\","
+               "        \"v\":28,"
+               "        \"msgHash\":\"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+               "      },"
+               "      {"
+               "        \"blockHash\":\"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+               "        \"block\":3662142,"
+               "        \"r\":\"0xdf49a129f1186ad491d66ef8100384799cbd583d59558092375c9e181ceddcec\","
+               "        \"s\":\"0x158e543243a2e4718cc253d389759b9382c040f5e77ae360531d7ff701537802\","
+               "        \"v\":28,"
+               "        \"msgHash\":\"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+               "      }]"
+               "    },"
+               "    \"version\":\"2.1.0\","
+               "    \"currentBlock\":3662181,"
+               "    \"lastValidatorChange\":0,"
+               "    \"lastNodeList\":3489472,"
+               "    \"execTime\":50,"
+               "    \"rpcTime\":45,"
+               "    \"rpcCount\":2"
+               "}");
+
+  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
+                                               "\"method\":\"eth_getTransactionByHash\","
+                                               "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
+                                               "\"in3\":{\"dataNodes\":[\"0x45d45e6ff99e6c34a235d263965910298985fcfe\"],"
+                                               "\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1\",\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\"]}}");
+  
+  in3_nodeselect_def_t* nl      = in3_nodeselect_def_data(in3);
+  bytes_t*              address = hex_to_new_bytes("45d45e6ff99e6c34a235d263965910298985fcfe", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->reporter, address->data, 20);
+  b_free(address);
+
+  address = hex_to_new_bytes("1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->offline->address, address->data, 20);
+  b_free(address);
+
+  TEST_ASSERT_FALSE(is_blacklisted(&nl->nodelist[0]));
+  ctx_free(ctx);
+
+  in3_free(in3);
+}
+
 /*
  * Main
  */
 int main() {
-  //  in3_log_set_quiet(false);
-  //  in3_log_set_level(LOG_TRACE);
+  in3_log_set_quiet(false);
+  in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_basic);
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_nodeselect_def);
 
   TESTS_BEGIN();
-  RUN_TEST(test_configure_request);
-  RUN_TEST(test_configure_signed_request);
-  RUN_TEST(test_bulk_response);
-  RUN_TEST(test_partial_response);
-  RUN_TEST(test_retry_response);
-  RUN_TEST(test_exec_req);
-  RUN_TEST(test_configure);
-  RUN_TEST(test_configure_validation);
+  //  RUN_TEST(test_configure_request);
+  //  RUN_TEST(test_configure_signed_request);
+  //  RUN_TEST(test_bulk_response);
+  //  RUN_TEST(test_partial_response);
+  //  RUN_TEST(test_retry_response);
+  //  RUN_TEST(test_exec_req);
+  //  RUN_TEST(test_configure);
+  //  RUN_TEST(test_configure_validation);
+  RUN_TEST(test_parallel_signatures);
   return TESTS_END();
 }

@@ -441,7 +441,4 @@ NONULL in3_proof_t in3_ctx_get_proof(
     int        i    /**< [in] the index within the request. */
 );
 
-NONULL_FOR((1, 2, 3, 5))
-in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
-
 #endif
