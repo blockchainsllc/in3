@@ -93,9 +93,9 @@ void init_in3(void) {
   plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);
   c->flags  = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist
   sb_t* cfg = sb_new("{\"chainId\":");
-  sb_add_int(cfg, chain);
+  sb_add_int(cfg, CHAIN_ID_GOERLI);
   sb_add_chars(cfg, ",\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
-  in3_configure(in3, cfg->data);
+  in3_configure(c, cfg->data);
   sb_free(cfg);
 }
 
