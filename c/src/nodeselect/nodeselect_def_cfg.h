@@ -4,6 +4,7 @@
 #include "../../prebuild/prebuild.h"
 #include "../core/client/client.h"
 
+#ifndef NO_BOOT_NODES_MAINNET
 /*
 #define BOOT_NODES_MAINNET JSON_TO_BIN("{"                                                                                          \
                                        " \"nodeRegistry\": {"                                                                       \
@@ -70,9 +71,11 @@ unsigned char BOOT_NODES_MAINNET_BIN[] = {
     0x69, 0x74, 0x2f, 0x6d, 0x61, 0x69, 0x6e, 0x6e, 0x65, 0x74, 0x2f, 0x6e,
     0x64, 0x2d, 0x35, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_MAINNET_BIN_LEN = 417;
+#endif // NO_BOOT_NODES_MAINNET
 
 #ifdef IN3_STAGING
 
+#ifndef NO_BOOT_NODES_GOERLI
 /*
 #define BOOT_NODES_GOERLI JSON_TO_BIN("{"                                                                                          \
                                       " \"nodeRegistry\": {"                                                                       \
@@ -110,9 +113,11 @@ unsigned char BOOT_NODES_GOERLI_BIN[] = {
     0x74, 0x2f, 0x67, 0x6f, 0x65, 0x72, 0x6c, 0x69, 0x2f, 0x6e, 0x64, 0x2d,
     0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_GOERLI_BIN_LEN = 211;
+#endif // NO_BOOT_NODES_GOERLI
 
 #else /* IN3_STAGING */
 
+#ifndef NO_BOOT_NODES_GOERLI
 /*
 #define BOOT_NODES_GOERLI JSON_TO_BIN("{"                                                                                          \
                                       " \"nodeRegistry\": {"                                                                       \
@@ -150,7 +155,9 @@ unsigned char BOOT_NODES_GOERLI_BIN[] = {
     0x6c, 0x69, 0x2f, 0x6e, 0x64, 0x2d, 0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff,
     0xff};
 unsigned int BOOT_NODES_GOERLI_BIN_LEN = 205;
+#endif // NO_BOOT_NODES_GOERLI
 
+#ifndef NO_BOOT_NODES_IPFS
 /*
 #define BOOT_NODES_IPFS JSON_TO_BIN("{"                                                                                          \
                                     " \"nodeRegistry\": {"                                                                       \
@@ -187,7 +194,9 @@ unsigned char BOOT_NODES_IPFS_BIN[] = {
     0x63, 0x6b, 0x2e, 0x69, 0x74, 0x2f, 0x69, 0x70, 0x66, 0x73, 0x2f, 0x6e,
     0x64, 0x2d, 0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_IPFS_BIN_LEN = 201;
+#endif // NO_BOOT_NODES_IPFS
 
+#ifndef NO_BOOT_NODES_BTC
 /*
 #define BOOT_NODES_BTC JSON_TO_BIN("{"                                                                                          \
                                    " \"nodeRegistry\": {"                                                                       \
@@ -224,7 +233,9 @@ unsigned char BOOT_NODES_BTC_BIN[] = {
     0x6b, 0x2e, 0x69, 0x74, 0x2f, 0x62, 0x74, 0x63, 0x2f, 0x6e, 0x64, 0x2d,
     0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_BTC_BIN_LEN = 199;
+#endif // NO_BOOT_NODES_BTC
 
+#ifndef NO_BOOT_NODES_EWC
 /*
 #define BOOT_NODES_EWC JSON_TO_BIN("{"                                                                                          \
                                    " \"nodeRegistry\": {"                                                                       \
@@ -261,7 +272,9 @@ unsigned char BOOT_NODES_EWC_BIN[] = {
     0x6b, 0x2e, 0x69, 0x74, 0x2f, 0x65, 0x77, 0x63, 0x2f, 0x6e, 0x64, 0x2d,
     0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_EWC_BIN_LEN = 199;
+#endif // NO_BOOT_NODES_EWC
 
+#ifndef NO_BOOT_NODES_LOCAL
 /*
 #define BOOT_NODES_LOCAL JSON_TO_BIN("{"                                                                \
                                      " \"nodeRegistry\": {"                                             \
@@ -284,24 +297,42 @@ unsigned char BOOT_NODES_LOCAL_BIN[] = {
     0x73, 0x74, 0x3a, 0x38, 0x35, 0x34, 0x35, 0x00, 0x41, 0x6e, 0xbd, 0xff,
     0xff};
 unsigned int BOOT_NODES_LOCAL_BIN_LEN = 85;
+#endif // NO_BOOT_NODES_LOCAL
 
 #endif /* IN3_STAGING */
 
 static inline bytes_t nodeselect_def_cfg_data(chain_id_t chain_id) {
+#ifndef NO_BOOT_NODES_MAINNET
   if (chain_id == CHAIN_ID_MAINNET)
     return bytes(BOOT_NODES_MAINNET_BIN, BOOT_NODES_MAINNET_BIN_LEN);
-  else if (chain_id == CHAIN_ID_GOERLI)
+#endif // NO_BOOT_NODES_MAINNET
+
+#ifndef NO_BOOT_NODES_GOERLI
+  if (chain_id == CHAIN_ID_GOERLI)
     return bytes(BOOT_NODES_GOERLI_BIN, BOOT_NODES_GOERLI_BIN_LEN);
-  else if (chain_id == CHAIN_ID_IPFS)
+#endif // NO_BOOT_NODES_GOERLI
+
+#ifndef NO_BOOT_NODES_IPFS
+  if (chain_id == CHAIN_ID_IPFS)
     return bytes(BOOT_NODES_IPFS_BIN, BOOT_NODES_IPFS_BIN_LEN);
-  else if (chain_id == CHAIN_ID_BTC)
+#endif // NO_BOOT_NODES_IPFS
+
+#ifndef NO_BOOT_NODES_BTC
+  if (chain_id == CHAIN_ID_BTC)
     return bytes(BOOT_NODES_BTC_BIN, BOOT_NODES_BTC_BIN_LEN);
-  else if (chain_id == CHAIN_ID_EWC)
+#endif // NO_BOOT_NODES_BTC
+
+#ifndef NO_BOOT_NODES_EWC
+  if (chain_id == CHAIN_ID_EWC)
     return bytes(BOOT_NODES_EWC_BIN, BOOT_NODES_EWC_BIN_LEN);
-  else if (chain_id == CHAIN_ID_LOCAL)
+#endif // NO_BOOT_NODES_EWC
+
+#ifndef NO_BOOT_NODES_LOCAL
+  if (chain_id == CHAIN_ID_LOCAL)
     return bytes(BOOT_NODES_LOCAL_BIN, BOOT_NODES_LOCAL_BIN_LEN);
-  else
-    return bytes(NULL, 0);
+#endif // NO_BOOT_NODES_LOCAL
+
+  return bytes(NULL, 0);
 }
 
 static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {
