@@ -213,7 +213,7 @@ foreach (testdir
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 
-          TIMEOUT 9
+          TIMEOUT 30
           ENVIRONMENT LLVM_PROFILE_FILE=evm_${testdir}_${testname}.profraw
           )
 
