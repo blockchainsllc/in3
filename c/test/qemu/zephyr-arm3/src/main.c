@@ -36,6 +36,7 @@
 #include "client/plugin.h"
 #include "eth_api.h"   //wrapper for easier use
 #include "eth_basic.h" // the full ethereum verifier containing the EVM
+#include "nodeselect_def.h"
 #include "receipt.h"
 #include "util/log.h"
 #include "util/mem.h"
@@ -73,6 +74,7 @@ in3_t* init_in3(in3_plugin_act_fn custom_transport, chain_id_t chain) {
   in3_log_set_quiet(0);
   in3_log_set_level(LOG_DEBUG);
   in3_register_default(in3_register_eth_basic);
+  in3_register_default(in3_register_nodeselect_def);
   in3 = in3_for_chain(chain);
   if (custom_transport)
     plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
