@@ -195,13 +195,14 @@ foreach (testdir
     file(GLOB files "testdata/evm/${testdir}/*.json")
 
     # exclude tests, but fix them later    
-    list(FILTER files EXCLUDE REGEX ".*randomStatetest(48|85|150|154|159|178|184|205|248|306|307|458|467|498|554|618|636|639).json$")
+    list(FILTER files EXCLUDE REGEX ".*randomStatetest(150|154|159|178|184|205|248|306|48|458|467|498|554|618|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
     list(FILTER files EXCLUDE REGEX ".*ecpairing(.*).json$")
     list(FILTER files EXCLUDE REGEX ".*pairingTest.json$")
     list(FILTER files EXCLUDE REGEX ".*ecmul_0-3_5616_28000_96.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
     list(FILTER files EXCLUDE REGEX ".*(pointMulAdd2).json$")
+    list(FILTER files EXCLUDE REGEX ".*(QuadraticComplexitySolidity_CallDataCopy).json$")
 
 
     foreach (file ${files})
