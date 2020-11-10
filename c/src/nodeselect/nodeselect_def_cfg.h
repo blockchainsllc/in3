@@ -4,33 +4,35 @@
 #include "../../prebuild/prebuild.h"
 #include "../core/client/client.h"
 
-// #define BOOT_NODES_MAINNET JSON_TO_BIN("{"                                                                                          \
-//                                        " \"nodeRegistry\": {"                                                                       \
-//                                        "   \"contract\": \"0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f\","                           \
-//                                        "   \"registryId\": \"0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb\"," \
-//                                        "   \"nodeList\": [{"                                                                        \
-//                                        "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
-//                                        "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-1\","                                     \
-//                                        "    \"props\": \"0xFFFF\""                                                                  \
-//                                        "   }, {"                                                                                    \
-//                                        "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
-//                                        "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-2\","                                     \
-//                                        "    \"props\": \"0xFFFF\""                                                                  \
-//                                        "   }, {"                                                                                    \
-//                                        "    \"address\": \"0x0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d\","                           \
-//                                        "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-3\","                                     \
-//                                        "    \"props\": \"0xFFFF\""                                                                  \
-//                                        "   }, {"                                                                                    \
-//                                        "    \"address\": \"0xccd12a2222995e62eca64426989c2688d828aa47\","                           \
-//                                        "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-4\","                                     \
-//                                        "    \"props\": \"0xFFFF\""                                                                  \
-//                                        "   }, {"                                                                                    \
-//                                        "    \"address\": \"0x510ee7f6f198e018e3529164da2473a96eeb3dc8\","                           \
-//                                        "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-5\","                                     \
-//                                        "    \"props\": \"0xFFFF\""                                                                  \
-//                                        "   }]"                                                                                      \
-//                                        " }"                                                                                         \
-//                                        "}")
+/*
+#define BOOT_NODES_MAINNET JSON_TO_BIN("{"                                                                                          \
+                                       " \"nodeRegistry\": {"                                                                       \
+                                       "   \"contract\": \"0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f\","                           \
+                                       "   \"registryId\": \"0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb\"," \
+                                       "   \"nodeList\": [{"                                                                        \
+                                       "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
+                                       "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-1\","                                     \
+                                       "    \"props\": \"0xFFFF\""                                                                  \
+                                       "   }, {"                                                                                    \
+                                       "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
+                                       "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-2\","                                     \
+                                       "    \"props\": \"0xFFFF\""                                                                  \
+                                       "   }, {"                                                                                    \
+                                       "    \"address\": \"0x0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d\","                           \
+                                       "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-3\","                                     \
+                                       "    \"props\": \"0xFFFF\""                                                                  \
+                                       "   }, {"                                                                                    \
+                                       "    \"address\": \"0xccd12a2222995e62eca64426989c2688d828aa47\","                           \
+                                       "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-4\","                                     \
+                                       "    \"props\": \"0xFFFF\""                                                                  \
+                                       "   }, {"                                                                                    \
+                                       "    \"address\": \"0x510ee7f6f198e018e3529164da2473a96eeb3dc8\","                           \
+                                       "    \"url\": \"https://in3-v2.slock.it/mainnet/nd-5\","                                     \
+                                       "    \"props\": \"0xFFFF\""                                                                  \
+                                       "   }]"                                                                                      \
+                                       " }"                                                                                         \
+                                       "}")
+*/
 unsigned char BOOT_NODES_MAINNET_BIN[] = {
     0xd9, 0x61, 0x5f, 0x35, 0x63, 0xce, 0x12, 0x14, 0xac, 0x1b, 0x82, 0x47,
     0x95, 0xe1, 0xeb, 0x1f, 0x6e, 0x60, 0x9f, 0xe0, 0xda, 0x9b, 0x9a, 0xf8,
@@ -71,21 +73,23 @@ unsigned int BOOT_NODES_MAINNET_BIN_LEN = 417;
 
 #ifdef IN3_STAGING
 
-// #define BOOT_NODES_GOERLI JSON_TO_BIN("{"                                                                                          \
-//                                       " \"nodeRegistry\": {"                                                                       \
-//                                       "   \"contract\": \"0x814fb2203f9848192307092337340dcf791a3fed\","                           \
-//                                       "   \"registryId\": \"0x0f687341e0823fa5288dc9edd8a00950b35cc7e481ad7eaccaf61e4e04a61e08\"," \
-//                                       "   \"nodeList\": [{"                                                                        \
-//                                       "    \"address\": \"0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a\","                           \
-//                                       "    \"url\": \"https://in3.stage.slock.it/goerli/nd-1\","                                   \
-//                                       "    \"props\": \"0xFFFF\""                                                                  \
-//                                       "   }, {"                                                                                    \
-//                                       "    \"address\": \"0x17cdf9ec6dcae05c5686265638647e54b14b41a2\","                           \
-//                                       "    \"url\": \"https://in3.stage.slock.it/goerli/nd-2\","                                   \
-//                                       "    \"props\": \"0xFFFF\""                                                                  \
-//                                       "   }]"                                                                                      \
-//                                       " }"                                                                                         \
-//                                       "}")
+/*
+#define BOOT_NODES_GOERLI JSON_TO_BIN("{"                                                                                          \
+                                      " \"nodeRegistry\": {"                                                                       \
+                                      "   \"contract\": \"0x814fb2203f9848192307092337340dcf791a3fed\","                           \
+                                      "   \"registryId\": \"0x0f687341e0823fa5288dc9edd8a00950b35cc7e481ad7eaccaf61e4e04a61e08\"," \
+                                      "   \"nodeList\": [{"                                                                        \
+                                      "    \"address\": \"0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a\","                           \
+                                      "    \"url\": \"https://in3.stage.slock.it/goerli/nd-1\","                                   \
+                                      "    \"props\": \"0xFFFF\""                                                                  \
+                                      "   }, {"                                                                                    \
+                                      "    \"address\": \"0x17cdf9ec6dcae05c5686265638647e54b14b41a2\","                           \
+                                      "    \"url\": \"https://in3.stage.slock.it/goerli/nd-2\","                                   \
+                                      "    \"props\": \"0xFFFF\""                                                                  \
+                                      "   }]"                                                                                      \
+                                      " }"                                                                                         \
+                                      "}")
+*/
 unsigned char BOOT_NODES_GOERLI_BIN[] = {
     0xcd, 0x61, 0x5f, 0x35, 0x63, 0xce, 0x12, 0x14, 0x81, 0x4f, 0xb2, 0x20,
     0x3f, 0x98, 0x48, 0x19, 0x23, 0x07, 0x09, 0x23, 0x37, 0x34, 0x0d, 0xcf,
@@ -109,21 +113,23 @@ unsigned int BOOT_NODES_GOERLI_BIN_LEN = 211;
 
 #else /* IN3_STAGING */
 
-// #define BOOT_NODES_GOERLI JSON_TO_BIN("{"                                                                                          \
-//                                       " \"nodeRegistry\": {"                                                                       \
-//                                       "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","                           \
-//                                       "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\"," \
-//                                       "   \"nodeList\": [{"                                                                        \
-//                                       "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
-//                                       "    \"url\": \"https://in3-v2.slock.it/goerli/nd-1\","                                      \
-//                                       "    \"props\": \"0xFFFF\""                                                                  \
-//                                       "   }, {"                                                                                    \
-//                                       "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
-//                                       "    \"url\": \"https://in3-v2.slock.it/goerli/nd-2\","                                      \
-//                                       "    \"props\": \"0xFFFF\""                                                                  \
-//                                       "   }]"                                                                                      \
-//                                       " }"                                                                                         \
-//                                       "}")
+/*
+#define BOOT_NODES_GOERLI JSON_TO_BIN("{"                                                                                          \
+                                      " \"nodeRegistry\": {"                                                                       \
+                                      "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","                           \
+                                      "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\"," \
+                                      "   \"nodeList\": [{"                                                                        \
+                                      "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
+                                      "    \"url\": \"https://in3-v2.slock.it/goerli/nd-1\","                                      \
+                                      "    \"props\": \"0xFFFF\""                                                                  \
+                                      "   }, {"                                                                                    \
+                                      "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
+                                      "    \"url\": \"https://in3-v2.slock.it/goerli/nd-2\","                                      \
+                                      "    \"props\": \"0xFFFF\""                                                                  \
+                                      "   }]"                                                                                      \
+                                      " }"                                                                                         \
+                                      "}")
+*/
 unsigned char BOOT_NODES_GOERLI_BIN[] = {
     0xcd, 0x61, 0x5f, 0x35, 0x63, 0xce, 0x12, 0x14, 0x5f, 0x51, 0xe4, 0x13,
     0x58, 0x1d, 0xd7, 0x67, 0x59, 0xe9, 0xee, 0xd5, 0x1e, 0x63, 0xd1, 0x4c,
@@ -145,21 +151,23 @@ unsigned char BOOT_NODES_GOERLI_BIN[] = {
     0xff};
 unsigned int BOOT_NODES_GOERLI_BIN_LEN = 205;
 
-// #define BOOT_NODES_IPFS JSON_TO_BIN("{"                                                                                          \
-//                                     " \"nodeRegistry\": {"                                                                       \
-//                                     "   \"contract\": \"0xa93b57289070550c82edb1106e12bb37138948b8\","                           \
-//                                     "   \"registryId\": \"0xf0162ec6d785ee990e36bad865251f45af0916cf136169540c02b0dd9cb69196\"," \
-//                                     "   \"nodeList\": [{"                                                                        \
-//                                     "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
-//                                     "    \"url\": \"https://in3-v2.slock.it/ipfs/nd-1\","                                        \
-//                                     "    \"props\": \"0xFFFF\""                                                                  \
-//                                     "   }, {"                                                                                    \
-//                                     "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
-//                                     "    \"url\": \"https://in3-v2.slock.it/ipfs/nd-2\","                                        \
-//                                     "    \"props\": \"0xFFFF\""                                                                  \
-//                                     "   }]"                                                                                      \
-//                                     " }"                                                                                         \
-//                                     "}")
+/*
+#define BOOT_NODES_IPFS JSON_TO_BIN("{"                                                                                          \
+                                    " \"nodeRegistry\": {"                                                                       \
+                                    "   \"contract\": \"0xa93b57289070550c82edb1106e12bb37138948b8\","                           \
+                                    "   \"registryId\": \"0xf0162ec6d785ee990e36bad865251f45af0916cf136169540c02b0dd9cb69196\"," \
+                                    "   \"nodeList\": [{"                                                                        \
+                                    "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
+                                    "    \"url\": \"https://in3-v2.slock.it/ipfs/nd-1\","                                        \
+                                    "    \"props\": \"0xFFFF\""                                                                  \
+                                    "   }, {"                                                                                    \
+                                    "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
+                                    "    \"url\": \"https://in3-v2.slock.it/ipfs/nd-2\","                                        \
+                                    "    \"props\": \"0xFFFF\""                                                                  \
+                                    "   }]"                                                                                      \
+                                    " }"                                                                                         \
+                                    "}")
+*/
 unsigned char BOOT_NODES_IPFS_BIN[] = {
     0xcd, 0x61, 0x5f, 0x35, 0x63, 0xce, 0x12, 0x14, 0xa9, 0x3b, 0x57, 0x28,
     0x90, 0x70, 0x55, 0x0c, 0x82, 0xed, 0xb1, 0x10, 0x6e, 0x12, 0xbb, 0x37,
@@ -180,21 +188,23 @@ unsigned char BOOT_NODES_IPFS_BIN[] = {
     0x64, 0x2d, 0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_IPFS_BIN_LEN = 201;
 
-// #define BOOT_NODES_BTC JSON_TO_BIN("{"                                                                                          \
-//                                    " \"nodeRegistry\": {"                                                                       \
-//                                    "   \"contract\": \"0xc2c05fbfe76ee7748ae5f5b61b57a46cc4061c32\","                           \
-//                                    "   \"registryId\": \"0x53786c93e54c21d9852d093c394eee9df8d714d8f2534cdf92f9c9998c528d19\"," \
-//                                    "   \"nodeList\": [{"                                                                        \
-//                                    "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
-//                                    "    \"url\": \"https://in3-v2.slock.it/btc/nd-1\","                                         \
-//                                    "    \"props\": \"0xFFFF\""                                                                  \
-//                                    "   }, {"                                                                                    \
-//                                    "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
-//                                    "    \"url\": \"https://in3-v2.slock.it/btc/nd-2\","                                         \
-//                                    "    \"props\": \"0xFFFF\""                                                                  \
-//                                    "   }]"                                                                                      \
-//                                    " }"                                                                                         \
-//                                    "}")
+/*
+#define BOOT_NODES_BTC JSON_TO_BIN("{"                                                                                          \
+                                   " \"nodeRegistry\": {"                                                                       \
+                                   "   \"contract\": \"0xc2c05fbfe76ee7748ae5f5b61b57a46cc4061c32\","                           \
+                                   "   \"registryId\": \"0x53786c93e54c21d9852d093c394eee9df8d714d8f2534cdf92f9c9998c528d19\"," \
+                                   "   \"nodeList\": [{"                                                                        \
+                                   "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
+                                   "    \"url\": \"https://in3-v2.slock.it/btc/nd-1\","                                         \
+                                   "    \"props\": \"0xFFFF\""                                                                  \
+                                   "   }, {"                                                                                    \
+                                   "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
+                                   "    \"url\": \"https://in3-v2.slock.it/btc/nd-2\","                                         \
+                                   "    \"props\": \"0xFFFF\""                                                                  \
+                                   "   }]"                                                                                      \
+                                   " }"                                                                                         \
+                                   "}")
+*/
 unsigned char BOOT_NODES_BTC_BIN[] = {
     0xcd, 0x61, 0x5f, 0x35, 0x63, 0xce, 0x12, 0x14, 0xc2, 0xc0, 0x5f, 0xbf,
     0xe7, 0x6e, 0xe7, 0x74, 0x8a, 0xe5, 0xf5, 0xb6, 0x1b, 0x57, 0xa4, 0x6c,
@@ -215,21 +225,23 @@ unsigned char BOOT_NODES_BTC_BIN[] = {
     0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_BTC_BIN_LEN = 199;
 
-// #define BOOT_NODES_EWC JSON_TO_BIN("{"                                                                                          \
-//                                    " \"nodeRegistry\": {"                                                                       \
-//                                    "   \"contract\": \"0x039562872008f7a76674a6e7842804f0ad37cb13\","                           \
-//                                    "   \"registryId\": \"0x313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed75\"," \
-//                                    "   \"nodeList\": [{"                                                                        \
-//                                    "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
-//                                    "    \"url\": \"https://in3-v2.slock.it/ewc/nd-1\","                                         \
-//                                    "    \"props\": \"0xFFFF\""                                                                  \
-//                                    "   }, {"                                                                                    \
-//                                    "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
-//                                    "    \"url\": \"https://in3-v2.slock.it/ewc/nd-2\","                                         \
-//                                    "    \"props\": \"0xFFFF\""                                                                  \
-//                                    "   }]"                                                                                      \
-//                                    " }"                                                                                         \
-//                                    "}")
+/*
+#define BOOT_NODES_EWC JSON_TO_BIN("{"                                                                                          \
+                                   " \"nodeRegistry\": {"                                                                       \
+                                   "   \"contract\": \"0x039562872008f7a76674a6e7842804f0ad37cb13\","                           \
+                                   "   \"registryId\": \"0x313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed75\"," \
+                                   "   \"nodeList\": [{"                                                                        \
+                                   "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
+                                   "    \"url\": \"https://in3-v2.slock.it/ewc/nd-1\","                                         \
+                                   "    \"props\": \"0xFFFF\""                                                                  \
+                                   "   }, {"                                                                                    \
+                                   "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
+                                   "    \"url\": \"https://in3-v2.slock.it/ewc/nd-2\","                                         \
+                                   "    \"props\": \"0xFFFF\""                                                                  \
+                                   "   }]"                                                                                      \
+                                   " }"                                                                                         \
+                                   "}")
+*/
 unsigned char BOOT_NODES_EWC_BIN[] = {
     0xcd, 0x61, 0x5f, 0x35, 0x63, 0xce, 0x12, 0x14, 0x03, 0x95, 0x62, 0x87,
     0x20, 0x08, 0xf7, 0xa7, 0x66, 0x74, 0xa6, 0xe7, 0x84, 0x28, 0x04, 0xf0,
@@ -250,16 +262,18 @@ unsigned char BOOT_NODES_EWC_BIN[] = {
     0x32, 0x00, 0x41, 0x6e, 0xbd, 0xff, 0xff};
 unsigned int BOOT_NODES_EWC_BIN_LEN = 199;
 
-// #define BOOT_NODES_LOCAL JSON_TO_BIN("{"                                                                \
-//                                      " \"nodeRegistry\": {"                                             \
-//                                      "   \"contract\": \"0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9\"," \
-//                                      "   \"nodeList\": [{"                                              \
-//                                      "    \"address\": \"0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a\"," \
-//                                      "    \"url\": \"http://localhost:8545\","                          \
-//                                      "    \"props\": \"0xFFFF\""                                        \
-//                                      "   }]"                                                            \
-//                                      " }"                                                               \
-//                                      "}")
+/*
+#define BOOT_NODES_LOCAL JSON_TO_BIN("{"                                                                \
+                                     " \"nodeRegistry\": {"                                             \
+                                     "   \"contract\": \"0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9\"," \
+                                     "   \"nodeList\": [{"                                              \
+                                     "    \"address\": \"0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a\"," \
+                                     "    \"url\": \"http://localhost:8545\","                          \
+                                     "    \"props\": \"0xFFFF\""                                        \
+                                     "   }]"                                                            \
+                                     " }"                                                               \
+                                     "}")
+*/
 unsigned char BOOT_NODES_LOCAL_BIN[] = {
     0xc8, 0x61, 0x5f, 0x35, 0x62, 0xce, 0x12, 0x14, 0xf0, 0xfb, 0x87, 0xf4,
     0x75, 0x7c, 0x77, 0xea, 0x34, 0x16, 0xaf, 0xe8, 0x7f, 0x36, 0xac, 0xaa,
