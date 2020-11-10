@@ -28,6 +28,7 @@ ${IN3_SRC}/src/api/eth1
 ${IN3_SRC}/src/api/utils
 ${IN3_SRC}/src/third-party/crypto
 ${IN3_SRC}/src/third-party/tommath
+${IN3_SRC}/src/nodeselect
 )
 
 foreach(dep ${IN3_DEPS})
