@@ -39,6 +39,7 @@
 #include "receipt.h"
 #include "util/log.h"
 #include "util/mem.h"
+#include "util/stringbuilder.h"
 /**
  * In3 Setup and usage
  * **/
@@ -66,7 +67,7 @@ in3_ret_t transport_mock(void* plugin_data, in3_plugin_act_t action, void* plugi
   return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 
-in3_t* init_in3(plgn_register custom_transport, chain_id_t chain) {
+in3_t* init_in3(in3_plugin_act_fn custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   //int    err;
   in3_log_set_quiet(0);
@@ -75,15 +76,12 @@ in3_t* init_in3(plgn_register custom_transport, chain_id_t chain) {
   in3 = in3_for_chain(chain);
   if (custom_transport)
     plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
-  in3->request_count = 1; // number of requests to sendp
-  in3->max_attempts  = 1;
-  in3->request_count = 1; // number of requests to sendp
-  in3->chain_id      = chain;
-  in3->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY;
-  for (int i = 0; i < in3->chains_length; i++) {
-    _free(in3->chains[i].nodelist_upd8_params);
-    in3->chains[i].nodelist_upd8_params = NULL;
-  }
+  in3->flags = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY;
+  sb_t* cfg  = sb_new("{\"chainId\":");
+  sb_add_int(cfg, chain);
+  sb_add_chars(cfg, ",\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
+  in3_configure(in3, cfg->data);
+  sb_free(cfg);
   return in3;
 }
 
