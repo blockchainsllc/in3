@@ -196,13 +196,16 @@ int evm_sub_call(evm_t*    parent,
   UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call
-  if (res == 0) success = evm_run(&evm, code_address);
+  if (res == 0)
+    success = evm_run(&evm, code_address);
+  else
+    success = res;
 
   // put the success in the stack ( in case of a create we add the new address)
   if (!address && success == 0)
-    res = min(res, evm_stack_push(parent, evm.account, 20));
+    res = evm_stack_push(parent, evm.account, 20);
   else
-    res = min(res, evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0));
+    res = evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0);
 
   // if we have returndata we write them into memory
   if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm.return_data.data) {
