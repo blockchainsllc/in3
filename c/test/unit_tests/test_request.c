@@ -674,7 +674,7 @@ static void test_parallel_signatures() {
                                                "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
                                                "\"in3\":{\"dataNodes\":[\"0x45d45e6ff99e6c34a235d263965910298985fcfe\"],"
                                                "\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1\",\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\"]}}");
-  
+
   in3_nodeselect_def_t* nl      = in3_nodeselect_def_data(in3);
   bytes_t*              address = hex_to_new_bytes("45d45e6ff99e6c34a235d263965910298985fcfe", 40);
   TEST_ASSERT_EQUAL_MEMORY(nl->offlines->reporter, address->data, 20);
@@ -694,21 +694,21 @@ static void test_parallel_signatures() {
  * Main
  */
 int main() {
-  in3_log_set_quiet(false);
-  in3_log_set_level(LOG_TRACE);
+  //  in3_log_set_quiet(false);
+  //  in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_basic);
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_nodeselect_def);
 
   TESTS_BEGIN();
-  //  RUN_TEST(test_configure_request);
-  //  RUN_TEST(test_configure_signed_request);
-  //  RUN_TEST(test_bulk_response);
-  //  RUN_TEST(test_partial_response);
-  //  RUN_TEST(test_retry_response);
-  //  RUN_TEST(test_exec_req);
-  //  RUN_TEST(test_configure);
-  //  RUN_TEST(test_configure_validation);
+  RUN_TEST(test_configure_request);
+  RUN_TEST(test_configure_signed_request);
+  RUN_TEST(test_bulk_response);
+  RUN_TEST(test_partial_response);
+  RUN_TEST(test_retry_response);
+  RUN_TEST(test_exec_req);
+  RUN_TEST(test_configure);
+  RUN_TEST(test_configure_validation);
   RUN_TEST(test_parallel_signatures);
   return TESTS_END();
 }
