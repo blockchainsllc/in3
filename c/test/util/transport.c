@@ -142,16 +142,17 @@ in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   p[params.len] = 0;
   clean_json_str(p);
 
-  TEST_ASSERT_EQUAL_STRING(responses->request_method, method);
-  TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
+  response_t* resp = responses;
+  for (int i = 0; i < req->urls_len; ++i) {
+    TEST_ASSERT_EQUAL_STRING(resp->request_method, method);
+    TEST_ASSERT_EQUAL_STRING(resp->request_params, p);
+    in3_ctx_add_response(req->ctx, i, false, resp->response, -1, 0);
+    _free(resp->response);
+    _free(resp);
+    resp = resp->next;
+  }
   json_free(r);
-
-  sb_add_chars(&req->ctx->raw_response->data, responses->response);
-  req->ctx->raw_response->state = IN3_OK;
-  response_t* next              = responses->next;
-  _free(responses->response);
-  _free(responses);
-  responses = next;
+  responses = resp;
   return IN3_OK;
 }
 
