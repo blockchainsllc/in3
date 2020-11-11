@@ -429,7 +429,9 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
   d_token_t* transaction = d_get(test, ikey(jc, "transaction"));
   d_token_t* post        = d_get(test, ikey(jc, "post"));
   d_token_t* indexes     = NULL;
-  uint64_t   total_gas;
+  uint64_t   total_gas   = 0;
+  bool  has_enough_gas   = true;
+
   address_t  _to;
   memset(_to, 0, 20);
 
@@ -518,62 +520,75 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.refund   = 0;
     evm.init_gas = evm.gas;
 
-    // prepare all accounts
-    read_accounts(&evm, d_get(test, ikey(jc, "pre")));
+    // check if we have enough gas to pay for intrinsic transaction cost
+    uint64_t tx_intrinsic_gas = G_TRANSACTION; // base gas cost for any transaction
+    // -- add the cost for transaction data
+    for (int i = 0; i < evm.call_data.len; i++) {
+      tx_intrinsic_gas += evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
+    }      
+    // -- check if we are executing a creation transaction
+    if (transaction && !d_len(d_get(transaction, ikey(jc, "to")))) {
+      tx_intrinsic_gas += G_TXCREATE;
+      evm.properties |= EVM_PROP_TXCREATE;
+    }
+    has_enough_gas = (tx_intrinsic_gas < evm.init_gas);
 
-    // we need to create an account since we don't have one
-    if (big_is_zero(evm.address, 20)) {
+    // execution should only continue if gasLimit is enough to pay for the transaction
+    if(has_enough_gas) {    
 
-      //  calculate the generated address
-      uint8_t*         nonce = evm_get_account(&evm, caller, true)->nonce;
-      bytes_builder_t* bb    = bb_new();
-      bytes_t          tmp   = bytes(caller, 20);
-      bytes32_t        hash;
-      rlp_encode_item(bb, &tmp);
-      if (big_is_zero(nonce, 32))
-        tmp.len = 0;
-      else {
-        tmp.len  = 32;
-        tmp.data = nonce;
-        optimize_len(tmp.data, tmp.len);
+      // prepare all accounts
+      read_accounts(&evm, d_get(test, ikey(jc, "pre")));
+
+      // we need to create an account since we don't have one
+      if (big_is_zero(evm.address, 20)) {
+
+        //  calculate the generated address
+        uint8_t*         nonce = evm_get_account(&evm, caller, true)->nonce;
+        bytes_builder_t* bb    = bb_new();
+        bytes_t          tmp   = bytes(caller, 20);
+        bytes32_t        hash;
+        rlp_encode_item(bb, &tmp);
+        if (big_is_zero(nonce, 32))
+          tmp.len = 0;
+        else {
+          tmp.len  = 32;
+          tmp.data = nonce;
+          optimize_len(tmp.data, tmp.len);
+        }
+        rlp_encode_item(bb, &tmp);
+        rlp_encode_to_list(bb);
+        keccak(bb->b, hash);
+        bb_free(bb);
+        memcpy(_to, hash + 12, 20);
+
+        evm_get_account(&evm, _to, true)->nonce[31]++;
       }
-      rlp_encode_item(bb, &tmp);
-      rlp_encode_to_list(bb);
-      keccak(bb->b, hash);
-      bb_free(bb);
-      memcpy(_to, hash + 12, 20);
 
-      evm_get_account(&evm, _to, true)->nonce[31]++;
+      // increase the nonce and pay for gas
+      account_t* c_adr = evm_get_account(&evm, evm.caller, true);
+      uint256_setn(c_adr->nonce, bytes_to_long(c_adr->nonce, 32) + 1);
+      uint8_t tmp[32], txval[64];
+      int     l;
+
+      // handle balance for sender
+      long_to_bytes(evm.gas, tmp);
+      l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, txval, 32);
+      l = big_add(txval, l, evm.call_value.data, evm.call_value.len, tmp, 32);
+      if (big_cmp(tmp, l, c_adr->balance, 32) > 0) {
+        print_error("not enough value to pay for the gas");
+        evm_free(&evm);
+        return 1;
+      }
+      l = big_sub(c_adr->balance, 32, tmp, l, txval);
+      uint256_setb(c_adr->balance, txval, l);
+
+      // handle balance for receiver
+      account_t* to_adr = evm_get_account(&evm, evm.address, true);
+      uint256_setb(to_adr->balance, tmp, big_add(to_adr->balance, 32, evm.call_value.data, evm.call_value.len, tmp, 32));
+
+      total_gas = tx_intrinsic_gas;
+      evm.gas -= total_gas;
     }
-
-    // increase the nonce and pay for gas
-    account_t* c_adr = evm_get_account(&evm, evm.caller, true);
-    uint256_setn(c_adr->nonce, bytes_to_long(c_adr->nonce, 32) + 1);
-    uint8_t tmp[32], txval[64];
-    int     l;
-
-    // handle balance for sender
-    long_to_bytes(evm.gas, tmp);
-    l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, txval, 32);
-    l = big_add(txval, l, evm.call_value.data, evm.call_value.len, tmp, 32);
-    if (big_cmp(tmp, l, c_adr->balance, 32) > 0) {
-      print_error("not enough value to pay for the gas");
-      evm_free(&evm);
-      return 1;
-    }
-    l = big_sub(c_adr->balance, 32, tmp, l, txval);
-    uint256_setb(c_adr->balance, txval, l);
-
-    // handle balance for receiver
-    account_t* to_adr = evm_get_account(&evm, evm.address, true);
-    uint256_setb(to_adr->balance, tmp, big_add(to_adr->balance, 32, evm.call_value.data, evm.call_value.len, tmp, 32));
-
-    // handle gas
-    total_gas = G_TRANSACTION;
-    for (int i = 0; i < evm.call_data.len; i++)
-      total_gas += evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
-
-    evm.gas = (total_gas > evm.gas) ? 0 : evm.gas - total_gas;
 
 #endif
   }
@@ -586,74 +601,68 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
   prepare_header(d_get(test, ikey(jc, "env")));
 
   uint64_t start = clock(), gas_before = evm.gas;
-#ifdef EVM_GAS
-  if (transaction && !d_len(d_get(transaction, ikey(jc, "to")))) {
-    evm.gas = (G_TXCREATE > evm.gas) ? 0 : evm.gas - G_TXCREATE;
-    evm.properties |= EVM_PROP_TXCREATE;
-  }
-#endif
-
-  int fail = evm_run(&evm, evm.account);
+  int fail = has_enough_gas ? evm_run(&evm, evm.account) : 0;
   *ms      = (clock() - start) / 1000;
 
   if (transaction) {
 #ifdef EVM_GAS
-    total_gas += gas_before - evm.gas;
-    if (fail) {
-      // it failed, so the transaction used up all the gas and we reverse all accounts
-      total_gas = d_long(get_test_val(transaction, "gasLimit", indexes));
-      evm.gas   = 0;
-      fail      = 0;
-      uint8_t    gas_tmp[32], gas_tmp2[32];
-      account_t* ac = NULL;
-      storage_t* s  = NULL;
-      // reset all accounts except the sender
-      while (evm.accounts) {
-        ac = evm.accounts;
-        //    if (ac->code.data) _free(ac->code.data);
-        s = NULL;
-        while (ac->storage) {
-          s           = ac->storage;
-          ac->storage = s->next;
-          _free(s);
+    if(has_enough_gas) {
+      total_gas += gas_before - evm.gas;
+      if (fail) {
+        // it failed, so the transaction used up all the gas and we reverse all accounts
+        total_gas = d_long(get_test_val(transaction, "gasLimit", indexes));
+        evm.gas   = 0;
+        fail      = 0;
+        uint8_t    gas_tmp[32], gas_tmp2[32];
+        account_t* ac = NULL;
+        storage_t* s  = NULL;
+        // reset all accounts except the sender
+        while (evm.accounts) {
+          ac = evm.accounts;
+          //    if (ac->code.data) _free(ac->code.data);
+          s = NULL;
+          while (ac->storage) {
+            s           = ac->storage;
+            ac->storage = s->next;
+            _free(s);
+          }
+          evm.accounts = ac->next;
+          _free(ac);
         }
-        evm.accounts = ac->next;
-        _free(ac);
+
+        // read the accounts from pre-state
+        read_accounts(&evm, d_get(test, ikey(jc, "pre")));
+
+        // reduce the gasLimit*price from caller the
+        account_t* sender = evm_get_account(&evm, evm.caller, true);
+        long_to_bytes(total_gas, gas_tmp);
+        int l = big_mul(evm.gas_price.data, evm.gas_price.len, gas_tmp, 8, gas_tmp2, 32);
+        uint256_setb(sender->balance, gas_tmp, big_sub(sender->balance, 32, gas_tmp2, l, gas_tmp));
+
+        // incremente the nonce
+        uint256_setn(sender->nonce, bytes_to_long(sender->nonce, 32) + 1);
       }
 
-      // read the accounts from pre-state
-      read_accounts(&evm, d_get(test, ikey(jc, "pre")));
+      uint8_t tmp[32], tmp2[32], eth3[8];
+      int     l;
 
-      // reduce the gasLimit*price from caller the
-      account_t* sender = evm_get_account(&evm, evm.caller, true);
-      long_to_bytes(total_gas, gas_tmp);
-      int l = big_mul(evm.gas_price.data, evm.gas_price.len, gas_tmp, 8, gas_tmp2, 32);
-      uint256_setb(sender->balance, gas_tmp, big_sub(sender->balance, 32, gas_tmp2, l, gas_tmp));
+      // if there is gas left we return it to the sender
+      if (evm.gas > 0) {
+        account_t* c_adr = evm_get_account(&evm, evm.caller, true);
+        long_to_bytes(evm.gas, tmp);
+        l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, tmp2, 32);
+        l = big_add(tmp2, l, c_adr->balance, 32, tmp, 32);
+        uint256_setb(c_adr->balance, tmp, l);
+      }
 
-      // incremente the nonce
-      uint256_setn(sender->nonce, bytes_to_long(sender->nonce, 32) + 1);
-    }
+      // pay the miner the total gas
+      account_t* miner = evm_get_account(&evm, d_get_bytesk(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1);
 
-    uint8_t tmp[32], tmp2[32], eth3[8];
-    int     l;
-
-    // if there is gas left we return it to the sender
-    if (evm.gas > 0) {
-      account_t* c_adr = evm_get_account(&evm, evm.caller, true);
-      long_to_bytes(evm.gas, tmp);
+      // increase balance of the miner
+      long_to_bytes(total_gas, tmp);
       l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, tmp2, 32);
-      l = big_add(tmp2, l, c_adr->balance, 32, tmp, 32);
-      uint256_setb(c_adr->balance, tmp, l);
+      uint256_setb(miner->balance, tmp, big_add(tmp2, l, miner->balance, 32, tmp, 32));
     }
-
-    // pay the miner the total gas
-    account_t* miner = evm_get_account(&evm, d_get_bytesk(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1);
-
-    // increase balance of the miner
-    long_to_bytes(total_gas, tmp);
-    l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, tmp2, 32);
-    uint256_setb(miner->balance, tmp, big_add(tmp2, l, miner->balance, 32, tmp, 32));
-
 #endif
   }
 

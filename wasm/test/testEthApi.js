@@ -62,8 +62,6 @@ describe('EthAPI-Tests', () => {
         mockResponse('eth_getCode', 'WETH')
         res = await c.eth.callFn('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', 'totalSupply():uint')
         assert.equal(2156081965638983079156868n, res)
-
-
     })
 
     it('eth.sendTransaction()', async () => {
@@ -86,7 +84,6 @@ describe('EthAPI-Tests', () => {
         })
 
         assert.equal(hash, '0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38')
-
     })
 
     it('plugin._handlRPC', async () => {
@@ -122,7 +119,6 @@ describe('EthAPI-Tests', () => {
         const address = IN3.util.private2address(pk)
         assert.equal(address, '0x082977959d0C5A1bA627720ac753Ec2ADB5Bd7d0')
 
-
         const c = createClient()
         assert.isTrue(await c.eth.sign(address, msg).then(_ => false, _ => true), 'must throw since we don not have a signer set')
 
@@ -134,7 +130,6 @@ describe('EthAPI-Tests', () => {
         assert.equal(sig.r, '0x5782d5df271b9a0890f89868de73b7a206f2eb988346bc3df2c0a475d60b068a')
         assert.equal(sig.s, '0x30760b12fd8cf88cd10a31dea71d9309d5b7b2f7bb49e36f69fcdbdfe480f129')
         assert.equal(sig.v, 28)
-
     })
 
     it('eth.blockNumber()', async () => {

@@ -202,9 +202,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*ecmul_0-3_5616_28000_96.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
     list(FILTER files EXCLUDE REGEX ".*(pointMulAdd2).json$")
-    list(FILTER files EXCLUDE REGEX ".*createNameRegistratorPerTxsNotEnoughGas(After|At|Before).json$")
-    list(FILTER files EXCLUDE REGEX ".*delegatecall(After|At|Before)Transition.json$")
-    list(FILTER files EXCLUDE REGEX ".*codesizeOOGInvalidSize.json$")
+
 
     foreach (file ${files})
         get_filename_component(testname "${file}" NAME_WE)
