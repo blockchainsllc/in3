@@ -463,7 +463,7 @@ NONULL char* in3_client_exec_req(
 );
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
-NONULL_FOR(1)
+NONULL
 in3_ret_t in3_client_register_chain(
     in3_t*           client,   /**< [in] the pointer to the incubed client config. */
     chain_id_t       chain_id, /**< [in] the chain id. */
