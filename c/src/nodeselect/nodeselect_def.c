@@ -377,21 +377,21 @@ static void offline_add(in3_nodeselect_def_t* data, in3_node_t* offline, const u
 }
 
 static void offline_remove(in3_nodeselect_def_t* data, const uint8_t* address) {
-  node_offline_t *curr = data->offlines, *next = NULL;
-  while (curr != NULL) {
-    next = curr->next;
-    if (!memcmp(curr->offline->address, address, 20))
-      _free(curr);
-    curr = next;
+  node_offline_t **curr = &data->offlines, *next = NULL;
+  while (*curr != NULL) {
+    next = (*curr)->next;
+    if (!memcmp((*curr)->offline->address, address, 20))
+      _free(*curr);
+    *curr = next;
   }
 }
 
 static void offline_free(in3_nodeselect_def_t* data) {
-  node_offline_t *curr = data->offlines, *next = NULL;
-  while (curr != NULL) {
-    next = curr->next;
-    _free(curr);
-    curr = next;
+  node_offline_t* tmp = NULL;
+  while (data->offlines) {
+    tmp = data->offlines->next;
+    _free(data->offlines);
+    data->offlines = tmp;
   }
 }
 
