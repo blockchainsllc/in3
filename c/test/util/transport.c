@@ -148,8 +148,9 @@ in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
     TEST_ASSERT_EQUAL_STRING(resp->request_params, p);
     in3_ctx_add_response(req->ctx, i, false, resp->response, -1, 0);
     _free(resp->response);
+    responses = resp->next;
     _free(resp);
-    resp = resp->next;
+    resp = responses;
   }
   json_free(r);
   responses = resp;
