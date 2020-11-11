@@ -644,20 +644,26 @@ static void test_parallel_signatures() {
                "      \"0xf8ae20b8abf8a982db6882f6958307a120947abc5f3976a239fd4addb73e2d43449038a7cf2c80b844205c287800000000000000000000000030666f5ef83df74980b30e36bc2f65478e9f78d9000000000000000000000000000000000000000000000001c9f78d2893e400002ea059c2d85d4ca60d6d0c1c1d29da1d07b1ed7190a02be72f386262baf48c5050f2a01d32a1bc5b07edfcc6a42a87841c8097cbed2ae76c90c2367396f8609582cdda\"],"
                "      \"txIndex\":1,"
                "      \"signatures\":[{"
-               "        \"blockHash\":\"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
-               "        \"block\":3662142,"
-               "        \"r\":\"0x389656b8924ab3b0f05b5d618e14a6b561cc85023bde9a96f1b78487eb1872a4\","
-               "        \"s\":\"0x49c00342564b30e8b17488941aa3afde8bc85728d2a2814094c0afb7ce84c926\","
-               "        \"v\":28,"
-               "        \"msgHash\":\"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
-               "      },"
-               "      {"
-               "        \"blockHash\":\"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
-               "        \"block\":3662142,"
-               "        \"r\":\"0xdf49a129f1186ad491d66ef8100384799cbd583d59558092375c9e181ceddcec\","
-               "        \"s\":\"0x158e543243a2e4718cc253d389759b9382c040f5e77ae360531d7ff701537802\","
-               "        \"v\":28,"
-               "        \"msgHash\":\"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+               "        \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+               "        \"block\": 3662142,"
+               "        \"r\": \"0x389656b8924ab3b0f05b5d618e14a6b561cc85023bde9a96f1b78487eb1872a4\","
+               "        \"s\": \"0x49c00342564b30e8b17488941aa3afde8bc85728d2a2814094c0afb7ce84c926\","
+               "        \"v\": 28,"
+               "        \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+               "      }, {"
+               "        \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+               "        \"block\": 3662142,"
+               "        \"r\": \"0xdf49a129f1186ad491d66ef8100384799cbd583d59558092375c9e181ceddcec\","
+               "        \"s\": \"0x158e543243a2e4718cc253d389759b9382c040f5e77ae360531d7ff701537802\","
+               "        \"v\": 28,"
+               "        \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+               "      }, {"
+               "        \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+               "        \"block\": 3662142,"
+               "        \"r\": \"0xe6ba447671e5f2c705d757111f0576e3109ec0b4b24540c74174dc101c6da2da\","
+               "        \"s\": \"0x61bdefd67dad9d6c2d07903b9a45072cd7a967b96139b9187307f05acbe0872a\","
+               "        \"v\": 27,"
+               "        \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
                "      }]"
                "    },"
                "    \"version\":\"2.1.0\","
@@ -734,7 +740,15 @@ static void test_parallel_signatures() {
                                                "\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\",\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\"]}}");
 
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(in3);
-  TEST_ASSERT_FALSE(is_blacklisted(&nl->nodelist[0]));
+  TEST_ASSERT_FALSE(is_blacklisted(&nl->nodelist[2]));
+
+  bytes_t*              address = hex_to_new_bytes("45d45e6ff99e6c34a235d263965910298985fcfe", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->reporter, address->data, 20);
+  b_free(address);
+
+  address = hex_to_new_bytes("945f75c0408c0026a3cd204d36f5e47745182fd4", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->offline->address, address->data, 20);
+  b_free(address);
   ctx_free(ctx);
 
   in3_free(in3);
