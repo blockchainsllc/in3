@@ -381,6 +381,7 @@ struct in3_t_ {
   uint_fast16_t          pending;               /**< number of pending requests created with this instance */
   uint32_t               cache_timeout;         /**< number of seconds requests can be cached. */
   uint32_t               timeout;               /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
+  uint32_t               id_count;              /**< counter for use as JSON RPC id - incremented for every request */
   in3_plugin_supp_acts_t plugin_acts;           /**< bitmask of supported actions of all plugins registered with this client */
   in3_proof_t            proof;                 /**< the type of proof used */
   uint64_t               min_deposit;           /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
@@ -388,11 +389,6 @@ struct in3_t_ {
   in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
-
-#ifndef DEV_NO_INC_RPC_ID
-  uint32_t id_count; /**< counter for use as JSON RPC id - incremented for every request */
-#endif
-
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
 #endif

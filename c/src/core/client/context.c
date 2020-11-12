@@ -80,7 +80,6 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
       return ctx;
     }
 
-#ifndef DEV_NO_INC_RPC_ID
     d_token_t* t = d_get(ctx->request_context->result, K_ID);
     if (t == NULL) {
       ctx->id = client->id_count;
@@ -88,7 +87,6 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
     }
     else if (d_type(t) == T_INTEGER)
       ctx->id = d_int(t);
-#endif
   }
   return ctx;
 }
@@ -264,11 +262,7 @@ sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
 
   *hctx->response = _calloc(1, sizeof(in3_response_t));
   sb_add_chars(&(*hctx->response)->data, "{\"id\":");
-#ifndef DEV_NO_INC_RPC_ID
   sb_add_int(&(*hctx->response)->data, hctx->ctx->id);
-#else
-  sb_add_int(&(*hctx->response)->data, 1);
-#endif
   return sb_add_chars(&(*hctx->response)->data, ",\"jsonrpc\":\"2.0\",\"result\":");
 }
 in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx) {

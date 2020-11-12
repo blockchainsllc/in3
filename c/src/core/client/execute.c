@@ -144,10 +144,6 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
 
   sb_add_char(sb, '[');
 
-#ifdef DEV_NO_INC_RPC_ID
-  static unsigned long rpc_id_counter = 1;
-#endif
-
   for (uint16_t i = 0; i < c->len; i++) {
     d_token_t * request_token = c->requests[i], *t;
     in3_proof_t proof         = no_in3 ? PROOF_NONE : in3_ctx_get_proof(c, i);
@@ -156,11 +152,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
     if (i > 0) sb_add_char(sb, ',');
     sb_add_char(sb, '{');
     if ((t = d_get(request_token, K_ID)) == NULL)
-#ifndef DEV_NO_INC_RPC_ID
       sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%" PRIu32, c->id + i)), false);
-#else
-      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%lu", rpc_id_counter++)), false);
-#endif
     else if (d_type(t) == T_INTEGER)
       sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%i", d_int(t))), false);
     else
