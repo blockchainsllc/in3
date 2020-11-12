@@ -371,8 +371,8 @@ int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
       acc_adr->code      = src_data;
     }
 #else
-   return EVM_ERROR_INVALID_OPCODE;
-#endif    
+    return EVM_ERROR_INVALID_OPCODE;
+#endif
   }
 
   return res;
