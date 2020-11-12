@@ -392,10 +392,6 @@ struct in3_t_ {
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
 #endif
-
-#ifndef DEV_NO_INTRN_PTR
-  void* internal; /**< pointer to internal data */
-#endif
 };
 
 /** creates a new Incubed configuration for a specified chain and returns the pointer.
