@@ -227,7 +227,6 @@ typedef struct in3_chain {
   chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t     type;            /**< chain-type */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
-  void*                conf;            /**< this configuration will be set by the verifiers and allow to add special structs here.*/
 } in3_chain_t;
 
 /** 

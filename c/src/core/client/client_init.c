@@ -167,7 +167,6 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   assert(c);
 
   in3_chain_t* chain     = &c->chain;
-  chain->conf            = NULL;
   chain->chain_id        = chain_id;
   chain->verified_hashes = NULL;
   chain->type            = type;
