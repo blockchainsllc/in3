@@ -16,12 +16,12 @@ namespace ConnectToEthereum
             Console.Out.WriteLine($"Latest Block Number: {mainnetLatest}");
             Console.Out.WriteLine($"Gas Price: {mainnetCurrentGasPrice} Wei");
 
-            Console.Out.WriteLine("Ethereum Kovan Test Network");
-            IN3 kovanClient = IN3.ForChain(Chain.Kovan);
-            BigInteger kovanLatest = await kovanClient.Eth1.BlockNumber();
-            BigInteger kovanCurrentGasPrice = await kovanClient.Eth1.GetGasPrice();
-            Console.Out.WriteLine($"Latest Block Number: {kovanLatest}");
-            Console.Out.WriteLine($"Gas Price: {kovanCurrentGasPrice} Wei");
+            Console.Out.WriteLine("Ethereum EWC Network");
+            IN3 ewcClient = IN3.ForChain(Chain.Ewc);
+            BigInteger ewcLatest = await ewcClient.Eth1.BlockNumber();
+            BigInteger ewcCurrentGasPrice = await ewcClient.Eth1.GetGasPrice();
+            Console.Out.WriteLine($"Latest Block Number: {ewcLatest}");
+            Console.Out.WriteLine($"Gas Price: {ewcCurrentGasPrice} Wei");
 
             Console.Out.WriteLine("Ethereum Goerli Test Network");
             IN3 goerliClient = IN3.ForChain(Chain.Goerli);
