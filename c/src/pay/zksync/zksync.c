@@ -34,14 +34,14 @@
 #include "zksync.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/plugin.h"
 #include "../../core/util/debug.h"
-#include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
+#include "zksync_priv.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+
 static void set_quoted_address(char* c, uint8_t* address) {
   bytes_to_hex(address, 20, c + 3);
   c[0] = c[43] = '"';
