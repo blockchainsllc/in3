@@ -154,7 +154,7 @@ function abiEncode(sig, ...params) {
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
     data = toUint8Array(data)
     pk = toUint8Array(pk)
-    return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0)
+    return toBuffer(call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0))
 }
 
 function abiDecode(sig, data) {
@@ -264,7 +264,7 @@ function toHex(val, bytes) {
         return undefined;
     let hex = ''
     if (typeof val === 'string')
-        hex = val.startsWith('0x')
+        hex = (val.startsWith('0x') || val.startsWith('0X'))
             ? val.substr(2)
             : (!isNaN(parseInt(val[val[0] == '-' ? 1 : 0])) ? convertInt2Hex(val) : convertUTF82Hex(val))
     else if (typeof val === 'boolean')

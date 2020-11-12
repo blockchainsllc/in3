@@ -33,7 +33,7 @@ clangcheck:
   extends: .only_full
   allow_failure: false
   tags:
-    - short-jobs
+    - long-jobs
   script:
     - mkdir _build
     - cd _build

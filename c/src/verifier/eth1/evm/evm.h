@@ -75,6 +75,7 @@ typedef enum evm_state {
 #define EVM_ERROR_BALANCE_TOO_LOW         -30 /**< not enough funds to transfer the requested value.  */
 #define EVM_ERROR_STACK_LIMIT             -31 /**< stack limit reached  */
 #define EVM_ERROR_SUCCESS_CONSUME_GAS     -32 /**< write success but consume all gas */
+#define EVM_ERROR_MAX_CODE_SIZE_EXCEEDED  -33 /**< tried to create a contract with code bigger than the maximum size limit */
 
 #define EVM_PROP_FRONTIER      1
 #define EVM_PROP_EIP150        2
@@ -83,6 +84,7 @@ typedef enum evm_state {
 #define EVM_PROP_ISTANBUL      32
 #define EVM_PROP_NO_FINALIZE   32768
 #define EVM_PROP_STATIC        256
+#define EVM_PROP_TXCREATE      512 /**< executing a creation transaction > */
 
 #define EVM_ENV_BALANCE     1
 #define EVM_ENV_CODE_SIZE   2
@@ -230,7 +232,6 @@ typedef struct account {
 typedef struct evm {
   // internal data
   bytes_builder_t stack;
-  //  bytes_builder_t memory;
   bytes_builder_t memory;
   int             stack_size;
   bytes_t         code;

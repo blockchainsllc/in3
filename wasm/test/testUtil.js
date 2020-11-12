@@ -34,13 +34,13 @@
 
 require('mocha')
 const { assert } = require('chai')
-const { IN3, beforeTest } = require('./util/mocker')
+const { IN3, beforeTest, createClient } = require('./util/mocker')
 const convertArray2Hex = a => Array.isArray(a) ? a.map(convertArray2Hex) : IN3.util.toHex(a)
+const BN = require('bn.js');
 
 describe('Util-Tests', () => {
 
     beforeEach(beforeTest)
-
     afterEach(IN3.freeAll)
 
     it('abi encode decode', async () => {
@@ -55,13 +55,10 @@ describe('Util-Tests', () => {
             )
 
         }
-
         check("transfer(address,uint256,string)",
             "0x56b8c724000000000000000000000000965d1c9987bd2c34e151e63d60aff8e9db6b15610000000000000000000000000000000000000000000000000000000000001c4200000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000007496e637562656400000000000000000000000000000000000000000000000000",
             "0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561", 7234, "Incubed"
         )
-
-
         check(
             "transfer(bytes,string)",
             "0x8fa7e45f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000014965d1c9987bd2c34e151e63d60aff8e9db6b15610000000000000000000000000000000000000000000000000000000000000000000000000000000000000007496e637562656400000000000000000000000000000000000000000000000000",
@@ -77,11 +74,9 @@ describe('Util-Tests', () => {
             "0x360a10540000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000034",
             [0x12, 0x34]
         )
-
     })
 
     it('splitSignature', async () => {
-
         let res = IN3.util.splitSignature("0xf596af3336ac65b01ff4b9c632bc8af8043f8c11ae4de626c74d834412cb5a234783c14807e20a9e665b3118dec54838bd78488307d9175dd1ff13eeb67e05941c"
             , "0x9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465")
 
@@ -89,7 +84,6 @@ describe('Util-Tests', () => {
         assert.equal(res.s, "0x4783c14807e20a9e665b3118dec54838bd78488307d9175dd1ff13eeb67e0594")
         assert.equal(res.v, 28)
         assert.equal(res.messageHash, "0xee966c673733bc2c23275a45f712006c0fecc62eba3660574ac738cc31c7c8b8")
-
     })
 
     it('randomBytes', async () => {
@@ -98,7 +92,6 @@ describe('Util-Tests', () => {
     })
 
     it('soliditySha3', async () => {
-
         assert.equal(IN3.util.soliditySha3('Hello!%'), "0x661136a4267dba9ccdf6bfddb7c00e714de936674c4bdb065a531cf1cb15c7fc")
         assert.equal(IN3.util.soliditySha3('234'), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
         assert.equal(IN3.util.soliditySha3(0xea), "0x61c831beab28d67d1bb40b5ae1a11e2757fa842f031a2d0bc94a7867bc5d26c2")
@@ -133,8 +126,6 @@ describe('Util-Tests', () => {
     it('getAddress', async () => {
         assert.equal(IN3.util.private2address("0x3f64dd6972bda1e7611dc38a294d7e3404d51c4aff4b09534675ecd43f66d659"),
             "0xeebCfd8F610e497748989B7cbAF0633E644512E6")
-
-
     })
 
     it('toMinHex', async () => {
@@ -165,7 +156,6 @@ describe('Util-Tests', () => {
         assert.Throw(() => IN3.util.toHex({}))
 
     })
-
 
     it('toNumber', async () => {
         assert.equal(1, IN3.util.toNumber(1))
@@ -201,5 +191,75 @@ describe('Util-Tests', () => {
         assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
     })
 
+    describe('setConvertBuffer', () => {
+        it('overrides buffer type', () => {
+            // Overrides the default function to return a buffer instead of a Uint8Array
+            IN3.setConvertBuffer(val => {
+                if (val === undefined || val === null || Buffer.isBuffer(val)) {
+                    return val;
+                }
+                if (val instanceof Uint8Array) {
+                    return Buffer.from(val);
+                }
+                if (BN.isBN(val)) {
+                    return Buffer.from(val.toString(16), 'hex');
+                }
+                if (typeof val !== 'string') {
+                    val = IN3.util.toHex(val);
+                }
+                return val.startsWith('0x') ? Buffer.from(val.substr(2), 'hex') : Buffer.from(val, 'utf8');
+            });
 
+            let toBeSigned = "some_data"
+
+            const pk = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
+            const c = createClient()
+            c.signer = new IN3.SimpleSigner()
+            let address = c.signer.addAccount(pk)
+            c.signer.sign(toBeSigned, address).then(signedData => {
+                assert.equal(Buffer.isBuffer(signedData), true)
+            })
+        })
+
+        it('eth.sign()', async () => {
+            // Overrides the default function to return a buffer instead of a Uint8Array
+            IN3.setConvertBuffer(val => {
+                if (val === undefined || val === null || Buffer.isBuffer(val)) {
+                    return val;
+                }
+                if (val instanceof Uint8Array) {
+                    return Buffer.from(val);
+                }
+                if (BN.isBN(val)) {
+                    return Buffer.from(val.toString(16), 'hex');
+                }
+                if (typeof val !== 'string') {
+                    val = IN3.util.toHex(val);
+                }
+                return val.startsWith('0x') ? Buffer.from(val.substr(2), 'hex') : Buffer.from(val, 'utf8');
+            });
+
+            const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
+            const msg = '0x9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465'
+            assert.equal(IN3.util.toHex(IN3.util.ecSign(pk, msg, false))
+                , '0xf596af3336ac65b01ff4b9c632bc8af8043f8c11ae4de626c74d834412cb5a234783c14807e20a9e665b3118dec54838bd78488307d9175dd1ff13eeb67e05941c')
+            assert.equal(IN3.util.toHex(IN3.util.ecSign(pk, msg, true))
+                , '0x349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c')
+
+            const address = IN3.util.private2address(pk)
+            assert.equal(address, '0x082977959d0C5A1bA627720ac753Ec2ADB5Bd7d0')
+
+            const c = createClient()
+            assert.isTrue(await c.eth.sign(address, msg).then(_ => false, _ => true), 'must throw since we don not have a signer set')
+
+            c.signer = new IN3.SimpleSigner(pk)
+            const sig = await c.eth.sign(address, msg)
+            assert.equal(sig.message, '0x19457468657265756d205369676e6564204d6573736167653a0a33329fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465')
+            assert.equal(sig.messageHash, IN3.util.toHex(IN3.util.keccak(sig.message)))
+            assert.equal(sig.signature, '0x5782d5df271b9a0890f89868de73b7a206f2eb988346bc3df2c0a475d60b068a30760b12fd8cf88cd10a31dea71d9309d5b7b2f7bb49e36f69fcdbdfe480f1291c')
+            assert.equal(sig.r, '0x5782d5df271b9a0890f89868de73b7a206f2eb988346bc3df2c0a475d60b068a')
+            assert.equal(sig.s, '0x30760b12fd8cf88cd10a31dea71d9309d5b7b2f7bb49e36f69fcdbdfe480f129')
+            assert.equal(sig.v, 28)
+        })
+    })
 })

@@ -167,6 +167,13 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "run request test",
+            "program": "${workspaceFolder}/build/test/test_request",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "run ethapi test",
             "program": "${workspaceFolder}/build/test/test_ethapi",
             "cwd": "${workspaceFolder}/build"

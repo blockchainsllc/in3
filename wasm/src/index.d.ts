@@ -379,7 +379,7 @@ export declare interface RPCResponse {
     /**
      * in case of an error this needs to be set
      */
-    error?: string
+    error?: string | { message: string, code: number, data?: any }
     /**
      * the params
      * example: 0xa35bc
@@ -397,13 +397,19 @@ interface IN3Plugin<BigIntType, BufferType> {
      * this is called when the client is cleaned up.
      * @param client the client object
      */
-    term?(client: IN3Generic<BigIntType, BufferType>)
+    term?(client: IN3Generic<BigIntType, BufferType>): void
 
     /**
      * returns address
      * @param client 
      */
-    getAccount?(client: IN3Generic<BigIntType, BufferType>)
+    getAccount?(client: IN3Generic<BigIntType, BufferType>): string
+
+    /**
+     * returns list of addresses
+     * @param client 
+     */
+    getAccounts?(client: IN3Generic<BigIntType, BufferType>): Address[]
 
     /**
      * called for each request. 
@@ -461,7 +467,7 @@ export default class IN3Generic<BigIntType, BufferType> {
     /**
      * disposes the Client. This must be called in order to free allocated memory!
      */
-    public free();
+    public free(): void;
 
     /**
      * returns a Object, which can be used as Web3Provider.
@@ -531,9 +537,16 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public static util: Utils<any>
 
-    public static setConvertBigInt(convert: (any) => any)
-    public static setConvertBuffer(convert: (any) => any)
-    // public static setConvertBuffer<BufferType>(val: any, len?: number) : BufferType
+    /** sets the convert-function, which converts any kind of type to Type defined for BigInt-operation.
+     * if not set the default type would be bigint.
+     */
+    public static setConvertBigInt(convert: (val: any) => any): void
+
+
+    /** sets the convert-function, which converts any kind of type to Type defined for Buffer or Bytes-operation.
+     * if not set the default type would be UInt8Array.
+     */
+    public static setConvertBuffer(convert: (val: any) => any): void
 
     /** supporting both ES6 and UMD usage */
     public static default: typeof IN3Generic
@@ -553,8 +566,16 @@ export class IN3 extends IN3Generic<bigint, Uint8Array> {
     public constructor(config?: Partial<IN3Config>);
 
 
-    public static setConvertBigInt(convert: (any) => any)
-    public static setConvertBuffer(convert: (any) => any)
+    /** sets the convert-function, which converts any kind of type to Type defined for BigInt-operation.
+     * if not set the default type would be bigint.
+     */
+    public static setConvertBigInt(convert: (val: any) => any): void
+
+
+    /** sets the convert-function, which converts any kind of type to Type defined for Buffer or Bytes-operation.
+     * if not set the default type would be UInt8Array.
+     */
+    public static setConvertBuffer(convert: (val: any) => any): void
 
 }
 
@@ -658,7 +679,7 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
 
     /** returns all addresses managed by the signer. */
     getAccounts(): Address[]
-    /** adds a private key to the signer. */
+    /** adds a private key to the signer and returns the address associated with it. */
     addAccount(pk: Hash): string;
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
@@ -791,6 +812,4 @@ export declare interface Utils<BufferType> {
      * @param pk the private key.
      */
     private2address(pk: Hex | BufferType): Address
-
 }
-

@@ -98,7 +98,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
       optimize_len(vp, bb.b.len);
       if (bb.b.len > 1 || (bb.b.len == 1 && *vp))
         return vc_err(vc, "empty storagehash, so we exepct 0 values");
-      if (d_type(pt) != T_ARRAY || d_len(pt) != 1 || d_type(pt + 1) != T_INTEGER || d_int(pt + 1) != 0x80)
+      if (d_type(pt) != T_ARRAY || d_len(pt) > 1 || (d_len(pt) == 1 && (d_type(pt + 1) != T_INTEGER || d_int(pt + 1) != 0x80)))
         return vc_err(vc, "invalid proof");
     }
     else {
@@ -197,11 +197,16 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   else if (strcmp(method, "eth_getStorageAt") == 0) {
     uint8_t result[32], proofed_result[32];
     d_bytes_to(vc->result, result, 32);
-    d_token_t* storage = d_get(proofed_account, K_STORAGE_PROOF);
-    d_token_t* skey    = d_get_at(d_get(vc->request, K_PARAMS), 1);
+    d_token_t* storage       = d_get(proofed_account, K_STORAGE_PROOF);
+    d_token_t* skey          = d_get_at(d_get(vc->request, K_PARAMS), 1);
+    bytes_t    requested_key = d_to_bytes(skey);
+    if (!requested_key.data) return vc_err(vc, "missing key");
+    b_optimize_len(&requested_key);
 
     for (i = 0, t = storage + 1; i < d_len(storage); i++, t = d_next(t)) {
-      if (d_eq(skey, d_get(t, K_KEY))) {
+      bytes_t storage_key = d_to_bytes(d_get(t, K_KEY));
+      b_optimize_len(&storage_key);
+      if (b_cmp(&storage_key, &requested_key)) {
         d_bytes_to(d_get(t, K_VALUE), proofed_result, 32);
         if (memcmp(result, proofed_result, 32) == 0)
           return IN3_OK;
