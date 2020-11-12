@@ -185,7 +185,8 @@ int evm_sub_call(evm_t*    parent,
   evm.call_value.len  = l_value;
 
   // if this is a delecate call, we set the address of the account storage we should use
-  if (mode == EVM_CALL_MODE_DELEGATE) evm.account = parent->account;
+  if (mode == EVM_CALL_MODE_DELEGATE)
+    evm.account = parent->account;
 
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   else if (mode == EVM_CALL_MODE_STATIC)

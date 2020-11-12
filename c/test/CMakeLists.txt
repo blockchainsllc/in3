@@ -144,7 +144,7 @@ foreach (testdir
         #GeneralStateTests/stInitCodeTest
         #GeneralStateTests/stCreateTest
         GeneralStateTests/stRandom2
-        #GeneralStateTests/stWalletTest
+        GeneralStateTests/stWalletTest
         GeneralStateTests/stCodeCopyTest
         #GeneralStateTests/stRefundTest
         #GeneralStateTests/stRecursiveCreate
