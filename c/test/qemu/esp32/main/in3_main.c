@@ -90,7 +90,7 @@ void init_in3(void) {
   c = in3_for_chain(CHAIN_ID_GOERLI);
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
-  plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);
   c->flags  = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist
   sb_t* cfg = sb_new("{\"chainId\":");
   sb_add_int(cfg, CHAIN_ID_GOERLI);

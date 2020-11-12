@@ -323,7 +323,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     sprintf(temp, "Request #%i", counter);
 
   in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
-  plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
 
   int j;
   c->max_attempts        = 1;

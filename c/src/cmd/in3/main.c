@@ -690,7 +690,7 @@ int main(int argc, char* argv[]) {
   char*      sig_type         = "raw";
   bool       to_eth           = false;
 
-  plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
 #ifndef USE_WINHTTP
   c->request_count = 1;
@@ -806,7 +806,7 @@ int main(int argc, char* argv[]) {
       gas_limit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-test") == 0) {
       test_name = argv[++i];
-      plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+      in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
     }
     else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];

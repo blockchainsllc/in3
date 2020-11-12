@@ -75,7 +75,7 @@ in3_t* init_in3_goerli(in3_plugin_act_fn custom_transport) {
   in3_register_default(in3_register_nodeselect_def);
   in3 = in3_for_chain(0x5);
   if (custom_transport)
-    plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
+    in3_plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
   in3->flags = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY;
   in3_configure(in3, "{\"chainId\":\"0x5\",\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
   return in3;

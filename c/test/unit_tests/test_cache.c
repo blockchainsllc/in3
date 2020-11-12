@@ -137,7 +137,7 @@ void static setup_test_cache(in3_t* c) {
 static void test_cache() {
   in3_t* c = in3_for_chain(0);
   TEST_ASSERT_NULL(in3_configure(c, "{\"chainId\":\"0x5\",\"signatureCount\":0}"));
-  plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
   setup_test_cache(c);
 
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
@@ -159,7 +159,7 @@ static void test_cache() {
   TEST_ASSERT_NULL(in3_configure(c2, "{\"chainId\":\"0x5\",\"signatureCount\":0,\"maxAttempts\":1}"));
 
   c2->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
-  plugin_register(c2, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+  in3_plugin_register(c2, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
 
   in3_nodeselect_def_t* nl2 = in3_nodeselect_def_data(c2);
 
@@ -182,7 +182,7 @@ static void test_cache() {
 }
 
 static in3_ret_t in3_register_test_transport(in3_t* c) {
-  return plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
 }
 
 static void test_newchain() {

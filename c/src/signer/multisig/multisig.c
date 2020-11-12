@@ -431,5 +431,5 @@ in3_ret_t add_gnosis_safe(in3_t* in3, address_t adr) {
   multisig_t* ms = _malloc(sizeof(multisig_t));
   ms->type       = MS_GNOSIS_SAFE;
   memcpy(ms->address, adr, 20);
-  return plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM, gs_prepare_tx, ms, false);
+  return in3_plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM, gs_prepare_tx, ms, false);
 }

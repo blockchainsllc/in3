@@ -493,7 +493,7 @@ cleanup:
   return res;
 }
 
-in3_ret_t in3_plugin_register(const char* name, in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
+in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_act_fn action_fn, void* data, bool replace_ex) {
   if (!acts || !action_fn)
     return IN3_EINVAL;
 
@@ -504,9 +504,6 @@ in3_ret_t in3_plugin_register(const char* name, in3_t* c, in3_plugin_supp_acts_t
       if ((*p)->acts & PLGN_ACT_TERM) (*p)->action_fn((*p)->data, PLGN_ACT_TERM, c);
       (*p)->action_fn = action_fn;
       (*p)->data      = data;
-#ifdef LOGGING
-      (*p)->name = name;
-#endif
       return IN3_OK;
     }
 
@@ -524,9 +521,6 @@ in3_ret_t in3_plugin_register(const char* name, in3_t* c, in3_plugin_supp_acts_t
   new_p->action_fn    = action_fn;
   new_p->data         = data;
   new_p->next         = NULL;
-#ifdef LOGGING
-  new_p->name = name;
-#endif
 
   // didn't find any existing, so we add a new ...
   c->plugin_acts |= acts;
