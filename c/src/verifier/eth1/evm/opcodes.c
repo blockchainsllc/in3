@@ -363,12 +363,16 @@ int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   if (src_data.len && res == 0) {
     res = evm_mem_write(evm, mem_pos, src_data, src_data.len);
 
+#ifdef EVM_GAS
     // Check if evm is executing a creation transaction
     if (evm->properties & EVM_PROP_TXCREATE) {
       // Modify state
       account_t* acc_adr = evm_get_account(evm, evm->account, true);
       acc_adr->code      = src_data;
     }
+#else
+   return EVM_ERROR_INVALID_OPCODE;
+#endif    
   }
 
   return res;
