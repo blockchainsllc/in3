@@ -127,8 +127,8 @@ int evm_mem_write(evm_t* evm, uint32_t off, bytes_t src, uint32_t len) {
     if (src.len >= len)
       memcpy(evm->memory.b.data + off, src.data, len);
     else {
-      memset(evm->memory.b.data + off, 0, len - src.len);
-      memcpy(evm->memory.b.data + off + len - src.len, src.data, src.len);
+      memcpy(evm->memory.b.data + off, src.data, src.len);
+      memset(evm->memory.b.data + off + src.len, 0, len - src.len);
     }
   }
   return 0;
