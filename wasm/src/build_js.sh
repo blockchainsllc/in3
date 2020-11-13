@@ -53,11 +53,9 @@ done
 if [ -e in3w.wasm ]
  then cp in3w.wasm  ../module/
 fi
-if [ $2 == "true" ]
- then
-   cat "$1/package.json" | sed  '2s/in3/in3-asmjs/g' > ../module/package.json
-   cat "$1/../README.md" | sed  "s/'in3'/'in3-asmjs'/g" | "s/in3.js/in3-asmjs.js/g" > ../module/README.md
-fi
+# Hook for ASMJS Cmake build flag enabled. Uncomment if you want to add specific commands for this build.
+#if [ $2 == "true" ]
+# then
 if [ -d "$1/../test/in3" ] 
   then 
      rm -rf "$1/../test/in3"
