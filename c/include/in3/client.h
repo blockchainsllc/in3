@@ -388,6 +388,7 @@ struct in3_t_ {
   in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
+
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
 #endif
