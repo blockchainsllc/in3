@@ -196,7 +196,7 @@ void EMSCRIPTEN_KEEPALIVE wasm_register_plugin(in3_t* c, in3_plugin_act_t action
   // the index is used as the custom void* or data for the plugin.
   // This way we can cast it backward in order doing the call to js to find the plugin
   // if a js-plugin needs custom data, the it should do this in js withihn its own plugin object
-  in3_plugin_register(NULL, c, action, wasm_plgn, (void*) index, false);
+  in3_plugin_register(c, action, wasm_plgn, (void*) index, false);
 }
 
 /**
