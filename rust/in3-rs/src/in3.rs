@@ -56,8 +56,8 @@ impl Ctx {
     async unsafe fn sign(&mut self, msg: Bytes) -> In3Result<Bytes> {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
-        let c = (*client).internal as *mut Client;
-        let signer = &mut (*c).signer.as_mut().expect("No signer set");
+        let c: &mut Client = client.into();
+        let signer = &mut c.signer.as_mut().expect("No signer set");
         signer.sign(msg).await
     }
 
@@ -131,8 +131,8 @@ impl Ctx {
 
                         let responses: Vec<Result<String, String>> = {
                             let transport = {
-                                let c = (*(*self.ptr).client).internal as *mut Client;
-                                &mut (*c).transport
+                                let c: &mut Client = (*self.ptr).client.into();
+                                &mut c.transport
                             };
                             transport.fetch(payload, &urls).await
                         };
@@ -404,7 +404,7 @@ impl Client {
                 storage: None,
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
-            (*c.ptr).internal = c_ptr;
+            in3_sys::in3_register_client_data(c.ptr, c_ptr);
             #[cfg(feature = "blocking")]
             {
                 (*c.ptr).transport = Some(Client::in3_rust_transport);
@@ -421,8 +421,8 @@ impl Client {
             .to_str()
             .expect("URL is not valid UTF-8");
         let client = cptr as *mut in3_sys::in3_t;
-        let c = (*client).internal as *mut Client;
-        if let Some(storage) = &(*c).storage {
+        let c: &mut Client = client.into();
+        if let Some(storage) = &c.storage {
             if let Some(val) = storage.get(key) {
                 return in3_sys::b_new(val.as_ptr(), val.len() as u32);
             }
@@ -440,16 +440,16 @@ impl Client {
             .expect("key is not valid UTF-8");
         let value = std::slice::from_raw_parts_mut((*value).data, (*value).len as usize);
         let client = cptr as *mut in3_sys::in3_t;
-        let c = (*client).internal as *mut Client;
-        if let Some(storage) = &mut (*c).storage {
+        let c: &mut Client = client.into();
+        if let Some(storage) = &mut c.storage {
             storage.set(key, value);
         }
     }
 
     unsafe extern "C" fn in3_rust_storage_clear(cptr: *mut libc::c_void) {
         let client = cptr as *mut in3_sys::in3_t;
-        let c = (*client).internal as *mut Client;
-        if let Some(storage) = &mut (*c).storage {
+        let c: &mut Client = client.into();
+        if let Some(storage) = &mut c.storage {
             storage.clear();
         }
     }
@@ -473,9 +473,8 @@ impl Client {
                 urls.push(url);
             }
 
-            let c = (*(*request).in3).internal as *mut Client;
-            let responses: Vec<Result<String, String>> =
-                (*c).transport.fetch_blocking(payload, &urls);
+            let c: &mut Client = (*request).in3.into();
+            let responses: Vec<Result<String, String>> = c.transport.fetch_blocking(payload, &urls);
 
             let mut any_err = false;
             for (i, resp) in responses.iter().enumerate() {
@@ -506,6 +505,12 @@ impl Client {
         }
 
         in3_sys::in3_ret_t::IN3_OK
+    }
+}
+
+impl From<*mut in3_sys::in3_t> for &mut Client {
+    fn from(c: *mut in3_sys::in3_t) -> Self {
+        unsafe { &mut (*(in3_sys::in3_plugin_get_client_data(c) as *mut Client)) }
     }
 }
 
