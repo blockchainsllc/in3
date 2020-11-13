@@ -638,7 +638,7 @@ export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
     from: Address
     /** (optional when creating new contract) 20 Bytes - The address the transaction is directed to.*/
-    to: Address
+    to?: Address
     /** Integer of the gas provided for the transaction execution. eth_call consumes zero gas, but this parameter may be needed by some executions. */
     gas: Quantity
     /** Integer of the gas price used for each paid gas.  */
