@@ -1,12 +1,15 @@
 /// read block as rpc
 
-const IN3 = require('in3-wasm')
+const IN3 = require('in3')
+
 
 async function showLatestBlock() {
     // create new incubed instance
-    var c = new IN3()
+    var c = IN3({
+        chainId: 0x5 // use goerli
+    })
 
-    await c.setConfig({
+    await IN3.setConfig({
         chainId: 0x5 // use goerli
     })
 

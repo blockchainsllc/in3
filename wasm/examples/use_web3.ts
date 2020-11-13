@@ -1,14 +1,15 @@
-/// use incubed as Web3Provider in web3js 
+/// use incubed as Web3Provider in web3js
 
 // import in3-Module
-import { IN3 } from 'in3-wasm'
+import IN3 from 'in3'
+
 const Web3 = require('web3')
 
 const in3 = new IN3({
     proof: 'standard',
     signatureCount: 1,
     requestCount: 1,
-    chainId: 'mainnet',
+    chainId: 'goerli',
     replaceLatestBlock: 10
 })
 

@@ -1,14 +1,17 @@
 /// register a custom plugin
 
-import { IN3, RPCRequest } from 'in3-wasm'
+import IN3 from 'in3'
+import { RPCRequest, IN3Plugin } from 'in3'
 import * as crypto from 'crypto'
+import IN3Generic from "../src";
 
-class Sha256Plugin {
+class Sha256Plugin extends IN3Plugin{
 
   // this function will register for handling rpc-methods
   // only if we return something other then `undefined`, it will be taken as the result of the rpc.
   // if we don't return, the request will be forwarded to the incubed nodes
   handleRPC(c: IN3, request: RPCRequest): any {
+
     if (request.method === 'sha256') {
       // assert params
       if (request.params.length != 1 || typeof (request.params[0]) != 'string')
@@ -24,22 +27,18 @@ class Sha256Plugin {
 
 }
 
-
-
 async function registerPlugin() {
-  // create new incubed instance
-  const client = new IN3()
 
   // register the plugin
-  client.registerPlugin(new Sha256Plugin())
+  IN3Generic.registerPlugin(new Sha256Plugin())
+
+  // create new incubed instance
+  const client = new IN3()
 
   // exeucte a rpc-call
   const result = await client.sendRPC("sha256", ["testdata"])
 
   console.log(" sha256: ", result)
-
-  // clean up
-  client.free()
 
 }
 
