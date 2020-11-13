@@ -33,13 +33,15 @@
 ###############################################################################
 
 
-add_static_library(
-  NAME
-        plugin_client_data
+IF (PLGN_CLIENT_DATA)
+    add_static_library(
+            NAME
+            plugin_client_data
 
-  SOURCES
-        client_data.c
+            SOURCES
+            client_data.c
 
-  DEPENDS
-        core
-)
+            DEPENDS
+            core
+    )
+ENDIF ()

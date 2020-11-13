@@ -84,6 +84,7 @@ OPTION(SENTRY "Enable Sentry" OFF)
 OPTION(PK_SIGNER "Enable Signing with private keys" ON)
 OPTION(NODESELECT_DEF "Enable default nodeselect implementation" ON)
 OPTION(NODESELECT_DEF_WL "Enable default nodeselect whitelist implementation" ON)
+OPTION(PLGN_CLIENT_DATA "Enable client-data plugin" OFF)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
