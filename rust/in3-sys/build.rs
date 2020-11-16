@@ -76,7 +76,6 @@ fn main() {
         .define("TRANSPORTS", "OFF")
         .define("USE_CURL", "OFF")
         .define("CMD", "OFF")
-        .define("DEV_NO_INTRN_PTR", "OFF")
         .define("PLGN_CLIENT_DATA", "ON")
         .build_target("in3_bundle")
         .build();
