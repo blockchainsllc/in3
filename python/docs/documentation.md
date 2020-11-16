@@ -85,8 +85,8 @@ latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
 
-print('\nEthereum Kovan Test Network')
-client = in3.Client('kovan')
+print('\nEthereum EWC Test Network')
+client = in3.Client('ewc')
 latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
@@ -103,7 +103,7 @@ Ethereum Main Network
 Latest BN: 9801135
 Gas Price: 2000000000 Wei
 
-Ethereum Kovan Test Network
+Ethereum EWC Test Network
 Latest BN: 17713464
 Gas Price: 6000000000 Wei
 
@@ -236,15 +236,15 @@ address = client.ens_address(domain)
 owner = client.ens_owner(domain)
 _print()
 
-# Instantiate In3 Client for Kovan
-chain = 'kovan'
+# Instantiate In3 Client for EWC
+chain = 'ewc'
 client = in3.Client(chain, cache_enabled=True)
 try:
     address = client.ens_address(domain)
     owner = client.ens_owner(domain)
     _print()
 except in3.ClientException:
-    print('\nENS is not available on Kovan.')
+    print('\nENS is not available on EWC.')
 
 
 # Produces
@@ -254,7 +254,7 @@ Ethereum Name Service
 Address for depraz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
 Owner for depraz.eth @ mainnet: 0x6fa33809667a99a805b610c49ee2042863b1bb83
 
-ENS is not available on Kovan.
+ENS is not available on EWC.
 """
 
 ```
@@ -441,7 +441,7 @@ Once with the latest list at hand, the client can request any other on-chain inf
 
 **Arguments**:
 
-- `chain` _str_ - Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'kovan', 'goerli', 'ewc'.
+- `chain` _str_ - Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'goerli', 'ewc'.
 - `in3_config` _ClientConfig or str_ - (optional) Configuration for the client. If not provided, default is loaded.
 - `cache_enabled` _bool_ - False will disable local storage caching.
 - `transport` _function_ - Transport function for custom request routing. Defaults to https.
