@@ -73,7 +73,9 @@ add_subdirectory(src/cmd)
 add_subdirectory(src/tools)
 add_subdirectory(docs)
 
-if (NODESELECT_DEF)
+if (NODESELECT_DEF_WL AND NOT NODESELECT_DEF)
+    message(SEND_ERROR "Nodeselect - whitelisting enabled without enabling the plugin itself!")
+elseif (NODESELECT_DEF)
     add_subdirectory(src/nodeselect)
 endif()
 
