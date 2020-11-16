@@ -116,8 +116,6 @@ rust:
   artifacts:
     reports:
       junit: rust_test.xml
-  tags:
-    - mac-os
 
 deploy_rust:
   stage: deploy
