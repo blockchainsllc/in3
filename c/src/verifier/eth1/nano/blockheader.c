@@ -373,7 +373,7 @@ static in3_ret_t sig_err(in3_vctx_t* vc, unsigned int missing) {
   return vc_err(vc, "missing signatures");
 }
 
-static bytes_t cacl_msg_hash(uint8_t msg_data[96], size_t msg_len, uint8_t* reg_id, bytes32_t block_hash, uint64_t header_number) {
+static bytes_t calc_msg_hash(uint8_t msg_data[96], size_t msg_len, uint8_t* reg_id, bytes32_t block_hash, uint64_t header_number) {
   bytes_t msg;
   msg.data = msg_data;
   msg.len  = msg_len;
@@ -400,7 +400,7 @@ static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
     // error not signed!
     return IN3_EFIND;
   }
-  else if (!d_get(err, K_CODE))
+  else if (!d_get(err, K_CODE) || !d_get(sig, K_TIMESTAMP))
     // malformed error
     return IN3_EINVAL;
 
@@ -481,7 +481,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   // calculate message hash
   uint8_t msg_data[96];
-  bytes_t msg = cacl_msg_hash(msg_data, vc->chain->version > 1 ? 96 : 64, dctx.data, block_hash, header_number);
+  bytes_t msg = calc_msg_hash(msg_data, vc->chain->version > 1 ? 96 : 64, dctx.data, block_hash, header_number);
 
   unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
   for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
