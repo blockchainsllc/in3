@@ -43,6 +43,7 @@
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "../../../verifier/eth1/nano/vhist.h"
+#include <assert.h>
 #include <string.h>
 
 #ifdef POA
@@ -372,6 +373,24 @@ static in3_ret_t sig_err(in3_vctx_t* vc, unsigned int missing) {
   return vc_err(vc, "missing signatures");
 }
 
+static bytes_t cacl_msg_hash(uint8_t msg_data[96], size_t msg_len, uint8_t* reg_id, bytes32_t block_hash, uint64_t header_number) {
+  bytes_t msg;
+  msg.data = msg_data;
+  msg.len  = msg_len;
+
+  // blockhash + blocknumber + registry id
+  memcpy(msg_data, block_hash, 32);
+  memset(msg_data + 32, 0, 32);
+  long_to_bytes(header_number, msg_data + 56);
+  memcpy(msg_data + 64, reg_id, 32);
+
+  // hash it to create the message hash
+  keccak(msg, msg_data);
+  msg.data = msg_data;
+  msg.len  = 32;
+  return msg;
+}
+
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
@@ -411,9 +430,9 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   // if we expect no signatures ...
   if (vc->ctx->signers_length == 0) {
-#ifdef POA
     in3_ret_t res = IN3_OK;
-    vhist_t*  vh  = NULL;
+#ifdef POA
+    vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
     if (vc->chain && vc->chain->spec && eth_get_engine(vc, header, vc->chain->spec->result, &vh) == ENGINE_AURA) {
       // we merge the current header + finality blocks
@@ -429,48 +448,34 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       _free(blocks);
     }
     vh_free(vh);
-    return res;
 #endif
+    return res;
   }
-  else {
-    // no signatures found,even though we expected some.
-    if (!(signatures = d_get(vc->proof, K_SIGNATURES)))
-      return vc_err(vc, "no signatures in proof");
 
-    // prepare the message to be signed
-    bytes_t msg;
-    uint8_t msg_data[96];
-    msg.data = (uint8_t*) &msg_data;
-    msg.len  = vc->chain->version > 1 ? 96 : 64;
+  // no signatures found,even though we expected some.
+  if (!(signatures = d_get(vc->proof, K_SIGNATURES)))
+    return vc_err(vc, "no signatures in proof");
 
-    // first the blockhash + blocknumber
-    memcpy(msg_data, block_hash, 32);
-    memset(msg_data + 32, 0, 32);
-    long_to_bytes(header_number, msg_data + 56);
+  // get registry_id
+  in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
+  in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
 
-    // get registry_id
-    in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
-    in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
-    memcpy(msg_data + 64, dctx.data, 32);
+  // calculate message hash
+  uint8_t msg_data[96];
+  bytes_t msg = cacl_msg_hash(msg_data, vc->chain->version > 1 ? 96 : 64, dctx.data, block_hash, header_number);
 
-    // hash it to create the message hash
-    keccak(msg, msg_data);
-    msg.data = msg_data;
-    msg.len  = 32;
-
-    unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
-    for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
-      // only if this signature has the correct blockhash and blocknumber we will verify it.
-      if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
-        confirmed |= eth_verify_signature(vc, &msg, sig);
-    }
-
-    if (confirmed != (1U << vc->ctx->signers_length) - 1) // we must collect all signatures!
-      return sig_err(vc, ((1 << vc->ctx->signers_length) - 1) ^ confirmed);
-
-    // ok, is is verified, so we should add it to the verified hashes
-    add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
+  unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
+  for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
+    // only if this signature has the correct blockhash and blocknumber we will verify it.
+    if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
+      confirmed |= eth_verify_signature(vc, &msg, sig);
   }
+
+  if (confirmed != (1U << vc->ctx->signers_length) - 1) // we must collect all signatures!
+    return sig_err(vc, ((1 << vc->ctx->signers_length) - 1) ^ confirmed);
+
+  // ok, is is verified, so we should add it to the verified hashes
+  add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
 
   return IN3_OK;
 }
