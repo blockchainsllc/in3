@@ -747,6 +747,126 @@ static void test_parallel_signatures() {
   in3_free(in3);
 }
 
+static void test_sigs() {
+  in3_t* in3 = in3_for_chain(0x34ff);
+  // note: maxVerifiedHashes must be zero for this test to work, since we would like to reuse the above response.
+  in3_configure(in3, "{\"chainId\":\"0x34ff\",\"chainType\":0,\"autoUpdateList\":false,\"signatureCount\":3,\"requestCount\":1,\"maxAttempts\":1,\"maxVerifiedHashes\":0,"
+                     "\"nodeRegistry\":{"
+                     "   \"needsUpdate\":false,"
+                     "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","
+                     "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\","
+                     "   \"nodeList\": [{"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-1\","
+                     "      \"address\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-2\","
+                     "      \"address\":\"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-3\","
+                     "      \"address\":\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-4\","
+                     "      \"address\":\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-5\","
+                     "      \"address\":\"0xbcdf4e3e90cc7288b578329efd7bcc90655148d2\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://tincubeth.komputing.org/\","
+                     "      \"address\":\"0xf944d416ebdf7f6e22eaf79a5a53ad1a487ddd9a\","
+                     "      \"props\":\"0x1d7e0000000a\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://h5l45fkzz7oc3gmb.onion/\","
+                     "      \"address\":\"0x56d986deb3b5d14cb230d0f39247cc32416020b6\","
+                     "      \"props\":\"0x21660000000a\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3node.com\","
+                     "      \"address\":\"0x1821354870a09e3c4d2ed1a5c4b481e38e3d6ba1\","
+                     "      \"props\":\"0xa000001d1\""
+                     "    }]"
+                     "}}");
+  register_transport(in3, test_transport);
+
+  ADD_RESPONSE_SIGS("[{"
+                    "  \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+                    "  \"block\": 3662142,"
+                    "  \"r\": \"0x389656b8924ab3b0f05b5d618e14a6b561cc85023bde9a96f1b78487eb1872a4\","
+                    "  \"s\": \"0x49c00342564b30e8b17488941aa3afde8bc85728d2a2814094c0afb7ce84c926\","
+                    "  \"v\": 28,"
+                    "  \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+                    "}, {"
+                    "  \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+                    "  \"block\": 3662142,"
+                    "  \"r\": \"0xdf49a129f1186ad491d66ef8100384799cbd583d59558092375c9e181ceddcec\","
+                    "  \"s\": \"0x158e543243a2e4718cc253d389759b9382c040f5e77ae360531d7ff701537802\","
+                    "  \"v\": 28,"
+                    "  \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+                    "}, {"
+                    "  \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+                    "  \"block\": 3662142,"
+                    "  \"r\": \"0xe6ba447671e5f2c705d757111f0576e3109ec0b4b24540c74174dc101c6da2da\","
+                    "  \"s\": \"0x61bdefd67dad9d6c2d07903b9a45072cd7a967b96139b9187307f05acbe0872a\","
+                    "  \"v\": 27,"
+                    "  \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+                    "}]");
+
+  ADD_RESPONSE_SIGS("[{"
+                    "  \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+                    "  \"block\": 3662142,"
+                    "  \"r\": \"0x389656b8924ab3b0f05b5d618e14a6b561cc85023bde9a96f1b78487eb1872a4\","
+                    "  \"s\": \"0x49c00342564b30e8b17488941aa3afde8bc85728d2a2814094c0afb7ce84c926\","
+                    "  \"v\": 28,"
+                    "  \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+                    "}, {"
+                    "  \"error\": {"
+                    "    \"message\": \"Internal Error\","
+                    "    \"code\": -32603,"
+                    "    \"data\": { \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\" }"
+                    "  }"
+                    "}, {"
+                    "  \"blockHash\": \"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","
+                    "  \"block\": 3662142,"
+                    "  \"r\": \"0xe6ba447671e5f2c705d757111f0576e3109ec0b4b24540c74174dc101c6da2da\","
+                    "  \"s\": \"0x61bdefd67dad9d6c2d07903b9a45072cd7a967b96139b9187307f05acbe0872a\","
+                    "  \"v\": 27,"
+                    "  \"msgHash\": \"0x2367ad2a1ff16e8af634f6e1062b0954f6898b5340d849b8b5b79bc936b57950\""
+                    "}]");
+
+  // we ask nd-1 and nd-5 for signatures of 3 nodes - nd-2, nd-3 & nd-4.
+  // nd-1's response is missing a signature from nd-4, therefore we mark nd-4 as offline.
+  // nd-5's response however has all 3 signatures, so we accept this response.
+  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
+                                               "\"method\":\"eth_getTransactionByHash\","
+                                               "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
+                                               "\"in3\":{\"dataNodes\":[\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"0xbcdf4e3e90cc7288b578329efd7bcc90655148d2\"],"
+                                               "\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\",\"0xc513a534de5a9d3f413152c41b09bd8116237fc8\"]}}");
+
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(in3);
+  TEST_ASSERT_FALSE(is_blacklisted(&nl->nodelist[3]));
+
+  bytes_t* address = hex_to_new_bytes("45d45e6ff99e6c34a235d263965910298985fcfe", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->reporter, address->data, 20);
+  b_free(address);
+
+  address = hex_to_new_bytes("c513a534de5a9d3f413152c41b09bd8116237fc8", 40);
+  TEST_ASSERT_EQUAL_MEMORY(nl->offlines->offline->address, address->data, 20);
+  b_free(address);
+  ctx_free(ctx);
+
+  in3_free(in3);
+}
+
 /*
  * Main
  */
