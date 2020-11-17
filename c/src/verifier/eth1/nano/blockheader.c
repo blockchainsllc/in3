@@ -391,6 +391,25 @@ static bytes_t cacl_msg_hash(uint8_t msg_data[96], size_t msg_len, uint8_t* reg_
   return msg;
 }
 
+static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
+  d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
+  if (!sig) {
+    if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_INTERNAL)
+      // node is probably offline, so error isn't signed
+      return IN3_EIGNORE;
+    // error not signed!
+    return IN3_EFIND;
+  }
+  else if (!d_get(err, K_CODE))
+    // malformed error
+    return IN3_EINVAL;
+
+  // calculate msgHash
+  bytes_t      err_hash = {.data = NULL, .len = 0};
+  unsigned int res      = eth_verify_signature(vc, &err_hash, sig);
+  return res ? res : IN3_EFIND;
+}
+
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
@@ -400,7 +419,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   unsigned int i;
   bytes32_t    block_hash;
   uint64_t     header_number = 0;
-  d_token_t *  sig, *signatures;
+  d_token_t *  sig, *signatures, *err;
   bytes_t      temp, *sig_hash;
 
   // generate the blockhash;
@@ -466,9 +485,35 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
   for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
-    // only if this signature has the correct blockhash and blocknumber we will verify it.
-    if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
-      confirmed |= eth_verify_signature(vc, &msg, sig);
+    err = d_get(sig, K_ERROR);
+    if (err) {
+      in3_ret_t res = verify_sig_err(vc, err);
+      if (res == IN3_EIGNORE)
+        // defer handling until completion of verification of remaining signatures
+        continue;
+      else if (res == IN3_EFIND || res == IN3_EINVAL)
+        // fixme: decide how to handle, for now blacklist responding node
+        return vc_err(vc, "error not signed or malformed");
+
+      assert(res > 0);
+
+      // error is signed
+      confirmed |= res;
+      if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
+        // todo: check if reported finality is correct!
+      }
+
+      continue;
+    }
+
+    if (d_get_longk(sig, K_BLOCK) != header_number)
+      return vc_err(vc, "wrong signature blocknumber");
+
+    sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32);
+    if (!sig_hash || memcmp(sig_hash->data, block_hash, 32) != 0)
+      return vc_err(vc, "wrong signature hash");
+
+    confirmed |= eth_verify_signature(vc, &msg, sig);
   }
 
   if (confirmed != (1U << vc->ctx->signers_length) - 1) // we must collect all signatures!
