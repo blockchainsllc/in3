@@ -42,6 +42,9 @@
 /** depreacted-attribute */
 #define DEPRECATED __attribute__((deprecated))
 
+/** JSON-RPC errors */
+#define JSON_RPC_ERR_INTERNAL (-32603)
+
 /** ERROR types  used as return values.
  * 
  * All values (except IN3_OK) indicate an error.
