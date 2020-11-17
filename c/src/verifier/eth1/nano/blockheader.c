@@ -391,6 +391,10 @@ static bytes_t calc_msg_hash(uint8_t msg_data[96], size_t msg_len, uint8_t* reg_
   return msg;
 }
 
+static bytes_t calc_err_hash(int64_t code, uint64_t ts) {
+  return bytes(NULL, 0);
+}
+
 static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
   d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
   if (!sig) {
@@ -400,13 +404,19 @@ static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
     // error not signed!
     return IN3_EFIND;
   }
-  else if (!d_get(err, K_CODE) || !d_get(sig, K_TIMESTAMP))
+
+  bytes_t* msg_hash = d_get_bytesk(sig, K_MSG_HASH);
+  if (!d_get(err, K_CODE) || !d_get(sig, K_TIMESTAMP) || !msg_hash || msg_hash->len != 32)
     // malformed error
     return IN3_EINVAL;
 
   // calculate msgHash
-  bytes_t      err_hash = {.data = NULL, .len = 0};
-  unsigned int res      = eth_verify_signature(vc, &err_hash, sig);
+  bytes_t err_hash = calc_err_hash(d_get_intk(err, K_CODE), d_get_longk(sig, K_TIMESTAMP));
+  if (memcmp(err_hash.data, msg_hash->data, 32) != 0)
+    return IN3_EFIND;
+
+  // verify signature
+  unsigned int res = eth_verify_signature(vc, &err_hash, sig);
   return res ? res : IN3_EFIND;
 }
 
