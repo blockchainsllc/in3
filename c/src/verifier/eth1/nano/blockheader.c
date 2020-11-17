@@ -366,7 +366,7 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
   memcpy(chain->verified_hashes[last_free].hash, hash, 32);
 }
 
-static in3_ret_t sig_err(in3_vctx_t* vc, unsigned int missing) {
+static in3_ret_t offline_err(in3_vctx_t* vc, unsigned int missing) {
   in3_nl_offline_ctx_t octx = {.vctx = vc, .missing = missing};
   in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_OFFLINE, &octx);
   vc->dont_blacklist = true;
@@ -494,6 +494,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   bytes_t msg = calc_msg_hash(msg_data, vc->chain->version > 1 ? 96 : 64, dctx.data, block_hash, header_number);
 
   unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
+  unsigned int erred     = 0; // bitmask for signed errors
   for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
     err = d_get(sig, K_ERROR);
     if (err) {
@@ -508,7 +509,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       assert(res > 0);
 
       // error is signed
-      confirmed |= res;
+      erred |= res;
       if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
         // todo: check if reported finality is correct!
       }
@@ -526,8 +527,13 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     confirmed |= eth_verify_signature(vc, &msg, sig);
   }
 
-  if (confirmed != (1U << vc->ctx->signers_length) - 1) // we must collect all signatures!
-    return sig_err(vc, ((1 << vc->ctx->signers_length) - 1) ^ confirmed);
+  unsigned int signd = (confirmed | erred);
+  unsigned int mask  = (1ULL << vc->ctx->signers_length) - 1;
+  if (signd != mask) // we must collect all signatures!
+    return offline_err(vc, mask & ~signd);
+
+  if (erred)
+    return vc_err(vc, "errors reported by signer nodes");
 
   // ok, is is verified, so we should add it to the verified hashes
   add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
