@@ -174,8 +174,11 @@ int evm_sub_call(evm_t*    parent,
   UNUSED_VAR(gas);
 
   // create a new evm
-  evm_t evm;
+  evm_t evm, evm_copy;
   int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
+  evm_prepare_evm(&evm_copy, address, code_address, origin, caller, parent->env, parent->env_ptr, mode);
+  bool     depend_on_refund_gas = false;
+  uint32_t gas_call_value       = 0;
 
   evm.properties      = parent->properties;
   evm.chain_id        = parent->chain_id;
@@ -196,11 +199,45 @@ int evm_sub_call(evm_t*    parent,
   UNUSED_VAR(new_account);
   UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
+  if (depend_on_refund_gas) {
+    // create a copy of evm in case we need to revert
+    evm_copy.properties      = evm.properties;
+    evm_copy.chain_id        = evm.chain_id;
+    evm_copy.call_data.data  = evm.call_data.data;
+    evm_copy.call_data.len   = evm.call_data.len;
+    evm_copy.call_value.data = evm.call_value.data;
+    evm_copy.call_value.len  = evm.call_value.len;
+    evm_copy.account         = evm.account;
+    evm_copy.gas             = evm.gas;
+    evm_copy.init_gas        = evm.init_gas;
+    evm_copy.gas_price.data  = evm.gas_price.data;
+    evm_copy.gas_price.len   = evm.gas_price.len;
+  }
+
   // execute the internal call
   if (res == 0)
     success = evm_run(&evm, code_address);
   else
     success = res;
+
+  if (depend_on_refund_gas) {
+    if (evm.gas < gas_call_value) {
+      // Call execution consumed more gas than the caller could afford.
+      success = EVM_ERROR_OUT_OF_GAS;
+      // Revert state
+      evm.properties      = evm_copy.properties;
+      evm.chain_id        = evm_copy.chain_id;
+      evm.call_data.data  = evm_copy.call_data.data;
+      evm.call_data.len   = evm_copy.call_data.len;
+      evm.call_value.data = evm_copy.call_value.data;
+      evm.call_value.len  = evm_copy.call_value.len;
+      evm.account         = evm_copy.account;
+      evm.gas             = evm_copy.gas;
+      evm.init_gas        = evm_copy.init_gas;
+      evm.gas_price.data  = evm_copy.gas_price.data;
+      evm.gas_price.len   = evm_copy.gas_price.len;
+    }
+  }
 
   // put the success in the stack ( in case of a create we add the new address)
   if (!address && success == 0)
@@ -224,8 +261,10 @@ int evm_sub_call(evm_t*    parent,
     }
   }
   FINALIZE_SUBCALL_GAS(&evm, success, parent);
+  if (depend_on_refund_gas) parent->gas -= gas;
   // clean up
   evm_free(&evm);
+  evm_free(&evm_copy);
   // we always return 0 since a failure simply means we write a 0 on the stack.
   return res;
 }
