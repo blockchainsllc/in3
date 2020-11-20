@@ -420,6 +420,14 @@ static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
   return res ? res : IN3_EFIND;
 }
 
+static uint8_t* get_verified_hash(in3_vctx_t* vc, uint64_t block_number) {
+  if (vc->chain->verified_hashes)
+    for (int i = 0; i < vc->ctx->client->max_verified_hashes; i++)
+      if (vc->chain->verified_hashes[i].block_number == block_number)
+        return vc->chain->verified_hashes[i].hash;
+  return NULL;
+}
+
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
@@ -446,16 +454,9 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     return vc_err(vc, "wrong blockhash");
 
   // already verified?
-  if (vc->chain->verified_hashes) {
-    for (i = 0; i < vc->ctx->client->max_verified_hashes; i++) {
-      if (vc->chain->verified_hashes[i].block_number == header_number) {
-        if (memcmp(vc->chain->verified_hashes[i].hash, block_hash, 32))
-          return vc_err(vc, "invalid blockhash");
-        else
-          return IN3_OK;
-      }
-    }
-  }
+  uint8_t* hash = get_verified_hash(vc, header_number);
+  if (hash)
+    return memcmp(hash, block_hash, 32) ? vc_err(vc, "invalid blockhash") : IN3_OK;
 
   // if we expect no signatures ...
   if (vc->ctx->signers_length == 0) {
