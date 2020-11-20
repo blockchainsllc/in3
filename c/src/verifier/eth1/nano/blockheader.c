@@ -406,7 +406,7 @@ static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
   }
 
   bytes_t* msg_hash = d_get_bytesk(sig, K_MSG_HASH);
-  if (!d_get(err, K_CODE) || !d_get(sig, K_TIMESTAMP) || !msg_hash || msg_hash->len != 32)
+  if (!d_get(err, K_CODE) || !d_get(sig, K_TIMESTAMP) || !d_get(sig, K_BLOCK_NUMBER) || !msg_hash || msg_hash->len != 32)
     // malformed error
     return IN3_EINVAL;
 
