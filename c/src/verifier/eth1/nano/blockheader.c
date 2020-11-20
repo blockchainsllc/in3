@@ -529,13 +529,11 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   unsigned int signd = (confirmed | erred);
   unsigned int mask  = (1ULL << vc->ctx->signers_length) - 1;
-  if (signd != mask) // we must collect all signatures!
+
+  if (signd != mask || erred)
     return offline_err(vc, mask & ~signd);
 
-  if (erred)
-    return vc_err(vc, "errors reported by signer nodes");
-
-  // ok, is is verified, so we should add it to the verified hashes
+  // ok, it is verified, so we should add it to the verified hashes
   add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
 
   return IN3_OK;
