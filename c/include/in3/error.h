@@ -42,6 +42,10 @@
 /** depreacted-attribute */
 #define DEPRECATED __attribute__((deprecated))
 
+/** JSON-RPC errors */
+#define JSON_RPC_ERR_INTERNAL (-32603) /** Internal error (probably offline signer node) */
+#define JSON_RPC_ERR_FINALITY (-16001) /** Block is not final so node refused to sign */
+
 /** ERROR types  used as return values.
  * 
  * All values (except IN3_OK) indicate an error.
