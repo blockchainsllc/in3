@@ -455,11 +455,24 @@ static in3_ret_t validate_sig(in3_vctx_t* vc, d_token_t* sig, uint64_t header_nu
   return eth_verify_signature(vc, &msg, sig);
 }
 
-static void handle_signed_err(in3_vctx_t* vc, d_token_t* err) {
+static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int signer_idx, uint64_t header_number) {
   // handle errors based on context
   if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
-    // todo: check if reported finality is correct!
-//     if (vc->currentBlock > header_number && vc->currentBlock - header_number > finality) blacklist this node
+    in3_get_data_ctx_t dctx = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = vc->ctx->signers + (20 * signer_idx)};
+    in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
+    uint32_t*     min_blk_height = dctx.data;
+    node_match_t* n              = vc->ctx->nodes;
+    while (n) {
+      if (memcmp(n->address, vc->ctx->signers + (20 * signer_idx), 20) == 0)
+        break;
+      n = n->next;
+    }
+    assert(n != NULL);
+
+    if (vc->currentBlock > header_number && vc->currentBlock - header_number >= *min_blk_height)
+      // signer lied to us about his min block height!
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, n);
+    if (dctx.cleanup) dctx.cleanup(dctx.data);
   }
 }
 
@@ -547,7 +560,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       if (res < 0)
         return res;
       else if (res != 0) // `res = 0` indicates eth_verify_signature() failure - ignored
-        handle_signed_err(vc, err);
+        handle_signed_err(vc, err, res, header_number);
 
       erred |= res;
     }
