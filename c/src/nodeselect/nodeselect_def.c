@@ -540,6 +540,28 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
         pctx->cleanup = NULL;
         return IN3_OK;
       }
+      else if (pctx->type == GET_DATA_NODE_MIN_BLK_HEIGHT) {
+        uint8_t*     address = pctx->data;
+        bool         found   = false;
+        unsigned int i;
+        for (i = 0; i < data->nodelist_length; i++)
+          if (memcmp(data->nodelist[i].address, address, 20) == 0)
+            found = true;
+
+        if (pctx->cleanup) pctx->cleanup(pctx->data);
+        if (found) {
+          in3_node_t* n   = &data->nodelist[i];
+          uint32_t    mbh = in3_node_props_get(n->props, NODE_PROP_MIN_BLOCK_HEIGHT);
+          pctx->data      = malloc(sizeof(mbh));
+          memcpy(pctx->data, &mbh, sizeof(mbh));
+          pctx->cleanup = free;
+        }
+        else {
+          pctx->data    = NULL;
+          pctx->cleanup = NULL;
+        }
+        return IN3_OK;
+      }
       return IN3_EIGNORE;
     }
     case PLGN_ACT_ADD_PAYLOAD: {

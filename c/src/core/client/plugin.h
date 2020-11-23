@@ -430,8 +430,9 @@ typedef struct {
 
 // -------- GET_DATA ---------
 typedef enum {
-  GET_DATA_REGISTRY_ID, /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
-  GET_DATA_CLIENT_DATA, /* returns a opaque pointer that was previously set by caller */
+  GET_DATA_REGISTRY_ID,         /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
+  GET_DATA_NODE_MIN_BLK_HEIGHT, /* returns a pointer to an internal bitmask; NO cleanup required */
+  GET_DATA_CLIENT_DATA,         /* returns an opaque pointer that was previously set by caller */
 } in3_get_data_type_t;
 
 /**
