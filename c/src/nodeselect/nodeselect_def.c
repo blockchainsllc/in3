@@ -541,6 +541,8 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
         return IN3_OK;
       }
       else if (pctx->type == GET_DATA_NODE_MIN_BLK_HEIGHT) {
+        assert(pctx->data);
+        
         uint8_t*     address = pctx->data;
         bool         found   = false;
         unsigned int i;
