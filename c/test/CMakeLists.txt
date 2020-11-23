@@ -163,7 +163,7 @@ foreach (testdir
         #GeneralStateTests/stCallCreateCallCodeTest
         GeneralStateTests/stQuadraticComplexityTest
         GeneralStateTests/stStackTests
-        #GeneralStateTests/stChangedEIP150
+        GeneralStateTests/stChangedEIP150
         #GeneralStateTests/stSolidityTest
         GeneralStateTests/stMemoryTest
         #GeneralStateTests/stEWASMTests
@@ -204,6 +204,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*(pointMulAdd2).json$")
     list(FILTER files EXCLUDE REGEX ".*(QuadraticComplexitySolidity_CallDataCopy).json$")
     list(FILTER files EXCLUDE REGEX ".*(staticcall_createfails).json$")
+    list(FILTER files EXCLUDE REGEX ".*((Call|Callcode)1024BalanceTooLow).json$") # in "GeneralStateTests/stChangedEIP150"
 
 
     foreach (file ${files})
