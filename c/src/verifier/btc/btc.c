@@ -19,7 +19,7 @@ static in3_ret_t check_pre_bip34(in3_vctx_t* vc, bytes_t finality_headers, uint6
   uint8_t   start_hash[16] = {0};
   if (bn > BIP34_START) return vc_err(vc, "block needs to support BIP34");
   if (checkpoint * 12 + 12 >= btc_pre_bip34_len) return vc_err(vc, "Blocknumber not before bip34");
-  memcpy(start_hash + 4, btc_pre_bip34 + checkpoint * 12, 12);
+  memcpy(start_hash + 4, btc_pre_bip34 + checkpoint * 12 - 12, 12);
   if (finality_headers.len < p * 80) return vc_err(vc, "Not enough fnialiity headers");
   btc_hash(bytes(finality_headers.data + (p - 1) * 80, 80), blockhash);
   if (memcmp(blockhash, start_hash, 16)) return vc_err(vc, "invalid finality header");
@@ -399,7 +399,7 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
         return vc_err(vc, "Invalid nextblockhash");
     }
 
-    if (*block_header != d_get_intk(vc->request, key("version"))) return vc_err(vc, "Invalid version");
+    if (*block_header != d_get_intk(vc->result, key("version"))) return vc_err(vc, "Invalid version");
   }
 
   return IN3_OK;
