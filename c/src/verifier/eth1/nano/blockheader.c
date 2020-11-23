@@ -366,11 +366,9 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
   memcpy(chain->verified_hashes[last_free].hash, hash, 32);
 }
 
-static in3_ret_t offline_err(in3_vctx_t* vc, unsigned int missing) {
+static void mark_offline(in3_vctx_t* vc, unsigned int missing) {
   in3_nl_offline_ctx_t octx = {.vctx = vc, .missing = missing};
   in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_OFFLINE, &octx);
-  vc->dont_blacklist = true;
-  return vc_err(vc, "missing signatures");
 }
 
 static bytes_t compute_msg_hash(uint8_t* msg_data, in3_vctx_t* vc, bytes32_t block_hash, uint64_t header_number) {
@@ -566,9 +564,11 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   unsigned int signd = (confirmed | erred);
   unsigned int mask  = (1ULL << vc->ctx->signers_length) - 1;
-
-  if (signd != mask || erred)
-    return offline_err(vc, mask & ~signd);
+  if (signd != mask || erred) {
+    mark_offline(vc, mask & ~signd);
+    vc->dont_blacklist = true;
+    return vc_err(vc, "missing signatures");
+  }
 
   // ok, it is verified, so we should add it to the verified hashes
   add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
