@@ -171,6 +171,8 @@ static uint8_t* get_difficulty(bytes_t header) {
 
 in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final, bytes_t header) {
 
+  if (block_number < BIP34_START) return IN3_OK; // for pre bip34, this finalityheader already checked it
+
   // is there a required ctx, which we need to clean up?
   in3_ctx_t* ctx = ctx_find_required(vc->ctx, "btc_proofTarget");                                                  // do we have an existing required proofTarget-request?
   if (ctx)                                                                                                         // yes, we do!
