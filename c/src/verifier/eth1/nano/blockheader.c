@@ -391,8 +391,40 @@ static bytes_t calc_msg_hash(uint8_t msg_data[96], size_t msg_len, uint8_t* reg_
   return msg;
 }
 
-static bytes_t calc_err_hash(int64_t code, uint64_t ts) {
-  return bytes(NULL, 0);
+static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
+  bytes_t msg;
+  msg.data = err_data;
+  msg.len  = 64;
+
+  bytes_builder_t* bb = bb_new();
+  bb_write_int(bb, d_get_intk(err, K_CODE));
+
+  for (d_token_t* t = d_get(d_get(err, K_DATA), K_SIGNED_ERR) + 1; (t = d_next(t));) {
+    if (t->key == K_R || t->key == K_S || t->key == K_V)
+      continue;
+
+    switch (d_type(t)) {
+      case T_BYTES:
+        bb_write_fixed_bytes(bb, d_bytes(t));
+        break;
+      case T_STRING: {
+        char* s = d_string(t);
+        bb_write_chars(bb, s, strlen(s));
+        break;
+      }
+      case T_BOOLEAN:
+      case T_INTEGER:
+        bb_write_int(bb, d_int(t));
+        break;
+      default: break;
+    }
+  }
+
+  // hash
+  keccak(msg, err_data);
+  msg.data = err_data;
+  msg.len  = 32;
+  return msg;
 }
 
 static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
