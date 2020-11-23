@@ -887,5 +887,6 @@ int main() {
   RUN_TEST(test_configure);
   RUN_TEST(test_configure_validation);
   RUN_TEST(test_parallel_signatures);
+  RUN_TEST(test_sigs);
   return TESTS_END();
 }

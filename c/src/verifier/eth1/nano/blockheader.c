@@ -573,11 +573,14 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   }
 
   unsigned int signd = (confirmed | erred);
-  unsigned int mask  = (1ULL << vc->ctx->signers_length) - 1;
-  if (signd != mask || erred) {
-    mark_offline(vc, mask & ~signd);
+  unsigned int all   = (1ULL << vc->ctx->signers_length) - 1;
+  if (signd != all) {
+    mark_offline(vc, all & ~signd);
     vc->dont_blacklist = true;
     return vc_err(vc, "missing signatures");
+  }
+  else if (erred) {
+    return vc_err(vc, "signers reported errors");
   }
 
   // ok, it is verified, so we should add it to the verified hashes
