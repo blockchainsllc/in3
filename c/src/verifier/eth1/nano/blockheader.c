@@ -429,29 +429,38 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   return msg;
 }
 
-static in3_ret_t verify_sig_err(in3_vctx_t* vc, d_token_t* err) {
+static bool is_err_signed(d_token_t* err) {
+  return d_get(d_get(err, K_DATA), K_SIGNED_ERR) != NULL;
+}
+
+static in3_ret_t validate_err(in3_vctx_t* vc, d_token_t* err, uint64_t header_number) {
   d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
-  if (!sig) {
-    if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_INTERNAL)
-      // node is probably offline, so error isn't signed
-      return IN3_EIGNORE;
-    // error not signed!
-    return IN3_EFIND;
+  if (d_get_longk(sig, K_BLOCK) != header_number)
+    return vc_err(vc, "wrong signature blocknumber");
+
+  uint8_t err_data[64];
+  bytes_t err_hash = compute_err_hash(err_data, err);
+
+  return eth_verify_signature(vc, &err_hash, sig);
+}
+
+static in3_ret_t validate_sig(in3_vctx_t* vc, d_token_t* sig, uint64_t header_number, bytes32_t block_hash, bytes_t msg) {
+  if (d_get_longk(sig, K_BLOCK) != header_number)
+    return vc_err(vc, "wrong signature blocknumber");
+
+  bytes_t* sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32);
+  if (!sig_hash || memcmp(sig_hash->data, block_hash, 32) != 0)
+    return vc_err(vc, "wrong signature hash");
+
+  return eth_verify_signature(vc, &msg, sig);
+}
+
+static void handle_signed_err(in3_vctx_t* vc, d_token_t* err) {
+  // handle errors based on context
+  if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
+    // todo: check if reported finality is correct!
+//     if (vc->currentBlock > header_number && vc->currentBlock - header_number > finality) blacklist this node
   }
-
-  bytes_t* msg_hash = d_get_bytesk(sig, K_MSG_HASH);
-  if (!d_get(err, K_CODE) || !d_get(sig, K_TIMESTAMP) || !d_get(sig, K_BLOCK_NUMBER) || !msg_hash || msg_hash->len != 32)
-    // malformed error
-    return IN3_EINVAL;
-
-  // calculate msgHash
-  bytes_t err_hash = calc_err_hash(d_get_intk(err, K_CODE), d_get_longk(sig, K_TIMESTAMP));
-  if (memcmp(err_hash.data, msg_hash->data, 32) != 0)
-    return IN3_EFIND;
-
-  // verify signature
-  unsigned int res = eth_verify_signature(vc, &err_hash, sig);
-  return res ? res : IN3_EFIND;
 }
 
 static uint8_t* get_verified_hash(in3_vctx_t* vc, uint64_t block_number) {
@@ -472,7 +481,8 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   bytes32_t    block_hash;
   uint64_t     header_number = 0;
   d_token_t *  sig, *signatures, *err;
-  bytes_t      temp, *sig_hash;
+  bytes_t      temp;
+  in3_ret_t    res = IN3_OK;
 
   // generate the blockhash;
   keccak(*header, block_hash);
@@ -494,7 +504,6 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   // if we expect no signatures ...
   if (vc->ctx->signers_length == 0) {
-    in3_ret_t res = IN3_OK;
 #ifdef POA
     vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
@@ -524,38 +533,30 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   uint8_t msg_data[96];
   bytes_t msg = compute_msg_hash(msg_data, vc, block_hash, header_number);
 
-  unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
+  unsigned int confirmed = 0; // bitmask for signed block-hashes
   unsigned int erred     = 0; // bitmask for signed errors
   for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
-    err = d_get(sig, K_ERROR);
-    if (err) {
-      in3_ret_t res = verify_sig_err(vc, err);
-      if (res == IN3_EIGNORE)
-        // defer handling until completion of verification of remaining signatures
-        continue;
-      else if (res == IN3_EFIND || res == IN3_EINVAL)
-        // fixme: decide how to handle, for now blacklist responding node
-        return vc_err(vc, "error not signed or malformed");
-
-      assert(res > 0);
-
-      // error is signed
-      erred |= res;
-      if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
-        // todo: check if reported finality is correct!
+    if ((err = d_get(sig, K_ERROR))) {
+      if (!is_err_signed(err)) {
+        if (d_get_intk(err, K_CODE) != JSON_RPC_ERR_INTERNAL)
+          return vc_err(vc, "error not signed");
+        continue; // assume offline
       }
 
-      continue;
+      res = validate_err(vc, err, header_number);
+      if (res < 0)
+        return res;
+      else if (res != 0) // `res = 0` indicates eth_verify_signature() failure - ignored
+        handle_signed_err(vc, err);
+
+      erred |= res;
     }
+    else {
+      res = validate_sig(vc, sig, header_number, block_hash, msg);
+      if (res < 0) return res; // `res = 0` indicates eth_verify_signature() failure - ignored
 
-    if (d_get_longk(sig, K_BLOCK) != header_number)
-      return vc_err(vc, "wrong signature blocknumber");
-
-    sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32);
-    if (!sig_hash || memcmp(sig_hash->data, block_hash, 32) != 0)
-      return vc_err(vc, "wrong signature hash");
-
-    confirmed |= eth_verify_signature(vc, &msg, sig);
+      confirmed |= res;
+    }
   }
 
   unsigned int signd = (confirmed | erred);
