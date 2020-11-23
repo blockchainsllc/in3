@@ -499,6 +499,10 @@ static in3_ret_t chain_change(in3_nodeselect_def_t* data, in3_t* c) {
   return init_boot_nodes(data, c);
 }
 
+static void free_(void* p) {
+  _free(p);
+}
+
 in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_nodeselect_def_t* data = plugin_data;
   switch (action) {
@@ -542,7 +546,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
       }
       else if (pctx->type == GET_DATA_NODE_MIN_BLK_HEIGHT) {
         assert(pctx->data);
-        
+
         uint8_t*     address = pctx->data;
         bool         found   = false;
         unsigned int i;
@@ -554,9 +558,9 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
         if (found) {
           in3_node_t* n   = &data->nodelist[i];
           uint32_t    mbh = in3_node_props_get(n->props, NODE_PROP_MIN_BLOCK_HEIGHT);
-          pctx->data      = malloc(sizeof(mbh));
+          pctx->data      = _malloc(sizeof(mbh));
           memcpy(pctx->data, &mbh, sizeof(mbh));
-          pctx->cleanup = free;
+          pctx->cleanup = free_;
         }
         else {
           pctx->data    = NULL;
