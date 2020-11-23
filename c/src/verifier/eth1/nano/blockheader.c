@@ -373,16 +373,20 @@ static in3_ret_t offline_err(in3_vctx_t* vc, unsigned int missing) {
   return vc_err(vc, "missing signatures");
 }
 
-static bytes_t calc_msg_hash(uint8_t msg_data[96], size_t msg_len, uint8_t* reg_id, bytes32_t block_hash, uint64_t header_number) {
+static bytes_t compute_msg_hash(uint8_t* msg_data, in3_vctx_t* vc, bytes32_t block_hash, uint64_t header_number) {
+  // get registry_id
+  in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
+  in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
+
   bytes_t msg;
   msg.data = msg_data;
-  msg.len  = msg_len;
+  msg.len  = vc->chain->version > 1 ? 96 : 64;
 
   // blockhash + blocknumber + registry id
   memcpy(msg_data, block_hash, 32);
   memset(msg_data + 32, 0, 32);
   long_to_bytes(header_number, msg_data + 56);
-  memcpy(msg_data + 64, reg_id, 32);
+  memcpy(msg_data + 64, dctx.data, 32);
 
   // hash it to create the message hash
   keccak(msg, msg_data);
