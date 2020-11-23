@@ -478,7 +478,7 @@ static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int signe
 
 static uint8_t* get_verified_hash(in3_vctx_t* vc, uint64_t block_number) {
   if (vc->chain->verified_hashes)
-    for (int i = 0; i < vc->ctx->client->max_verified_hashes; i++)
+    for (uint_fast16_t i = 0; i < vc->ctx->client->max_verified_hashes; i++)
       if (vc->chain->verified_hashes[i].block_number == block_number)
         return vc->chain->verified_hashes[i].hash;
   return NULL;
