@@ -520,13 +520,9 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   if (!(signatures = d_get(vc->proof, K_SIGNATURES)))
     return vc_err(vc, "no signatures in proof");
 
-  // get registry_id
-  in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
-  in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
-
   // calculate message hash
   uint8_t msg_data[96];
-  bytes_t msg = calc_msg_hash(msg_data, vc->chain->version > 1 ? 96 : 64, dctx.data, block_hash, header_number);
+  bytes_t msg = compute_msg_hash(msg_data, vc, block_hash, header_number);
 
   unsigned int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
   unsigned int erred     = 0; // bitmask for signed errors
