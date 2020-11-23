@@ -34,6 +34,12 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
+if (MSVC OR MSYS OR MINGW)
+  set(WINE "wine")
+else()
+  set(WINE "")
+endif()
+
 include_directories(. ../src)
 
 # handle codecoverage
@@ -48,8 +54,6 @@ if (CODE_COVERAGE)
   # we exclude all headers, tests and thridparty-code
   set(coverage_excludes "EXCLUDE" "c/test/*" "*.h" "c/src/third-party/*"  "../c/src/third-party/*")
 endif()
-
-
 # first we build the runners
 add_executable(runner runner.c)
 target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API})
@@ -78,7 +82,7 @@ foreach (file ${files})
 
      add_test(
                 NAME "in3_${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
+                COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
       set_tests_properties("in3_${testname}" PROPERTIES 
@@ -95,11 +99,26 @@ foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "in3_${testname}"
-            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
+            COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
     )
     set_tests_properties("in3_${testname}" PROPERTIES 
       ENVIRONMENT LLVM_PROFILE_FILE=in3_${testname}.profraw
+    )
+
+endforeach ()
+
+# add cmd--tests
+file(GLOB files "testdata/cmd/*.txt")
+foreach (file ${files})
+    get_filename_component(testname "${file}" NAME_WE)
+    add_test(
+            NAME "cmd_${testname}"
+            COMMAND ${CMAKE_BINARY_DIR}/bin/in3 -fi ${file} 
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
+    )
+    set_tests_properties("cmd_${testname}" PROPERTIES 
+      ENVIRONMENT LLVM_PROFILE_FILE=cmd_${testname}.profraw
     )
 
 endforeach ()
@@ -125,37 +144,37 @@ foreach (testdir
         #GeneralStateTests/stInitCodeTest
         #GeneralStateTests/stCreateTest
         GeneralStateTests/stRandom2
-        #GeneralStateTests/stWalletTest
+        GeneralStateTests/stWalletTest
         GeneralStateTests/stCodeCopyTest
         #GeneralStateTests/stRefundTest
         #GeneralStateTests/stRecursiveCreate
         #GeneralStateTests/stPreCompiledContracts
         #GeneralStateTests/stExtCodeHash
-        #GeneralStateTests/stBugs
+        GeneralStateTests/stBugs
         GeneralStateTests/stExample
-        #GeneralStateTests/stTransitionTest
+        GeneralStateTests/stTransitionTest
         GeneralStateTests/stCallCodes
         #GeneralStateTests/stPreCompiledContracts2
         #GeneralStateTests/stZeroCallsTest
-        #GeneralStateTests/stBadOpcode
+        GeneralStateTests/stBadOpcode
         #GeneralStateTests/stMemoryStressTest
         GeneralStateTests/stShift
         #GeneralStateTests/stSpecialTest
         #GeneralStateTests/stCallCreateCallCodeTest
-        #GeneralStateTests/stQuadraticComplexityTest
-        #GeneralStateTests/stStackTests
+        GeneralStateTests/stQuadraticComplexityTest
+        GeneralStateTests/stStackTests
         #GeneralStateTests/stChangedEIP150
         #GeneralStateTests/stSolidityTest
         GeneralStateTests/stMemoryTest
         #GeneralStateTests/stEWASMTests
         #GeneralStateTests/stNonZeroCallsTest
-        #GeneralStateTests/stCodeSizeLimit
+        GeneralStateTests/stCodeSizeLimit
         #GeneralStateTests/stSystemOperationsTest
         #GeneralStateTests/stHomesteadSpecific
         #GeneralStateTests/stCreate2
-        #GeneralStateTests/stCallDelegateCodesHomestead
-        #GeneralStateTests/stSStoreTest
-        #GeneralStateTests/stCallDelegateCodesCallCodeHomestead
+        GeneralStateTests/stCallDelegateCodesHomestead
+        GeneralStateTests/stSStoreTest
+        GeneralStateTests/stCallDelegateCodesCallCodeHomestead
         #GeneralStateTests/stDelegatecallTestHomestead
         #GeneralStateTests/stEIP150Specific
         #GeneralStateTests/stEIP150singleCodeGasPrices
@@ -166,7 +185,7 @@ foreach (testdir
         #GeneralStateTests/stTransactionTest
         GeneralStateTests/stZeroKnowledge
         #GeneralStateTests/stStaticCall
-        #GeneralStateTests/stMemExpandingEIP150Calls
+        GeneralStateTests/stMemExpandingEIP150Calls
         GeneralStateTests/stArgsZeroOneBalance
         #GeneralStateTests/stAttackTest
         #GeneralStateTests/stReturnDataTest
@@ -176,24 +195,26 @@ foreach (testdir
     file(GLOB files "testdata/evm/${testdir}/*.json")
 
     # exclude tests, but fix them later    
-    list(FILTER files EXCLUDE REGEX ".*randomStatetest(150|154|159|178|184|205|248|306|48|458|467|498|554|636|639).json$")
+    list(FILTER files EXCLUDE REGEX ".*randomStatetest(48|148|150|154|159|178|184|205|248|306|458|467|498|554|618|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
     list(FILTER files EXCLUDE REGEX ".*ecpairing(.*).json$")
     list(FILTER files EXCLUDE REGEX ".*pairingTest.json$")
     list(FILTER files EXCLUDE REGEX ".*ecmul_0-3_5616_28000_96.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
-
     list(FILTER files EXCLUDE REGEX ".*(pointMulAdd2).json$")
+    list(FILTER files EXCLUDE REGEX ".*(QuadraticComplexitySolidity_CallDataCopy).json$")
+    list(FILTER files EXCLUDE REGEX ".*(staticcall_createfails).json$")
+
 
     foreach (file ${files})
         get_filename_component(testname "${file}" NAME_WE)
         add_test(
                 NAME "evm/${testdir}/${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file} ${EVMARG}
+                COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file} ${EVMARG}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 
-          TIMEOUT 9
+          TIMEOUT 30
           ENVIRONMENT LLVM_PROFILE_FILE=evm_${testdir}_${testname}.profraw
           )
 

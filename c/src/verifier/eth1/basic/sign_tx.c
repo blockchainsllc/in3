@@ -113,9 +113,11 @@ static in3_ret_t get_from_address(d_token_t* tx, in3_ctx_t* ctx, address_t res) 
   // if it is not specified, we rely on the from-address of the signer.
   if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
-  in3_sign_account_ctx_t actx = {.ctx = ctx, .account = {0}};
+  in3_sign_account_ctx_t actx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
   TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
-  memcpy(res, actx.account, 20);
+  if (!actx.accounts) return ctx_set_error(ctx, "no from address found", IN3_EINVAL);
+  memcpy(res, actx.accounts, 20);
+  _free(actx.accounts);
   return IN3_OK;
 }
 
@@ -204,7 +206,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
 in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_t* dst) {
-  uint8_t sig[65];
+  bytes_t signature;
 
   // make sure, we have the correct chain_id
   chain_id_t chain_id = ctx->client->chain_id;
@@ -214,42 +216,15 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
     chain_id = d_long(r);
   }
 
+  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
+  if (signature.len != 65) return ctx_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
+
   // get the signature from required
-  in3_ctx_t* c = ctx_find_required(ctx, "sign_ec_hash");
-  if (c)
-    switch (in3_ctx_state(c)) {
-      case CTX_ERROR:
-        return ctx_set_error(ctx, c->error, IN3_ERPC);
-      case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_SEND:
-        return IN3_WAITING;
-      case CTX_SUCCESS: {
-        if (c->raw_response && c->raw_response->data.len == 65)
-          memcpy(sig, c->raw_response->data.data, 65);
-        else if (c->raw_response && c->raw_response->state)
-          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
-        else
-          return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
-      }
-    }
-  else {
-    bytes_t from_b = bytes(from, 20);
-    sb_t*   req    = sb_new("{\"method\":\"sign_ec_hash\",\"params\":[");
-    sb_add_bytes(req, NULL, &raw_tx, 1, false);
-    sb_add_chars(req, ",");
-    sb_add_bytes(req, NULL, &from_b, 1, false);
-    sb_add_chars(req, "]}");
-    c             = ctx_new(ctx->client, req->data);
-    c->type       = CT_SIGN;
-    in3_ret_t res = ctx_add_required(ctx, c);
-    _free(req); // we only free the builder, but  not the data, because for subcontextes the data will automaticly be freed.
-    return res;
-  }
 
   // if we reached that point we have a valid signature in sig
   // create raw transaction with signature
   bytes_t  data, last;
-  uint32_t v = 27 + sig[64] + (get_v(chain_id) ? (get_v(chain_id) * 2 + 8) : 0);
+  uint32_t v = 27 + signature.data[64] + (get_v(chain_id) ? (get_v(chain_id) * 2 + 8) : 0);
   EXPECT_EQ(rlp_decode(&raw_tx, 0, &data), 2)                           // the raw data must be a list(2)
   EXPECT_EQ(rlp_decode(&data, 5, &last), 1)                             // the last element (data) must be an item (1)
   bytes_builder_t* rlp = bb_newl(raw_tx.len + 68);                      // we try to make sure, we don't have to reallocate
@@ -263,12 +238,12 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
   rlp_encode_item(rlp, &data);
 
   // add r
-  data = bytes(sig, 32);
+  data = bytes(signature.data, 32);
   b_optimize_len(&data);
   rlp_encode_item(rlp, &data);
 
   // add s
-  data = bytes(sig + 32, 32);
+  data = bytes(signature.data + 32, 32);
   b_optimize_len(&data);
   rlp_encode_item(rlp, &data);
 
@@ -277,7 +252,6 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
   *dst = rlp->b;
 
   _free(rlp);
-  ctx_remove_required(ctx, c, false);
   return IN3_OK;
 }
 
@@ -289,32 +263,35 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   address_t  from;
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
 
+  TRY(get_from_address(tx_params + 1, ctx, from));
+
   // is there a pending signature?
   // we get the raw transaction from this request
   in3_ctx_t* sig_ctx = ctx_find_required(ctx, "sign_ec_hash");
-  if (sig_ctx)
-    unsigned_tx = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
-
-  TRY(get_from_address(tx_params + 1, ctx, from));
-  TRY(unsigned_tx.data ? IN3_OK : eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
+  if (sig_ctx) {
+    bytes_t raw = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
+    unsigned_tx = bytes(_malloc(raw.len), raw.len);
+    memcpy(unsigned_tx.data, raw.data, raw.len);
+  }
+  else
+    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
-            if (!sig_ctx && unsigned_tx.data) _free(unsigned_tx.data);)
+            if (unsigned_tx.data) _free(unsigned_tx.data);)
 
   // build the RPC-request
-  sb_t* sb = sb_new("{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[");
-  sb_add_bytes(sb, "", &signed_tx, 1, false);
-  sb_add_chars(sb, "]");
-  sb_add_chars(sb, "}");
+  sb_t sb = {0};
+  sb_add_rawbytes(&sb, "{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[\"0x", signed_tx, 0);
+  sb_add_chars(&sb, "\"]");
+  sb_add_chars(&sb, "}");
 
   // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
   _free(signed_tx.data);
   json_free(ctx->request_context);
 
   // set the new RPC-Request.
-  ctx->request_context                            = parse_json(sb->data);
-  ctx->requests[0]                                = ctx->request_context->result;
-  in3_cache_add_ptr(&ctx->cache, sb->data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-  _free(sb);                                                                                         // and we only free the stringbuilder, but not the data itself.
+  ctx->request_context                           = parse_json(sb.data);
+  ctx->requests[0]                               = ctx->request_context->result;
+  in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
   return IN3_OK;
 }
 

@@ -39,12 +39,18 @@ if (USE_SCRYPT)
   ADD_DEFINITIONS(-DSCRYPT)
 endif()
 
+if (ETH_FULL)
+  set(LIBS ${LIBS} tommath)
+endif()
+
 add_static_library(
   NAME     eth_api 
   
   SOURCES 
     eth_api.c 
-    abi.c 
+    abi_parse.c
+    abi_encode.c
+    abi_decode.c
     key.c 
     rpc_api.c 
     ens.c
@@ -57,4 +63,3 @@ add_static_library(
 
 
 target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
-

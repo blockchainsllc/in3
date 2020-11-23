@@ -56,7 +56,7 @@ Explanation of this source code architecture and how it is organized. For more o
 - **in3.eth.api**: Ethereum API.
 - **in3.eth.account**: Ethereum accounts.
 - **in3.eth.contract**: Ethereum smart-contracts API.
-- **in3.eth.model**: MVC Model classes for the Ethereum client module domain. Manages serializaation.
+- **in3.eth.model**: MVC Model classes for the Ethereum client module domain. Manages serialization.
 - **in3.eth.factory**: Ethereum Object Factory. Manages deserialization.
 - **in3.libin3**: Module for the libin3 runtime. Libin3 is written in C and can be found [here](https://github.com/slockit/in3-c).
 - **in3.libin3.shared**: Native shared libraries for multiple operating systems and platforms.
@@ -85,8 +85,8 @@ latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
 
-print('\nEthereum Kovan Test Network')
-client = in3.Client('kovan')
+print('\nEthereum EWC Test Network')
+client = in3.Client('ewc')
 latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
@@ -103,7 +103,7 @@ Ethereum Main Network
 Latest BN: 9801135
 Gas Price: 2000000000 Wei
 
-Ethereum Kovan Test Network
+Ethereum EWC Test Network
 Latest BN: 17713464
 Gas Price: 6000000000 Wei
 
@@ -236,15 +236,15 @@ address = client.ens_address(domain)
 owner = client.ens_owner(domain)
 _print()
 
-# Instantiate In3 Client for Kovan
-chain = 'kovan'
+# Instantiate In3 Client for EWC
+chain = 'ewc'
 client = in3.Client(chain, cache_enabled=True)
 try:
     address = client.ens_address(domain)
     owner = client.ens_owner(domain)
     _print()
 except in3.ClientException:
-    print('\nENS is not available on Kovan.')
+    print('\nENS is not available on EWC.')
 
 
 # Produces
@@ -254,7 +254,7 @@ Ethereum Name Service
 Address for depraz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
 Owner for depraz.eth @ mainnet: 0x6fa33809667a99a805b610c49ee2042863b1bb83
 
-ENS is not available on Kovan.
+ENS is not available on EWC.
 """
 
 ```
@@ -402,72 +402,6 @@ To address:
 
 ```
 
-### smart_meter_write
-
-source : [in3-c/python/examples/smart_meter_write.py](https://github.com/slockit/in3-c/blob/master/python/examples/smart_meter_write.py)
-
-
-
-```python
-"""
-[{"type":"event","name":"NewReadStored","inputs":[{"type":"address","name":"meter","internalType":"address","indexed":true},{"type":"uint256","name":"bucket","internalType":"uint256","indexed":true},{"type":"address","name":"operator","internalType":"address","indexed":false},{"type":"uint256","name":"timestamp","internalType":"uint256","indexed":false},{"type":"bytes","name":"data","internalType":"bytes","indexed":false}],"anonymous":false},{"type":"function","stateMutability":"view","payable":false,"outputs":[{"type":"uint256","name":"","internalType":"uint256"}],"name":"DAILY_BUCKET","inputs":[],"constant":true},{"type":"function","stateMutability":"nonpayable","payable":false,"outputs":[],"name":"store","inputs":[{"type":"address","name":"meter","internalType":"address"},{"type":"bytes","name":"data","internalType":"bytes"},{"type":"uint256","name":"timestamp","internalType":"uint256"},{"type":"uint256","name":"bucket","internalType":"uint256"}],"constant":false},{"type":"function","stateMutability":"nonpayable","payable":false,"outputs":[],"name":"storeWithDailyBucket","inputs":[{"type":"address","name":"meter","internalType":"address"},{"type":"bytes","name":"data","internalType":"bytes"},{"type":"uint256","name":"timestamp","internalType":"uint256"}],"constant":false}]
-
-0xf23FF7472FC62C6bEe2F960f5b4170Ab3C1C26d2
-"""
-import base64
-import json
-
-import in3
-import hashlib
-import random
-import time
-
-if __name__ == '__main__':
-
-    c = in3.Client(chain='ewc', in3_config=in3.ClientConfig(transport_binary_format=True))
-
-    smart_meter_registry_addr = '0xf23FF7472FC62C6bEe2F960f5b4170Ab3C1C26d2'
-    # meter, bucket, operator, timestamp, data
-    NewReadStoredEvent = 'NewReadStored(address,uint,address,uint,bytes))'
-    try:
-        # meter, data, timestamp
-        storeWithDailyBucket = 'storeWithDailyBucket(address,bytes,uint256)'
-        meter_addr = '0xb11469A59dF65312737053c4785FA7Ff28660013'
-        salt = hex(random.getrandbits(64))
-        secret_read = hashlib.sha512(b'1101101')
-        secret_read.update(salt.encode('utf8'))
-        secret_read = secret_read.hexdigest()
-        # secret_read = base64.b64encode(secret_read.digest())
-        timestamp = int(time.time())
-        sender_secret = input("Sender secret: ")
-        sender = c.eth.account.recover(sender_secret)
-        encoded_contract_call = c.eth.contract.encode(storeWithDailyBucket, meter_addr, secret_read, timestamp)
-        tx = in3.eth.NewTransaction(to=smart_meter_registry_addr,
-                                    data=encoded_contract_call)
-        tx.gasLimit = c.eth.account.estimate_gas(tx)
-        tx_hash = c.eth.account.send_transaction(sender=sender, transaction=tx)
-        print('https://explorer.energyweb.org/tx/{}'.format(tx_hash))
-        confirmation_wait_time_in_seconds = 60
-        while True:
-            try:
-                print('\n[.] Waiting {} seconds for confirmation.\n'.format(confirmation_wait_time_in_seconds))
-                time.sleep(confirmation_wait_time_in_seconds)
-                receipt: in3.eth.TransactionReceipt = c.eth.transaction_receipt(tx_hash)
-                print('[.] Transaction was sent successfully!\n')
-                print(json.dumps(receipt.to_dict(), indent=4, sort_keys=True))
-                print('[.] Mined on block {} used {} GWei.'.format(receipt.blockNumber, receipt.gasUsed))
-                break
-            except Exception:
-                print('[!] Transaction not mined yet, check https://etherscan.io/gasTracker.')
-                print('[!] Just wait some minutes longer than the average for the price paid!')
-    except in3.PrivateKeyNotFoundException as e:
-        print(str(e))
-    except in3.ClientException as e:
-        print('Client returned error: ', str(e))
-        print('Please try again.')
-
-```
-
 
 ### Running the examples
 
@@ -498,7 +432,7 @@ Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
 cache_enabled: bool = True,
-transport=<function https_transport at 0x101898e60>)
+transport=<function https_transport at 0x1081c5f80>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -507,7 +441,7 @@ Once with the latest list at hand, the client can request any other on-chain inf
 
 **Arguments**:
 
-- `chain` _str_ - Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'kovan', 'goerli', 'ewc'.
+- `chain` _str_ - Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'goerli', 'ewc'.
 - `in3_config` _ClientConfig or str_ - (optional) Configuration for the client. If not provided, default is loaded.
 - `cache_enabled` _bool_ - False will disable local storage caching.
 - `transport` _function_ - Transport function for custom request routing. Defaults to https.
@@ -622,8 +556,6 @@ response_includes_code: bool = None,
 response_keep_proof: bool = None,
 transport_binary_format: bool = None,
 transport_ignore_tls: bool = None,
-cached_blocks: int = None,
-cached_code_bytes: int = None,
 boot_weights: bool = None,
 in3_registry: dict = None)
 ```
@@ -657,8 +589,6 @@ The verification policy enforces an extra step of security, adding a financial s
 - `response_keep_proof` _bool_ - If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
 - `transport_binary_format` - If true, the client will communicate with the server using a binary payload instead of json.
 - `transport_ignore_tls` - The client usually verify https tls certificates. To communicate over insecure http, turn this on.
-- `cached_blocks` _int_ - Maximum blocks kept in memory. example: 100 last requested blocks
-- `cached_code_bytes` _int_ - Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
 - `boot_weights` _bool_ - if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
 - `in3_registry` _dict_ - In3 Registry Smart Contract configuration data
   
@@ -1298,7 +1228,7 @@ Load libin3 shared library for the current system, map function ABI, sets in3 ne
 #### libin3_new
 ```python
 libin3_new(chain_id: int, cache_enabled: bool,
-transport_fn: <function CFUNCTYPE at 0x10182ce60>)
+transport_fn: <function CFUNCTYPE at 0x1084f2320>)
 ```
 
 Instantiate new In3 Client instance.

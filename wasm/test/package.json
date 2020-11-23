@@ -5,15 +5,15 @@
   "main": "js/src/index.js",
   "scripts": {
     "build": "tsc -p .",
-    "test": "[ -d node_modules ] || npm i ; mocha --timeout 15000 --full-trace testRunner.js testEthApi.js testUtil.js testBtcApi.js testIpfs.js",
-    "test_report": "mocha  --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testEthApi.js testIpfs.js testUtil.js",
-    "test_coverage": "nyc mocha  --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testEthApi.js testIpfs.js testUtil.js",
-    "test_btc": "mocha --inspect-brk  --timeout 15000 --full-trace  testBtcApi.js",
-    "test_eth": "mocha --inspect-brk  --timeout 15000 --full-trace  testEthApi.js",
-    "test_ipfs": "mocha --inspect-brk  --timeout 15000 --full-trace  testIpfs.js",
-    "test_fail": "mocha --timeout 15000 --full-trace  testEthApi.js testRunner.js ",
-    "test_all": "mocha --timeout 15000 --full-trace  *.js",
-    "test_runner": "mocha --inspect-brk --timeout 15000 --full-trace  testRunner.js"
+    "test": "[ -d node_modules ] || npm i ; mocha --timeout 20000 --full-trace testRunner.js testEthApi.js testUtil.js testBtcApi.js testIpfs.js",
+    "test_report": "mocha  --timeout 20000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testEthApi.js testIpfs.js testUtil.js",
+    "test_coverage": "nyc mocha  --timeout 20000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testEthApi.js testIpfs.js testUtil.js",
+    "test_btc": "mocha --inspect-brk  --timeout 20000 --full-trace  testBtcApi.js",
+    "test_eth": "mocha --inspect-brk  --timeout 20000 --full-trace  testEthApi.js",
+    "test_ipfs": "mocha --inspect-brk  --timeout 20000 --full-trace  testIpfs.js",
+    "test_fail": "mocha --timeout 20000 --full-trace  testEthApi.js testRunner.js ",
+    "test_all": "mocha --timeout 20000 --full-trace  *.js",
+    "test_runner": "mocha --inspect-brk --timeout 20000 --full-trace  testRunner.js"
   },
   "nyc": {
     "all": true,
@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
+    "bn": "^1.0.5",
     "bn.js": "^5.0.0",
     "buffer": "^5.2.1",
     "eth-lib": "^0.2.8",

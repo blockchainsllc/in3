@@ -59,6 +59,7 @@ void append_rlp(bytes_builder_t* bb, d_token_t* in) {
     return;
   }
   bytes_t b = d_to_bytes(in);
+  if (d_type(in) == T_INTEGER && d_int(in) == 0) b.len = 0;
   rlp_encode_item(bb, &b);
 }
 

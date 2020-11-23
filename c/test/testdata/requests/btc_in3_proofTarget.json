@@ -1,6 +1,7 @@
 [
   {
     "descr": "btc_proofTarget",
+    "api": "btc",
     "chainId": "0x99",
     "fuzzer": true,
     "finality": 7,

@@ -1,0 +1,21 @@
+[
+    {
+        "descr": "in3_toWei",
+        "chainId": "0x1",
+        "intern": true,
+        "request": {
+            "method": "in3_toWei",
+            "params": [
+                "20.0009123",
+                "eth"
+            ]
+        },
+        "response": [
+            {
+                "id": 1,
+                "result": "0x01159183c4793db800",
+                "jsonrpc": "2.0"
+            }
+        ]
+    }
+]

@@ -148,8 +148,8 @@ typedef struct {
 uint256_t         eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block);      /**< Returns the storage value of a given address.*/
 bytes_t           eth_getCode(in3_t* in3, address_t account, eth_blknum_t block);                          /**< Returns the code of the account of given address. (Make sure you free the data-point of the result after use.) */
 uint256_t         eth_getBalance(in3_t* in3, address_t account, eth_blknum_t block);                       /**< Returns the balance of the account of given address. */
-uint64_t          eth_blockNumber(in3_t* in3);                                                             /**< Returns the current price per gas in wei. */
-uint64_t          eth_gasPrice(in3_t* in3);                                                                /**< Returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
+uint64_t          eth_blockNumber(in3_t* in3);                                                             /**< Returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
+uint64_t          eth_gasPrice(in3_t* in3);                                                                /**< Returns the current price per gas in wei. */
 eth_block_t*      eth_getBlockByNumber(in3_t* in3, eth_blknum_t number, bool include_tx);                  /**< Returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t*      eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                         /**< Returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_log_t*        eth_getLogs(in3_t* in3, char* fopt);                                                     /**< Returns a linked list of logs. If result is null, check eth_last_error()! otherwise make sure to free the log, its topics and data after using it! */
@@ -179,10 +179,7 @@ eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);     
 char*             eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);                                     /**< Waits for receipt of a transaction requested by transaction hash. */
 void              eth_log_free(eth_log_t* log);                                                            /**< Frees a eth_log_t object */
 void              eth_tx_receipt_free(eth_tx_receipt_t* txr);                                              /**< Frees a eth_tx_receipt_t object */
-
-/**
- * this function should only be called once and will register the eth-API verifier.
- */
-in3_ret_t in3_register_eth_api(in3_t* c);
+int               string_val_to_bytes(char* val, char* unit, bytes32_t target);                            /**< reades the string as hex or decimal and converts it into bytes. the value may also contains a suffix as unit like '1.5eth` which will convert it into wei. the target-pointer must be at least as big as the strlen. The length of the bytes will be returned or a negative value in case of an error.*/
+in3_ret_t         in3_register_eth_api(in3_t* c);                                                          /**< this function should only be called once and will register the eth-API verifier.*/
 
 #endif

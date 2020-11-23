@@ -347,11 +347,34 @@ int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   src_data.len     = src_data.data ? min(src_data.len, ((uint32_t) data_len)) : 0;
   if (check_size && !src_data.data) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
+  // check if we are executing a creation transaction
+  if (evm->properties & EVM_PROP_TXCREATE) {
+    if (!(evm->properties & (EVM_PROP_FRONTIER | EVM_PROP_EIP150 | EVM_PROP_EIP158)) && (src_data.len > EVM_MAX_CODE_SIZE)) {
+      return EVM_ERROR_MAX_CODE_SIZE_EXCEEDED;
+    }
+    else {
+      subgas(src_data.len * G_CODEDEPOSIT); // subtract gas cost for ceation transactions
+    }
+  }
+
   if (src_data.len < (uint32_t) data_len)
     res = evm_mem_write(evm, mem_pos + src_data.len, bytes(NULL, 0), data_len - src_data.len);
 
-  if (src_data.len && res == 0)
+  if (src_data.len && res == 0) {
     res = evm_mem_write(evm, mem_pos, src_data, src_data.len);
+
+#ifdef EVM_GAS
+    // Check if evm is executing a creation transaction
+    if (evm->properties & EVM_PROP_TXCREATE) {
+      // Modify state
+      account_t* acc_adr = evm_get_account(evm, evm->account, true);
+      acc_adr->code      = src_data;
+    }
+#else
+    return EVM_ERROR_INVALID_OPCODE;
+#endif
+  }
+
   return res;
 }
 

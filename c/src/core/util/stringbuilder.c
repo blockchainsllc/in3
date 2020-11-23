@@ -243,3 +243,30 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size) 
   bytes_to_hex(b.data, b.len, sb->data + p);
   return sb;
 }
+
+sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args) {
+  int n = sb->allocted - sb->len - 1;
+  if (n < (int) strlen(fmt)) {
+    check_size(sb, strlen(fmt) + 30);
+    n = sb->allocted - sb->len - 1;
+  }
+
+  va_list cpy;
+  va_copy(cpy, args);
+  int w = vsnprintf(sb->data + sb->len, n + 1, fmt, args);
+  if (w > n) {
+    check_size(sb, w + 1);
+    vsprintf(sb->data + sb->len, fmt, cpy);
+    va_end(cpy);
+  }
+  sb->len += w;
+  return sb;
+}
+
+sb_t* sb_print(sb_t* sb, const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  sb_vprint(sb, fmt, args);
+  va_end(args);
+  return sb;
+}

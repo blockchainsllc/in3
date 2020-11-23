@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#define _GNU_SOURCE
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <stdlib.h>
@@ -117,7 +118,7 @@ static void escape(sb_t* sb, char* c) {
       case 27:
         break;
       default:
-        sb_add_char(sb, *c);
+        sb_add_char(sb, (*c < 32 && *c != 10 && *c != 13) ? 32 : *c);
         break;
     }
   }
@@ -153,6 +154,60 @@ static bool start_with_number(char* c) {
   }
   return false;
 }
+
+#if defined(_WIN32)
+size_t getline(char** lineptr, size_t* n, FILE* stream) {
+  char*  bufptr = NULL;
+  char*  p      = bufptr;
+  size_t size;
+  int    c;
+
+  if (lineptr == NULL) {
+    return -1;
+  }
+  if (stream == NULL) {
+    return -1;
+  }
+  if (n == NULL) {
+    return -1;
+  }
+  bufptr = *lineptr;
+  size   = *n;
+
+  c = fgetc(stream);
+  if (c == EOF) {
+    return -1;
+  }
+  if (bufptr == NULL) {
+    bufptr = malloc(128);
+    if (bufptr == NULL) {
+      return -1;
+    }
+    size = 128;
+  }
+  p = bufptr;
+  while (c != EOF) {
+    if ((p - bufptr) > (size - 1)) {
+      size   = size + 128;
+      bufptr = realloc(bufptr, size);
+      if (bufptr == NULL) {
+        return -1;
+      }
+    }
+    *p++ = c;
+    if (c == '\n') {
+      break;
+    }
+    c = fgetc(stream);
+  }
+
+  *p++     = '\0';
+  *lineptr = bufptr;
+  *n       = size;
+
+  return p - bufptr - 1;
+}
+#endif
 
 int main(int argc, char* argv[]) {
   char*  full_line = NULL;
@@ -207,7 +262,7 @@ int main(int argc, char* argv[]) {
         escape(&last_suite->props, out + 14);
         sb_add_chars(&last_suite->props, "\"/>\n");
       }
-      else {
+      else {  
 
         if (last_suite->out.len) sb_add_char(&last_suite->out, '\n');
         escape(&last_suite->out, out);

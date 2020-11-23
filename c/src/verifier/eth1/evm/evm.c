@@ -496,6 +496,7 @@ int evm_run(evm_t* evm, address_t code_address) {
     // execute the opcode
     res = evm_execute(evm);
     // display the result of the opcode (only if the debug flag is set)
+
 #ifdef EVM_GAS
     // debug gas output
     EVM_DEBUG_BLOCK({ evm_print_stack(evm, last_gas, last); });

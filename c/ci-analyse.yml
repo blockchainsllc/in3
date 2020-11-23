@@ -5,6 +5,7 @@
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
 
 coverage:
   stage: analysis
@@ -16,7 +17,7 @@ coverage:
     - short-jobs
   script:
     - mkdir cov_build; cd cov_build
-    - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake -DIN3API=true -DIN3_LIB=false -DUSE_CURL=false -DTEST=true -DZKSYNC=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
     - make -j8 &&  make ptest
     - ../scripts/lcov_report.sh | xargs llvm-cov report
     - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
@@ -32,7 +33,7 @@ clangcheck:
   extends: .only_full
   allow_failure: false
   tags:
-    - short-jobs
+    - long-jobs
   script:
     - mkdir _build
     - cd _build
@@ -44,7 +45,7 @@ clangcheck:
 
 cppcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
+  image: docker.slock.it/build-images/cmake:gcc10
   extends: .only_full
   allow_failure: true
   needs: []
@@ -54,8 +55,9 @@ cppcheck:
     - mkdir _build
     - cd _build
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
+    - sed -i 's/\\\\\\/\\/g' compile_commands.json
     - cd ..
-    - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/c/test/unity -i/builds/in3/c/in3-core/c/src/third-party
+    - cppcheck --quiet --project=_build/compile_commands.json -i/usr/include -i/builds/in3/c/in3-core/c/test -i/builds/in3/c/in3-core/c/src/third-party
 
 gcc10check:
   stage: analysis
@@ -95,6 +97,7 @@ code_quality:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
   stage: analysis
   needs: []
   tags:
@@ -133,6 +136,7 @@ vulnerabilities:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
   stage: analysis
   extends: .only_full
   allow_failure: true
@@ -142,6 +146,8 @@ vulnerabilities:
     - short-jobs
   image: docker.slock.it/build-images/vulnerability-testing-tools
   script:
+    - export COMMIT_IMAGE_TAG="$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME/\//_}"
+    - echo $COMMIT_IMAGE_TAG
     - export TRIVY_AUTH_URL=$CI_REGISTRY
     - export TRIVY_USERNAME=gitlab-ci-token
     - export TRIVY_PASSWORD=$CI_JOB_TOKEN

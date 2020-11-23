@@ -54,7 +54,7 @@ describe('EthAPI-Tests', () => {
         assert.isArray(res)
         assert.equal(res.length, 6)
         assert.equal(res[0], 'https://in3.slock.it/mainnet/nd-4')
-        assert.equal(res[1], '0xbc0ea09c1651a3d5d40bacb4356fb59159a99564')
+        assert.equal(res[1], '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
         assert.equal(res[2], 0xffff)
         assert.equal(res[3], 0xffffn)
 
@@ -62,8 +62,6 @@ describe('EthAPI-Tests', () => {
         mockResponse('eth_getCode', 'WETH')
         res = await c.eth.callFn('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', 'totalSupply():uint')
         assert.equal(2156081965638983079156868n, res)
-
-
     })
 
     it('eth.sendTransaction()', async () => {
@@ -86,7 +84,6 @@ describe('EthAPI-Tests', () => {
         })
 
         assert.equal(hash, '0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38')
-
     })
 
     it('plugin._handlRPC', async () => {
@@ -105,8 +102,8 @@ describe('EthAPI-Tests', () => {
 
         assert.equal('test', await c.sendRPC('rpc_test'))
         assert.equal(true, await c.sendRPC('test2').catch(() => true))
-        assert.equal('RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
-        assert.equal('RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
+        assert.equal('Error sending rpc_error():RPCERROR', await c.sendRPC('rpc_error').catch(x => x.message))
+        assert.equal('Error sending rpc_error2():RPCERROR2', await c.sendRPC('rpc_error2').catch(x => x.message))
 
     })
 
@@ -122,7 +119,6 @@ describe('EthAPI-Tests', () => {
         const address = IN3.util.private2address(pk)
         assert.equal(address, '0x082977959d0C5A1bA627720ac753Ec2ADB5Bd7d0')
 
-
         const c = createClient()
         assert.isTrue(await c.eth.sign(address, msg).then(_ => false, _ => true), 'must throw since we don not have a signer set')
 
@@ -134,7 +130,6 @@ describe('EthAPI-Tests', () => {
         assert.equal(sig.r, '0x5782d5df271b9a0890f89868de73b7a206f2eb988346bc3df2c0a475d60b068a')
         assert.equal(sig.s, '0x30760b12fd8cf88cd10a31dea71d9309d5b7b2f7bb49e36f69fcdbdfe480f129')
         assert.equal(sig.v, 28)
-
     })
 
     it('eth.blockNumber()', async () => {
@@ -146,16 +141,16 @@ describe('EthAPI-Tests', () => {
     it('requestCount', async () => {
         const requestCount = 3
         let c = createClient({ requestCount })
-        // This is dangerous as it changes a static reference, if anything is every wrong with the test transport, this should be the first suspicion
+        // This is dangerous as it changes a static reference, if anything ever happens to the test transport, this is probably the cause
         // Another way to do that is to either make sure that you only override a single reference with transport or make the transport method public so you can do something like chai.spy.on(c, 'transport')
         // as of right now, the actual reference of in3w is in the constructor function scope hidden by js module pattern
-        let spy = chai.spy(testTransport)
-        IN3.setTransport(spy)
+        let transport = chai.spy(testTransport)
+        IN3.setTransport(transport)
         mockResponse('eth_blockNumber', '0x1')
 
         const res = await c.eth.blockNumber()
 
-        expect(spy).to.have.been.called.exactly(requestCount)
+        expect(transport).to.have.been.called.exactly(requestCount)
     })
 
     it('eth.gasPrice()', async () => {
@@ -302,8 +297,8 @@ describe('EthAPI-Tests', () => {
         mockResponse('eth_getLogs', 'weth.Transfer')
         let logs = await weth.events.Transfer.getLogs({ fromBlock: 10317749, toBlock: 10317749 })
         assert.equal(9, logs.length)
-        assert.equal('0x7a250d5630b4cf539739df2c5dacb4c659f2488d', logs[0].src)
-        assert.equal('0xbb2b8038a1640196fbe3e38816f3e67cba72d940', logs[0].dst)
+        assert.equal('0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D', logs[0].src)
+        assert.equal('0xBb2b8038a1640196FbE3e38816F3e67Cba72D940', logs[0].dst)
         assert.equal('Transfer', logs[0].event.event)
         assert.equal(74573366884515930470n, logs[0].wad)
         assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].log.address)
@@ -340,8 +335,8 @@ describe('EthAPI-Tests', () => {
         mockResponse('eth_getLogs', 'weth.Transfer')
         let logs = await weth.getPastEvents('Transfer', { fromBlock: 10317749, toBlock: 10317749 })
         assert.equal(9, logs.length)
-        assert.equal('0x7a250d5630b4cf539739df2c5dacb4c659f2488d', logs[0].returnValues.src)
-        assert.equal('0xbb2b8038a1640196fbe3e38816f3e67cba72d940', logs[0].returnValues.dst)
+        assert.equal('0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D', logs[0].returnValues.src)
+        assert.equal('0xBb2b8038a1640196FbE3e38816F3e67Cba72D940', logs[0].returnValues.dst)
         assert.equal('Transfer', logs[0].event)
         assert.equal(74573366884515930470n, logs[0].returnValues.wad)
         assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].address)
@@ -466,6 +461,13 @@ describe('EthAPI-Tests', () => {
         let filterId = await client.eth.newBlockFilter()
 
         assert.equal(filterId, "0x1")
+    })
+
+
+    it('eth.toWei()', async () => {
+        let client = createClient()
+        const val = client.eth.toWei('20.0009123', 'eth')
+        assert.equal(val, "0x01159183c4793db800")
     })
 
     it('eth.newFilter()', async () => {

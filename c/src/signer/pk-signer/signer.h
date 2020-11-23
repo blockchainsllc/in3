@@ -66,14 +66,18 @@ typedef enum {
  */
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
 
+/**
+ * registers pk signer as plugin so you can use config or in3_addKeys as rpc
+ */
+in3_ret_t eth_register_pk_signer(in3_t* in3);
+
 /** sets the signer and a pk to the client*/
 in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk);
 
-in3_ret_t eth_register_request_signer(in3_t* in3);
 /**
  * simply signer with one private key as hex.
  */
-uint8_t* eth_set_pk_signer_hex(in3_t* in3, char* key);
+void eth_set_pk_signer_hex(in3_t* in3, char* key);
 
 /** Signs message after hashing it with hasher function given in 'hasher_t', with the given private key*/
 in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst);

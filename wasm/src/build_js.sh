@@ -9,7 +9,7 @@ TARGET_JS="in3.js"
 # wrap code in a function in order to not polute the global namespace.
 printf "const IN3=(function(){\nvar in3w = {};\n" > $TARGET_JS
 # add emscripten gluecode
-cat in3w.js | sed "s/uncaughtException/ue/g" >> $TARGET_JS
+cat in3w.js | sed "s/(document/(typeof document!=\"undefined\"\&\&document/g" | sed "s/uncaughtException/ue/g" >> $TARGET_JS
 # add custom code the defines the public export. This code will have access to all the internal functions of the gluecode!
 # it should also overwrite the module.exports to use the wrapper-class.
 cat "$1/in3.js" >> $TARGET_JS
@@ -44,7 +44,7 @@ mkdir -p ../module
 cp ../../LICENSE.AGPL "$1/package.json" $1/../README.md ../module/
 cp in3.js  ../module/index.js
 
-cat "$1/in3.d.ts" | awk -v "r=$__CONFIG__" '{gsub(/__CONFIG__/,r)}1' | awk -v "r=$__API__" '{gsub(/__API__/,r)}1'  > ../module/index.d.ts
+cat "$1/index.d.ts" | awk -v "r=$__CONFIG__" '{gsub(/__CONFIG__/,r)}1' | awk -v "r=$__API__" '{gsub(/__API__/,r)}1'  > ../module/index.d.ts
 for f in $typedefs; do 
   cat $f >>  ../module/index.d.ts
 done

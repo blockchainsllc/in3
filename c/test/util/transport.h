@@ -40,9 +40,9 @@ extern "C" {
 #endif
 
 #include "../../src/core/client/plugin.h"
-void add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
-int  add_response_test(char* test, char* needed_params);
-
+void      add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
+int       add_response_test(char* test, char* needed_params);
+char*     read_json_response_buffer(char* path);
 in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 

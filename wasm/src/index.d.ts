@@ -379,7 +379,7 @@ export declare interface RPCResponse {
     /**
      * in case of an error this needs to be set
      */
-    error?: string
+    error?: string | { message: string, code: number, data?: any }
     /**
      * the params
      * example: 0xa35bc
@@ -397,13 +397,19 @@ interface IN3Plugin<BigIntType, BufferType> {
      * this is called when the client is cleaned up.
      * @param client the client object
      */
-    term?(client: IN3Generic<BigIntType, BufferType>)
+    term?(client: IN3Generic<BigIntType, BufferType>): void
 
     /**
      * returns address
      * @param client 
      */
-    getAccount?(client: IN3Generic<BigIntType, BufferType>)
+    getAccount?(client: IN3Generic<BigIntType, BufferType>): string
+
+    /**
+     * returns list of addresses
+     * @param client 
+     */
+    getAccounts?(client: IN3Generic<BigIntType, BufferType>): Address[]
 
     /**
      * called for each request. 
@@ -448,10 +454,20 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public sendRPC(method: string, params?: any[]): Promise<any>;
 
+
+    /**
+     * sends a RPC-Requests specified by name and params as a sync call. This is only alowed if the request is handled internally, like web3_sha3,
+     * 
+     * if the response contains an error, this will be thrown. if not the result will be returned.
+     * 
+     * @param method the method to call. 
+     */
+    public execLocal(method: string, params?: any[]): any;
+
     /**
      * disposes the Client. This must be called in order to free allocated memory!
      */
-    public free();
+    public free(): void;
 
     /**
      * returns a Object, which can be used as Web3Provider.
@@ -521,9 +537,16 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public static util: Utils<any>
 
-    public static setConvertBigInt(convert: (any) => any)
-    public static setConvertBuffer(convert: (any) => any)
-    // public static setConvertBuffer<BufferType>(val: any, len?: number) : BufferType
+    /** sets the convert-function, which converts any kind of type to Type defined for BigInt-operation.
+     * if not set the default type would be bigint.
+     */
+    public static setConvertBigInt(convert: (val: any) => any): void
+
+
+    /** sets the convert-function, which converts any kind of type to Type defined for Buffer or Bytes-operation.
+     * if not set the default type would be UInt8Array.
+     */
+    public static setConvertBuffer(convert: (val: any) => any): void
 
     /** supporting both ES6 and UMD usage */
     public static default: typeof IN3Generic
@@ -543,8 +566,16 @@ export class IN3 extends IN3Generic<bigint, Uint8Array> {
     public constructor(config?: Partial<IN3Config>);
 
 
-    public static setConvertBigInt(convert: (any) => any)
-    public static setConvertBuffer(convert: (any) => any)
+    /** sets the convert-function, which converts any kind of type to Type defined for BigInt-operation.
+     * if not set the default type would be bigint.
+     */
+    public static setConvertBigInt(convert: (val: any) => any): void
+
+
+    /** sets the convert-function, which converts any kind of type to Type defined for Buffer or Bytes-operation.
+     * if not set the default type would be UInt8Array.
+     */
+    public static setConvertBuffer(convert: (val: any) => any): void
 
 }
 
@@ -586,6 +617,7 @@ export type Signature = {
 }
 
 export type ABIField = {
+    internalType?: string
     indexed?: boolean
     name: string
     type: string
@@ -594,18 +626,19 @@ export type ABI = {
     anonymous?: boolean
     constant?: boolean
     payable?: boolean
-    stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
-
+    stateMutability?: 'pure' | 'view' | 'nonpayable' | 'payable' | string
+    components?: ABIField[],
     inputs?: ABIField[],
-    outputs?: ABIField[]
+    outputs?: ABIField[] | any[]
     name?: string
-    type: 'event' | 'function' | 'constructor' | 'fallback'
+    type: 'function' | 'constructor' | 'event' | 'fallback' | string
+    internalType?: string
 }
 export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
     from: Address
     /** (optional when creating new contract) 20 Bytes - The address the transaction is directed to.*/
-    to: Address
+    to?: Address
     /** Integer of the gas provided for the transaction execution. eth_call consumes zero gas, but this parameter may be needed by some executions. */
     gas: Quantity
     /** Integer of the gas price used for each paid gas.  */
@@ -628,6 +661,9 @@ export declare interface Signer<BigIntType, BufferType> {
     /** returns true if the account is supported (or unlocked) */
     canSign(address: Address): Promise<boolean>
 
+    /** returns all addresses managed by the signer. */
+    getAccounts(): Address[]
+
     /** 
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
@@ -640,6 +676,10 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
         [ac: string]: BufferType;
     };
     constructor(...pks: (Hash | BufferType)[]);
+
+    /** returns all addresses managed by the signer. */
+    getAccounts(): Address[]
+    /** adds a private key to the signer and returns the address associated with it. */
     addAccount(pk: Hash): string;
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
@@ -688,10 +728,31 @@ export declare interface Utils<BufferType> {
     toChecksumAddress(address: Address, chainId?: number): Address
 
     /**
+     * checks whether the given address is a correct checksumAddress
+     * If the chainId is passed, it will be included accord to EIP 1191
+     * @param address the address (as hex)
+     * @param chainId the chainId (if supported)
+     */
+    checkAddressChecksum(address: Address, chainId?: number): boolean
+
+    /**
+     * checks whether the given address is a valid hex string with 0x-prefix and 20 bytes
+     * @param address the address (as hex)
+     */
+    isAddress(address: Address): boolean
+
+    /**
      * calculates the keccack hash for the given data.
      * @param data the data as Uint8Array or hex data.
      */
     keccak(data: BufferType | Data): BufferType
+
+    /**
+     * returns a Buffer with strong random bytes.
+     * Thsi will use the browsers crypto-module or in case of nodejs use the crypto-module there.
+     * @param len the number of bytes to generate.
+     */
+    randomBytes(len: number): BufferType
 
     /**
      * converts any value to a hex string (with prefix 0x).
@@ -751,6 +812,4 @@ export declare interface Utils<BufferType> {
      * @param pk the private key.
      */
     private2address(pk: Hex | BufferType): Address
-
 }
-
