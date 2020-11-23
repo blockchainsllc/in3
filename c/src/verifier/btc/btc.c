@@ -398,8 +398,8 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
       if (!equals_hex(bytes(hash, 32), d_get_stringk(vc->result, key("nextblockhash"))))
         return vc_err(vc, "Invalid nextblockhash");
     }
-
-    if (*block_header != d_get_intk(vc->result, key("version"))) return vc_err(vc, "Invalid version");
+    int32_t v = (block_header[3] << 24) | (block_header[2] << 16) | (block_header[1] << 8) | block_header[0];
+    if (v != d_get_intk(vc->result, key("version"))) return vc_err(vc, "Invalid version");
   }
 
   return IN3_OK;
