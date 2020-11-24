@@ -470,7 +470,7 @@ static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int signe
     }
     assert(n != NULL);
 
-    if (vc->currentBlock > header_number && vc->currentBlock - header_number >= *min_blk_height)
+    if (d_get_longk(err, K_CURRENT_BLOCK) > header_number && vc->currentBlock - header_number >= *min_blk_height)
       // signer lied to us about his min block height!
       in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, n);
     if (dctx.cleanup) dctx.cleanup(dctx.data);
