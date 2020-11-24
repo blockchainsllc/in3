@@ -207,6 +207,10 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
         sb_add_chars(sb, ",\"noStats\":true");
       if ((rc->flags & FLAGS_BINARY))
         sb_add_chars(sb, ",\"useBinary\":true");
+#ifdef BTC_PRE_BPI34
+      if (chain->type == CHAIN_BTC)
+        sb_add_chars(sb, ",\"preBIP34\":true");
+#endif
 
       // do we have verified hashes?
       if (rc->chain.verified_hashes) {

@@ -150,19 +150,19 @@ foreach (testdir
         #GeneralStateTests/stRecursiveCreate
         #GeneralStateTests/stPreCompiledContracts
         #GeneralStateTests/stExtCodeHash
-        #GeneralStateTests/stBugs
+        GeneralStateTests/stBugs
         GeneralStateTests/stExample
         GeneralStateTests/stTransitionTest
         GeneralStateTests/stCallCodes
         #GeneralStateTests/stPreCompiledContracts2
         #GeneralStateTests/stZeroCallsTest
-        #GeneralStateTests/stBadOpcode
+        GeneralStateTests/stBadOpcode
         #GeneralStateTests/stMemoryStressTest
         GeneralStateTests/stShift
         #GeneralStateTests/stSpecialTest
         #GeneralStateTests/stCallCreateCallCodeTest
         GeneralStateTests/stQuadraticComplexityTest
-        #GeneralStateTests/stStackTests
+        GeneralStateTests/stStackTests
         #GeneralStateTests/stChangedEIP150
         #GeneralStateTests/stSolidityTest
         GeneralStateTests/stMemoryTest
@@ -172,9 +172,9 @@ foreach (testdir
         #GeneralStateTests/stSystemOperationsTest
         #GeneralStateTests/stHomesteadSpecific
         #GeneralStateTests/stCreate2
-        #GeneralStateTests/stCallDelegateCodesHomestead
-        #GeneralStateTests/stSStoreTest
-        #GeneralStateTests/stCallDelegateCodesCallCodeHomestead
+        GeneralStateTests/stCallDelegateCodesHomestead
+        GeneralStateTests/stSStoreTest
+        GeneralStateTests/stCallDelegateCodesCallCodeHomestead
         #GeneralStateTests/stDelegatecallTestHomestead
         #GeneralStateTests/stEIP150Specific
         #GeneralStateTests/stEIP150singleCodeGasPrices
@@ -203,6 +203,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
     list(FILTER files EXCLUDE REGEX ".*(pointMulAdd2).json$")
     list(FILTER files EXCLUDE REGEX ".*(QuadraticComplexitySolidity_CallDataCopy).json$")
+    list(FILTER files EXCLUDE REGEX ".*(staticcall_createfails).json$")
 
 
     foreach (file ${files})

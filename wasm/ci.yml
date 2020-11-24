@@ -24,7 +24,7 @@ wasm:
     - make -j8
     - mkdir ../wasm_build
     - cd ../wasm_build
-    - emcmake cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DBTC_PRE_BPI34=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
     - cp ../wasm_build_min/bin/*.wasm bin/in3w_min.wasm
     - cp ../wasm_build_min/bin/*.wasm module/in3w_min.wasm
@@ -42,7 +42,7 @@ asmjs:
   script:
     - mkdir asmjs_build
     - cd asmjs_build
-    - emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG  -DIN3API=true  -DCMAKE_BUILD_TYPE=RELEASE ..
+    - emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG  -DIN3API=true -DBTC_PRE_BPI34=false -DCMAKE_BUILD_TYPE=RELEASE ..
     - make -j8
   artifacts:
     paths:
