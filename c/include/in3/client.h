@@ -164,10 +164,6 @@ typedef struct in3_node_weight {
   uint32_t response_count;      /**< counter for responses */
   uint32_t total_response_time; /**< total of all response times */
   uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
-#ifdef PAY
-  uint32_t price; /**< the price per request unit */
-  uint64_t payed; /**< already payed */
-#endif
 } in3_node_weight_t;
 
 /**

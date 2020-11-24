@@ -164,10 +164,6 @@ typedef struct in3_node_weight {
   uint32_t response_count;      /**< counter for responses */
   uint32_t total_response_time; /**< total of all response times */
   uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
-#ifdef PAY
-  uint32_t price; /**< the price per request unit */
-  uint64_t payed; /**< already payed */
-#endif
 } in3_node_weight_t;
 
 /**
@@ -229,45 +225,7 @@ typedef struct in3_chain {
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
 } in3_chain_t;
 
-/** 
- * payment preparation function.
- * 
- * allows the payment to handle things before the request will be send.
- * 
-*/
-typedef in3_ret_t (*in3_pay_prepare)(struct in3_ctx* ctx, void* cptr);
-
-/** 
- * called after receiving a parse-able response with a in3-section.
-*/
-typedef in3_ret_t (*in3_pay_follow_up)(struct in3_ctx* ctx, void* node, d_token_t* in3, d_token_t* error, void* cptr);
-
-/** 
- * free function for the custom pointer.
-*/
-typedef void (*in3_pay_free)(void* cptr);
-
-/** 
- * handles the request.
- * 
- * this function is called when the in3-section of payload of the request is built and allows the handler to add properties. 
-*/
-typedef in3_ret_t (*in3_pay_handle_request)(struct in3_ctx* ctx, sb_t* sb, void* cptr);
-
-/** 
- * the payment handler.
- * 
- * if a payment handler is set it will be used when generating the request.
-*/
-typedef struct in3_pay {
-  in3_pay_prepare        prepare;        /**< payment preparation function.*/
-  in3_pay_follow_up      follow_up;      /**< payment function to be called after the request.*/
-  in3_pay_handle_request handle_request; /**< this function is called when the in3-section of payload of the request is built and allows the handler to add properties. .*/
-  in3_pay_free           free;           /**< frees the custom pointer (cptr).*/
-  void*                  cptr;           /**< custom object which will be passed to functions */
-} in3_pay_t;
-
-/** Incubed Configuration. 
+/** Incubed Configuration.
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
@@ -388,11 +346,6 @@ struct in3_t_ {
   in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
   in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
-
-  // fixme: #644
-#ifdef PAY
-  in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */
-#endif
 };
 
 /** creates a new Incubed configuration for a specified chain and returns the pointer.
@@ -487,21 +440,6 @@ NONULL char* in3_get_config(
 /** a register-function for a plugin.
  */
 typedef in3_ret_t (*plgn_register)(in3_t* c);
-
-#ifdef PAY
-/**
-  *  configure function for a payment.
-  */
-typedef char* (*pay_configure)(in3_t* c, d_token_t* config);
-
-/**
- * registers a payment provider
- */
-void in3_register_payment(
-    char*         name,   /**< name of the payment-type */
-    pay_configure handler /**< pointer to the handler- */
-);
-#endif
 
 #define assert_in3(c)                                  \
   assert(c);                                           \
