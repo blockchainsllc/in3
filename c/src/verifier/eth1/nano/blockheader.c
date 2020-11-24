@@ -472,19 +472,16 @@ static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int bs, u
     in3_get_data_ctx_t dctx        = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = signer_addr};
     ba_print(signer_addr, 20);
     in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
-    uint32_t*     min_blk_height = dctx.data;
-    node_match_t* n              = vc->ctx->nodes;
-    while (n) {
-      if (memcmp(n->address, signer_addr, 20) == 0)
-        break;
-      n = n->next;
+    uint32_t* min_blk_height = dctx.data;
+
+    if (DIFF_ATMOST(d_get_longk(d_get(d_get(err, K_DATA), K_SIGNED_ERR), K_CURRENT_BLOCK), header_number, *min_blk_height)) {
+      vc_err(vc, "blacklisting signer (reported wrong min block-height)");
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, signer_addr);
     }
-    assert(n != NULL);
-
-    if (DIFF_ATLEAST(d_get_longk(err, K_CURRENT_BLOCK), header_number, *min_blk_height) || !DIFF_ATMOST(d_get_longk(err, K_CURRENT_BLOCK), vc->currentBlock, 1))
-      // signer lied to us about his min block height OR signer is out-of-sync
-      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, n);
-
+    else if (!DIFF_ATMOST(d_get_longk(err, K_CURRENT_BLOCK), vc->currentBlock, 1)) {
+      vc_err(vc, "blacklisting signer (out-of-sync)");
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, signer_addr);
+    }
     if (dctx.cleanup) dctx.cleanup(dctx.data);
   }
 }
