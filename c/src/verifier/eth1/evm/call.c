@@ -192,7 +192,7 @@ int evm_sub_call(evm_t*    parent,
   evm     = &call_evm;
   int res = evm_prepare_evm(evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
   evm_prepare_evm(&revert_evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode);
-  uint32_t gas_call_value       = 0;
+  uint32_t gas_call_value = 0;
 
   evm->properties      = parent->properties;
   evm->chain_id        = parent->chain_id;
