@@ -550,17 +550,21 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
         uint8_t*     address = pctx->data;
         bool         found   = false;
         unsigned int i;
-        for (i = 0; i < data->nodelist_length; i++)
-          if (memcmp(data->nodelist[i].address, address, 20) == 0)
+        for (i = 0; i < data->nodelist_length; i++) {
+          if (memcmp(data->nodelist[i].address, address, 20) == 0) {
             found = true;
+            break;
+          }
+        }
 
         if (pctx->cleanup) pctx->cleanup(pctx->data);
         if (found) {
-          in3_node_t* n   = &data->nodelist[i];
-          uint32_t    mbh = in3_node_props_get(n->props, NODE_PROP_MIN_BLOCK_HEIGHT);
-          pctx->data      = _malloc(sizeof(mbh));
-          memcpy(pctx->data, &mbh, sizeof(mbh));
-          pctx->cleanup = free_;
+          in3_node_t*   n    = &data->nodelist[i];
+          uint32_t      mbh  = in3_node_props_get(n->props, NODE_PROP_MIN_BLOCK_HEIGHT);
+          unsigned int* mbhp = _malloc(sizeof(mbh));
+          *mbhp              = mbh;
+          pctx->data         = mbhp;
+          pctx->cleanup      = free_;
         }
         else {
           pctx->data    = NULL;
