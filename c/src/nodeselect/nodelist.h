@@ -167,13 +167,11 @@ NONULL static in3_ret_t blacklist_node(in3_nodeselect_def_t* data, unsigned int 
   return IN3_OK;
 }
 
-NONULL static inline void blacklist_node_addr(in3_nodeselect_def_t* data, const address_t node_addr, uint64_t secs_from_now) {
-  for (unsigned int i = 0; i < data->nodelist_length; ++i) {
-    if (!memcmp(data->nodelist[i].address, node_addr, 20)) {
-      blacklist_node(data, data->nodelist[i].index, secs_from_now);
-      break;
-    }
-  }
+NONULL static inline in3_ret_t blacklist_node_addr(in3_nodeselect_def_t* data, const address_t node_addr, uint64_t secs_from_now) {
+  for (unsigned int i = 0; i < data->nodelist_length; ++i)
+    if (!memcmp(data->nodelist[i].address, node_addr, 20))
+      return blacklist_node(data, data->nodelist[i].index, secs_from_now);
+  return IN3_OK;
 }
 
 #endif

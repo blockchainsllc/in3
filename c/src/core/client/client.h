@@ -321,7 +321,7 @@ typedef enum {
   PLGN_ACT_LOG_ERROR         = 0x80000,   /**< report an error */
   PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t */
   PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to node_match_t. */
+  PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to the node's address. */
   PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_ctx_t */
   PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to in3_nl_offline_ctx_t. */
   PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
