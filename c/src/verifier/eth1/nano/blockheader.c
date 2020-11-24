@@ -401,8 +401,10 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   bytes_builder_t* bb = bb_new();
   bb_write_int(bb, d_get_intk(err, K_CODE));
 
-  for (d_token_t* t = d_get(d_get(err, K_DATA), K_SIGNED_ERR) + 1; (t = d_next(t));) {
-    if (t->key == K_R || t->key == K_S || t->key == K_V)
+  int        i   = 0;
+  d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
+  for (d_token_t* t = sig + 1; i < d_len(sig); t = d_next(t), i++) {
+    if (t->key == K_R || t->key == K_S || t->key == K_V || t->key == K_MSG_HASH)
       continue;
 
     switch (d_type(t)) {
@@ -438,9 +440,8 @@ static in3_ret_t validate_err(in3_vctx_t* vc, d_token_t* err, uint64_t header_nu
   if (d_get_longk(sig, K_BLOCK) != header_number)
     return vc_err(vc, "wrong signature blocknumber");
 
-  uint8_t err_data[64];
-  bytes_t err_hash = compute_err_hash(err_data, err);
-
+  uint8_t err_data[64] = {0};
+  bytes_t err_hash     = compute_err_hash(err_data, err);
   return eth_verify_signature(vc, &err_hash, sig);
 }
 
@@ -543,8 +544,8 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     return vc_err(vc, "no signatures in proof");
 
   // calculate message hash
-  uint8_t msg_data[96];
-  bytes_t msg = compute_msg_hash(msg_data, vc, block_hash, header_number);
+  uint8_t msg_data[96] = {0};
+  bytes_t msg          = compute_msg_hash(msg_data, vc, block_hash, header_number);
 
   unsigned int confirmed = 0; // bitmask for signed block-hashes
   unsigned int erred     = 0; // bitmask for signed errors
