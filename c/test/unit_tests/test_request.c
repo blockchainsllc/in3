@@ -792,7 +792,7 @@ static void test_sigs() {
                      "    },"
                      "    {"
                      "      \"url\":\"https://in3node.com\","
-                     "      \"address\":\"0x7507333c63046b78a1f2848fcb1a83321b1de017\","
+                     "      \"address\":\"0xd4f40cb00b0620fbf3a546feb68a4496482d89a4\","
                      "      \"props\":\"0xa000001d1\""
                      "    }]"
                      "}}");
@@ -877,13 +877,13 @@ static void test_sigs() {
                     "    \"message\": \"block is not final\","
                     "    \"data\": {"
                     "      \"signedError\": {"
-                    "        \"r\": \"0xbf484c898764b35095d9f352b80d730d55a5be9ac7a6b76609756161ed2d55ed\","
-                    "        \"s\": \"0x446530191b76833b74557732a840971f68b9de7bfe645fc0beb9b0d63f739c1c\","
+                    "        \"r\": \"0x7edfd61f03d06cc65c08fb410435c7093ded2b3a0c4256e4d2993d930eac58d1\","
+                    "        \"s\": \"0x6862b882c0bd3ed4d942c40f5efae692c4bdb27417651531f4cc1feab7fa2f9c\","
                     "        \"v\": 27,"
                     "        \"block\": 3662142,"
                     "        \"currentBlock\": 3662148,"
                     "        \"timestamp\": 1606156121,"
-                    "        \"msgHash\": \"0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5\""
+                    "        \"msgHash\": \"0x7ed5cdcb7790a78baa5f3aa5df1632f18c8ffb8ef926ebaa7a1394666f69e452\""
                     "      }"
                     "    }"
                     "  }"
@@ -904,7 +904,7 @@ static void test_sigs() {
                                     "\"method\":\"eth_getTransactionByHash\","
                                     "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
                                     "\"in3\":{\"dataNodes\":[\"0xf944d416ebdf7f6e22eaf79a5a53ad1a487ddd9a\"],"
-                                    "\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\",\"0x7507333c63046b78a1f2848fcb1a83321b1de017\"]}}");
+                                    "\"signerNodes\":[\"0x1fe2e9bf29aa1938859af64c413361227d04059a\",\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\",\"0xd4f40cb00b0620fbf3a546feb68a4496482d89a4\"]}}");
 
   nl = in3_nodeselect_def_data(in3);
   TEST_ASSERT_TRUE(is_blacklisted(&nl->nodelist[7]));

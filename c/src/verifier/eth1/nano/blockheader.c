@@ -395,10 +395,6 @@ static bytes_t compute_msg_hash(uint8_t* msg_data, in3_vctx_t* vc, bytes32_t blo
 }
 
 static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
-  bytes_t msg;
-  msg.data = err_data;
-  msg.len  = 64;
-
   bytes_builder_t* bb = bb_new();
   bb_write_int(bb, d_get_intk(err, K_CODE));
 
@@ -426,10 +422,9 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   }
 
   // hash
-  keccak(msg, err_data);
-  msg.data = err_data;
-  msg.len  = 32;
-  return msg;
+  keccak(bb->b, err_data);
+  bb_free(bb);
+  return (bytes_t){.data = err_data, .len = 32};
 }
 
 static bool is_err_signed(d_token_t* err) {
