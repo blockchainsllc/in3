@@ -68,7 +68,9 @@
  *  Check if n1 & n2 are at max err apart
  * Expects n1 & n2 to be integral types
  */
-#define IS_APPROX(n1, n2, err) ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
+#define IS_APPROX(n1, n2, err)    ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
+#define DIFF_ATMOST(n1, n2, diff) IS_APPROX(n1, n2, diff)
+#define DIFF_ATLEAST(n1, n2, err) ((n1 > n2) ? ((n1 - n2) >= err) : ((n2 - n1) >= err))
 
 /**
  * simple macro to stringify other macro defs

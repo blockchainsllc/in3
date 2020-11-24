@@ -44,6 +44,7 @@
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "../../../verifier/eth1/nano/vhist.h"
 #include <assert.h>
+#include <limits.h>
 #include <string.h>
 
 #ifdef POA
@@ -456,23 +457,34 @@ static in3_ret_t validate_sig(in3_vctx_t* vc, d_token_t* sig, uint64_t header_nu
   return eth_verify_signature(vc, &msg, sig);
 }
 
-static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int signer_idx, uint64_t header_number) {
+static unsigned int idx_from_bs(unsigned int bs) {
+  const uint8_t blen = sizeof(bs) * CHAR_BIT;
+  for (unsigned int pos = 0; pos != blen; pos++)
+    if (BIT_CHECK(bs, pos))
+      return pos + 1;
+  return 0;
+}
+
+static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int bs, uint64_t header_number) {
   // handle errors based on context
   if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
-    in3_get_data_ctx_t dctx = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = vc->ctx->signers + (20 * signer_idx)};
+    uint8_t*           signer_addr = vc->ctx->signers + (20 * (idx_from_bs(bs) - 1));
+    in3_get_data_ctx_t dctx        = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = signer_addr};
+    ba_print(signer_addr, 20);
     in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
     uint32_t*     min_blk_height = dctx.data;
     node_match_t* n              = vc->ctx->nodes;
     while (n) {
-      if (memcmp(n->address, vc->ctx->signers + (20 * signer_idx), 20) == 0)
+      if (memcmp(n->address, signer_addr, 20) == 0)
         break;
       n = n->next;
     }
     assert(n != NULL);
 
-    if (d_get_longk(err, K_CURRENT_BLOCK) > header_number && vc->currentBlock - header_number >= *min_blk_height)
-      // signer lied to us about his min block height!
+    if (DIFF_ATLEAST(d_get_longk(err, K_CURRENT_BLOCK), header_number, *min_blk_height) || !DIFF_ATMOST(d_get_longk(err, K_CURRENT_BLOCK), vc->currentBlock, 1))
+      // signer lied to us about his min block height OR signer is out-of-sync
       in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, n);
+
     if (dctx.cleanup) dctx.cleanup(dctx.data);
   }
 }
