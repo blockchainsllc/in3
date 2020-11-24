@@ -898,6 +898,8 @@ static void test_sigs() {
 
   // now, we ask tincubeth for the signatures from nd-2, nd-3 and in3node.com.
   // in3node.com responds with a signed error saying that it doesn't consider the requested block final.
+  // but, since we know that the diff b/w requested block and current block is less than in3node.com's
+  // min block-height, we blacklist it
   ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
                                     "\"method\":\"eth_getTransactionByHash\","
                                     "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
@@ -906,7 +908,6 @@ static void test_sigs() {
 
   nl = in3_nodeselect_def_data(in3);
   TEST_ASSERT_TRUE(is_blacklisted(&nl->nodelist[7]));
-  TEST_ASSERT_NULL(nl->offlines);
   ctx_free(ctx);
 
   in3_free(in3);
