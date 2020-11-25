@@ -66,7 +66,7 @@ in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* plugin_
   //    if ((t = d_get(pay, key("price")))) node->weight->price = d_long(t);
   //    if (plugin_ctx->resp_error && d_get_intk(plugin_ctx->resp_error, K_CODE) == IN3_EPAYMENT_REQUIRED) {
   //      // TODO now we need to decide whether it's worth to pay
-  //      if (node->weight->price && (conf->max_price == 0 || node->weight->price < conf->max_price))
+  //      if (node->weight->price && (data->max_price == 0 || node->weight->price < data->max_price))
   //        return IN3_WAITING;
   //    }
   //  }
@@ -187,5 +187,5 @@ in3_ret_t in3_register_pay_eth(in3_t* c) {
   in3_pay_eth_t* data = _calloc(1, sizeof(*data));
   data->bulk_size     = 1000;
   data->max_price     = 10;
-  return in3_plugin_register(c, PLGN_ACT_TERM | PLGN_ACT_CONFIG_SET | PLGN_ACT_CONFIG_GET | PLGN_ACT_PAY_PREPARE | PLGN_ACT_PAY_FOLLOWUP | PLGN_ACT_PAY_HANDLE | PLGN_ACT_PAY_SIGN_REQ, in3_pay_eth, data, false);
+  return in3_plugin_register(c, PLGN_ACT_TERM | PLGN_ACT_CONFIG_SET | PLGN_ACT_CONFIG_GET | PLGN_ACT_PAY_PREPARE | PLGN_ACT_PAY_FOLLOWUP | PLGN_ACT_PAY_HANDLE, in3_pay_eth, data, false);
 }
