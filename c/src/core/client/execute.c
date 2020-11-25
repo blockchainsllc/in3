@@ -228,12 +228,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
         }
       }
 
-#ifdef PAY
-      if (c->client->pay && c->client->pay->handle_request) {
-        in3_ret_t ret = c->client->pay->handle_request(c, sb, rc, c->client->pay->cptr);
-        if (ret != IN3_OK) return ret;
-      }
-#endif
+      // fixme 666: cal plugin to handle payments
       sb_add_range(sb, "}}", 0, 2);
     }
     else
@@ -314,39 +309,6 @@ static void clean_up_ctx(in3_ctx_t* ctx) {
   ctx->error = NULL;
 }
 
-static in3_ret_t handle_payment(in3_ctx_t* ctx, node_match_t* node, int index) {
-#ifdef PAY
-  // we update the payment info from the in3-section
-  if (ctx->client->pay && ctx->client->pay->follow_up) {
-    in3_ret_t res = ctx->client->pay->follow_up(ctx, node, vc.proof, d_get(ctx->responses[index], K_ERROR), ctx->client->pay->cptr);
-    if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
-      int nodes_count = ctx_nodes_len(ctx->node);
-      // this means we need to retry with the same node
-      ctx->attempt++;
-      for (int i = 0; i < nodes_count; i++) {
-        if (ctx->raw_response[i].data.data)
-          _free(ctx->raw_response[i].data.data);
-      }
-      _free(ctx->raw_response);
-      _free(ctx->responses);
-      json_free(ctx->response_context);
-
-      ctx->raw_response     = NULL;
-      ctx->response_context = NULL;
-      ctx->responses        = NULL;
-      return res;
-    }
-    else if (res)
-      return ctx_set_error(ctx, "Error following up the payment data", res);
-  }
-#else
-  UNUSED_VAR(ctx);
-  UNUSED_VAR(node);
-  UNUSED_VAR(index);
-#endif
-  return IN3_OK;
-}
-
 static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
   assert_in3_ctx(ctx);
   assert(chain);
@@ -385,7 +347,8 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
     vc.dont_blacklist = false;
 
     if ((vc.proof = d_get(ctx->responses[i], K_IN3))) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-      if ((res = handle_payment(ctx, node, i))) return res;
+      // fixme 666: impl handle_payment
+      // if ((res = handle_payment(ctx, node, i))) return res;
       vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
       vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
       vc.proof                 = d_get(vc.proof, K_PROOF);
@@ -842,11 +805,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
           pctx.type = NL_SIGNER;
           if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
-
-#ifdef PAY
-          // now we have the nodes, we can prepare the payment
-          if (ctx->client->pay && ctx->client->pay->prepare && (ret = ctx->client->pay->prepare(ctx, ctx->client->pay->cptr)) != IN3_OK) return ret;
-#endif
+          // fixme 666: handle prepare payment
         }
         else
           // since we could not get the nodes, we either report it as error or wait.
