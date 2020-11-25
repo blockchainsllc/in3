@@ -390,6 +390,22 @@ in3_ret_t vc_set_error(
     char*       msg /**< the error message. */
 );
 
+// ---- PLGN_ACT_PAY_FOLLOWUP -----------
+
+typedef struct {
+  in3_ctx_t*    ctx;        /**< Request context. */
+  node_match_t* node;       /**< the responding node. */
+  d_token_t*    resp_in3;   /**< the response's in3 section */
+  d_token_t*    resp_error; /**< the response's error section */
+} in3_pay_followup_ctx_t;
+
+// ---- PLGN_ACT_PAY_HANDLE -----------
+
+typedef struct {
+  in3_ctx_t* ctx;     /**< Request context. */
+  sb_t*      payload; /**< the request payload */
+} in3_pay_handle_ctx_t;
+
 // ---- PAY_SIGN_REQ -----------
 
 typedef struct {
@@ -398,6 +414,8 @@ typedef struct {
   bytes32_t  request_hash;  /**< the hash to sign */
   uint8_t    signature[65]; /**< the signature */
 } in3_pay_sign_req_ctx_t;
+
+// ---- LOG_ERROR -----------
 
 typedef struct {
   char*      msg;   /**< the error message. */

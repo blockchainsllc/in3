@@ -43,16 +43,30 @@
 #define PAY_ETH_H
 
 #include "client.h"
+#include "plugin.h"
 
-typedef struct in3_pay_eth_config {
+typedef struct {
   uint64_t bulk_size;
   uint64_t max_price;
   uint64_t nonce;
   uint64_t gas_price;
-} in3_pay_eth_config_t;
+} in3_pay_eth_t;
 
-void in3_register_pay_eth();
+/**
+ * Eth payment implementation
+ */
+in3_ret_t in3_pay_eth(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 
-char* pay_eth_configure(in3_t* c, d_token_t* cconfig);
+/**
+ * get access to internal plugin data if registered
+ */
+static inline in3_pay_eth_t* in3_pay_eth_data(in3_t* c) {
+  return in3_plugin_get_data(c, in3_pay_eth);
+}
+
+/**
+ * registers the Eth payment plugin
+ */
+in3_ret_t in3_register_pay_eth(in3_t* c);
 
 #endif
