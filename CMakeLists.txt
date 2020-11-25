@@ -65,7 +65,7 @@ option(WASM_EMMALLOC "use ther smaller EMSCRIPTEN Malloc, which reduces the size
 option(WASM_SYNC "intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)" OFF)
 option(CODE_COVERAGE  "Builds targets with code coverage instrumentation. (Requires GCC or Clang)"  OFF)
 option(GCC_ANALYZER "GCC10 static code analyses" OFF)
-option(PAY_ETH  "support for direct Eth-Payment" ON)
+option(PAY_ETH  "support for direct Eth-Payment" OFF)
 option(USE_SCRYPT "integrate scrypt into the build in order to allow decrypt_key for scrypt encoded keys." ON)
 option(USE_CURL "if true the curl transport will be built (with a dependency to libcurl)" ON)
 option(USE_WINHTTP "if true the winhttp transport will be built (with a dependency to winhttp)" OFF)
