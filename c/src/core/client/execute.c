@@ -228,7 +228,11 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
         }
       }
 
-      // fixme 666: cal plugin to handle payments
+      in3_pay_handle_ctx_t pctx = {.ctx = c, .payload = sb};
+      in3_ret_t            ret  = in3_plugin_execute_first_or_none(c, PLGN_ACT_PAY_HANDLE, &pctx);
+      if (ret != IN3_OK)
+        return ret;
+
       sb_add_range(sb, "}}", 0, 2);
     }
     else
@@ -309,6 +313,33 @@ static void clean_up_ctx(in3_ctx_t* ctx) {
   ctx->error = NULL;
 }
 
+static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
+  in3_ctx_t*             ctx  = vc->ctx;
+  in3_pay_followup_ctx_t fctx = {.ctx = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
+  in3_ret_t              res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_TRANSPORT_CLEAN, &fctx);
+
+  if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
+    int nodes_count = ctx_nodes_len(ctx->nodes);
+    // this means we need to retry with the same node
+    ctx->attempt++;
+    for (int i = 0; i < nodes_count; i++) {
+      if (ctx->raw_response[i].data.data)
+        _free(ctx->raw_response[i].data.data);
+    }
+    _free(ctx->raw_response);
+    _free(ctx->responses);
+    json_free(ctx->response_context);
+
+    ctx->raw_response     = NULL;
+    ctx->response_context = NULL;
+    ctx->responses        = NULL;
+    return res;
+  }
+  else if (res)
+    return ctx_set_error(ctx, "Error following up the payment data", res);
+  return IN3_OK;
+}
+
 static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
   assert_in3_ctx(ctx);
   assert(chain);
@@ -347,8 +378,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
     vc.dont_blacklist = false;
 
     if ((vc.proof = d_get(ctx->responses[i], K_IN3))) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-      // fixme 666: impl handle_payment
-      // if ((res = handle_payment(ctx, node, i))) return res;
+      if ((res = handle_payment(&vc, node, i))) return res;
       vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
       vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
       vc.proof                 = d_get(vc.proof, K_PROOF);
@@ -805,7 +835,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
           pctx.type = NL_SIGNER;
           if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
-          // fixme 666: handle prepare payment
+
+          if ((ret = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_PREPARE, ctx)) != IN3_OK) return ret;
         }
         else
           // since we could not get the nodes, we either report it as error or wait.
