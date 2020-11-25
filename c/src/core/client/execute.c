@@ -316,7 +316,7 @@ static void clean_up_ctx(in3_ctx_t* ctx) {
 static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
   in3_ctx_t*             ctx  = vc->ctx;
   in3_pay_followup_ctx_t fctx = {.ctx = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
-  in3_ret_t              res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_TRANSPORT_CLEAN, &fctx);
+  in3_ret_t              res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx);
 
   if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
     int nodes_count = ctx_nodes_len(ctx->nodes);
