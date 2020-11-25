@@ -45,11 +45,19 @@
 #include "client.h"
 #include "plugin.h"
 
+typedef struct in3_pay_eth_node {
+  address_t                address;
+  uint32_t                 price;
+  uint64_t                 payed;
+  struct in3_pay_eth_node* next;
+} in3_pay_eth_node_t;
+
 typedef struct {
-  uint64_t bulk_size;
-  uint64_t max_price;
-  uint64_t nonce;
-  uint64_t gas_price;
+  uint64_t            bulk_size;
+  uint64_t            max_price;
+  uint64_t            nonce;
+  uint64_t            gas_price;
+  in3_pay_eth_node_t* nodes;
 } in3_pay_eth_t;
 
 /**
