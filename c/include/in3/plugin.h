@@ -404,6 +404,7 @@ typedef struct {
 typedef struct {
   in3_ctx_t* ctx;     /**< Request context. */
   sb_t*      payload; /**< the request payload */
+  bytes32_t  pk;      /**< the private-key to sign with */
 } in3_pay_handle_ctx_t;
 
 // ---- PAY_SIGN_REQ -----------

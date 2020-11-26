@@ -45,11 +45,49 @@
 #include <stdio.h>
 #include <string.h>
 
-uint64_t calc_request_units(in3_ctx_t* ctx) {
+static uint64_t calc_request_units(in3_ctx_t* ctx) {
   return ctx->len;
 }
 
-in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* plugin_ctx) {
+static in3_pay_eth_node_t* node_get(in3_pay_eth_t* data, const address_t address) {
+  in3_pay_eth_node_t* n = data->nodes;
+  while (n) {
+    if (!memcmp(n->address, address, 20))
+      break;
+    n = n->next;
+  }
+  return n;
+}
+
+static in3_pay_eth_node_t* node_add(in3_pay_eth_t* data, const address_t address) {
+  in3_pay_eth_node_t** n = &data->nodes;
+  while (*n)
+    (*n) = (*n)->next;
+  *n = _calloc(1, sizeof(in3_pay_eth_node_t));
+  if (*n) {
+    memcpy((*n)->address, address, 20);
+    (*n)->next = NULL;
+  }
+  return *n;
+}
+
+static in3_pay_eth_node_t* node_get_or_add(in3_pay_eth_t* data, const address_t address) {
+  in3_pay_eth_node_t* n = node_get(data, address);
+  if (!n)
+    n = node_add(data, address);
+  return n;
+}
+
+static void node_free(in3_pay_eth_t* data) {
+  in3_pay_eth_node_t* tmp = NULL;
+  while (data->nodes) {
+    tmp = data->nodes->next;
+    _free(data->nodes);
+    data->nodes = tmp;
+  }
+}
+
+static in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* plugin_ctx) {
   in3_ctx_t* ctx = plugin_ctx->ctx;
   d_token_t *pay = d_get(plugin_ctx->resp_in3, key("pay")), *t;
   if (!pay || !ctx) return IN3_OK;
@@ -59,22 +97,21 @@ in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* plugin_
   if ((t = d_get(pay, key("gasPrice")))) data->gas_price = d_long(t);
   if ((t = d_get(pay, key("nonce")))) data->nonce = d_long(t);
 
-  // fixme 666: interaction with nodelist?
-  //  node_match_t* node = plugin_ctx->node;
-  //  if (node->weight) {
-  //    if ((t = d_get(pay, key("payed")))) node->weight->payed = d_long(t);
-  //    if ((t = d_get(pay, key("price")))) node->weight->price = d_long(t);
-  //    if (plugin_ctx->resp_error && d_get_intk(plugin_ctx->resp_error, K_CODE) == IN3_EPAYMENT_REQUIRED) {
-  //      // TODO now we need to decide whether it's worth to pay
-  //      if (node->weight->price && (data->max_price == 0 || node->weight->price < data->max_price))
-  //        return IN3_WAITING;
-  //    }
-  //  }
+  in3_pay_eth_node_t* node = node_get_or_add(data, plugin_ctx->node->address);
+  if (node) {
+    if ((t = d_get(pay, key("payed")))) node->payed = d_long(t);
+    if ((t = d_get(pay, key("price")))) node->price = d_long(t);
+    if (plugin_ctx->resp_error && d_get_intk(plugin_ctx->resp_error, K_CODE) == IN3_EPAYMENT_REQUIRED) {
+      // TODO now we need to decide whether it's worth to pay
+      if (node->price && (data->max_price == 0 || node->price < data->max_price))
+        return IN3_WAITING;
+    }
+  }
 
   return IN3_OK;
 }
 
-in3_ret_t pay_eth_prepare(in3_pay_eth_t* data, in3_ctx_t* ctx) {
+static in3_ret_t pay_eth_prepare(in3_pay_eth_t* data, in3_ctx_t* ctx) {
   if (data == NULL || ctx == NULL) return IN3_EINVAL;
   return IN3_OK;
 }
@@ -99,40 +136,37 @@ static void create_signed_tx(in3_pay_eth_t* data, bytes32_t key, sb_t* sb, addre
   b_free(raw);
 }
 
-in3_ret_t pay_eth_handle_request(in3_pay_eth_t* data, in3_pay_handle_ctx_t* plugin_ctx) {
+static in3_ret_t pay_eth_handle_request(in3_pay_eth_t* data, in3_pay_handle_ctx_t* plugin_ctx) {
   in3_ctx_t*     ctx     = plugin_ctx->ctx;
   const uint64_t units   = calc_request_units(ctx);
   bool           started = false;
   sb_t*          sb      = plugin_ctx->payload;
 
-  // fixme 666: interaction with nodelist?
-  //  // TODO if we have a request Count > 1 we are currently still sending the same payload,
-  //  // but for payments, we may need different payload for each.
-  //  for (node_match_t* node = ctx->nodes; node; node = node->next) {
-  //    if (node->weight) {
-  //      if (node->weight->payed < units && node->weight->price && ctx->client->key) {
-  //        // TODO we don't even know if we have enough balance, we simply give it a try.
-  //        // TODO we should support ERC20-tokens instead of ether!
-  //
-  //        if (!started)
-  //          sb_add_chars(sb, ",\"pay\":{ \"type\":\"eth\", \"tx\":[");
-  //        else
-  //          sb_add_char(sb, ',');
-  //        started = true;
-  //
-  //        uint64_t val = data->bulk_size * node->weight->price;
-  //        uint64_t v   = ctx->client->chain.chain_id;
-  //        if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
-  //        create_signed_tx(ctx->client->key, sb, node->node->address->data, data->bulk_size * node->weight->price, data, v);
-  //        data->nonce++;
-  //        node->weight->payed += val;
-  //      }
-  //    }
-  //  }
+  // TODO if we have a request Count > 1 we are currently still sending the same payload,
+  // but for payments, we may need different payload for each.
+  for (in3_pay_eth_node_t* node = data->nodes; node; node = node->next) {
+    if (node->payed < units && node->price) {
+      // TODO we don't even know if we have enough balance, we simply give it a try.
+      // TODO we should support ERC20-tokens instead of ether!
+      if (!started)
+        sb_add_chars(sb, ",\"pay\":{ \"type\":\"eth\", \"tx\":[");
+      else
+        sb_add_char(sb, ',');
+      started = true;
+
+      uint64_t val = data->bulk_size * node->price;
+      uint64_t v   = ctx->client->chain.chain_id;
+      if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
+      create_signed_tx(data, plugin_ctx->pk, sb, node->address, data->bulk_size * node->price, v);
+      data->nonce++;
+      node->payed += val;
+    }
+  }
 
   if (started) sb_add_chars(sb, "]}");
   return IN3_OK;
 }
+
 static in3_ret_t config_set(in3_pay_eth_t* data, in3_configure_ctx_t* ctx) {
   char*       res   = NULL;
   json_ctx_t* json  = ctx->json;
@@ -166,6 +200,7 @@ in3_ret_t in3_pay_eth(void* plugin_data, in3_plugin_act_t action, void* plugin_c
   in3_pay_eth_t* data = plugin_data;
   switch (action) {
     case PLGN_ACT_TERM:
+      node_free(data);
       _free(data);
       return IN3_OK;
     case PLGN_ACT_CONFIG_SET:
@@ -187,5 +222,6 @@ in3_ret_t in3_register_pay_eth(in3_t* c) {
   in3_pay_eth_t* data = _calloc(1, sizeof(*data));
   data->bulk_size     = 1000;
   data->max_price     = 10;
+  data->nodes         = NULL;
   return in3_plugin_register(c, PLGN_ACT_TERM | PLGN_ACT_CONFIG_SET | PLGN_ACT_CONFIG_GET | PLGN_ACT_PAY_PREPARE | PLGN_ACT_PAY_FOLLOWUP | PLGN_ACT_PAY_HANDLE, in3_pay_eth, data, false);
 }
