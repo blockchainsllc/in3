@@ -55,7 +55,7 @@ export declare interface IN3Config {
      * The chain-id based on EIP-155.
      * or the name of the supported chain.
      * 
-     * Currently we support 'mainnet', 'goerli', 'kovan', 'ipfs' and 'local'
+     * Currently we support 'mainnet', 'goerli', 'ipfs' and 'local'
      * 
      * While most of the chains use preconfigured chain settings, 
      * 'local' actually uses the local running client turning of proof.

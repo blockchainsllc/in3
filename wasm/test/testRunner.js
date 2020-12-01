@@ -197,11 +197,6 @@ async function runSingleTest(test, c) {
                 contract: '0x5f51e413581dd76759e9eed51e63d14c8d1379c8',
                 registryId: '0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea'
             },
-            '0x2a': {
-                needsUpdate: false,
-                contract: '0x4c396dcf50ac396e5fdea18163251699b5fcca25',
-                registryId: '0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf'
-            },
             '0x99': {
                 needsUpdate: false,
                 contract: '0x4c396dcf50ac396e5fdea18163251699b5fcca25',

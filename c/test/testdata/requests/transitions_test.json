@@ -2,7 +2,7 @@
   {
     "descr": "get block on transition",
     "success": true,
-    "chainId": "0x2a",
+    "chainId": "0x5",
     "request": {
       "method": "eth_getBlockByHash",
       "params": [
@@ -59,7 +59,7 @@
   {
     "descr": "get block before transition",
     "success": true,
-    "chainId": "0x2a",
+    "chainId": "0x5",
     "request": {
       "method": "eth_getBlockByHash",
       "params": [
@@ -116,7 +116,7 @@
   {
     "descr": "get block after transition",
     "success": true,
-    "chainId": "0x2a",
+    "chainId": "0x5",
     "request": {
       "method": "eth_getBlockByHash",
       "params": [

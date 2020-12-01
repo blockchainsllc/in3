@@ -155,18 +155,18 @@ class ClientParsingTest(unittest.TestCase):
             self.client.ens_namehash('.eth')
 
 
-class KovanClientTest(ClientNegativeTest):
-
-    def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
-
-
 class GoerliClientTest(ClientNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
         self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+
+
+# class EwcClientTest(ClientNegativeTest):
+#
+#     def setUp(self):
+#         # self.client = in3.Client('ewc', in3_config=mock_config)
+#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
 
 if __name__ == '__main__':

@@ -562,21 +562,30 @@ mod tests {
         api
     }
 
-    #[test]
-    fn test_eth_api_block_number() -> In3Result<()> {
+    fn block_number_for_chain(chain: chain::ChainId) -> In3Result<bool> {
         //Make use of static string literals conversion for mock transport.
         let responses = vec![(
             "eth_blockNumber",
             r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
         )];
         let transport: Box<dyn Transport> = Box::new(MockTransport { responses });
-        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-        let mut eth_api = init_api(transport, chain::MAINNET, config);
+        let config = format!(
+            r#"{{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{{"{:#02x}":{{"needsUpdate":false}}}}}}"#,
+            &chain
+        );
+        let mut eth_api = init_api(transport, chain, &config);
         let num: u64 = task::block_on(eth_api.block_number())?
             .try_into()
             .expect("cannot convert to u64");
-        println!("{:?}", num);
-        assert_eq!(num, 0x96bacd);
+        Ok(num == 0x96bacd)
+    }
+
+    #[test]
+    fn test_eth_api_block_number() -> In3Result<()> {
+        block_number_for_chain(chain::MAINNET)?;
+        block_number_for_chain(chain::GOERLI)?;
+        block_number_for_chain(chain::EWC)?;
+        block_number_for_chain(chain::LOCAL)?;
         Ok(())
     }
 

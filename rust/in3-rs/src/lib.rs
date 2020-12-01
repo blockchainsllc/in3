@@ -62,8 +62,8 @@ pub fn init() {
     /// An exported constructor function. On supported platforms, this will be
     /// invoked automatically before the program's `main` is called.
     #[cfg_attr(
-    any(target_os = "linux", target_os = "freebsd", target_os = "android"),
-    link_section = ".init_array"
+        any(target_os = "linux", target_os = "freebsd", target_os = "android"),
+        link_section = ".init_array"
     )]
     #[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
     #[cfg_attr(target_os = "windows", link_section = ".CRT$XCU")]
@@ -71,14 +71,12 @@ pub fn init() {
 
     /// This is the body of our constructor function.
     #[cfg_attr(
-    any(target_os = "linux", target_os = "android"),
-    link_section = ".text.startup"
+        any(target_os = "linux", target_os = "android"),
+        link_section = ".text.startup"
     )]
     extern "C" fn init_inner() {
-        INIT.call_once(|| {
-            unsafe {
-                in3_sys::in3_init();
-            }
+        INIT.call_once(|| unsafe {
+            in3_sys::in3_init();
         });
     }
 
