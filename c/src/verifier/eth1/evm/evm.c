@@ -416,7 +416,7 @@ int evm_execute(evm_t* evm) {
       op_exec((evm->properties & EVM_PROP_ISTANBUL) ? evm_stack_push_long(evm, evm->chain_id) : EVM_ERROR_INVALID_OPCODE, G_BASE);
 
     case 0x50: // POP
-      op_exec(evm_stack_pop(evm, NULL, 0), G_BASE);
+      op_exec(op_pop(evm), G_BASE);
     case 0x51: // MLOAD
       op_exec(op_mload(evm), G_VERY_LOW);
     case 0x52: // MSTORE
