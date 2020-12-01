@@ -44,7 +44,7 @@ subcmds=(
     )
 
 args=(
- '-c[chain]:chain id:(mainnet goerli kovan local)'
+ '-c[chain]:chain id:(mainnet goerli ewc ipfs btc local)'
  '-st[the type of the signature data]:st:(eth_sign raw hash)'
  '-p[the Verification level]:p:(none standard full)'
  '-pwd[password to unlock the key]:pwd:()'

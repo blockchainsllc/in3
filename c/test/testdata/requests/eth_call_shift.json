@@ -1,7 +1,7 @@
 [
     {
         "descr": "eth_call using shift op code",
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "verification": "proof",
         "binaryFormat": false,
         "request": {
@@ -75,7 +75,7 @@
     },
     {
         "descr": "simple eth_call",
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "verification": "proof",
         "binaryFormat": true,
         "request": {
@@ -137,7 +137,7 @@
     },
     {
         "descr": "simple eth_call",
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "verification": "proof",
         "fuzzer": true,
         "request": {

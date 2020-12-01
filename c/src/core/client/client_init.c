@@ -168,7 +168,6 @@ static void whitelist_free(in3_whitelist_t* wl) {
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
     case CHAIN_ID_MAINNET: return 15;
-    case CHAIN_ID_KOVAN: return 6;
     case CHAIN_ID_GOERLI: return 15;
     default: return 5;
   }
@@ -260,19 +259,6 @@ static void init_btc(in3_chain_t* chain) {
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/btc/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/btc/nd-2");
 }
-static void init_kovan(in3_chain_t* chain) {
-#ifdef IN3_STAGING
-  // kovan
-  initChain(chain, 0x2a, "0604014f2a5fdfafce3f2ec10c77c31d8e15ce6f", "d440f01322c8529892c204d3705ae871c514bafbb2f35907832a07322e0dc868", 2, 2, CHAIN_ETH, NULL);
-  initNode(chain, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/kovan/nd-1");
-  initNode(chain, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
-#else
-  // kovan
-  initChain(chain, 0x2a, "4c396dcf50ac396e5fdea18163251699b5fcca25", "92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf", 2, 2, CHAIN_ETH, NULL);
-  initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/kovan/nd-1");
-  initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/kovan/nd-2");
-#endif
-}
 
 static void init_goerli(in3_chain_t* chain) {
 
@@ -304,7 +290,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->proof                 = PROOF_STANDARD;
   c->replace_latest_block  = 0;
   c->request_count         = 1;
-  c->chains_length         = chain_id ? 1 : 7;
+  c->chains_length         = chain_id ? 1 : 6; //Mainnet, Goerli, EWC, BTC, IPFS, Local
   c->chains                = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters               = NULL;
   c->timeout               = 10000;
@@ -317,9 +303,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 
   if (!chain_id || chain_id == CHAIN_ID_MAINNET)
     init_mainnet(chain++);
-
-  if (!chain_id || chain_id == CHAIN_ID_KOVAN)
-    init_kovan(chain++);
 
   if (!chain_id || chain_id == CHAIN_ID_GOERLI)
     init_goerli(chain++);
@@ -584,7 +567,6 @@ in3_t* in3_new() {
 
 static chain_id_t get_chain_from_key(d_key_t k) {
   if (k == key("0x1")) return CHAIN_ID_MAINNET;
-  if (k == key("0x2a")) return CHAIN_ID_KOVAN;
   if (k == key("0x5")) return CHAIN_ID_GOERLI;
   if (k == key("0xf6")) return CHAIN_ID_EWC;
   if (k == key("0x99")) return CHAIN_ID_BTC;
@@ -602,7 +584,6 @@ static chain_id_t chain_id(d_token_t* t) {
   if (d_type(t) == T_STRING) {
     char* c = d_string(t);
     if (!strcmp(c, "mainnet")) return CHAIN_ID_MAINNET;
-    if (!strcmp(c, "kovan")) return CHAIN_ID_KOVAN;
     if (!strcmp(c, "goerli")) return CHAIN_ID_GOERLI;
     if (!strcmp(c, "ewc")) return CHAIN_ID_EWC;
     if (!strcmp(c, "btc")) return CHAIN_ID_BTC;
@@ -737,7 +718,7 @@ char* in3_configure(in3_t* c, const char* config) {
       BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
     }
     else if (token->key == key("chainId")) {
-      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
+      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/ewc/btc/ipfs)");
       c->chain_id = chain_id(token);
     }
     else if (token->key == key("signatureCount")) {
@@ -747,7 +728,7 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == key("finality")) {
       EXPECT_TOK_U16(token);
 #ifdef POA
-      if (c->chain_id == CHAIN_ID_GOERLI || c->chain_id == CHAIN_ID_KOVAN)
+      if (c->chain_id == CHAIN_ID_GOERLI)
         EXPECT_CFG(d_int(token) > 0 && d_int(token) <= 100, "expected % value");
 #endif
       c->finality = (uint16_t) d_int(token);

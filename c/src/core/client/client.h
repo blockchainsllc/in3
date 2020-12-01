@@ -55,10 +55,7 @@
 
 #define CHAIN_ID_MULTICHAIN 0x0   /**< chain_id working with all known chains */
 #define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
-#define CHAIN_ID_KOVAN      0x2a  /**< chain_id for kovan */
-#define CHAIN_ID_TOBALABA   0x44d /**< chain_id for tobalaba */
 #define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
-#define CHAIN_ID_EVAN       0x4b1 /**< chain_id for evan */
 #define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
 #define CHAIN_ID_BTC        0x99  /**< chain_id for btc */

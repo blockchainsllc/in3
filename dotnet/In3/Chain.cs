@@ -9,9 +9,6 @@ namespace In3
         /// <summary>Ethereum mainnet.</summary>
         Mainnet = 0x1,
 
-        /// <summary>Kovan testnet.</summary>
-        Kovan = 0x2a,
-
         /// <summary>Tobalaba testnet.</summary>
         Tobalaba = 0x44d,
 
@@ -23,9 +20,6 @@ namespace In3
 
         /// <summary>Ewf chain.</summary>
         Ewc = 0xf6,
-
-        /// <summary>Evan testnet.</summary>
-        Evan = 0x4b1,
 
         /// <summary>Ipfs (InterPlanetary File System).</summary>
         Ipfs = 0x7d0,
