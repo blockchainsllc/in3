@@ -25,7 +25,8 @@ function build {
 }
 
 # define options
-source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
+git clone https://github.com/emscripten-core/emsdk.git
+source emsdk/emsdk_env.sh > /dev/null
 CWD=$PWD
 cd $(dirname $0)/..
 DST="$1"
@@ -38,14 +39,46 @@ if [ "$3" = "debug" ]; then
 fi
 
 # targets
-build index       "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=true" 
-build wasm        "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=true" 
-build zksync-wasm "$OPTS $WASM  -DBTC=false -DZKSYNC=true"
-build zksync      "$OPTS $ASMJS -DBTC=false -DZKSYNC=true" 
-build btc-wasm    "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
-build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
-build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
-build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+
+case $opt in
+    -i|--index)
+      build index       "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+    ;;
+    -w|--wasm)
+      build wasm        "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+    ;;
+    -zw|--zksync-wasm)
+      build zksync-wasm "$OPTS $WASM  -DBTC=false -DZKSYNC=true"
+    ;;
+    -z|--zksync)
+      build zksync      "$OPTS $ASMJS -DBTC=false -DZKSYNC=true" 
+    ;;
+    -b|--btc-wasm)
+      build btc-wasm    "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+    ;;
+    -b|--btc)
+      build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+    ;;
+    -mw|--min-wasm)
+      build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+    ;;
+    -mi|--min)
+      build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+    ;;
+    -m|--help)
+        echo 'Usage: %s <options> ... '
+        exit 0
+    ;;
+esac
+
+# build index       "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+# build wasm        "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+# build zksync-wasm "$OPTS $WASM  -DBTC=false -DZKSYNC=true"
+# build zksync      "$OPTS $ASMJS -DBTC=false -DZKSYNC=true" 
+# build btc-wasm    "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+# build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+# build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+# build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
 
 # go back to where we came from
 cd 
