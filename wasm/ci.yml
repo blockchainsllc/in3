@@ -18,13 +18,13 @@ wasm:
   tags:
     - long-jobs
   script:
-    - mkdir wasm_multi_min
+    - mkdir index
     - cd scripts
-    - /bin/bash build_multi_wasm.sh --index
-  artifacts:
-    paths:
-      - wasm_build/module
-      - wasm_build/bin
+    - ./build_multi_wasm.sh --index
+  # artifacts:
+  #   paths:
+  #     - wasm_build/module
+  #     - wasm_build/bin
 
 # asmjs:
 #   image: docker.slock.it/build-images/cmake:clang11
