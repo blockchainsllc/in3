@@ -17,7 +17,7 @@ wasm:
   stage: build
   tags:
     - long-jobs
-  script 
+  script:
     - mkdir wasm_multi_min
     - cd scripts
     - /bin/bash build_multi_wasm.sh wasm_multi_min
