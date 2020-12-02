@@ -82,7 +82,12 @@ OPTION(POA "support POA verification including validatorlist updates" OFF)
 OPTION(MULTISIG "add capapbility to sign with a multig. Currrently only gnosis safe is supported" OFF)
 OPTION(ZKSYNC "add RPC-functioin to handle zksync-payments" ON)
 OPTION(SENTRY "Enable Sentry" OFF)
+OPTION(BTC_PRE_BPI34 "Enable BTC-Verfification for blocks before BIP34 was activated" ON)
 OPTION(PK_SIGNER "Enable Signing with private keys" ON)
+
+IF (BTC_PRE_BPI34)
+  ADD_DEFINITIONS(-DBTC_PRE_BPI34)
+ENDIF (BTC_PRE_BPI34)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)
