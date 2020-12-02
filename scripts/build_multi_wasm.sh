@@ -10,12 +10,12 @@ function build {
   make -j8
 
   # copy to destination
-  if [ ! -f "$DST/package.json" ]; then
-    cp -r module/* "$DST/"
+  if [ ! -f "$NAME/package.json" ]; then
+    cp -r module/* "$NAME/"
   else
-    cat module/index.js | sed  "s/in3w.wasm/$NAME.wasm/g" > "$DST/$NAME.js"
-    cp module/index.d.ts "$DST/$NAME.d.ts"
-    [ -f module/in3w.wasm ] && cp module/in3w.wasm "$DST/$NAME.wasm"
+    cat module/index.js | sed  "s/in3w.wasm/$NAME.wasm/g" > "$NAME/$NAME.js"
+    cp module/index.d.ts "$NAME/$NAME.d.ts"
+    [ -f module/in3w.wasm ] && cp module/in3w.wasm "$NAME/$NAME.wasm"
   fi
 
   # clean up
@@ -42,6 +42,7 @@ fi
 
 case $opt in
     -i|--index)
+      echo "BUILDING INDEX CONFIG"
       build index       "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=true" 
     ;;
     -w|--wasm)
@@ -81,6 +82,6 @@ esac
 # build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
 
 # go back to where we came from
-cd 
-cp -r build/$DST wasm/test/in3
-cd $CWD
+# cd 
+# cp -r build/$DST wasm/test/in3
+# cd $CWD

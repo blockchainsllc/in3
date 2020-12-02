@@ -20,7 +20,7 @@ wasm:
   script:
     - mkdir wasm_multi_min
     - cd scripts
-    - /bin/bash build_multi_wasm.sh wasm_multi_min
+    - /bin/bash build_multi_wasm.sh --index
   artifacts:
     paths:
       - wasm_build/module
