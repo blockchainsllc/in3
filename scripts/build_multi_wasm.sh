@@ -29,7 +29,6 @@ function build {
 
 CWD=$PWD
 cd $(dirname $0)/..
-# DST="$1"
 OPTS="-DWASM=true -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DUSE_CURL=false -DCMD=false   -DTAG_VERSION=$2"
 WASM="-DCMAKE_BUILD_TYPE=MINSIZEREL -DWASM_EMBED=false"
 ASMJS="-DCMAKE_BUILD_TYPE=RELEASE -DWASM_EMBED=true -DASMJS=true"
@@ -61,10 +60,10 @@ case $opt in
       build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
     ;;
     -mw|--min-wasm)
-      build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+      build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=true" 
     ;;
     -mi|--min)
-      build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+      build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=true" 
     ;;
     -m|--help)
         echo 'Usage: %s <options> ... '
