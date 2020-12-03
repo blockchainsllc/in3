@@ -24,7 +24,7 @@ asmjs:
     paths:
       - in3_index
 
-test_index_asmjs:
+test_asmjs:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
   image: docker.slock.it/build-images/node:10-alpine
   needs:
@@ -59,7 +59,7 @@ wasm:
     paths:
       - in3_wasm
 
-test_index_wasm:
+test_wasm:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
   image: docker.slock.it/build-images/node:10-alpine
   needs:
