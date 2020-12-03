@@ -11,12 +11,12 @@
     paths:
       - .npm/
 
-index_asmjs:
+asmjs:
   image: docker.slock.it/build-images/cmake:clang11
   needs: []
   stage: bindings
   tags:
-    - long-jobs
+    - short-jobs
   script:
     - cd scripts
     - ./build_multi_wasm.sh --index
@@ -28,7 +28,7 @@ test_index_asmjs:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
   image: docker.slock.it/build-images/node:10-alpine
   needs:
-    - index_asmjs
+    - asmjs
   stage: wasm
   tags:
     - short-jobs
@@ -46,12 +46,12 @@ test_index_asmjs:
       junit: wasm/test/mocha.xml
 
 
-index_wasm:
+wasm:
   image: docker.slock.it/build-images/cmake:clang11
   needs: []
   stage: bindings
   tags:
-    - long-jobs
+    - short-jobs
   script:
     - cd scripts
     - ./build_multi_wasm.sh --wasm
@@ -63,7 +63,7 @@ test_index_wasm:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
   image: docker.slock.it/build-images/node:10-alpine
   needs:
-    - index_wasm
+    - wasm
   stage: wasm
   tags:
     - short-jobs
