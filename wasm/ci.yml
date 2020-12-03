@@ -264,7 +264,7 @@ min_asmjs:
     - long-jobs
   script:
     - cd scripts
-    - ./bild_multi_wasm.sh --min
+    - ./build_multi_wasm.sh --min
   artifacts:
     paths:
       - in3_min
