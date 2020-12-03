@@ -7,6 +7,7 @@ function build {
   # build
   rm -rf $DST
   mkdir -p $DST
+  rm -rf wasm_build
   mkdir -p wasm_build
   mkdir -p _build
   cd _build
@@ -43,7 +44,6 @@ fi
 opt=$1
 case $opt in
     -i|--index)
-      echo "BUILDING INDEX CONFIG"
       build index       "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=true" 
     ;;
     -w|--wasm)
@@ -67,12 +67,34 @@ case $opt in
     -mi|--min)
       build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
     ;;
+    -a|--all)
+      # targets
+      build index       "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+      build wasm        "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+      build zksync-wasm "$OPTS $WASM  -DBTC=false -DZKSYNC=true"
+      build zksync      "$OPTS $ASMJS -DBTC=false -DZKSYNC=true" 
+      build btc-wasm    "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+      build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+      build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+      build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+
+      # go back to where we came from
+      cd 
+      cp -r build/$DST wasm/test/in3
+      cd $CWD
+    ;;
     -m|--help)
-        echo 'Usage: %s <options> ... '
+        echo 'Usage: %s <options> build multiple wasm enabled feature for in3... 
+    -i,--index        build index       "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+    -w,--wasm         build wasm        "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=true" 
+    -zw,--zksync-wasm build zksync-wasm "$OPTS $WASM  -DBTC=false -DZKSYNC=true"
+    -z,--zksync       build zksync      "$OPTS $ASMJS -DBTC=false -DZKSYNC=true" 
+    -b,--btc-wasm     build btc-wasm    "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+    -b,--btc          build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
+    -mw,--min-wasm    build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+    -mi,--min         build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+    -a,--all build all configurations'
         exit 0
     ;;
 esac
 
-# cd 
-# cp -r build/$DST wasm/test/in3
-# cd $CWD
