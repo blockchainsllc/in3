@@ -142,46 +142,46 @@ void update_account_code(evm_t* evm, account_t* new_account);
 #define SUBGAS(evm, g)                             subgas(evm, g)
 #define KEEP_TRACK_GAS(evm)                        evm->gas
 #define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
-#define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value)           \
-  do {                                                                                                      \
-    evm->parent               = parent;                                                                     \
-    uint64_t max_gas_provided = parent->gas - (parent->gas >> 6);                                           \
-    if (!address) {                                                                                         \
-      new_account = evm_create_account(evm, evm->call_data.data, evm->call_data.len, code_address, caller); \
-      gas         = max_gas_provided;                                                                       \
-    }                                                                                                       \
-    else                                                                                                    \
-      gas = min(gas, max_gas_provided);                                                                     \
-    evm->gas            = gas;                                                                              \
-    evm->init_gas       = gas;                                                                              \
-    evm->gas_price.data = parent->gas_price.data;                                                           \
-    evm->gas_price.len  = parent->gas_price.len;                                                            \
-    if (res == 0 && !big_is_zero(value, l_value)) {                                                         \
-      if (mode == EVM_CALL_MODE_STATIC)                                                                     \
-        res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;                                                            \
-      else {                                                                                                \
-        if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {                                 \
-          evm->gas += G_CALLSTIPEND;                                                                        \
-          gas_call_value = G_CALLVALUE;                                                                     \
-        }                                                                                                   \
-        res = transfer_value(evm, parent->address, evm->address, value, l_value, gas_call_value);           \
-      }                                                                                                     \
-    }                                                                                                       \
-    if (res == 0) {                                                                                         \
-      if (parent->gas < gas) {                                                                              \
-        if (parent->gas + gas_call_value < gas) {                                                           \
-          /* transaction does not have enough gas to be completed */                                        \
-          res = EVM_ERROR_OUT_OF_GAS;                                                                       \
-        }                                                                                                   \
-        else {                                                                                              \
-          /* the call depends on how much gas will be refunded after execution to complete successfully */  \
-          /* We take an 'optimistic' approach, set the flag and proceed with execution */                   \
-          evm->properties |= EVM_PROP_CALL_DEPEND_ON_REFUND;                                                \
-        }                                                                                                   \
-      }                                                                                                     \
-      else                                                                                                  \
-        parent->gas -= gas;                                                                                 \
-    }                                                                                                       \
+#define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value)          \
+  do {                                                                                                     \
+    evm.parent                = parent;                                                                    \
+    uint64_t max_gas_provided = parent->gas - (parent->gas >> 6);                                          \
+    if (!address) {                                                                                        \
+      new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller); \
+      gas         = max_gas_provided;                                                                      \
+    }                                                                                                      \
+    else                                                                                                   \
+      gas = min(gas, max_gas_provided);                                                                    \
+    evm.gas            = gas;                                                                              \
+    evm.init_gas       = gas;                                                                              \
+    evm.gas_price.data = parent->gas_price.data;                                                           \
+    evm.gas_price.len  = parent->gas_price.len;                                                            \
+    if (res == 0 && !big_is_zero(value, l_value)) {                                                        \
+      if (mode == EVM_CALL_MODE_STATIC)                                                                    \
+        res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;                                                           \
+      else {                                                                                               \
+        if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {                                \
+          evm.gas += G_CALLSTIPEND;                                                                        \
+          gas_call_value = G_CALLVALUE;                                                                    \
+        }                                                                                                  \
+        res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);          \
+      }                                                                                                    \
+    }                                                                                                      \
+    if (res == 0) {                                                                                        \
+      if (parent->gas < gas) {                                                                             \
+        if (parent->gas + gas_call_value < gas) {                                                          \
+          /* transaction does not have enough gas to be completed */                                       \
+          res = EVM_ERROR_OUT_OF_GAS;                                                                      \
+        }                                                                                                  \
+        else {                                                                                             \
+          /* the call depends on how much gas will be refunded after execution to complete successfully */ \
+          /* We take an 'optimistic' approach, set the flag and proceed with execution */                  \
+          evm.properties |= EVM_PROP_CALL_DEPEND_ON_REFUND;                                                \
+        }                                                                                                  \
+      }                                                                                                    \
+      else                                                                                                 \
+        parent->gas -= gas;                                                                                \
+    }                                                                                                      \
   } while (0)
 
 #define FINALIZE_AND_REFUND_GAS(evm)          finalize_and_refund_gas(evm)

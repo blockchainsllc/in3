@@ -155,20 +155,6 @@ int evm_prepare_evm(evm_t*      evm,
     return 0;
 }
 
-void copy_call_state(evm_t* dst, evm_t* src) {
-  dst->properties      = src->properties;
-  dst->chain_id        = src->chain_id;
-  dst->call_data.data  = src->call_data.data;
-  dst->call_data.len   = src->call_data.len;
-  dst->call_value.data = src->call_value.data;
-  dst->call_value.len  = src->call_value.len;
-  dst->account         = src->account;
-  dst->gas             = src->gas;
-  dst->init_gas        = src->init_gas;
-  dst->gas_price.data  = src->gas_price.data;
-  dst->gas_price.len   = src->gas_price.len;
-}
-
 /**
  * handle internal calls.
  */
@@ -188,80 +174,79 @@ int evm_sub_call(evm_t*    parent,
   UNUSED_VAR(gas);
 
   // create a new evm
-  evm_t *evm, call_evm, revert_evm;
-  evm     = &call_evm;
-  int res = evm_prepare_evm(evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
-  evm_prepare_evm(&revert_evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode);
-  uint32_t gas_call_value = 0;
+  evm_t    evm;
+  int      res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
+  uint32_t gas_call_value = 0, old_gas = 0;
 
-  evm->properties      = parent->properties;
-  evm->chain_id        = parent->chain_id;
-  evm->call_data.data  = data;
-  evm->call_data.len   = l_data;
-  evm->call_value.data = value;
-  evm->call_value.len  = l_value;
+  evm.properties      = parent->properties;
+  evm.chain_id        = parent->chain_id;
+  evm.call_data.data  = data;
+  evm.call_data.len   = l_data;
+  evm.call_value.data = value;
+  evm.call_value.len  = l_value;
 
   // if parent has EVM_PROP_CALL_DEPEND_ON_REFUND set, we need to clean it up from child
-  if (evm->properties & EVM_PROP_CALL_DEPEND_ON_REFUND)
-    evm->properties ^= EVM_PROP_CALL_DEPEND_ON_REFUND;
+  if (evm.properties & EVM_PROP_CALL_DEPEND_ON_REFUND)
+    evm.properties ^= EVM_PROP_CALL_DEPEND_ON_REFUND;
 
   // if this is a delecate call, we set the address of the account storage we should use
   if (mode == EVM_CALL_MODE_DELEGATE)
-    evm->account = parent->account;
+    evm.account = parent->account;
 
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   else if (mode == EVM_CALL_MODE_STATIC)
-    evm->properties |= EVM_PROP_STATIC;
+    evm.properties |= EVM_PROP_STATIC;
 
   account_t* new_account = NULL;
   UNUSED_VAR(new_account);
   UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
-  if (evm->properties & EVM_PROP_CALL_DEPEND_ON_REFUND) {
-    // create a copy of evm in case we need to revert
-    copy_call_state(&revert_evm, evm);
+  if (evm.properties & EVM_PROP_CALL_DEPEND_ON_REFUND) {
+    // store old gas amount in case we need to revert
+    old_gas = evm.gas;
   }
 
   // execute the internal call
   if (res == 0)
-    success = evm_run(evm, code_address);
+    success = evm_run(&evm, code_address);
   else
     success = res;
 
-  if (evm->properties & EVM_PROP_CALL_DEPEND_ON_REFUND) {
-    if (evm->gas < gas_call_value) {
+  if (evm.properties & EVM_PROP_CALL_DEPEND_ON_REFUND) {
+    if (evm.gas < gas_call_value) {
       // Call execution consumed more gas than the caller could afford.
       success = EVM_ERROR_OUT_OF_GAS;
-      // Revert state
-      evm = &revert_evm;
+      // Restore gas amount from before call execution
+      evm.gas = old_gas;
+      // Flag evm as reverted to prevent new state to be copied to parent
+      evm.state = EVM_STATE_REVERTED;
     }
   }
 
-  // put the success in the stack ( in case of a create we add the new address)
+  // put the success in the stack (in case of a create we add the new address)
   if (!address && success == 0)
-    res = evm_stack_push(parent, evm->account, 20);
+    res = evm_stack_push(parent, evm.account, 20);
   else
     res = evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0);
 
   // if we have returndata we write them into memory
-  if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm->return_data.data) {
+  if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm.return_data.data) {
     // if we have a target to write the result to we do.
-    if (out_len) res = evm_mem_write(parent, out_offset, evm->return_data, out_len);
+    if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
 
-    UPDATE_ACCOUNT_CODE(evm, new_account);
+    UPDATE_ACCOUNT_CODE(&evm, new_account);
 
     // move the return_data to parent.
     if (res == 0) {
       if (parent->last_returned.data) _free(parent->last_returned.data);
-      parent->last_returned = evm->return_data;
-      evm->return_data.data = NULL;
-      evm->return_data.len  = 0;
+      parent->last_returned = evm.return_data;
+      evm.return_data.data  = NULL;
+      evm.return_data.len   = 0;
     }
   }
-  FINALIZE_SUBCALL_GAS(evm, success, parent);
+  FINALIZE_SUBCALL_GAS(&evm, success, parent);
   // clean up
-  evm_free(&call_evm);
-  evm_free(&revert_evm);
+  evm_free(&evm);
   // we always return 0 since a failure simply means we write a 0 on the stack.
   return res;
 }
