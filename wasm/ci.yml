@@ -58,6 +58,7 @@ wasm:
   artifacts:
     paths:
       - in3_wasm
+      - wasm_build
 
 test_wasm:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
@@ -164,26 +165,26 @@ btc_wasm:
     paths:
       - in3_btc-wasm
 
-test_btc_wasm:
-  coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
-  needs:
-    - btc_wasm
-  stage: wasm
-  tags:
-    - short-jobs
-  extends: .cache_setup
-  script:
-    - mv in3_btc-wasm wasm/test/in3
-    - cd wasm/test
-    - sh /prepare.sh
-    - npm install
-    - npm run test_coverage
-  artifacts:
-    paths:
-      - wasm/test/coverage
-    reports:
-      junit: wasm/test/mocha.xml
+# test_btc_wasm:
+#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
+#   image: docker.slock.it/build-images/node:10-alpine
+#   needs:
+#     - btc_wasm
+#   stage: wasm
+#   tags:
+#     - short-jobs
+#   extends: .cache_setup
+#   script:
+#     - mv in3_btc-wasm wasm/test/in3
+#     - cd wasm/test
+#     - sh /prepare.sh
+#     - npm install
+#     - npm run test_coverage
+#   artifacts:
+#     paths:
+#       - wasm/test/coverage
+#     reports:
+#       junit: wasm/test/mocha.xml
 
 
 btc_asmjs:
@@ -199,26 +200,26 @@ btc_asmjs:
     paths:
       - in3_btc
 
-test_btc_amsjs:
-  coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
-  needs:
-    - btc_asmjs
-  stage: wasm
-  tags:
-    - short-jobs
-  extends: .cache_setup
-  script:
-    - mv in3_btc wasm/test/in3
-    - cd wasm/test
-    - sh /prepare.sh
-    - npm install
-    - npm test
-  artifacts:
-    paths:
-      - wasm/test/coverage
-    reports:
-      junit: wasm/test/mocha.xml
+# test_btc_amsjs:
+#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
+#   image: docker.slock.it/build-images/node:10-alpine
+#   needs:
+#     - btc_asmjs
+#   stage: wasm
+#   tags:
+#     - short-jobs
+#   extends: .cache_setup
+#   script:
+#     - mv in3_btc wasm/test/in3
+#     - cd wasm/test
+#     - sh /prepare.sh
+#     - npm install
+#     - npm test
+#   artifacts:
+#     paths:
+#       - wasm/test/coverage
+#     reports:
+#       junit: wasm/test/mocha.xml
 
 
 min_wasm:
@@ -235,26 +236,26 @@ min_wasm:
       - in3_min-wasm
 
 
-test_min_wasm:
-  coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
-  needs:
-    - min_wasm
-  stage: wasm
-  tags:
-    - short-jobs
-  extends: .cache_setup
-  script:
-    - mv in3_min-wasm wasm/test/in3
-    - cd wasm/test
-    - sh /prepare.sh
-    - npm install
-    - npm run test_coverage
-  artifacts:
-    paths:
-      - wasm/test/coverage
-    reports:
-      junit: wasm/test/mocha.xml
+# test_min_wasm:
+#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
+#   image: docker.slock.it/build-images/node:10-alpine
+#   needs:
+#     - min_wasm
+#   stage: wasm
+#   tags:
+#     - short-jobs
+#   extends: .cache_setup
+#   script:
+#     - mv in3_min-wasm wasm/test/in3
+#     - cd wasm/test
+#     - sh /prepare.sh
+#     - npm install
+#     - npm run test_coverage
+#   artifacts:
+#     paths:
+#       - wasm/test/coverage
+#     reports:
+#       junit: wasm/test/mocha.xml
 
 min_asmjs:
   image: docker.slock.it/build-images/cmake:clang11
@@ -270,26 +271,26 @@ min_asmjs:
       - in3_min
 
 
-test_min_asmjs:
-  coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
-  needs:
-    - min_asmjs
-  stage: wasm
-  tags:
-    - short-jobs
-  extends: .cache_setup
-  script:
-    - mv in3_min wasm/test/in3
-    - cd wasm/test
-    - sh /prepare.sh
-    - npm install
-    - npm test
-  artifacts:
-    paths:
-      - wasm/test/coverage
-    reports:
-      junit: wasm/test/mocha.xml
+# test_min_asmjs:
+#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
+#   image: docker.slock.it/build-images/node:10-alpine
+#   needs:
+#     - min_asmjs
+#   stage: wasm
+#   tags:
+#     - short-jobs
+#   extends: .cache_setup
+#   script:
+#     - mv in3_min wasm/test/in3
+#     - cd wasm/test
+#     - sh /prepare.sh
+#     - npm install
+#     - npm test
+#   artifacts:
+#     paths:
+#       - wasm/test/coverage
+#     reports:
+#       junit: wasm/test/mocha.xml
 
 
 wasm-slockit-npm:

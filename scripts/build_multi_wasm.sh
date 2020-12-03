@@ -7,6 +7,7 @@ function build {
   # build
   rm -rf $DST
   mkdir -p $DST
+  mkdir -p wasm_build
   mkdir -p _build
   cd _build
   emcmake cmake $OPTIONS ..
@@ -23,6 +24,7 @@ function build {
 
   # clean up
   cd ..
+  cp -vr _build wasm_build
   rm -rf _build
 
 }
@@ -60,10 +62,10 @@ case $opt in
       build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
     ;;
     -mw|--min-wasm)
-      build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=true" 
+      build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
     ;;
     -mi|--min)
-      build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=true" 
+      build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
     ;;
     -m|--help)
         echo 'Usage: %s <options> ... '
