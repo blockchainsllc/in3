@@ -11,20 +11,40 @@
     paths:
       - .npm/
 
-wasm:
+wasm_index:
   image: docker.slock.it/build-images/cmake:clang11
   needs: []
   stage: build
   tags:
     - long-jobs
   script:
-    - mkdir index
     - cd scripts
     - ./build_multi_wasm.sh --index
-  # artifacts:
-  #   paths:
-  #     - wasm_build/module
-  #     - wasm_build/bin
+  artifacts:
+    paths:
+      - in3_index
+
+
+test_wasm:
+  coverage: '/Lines.*:\s+(\d+.\d+\%)/'
+  image: docker.slock.it/build-images/node:10-alpine
+  needs:
+    - wasm_index
+  stage: test
+  tags:
+    - short-jobs
+  extends: .cache_setup
+  script:
+    - mv in3_index wasm/test/in3
+    - cd wasm/test
+    - sh /prepare.sh
+    - npm install
+    - npm run test_coverage
+  artifacts:
+    paths:
+      - wasm/test/coverage
+    reports:
+      junit: wasm/test/mocha.xml
 
 # asmjs:
 #   image: docker.slock.it/build-images/cmake:clang11
