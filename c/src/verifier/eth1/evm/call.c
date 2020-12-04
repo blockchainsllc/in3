@@ -176,8 +176,9 @@ int evm_sub_call(evm_t*    parent,
   // create a new evm
   evm_t    evm;
   int      res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
-  uint32_t gas_call_value = 0, old_gas = 0;
+  uint32_t c_xfer = 0, old_gas = 0;
 
+  evm.parent          = parent;
   evm.properties      = parent->properties;
   evm.chain_id        = parent->chain_id;
   evm.call_data.data  = data;
@@ -213,7 +214,7 @@ int evm_sub_call(evm_t*    parent,
     success = res;
 
   if (evm.properties & EVM_PROP_CALL_DEPEND_ON_REFUND) {
-    if (evm.gas < gas_call_value) {
+    if (evm.gas < c_xfer) {
       // Call execution consumed more gas than the caller could afford.
       success = EVM_ERROR_OUT_OF_GAS;
       // Restore gas amount from before call execution
