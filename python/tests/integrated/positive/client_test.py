@@ -69,23 +69,23 @@ class MainNetClientCachedTest(MainNetClientTest):
 #         self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
 
-class KovanClientTest(MainNetClientTest):
-
-    def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
-
-    def test_configure(self):
-        client = in3.Client('kovan')
-        self.assertIsInstance(client, in3.Client)
-        client = in3.Client('koVan')
-        self.assertIsInstance(client, in3.Client)
-        client = in3.Client('kovan', in3.model.ClientConfig())
-        self.assertIsInstance(client, in3.Client)
-
-    def test_ens_resolve(self):
-        # Not supported by app.ens.domains!
-        return
+# class EwcClientTest(MainNetClientTest):
+#
+#     def setUp(self):
+#         # self.client = in3.Client('ewc', in3_config=mock_config)
+#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+#
+#     def test_configure(self):
+#         client = in3.Client('ewc')
+#         self.assertIsInstance(client, in3.Client)
+#         client = in3.Client('ewc')
+#         self.assertIsInstance(client, in3.Client)
+#         client = in3.Client('ewc', in3.model.ClientConfig())
+#         self.assertIsInstance(client, in3.Client)
+#
+#     def test_ens_resolve(self):
+#         # Not supported by app.ens.domains!
+#         return
 
 
 class GoerliClientTest(MainNetClientTest):

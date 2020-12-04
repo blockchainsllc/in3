@@ -9,10 +9,6 @@ public final class Chain {
    */
   public static final long MAINNET = 0x01;
   /**
-   * use kovan testnet
-   */
-  public static final long KOVAN = 0x2a;
-  /**
    * use tobalaba testnet
    */
   public static final long TOBALABA = 0x44d;
@@ -24,10 +20,6 @@ public final class Chain {
    * use ewf chain
    */
   public static final long EWC = 0xf6;
-  /**
-   * use evan testnet
-   */
-  public static final long EVAN = 0x4b1;
   /**
    * use ipfs
    */

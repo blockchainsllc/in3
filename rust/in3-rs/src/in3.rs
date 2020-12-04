@@ -21,12 +21,8 @@ pub mod chain {
 
     /// Chain Id for mainnet
     pub const MAINNET: u32 = in3_sys::CHAIN_ID_MAINNET;
-    /// Chain Id for tobalaba
-    pub const TOBALABA: u32 = in3_sys::CHAIN_ID_TOBALABA;
     /// Chain Id for goerli
     pub const GOERLI: u32 = in3_sys::CHAIN_ID_GOERLI;
-    /// Chain Id for evan
-    pub const EVAN: u32 = in3_sys::CHAIN_ID_EVAN;
     /// Chain Id for EWC
     pub const EWC: u32 = in3_sys::CHAIN_ID_EWC;
     /// Chain Id for IPFS

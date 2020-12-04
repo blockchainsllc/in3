@@ -188,7 +188,7 @@ async function runSingleTest(test, c) {
             needsUpdate: false
         }
     })
-    await client.setConfig({chainId: test.chainId || '0x1'})
+    await client.setConfig({ chainId: test.chainId || '0x1' })
 
     let s = false, error = null
     try {

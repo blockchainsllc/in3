@@ -15,7 +15,7 @@ class Client:
     the network and ask a certain number of the to sign the block header of given list, putting their deposit at stake.
     Once with the latest list at hand, the client can request any other on-chain information using the same scheme.
     Args:
-        chain (str): Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'kovan', 'goerli', 'ewc'.
+        chain (str): Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'goerli', 'ewc', 'btc', 'ipfs'.
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
         cache_enabled (bool): False will disable local storage caching.
         transport (function): Transport function for custom request routing. Defaults to https.
@@ -24,8 +24,8 @@ class Client:
     def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, cache_enabled: bool = True,
                  transport=https_transport):
 
-        if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'kovan', 'goerli', 'ewc']:
-            raise AssertionError('Client: Chain name not supported. Try mainnet, kovan, goerli, ewc.')
+        if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'goerli', 'ewc', 'btc', 'ipfs']:
+            raise AssertionError('Client: Chain name not supported. Try mainnet, evan, goerli, ewc, or ipfs.')
         # TODO: Clear Chain-configs
         if in3_config and not isinstance(in3_config, ClientConfig):
             raise AssertionError('Client: Use in3.ClientConfig to create a new client configuration instance.')

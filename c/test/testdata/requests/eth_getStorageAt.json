@@ -1,6 +1,6 @@
 [
     {
-        "descr": " get storage at kovan",
+        "descr": " get storage at goerli",
         "fuzzer": true,
         "verification": "proof",
         "chainId": "0x5",

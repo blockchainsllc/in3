@@ -88,28 +88,28 @@ class EthereumGoerliTest(EthereumTest):
         self.assertIsInstance(result, in3.eth.TransactionReceipt)
 
 
-class EthereumKovanTest(EthereumTest):
-
-    def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client('kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
-
-    def test_get_block_by_number(self):
-        block = self.client.eth.block_by_number(18135233)
-        self.assertIsInstance(block, in3.eth.Block)
-        block = self.client.eth.block_by_number('latest')
-        self.assertIsInstance(block, in3.eth.Block)
-
-    def test_get_transaction_by_hash(self):
-        tx_hash = '0x561438bacbd058aca597dd8ebaafbf05df993c83c3224301f33d569c417d0db4'
-        tx = self.client.eth.transaction_by_hash(tx_hash)
-        self.assertIsInstance(tx, in3.eth.Transaction)
-        self.assertEqual(tx_hash, tx.hash)
-
-    def test_get_tx_receipt(self):
-        tx_hash = '0x561438bacbd058aca597dd8ebaafbf05df993c83c3224301f33d569c417d0db4'
-        result = self.client.eth.transaction_receipt(tx_hash)
-        self.assertIsInstance(result, in3.eth.TransactionReceipt)
+# class EthereumEwcTest(EthereumTest):
+#
+#     def setUp(self):
+#         # self.client = in3.Client('ewc', in3_config=mock_config)
+#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+#
+#     def test_get_block_by_number(self):
+#         block = self.client.eth.block_by_number(18135233)
+#         self.assertIsInstance(block, in3.eth.Block)
+#         block = self.client.eth.block_by_number('latest')
+#         self.assertIsInstance(block, in3.eth.Block)
+#
+#     def test_get_transaction_by_hash(self):
+#         tx_hash = '0x561438bacbd058aca597dd8ebaafbf05df993c83c3224301f33d569c417d0db4'
+#         tx = self.client.eth.transaction_by_hash(tx_hash)
+#         self.assertIsInstance(tx, in3.eth.Transaction)
+#         self.assertEqual(tx_hash, tx.hash)
+#
+#     def test_get_tx_receipt(self):
+#         tx_hash = '0x561438bacbd058aca597dd8ebaafbf05df993c83c3224301f33d569c417d0db4'
+#         result = self.client.eth.transaction_receipt(tx_hash)
+#         self.assertIsInstance(result, in3.eth.TransactionReceipt)
 
 
 if __name__ == '__main__':

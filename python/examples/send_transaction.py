@@ -26,32 +26,34 @@ client = in3.Client(chain if chain else 'mainnet')
 confirmation_wait_time_in_seconds = 30
 etherscan_link_mask = 'https://{}{}etherscan.io/tx/{}'
 
-print('-= Ethereum Transaction using Incubed =- \n')
-try:
-    sender = client.eth.account.recover(sender_secret)
-    tx = in3.eth.NewTransaction(to=receiver, value=value_in_wei)
-    print('[.] Sending {} Wei from {} to {}. Please wait.\n'.format(tx.value, sender.address, tx.to))
-    tx_hash = client.eth.account.send_transaction(sender, tx)
-    print('[.] Transaction accepted with hash {}.'.format(tx_hash))
-    add_dot_if_chain = '.' if chain else ''
-    print(etherscan_link_mask.format(chain, add_dot_if_chain, tx_hash))
-    while True:
-        try:
-            print('\n[.] Waiting {} seconds for confirmation.\n'.format(confirmation_wait_time_in_seconds))
-            time.sleep(confirmation_wait_time_in_seconds)
-            receipt: in3.eth.TransactionReceipt = client.eth.transaction_receipt(tx_hash)
-            print('[.] Transaction was sent successfully!\n')
-            print(json.dumps(receipt.to_dict(), indent=4, sort_keys=True))
-            print('[.] Mined on block {} used {} GWei.'.format(receipt.blockNumber, receipt.gasUsed))
-            break
-        except Exception:
-            print('[!] Transaction not mined yet, check https://etherscan.io/gasTracker.')
-            print('[!] Just wait some minutes longer than the average for the price paid!')
-except in3.PrivateKeyNotFoundException as e:
-    print(str(e))
-except in3.ClientException as e:
-    print('Client returned error: ', str(e))
-    print('Please try again.')
+if __name__ == '__main__':
+
+    try:
+        print('-= Ethereum Transaction using Incubed =- \n')
+        sender = client.eth.account.recover(sender_secret)
+        tx = in3.eth.NewTransaction(to=receiver, value=value_in_wei)
+        print('[.] Sending {} Wei from {} to {}. Please wait.\n'.format(tx.value, sender.address, tx.to))
+        tx_hash = client.eth.account.send_transaction(sender, tx)
+        print('[.] Transaction accepted with hash {}.'.format(tx_hash))
+        add_dot_if_chain = '.' if chain else ''
+        print(etherscan_link_mask.format(chain, add_dot_if_chain, tx_hash))
+        while True:
+            try:
+                print('\n[.] Waiting {} seconds for confirmation.\n'.format(confirmation_wait_time_in_seconds))
+                time.sleep(confirmation_wait_time_in_seconds)
+                receipt: in3.eth.TransactionReceipt = client.eth.transaction_receipt(tx_hash)
+                print('[.] Transaction was sent successfully!\n')
+                print(json.dumps(receipt.to_dict(), indent=4, sort_keys=True))
+                print('[.] Mined on block {} used {} GWei.'.format(receipt.blockNumber, receipt.gasUsed))
+                break
+            except Exception:
+                print('[!] Transaction not mined yet, check https://etherscan.io/gasTracker.')
+                print('[!] Just wait some minutes longer than the average for the price paid!')
+    except in3.PrivateKeyNotFoundException as e:
+        print(str(e))
+    except in3.ClientException as e:
+        print('Client returned error: ', str(e))
+        print('Please try again.')
 
 # Response
 """

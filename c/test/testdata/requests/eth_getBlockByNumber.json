@@ -99,7 +99,7 @@
         ]
     },
     {
-        "descr": "kovan block with transaction hashes",
+        "descr": "goerli block with transaction hashes",
         "success": true,
         "fuzzer": true,
         "chainId": "0x5",
@@ -203,7 +203,7 @@
         ]
     },
     {
-        "descr": "kovan block with wrong transaction hashes",
+        "descr": "goerli block with wrong transaction hashes",
         "success": false,
         "chainId": "0x5",
         "request": {
@@ -306,7 +306,7 @@
         ]
     },
     {
-        "descr": "kovan block",
+        "descr": "goerli block",
         "success": true,
         "chainId": "0x5",
         "fuzzer": true,
@@ -407,7 +407,7 @@
         ]
     },
     {
-        "descr": "kovan block with transaction hashes and raw tx in proof",
+        "descr": "goerli block with transaction hashes and raw tx in proof",
         "success": true,
         "fuzzer": true,
         "chainId": "0x5",

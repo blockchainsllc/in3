@@ -57,7 +57,7 @@ function createClient(config = {}, recordName) {
         },
         ...config
     })
-    c.setConfig({chainId: config.chainId || '0x1'})
+    c.setConfig({ chainId: config.chainId || '0x1' })
 
     if (recordName)
         IN3.setTransport((url, payload, timeout = 30000) => {
