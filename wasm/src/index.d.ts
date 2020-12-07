@@ -55,7 +55,7 @@ export declare interface IN3Config {
      * The chain-id based on EIP-155.
      * or the name of the supported chain.
      * 
-     * Currently we support 'mainnet', 'goerli', 'kovan', 'ipfs' and 'local'
+     * Currently we support 'mainnet', 'goerli', 'ipfs' and 'local'
      * 
      * While most of the chains use preconfigured chain settings, 
      * 'local' actually uses the local running client turning of proof.
@@ -638,7 +638,7 @@ export type Transaction = {
     /** 20 Bytes - The address the transaction is send from. */
     from: Address
     /** (optional when creating new contract) 20 Bytes - The address the transaction is directed to.*/
-    to: Address
+    to?: Address
     /** Integer of the gas provided for the transaction execution. eth_call consumes zero gas, but this parameter may be needed by some executions. */
     gas: Quantity
     /** Integer of the gas price used for each paid gas.  */
@@ -679,7 +679,7 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
 
     /** returns all addresses managed by the signer. */
     getAccounts(): Address[]
-    /** adds a private key to the signer. */
+    /** adds a private key to the signer and returns the address associated with it. */
     addAccount(pk: Hash): string;
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>

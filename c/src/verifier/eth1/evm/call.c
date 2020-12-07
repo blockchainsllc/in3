@@ -185,7 +185,8 @@ int evm_sub_call(evm_t*    parent,
   evm.call_value.len  = l_value;
 
   // if this is a delecate call, we set the address of the account storage we should use
-  if (mode == EVM_CALL_MODE_DELEGATE) evm.account = parent->account;
+  if (mode == EVM_CALL_MODE_DELEGATE)
+    evm.account = parent->account;
 
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   else if (mode == EVM_CALL_MODE_STATIC)
@@ -196,7 +197,10 @@ int evm_sub_call(evm_t*    parent,
   UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call
-  if (res == 0) success = evm_run(&evm, code_address);
+  if (res == 0)
+    success = evm_run(&evm, code_address);
+  else
+    success = res;
 
   // put the success in the stack ( in case of a create we add the new address)
   if (!address && success == 0)

@@ -3,7 +3,7 @@ class AccountAPI {
     constructor(client) { this.client = client }
 
     add(pk) {
-        return this.client.sendRPC("in3_addRawKey", [toHex(pk)])
+        return this.client.sendRPC("in3_addRawKey", [toHex(pk)]).then(toChecksumAddress)
     }
 }
 class EthAPI {

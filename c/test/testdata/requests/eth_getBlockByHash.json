@@ -101,7 +101,7 @@
         ]
     },
     {
-        "descr": "kovan block with transaction hashes",
+        "descr": "goerli block with transaction hashes",
         "success": true,
         "fuzzer": true,
         "request": {
@@ -204,7 +204,7 @@
         ]
     },
     {
-        "descr": "kovan block with wrong transaction hashes",
+        "descr": "goerli block with wrong transaction hashes",
         "success": false,
         "request": {
             "method": "eth_getBlockByHash",
@@ -306,7 +306,7 @@
         ]
     },
     {
-        "descr": "kovan block",
+        "descr": "goerli block",
         "success": true,
         "fuzzer": true,
         "request": {

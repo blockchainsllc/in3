@@ -154,7 +154,7 @@ function abiEncode(sig, ...params) {
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
     data = toUint8Array(data)
     pk = toUint8Array(pk)
-    return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0)
+    return toBuffer(call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0))
 }
 
 function abiDecode(sig, data) {

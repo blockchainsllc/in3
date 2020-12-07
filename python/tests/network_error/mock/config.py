@@ -27,17 +27,6 @@ _registry = {
             {'url': 'https://in3-v2.slock.it/goerli/nd-2',
              'address': '1fe2e9bf29aa1938859af64c413361227d04059a'},
         ]},
-    '0x2a': {
-        'contract': '0x4c396dcf50ac396e5fdea18163251699b5fcca25',
-        'registryId': '0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf',
-        'needsUpdate': False,
-        'avgBlockTime': 6,
-        'nodeList': [
-            {'url': 'https://in3-v2.slock.it/kovan/nd-1',
-             'address': '45d45e6ff99e6c34a235d263965910298985fcfe'},
-            {'url': 'https://in3-v2.slock.it/kovan/nd-2',
-             'address': '1fe2e9bf29aa1938859af64c413361227d04059a'},
-        ]},
     '0x7d0': {
         'contract': '0xa93b57289070550c82edb1106e12bb37138948b8',
         'registryId': '0xf0162ec6d785ee990e36bad865251f45af0916cf136169540c02b0dd9cb69196',
