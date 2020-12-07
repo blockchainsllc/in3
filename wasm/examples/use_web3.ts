@@ -1,4 +1,4 @@
-/// use incubed as Web3Provider in web3js
+/// use IN3 as Web3Provider in web3js
 
 // import in3-Module
 import IN3 from 'in3'

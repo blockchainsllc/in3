@@ -9,7 +9,7 @@ class Sha256Plugin extends IN3Plugin{
 
   // this function will register for handling rpc-methods
   // only if we return something other then `undefined`, it will be taken as the result of the rpc.
-  // if we don't return, the request will be forwarded to the incubed nodes
+  // if we don't return, the request will be forwarded to the IN3 nodes
   handleRPC(c: IN3, request: RPCRequest): any {
 
     if (request.method === 'sha256') {
@@ -32,7 +32,7 @@ async function registerPlugin() {
   // register the plugin
   IN3Generic.registerPlugin(new Sha256Plugin())
 
-  // create new incubed instance
+  // create new IN3 instance
   const client = new IN3()
 
   // exeucte a rpc-call

@@ -4,7 +4,7 @@ const IN3 = require('in3')
 
 
 async function showLatestBlock() {
-    // create new incubed instance
+    // create new IN3 instance
     var c = IN3({
         chainId: 0x5 // use goerli
     })

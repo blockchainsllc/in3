@@ -4,7 +4,7 @@ import IN3 from 'in3'
 
 async function showLatestBlock() {
 
-  // create new incubed instance
+  // create new IN3 instance
   const client = new IN3({
     proof              : 'standard',
     signatureCount     : 1,
