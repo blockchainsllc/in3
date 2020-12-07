@@ -1,8 +1,8 @@
 /*******************************************************************************
- * This file is part of the Incubed project.
+ * This file is part of the IN3 project.
  * Sources: https://github.com/blockchainsllc/in3
  *
- * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2021 slock.it GmbH, Blockchains LLC
  *
  *
  * COMMERCIAL LICENSE USAGE
