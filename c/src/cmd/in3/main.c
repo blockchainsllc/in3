@@ -377,18 +377,20 @@ uint64_t getchain_id(char* name) {
 void set_chain_id(in3_t* c, char* id) {
   c->chain.chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
   if (c->chain.chain_id == CHAIN_ID_LOCAL) {
-    BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
-    c->proof                 = PROOF_NONE;
-    in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+    sb_t* sb = sb_new("{\"autoUpdateList\":false,\"proof\":\"none\"");
     if (strstr(id, "://")) { // its a url
-      if (!nl->nodelist)
-        nl->nodelist = _calloc(1, sizeof(in3_node_t));
-      nl->nodelist[0].url = id;
+      sb_add_chars(sb, ",\"nodeRegistry\":{\"needsUpdate\":false,\"nodeList\":[");
+      sb_add_chars(sb, "{\"address\":\"0x8a91dc2d28b689474298d91899f0c1baf62cb85b\"");
+      sb_add_chars(sb, ",\"url\":\"");
+      sb_add_chars(sb, id);
+      sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+      sb_add_chars(sb, "]}}");
     }
-    if (nl->nodelist_upd8_params) {
-      _free(nl->nodelist_upd8_params);
-      nl->nodelist_upd8_params = NULL;
-    }
+    sb_add_chars(sb, "}");
+    char* err = in3_configure(c, sb->data);
+    if (err)
+      die(err);
+    sb_free(sb);
   }
 }
 
