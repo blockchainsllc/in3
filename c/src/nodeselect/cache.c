@@ -47,7 +47,7 @@
 
 #define NODE_LIST_KEY   "nodelist_%d"
 #define WHITTE_LIST_KEY "_0x%s"
-#define CACHE_VERSION   6
+#define CACHE_VERSION   7
 #define MAX_KEYLEN      200
 
 /**
