@@ -1,5 +1,5 @@
-// register a custom plugin
-
+// Register a custom RPC for sha256 hashing using a plugin
+// Read about IN3 Plugins in the docs: https://in3.readthedocs.io/en/develop/api-c.html#plugins
 import IN3 from 'in3'
 import { RPCRequest, IN3Plugin } from 'in3'
 import * as crypto from 'crypto'

@@ -1,4 +1,4 @@
-<!-- use incubed directly in html -->
+<!-- use IN3 in html -->
 <html>
 
 <head>
@@ -16,7 +16,6 @@
         in3.eth.getBlockByNumber('latest', false)
             .then(block => document.getElementById('result').innerHTML = JSON.stringify(block, null, 2))
             .catch(alert)
-            .finally(() => in3.free())
     </script>
 </body>
 
