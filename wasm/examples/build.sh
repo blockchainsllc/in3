@@ -1,7 +1,7 @@
 #!/bin/sh
 if [ -d ../../build/module ]; then
   npm i typescript web3 bignumber.js
-  cp -r ../../build/module node_modules/in3-wasm
+  cp -r ../../build/module node_modules/in3
 else
   # build ...
   npm i typescript web3 bignumber.js
