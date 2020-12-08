@@ -214,8 +214,6 @@ static in3_chain_type_t chain_type(chain_id_t id) {
     case CHAIN_ID_MAINNET:
     case CHAIN_ID_GOERLI:
     case CHAIN_ID_EWC:
-    case CHAIN_ID_TOBALABA:
-    case CHAIN_ID_EVAN:
     case CHAIN_ID_LOCAL:
       return CHAIN_ETH;
     case CHAIN_ID_IPFS:
