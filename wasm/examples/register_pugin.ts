@@ -1,16 +1,14 @@
 // Register a custom RPC for sha256 hashing using a plugin
 // Read about IN3 Plugins in the docs: https://in3.readthedocs.io/en/develop/api-c.html#plugins
-import IN3 from 'in3'
-import { RPCRequest, IN3Plugin } from 'in3'
+import { IN3, RPCRequest, IN3Plugin } from 'in3'
 import * as crypto from 'crypto'
-import IN3Generic from "../src";
 
-class Sha256Plugin extends IN3Plugin{
+class Sha256Plugin<BigIntType, BufferType> implements IN3Plugin<BigIntType, BufferType> {
 
   // this function will register for handling rpc-methods
   // only if we return something other then `undefined`, it will be taken as the result of the rpc.
   // if we don't return, the request will be forwarded to the IN3 nodes
-  handleRPC(c: IN3, request: RPCRequest): any {
+  handleRPC(client, request: RPCRequest): any {
 
     if (request.method === 'sha256') {
       // assert params
@@ -29,11 +27,11 @@ class Sha256Plugin extends IN3Plugin{
 
 async function registerPlugin() {
 
-  // register the plugin
-  IN3Generic.registerPlugin(new Sha256Plugin())
-
   // create new IN3 instance
   const client = new IN3()
+
+  // register the plugin
+  client.registerPlugin(new Sha256Plugin())
 
   // exeucte a rpc-call
   const result = await client.sendRPC("sha256", ["testdata"])
