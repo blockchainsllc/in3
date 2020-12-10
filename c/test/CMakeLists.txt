@@ -149,7 +149,7 @@ foreach (testdir
         #GeneralStateTests/stRefundTest
         #GeneralStateTests/stRecursiveCreate
         #GeneralStateTests/stPreCompiledContracts
-        #GeneralStateTests/stExtCodeHash
+        GeneralStateTests/stExtCodeHash
         GeneralStateTests/stBugs
         GeneralStateTests/stExample
         GeneralStateTests/stTransitionTest
