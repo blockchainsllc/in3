@@ -45,7 +45,7 @@ cp ../../LICENSE.AGPL "$1/package.json" $1/../README.md ../module/
 cp in3.js  ../module/index.js
 
 cat "$1/index.d.ts" | awk -v "r=$__CONFIG__" '{gsub(/__CONFIG__/,r)}1' | awk -v "r=$__API__" '{gsub(/__API__/,r)}1'  > ../module/index.d.ts
-for f in $typedefs; do 
+for f in $typedefs; do
   cat $f >>  ../module/index.d.ts
 done
 
@@ -53,13 +53,11 @@ done
 if [ -e in3w.wasm ]
  then cp in3w.wasm  ../module/
 fi
-if [ $2 == "true" ]
- then
-   cat "$1/package.json" | sed  's/wasm/asmjs/g' > ../module/package.json
-   cat "$1/../README.md" | sed  's/wasm/asmjs/g' > ../module/README.md
-fi
-if [ -d "$1/../test/in3" ] 
-  then 
+# Hook for ASMJS Cmake build flag enabled. Uncomment if you want to add specific commands for this build.
+#if [ $2 == "true" ]
+# then
+if [ -d "$1/../test/in3" ]
+  then
      rm -rf "$1/../test/in3"
 fi
 cp -r ../module "$1/../test/in3"

@@ -1,9 +1,9 @@
 {
-    "name": "in3-wasm",
-    "version": "0.0.2",
-    "description": "WASM-Version of incubed build from C",
+    "name": "in3",
+    "version": "3.2.0",
+    "description": "IN3 Ethereum client WASM with bindings for Javascript and Typescript types",
     "main": "index.js",
-    "author": "Simon Jentzsch",
+    "author": "Blockchains",
     "license": "(AGPL-3.0-or-later OR commercial)",
     "scripts": {
         "doc": "typedoc --includeDeclarations --ignoreCompilerErrors --mode file --excludeExternals --out doc index.d.ts"
@@ -13,15 +13,16 @@
     },
     "dependencies": {},
     "bugs": {
-        "url": "https://github.com/slockit/in3/issues"
+        "url": "https://github.com/blockchainsllc/in3/issues"
     },
-    "homepage": "https://github.com/slockit/in3#readme",
+    "homepage": "https://github.com/blockchainsllc/in3#readme",
     "keywords": [
         "ethereum",
-        "slockit",
+        "client",
+        "minimum",
+        "blockchains",
         "iot",
         "in3",
-        "client",
         "jsonrpc"
     ]
 }
