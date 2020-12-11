@@ -74,8 +74,12 @@ void finalize_subcall_gas(evm_t* evm, int success, evm_t* parent) {
   // if it was successfull we copy the new state to the parent
   if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm->state != EVM_STATE_REVERTED)
     copy_state(parent, evm);
-  // if we have gas left and it was successfull we returen it to the parent process.
-  if (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) parent->gas += evm->gas;
+  // if we have gas left and it was successfull we return it to the parent process.
+  if (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS)
+    parent->gas += evm->gas;
+  // If balance was insuficient, we return only the deduced stipend
+  else if (success == EVM_ERROR_BALANCE_TOO_LOW)
+    parent->gas += G_CALLSTIPEND;
 }
 
 #endif

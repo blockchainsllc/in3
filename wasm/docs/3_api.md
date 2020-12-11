@@ -1,10 +1,10 @@
-## Incubed Module
+## IN3 Module
 
 This page contains a list of all Datastructures and Classes used within the IN3 WASM-Client
 
-Importing incubed is as easy as 
+Importing IN3 is as easy as
 ```ts
-import {IN3} from "in3-wasm"
+import {IN3} from "in3"
 ```
 
 
@@ -29,7 +29,7 @@ If you want to change this type, use [setConverBuffer()](#setconvertbuffer) func
 #### Generics
 
 ```js
-import {IN3Generic} from 'in3-wasm'
+import {IN3Generic} from 'in3'
 import BN from 'bn.js'
 
 // create a new client by setting the Generic Types
@@ -46,4 +46,3 @@ IN3Generic.setConverBigInt(val => new BN(val))
 ### Package
 
 While the In3Client-class is also the default import, the following imports can be used:
-

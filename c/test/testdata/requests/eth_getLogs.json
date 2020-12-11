@@ -1,6 +1,6 @@
 [
     {
-        "descr": "get registry logs from kovan",
+        "descr": "get registry logs from goerli",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -99,7 +99,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with no address provided",
+        "descr": "get registry logs from goerli with no address provided",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -197,7 +197,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with empty request array",
+        "descr": "get registry logs from goerli with empty request array",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -297,7 +297,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with address array",
+        "descr": "get registry logs from goerli with address array",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -401,7 +401,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with blockHash",
+        "descr": "get registry logs from goerli with blockHash",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -468,7 +468,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with wrong fromBlock",
+        "descr": "get registry logs from goerli with wrong fromBlock",
         "success": false,
         "verification": "proof",
         "request": {
@@ -567,7 +567,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with wrong toBlock",
+        "descr": "get registry logs from goerli with wrong toBlock",
         "success": false,
         "verification": "proof",
         "request": {
@@ -666,7 +666,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with wrong address",
+        "descr": "get registry logs from goerli with wrong address",
         "success": false,
         "verification": "proof",
         "request": {
@@ -765,7 +765,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with wrong address-array",
+        "descr": "get registry logs from goerli with wrong address-array",
         "success": false,
         "verification": "proof",
         "request": {
@@ -867,7 +867,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with wrong topics",
+        "descr": "get registry logs from goerli with wrong topics",
         "success": false,
         "verification": "proof",
         "request": {
@@ -969,7 +969,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with wrong topic ordering",
+        "descr": "get registry logs from goerli with wrong topic ordering",
         "success": false,
         "verification": "proof",
         "request": {
@@ -1072,7 +1072,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with fromBlock, toBlock and a blockHash",
+        "descr": "get registry logs from goerli with fromBlock, toBlock and a blockHash",
         "success": false,
         "verification": "proof",
         "request": {
@@ -1176,7 +1176,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan with wrong blockHash",
+        "descr": "get registry logs from goerli with wrong blockHash",
         "success": false,
         "verification": "proof",
         "request": {
@@ -1277,7 +1277,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan, toBlock: latest and wrong result",
+        "descr": "get registry logs from goerli, toBlock: latest and wrong result",
         "verification": "proof",
         "request": {
             "method": "eth_getLogs",
@@ -1376,7 +1376,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan toBlock latest",
+        "descr": "get registry logs from goerli toBlock latest",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -1476,7 +1476,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan from earliest to latest",
+        "descr": "get registry logs from goerli from earliest to latest",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -1576,7 +1576,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan from earliest to latest with wrong logs",
+        "descr": "get registry logs from goerli from earliest to latest with wrong logs",
         "success": false,
         "verification": "proof",
         "request": {
@@ -1676,7 +1676,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan from latest to latest",
+        "descr": "get registry logs from goerli from latest to latest",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -1745,7 +1745,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan from pending to pending",
+        "descr": "get registry logs from goerli from pending to pending",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -1814,7 +1814,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan wrong blockHash",
+        "descr": "get registry logs from goerli wrong blockHash",
         "success": false,
         "verification": "proof",
         "request": {
@@ -1897,7 +1897,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan - wrong proof",
+        "descr": "get registry logs from goerli - wrong proof",
         "success": false,
         "verification": "proof",
         "request": {
@@ -1996,7 +1996,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan - wrong number in proof",
+        "descr": "get registry logs from goerli - wrong number in proof",
         "success": false,
         "verification": "proof",
         "request": {
@@ -2095,7 +2095,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan - wrong txHash in proof",
+        "descr": "get registry logs from goerli - wrong txHash in proof",
         "success": false,
         "verification": "proof",
         "request": {
@@ -2194,7 +2194,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan - wrong tx index in proof",
+        "descr": "get registry logs from goerli - wrong tx index in proof",
         "success": false,
         "verification": "proof",
         "request": {
@@ -2293,7 +2293,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan - wrong proof",
+        "descr": "get registry logs from goerli - wrong proof",
         "success": false,
         "verification": "proof",
         "request": {
@@ -2392,7 +2392,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan - wrong txProof",
+        "descr": "get registry logs from goerli - wrong txProof",
         "success": false,
         "verification": "proof",
         "request": {
@@ -2491,7 +2491,7 @@
         ]
     },
     {
-        "descr": "get registry logs from kovan - wrong blockproof",
+        "descr": "get registry logs from goerli - wrong blockproof",
         "success": false,
         "verification": "proof",
         "request": {
@@ -2590,7 +2590,7 @@
         ]
     },
     {
-        "descr": "get logs from kovan - invalid merkle proof",
+        "descr": "get logs from goerli - invalid merkle proof",
         "verification": "proof",
         "request": {
             "method": "eth_getLogs",
@@ -2686,7 +2686,7 @@
         ]
     },
     {
-        "descr": "get logs from kovan - multiple logs from same transaction",
+        "descr": "get logs from goerli - multiple logs from same transaction",
         "verification": "proof",
         "request": {
             "method": "eth_getLogs",

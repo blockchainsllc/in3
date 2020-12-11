@@ -54,12 +54,12 @@
 void test_get_config() {
   in3_register_default(in3_register_eth_nano);
   in3_register_default(in3_register_eth_api);
-  in3_t* c      = in3_for_chain(CHAIN_ID_KOVAN);
+  in3_t* c      = in3_for_chain(CHAIN_ID_GOERLI);
   char * result = NULL, *error = NULL;
   in3_client_rpc(c, "in3_getConfig", "[]", &result, &error);
   if (error) printf("ERROR: %s\n", error);
   TEST_ASSERT_NULL(error);
-  TEST_ASSERT_EQUAL_STRING("{\"autoUpdateList\":true,\"chainId\":42,\"signatureCount\":0,\"finality\":0,\"includeCode\":false,\"bootWeights\":true,\"maxAttempts\":7,\"keepIn3\":false,\"stats\":true,\"useBinary\":false,\"useHttp\":false,\"maxVerifiedHashes\":5,\"timeout\":10000,\"minDeposit\":0,\"nodeProps\":0,\"nodeLimit\":0,\"proof\":\"standard\",\"requestCount\":1,\"nodes\":{\"0x2a\":{\"contract\":\"0x4c396dcf50ac396e5fdea18163251699b5fcca25\",\"registryId\":\"0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf\",\"needsUpdate\":true,\"avgBlockTime\":6}}}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"autoUpdateList\":true,\"chainId\":5,\"signatureCount\":0,\"finality\":0,\"includeCode\":false,\"bootWeights\":true,\"maxAttempts\":7,\"keepIn3\":false,\"stats\":true,\"useBinary\":false,\"useHttp\":false,\"maxVerifiedHashes\":5,\"timeout\":10000,\"minDeposit\":0,\"nodeProps\":0,\"nodeLimit\":0,\"proof\":\"standard\",\"requestCount\":1,\"nodes\":{\"0x5\":{\"contract\":\"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\",\"registryId\":\"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\",\"needsUpdate\":true,\"avgBlockTime\":15}}}", result);
   _free(result);
   in3_free(c);
 }

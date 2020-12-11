@@ -144,25 +144,25 @@ foreach (testdir
         #GeneralStateTests/stInitCodeTest
         #GeneralStateTests/stCreateTest
         GeneralStateTests/stRandom2
-        #GeneralStateTests/stWalletTest
+        GeneralStateTests/stWalletTest
         GeneralStateTests/stCodeCopyTest
         #GeneralStateTests/stRefundTest
         #GeneralStateTests/stRecursiveCreate
         #GeneralStateTests/stPreCompiledContracts
         #GeneralStateTests/stExtCodeHash
-        #GeneralStateTests/stBugs
+        GeneralStateTests/stBugs
         GeneralStateTests/stExample
         GeneralStateTests/stTransitionTest
         GeneralStateTests/stCallCodes
         #GeneralStateTests/stPreCompiledContracts2
         #GeneralStateTests/stZeroCallsTest
-        #GeneralStateTests/stBadOpcode
+        GeneralStateTests/stBadOpcode
         #GeneralStateTests/stMemoryStressTest
         GeneralStateTests/stShift
         #GeneralStateTests/stSpecialTest
         #GeneralStateTests/stCallCreateCallCodeTest
-        #GeneralStateTests/stQuadraticComplexityTest
-        #GeneralStateTests/stStackTests
+        GeneralStateTests/stQuadraticComplexityTest
+        GeneralStateTests/stStackTests
         #GeneralStateTests/stChangedEIP150
         #GeneralStateTests/stSolidityTest
         GeneralStateTests/stMemoryTest
@@ -172,9 +172,9 @@ foreach (testdir
         #GeneralStateTests/stSystemOperationsTest
         #GeneralStateTests/stHomesteadSpecific
         #GeneralStateTests/stCreate2
-        #GeneralStateTests/stCallDelegateCodesHomestead
-        #GeneralStateTests/stSStoreTest
-        #GeneralStateTests/stCallDelegateCodesCallCodeHomestead
+        GeneralStateTests/stCallDelegateCodesHomestead
+        GeneralStateTests/stSStoreTest
+        GeneralStateTests/stCallDelegateCodesCallCodeHomestead
         #GeneralStateTests/stDelegatecallTestHomestead
         #GeneralStateTests/stEIP150Specific
         #GeneralStateTests/stEIP150singleCodeGasPrices
@@ -185,7 +185,7 @@ foreach (testdir
         #GeneralStateTests/stTransactionTest
         GeneralStateTests/stZeroKnowledge
         #GeneralStateTests/stStaticCall
-        #GeneralStateTests/stMemExpandingEIP150Calls
+        GeneralStateTests/stMemExpandingEIP150Calls
         GeneralStateTests/stArgsZeroOneBalance
         #GeneralStateTests/stAttackTest
         #GeneralStateTests/stReturnDataTest
@@ -195,13 +195,15 @@ foreach (testdir
     file(GLOB files "testdata/evm/${testdir}/*.json")
 
     # exclude tests, but fix them later    
-    list(FILTER files EXCLUDE REGEX ".*randomStatetest(150|154|159|178|184|205|248|306|48|458|467|498|554|636|639).json$")
+    list(FILTER files EXCLUDE REGEX ".*randomStatetest(48|148|150|154|159|178|184|205|248|306|458|467|498|554|618|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
     list(FILTER files EXCLUDE REGEX ".*ecpairing(.*).json$")
     list(FILTER files EXCLUDE REGEX ".*pairingTest.json$")
     list(FILTER files EXCLUDE REGEX ".*ecmul_0-3_5616_28000_96.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
     list(FILTER files EXCLUDE REGEX ".*(pointMulAdd2).json$")
+    list(FILTER files EXCLUDE REGEX ".*(QuadraticComplexitySolidity_CallDataCopy).json$")
+    list(FILTER files EXCLUDE REGEX ".*(staticcall_createfails).json$")
 
 
     foreach (file ${files})
@@ -212,7 +214,7 @@ foreach (testdir
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 
-          TIMEOUT 9
+          TIMEOUT 30
           ENVIRONMENT LLVM_PROFILE_FILE=evm_${testdir}_${testname}.profraw
           )
 

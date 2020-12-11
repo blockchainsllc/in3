@@ -1,9 +1,9 @@
 [
     {
-        "descr": " get storage at kovan",
+        "descr": " get storage at goerli",
         "fuzzer": true,
         "verification": "proof",
-        "chainId": "0x2a",
+        "chainId": "0x5",
         "request": {
             "method": "eth_getStorageAt",
             "params": [

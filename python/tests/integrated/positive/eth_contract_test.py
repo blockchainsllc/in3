@@ -127,21 +127,20 @@ class GoerliContractTest(MainNetContractTest):
         self.assertEqual(len(code), 10694)
 
 
-class KovanContractTest(MainNetContractTest):
-
-    def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_config)
-        self.client = in3.Client(
-            'kovan', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
-
-    def test_eth_call(self):
-        # TODO: Future
-        return
-
-    def test_get_storage_at(self):
-        # TODO: Future
-        return
-
-    def test_get_code(self):
-        # TODO: Future
-        return
+# class EwcContractTest(MainNetContractTest):
+#
+#     def setUp(self):
+#         # self.client = in3.Client('ewc', in3_config=mock_config)
+#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+#
+#     def test_eth_call(self):
+#         # TODO: Future
+#         return
+#
+#     def test_get_storage_at(self):
+#         # TODO: Future
+#         return
+#
+#     def test_get_code(self):
+#         # TODO: Future
+#         return

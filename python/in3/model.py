@@ -147,24 +147,6 @@ chain_configs = {
             latest_block_stall=10,
             node_signatures=2)
     ),
-    "kovan": ChainConfig(
-        chain_id=int(0x2a),
-        chain_id_alias="kovan",
-        client_config=ClientConfig(
-            chain_finality_threshold=1,
-            latest_block_stall=6,
-            node_signatures=1,
-            node_signature_consensus=3)
-    ),
-    "evan": ChainConfig(
-        chain_id=int(0x4b1),
-        chain_id_alias="evan",
-        client_config=ClientConfig(
-            chain_finality_threshold=1,
-            latest_block_stall=6,
-            node_signatures=0,
-            node_signature_consensus=5)
-    ),
     "goerli": ChainConfig(
         chain_id=int(0x5),
         chain_id_alias="goerli",

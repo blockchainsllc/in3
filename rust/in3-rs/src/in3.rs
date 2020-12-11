@@ -23,14 +23,8 @@ pub mod chain {
     pub const MULTICHAIN: u32 = in3_sys::CHAIN_ID_MULTICHAIN;
     /// Chain Id for mainnet
     pub const MAINNET: u32 = in3_sys::CHAIN_ID_MAINNET;
-    /// Chain Id for kovan
-    pub const KOVAN: u32 = in3_sys::CHAIN_ID_KOVAN;
-    /// Chain Id for tobalaba
-    pub const TOBALABA: u32 = in3_sys::CHAIN_ID_TOBALABA;
     /// Chain Id for goerli
     pub const GOERLI: u32 = in3_sys::CHAIN_ID_GOERLI;
-    /// Chain Id for evan
-    pub const EVAN: u32 = in3_sys::CHAIN_ID_EVAN;
     /// Chain Id for EWC
     pub const EWC: u32 = in3_sys::CHAIN_ID_EWC;
     /// Chain Id for IPFS
@@ -249,7 +243,7 @@ impl ClientTrait for Client {
     /// 	"proof": "standard",
     /// 	"requestCount": 1,
     /// 	"nodes": {
-    /// 		"0x2a": {
+    /// 		"0x1": {
     /// 			"contract": "0x4c396dcf50ac396e5fdea18163251699b5fcca25",
     /// 			"registryId": "0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf",
     /// 			"needsUpdate": true,

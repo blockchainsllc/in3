@@ -1,8 +1,8 @@
-<!-- use incubed directly in html -->
+<!-- use IN3 in html -->
 <html>
 
 <head>
-    <script src="node_modules/in3-wasm/index.js"></script>
+    <script src="node_modules/in3/index.js"></script>
 </head>
 
 <body>
@@ -16,7 +16,6 @@
         in3.eth.getBlockByNumber('latest', false)
             .then(block => document.getElementById('result').innerHTML = JSON.stringify(block, null, 2))
             .catch(alert)
-            .finally(() => in3.free())
     </script>
 </body>
 
