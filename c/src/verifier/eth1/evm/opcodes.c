@@ -406,6 +406,11 @@ int op_header(evm_t* evm, uint8_t index) {
     return evm_stack_push_int(evm, 0);
 }
 
+int op_pop(evm_t* evm) {
+  int res = evm_stack_pop(evm, NULL, 0);
+  return (res < 0) ? res : 0;
+}
+
 int op_mload(evm_t* evm) {
   uint8_t *off, *dst;
   int      off_len = evm_stack_pop_ref(evm, &off);

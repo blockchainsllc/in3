@@ -157,7 +157,7 @@ foreach (testdir
         #GeneralStateTests/stPreCompiledContracts2
         #GeneralStateTests/stZeroCallsTest
         GeneralStateTests/stBadOpcode
-        #GeneralStateTests/stMemoryStressTest
+        GeneralStateTests/stMemoryStressTest
         GeneralStateTests/stShift
         #GeneralStateTests/stSpecialTest
         #GeneralStateTests/stCallCreateCallCodeTest
