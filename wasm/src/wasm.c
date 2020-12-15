@@ -297,6 +297,10 @@ void EMSCRIPTEN_KEEPALIVE wasm_init() {
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
+void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
+  in3_nl_blacklist_ctx_t bctx = {.address = url, .is_addr = false};
+  in3_plugin_execute_all(in3, PLGN_ACT_NL_BLACKLIST, &bctx);
+}
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
   if (!ctx->raw_response) ctx->raw_response = _calloc(sizeof(in3_response_t), i + 1);
