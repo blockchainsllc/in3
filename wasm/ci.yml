@@ -25,7 +25,7 @@ test_asmjs:
     - cd wasm/test
     - sh /prepare.sh
     - npm install
-    - npm run test_coverage
+    - npm run test_report
   artifacts:
     paths:
       - wasm/test/coverage
