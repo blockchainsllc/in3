@@ -296,7 +296,8 @@ static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_r
   assert_in3_ctx(ctx);
   assert_in3_response(response);
   // we block this node
-  if (node && IN3_OK != in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node->address)) {
+  in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+  if (node && IN3_OK != in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx)) {
     ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
     clear_response(response);                                                                         // free up memory
   }
@@ -357,7 +358,10 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   if (ctx_parse_response(ctx, response->data.data, response->data.len)) {
     // in case of an error we get a error-code and error is set in the ctx?
     // so we need to block the node.
-    if (node) in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node->address);
+    if (node) {
+      in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+      in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
+    }
     clear_response(response); // we want to save memory and free the invalid response
     return ctx->verification_state;
   }
@@ -394,7 +398,8 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
       }
       else {
         in3_log_debug("we have a system-error from node, so we block it ..\n");
-        in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node->address);
+        in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+        in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
         return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
       }
     }
@@ -416,8 +421,10 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
         response->state = res;
         response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
       }
-      if (!vc.dont_blacklist)
-        in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, node->address);
+      if (!vc.dont_blacklist) {
+        in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+        in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
+      }
       return res;
     }
 

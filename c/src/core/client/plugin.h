@@ -441,6 +441,15 @@ typedef struct {
   node_match_t* node; /**< Node that gave us a valid response */
 } in3_nl_followup_ctx_t;
 
+// -------- NL_BLACKLIST ---------
+typedef struct {
+  union {
+    uint8_t*    address; /**< address of node that is to be blacklisted */
+    const char* url;     /**< URL of node that is to be blacklisted */
+  };
+  bool is_addr; /**< Specifies whether the identifier is an address or a url */
+} in3_nl_blacklist_ctx_t;
+
 // -------- NL_OFFLINE ---------
 typedef struct {
   in3_vctx_t*  vctx;    /**< Request context. */

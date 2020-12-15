@@ -471,11 +471,13 @@ static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int bs, u
 
     if (DIFF_ATMOST(d_get_longk(d_get(d_get(err, K_DATA), K_SIGNED_ERR), K_CURRENT_BLOCK), header_number, *min_blk_height)) {
       vc_err(vc, "blacklisting signer (reported wrong min block-height)");
-      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, signer_addr);
+      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
     }
     else if (!DIFF_ATMOST(d_get_longk(err, K_CURRENT_BLOCK), vc->currentBlock, 1)) {
       vc_err(vc, "blacklisting signer (out-of-sync)");
-      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, signer_addr);
+      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
     }
     if (dctx.cleanup) dctx.cleanup(dctx.data);
   }

@@ -174,4 +174,11 @@ NONULL static inline in3_ret_t blacklist_node_addr(in3_nodeselect_def_t* data, c
   return IN3_OK;
 }
 
+NONULL static inline in3_ret_t blacklist_node_url(in3_nodeselect_def_t* data, const char* node_url, uint64_t secs_from_now) {
+  for (unsigned int i = 0; i < data->nodelist_length; ++i)
+    if (!strcmp(data->nodelist[i].url, node_url))
+      return blacklist_node(data, data->nodelist[i].index, secs_from_now);
+  return IN3_OK;
+}
+
 #endif

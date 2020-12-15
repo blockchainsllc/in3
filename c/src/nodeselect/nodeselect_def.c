@@ -529,8 +529,11 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     }
     case PLGN_ACT_NL_PICK_FOLLOWUP:
       return pick_followup(data, plugin_ctx);
-    case PLGN_ACT_NL_BLACKLIST:
-      return blacklist_node_addr(data, ((uint8_t*) plugin_ctx), BLACKLISTTIME);
+    case PLGN_ACT_NL_BLACKLIST: {
+      in3_nl_blacklist_ctx_t* bctx = plugin_ctx;
+      return bctx->is_addr ? blacklist_node_addr(data, bctx->address, BLACKLISTTIME)
+                           : blacklist_node_url(data, bctx->url, BLACKLISTTIME);
+    }
     case PLGN_ACT_NL_FAILABLE:
       return handle_failable(data, plugin_ctx);
     case PLGN_ACT_NL_OFFLINE:
