@@ -271,7 +271,7 @@ pages:
     - clangcheck
     - vulnerabilities
     - java_linux
-    - test_wasm
+    - test_asmjs
     - python_linux
   script:
     - mkdir -p public/lib

@@ -60,10 +60,8 @@ test_wasm:
     - mv in3/wasm.js in3/index.js
     - sh /prepare.sh
     - npm install
-    - npm run test_coverage
+    - npm run test_report
   artifacts:
-    paths:
-      - wasm/test/coverage
     reports:
       junit: wasm/test/mocha.xml
 
@@ -83,10 +81,8 @@ test_zksync_wasm:
     - mv in3/zksync-wasm.js in3/index.js
     - sh /prepare.sh
     - npm install
-    - npm run test_coverage
+    - npm run test_report
   artifacts:
-    paths:
-      - wasm/test/coverage
     reports:
       junit: wasm/test/mocha.xml
 
