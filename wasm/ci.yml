@@ -13,7 +13,7 @@
 
 test_asmjs:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
     - wasm
   stage: wasm
@@ -47,7 +47,7 @@ wasm:
 
 test_wasm:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
     - wasm
   stage: wasm
@@ -70,7 +70,7 @@ test_wasm:
 
 test_zksync_wasm:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
     - wasm
   stage: wasm
@@ -92,7 +92,7 @@ test_zksync_wasm:
 
 test_zksync_asmjs:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
     - wasm
   stage: wasm
