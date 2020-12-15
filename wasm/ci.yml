@@ -25,7 +25,7 @@ test_asmjs:
     - cd wasm/test
     - sh /prepare.sh
     - npm install
-    - npm test_coverage
+    - npm run test_coverage
   artifacts:
     paths:
       - wasm/test/coverage
@@ -101,7 +101,7 @@ test_zksync_asmjs:
     - mv in3/zksync.js in3/index.js
     - sh /prepare.sh
     - npm install
-    - npm test_report
+    - npm run test_report
   artifacts:
     paths:
       - wasm/test/coverage
