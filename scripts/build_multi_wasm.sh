@@ -49,6 +49,8 @@ build btc-wasm    "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BA
 build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
 build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
 build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
+build eth1-wasm   "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false" 
+build eth1        "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false" 
 
 # go back to where we came from
 cd $CWD

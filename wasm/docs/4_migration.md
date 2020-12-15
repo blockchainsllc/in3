@@ -32,7 +32,7 @@ Why are dependencies bad? According to a security survey by npm, 77% of responde
 
 For the WASM-Client we tried to keep the API as close as possible to the old TypeScript-Version, but due to new features and some WASM-specific behaviors there are some changes you need to be aware of:
 
-1. WASM loads async
+1. **WASM loads async**
     Since WebAssembly is always loaded async, some function (like special util-functions) may not be available if you execute code directly after requiring the client. For all those cases the Incubed-Client now offers a onInit-function, which also returns a promis with the result. ( his is not be needed for normale rpc-request, since they are already async)
 
     ```js
@@ -44,10 +44,11 @@ For the WASM-Client we tried to keep the API as close as possible to the old Typ
     })
     ```
 
-2. Freeing Memory
+2. **Freeing Memory**
     As every C/C++-Developer knows, in order to avoid memory leaks, you need to free memory after usage. While it may not make a big difference if you only use one instance, if you create a temp instance, make sure to call `.free()` afterwards. 
 
-3. We removed a lot of internal functions from the Client, like
+3. **Deprecated Functions**
+    We removed a lot of internal functions from the Client, like
     - `getChainContext()`
     - `updateWhiteListNodes()`
     - `updateNodeList()`
@@ -60,7 +61,7 @@ For the WASM-Client we tried to keep the API as close as possible to the old Typ
     - `setConfig(config: Partial<IN3Config>)` - changes (partial) configurations
     - `execLocal(method: string, params?: any[])` - to execute a rpc request synchronously directly in the client, like ( `web3_version` or )
 
-4. Changes in the Eth-API
+4. **Changes in the Eth-API**
     We extended the Eth-API (`in3.eth`) and added the following functions.
 
     - `accounts` - the Account API for adding signer keys
@@ -69,9 +70,26 @@ For the WASM-Client we tried to keep the API as close as possible to the old Typ
     - `web3ContractAt()` - creates a instance of a Contract with the same methods as web3 would do
     - `contractAt()`- creates a instance of an contract with the same methods as ethers would do
 
-5. New APIs
+5. **New APIs**
     - `btc`-  this API support verified Bitcoin-Responses ( we will have a seperate blogpost about it )
     - `zksync` - API for using a zksync-service
 
+
+### Optimizing size
+
+The official `in3`-module release contains different configurations you can choose from. This way you can pick a version which is just small enough to fit your needs. Currently those Versions are included:
+
+- `require('in3')` - default, uses asmjs and includes all modules (eth,btc, zksync) - 900kB
+- `require('in3/wasm')` - wasm-version which includes all modules (eth,btc, zksync) - 525kB
+- `require('in3/eth1')` - Ethereum only asmjs module - 823kB
+- `require('in3/eth1-wasm')` - Ethereum only wasm module - 470kB
+- `require('in3/btc')` - Bitcoin - the asmjs-version with only eth_nano and btc - 656kB
+- `require('in3/btc-wasm')` - Bitcoin - the wasm-version with only eth_nano and btc - 400kB
+- `require('in3/zksync')` - Zksync - the asmjs-version with only eth_full, ipfs and zksync - 2.8MB
+- `require('in3/zksync-wasm')` - Zksync - the wasm-version with only eth_full, ipfs and zksync - 819kB
+- `require('in3/min')` - Minimal - the asmjs-version with only eth_nano - 524kB
+- `require('in3/min-wasm')` - Minimal - the wasm-version with only eth_nano - 313kB
+
+For all wasm-versions we are embedding the wasm-code as base64 directly into the code making it easier to bundle the package.
 
 
