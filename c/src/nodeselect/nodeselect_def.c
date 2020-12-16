@@ -291,7 +291,7 @@ static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   int rc = ctx->client->request_count;
   if (ctx->client->signature_count && ctx->client->request_count <= 1)
     rc = 2;
-  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, filter);
+  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, filter, NULL);
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
@@ -314,7 +314,7 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
     in3_node_filter_t filter       = NODE_FILTER_INIT;
     filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
     filter.props                   = c->node_props | NODE_PROP_SIGNER;
-    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, data, &signer_nodes, total_sig_cnt, filter);
+    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, data, &signer_nodes, total_sig_cnt, filter, ctx->nodes);
     if (res < 0)
       return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
     if (ctx->signers) _free(ctx->signers);

@@ -382,7 +382,7 @@ NONULL static char* to_http_url(char* src_url) {
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found,
-                                        in3_node_filter_t filter) {
+                                        in3_node_filter_t filter, const node_match_t* exclude) {
 
   int                found      = 0;
   uint32_t           weight_sum = 0;
@@ -408,6 +408,19 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
       if (!in_filter_nodes)
         continue;
     }
+
+    if (exclude != NULL) {
+      bool is_excluded = false;
+      for (const node_match_t* exc = exclude; exc; exc = exc->next) {
+        if (memcmp(exc->address, node_def->address, 20) == 0) {
+          is_excluded = true;
+          break;
+        }
+      }
+      if (is_excluded)
+        continue;
+    }
+
     if (weight_def->blacklisted_until > (uint64_t) now) continue;
     if (BIT_CHECK(node_def->attrs, ATTR_BOOT_NODE)) goto SKIP_FILTERING;
 
@@ -479,7 +492,7 @@ SKIP_UPDATE:
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, in3_node_filter_t filter) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, in3_node_filter_t filter, const node_match_t* exclude) {
   // get all nodes from the nodelist
   uint64_t           now       = in3_time(NULL);
   in3_node_t*        all_nodes = NULL;
@@ -494,7 +507,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
   // filter out nodes
   node_match_t* found = in3_node_list_fill_weight(
       ctx->client, data, all_nodes, weights, all_nodes_len,
-      now, &total_weight, &total_found, filter);
+      now, &total_weight, &total_found, filter, exclude);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -507,7 +520,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
     if (blacklisted > all_nodes_len / 2) {
       for (unsigned int i = 0; i < all_nodes_len; i++)
         weights[i].blacklisted_until = 0;
-      found = in3_node_list_fill_weight(ctx->client, data, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter);
+      found = in3_node_list_fill_weight(ctx->client, data, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter, exclude);
     }
 
     if (total_found == 0)
