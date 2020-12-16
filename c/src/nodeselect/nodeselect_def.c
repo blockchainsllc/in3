@@ -291,7 +291,31 @@ static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   int rc = ctx->client->request_count;
   if (ctx->client->signature_count && ctx->client->request_count <= 1)
     rc = 2;
-  return in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, filter, NULL);
+
+  // we must exclude any manually specified signer nodes
+  node_match_t *signers = NULL, **s = &signers;
+  d_token_t*    dsigners = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
+  if (dsigners && d_type(dsigners) == T_ARRAY) {
+    unsigned int len = d_len(dsigners);
+    for (unsigned int i = 0; i < len; i++) {
+      d_token_t* dsigner = d_get_at(dsigners, i);
+      if (d_type(dsigner) == T_BYTES && d_len(dsigner) == 20) {
+        *s = _calloc(1, sizeof(node_match_t));
+        memcpy((*s)->address, d_bytes(dsigner)->data, 20);
+        (*s)->next = NULL;
+        s          = &(*s)->next;
+      }
+    }
+  }
+
+  in3_ret_t     ret = in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, filter, signers);
+  node_match_t* tmp = NULL;
+  while (signers) {
+    tmp = signers->next;
+    _free(signers);
+    signers = tmp;
+  }
+  return ret;
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
