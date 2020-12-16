@@ -292,4 +292,9 @@ int transfer_value(evm_t* current, address_t from_account, address_t to_account,
 
   return 0;
 }
+
+void increment_nonce(account_t* ac, bytes32_t nonce_output) {
+  uint8_t one = 1;
+  uint256_set(nonce_output, big_add(ac->nonce, 32, &one, 1, nonce_output, 32), ac->nonce);
+}
 #endif
