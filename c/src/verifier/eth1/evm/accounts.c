@@ -113,8 +113,7 @@ account_t* evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, addres
   // increment the nonce of the sender
   account_t* sender_account = evm_get_account(evm, caller, 1);
   bytes32_t  new_nonce;
-  uint8_t    one = 1;
-  uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
+  increment_nonce(sender_account, new_nonce);
   return new_account;
 }
 
