@@ -136,7 +136,7 @@ static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint
   TRY(zksync_get_account(conf, ctx, &account))
   assert(account);
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
-  if(signature.len == 65)
+  if (signature.len == 65)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);
   memcpy(sync_key, conf->sync_key, 32);
@@ -218,11 +218,12 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
     return IN3_OK;
   }
   d_token_t* result;
-  int        ss = strlen(type) + 4 + 50 * 2;
-  sb_t       sb = {.allocted = ss, .data = alloca(ss), .len = 0};
-  sb_add_char(&sb, '"');
+  bool       is_object_type = *type == '{';
+  int        ss             = strlen(type) + 4 + 50 * 2 - is_object_type * 2;
+  sb_t       sb             = {.allocted = ss, .data = alloca(ss), .len = 0};
+  if (!is_object_type) sb_add_char(&sb, '"');
   sb_add_chars(&sb, type);
-  sb_add_bytes(&sb, "\",", &to, 1, false);
+  sb_add_bytes(&sb, is_object_type ? "," : "\",", &to, 1, false);
   sb_add_char(&sb, ',');
   switch (d_type(token)) {
     case T_BYTES:
@@ -242,7 +243,7 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
   memset(fee, 0, 32);
   long_to_bytes(d_get_longk(result, key("totalFee")), fee + 24);
 #else
-  *fee           = d_get_longk(result, key("totalFee"));
+  *fee = d_get_longk(result, key("totalFee"));
 #endif
   return IN3_OK;
 }
@@ -484,12 +485,27 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   return ret;
 }
 
-static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  bytes32_t pk;
-  address_t pub_hash;
-  uint32_t  nonce;
+static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  bytes32_t       pk;
+  address_t       pub_hash;
+  uint32_t        nonce;
+  d_token_t*      token = params_get(params, key("token"), 0);
+  zksync_token_t* token_data;
+#ifdef ZKSYNC_256
+  bytes32_t fee;
+#else
+  uint64_t fee;
+#endif
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
+  TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
+  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}",
+#ifdef ZKSYNC_256
+                     fee
+#else
+                     &fee
+#endif
+                     ))
   zkcrypto_pk_to_pubkey(pk, pub_hash);
   if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL);
   if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
@@ -502,7 +518,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   }
   if (!cached) {
     sb_t      sb  = {0};
-    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, nonce, conf->account, conf->account_id);
+    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, pk, nonce, conf->account, conf->account_id, fee, token_data);
     if (ret && sb.data) _free(sb.data);
     if (!sb.data) return IN3_EUNKNOWN;
     TRY(ret)
@@ -519,11 +535,6 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     return in3_rpc_handle_finish(ctx);
   }
   return ret;
-
-  sb_t      sb = {0};
-  in3_ret_t r  = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, nonce, conf->account, conf->account_id);
-  if (r < 0) {
-  }
 }
 
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
@@ -544,7 +555,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0 || strcmp(method, "zksync_deposit") == 0) return payin(conf, ctx, params);
   if (strcmp(method, "zksync_syncTransfer") == 0 || strcmp(method, "zksync_transfer") == 0) return transfer(conf, ctx, params, ZK_TRANSFER);
   if (strcmp(method, "zksync_withdraw") == 0) return transfer(conf, ctx, params, ZK_WITHDRAW);
-  if (strcmp(method, "zksync_setKey") == 0) return set_key(conf, ctx);
+  if (strcmp(method, "zksync_setKey") == 0) return set_key(conf, ctx, params);
   if (strcmp(method, "zksync_emergencyWithdraw") == 0) return emergency_withdraw(conf, ctx, params);
   if (strcmp(method, "zksync_getKey") == 0) {
     bytes32_t k;
