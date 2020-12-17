@@ -490,7 +490,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   address_t       pub_hash;
   uint32_t        nonce;
   d_token_t*      token = params_get(params, key("token"), 0);
-  zksync_token_t* token_data;
+  zksync_token_t* token_data = NULL;
   if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
 #ifdef ZKSYNC_256
   bytes32_t fee;
