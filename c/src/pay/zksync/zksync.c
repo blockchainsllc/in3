@@ -243,7 +243,7 @@ static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t
   memset(fee, 0, 32);
   long_to_bytes(d_get_longk(result, key("totalFee")), fee + 24);
 #else
-  *fee = d_get_longk(result, key("totalFee"));
+  *fee           = d_get_longk(result, key("totalFee"));
 #endif
   return IN3_OK;
 }
@@ -489,7 +489,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   bytes32_t       pk;
   address_t       pub_hash;
   uint32_t        nonce;
-  d_token_t*      token = params_get(params, key("token"), 0);
+  d_token_t*      token      = params_get(params, key("token"), 0);
   zksync_token_t* token_data = NULL;
   if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
 #ifdef ZKSYNC_256
@@ -500,7 +500,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
-  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}",
+  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
 #ifdef ZKSYNC_256
                      fee
 #else

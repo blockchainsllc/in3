@@ -286,7 +286,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   sb_add_rawbytes(sb, "\",\"newPkHash\":\"sync:", bytes(sync_pub_key, 20), 0);
   sb_add_chars(sb, "\",\"feeToken\":");
   sb_add_int(sb, token->id);
-  sb_add_chars(sb, "\",\"fee\":");
+  sb_add_chars(sb, ",\"fee\":");
 #ifdef ZKSYNC_256
   to_dec(dec, fee);
   sb_add_chars(sb, dec);
@@ -297,7 +297,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   sb_add_int(sb, nonce);
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
   sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
-  sb_add_rawbytes(sb, "},\"ethSignature\":\"0x", signature, 0);
+  sb_add_rawbytes(sb, "\"},\"ethSignature\":\"0x", signature, 0);
   sb_add_chars(sb, "\"},null,false");
   return IN3_OK;
 }
