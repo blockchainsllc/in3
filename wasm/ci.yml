@@ -11,34 +11,21 @@
     paths:
       - .npm/
 
-asmjs:
-  image: docker.slock.it/build-images/cmake:clang11
-  needs: []
-  stage: bindings
-  tags:
-    - short-jobs
-  script:
-    - cd scripts
-    - ./build_multi_wasm.sh --index
-  artifacts:
-    paths:
-      - in3_index
-
 test_asmjs:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
-    - asmjs
+    - wasm
   stage: wasm
   tags:
     - short-jobs
   extends: .cache_setup
   script:
-    - mv in3_index wasm/test/in3
+    - mv in3_wasm wasm/test/in3
     - cd wasm/test
     - sh /prepare.sh
     - npm install
-    - npm test
+    - npm run test_report
   artifacts:
     paths:
       - wasm/test/coverage
@@ -53,16 +40,14 @@ wasm:
   tags:
     - short-jobs
   script:
-    - cd scripts
-    - ./build_multi_wasm.sh --wasm
+    - scripts/build_multi_wasm.sh in3_wasm
   artifacts:
     paths:
       - in3_wasm
-      - wasm_build
 
 test_wasm:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
     - wasm
   stage: wasm
@@ -72,225 +57,57 @@ test_wasm:
   script:
     - mv in3_wasm wasm/test/in3
     - cd wasm/test
+    - mv in3/wasm.js in3/index.js
     - sh /prepare.sh
     - npm install
-    - npm run test_coverage
+    - npm run test_report
   artifacts:
-    paths:
-      - wasm/test/coverage
     reports:
       junit: wasm/test/mocha.xml
-
-
-zksync_wasm:
-  image: docker.slock.it/build-images/cmake:clang11
-  needs: []
-  stage: bindings
-  tags:
-    - long-jobs
-  script:
-    - cd scripts
-    - ./build_multi_wasm.sh --zksync-wasm
-  artifacts:
-    paths:
-      - in3_zksync-wasm
 
 
 test_zksync_wasm:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
-    - zksync_wasm
+    - wasm
   stage: wasm
   tags:
     - short-jobs
   extends: .cache_setup
   script:
-    - mv in3_zksync-wasm wasm/test/in3
+    - mv in3_wasm wasm/test/in3
     - cd wasm/test
+    - mv in3/zksync-wasm.js in3/index.js
     - sh /prepare.sh
     - npm install
-    - npm run test_coverage
+    - npm run test_report
   artifacts:
-    paths:
-      - wasm/test/coverage
     reports:
       junit: wasm/test/mocha.xml
-
-zksync_asmjs:
-  image: docker.slock.it/build-images/cmake:clang11
-  needs: []
-  stage: bindings
-  tags:
-    - long-jobs
-  script:
-    - cd scripts
-    - ./build_multi_wasm.sh --zksync
-  artifacts:
-    paths:
-      - in3_zksync
-
 
 test_zksync_asmjs:
   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-  image: docker.slock.it/build-images/node:10-alpine
+  image: docker.slock.it/build-images/node:11-alpine
   needs:
-    - zksync_asmjs
+    - wasm
   stage: wasm
   tags:
     - short-jobs
   extends: .cache_setup
   script:
-    - mv in3_zksync wasm/test/in3
+    - mv in3_wasm wasm/test/in3
     - cd wasm/test
+    - mv in3/zksync.js in3/index.js
     - sh /prepare.sh
     - npm install
-    - npm test
+    - npm run test_report
   artifacts:
     paths:
       - wasm/test/coverage
     reports:
       junit: wasm/test/mocha.xml
 
-btc_wasm:
-  image: docker.slock.it/build-images/cmake:clang11
-  needs: []
-  stage: bindings
-  tags:
-    - long-jobs
-  script:
-    - cd scripts
-    - ./build_multi_wasm.sh --btc-wasm
-  artifacts:
-    paths:
-      - in3_btc-wasm
-
-# test_btc_wasm:
-#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-#   image: docker.slock.it/build-images/node:10-alpine
-#   needs:
-#     - btc_wasm
-#   stage: wasm
-#   tags:
-#     - short-jobs
-#   extends: .cache_setup
-#   script:
-#     - mv in3_btc-wasm wasm/test/in3
-#     - cd wasm/test
-#     - sh /prepare.sh
-#     - npm install
-#     - npm run test_coverage
-#   artifacts:
-#     paths:
-#       - wasm/test/coverage
-#     reports:
-#       junit: wasm/test/mocha.xml
-
-
-btc_asmjs:
-  image: docker.slock.it/build-images/cmake:clang11
-  needs: []
-  stage: bindings
-  tags:
-    - long-jobs
-  script:
-    - cd scripts
-    - ./build_multi_wasm.sh --btc
-  artifacts:
-    paths:
-      - in3_btc
-
-# test_btc_amsjs:
-#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-#   image: docker.slock.it/build-images/node:10-alpine
-#   needs:
-#     - btc_asmjs
-#   stage: wasm
-#   tags:
-#     - short-jobs
-#   extends: .cache_setup
-#   script:
-#     - mv in3_btc wasm/test/in3
-#     - cd wasm/test
-#     - sh /prepare.sh
-#     - npm install
-#     - npm test
-#   artifacts:
-#     paths:
-#       - wasm/test/coverage
-#     reports:
-#       junit: wasm/test/mocha.xml
-
-
-min_wasm:
-  image: docker.slock.it/build-images/cmake:clang11
-  needs: []
-  stage: bindings
-  tags:
-    - long-jobs
-  script:
-    - cd scripts
-    - ./build_multi_wasm.sh --min-wasm
-  artifacts:
-    paths:
-      - in3_min-wasm
-
-
-# test_min_wasm:
-#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-#   image: docker.slock.it/build-images/node:10-alpine
-#   needs:
-#     - min_wasm
-#   stage: wasm
-#   tags:
-#     - short-jobs
-#   extends: .cache_setup
-#   script:
-#     - mv in3_min-wasm wasm/test/in3
-#     - cd wasm/test
-#     - sh /prepare.sh
-#     - npm install
-#     - npm run test_coverage
-#   artifacts:
-#     paths:
-#       - wasm/test/coverage
-#     reports:
-#       junit: wasm/test/mocha.xml
-
-min_asmjs:
-  image: docker.slock.it/build-images/cmake:clang11
-  needs: []
-  stage: bindings
-  tags:
-    - long-jobs
-  script:
-    - cd scripts
-    - ./build_multi_wasm.sh --min
-  artifacts:
-    paths:
-      - in3_min
-
-
-# test_min_asmjs:
-#   coverage: '/Lines.*:\s+(\d+.\d+\%)/'
-#   image: docker.slock.it/build-images/node:10-alpine
-#   needs:
-#     - min_asmjs
-#   stage: wasm
-#   tags:
-#     - short-jobs
-#   extends: .cache_setup
-#   script:
-#     - mv in3_min wasm/test/in3
-#     - cd wasm/test
-#     - sh /prepare.sh
-#     - npm install
-#     - npm test
-#   artifacts:
-#     paths:
-#       - wasm/test/coverage
-#     reports:
-#       junit: wasm/test/mocha.xml
 
 
 wasm-slockit-npm:
@@ -304,7 +121,7 @@ wasm-slockit-npm:
     - wasm
   script:
     - sh /prepare.sh
-    - cd wasm_build/module
+    - cd in3_wasm
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish
 
@@ -318,35 +135,7 @@ wasm-public-npm:
     - wasm
   script:
     - sh /prepare.sh
-    - cd wasm_build/module
+    - cd in3-wasm
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
 
-asmjs-slockit-npm:
-  image: docker.slock.it/build-images/node:11-alpine
-  stage: deploy
-  tags:
-    - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/'
-  needs:
-    - asmjs
-  script:
-    - sh /prepare.sh
-    - cd asmjs_build/module
-    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
-    - npm publish
-
-asmjs-public-npm:
-  image: docker.slock.it/build-images/node:11-alpine
-  stage: deploy
-  tags:
-    - short-jobs
-  extends: .only_deploy
-  needs:
-    - asmjs
-  script:
-    - sh /prepare.sh
-    - cd asmjs_build/module
-    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
-    - npm publish --registry https://registry.npmjs.org
