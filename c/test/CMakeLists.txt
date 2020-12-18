@@ -155,7 +155,7 @@ foreach (testdir
         GeneralStateTests/stTransitionTest
         GeneralStateTests/stCallCodes
         #GeneralStateTests/stPreCompiledContracts2
-        #GeneralStateTests/stZeroCallsTest
+        GeneralStateTests/stZeroCallsTest
         GeneralStateTests/stBadOpcode
         GeneralStateTests/stMemoryStressTest
         GeneralStateTests/stShift
@@ -195,6 +195,7 @@ foreach (testdir
     file(GLOB files "testdata/evm/${testdir}/*.json")
 
     # exclude tests, but fix them later    
+    list(FILTER files EXCLUDE REGEX ".*ZeroValue_(CALLCODE|DELEGATECALL)_To(Empty|OneStorageKey).json$") # in ZeroCallsTest
     list(FILTER files EXCLUDE REGEX ".*randomStatetest(48|148|150|154|159|178|184|205|248|306|458|467|498|554|618|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
     list(FILTER files EXCLUDE REGEX ".*ecpairing(.*).json$")
