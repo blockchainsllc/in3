@@ -58,6 +58,12 @@ typedef enum zk_msg_type {
   ZK_WITHDRAW = 3
 } zk_msg_type_t;
 
+typedef enum zk_sign_type {
+  ZK_SIGN_PK = 1,
+  ZK_SIGN_CONTRACT = 2,
+  ZK_SIGN_CREATE2 = 3
+} zk_sign_type_t;
+
 typedef struct {
   char*           provider_url;
   uint8_t*        account;
