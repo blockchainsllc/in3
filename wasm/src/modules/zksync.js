@@ -62,8 +62,8 @@ class ZksyncAPI {
   }
 
 
-  setKey() {
-    return this.send('zksync_setKey')
+  setKey(tokenSymbol) {
+    return this.send('zksync_setKey', tokenSymbol || 'ETH')
   }
 
 

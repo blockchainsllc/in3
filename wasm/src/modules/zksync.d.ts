@@ -130,8 +130,9 @@ export declare interface ZksyncAPI<BufferType> {
 
     /**
      * set the signer key based on the current pk
+     * @param tokenSymbol the address of the token
      */
-    setKey(): Promise<String>
+    setKey(tokenSymbol: string): Promise<String>
 
     /**
      * returns the state of receipt of the PriorityOperation

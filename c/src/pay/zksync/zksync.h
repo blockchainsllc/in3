@@ -90,6 +90,13 @@ typedef struct {
 in3_ret_t in3_register_zksync(in3_t* c);
 
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, uint8_t* account, uint32_t account_id);
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, uint8_t* account, uint32_t account_id,
+#ifdef ZKSYNC_256
+                                     bytes32_t fee
+#else
+                                     uint64_t fee
+#endif
+                                     ,
+                                     zksync_token_t* token);
 
 #endif
