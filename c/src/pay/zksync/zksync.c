@@ -485,11 +485,19 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   return ret;
 }
 
+static zk_sign_type_t get_sign_type(d_token_t* type) {
+  if (type==NULL) return ZK_SIGN_PK;
+  char* c = d_string(type);
+  if (strcmp(c,"contract")==0) return ZK_SIGN_CONTRACT;
+  if (strcmp(c,"create2")==0) return ZK_SIGN_CREATE2;
+  return ZK_SIGN_PK;
+}
 static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   bytes32_t       pk;
   address_t       pub_hash;
   uint32_t        nonce;
   d_token_t*      token      = params_get(params, key("token"), 0);
+  zk_sign_type_t sign_type   = get_sign_type(params_get(params, key("type"), 1));
   zksync_token_t* token_data = NULL;
   if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
 #ifdef ZKSYNC_256
@@ -500,7 +508,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
-  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
+  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, sign_type==ZK_SIGN_CONTRACT?"{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}":"{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
 #ifdef ZKSYNC_256
                      fee
 #else
@@ -510,6 +518,24 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   zkcrypto_pk_to_pubkey(pk, pub_hash);
   if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL);
   if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
+
+  if (sign_type==ZK_SIGN_CONTRACT) {
+    d_token_t* tx_receipt=NULL;
+    uint8_t data[128];
+    memset(data,0,128);
+    data[31]=64; // offset for bytes
+    data[95]=20; // length of the pubKeyHash
+    memcpy(data+96,pub_hash,20); // copy new pubKeyHash
+    int_to_bytes(nonce,data+60); // nonce
+    sb_t sb = {0};
+    sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(conf->main_contract, 20), 0);
+    sb_add_rawbytes(&sb, "\",\"data\":\"0x595a5ebc", bytes(data, 128), 0);
+    sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
+
+    TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+
+    if (tx_receipt==NULL || d_type(tx_receipt)!=T_OBJECT || d_get_intk(tx_receipt,K_STATUS)==0) return ctx_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
+  }
 
   // create payload
   cache_entry_t* cached = ctx->ctx->cache;
