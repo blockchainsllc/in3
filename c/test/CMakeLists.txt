@@ -187,7 +187,7 @@ foreach (testdir
         #GeneralStateTests/stStaticCall
         GeneralStateTests/stMemExpandingEIP150Calls
         GeneralStateTests/stArgsZeroOneBalance
-        #GeneralStateTests/stAttackTest
+        GeneralStateTests/stAttackTest
         #GeneralStateTests/stReturnDataTest
         TrieTests
         RLPTests
