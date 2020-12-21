@@ -382,7 +382,7 @@ NONULL static char* to_http_url(char* src_url) {
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found,
-                                        in3_node_filter_t filter, const node_match_t* exclude) {
+                                        const in3_node_filter_t* filter) {
 
   int                found      = 0;
   uint32_t           weight_sum = 0;
@@ -397,9 +397,9 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
     node_def   = all_nodes + i;
     weight_def = weights + i;
 
-    if (filter.nodes != NULL) {
+    if (filter && filter->nodes) {
       bool in_filter_nodes = false;
-      for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
+      for (d_iterator_t it = d_iter(filter->nodes); it.left; d_iter_next(&it)) {
         if (memcmp(d_bytesl(it.token, 20)->data, node_def->address, 20) == 0) {
           in_filter_nodes = true;
           break;
@@ -409,9 +409,9 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
         continue;
     }
 
-    if (exclude != NULL) {
+    if (filter && filter->exclusions) {
       bool is_excluded = false;
-      for (const node_match_t* exc = exclude; exc; exc = exc->next) {
+      for (const node_match_t* exc = filter->exclusions; exc; exc = exc->next) {
         if (memcmp(exc->address, node_def->address, 20) == 0) {
           is_excluded = true;
           break;
@@ -431,7 +431,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
 #endif
 
     if (node_def->deposit < c->min_deposit) continue;
-    if (!in3_node_props_match(filter.props, node_def->props)) continue;
+    if (!in3_node_props_match(filter->props, node_def->props)) continue;
 
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
@@ -492,7 +492,7 @@ SKIP_UPDATE:
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, in3_node_filter_t filter, const node_match_t* exclude) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter) {
   // get all nodes from the nodelist
   uint64_t           now       = in3_time(NULL);
   in3_node_t*        all_nodes = NULL;
@@ -507,7 +507,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
   // filter out nodes
   node_match_t* found = in3_node_list_fill_weight(
       ctx->client, data, all_nodes, weights, all_nodes_len,
-      now, &total_weight, &total_found, filter, exclude);
+      now, &total_weight, &total_found, filter);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -520,7 +520,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
     if (blacklisted > all_nodes_len / 2) {
       for (unsigned int i = 0; i < all_nodes_len; i++)
         weights[i].blacklisted_until = 0;
-      found = in3_node_list_fill_weight(ctx->client, data, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter, exclude);
+      found = in3_node_list_fill_weight(ctx->client, data, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter);
     }
 
     if (total_found == 0)

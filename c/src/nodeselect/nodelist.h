@@ -52,6 +52,7 @@
 typedef struct {
   in3_node_props_t props;
   d_token_t*       nodes;
+  node_match_t*    exclusions;
 } in3_node_filter_t;
 
 typedef struct node_offline_ {
@@ -104,7 +105,7 @@ NONULL in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, b
  * filters and fills the weights on a returned linked list.
  */
 NONULL_FOR((1, 2, 3, 4, 7, 8))
-node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights, unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found, in3_node_filter_t filter, const node_match_t* exclude);
+node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights, unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found, const in3_node_filter_t* filter);
 
 /**
  * calculates the weight for a node.
@@ -114,7 +115,7 @@ NONULL uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, u
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
 NONULL_FOR((1, 2, 3))
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, in3_node_filter_t filter, const node_match_t* exclude);
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter);
 
 /**
  * forces the client to update the nodelist

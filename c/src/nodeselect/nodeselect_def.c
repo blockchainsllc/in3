@@ -278,23 +278,8 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c) {
   return in3_cache_init(c, data);
 }
 
-static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
-  // init cache lazily this also means we can be sure that all other related plugins are registered by now
-  if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client))
-    return IN3_ECONFIG;
-
-  in3_node_filter_t filter = NODE_FILTER_INIT;
-  filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
-  filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
-
-  // Send parallel requests if signatures have been requested
-  int rc = ctx->client->request_count;
-  if (ctx->client->signature_count && ctx->client->request_count <= 1)
-    rc = 2;
-
-  // we must exclude any manually specified signer nodes
+static node_match_t* parse_signers(d_token_t* dsigners) {
   node_match_t *signers = NULL, **s = &signers;
-  d_token_t*    dsigners = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
   if (dsigners && d_type(dsigners) == T_ARRAY) {
     unsigned int len = d_len(dsigners);
     for (unsigned int i = 0; i < len; i++) {
@@ -307,14 +292,35 @@ static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
       }
     }
   }
+  return signers;
+}
 
-  in3_ret_t     ret = in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, filter, signers);
+static void free_signers(node_match_t* signers) {
   node_match_t* tmp = NULL;
   while (signers) {
     tmp = signers->next;
     _free(signers);
     signers = tmp;
   }
+}
+
+static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
+  // init cache lazily this also means we can be sure that all other related plugins are registered by now
+  if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client))
+    return IN3_ECONFIG;
+
+  in3_node_filter_t filter = NODE_FILTER_INIT;
+  filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
+  filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
+  filter.exclusions        = parse_signers(d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES)); // we must exclude any manually specified signer nodes
+
+  // Send parallel requests if signatures have been requested
+  int rc = ctx->client->request_count;
+  if (ctx->client->signature_count && ctx->client->request_count <= 1)
+    rc = 2;
+
+  in3_ret_t ret = in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, &filter);
+  free_signers(filter.exclusions);
   return ret;
 }
 
@@ -338,7 +344,8 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
     in3_node_filter_t filter       = NODE_FILTER_INIT;
     filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
     filter.props                   = c->node_props | NODE_PROP_SIGNER;
-    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, data, &signer_nodes, total_sig_cnt, filter, ctx->nodes);
+    filter.exclusions              = ctx->nodes;
+    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, data, &signer_nodes, total_sig_cnt, &filter);
     if (res < 0)
       return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
     if (ctx->signers) _free(ctx->signers);
