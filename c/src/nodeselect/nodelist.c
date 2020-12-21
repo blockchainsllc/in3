@@ -431,7 +431,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
 #endif
 
     if (node_def->deposit < c->min_deposit) continue;
-    if (!in3_node_props_match(filter->props, node_def->props)) continue;
+    if (filter && !in3_node_props_match(filter->props, node_def->props)) continue;
 
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
