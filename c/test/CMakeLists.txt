@@ -170,7 +170,7 @@ foreach (testdir
         #GeneralStateTests/stNonZeroCallsTest
         GeneralStateTests/stCodeSizeLimit
         #GeneralStateTests/stSystemOperationsTest
-        #GeneralStateTests/stHomesteadSpecific
+        GeneralStateTests/stHomesteadSpecific
         #GeneralStateTests/stCreate2
         GeneralStateTests/stCallDelegateCodesHomestead
         GeneralStateTests/stSStoreTest

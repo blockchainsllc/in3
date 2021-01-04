@@ -628,8 +628,19 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
     keccak(tmp, hash);
   }
 
+  // get nonce before the call
+  account_t* ac         = evm_get_account(evm, evm->address, 0);
+  uint8_t    prev_nonce = ac->nonce[31];
+
   // now execute the call
-  return evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
+  int res = evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
+
+  if (prev_nonce == ac->nonce[31]) {
+    // subcall returned OOG exception but we still need to increment contract nonce
+    bytes32_t new_nonce;
+    increment_nonce(ac, new_nonce);
+  }
+  return res;
 }
 int op_selfdestruct(evm_t* evm) {
   uint8_t adr[20], l, *p;

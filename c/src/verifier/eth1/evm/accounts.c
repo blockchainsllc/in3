@@ -113,8 +113,7 @@ account_t* evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, addres
   // increment the nonce of the sender
   account_t* sender_account = evm_get_account(evm, caller, 1);
   bytes32_t  new_nonce;
-  uint8_t    one = 1;
-  uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
+  increment_nonce(sender_account, new_nonce);
   return new_account;
 }
 
@@ -293,5 +292,10 @@ int transfer_value(evm_t* current, address_t from_account, address_t to_account,
   uint256_set(tmp, big_add(ac_to->balance, 32, value, value_len, tmp, 32), ac_to->balance);
 
   return 0;
+}
+
+void increment_nonce(account_t* ac, bytes32_t nonce_output) {
+  uint8_t one = 1;
+  uint256_set(nonce_output, big_add(ac->nonce, 32, &one, 1, nonce_output, 32), ac->nonce);
 }
 #endif
