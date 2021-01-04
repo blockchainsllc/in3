@@ -62,7 +62,9 @@ void finalize_and_refund_gas(evm_t* evm) {
     // finalize and refund
     if (evm->refund && evm->parent) {
       evm->parent->gas -= gas_used;
-      evm->gas += gas_used + evm->refund;
+      evm->gas += gas_used;
+      evm->parent->refund += evm->refund;
+      evm->refund = 0;
     }
     else {
       evm->gas += min(evm->refund, gas_used >> 1);

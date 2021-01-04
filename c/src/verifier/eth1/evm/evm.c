@@ -506,6 +506,20 @@ int evm_run(evm_t* evm, address_t code_address) {
   // done...
 
 #ifdef EVM_GAS
+  // check if we are executing a creation transaction
+  if (evm->properties & EVM_PROP_TXCREATE && evm->state == EVM_STATE_STOPPED && res == 0) {
+    // This is a successful creation transaction, so we need to deduce gas for creation and modify state
+    if (!(evm->properties & (EVM_PROP_FRONTIER | EVM_PROP_EIP150 | EVM_PROP_EIP158)) && (evm->return_data.len > EVM_MAX_CODE_SIZE)) {
+      res = EVM_ERROR_MAX_CODE_SIZE_EXCEEDED;
+    }
+    else {
+      // subtract gas cost for ceation transactions
+      subgas(evm->return_data.len * G_CODEDEPOSIT);
+      // Modify state
+      account_t* acc_adr = evm_get_account(evm, evm->account, true);
+      acc_adr->code      = evm->return_data;
+    }
+  }
   // debug gas output
   EVM_DEBUG_BLOCK({
     in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
