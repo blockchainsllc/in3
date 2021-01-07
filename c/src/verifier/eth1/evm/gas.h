@@ -160,6 +160,10 @@ void update_account_code(evm_t* evm, account_t* new_account);
       new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller); \
       no_address  = true;                                                                                  \
     }                                                                                                      \
+    else { /* if no code was already set for execution */                                                  \
+      account_t* ac = evm_get_account(parent, code_address, 0);                                            \
+      if (ac) evm.code = ac->code;                                                                         \
+    }                                                                                                      \
     if (res == 0 && !big_is_zero(value, l_value)) {                                                        \
       if (mode == EVM_CALL_MODE_STATIC)                                                                    \
         res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;                                                           \
