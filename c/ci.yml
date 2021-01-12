@@ -279,6 +279,8 @@ integration_longrun:
 
 integration_browser:
   stage: integration
+  variables:
+    REL_BRANCH: $CI_COMMIT_BRANCH
   extends: .only_release
   trigger:
     project: in3/ts/browser-test
