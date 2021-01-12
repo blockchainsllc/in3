@@ -269,6 +269,8 @@ examples_macos:
 
 integration_longrun:
   stage: integration
+  variables:
+    REL_BRANCH: $CI_COMMIT_BRANCH
   extends: .only_release
   trigger:
     project: qa/long-run
