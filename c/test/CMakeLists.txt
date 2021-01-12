@@ -141,7 +141,7 @@ foreach (testdir
         vmTests/vmArithmeticTest
         GeneralStateTests/stRandom
         #GeneralStateTests/stRevertTest
-        #GeneralStateTests/stInitCodeTest
+        GeneralStateTests/stInitCodeTest
         #GeneralStateTests/stCreateTest
         GeneralStateTests/stRandom2
         GeneralStateTests/stWalletTest
@@ -207,7 +207,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*(staticcall_createfails).json$")
     list(FILTER files EXCLUDE REGEX ".*((Call|Callcode)1024BalanceTooLow).json$") # in "GeneralStateTests/stChangedEIP150"
     list(FILTER files EXCLUDE REGEX ".*(RawCreateFailGasValue(Transfer|Transfer2)).json$") # in "GeneralStateTests/stEIP150singleCodeGasPrices"
-
+    list(FILTER files EXCLUDE REGEX ".*(CallContractToCreateContract(NoCash|OOG)).json$") # in "GeneralStateTests/stInitCodeTest"
 
     foreach (file ${files})
         get_filename_component(testname "${file}" NAME_WE)

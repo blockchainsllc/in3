@@ -155,8 +155,14 @@ void update_account_code(evm_t* evm, account_t* new_account);
     /**************************************************************/                                       \
     bool no_address = false;                                                                               \
     if (!address) {                                                                                        \
+      /* Flag EVM with "creating transaction", so the gas for modifying state will be deduced later */     \
+      evm.properties |= EVM_PROP_TXCREATE;                                                                 \
       new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller); \
       no_address  = true;                                                                                  \
+    }                                                                                                      \
+    else { /* if no code was already set for execution */                                                  \
+      account_t* ac = evm_get_account(parent, code_address, 0);                                            \
+      if (ac) evm.code = ac->code;                                                                         \
     }                                                                                                      \
     if (res == 0 && !big_is_zero(value, l_value)) {                                                        \
       if (mode == EVM_CALL_MODE_STATIC)                                                                    \
