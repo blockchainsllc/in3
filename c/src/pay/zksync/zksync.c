@@ -44,6 +44,12 @@
 #include <stdio.h>
 #include <string.h>
 
+static d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
+  return d_type(params + 1) == T_OBJECT
+             ? d_get(params + 1, k)
+             : d_get_at(params, index);
+}
+
 static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   //  amount
   d_token_t* tmp           = NULL;

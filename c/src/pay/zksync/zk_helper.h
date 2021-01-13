@@ -46,12 +46,6 @@
 
 void set_quoted_address(char* c, uint8_t* address);
 
-static d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
-  return d_type(params + 1) == T_OBJECT
-             ? d_get(params + 1, k)
-             : d_get_at(params, index);
-}
-
 in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result);
 
 /**
