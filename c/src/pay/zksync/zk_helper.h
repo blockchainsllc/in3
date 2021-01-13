@@ -71,9 +71,9 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* non
 
 in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
 #ifdef ZKSYNC_256
-                                uint8_t* fee
+                         uint8_t* fee
 #else
-                                uint64_t* fee
+                         uint64_t* fee
 #endif
 );
 

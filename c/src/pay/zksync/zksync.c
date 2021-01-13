@@ -38,12 +38,11 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
+#include "zk_helper.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-#include "zk_helper.h"
-
 
 static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   //  amount
@@ -123,8 +122,6 @@ static in3_ret_t payin(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token
 
   return ctx_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
 }
-
-
 
 static in3_ret_t emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   uint8_t         aid[4];
@@ -215,10 +212,10 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
 }
 
 static zk_sign_type_t get_sign_type(d_token_t* type) {
-  if (type==NULL) return ZK_SIGN_PK;
+  if (type == NULL) return ZK_SIGN_PK;
   char* c = d_string(type);
-  if (strcmp(c,"contract")==0) return ZK_SIGN_CONTRACT;
-  if (strcmp(c,"create2")==0) return ZK_SIGN_CREATE2;
+  if (strcmp(c, "contract") == 0) return ZK_SIGN_CONTRACT;
+  if (strcmp(c, "create2") == 0) return ZK_SIGN_CREATE2;
   return ZK_SIGN_PK;
 }
 static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
@@ -236,7 +233,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
-  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, conf->sign_type==ZK_SIGN_CONTRACT?"{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}":"{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
+  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, conf->sign_type == ZK_SIGN_CONTRACT ? "{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}" : "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
 #ifdef ZKSYNC_256
                      fee
 #else
@@ -247,14 +244,14 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL);
   if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
 
-  if (conf->sign_type==ZK_SIGN_CONTRACT) {
-    d_token_t* tx_receipt=NULL;
-    uint8_t data[128];
-    memset(data,0,128);
-    data[31]=64; // offset for bytes
-    data[95]=20; // length of the pubKeyHash
-    memcpy(data+96,pub_hash,20); // copy new pubKeyHash
-    int_to_bytes(nonce,data+60); // nonce
+  if (conf->sign_type == ZK_SIGN_CONTRACT) {
+    d_token_t* tx_receipt = NULL;
+    uint8_t    data[128];
+    memset(data, 0, 128);
+    data[31] = 64;                   // offset for bytes
+    data[95] = 20;                   // length of the pubKeyHash
+    memcpy(data + 96, pub_hash, 20); // copy new pubKeyHash
+    int_to_bytes(nonce, data + 60);  // nonce
     sb_t sb = {0};
     sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(conf->main_contract, 20), 0);
     sb_add_rawbytes(&sb, "\",\"data\":\"0x595a5ebc", bytes(data, 128), 0);
@@ -262,7 +259,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
 
     TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
 
-    if (tx_receipt==NULL || d_type(tx_receipt)!=T_OBJECT || d_get_intk(tx_receipt,K_STATUS)==0) return ctx_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
+    if (tx_receipt == NULL || d_type(tx_receipt) != T_OBJECT || d_get_intk(tx_receipt, K_STATUS) == 0) return ctx_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
   }
 
   // create payload
@@ -291,7 +288,6 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   }
   return ret;
 }
-
 
 // --- handle rpc----
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
@@ -325,9 +321,9 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
     zkcrypto_pk_to_pubkey(k, pubkey_hash);
     char res[48];
-    strcpy(res,"\"sync:");
-    bytes_to_hex(pubkey_hash,20,res+6);
-    strcpy(res+46,"\"");
+    strcpy(res, "\"sync:");
+    bytes_to_hex(pubkey_hash, 20, res + 6);
+    strcpy(res + 46, "\"");
     return in3_rpc_handle_with_string(ctx, res);
   }
   if (strcmp(method, "zksync_contract_address") == 0) {
@@ -402,9 +398,12 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         sb_add_bytes(ctx->sb, ",\"account\"=", &ac, 1, false);
       }
       sb_add_chars(ctx->sb, ",\"signer_type\":\"");
-      if (conf->sign_type==ZK_SIGN_CONTRACT)  sb_add_chars(ctx->sb, "contract\"");
-      else if (conf->sign_type==ZK_SIGN_CREATE2)  sb_add_chars(ctx->sb, "create2\"");
-      else  sb_add_chars(ctx->sb, "pk\"");
+      if (conf->sign_type == ZK_SIGN_CONTRACT)
+        sb_add_chars(ctx->sb, "contract\"");
+      else if (conf->sign_type == ZK_SIGN_CREATE2)
+        sb_add_chars(ctx->sb, "create2\"");
+      else
+        sb_add_chars(ctx->sb, "pk\"");
       sb_add_char(ctx->sb, '}');
       return IN3_OK;
     }
@@ -418,7 +417,7 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
         bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");
         if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
-        conf->sign_type = get_sign_type(d_get(ctx->token,key("signer_type")));
+        conf->sign_type = get_sign_type(d_get(ctx->token, key("signer_type")));
         return IN3_OK;
       }
       return IN3_EIGNORE;

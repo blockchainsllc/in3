@@ -160,6 +160,11 @@ export declare interface ZksyncAPI<BufferType> {
     getSyncKey(): String
 
     /**
+     * returns public key used for signing zksync transactions
+     */
+    getSyncPubKeyHash(): String
+
+    /**
      * deposits the declared amount into the rollup
      * @param amount amount in wei to deposit
      * @param token the token identifier e.g. ETH
@@ -207,6 +212,11 @@ export declare interface zksync_config {
     * the account to be used. if not specified, the first signer will be used.
     */
     account?: string
+
+    /**
+     * defines the type of the signer. Must be one of those 3 values. (default: pk)
+     */
+    signer_type?: 'pk' | 'contract' | 'create2'
 
 }
 

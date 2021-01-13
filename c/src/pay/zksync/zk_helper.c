@@ -32,8 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-
-#include "zksync.h"
 #include "zk_helper.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
@@ -41,6 +39,7 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
+#include "zksync.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -76,7 +75,7 @@ in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** ac
 
 // sends a account_info request and updates the config
 in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
-  uint8_t* account;
+  uint8_t*   account;
   d_token_t* result;
   char       adr[45];
 
@@ -209,9 +208,9 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* non
 
 in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
 #ifdef ZKSYNC_256
-                                uint8_t* fee
+                         uint8_t* fee
 #else
-                                uint64_t* fee
+                         uint64_t* fee
 #endif
 ) {
   if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
@@ -249,7 +248,7 @@ in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_i
   memset(fee, 0, 32);
   long_to_bytes(d_get_longk(result, key("totalFee")), fee + 24);
 #else
-  *fee           = d_get_longk(result, key("totalFee"));
+  *fee = d_get_longk(result, key("totalFee"));
 #endif
   return IN3_OK;
 }
@@ -316,4 +315,3 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token
 
   return ctx_set_error(ctx, "could not find the specifed token", IN3_EFIND);
 }
-

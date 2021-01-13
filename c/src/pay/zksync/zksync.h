@@ -59,9 +59,9 @@ typedef enum zk_msg_type {
 } zk_msg_type_t;
 
 typedef enum zk_sign_type {
-  ZK_SIGN_PK = 1,
+  ZK_SIGN_PK       = 1,
   ZK_SIGN_CONTRACT = 2,
-  ZK_SIGN_CREATE2 = 3
+  ZK_SIGN_CREATE2  = 3
 } zk_sign_type_t;
 
 typedef struct {
