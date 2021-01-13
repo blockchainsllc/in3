@@ -42,6 +42,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+
+// -- helper util functions ---
+
+
 static void set_quoted_address(char* c, uint8_t* address) {
   bytes_to_hex(address, 20, c + 3);
   c[0] = c[43] = '"';
@@ -70,13 +74,16 @@ static in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8
   return IN3_OK;
 }
 
+// sends a account_info request and updates the config
 static in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
   uint8_t* account;
-  TRY(zksync_get_account(conf, ctx, &account))
   d_token_t* result;
   char       adr[45];
+
+  TRY(zksync_get_account(conf, ctx, &account))
   set_quoted_address(adr, account);
   TRY(send_provider_request(ctx, conf, "account_info", adr, &result))
+
   d_token_t* committed = d_get(result, key("committed"));
   conf->account_id     = d_get_intk(result, K_ID);
   conf->nonce          = d_get_longk(committed, K_NONCE);
@@ -84,11 +91,10 @@ static in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
   if (kh && strlen(kh) == 45)
     hex_to_bytes(kh + 5, 40, conf->pub_key_hash, 20);
 
-  // clean up
-  //  ctx_remove_required(ctx, ctx_find_required(ctx, "account_info"), false);
   return IN3_OK;
 }
 
+// resolves the account_id
 static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id) {
   uint8_t* account    = NULL;
   char*    cache_name = NULL;
@@ -588,6 +594,17 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     bytes32_t k;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
     return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
+  }
+  if (strcmp(method, "zksync_getPubKeyHash") == 0) {
+    bytes32_t k;
+    address_t pubkey_hash;
+    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+    zkcrypto_pk_to_pubkey(k, pubkey_hash);
+    char res[48];
+    strcpy(res,"\"sync:");
+    bytes_to_hex(pubkey_hash,20,res+6);
+    strcpy(res+46,"\"");
+    return in3_rpc_handle_with_string(ctx, res);
   }
   if (strcmp(method, "zksync_contract_address") == 0) {
     uint8_t* adr;
