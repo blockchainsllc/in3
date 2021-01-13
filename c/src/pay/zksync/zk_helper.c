@@ -75,7 +75,7 @@ in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** ac
 
 // sends a account_info request and updates the config
 in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
-  uint8_t*   account;
+  uint8_t*   account = NULL;
   d_token_t* result;
   char       adr[45];
 
