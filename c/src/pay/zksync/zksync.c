@@ -252,8 +252,8 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
 
   if (conf->sign_type == ZK_SIGN_CONTRACT) {
     d_token_t* tx_receipt = NULL;
-    uint8_t    data[128];
-    memset(data, 0, 128);
+    uint8_t    data[128];            // the abi-ebcoded data for calling setAuthPubkeyHash(bytes calldata _pubkey_hash, uint32 _nonce)
+    memset(data, 0, 128);            // clear the data
     data[31] = 64;                   // offset for bytes
     data[95] = 20;                   // length of the pubKeyHash
     memcpy(data + 96, pub_hash, 20); // copy new pubKeyHash
