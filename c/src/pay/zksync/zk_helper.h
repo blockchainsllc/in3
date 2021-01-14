@@ -39,71 +39,38 @@
  * This header-file registers zksync api functions.
  * */
 
-#ifndef ZKSYNC_H
-#define ZKSYNC_H
+#ifndef ZKSYNC_HELPER_H
+#define ZKSYNC_HELPER_H
 
-#include "../../core/client/plugin.h"
-#if defined(ETH_FULL) && !defined(ZKSYNC_256)
-#define ZKSYNC_256
-#endif
-typedef struct {
-  uint16_t  id;
-  char      symbol[8];
-  uint8_t   decimals;
-  address_t address;
-} zksync_token_t;
+#include "zksync.h"
 
-typedef enum zk_msg_type {
-  ZK_TRANSFER = 5,
-  ZK_WITHDRAW = 3
-} zk_msg_type_t;
+void set_quoted_address(char* c, uint8_t* address);
 
-typedef enum zk_sign_type {
-  ZK_SIGN_PK       = 1,
-  ZK_SIGN_CONTRACT = 2,
-  ZK_SIGN_CREATE2  = 3
-} zk_sign_type_t;
+in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result);
 
-typedef struct {
-  char*           provider_url;
-  uint8_t*        account;
-  uint8_t*        main_contract;
-  uint8_t*        gov_contract;
-  uint64_t        account_id;
-  uint64_t        nonce;
-  address_t       pub_key_hash;
-  uint16_t        token_len;
-  bytes32_t       sync_key;
-  zksync_token_t* tokens;
-  zk_sign_type_t  sign_type;
+/**
+ * resolves the account address based on the config 
+ */
+in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account);
 
-} zksync_config_t;
-typedef struct {
-  uint32_t        account_id;
-  address_t       from;
-  address_t       to;
-  zksync_token_t* token;
+in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx);
+
+in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id);
+
+in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key);
+
+in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main);
+
+in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce);
+
+in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
 #ifdef ZKSYNC_256
-  bytes32_t amount;
-  bytes32_t fee;
+                         uint8_t* fee
 #else
-  uint64_t amount;
-  uint64_t fee;
+                         uint64_t* fee
 #endif
-  uint32_t      nonce;
-  zk_msg_type_t type;
-} zksync_tx_data_t;
+);
 
-in3_ret_t in3_register_zksync(in3_t* c);
-
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, uint8_t* account, uint32_t account_id,
-#ifdef ZKSYNC_256
-                                     bytes32_t fee
-#else
-                                     uint64_t fee
-#endif
-                                     ,
-                                     zksync_token_t* token);
+in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst);
 
 #endif
