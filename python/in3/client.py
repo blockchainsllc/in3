@@ -6,7 +6,7 @@ from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
 from in3.exception import EnsDomainFormatException
 from in3.model import In3Node, NodeList, ClientConfig, chain_configs
-from in3.transport import https_transport_plugin
+from in3.transport import https_transport
 
 
 class Client:
@@ -22,7 +22,7 @@ class Client:
     """
 
     def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, cache_enabled: bool = True,
-                 transport=https_transport_plugin):
+                 transport=https_transport):
 
         if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'goerli', 'ewc', 'btc', 'ipfs']:
             raise AssertionError('Client: Chain name not supported. Try mainnet, evan, goerli, ewc, or ipfs.')

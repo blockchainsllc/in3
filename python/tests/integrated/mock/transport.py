@@ -5,11 +5,11 @@ Collect mocked responses from `http.py`.
 """
 import json
 
-from in3.libin3.transport import In3Request, In3Response, TransportPlugin
+from in3.libin3.transport import In3Request, In3Response
 from tests.integrated.mock import http
 
 
-def _mock_transport(in3_request: In3Request, in3_response: In3Response):
+def mock_transport(in3_request: In3Request, in3_response: In3Response):
     """
     Transports each request coming from libin3 to the in3 network and and reports the answer back
     Args:
@@ -35,6 +35,3 @@ def _mock_transport(in3_request: In3Request, in3_response: In3Response):
             err_bytes = str(err).encode('utf8')
             in3_response.failure(i, err_bytes)
     return 0
-
-
-mock_transport_plugin = TransportPlugin(_mock_transport, _mock_transport, None)

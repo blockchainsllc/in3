@@ -1,7 +1,6 @@
 import ctypes as c
 
-from in3.libin3.enum import PluginAction, RPCCode
-from in3.libin3.plugin import In3Plugin
+from in3.libin3.enum import PluginAction
 
 from in3.libin3.rpc_api import libin3_in3_req_add_response
 
@@ -128,31 +127,17 @@ def factory(transport_fn):
     Decorates a transport function augmenting its capabilities for native interoperability
     """
 
-    @c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
-    def new(native_payload: NativeRequest or NativeResponse):
-        request = In3Request(native_payload)
-        response = In3Response(native_payload)
-        return transport_fn(request, response)
-
-    return new
-
-
-class TransportPlugin(In3Plugin):
-
-    def __init__(self, transport_send_fn, transport_receive_fn, transport_clear_fn):
-        self.send_fn = transport_send_fn
-        self.receive_fn = transport_receive_fn
-        self.clear_fn = transport_clear_fn
-        super().__init__(PluginAction.PLGN_ACT_TRANSPORT)
-
-    def handler(self, plugin_data, action: PluginAction, plugin_ctx: NativeRequest or NativeResponse) -> RPCCode:
+    @c.CFUNCTYPE(c.c_int32, c.c_void_p, c.c_int32, c.POINTER(NativeRequest))
+    def new(plugin_data, action: PluginAction, plugin_ctx: NativeRequest or NativeResponse):
         request = In3Request(plugin_ctx)
         response = In3Response(plugin_ctx)
-        if action.PLGN_ACT_TRANSPORT_SEND:
-            return self.send_fn(request, response)
-        elif action.PLGN_ACT_TRANSPORT_RECEIVE:
-            return self.receive_fn(request, response)
-        elif action.PLGN_ACT_TRANSPORT_CLEAN:
-            return self.clear_fn(request, response)
+        if PluginAction(action) == PluginAction.PLGN_ACT_TRANSPORT_SEND:
+            return transport_fn(request, response)
+        elif PluginAction(action) == PluginAction.PLGN_ACT_TRANSPORT_RECEIVE:
+            return transport_fn(request, response)
+        elif PluginAction(action) == PluginAction.PLGN_ACT_TRANSPORT_CLEAN:
+            return transport_fn(request, response)
         else:
             raise Exception("In3 Transport Plugin: Unknown action: ", action)
+
+    return new

@@ -38,9 +38,7 @@ class In3Runtime:
     """
 
     def __init__(self, chain_id: int, cache_enabled: bool, transport_fn):
-        #TODO:Clear this change docs
-        #self.transport_handler = transport.factory(transport_fn)
-        self.transport_handler = transport_fn
+        self.transport_handler = transport.factory(transport_fn)
         self.cache_enabled = cache_enabled
         self.in3 = libin3_new(chain_id, cache_enabled, self.transport_handler)
         self.chain_id = chain_id

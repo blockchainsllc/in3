@@ -6,14 +6,14 @@ from pathlib import Path
 
 import in3
 from tests.integrated.mock.config import mock_config
-from tests.integrated.mock.transport import mock_transport_plugin
+from tests.integrated.mock.transport import mock_transport
 
 
 class MainNetClientTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport_plugin)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client()
@@ -46,13 +46,13 @@ class MainNetClientTest(unittest.TestCase):
 class MainNetClientCacheStoringTest(MainNetClientTest):
 
     def setUp(self):
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport_plugin)
+        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
 
 class MainNetClientCachedTest(MainNetClientTest):
 
     def setUp(self):
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport_plugin)
+        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
 
 # TODO: Issue https://git.slock.it/in3/c/in3-core/-/issues/451
@@ -66,14 +66,14 @@ class MainNetClientCachedTest(MainNetClientTest):
 #         for filepath in [f for f in path.iterdir() if f.is_file()]:
 #             with open(filepath, 'w+b') as file:
 #                 file.write(b'123123123123123123')
-#         self.client = in3.Client(in3_config=mock_config, transport=mock_transport_plugin)
+#         self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
 
 # class EwcClientTest(MainNetClientTest):
 #
 #     def setUp(self):
 #         # self.client = in3.Client('ewc', in3_config=mock_config)
-#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport_plugin)
+#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 #
 #     def test_configure(self):
 #         client = in3.Client('ewc')
@@ -92,7 +92,7 @@ class GoerliClientTest(MainNetClientTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport_plugin)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client('goerli')

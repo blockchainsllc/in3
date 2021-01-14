@@ -6,7 +6,6 @@ import platform
 from pathlib import Path
 
 from in3.libin3.enum import PluginAction, RPCCode
-from in3.libin3.plugin import In3Plugin
 from in3.libin3.storage import get_item, set_item, clear
 
 DEBUG = False
@@ -65,14 +64,13 @@ def _load_shared_library() -> c.CDLL:
 _libin3 = _load_shared_library()
 
 
-def libin3_new(chain_id: int, cache_enabled: bool, transport_plugin: In3Plugin) -> int:
+def libin3_new(chain_id: int, cache_enabled: bool, transport_fn) -> int:
     """
     Instantiate new In3 Client instance.
     Args:
         chain_id (int): Chain id as integer
         cache_enabled (bool): False will disable local storage cache.
-        transport_plugin: Transport plugin for the in3 network requests
-        storage_plugin: Cache Storage plugin for node list and requests caching
+        transport_fn: Transport plugin function for the in3 network requests
     Returns:
          instance (int): Memory address of the client instance, return value from libin3_new
     """
@@ -102,7 +100,7 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_plugin: In3Plugin) 
     _libin3.in3_register_eth_api.argtypes = c.c_void_p,
     _libin3.in3_for_chain_auto_init.restype = c.c_void_p
     instance = _libin3.in3_for_chain_auto_init(chain_id)
-    libin3_register_plugin(instance, PluginAction.PLGN_ACT_TRANSPORT, transport_plugin.action_fn)
+    libin3_register_plugin(instance, PluginAction.PLGN_ACT_TRANSPORT, transport_fn)
     # _libin3.in3_set_default_legacy_transport(transport_fn)
     # TODO: in3_set_default_signer
     _libin3.in3_register_eth_full(instance)
