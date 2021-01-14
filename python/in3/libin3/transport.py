@@ -1,5 +1,8 @@
 import ctypes as c
 
+from in3.libin3.enum import PluginAction, RPCCode
+from in3.libin3.plugin import In3Plugin
+
 from in3.libin3.rpc_api import libin3_in3_req_add_response
 
 
@@ -13,6 +16,20 @@ class NativeRequest(c.Structure):
                 ("results", c.c_void_p),
                 ("timeout", c.c_uint32),
                 ("times", c.c_uint32)]
+    """
+    /** request-object. 
+     * 
+     * represents a RPC-request
+     */
+    typedef struct in3_request {
+      char*           payload;  /**< the payload to send */
+      char**          urls;     /**< array of urls */
+      uint_fast16_t   urls_len; /**< number of urls */
+      struct in3_ctx* ctx;      /**< the current context */
+      void*           cptr;     /**< a custom ptr to hold information during */
+      uint32_t        wait;     /**< time in ms to wait before sending out the request */
+    } in3_request_t;
+    """
 
 
 class NativeResponse(c.Structure):
@@ -23,6 +40,20 @@ class NativeResponse(c.Structure):
     typedef struct in3_response {
       sb_t error;  /**< a stringbuilder to add any errors! */
       sb_t result; /**< a stringbuilder to add the result */
+    """
+    """
+        /**
+         * adds a response for a request-object.
+         * This function should be used in the transport-function to set the response.
+         */
+        NONULL void in3_req_add_response(
+            in3_request_t* req,      /**< [in]the the request */
+            int            index,    /**< [in] the index of the url, since this request could go out to many urls */
+            bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+            const char*    data,     /**<  the data or the the string*/
+            int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+            uint32_t       time      /**<  the time this request took in ms or 0 if not possible (it will be used to calculate the weights)*/
+        );
     """
 
 
@@ -104,3 +135,24 @@ def factory(transport_fn):
         return transport_fn(request, response)
 
     return new
+
+
+class TransportPlugin(In3Plugin):
+
+    def __init__(self, transport_send_fn, transport_receive_fn, transport_clear_fn):
+        self.send_fn = transport_send_fn
+        self.receive_fn = transport_receive_fn
+        self.clear_fn = transport_clear_fn
+        super().__init__(PluginAction.PLGN_ACT_TRANSPORT)
+
+    def handler(self, plugin_data, action: PluginAction, plugin_ctx: NativeRequest or NativeResponse) -> RPCCode:
+        request = In3Request(plugin_ctx)
+        response = In3Response(plugin_ctx)
+        if action.PLGN_ACT_TRANSPORT_SEND:
+            return self.send_fn(request, response)
+        elif action.PLGN_ACT_TRANSPORT_RECEIVE:
+            return self.receive_fn(request, response)
+        elif action.PLGN_ACT_TRANSPORT_CLEAN:
+            return self.clear_fn(request, response)
+        else:
+            raise Exception("In3 Transport Plugin: Unknown action: ", action)

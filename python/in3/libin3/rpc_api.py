@@ -5,6 +5,8 @@ import ctypes as c
 import platform
 from pathlib import Path
 
+from in3.libin3.enum import PluginAction, RPCCode
+from in3.libin3.plugin import In3Plugin
 from in3.libin3.storage import get_item, set_item, clear
 
 DEBUG = False
@@ -63,23 +65,32 @@ def _load_shared_library() -> c.CDLL:
 _libin3 = _load_shared_library()
 
 
-def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) -> int:
+def libin3_new(chain_id: int, cache_enabled: bool, transport_plugin: In3Plugin) -> int:
     """
     Instantiate new In3 Client instance.
     Args:
         chain_id (int): Chain id as integer
         cache_enabled (bool): False will disable local storage cache.
-        transport_fn: Transport function for the in3 network requests
-        storage_fn: Cache Storage function for node list and requests caching
+        transport_plugin: Transport plugin for the in3 network requests
+        storage_plugin: Cache Storage plugin for node list and requests caching
     Returns:
          instance (int): Memory address of the client instance, return value from libin3_new
     """
     assert isinstance(chain_id, int)
+    """
+    /** registers a plugin with the client */
+    in3_ret_t in3_plugin_register(
+        in3_t*                 c,         /**< the client */
+        in3_plugin_supp_acts_t acts,      /**< the actions to register for combined with OR */
+        in3_plugin_act_fn      action_fn, /**< the plugin action function */
+        void*                  data,      /**< an optional data or config struct which will be passed to the action function when executed */
+        bool                   replace_ex /**< if this is true and an plugin with the same action is already registered, it will replace it */
+    );
+    """
     # ctypes mappings
     _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int, c.c_uint32
     _libin3.in3_init()
     # In3 init and module loading
-    _libin3.in3_set_default_legacy_transport(transport_fn)
     global DEBUG
     if DEBUG:
         # set logger level to TRACE
@@ -89,15 +100,18 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn: c.CFUNCTYPE) ->
     _libin3.in3_for_chain_auto_init.restype = c.c_void_p
     _libin3.in3_register_eth_full.argtypes = c.c_void_p,
     _libin3.in3_register_eth_api.argtypes = c.c_void_p,
+    _libin3.in3_for_chain_auto_init.restype = c.c_void_p
     instance = _libin3.in3_for_chain_auto_init(chain_id)
+    libin3_register_plugin(instance, PluginAction.PLGN_ACT_TRANSPORT, transport_plugin.action_fn)
+    # _libin3.in3_set_default_legacy_transport(transport_fn)
     # TODO: in3_set_default_signer
     _libin3.in3_register_eth_full(instance)
     # TODO: IPFS libin3.in3_register_ipfs();
     _libin3.in3_register_eth_api(instance)
     if cache_enabled:
+        # libin3_register_plugin(instance, PluginAction.PLGN_ACT_CACHE, cache_plugin.action_fn, None, True)
         _libin3.in3_set_storage_handler.argtypes = c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p
-        _libin3.in3_set_storage_handler(
-            instance, get_item, set_item, clear, None)
+        _libin3.in3_set_storage_handler(instance, get_item, set_item, clear, None)
     return instance
 
 
@@ -123,11 +137,9 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     """
     response = c.c_char_p()
     error = c.c_char_p()
-    _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(
-        c.c_char_p), c.POINTER(c.c_char_p)
+    _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char_p)
     _libin3.in3_client_rpc.restype = c.c_int
-    result = _libin3.in3_client_rpc(
-        instance, fn_name, fn_args, c.byref(response), c.byref(error))
+    result = _libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
     return result, response.value, error.value
 
 
@@ -163,3 +175,22 @@ def libin3_new_bytes_t(value: bytes, length: int) -> int:
     _libin3.b_new.argtypes = c.c_char_p, c.c_uint
     _libin3.b_new.restype = c.c_void_p
     return _libin3.b_new(value, length)
+
+
+def libin3_register_plugin(instance: int, actions: PluginAction, action_fn: c.CFUNCTYPE, data=None,
+                           replace_old=True) -> RPCCode:
+    """
+    Registers a plugin. Plugins are extension modules that can perform custom actions like sign transactions,
+    transport it, select nodes from the in3 network, and more.
+    Args:
+        instance: In3 instance
+        actions: Bit mask of actions the plugin can perform
+        action_fn: Function that will handle the plugin calls according to actions
+        data: Context data the plugin needs to know to operate
+        replace_old: Replace old registered action handlers for defined actions
+    Returns:
+        in3_rpc_error_code: OK will return 0.
+    """
+    _libin3.in3_plugin_register.argtypes = c.c_void_p, c.c_uint32, c.c_void_p, c.c_void_p, c.c_bool
+    _libin3.in3_plugin_register.restype = c.c_int
+    return _libin3.in3_plugin_register(instance, actions.value, action_fn, data, replace_old)

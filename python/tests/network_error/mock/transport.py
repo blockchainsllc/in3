@@ -5,16 +5,16 @@ Collect mocked responses from `http.py`.
 """
 import hashlib
 
-from in3.libin3.transport import In3Request, In3Response
+from in3.libin3.transport import In3Request, In3Response, TransportPlugin
 from tests.network_error.mock import http
 
 
-def mock_transport(in3_request: In3Request, in3_response: In3Response):
+def _mock_transport(in3_request: In3Request, in3_response: In3Response):
     """
     Transports each request coming from libin3 to the in3 network and and reports the answer back
     Args:
         in3_request (In3Request): request sent by the In3 Client Core to the In3 Network
-        in3_request (In3Response): response to be dispatched to the In3 Client Core
+        in3_response (In3Response): response to be dispatched to the In3 Client Core
     Returns:
         exit_status (int): Always zero for signaling libin3 the function executed OK.
     """
@@ -36,3 +36,6 @@ def mock_transport(in3_request: In3Request, in3_response: In3Response):
             err_bytes = str(err).encode('utf8')
             in3_response.failure(i, err_bytes)
     return 0
+
+
+mock_transport_plugin = TransportPlugin(_mock_transport, _mock_transport, None)

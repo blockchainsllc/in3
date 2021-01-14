@@ -5,10 +5,10 @@ import urllib.parse
 import urllib.request
 
 from in3.exception import TransportException
-from in3.libin3.transport import In3Request, In3Response
+from in3.libin3.transport import In3Request, In3Response, TransportPlugin
 
 
-def https_transport(in3_request: In3Request, in3_response: In3Response):
+def _https_transport(in3_request: In3Request, in3_response: In3Response):
     """
     Transports each request coming from libin3 to the in3 network and and reports the answer back
     Args:
@@ -36,3 +36,6 @@ def https_transport(in3_request: In3Request, in3_response: In3Response):
         except Exception as err:
             in3_response.failure(i, str(err).encode('utf8'))
     return 0
+
+
+https_transport_plugin = TransportPlugin(_https_transport, _https_transport, None)

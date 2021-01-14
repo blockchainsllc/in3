@@ -5,14 +5,14 @@ import unittest
 
 import in3
 from tests.integrated.mock.config import mock_config
-from tests.integrated.mock.transport import mock_transport
+from tests.integrated.mock.transport import mock_transport_plugin
 
 
 class EthereumNegativeTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport_plugin)
 
     def test_get_block_by_number_client(self):
         for i in range(50):
@@ -55,7 +55,7 @@ class ParsingTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport_plugin)
 
     def test_get_block_by_number(self):
         with self.assertRaises(AssertionError):
@@ -106,14 +106,14 @@ class NegativeGoerliTest(EthereumNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport_plugin)
 
 
 # class NegativeEwcTest(EthereumNegativeTest):
 #
 #     def setUp(self):
 #         # self.client = in3.Client('ewc', in3_config=mock_config)
-#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport_plugin)
 
 
 if __name__ == '__main__':
