@@ -224,6 +224,7 @@ static zk_sign_type_t get_sign_type(d_token_t* type) {
   if (strcmp(c, "create2") == 0) return ZK_SIGN_CREATE2;
   return ZK_SIGN_PK;
 }
+
 static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   bytes32_t       pk;
   address_t       pub_hash;
@@ -246,29 +247,53 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
                      &fee
 #endif
                      ))
-  zkcrypto_pk_to_pubkey(pk, pub_hash);
-  if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL);
+
+  zkcrypto_pk_to_pubkey(pk, pub_hash); // calculate the pubKey_hash
+  if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL); // and check if it is already set
   if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
 
+  // for contracts we need to pre authorized on layer 1
   if (conf->sign_type == ZK_SIGN_CONTRACT) {
-    d_token_t* tx_receipt = NULL;
-    uint8_t    data[128];            // the abi-ebcoded data for calling setAuthPubkeyHash(bytes calldata _pubkey_hash, uint32 _nonce)
-    memset(data, 0, 128);            // clear the data
-    data[31] = 64;                   // offset for bytes
-    data[95] = 20;                   // length of the pubKeyHash
-    memcpy(data + 96, pub_hash, 20); // copy new pubKeyHash
-    int_to_bytes(nonce, data + 60);  // nonce
+    d_token_t* result = NULL; 
     sb_t sb = {0};
+    uint8_t    data[128];            // the abi-ebcoded data
+    memset(data, 0, 128);            // clear the data
+    memcpy(data+12, conf->account, 20); // account to check
+    int_to_bytes(nonce, data + 60);  // nonce
+
+    // check if the key is already authorized by calling
+    // authFacts(address account,uint32 nonce) == keccak256(pubkey_hash)
     sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(conf->main_contract, 20), 0);
-    sb_add_rawbytes(&sb, "\",\"data\":\"0x595a5ebc", bytes(data, 128), 0);
-    sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
+    sb_add_rawbytes(&sb, "\",\"data\":\"0x8ae20dc9", bytes(data, 64), 0);
+    sb_add_chars(&sb,"\"},\"latest\"");
 
-    TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+    // send request
+    TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_call", sb.data, &result), _free(sb.data))
 
-    if (tx_receipt == NULL || d_type(tx_receipt) != T_OBJECT || d_get_intk(tx_receipt, K_STATUS) == 0) return ctx_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
+    // check result
+    bytes32_t pub_hash_hash;
+    keccak(bytes(pub_hash,20),pub_hash_hash);
+    if (d_type(result)!=T_BYTES || d_len(result)!=32 || memcmp(pub_hash_hash,result->data,32)) {
+      // not approved yet, so we need to approve in layer 1
+      // the abi-ebcoded data for calling setAuthPubkeyHash(bytes calldata _pubkey_hash, uint32 _nonce)
+      memset(&sb,0,sizeof(sb_t));      // clear stringbuilder
+      memset(data, 0, 128);            // clear the data
+      data[31] = 64;                   // offset for bytes
+      data[95] = 20;                   // length of the pubKeyHash
+      memcpy(data + 96, pub_hash, 20); // copy new pubKeyHash
+      int_to_bytes(nonce, data + 60);  // nonce
+      sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(conf->main_contract, 20), 0);
+      sb_add_rawbytes(&sb, "\",\"data\":\"0x595a5ebc", bytes(data, 128), 0);
+      sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
+
+      TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &result), _free(sb.data))
+
+      if (result == NULL || d_type(result) != T_OBJECT || d_get_intk(result, K_STATUS) == 0)
+        return ctx_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
+    }
   }
 
-  // create payload
+  // create payload for change key tx
   cache_entry_t* cached = ctx->ctx->cache;
   while (cached) {
     if (cached->props & 0x10) break;
@@ -287,6 +312,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   d_token_t* result = NULL;
   in3_ret_t  ret    = send_provider_request(ctx->ctx, conf, "tx_submit", (void*) cached->value.data, &result);
   if (ret == IN3_OK) {
+    // return only the pubkeyhash as result
     sb_t* sb = in3_rpc_handle_start(ctx);
     sb_add_rawbytes(sb, "\"sync:", bytes(pub_hash, 20), 20);
     sb_add_char(sb, '\"');
