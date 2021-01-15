@@ -45,6 +45,12 @@
 #include <stdio.h>
 #include <string.h>
 
+d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
+  return d_type(params + 1) == T_OBJECT
+             ? d_get(params + 1, k)
+             : d_get_at(params, index);
+}
+
 void set_quoted_address(char* c, uint8_t* address) {
   bytes_to_hex(address, 20, c + 3);
   c[0] = c[43] = '"';

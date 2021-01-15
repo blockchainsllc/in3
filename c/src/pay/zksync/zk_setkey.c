@@ -1,4 +1,3 @@
-#include "zk_set_key.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
@@ -6,6 +5,7 @@
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"
+#include "zksync.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -54,7 +54,7 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
   return IN3_OK;
 }
 
-in3_ret_t zk_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   bytes32_t       pk;
   address_t       pub_hash;
   uint32_t        nonce;

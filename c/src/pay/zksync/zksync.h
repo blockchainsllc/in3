@@ -46,57 +46,80 @@
 #if defined(ETH_FULL) && !defined(ZKSYNC_256)
 #define ZKSYNC_256
 #endif
+
+/** represents a token supported in zksync. */
 typedef struct {
-  uint16_t  id;
-  char      symbol[8];
-  uint8_t   decimals;
-  address_t address;
+  uint16_t  id;        /**< the id used in messaged */
+  char      symbol[8]; /**< short symbol */
+  uint8_t   decimals;  /**< decimals for display */
+  address_t address;   /**< erc20 address (or 0x00 for eth) */
 } zksync_token_t;
 
+/** message type. */
 typedef enum zk_msg_type {
-  ZK_TRANSFER = 5,
-  ZK_WITHDRAW = 3
+  ZK_TRANSFER = 5, /**< transfer tx */
+  ZK_WITHDRAW = 3  /**< withdraw tx */
 } zk_msg_type_t;
 
+/** signature-type which can be configured in the config */
 typedef enum zk_sign_type {
-  ZK_SIGN_PK       = 1,
-  ZK_SIGN_CONTRACT = 2,
-  ZK_SIGN_CREATE2  = 3
+  ZK_SIGN_PK       = 1, /**< sign with PK (default)*/
+  ZK_SIGN_CONTRACT = 2, /**< use eip1271 contract signatures */
+  ZK_SIGN_CREATE2  = 3  /**< use creat2 code */
 } zk_sign_type_t;
 
+/** internal configuration-object */
 typedef struct {
-  char*           provider_url;
-  uint8_t*        account;
-  uint8_t*        main_contract;
-  uint8_t*        gov_contract;
-  uint64_t        account_id;
-  uint64_t        nonce;
-  address_t       pub_key_hash;
-  uint16_t        token_len;
-  bytes32_t       sync_key;
-  zksync_token_t* tokens;
-  zk_sign_type_t  sign_type;
+  char*           provider_url;  /**< url of the zksync-server */
+  uint8_t*        account;       /**< address of the account */
+  uint8_t*        main_contract; /**< address of the main zksync contract*/
+  uint8_t*        gov_contract;  /**< address of the government contract */
+  uint64_t        account_id;    /**< the id of the account as used in the messages */
+  uint64_t        nonce;         /**< the current nonce */
+  address_t       pub_key_hash;  /**< the pub_key_hash */
+  uint16_t        token_len;     /**< number of tokens in the tokenlist */
+  bytes32_t       sync_key;      /**< the raw key to sign with*/
+  zksync_token_t* tokens;        /**< the token-list */
+  zk_sign_type_t  sign_type;     /**< the signature-type to use*/
 
 } zksync_config_t;
+
+/** a transaction */
 typedef struct {
-  uint32_t        account_id;
-  address_t       from;
-  address_t       to;
-  zksync_token_t* token;
+  uint32_t        account_id; /**< the id of the account */
+  address_t       from;       /**< the from-address */
+  address_t       to;         /**< the address of the receipient */
+  zksync_token_t* token;      /**< the token to use */
+  uint32_t        nonce;      /**< current nonce */
+  zk_msg_type_t   type;       /**< message type */
 #ifdef ZKSYNC_256
-  bytes32_t amount;
-  bytes32_t fee;
+  bytes32_t amount; /**< amount to send */
+  bytes32_t fee;    /**< ransaction fees */
 #else
-  uint64_t amount;
-  uint64_t fee;
+  uint64_t amount; /**< amount to send */
+  uint64_t fee;    /**< ransaction fees */
 #endif
-  uint32_t      nonce;
-  zk_msg_type_t type;
 } zksync_tx_data_t;
 
+/** registers the zksync-plugin in the client */
 in3_ret_t in3_register_zksync(in3_t* c);
 
+/** sets a PubKeyHash for the current Account */
+in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+
+/** sends a transfer transaction in Layer 2*/
+in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params, zk_msg_type_t type);
+
+/** sends a deposit transaction in Layer 1*/
+in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+
+/** sends a emergency withdraw  transaction in Layer 1*/
+in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+
+/** creates message data and signs a transfer-message */
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
+
+/** creates message data and signs a change_pub_key-message */
 in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, uint8_t* account, uint32_t account_id,
 #ifdef ZKSYNC_256
                                      bytes32_t fee
