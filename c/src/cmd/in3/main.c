@@ -717,6 +717,15 @@ int main(int argc, char* argv[]) {
     eth_set_pk_signer(c, pk);
   }
 
+#ifdef ZKSYNC
+  if (getenv("IN3_ZKS")) {
+    char tmp[500];
+    sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", getenv("IN3_ZKS"));
+    char* err = in3_configure(c, tmp);
+    if (err) die(err);
+  }
+#endif
+
   if (getenv("IN3_CHAIN"))
     set_chain_id(c, getenv("IN3_CHAIN"));
 
