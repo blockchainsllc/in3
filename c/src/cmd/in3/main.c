@@ -392,13 +392,13 @@ void set_chain_id(in3_t* c, char* id) {
 }
 
 // prepare a eth_call or eth_sendTransaction
-abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
+abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
   char*      error = NULL;
   bytes_t    rdata = {0};
   abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
   if (error) die(error);                                             // parse-error we stop here.
   if (req) {                                                         // if type is a tuple, it means we have areuments we need to parse.
-    json_ctx_t* in_data = parse_json(args);                          // the args are passed as a "[]"- json-array string.
+    json_ctx_t* in_data = parse_json(args->data);                    // the args are passed as a "[]"- json-array string.
     rdata               = abi_encode(req, in_data->result, &error);  //encode data
     if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
     json_free(in_data);                                              // of course we clean up ;-)
@@ -445,7 +445,8 @@ abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, ui
     sb_add_bytes(params, "", &g_bytes, 1, false);
     sb_add_chars(params, "}]");
   }
-  strcpy(args, params->data);
+  args->len = 0;
+  sb_add_chars(args, params->data);
   sb_free(params);
   return req;
 }
@@ -937,7 +938,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, resolve(c, to), args->data, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), args, block_number, 0, NULL, data);
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
@@ -963,6 +964,7 @@ int main(int argc, char* argv[]) {
     if (s && !error) {
       bytes_t     data = d_to_bytes(d_get_at(parse_json(args->data)->result, 0));
       json_ctx_t* res  = abi_decode(s, data, &error);
+      if (error) die(error);
       if (json)
         recorder_print(0, "%s\n", d_create_json(res, res->result));
       else
@@ -1121,7 +1123,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, resolve(c, to), args->data, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, value, data);
     method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
