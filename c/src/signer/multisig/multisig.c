@@ -37,6 +37,7 @@
 #include "../../core/client/context.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
@@ -181,7 +182,7 @@ in3_ret_t get_tx_hash(in3_ctx_t* ctx, multisig_t* ms, tx_data_t* tx_data, bytes3
   memcpy(raw, "\xd8\xd1\x1f\x78", 4);                                    // get TransactionHash functionhash
   cpy_right(raw, 0, tx_data->to);                                        // to
   cpy_right(raw, 1, tx_data->value);                                     // value
-  int_to_bytes(offset_data, raw + 4 + 64 + 28);                          // offset for data bytes
+  int_to_bytes(offset_data - 4, raw + 4 + 64 + 28);                      // offset for data bytes
   int_to_bytes(tx_data->data.len, raw + offset_data + 28);               // len for data bytes
   memcpy(raw + offset_data + 32, tx_data->data.data, tx_data->data.len); // copy data
   cpy_right(raw, 4, tx_data->gas);
@@ -203,16 +204,16 @@ static bytes_t get_exec_tx_data(tx_data_t* tx_data, sig_data_t* signatures, uint
   int size        = offset_sig + ((sig_data.len + 31) / 32 + 1) * 32;
 
   uint8_t* raw = _calloc(size, 1);
-  memcpy(raw, "\x6a\x76\x12\x02", 4);                                    // get TransactionHash functionhash
+  memcpy(raw, "\x6a\x76\x12\x02", 4);                                    // get execTransaction functionhash
   cpy_right(raw, 0, tx_data->to);                                        // to
   cpy_right(raw, 1, tx_data->value);                                     // value
-  int_to_bytes(offset_data, raw + 4 + 64 + 28);                          // offset for data bytes
+  int_to_bytes(offset_data - 4, raw + 4 + 64 + 28);                      // offset for data bytes
   int_to_bytes(tx_data->data.len, raw + offset_data + 28);               // len for data bytes
   memcpy(raw + offset_data + 32, tx_data->data.data, tx_data->data.len); // copy data
   cpy_right(raw, 4, tx_data->gas);
   cpy_right(raw, 5, tx_data->gas);
   cpy_right(raw, 6, tx_data->gas_price);
-  int_to_bytes(offset_sig, raw + 4 + 9 * 32 + 28);            // offset for signatures bytes
+  int_to_bytes(offset_sig - 4, raw + 4 + 9 * 32 + 28);        // offset for signatures bytes
   int_to_bytes(sig_data.len, raw + offset_sig + 28);          // len for sig bytes
   memcpy(raw + offset_sig + 32, sig_data.data, sig_data.len); // copy sigs
   _free(sig_data.data);
@@ -317,6 +318,7 @@ static void exec_tx(bytes_t* target, tx_data_t* tx_data, sig_data_t* signatures,
   rlp_encode_item(&bb, &tx_data->v);                                                 // v
   rlp_encode_bytes(&bb, bytes(NULL, 0));                                             // empty because signature
   rlp_encode_bytes(&bb, bytes(NULL, 0));                                             // is still missing
+  rlp_encode_to_list(&bb);
   *target = bb.b;
   _free(data.data);
 }

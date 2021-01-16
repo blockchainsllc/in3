@@ -49,6 +49,14 @@ safe_get_NAME() {
     in3 call -to $G_SAFE "NAME():string"
 }
 
-safe_send() {
+safe_fund_with_5eth() {
+    in3 send -value 5.0eth -to $G_SAFE -w
+}
 
+safe_balance() {
+    in3 eth_getBalance $G_SAFE latest
+}
+
+safe_send() {
+   in3 send -ms $G_SAFE -w $@
 }
