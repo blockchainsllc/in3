@@ -694,12 +694,56 @@ static void test_nodelist_update_8() {
   in3_free(c);
 }
 
+static void test_nodelist_pick_signer_exclusions() {
+  in3_t* in3 = in3_for_chain(0x34ff);
+  in3_configure(in3, "{\"chainId\":\"0x34ff\",\"chainType\":0,\"autoUpdateList\":false,\"signatureCount\":1,\"requestCount\":1,\"maxAttempts\":1,\"maxVerifiedHashes\":0,"
+                     "\"nodeRegistry\":{"
+                     "   \"needsUpdate\":false,"
+                     "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","
+                     "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\","
+                     "   \"nodeList\": [{"
+                     "      \"url\":\"https://in3-v2.slock.it/priv/nd-1\","
+                     "      \"address\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/priv/nd-2\","
+                     "      \"address\":\"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+                     "      \"props\":\"0x1dd\""
+                     "    },"
+                     "    {"
+                     "      \"url\":\"https://in3-v2.slock.it/goerli/nd-3\","
+                     "      \"address\":\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\","
+                     "      \"props\":\"0x1dd\""
+                     "    }]"
+                     "}}");
+  register_transport(in3, test_transport);
+
+  size_t test_count = 100; /* we should surely hit a collision by then (unless the code is handling exclusions correctly) */
+  for (size_t i = 0; i < test_count; i++) {
+    in3_ctx_t*        ctx  = ctx_new(in3, "{\"jsonrpc\":\"2.0\","
+                                  "\"method\":\"eth_getTransactionByHash\","
+                                  "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]}");
+    in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .ctx = ctx};
+    TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx));
+    pctx.type = NL_SIGNER;
+    TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx));
+    TEST_ASSERT_NOT_NULL(ctx->nodes);
+    TEST_ASSERT_EQUAL(1, ctx->signers_length);
+    TEST_ASSERT(memcmp(ctx->nodes->address, ctx->signers, 20) != 0);
+    ctx_free(ctx);
+  }
+
+  in3_free(in3);
+}
+
 /*
  * Main
  */
 int main() {
   TESTS_BEGIN();
   in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_nodeselect_def);
   in3_set_func_time(mock_time);
   in3_set_func_rand(mock_rand);
   RUN_TEST(test_capabilities);
@@ -711,5 +755,6 @@ int main() {
   RUN_TEST(test_nodelist_update_6);
   RUN_TEST(test_nodelist_update_7);
   RUN_TEST(test_nodelist_update_8);
+  RUN_TEST(test_nodelist_pick_signer_exclusions);
   return TESTS_END();
 }
