@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int mem_check(evm_t* evm, uint64_t max_pos, uint8_t read_only) {
+int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only) {
   if (max_pos >= MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
   if (max_pos > evm->memory.b.len) {
 
@@ -80,7 +80,7 @@ int evm_mem_readi(evm_t* evm, uint32_t off, uint8_t* dst, uint32_t len) {
   if (!len) return 0;
   uint8_t* src     = NULL;
   uint32_t max_len = 0;
-  if (mem_check(evm, (uint64_t) off + len, 1) < 0) return EVM_ERROR_OUT_OF_GAS;
+  if (mem_check(evm, off + len, 1) < 0) return EVM_ERROR_OUT_OF_GAS;
   if (off < evm->memory.bsize) {
     src     = evm->memory.b.data + off;
     max_len = evm->memory.bsize - off;
@@ -104,7 +104,6 @@ int evm_mem_read(evm_t* evm, bytes_t mem_off, uint8_t* dst, uint32_t len) {
   if (mem_off.len > 4) return EVM_ERROR_OUT_OF_GAS;
   return evm_mem_readi(evm, bytes_to_int(mem_off.data, mem_off.len), dst, len);
 }
-
 int evm_mem_read_ref(evm_t* evm, uint32_t off, uint32_t len, bytes_t* src) {
   src->data = NULL;
   src->len  = 0;

@@ -259,8 +259,7 @@ examples_macos:
     - ./build.sh
     - cd ../..
     - mv build mac_build
-    - mkdir build
-    - mv in3_wasm build/module
+    - mv wasm_build build
     - cd wasm/examples
     - ./build.sh
   tags:

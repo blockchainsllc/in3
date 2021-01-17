@@ -39,7 +39,6 @@ add_static_library(
   SOURCES 
     zksync.c
     zk_message.c
-    zk_helper.c
 
   DEPENDS 
     eth_basic

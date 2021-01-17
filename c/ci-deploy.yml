@@ -62,7 +62,7 @@ readthedocs:
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - chmod 777 bin/*
     - cd ../wasm/src
-    - cp ../../in3_wasm/index.d.ts .
+    - cp ../../wasm_build/module/index.d.ts .
     - npm --cache .npm i typedoc
     - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json index.d.ts
     - cat doc.json | ../../generator/bin/slockit-docu index.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
@@ -87,6 +87,7 @@ release_mac_and_wasm:
     - gcc8
     - readthedocs
     - wasm
+    - asmjs
     - java
     - python
   script:
@@ -97,7 +98,8 @@ release_mac_and_wasm:
     - cp -r ../mac_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
@@ -124,6 +126,7 @@ release_x64:
     - gcc8
     - readthedocs
     - wasm
+    - asmjs
     - java
     - python
   extends: .only_deploy
@@ -135,7 +138,8 @@ release_x64:
     - cp -r ../x64_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
@@ -160,6 +164,7 @@ release_x86:
     - gcc8-x86
     - readthedocs
     - wasm
+    - asmjs
     - java
     - python
   script:
@@ -170,7 +175,8 @@ release_x86:
     - cp -r ../x86_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
@@ -195,6 +201,7 @@ release_arm7:
     - arm7
     - readthedocs
     - wasm
+    - asmjs
     - java
     - python
   script:
@@ -205,7 +212,8 @@ release_arm7:
     - cp -r ../arm7_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
@@ -230,6 +238,7 @@ release_win:
     - win_mingw
     - readthedocs
     - wasm
+    - asmjs
     - java
     - python
   script:
@@ -244,7 +253,8 @@ release_win:
     - mv lib/libin3.so lib/in3.dll
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
@@ -271,7 +281,7 @@ pages:
     - clangcheck
     - vulnerabilities
     - java_linux
-    - test_asmjs
+    - test_wasm
     - python_linux
   script:
     - mkdir -p public/lib
@@ -283,8 +293,9 @@ pages:
     - cp -r doc/build public/rtd
     - cp -r vulnerability_analysis.json public/vulnerability_analysis.json || true
     - cp -r java/build/reports/jacoco/test/html    public/coverage_java
+    - cp -r wasm/test/coverage public/coverage_wasm
     - cp -r python_multilib/htmlcov public/coverage_python
-    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li><li><a href='coverage_python/index.html'>Code Coverage PYTHON</a></li></ul></body></html>" > public/index.html
+    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li><li><a href='coverage_wasm/index.html'>Code Coverage WASM</a></li><li><a href='coverage_python/index.html'>Code Coverage PYTHON</a></li></ul></body></html>" > public/index.html
   artifacts:
     paths:
       - public

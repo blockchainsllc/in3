@@ -62,9 +62,7 @@ void finalize_and_refund_gas(evm_t* evm) {
     // finalize and refund
     if (evm->refund && evm->parent) {
       evm->parent->gas -= gas_used;
-      evm->gas += gas_used;
-      evm->parent->refund += evm->refund;
-      evm->refund = 0;
+      evm->gas += gas_used + evm->refund;
     }
     else {
       evm->gas += min(evm->refund, gas_used >> 1);
@@ -73,17 +71,12 @@ void finalize_and_refund_gas(evm_t* evm) {
 }
 
 void finalize_subcall_gas(evm_t* evm, int success, evm_t* parent) {
-  // if the subcall was successful
-  if (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) {
-    // if we didn't have to revert, copy new state to parent
-    if (evm->state != EVM_STATE_REVERTED) copy_state(parent, evm);
-
-    // refund gas left to parent
+  // if it was successfull we copy the new state to the parent
+  if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm->state != EVM_STATE_REVERTED)
+    copy_state(parent, evm);
+  // if we have gas left and it was successfull we return it to the parent process.
+  if (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS)
     parent->gas += evm->gas;
-
-    // if parent was depending on refund, deduce gas that was on hold
-    if (evm->properties & EVM_PROP_CALL_DEPEND_ON_REFUND) parent->gas -= evm->init_gas;
-  }
   // If balance was insuficient, we return only the deduced stipend
   else if (success == EVM_ERROR_BALANCE_TOO_LOW)
     parent->gas += G_CALLSTIPEND;

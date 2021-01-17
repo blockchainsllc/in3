@@ -174,21 +174,15 @@ int evm_sub_call(evm_t*    parent,
   UNUSED_VAR(gas);
 
   // create a new evm
-  evm_t    evm;
-  int      res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
-  uint32_t c_xfer = 0, old_gas = 0;
+  evm_t evm;
+  int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
 
-  evm.parent          = parent;
   evm.properties      = parent->properties;
   evm.chain_id        = parent->chain_id;
   evm.call_data.data  = data;
   evm.call_data.len   = l_data;
   evm.call_value.data = value;
   evm.call_value.len  = l_value;
-
-  // if parent has EVM_PROP_CALL_DEPEND_ON_REFUND set, we need to clean it up from child
-  if (evm.properties & EVM_PROP_CALL_DEPEND_ON_REFUND)
-    evm.properties ^= EVM_PROP_CALL_DEPEND_ON_REFUND;
 
   // if this is a delecate call, we set the address of the account storage we should use
   if (mode == EVM_CALL_MODE_DELEGATE)
@@ -202,29 +196,13 @@ int evm_sub_call(evm_t*    parent,
   UNUSED_VAR(new_account);
   UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
-  if (evm.properties & EVM_PROP_CALL_DEPEND_ON_REFUND) {
-    // store old gas amount in case we need to revert
-    old_gas = evm.gas;
-  }
-
   // execute the internal call
   if (res == 0)
     success = evm_run(&evm, code_address);
   else
     success = res;
 
-  if (evm.properties & EVM_PROP_CALL_DEPEND_ON_REFUND) {
-    if (evm.gas < c_xfer) {
-      // Call execution consumed more gas than the caller could afford.
-      success = EVM_ERROR_OUT_OF_GAS;
-      // Restore gas amount from before call execution
-      evm.gas = old_gas;
-      // Flag evm as reverted to prevent new state to be copied to parent
-      evm.state = EVM_STATE_REVERTED;
-    }
-  }
-
-  // put the success in the stack (in case of a create we add the new address)
+  // put the success in the stack ( in case of a create we add the new address)
   if (!address && success == 0)
     res = evm_stack_push(parent, evm.account, 20);
   else
