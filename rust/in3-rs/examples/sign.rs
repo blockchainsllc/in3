@@ -28,7 +28,7 @@ fn sign_tx_api() {
         ),
     ];
     let _ = eth_api.client().configure(
-        r#"{"proof":"none", "autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
+        r#"{"proof":"none", "autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#,
     );
     eth_api.client().set_signer(Box::new(In3Signer::new(
         "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
@@ -61,7 +61,7 @@ fn sign_tx_rpc() {
     // Config in3 api client
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(
-        r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
+        r#"{"proof":"none","autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#,
     );
     let responses = vec![
         (

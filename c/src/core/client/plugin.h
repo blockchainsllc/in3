@@ -52,7 +52,6 @@
 
 /** registers a plugin with the client */
 in3_ret_t in3_plugin_register(
-    const char*            name,      /**< the name of the plugin (optional), which is ignored if LOGGIN is not defined */
     in3_t*                 c,         /**< the client */
     in3_plugin_supp_acts_t acts,      /**< the actions to register for combined with OR */
     in3_plugin_act_fn      action_fn, /**< the plugin action function */
@@ -60,8 +59,6 @@ in3_ret_t in3_plugin_register(
     bool                   replace_ex /**< if this is true and an plugin with the same action is already registered, it will replace it */
 );
 
-/** registers a plugin and uses the function name as plugin name */
-#define plugin_register(c, acts, action_fn, data, replace_ex) in3_plugin_register(#action_fn, c, acts, action_fn, data, replace_ex)
 /**
  * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
  */
@@ -81,6 +78,19 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
  * same as in3_plugin_execute_first(), but returns IN3_OK even if no plugin could handle specified action
  */
 in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
+
+/**
+ * get direct access to plugin data (if registered) based on action function
+ */
+static inline void* in3_plugin_get_data(in3_t* c, in3_plugin_act_fn fn) {
+  in3_plugin_t* p = c->plugins;
+  while (p) {
+    if (p->action_fn == fn)
+      return p->data;
+    p = p->next;
+  }
+  return NULL;
+}
 
 // ----------- RPC HANDLE -----------
 
@@ -280,12 +290,13 @@ NONULL in3_sign_ctx_t* create_sign_ctx(
  * context used during configure
  */
 typedef struct in3_configure_ctx {
-  in3_t*     client;    /**< the client to configure */
-  d_token_t* token;     /**< the token not handled yet*/
-  char*      error_msg; /**< message in case of an incorrect config */
+  in3_t*      client;    /**< the client to configure */
+  json_ctx_t* json;      /**< the json ctx corresponding to below token */
+  d_token_t*  token;     /**< the token not handled yet*/
+  char*       error_msg; /**< message in case of an incorrect config */
 } in3_configure_ctx_t;
 
-// -------- SET_CONFIG ---------
+// -------- GET_CONFIG ---------
 
 /**
  * context used during get config
@@ -354,15 +365,17 @@ void in3_set_storage_handler(
  * verification context holding the pointers to all relevant toknes.
  */
 typedef struct {
-  in3_ctx_t*   ctx;                   /**< Request context. */
-  in3_chain_t* chain;                 /**< the chain definition. */
-  d_token_t*   result;                /**< the result to verify */
-  d_token_t*   request;               /**< the request sent. */
-  d_token_t*   proof;                 /**< the delivered proof. */
-  in3_t*       client;                /**< the client. */
-  uint64_t     last_validator_change; /**< Block number of last change of the validator list */
-  uint64_t     currentBlock;          /**< Block number of latest block */
-  int          index;                 /**< the index of the request within the bulk */
+  in3_ctx_t*    ctx;                   /**< Request context. */
+  in3_chain_t*  chain;                 /**< the chain definition. */
+  d_token_t*    result;                /**< the result to verify */
+  d_token_t*    request;               /**< the request sent. */
+  d_token_t*    proof;                 /**< the delivered proof. */
+  in3_t*        client;                /**< the client. */
+  uint64_t      last_validator_change; /**< Block number of last change of the validator list */
+  uint64_t      currentBlock;          /**< Block number of latest block */
+  int           index;                 /**< the index of the request within the bulk */
+  node_match_t* node;                  /**< the node who delivered this response */
+  bool          dont_blacklist;        /**< indicates whether the plugin would like the node to be blacklisted */
 } in3_vctx_t;
 
 #ifdef LOGGING
@@ -377,6 +390,23 @@ in3_ret_t vc_set_error(
     char*       msg /**< the error message. */
 );
 
+// ---- PLGN_ACT_PAY_FOLLOWUP -----------
+
+typedef struct {
+  in3_ctx_t*    ctx;        /**< Request context. */
+  node_match_t* node;       /**< the responding node. */
+  d_token_t*    resp_in3;   /**< the response's in3 section */
+  d_token_t*    resp_error; /**< the response's error section */
+} in3_pay_followup_ctx_t;
+
+// ---- PLGN_ACT_PAY_HANDLE -----------
+
+typedef struct {
+  in3_ctx_t* ctx;     /**< Request context. */
+  sb_t*      payload; /**< the request payload */
+  bytes32_t  pk;      /**< the private-key to sign with */
+} in3_pay_handle_ctx_t;
+
 // ---- PAY_SIGN_REQ -----------
 
 typedef struct {
@@ -386,10 +416,65 @@ typedef struct {
   uint8_t    signature[65]; /**< the signature */
 } in3_pay_sign_req_ctx_t;
 
+// ---- LOG_ERROR -----------
+
 typedef struct {
   char*      msg;   /**< the error message. */
   uint16_t   error; /**< error code. */
   in3_ctx_t* ctx;   /**< ctx . */
 } error_log_ctx_t;
 
-#endif
+// -------- NL_PICK ---------
+typedef enum {
+  NL_DATA,  /**< data provider node. */
+  NL_SIGNER /**< signer node. */
+} in3_nl_pick_type_t;
+
+typedef struct {
+  in3_nl_pick_type_t type; /**< type of node to pick. */
+  in3_ctx_t*         ctx;  /**< Request context. */
+} in3_nl_pick_ctx_t;
+
+// -------- NL_FOLLOWUP ---------
+typedef struct {
+  in3_ctx_t*    ctx;  /**< Request context. */
+  node_match_t* node; /**< Node that gave us a valid response */
+} in3_nl_followup_ctx_t;
+
+// -------- NL_BLACKLIST ---------
+typedef struct {
+  union {
+    uint8_t*    address; /**< address of node that is to be blacklisted */
+    const char* url;     /**< URL of node that is to be blacklisted */
+  };
+  bool is_addr; /**< Specifies whether the identifier is an address or a url */
+} in3_nl_blacklist_ctx_t;
+
+// -------- NL_OFFLINE ---------
+typedef struct {
+  in3_vctx_t*  vctx;    /**< Request context. */
+  unsigned int missing; /**< bitmask representing nodes - a reset bit indicates missing signatures */
+} in3_nl_offline_ctx_t;
+
+// -------- GET_DATA ---------
+typedef enum {
+  GET_DATA_REGISTRY_ID,         /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
+  GET_DATA_NODE_MIN_BLK_HEIGHT, /* returns a pointer to an internal bitmask; NO cleanup required */
+  GET_DATA_CLIENT_DATA,         /* returns an opaque pointer that was previously set by caller */
+} in3_get_data_type_t;
+
+/**
+ * context used during get data
+ * sample usage -
+ *     in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
+ *     in3_plugin_execute_first(ctx, PLGN_ACT_GET_DATA, &dctx);
+ *     // use dctx->data as required
+ *     if (dctx.cleanup) dctx.cleanup(dctx.data);
+ */
+typedef struct {
+  in3_get_data_type_t type; /**< type of data that the caller wants. */
+  void*               data; /**< output param set by plugin code - pointer to data requested. */
+  void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */
+} in3_get_data_ctx_t;
+
+#endif //PLUGIN_H

@@ -63,10 +63,9 @@ typedef enum ctx_type {
  */
 typedef struct weight {
   unsigned int   index;   /**< index of the node in the nodelist */
-  bool           blocked; /**< if true this node has  been blocked for sending wrong responses */
-  uint32_t       s;       /**< The starting value */
-  uint32_t       w;       /**< weight value */
-  struct weight* next;    /**< next in the linkedlist or NULL if this is the last element*/
+  char*          url;     /**< the url of the node */
+  address_t      address; /**< address of the server */
+  struct weight* next;    /**< next in the linked-list or NULL if this is the last element*/
 } node_match_t;
 
 /** response-object. 
@@ -88,6 +87,7 @@ typedef struct in3_ctx {
   uint_fast8_t    signers_length;     /**< number or addresses */
   uint16_t        len;                /**< the number of requests */
   uint_fast16_t   attempt;            /**< the number of attempts */
+  uint32_t        id;                 /**< JSON RPC id of request at index 0 */
   ctx_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */
   char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
@@ -101,10 +101,6 @@ typedef struct in3_ctx {
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
   in3_t*          client;             /**< reference to the client*/
-
-#ifndef DEV_NO_INC_RPC_ID
-  uint32_t id; /**< JSON RPC id of request at index 0 */
-#endif
 } in3_ctx_t;
 
 /**
@@ -441,12 +437,5 @@ NONULL in3_proof_t in3_ctx_get_proof(
     in3_ctx_t* ctx, /**< [in] the current request. */
     int        i    /**< [in] the index within the request. */
 );
-
-NONULL static inline in3_node_t* ctx_get_node(const in3_chain_t* chain, const node_match_t* node) {
-  return node->index < chain->nodelist_length ? chain->nodelist + node->index : NULL;
-}
-NONULL static inline in3_node_weight_t* ctx_get_node_weight(const in3_chain_t* chain, const node_match_t* node) {
-  return node->index < chain->nodelist_length ? chain->weights + node->index : NULL;
-}
 
 #endif

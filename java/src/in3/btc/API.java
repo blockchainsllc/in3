@@ -42,7 +42,7 @@ public class API {
   }
 
   /**
-   * Retrieves the byte array representing teh serialized blockheader data.
+   * Retrieves the byte array representing the serialized blockheader data.
    */
   public byte[] getBlockHeaderBytes(String blockHash) {
     Object jsonResponse = in3.sendRPCasObject(BTC_GET_BLOCKHEADER, new Object[] {blockHash, false});

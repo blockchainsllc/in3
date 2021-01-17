@@ -3,7 +3,7 @@ use crate::json_rpc::json::*;
 use base64::{decode, encode, DecodeError};
 
 use crate::error::{Error, In3Result};
-use crate::in3::chain::{IPFS, MULTICHAIN};
+use crate::in3::chain::IPFS;
 use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -20,7 +20,7 @@ impl ApiTrait for Api {
     /// Creates an [`ipfs::Api`](../ipfs/struct.Api.html) instance by consuming a
     /// [`Client`](../in3/struct.Client.html).
     fn new(client: Box<dyn ClientTrait>) -> Self {
-        assert!(client.id() == IPFS || client.id() == MULTICHAIN);
+        assert_eq!(client.id(), IPFS);
         Api { client }
     }
 
@@ -84,7 +84,7 @@ mod tests {
     fn test_ipfs_put() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::IPFS));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodes":{"0x7d0":{"needsUpdate":false}}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "ipfs_put",
@@ -103,7 +103,7 @@ mod tests {
     fn test_ipfs_get() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::IPFS));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodes":{"0x7d0":{"needsUpdate":false}}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "ipfs_get",

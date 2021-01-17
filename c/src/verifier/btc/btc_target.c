@@ -1,9 +1,9 @@
 #include "btc_target.h"
-#include "../../core/client/cache.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/util/mem.h"
+#include "../../nodeselect/cache.h"
 #include "btc_serialize.h"
 
 in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target) {
@@ -85,10 +85,10 @@ static void set_cachekey(chain_id_t id, char* buffer) {
 
 in3_ret_t btc_check_conf(in3_t* c, btc_target_conf_t* conf) {
   // did the chain_id change?
-  if (c->chain_id != conf->chain_id) {
+  if (c->chain.chain_id != conf->chain_id) {
     if (conf->data.data) _free(conf->data.data);
     conf->data     = bytes(NULL, 0);
-    conf->chain_id = c->chain_id;
+    conf->chain_id = c->chain.chain_id;
   }
 
   if (!conf->data.data) {

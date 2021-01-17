@@ -1,10 +1,8 @@
 #include "../../core/client/context_internal.h"
-#include "../../core/client/plugin.h"
 #include "../../core/util/log.h"
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
-#include "zksync.h"
-#include <assert.h>
+#include "zksync_priv.h"
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
 

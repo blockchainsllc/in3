@@ -165,7 +165,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
           gas_price = get(tx, K_GAS_PRICE);
 
   // make sure, we have the correct chain_id
-  chain_id_t chain_id = ctx->client->chain_id;
+  chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
     TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
@@ -209,7 +209,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
   bytes_t signature;
 
   // make sure, we have the correct chain_id
-  chain_id_t chain_id = ctx->client->chain_id;
+  chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
     TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
