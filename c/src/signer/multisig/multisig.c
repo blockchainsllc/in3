@@ -61,25 +61,6 @@ bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
   return true;
 }
 
-/*
-*   rlp_add_bytes(rlp, nonce             , UINT);
-  rlp_add_bytes(rlp, gas_price         , UINT);
-  rlp_add_bytes(rlp, gas_limit         , UINT);
-  rlp_add_bytes(rlp, to                , ADDRESS);
-  rlp_add_bytes(rlp, value             , UINT);
-  rlp_add_bytes(rlp, data              , BYTES);
-
- */
-/*
-*         to: '0x567B4485746CFE0bbd73aa04c818BB42B9A07C17',
-        value: "0x00",
-        data: '0x2cc9c4650000000000000000000000000000000000000000000000000000000000000001',
-        safeTxGas: 400000,
-        baseGas: 450000,
-        gasPrice: 0,
-        gasToken: '0x0000000000000000000000000000000000000000',
-        refundReceiver: '0x0000000000000000000000000000000000000000'
-*/
 typedef struct {
   bytes_t nonce;
   bytes_t to;
@@ -342,7 +323,22 @@ static void approve_hash(bytes_t* target, tx_data_t* tx_data, bytes32_t hash, ad
   *target = bb.b;
 }
 
-static in3_ret_t get_owners(multisig_t* ms, in3_ctx_t* ctx) {
+static in3_ret_t ensure_ms_type(multisig_t* ms, in3_ctx_t* ctx) {
+  if (ms->type == MS_UNKNOWN) {
+    bytes_t* tmp;
+    TRY(call(ctx, ms->address, bytes((uint8_t*) "\xa3\xf4\xdf\x7e", 4), &tmp))
+    if (tmp->len < 96) return ctx_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
+    char* name = (void*) tmp->data + 64;
+    if (strcmp(name, "Gnosis Safe") == 0)
+      ms->type = MS_GNOSIS_SAFE;
+    else if (strcmp(name, "IAMO Safe") == 0)
+      ms->type = MS_IAMO_SAFE;
+    else
+      return ctx_set_error(ctx, "unknwon MultiSig TYPE", IN3_ENOTSUP);
+  }
+  return IN3_OK;
+}
+static in3_ret_t ensure_owners(multisig_t* ms, in3_ctx_t* ctx) {
   if (ms->owners == NULL) {
     // init the owners first
     bytes_t*  tmp;
@@ -380,7 +376,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   bytes32_t  tx_hash    = {0};
 
   // get Threshold
-  in3_ret_t ret = get_owners(ms, ctx);
+  in3_ret_t ret = ensure_owners(ms, ctx);
   if (ret != IN3_WAITING && ret != IN3_OK)
     return ret;
 
@@ -432,13 +428,21 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
 }
 
 in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
+  // is this the right account?
   if (ctx->account.len != 20 || memcmp(ms->address, ctx->account.data, 20)) return IN3_EIGNORE;
-  //  ctx->signature = bytes(_malloc(65), 65);
+
+  // make sure we know the type of Multisig
+  TRY(ensure_ms_type(ms, ctx->ctx))
+
+  // calculate the hash
   bytes32_t hash;
   switch (ctx->type) {
     case SIGN_EC_RAW: // already hashed
       if (ctx->message.len != 32) return ctx_set_error(ctx->ctx, "invalid message, must be a 256bit hash", IN3_EINVAL);
-      memcpy(hash, ctx->message.data, 32);
+      if (ms->type == MS_IAMO_SAFE)
+        keccak(ctx->message, hash);
+      else
+        memcpy(hash, ctx->message.data, 32);
       break;
     case SIGN_EC_HASH: {
       //do we know the domain_seperator?
@@ -454,7 +458,11 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       // calculate the message hash according to the GnosisSafe getMessageHash - function.
       uint8_t tmp[66];
       memcpy(tmp, "\x60\xb3\xcb\xf8\xb4\xa2\x23\xd6\x8d\x64\x1b\x3b\x6d\xdf\x9a\x29\x8e\x7f\x33\x71\x0c\xf3\xd3\xa9\xd1\x14\x6b\x5a\x61\x50\xfb\xca", 32); // SAFE_MSG_TYPEHASH
-      keccak(ctx->message, tmp + 32);
+      keccak(ctx->message, hash);
+      if (ms->type == MS_IAMO_SAFE)
+        keccak(bytes(hash, 32), tmp + 32);
+      else
+        memcpy(tmp + 32, hash, 32);
       keccak(bytes(tmp, 64), tmp + 34);
       tmp[0] = 0x19;
       tmp[1] = 0x01;
@@ -463,12 +471,11 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       break;
     }
     default:
-      _free(ctx->signature.data);
       return IN3_ENOTSUP;
   }
 
   // get Owners
-  TRY(get_owners(ms, ctx->ctx))
+  TRY(ensure_owners(ms, ctx->ctx))
 
   // prepare signatures
   sig_data_t*  sig_data  = alloca(sizeof(sig_data_t) * ms->threshold);
@@ -530,7 +537,6 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* ctx) {
 
 in3_ret_t add_gnosis_safe(in3_t* in3, address_t adr) {
   multisig_t* ms = _calloc(1, sizeof(multisig_t));
-  ms->type       = MS_GNOSIS_SAFE;
   memcpy(ms->address, adr, 20);
   return plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM | PLGN_ACT_SIGN, handle, ms, false);
 }

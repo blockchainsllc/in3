@@ -147,6 +147,7 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
       if (conf->provider_url) _free(conf->provider_url);
       if (conf->main_contract) _free(conf->main_contract);
       if (conf->account) _free(conf->account);
+      if (conf->tokens) _free(conf->tokens);
       _free(conf);
       return IN3_OK;
     }

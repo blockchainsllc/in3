@@ -386,7 +386,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     return ctx_set_error(ctx->ctx, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
   bytes_t sig_bytes = sc.signature;
-  if (sc.signature.len == 65)
+  if (sc.signature.len == 65 && sc.signature.data[64] < 2)
     sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
