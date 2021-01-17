@@ -50,7 +50,7 @@ safe_get_NAME() {
 }
 
 safe_fund_with_5eth() {
-    in3 send -value 5.0eth -to $G_SAFE -w
+    in3 send -value 5.0eth -to $G_SAFE -w | jq
 }
 
 safe_balance() {
@@ -58,5 +58,11 @@ safe_balance() {
 }
 
 safe_send() {
-   in3 send -ms $G_SAFE -w $@
+   in3 send -ms $G_SAFE -w $@ | jq
+}
+
+safe_create_key() {
+   export TEST_PK=`in3 createkey`
+   export TEST_ADR=`in3 pk2address $TEST_PK`
+   echo "created address (TEST_ADR) : $TEST_ADR"
 }
