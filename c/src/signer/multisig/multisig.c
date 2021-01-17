@@ -496,8 +496,9 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
             if (memcmp(ms->owners + n, account, 20) == 0) sig_data[sig_count].address = (void*) (ms->owners + n);
           }
           memcpy(sig_data[sig_count].sig, signature.data, 65);
-          sig_data[sig_count].data = bytes(NULL, 0); // no data needed (at least for now)
-          sig_count++;                               // we have at least one signature now.
+          if (sig_data[sig_count].sig[64] < 2) sig_data[sig_count].sig[64] += 27; // fix chain-id later
+          sig_data[sig_count].data = bytes(NULL, 0);                              // no data needed (at least for now)
+          sig_count++;                                                            // we have at least one signature now.
         }
       }
       _free(sctx.accounts);
