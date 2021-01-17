@@ -1,9 +1,8 @@
 {
-  "name": "in3-tests",
-  "version": "3.2.0",
-  "description": "IN3 Tests",
+  "name": "in3-wasm",
+  "version": "2.0.0-beta.5",
+  "description": "Typescript-version of the incubed client",
   "main": "js/src/index.js",
-  "private": true,
   "scripts": {
     "build": "tsc -p .",
     "test": "[ -d node_modules ] || npm i ; mocha --timeout 20000 --full-trace testRunner.js testEthApi.js testUtil.js testBtcApi.js testIpfs.js",
@@ -28,12 +27,12 @@
     "sourceMap": true,
     "instrument": true
   },
-  "author": "Blockchains",
+  "author": "Simon Jentzsch",
   "license": "(AGPL-3.0-or-later OR commercial)",
   "bugs": {
-    "url": "https://github.com/blockchainsllc/in3-c/issues"
+    "url": "https://github.com/slockit/in3-c/issues"
   },
-  "homepage": "https://github.com/blockchainsllc/in3-c#readme",
+  "homepage": "https://github.com/slockit/in3-c#readme",
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.49",
     "@babel/preset-env": "^7.0.0-beta.49",

@@ -1,36 +1,3 @@
-/*******************************************************************************
- * This file is part of the IN3 project.
- * Sources: https://github.com/blockchainsllc/in3
- *
- * Copyright (C) 2018-2021 slock.it GmbH, Blockchains LLC
- *
- *
- * COMMERCIAL LICENSE USAGE
- *
- * Licensees holding a valid commercial license may use this file in accordance
- * with the commercial license agreement provided with the Software or, alternatively,
- * in accordance with the terms contained in a written agreement between you and
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
- * information please contact slock.it at in3@slock.it.
- *
- * Alternatively, this file may be used under the AGPL license as follows:
- *
- * AGPL LICENSE USAGE
- *
- * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available
- * complete source code of licensed works and modifications, which include larger
- * works using a licensed work, under the same license. Copyright and license notices
- * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along
- * with this program. If not, see <https://www.gnu.org/licenses/>.
- *******************************************************************************/
 in3w.extensions.push(c => c.eth = new EthAPI(c))
 class AccountAPI {
     constructor(client) { this.client = client }
@@ -88,7 +55,7 @@ class EthAPI {
     }
 
     /**
-     * Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send _call.
+     * Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send _call. 
      */
     async callFn(to, method, ...args) {
         if (typeof (to) === 'string' && to.endsWith('.eth')) to = await this.resolveENS(to)
@@ -294,10 +261,10 @@ class EthAPI {
 
     /**
      * Creates a filter object, based on filter options, to notify when the state changes (logs). To check if the state h, call eth_getFilterChanges.
-     *
+     * 
      * A note on specifying topic filters:
      * Topics are order-dependent. A transaction with a log with topics [A, B] will be matched by the following topic filters:
-     *
+     * 
      * [] “anything”
      * [A] “A in first position (and anything after)”
      * [null, B] “anything in first position AND B in second position (and anything after)”
@@ -310,7 +277,7 @@ class EthAPI {
 
     /**
      * Creates a filter in the node, to notify when new pending transactions arrive.
-     *
+     * 
      * To check if the state h, call eth_getFilterChanges.
      */
     newPendingTransactionFilter() {

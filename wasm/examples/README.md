@@ -11,14 +11,14 @@
    register a custom plugin
 
 -  [use_web3](./use_web3.ts)
-   use IN3 as Web3Provider in web3js
+   use incubed as Web3Provider in web3js 
 
 -  [in3_in_browser](./in3_in_browser.html)
-   use IN3 directly in html
+   use incubed directly in html 
 
-### Building
+### Building 
 
-In order to run those examples, you need to install `in3` and typescript first.
+In order to run those examples, you need to install in3-wasm and typescript first.
 The build.sh will do this and the run the tsc-compiler
 
 ```sh
@@ -30,3 +30,4 @@ In order to run a example use
 ```
 node build/get_block_api.ts
 ```
+

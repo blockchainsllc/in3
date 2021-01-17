@@ -1,34 +1,34 @@
 /*******************************************************************************
- * This file is part of the IN3 project.
- * Sources: https://github.com/blockchainsllc/in3
- *
- * Copyright (C) 2018-2021 slock.it GmbH, Blockchains LLC
- *
- *
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+ * 
+ * 
  * COMMERCIAL LICENSE USAGE
- *
- * Licensees holding a valid commercial license may use this file in accordance
- * with the commercial license agreement provided with the Software or, alternatively,
- * in accordance with the terms contained in a written agreement between you and
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
  * information please contact slock.it at in3@slock.it.
- *
+ * 	
  * Alternatively, this file may be used under the AGPL license as follows:
- *
+ *    
  * AGPL LICENSE USAGE
- *
+ * 
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software
+ * terms of the GNU Affero General Public License as published by the Free Software 
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available
- * complete source code of licensed works and modifications, which include larger
- * works using a licensed work, under the same license. Copyright and license notices
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along
+ * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -39,14 +39,14 @@
 export declare interface IN3Config {
     /**
      * sets the transport-function.
-     *
+     * 
      * @param fn the function to fetch the response for the given url
      */
     transport?: (url: string, payload: string, timeout?: number) => Promise<string>
 
     /**
      * if true the nodelist will be automaticly updated if the lastBlock is newer.
-     *
+     * 
      * default: true
      */
     autoUpdateList?: boolean
@@ -54,21 +54,21 @@ export declare interface IN3Config {
     /**
      * The chain-id based on EIP-155.
      * or the name of the supported chain.
-     *
+     * 
      * Currently we support 'mainnet', 'goerli', 'ipfs' and 'local'
-     *
-     * While most of the chains use preconfigured chain settings,
+     * 
+     * While most of the chains use preconfigured chain settings, 
      * 'local' actually uses the local running client turning of proof.
-     *
+     * 
      * example: '0x1' or 'mainnet' or 'goerli'
-     *
+     * 
      * default: 'mainnet'
      */
     chainId: string // ^0x[0-9a-fA-F]+$
 
     /**
      * number of signatures requested. The more signatures, the more security you get, but responses may take longer.
-     *
+     * 
      * default: 0
      */
     signatureCount?: number
@@ -76,16 +76,16 @@ export declare interface IN3Config {
     /**
      * the number in percent needed in order reach finality if you run on a POA-Chain.
      * (% of signature of the validators)
-     *
+     * 
      * default: 0
      */
     finality?: number
 
     /**
-     * if true, the request should include the codes of all accounts.
-     * Otherwise only the the codeHash is returned.
+     * if true, the request should include the codes of all accounts. 
+     * Otherwise only the the codeHash is returned. 
      * In this case the client may ask by calling eth_getCode() afterwards
-     *
+     * 
      * default: false
      */
     includeCode?: boolean
@@ -93,7 +93,7 @@ export declare interface IN3Config {
     /**
     * if true, the first request (updating the nodelist) will also fetch the current health status
     * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
-    *
+    * 
     * default: false
     */
     bootWeights?: boolean
@@ -101,17 +101,17 @@ export declare interface IN3Config {
     /**
      * max number of attempts in case a response is rejected.
      * Incubed will retry to find a different node giving a verified response.
-     *
+     * 
      * default: 5
      */
     maxAttempts?: number
 
 
     /**
-     * if true, the in3-section of the response will be kept and returned.
-     * Otherwise it will be removed after validating the data.
+     * if true, the in3-section of the response will be kept and returned. 
+     * Otherwise it will be removed after validating the data. 
      * This is useful for debugging or if the proof should be used afterwards.
-     *
+     * 
      * default: false
      */
     keepIn3?: boolean
@@ -123,53 +123,53 @@ export declare interface IN3Config {
 
     /**
      * the limit of nodes to store in the client. If set a random seed will be picked, which is the base for a deterministic verifiable partial nodelist.
-     *
+     * 
      * default: 0
      */
     nodeLimit?: number
 
     /**
-     * if false, the requests will not be included in the stats of the nodes ( or marked as intern ).
-     *
+     * if false, the requests will not be included in the stats of the nodes ( or marked as intern ). 
+     * 
      * default: true
      */
     stats?: boolean
 
     /**
      * specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
-     *
+     * 
      * default: 5000
      */
     timeout?: number
     /**
      * min stake of the server. Only nodes owning at least this amount will be chosen.
-     *
+     * 
      * default: 0
      */
     minDeposit: number
 
     /**
-     * a bitmask-value combining the minimal properties as filter for the selected nodes. See https://in3.readthedocs.io/en/develop/spec.html#node-structure for details.
+     * a bitmask-value combining the minimal properties as filter for the selected nodes. See https://in3.readthedocs.io/en/develop/spec.html#node-structure for details. 
      */
     nodeProps: number | Hex
 
     /**
      * if true the nodes should send a proof of the response
-     *
+     * 
      * default: 'standard'
      */
     proof?: 'none' | 'standard' | 'full'
 
     /**
      * if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
-     *
+     * 
      * default: 6
      */
     replaceLatestBlock?: number
 
     /**
      * the number of request send when getting a first answer
-     *
+     * 
      * default: 1
      */
     requestCount: number
@@ -196,28 +196,28 @@ export declare interface IN3Config {
         [name: string]: {
             /**
              * the address of the registry contract
-             *
+             * 
              * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
              */
             contract?: Address
 
             /**
              * address of the whiteList contract. (optional, cannot be combined with whiteList)
-             *
+             * 
              * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
              */
             whiteListContract?: Address
 
             /**
              * manuall list of whitelisted addresses. (optional, cannot be combined with whiteListContract)
-             *
+             * 
              * example: ['0xe36179e2286ef405e929C90ad3E70E649B22a945']
              */
             whiteList?: Address[]
 
             /**
              * if true the nodelist should be updated. This flag will be set to false after the first successfull update.
-             *
+             * 
              * default: true
              */
             needsUpdate?: boolean
@@ -239,7 +239,7 @@ export declare interface IN3Config {
 
             /**
              * average block time (seconds) for this chain.
-             *
+             * 
              * default: 14
              */
             avgBlockTime?: number
@@ -389,7 +389,7 @@ export declare interface RPCResponse {
 
 /**
  * a Incubed plugin.
- *
+ * 
  * Depending on the methods this will register for those actions.
  */
 interface IN3Plugin<BigIntType, BufferType> {
@@ -401,18 +401,18 @@ interface IN3Plugin<BigIntType, BufferType> {
 
     /**
      * returns address
-     * @param client
+     * @param client 
      */
     getAccount?(client: IN3Generic<BigIntType, BufferType>): string
 
     /**
      * returns list of addresses
-     * @param client
+     * @param client 
      */
     getAccounts?(client: IN3Generic<BigIntType, BufferType>): Address[]
 
     /**
-     * called for each request.
+     * called for each request. 
      * If the plugin wants to handle the request, this function should return the value or a Promise for the value.
      * If the plugin does not want to handle it, it should rreturn undefined.
      * @param client the current client
@@ -447,20 +447,20 @@ export default class IN3Generic<BigIntType, BufferType> {
 
     /**
      * sends a RPC-Requests specified by name and params.
-     *
+     * 
      * if the response contains an error, this will be thrown. if not the result will be returned.
-     *
-     * @param method the method to call.
+     * 
+     * @param method the method to call. 
      */
     public sendRPC(method: string, params?: any[]): Promise<any>;
 
 
     /**
      * sends a RPC-Requests specified by name and params as a sync call. This is only alowed if the request is handled internally, like web3_sha3,
-     *
+     * 
      * if the response contains an error, this will be thrown. if not the result will be returned.
-     *
-     * @param method the method to call.
+     * 
+     * @param method the method to call. 
      */
     public execLocal(method: string, params?: any[]): any;
 
@@ -471,7 +471,7 @@ export default class IN3Generic<BigIntType, BufferType> {
 
     /**
      * returns a Object, which can be used as Web3Provider.
-     *
+     * 
      * ```
      * const web3 = new Web3(new IN3().createWeb3Provider())
      * ```
@@ -486,7 +486,7 @@ export default class IN3Generic<BigIntType, BufferType> {
 
     /**
      * changes the default transport-function.
-     *
+     * 
      * @param fn the function to fetch the response for the given url
      */
     public static setTransport(fn: (url: string, payload: string, timeout?: number) => Promise<string>): void
@@ -664,8 +664,8 @@ export declare interface Signer<BigIntType, BufferType> {
     /** returns all addresses managed by the signer. */
     getAccounts(): Address[]
 
-    /**
-     * signing of any data.
+    /** 
+     * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
     sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
@@ -687,8 +687,8 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
     /** returns true if the account is supported (or unlocked) */
     canSign(address: Address): Promise<boolean>
 
-    /**
-     * signing of any data.
+    /** 
+     * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
     sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
@@ -698,7 +698,7 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
  * Collection of different util-functions.
  */
 export declare interface Utils<BufferType> {
-    // toInputToBuffer(data: Hex | BufferType | number | bigint, len?: number): BufferType
+    // toInputToBuffer(data: Hex | BufferType | number | bigint, len?: number): BufferType 
 
     createSignatureHash(def: ABI): Hex;
 
