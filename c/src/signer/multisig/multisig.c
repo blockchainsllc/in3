@@ -392,7 +392,6 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   }
   else
     return ret2;
-
   TRY(ret)
 
   // prepare the sigdata
@@ -477,12 +476,11 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
 
   // find all available signer-accounts
   in3_sign_account_ctx_t sctx = {.ctx = ctx->ctx, .accounts = NULL, .accounts_len = 0};
-
-  for (in3_plugin_t* p = ctx->ctx->client->plugins; p; p = p->next) {
+  for (in3_plugin_t* p = ctx->ctx->client->plugins; p && sig_count < ms->threshold; p = p->next) {
     sctx.accounts     = NULL;
     sctx.accounts_len = 0;
     if (p->acts & (PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sctx) == IN3_OK && sctx.accounts_len) {
-      for (int i = 0; i < sctx.accounts_len; i++) {
+      for (int i = 0; i < sctx.accounts_len && sig_count < ms->threshold; i++) {
         uint8_t* account = sctx.accounts + i * 20;
         if (is_valid(sig_data, ms, account, sig_count)) {
           bytes_t signature = bytes(NULL, 0);
