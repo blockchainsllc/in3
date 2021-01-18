@@ -258,7 +258,7 @@ static in3_ret_t add_approved(in3_ctx_t* ctx, uint32_t* sig_count, sig_data_t* s
     if (is_valid(sig_data, ms, (void*) ms->owners + i, *sig_count)) {
       // we don't have a signature from this owner
       uint8_t  check_approved[68];
-      bytes_t* result;
+      bytes_t* result = NULL;
       memcpy(check_approved, "\x7d\x83\x29\x74", 4); // 7d832974: approvedHashes(address,bytes32)
       memset(check_approved + 4, 0, 12);
       memcpy(check_approved + 16, ms->owners + i, 20);
@@ -357,7 +357,7 @@ static in3_ret_t ensure_owners(multisig_t* ms, in3_ctx_t* ctx) {
     // get the threshold
     in3_ret_t ret2 = call(ctx, ms->address, bytes((uint8_t*) "\xe7\x52\x35\xb8", 4), &tmp);
     if (ret2 == IN3_OK) {
-      if (tmp->len != 32) return ctx_set_error(ctx, "invalid threshold result", IN3_ERPC);
+      if (!tmp || tmp->len != 32) return ctx_set_error(ctx, "invalid threshold result", IN3_ERPC);
       ms->threshold = bytes_to_int(tmp->data + 28, 4);
     }
 
