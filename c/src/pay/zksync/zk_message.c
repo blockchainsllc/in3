@@ -232,7 +232,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
   sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
   sb_add_chars(sb, "\"}},{\"type\":\"");
-  if (data->conf->sign_type == SIGNER_EIP1271)
+  if (data->conf->sign_type == ZK_SIGN_CONTRACT)
     sb_add_chars(sb, "EIP1271Signature");
   else
     sb_add_chars(sb, "EthereumSignature");

@@ -632,6 +632,7 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
 
 int main(int argc, char* argv[]) {
   // check for usage
+  bool use_pk=false;
   if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
     recorder_exit(0);
@@ -704,11 +705,13 @@ int main(int argc, char* argv[]) {
   c->request_count = 1;
 #endif
   // handle clear cache opt before initializing cache
-  for (i = 1; i < argc; i++)
+  for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-fi") == 0) {
       recorder_update_cmd(argv[i + 1], &argc, &argv);
       break;
     }
+    if (strcmp(argv[i], "-pk") == 0) use_pk=true;
+  }
 
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
@@ -719,7 +722,7 @@ int main(int argc, char* argv[]) {
   in3_register_file_storage(c);
 
   // check env
-  if (getenv("IN3_PK")) {
+  if (getenv("IN3_PK") && !use_pk) {
     hex_to_bytes(getenv("IN3_PK"), -1, pk, 32);
     eth_set_pk_signer(c, pk);
   }
