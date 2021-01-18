@@ -89,6 +89,7 @@ static in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
 }
 
 static in3_ret_t call(in3_ctx_t* parent, address_t ms, bytes_t data, bytes_t** result) {
+  if (!parent) return IN3_EINVAL;
   in3_ctx_t* ctx = parent;
   for (; ctx; ctx = ctx->required) {
     if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_call")) continue;
@@ -263,7 +264,7 @@ static in3_ret_t add_approved(in3_ctx_t* ctx, uint32_t* sig_count, sig_data_t* s
       memcpy(check_approved + 16, ms->owners + i, 20);
       memcpy(check_approved + 36, tx_hash, 32);
       TRY(call(ctx, ms->address, bytes(check_approved, 68), &result))
-      if (result->len != 32) return ctx_set_error(ctx, "invalid response for approved check", IN3_EINVAL);
+      if (!result || result->len != 32) return ctx_set_error(ctx, "invalid response for approved check", IN3_EINVAL);
       if (result->data[31]) {
         memset(sig_data + *sig_count, 0, sizeof(sig_data_t));
         memcpy(sig_data[*sig_count].sig + 12, ms->owners + i, 20);
@@ -325,9 +326,9 @@ static void approve_hash(bytes_t* target, tx_data_t* tx_data, bytes32_t hash, ad
 
 static in3_ret_t ensure_ms_type(multisig_t* ms, in3_ctx_t* ctx) {
   if (ms->type == MS_UNKNOWN) {
-    bytes_t* tmp;
+    bytes_t* tmp = NULL;
     TRY(call(ctx, ms->address, bytes((uint8_t*) "\xa3\xf4\xdf\x7e", 4), &tmp))
-    if (tmp->len < 96) return ctx_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
+    if (!tmp || tmp->len < 96) return ctx_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
     char* name = (void*) tmp->data + 64;
     if (strcmp(name, "Gnosis Safe") == 0)
       ms->type = MS_GNOSIS_SAFE;
@@ -341,10 +342,10 @@ static in3_ret_t ensure_ms_type(multisig_t* ms, in3_ctx_t* ctx) {
 static in3_ret_t ensure_owners(multisig_t* ms, in3_ctx_t* ctx) {
   if (ms->owners == NULL) {
     // init the owners first
-    bytes_t*  tmp;
+    bytes_t*  tmp = NULL;
     in3_ret_t ret = call(ctx, ms->address, bytes((uint8_t*) "\xa0\xe6\x7e\x2b", 4), &tmp);
     if (ret == IN3_OK) {
-      if (tmp->len < 64) return ctx_set_error(ctx, "invalid owner result", IN3_ERPC);
+      if (!tmp || tmp->len < 64) return ctx_set_error(ctx, "invalid owner result", IN3_ERPC);
       ms->owners_len = bytes_to_int(tmp->data + 32 + 28, 4);
       ms->owners     = _malloc(sizeof(address_t) * ms->owners_len);
       if (tmp->len != 64 + 32 * ms->owners_len) return ctx_set_error(ctx, "invalid owner result length", IN3_ERPC);
@@ -383,7 +384,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   // get nonce
   in3_ret_t ret2 = call(ctx, ms->address, bytes((uint8_t*) "\xaf\xfe\xd0\xe0", 4), &tmp);
   if (ret2 == IN3_OK) {
-    if (tmp->len != 32) return ctx_set_error(ctx, "invalid nonce result", IN3_ERPC);
+    if (!tmp || tmp->len != 32) return ctx_set_error(ctx, "invalid nonce result", IN3_ERPC);
     nonce = bytes_to_long(tmp->data + 24, 8);
   }
   else
@@ -492,10 +493,12 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
         if (is_valid(sig_data, ms, account, sig_count)) {
           bytes_t signature = bytes(NULL, 0);
           TRY(ctx_require_signature(ctx->ctx, SIGN_EC_RAW, &signature, bytes(hash, 32), bytes(account, 20)))
+          sig_data[sig_count].address = NULL;
           for (unsigned int n = 0; n < ms->owners_len; n++) {
             if (memcmp(ms->owners + n, account, 20) == 0) sig_data[sig_count].address = (void*) (ms->owners + n);
           }
-          memcpy(sig_data[sig_count].sig, signature.data, 65);
+          if (sig_data[sig_count].address == NULL) break;                         // shouldn't happen, but better safe
+          memcpy(sig_data[sig_count].sig, signature.data, 65);                    // currently we only accept EOA-Signatures, contract-signatures should be supported later also!
           if (sig_data[sig_count].sig[64] < 2) sig_data[sig_count].sig[64] += 27; // fix chain-id later
           sig_data[sig_count].data = bytes(NULL, 0);                              // no data needed (at least for now)
           sig_count++;                                                            // we have at least one signature now.

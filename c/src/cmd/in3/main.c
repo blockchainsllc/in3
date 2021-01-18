@@ -632,7 +632,7 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
 
 int main(int argc, char* argv[]) {
   // check for usage
-  bool use_pk=false;
+  bool use_pk = false;
   if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
     recorder_exit(0);
@@ -710,7 +710,7 @@ int main(int argc, char* argv[]) {
       recorder_update_cmd(argv[i + 1], &argc, &argv);
       break;
     }
-    if (strcmp(argv[i], "-pk") == 0) use_pk=true;
+    if (strcmp(argv[i], "-pk") == 0) use_pk = true;
   }
 
   // handle clear cache opt before initializing cache
