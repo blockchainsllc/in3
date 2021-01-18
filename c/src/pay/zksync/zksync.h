@@ -86,12 +86,13 @@ typedef struct {
 
 /** a transaction */
 typedef struct {
-  uint32_t        account_id; /**< the id of the account */
-  address_t       from;       /**< the from-address */
-  address_t       to;         /**< the address of the receipient */
-  zksync_token_t* token;      /**< the token to use */
-  uint32_t        nonce;      /**< current nonce */
-  zk_msg_type_t   type;       /**< message type */
+  zksync_config_t* conf;       /**< the configuration of the zksync-account */
+  uint32_t         account_id; /**< the id of the account */
+  address_t        from;       /**< the from-address */
+  address_t        to;         /**< the address of the receipient */
+  zksync_token_t*  token;      /**< the token to use */
+  uint32_t         nonce;      /**< current nonce */
+  zk_msg_type_t    type;       /**< message type */
 #ifdef ZKSYNC_256
   bytes32_t amount; /**< amount to send */
   bytes32_t fee;    /**< ransaction fees */
@@ -120,7 +121,7 @@ in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
 
 /** creates message data and signs a change_pub_key-message */
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, uint8_t* account, uint32_t account_id,
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, zksync_config_t* conf,
 #ifdef ZKSYNC_256
                                      bytes32_t fee
 #else

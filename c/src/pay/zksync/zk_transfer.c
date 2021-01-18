@@ -18,7 +18,8 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   TRY(zksync_get_sync_key(conf, ctx->ctx, sync_key));
   // prepare tx data
   zksync_tx_data_t tx_data = {0};
-  bytes_t          to      = d_to_bytes(params_get(params, type == ZK_WITHDRAW ? key("ethAddress") : K_TO, 0));
+  tx_data.conf             = conf;
+  bytes_t to               = d_to_bytes(params_get(params, type == ZK_WITHDRAW ? key("ethAddress") : K_TO, 0));
   if (!to.data || to.len != 20) return ctx_set_error(ctx->ctx, "invalid to address", IN3_EINVAL);
   memcpy(tx_data.to, to.data, 20);
   tx_data.type = type;
@@ -63,8 +64,9 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   d_token_t* result = NULL;
   in3_ret_t  ret    = send_provider_request(ctx->ctx, conf, "tx_submit", (void*) cached->value.data, &result);
   if (ret == IN3_OK && cached && cached->value.data) {
-    sb_t* sb = in3_rpc_handle_start(ctx);
-    sb_add_range(sb, (void*) cached->value.data, 0, strlen((void*) cached->value.data) - 177);
+    uint8_t* start_sig = (void*) strstr((void*) cached->value.data, ",\"signature\":");
+    sb_t*    sb        = in3_rpc_handle_start(ctx);
+    sb_add_range(sb, (void*) cached->value.data, 0, start_sig ? (start_sig - cached->value.data) : (strlen((void*) cached->value.data) - 177));
     sb_add_chars(sb, ",\"txHash\":\"");
     sb_add_chars(sb, d_string(result));
     sb_add_chars(sb, "\"}");

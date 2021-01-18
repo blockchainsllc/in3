@@ -147,7 +147,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sy
   TRY(zksync_get_account(conf, ctx, &account))
   assert(account);
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
-  if (signature.len == 65)
+  if (signature.len == 65 && signature.data[64] < 2)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);
   memcpy(sync_key, conf->sync_key, 32);

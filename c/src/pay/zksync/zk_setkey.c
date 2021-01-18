@@ -12,16 +12,18 @@
 #include <string.h>
 
 static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, uint32_t nonce, address_t pub_hash) {
-  d_token_t* result = NULL;
-  sb_t       sb     = {0};
+  d_token_t* result        = NULL;
+  sb_t       sb            = {0};
+  uint8_t*   main_contract = NULL;
   uint8_t    data[128];                 // the abi-ebcoded data
   memset(data, 0, 128);                 // clear the data
   memcpy(data + 12, conf->account, 20); // account to check
   int_to_bytes(nonce, data + 60);       // nonce
+  TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
 
   // check if the key is already authorized by calling
   // authFacts(address account,uint32 nonce) == keccak256(pubkey_hash)
-  sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(conf->main_contract, 20), 0);
+  sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 0);
   sb_add_rawbytes(&sb, "\",\"data\":\"0x8ae20dc9", bytes(data, 64), 0);
   sb_add_chars(&sb, "\"},\"latest\"");
 
@@ -41,7 +43,7 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
   data[95] = 20;                   // length of the pubKeyHash
   memcpy(data + 96, pub_hash, 20); // copy new pubKeyHash
   int_to_bytes(nonce, data + 60);  // nonce
-  sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(conf->main_contract, 20), 0);
+  sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 0);
   sb_add_rawbytes(&sb, "\",\"data\":\"0x595a5ebc", bytes(data, 128), 0);
   sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
 
@@ -69,13 +71,6 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
-  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, conf->sign_type == ZK_SIGN_CONTRACT ? "{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}" : "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
-#ifdef ZKSYNC_256
-                     fee
-#else
-                     &fee
-#endif
-                     ))
 
   zkcrypto_pk_to_pubkey(pk, pub_hash);                                                                                        // calculate the pubKey_hash
   if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL); // and check if it is already set
@@ -83,6 +78,15 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
 
   // for contracts we need to pre authorized on layer 1
   if (conf->sign_type == ZK_SIGN_CONTRACT) TRY(auth_pub_key(conf, ctx, nonce, pub_hash))
+
+  // get fees
+  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, conf->sign_type == ZK_SIGN_CONTRACT ? "{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}" : "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
+#ifdef ZKSYNC_256
+                     fee
+#else
+                     &fee
+#endif
+                     ))
 
   // create payload for change key tx
   cache_entry_t* cached = ctx->ctx->cache;
@@ -92,7 +96,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   }
   if (!cached) {
     sb_t      sb  = {0};
-    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, pk, nonce, conf->account, conf->account_id, fee, token_data);
+    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, pk, nonce, conf, fee, token_data);
     if (ret && sb.data) _free(sb.data);
     if (!sb.data) return IN3_EUNKNOWN;
     TRY(ret)

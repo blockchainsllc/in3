@@ -125,8 +125,14 @@ void show_help(char* name) {
 -sigs          add additional signatures, which will be useds when sending through a multisig! \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-fi            reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging) \n\
+-fo            records a request and writes the reproducable data in a file (including all cache-data, timestamps ...) \n\
 -nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
 -bn            a coma seperated list of urls (or address:url) to be used as boot nodes\n\
+-zks           zksync server to use\n\
+-zkss          zksync signatures to pass along when signing\n\
+-zka           zksync account to use\n\
+-zkat          zksync account type could be one of 'pk'(default), 'contract' or 'create2'\n\
 -os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
@@ -776,6 +782,18 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-zks") == 0) {
       char tmp[500];
       sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zka") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"account\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zkat") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"signer_type\":\"%s\"}}", argv[++i]);
       char* err = in3_configure(c, tmp);
       if (err) die(err);
     }

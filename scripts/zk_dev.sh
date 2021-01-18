@@ -116,13 +116,29 @@ safe_is_valid_signature() {
   fi
   test $res = 371636862 && echo "Yes" || echo "No"
 }
-
 safe_sign() {
   in3 in3_signData -ms $G_SAFE $1 $G_SAFE | jq -r .signature
 }
-
 safe_create_key() {
    export TEST_PK=`in3 createkey`
    export TEST_ADR=`in3 pk2address $TEST_PK`
    echo "created address (TEST_ADR) : $TEST_ADR"
+}
+safe_zk_deposit() {
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_deposit $1 ETH false | jq
+}
+safe_zk_set_key() {
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_setKey ETH
+}
+safe_zk_transfer() {
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_transfer $1 $2 ETH
+}
+safe_zk_account() {
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_account_info $G_SAFE| jq
+}
+safe_zk_tx_info() {
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_tx_info $1 | jq
+}
+safe_zk_op_info() {
+  in3 -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_ethop_info $1 | jq
 }
