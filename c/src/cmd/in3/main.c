@@ -133,6 +133,8 @@ void show_help(char* name) {
 -zkss          zksync signatures to pass along when signing\n\
 -zka           zksync account to use\n\
 -zkat          zksync account type could be one of 'pk'(default), 'contract' or 'create2'\n\
+-zsk           zksync signer seed (if not set this key will be derrived from account unless create2)\n\
+-zc2           zksync create2 arguments in the form <creator>:<codehash>:<saltarg>. if set the account type is also changed to create2\n\
 -os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
@@ -798,6 +800,22 @@ int main(int argc, char* argv[]) {
       char tmp[500];
       sprintf(tmp, "{\"zksync\":{\"signer_type\":\"%s\"}}", argv[++i]);
       char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zsk") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"sync_key\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zc2") == 0) {
+      char* c2val = argv[++i];
+      if (strlen(c2val) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
+      char tmp[177], t2[500];
+      memcpy(tmp, c2val, 177);
+      tmp[42] = tmp[109] = 0;
+      sprintf(t2, "{\"zksync\":{\"signer_type\":\"create2\",\"create2\":{\"creator\":\"%s\",\"codehash\":\"%s\",\"saltarg\":\"%s\"}}}", tmp, tmp + 43, tmp + 110);
+      char* err = in3_configure(c, t2);
       if (err) die(err);
     }
 #endif

@@ -65,7 +65,38 @@ in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* 
   return ctx_send_sub_request(parent, method, params, in3, result);
 }
 
+void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t saltarg, address_t pub_key_hash, address_t dst) {
+  uint8_t tmp[85];
+  memset(tmp, 0, 85);
+  memcpy(tmp, saltarg, 32);
+  memcpy(tmp + 32 + 12, pub_key_hash, 20);
+  keccak(bytes(tmp, 64), tmp + 21);
+  *tmp = 0xff;
+  memcpy(tmp + 1, creator, 20);
+  memcpy(tmp + 53, codehash, 32);
+  keccak(bytes(tmp, 85), tmp);
+  memcpy(dst, tmp + 12, 20);
+}
+
+in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_ctx_t* ctx) {
+  if (conf->sign_type != ZK_SIGN_CREATE2) return IN3_OK;
+  if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "no key set", IN3_ECONFIG);
+  if (conf->account) return IN3_OK;
+  if (!conf->create2) return ctx_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->creator, 20)) return ctx_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->codehash, 32)) return ctx_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->salt_arg, 32)) return ctx_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
+  if (!conf->account) {
+    address_t pub_key_hash;
+    zkcrypto_pk_to_pubkey(conf->sync_key, pub_key_hash);
+    conf->account = _malloc(20);
+    zksync_calculate_account(conf->create2->creator, conf->create2->codehash, conf->create2->salt_arg, pub_key_hash, conf->account);
+  }
+  return IN3_OK;
+}
+
 in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account) {
+  TRY(zksync_check_create2(conf, ctx))
   if (!conf->account) {
     in3_sign_account_ctx_t sctx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
     if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx) || !sctx.accounts_len) {

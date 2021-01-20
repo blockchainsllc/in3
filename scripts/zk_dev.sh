@@ -3,6 +3,7 @@ export IN3_ZKS=http://localhost:3030
 export IN3_CHAIN=http://localhost:8545
 export IN3_PK=0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8
 export ZK_ACCOUNT=0x8a91dc2d28b689474298d91899f0c1baf62cb85b
+export IN3_ARGS="-zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN"
 
 deploy_gnosis_master_copy() 
 {
@@ -125,20 +126,72 @@ safe_create_key() {
    echo "created address (TEST_ADR) : $TEST_ADR"
 }
 safe_zk_deposit() {
-  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_deposit $1 ETH false | jq
+  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_deposit_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_deposit $1 ETH false | jq
 }
 safe_zk_set_key() {
-  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_setKey ETH
+  in3  -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_setkey_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_setKey ETH
 }
 safe_zk_transfer() {
-  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_transfer $1 $2 ETH
+  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_transfer_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_transfer $1 $2 ETH
+}
+safe_zk_withdraw() {
+  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_withdraw_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_withdraw $1 $2 ETH
+}
+safe_zk_emergency_withdraw() {
+  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_emergency_withdraw_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_emergencyWithdraw ETH
 }
 safe_zk_account() {
-  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_account_info $G_SAFE| jq
+  in3  -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_account_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_account_info $G_SAFE| jq
 }
 safe_zk_tx_info() {
   in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_tx_info $1 | jq
 }
 safe_zk_op_info() {
   in3 -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_ethop_info $1 | jq
+}
+safe_c2_create() {
+  
+  # GnosisSafeProxy byteCode
+  CODE=0x608060405234801561001057600080fd5b5060405161014d38038061014d8339818101604052602081101561003357600080fd5b50516001600160a01b03811661007a5760405162461bcd60e51b81526004018080602001828103825260248152602001806101296024913960400191505060405180910390fd5b600080546001600160a01b039092166001600160a01b03199092169190911790556080806100a96000396000f3fe60806040526001600160a01b036000541663530ca43760e11b6000351415602a578060005260206000f35b3660008037600080366000845af43d6000803e806046573d6000fd5b3d6000f3fea265627a7a72315820698377879d8c17814e588823ab338543f53081cc51ba19d2c81450b815d1820e64736f6c63430005110032496e76616c6964206d617374657220636f707920616464726573732070726f7669646564
+
+  # check factory ready
+  test -n "$IAMO_FACTORY" || deploy_iamo_factory
+  test -n "$IAMO_MASTER_COPY" || deploy_iamo_master_copy
+
+  # prepare setup-tx
+  threshold=$1
+  shift
+  owners="$@"
+  roles=`node -p "JSON.stringify('$owners'.split(/ /).map(_=>_.substr(0,_.indexOf(':'))).map(_=>(_.indexOf('C')==-1?0:1)+(_.indexOf('I')==-1?0:2)+(_.indexOf('A')==-1?0:4)))"`
+  owners=`node -p "JSON.stringify('$owners'.split(/ /).map(_=>_.substr(1+_.indexOf(':'))))"`
+  noadr=0x0000000000000000000000000000000000000000
+  setup=`in3 abi_encode "setup(address[],uint8[],uint32,address,bytes,address,address,uint256,address)" $owners $roles $threshold $noadr 0x $noadr $noadr 0 $noadr`
+
+  # calculate 
+  export G_SALTARG=`in3 web3_sha3 $setup`
+  export G_SEED=`in3 createkey`
+  export G_CODEHASH=`in3 web3_sha3 ${CODE}000000000000000000000000${IAMO_MASTER_COPY:2}`
+  export G_CREATOR=$IAMO_FACTORY
+  pub_key_hash=`in3 zk_getPubKeyHash -zsk $G_SEED`
+  export G_SAFE=`in3 -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED zk_account_address`
+  export G_NONCE=0x000000000000000000000000${pub_key_hash:5}
+
+  #prepare deploy tx
+  export G_RAWTX=`in3 send -os -gas 5000000 -to $IAMO_FACTORY  "createProxyWithNonce(address,bytes,uint256)" $IAMO_MASTER_COPY $setup $G_NONCE`
+
+  echo "iamo safe succesfully NOT deployed.  G_SAFE  : $G_SAFE "
+}
+
+safe_c2_setkey() {
+ in3 -debug -zks $IN3_ZKS  -c $IN3_CHAIN -fo zksync_setkey_c2.txt -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED zksync_setKey ETH
+}
+
+
+safe_c2_fund_l1() {
+ in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_deposit_c2.txt -zkat contract zksync_deposit $1 ETH false $G_SAFE | jq
+}
+
+
+safe_c2_transfer() {
+ in3 -zks $IN3_ZKS  -c $IN3_CHAIN -fo zksync_transfer_c2.txt -zka $G_SAFE -zkat create2 -zsk $G_SEED zksync_transfer $1 $2 ETH
 }

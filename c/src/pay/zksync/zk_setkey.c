@@ -61,6 +61,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   address_t       pub_hash;
   uint32_t        nonce;
   d_token_t*      token      = d_len(params) == 1 ? params + 1 : NULL;
+  bytes_t*        new_key    = d_get_bytes_at(params, 1);
   zksync_token_t* token_data = NULL;
   if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
 #ifdef ZKSYNC_256
@@ -68,6 +69,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
 #else
   uint64_t fee;
 #endif
+  if (new_key && new_key->len == 32) memcpy(conf->sync_key, new_key->data, 32);
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
@@ -80,7 +82,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   if (conf->sign_type == ZK_SIGN_CONTRACT) TRY(auth_pub_key(conf, ctx, nonce, pub_hash))
 
   // get fees
-  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, conf->sign_type == ZK_SIGN_CONTRACT ? "{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}" : "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
+  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, conf->sign_type == ZK_SIGN_PK ? "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}" : "{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}",
 #ifdef ZKSYNC_256
                      fee
 #else

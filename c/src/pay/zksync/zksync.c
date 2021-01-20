@@ -52,33 +52,51 @@ static zk_sign_type_t get_sign_type(d_token_t* type) {
   return ZK_SIGN_PK;
 }
 
+static in3_ret_t ensure_provider(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  if (conf->provider_url) return IN3_OK;
+  switch (ctx->ctx->client->chain_id) {
+    case CHAIN_ID_MAINNET:
+      conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
+      break;
+    default:
+      return ctx_set_error(ctx->ctx, "no provider_url in config", IN3_EINVAL);
+  }
+  return IN3_OK;
+}
+
 // --- handle rpc----
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   char*      method = d_get_stringk(ctx->ctx->requests[0], K_METHOD);
   d_token_t* params = d_get(ctx->ctx->requests[0], K_PARAMS);
-  if (strncmp(method, "zksync_", 7)) return IN3_EIGNORE;
 
-  // do we have a provider?
-  if (!conf->provider_url) {
-    switch (ctx->ctx->client->chain_id) {
-      case CHAIN_ID_MAINNET:
-        conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
-        break;
-      default:
-        return ctx_set_error(ctx->ctx, "no provider_url in config", IN3_EINVAL);
-    }
-  }
-  if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0 || strcmp(method, "zksync_deposit") == 0) return zksync_deposit(conf, ctx, params);
-  if (strcmp(method, "zksync_syncTransfer") == 0 || strcmp(method, "zksync_transfer") == 0) return zksync_transfer(conf, ctx, params, ZK_TRANSFER);
-  if (strcmp(method, "zksync_withdraw") == 0) return zksync_transfer(conf, ctx, params, ZK_WITHDRAW);
-  if (strcmp(method, "zksync_setKey") == 0) return zksync_set_key(conf, ctx, params);
-  if (strcmp(method, "zksync_emergencyWithdraw") == 0) return zksync_emergency_withdraw(conf, ctx, params);
-  if (strcmp(method, "zksync_getKey") == 0) {
+  // check the prefix (zksync_ or zk_ is supported)
+  if (strncmp(method, "zksync_", 7) == 0)
+    method += 7;
+  else if (strncmp(method, "zk_", 3) == 0)
+    method += 3;
+  else
+    return IN3_EIGNORE;
+
+  // make sure the provider is set
+  TRY(ensure_provider(conf, ctx))
+
+  // do we have a provider? if not we
+  if (strcmp(method, "depositToSyncFromEthereum") == 0 || strcmp(method, "deposit") == 0)
+    return zksync_deposit(conf, ctx, params);
+  if (strcmp(method, "syncTransfer") == 0 || strcmp(method, "transfer") == 0)
+    return zksync_transfer(conf, ctx, params, ZK_TRANSFER);
+  if (strcmp(method, "withdraw") == 0)
+    return zksync_transfer(conf, ctx, params, ZK_WITHDRAW);
+  if (strcmp(method, "setKey") == 0)
+    return zksync_set_key(conf, ctx, params);
+  if (strcmp(method, "emergencyWithdraw") == 0)
+    return zksync_emergency_withdraw(conf, ctx, params);
+  if (strcmp(method, "getKey") == 0) {
     bytes32_t k;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
     return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
   }
-  if (strcmp(method, "zksync_getPubKeyHash") == 0) {
+  if (strcmp(method, "getPubKeyHash") == 0) {
     bytes32_t k;
     address_t pubkey_hash;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
@@ -89,7 +107,12 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     strcpy(res + 46, "\"");
     return in3_rpc_handle_with_string(ctx, res);
   }
-  if (strcmp(method, "zksync_contract_address") == 0) {
+  if (strcmp(method, "account_address") == 0) {
+    uint8_t* account = NULL;
+    TRY(zksync_get_account(conf, ctx->ctx, &account));
+    return in3_rpc_handle_with_bytes(ctx, bytes(account, 20));
+  }
+  if (strcmp(method, "contract_address") == 0) {
     uint8_t* adr;
     TRY(zksync_get_contracts(conf, ctx->ctx, &adr))
     sb_t* sb = in3_rpc_handle_start(ctx);
@@ -98,7 +121,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_add_chars(sb, "\"}");
     return in3_rpc_handle_finish(ctx);
   }
-  if (strcmp(method, "zksync_tokens") == 0) {
+  if (strcmp(method, "tokens") == 0) {
     TRY(resolve_tokens(conf, ctx->ctx, NULL, NULL))
     sb_t* sb = in3_rpc_handle_start(ctx);
     sb_add_char(sb, '{');
@@ -123,16 +146,16 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   memcpy(param_string, p.data + 1, p.len - 2);
   param_string[p.len - 2] = 0;
 
-  if (strcmp(method, "zksync_account_info") == 0 && *param_string == 0) {
+  if (strcmp(method, "account_info") == 0 && *param_string == 0) {
     TRY(zksync_get_account(conf, ctx->ctx, NULL))
     param_string = alloca(45);
     set_quoted_address(param_string, conf->account);
   }
-  if (strcmp(method, "zksync_ethop_info") == 0)
+  if (strcmp(method, "ethop_info") == 0)
     sprintf(param_string, "%i", d_get_int_at(params, 0));
 
   d_token_t* result;
-  TRY(send_provider_request(ctx->ctx, conf, method + 7, param_string, &result))
+  TRY(send_provider_request(ctx->ctx, conf, method, param_string, &result))
 
   char* json = d_create_json(NULL, result);
   in3_rpc_handle_with_string(ctx, json);
@@ -148,6 +171,7 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
       if (conf->main_contract) _free(conf->main_contract);
       if (conf->account) _free(conf->account);
       if (conf->tokens) _free(conf->tokens);
+      if (conf->create2) _free(conf->create2);
       _free(conf);
       return IN3_OK;
     }
@@ -179,9 +203,23 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         if (provider) conf->provider_url = _strdupn(provider, -1);
         bytes_t* account = d_get_bytes(ctx->token, "account");
         if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
+        bytes_t sync_key = d_to_bytes(d_get(ctx->token, key("sync_key")));
+        if (sync_key.len) zkcrypto_pk_from_seed(sync_key, conf->sync_key);
         bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");
         if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
-        conf->sign_type = get_sign_type(d_get(ctx->token, key("signer_type")));
+        d_token_t* st = d_get(ctx->token, key("signer_type"));
+        if (st) conf->sign_type = get_sign_type(st);
+        conf->version      = (uint32_t) d_intd(d_get(ctx->token, key("version")), conf->version);
+        d_token_t* create2 = d_get(ctx->token, key("create2"));
+        if (create2) {
+          if (!conf->create2) conf->create2 = _calloc(1, sizeof(zk_create2_t));
+          bytes_t* t = d_get_bytesk(create2, key("creator"));
+          if (t && t->len == 20) memcpy(conf->create2->creator, t->data, 20);
+          t = d_get_bytesk(create2, key("saltarg"));
+          if (t && t->len == 32) memcpy(conf->create2->salt_arg, t->data, 32);
+          t = d_get_bytesk(create2, key("codehash"));
+          if (t && t->len == 32) memcpy(conf->create2->codehash, t->data, 32);
+        }
         return IN3_OK;
       }
       return IN3_EIGNORE;
@@ -198,5 +236,7 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
 }
 
 in3_ret_t in3_register_zksync(in3_t* c) {
-  return plugin_register(c, PLGN_ACT_RPC_HANDLE | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_zksync, _calloc(sizeof(zksync_config_t), 1), false);
+  zksync_config_t* conf = _calloc(sizeof(zksync_config_t), 1);
+  conf->version         = 1;
+  return plugin_register(c, PLGN_ACT_RPC_HANDLE | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_zksync, conf, false);
 }

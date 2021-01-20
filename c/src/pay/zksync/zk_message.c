@@ -191,7 +191,12 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   sb_t    msg = sb_stack(msg_data);
   create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
   create_signed_bytes(&msg);
-  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+  if (data->conf->sign_type == ZK_SIGN_CREATE2) {
+    signature = bytes(alloca(65), 65);
+    memset(signature.data, 0, 65);
+  }
+  else
+    TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
   in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
   if (signature.len == 65 && signature.data[64] < 27)
@@ -301,6 +306,19 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
 #endif
   sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, nonce);
+  if (conf->version > 0) {
+    sb_add_chars(sb, ",\"changePubkeyType\":{");
+    if (conf->sign_type == ZK_SIGN_PK)
+      sb_add_rawbytes(sb, "\"type\":\"EthereumSignature\",\"ethSignature\":\"0x", signature, 0);
+    else if (conf->sign_type == ZK_SIGN_CONTRACT)
+      sb_add_rawbytes(sb, "\"type\":\"OnchainTransaction", signature, 0);
+    else if (conf->sign_type == ZK_SIGN_CREATE2 && conf->create2) {
+      sb_add_rawbytes(sb, "\"type\":\"Create2Contract\",\"creatorAddress\":\"0x", bytes(conf->create2->creator, 20), 0);
+      sb_add_rawbytes(sb, "\",\"saltArg\":\"0x", bytes(conf->create2->salt_arg, 32), 0);
+      sb_add_rawbytes(sb, "\",\"codeHash\":\"0x", bytes(conf->create2->codehash, 32), 0);
+    }
+    sb_add_chars(sb, "\"}");
+  }
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
   sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
   if (signature.data) {

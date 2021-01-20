@@ -68,6 +68,13 @@ typedef enum zk_sign_type {
   ZK_SIGN_CREATE2  = 3  /**< use creat2 code */
 } zk_sign_type_t;
 
+/** create2-arguments */
+typedef struct zk_create2 {
+  address_t creator;  /**< address of the creator*/
+  bytes32_t salt_arg; /**< saltarg*/
+  bytes32_t codehash; /**< hash of the deploy-txdata*/
+} zk_create2_t;
+
 /** internal configuration-object */
 typedef struct {
   char*           provider_url;  /**< url of the zksync-server */
@@ -81,7 +88,8 @@ typedef struct {
   bytes32_t       sync_key;      /**< the raw key to sign with*/
   zksync_token_t* tokens;        /**< the token-list */
   zk_sign_type_t  sign_type;     /**< the signature-type to use*/
-
+  uint32_t        version;       /**< zksync version */
+  zk_create2_t*   create2;       /**< create2 args */
 } zksync_config_t;
 
 /** a transaction */
