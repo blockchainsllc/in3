@@ -5,15 +5,15 @@ import unittest
 from pathlib import Path
 
 import in3
-from tests.integrated.mock.config import mock_config
+from tests.integrated.mock.config import mainchain_mock_config, goerli_mock_config
 from tests.integrated.mock.transport import mock_transport
 
 
 class MainNetClientTest(unittest.TestCase):
 
     def setUp(self):
-        # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(in3_config=mainchain_mock_config)
+        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client()
@@ -46,13 +46,13 @@ class MainNetClientTest(unittest.TestCase):
 class MainNetClientCacheStoringTest(MainNetClientTest):
 
     def setUp(self):
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mainchain_mock_config, transport=mock_transport)
 
 
 class MainNetClientCachedTest(MainNetClientTest):
 
     def setUp(self):
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mainchain_mock_config, transport=mock_transport)
 
 
 # TODO: Issue https://git.slock.it/in3/c/in3-core/-/issues/451
@@ -91,8 +91,8 @@ class MainNetClientCachedTest(MainNetClientTest):
 class GoerliClientTest(MainNetClientTest):
 
     def setUp(self):
-        # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client('goerli', in3_config=goerli_mock_config)
+        self.client = in3.Client('goerli', in3_config=goerli_mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client('goerli')

@@ -10,9 +10,6 @@ function build {
   make -j8
 
   # copy to destination
-  if [ ! -d "$DST" ]; then
-    mkdir $DST
-  fi
   if [ ! -f "$DST/package.json" ]; then
     cp -r module/* "$DST/"
   else
@@ -31,9 +28,9 @@ function build {
 source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
 CWD=$PWD
 cd $(dirname $0)/..
-DST="$CWD/$1"
+DST="$1"
 OPTS="-DWASM=true -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DUSE_CURL=false -DCMD=false   -DTAG_VERSION=$2"
-WASM="-DCMAKE_BUILD_TYPE=MINSIZEREL -DWASM_EMBED=true"
+WASM="-DCMAKE_BUILD_TYPE=MINSIZEREL -DWASM_EMBED=false"
 ASMJS="-DCMAKE_BUILD_TYPE=RELEASE -DWASM_EMBED=true -DASMJS=true"
 if [ "$3" = "debug" ]; then
   WASM="-DCMAKE_BUILD_TYPE=DEBUG -DWASM_EMBED=false"
@@ -49,8 +46,8 @@ build btc-wasm    "$OPTS $WASM  -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BA
 build btc         "$OPTS $ASMJS -DBTC=true  -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false" 
 build min-wasm    "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
 build min         "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false -DETH_BASIC=false -DETH_FULL=false -DUSE_SCRYPT=false -DIN3API=false" 
-build eth1-wasm   "$OPTS $WASM  -DBTC=false -DZKSYNC=false -DIPFS=false" 
-build eth1        "$OPTS $ASMJS -DBTC=false -DZKSYNC=false -DIPFS=false" 
 
 # go back to where we came from
+cd 
+cp -r build/$DST wasm/test/in3
 cd $CWD

@@ -4,15 +4,15 @@ Integrated tests for `in3.eth` module.
 import unittest
 
 import in3
-from tests.integrated.mock.config import mock_config
+from tests.integrated.mock.config import mainchain_mock_config, goerli_mock_config
 from tests.integrated.mock.transport import mock_transport
 
 
 class EthereumTest(unittest.TestCase):
 
     def setUp(self):
-        # self.client = in3.Client(in3_config=mock_config)
-        self.client = in3.Client(in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client(in3_config=mainchain_mock_config)
+        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_ethereum_sha3(self):
         digest = self.client.eth.keccak256('0x68656c6c6f20776f726c64')
@@ -67,8 +67,8 @@ class EthereumTest(unittest.TestCase):
 class EthereumGoerliTest(EthereumTest):
 
     def setUp(self):
-        # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
+        # self.client = in3.Client('goerli', in3_config=goerli_mock_config)
+        self.client = in3.Client('goerli', in3_config=goerli_mock_config, cache_enabled=False, transport=mock_transport)
 
     def test_get_block_by_number(self):
         block = self.client.eth.block_by_number(2581719)
