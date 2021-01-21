@@ -208,7 +208,10 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");
         if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
         d_token_t* st = d_get(ctx->token, key("signer_type"));
-        if (st) conf->sign_type = get_sign_type(st);
+        if (st)
+          conf->sign_type = get_sign_type(st);
+        else if (conf->sign_type == 0)
+          conf->sign_type = ZK_SIGN_PK;
         conf->version      = (uint32_t) d_intd(d_get(ctx->token, key("version")), conf->version);
         d_token_t* create2 = d_get(ctx->token, key("create2"));
         if (create2) {
