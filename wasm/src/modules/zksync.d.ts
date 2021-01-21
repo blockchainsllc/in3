@@ -225,6 +225,26 @@ export declare interface zksync_config {
      */
     sync_key?: string
 
+    /**
+     * create2 arguments
+     */
+    create2?: {
+        /**
+         * the address of creator of the contract
+         */
+        creator: string
+
+        /**
+         * the codehash of the deploy-tx (including constructor arguments)
+         */
+        codehash: string
+
+        /**
+         * the saltarg, which is added to the pub_key_has of the sync_key
+         */
+        saltarg: string
+    }
+
 }
 
 
