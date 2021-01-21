@@ -96,7 +96,7 @@ NONULL void in3_check_verified_hashes(in3_t* c) {
 NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   assert_in3_ctx(ctx);
   // only for intern requests, we actually free the original request-string
-  if (is_sub)
+  if (is_sub && ctx->request_context)
     _free(ctx->request_context->c);
   ctx->client->pending--;
   if (ctx->error) _free(ctx->error);
