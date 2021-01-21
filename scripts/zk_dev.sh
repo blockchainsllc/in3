@@ -126,22 +126,22 @@ safe_create_key() {
    echo "created address (TEST_ADR) : $TEST_ADR"
 }
 safe_zk_deposit() {
-  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_deposit_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_deposit $1 ETH false | jq
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_deposit $1 ETH false | jq
 }
 safe_zk_set_key() {
-  in3  -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_setkey_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_setKey ETH
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_setKey ETH
 }
 safe_zk_transfer() {
-  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_transfer_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_transfer $1 $2 ETH
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_transfer $1 $2 ETH
 }
 safe_zk_withdraw() {
-  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_withdraw_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_withdraw $1 $2 ETH
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_withdraw $1 $2 ETH
 }
 safe_zk_emergency_withdraw() {
-  in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_emergency_withdraw_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_emergencyWithdraw ETH
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_emergencyWithdraw ETH
 }
 safe_zk_account() {
-  in3  -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_account_eip1271.txt -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_account_info $G_SAFE| jq
+  in3   -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_account_info $G_SAFE| jq
 }
 safe_zk_tx_info() {
   in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_tx_info $1 | jq
@@ -183,15 +183,14 @@ safe_c2_create() {
 }
 
 safe_c2_setkey() {
- in3 -debug -zks $IN3_ZKS  -c $IN3_CHAIN -fo zksync_setkey_c2.txt -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED zksync_setKey ETH
+ in3 -debug  -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED zksync_setKey ETH
 }
-
-
 safe_c2_fund_l1() {
- in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -fo zksync_deposit_c2.txt -zkat contract zksync_deposit $1 ETH false $G_SAFE | jq
+ in3  -zkat contract zksync_deposit $1 ETH false $G_SAFE | jq
 }
-
-
 safe_c2_transfer() {
- in3 -zks $IN3_ZKS  -c $IN3_CHAIN -fo zksync_transfer_c2.txt -zka $G_SAFE -zkat create2 -zsk $G_SEED zksync_transfer $1 $2 ETH
+ in3  -zka $G_SAFE -zkat create2 -zsk $G_SEED zksync_transfer $1 $2 ETH
+}
+safe_c2_withdraw() {
+ in3  -zka $G_SAFE -zkat create2 -zsk $G_SEED zksync_withdraw $1 $2 ETH
 }
