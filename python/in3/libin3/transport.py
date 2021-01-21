@@ -1,7 +1,6 @@
 import ctypes as c
 
 from in3.libin3.enum import PluginAction
-
 from in3.libin3.rpc_api import libin3_in3_req_add_response
 
 
