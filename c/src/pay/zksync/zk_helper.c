@@ -88,7 +88,7 @@ in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_ctx_t* ctx) {
   if (memiszero(conf->create2->salt_arg, 32)) return ctx_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
   if (!conf->account) {
     address_t pub_key_hash;
-    zkcrypto_pk_to_pubkey(conf->sync_key, pub_key_hash);
+    zkcrypto_pk_to_pubkey_hash(conf->sync_key, pub_key_hash);
     conf->account = _malloc(20);
     zksync_calculate_account(conf->create2->creator, conf->create2->codehash, conf->create2->salt_arg, pub_key_hash, conf->account);
   }

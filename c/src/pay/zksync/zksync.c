@@ -96,16 +96,28 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
     return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
   }
+  if (strcmp(method, "schnorrAggregatePublicKeys") == 0) {
+    bytes32_t dst;
+    TRY(zkcrypto_compute_aggregated_pubkey(d_to_bytes(params + 1), dst))
+    return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
+  }
   if (strcmp(method, "getPubKeyHash") == 0) {
     bytes32_t k;
     address_t pubkey_hash;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
-    zkcrypto_pk_to_pubkey(k, pubkey_hash);
+    zkcrypto_pk_to_pubkey_hash(k, pubkey_hash);
     char res[48];
     strcpy(res, "\"sync:");
     bytes_to_hex(pubkey_hash, 20, res + 6);
     strcpy(res + 46, "\"");
     return in3_rpc_handle_with_string(ctx, res);
+  }
+  if (strcmp(method, "getPubKey") == 0) {
+    bytes32_t pubkey;
+    bytes32_t k;
+    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+    TRY(zkcrypto_pk_to_pubkey(k, pubkey))
+    return in3_rpc_handle_with_bytes(ctx, bytes(pubkey, 32));
   }
   if (strcmp(method, "account_address") == 0) {
     uint8_t* account = NULL;

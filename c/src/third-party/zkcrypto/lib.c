@@ -68,7 +68,7 @@ u32 zke_string_new(u32 a, u32 b) {
   printf("# zke_string_new\n");
   u32 sp = wmalloc(b+1);
   memcpy(mem_ptr(sp),mem_ptr(a),b+1);
-  char* s = mem_ptr(sp);
+  char* s = (void*)mem_ptr(sp);
   s[b]=0;
   return sp;
 }
@@ -84,8 +84,6 @@ void zke_rethrow(u32 x) {
   printf("# zke_rethrow\n");
 
 }
-
-
 
 void zkcrypto_initialize() {
   zkcrypto_init();
@@ -125,10 +123,22 @@ in3_ret_t zkcrypto_pk_to_pubkey(bytes32_t pk, uint8_t* dst) {
   zkcrypto_Z_private_key_to_pubkey_hashZ_viii(8, sp, 32);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
+  if (r1 == 32) memcpy(dst, mem_ptr(r0), 20);
+  wfree(r0, r1);
+  return r1 == 32 ? IN3_OK : IN3_EINVAL;
+}
+
+in3_ret_t zkcrypto_pk_to_pubkey_hash(bytes32_t pk, uint8_t* dst) {
+  u32 sp = wmalloc(32);
+  memcpy(mem_ptr(sp), pk, 32);
+  zkcrypto_Z_private_key_to_pubkey_hashZ_viii(8, sp, 32);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
   if (r1 == 20) memcpy(dst, mem_ptr(r0), 20);
   wfree(r0, r1);
   return r1 == 20 ? IN3_OK : IN3_EINVAL;
 }
+
 
 in3_ret_t zkcrypto_sign_musig(bytes32_t pk, bytes_t msg, uint8_t* dst) {
   u32 pkp = wmalloc(32);
@@ -142,3 +152,18 @@ in3_ret_t zkcrypto_sign_musig(bytes32_t pk, bytes_t msg, uint8_t* dst) {
   wfree(r0, r1);
   return r1 == 96 ? IN3_OK : IN3_EINVAL;
 }
+
+in3_ret_t zkcrypto_compute_aggregated_pubkey(bytes_t keys, uint8_t* dst) {
+  u32 pub_keys = wmalloc(keys.len);
+  memcpy(mem_ptr(pub_keys), keys.data, keys.len);
+  zkcrypto_Z_musigbn256wasmaggregatedpubkey_computeZ_viii(8, pub_keys, keys.len);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
+  if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
+  wfree(r0, r1);
+  return r1 == 32 ? IN3_OK : IN3_EINVAL;
+}
+
+
+
+

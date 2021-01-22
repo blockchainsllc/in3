@@ -74,7 +74,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
 
-  zkcrypto_pk_to_pubkey(pk, pub_hash);                                                                                        // calculate the pubKey_hash
+  zkcrypto_pk_to_pubkey_hash(pk, pub_hash);                                                                                   // calculate the pubKey_hash
   if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL); // and check if it is already set
   if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
 
