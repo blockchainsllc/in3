@@ -2,7 +2,7 @@
 #include "../../core/util/log.h"
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
-#include "zksync_priv.h"
+#include "zk_helper.h"
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
 
@@ -234,8 +234,32 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, uint8_t* account, uint32_t account_id) {
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, uint8_t* account, uint32_t account_id,
+#ifdef ZKSYNC_256
+                                     bytes32_t fee
+#else
+                                     uint64_t fee
+#endif
+                                     ,
+                                     zksync_token_t* token) {
 
+  // create sign_msg for the rollup
+  char    dec[80];
+  uint8_t sign_msg_bytes[53], sig[96];
+  sign_msg_bytes[0] = 7;                          // tx type 7 (1 byte)
+  int_to_bytes(account_id, sign_msg_bytes + 1);   // acount_id (4 bytes)
+  memcpy(sign_msg_bytes + 5, account, 20);        // account address
+  memcpy(sign_msg_bytes + 25, sync_pub_key, 20);  // new sync pub key
+  sign_msg_bytes[45] = token->id >> 8 & 0xff;     // token_id (high)
+  sign_msg_bytes[46] = token->id & 0xff;          // token_id (low)
+  to_dec(dec, fee);                               // create a decimal represntation and pack it
+  TRY(pack(dec, 11, 5, sign_msg_bytes + 47, ctx)) // 47: fee packed (2)
+  int_to_bytes(nonce, sign_msg_bytes + 49);       // nonce
+
+  // now sign it with the new pk
+  TRY(zkcrypto_sign_musig(sync_key, bytes(sign_msg_bytes, 53), sig));
+
+  // create human readable message
   char    msg_data[300];
   uint8_t tmp[8];
   bytes_t signature;
@@ -258,9 +282,20 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   sb_add_int(sb, account_id);
   sb_add_rawbytes(sb, ",\"account\":\"0x", bytes(account, 20), 0);
   sb_add_rawbytes(sb, "\",\"newPkHash\":\"sync:", bytes(sync_pub_key, 20), 0);
-  sb_add_chars(sb, "\",\"nonce\":");
+  sb_add_chars(sb, "\",\"feeToken\":");
+  sb_add_int(sb, token->id);
+  sb_add_chars(sb, ",\"fee\":");
+#ifdef ZKSYNC_256
+  to_dec(dec, fee);
+  sb_add_chars(sb, dec);
+#else
+  sb_add_int(sb, fee);
+#endif
+  sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, nonce);
-  sb_add_rawbytes(sb, ",\"ethSignature\":\"0x", signature, 0);
-  sb_add_chars(sb, "\"},null");
+  sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
+  sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
+  sb_add_rawbytes(sb, "\"},\"ethSignature\":\"0x", signature, 0);
+  sb_add_chars(sb, "\"},null,false");
   return IN3_OK;
 }

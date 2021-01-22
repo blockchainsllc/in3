@@ -75,7 +75,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "in3 setKEy",
+            "name": "in3 setKey",
             "program": "${workspaceFolder}/build/bin/in3",
             "cwd": "${workspaceFolder}/build/bin",
             "externalConsole": true,
@@ -89,6 +89,7 @@
                 "-pk",
                 "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8",
                 "zksync_setKey",
+                "ETH",
                 "-debug"
             ]
         },

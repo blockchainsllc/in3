@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -32,61 +32,45 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "gas.h"
+// @PUBLIC_HEADER
+/** @file
+ * ZKSync API.
+ * 
+ * This header-file registers zksync api functions.
+ * */
 
-#ifdef EVM_GAS
-void init_gas(evm_t* evm) {
-  // prepare evm gas
-  evm->refund = 0;
-  if (!evm->init_gas) evm->init_gas = evm->gas;
-}
+#ifndef ZKSYNC_HELPER_H
+#define ZKSYNC_HELPER_H
 
-void update_account_code(evm_t* evm, account_t* new_account) {
-  // prepare evm gas
-  if (new_account)
-    new_account->code = evm->return_data;
-}
+#include "zksync.h"
 
-void evm_init(evm_t* evm) {
-  evm->accounts = NULL;
-  evm->gas      = 0;
-  evm->logs     = NULL;
-  evm->parent   = NULL;
-  evm->refund   = 0;
-  evm->init_gas = 0;
-}
+void set_quoted_address(char* c, uint8_t* address);
 
-void finalize_and_refund_gas(evm_t* evm) {
-  uint64_t gas_used = evm->init_gas - evm->gas;
-  if ((evm->properties & EVM_PROP_NO_FINALIZE) == 0) {
-    // finalize and refund
-    if (evm->refund && evm->parent) {
-      evm->parent->gas -= gas_used;
-      evm->gas += gas_used;
-      evm->parent->refund += evm->refund;
-      evm->refund = 0;
-    }
-    else {
-      evm->gas += min(evm->refund, gas_used >> 1);
-    }
-  }
-}
+in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result);
 
-void finalize_subcall_gas(evm_t* evm, int success, evm_t* parent) {
-  // if the subcall was successful
-  if (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) {
-    // if we didn't have to revert, copy new state to parent
-    if (evm->state != EVM_STATE_REVERTED) copy_state(parent, evm);
+/**
+ * resolves the account address based on the config 
+ */
+in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account);
 
-    // refund gas left to parent
-    parent->gas += evm->gas;
+in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx);
 
-    // if parent was depending on refund, deduce gas that was on hold
-    if (evm->properties & EVM_PROP_CALL_DEPEND_ON_REFUND) parent->gas -= evm->init_gas;
-  }
-  // If balance was insuficient, we return only the deduced stipend
-  else if (success == EVM_ERROR_BALANCE_TOO_LOW)
-    parent->gas += G_CALLSTIPEND;
-}
+in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id);
+
+in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key);
+
+in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main);
+
+in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce);
+
+in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
+#ifdef ZKSYNC_256
+                         uint8_t* fee
+#else
+                         uint64_t* fee
+#endif
+);
+
+in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst);
 
 #endif

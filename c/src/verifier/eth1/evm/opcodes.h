@@ -99,6 +99,8 @@ int op_extcodecopy(evm_t* evm);
 
 int op_header(evm_t* evm, uint8_t index);
 
+int op_pop(evm_t* evm);
+
 int op_mload(evm_t* evm);
 
 int op_mstore(evm_t* evm, uint8_t len);
