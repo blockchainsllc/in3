@@ -292,7 +292,7 @@ if __name__ == '__main__':
                 print('\n[.] Waiting {} seconds for confirmation.\n'.format(confirmation_wait_time_in_seconds))
                 time.sleep(confirmation_wait_time_in_seconds)
                 receipt: in3.eth.TransactionReceipt = client.eth.transaction_receipt(tx_hash)
-                print('[.] Transaction was mined successfully!\n')
+                print('[.] Transaction was sent successfully!\n')
                 print(json.dumps(receipt.to_dict(), indent=4, sort_keys=True))
                 print('[.] Mined on block {} used {} GWei.'.format(receipt.blockNumber, receipt.gasUsed))
                 break
@@ -499,8 +499,9 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
+transport=<function https_transport at 0x10fddf0d0>,
 cache_enabled: bool = True,
-transport=<function https_transport at 0x104c8a200>)
+test_instance: bool = False)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -509,10 +510,11 @@ Once with the latest list at hand, the client can request any other on-chain inf
 
 **Arguments**:
 
-- `chain` _str_ - Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'goerli', 'ewc', 'ipfs', 'btc'.
+- `chain` _str_ - Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'goerli', 'ewc', 'btc', 'ipfs'.
 - `in3_config` _ClientConfig or str_ - (optional) Configuration for the client. If not provided, default is loaded.
-- `cache_enabled` _bool_ - False will disable local storage caching.
 - `transport` _function_ - Transport function for custom request routing. Defaults to https.
+- `cache_enabled` _bool_ - False will disable local storage caching.
+- `test_instance` _bool_ - True will create a test instance of IN3. HIGH SECURITY RISK - USE FOR TESTS ONLY.
   
 
 #### refresh_node_list
@@ -1276,7 +1278,11 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 
 ### In3Runtime
 ```python
-In3Runtime(self, chain_id: int, cache_enabled: bool, transport_fn)
+In3Runtime(self,
+chain_id: int,
+transport_fn,
+cache_enabled: bool = True,
+deterministic_node_sel: bool = False)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1284,8 +1290,9 @@ Instantiate libin3 and frees it when garbage collected.
 **Arguments**:
 
 - `chain_id` _int_ - Chain-id based on EIP-155. Default is 0x1 for Ethereum mainNet.
-- `cache_enabled` _bool_ - False will disable local storage cache.
 - `transport_fn` - Transport function to handle the HTTP Incubed Network requests.
+- `cache_enabled` _bool_ - False will disable local storage cache.
+- `deterministic_node_sel` _bool_ - True will make node selection deterministic.
   
 
 ### in3.libin3.rpc_api
@@ -1295,8 +1302,10 @@ Load libin3 shared library for the current system, map function ABI, sets in3 ne
 
 #### libin3_new
 ```python
-libin3_new(chain_id: int, cache_enabled: bool,
-transport_fn: <function CFUNCTYPE at 0x104cd2a70>)
+libin3_new(chain_id: int,
+transport_fn,
+cache_enabled: bool = True,
+deterministic_node_sel: bool = False)
 ```
 
 Instantiate new In3 Client instance.
@@ -1304,9 +1313,9 @@ Instantiate new In3 Client instance.
 **Arguments**:
 
 - `chain_id` _int_ - Chain id as integer
+- `transport_fn` - (c.CFUNCTYPE)Transport plugin function for the in3 network requests
 - `cache_enabled` _bool_ - False will disable local storage cache.
-- `transport_fn` - Transport function for the in3 network requests
-- `storage_fn` - Cache Storage function for node list and requests caching
+- `deterministic_node_sel` - (bool): True will enable in3 node selection to be deterministic
 
 **Returns**:
 
@@ -1383,4 +1392,29 @@ C Bytes struct
 **Returns**:
 
 - `ptr_addr` - address of the instance of this struct
+  
+
+#### libin3_register_plugin
+```python
+libin3_register_plugin(instance: int,
+actions: PluginAction,
+action_fn: <function CFUNCTYPE at 0x10fd703a0>,
+data=None,
+replace_old=True)
+```
+
+Registers a plugin. Plugins are extension modules that can perform custom actions like sign transactions,
+transport it, select nodes from the in3 network, and more.
+
+**Arguments**:
+
+- `instance` - In3 instance
+- `actions` - Bit mask of actions the plugin can perform
+- `action_fn` - Function that will handle the plugin calls according to actions
+- `data` - Context data the plugin needs to know to operate
+- `replace_old` - Replace old registered action handlers for defined actions
+
+**Returns**:
+
+- `in3_rpc_error_code` - OK will return 0.
   

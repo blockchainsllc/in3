@@ -1,11 +1,17 @@
 # Examples
 
 
+-  [get_block_rpc 2](./get_block_rpc 2.js)
+   
 -  [get_block_rpc](./get_block_rpc.js)
    read block as rpc
 
 -  [get_block_api](./get_block_api.ts)
    read block with API
+
+-  [get_block_rpc](./get_block_rpc.ts)
+   Reads the latest block by calling IN3's internal RPC to the WASM core.
+Learn other exclusive IN3 RPC calls here: https://in3.readthedocs.io/en/develop/rpc.html
 
 -  [register_pugin](./register_pugin.ts)
    register a custom plugin
