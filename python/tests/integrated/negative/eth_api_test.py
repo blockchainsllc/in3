@@ -12,7 +12,8 @@ class EthereumNegativeTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mainchain_mock_config)
-        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport,
+                                 test_instance=True)
 
     def test_get_block_by_number_client(self):
         for i in range(50):
@@ -20,11 +21,6 @@ class EthereumNegativeTest(unittest.TestCase):
                 self.client.eth.block_by_number(9937219)
             with self.assertRaises(in3.ClientException):
                 self.client.eth.block_by_number(True)
-
-    # def test_get_block_by_number_client_issue_334(self):
-    #     for i in range(20):
-    #         with self.assertRaises(in3.ClientException):
-    #             self.client.eth.block_by_number(False)
 
     def test_get_transaction_by_hash_client(self):
         tx_bad_hash = '0xTe25a4b673bd87f40ea147a5506cb2ffb38e32ec1efc372c6730a5ba50668aeP'
@@ -55,7 +51,8 @@ class ParsingTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mainchain_mock_config)
-        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport,
+                                 test_instance=True)
 
     def test_get_block_by_number(self):
         with self.assertRaises(AssertionError):
@@ -106,14 +103,8 @@ class NegativeGoerliTest(EthereumNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=goerli_mock_config)
-        self.client = in3.Client('goerli', in3_config=goerli_mock_config, cache_enabled=False, transport=mock_transport)
-
-
-# class NegativeEwcTest(EthereumNegativeTest):
-#
-#     def setUp(self):
-#         # self.client = in3.Client('ewc', in3_config=mainchain_mock_config)
-#         self.client = in3.Client('ewc', in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=goerli_mock_config, cache_enabled=False, transport=mock_transport,
+                                 test_instance=True)
 
 
 if __name__ == '__main__':

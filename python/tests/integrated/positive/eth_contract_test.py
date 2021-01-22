@@ -41,13 +41,6 @@ class MainNetContractTest(unittest.TestCase):
         encoded = self.client.eth.contract.encode(*params)
         expected = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000378797a0000000000000000000000000000000000000000000000000000000000"
         self.assertEqual(encoded, expected)
-
-        # params = "(address,string)", "1234567890123456789012345678901234567890", "xyz"
-        # encoded = self.client.eth.contract.encode(*params)
-        # expected = "0x000000000000000000000000000000000000000000000000313233343536373839303132333435363738" + \
-        #            "3930313233343536373839303132333435363738393000000000000000000000000000000000000000000000000000" + \
-        #            "0000000000000378797a0000000000000000000000000000000000000000000000000000000000"
-        # self.assertEqual(encoded, expected)
         params = "getData(address,string,uint8,string)", "0x1234567890123456789012345678901234567890", \
                  "xyz", "0xff", "abc"
         expected = "0x597574130000000000000000000000001234567890123456789012345678901234567890000000000000000000000" + \
@@ -103,7 +96,8 @@ class GoerliContractTest(MainNetContractTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_config)
-        self.client = in3.Client('goerli', in3_config=goerli_mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=goerli_mock_config, cache_enabled=False, transport=mock_transport,
+                                 test_instance=True)
 
     def test_eth_call(self):
         tx = {
@@ -124,22 +118,3 @@ class GoerliContractTest(MainNetContractTest):
         code = self.client.eth.contract.code(
             "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e")
         self.assertEqual(len(code), 10694)
-
-
-# class EwcContractTest(MainNetContractTest):
-#
-#     def setUp(self):
-#         # self.client = in3.Client('ewc', in3_config=mock_config)
-#         self.client = in3.Client('ewc', in3_config=mock_config, cache_enabled=False, transport=mock_transport)
-#
-#     def test_eth_call(self):
-#         # TODO: Future
-#         return
-#
-#     def test_get_storage_at(self):
-#         # TODO: Future
-#         return
-#
-#     def test_get_code(self):
-#         # TODO: Future
-#         return

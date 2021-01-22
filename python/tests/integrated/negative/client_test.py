@@ -12,7 +12,8 @@ class ClientNegativeTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mainchain_mock_config)
-        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport,
+                                 test_instance=True)
 
     def test_configure(self):
         # TODO
@@ -49,7 +50,8 @@ class ClientParsingTest(unittest.TestCase):
 
     def setUp(self):
         # self.client = in3.Client(in3_config=mainchain_mock_config)
-        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client(in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport,
+                                 test_instance=True)
 
     def test_instantiate(self):
         with self.assertRaises(AssertionError):
@@ -159,14 +161,8 @@ class GoerliClientTest(ClientNegativeTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mainchain_mock_config)
-        self.client = in3.Client('goerli', in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
-
-
-# class EwcClientTest(ClientNegativeTest):
-#
-#     def setUp(self):
-#         # self.client = in3.Client('ewc', in3_config=mainchain_mock_config)
-#         self.client = in3.Client('ewc', in3_config=mainchain_mock_config, cache_enabled=False, transport=mock_transport)
+        self.client = in3.Client('goerli', in3_config=mainchain_mock_config, cache_enabled=False,
+                                 transport=mock_transport, test_instance=True)
 
 
 if __name__ == '__main__':

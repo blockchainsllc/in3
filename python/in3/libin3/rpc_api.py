@@ -64,13 +64,14 @@ def _load_shared_library() -> c.CDLL:
 _libin3 = _load_shared_library()
 
 
-def libin3_new(chain_id: int, cache_enabled: bool, transport_fn) -> int:
+def libin3_new(chain_id: int, transport_fn, cache_enabled: bool = True, deterministic_node_sel: bool = False) -> int:
     """
     Instantiate new In3 Client instance.
     Args:
         chain_id (int): Chain id as integer
+        transport_fn: (c.CFUNCTYPE)Transport plugin function for the in3 network requests
         cache_enabled (bool): False will disable local storage cache.
-        transport_fn: Transport plugin function for the in3 network requests
+        deterministic_node_sel: (bool): True will enable in3 node selection to be deterministic
     Returns:
          instance (int): Memory address of the client instance, return value from libin3_new
     """
@@ -101,15 +102,15 @@ def libin3_new(chain_id: int, cache_enabled: bool, transport_fn) -> int:
     _libin3.in3_for_chain_auto_init.restype = c.c_void_p
     instance = _libin3.in3_for_chain_auto_init(chain_id)
     libin3_register_plugin(instance, PluginAction.PLGN_ACT_TRANSPORT, transport_fn)
-    # _libin3.in3_set_default_legacy_transport(transport_fn)
-    # TODO: in3_set_default_signer
     _libin3.in3_register_eth_full(instance)
     # TODO: IPFS libin3.in3_register_ipfs();
     _libin3.in3_register_eth_api(instance)
     if cache_enabled:
-        # libin3_register_plugin(instance, PluginAction.PLGN_ACT_CACHE, cache_plugin.action_fn, None, True)
         _libin3.in3_set_storage_handler.argtypes = c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p, c.c_void_p
         _libin3.in3_set_storage_handler(instance, get_item, set_item, clear, None)
+    if deterministic_node_sel:
+        _libin3.in3_set_func_rand.argtypes = c.c_void_p,
+        _libin3.in3_set_func_rand(mock_rand)
     return instance
 
 
@@ -192,3 +193,8 @@ def libin3_register_plugin(instance: int, actions: PluginAction, action_fn: c.CF
     _libin3.in3_plugin_register.argtypes = c.c_void_p, c.c_uint32, c.c_void_p, c.c_void_p, c.c_bool
     _libin3.in3_plugin_register.restype = c.c_int
     return _libin3.in3_plugin_register(instance, actions.value, action_fn, data, replace_old)
+
+
+@c.CFUNCTYPE(c.c_uint, c.c_uint)
+def mock_rand(index=0):
+    return not index
