@@ -120,10 +120,10 @@ in3_ret_t zkcrypto_pk_from_seed(bytes_t seed, bytes32_t dst) {
 in3_ret_t zkcrypto_pk_to_pubkey(bytes32_t pk, uint8_t* dst) {
   u32 sp = wmalloc(32);
   memcpy(mem_ptr(sp), pk, 32);
-  zkcrypto_Z_private_key_to_pubkey_hashZ_viii(8, sp, 32);
+  zkcrypto_Z_private_key_to_pubkeyZ_viii(8, sp, 32);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
-  if (r1 == 32) memcpy(dst, mem_ptr(r0), 20);
+  if (r1 == 32) memcpy(dst, mem_ptr(r0), 32);
   wfree(r0, r1);
   return r1 == 32 ? IN3_OK : IN3_EINVAL;
 }
@@ -162,6 +162,87 @@ in3_ret_t zkcrypto_compute_aggregated_pubkey(bytes_t keys, uint8_t* dst) {
   if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
   return r1 == 32 ? IN3_OK : IN3_EINVAL;
+}
+
+zkcrypto_signer_t zkcrypto_signer_new(bytes_t pub_keys, uint32_t pos) {
+  u32 keys = wmalloc(pub_keys.len);
+  memcpy(mem_ptr(keys), pub_keys.data, pub_keys.len);
+  return zkcrypto_Z_musigbn256wasmsigner_newZ_iiii(keys, pub_keys.len, pos);
+}
+
+void zkcrypto_signer_free(zkcrypto_signer_t signer) {
+  return zkcrypto_Z___wbg_musigbn256wasmsigner_freeZ_vi(signer);
+}
+
+in3_ret_t zkcrypto_signer_compute_precommitment(zkcrypto_signer_t signer, bytes_t seed, uint8_t* dst) {
+  u32 data = wmalloc(seed.len);
+  memcpy(mem_ptr(data), seed.data, seed.len);
+  zkcrypto_Z_musigbn256wasmsigner_compute_precommitmentZ_viiii(8, signer, data, seed.len/4);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
+  if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
+  wfree(r0, r1);
+  return r1 == 32 ? IN3_OK : IN3_EINVAL;
+}
+
+
+in3_ret_t zkcrypto_signer_receive_precommitment(zkcrypto_signer_t signer, bytes_t input, uint8_t* dst) {
+  u32 data = wmalloc(input.len);
+  memcpy(mem_ptr(data), input.data, input.len);
+  zkcrypto_Z_musigbn256wasmsigner_receive_precommitmentsZ_viiii(8, signer, data, input.len);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
+  if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
+  wfree(r0, r1);
+  return r1 == 32 ? IN3_OK : IN3_EINVAL;
+}
+
+
+in3_ret_t zkcrypto_signer_receive_commitment(zkcrypto_signer_t signer, bytes_t input, uint8_t* dst) {
+  u32 data = wmalloc(input.len);
+  memcpy(mem_ptr(data), input.data, input.len);
+  zkcrypto_Z_musigbn256wasmsigner_receive_commitmentsZ_viiii(8, signer, data, input.len);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
+  if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
+  wfree(r0, r1);
+  return r1 == 32 ? IN3_OK : IN3_EINVAL;
+}
+
+
+
+in3_ret_t zkcrypto_signer_sign(zkcrypto_signer_t signer, bytes32_t pk, bytes_t input, uint8_t* dst) {
+  u32 data = wmalloc(input.len);
+  memcpy(mem_ptr(data), input.data, input.len);
+  u32 pkey = wmalloc(32);
+  memcpy(mem_ptr(pkey), pk, 32);
+  zkcrypto_Z_musigbn256wasmsigner_signZ_viiiiii(8, signer, pkey, 32,data, input.len);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
+  if (r1>32) memcpy(dst, mem_ptr(r0), r1);
+  wfree(r0, r1);
+  return r1 >32 ? IN3_OK : IN3_EINVAL;
+}
+
+in3_ret_t zkcrypto_signer_receive_signature_shares(zkcrypto_signer_t signer,  bytes_t input, uint8_t* dst) {
+  u32 data = wmalloc(input.len);
+  memcpy(mem_ptr(data), input.data, input.len);
+  zkcrypto_Z_musigbn256wasmsigner_receive_signature_sharesZ_viiii(8, signer, data, input.len);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
+  if (r1) memcpy(dst, mem_ptr(r0), r1);
+  wfree(r0, r1);
+  return r1  ? IN3_OK : IN3_EINVAL;
+}
+
+bool zkcrypto_verify_signatures(bytes_t message, bytes_t pubkeys, bytes_t signature) {
+  u32 _message = wmalloc(message.len);
+  memcpy(mem_ptr(_message), message.data, message.len);
+  u32 _pubkeys = wmalloc(pubkeys.len);
+  memcpy(mem_ptr(_pubkeys), pubkeys.data, pubkeys.len);
+  u32 _signature = wmalloc(signature.len);
+  memcpy(mem_ptr(_signature), signature.data, signature.len);
+  return zkcrypto_Z_musigbn256wasmverifier_verifyZ_iiiiiii(_message, message.len, _pubkeys,pubkeys.len, _signature,signature.len)!=0;
 }
 
 

@@ -90,6 +90,7 @@ typedef struct {
   zk_sign_type_t  sign_type;     /**< the signature-type to use*/
   uint32_t        version;       /**< zksync version */
   zk_create2_t*   create2;       /**< create2 args */
+  bytes_t         musig_pub_keys; /**< the public keys of all participants of a schnorr musig signature */
 } zksync_config_t;
 
 /** a transaction */
@@ -139,3 +140,5 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
                                      zksync_token_t* token);
 
 #endif
+
+in3_ret_t zksync_musig_create_pre_commit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);

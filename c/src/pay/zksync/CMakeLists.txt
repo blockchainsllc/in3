@@ -43,6 +43,7 @@ add_static_library(
     zk_setkey.c
     zk_transfer.c
     zk_deposit.c
+    zk_musig.c
 
   DEPENDS 
     eth_basic
