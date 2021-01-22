@@ -12,13 +12,25 @@ static void hex(bytes_t b) {
 }
 
 /* import: './web.js' '__wbg_new_59cb74e423758ede' */
-u32 (*Z_Z2EZ2FwebZ2EjsZ___wbg_new_59cb74e423758edeZ_iv)(void);
+u32 (*Z___wbindgen_placeholder__Z___wbg_new_59cb74e423758edeZ_iv)(void);
 /* import: './web.js' '__wbg_stack_558ba5917b466edd' */
-void (*Z_Z2EZ2FwebZ2EjsZ___wbg_stack_558ba5917b466eddZ_vii)(u32, u32);
+void (*Z___wbindgen_placeholder__Z___wbg_stack_558ba5917b466eddZ_vii)(u32, u32);
 /* import: './web.js' '__wbg_error_4bb6c2a97407129a' */
-void (*Z_Z2EZ2FwebZ2EjsZ___wbg_error_4bb6c2a97407129aZ_vii)(u32, u32);
+void (*Z___wbindgen_placeholder__Z___wbg_error_4bb6c2a97407129aZ_vii)(u32, u32);
 /* import: './web.js' '__wbindgen_object_drop_ref' */
-void (*Z_Z2EZ2FwebZ2EjsZ___wbindgen_object_drop_refZ_vi)(u32);
+void (*Z___wbindgen_placeholder__Z___wbindgen_object_drop_refZ_vi)(u32);
+
+
+
+/* import: '__wbindgen_placeholder__' '__wbindgen_string_new' */
+u32 (*Z___wbindgen_placeholder__Z___wbindgen_string_newZ_iii)(u32, u32);
+/* import: '__wbindgen_placeholder__' '__wbindgen_throw' */
+void (*Z___wbindgen_placeholder__Z___wbindgen_throwZ_vii)(u32, u32);
+/* import: '__wbindgen_placeholder__' '__wbindgen_rethrow' */
+void (*Z___wbindgen_placeholder__Z___wbindgen_rethrowZ_vi)(u32);
+
+
+
 
 #define wmalloc(l)  zkcrypto_Z___wbindgen_mallocZ_ii(l)
 #define wfree(p, l) zkcrypto_Z___wbindgen_freeZ_vii(p, l)
@@ -50,18 +62,52 @@ void zke_error(u32 a, u32 b) {
 void zke_drop(u32 a) {
   printf("# zke_drop\n");
 }
+
+/* import: '__wbindgen_placeholder__' '__wbindgen_string_new' */
+u32 zke_string_new(u32 a, u32 b) {
+  printf("# zke_string_new\n");
+  u32 sp = wmalloc(b+1);
+  memcpy(mem_ptr(sp),mem_ptr(a),b+1);
+  char* s = mem_ptr(sp);
+  s[b]=0;
+  return sp;
+}
+/* import: '__wbindgen_placeholder__' '__wbindgen_throw' */
+void zke_throw(u32 a, u32 b) {
+  if (a || b)
+  printf("# zke_throw\n");
+
+}
+/* import: '__wbindgen_placeholder__' '__wbindgen_rethrow' */
+void zke_rethrow(u32 x) {
+  if (x)
+  printf("# zke_rethrow\n");
+
+}
+
+
+
 void zkcrypto_initialize() {
   zkcrypto_init();
 
   /* import: './web.js' '__wbg_new_59cb74e423758ede' */
-  Z_Z2EZ2FwebZ2EjsZ___wbg_new_59cb74e423758edeZ_iv = zke_add;
+  Z___wbindgen_placeholder__Z___wbg_new_59cb74e423758edeZ_iv = zke_add;
   /* import: './web.js' '__wbg_stack_558ba5917b466edd' */
-  Z_Z2EZ2FwebZ2EjsZ___wbg_stack_558ba5917b466eddZ_vii = zke_stack;
+  Z___wbindgen_placeholder__Z___wbg_stack_558ba5917b466eddZ_vii = zke_stack;
   /* import: './web.js' '__wbg_error_4bb6c2a97407129a' */
-  Z_Z2EZ2FwebZ2EjsZ___wbg_error_4bb6c2a97407129aZ_vii = zke_error;
+  Z___wbindgen_placeholder__Z___wbg_error_4bb6c2a97407129aZ_vii = zke_error;
   /* import: './web.js' '__wbindgen_object_drop_ref' */
-  Z_Z2EZ2FwebZ2EjsZ___wbindgen_object_drop_refZ_vi = zke_drop;
+  Z___wbindgen_placeholder__Z___wbindgen_object_drop_refZ_vi = zke_drop;
+
+  /* import: '__wbindgen_placeholder__' '__wbindgen_string_new' */
+  Z___wbindgen_placeholder__Z___wbindgen_string_newZ_iii= zke_string_new;
+  /* import: '__wbindgen_placeholder__' '__wbindgen_throw' */
+  Z___wbindgen_placeholder__Z___wbindgen_throwZ_vii = zke_throw;
+  /* import: '__wbindgen_placeholder__' '__wbindgen_rethrow' */
+  Z___wbindgen_placeholder__Z___wbindgen_rethrowZ_vi = zke_rethrow;
+
 }
+
 
 in3_ret_t zkcrypto_pk_from_seed(bytes_t seed, bytes32_t dst) {
   u32 sp = wmalloc(seed.len);
