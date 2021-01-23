@@ -219,9 +219,9 @@ in3_ret_t zkcrypto_signer_sign(zkcrypto_signer_t signer, bytes32_t pk, bytes_t i
   zkcrypto_Z_musigbn256wasmsigner_signZ_viiiiii(8, signer, pkey, 32,data, input.len);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
-  if (r1>32) memcpy(dst, mem_ptr(r0), r1);
+  if (r1==32) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
-  return r1 >32 ? IN3_OK : IN3_EINVAL;
+  return r1 ==32 ? IN3_OK : IN3_EINVAL;
 }
 
 in3_ret_t zkcrypto_signer_receive_signature_shares(zkcrypto_signer_t signer,  bytes_t input, uint8_t* dst) {
@@ -230,9 +230,9 @@ in3_ret_t zkcrypto_signer_receive_signature_shares(zkcrypto_signer_t signer,  by
   zkcrypto_Z_musigbn256wasmsigner_receive_signature_sharesZ_viiii(8, signer, data, input.len);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
-  if (r1) memcpy(dst, mem_ptr(r0), r1);
+  if (r1==64) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
-  return r1  ? IN3_OK : IN3_EINVAL;
+  return r1==64  ? IN3_OK : IN3_EINVAL;
 }
 
 bool zkcrypto_verify_signatures(bytes_t message, bytes_t pubkeys, bytes_t signature) {

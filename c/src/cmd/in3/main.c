@@ -135,7 +135,8 @@ void show_help(char* name) {
 -zkat          zksync account type could be one of 'pk'(default), 'contract' or 'create2'\n\
 -zsk           zksync signer seed (if not set this key will be derrived from account unless create2)\n\
 -zc2           zksync create2 arguments in the form <creator>:<codehash>:<saltarg>. if set the account type is also changed to create2\n\
--zms           public keys of a musig schnorr saignatures to sign with\n\
+-zms           public keys of a musig schnorr signatures to sign with\n\
+-zmu           url for signing service matching the first remote public key\n\
 -os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
@@ -806,6 +807,12 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-zms") == 0) {
       char tmp[1000];
       sprintf(tmp, "{\"zksync\":{\"musig_pub_keys\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zmu") == 0) {
+      char tmp[1000];
+      sprintf(tmp, "{\"zksync\":{\"musig_urls\":[null,\"%s\"]}}", argv[++i]);
       char* err = in3_configure(c, tmp);
       if (err) die(err);
     }

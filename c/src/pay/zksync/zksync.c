@@ -158,8 +158,8 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_add_char(sb, '}');
     return in3_rpc_handle_finish(ctx);
   }
-  if (strcmp(method, "musig_create_pre_commit") == 0)
-    return zksync_musig_create_pre_commit(conf, ctx, params);
+  if (strcmp(method, "musig_sign") == 0)
+    return zksync_musig_sign(conf, ctx, params);
 
   str_range_t p            = d_to_json(params);
   char*       param_string = alloca(p.len - 1);
@@ -187,12 +187,19 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
   zksync_config_t* conf = cptr;
   switch (action) {
     case PLGN_ACT_TERM: {
+      if (conf->musig_urls) {
+        for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
+          if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
+        }
+        _free(conf->musig_urls);
+      }
       if (conf->provider_url) _free(conf->provider_url);
       if (conf->main_contract) _free(conf->main_contract);
       if (conf->account) _free(conf->account);
       if (conf->tokens) _free(conf->tokens);
       if (conf->create2) _free(conf->create2);
       if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
+      while (conf->musig_sessions) conf->musig_sessions = zk_musig_session_free(conf->musig_sessions);
       _free(conf);
       return IN3_OK;
     }
@@ -225,7 +232,12 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         bytes_t* account = d_get_bytes(ctx->token, "account");
         if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
         bytes_t sync_key = d_to_bytes(d_get(ctx->token, key("sync_key")));
-        if (sync_key.len) zkcrypto_pk_from_seed(sync_key, conf->sync_key);
+        if (sync_key.len) {
+          zkcrypto_pk_from_seed(sync_key, conf->sync_key);
+          zkcrypto_pk_to_pubkey(conf->sync_key, conf->pub_key);
+          zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key_hash);
+        }
+
         bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");
         if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
         d_token_t* st = d_get(ctx->token, key("signer_type"));
@@ -239,6 +251,20 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
           if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
           conf->musig_pub_keys = bytes(_malloc(d_len(musig)), musig->len);
           memcpy(conf->musig_pub_keys.data, musig->data, musig->len);
+        }
+        d_token_t* urls = d_get(ctx->token, key("musig_urls"));
+        if (urls) {
+          if (conf->musig_urls) {
+            for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
+              if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
+            }
+            _free(conf->musig_urls);
+          }
+          conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
+          for (int i = 0; i < d_len(urls); i++) {
+            char* s = d_get_string_at(urls, i);
+            if (s) conf->musig_urls[i] = _strdupn(s, -1);
+          }
         }
         d_token_t* create2 = d_get(ctx->token, key("create2"));
         if (create2) {

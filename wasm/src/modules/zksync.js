@@ -118,4 +118,8 @@ class ZksyncAPI {
     return this.send('zksync_emergencyWithdraw', token)
   }
 
+  musig_sign(message) {
+    return this.send('zksync_musig_sign', message);
+  }
+
 }

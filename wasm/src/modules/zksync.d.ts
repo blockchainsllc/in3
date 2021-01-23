@@ -245,6 +245,18 @@ export declare interface zksync_config {
         saltarg: string
     }
 
+    /** 
+     * if used as a musig-signature the 
+     */
+    musig_urls?: string[]
+
+    /** 
+     * concated packed public keys of the signers of the multisig
+     */
+    musig_pub_keys?: string
+
+
+
 }
 
 
