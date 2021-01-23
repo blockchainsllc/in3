@@ -47,20 +47,22 @@ extern void (*Z___wbindgen_placeholder__Z___wbindgen_rethrowZ_vi)(u32);
 
 /* export: 'memory' */
 extern wasm_rt_memory_t (*WASM_RT_ADD_PREFIX(Z_memory));
-/* export: '__wbg_musigbn256wasmverifier_free' */
-extern void (*WASM_RT_ADD_PREFIX(Z___wbg_musigbn256wasmverifier_freeZ_vi))(u32);
-/* export: 'musigbn256wasmverifier_verify' */
-extern u32 (*WASM_RT_ADD_PREFIX(Z_musigbn256wasmverifier_verifyZ_iiiiiii))(u32, u32, u32, u32, u32, u32);
 /* export: 'zksync_crypto_init' */
 extern void (*WASM_RT_ADD_PREFIX(Z_zksync_crypto_initZ_vv))(void);
 /* export: 'privateKeyFromSeed' */
 extern void (*WASM_RT_ADD_PREFIX(Z_privateKeyFromSeedZ_viii))(u32, u32, u32);
 /* export: 'private_key_to_pubkey_hash' */
 extern void (*WASM_RT_ADD_PREFIX(Z_private_key_to_pubkey_hashZ_viii))(u32, u32, u32);
+/* export: 'pubKeyHash' */
+extern void (*WASM_RT_ADD_PREFIX(Z_pubKeyHashZ_viii))(u32, u32, u32);
 /* export: 'private_key_to_pubkey' */
 extern void (*WASM_RT_ADD_PREFIX(Z_private_key_to_pubkeyZ_viii))(u32, u32, u32);
 /* export: 'sign_musig' */
 extern void (*WASM_RT_ADD_PREFIX(Z_sign_musigZ_viiiii))(u32, u32, u32, u32, u32);
+/* export: '__wbg_musigbn256wasmverifier_free' */
+extern void (*WASM_RT_ADD_PREFIX(Z___wbg_musigbn256wasmverifier_freeZ_vi))(u32);
+/* export: 'musigbn256wasmverifier_verify' */
+extern u32 (*WASM_RT_ADD_PREFIX(Z_musigbn256wasmverifier_verifyZ_iiiiiii))(u32, u32, u32, u32, u32, u32);
 /* export: '__wbg_musigbn256wasmaggregatedpubkey_free' */
 extern void (*WASM_RT_ADD_PREFIX(Z___wbg_musigbn256wasmaggregatedpubkey_freeZ_vi))(u32);
 /* export: 'musigbn256wasmaggregatedpubkey_compute' */

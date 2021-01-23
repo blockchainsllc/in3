@@ -246,5 +246,15 @@ bool zkcrypto_verify_signatures(bytes_t message, bytes_t pubkeys, bytes_t signat
 }
 
 
+in3_ret_t zkcrypto_pubkey_hash(bytes_t pubkey, uint8_t* dst) {
+  u32 pk = wmalloc(pubkey.len);
+  memcpy(mem_ptr(pk), pubkey.data, pubkey.len);
+  zkcrypto_Z_pubKeyHashZ_viii(8, pk, pubkey.len);
+  u32 r0 = mem_u32(2);
+  u32 r1 = mem_u32(3);
+  if (r1 == 20) memcpy(dst, mem_ptr(r0), r1);
+  wfree(r0, r1);
+  return r1 == 20 ? IN3_OK : IN3_EINVAL;
+}
 
 

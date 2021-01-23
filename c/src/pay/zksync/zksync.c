@@ -104,8 +104,13 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(method, "getPubKeyHash") == 0) {
     bytes32_t k;
     address_t pubkey_hash;
-    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
-    zkcrypto_pk_to_pubkey_hash(k, pubkey_hash);
+    if (d_len(params) == 1) {
+      TRY(zkcrypto_pubkey_hash(d_to_bytes(params + 1), pubkey_hash));
+    }
+    else {
+      TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+      zkcrypto_pk_to_pubkey_hash(k, pubkey_hash);
+    }
     char res[48];
     strcpy(res, "\"sync:");
     bytes_to_hex(pubkey_hash, 20, res + 6);
@@ -153,9 +158,9 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_add_char(sb, '}');
     return in3_rpc_handle_finish(ctx);
   }
-  if (strcmp(method, "musig_create_pre_commit")==0)
-     return zksync_musig_create_pre_commit(conf,ctx,params);
-     
+  if (strcmp(method, "musig_create_pre_commit") == 0)
+    return zksync_musig_create_pre_commit(conf, ctx, params);
+
   str_range_t p            = d_to_json(params);
   char*       param_string = alloca(p.len - 1);
   memcpy(param_string, p.data + 1, p.len - 2);
@@ -187,7 +192,7 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
       if (conf->account) _free(conf->account);
       if (conf->tokens) _free(conf->tokens);
       if (conf->create2) _free(conf->create2);
-      if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data); 
+      if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
       _free(conf);
       return IN3_OK;
     }
@@ -228,12 +233,12 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
           conf->sign_type = get_sign_type(st);
         else if (conf->sign_type == 0)
           conf->sign_type = ZK_SIGN_PK;
-        conf->version      = (uint32_t) d_intd(d_get(ctx->token, key("version")), conf->version);
+        conf->version    = (uint32_t) d_intd(d_get(ctx->token, key("version")), conf->version);
         d_token_t* musig = d_get(ctx->token, key("musig_pub_keys"));
-        if (musig && d_type(musig)==T_BYTES && d_len(musig)%32==0) {
+        if (musig && d_type(musig) == T_BYTES && d_len(musig) % 32 == 0) {
           if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
           conf->musig_pub_keys = bytes(_malloc(d_len(musig)), musig->len);
-          memcpy(conf->musig_pub_keys.data,musig->data,musig->len);
+          memcpy(conf->musig_pub_keys.data, musig->data, musig->len);
         }
         d_token_t* create2 = d_get(ctx->token, key("create2"));
         if (create2) {
