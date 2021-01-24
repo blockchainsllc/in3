@@ -85,7 +85,7 @@ typedef struct zk_musig_session {
   bytes_t                  precommitments;   /**< all precommits */
   bytes_t                  commitments;      /**< all commits */
   bytes_t                  signature_shares; /**< all signatures shares */
-  uint32_t                 signer;           /**< handle for the signer */
+  void*                    signer;           /**< handle for the signer */
   struct zk_musig_session* next;             /**< next session */
 } zk_musig_session_t;
 

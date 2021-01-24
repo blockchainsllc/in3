@@ -4,7 +4,7 @@
 #ifndef __ZK_CRYPTO_H__
 #define __ZK_CRYPTO_H__
 
-typedef uint32_t zkcrypto_signer_t;
+typedef void*  zkcrypto_signer_t;
 
 /**
  * this must be called in order to initialize the crypto-curves
