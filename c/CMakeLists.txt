@@ -93,8 +93,8 @@ if (IN3_LIB)
     endif()
 
     if (ZKSYNC AND ZKCRYPTO_LIB )
-      target_link_libraries(in3_bundle ${ZKCRYPTO_LIB} )
-      target_link_libraries(in3_lib ${ZKCRYPTO_LIB} )
+        target_link_libraries(in3_bundle zk_crypto_rs )
+        target_link_libraries(in3_lib zk_crypto_rs )
     endif()
 
 
