@@ -33,30 +33,7 @@
 ###############################################################################
 
 if(ZKCRYPTO_LIB)
-
   add_subdirectory(rust)
-
-  add_static_library(
-    NAME     zkcrypto 
-    
-    SOURCES 
-      lib_ext.c
-    DEPENDS 
-      core
-      zk_crypto_rs
-  )
-
 else()
-  add_static_library(
-    NAME     zkcrypto 
-    
-    SOURCES 
-      wasm-rt-impl.c
-      zk-crypto.c
-      lib.c
-    DEPENDS 
-      core
-  )
+  add_subdirectory(wasm)
 endif()
-
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-value -Wno-unused-function")

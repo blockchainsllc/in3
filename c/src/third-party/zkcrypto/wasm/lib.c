@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #define WASM_RT_MODULE_PREFIX zkcrypto_
-#include "lib.h"
+#include "../lib.h"
 #include "zk-crypto.h"
 
 static void hex(bytes_t b) {

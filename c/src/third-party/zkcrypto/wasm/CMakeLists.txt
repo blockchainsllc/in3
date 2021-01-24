@@ -32,29 +32,15 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
-set(OUTPUT_PATH ${PROJECT_BINARY_DIR}/rust/zkcrypto/release/libzk_crypto.a)
-
-add_custom_command(
-    OUTPUT ${OUTPUT_PATH}
-    DEPENDS Cargo.toml src/aggregated_pubkey.rs src/lib.rs src/signer.rs src/verifier.rs
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND cargo build --target-dir ${PROJECT_BINARY_DIR}/rust/zkcrypto --release
+add_static_library(
+  NAME     zkcrypto 
+  
+  SOURCES 
+    wasm-rt-impl.c
+    zk-crypto.c
+    lib.c
+  DEPENDS 
+    core
 )
 
-add_custom_target(zk_crypto_target DEPENDS ${OUTPUT_PATH} )
-add_library(zk_crypto_rs STATIC IMPORTED GLOBAL)
-add_dependencies(zk_crypto_rs zk_crypto_target)
-set_property(TARGET zk_crypto_rs PROPERTY IMPORTED_LOCATION ${OUTPUT_PATH} ) 
-
-
-add_static_library(
-    NAME     zkcrypto 
-    
-    SOURCES 
-      lib.c
-    DEPENDS 
-      core
-      zk_crypto_rs
-  )
-
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-value -Wno-unused-function")

@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lib.h"
-#include "zkcrypto_ext.h"
+#include "../lib.h"
+#include "zkcrypto.h"
 
 
 void zkcrypto_initialize() {
