@@ -8,25 +8,17 @@
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
 
+static int to_dec(char* dst, zk_fee_t val) {
 #ifdef ZKSYNC_256
-static int to_dec(char* dst, bytes32_t val) {
   bignum256 bn;
   bn_read_be(val, &bn);
   return bn_format(&bn, "", "", 0, 0, false, dst, 80);
-}
 #else
-static int to_dec(char* dst, uint64_t val) {
   return sprintf(dst, "%" PRId64, val);
+#endif
 }
-#endif
 
-static void add_amount(sb_t* sb, zksync_token_t* token,
-#ifdef ZKSYNC_256
-                       uint8_t* val
-#else
-                       uint64_t val
-#endif
-) {
+static void add_amount(sb_t* sb, zksync_token_t* token, zk_fee_t val) {
   int   dec = token ? token->decimals : 0;
   char  tmp[80]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
   char* sep = NULL;
@@ -246,14 +238,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, zksync_config_t* conf,
-#ifdef ZKSYNC_256
-                                     bytes32_t fee
-#else
-                                     uint64_t fee
-#endif
-                                     ,
-                                     zksync_token_t* token) {
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token) {
 
   // create sign_msg for the rollup
   char    dec[80];

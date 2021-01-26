@@ -64,11 +64,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   bytes_t*        new_key    = d_get_bytes_at(params, 1);
   zksync_token_t* token_data = NULL;
   if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
-#ifdef ZKSYNC_256
-  bytes32_t fee;
-#else
-  uint64_t fee;
-#endif
+  zk_fee_t fee;
   if (new_key && new_key->len == 32) memcpy(conf->sync_key, new_key->data, 32);
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
