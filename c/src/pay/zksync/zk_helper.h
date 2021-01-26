@@ -44,15 +44,8 @@
 
 #include "zksync.h"
 
-/** resolves the fees */
-in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
-#ifdef ZKSYNC_256
-                         uint8_t* fee
-#else
-                         uint64_t* fee
-#endif
-);
 
+in3_ret_t  zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee); /**< resolves the fees */
 void       set_quoted_address(char* c, uint8_t* address);                                                                   /**< writes the address as hex into the string.*/
 d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index);                                                        /**< returns the token either by index or key depending on the token-type */
 in3_ret_t  send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result); /**< send a request to the zksync-server*/

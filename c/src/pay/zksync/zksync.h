@@ -46,6 +46,13 @@
 #if defined(ETH_FULL) && !defined(ZKSYNC_256)
 #define ZKSYNC_256
 #endif
+#ifdef ZKSYNC_256
+typedef bytes32_t zk_fee_t;
+typedef uint8_t   zk_fee_p_t;
+#else
+typedef uint64_t zk_fee_t;
+typedef uint64_t zk_fee_p_t;
+#endif
 
 /** represents a token supported in zksync. */
 typedef struct {
@@ -120,42 +127,30 @@ typedef struct {
   zksync_token_t*  token;      /**< the token to use */
   uint32_t         nonce;      /**< current nonce */
   zk_msg_type_t    type;       /**< message type */
-#ifdef ZKSYNC_256
-  bytes32_t amount; /**< amount to send */
-  bytes32_t fee;    /**< ransaction fees */
-#else
-  uint64_t amount; /**< amount to send */
-  uint64_t fee;    /**< ransaction fees */
-#endif
+  zk_fee_t         amount;     /**< amount to send */
+  zk_fee_t         fee;        /**< ransaction fees */
 } zksync_tx_data_t;
 
 /** registers the zksync-plugin in the client */
-in3_ret_t in3_register_zksync(in3_t* c);
+NONULL in3_ret_t in3_register_zksync(in3_t* c);
 
 /** sets a PubKeyHash for the current Account */
-in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+NONULL in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
 
 /** sends a transfer transaction in Layer 2*/
-in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params, zk_msg_type_t type);
+NONULL in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params, zk_msg_type_t type);
 
 /** sends a deposit transaction in Layer 1*/
-in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+NONULL in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
 
 /** sends a emergency withdraw  transaction in Layer 1*/
-in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+NONULL in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
 
 /** creates message data and signs a transfer-message */
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf);
+NONULL in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf);
 
 /** creates message data and signs a change_pub_key-message */
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf,
-#ifdef ZKSYNC_256
-                                     bytes32_t fee
-#else
-                                     uint64_t fee
-#endif
-                                     ,
-                                     zksync_token_t* token);
+NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token);
 
 #endif
 

@@ -270,13 +270,7 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* non
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
-#ifdef ZKSYNC_256
-                         uint8_t* fee
-#else
-                         uint64_t* fee
-#endif
-) {
+in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
   if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
 #ifdef ZKSYNC_256
     bytes_t b = d_to_bytes(fee_in);
