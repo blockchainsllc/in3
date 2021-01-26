@@ -14,6 +14,12 @@ typedef struct MusigBN256WasmSigner MusigBN256WasmSigner;
 
 void zc_compute_aggregated_pubkey(uint8_t *pks, size_t pks_len, uint8_t *dst);
 
+/**
+ * This method initializes params for current thread, otherwise they will be initialized when signing
+ * first message.
+ */
+void zc_init(void);
+
 void zc_private_key_from_seed(uint8_t *seed, size_t seed_len, uint8_t *dst);
 
 void zc_private_key_to_pubkey(uint8_t *pk, uint8_t *dst);
@@ -54,10 +60,12 @@ void zc_signer_sign(struct MusigBN256WasmSigner *signer,
                     size_t len,
                     uint8_t *dst);
 
-/**
- * This method initializes params for current thread, otherwise they will be initialized when signing
- * first message.
- */
-void zc_init(void);
+bool zc_verify_musig(uint8_t *msg, size_t msg_len, uint8_t *signature);
+
+bool zc_verify_signatures(uint8_t *msg,
+                          size_t msg_len,
+                          uint8_t *pubkeys,
+                          size_t pubkeys_len,
+                          uint8_t *signature);
 
 #endif /* zkcrypto_h */

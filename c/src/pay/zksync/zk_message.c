@@ -148,7 +148,7 @@ static void create_signed_bytes(sb_t* sb) {
   memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
 }
 
-static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key, uint8_t* raw, uint8_t* sig) {
+static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig) {
   uint32_t total;
   char     dec[80];
   uint16_t tid = data->token ? data->token->id : 0;
@@ -180,12 +180,10 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, uint
   }
 
   // sign data
-  TRY(zkcrypto_sign_musig(sync_key, bytes(raw, total), sig));
-
-  return IN3_OK;
+  return zksync_sign(conf,  bytes(raw, total), ctx,sig);
 }
 
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key) {
+in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf) {
   char    msg_data[200];
   bytes_t signature;
   sb_t    msg = sb_stack(msg_data);
@@ -203,7 +201,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
     signature.data[64] += 27; //because EIP155 chainID = 0
   // now create the packed sync transfer
   uint8_t raw[69], sig[96];
-  TRY(sign_sync_transfer(data, ctx, sync_key, raw, sig));
+  TRY(sign_sync_transfer(data, ctx, conf, raw, sig));
 
   if (in3_log_level_is(LOG_DEBUG) || in3_log_level_is(LOG_TRACE)) {
     char* hex = alloca(142);
@@ -246,7 +244,24 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, zksync_config_t* conf,
+in3_ret_t zksync_sign( zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig ) {
+  if (memiszero(conf->sync_key,32)) return ctx_set_error(ctx, "no signing key set", IN3_ECONFIG);
+  if (!conf->musig_pub_keys.data) return zkcrypto_sign_musig(conf->sync_key, msg, sig);
+  char* p = alloca(msg.len*2+5);
+  p[0]='"';
+  p[1]='0';
+  p[2]='x';
+  bytes_to_hex(msg.data,msg.len,p+3);
+  p[msg.len*2+3]='"';
+  p[msg.len*2+4]=0;
+  d_token_t* result;
+  TRY(ctx_send_sub_request(ctx, "zk_musig_sign", p, NULL, &result))
+  if (d_type(result)!=T_BYTES || d_len(result)!=96) return ctx_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
+  memcpy(sig, result->data, 96);
+  return IN3_OK;
+}
+
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf,
 #ifdef ZKSYNC_256
                                      bytes32_t fee
 #else
@@ -269,8 +284,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   int_to_bytes(nonce, sign_msg_bytes + 49);           // nonce
 
   // now sign it with the new pk
-  TRY(zkcrypto_sign_musig(sync_key, bytes(sign_msg_bytes, 53), sig));
-
+  TRY(zksync_sign(conf,bytes(sign_msg_bytes, 53),ctx, sig))
   // create human readable message
   char    msg_data[300];
   uint8_t tmp[8];

@@ -999,6 +999,7 @@ static inline in3_ret_t handle_internally(in3_ctx_t* ctx) {
   if (ctx->len != 1) return IN3_OK; //  currently we do not support bulk requests forr internal calls
   in3_rpc_handle_ctx_t vctx = {.ctx = ctx, .response = &ctx->raw_response, .request = ctx->requests[0]};
   in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
+  if (res==IN3_OK && ctx->raw_response && ctx->raw_response->data.data) in3_log_debug("internal response: %s\n",ctx->raw_response->data.data);
   return res == IN3_EIGNORE ? IN3_OK : res;
 }
 

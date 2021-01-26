@@ -82,4 +82,10 @@ in3_ret_t zkcrypto_signer_receive_signature_shares(zkcrypto_signer_t signer,  by
  */
 in3_ret_t zkcrypto_signer_sign(zkcrypto_signer_t signer, bytes32_t pk, bytes_t input, uint8_t* dst);
 
+/**
+ * verify a signature ( works for simple pk key or schnorr signatures)
+ */
+bool zkcrypto_verify_musig(bytes_t message,  bytes_t signature) ;
+
+
 #endif

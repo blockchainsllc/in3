@@ -80,7 +80,6 @@ void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t s
 
 in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_ctx_t* ctx) {
   if (conf->sign_type != ZK_SIGN_CREATE2) return IN3_OK;
-  if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "no key set", IN3_ECONFIG);
   if (conf->account) return IN3_OK;
   if (!conf->create2) return ctx_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
   if (memiszero(conf->create2->creator, 20)) return ctx_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
@@ -88,7 +87,7 @@ in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_ctx_t* ctx) {
   if (memiszero(conf->create2->salt_arg, 32)) return ctx_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
   if (!conf->account) {
     address_t pub_key_hash;
-    zkcrypto_pk_to_pubkey_hash(conf->sync_key, pub_key_hash);
+    TRY(zksync_get_pubkey_hash(conf, ctx, pub_key_hash))
     conf->account = _malloc(20);
     zksync_calculate_account(conf->create2->creator, conf->create2->codehash, conf->create2->salt_arg, pub_key_hash, conf->account);
   }
@@ -125,7 +124,7 @@ in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
   conf->nonce          = d_get_longk(committed, K_NONCE);
   char* kh             = d_get_stringk(committed, key("pubKeyHash"));
   if (kh && strlen(kh) == 45)
-    hex_to_bytes(kh + 5, 40, conf->pub_key_hash, 20);
+    hex_to_bytes(kh + 5, 40, conf->pub_key_hash_set, 20);
 
   return IN3_OK;
 }
@@ -182,6 +181,34 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sy
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);
   memcpy(sync_key, conf->sync_key, 32);
+  return IN3_OK;
+}
+
+
+in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash) {
+  if (!conf) return IN3_EUNKNOWN;
+  if (!memiszero(conf->pub_key_hash_pk, 20) && !conf->musig_pub_keys.data) {
+    memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
+    return IN3_OK;
+  }
+
+  bytes32_t tmp;
+  if (conf->musig_pub_keys.data) {
+    TRY( zkcrypto_compute_aggregated_pubkey(conf->musig_pub_keys,tmp))
+    return zkcrypto_pubkey_hash(bytes(tmp,32),pubkey_hash);
+  }
+
+  if (!memiszero(conf->pub_key,32)) {
+     TRY(zkcrypto_pubkey_hash(bytes(conf->pub_key,32),conf->pub_key))
+     memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
+     return IN3_OK;
+  } 
+    
+
+  TRY(zksync_get_sync_key(conf,ctx,tmp))
+  TRY(zkcrypto_pk_to_pubkey_hash(tmp,conf->pub_key_hash_pk))
+
+  memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
   return IN3_OK;
 }
 

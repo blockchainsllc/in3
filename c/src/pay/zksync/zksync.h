@@ -97,7 +97,8 @@ typedef struct {
   uint8_t*            gov_contract;   /**< address of the government contract */
   uint64_t            account_id;     /**< the id of the account as used in the messages */
   uint64_t            nonce;          /**< the current nonce */
-  address_t           pub_key_hash;   /**< the pub_key_hash */
+  address_t           pub_key_hash_set;   /**< the pub_key_hash as set in the account*/
+  address_t           pub_key_hash_pk;   /**< the pub_key_hash based on the sync_key*/
   bytes32_t           pub_key;        /**< the pub_key */
   uint16_t            token_len;      /**< number of tokens in the tokenlist */
   bytes32_t           sync_key;       /**< the raw key to sign with*/
@@ -144,10 +145,10 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
 in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
 
 /** creates message data and signs a transfer-message */
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
+in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf);
 
 /** creates message data and signs a change_pub_key-message */
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, zksync_config_t* conf,
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf,
 #ifdef ZKSYNC_256
                                      bytes32_t fee
 #else
@@ -160,3 +161,4 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
 
 in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
+in3_ret_t zksync_sign( zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig );

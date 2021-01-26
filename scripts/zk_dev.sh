@@ -170,11 +170,16 @@ safe_c2_create() {
   # calculate 
   export G_SALTARG=`in3 web3_sha3 $setup`
   export G_SEED=`in3 createkey`
+  export G_SEED_BUNKER=`in3 createkey`
+  export G_PUB_KEY=`in3 -zsk $G_SEED zk_getPubKey`
+  export G_PUB_KEY_BUNKER=`in3 -zsk $G_SEED_BUNKER zk_getPubKey`
+  export G_PUB_KEYS="$G_PUB_KEY${G_PUB_KEY_BUNKER:2}"
+
   export G_CODEHASH=`in3 web3_sha3 ${CODE}000000000000000000000000${IAMO_MASTER_COPY:2}`
   export G_CREATOR=$IAMO_FACTORY
-  pub_key_hash=`in3 zk_getPubKeyHash -zsk $G_SEED`
-  export G_SAFE=`in3 -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED zk_account_address`
-  export G_NONCE=0x000000000000000000000000${pub_key_hash:5}
+  export G_PUB_KEY_HASH=`in3 zk_getPubKeyHash -zms $G_PUB_KEYS`
+  export G_SAFE=`in3 -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED -zms $G_PUB_KEYS zk_account_address`
+  export G_NONCE=0x000000000000000000000000${G_PUB_KEY_HASH:5}
 
   #prepare deploy tx
   export G_RAWTX=`in3 send -os -gas 5000000 -to $IAMO_FACTORY  "createProxyWithNonce(address,bytes,uint256)" $IAMO_MASTER_COPY $setup $G_NONCE`
@@ -183,14 +188,18 @@ safe_c2_create() {
 }
 
 safe_c2_setkey() {
- in3 -debug  -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED zksync_setKey ETH
+ in3 -debug -zka $G_SAFE -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED -zms $G_PUB_KEYS -zmu http://127.0.0.1:8099  zksync_setKey ETH
 }
 safe_c2_fund_l1() {
  in3  -zkat contract zksync_deposit $1 ETH false $G_SAFE | jq
 }
 safe_c2_transfer() {
- in3  -zka $G_SAFE -zkat create2 -zsk $G_SEED zksync_transfer $1 $2 ETH
+ in3 -zks $IN3_ZKS -pk $IN3_PK -c $IN3_CHAIN -debug -zka $G_SAFE -zkat create2 -zsk $G_SEED -zms $G_PUB_KEYS -zmu http://127.0.0.1:8099  zksync_transfer $1 $2 ETH -fo debug.txt
 }
 safe_c2_withdraw() {
- in3  -zka $G_SAFE -zkat create2 -zsk $G_SEED zksync_withdraw $1 $2 ETH
+ in3  -zka $G_SAFE -zkat create2 -zsk $G_SEED -zms $G_PUB_KEYS -zmu http://127.0.0.1:8099 zksync_withdraw $1 $2 ETH
+}
+
+safe_c2_start_bunker() {
+ nohup in3 -zsk $G_SEED_BUNKER -port 8099 -debug 2>bunker_sign.log  > bunker_sign.log &
 }

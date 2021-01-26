@@ -7,6 +7,10 @@ use franklin_crypto::jubjub::FixedGenerators;
 use musig::verifier::MuSigVerifier;
 use wasm_bindgen::prelude::*;
 
+
+use crate::rescue_hash_tx_msg;
+
+
 #[wasm_bindgen]
 pub struct MusigBN256WasmVerifier;
 
@@ -30,16 +34,16 @@ impl MusigBN256WasmVerifier {
             &jubjub_params,
         )
         .unwrap();
-
+        let hashed_msg = rescue_hash_tx_msg(message);
         let mut repr = FsRepr::default();
-        repr.read_be(&encoded_signature[STANDARD_ENCODING_LENGTH..])
+        repr.read_le(&encoded_signature[STANDARD_ENCODING_LENGTH..])
             .unwrap();
         let sig_s = Fs::from_repr(repr).unwrap();
 
         let signature = Signature { r: sig_r, s: sig_s };
 
         let is_valid = MuSigVerifier::verify(
-            message,
+            &hashed_msg,
             &pubkeys,
             &signature,
             &jubjub_params,
@@ -51,3 +55,12 @@ impl MusigBN256WasmVerifier {
         Ok(is_valid)
     }
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn zc_verify_signatures(msg: *mut u8, msg_len : usize, pubkeys: *mut u8, pubkeys_len : usize, signature: *mut u8) ->  bool {
+    MusigBN256WasmVerifier::verify(
+        core::slice::from_raw_parts_mut(msg, msg_len),
+        core::slice::from_raw_parts_mut(pubkeys, pubkeys_len),
+        core::slice::from_raw_parts_mut(signature, 64)).unwrap()
+}
+

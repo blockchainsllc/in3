@@ -63,5 +63,6 @@ in3_ret_t  zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* s
 in3_ret_t  zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main);                                     /**< resolves the main contract */
 in3_ret_t  zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce);                   /**< resolves the nonce */
 in3_ret_t  resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst);         /**< resolve token list */
+in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash); /**< get pubkeyhash */
 
 #endif

@@ -57,7 +57,6 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
 }
 
 in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  bytes32_t       pk;
   address_t       pub_hash;
   uint32_t        nonce;
   d_token_t*      token      = d_len(params) == 1 ? params + 1 : NULL;
@@ -72,10 +71,9 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   if (new_key && new_key->len == 32) memcpy(conf->sync_key, new_key->data, 32);
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
-  TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
+  TRY(zksync_get_pubkey_hash(conf, ctx->ctx,pub_hash))
 
-  zkcrypto_pk_to_pubkey_hash(pk, pub_hash);                                                                                   // calculate the pubKey_hash
-  if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL); // and check if it is already set
+  if (memcmp(pub_hash, conf->pub_key_hash_set, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL); // and check if it is already set
   if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
 
   // for contracts we need to pre authorized on layer 1
@@ -98,10 +96,10 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   }
   if (!cached) {
     sb_t      sb  = {0};
-    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, pk, nonce, conf, fee, token_data);
+    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, nonce, conf, fee, token_data);
     if (ret && sb.data) _free(sb.data);
-    if (!sb.data) return IN3_EUNKNOWN;
     TRY(ret)
+    if (!sb.data) return IN3_EUNKNOWN;
     cached        = in3_cache_add_entry(&ctx->ctx->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)));
     cached->props = CACHE_PROP_MUST_FREE | 0x10;
   }

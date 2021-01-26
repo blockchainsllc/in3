@@ -72,8 +72,13 @@ in3_ret_t zkcrypto_signer_receive_signature_shares(zkcrypto_signer_t signer,  by
 }
 
 bool zkcrypto_verify_signatures(bytes_t message, bytes_t pubkeys, bytes_t signature) {
-  return true;
+  return zc_verify_signatures(message.data,message.len, pubkeys.data,pubkeys.len, signature.data + (signature.len==96?32:0));
 }
+
+bool zkcrypto_verify_musig(bytes_t message,  bytes_t signature) {
+  return zc_verify_musig(message.data,message.len, signature.data);
+}
+
 
 
 in3_ret_t zkcrypto_pubkey_hash(bytes_t pubkey, uint8_t* dst) {

@@ -53,10 +53,10 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   }
   if (!cached) {
     sb_t      sb  = {0};
-    in3_ret_t ret = zksync_sign_transfer(&sb, &tx_data, ctx->ctx, sync_key);
+    in3_ret_t ret = zksync_sign_transfer(&sb, &tx_data, ctx->ctx, conf);
     if (ret && sb.data) _free(sb.data);
-    if (!sb.data) return IN3_EUNKNOWN;
     TRY(ret)
+    if (!sb.data) return IN3_EUNKNOWN;
     cached        = in3_cache_add_entry(&ctx->ctx->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)));
     cached->props = CACHE_PROP_MUST_FREE | 0x10;
   }

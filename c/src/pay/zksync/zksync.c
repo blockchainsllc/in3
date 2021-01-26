@@ -102,26 +102,36 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
   }
   if (strcmp(method, "getPubKeyHash") == 0) {
-    bytes32_t k;
     address_t pubkey_hash;
     if (d_len(params) == 1) {
       TRY(zkcrypto_pubkey_hash(d_to_bytes(params + 1), pubkey_hash));
     }
-    else {
-      TRY(zksync_get_sync_key(conf, ctx->ctx, k))
-      zkcrypto_pk_to_pubkey_hash(k, pubkey_hash);
-    }
+    else 
+      TRY(zksync_get_pubkey_hash(conf,ctx->ctx,pubkey_hash))
     char res[48];
     strcpy(res, "\"sync:");
     bytes_to_hex(pubkey_hash, 20, res + 6);
     strcpy(res + 46, "\"");
     return in3_rpc_handle_with_string(ctx, res);
   }
+  if (strcmp(method,"musig_verify")==0) {
+    return in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
+    ?  zkcrypto_verify_signatures(d_to_bytes(params+1),conf->musig_pub_keys,d_to_bytes(params+2))
+    :  zkcrypto_verify_musig(d_to_bytes(params+1),d_to_bytes(params+2)));
+  }
   if (strcmp(method, "getPubKey") == 0) {
     bytes32_t pubkey;
-    bytes32_t k;
-    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
-    TRY(zkcrypto_pk_to_pubkey(k, pubkey))
+    if (conf->musig_pub_keys.data) {
+      TRY(zkcrypto_compute_aggregated_pubkey(conf->musig_pub_keys, pubkey))
+    }
+    else if (!memiszero(conf->pub_key,32))
+      memcpy(pubkey,conf->pub_key,32);
+    else {
+      bytes32_t k;
+      TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+      TRY(zkcrypto_pk_to_pubkey(k, pubkey))
+      memcpy(conf->pub_key, pubkey,32);
+    }
     return in3_rpc_handle_with_bytes(ctx, bytes(pubkey, 32));
   }
   if (strcmp(method, "account_address") == 0) {
@@ -235,7 +245,7 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         if (sync_key.len) {
           zkcrypto_pk_from_seed(sync_key, conf->sync_key);
           zkcrypto_pk_to_pubkey(conf->sync_key, conf->pub_key);
-          zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key_hash);
+          zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key_hash_pk);
         }
 
         bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");

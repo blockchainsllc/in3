@@ -17,6 +17,7 @@ const PACKED_SIGNATURE_SIZE: usize = 64;
 
 pub use franklin_crypto::bellman::pairing::bn256::{Bn256 as Engine, Fr};
 use franklin_crypto::rescue::bn256::Bn256RescueParams;
+use franklin_crypto::jubjub::Unknown;
 
 pub type Fs = <Engine as JubjubEngine>::Fs;
 
@@ -28,14 +29,15 @@ thread_local! {
 use wasm_bindgen::prelude::*;
 
 use franklin_crypto::{
-    alt_babyjubjub::{fs::FsRepr, AltJubjubBn256, FixedGenerators, },
+    alt_babyjubjub::{fs::FsRepr, AltJubjubBn256, FixedGenerators,edwards, },
     bellman::pairing::ff::{PrimeField, PrimeFieldRepr},
-    eddsa::{PrivateKey, PublicKey, Seed},
+    eddsa::{PrivateKey, PublicKey, Seed, Signature},
     jubjub::{JubjubEngine},
 };
 
 use crate::utils::{pub_key_hash, rescue_hash_tx_msg, set_panic_hook};
 use sha2::{Digest, Sha256};
+
 
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -80,6 +82,14 @@ pub unsafe extern "C" fn zc_sign_musig(pk: *mut u8, msg: *mut u8, msg_len:usize,
           core::slice::from_raw_parts_mut(pk, 32),
           core::slice::from_raw_parts_mut(msg, msg_len)
         ).as_ptr(), dst, 96);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn zc_verify_musig(msg: *mut u8, msg_len: usize, signature: *mut u8 ) -> bool  {
+        verify_musig(
+          core::slice::from_raw_parts_mut(msg, msg_len),
+          core::slice::from_raw_parts_mut(signature, 96)
+        )
 }
 
 #[no_mangle]
@@ -173,6 +183,39 @@ pub fn private_key_to_pubkey(private_key: &[u8]) -> Vec<u8> {
 
     pubkey_buf
 }
+
+#[wasm_bindgen]
+pub fn verify_musig( msg: &[u8], signature: &[u8]) -> bool {
+    let pub_key = JUBJUB_PARAMS.with(|params|  PublicKey::<Engine>(
+        edwards::Point::read(&signature[0..32], params).unwrap()
+    ));
+
+    let r:edwards::Point<Engine,Unknown> = JUBJUB_PARAMS.with(|params| edwards::Point::read(&signature[32..64],params ).expect("Failed to restore R point from R_bar") );
+    let mut s_repr = FsRepr::default();
+    s_repr
+        .read_le(&signature[64..])
+        .expect("Failed to read s_bar");
+
+    let s = Fs::from_repr(s_repr)
+        .expect("Failed to restore s scalar from s_bar");
+    
+    let sig = Signature{r,s};
+
+    JUBJUB_PARAMS.with(|jubjub_params| {
+        RESCUE_PARAMS.with(|rescue_params| {
+            let hashed_msg = rescue_hash_tx_msg(msg);
+            pub_key.verify_musig_rescue(
+                &hashed_msg,
+                &sig,
+                FixedGenerators::SpendingKeyGenerator,
+                rescue_params,
+                jubjub_params
+            )
+        })
+    })
+
+}
+
 
 #[wasm_bindgen]
 /// We use musig Schnorr signature scheme.

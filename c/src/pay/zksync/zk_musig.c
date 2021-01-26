@@ -4,6 +4,7 @@
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zksync.h"
+#include "zk_helper.h"
 #include <assert.h>
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
@@ -136,8 +137,16 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_
     message = d_to_bytes(d_get(result, key("message")));
     if (!message.data) return ctx_set_error(ctx->ctx, "missing message in request", IN3_EINVAL);
   }
-  else
+  else {
     message = d_to_bytes(params + 1);
+    if (!conf->musig_pub_keys.data) {
+      bytes32_t pk;
+      uint8_t sig[96];
+      TRY(zksync_get_sync_key(conf,ctx->ctx,pk))
+      TRY(zkcrypto_sign_musig(pk,message,sig))
+      return in3_rpc_handle_with_bytes(ctx,bytes(sig,96));
+    }
+  }
   bytes32_t hash;
   keccak(message, hash);
   uint64_t            session_id = *((uint64_t*) (void*) hash);
@@ -217,6 +226,13 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_
     TRY_SIG(zkcrypto_compute_aggregated_pubkey(s->pub_keys, res))
     TRY_SIG(zkcrypto_signer_receive_signature_shares(s->signer, s->signature_shares, res + 32))
     cleanup_session(s, conf);
+    in3_log_debug("message:\n");
+    b_print(&message);
+    in3_log_debug("sig:\n");
+    ba_print(res,96);;
+    in3_log_debug("check signature:\n");
+    if (!zkcrypto_verify_signatures(message,conf->musig_pub_keys,bytes(res,96)))
+      return ctx_set_error(ctx->ctx, "invalid signature", IN3_EINVAL);
     return in3_rpc_handle_with_bytes(ctx, bytes(res, 96));
   }
 

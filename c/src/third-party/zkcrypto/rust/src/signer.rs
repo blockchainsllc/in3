@@ -3,6 +3,7 @@ extern crate core;
 
 use crate::decoder::Decoder;
 use crate::errors::MusigABIError;
+use crate::rescue_hash_tx_msg;
 use bellman::pairing::bn256::Bn256;
 use bellman::{PrimeField, PrimeFieldRepr};
 use franklin_crypto::alt_babyjubjub::AltJubjubBn256;
@@ -172,10 +173,10 @@ impl MusigBN256WasmSigner {
             franklin_crypto::rescue::bn256::Bn256RescueParams::new_checked_2_into_1();
 
         let private_key = Decoder::decode_private_key(private_key_bytes)?;
-
+        let hashed_msg = rescue_hash_tx_msg(message);
         let signature_share = self
             .musig_signer
-            .sign(&private_key, message, &rescue_params)
+            .sign(&private_key, &hashed_msg, &rescue_params)
             .map_err(|e| JsValue::from(format!("{}", e)))?;
 
         let mut encoded_sig_share = vec![0u8; crate::decoder::STANDARD_ENCODING_LENGTH];
@@ -207,7 +208,7 @@ impl MusigBN256WasmSigner {
         signature
             .s
             .into_repr()
-            .write_be(&mut encoded_sig[crate::decoder::STANDARD_ENCODING_LENGTH..])
+            .write_le(&mut encoded_sig[crate::decoder::STANDARD_ENCODING_LENGTH..])
             .map_err(|_| MusigABIError::EncodingError)?;
 
         Ok(encoded_sig)
