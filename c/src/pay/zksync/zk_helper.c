@@ -184,7 +184,6 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sy
   return IN3_OK;
 }
 
-
 in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash) {
   if (!conf) return IN3_EUNKNOWN;
   if (!memiszero(conf->pub_key_hash_pk, 20) && !conf->musig_pub_keys.data) {
@@ -194,19 +193,18 @@ in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t*
 
   bytes32_t tmp;
   if (conf->musig_pub_keys.data) {
-    TRY( zkcrypto_compute_aggregated_pubkey(conf->musig_pub_keys,tmp))
-    return zkcrypto_pubkey_hash(bytes(tmp,32),pubkey_hash);
+    TRY(zkcrypto_compute_aggregated_pubkey(conf->musig_pub_keys, tmp))
+    return zkcrypto_pubkey_hash(bytes(tmp, 32), pubkey_hash);
   }
 
-  if (!memiszero(conf->pub_key,32)) {
-     TRY(zkcrypto_pubkey_hash(bytes(conf->pub_key,32),conf->pub_key))
-     memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
-     return IN3_OK;
-  } 
-    
+  if (!memiszero(conf->pub_key, 32)) {
+    TRY(zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key))
+    memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
+    return IN3_OK;
+  }
 
-  TRY(zksync_get_sync_key(conf,ctx,tmp))
-  TRY(zkcrypto_pk_to_pubkey_hash(tmp,conf->pub_key_hash_pk))
+  TRY(zksync_get_sync_key(conf, ctx, tmp))
+  TRY(zkcrypto_pk_to_pubkey_hash(tmp, conf->pub_key_hash_pk))
 
   memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
   return IN3_OK;

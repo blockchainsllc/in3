@@ -172,7 +172,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, zksy
   }
 
   // sign data
-  return zksync_sign(conf,  bytes(raw, total), ctx,sig);
+  return zksync_sign(conf, bytes(raw, total), ctx, sig);
 }
 
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf) {
@@ -236,24 +236,24 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign( zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig ) {
-  if (memiszero(conf->sync_key,32)) return ctx_set_error(ctx, "no signing key set", IN3_ECONFIG);
+in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig) {
+  if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "no signing key set", IN3_ECONFIG);
   if (!conf->musig_pub_keys.data) return zkcrypto_sign_musig(conf->sync_key, msg, sig);
-  char* p = alloca(msg.len*2+5);
-  p[0]='"';
-  p[1]='0';
-  p[2]='x';
-  bytes_to_hex(msg.data,msg.len,p+3);
-  p[msg.len*2+3]='"';
-  p[msg.len*2+4]=0;
+  char* p = alloca(msg.len * 2 + 5);
+  p[0]    = '"';
+  p[1]    = '0';
+  p[2]    = 'x';
+  bytes_to_hex(msg.data, msg.len, p + 3);
+  p[msg.len * 2 + 3] = '"';
+  p[msg.len * 2 + 4] = 0;
   d_token_t* result;
   TRY(ctx_send_sub_request(ctx, "zk_musig_sign", p, NULL, &result))
-  if (d_type(result)!=T_BYTES || d_len(result)!=96) return ctx_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
+  if (d_type(result) != T_BYTES || d_len(result) != 96) return ctx_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
   memcpy(sig, result->data, 96);
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf,zk_fee_t fee,zksync_token_t* token) {
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token) {
 
   // create sign_msg for the rollup
   char    dec[80];
@@ -269,7 +269,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   int_to_bytes(nonce, sign_msg_bytes + 49);           // nonce
 
   // now sign it with the new pk
-  TRY(zksync_sign(conf,bytes(sign_msg_bytes, 53),ctx, sig))
+  TRY(zksync_sign(conf, bytes(sign_msg_bytes, 53), ctx, sig))
   // create human readable message
   char    msg_data[300];
   uint8_t tmp[8];

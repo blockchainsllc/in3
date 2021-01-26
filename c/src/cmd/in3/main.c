@@ -1273,7 +1273,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "createkey") == 0) {
-    srand(current_ms()%0xFFFFFFFF);
+    srand(current_ms() % 0xFFFFFFFF);
     recorder_print(0, "0x");
     for (i = 0; i < 32; i++) recorder_print(0, "%02x", rand() % 256);
     recorder_print(0, "\n");

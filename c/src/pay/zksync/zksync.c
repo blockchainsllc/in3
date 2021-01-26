@@ -106,31 +106,31 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     if (d_len(params) == 1) {
       TRY(zkcrypto_pubkey_hash(d_to_bytes(params + 1), pubkey_hash));
     }
-    else 
-      TRY(zksync_get_pubkey_hash(conf,ctx->ctx,pubkey_hash))
+    else
+      TRY(zksync_get_pubkey_hash(conf, ctx->ctx, pubkey_hash))
     char res[48];
     strcpy(res, "\"sync:");
     bytes_to_hex(pubkey_hash, 20, res + 6);
     strcpy(res + 46, "\"");
     return in3_rpc_handle_with_string(ctx, res);
   }
-  if (strcmp(method,"musig_verify")==0) {
+  if (strcmp(method, "musig_verify") == 0) {
     return in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
-    ?  zkcrypto_verify_signatures(d_to_bytes(params+1),conf->musig_pub_keys,d_to_bytes(params+2))
-    :  zkcrypto_verify_musig(d_to_bytes(params+1),d_to_bytes(params+2)));
+                                            ? zkcrypto_verify_signatures(d_to_bytes(params + 1), conf->musig_pub_keys, d_to_bytes(params + 2))
+                                            : zkcrypto_verify_musig(d_to_bytes(params + 1), d_to_bytes(params + 2)));
   }
   if (strcmp(method, "getPubKey") == 0) {
     bytes32_t pubkey;
     if (conf->musig_pub_keys.data) {
       TRY(zkcrypto_compute_aggregated_pubkey(conf->musig_pub_keys, pubkey))
     }
-    else if (!memiszero(conf->pub_key,32))
-      memcpy(pubkey,conf->pub_key,32);
+    else if (!memiszero(conf->pub_key, 32))
+      memcpy(pubkey, conf->pub_key, 32);
     else {
       bytes32_t k;
       TRY(zksync_get_sync_key(conf, ctx->ctx, k))
       TRY(zkcrypto_pk_to_pubkey(k, pubkey))
-      memcpy(conf->pub_key, pubkey,32);
+      memcpy(conf->pub_key, pubkey, 32);
     }
     return in3_rpc_handle_with_bytes(ctx, bytes(pubkey, 32));
   }

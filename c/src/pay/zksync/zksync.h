@@ -98,24 +98,24 @@ typedef struct zk_musig_session {
 
 /** internal configuration-object */
 typedef struct {
-  char*               provider_url;   /**< url of the zksync-server */
-  uint8_t*            account;        /**< address of the account */
-  uint8_t*            main_contract;  /**< address of the main zksync contract*/
-  uint8_t*            gov_contract;   /**< address of the government contract */
-  uint64_t            account_id;     /**< the id of the account as used in the messages */
-  uint64_t            nonce;          /**< the current nonce */
-  address_t           pub_key_hash_set;   /**< the pub_key_hash as set in the account*/
-  address_t           pub_key_hash_pk;   /**< the pub_key_hash based on the sync_key*/
-  bytes32_t           pub_key;        /**< the pub_key */
-  uint16_t            token_len;      /**< number of tokens in the tokenlist */
-  bytes32_t           sync_key;       /**< the raw key to sign with*/
-  zksync_token_t*     tokens;         /**< the token-list */
-  zk_sign_type_t      sign_type;      /**< the signature-type to use*/
-  uint32_t            version;        /**< zksync version */
-  zk_create2_t*       create2;        /**< create2 args */
-  bytes_t             musig_pub_keys; /**< the public keys of all participants of a schnorr musig signature */
-  zk_musig_session_t* musig_sessions; /**< linked list of open musig sessions */
-  char**              musig_urls;     /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
+  char*               provider_url;     /**< url of the zksync-server */
+  uint8_t*            account;          /**< address of the account */
+  uint8_t*            main_contract;    /**< address of the main zksync contract*/
+  uint8_t*            gov_contract;     /**< address of the government contract */
+  uint64_t            account_id;       /**< the id of the account as used in the messages */
+  uint64_t            nonce;            /**< the current nonce */
+  address_t           pub_key_hash_set; /**< the pub_key_hash as set in the account*/
+  address_t           pub_key_hash_pk;  /**< the pub_key_hash based on the sync_key*/
+  bytes32_t           pub_key;          /**< the pub_key */
+  uint16_t            token_len;        /**< number of tokens in the tokenlist */
+  bytes32_t           sync_key;         /**< the raw key to sign with*/
+  zksync_token_t*     tokens;           /**< the token-list */
+  zk_sign_type_t      sign_type;        /**< the signature-type to use*/
+  uint32_t            version;          /**< zksync version */
+  zk_create2_t*       create2;          /**< create2 args */
+  bytes_t             musig_pub_keys;   /**< the public keys of all participants of a schnorr musig signature */
+  zk_musig_session_t* musig_sessions;   /**< linked list of open musig sessions */
+  char**              musig_urls;       /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
 } zksync_config_t;
 
 /** a transaction */
@@ -156,4 +156,4 @@ NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* s
 
 in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
-in3_ret_t zksync_sign( zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig );
+in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig);
