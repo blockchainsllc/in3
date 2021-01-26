@@ -29,6 +29,8 @@ void (*Z___wbindgen_placeholder__Z___wbindgen_throwZ_vii)(u32, u32);
 /* import: '__wbindgen_placeholder__' '__wbindgen_rethrow' */
 void (*Z___wbindgen_placeholder__Z___wbindgen_rethrowZ_vi)(u32);
 
+/* import: '__wbindgen_placeholder__' '__wbindgen_debug_string' */
+void (*Z___wbindgen_placeholder__Z___wbindgen_debug_stringZ_vii)(u32, u32);
 
 
 
@@ -47,6 +49,13 @@ u32 zke_add() {
 /* import: './web.js' '__wbg_stack_558ba5917b466edd' */
 void zke_stack(u32 p, u32 idx) {
   printf("# zke_stack\n");
+  // returns the stack added previously
+  *mem_ptr(p)     = 0;
+  *mem_ptr(p + 4) = 0;
+}
+/* import: './web.js' '__wbg_stack_558ba5917b466edd' */
+void zke_debug_string(u32 p, u32 idx) {
+  printf("# debug_string\n");
   // returns the stack added previously
   *mem_ptr(p)     = 0;
   *mem_ptr(p + 4) = 0;
@@ -103,6 +112,8 @@ void zkcrypto_initialize() {
   Z___wbindgen_placeholder__Z___wbindgen_throwZ_vii = zke_throw;
   /* import: '__wbindgen_placeholder__' '__wbindgen_rethrow' */
   Z___wbindgen_placeholder__Z___wbindgen_rethrowZ_vi = zke_rethrow;
+  /* import: '__wbindgen_placeholder__' '__wbindgen_debug_string' */
+  Z___wbindgen_placeholder__Z___wbindgen_debug_stringZ_vii = zke_debug_string;
 
 }
 
@@ -257,4 +268,13 @@ in3_ret_t zkcrypto_pubkey_hash(bytes_t pubkey, uint8_t* dst) {
   return r1 == 20 ? IN3_OK : IN3_EINVAL;
 }
 
+
+
+bool zkcrypto_verify_musig(bytes_t message,  bytes_t signature) {
+  u32 _message = wmalloc(message.len);
+  memcpy(mem_ptr(_message), message.data, message.len);
+  u32 _signature = wmalloc(signature.len);
+  memcpy(mem_ptr(_signature), signature.data, signature.len);
+  return zkcrypto_Z_verify_musigZ_iiiii(_message, message.len, _signature,signature.len)!=0;
+}
 
