@@ -43,9 +43,11 @@
 #define ZKSYNC_H
 
 #include "../../core/client/plugin.h"
+
 #if defined(ETH_FULL) && !defined(ZKSYNC_256)
 #define ZKSYNC_256
 #endif
+
 typedef struct {
   uint16_t  id;
   char      symbol[8];
