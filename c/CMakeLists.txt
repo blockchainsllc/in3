@@ -98,6 +98,12 @@ if (IN3_LIB)
         target_link_libraries(in3_lib sentry) 
     endif()
 
+    if (ZKSYNC AND ZKCRYPTO_LIB )
+        target_link_libraries(in3_bundle zk_crypto_rs )
+        target_link_libraries(in3_lib zk_crypto_rs )
+    endif()
+
+
     # install
     INSTALL(TARGETS in3_bundle
       DESTINATION "lib"

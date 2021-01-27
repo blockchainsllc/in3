@@ -131,8 +131,9 @@ export declare interface ZksyncAPI<BufferType> {
     /**
      * set the signer key based on the current pk
      * @param tokenSymbol the address of the token
+     * @param newKey the seed of the new key ( this is optional, if ommited the derrived key will be set in the rollup)
      */
-    setKey(tokenSymbol: string): Promise<String>
+    setKey(tokenSymbol?: string, newKey?: BufferType | string): Promise<String>
 
     /**
      * returns the state of receipt of the PriorityOperation
@@ -217,6 +218,44 @@ export declare interface zksync_config {
      * defines the type of the signer. Must be one of those 3 values. (default: pk)
      */
     signer_type?: 'pk' | 'contract' | 'create2'
+
+    /**
+     * optionaly the private seephrase to use when signing sync-transaction.
+     * If ommited this key is derrived from the signer.
+     */
+    sync_key?: string
+
+    /**
+     * create2 arguments
+     */
+    create2?: {
+        /**
+         * the address of creator of the contract
+         */
+        creator: string
+
+        /**
+         * the codehash of the deploy-tx (including constructor arguments)
+         */
+        codehash: string
+
+        /**
+         * the saltarg, which is added to the pub_key_has of the sync_key
+         */
+        saltarg: string
+    }
+
+    /** 
+     * if used as a musig-signature the 
+     */
+    musig_urls?: string[]
+
+    /** 
+     * concated packed public keys of the signers of the multisig
+     */
+    musig_pub_keys?: string
+
+
 
 }
 
