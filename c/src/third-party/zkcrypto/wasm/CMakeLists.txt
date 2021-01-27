@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -32,21 +32,15 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
 add_static_library(
-  NAME     zksync 
+  NAME     zkcrypto 
   
   SOURCES 
-    zksync.c
-    zk_message.c
-    zk_helper.c
-    zk_setkey.c
-    zk_transfer.c
-    zk_deposit.c
-    zk_musig.c
-
+    wasm-rt-impl.c
+    zk-crypto.c
+    lib.c
   DEPENDS 
-    eth_basic
-    zkcrypto
+    core
 )
 
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-value -Wno-unused-function")

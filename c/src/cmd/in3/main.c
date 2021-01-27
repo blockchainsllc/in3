@@ -126,8 +126,18 @@ void show_help(char* name) {
 -sigs          add additional signatures, which will be useds when sending through a multisig! \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-fi            reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging) \n\
+-fo            records a request and writes the reproducable data in a file (including all cache-data, timestamps ...) \n\
 -nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
 -bn            a coma seperated list of urls (or address:url) to be used as boot nodes\n\
+-zks           zksync server to use\n\
+-zkss          zksync signatures to pass along when signing\n\
+-zka           zksync account to use\n\
+-zkat          zksync account type could be one of 'pk'(default), 'contract' or 'create2'\n\
+-zsk           zksync signer seed (if not set this key will be derrived from account unless create2)\n\
+-zc2           zksync create2 arguments in the form <creator>:<codehash>:<saltarg>. if set the account type is also changed to create2\n\
+-zms           public keys of a musig schnorr signatures to sign with\n\
+-zmu           url for signing service matching the first remote public key\n\
 -os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
@@ -395,13 +405,13 @@ void set_chain_id(in3_t* c, char* id) {
 }
 
 // prepare a eth_call or eth_sendTransaction
-abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
+abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
   char*      error = NULL;
   bytes_t    rdata = {0};
   abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
   if (error) die(error);                                             // parse-error we stop here.
   if (req) {                                                         // if type is a tuple, it means we have areuments we need to parse.
-    json_ctx_t* in_data = parse_json(args);                          // the args are passed as a "[]"- json-array string.
+    json_ctx_t* in_data = parse_json(args->data);                    // the args are passed as a "[]"- json-array string.
     rdata               = abi_encode(req, in_data->result, &error);  //encode data
     if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
     json_free(in_data);                                              // of course we clean up ;-)
@@ -448,7 +458,8 @@ abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, ui
     sb_add_bytes(params, "", &g_bytes, 1, false);
     sb_add_chars(params, "}]");
   }
-  strcpy(args, params->data);
+  args->len = 0;
+  sb_add_chars(args, params->data);
   sb_free(params);
   return req;
 }
@@ -625,6 +636,7 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
 
 int main(int argc, char* argv[]) {
   // check for usage
+  bool use_pk = false;
   if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
     recorder_exit(0);
@@ -698,11 +710,13 @@ int main(int argc, char* argv[]) {
   c->request_count = 1;
 #endif
   // handle clear cache opt before initializing cache
-  for (i = 1; i < argc; i++)
+  for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-fi") == 0) {
       recorder_update_cmd(argv[i + 1], &argc, &argv);
       break;
     }
+    if (strcmp(argv[i], "-pk") == 0) use_pk = true;
+  }
 
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
@@ -713,10 +727,19 @@ int main(int argc, char* argv[]) {
   in3_register_file_storage(c);
 
   // check env
-  if (getenv("IN3_PK")) {
+  if (getenv("IN3_PK") && !use_pk) {
     hex_to_bytes(getenv("IN3_PK"), -1, pk, 32);
     eth_set_pk_signer(c, pk);
   }
+
+#ifdef ZKSYNC
+  if (getenv("IN3_ZKS")) {
+    char tmp[500];
+    sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", getenv("IN3_ZKS"));
+    char* err = in3_configure(c, tmp);
+    if (err) die(err);
+  }
+#endif
 
   if (getenv("IN3_CHAIN"))
     set_chain_id(c, getenv("IN3_CHAIN"));
@@ -768,6 +791,46 @@ int main(int argc, char* argv[]) {
       char tmp[500];
       sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", argv[++i]);
       char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zka") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"account\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zkat") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"signer_type\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zms") == 0) {
+      char tmp[1000];
+      sprintf(tmp, "{\"zksync\":{\"musig_pub_keys\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zmu") == 0) {
+      char tmp[1000];
+      sprintf(tmp, "{\"zksync\":{\"musig_urls\":[null,\"%s\"]}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zsk") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"sync_key\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zc2") == 0) {
+      char* c2val = argv[++i];
+      if (strlen(c2val) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
+      char tmp[177], t2[500];
+      memcpy(tmp, c2val, 177);
+      tmp[42] = tmp[109] = 0;
+      sprintf(t2, "{\"zksync\":{\"signer_type\":\"create2\",\"create2\":{\"creator\":\"%s\",\"codehash\":\"%s\",\"saltarg\":\"%s\"}}}", tmp, tmp + 43, tmp + 110);
+      char* err = in3_configure(c, t2);
       if (err) die(err);
     }
 #endif
@@ -931,7 +994,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, resolve(c, to), args->data, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), args, block_number, 0, NULL, data);
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
@@ -957,6 +1020,7 @@ int main(int argc, char* argv[]) {
     if (s && !error) {
       bytes_t     data = d_to_bytes(d_get_at(parse_json(args->data)->result, 0));
       json_ctx_t* res  = abi_decode(s, data, &error);
+      if (error) die(error);
       if (json)
         recorder_print(0, "%s\n", d_create_json(res, res->result));
       else
@@ -1115,7 +1179,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, resolve(c, to), args->data, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, value, data);
     method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
@@ -1212,8 +1276,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "createkey") == 0) {
-    time_t t;
-    srand((unsigned) time(&t));
+    srand(current_ms() % 0xFFFFFFFF);
     recorder_print(0, "0x");
     for (i = 0; i < 32; i++) recorder_print(0, "%02x", rand() % 256);
     recorder_print(0, "\n");

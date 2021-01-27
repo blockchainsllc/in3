@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -33,20 +33,28 @@
 ###############################################################################
 
 
-add_static_library(
-  NAME     zksync 
-  
-  SOURCES 
-    zksync.c
-    zk_message.c
-    zk_helper.c
-    zk_setkey.c
-    zk_transfer.c
-    zk_deposit.c
-    zk_musig.c
+set(OUTPUT_PATH ${PROJECT_BINARY_DIR}/rust/zkcrypto/release/libzk_crypto.a)
 
-  DEPENDS 
-    eth_basic
-    zkcrypto
+add_custom_command(
+    OUTPUT ${OUTPUT_PATH}
+    DEPENDS Cargo.toml src/aggregated_pubkey.rs src/lib.rs src/signer.rs src/verifier.rs
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND cargo build --target-dir ${PROJECT_BINARY_DIR}/rust/zkcrypto --release
 )
+
+add_custom_target(zk_crypto_target DEPENDS ${OUTPUT_PATH} )
+add_library(zk_crypto_rs STATIC IMPORTED GLOBAL)
+add_dependencies(zk_crypto_rs zk_crypto_target)
+set_property(TARGET zk_crypto_rs PROPERTY IMPORTED_LOCATION ${OUTPUT_PATH} ) 
+
+
+add_static_library(
+    NAME     zkcrypto 
+    
+    SOURCES 
+      lib.c
+    DEPENDS 
+      core
+      zk_crypto_rs
+  )
 

@@ -87,6 +87,7 @@ int             bytes_cmp(const bytes_t a, const bytes_t b);                    
 void            b_free(bytes_t* a);                                                                             /**< frees the data */
 bytes_t         b_concat(int cnt, ...);                                                                         /**< duplicates the content of bytes*/
 NONULL bytes_t* b_dup(const bytes_t* a);                                                                        /**< clones a byte array*/
+NONULL bytes_t  bytes_dup(const bytes_t a);                                                                     /**< clones a byte array*/
 NONULL uint8_t  b_read_byte(bytes_t* b, size_t* pos);                                                           /**< reads a byte on the current position and updates the pos afterwards. */
 NONULL uint32_t b_read_int(bytes_t* b, size_t* pos);                                                            /**< reads a integer on the current position and updates the pos afterwards. */
 NONULL uint64_t b_read_long(bytes_t* b, size_t* pos);                                                           /**< reads a long on the current position and updates the pos afterwards. */

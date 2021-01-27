@@ -37,7 +37,9 @@
 #include "../../core/client/context.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/rlp.h"
@@ -59,25 +61,6 @@ bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
   return true;
 }
 
-/*
-*   rlp_add_bytes(rlp, nonce             , UINT);
-  rlp_add_bytes(rlp, gas_price         , UINT);
-  rlp_add_bytes(rlp, gas_limit         , UINT);
-  rlp_add_bytes(rlp, to                , ADDRESS);
-  rlp_add_bytes(rlp, value             , UINT);
-  rlp_add_bytes(rlp, data              , BYTES);
-
- */
-/*
-*         to: '0x567B4485746CFE0bbd73aa04c818BB42B9A07C17',
-        value: "0x00",
-        data: '0x2cc9c4650000000000000000000000000000000000000000000000000000000000000001',
-        safeTxGas: 400000,
-        baseGas: 450000,
-        gasPrice: 0,
-        gasToken: '0x0000000000000000000000000000000000000000',
-        refundReceiver: '0x0000000000000000000000000000000000000000'
-*/
 typedef struct {
   bytes_t nonce;
   bytes_t to;
@@ -106,6 +89,7 @@ static in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
 }
 
 static in3_ret_t call(in3_ctx_t* parent, address_t ms, bytes_t data, bytes_t** result) {
+  if (!parent) return IN3_EINVAL;
   in3_ctx_t* ctx = parent;
   for (; ctx; ctx = ctx->required) {
     if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_call")) continue;
@@ -181,7 +165,7 @@ in3_ret_t get_tx_hash(in3_ctx_t* ctx, multisig_t* ms, tx_data_t* tx_data, bytes3
   memcpy(raw, "\xd8\xd1\x1f\x78", 4);                                    // get TransactionHash functionhash
   cpy_right(raw, 0, tx_data->to);                                        // to
   cpy_right(raw, 1, tx_data->value);                                     // value
-  int_to_bytes(offset_data, raw + 4 + 64 + 28);                          // offset for data bytes
+  int_to_bytes(offset_data - 4, raw + 4 + 64 + 28);                      // offset for data bytes
   int_to_bytes(tx_data->data.len, raw + offset_data + 28);               // len for data bytes
   memcpy(raw + offset_data + 32, tx_data->data.data, tx_data->data.len); // copy data
   cpy_right(raw, 4, tx_data->gas);
@@ -203,16 +187,16 @@ static bytes_t get_exec_tx_data(tx_data_t* tx_data, sig_data_t* signatures, uint
   int size        = offset_sig + ((sig_data.len + 31) / 32 + 1) * 32;
 
   uint8_t* raw = _calloc(size, 1);
-  memcpy(raw, "\x6a\x76\x12\x02", 4);                                    // get TransactionHash functionhash
+  memcpy(raw, "\x6a\x76\x12\x02", 4);                                    // get execTransaction functionhash
   cpy_right(raw, 0, tx_data->to);                                        // to
   cpy_right(raw, 1, tx_data->value);                                     // value
-  int_to_bytes(offset_data, raw + 4 + 64 + 28);                          // offset for data bytes
+  int_to_bytes(offset_data - 4, raw + 4 + 64 + 28);                      // offset for data bytes
   int_to_bytes(tx_data->data.len, raw + offset_data + 28);               // len for data bytes
   memcpy(raw + offset_data + 32, tx_data->data.data, tx_data->data.len); // copy data
   cpy_right(raw, 4, tx_data->gas);
   cpy_right(raw, 5, tx_data->gas);
   cpy_right(raw, 6, tx_data->gas_price);
-  int_to_bytes(offset_sig, raw + 4 + 9 * 32 + 28);            // offset for signatures bytes
+  int_to_bytes(offset_sig - 4, raw + 4 + 9 * 32 + 28);        // offset for signatures bytes
   int_to_bytes(sig_data.len, raw + offset_sig + 28);          // len for sig bytes
   memcpy(raw + offset_sig + 32, sig_data.data, sig_data.len); // copy sigs
   _free(sig_data.data);
@@ -220,10 +204,10 @@ static bytes_t get_exec_tx_data(tx_data_t* tx_data, sig_data_t* signatures, uint
   return bytes(raw, size);
 }
 
-static bool is_valid(sig_data_t* data, uint8_t** owners, address_t new_sig, int sig_count, int owner_count) {
+static bool is_valid(sig_data_t* data, multisig_t* ms, address_t new_sig, int sig_count) {
   bool valid = false;
-  for (int i = 0; i < owner_count; i++) {
-    if (memcmp(new_sig, owners[i], 20) == 0) {
+  for (unsigned int i = 0; i < ms->owners_len; i++) {
+    if (memcmp(new_sig, ms->owners + i, 20) == 0) {
       valid = true;
       break;
     }
@@ -237,11 +221,11 @@ static bool is_valid(sig_data_t* data, uint8_t** owners, address_t new_sig, int 
   return true;
 }
 
-static in3_ret_t fill_signature(in3_ctx_t* ctx, bytes_t* signatures, uint32_t* sig_count, uint32_t threshold, sig_data_t* sig_data, bytes32_t tx_hash, uint8_t** owners, uint32_t owner_len) {
+static in3_ret_t fill_signature(in3_ctx_t* ctx, bytes_t* signatures, uint32_t* sig_count, multisig_t* ms, sig_data_t* sig_data, bytes32_t tx_hash) {
   // check passed signatures
   if (!signatures) return IN3_OK;
   uint32_t index = *sig_count;
-  for (unsigned int i = 0; i < signatures->len && index < threshold; i += 65) {
+  for (unsigned int i = 0; i < signatures->len && index < ms->threshold; i += 65) {
     uint8_t v = signatures->data[i + 64];
     if (v == 0) { // contract signature
       uint32_t offset = bytes_to_int(signatures->data + i + 64 - 4, 4);
@@ -262,29 +246,29 @@ static in3_ret_t fill_signature(in3_ctx_t* ctx, bytes_t* signatures, uint32_t* s
     }
     else
       return ctx_set_error(ctx, "invalid signature (v-value)", IN3_EINVAL);
-    if (is_valid(sig_data, owners, sig_data[index].address, index, owner_len)) index++;
+    if (is_valid(sig_data, ms, sig_data[index].address, index)) index++;
   }
   *sig_count = index;
   return IN3_OK;
 }
 
-static in3_ret_t add_approved(in3_ctx_t* ctx, uint8_t** owners, uint32_t owner_len, uint32_t* sig_count, uint32_t threshold, sig_data_t* sig_data, bytes32_t tx_hash, multisig_t* ms) {
+static in3_ret_t add_approved(in3_ctx_t* ctx, uint32_t* sig_count, sig_data_t* sig_data, bytes32_t tx_hash, multisig_t* ms) {
   // we don't have enough signatures, so we need to check if owners have preapproved
-  for (unsigned int i = 0; i < owner_len && *sig_count < threshold; i++) {
-    if (is_valid(sig_data, owners, owners[i], *sig_count, owner_len)) {
+  for (unsigned int i = 0; i < ms->owners_len && *sig_count < ms->threshold; i++) {
+    if (is_valid(sig_data, ms, (void*) ms->owners + i, *sig_count)) {
       // we don't have a signature from this owner
       uint8_t  check_approved[68];
-      bytes_t* result;
+      bytes_t* result = NULL;
       memcpy(check_approved, "\x7d\x83\x29\x74", 4); // 7d832974: approvedHashes(address,bytes32)
       memset(check_approved + 4, 0, 12);
-      memcpy(check_approved + 16, owners[i], 20);
+      memcpy(check_approved + 16, ms->owners + i, 20);
       memcpy(check_approved + 36, tx_hash, 32);
       TRY(call(ctx, ms->address, bytes(check_approved, 68), &result))
-      if (result->len != 32) return ctx_set_error(ctx, "invalid response for approved check", IN3_EINVAL);
+      if (!result || result->len != 32) return ctx_set_error(ctx, "invalid response for approved check", IN3_EINVAL);
       if (result->data[31]) {
         memset(sig_data + *sig_count, 0, sizeof(sig_data_t));
-        memcpy(sig_data[*sig_count].sig + 12, owners[i], 20);
-        sig_data[*sig_count].address = owners[i];
+        memcpy(sig_data[*sig_count].sig + 12, ms->owners + i, 20);
+        sig_data[*sig_count].address = (void*) ms->owners + i;
         sig_data[*sig_count].data    = bytes(NULL, 0);
         (*sig_count)++;
       }
@@ -317,6 +301,7 @@ static void exec_tx(bytes_t* target, tx_data_t* tx_data, sig_data_t* signatures,
   rlp_encode_item(&bb, &tx_data->v);                                                 // v
   rlp_encode_bytes(&bb, bytes(NULL, 0));                                             // empty because signature
   rlp_encode_bytes(&bb, bytes(NULL, 0));                                             // is still missing
+  rlp_encode_to_list(&bb);
   *target = bb.b;
   _free(data.data);
 }
@@ -339,62 +324,78 @@ static void approve_hash(bytes_t* target, tx_data_t* tx_data, bytes32_t hash, ad
   *target = bb.b;
 }
 
-in3_ret_t gs_prepare_tx(void* plugin_data, in3_plugin_act_t action, void* pctx) {
-  if (action == PLGN_ACT_TERM) {
-    _free(plugin_data);
-    return IN3_OK;
+static in3_ret_t ensure_ms_type(multisig_t* ms, in3_ctx_t* ctx) {
+  if (ms->type == MS_UNKNOWN) {
+    bytes_t* tmp = NULL;
+    TRY(call(ctx, ms->address, bytes((uint8_t*) "\xa3\xf4\xdf\x7e", 4), &tmp))
+    if (!tmp || tmp->len < 96) return ctx_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
+    char* name = (void*) tmp->data + 64;
+    if (strcmp(name, "Gnosis Safe") == 0)
+      ms->type = MS_GNOSIS_SAFE;
+    else if (strcmp(name, "IAMO Safe") == 0)
+      ms->type = MS_IAMO_SAFE;
+    else
+      return ctx_set_error(ctx, "unknwon MultiSig TYPE", IN3_ENOTSUP);
   }
-  if (action != PLGN_ACT_SIGN_PREPARE) return IN3_ENOTSUP;
-  multisig_t*             ms          = plugin_data;
-  in3_sign_prepare_ctx_t* prepare_ctx = pctx;
-  bytes_t                 raw_tx      = prepare_ctx->old_tx;
-  bytes_t*                new_raw_tx  = &prepare_ctx->new_tx;
-  in3_ctx_t*              ctx         = prepare_ctx->ctx;
-  bytes_t*                tmp         = NULL;
-  uint32_t                threshold   = 0,
-           sig_count                  = 0,
-           owner_len                  = 0;
-  uint8_t**   owners                  = NULL;
-  uint64_t    nonce                   = 0;
-  tx_data_t   tx_data                 = {0};
-  bytes32_t   tx_hash                 = {0};
-  sig_data_t* sig_data                = NULL;
+  return IN3_OK;
+}
+static in3_ret_t ensure_owners(multisig_t* ms, in3_ctx_t* ctx) {
+  if (ms->owners == NULL) {
+    // init the owners first
+    bytes_t*  tmp = NULL;
+    in3_ret_t ret = call(ctx, ms->address, bytes((uint8_t*) "\xa0\xe6\x7e\x2b", 4), &tmp);
+    if (ret == IN3_OK) {
+      if (!tmp || tmp->len < 64) return ctx_set_error(ctx, "invalid owner result", IN3_ERPC);
+      ms->owners_len = bytes_to_int(tmp->data + 32 + 28, 4);
+      ms->owners     = _malloc(sizeof(address_t) * ms->owners_len);
+      if (tmp->len != 64 + 32 * ms->owners_len) return ctx_set_error(ctx, "invalid owner result length", IN3_ERPC);
+      for (unsigned int i = 0; i < ms->owners_len; i++) memcpy(ms->owners + i, tmp->data + i * 32 + 64 + 12, 20);
+    }
+    else if (ret != IN3_WAITING)
+      return ret;
+
+    // get the threshold
+    in3_ret_t ret2 = call(ctx, ms->address, bytes((uint8_t*) "\xe7\x52\x35\xb8", 4), &tmp);
+    if (ret2 == IN3_OK) {
+      if (!tmp || tmp->len != 32) return ctx_set_error(ctx, "invalid threshold result", IN3_ERPC);
+      ms->threshold = bytes_to_int(tmp->data + 28, 4);
+    }
+
+    return ret == IN3_OK ? ret2 : ret;
+  }
+  return IN3_OK;
+}
+
+in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
+  bytes_t    raw_tx     = prepare_ctx->old_tx;
+  bytes_t*   new_raw_tx = &prepare_ctx->new_tx;
+  in3_ctx_t* ctx        = prepare_ctx->ctx;
+  bytes_t*   tmp        = NULL;
+  uint32_t   sig_count  = 0;
+  uint64_t   nonce      = 0;
+  tx_data_t  tx_data    = {0};
+  bytes32_t  tx_hash    = {0};
 
   // get Threshold
-  in3_ret_t ret = call(ctx, ms->address, bytes((uint8_t*) "\xe7\x52\x35\xb8", 4), &tmp);
-  if (ret == IN3_OK) {
-    if (tmp->len != 32) return ctx_set_error(ctx, "invalid threshold result", IN3_ERPC);
-    threshold = bytes_to_int(tmp->data + 28, 4);
-  }
-  else if (ret != IN3_WAITING)
+  in3_ret_t ret = ensure_owners(ms, ctx);
+  if (ret != IN3_WAITING && ret != IN3_OK)
     return ret;
 
   // get nonce
   in3_ret_t ret2 = call(ctx, ms->address, bytes((uint8_t*) "\xaf\xfe\xd0\xe0", 4), &tmp);
   if (ret2 == IN3_OK) {
-    if (tmp->len != 32) return ctx_set_error(ctx, "invalid nonce result", IN3_ERPC);
+    if (!tmp || tmp->len != 32) return ctx_set_error(ctx, "invalid nonce result", IN3_ERPC);
     nonce = bytes_to_long(tmp->data + 24, 8);
   }
-  else if (ret2 != IN3_WAITING)
-    return ret2;
   else
-    ret = IN3_WAITING;
+    return ret2;
+  TRY(ret)
 
-  // get Owners
-  ret2 = call(ctx, ms->address, bytes((uint8_t*) "\xa0\xe6\x7e\x2b", 4), &tmp);
-  if (ret2 != IN3_OK) ret = ret2;
-  if (ret) return ret;
-
-  // check the owners
-  if (tmp->len < 64) return ctx_set_error(ctx, "invalid owner result", IN3_ERPC);
-  owner_len = bytes_to_int(tmp->data + 32 + 28, 4);
-  owners    = alloca(sizeof(void*) * owner_len);
-  sig_data  = alloca(sizeof(sig_data_t) * threshold);
-  if (tmp->len != 64 + 32 * owner_len) return ctx_set_error(ctx, "invalid owner result length", IN3_ERPC);
-  for (unsigned int i = 0; i < owner_len; i++) owners[i] = tmp->data + i * 32 + 64 + 12;
+  // prepare the sigdata
+  sig_data_t* sig_data = alloca(sizeof(sig_data_t) * ms->threshold);
 
   // if we are one of the owners, we add our signature first (maybe in the future we should check if we are a initiator)
-  if (is_valid(sig_data, owners, prepare_ctx->account, sig_count, owner_len)) {
+  if (is_valid(sig_data, ms, prepare_ctx->account, sig_count)) {
     memset(sig_data->sig, 0, 65);                         // clear
     memcpy(sig_data->sig + 12, prepare_ctx->account, 20); // we use the address as constant part
     sig_data->address = prepare_ctx->account;             // keep address of the owner
@@ -410,15 +411,15 @@ in3_ret_t gs_prepare_tx(void* plugin_data, in3_plugin_act_t action, void* pctx) 
   TRY(get_tx_hash(ctx, ms, &tx_data, tx_hash, nonce))
 
   // verifiy and copy the passed signatures into sig_data
-  TRY(fill_signature(ctx, d_get_bytes(d_get(ctx->requests[0], K_IN3), "msSigs"), &sig_count, threshold, sig_data, tx_hash, owners, owner_len))
+  TRY(fill_signature(ctx, d_get_bytes(d_get(ctx->requests[0], K_IN3), "msSigs"), &sig_count, ms, sig_data, tx_hash))
 
   // look for already approved messages from owners where we don't have the signature yet.
-  TRY(add_approved(ctx, owners, owner_len, &sig_count, threshold, sig_data, tx_hash, ms))
+  TRY(add_approved(ctx, &sig_count, sig_data, tx_hash, ms))
 
-  if (sig_count >= threshold)
+  if (sig_count >= ms->threshold)
     // if we have enough signatures, we execute the the tx
     exec_tx(new_raw_tx, &tx_data, sig_data, sig_count, ms->address);
-  else if (is_valid(sig_data, owners, prepare_ctx->account, 0, owner_len))
+  else if (is_valid(sig_data, ms, prepare_ctx->account, 0))
     // if not we simply approve it
     approve_hash(new_raw_tx, &tx_data, tx_hash, ms->address);
   else
@@ -427,9 +428,119 @@ in3_ret_t gs_prepare_tx(void* plugin_data, in3_plugin_act_t action, void* pctx) 
   return IN3_OK;
 }
 
+in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
+  // is this the right account?
+  if (ctx->account.len != 20 || memcmp(ms->address, ctx->account.data, 20)) return IN3_EIGNORE;
+
+  // make sure we know the type of Multisig
+  TRY(ensure_ms_type(ms, ctx->ctx))
+
+  // calculate the hash
+  bytes32_t hash;
+  switch (ctx->type) {
+    case SIGN_EC_RAW: // already hashed
+      if (ctx->message.len != 32) return ctx_set_error(ctx->ctx, "invalid message, must be a 256bit hash", IN3_EINVAL);
+      if (ms->type == MS_IAMO_SAFE)
+        keccak(ctx->message, hash);
+      else
+        memcpy(hash, ctx->message.data, 32);
+      break;
+    case SIGN_EC_HASH: {
+      //do we know the domain_seperator?
+      if (memiszero(ms->domain_sep, 32)) {
+        // TODO get it from cache
+        bytes_t* result = NULL;
+        TRY(call(ctx->ctx, ms->address, bytes((uint8_t*) "\xf6\x98\xda\x25", 4), &result))
+        if (!result || result->len != 32) return ctx_set_error(ctx->ctx, "invalid domain_seperator", IN3_EINVAL);
+        memcpy(ms->domain_sep, result->data, 32);
+        // TODO put it in cache
+      }
+
+      // calculate the message hash according to the GnosisSafe getMessageHash - function.
+      uint8_t tmp[66];
+      memcpy(tmp, "\x60\xb3\xcb\xf8\xb4\xa2\x23\xd6\x8d\x64\x1b\x3b\x6d\xdf\x9a\x29\x8e\x7f\x33\x71\x0c\xf3\xd3\xa9\xd1\x14\x6b\x5a\x61\x50\xfb\xca", 32); // SAFE_MSG_TYPEHASH
+      keccak(ctx->message, hash);
+      if (ms->type == MS_IAMO_SAFE)
+        keccak(bytes(hash, 32), tmp + 32);
+      else
+        memcpy(tmp + 32, hash, 32);
+      keccak(bytes(tmp, 64), tmp + 34);
+      tmp[0] = 0x19;
+      tmp[1] = 0x01;
+      memcpy(tmp + 2, ms->domain_sep, 32);
+      keccak(bytes(tmp, 66), hash);
+      break;
+    }
+    default:
+      return IN3_ENOTSUP;
+  }
+
+  // get Owners
+  TRY(ensure_owners(ms, ctx->ctx))
+
+  // prepare signatures
+  sig_data_t*  sig_data  = alloca(sizeof(sig_data_t) * ms->threshold);
+  unsigned int sig_count = 0;
+
+  // find all available signer-accounts
+  in3_sign_account_ctx_t sctx = {.ctx = ctx->ctx, .accounts = NULL, .accounts_len = 0};
+  for (in3_plugin_t* p = ctx->ctx->client->plugins; p && sig_count < ms->threshold; p = p->next) {
+    sctx.accounts     = NULL;
+    sctx.accounts_len = 0;
+    if (p->acts & (PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sctx) == IN3_OK && sctx.accounts_len) {
+      for (int i = 0; i < sctx.accounts_len && sig_count < ms->threshold; i++) {
+        uint8_t* account = sctx.accounts + i * 20;
+        if (is_valid(sig_data, ms, account, sig_count)) {
+          bytes_t signature = bytes(NULL, 0);
+          TRY(ctx_require_signature(ctx->ctx, SIGN_EC_RAW, &signature, bytes(hash, 32), bytes(account, 20)))
+          sig_data[sig_count].address = NULL;
+          for (unsigned int n = 0; n < ms->owners_len; n++) {
+            if (memcmp(ms->owners + n, account, 20) == 0) sig_data[sig_count].address = (void*) (ms->owners + n);
+          }
+          if (sig_data[sig_count].address == NULL) break;                         // shouldn't happen, but better safe
+          memcpy(sig_data[sig_count].sig, signature.data, 65);                    // currently we only accept EOA-Signatures, contract-signatures should be supported later also!
+          if (sig_data[sig_count].sig[64] < 2) sig_data[sig_count].sig[64] += 27; // fix chain-id later
+          sig_data[sig_count].data = bytes(NULL, 0);                              // no data needed (at least for now)
+          sig_count++;                                                            // we have at least one signature now.
+        }
+      }
+      _free(sctx.accounts);
+    }
+  }
+
+  // look for already approved messages from owners where we don't have the signature yet.
+  TRY(add_approved(ctx->ctx, &sig_count, sig_data, hash, ms))
+
+  if (sig_count >= ms->threshold)
+    ctx->signature = create_signatures(sig_data, sig_count);
+  else
+    return ctx_set_error(ctx->ctx, "the account is not an owner and does not have enough signatures to sign this messagen!", IN3_EINVAL);
+
+  return IN3_OK;
+}
+
+static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* ctx) {
+  multisig_t* ms = plugin_data;
+  switch (action) {
+    case PLGN_ACT_TERM: {
+      if (ms->owners) _free(ms->owners);
+      _free(ms);
+      return IN3_OK;
+    }
+
+    case PLGN_ACT_SIGN_PREPARE:
+      return gs_prepare_tx(ms, ctx);
+
+    case PLGN_ACT_SIGN:
+      return gs_create_contract_signature(ms, ctx);
+
+    default:
+      return IN3_ENOTSUP;
+  }
+}
+
 in3_ret_t add_gnosis_safe(in3_t* in3, address_t adr) {
-  multisig_t* ms = _malloc(sizeof(multisig_t));
-  ms->type       = MS_GNOSIS_SAFE;
+  multisig_t* ms = _calloc(1, sizeof(multisig_t));
   memcpy(ms->address, adr, 20);
-  return in3_plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM, gs_prepare_tx, ms, false);
+  return in3_plugin_register(in3, PLGN_ACT_SIGN_PREPARE | PLGN_ACT_TERM | PLGN_ACT_SIGN, handle, ms, false);
 }

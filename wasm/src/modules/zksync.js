@@ -62,8 +62,8 @@ class ZksyncAPI {
   }
 
 
-  setKey(tokenSymbol) {
-    return this.send('zksync_setKey', tokenSymbol || 'ETH')
+  setKey(tokenSymbol, newKey) {
+    return this.send('zksync_setKey', tokenSymbol || 'ETH', newKey || null)
   }
 
 
@@ -116,6 +116,10 @@ class ZksyncAPI {
 
   emergencyWithdraw(token) {
     return this.send('zksync_emergencyWithdraw', token)
+  }
+
+  musig_sign(message) {
+    return this.send('zksync_musig_sign', message);
   }
 
 }
