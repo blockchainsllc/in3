@@ -77,6 +77,9 @@ fn main() {
         .define("USE_CURL", "OFF")
         .define("CMD", "OFF")
         .define("PLGN_CLIENT_DATA", "ON")
+        .define("RECORDER", "ON")
+        .define("MULTISIG", "ON")
+        .define("ZKSYNC", "ON")
         .build_target("in3_bundle")
         .build();
 
