@@ -32,16 +32,13 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+add_static_library(
+        NAME
+        plugin_client_data
 
-IF (PLGN_CLIENT_DATA)
-    add_static_library(
-            NAME
-            plugin_client_data
+        SOURCES
+        client_data.c
 
-            SOURCES
-            client_data.c
-
-            DEPENDS
-            core
-    )
-ENDIF ()
+        DEPENDS
+        core
+)

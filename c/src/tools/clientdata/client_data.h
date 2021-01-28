@@ -34,7 +34,7 @@
 #ifndef IN3_CLIENT_DATA_H
 #define IN3_CLIENT_DATA_H
 
-#include "../core/client/plugin.h"
+#include "../../core/client/plugin.h"
 
 in3_ret_t in3_plugin_client_data(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 
