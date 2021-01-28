@@ -390,7 +390,7 @@ void set_chain_id(in3_t* c, char* id) {
     sb_t* sb = sb_new("{\"autoUpdateList\":false,\"proof\":\"none\"");
     if (strstr(id, "://")) { // its a url
       sb_add_chars(sb, ",\"nodeRegistry\":{\"needsUpdate\":false,\"nodeList\":[");
-      sb_add_chars(sb, "{\"address\":\"0x8a91dc2d28b689474298d91899f0c1baf62cb85b\"");
+      sb_add_chars(sb, "{\"address\":\"0x0000000000000000000000000000000000000000\"");
       sb_add_chars(sb, ",\"url\":\"");
       sb_add_chars(sb, id);
       sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
