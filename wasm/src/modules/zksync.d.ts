@@ -197,6 +197,12 @@ export declare interface ZksyncAPI<BufferType> {
      * @param token the token identifier e.g. ETH
      */
     emergencyWithdraw(token: string): Promise<String> //in3 error type?
+
+    /**
+     * signs the message based on the config and returns a Musig Schnorr signature
+     * @param msg the message
+     */
+    sign(msg: string): Promise<String> //in3 error type?
 }
 
 

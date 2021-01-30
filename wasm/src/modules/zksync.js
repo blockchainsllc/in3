@@ -63,7 +63,7 @@ class ZksyncAPI {
 
 
   setKey(tokenSymbol, newKey) {
-    return this.send('zksync_setKey', tokenSymbol || 'ETH', newKey || null)
+    return this.send('zksync_set_key', tokenSymbol || 'ETH', newKey || null)
   }
 
 
@@ -83,11 +83,11 @@ class ZksyncAPI {
 
 
   getSyncKey() {
-    return this.send('zksync_getKey')
+    return this.send('zksync_sync_key')
   }
 
   getSyncPubKeyHash() {
-    return this.send('zksync_getPubKeyHash')
+    return this.send('zksync_pubkeyhash')
   }
 
   deposit(amount, token, approveDepositAmountForERC20, account) {
@@ -115,11 +115,11 @@ class ZksyncAPI {
 
 
   emergencyWithdraw(token) {
-    return this.send('zksync_emergencyWithdraw', token)
+    return this.send('zksync_emergency_withdraw', token)
   }
 
-  musig_sign(message) {
-    return this.send('zksync_musig_sign', message);
+  sign(message) {
+    return this.send('zksync_sign', message);
   }
 
 }
