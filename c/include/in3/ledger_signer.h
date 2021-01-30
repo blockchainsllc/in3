@@ -42,6 +42,10 @@
 #ifndef in3_ledger_signer_h__
 #define in3_ledger_signer_h__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "client.h"
 
 /**
@@ -57,5 +61,9 @@ in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path);
  * returns IN3_ENODEVICE error if ledger nano device is not connected 
  */
 in3_ret_t eth_ledger_get_public_key(uint8_t* bip_path, uint8_t* public_key);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

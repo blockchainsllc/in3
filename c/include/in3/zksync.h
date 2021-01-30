@@ -41,7 +41,9 @@
 
 #ifndef ZKSYNC_H
 #define ZKSYNC_H
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "plugin.h"
 
 #if defined(ETH_FULL) && !defined(ZKSYNC_256)
@@ -154,8 +156,12 @@ NONULL in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_
 /** creates message data and signs a change_pub_key-message */
 NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token);
 
-#endif
-
 in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
 in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

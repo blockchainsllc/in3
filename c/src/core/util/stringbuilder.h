@@ -40,6 +40,10 @@
 #ifndef __STR_BUILDER_H__
 #define __STR_BUILDER_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bytes.h"
 #include <stdarg.h>
 #include <stdbool.h>
@@ -84,4 +88,8 @@ NONULL_FOR((1))
 sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size);
 sb_t* sb_print(sb_t* sb, const char* fmt, ...);
 sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

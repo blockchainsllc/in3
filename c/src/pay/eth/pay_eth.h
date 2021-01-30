@@ -41,7 +41,9 @@
 
 #ifndef PAY_ETH_H
 #define PAY_ETH_H
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "../../core/client/client.h"
 #include "../../core/client/plugin.h"
 
@@ -76,5 +78,7 @@ static inline in3_pay_eth_t* in3_pay_eth_data(in3_t* c) {
  * registers the Eth payment plugin
  */
 in3_ret_t in3_register_pay_eth(in3_t* c);
-
+#ifdef __cplusplus
+}
+#endif
 #endif

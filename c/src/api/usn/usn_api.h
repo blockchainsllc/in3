@@ -41,6 +41,9 @@
 
 #ifndef USN_API_H
 #define USN_API_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "../../core/client/client.h"
 
@@ -119,5 +122,8 @@ usn_event_t  usn_get_next_event(usn_device_conf_t* conf);
 in3_ret_t usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, bytes32_t tx_hash);
 in3_ret_t usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash);
 in3_ret_t usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, address_t controller, bytes32_t price);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

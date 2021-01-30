@@ -45,18 +45,24 @@
  * 
  * */
 
+#ifndef __DATA_H__
+#define __DATA_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef DATA_DEPTH_MAX
+/** the max DEPTH of the JSON-data allowed. It will throw an error if reached. */
+#define DATA_DEPTH_MAX 11
+#endif
+
 #include "bytes.h"
 #include "mem.h"
 #include "stringbuilder.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef __DATA_H__
-#define __DATA_H__
-#ifndef DATA_DEPTH_MAX
-/** the max DEPTH of the JSON-data allowed. It will throw an error if reached. */
-#define DATA_DEPTH_MAX 11
-#endif
 
 typedef uint16_t d_key_t;
 /** type of a token. */
@@ -213,5 +219,7 @@ static inline bool d_iter_next(d_iterator_t* const iter) {
 #define vprintX  vprintf
 
 #endif
-
+#ifdef __cplusplus
+}
+#endif
 #endif

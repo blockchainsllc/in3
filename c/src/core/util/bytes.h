@@ -37,14 +37,18 @@
  * util helper on byte arrays.
  * */
 
+#ifndef BYTES_H
+#define BYTES_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mem.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef BYTES_H
-#define BYTES_H
-
 /** creates a new bytes_builder with a initial size of 32 bytes */
 #define bb_new()                   bb_newl(32)
 #define bb_read(_bb_, _i_, _vptr_) bb_readl((_bb_), (_i_), (_vptr_), sizeof(*_vptr_))
@@ -118,5 +122,7 @@ NONULL static inline void b_optimize_len(bytes_t* b) {                          
     b->len--;
   }
 }
-
+#ifdef __cplusplus
+}
+#endif
 #endif
