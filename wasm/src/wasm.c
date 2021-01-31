@@ -298,7 +298,7 @@ void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
-  in3_nl_blacklist_ctx_t bctx = {.address = url, .is_addr = false};
+  in3_nl_blacklist_ctx_t bctx = {.url = url, .is_addr = false};
   in3_plugin_execute_all(in3, PLGN_ACT_NL_BLACKLIST, &bctx);
 }
 

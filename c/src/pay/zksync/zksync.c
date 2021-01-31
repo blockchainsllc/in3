@@ -285,6 +285,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   }
   d_token_t* create2 = d_get(ctx->token, key("create2"));
   if (create2) {
+    conf->sign_type = ZK_SIGN_CREATE2;
     if (!conf->create2) conf->create2 = _calloc(1, sizeof(zk_create2_t));
     bytes_t* t = d_get_bytesk(create2, key("creator"));
     if (t && t->len == 20) memcpy(conf->create2->creator, t->data, 20);
@@ -296,12 +297,12 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
+static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
   switch (action) {
-    case PLGN_ACT_TERM: return config_free(cptr);
-    case PLGN_ACT_CONFIG_GET: return config_get(cptr, arg);
-    case PLGN_ACT_CONFIG_SET: return config_set(cptr, arg);
-    case PLGN_ACT_RPC_HANDLE: return zksync_rpc(cptr, arg);
+    case PLGN_ACT_TERM: return config_free(conf);
+    case PLGN_ACT_CONFIG_GET: return config_get(conf, arg);
+    case PLGN_ACT_CONFIG_SET: return config_set(conf, arg);
+    case PLGN_ACT_RPC_HANDLE: return zksync_rpc(conf, arg);
     default: return IN3_ENOTSUP;
   }
   return IN3_EIGNORE;

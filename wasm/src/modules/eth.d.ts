@@ -31,6 +31,9 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+
+
+/** a  Receipt of a Transaction containing the events and execution status */
 export type TransactionReceipt = {
     /** 32 Bytes - hash of the block where this transaction was in. */
     blockHash: Hash
