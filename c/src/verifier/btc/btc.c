@@ -467,7 +467,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   }
   if (strcmp(method, "getrawtransaction") == 0) {
     d_token_t* tx_id      = d_get_at(params, 0);
-    bool       json       = d_len(params) < 2 ? true : d_get_int_at(params, 1);
+    bool       json       = d_len(params) < 2 ? d_type(vc->result) == T_OBJECT : d_get_int_at(params, 1);
     d_token_t* block_hash = d_get_at(params, 2);
     if (!tx_id || d_type(tx_id) != T_STRING || d_len(tx_id) != 64) return vc_err(vc, "Invalid tx_id");
     bytes32_t tx_hash_bytes;
