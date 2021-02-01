@@ -135,7 +135,7 @@ wasm-public-npm:
     - wasm
   script:
     - sh /prepare.sh
-    - cd in3-wasm
+    - cd in3_wasm
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
 
