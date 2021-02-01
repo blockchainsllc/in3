@@ -130,8 +130,9 @@ export declare interface ZksyncAPI<BufferType> {
 
     /**
      * set the signer key based on the current pk
+     * @param tokenSymbol the address of the token
      */
-    setKey(): Promise<String>
+    setKey(tokenSymbol: string): Promise<String>
 
     /**
      * returns the state of receipt of the PriorityOperation
@@ -157,6 +158,11 @@ export declare interface ZksyncAPI<BufferType> {
      * returns private key used for signing zksync transactions
      */
     getSyncKey(): String
+
+    /**
+     * returns public key used for signing zksync transactions
+     */
+    getSyncPubKeyHash(): String
 
     /**
      * deposits the declared amount into the rollup
@@ -206,6 +212,11 @@ export declare interface zksync_config {
     * the account to be used. if not specified, the first signer will be used.
     */
     account?: string
+
+    /**
+     * defines the type of the signer. Must be one of those 3 values. (default: pk)
+     */
+    signer_type?: 'pk' | 'contract' | 'create2'
 
 }
 

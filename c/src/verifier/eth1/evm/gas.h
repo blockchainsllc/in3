@@ -144,32 +144,64 @@ void update_account_code(evm_t* evm, account_t* new_account);
 #define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
 #define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value)          \
   do {                                                                                                     \
-    evm.parent                = parent;                                                                    \
-    uint64_t max_gas_provided = parent->gas - (parent->gas >> 6);                                          \
+    /**************************************************************/                                       \
+    /* According to the Yellow Paper: C_call = C_gascap + C_extra */                                       \
+    /* Where:                                                     */                                       \
+    /* C_gascap = min(L(parent.gas - C_extra), gas)               */                                       \
+    /* L(x) = x - (x/64)                                          */                                       \
+    /* C_extra = G_CALL + C_xfer + C_new                          */                                       \
+    /* C_xfer = (value == 0) ? 0 : G_CALLVALUE                    */                                       \
+    /* C_new = to_account ? 0 : G_NEWACCOUNT                      */                                       \
+    /**************************************************************/                                       \
+    bool no_address = false;                                                                               \
     if (!address) {                                                                                        \
+      /* Flag EVM with "creating transaction", so the gas for modifying state will be deduced later */     \
+      evm.properties |= EVM_PROP_TXCREATE;                                                                 \
       new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller); \
-      gas         = max_gas_provided;                                                                      \
+      no_address  = true;                                                                                  \
     }                                                                                                      \
-    else                                                                                                   \
-      gas = min(gas, max_gas_provided);                                                                    \
-    evm.gas            = gas;                                                                              \
-    evm.gas_price.data = parent->gas_price.data;                                                           \
-    evm.gas_price.len  = parent->gas_price.len;                                                            \
+    else { /* if no code was already set for execution */                                                  \
+      account_t* ac = evm_get_account(parent, code_address, 0);                                            \
+      if (ac) evm.code = ac->code;                                                                         \
+    }                                                                                                      \
     if (res == 0 && !big_is_zero(value, l_value)) {                                                        \
       if (mode == EVM_CALL_MODE_STATIC)                                                                    \
         res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;                                                           \
       else {                                                                                               \
-        uint32_t gas_call_value = 0;                                                                       \
         if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {                                \
           evm.gas += G_CALLSTIPEND;                                                                        \
-          gas_call_value = G_CALLVALUE;                                                                    \
+          c_xfer = G_CALLVALUE;                                                                            \
         }                                                                                                  \
-        res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);          \
+        /* Transfer value from caller and deduce (C_xfer + C_new) from parent gas*/                        \
+        res = transfer_value(&evm, parent->address, evm.address, value, l_value, c_xfer);                  \
       }                                                                                                    \
     }                                                                                                      \
+    /* Calculate L(parent.gas - C_extra) */                                                                \
+    /* As C_extra was already deduced in previous steps, we calculate only L(parent.gas) now */            \
+    uint64_t max_gas_provided = parent->gas - (parent->gas >> 6);                                          \
+    /* Calculate C_gascap */                                                                               \
+    if (no_address) {                                                                                      \
+      gas = max_gas_provided;                                                                              \
+    }                                                                                                      \
+    else                                                                                                   \
+      gas = min(gas, max_gas_provided);                                                                    \
+    /* Assign values to child EVM */                                                                       \
+    evm.gas += gas;                                                                                        \
+    evm.init_gas       = gas;                                                                              \
+    evm.gas_price.data = parent->gas_price.data;                                                           \
+    evm.gas_price.len  = parent->gas_price.len;                                                            \
     if (res == 0) {                                                                                        \
-      if (parent->gas < gas)                                                                               \
-        res = EVM_ERROR_OUT_OF_GAS;                                                                        \
+      if (parent->gas < gas) {                                                                             \
+        if (parent->gas + c_xfer < gas) {                                                                  \
+          /* transaction does not have enough gas to be completed */                                       \
+          res = EVM_ERROR_OUT_OF_GAS;                                                                      \
+        }                                                                                                  \
+        else {                                                                                             \
+          /* the call depends on how much gas will be refunded after execution to complete successfully */ \
+          /* We take an 'optimistic' approach, set the flag and proceed with execution */                  \
+          evm.properties |= EVM_PROP_CALL_DEPEND_ON_REFUND;                                                \
+        }                                                                                                  \
+      }                                                                                                    \
       else                                                                                                 \
         parent->gas -= gas;                                                                                \
     }                                                                                                      \

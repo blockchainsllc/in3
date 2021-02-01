@@ -40,6 +40,7 @@ java:
       - java_build/lib
 
 test_android:
+  allow_failure: true
   image: cangol/android-gradle
   stage: java
   needs: []

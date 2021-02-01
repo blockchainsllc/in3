@@ -38,279 +38,12 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
+#include "zk_helper.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-static void set_quoted_address(char* c, uint8_t* address) {
-  bytes_to_hex(address, 20, c + 3);
-  c[0] = c[43] = '"';
-  c[1]         = '0';
-  c[2]         = 'x';
-  c[44]        = 0;
-}
-static in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
-  if (params == NULL) params = "";
-  char* in3 = conf ? alloca(strlen(conf->provider_url) + 26) : NULL;
-  if (in3) sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
-  return ctx_send_sub_request(parent, method, params, in3, result);
-}
 
-static in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account) {
-  if (!conf->account) {
-    in3_sign_account_ctx_t sctx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
-    if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx) || !sctx.accounts_len) {
-      if (sctx.accounts) _free(sctx.accounts);
-      return ctx_set_error(ctx, "No account configured or signer set", IN3_ECONFIG);
-    }
-    conf->account = (uint8_t*) sctx.accounts;
-  }
-
-  if (account) *account = conf->account;
-  return IN3_OK;
-}
-
-static in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
-  uint8_t* account;
-  TRY(zksync_get_account(conf, ctx, &account))
-  d_token_t* result;
-  char       adr[45];
-  set_quoted_address(adr, account);
-  TRY(send_provider_request(ctx, conf, "account_info", adr, &result))
-  d_token_t* committed = d_get(result, key("committed"));
-  conf->account_id     = d_get_intk(result, K_ID);
-  conf->nonce          = d_get_longk(committed, K_NONCE);
-  char* kh             = d_get_stringk(committed, key("pubKeyHash"));
-  if (kh && strlen(kh) == 45)
-    hex_to_bytes(kh + 5, 40, conf->pub_key_hash, 20);
-
-  // clean up
-  //  ctx_remove_required(ctx, ctx_find_required(ctx, "account_info"), false);
-  return IN3_OK;
-}
-
-static in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id) {
-  uint8_t* account    = NULL;
-  char*    cache_name = NULL;
-  TRY(zksync_get_account(conf, ctx, &account))
-
-  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE) && account) {
-    cache_name = alloca(60);
-    strcpy(cache_name, "zksync_ac_");
-    bytes_to_hex(account, 20, cache_name + 9);
-    in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
-    TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
-    if (cctx.content) {
-      conf->account_id = bytes_to_int(cctx.content->data, 4);
-      b_free(cctx.content);
-    }
-  }
-
-  if (!conf->account_id) TRY(zksync_update_account(conf, ctx))
-  if (!conf->account_id) return ctx_set_error(ctx, "This user has no account yet!", IN3_EFIND);
-  if (account_id) *account_id = conf->account_id;
-
-  // add to cache
-  if (cache_name) {
-    uint8_t data[4];
-    bytes_t content = bytes(data, 4);
-    int_to_bytes(conf->account_id, data);
-    in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &content};
-    TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
-  }
-
-  return IN3_OK;
-}
-
-static in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key) {
-  if (!conf) return IN3_EUNKNOWN;
-  if (!memiszero(conf->sync_key, 32)) {
-    memcpy(sync_key, conf->sync_key, 32);
-    return IN3_OK;
-  }
-  uint8_t* account = NULL;
-  bytes_t  signature;
-  char*    message = "\x19"
-                  "Ethereum Signed Message:\n68"
-                  "Access zkSync account.\n\nOnly sign this message for a trusted client!";
-  TRY(zksync_get_account(conf, ctx, &account))
-  assert(account);
-  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
-  if(signature.len == 65)
-    signature.data[64] += 27;
-  zkcrypto_pk_from_seed(signature, conf->sync_key);
-  memcpy(sync_key, conf->sync_key, 32);
-  return IN3_OK;
-}
-
-static in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main) {
-
-  char* cache_name = NULL;
-  if (!conf->main_contract) {
-    // check cache first
-    if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
-      cache_name = alloca(100);
-      sprintf(cache_name, "zksync_contracts_%x", key(conf->provider_url));
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
-      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
-      if (cctx.content) {
-        conf->main_contract = _malloc(20);
-        conf->gov_contract  = _malloc(20);
-        memcpy(conf->main_contract, cctx.content->data, 20);
-        memcpy(conf->gov_contract, cctx.content->data + 20, 20);
-        b_free(cctx.content);
-      }
-    }
-  }
-
-  if (!conf->main_contract) {
-    d_token_t* result;
-    TRY(send_provider_request(ctx, conf, "contract_address", "", &result))
-    bytes_t* main_contract = d_get_bytesk(result, key("mainContract"));
-    if (!main_contract || main_contract->len != 20) return ctx_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
-    memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
-
-    bytes_t* gov_contract = d_get_bytesk(result, key("govContract"));
-    if (!gov_contract || gov_contract->len != 20) return ctx_set_error(ctx, "could not get the gov_contract from provider", IN3_ERPC);
-    memcpy(conf->gov_contract = _malloc(20), gov_contract->data, 20);
-
-    if (cache_name) {
-      uint8_t data[40];
-      bytes_t content = bytes(data, 40);
-      memcpy(data, main_contract->data, 20);
-      memcpy(data + 20, gov_contract->data, 20);
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &content};
-      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
-    }
-
-    // clean up
-    ctx_remove_required(ctx, ctx_find_required(ctx, "contract_address"), false);
-  }
-
-  if (main) *main = conf->main_contract;
-  return IN3_OK;
-}
-
-static in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce) {
-  if (nonce_in && (d_type(nonce_in) == T_INTEGER || d_type(nonce_in) == T_BYTES)) {
-    *nonce = d_long(nonce_in);
-    return IN3_OK;
-  }
-  TRY(zksync_update_account(conf, ctx))
-  *nonce = conf->nonce;
-  return IN3_OK;
-}
-
-static in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
-#ifdef ZKSYNC_256
-                                uint8_t* fee
-#else
-                                uint64_t* fee
-#endif
-) {
-  if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
-#ifdef ZKSYNC_256
-    bytes_t b = d_to_bytes(fee_in);
-    memcpy(fee + 32 - b.len, b.data, b.len);
-#else
-    *fee = d_long(fee_in);
-#endif
-    return IN3_OK;
-  }
-  d_token_t* result;
-  int        ss = strlen(type) + 4 + 50 * 2;
-  sb_t       sb = {.allocted = ss, .data = alloca(ss), .len = 0};
-  sb_add_char(&sb, '"');
-  sb_add_chars(&sb, type);
-  sb_add_bytes(&sb, "\",", &to, 1, false);
-  sb_add_char(&sb, ',');
-  switch (d_type(token)) {
-    case T_BYTES:
-      sb_add_bytes(&sb, ",", d_bytes(token), 1, false);
-      break;
-    case T_STRING: {
-      sb_add_char(&sb, '"');
-      sb_add_chars(&sb, d_string(token));
-      sb_add_char(&sb, '"');
-      break;
-    }
-    default:
-      return ctx_set_error(ctx, "invalid token-value", IN3_EINVAL);
-  }
-  TRY(send_provider_request(ctx, conf, "get_tx_fee", sb.data, &result))
-#ifdef ZKSYNC_256
-  memset(fee, 0, 32);
-  long_to_bytes(d_get_longk(result, key("totalFee")), fee + 24);
-#else
-  *fee           = d_get_longk(result, key("totalFee"));
-#endif
-  return IN3_OK;
-}
-
-in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst) {
-  char* cache_name = NULL;
-  if (!conf->token_len) {
-    // check cache first
-    if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
-      cache_name = alloca(100);
-      sprintf(cache_name, "zksync_tokens_%x", key(conf->provider_url));
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
-      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
-      if (cctx.content) {
-        conf->token_len = cctx.content->len / sizeof(zksync_token_t);
-        conf->tokens    = (void*) cctx.content->data;
-        _free(cctx.content);
-      }
-    }
-  }
-
-  // still no tokenlist?
-  if (!conf->token_len) {
-    d_token_t* result;
-    TRY(send_provider_request(ctx, conf, "tokens", "", &result))
-    conf->token_len = d_len(result);
-    conf->tokens    = _calloc(conf->token_len, sizeof(zksync_token_t));
-    int i           = 0;
-    for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it), i++) {
-      conf->tokens[i].id       = d_get_intk(it.token, K_ID);
-      conf->tokens[i].decimals = d_get_intk(it.token, key("decimals"));
-      char* name               = d_get_stringk(it.token, key("symbol"));
-      if (!name || strlen(name) > 7) return ctx_set_error(ctx, "invalid token name", IN3_EINVAL);
-      strcpy(conf->tokens[i].symbol, name);
-      bytes_t* adr = d_get_bytesk(it.token, K_ADDRESS);
-      if (!adr || !adr->data || adr->len != 20) return ctx_set_error(ctx, "invalid token addr", IN3_EINVAL);
-      memcpy(conf->tokens[i].address, adr->data, 20);
-    }
-
-    // clean up
-    ctx_remove_required(ctx, ctx_find_required(ctx, "tokens"), false);
-
-    if (cache_name) {
-      bytes_t         data = bytes((void*) conf->tokens, conf->token_len * sizeof(zksync_token_t));
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &data};
-      TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
-    }
-  }
-
-  if (!token_dst) return IN3_OK;
-
-  for (unsigned int i = 0; i < conf->token_len; i++) {
-    if (d_type(token_src) == T_STRING) {
-      if (strcmp(d_string(token_src), conf->tokens[i].symbol) == 0) {
-        *token_dst = conf->tokens + i;
-        return IN3_OK;
-      }
-    }
-    else if (d_type(token_src) == T_BYTES && token_src->len == 20 && memcmp(token_src->data, conf->tokens[i].address, 20) == 0) {
-      *token_dst = conf->tokens + i;
-      return IN3_OK;
-    }
-  }
-
-  return ctx_set_error(ctx, "could not find the specifed token", IN3_EFIND);
-}
-
-//static in3_ret_t payin_approve()
 static d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
   return d_type(params + 1) == T_OBJECT
              ? d_get(params + 1, k)
@@ -484,15 +217,56 @@ static in3_ret_t transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_to
   return ret;
 }
 
-static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  bytes32_t pk;
-  address_t pub_hash;
-  uint32_t  nonce;
+static zk_sign_type_t get_sign_type(d_token_t* type) {
+  if (type == NULL) return ZK_SIGN_PK;
+  char* c = d_string(type);
+  if (strcmp(c, "contract") == 0) return ZK_SIGN_CONTRACT;
+  if (strcmp(c, "create2") == 0) return ZK_SIGN_CREATE2;
+  return ZK_SIGN_PK;
+}
+static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  bytes32_t       pk;
+  address_t       pub_hash;
+  uint32_t        nonce;
+  d_token_t*      token      = params_get(params, key("token"), 0);
+  zksync_token_t* token_data = NULL;
+  if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
+#ifdef ZKSYNC_256
+  bytes32_t fee;
+#else
+  uint64_t fee;
+#endif
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
+  TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
+  TRY(zksync_get_fee(conf, ctx->ctx, NULL, bytes(conf->account, 20), token, conf->sign_type == ZK_SIGN_CONTRACT ? "{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}" : "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}",
+#ifdef ZKSYNC_256
+                     fee
+#else
+                     &fee
+#endif
+                     ))
   zkcrypto_pk_to_pubkey(pk, pub_hash);
   if (memcmp(pub_hash, conf->pub_key_hash, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL);
   if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
+
+  if (conf->sign_type == ZK_SIGN_CONTRACT) {
+    d_token_t* tx_receipt = NULL;
+    uint8_t    data[128];            // the abi-ebcoded data for calling setAuthPubkeyHash(bytes calldata _pubkey_hash, uint32 _nonce)
+    memset(data, 0, 128);            // clear the data
+    data[31] = 64;                   // offset for bytes
+    data[95] = 20;                   // length of the pubKeyHash
+    memcpy(data + 96, pub_hash, 20); // copy new pubKeyHash
+    int_to_bytes(nonce, data + 60);  // nonce
+    sb_t sb = {0};
+    sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(conf->main_contract, 20), 0);
+    sb_add_rawbytes(&sb, "\",\"data\":\"0x595a5ebc", bytes(data, 128), 0);
+    sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
+
+    TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+
+    if (tx_receipt == NULL || d_type(tx_receipt) != T_OBJECT || d_get_intk(tx_receipt, K_STATUS) == 0) return ctx_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
+  }
 
   // create payload
   cache_entry_t* cached = ctx->ctx->cache;
@@ -502,7 +276,7 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   }
   if (!cached) {
     sb_t      sb  = {0};
-    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, nonce, conf->account, conf->account_id);
+    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, pk, nonce, conf->account, conf->account_id, fee, token_data);
     if (ret && sb.data) _free(sb.data);
     if (!sb.data) return IN3_EUNKNOWN;
     TRY(ret)
@@ -519,13 +293,9 @@ static in3_ret_t set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     return in3_rpc_handle_finish(ctx);
   }
   return ret;
-
-  sb_t      sb = {0};
-  in3_ret_t r  = zksync_sign_change_pub_key(&sb, ctx->ctx, pub_hash, nonce, conf->account, conf->account_id);
-  if (r < 0) {
-  }
 }
 
+// --- handle rpc----
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   char*      method = d_get_stringk(ctx->ctx->requests[0], K_METHOD);
   d_token_t* params = d_get(ctx->ctx->requests[0], K_PARAMS);
@@ -544,12 +314,23 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(method, "zksync_depositToSyncFromEthereum") == 0 || strcmp(method, "zksync_deposit") == 0) return payin(conf, ctx, params);
   if (strcmp(method, "zksync_syncTransfer") == 0 || strcmp(method, "zksync_transfer") == 0) return transfer(conf, ctx, params, ZK_TRANSFER);
   if (strcmp(method, "zksync_withdraw") == 0) return transfer(conf, ctx, params, ZK_WITHDRAW);
-  if (strcmp(method, "zksync_setKey") == 0) return set_key(conf, ctx);
+  if (strcmp(method, "zksync_setKey") == 0) return set_key(conf, ctx, params);
   if (strcmp(method, "zksync_emergencyWithdraw") == 0) return emergency_withdraw(conf, ctx, params);
   if (strcmp(method, "zksync_getKey") == 0) {
     bytes32_t k;
     TRY(zksync_get_sync_key(conf, ctx->ctx, k))
     return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
+  }
+  if (strcmp(method, "zksync_getPubKeyHash") == 0) {
+    bytes32_t k;
+    address_t pubkey_hash;
+    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+    zkcrypto_pk_to_pubkey(k, pubkey_hash);
+    char res[48];
+    strcpy(res, "\"sync:");
+    bytes_to_hex(pubkey_hash, 20, res + 6);
+    strcpy(res + 46, "\"");
+    return in3_rpc_handle_with_string(ctx, res);
   }
   if (strcmp(method, "zksync_contract_address") == 0) {
     uint8_t* adr;
@@ -622,6 +403,13 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
         bytes_t ac = bytes(conf->account, 20);
         sb_add_bytes(ctx->sb, ",\"account\"=", &ac, 1, false);
       }
+      sb_add_chars(ctx->sb, ",\"signer_type\":\"");
+      if (conf->sign_type == ZK_SIGN_CONTRACT)
+        sb_add_chars(ctx->sb, "contract\"");
+      else if (conf->sign_type == ZK_SIGN_CREATE2)
+        sb_add_chars(ctx->sb, "create2\"");
+      else
+        sb_add_chars(ctx->sb, "pk\"");
       sb_add_char(ctx->sb, '}');
       return IN3_OK;
     }
@@ -629,12 +417,13 @@ static in3_ret_t handle_zksync(void* cptr, in3_plugin_act_t action, void* arg) {
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* ctx = arg;
       if (ctx->token->key == key("zksync")) {
-        char* provider = d_get_string(ctx->token, "provider_url");
+        const char* provider = d_get_string(ctx->token, "provider_url");
         if (provider) conf->provider_url = _strdupn(provider, -1);
         bytes_t* account = d_get_bytes(ctx->token, "account");
         if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
         bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");
         if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
+        conf->sign_type = get_sign_type(d_get(ctx->token, key("signer_type")));
         return IN3_OK;
       }
       return IN3_EIGNORE;

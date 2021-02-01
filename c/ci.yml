@@ -259,7 +259,8 @@ examples_macos:
     - ./build.sh
     - cd ../..
     - mv build mac_build
-    - mv wasm_build build
+    - mkdir build
+    - mv in3_wasm build/module
     - cd wasm/examples
     - ./build.sh
   tags:
@@ -274,10 +275,10 @@ integration_longrun:
     strategy: depend
     branch: develop
 
-integration_browser:
-  stage: integration
-  extends: .only_release
-  trigger:
-    project: in3/ts/browser-test
-    strategy: depend
-    branch: develop
+#integration_browser:
+#  stage: integration
+#  extends: .only_release
+#  trigger:
+#    project: in3/ts/browser-test
+#    strategy: depend
+#    branch: develop

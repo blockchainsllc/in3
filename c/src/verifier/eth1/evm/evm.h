@@ -77,14 +77,15 @@ typedef enum evm_state {
 #define EVM_ERROR_SUCCESS_CONSUME_GAS     -32 /**< write success but consume all gas */
 #define EVM_ERROR_MAX_CODE_SIZE_EXCEEDED  -33 /**< tried to create a contract with code bigger than the maximum size limit */
 
-#define EVM_PROP_FRONTIER      1
-#define EVM_PROP_EIP150        2
-#define EVM_PROP_EIP158        4
-#define EVM_PROP_CONSTANTINOPL 16
-#define EVM_PROP_ISTANBUL      32
-#define EVM_PROP_NO_FINALIZE   32768
-#define EVM_PROP_STATIC        256
-#define EVM_PROP_TXCREATE      512 /**< executing a creation transaction > */
+#define EVM_PROP_FRONTIER              1
+#define EVM_PROP_EIP150                2
+#define EVM_PROP_EIP158                4
+#define EVM_PROP_CONSTANTINOPL         16
+#define EVM_PROP_ISTANBUL              32
+#define EVM_PROP_NO_FINALIZE           32768
+#define EVM_PROP_STATIC                256
+#define EVM_PROP_TXCREATE              512 /**< executing a creation transaction > */
+#define EVM_PROP_CALL_DEPEND_ON_REFUND 1024 /**< executing code that depends on subcall gas refund to succeed > */
 
 #define EVM_ENV_BALANCE     1
 #define EVM_ENV_CODE_SIZE   2

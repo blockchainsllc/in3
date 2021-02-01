@@ -58,6 +58,12 @@ typedef enum zk_msg_type {
   ZK_WITHDRAW = 3
 } zk_msg_type_t;
 
+typedef enum zk_sign_type {
+  ZK_SIGN_PK       = 1,
+  ZK_SIGN_CONTRACT = 2,
+  ZK_SIGN_CREATE2  = 3
+} zk_sign_type_t;
+
 typedef struct {
   char*           provider_url;
   uint8_t*        account;
@@ -69,6 +75,7 @@ typedef struct {
   uint16_t        token_len;
   bytes32_t       sync_key;
   zksync_token_t* tokens;
+  zk_sign_type_t  sign_type;
 
 } zksync_config_t;
 typedef struct {
@@ -90,6 +97,13 @@ typedef struct {
 in3_ret_t in3_register_zksync(in3_t* c);
 
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, uint8_t* sync_key);
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, uint8_t* account, uint32_t account_id);
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint8_t* sync_key, uint32_t nonce, uint8_t* account, uint32_t account_id,
+#ifdef ZKSYNC_256
+                                     bytes32_t fee
+#else
+                                     uint64_t fee
+#endif
+                                     ,
+                                     zksync_token_t* token);
 
 #endif

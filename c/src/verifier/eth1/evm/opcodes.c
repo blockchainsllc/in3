@@ -347,34 +347,11 @@ int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   src_data.len     = src_data.data ? min(src_data.len, ((uint32_t) data_len)) : 0;
   if (check_size && !src_data.data) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
-  // check if we are executing a creation transaction
-  if (evm->properties & EVM_PROP_TXCREATE) {
-    if (!(evm->properties & (EVM_PROP_FRONTIER | EVM_PROP_EIP150 | EVM_PROP_EIP158)) && (src_data.len > EVM_MAX_CODE_SIZE)) {
-      return EVM_ERROR_MAX_CODE_SIZE_EXCEEDED;
-    }
-    else {
-      subgas(src_data.len * G_CODEDEPOSIT); // subtract gas cost for ceation transactions
-    }
-  }
-
   if (src_data.len < (uint32_t) data_len)
     res = evm_mem_write(evm, mem_pos + src_data.len, bytes(NULL, 0), data_len - src_data.len);
 
-  if (src_data.len && res == 0) {
+  if (src_data.len && res == 0)
     res = evm_mem_write(evm, mem_pos, src_data, src_data.len);
-
-#ifdef EVM_GAS
-    // Check if evm is executing a creation transaction
-    if (evm->properties & EVM_PROP_TXCREATE) {
-      // Modify state
-      account_t* acc_adr = evm_get_account(evm, evm->account, true);
-      acc_adr->code      = src_data;
-    }
-#else
-    return EVM_ERROR_INVALID_OPCODE;
-#endif
-  }
-
   return res;
 }
 
@@ -404,6 +381,11 @@ int op_header(evm_t* evm, uint8_t index) {
     return evm_stack_push(evm, b.data, b.len);
   else
     return evm_stack_push_int(evm, 0);
+}
+
+int op_pop(evm_t* evm) {
+  int res = evm_stack_pop(evm, NULL, 0);
+  return (res < 0) ? res : 0;
 }
 
 int op_mload(evm_t* evm) {
@@ -646,8 +628,19 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
     keccak(tmp, hash);
   }
 
+  // get nonce before the call
+  account_t* ac         = evm_get_account(evm, evm->address, 0);
+  uint8_t    prev_nonce = ac->nonce[31];
+
   // now execute the call
-  return evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
+  int res = evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
+
+  if (prev_nonce == ac->nonce[31]) {
+    // subcall returned OOG exception but we still need to increment contract nonce
+    bytes32_t new_nonce;
+    increment_nonce(ac, new_nonce);
+  }
+  return res;
 }
 int op_selfdestruct(evm_t* evm) {
   uint8_t adr[20], l, *p;

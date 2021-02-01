@@ -62,8 +62,8 @@ class ZksyncAPI {
   }
 
 
-  setKey() {
-    return this.send('zksync_setKey')
+  setKey(tokenSymbol) {
+    return this.send('zksync_setKey', tokenSymbol || 'ETH')
   }
 
 
@@ -83,9 +83,12 @@ class ZksyncAPI {
 
 
   getSyncKey() {
-    return this.send('zksync_syncKey')
+    return this.send('zksync_getKey')
   }
 
+  getSyncPubKeyHash() {
+    return this.send('zksync_getPubKeyHash')
+  }
 
   deposit(amount, token, approveDepositAmountForERC20, account) {
     if (account)
