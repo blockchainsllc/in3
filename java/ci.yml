@@ -58,7 +58,7 @@ test_android:
     - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android
     - mkdir in3
-    - mv ../../c ../../CMakeLists.txt  ../../java in3/
+    - mv ../c ../CMakeLists.txt  ../java in3/
     - gradle --stacktrace build
   artifacts:
     paths:
