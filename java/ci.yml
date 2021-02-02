@@ -47,7 +47,6 @@ test_android:
   tags:
     - short-jobs
   extends: .only_java
-  # Caches per branch - per job
   before_script:
     - export GRADLE_USER_HOME=`pwd`/.gradle
   cache:
