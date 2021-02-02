@@ -439,11 +439,11 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
     current->index    = i;
     node_def->blocked = false;
     current->next     = NULL;
-    node_def->s       = weight_sum;
-    node_def->w       = in3_node_calculate_weight(weight_def, node_def->capacity, now);
+    current->s        = weight_sum;
+    current->w        = in3_node_calculate_weight(weight_def, node_def->capacity, now);
     current->url      = (c->flags & FLAGS_HTTP) ? to_http_url(node_def->url) : _strdupn(node_def->url, -1);
     memcpy(current->address, node_def->address, 20);
-    weight_sum += node_def->w;
+    weight_sum += current->w;
     found++;
     if (prev) prev->next = current;
     prev = current;
@@ -548,8 +548,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
     // find the first node matching it.
     current = found;
     while (current) {
-      in3_node_t* n = get_node(data, current);
-      if (n->s <= r && n->s + n->w >= r) break;
+      if (current->s <= r && current->s + current->w >= r) break;
       current = current->next;
     }
 
