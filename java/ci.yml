@@ -59,6 +59,7 @@ test_android:
     - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android/app
     - cp -r ../../java/src/in3 src/main/java/
+    - mkdir in3
     - mv ../../c ../../CMakeLists.txt  ../../java in3/
     - cd ..
     - gradle --stacktrace build
