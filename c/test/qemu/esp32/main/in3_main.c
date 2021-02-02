@@ -1,6 +1,6 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
- * Sources: https://github.com/slockit/in3-example-espidf
+ * Sources: https://github.com/blockchainsllc/in3-example-espidf
  * 
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
  * 

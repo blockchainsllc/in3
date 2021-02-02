@@ -58,7 +58,7 @@ In3 will support a wide range of microcontrollers, in this guide we will use wel
 
 1. Clone the repo
 
-`git clone --recursive https://github.com/slockit/in3-devices-esp `
+`git clone --recursive https://github.com/blockchainsllc/in3-devices-esp `
 
 2. Deploy the contract with your favorite tool (truffle, etc) or use our previusly deployed contract on goerli, with address `0x36643F8D17FE745a69A2Fd22188921Fade60a98B`
 
@@ -90,7 +90,7 @@ take note if your ip address which will be used in the android application examp
 
 7. Clone the android repository, compile the android application and install the in3 demo application in your phone.
 
-`git clone https://github.com/slockit/in3-android-example`
+`git clone https://github.com/blockchainsllc/in3-android-example`
 
 8. Modify the android source changing ip address variable inside kotlin source file `MainActivity.kt`, with the IP address found on step 6.
 

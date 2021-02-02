@@ -312,7 +312,7 @@ pages:
     - echo "" >> debian/changelog
     - echo "in3 (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
-    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
+    - echo "  * Check https://github.com/blockchainsllc/in3 for changelog " >> debian/changelog
     - echo "" >> debian/changelog
     - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
     - echo "" >> debian/changelog
@@ -365,7 +365,7 @@ debian_package_deploy_focal:
     - echo "" >> debian/changelog
     - echo "in3-dev (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
-    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
+    - echo "  * Check https://github.com/blockchainsllc/in3 for changelog " >> debian/changelog
     - echo "" >> debian/changelog
     - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
     - echo "" >> debian/changelog
@@ -408,7 +408,7 @@ brew_release:
     - git config --global user.name "${GITHUB_USER_NAME}"
     - git config --global user.email "${GITHUB_USER_EMAIL}"
   script:
-    - git clone https://github.com/slockit/homebrew-in3.git
+    - git clone https://github.com/blockchainsllc/homebrew-in3.git
     - cd homebrew-in3
     - sed '4s/.*/url "https:\/\/github.com\/slockit\/in3-c\/releases\/download\/'"${CI_COMMIT_TAG}"'\/in3_'"${CI_COMMIT_TAG}"'_mac.tar.gz"/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
     - curl -jksSL -o /tmp/mac.tar.gz  https://github.com/blockchainsllc/in3/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz

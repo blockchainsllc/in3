@@ -99,4 +99,4 @@ Step 3: Use methods available in app/src/main/java/in3/IN3.java from android act
 
 Here is example how to use it:
 
-https://github.com/slockit/in3-example-android
+https://github.com/blockchainsllc/in3-example-android

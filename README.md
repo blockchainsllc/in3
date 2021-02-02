@@ -27,9 +27,9 @@ fast access to blockchain for a large number of low-performance IoT, mobile devi
 
 A more detailed explanation of in3 can be found [here](https://in3.readthedocs.io/en/latest/intro.html).
 
-For information on the in3-node, please go [here](https://github.com/slockit/in3-server).
+For information on the in3-node, please go [here](https://github.com/blockchainsllc/in3-server).
 
-For information on the in3 typescript client, please go [here](https://github.com/slockit/in3).
+For information on the in3 typescript client, please go [here](https://github.com/blockchainsllc/in3-legacy).
 
 ## Installation and Usage
 
@@ -37,7 +37,7 @@ For information on the in3 typescript client, please go [here](https://github.co
 | :------------------------- | --------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ubuntu Launchpad           | [![ubuntu](https://img.shields.io/badge/ubuntu-launchpad-blue)](https://launchpad.net/~devops-slock-it/+archive/ubuntu/in3) | Installs libs and binaries on IoT devices or Linux-Systems <br><br>_Add the slock.it ppa to your system_<br>`sudo add-apt-repository ppa:devops-slock-it/in3`<br><br>_install the commandline tool in3_<br>`apt-get install in3`<br><br>_install shared and static libs and header files_<br>`apt-get install in3-dev` |
 | Docker Hub                 |                       [![DockerHub](https://img.shields.io/badge/DockerHub-in3-blue)](https://hub.docker.com/r/slockit/in3) | Quick and easy way to get in3 client running as docker container<br>`docker run -d -p 8545:8545 slockit/in3:latest --chainId=goerli -port 8545`<br> More parameters and their descriptions can be found [here](https://in3.readthedocs.io/en/latest/getting_started.html#as-docker-container).                         |
-| Brew                       |                      [![Homebrew](https://img.shields.io/badge/Homebrew-tap-blue)](https://github.com/slockit/homebrew-in3) | Easy to install on MacOS<br><br>_Add a brew tap_ <br>`brew tap slockit/in3`<br><br>_install all binaries and libraries_<br>`brew install in3`                                                                                                                                                                          |
+| Brew                       |               [![Homebrew](https://img.shields.io/badge/Homebrew-tap-blue)](https://github.com/blockchainsllc/homebrew-in3) | Easy to install on MacOS<br><br>_Add a brew tap_ <br>`brew tap slockit/in3`<br><br>_install all binaries and libraries_<br>`brew install in3`                                                                                                                                                                          |
 | Release page               |               [![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/blockchainsllc/in3/releases) | Releases including precompiled libraries for major platforms. To build or compile against the incubed, see [readthedocs](https://in3.readthedocs.io/en/latest/api-c.html).                                                                                                                                             |
 | WASM                       |                             [![npm](https://img.shields.io/badge/npm-package-blue)](https://www.npmjs.com/package/in3-wasm) | a WASM-Based npm module running in browsers or nodjs.<br>`npm install --save in3-wasm`<br>See [examples](https://github.com/blockchainsllc/in3/blob/latest/examples/js/get_block_rpc.js) on how to use it.                                                                                                             |
 | Java                       |               [![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/blockchainsllc/in3/releases) | For integrating with java applications. Take the jar-file from the release. <br>`javac -cp $IN3_JAR_LOCATION/in3.jar *.java`<br> For infromation on how to use maven, examples and documentation see [readthedocs](https://in3.readthedocs.io/en/latest/api-java.html)                                                 |
@@ -125,8 +125,8 @@ A more detailed example with information on how to call functions can be found [
 
 - [C API reference](https://in3.readthedocs.io/en/latest/api-c.html)
 - [C examples](https://in3.readthedocs.io/en/latest/api-c.html#examples)
-- [in3-node](https://github.com/slockit/in3-server)
-- [in3 typescript client](https://github.com/slockit/in3)
+- [in3-node](https://github.com/blockchainsllc/in3-server)
+- [in3 typescript client](https://github.com/blockchainsllc/in3-legacy)
 - [Website](https://slock.it/incubed/)
 - [ReadTheDocs](https://in3.readthedocs.io/en/latest/)
 - [Blog](https://blog.slock.it/)

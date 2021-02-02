@@ -56,7 +56,7 @@ test_android:
       - .gradle/wrapper
       - .gradle/caches
   script:
-    - git clone https://github.com/slockit/in3-example-android.git
+    - git clone https://github.com/blockchainsllc/in3-example-android.git
     - cd in3-example-android/app
     - cp -r ../../java/src/in3 src/main/java/
     - mv ../../c ../../java in3-c/
