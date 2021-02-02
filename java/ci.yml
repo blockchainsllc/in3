@@ -40,7 +40,6 @@ java:
       - java_build/lib
 
 test_android:
-  allow_failure: true
   image: cangol/android-gradle
   stage: java
   needs: []
@@ -57,11 +56,9 @@ test_android:
   script:
     - wget https://services.gradle.org/distributions/gradle-6.8.1-bin.zip ; unzip gradle-6.8.1-bin.zip ; export PATH=`pwd`/gradle-6.8.1/bin:$PATH
     - git clone https://github.com/slockit/in3-example-android.git
-    - cd in3-example-android/app
-    - cp -r ../../java/src/in3 src/main/java/
+    - cd in3-example-android
     - mkdir in3
     - mv ../../c ../../CMakeLists.txt  ../../java in3/
-    - cd ..
     - gradle --stacktrace build
   artifacts:
     paths:
