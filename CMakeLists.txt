@@ -87,6 +87,15 @@ OPTION(NODESELECT_DEF "Enable default nodeselect implementation" ON)
 OPTION(NODESELECT_DEF_WL "Enable default nodeselect whitelist implementation" ON)
 OPTION(PLGN_CLIENT_DATA "Enable client-data plugin" OFF)
 
+
+IF (DEFINED ANDROID_ABI)
+  set(TRANSPORTS,false)
+  set(IN3_LIB,false)
+  set(USE_CURL,false)
+  set(JAVA,true)
+  set(RECORDER,false)
+ENDIF()
+
 IF (BTC_PRE_BPI34)
   ADD_DEFINITIONS(-DBTC_PRE_BPI34)
 ENDIF (BTC_PRE_BPI34)
