@@ -2,9 +2,7 @@
 
 ### CallSmartContractFunction
 
-source : [in3-c/dotnet/Examples/CallSmartContractFunction//CallSmartContractFunction](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/CallSmartContractFunction//CallSmartContractFunction/Program.cs)
-
-
+source : [in3-c/dotnet/Examples/CallSmartContractFunction//CallSmartContractFunction](https://github.com/blockchainsllc/in3/blob/master/dotnet/Examples/CallSmartContractFunction//CallSmartContractFunction/Program.cs)
 
 ```c#
 using System;
@@ -59,9 +57,7 @@ namespace CallSmartContractFunction
 
 ### ConnectToEthereum
 
-source : [in3-c/dotnet/Examples/ConnectToEthereum//ConnectToEthereum](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/ConnectToEthereum//ConnectToEthereum/Program.cs)
-
-
+source : [in3-c/dotnet/Examples/ConnectToEthereum//ConnectToEthereum](https://github.com/blockchainsllc/in3/blob/master/dotnet/Examples/ConnectToEthereum//ConnectToEthereum/Program.cs)
 
 ```c#
 using System;
@@ -102,9 +98,7 @@ namespace ConnectToEthereum
 
 ### EnsResolver
 
-source : [in3-c/dotnet/Examples/EnsResolver//EnsResolver](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/EnsResolver//EnsResolver/Program.cs)
-
-
+source : [in3-c/dotnet/Examples/EnsResolver//EnsResolver](https://github.com/blockchainsllc/in3/blob/master/dotnet/Examples/EnsResolver//EnsResolver/Program.cs)
 
 ```c#
 using System;
@@ -131,9 +125,7 @@ namespace EnsResolver
 
 ### Ipfs
 
-source : [in3-c/dotnet/Examples/Ipfs//Ipfs](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/Ipfs//Ipfs/Program.cs)
-
-
+source : [in3-c/dotnet/Examples/Ipfs//Ipfs](https://github.com/blockchainsllc/in3/blob/master/dotnet/Examples/Ipfs//Ipfs/Program.cs)
 
 ```c#
 ﻿using System;
@@ -168,9 +160,7 @@ namespace Ipfs
 
 ### Logs
 
-source : [in3-c/dotnet/Examples/Logs//Logs](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/Logs//Logs/Program.cs)
-
-
+source : [in3-c/dotnet/Examples/Logs//Logs](https://github.com/blockchainsllc/in3/blob/master/dotnet/Examples/Logs//Logs/Program.cs)
 
 ```c#
 ﻿using System;
@@ -220,9 +210,7 @@ namespace Logs
 
 ### SendTransaction
 
-source : [in3-c/dotnet/Examples/SendTransaction//SendTransaction](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/SendTransaction//SendTransaction/Program.cs)
-
-
+source : [in3-c/dotnet/Examples/SendTransaction//SendTransaction](https://github.com/blockchainsllc/in3/blob/master/dotnet/Examples/SendTransaction//SendTransaction/Program.cs)
 
 ```c#
 using System;
@@ -274,7 +262,6 @@ namespace SendTransaction
 
 ### Build Examples
 
-
 To setup and run the example projects, simply run on the respective project folder:
 
 ```sh
@@ -286,4 +273,3 @@ To build all of them, on the solution folder, run:
 ```sh
 dotnet build
 ```
-

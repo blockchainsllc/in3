@@ -1,9 +1,7 @@
 ## Installing
 
-
-
 The Incubed Java client uses JNI in order to call native functions. But all the native-libraries are bundled inside the jar-file.
-This jar file ha **no** dependencies and can even be used standalone: 
+This jar file ha **no** dependencies and can even be used standalone:
 
 like
 
@@ -13,21 +11,21 @@ java -cp in3.jar in3.IN3 eth_getBlockByNumber latest false
 
 ### Downloading
 
-
-The jar file can be downloaded from the latest release. [here](https://github.com/slockit/in3-c/releases).
+The jar file can be downloaded from the latest release. [here](https://github.com/blockchainsllc/in3/releases).
 
 Alternatively, If you wish to download Incubed using the maven package manager, add this to your pom.xml
+
 ```
 <dependency>
   <groupId>it.slock</groupId>
   <artifactId>in3</artifactId>
   <version>2.21</version>
-</dependency> 
+</dependency>
 ```
 
-After which, install in3 with ```mvn install ```.
+After which, install in3 with `mvn install `.
 
-###  Building
+### Building
 
 For building the shared library you need to enable java by using the `-DJAVA=true` flag:
 
@@ -56,15 +54,15 @@ cmake_minimum_required(VERSION 3.4.1)
 ADD_DEFINITIONS(-DIN3_MATH_LITE)
 
 # loop through the required module and cretae the build-folders
-foreach(module 
-  c/src/core 
-  c/src/verifier/eth1/nano 
-  c/src/verifier/eth1/evm 
-  c/src/verifier/eth1/basic 
-  c/src/verifier/eth1/full 
+foreach(module
+  c/src/core
+  c/src/verifier/eth1/nano
+  c/src/verifier/eth1/evm
+  c/src/verifier/eth1/basic
+  c/src/verifier/eth1/full
   java/src
-  c/src/third-party/crypto 
-  c/src/third-party/tommath 
+  c/src/third-party/crypto
+  c/src/third-party/tommath
   c/src/api/eth1)
         file(MAKE_DIRECTORY in3-c/${module}/outputs)
         add_subdirectory( in3-c/${module} in3-c/${module}/outputs )
@@ -72,13 +70,13 @@ endforeach()
 
 ```
 
-Step 2: clone [in3-c](https://github.com/slockit/in3-c.git) into the `app`-folder or use this script to clone and update in3:
+Step 2: clone [in3-c](https://github.com/blockchainsllc/in3.git) into the `app`-folder or use this script to clone and update in3:
 
 ```sh
 #!/usr/bin/env sh
 
 #github-url for in3-c
-IN3_SRC=https://github.com/slockit/in3-c.git
+IN3_SRC=https://github.com/blockchainsllc/in3.git
 
 cd app
 
@@ -99,9 +97,6 @@ cp -r in3-c/java/src/in3 src/main/java/
 
 Step 3: Use methods available in app/src/main/java/in3/IN3.java from android activity to access IN3 functions.
 
-
 Here is example how to use it:
 
 https://github.com/slockit/in3-example-android
-
-

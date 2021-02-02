@@ -10,7 +10,7 @@ https://pypi.org/classifiers/
 
 
 version = environ.get("version", "2.3.0")
-url = environ.get("url", "https://github.com/slockit/in3-c")
+url = environ.get("url", "https://github.com/blockchainsllc/in3")
 License = environ.get("license", "AGPL")
 description = environ.get(
     "description", "Incubed client and provider for web3. Based on in3-c runtime.")
@@ -18,7 +18,7 @@ keywords = environ.get(
     "keywords", "in3,c,arm,x86,x64,macos,windows,linux,blockchain,ethereum,bitcoin,ipfs").split(",")
 readme = (pathlib.Path(__file__).parent / "README.md").read_text()
 name = environ.get("name", "in3")
-author = environ.get("author", "github.com/slockit/in3-c")
+author = environ.get("author", "github.com/blockchainsllc/in3")
 author_email = environ.get("author_email", "products@slock.it")
 setuptools.setup(
     name=name,

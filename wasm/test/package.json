@@ -31,9 +31,9 @@
   "author": "Blockchains",
   "license": "(AGPL-3.0-or-later OR commercial)",
   "bugs": {
-    "url": "https://github.com/blockchainsllc/in3-c/issues"
+    "url": "https://github.com/blockchainsllc/in3/issues"
   },
-  "homepage": "https://github.com/blockchainsllc/in3-c#readme",
+  "homepage": "https://github.com/blockchainsllc/in3#readme",
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.49",
     "@babel/preset-env": "^7.0.0-beta.49",
