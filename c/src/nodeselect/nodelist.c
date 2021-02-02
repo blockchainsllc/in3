@@ -537,10 +537,9 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
   unsigned int  added   = 0;
   node_match_t* last    = NULL;
   node_match_t* first   = NULL;
-  node_match_t* next    = NULL;
   node_match_t* current = NULL;
 
-  // we want ot make sure this loop is run only max 10xthe number of requested nodes
+  // we want to make sure this loop is run only max 10xthe number of requested nodes
   for (unsigned int i = 0; added < filled_len && i < filled_len * 10; i++) {
     // pick a random number
     r = total_weight ? (in3_rand(NULL) % total_weight) : 0;
@@ -553,27 +552,29 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
     }
 
     if (current) {
-      // check if we already added it,
-      next = first;
-      while (next) {
-        if (next->index == current->index) break;
-        next = next->next;
+      added++;
+
+      if (!first) first = current;
+      if (last) {
+        last->next = current;
+        last       = last->next;
       }
+      else
+        last = first;
 
-      if (!next) {
-        added++;
-        next        = _calloc(1, sizeof(node_match_t));
-        next->index = current->index;
-        next->url   = _strdupn(current->url, -1);
-        memcpy(next->address, current->address, 20);
+      // remove current from `found` list
+      for (node_match_t** tmp = &found; *tmp; tmp = &(*tmp)->next) {
+        if ((*tmp)->index == current->index) {
+          total_weight -= current->w;
+          *tmp = (*tmp)->next;
 
-        if (!first) first = next;
-        if (last) {
-          last->next = next;
-          last       = last->next;
+          while (*tmp) {
+            (*tmp)->s -= current->w;
+            tmp = &(*tmp)->next;
+          }
+          current->next = NULL;
+          break;
         }
-        else
-          last = first;
       }
     }
   }
