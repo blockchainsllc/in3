@@ -67,6 +67,8 @@ typedef enum ctx_type {
  */
 typedef struct weight {
   unsigned int   index;   /**< index of the node in the nodelist */
+  uint32_t       s;       /**< The starting value */
+  uint32_t       w;       /**< weight value */
   char*          url;     /**< the url of the node */
   address_t      address; /**< address of the server */
   struct weight* next;    /**< next in the linked-list or NULL if this is the last element*/
