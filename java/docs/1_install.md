@@ -48,31 +48,32 @@ In order to use Incubed in android simply follow these steps:
 ## How to use IN3 in android project.
 1. clone [in3](https://github.com/blockchainsllc/in3.git) in your project (or use script to update it):
 
-    ```sh
-    #!/usr/bin/env sh
-    if [ -f in3/CMakeLists.txt ]; then
-        cd in3
-        git pull
-        cd ..
-    else
-        git clone https://github.com/blockchainsllc/in3.git
-    fi
-    ```
+```sh
+#!/usr/bin/env sh
+if [ -f in3/CMakeLists.txt ]; then
+    cd in3
+    git pull
+    cd ..
+else
+    git clone https://github.com/blockchainsllc/in3.git
+fi
+```
 
 2. add the native-build section and the additional source-set in your `build.gradle` in the app-folder inside the `android`-section:
 
-    ```js
-        externalNativeBuild {
-            cmake {
-                path file('in3/CMakeLists.txt')
-            }
+```js
+    externalNativeBuild {
+        cmake {
+            path file('in3/CMakeLists.txt')
         }
-        sourceSets {
-          main.java.srcDirs += ['../in3/java/src']
-        }
-    ```
+    }
+    sourceSets {
+      main.java.srcDirs += ['../in3/java/src']
+    }
+```
 
 if you want to configure which modules should be included, you can also specify the `externalNativeBuild` in the `defaultConfig':` 
+
 ```js
     defaultConfig {
         externalNativeBuild {
