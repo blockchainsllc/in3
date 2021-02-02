@@ -1,7 +1,8 @@
 #ifndef IN3_NODE_SELECT_DEF_CFG_H
 #define IN3_NODE_SELECT_DEF_CFG_H
 
-#include "../../prebuild/prebuild.h"
+#define JSON_TO_BIN(x) x // marker for pre-build stage
+
 #include "../core/client/client.h"
 
 #ifndef NO_BOOT_NODES_MAINNET
