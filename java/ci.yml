@@ -62,7 +62,7 @@ test_android:
     - cp -r ../../java/src/in3 src/main/java/
     - mv ../../c ../../java in3-c/
     - cd ..
-    - gradle --stacktrace --info build
+    - gradle --stacktrace build
   artifacts:
     paths:
       - in3-example-android/app/build/outputs/apk
