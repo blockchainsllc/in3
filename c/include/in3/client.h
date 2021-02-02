@@ -42,6 +42,10 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bytes.h"
 #include "data.h"
 #include "error.h"
@@ -53,13 +57,13 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
-#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
-#define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
+#define CHAIN_ID_MAINNET    0x01 /**< chain_id for mainnet */
+#define CHAIN_ID_GOERLI     0x5 /**< chain_id for goerlii */
+#define CHAIN_ID_EWC        0xf6 /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
-#define CHAIN_ID_BTC        0x99  /**< chain_id for btc */
-#define CHAIN_ID_LOCAL      0x11  /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6     /**< default replace_latest_block */
+#define CHAIN_ID_BTC        0x99 /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0x11 /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6 /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -447,5 +451,9 @@ typedef in3_ret_t (*plgn_register)(in3_t* c);
   assert((c)->max_attempts > 0);                       \
   assert((c)->proof >= 0 && (c)->proof <= PROOF_FULL); \
   assert((c)->proof >= 0 && (c)->proof <= PROOF_FULL);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

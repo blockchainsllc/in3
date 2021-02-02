@@ -31,6 +31,10 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+
+/**
+ * return structure after fetching the current account info.
+ */
 export declare interface ZKAccountInfo {
     address: string,
     committed: {
@@ -54,13 +58,18 @@ export declare interface ZKAccountInfo {
         pubKeyHash: string
     }
 }
-
+/**
+ * Block state.
+ */
 export declare interface BlockInfo {
     blockNumber: number,
     committed: boolean,
     verified: boolean
 }
 
+/**
+ * Transaction state
+ */
 export declare interface TxInfo {
     block: BlockInfo,
     executed: boolean,
@@ -68,15 +77,24 @@ export declare interface TxInfo {
     success: boolean
 }
 
+/**
+ * L1 Operation State
+ */
 export declare interface ETHOpInfoResp {
     executed: boolean,
     block: BlockInfo
 }
 
+/**
+ * Defines the type of a transaction.
+ */
 export declare interface TxType {
     type: "Withdraw" | "Transfer" | "TransferToNew"
 }
 
+/**
+ * fee collection.
+ */
 export declare interface Fee {
     feeType: TxType,
     totalGas: number,
@@ -86,10 +104,13 @@ export declare interface Fee {
     totalFee: number
 }
 
+/**
+ * Token List.
+ */
 export declare interface Tokens {
     [key: string]: Token
 }
-
+/** Token representation */
 export declare interface Token {
     address: String,
     decimals: number,
@@ -97,6 +118,9 @@ export declare interface Token {
     symbol: String
 }
 
+/**
+ * Response of a Deposit-Transaction.
+ */
 export declare interface DepositResponse {
     receipt: TransactionReceipt
 }
@@ -116,6 +140,11 @@ export declare interface ZksyncAPI<BufferType> {
      * gets the contract address of the zksync contract
      */
     getContractAddress(): Promise<String>
+
+    /**
+     * returns the address of the account used.
+     */
+    getAccountAddress(): String
 
     /**
      * returns an object containing Token objects with its short name as key
@@ -166,6 +195,11 @@ export declare interface ZksyncAPI<BufferType> {
     getSyncPubKeyHash(): String
 
     /**
+     * returns public key used for signing zksync transactions
+     */
+    getSyncPubKey(): String
+
+    /**
      * deposits the declared amount into the rollup
      * @param amount amount in wei to deposit
      * @param token the token identifier e.g. ETH
@@ -197,6 +231,25 @@ export declare interface ZksyncAPI<BufferType> {
      * @param token the token identifier e.g. ETH
      */
     emergencyWithdraw(token: string): Promise<String> //in3 error type?
+
+    /**
+     * signs the message based on the config and returns a Musig Schnorr signature
+     * @param msg the message
+     */
+    sign(msg: string): Promise<String> //in3 error type?
+
+    /**
+     * verifies a Musig Schnorr signature
+     * @param msg the message
+     * @param sig the 96byte long signature
+     */
+    verify(msg: string, sig: string): boolean
+
+    /**
+     * aggregates the given publickeys into one public key for a Musig Schnorr signature
+     * @param pubkeys the packed public keys (either a concatenated string or as array of public keys)
+     */
+    aggregatePubKey(pubkeys: string | string[]): string
 }
 
 

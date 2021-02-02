@@ -40,6 +40,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bytes.h"
 #include <stdint.h>
 
@@ -289,5 +293,9 @@ void in3_sleep(uint32_t ms);
 int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

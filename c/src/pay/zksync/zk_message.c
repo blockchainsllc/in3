@@ -245,7 +245,7 @@ in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_
   p[msg.len * 2 + 3] = '"';
   p[msg.len * 2 + 4] = 0;
   d_token_t* result;
-  TRY(ctx_send_sub_request(ctx, "zk_musig_sign", p, NULL, &result))
+  TRY(ctx_send_sub_request(ctx, "zk_sign", p, NULL, &result))
   if (d_type(result) != T_BYTES || d_len(result) != 96) return ctx_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
   memcpy(sig, result->data, 96);
   return IN3_OK;

@@ -129,7 +129,7 @@ safe_zk_deposit() {
   in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_deposit $1 ETH false | jq
 }
 safe_zk_set_key() {
-  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_setKey ETH
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_set_key ETH
 }
 safe_zk_transfer() {
   in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_transfer $1 $2 ETH
@@ -138,7 +138,7 @@ safe_zk_withdraw() {
   in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_withdraw $1 $2 ETH
 }
 safe_zk_emergency_withdraw() {
-  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_emergencyWithdraw ETH
+  in3  -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_emergency_withdraw ETH
 }
 safe_zk_account() {
   in3   -ms $G_SAFE -zka $G_SAFE -zkat contract zksync_account_info $G_SAFE| jq
@@ -171,13 +171,13 @@ safe_c2_create() {
   export G_SALTARG=`in3 web3_sha3 $setup`
   export G_SEED=`in3 createkey`
   export G_SEED_BUNKER=`in3 createkey`
-  export G_PUB_KEY=`in3 -zsk $G_SEED zk_getPubKey`
-  export G_PUB_KEY_BUNKER=`in3 -zsk $G_SEED_BUNKER zk_getPubKey`
+  export G_PUB_KEY=`in3 -zsk $G_SEED zk_pubkey`
+  export G_PUB_KEY_BUNKER=`in3 -zsk $G_SEED_BUNKER zk_pubkey`
   export G_PUB_KEYS="$G_PUB_KEY${G_PUB_KEY_BUNKER:2}"
 
   export G_CODEHASH=`in3 web3_sha3 ${CODE}000000000000000000000000${IAMO_MASTER_COPY:2}`
   export G_CREATOR=$IAMO_FACTORY
-  export G_PUB_KEY_HASH=`in3 zk_getPubKeyHash -zms $G_PUB_KEYS`
+  export G_PUB_KEY_HASH=`in3 zk_pubkeyhash -zms $G_PUB_KEYS`
   export G_SAFE=`in3 -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED -zms $G_PUB_KEYS zk_account_address`
   export G_NONCE=0x000000000000000000000000${G_PUB_KEY_HASH:5}
 
@@ -188,7 +188,7 @@ safe_c2_create() {
 }
 
 safe_c2_setkey() {
- in3 -debug -zka $G_SAFE -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED -zms $G_PUB_KEYS -zmu http://127.0.0.1:8099  zksync_setKey ETH
+ in3 -debug -zka $G_SAFE -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED -zms $G_PUB_KEYS -zmu http://127.0.0.1:8099  zksync_set_key ETH
 }
 safe_c2_fund_l1() {
  in3  -zkat contract zksync_deposit $1 ETH false $G_SAFE | jq

@@ -39,6 +39,10 @@
 #ifndef IN3_IN3_INIT_H
 #define IN3_IN3_INIT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "client.h"
 
 #ifdef in3_for_chain
@@ -62,5 +66,9 @@ void in3_init();
  * function.
  */
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IN3_IN3_INIT_H

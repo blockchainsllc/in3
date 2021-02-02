@@ -38,6 +38,13 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
+#ifndef CONTEXT_H
+#define CONTEXT_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
@@ -45,9 +52,6 @@
 #include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
-#ifndef CONTEXT_H
-#define CONTEXT_H
-
 /**
  * type of the request context,
  */
@@ -437,5 +441,7 @@ NONULL in3_proof_t in3_ctx_get_proof(
     in3_ctx_t* ctx, /**< [in] the current request. */
     int        i    /**< [in] the index within the request. */
 );
-
+#ifdef __cplusplus
+}
+#endif
 #endif

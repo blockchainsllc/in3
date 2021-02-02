@@ -32,13 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * ZKSync API.
- * 
- * This header-file registers zksync api functions.
- * */
-
 #ifndef ZKSYNC_HELPER_H
 #define ZKSYNC_HELPER_H
 

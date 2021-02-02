@@ -84,7 +84,7 @@ static in3_ret_t request_message(zksync_config_t* conf, zk_musig_session_t* s, i
   sb_add_char(&sb, ',');
   add_sessiondata(&sb, s);
   sb_add_char(&sb, '}');
-  in3_ret_t r = send_sign_request(ctx, pos, conf, "zk_musig_sign", sb.data, result);
+  in3_ret_t r = send_sign_request(ctx, pos, conf, "zk_sign", sb.data, result);
   if (r == IN3_OK) r = update_session(s, ctx, *result);
   _free(sb.data);
   return r;

@@ -39,6 +39,9 @@
 #ifndef IN3_ERROR_H
 #define IN3_ERROR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /** depreacted-attribute */
 #define DEPRECATED __attribute__((deprecated))
 
@@ -111,5 +114,8 @@ typedef enum {
  * These strings are constants and do not need to be freed.
  */
 char* in3_errmsg(in3_ret_t err /**< the error code */);
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IN3_ERROR_H

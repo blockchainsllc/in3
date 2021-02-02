@@ -41,7 +41,9 @@
 
 #ifndef PLUGIN_H
 #define PLUGIN_H
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "client.h"
 #include "context.h"
 
@@ -476,5 +478,7 @@ typedef struct {
   void*               data; /**< output param set by plugin code - pointer to data requested. */
   void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */
 } in3_get_data_ctx_t;
-
+#ifdef __cplusplus
+}
+#endif
 #endif //PLUGIN_H

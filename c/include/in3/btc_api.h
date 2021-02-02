@@ -41,6 +41,9 @@
 
 #ifndef IN3_BTC_API_H
 #define IN3_BTC_API_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "client.h"
 #include "bytes.h"
@@ -180,5 +183,9 @@ btc_transaction_t*  btc_d_to_tx(d_token_t* t);           /** Deserializes a `btc
 btc_blockheader_t*  btc_d_to_blockheader(d_token_t* t);  /** Deserializes a `btc_blockheader_t` type. You must free the result with free() after use! */
 btc_block_txids_t*  btc_d_to_block_txids(d_token_t* t);  /** Deserializes a `btc_block_txids_t` type. You must free the result with free() after use! */
 btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t); /** Deserializes a `btc_block_txdata_t` type. You must free the result with free() after use! */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IN3_BTC_API_H
