@@ -124,7 +124,7 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
     if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash, tmp, NULL, target, NULL))) return ret; // check the headers proof of work and set the new parent hash
   }
 
-  return final_blocks.len == p ? IN3_OK : vc_err(vc, "too many final headers");
+  return final_blocks.len >= p ? IN3_OK : vc_err(vc, "too many final headers");
 }
 
 in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* block_hash) {
