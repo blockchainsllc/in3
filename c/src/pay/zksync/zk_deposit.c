@@ -14,10 +14,9 @@
 in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   // check params
   if (!(d_len(params) == 1 && d_type(params + 1) == T_OBJECT)) {
-    CHECK_PARAMS_LEN(ctx->ctx, params, 3)
+    CHECK_PARAMS_LEN(ctx->ctx, params, 2)
     CHECK_PARAM_NUMBER(ctx->ctx, params, 0)
     CHECK_PARAM_TOKEN(ctx->ctx, params, 1)
-    CHECK_PARAM_TYPE(ctx->ctx, params, 2, T_BOOLEAN)
   }
 
   //  amount
