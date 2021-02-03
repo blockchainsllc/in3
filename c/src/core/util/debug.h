@@ -159,7 +159,7 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
 #define CHECK_PARAM_ADDRESS(ctx, params, index)                                                                                                  \
   {                                                                                                                                              \
     const d_token_t* val = d_get_at(params, index);                                                                                              \
-    if (d_type(val) != T_BYTES || val->len != 32) return ctx_set_error(ctx, "argument at index " #index " must be a valid address", IN3_EINVAL); \
+    if (d_type(val) != T_BYTES || val->len != 20) return ctx_set_error(ctx, "argument at index " #index " must be a valid address", IN3_EINVAL); \
   }
 #define CHECK_PARAM_LEN(ctx, params, index, len) \
   if (d_len(d_get_at(params, index)) != len) return ctx_set_error(ctx, "argument at index " #index " must have a length of " #len, IN3_EINVAL);

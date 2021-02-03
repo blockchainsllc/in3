@@ -58,10 +58,27 @@ void set_quoted_address(char* c, uint8_t* address) {
   c[2]         = 'x';
   c[44]        = 0;
 }
+
+static in3_ret_t ensure_provider(zksync_config_t* conf, in3_ctx_t* ctx) {
+  if (conf->provider_url) return IN3_OK;
+  switch (ctx->client->chain.chain_id) {
+    case CHAIN_ID_MAINNET:
+      conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
+      break;
+    default:
+      return ctx_set_error(ctx, "no provider_url in config", IN3_EINVAL);
+  }
+  return IN3_OK;
+}
+
 in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
   if (params == NULL) params = "";
-  char* in3 = conf ? alloca(strlen(conf->provider_url) + 26) : NULL;
-  if (in3) sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
+  char* in3 = NULL;
+  if (conf) {
+    TRY(ensure_provider(conf, parent))
+    in3 = alloca(strlen(conf->provider_url) + 26);
+    sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
+  }
   return ctx_send_sub_request(parent, method, params, in3, result);
 }
 
@@ -216,6 +233,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** 
   if (!conf->main_contract) {
     // check cache first
     if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+      TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
       sprintf(cache_name, "zksync_contracts_%x", key(conf->provider_url));
       in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
@@ -314,6 +332,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token
   if (!conf->token_len) {
     // check cache first
     if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+      TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
       sprintf(cache_name, "zksync_tokens_%x", key(conf->provider_url));
       in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};

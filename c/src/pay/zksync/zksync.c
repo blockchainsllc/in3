@@ -50,18 +50,6 @@ static zk_sign_type_t get_sign_type(d_token_t* type) {
   return ZK_SIGN_PK;
 }
 
-static in3_ret_t ensure_provider(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  if (conf->provider_url) return IN3_OK;
-  switch (ctx->ctx->client->chain.chain_id) {
-    case CHAIN_ID_MAINNET:
-      conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
-      break;
-    default:
-      return ctx_set_error(ctx->ctx, "no provider_url in config", IN3_EINVAL);
-  }
-  return IN3_OK;
-}
-
 static in3_ret_t zksync_get_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   bytes32_t k;
   TRY(zksync_get_sync_key(conf, ctx->ctx, k))
@@ -157,9 +145,6 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   else
     return IN3_EIGNORE;
 
-  // make sure the provider is set
-  TRY(ensure_provider(conf, ctx))
-
   // handle rpc -functions
   TRY_RPC("deposit", zksync_deposit(conf, ctx, params))
   TRY_RPC("transfer", zksync_transfer(conf, ctx, params, ZK_TRANSFER))
@@ -250,7 +235,10 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key != key("zksync")) return IN3_EIGNORE;
 
   const char* provider = d_get_string(ctx->token, "provider_url");
-  if (provider) conf->provider_url = _strdupn(provider, -1);
+  if (provider) {
+    if (conf->provider_url) _free(conf->provider_url);
+    conf->provider_url = _strdupn(provider, -1);
+  }
   bytes_t* account = d_get_bytes(ctx->token, "account");
   if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
   bytes_t sync_key = d_to_bytes(d_get(ctx->token, key("sync_key")));
