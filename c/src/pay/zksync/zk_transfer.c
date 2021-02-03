@@ -14,6 +14,14 @@
 #include <string.h>
 
 in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params, zk_msg_type_t type) {
+  // check params
+  if (!(d_len(params) == 1 && d_type(params + 1) == T_OBJECT)) {
+    CHECK_PARAMS_LEN(ctx->ctx, params, 3)
+    CHECK_PARAM_ADDRESS(ctx->ctx, params, 0)
+    CHECK_PARAM_NUMBER(ctx->ctx, params, 1)
+    CHECK_PARAM_TOKEN(ctx->ctx, params, 2)
+  }
+
   bytes32_t sync_key;
   TRY(zksync_get_sync_key(conf, ctx->ctx, sync_key));
   // prepare tx data

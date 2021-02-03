@@ -12,6 +12,14 @@
 #include <string.h>
 
 in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  // check params
+  if (!(d_len(params) == 1 && d_type(params + 1) == T_OBJECT)) {
+    CHECK_PARAMS_LEN(ctx->ctx, params, 3)
+    CHECK_PARAM_NUMBER(ctx->ctx, params, 0)
+    CHECK_PARAM_TOKEN(ctx->ctx, params, 1)
+    CHECK_PARAM_TYPE(ctx->ctx, params, 2, T_BOOLEAN)
+  }
+
   //  amount
   d_token_t* tmp           = NULL;
   bytes_t    amount        = d_to_bytes(params_get(params, key("amount"), 0));
@@ -98,6 +106,8 @@ in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
   uint32_t        account_id    = 0;
   d_token_t*      tx_receipt    = NULL;
   sb_t            sb            = {0};
+
+  CHECK_PARAM_TOKEN(ctx->ctx, params, 0)
 
   // check main_contract
   TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))

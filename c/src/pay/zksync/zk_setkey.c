@@ -12,6 +12,7 @@
 #include <string.h>
 
 static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, uint32_t nonce, address_t pub_hash) {
+
   d_token_t* result        = NULL;
   sb_t       sb            = {0};
   uint8_t*   main_contract = NULL;

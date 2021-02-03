@@ -71,6 +71,8 @@ static in3_ret_t zksync_get_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx
 static in3_ret_t zksync_get_pubkeyhash(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   address_t pubkey_hash;
   if (d_len(params) == 1) {
+    CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_BYTES)
+    CHECK_PARAM_LEN(ctx->ctx, params, 0, 32)
     TRY(zkcrypto_pubkey_hash(d_to_bytes(params + 1), pubkey_hash));
   }
   else
@@ -99,6 +101,9 @@ static in3_ret_t zksync_get_pubkey(zksync_config_t* conf, in3_rpc_handle_ctx_t* 
 
 static in3_ret_t zksync_aggregate_pubkey(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   bytes32_t dst;
+  CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_BYTES)
+  CHECK_PARAM(ctx->ctx, params, 0, d_len(val) % 32 == 0)
+
   TRY(zkcrypto_compute_aggregated_pubkey(d_to_bytes(params + 1), dst))
   return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
 }
@@ -138,9 +143,6 @@ static in3_ret_t zksync_tokens(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx)
   sb_add_char(sb, '}');
   return in3_rpc_handle_finish(ctx);
 }
-
-#define TRY_RPC(name, fn) \
-  if (strcmp(method, name) == 0) return fn;
 
 // --- handle rpc----
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
@@ -182,11 +184,14 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   memcpy(param_string, p.data + 1, p.len - 2);
   param_string[p.len - 2] = 0;
 
-  // if we call account_info without arguments we are showing the configured account
-  if (strcmp(method, "account_info") == 0 && *param_string == 0) {
-    TRY(zksync_get_account(conf, ctx->ctx, NULL))
-    param_string = alloca(45);
-    set_quoted_address(param_string, conf->account);
+  if (strcmp(method, "account_info") == 0) {
+    if (*param_string == 0) {
+      TRY(zksync_get_account(conf, ctx->ctx, NULL))
+      param_string = alloca(45);
+      set_quoted_address(param_string, conf->account);
+    }
+    else
+      CHECK_PARAM_ADDRESS(ctx->ctx, params, 0)
   }
 
   // we need to show the arguments as integers

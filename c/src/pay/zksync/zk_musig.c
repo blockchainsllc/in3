@@ -1,5 +1,6 @@
 #include "../../core/client/context_internal.h"
 #include "../../core/client/plugin.h"
+#include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
@@ -9,8 +10,6 @@
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
 
-#define expect_params_eq(n) \
-  if (d_len(params) != n) return ctx_set_error(ctx->ctx, "Wrong number of arguments", IN3_EINVAL);
 #define TRY_SIGNER(x) TRY_FINAL(x, zkcrypto_signer_free(signer))
 #define TRY_SIG(exp)                                                 \
   {                                                                  \
@@ -128,7 +127,7 @@ static bool is_complete(bytes_t data) {
 
 in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   if (d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
-  expect_params_eq(1);
+  CHECK_PARAMS_LEN(ctx->ctx, params, 1);
   d_token_t* result = NULL;
   bytes_t    message;
 
