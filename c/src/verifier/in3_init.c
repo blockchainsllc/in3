@@ -12,6 +12,9 @@
 #else
 #include "../transport/http/in3_http.h"
 #endif
+#ifdef NODESELECT_DEF
+#include "../nodeselect/nodeselect_def.h"
+#endif
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
@@ -55,6 +58,7 @@ static void init_verifier() {
   in3_register_default(eth_register_pk_signer);
 #endif
 }
+
 static void init_transport() {
 #ifdef TRANSPORTS
 #ifdef USE_CURL
@@ -66,17 +70,25 @@ static void init_transport() {
 #endif /* USE_CURL */
 #endif /* TRANSPORTS */
 }
+
+static void init_nodeselect() {
+#ifdef NODESELECT_DEF
+  in3_register_default(in3_register_nodeselect_def);
+#endif
+}
+
 void in3_init() {
   if (!initialized) {
     initialized = true;
     init_transport();
     init_verifier();
-
+    init_nodeselect();
 #ifdef ZKSYNC
     zkcrypto_initialize();
 #endif
   }
 }
+
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
   in3_init();
   return in3_for_chain_default(chain_id);

@@ -90,12 +90,13 @@ void init_in3(void) {
   c = in3_for_chain(CHAIN_ID_GOERLI);
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
-  plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);
-  c->request_count = 1; // number of requests to sendp
-  c->max_attempts  = 1;
-  c->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist
-  // c->flags         = FLAGS_STATS ; // no autoupdate nodelist
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);
+  c->flags  = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist
+  sb_t* cfg = sb_new("{\"chainId\":");
+  sb_add_int(cfg, CHAIN_ID_GOERLI);
+  sb_add_chars(cfg, ",\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
+  in3_configure(c, cfg->data);
+  sb_free(cfg);
 }
 
 void eth_call(void) {

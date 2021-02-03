@@ -2,8 +2,7 @@ package in3.config;
 
 import in3.Proof;
 import in3.utils.JSON;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.math.BigInteger;
 
 /**
  * Configuration Object for Incubed Client. It holds the state for the root of
@@ -11,144 +10,127 @@ import java.util.HashMap;
  * IN3#getConfig()
  */
 public class ClientConfiguration implements Configuration {
+  private JSON                      data;
+  private NodeRegistryConfiguration registryConfiguration;
 
-  // Based on core/client/client_init.c
-  private Integer requestCount;
-  private Boolean autoUpdateList;
-  private Proof   proof = Proof.standard;
-  private Integer maxAttempts;
-  private Integer signatureCount;
-  private Integer finality;
-  private Boolean includeCode;
-  private Boolean bootWeights;
-  private Boolean keepIn3;
-  private Boolean useHttp;
-  private Long    timeout;
-  private Long    minDeposit;
-  private Long    nodeProps;
-  private Long    nodeLimit;
-  private Integer replaceLatestBlock;
-  private String  rpc;
-  private Boolean stats;
-
-  private String serialzedState;
-
-  private HashMap<Long, ChainConfiguration> chainsConfig = new HashMap<Long, ChainConfiguration>();
+  private boolean dirty;
 
   // Make the constructor private in order to ensure people use client.getConfig()
-  private ClientConfiguration() {
+  public ClientConfiguration(Object json) {
+    this.data = (JSON) json;
+    setNodeRegistry();
+    markAsSynced();
   }
 
   public Integer getRequestCount() {
-    return requestCount;
+    return data.getInteger("requestCount");
   }
 
   /** sets the number of requests send when getting a first answer */
-  public void setRequestCount(int requestCount) {
-    this.requestCount = requestCount;
+  public void setRequestCount(Integer requestCount) {
+    setDirty(requestCount != getRequestCount());
+    data.put("requestCount", requestCount);
   }
 
   public Boolean isAutoUpdateList() {
-    return autoUpdateList;
+    return data.getBoolean("autoUpdateList");
   }
 
   /**
-   * activates the auto update.if true the nodelist will be automaticly updated if
-   * the lastBlock is newer
+   * activates the auto update.if true the nodelist will be automatically updated
+   * if the lastBlock is newer
    */
   public void setAutoUpdateList(boolean autoUpdateList) {
-    this.autoUpdateList = autoUpdateList;
+    setDirty(autoUpdateList != isAutoUpdateList());
+    data.put("autoUpdateList", autoUpdateList);
   }
 
   public Proof getProof() {
-    return proof;
+    String proof = data.getString("proof");
+    return proof != null ? Proof.valueOf(proof) : null;
   }
 
   /** sets the type of proof used */
   public void setProof(Proof proof) {
-    this.proof = proof;
+    setDirty(!isObjectEqual(getProof(), proof));
+    data.put("proof", proof.toString());
   }
 
   public Integer getMaxAttempts() {
-    return maxAttempts;
+    return data.getInteger("maxAttempts");
   }
 
   /** sets the max number of attempts before giving up */
   public void setMaxAttempts(int maxAttempts) {
-    this.maxAttempts = maxAttempts;
+    setDirty(maxAttempts != getMaxAttempts());
+    data.put("maxAttempts", maxAttempts);
   }
 
   public Integer getSignatureCount() {
-    return signatureCount;
+    return data.getInteger("signatureCount");
   }
 
   /** sets the number of signatures used to proof the blockhash. */
   public void setSignatureCount(int signatureCount) {
-    this.signatureCount = signatureCount;
-  }
-
-  public Boolean isStats() {
-    return stats;
-  }
-
-  /**
-   * if true (default) the request will be counted as part of the regular stats,
-   * if not they are not shown as part of the dashboard.
-   */
-  public void setStats(boolean stats) {
-    this.stats = stats;
+    setDirty(signatureCount != getSignatureCount());
+    data.put("signatureCount", signatureCount);
   }
 
   public Integer getFinality() {
-    return finality;
+    return data.getInteger("finality");
   }
 
   /** sets the number of signatures in percent required for the request */
   public void setFinality(int finality) {
-    this.finality = finality;
+    setDirty(finality != getFinality());
+    data.put("finality", finality);
   }
 
   public Boolean isIncludeCode() {
-    return includeCode;
+    return data.getBoolean("includeCode");
   }
 
-  /* TODO ask what is this to Simon */
   public void setIncludeCode(boolean includeCode) {
-    this.includeCode = includeCode;
+    setDirty(includeCode != isIncludeCode());
+    data.put("includeCode", includeCode);
   }
 
   public Boolean isBootWeights() {
-    return bootWeights;
+    return data.getBoolean("bootWeights");
   }
 
-  /** 
-    * if true, the first request (updating the nodelist) will also fetch the current health status
-    * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
-    */
-  public void setBootWeights(boolean value) {
-    this.bootWeights = value;
+  /**
+   * if true, the first request (updating the nodelist) will also fetch the
+   * current health status and use it for blacklisting unhealthy nodes. This is
+   * used only if no nodelist is available from cache.
+   */
+  public void setBootWeights(boolean bootWeights) {
+    setDirty(bootWeights != isBootWeights());
+    data.put("bootWeights", bootWeights);
   }
 
   public Boolean isKeepIn3() {
-    return keepIn3;
+    return data.getBoolean("keepIn3");
   }
 
   /* preserve in3 section of the rpc call response intact */
   public void setKeepIn3(boolean keepIn3) {
-    this.keepIn3 = keepIn3;
+    setDirty(keepIn3 != isKeepIn3());
+    data.put("keepIn3", keepIn3);
   }
 
   public Boolean isUseHttp() {
-    return useHttp;
+    return data.getBoolean("useHttp");
   }
 
   /* allow transport to use non-ssl */
   public void setUseHttp(boolean useHttp) {
-    this.useHttp = useHttp;
+    setDirty(useHttp != isUseHttp());
+    data.put("useHttp", useHttp);
   }
 
   public Long getTimeout() {
-    return timeout;
+    return data.getLong("timeout");
   }
 
   /**
@@ -156,11 +138,12 @@ public class ClientConfiguration implements Configuration {
    * may be helpful if the device uses a slow connection.
    */
   public void setTimeout(long timeout) {
-    this.timeout = timeout;
+    setDirty(timeout != getTimeout());
+    data.put("timeout", timeout);
   }
 
   public Long getMinDeposit() {
-    return minDeposit;
+    return data.getLong("minDeposit");
   }
 
   /**
@@ -168,38 +151,46 @@ public class ClientConfiguration implements Configuration {
    * chosen.
    */
   public void setMinDeposit(long minDeposit) {
-    this.minDeposit = minDeposit;
+    setDirty(minDeposit != getMinDeposit());
+    data.put("minDeposit", minDeposit);
   }
 
   public Long getNodeProps() {
-    return nodeProps;
+    return data.getLong("nodeProps");
   }
 
   /* used to filter nodes according to its capabilities */
   public void setNodeProps(long nodeProps) {
-    this.nodeProps = nodeProps;
+    setDirty(nodeProps != getNodeProps());
+    data.put("nodeProps", nodeProps);
   }
 
   public Long getNodeLimit() {
-    return nodeLimit;
+    return data.getLong("nodeLimit");
   }
 
   /** sets the limit of nodes to store in the client. */
   public void setNodeLimit(long nodeLimit) {
-    this.nodeLimit = nodeLimit;
+    setDirty(nodeLimit != getNodeLimit());
+    data.put("nodeLimit", nodeLimit);
+  }
+
+  public NodeRegistryConfiguration getNodeRegistry() {
+    return this.registryConfiguration;
   }
 
   public Integer getReplaceLatestBlock() {
-    return replaceLatestBlock;
+    return data.getInteger("replaceLatestBlock");
   }
 
   /** replaces the *latest* with blockNumber- specified value */
   public void setReplaceLatestBlock(int replaceLatestBlock) {
-    this.replaceLatestBlock = replaceLatestBlock;
+    setDirty(replaceLatestBlock != getReplaceLatestBlock());
+    data.put("replaceLatestBlock", replaceLatestBlock);
   }
 
   public String getRpc() {
-    return rpc;
+    return data.getString("rpc");
   }
 
   /**
@@ -207,34 +198,19 @@ public class ClientConfiguration implements Configuration {
    * to none
    */
   public void setRpc(String rpc) {
-    this.rpc = rpc;
-  }
-
-  public HashMap<Long, ChainConfiguration> getNodesConfig() {
-    return chainsConfig;
-  }
-
-  public void setChainsConfig(HashMap<Long, ChainConfiguration> chainsConfig) {
-    this.chainsConfig = chainsConfig;
-  }
-
-  protected void addChainConfiguration(ChainConfiguration configuration) {
-    /*
-     * This is stored in a HashMap to ensure uniqueness between chains without
-     * changing NodeConfiguration equals or toHash methods
-     */
-    chainsConfig.put(configuration.getChain(), configuration);
-  }
-
-  public void markAsSynced() {
-    serialzedState = toJSON();
+    setDirty(isObjectEqual(rpc, getRpc()));
+    data.put("rpc", rpc);
   }
 
   public boolean isSynced() {
-    return toJSON().equals(serialzedState);
+    return !isDirty() && registryConfiguration.isSynced();
   }
 
-  @Override
+  public void markAsSynced() {
+    dirty = false;
+    registryConfiguration.markAsSynced();
+  }
+
   public String toString() {
     StringBuilder sb = new StringBuilder("{");
 
@@ -265,9 +241,6 @@ public class ClientConfiguration implements Configuration {
     if (isKeepIn3() != null) {
       JSON.appendKey(sb, "keepIn3", isKeepIn3());
     }
-    if (isStats() != null) {
-      JSON.appendKey(sb, "stats", isStats());
-    }
     if (isUseHttp() != null) {
       JSON.appendKey(sb, "useHttp", isUseHttp());
     }
@@ -290,22 +263,30 @@ public class ClientConfiguration implements Configuration {
       JSON.appendKey(sb, "rpc", getRpc());
     }
 
-    if (!chainsConfig.isEmpty()) {
-      StringBuilder sb2 = new StringBuilder("{");
-      for (ChainConfiguration chainConfig : chainsConfig.values()) {
-        JSON.appendKey(sb2, JSON.asString(chainConfig.getChain()), chainConfig);
-      }
-
-      sb2.setCharAt(sb2.length() - 1, '}');
-      JSON.appendKey(sb, "nodes", sb2);
-    }
-
+    JSON.appendKey(sb, "nodeRegistry", getNodeRegistry());
     sb.setCharAt(sb.length() - 1, '}');
     return sb.toString();
   }
 
   @Override
   public String toJSON() {
-    return JSON.toJson(this);
+    return this.toString();
+  }
+
+  private boolean isDirty() {
+    return dirty;
+  }
+
+  private void setDirty(boolean dirty) {
+    this.dirty = isDirty() || dirty;
+  }
+
+  private boolean isObjectEqual(Object obj1, Object obj2) {
+    return obj1 == obj2 || (obj1 != null && obj1.equals(obj2));
+  }
+
+  private void setNodeRegistry() {
+    JSON data                  = (JSON) this.data.getObject("nodeRegistry");
+    this.registryConfiguration = new NodeRegistryConfiguration(data);
   }
 }

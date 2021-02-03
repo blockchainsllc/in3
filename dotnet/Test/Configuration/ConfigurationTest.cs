@@ -21,23 +21,22 @@ namespace Test.Configuration
         public void ReadsDefaultConfiguration()
         {
             ClientConfiguration clientConfig = _client.Configuration;
-            Assert.That(clientConfig.ChainsConfiguration.Values.Count, Is.AtLeast(1));
+            Assert.IsNotNull(clientConfig.NodeRegistry);
         }
 
         [Test]
         public void ObjectHierarchy()
         {
-            string nodeConfigOutputKey = "nodes";
+            string nodeConfigOutputKey = "nodeRegistry";
 
             ClientConfiguration clientConfig = _client.Configuration;
 
-            ChainConfiguration chainConfig = new ChainConfiguration(Chain.Goerli, clientConfig)
-            {
-                NeedsUpdate = false,
-                RegistryId = "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb",
-                Contract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab",
-                WhiteListContract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
-            };
+            NodeRegistryConfiguration nodeRegistryConfig = clientConfig.NodeRegistry;
+
+            nodeRegistryConfig.NeedsUpdate = false;
+            nodeRegistryConfig.RegistryId = "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb";
+            nodeRegistryConfig.Contract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab";
+            nodeRegistryConfig.WhiteListContract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab";
 
             string jsonConfiguration1 = clientConfig.ToJson();
 
@@ -46,7 +45,7 @@ namespace Test.Configuration
 
             Assert.That(propertiesName.Contains(nodeConfigOutputKey));
 
-            NodeConfiguration nodeListConfig = new NodeConfiguration(chainConfig)
+            NodeConfiguration nodeListConfig = new NodeConfiguration(nodeRegistryConfig)
             {
                 Props = 0x0,
                 Url = "scheme://userinfo@host:port/path?query#fragment",
@@ -58,8 +57,7 @@ namespace Test.Configuration
 
             Assert.DoesNotThrow(() => jsonObject2
                 .RootElement
-                .GetProperty(nodeConfigOutputKey)
-                .GetProperty("0x5"));
+                .GetProperty(nodeConfigOutputKey));
         }
 
         [Test]
@@ -90,16 +88,16 @@ namespace Test.Configuration
         {
             ClientConfiguration config = _client.Configuration;
 
-            ChainConfiguration nodeConfig = new ChainConfiguration(Chain.Goerli, config)
+            NodeRegistryConfiguration chainConfig = config.NodeRegistry;
+
+            chainConfig.NeedsUpdate = false;
+            chainConfig.RegistryId = "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb";
+            chainConfig.Contract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab";
+            chainConfig.WhiteListContract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab";
+            chainConfig.WhiteList = new[]
             {
-                NeedsUpdate = false,
-                RegistryId = "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb",
-                Contract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab",
-                WhiteListContract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab",
-                WhiteList = new[] {
-                    "0x0123456789012345678901234567890123456789",
-                    "0x1234567890123456789012345678901234567890"
-                }
+                "0x0123456789012345678901234567890123456789",
+                "0x1234567890123456789012345678901234567890"
             };
 
             Assert.ThrowsAsync<ArgumentException>(() => _client.Eth1.GetGasPrice());

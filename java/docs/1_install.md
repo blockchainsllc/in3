@@ -44,60 +44,50 @@ You will find the `in3.jar` in the build/lib - folder.
 
 In order to use Incubed in android simply follow these steps:
 
-Step 1: Create a top-level CMakeLists.txt in android project inside app folder and link this to gradle. Follow the steps using this [guide](https://developer.android.com/studio/projects/gradle-external-native-builds) on howto link.
 
-The Content of the `CMakeLists.txt` should look like this:
-
-```sh
-
-cmake_minimum_required(VERSION 3.4.1)
-
-# turn off FAST_MATH in the evm.
-ADD_DEFINITIONS(-DIN3_MATH_LITE)
-
-# loop through the required module and cretae the build-folders
-foreach(module 
-  c/src/core 
-  c/src/verifier/eth1/nano 
-  c/src/verifier/eth1/evm 
-  c/src/verifier/eth1/basic 
-  c/src/verifier/eth1/full 
-  java/src
-  c/src/third-party/crypto 
-  c/src/third-party/tommath 
-  c/src/api/eth1)
-        file(MAKE_DIRECTORY in3-c/${module}/outputs)
-        add_subdirectory( in3-c/${module} in3-c/${module}/outputs )
-endforeach()
-
-```
-
-Step 2: clone [in3-c](https://github.com/slockit/in3-c.git) into the `app`-folder or use this script to clone and update in3:
+## How to use IN3 in android project.
+1. clone [in3](https://github.com/blockchainsllc/in3.git) in your project (or use script to update it):
 
 ```sh
 #!/usr/bin/env sh
-
-#github-url for in3-c
-IN3_SRC=https://github.com/slockit/in3-c.git
-
-cd app
-
-# if it exists we only call git pull
-if [ -d in3-c ]; then
-    cd in3-c
+if [ -f in3/CMakeLists.txt ]; then
+    cd in3
     git pull
     cd ..
 else
-# if not we clone it
-    git clone $IN3_SRC
+    git clone https://github.com/blockchainsllc/in3.git
 fi
-
-
-# copy the java-sources to the main java path
-cp -r in3-c/java/src/in3 src/main/java/
 ```
 
-Step 3: Use methods available in app/src/main/java/in3/IN3.java from android activity to access IN3 functions.
+2. add the native-build section and the additional source-set in your `build.gradle` in the app-folder inside the `android`-section:
+
+```js
+    externalNativeBuild {
+        cmake {
+            path file('in3/CMakeLists.txt')
+        }
+    }
+    sourceSets {
+      main.java.srcDirs += ['../in3/java/src']
+    }
+```
+
+if you want to configure which modules should be included, you can also specify the `externalNativeBuild` in the `defaultConfig':` 
+
+```js
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                arguments "-DBTC=OFF", "-DZKSYNC=OFF"
+            }
+        }
+    }
+
+```
+
+For possible options, see https://in3.readthedocs.io/en/develop/api-c.html#cmake-options
+
+Now you can use any Functions as defined here https://in3.readthedocs.io/en/develop/api-java.html
 
 
 Here is example how to use it:

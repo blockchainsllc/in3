@@ -1,5 +1,6 @@
 import ctypes as c
 
+from in3.libin3.enum import PluginAction
 from in3.libin3.rpc_api import libin3_in3_req_add_response
 
 
@@ -13,6 +14,20 @@ class NativeRequest(c.Structure):
                 ("results", c.c_void_p),
                 ("timeout", c.c_uint32),
                 ("times", c.c_uint32)]
+    """
+    /** request-object. 
+     * 
+     * represents a RPC-request
+     */
+    typedef struct in3_request {
+      char*           payload;  /**< the payload to send */
+      char**          urls;     /**< array of urls */
+      uint_fast16_t   urls_len; /**< number of urls */
+      struct in3_ctx* ctx;      /**< the current context */
+      void*           cptr;     /**< a custom ptr to hold information during */
+      uint32_t        wait;     /**< time in ms to wait before sending out the request */
+    } in3_request_t;
+    """
 
 
 class NativeResponse(c.Structure):
@@ -23,6 +38,20 @@ class NativeResponse(c.Structure):
     typedef struct in3_response {
       sb_t error;  /**< a stringbuilder to add any errors! */
       sb_t result; /**< a stringbuilder to add the result */
+    """
+    """
+        /**
+         * adds a response for a request-object.
+         * This function should be used in the transport-function to set the response.
+         */
+        NONULL void in3_req_add_response(
+            in3_request_t* req,      /**< [in]the the request */
+            int            index,    /**< [in] the index of the url, since this request could go out to many urls */
+            bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+            const char*    data,     /**<  the data or the the string*/
+            int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+            uint32_t       time      /**<  the time this request took in ms or 0 if not possible (it will be used to calculate the weights)*/
+        );
     """
 
 
@@ -97,10 +126,17 @@ def factory(transport_fn):
     Decorates a transport function augmenting its capabilities for native interoperability
     """
 
-    @c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
-    def new(native_payload: NativeRequest or NativeResponse):
-        request = In3Request(native_payload)
-        response = In3Response(native_payload)
-        return transport_fn(request, response)
+    @c.CFUNCTYPE(c.c_int32, c.c_void_p, c.c_int32, c.POINTER(NativeRequest))
+    def new(plugin_data, action: PluginAction, plugin_ctx: NativeRequest or NativeResponse):
+        request = In3Request(plugin_ctx)
+        response = In3Response(plugin_ctx)
+        if PluginAction(action) == PluginAction.PLGN_ACT_TRANSPORT_SEND:
+            return transport_fn(request, response)
+        elif PluginAction(action) == PluginAction.PLGN_ACT_TRANSPORT_RECEIVE:
+            return transport_fn(request, response)
+        elif PluginAction(action) == PluginAction.PLGN_ACT_TRANSPORT_CLEAN:
+            return transport_fn(request, response)
+        else:
+            raise Exception("In3 Transport Plugin: Unknown action: ", action)
 
     return new

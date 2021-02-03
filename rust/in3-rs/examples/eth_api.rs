@@ -15,7 +15,7 @@ fn main() -> In3Result<()> {
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
     eth_api
         .client()
-        .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
+        .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
 
     // eth_getStorageAt
     let address: Address = from_str(r#""0x0123456789012345678901234567890123456789""#)?;

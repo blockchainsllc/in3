@@ -250,7 +250,7 @@ in3_ret_t eth_ledger_set_signer_txn(in3_t* in3, uint8_t* bip_path) {
   eth_ledger_get_public_addr(bip32, public_key);
   keccak(bytes(public_key + 1, 64), sdata);
   memcpy(data->adr, sdata + 12, 20);
-  return plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign_txn, data, false);
+  return in3_plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_ledger_sign_txn, data, false);
 }
 
 void set_command_params_eth() {

@@ -32,45 +32,30 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * ZKSync API.
- * 
- * This header-file registers zksync api functions.
- * */
-
 #ifndef ZKSYNC_HELPER_H
 #define ZKSYNC_HELPER_H
 
 #include "zksync.h"
 
-void set_quoted_address(char* c, uint8_t* address);
+in3_ret_t  zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee); /**< resolves the fees */
+void       set_quoted_address(char* c, uint8_t* address);                                                                                       /**< writes the address as hex into the string.*/
+d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index);                                                                            /**< returns the token either by index or key depending on the token-type */
+in3_ret_t  send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result);                     /**< send a request to the zksync-server*/
+in3_ret_t  zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account);                                                        /**< resolves the account */
+in3_ret_t  zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx);                                                                        /**< updates the account data from the server to the config*/
+in3_ret_t  zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id);                                                  /**< resolves the account_id*/
+in3_ret_t  zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key);                                                       /**< resolves the sync key*/
+in3_ret_t  zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main);                                                         /**< resolves the main contract */
+in3_ret_t  zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce);                                       /**< resolves the nonce */
+in3_ret_t  resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst);                             /**< resolve token list */
+in3_ret_t  zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash);                                                 /**< get pubkeyhash */
 
-in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result);
-
-/**
- * resolves the account address based on the config 
- */
-in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account);
-
-in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx);
-
-in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id);
-
-in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key);
-
-in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main);
-
-in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce);
-
-in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
-#ifdef ZKSYNC_256
-                         uint8_t* fee
-#else
-                         uint64_t* fee
-#endif
-);
-
-in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst);
+#define CHECK_PARAM_TOKEN(ctx, params, index)                                                                           \
+  switch (d_type(d_get_at(params, index))) {                                                                            \
+    case T_STRING: break;                                                                                               \
+    case T_BYTES:                                                                                                       \
+      if (d_len(d_get_at(params, index)) == 20) break;                                                                  \
+    default: return ctx_set_error(ctx, "argument at index " #index " must be a token name or and address", IN3_EINVAL); \
+  }
 
 #endif

@@ -5,7 +5,7 @@ use in3::transport::MockTransport;
 
 fn main() {
     let mut c = Client::new(chain::MAINNET);
-    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    let _ = c.configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#);
     c.set_transport(Box::new(MockTransport {
         responses: vec![(
             "eth_blockNumber",

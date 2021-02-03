@@ -35,6 +35,7 @@
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
@@ -56,6 +57,7 @@
                         "Ethereum Signed Message:\n%u"
 
 static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_STRING)
   in3_ret_t  ret   = IN3_OK;
   bytes_t    data  = {0};
   char*      error = NULL;
@@ -74,12 +76,13 @@ static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 }
 
 static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_STRING)
+  CHECK_PARAM_TYPE(ctx->ctx, params, 1, T_BYTES)
+  CHECK_PARAM(ctx->ctx, params, 1, val->len % 32 == 0)
   char*       error = NULL;
   json_ctx_t* res   = NULL;
   char*       sig   = d_get_string_at(params, 0);
   bytes_t     data  = d_to_bytes(d_get_at(params, 1));
-  if (!sig) return ctx_set_error(ctx->ctx, "missing signature", IN3_EINVAL);
-  if (!data.data) return ctx_set_error(ctx->ctx, "missing data", IN3_EINVAL);
   if (d_len(params) > 2) return ctx_set_error(ctx->ctx, "too many arguments (only 2 alllowed)", IN3_EINVAL);
 
   abi_sig_t* req = abi_sig_create(sig, &error);
@@ -94,11 +97,12 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 }
 
 static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  CHECK_PARAM_ADDRESS(ctx->ctx, params, 0)
   if (d_len(params) > 2) return ctx_set_error(ctx->ctx, "must be max 2 arguments", IN3_EINVAL);
   char     result[45];
   bytes_t* adr = d_get_bytes_at(params, 0);
   if (!adr || adr->len != 20) return ctx_set_error(ctx->ctx, "the address must have 20 bytes", IN3_EINVAL);
-  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->ctx->client->chain_id : 0, result + 1);
+  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->ctx->client->chain.chain_id : 0, result + 1);
   if (res) return ctx_set_error(ctx->ctx, "Could not create the checksum address", res);
   result[0]  = '\'';
   result[43] = '\'';
@@ -386,7 +390,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     return ctx_set_error(ctx->ctx, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
   bytes_t sig_bytes = sc.signature;
-  if (sc.signature.len == 65)
+  if (sc.signature.len == 65 && sc.signature.data[64] < 2)
     sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
@@ -474,26 +478,27 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   char*                 method  = d_get_stringk(rpc_ctx->request, K_METHOD);
   d_token_t*            params  = d_get(rpc_ctx->request, K_PARAMS);
 
-  if (strcmp(method, "in3_abiEncode") == 0) return in3_abiEncode(rpc_ctx, params);
-  if (strcmp(method, "in3_abiDecode") == 0) return in3_abiDecode(rpc_ctx, params);
-  if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(rpc_ctx, params);
-  if (strcmp(method, "in3_ens") == 0) return in3_ens(rpc_ctx, params);
-  if (strcmp(method, "web3_sha3") == 0) return in3_sha3(rpc_ctx, params);
-  if (strcmp(method, "in3_toWei") == 0) return in3_toWei(rpc_ctx, params);
-  if (strcmp(method, "in3_config") == 0) return in3_config(rpc_ctx, params);
-  if (strcmp(method, "in3_getConfig") == 0) return in3_getConfig(rpc_ctx);
-  if (strcmp(method, "in3_pk2address") == 0) return in3_pk2address(rpc_ctx, params);
-  if (strcmp(method, "in3_pk2public") == 0) return in3_pk2address(rpc_ctx, params);
-  if (strcmp(method, "in3_ecrecover") == 0) return in3_ecrecover(rpc_ctx, params);
-  if (strcmp(method, "in3_signData") == 0) return in3_sign_data(rpc_ctx, params);
-  if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(rpc_ctx);
-  if (strcmp(method, "in3_decryptKey") == 0) return in3_decryptKey(rpc_ctx, params);
-  if (strcmp(method, "in3_prepareTx") == 0) return in3_prepareTx(rpc_ctx, params);
-  if (strcmp(method, "in3_signTx") == 0) return in3_signTx(rpc_ctx, params);
+  TRY_RPC("in3_abiEncode", in3_abiEncode(rpc_ctx, params))
+  TRY_RPC("in3_abiDecode", in3_abiDecode(rpc_ctx, params))
+  TRY_RPC("in3_checksumAddress", in3_checkSumAddress(rpc_ctx, params))
+  TRY_RPC("in3_ens", in3_ens(rpc_ctx, params))
+  TRY_RPC("web3_sha3", in3_sha3(rpc_ctx, params))
+  TRY_RPC("keccak", in3_sha3(rpc_ctx, params))
+  TRY_RPC("in3_toWei", in3_toWei(rpc_ctx, params))
+  TRY_RPC("in3_config", in3_config(rpc_ctx, params))
+  TRY_RPC("in3_getConfig", in3_getConfig(rpc_ctx))
+  TRY_RPC("in3_pk2address", in3_pk2address(rpc_ctx, params))
+  TRY_RPC("in3_pk2public", in3_pk2address(rpc_ctx, params))
+  TRY_RPC("in3_ecrecover", in3_ecrecover(rpc_ctx, params))
+  TRY_RPC("in3_signData", in3_sign_data(rpc_ctx, params))
+  TRY_RPC("in3_cacheClear", in3_cacheClear(rpc_ctx))
+  TRY_RPC("in3_decryptKey", in3_decryptKey(rpc_ctx, params))
+  TRY_RPC("in3_prepareTx", in3_prepareTx(rpc_ctx, params))
+  TRY_RPC("in3_signTx", in3_signTx(rpc_ctx, params))
 
   return IN3_EIGNORE;
 }
 
 in3_ret_t in3_register_eth_api(in3_t* c) {
-  return plugin_register(c, PLGN_ACT_RPC_HANDLE, handle_intern, NULL, false);
+  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE, handle_intern, NULL, false);
 }

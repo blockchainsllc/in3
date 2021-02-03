@@ -1,4 +1,4 @@
-# API Reference WASM
+# API Reference TS/JS
 
 Even though the IN3 client is written in C, we are using emscripten to build wasm. Together with some binding-code IN3 runs in any Javascript-Runtime.
 Using WASM gives us 3 important features:

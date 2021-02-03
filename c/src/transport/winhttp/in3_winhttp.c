@@ -183,5 +183,5 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
 }
 
 in3_ret_t in3_register_winhttp(in3_t* c) {
-  return plugin_register(c, PLGN_ACT_TRANSPORT, send_winhttp, NULL, true);
+  return in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_winhttp, NULL, true);
 }

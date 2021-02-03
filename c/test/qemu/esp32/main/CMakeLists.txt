@@ -8,6 +8,8 @@ ADD_DEFINITIONS(-DETH_FULL)
 ADD_DEFINITIONS(-DIN3_LIB)
 ADD_DEFINITIONS(-DEVM_GAS)
 ADD_DEFINITIONS(-DLOGGING)
+ADD_DEFINITIONS(-DNODESELECT_DEF)
+ADD_DEFINITIONS(-DNODESELECT_DEF_WL)
 ADD_DEFINITIONS(-DIN3_EXPORT_TEST=static)
 ADD_DEFINITIONS(-DIN3_IMPORT_TEST=)
 ADD_DEFINITIONS(-DESP_IDF)
@@ -19,6 +21,7 @@ add_subdirectory(${IN3_SRC}/src/third-party/tommath build_tommath)
 add_subdirectory(${IN3_SRC}/src/third-party/crypto build_crypto)
 
 add_subdirectory(${IN3_SRC}/src/signer/pk-signer build_signer) 
+add_subdirectory(${IN3_SRC}/src/nodeselect build_nodeselect)
 add_subdirectory(${IN3_SRC}/src/verifier/eth1/basic build_basic)
 add_subdirectory(${IN3_SRC}/src/verifier/eth1/nano build_nano)
 add_subdirectory(${IN3_SRC}/src/verifier/eth1/full build_full)
@@ -36,6 +39,7 @@ set(IN3_LIBS
         $<TARGET_OBJECTS:eth_basic_o> 
         $<TARGET_OBJECTS:eth_nano_o>
         $<TARGET_OBJECTS:eth_full_o>
+        $<TARGET_OBJECTS:nodeselect_def_o>
         $<TARGET_OBJECTS:evm_o>
         $<TARGET_OBJECTS:api_utils_o>
 )

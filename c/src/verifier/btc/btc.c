@@ -124,7 +124,7 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
     if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash, tmp, NULL, target, NULL))) return ret; // check the headers proof of work and set the new parent hash
   }
 
-  return final_blocks.len == p ? IN3_OK : vc_err(vc, "too many final headers");
+  return final_blocks.len >= p ? IN3_OK : vc_err(vc, "too many final headers");
 }
 
 in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* block_hash) {
@@ -467,7 +467,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   }
   if (strcmp(method, "getrawtransaction") == 0) {
     d_token_t* tx_id      = d_get_at(params, 0);
-    bool       json       = d_len(params) < 2 ? true : d_get_int_at(params, 1);
+    bool       json       = d_len(params) < 2 ? d_type(vc->result) == T_OBJECT : d_get_int_at(params, 1);
     d_token_t* block_hash = d_get_at(params, 2);
     if (!tx_id || d_type(tx_id) != T_STRING || d_len(tx_id) != 64) return vc_err(vc, "Invalid tx_id");
     bytes32_t tx_hash_bytes;
@@ -518,7 +518,7 @@ in3_ret_t in3_register_btc(in3_t* c) {
   tc->max_daps          = 20;
   tc->max_diff          = 10;
   tc->dap_limit         = 20;
-  return plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
 }
 /*
 static void print_hex(char* prefix, uint8_t* data, int len) {

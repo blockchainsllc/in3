@@ -40,26 +40,30 @@
 #endif
 
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/cache.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/debug.h"
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 #include "../test_utils.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
+#include <nodeselect/nodeselect_def.h>
 #include <stdio.h>
 #include <unistd.h>
 
 void test_get_config() {
   in3_register_default(in3_register_eth_nano);
   in3_register_default(in3_register_eth_api);
-  in3_t* c      = in3_for_chain(CHAIN_ID_GOERLI);
-  char * result = NULL, *error = NULL;
+  in3_register_default(in3_register_nodeselect_def);
+  in3_t* c = in3_for_chain(0);
+  in3_configure(c, "{\"chainId\":\"0x5\"}");
+  char *result = NULL, *error = NULL;
   in3_client_rpc(c, "in3_getConfig", "[]", &result, &error);
   if (error) printf("ERROR: %s\n", error);
   TEST_ASSERT_NULL(error);
-  TEST_ASSERT_EQUAL_STRING("{\"autoUpdateList\":true,\"chainId\":5,\"signatureCount\":0,\"finality\":0,\"includeCode\":false,\"bootWeights\":true,\"maxAttempts\":7,\"keepIn3\":false,\"stats\":true,\"useBinary\":false,\"useHttp\":false,\"maxVerifiedHashes\":5,\"timeout\":10000,\"minDeposit\":0,\"nodeProps\":0,\"nodeLimit\":0,\"proof\":\"standard\",\"requestCount\":1,\"nodes\":{\"0x5\":{\"contract\":\"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\",\"registryId\":\"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\",\"needsUpdate\":true,\"avgBlockTime\":15}}}", result);
+  TEST_ASSERT_EQUAL_STRING(result,
+                           "{\"autoUpdateList\":true,\"chainId\":5,\"signatureCount\":0,\"finality\":0,\"includeCode\":false,\"bootWeights\":true,\"maxAttempts\":7,\"keepIn3\":false,\"stats\":true,\"useBinary\":false,\"useHttp\":false,\"maxVerifiedHashes\":5,\"timeout\":10000,\"minDeposit\":0,\"nodeProps\":0,\"nodeLimit\":0,\"proof\":\"standard\",\"requestCount\":1,\"nodeRegistry\":{\"contract\":\"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\",\"registryId\":\"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\",\"needsUpdate\":true,\"avgBlockTime\":15}}");
   _free(result);
   in3_free(c);
 }

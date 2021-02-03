@@ -39,8 +39,15 @@
 #ifndef IN3_ERROR_H
 #define IN3_ERROR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /** depreacted-attribute */
 #define DEPRECATED __attribute__((deprecated))
+
+/** JSON-RPC errors */
+#define JSON_RPC_ERR_INTERNAL (-32603) /** Internal error (probably offline signer node) */
+#define JSON_RPC_ERR_FINALITY (-16001) /** Block is not final so node refused to sign */
 
 /** ERROR types  used as return values.
  * 
@@ -107,5 +114,8 @@ typedef enum {
  * These strings are constants and do not need to be freed.
  */
 char* in3_errmsg(in3_ret_t err /**< the error code */);
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IN3_ERROR_H

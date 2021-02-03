@@ -56,7 +56,8 @@ bagl_ui_text_review_nanos_button(unsigned int button_mask,
     case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
       if (!display_text_part()) {
         ui_approval();
-      } else {
+      }
+      else {
         UX_REDISPLAY();
       }
       break;

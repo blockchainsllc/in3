@@ -9,6 +9,10 @@
 #ifndef LOG_H
 #define LOG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "colors.h"
 #include "utils.h"
 #include <stdarg.h>
@@ -89,4 +93,7 @@ int             in3_log_is_prefix_enabled_();
 /* in3_log() function can be made thread-safe using the in3_log_set_lock() function */
 void in3_log_(in3_log_level_t level, const char* file, const char* function, int line, const char* fmt, ...);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,7 +1,6 @@
 #include "recorder.h"
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/nodelist.h"
 #include <errno.h>
 #include <math.h>
 #include <stdio.h>
@@ -140,10 +139,9 @@ static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t actio
 
 static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req   = plugin_ctx;
-  in3_chain_t*   chain = in3_get_chain(req->ctx->client);
-  node_match_t*  m     = req->ctx->nodes;
-  in3_ret_t      res   = rec.transport(NULL, action, plugin_ctx);
+  in3_request_t* req = plugin_ctx;
+  node_match_t*  m   = req->ctx->nodes;
+  in3_ret_t      res = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     fprintf(rec.f, ":: request ");
     char* rpc = d_get_stringk(d_get(req->ctx->requests[0], K_IN3), K_RPC);
@@ -151,7 +149,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
       fprintf(rec.f, "%s ", rpc);
     else {
       for (int i = 0; m; i++, m = m->next)
-        fprintf(rec.f, "%s ", ctx_get_node(chain, m)->url);
+        fprintf(rec.f, "%s ", m->url);
     }
     fprintf(rec.f, "\n     %s\n\n", req->payload);
     fflush(rec.f);
@@ -162,7 +160,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
     int   l   = rpc ? 1 : ctx_nodes_len(m);
     for (int i = 0; i < l; i++, m = m ? m->next : NULL) {
       in3_response_t* r = req->ctx->raw_response + i;
-      if (m) rpc = ctx_get_node(chain, m)->url;
+      if (m) rpc = m->url;
       if (r->time) {
         fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->ctx->requests[0], K_METHOD), i, rpc, r->state, r->time);
         char* data = format_json(r->data.data ? r->data.data : "");

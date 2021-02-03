@@ -275,10 +275,10 @@ integration_longrun:
     strategy: depend
     branch: develop
 
-integration_browser:
-  stage: integration
-  extends: .only_release
-  trigger:
-    project: in3/ts/browser-test
-    strategy: depend
-    branch: develop
+#integration_browser:
+#  stage: integration
+#  extends: .only_release
+#  trigger:
+#    project: in3/ts/browser-test
+#    strategy: depend
+#    branch: develop

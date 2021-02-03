@@ -1,12 +1,12 @@
 #pragma once
 
-#define CX_CURVE_256K1 CX_CURVE_SECP256K1
-#define HASH_LEN 0x20
+#define CX_CURVE_256K1     CX_CURVE_SECP256K1
+#define HASH_LEN           0x20
 #define BIP32_PATH_LEN_MAX 0x14
 #define MAX_CHARS_PER_LINE 49
-#define DEFAULT_FONT BAGL_FONT_OPEN_SANS_LIGHT_16px | BAGL_FONT_ALIGNMENT_LEFT
-#define TEXT_HEIGHT 15
-#define TEXT_SPACE 4
+#define DEFAULT_FONT       BAGL_FONT_OPEN_SANS_LIGHT_16px | BAGL_FONT_ALIGNMENT_LEFT
+#define TEXT_HEIGHT        15
+#define TEXT_SPACE         4
 
 typedef unsigned char uchar_t;
 
