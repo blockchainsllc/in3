@@ -644,7 +644,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
       MUTEX_UNLOCK(m, re);
       MUTEX_LOCK(data->mutex, data->reentrance)
 #endif
-      MUTEX_RETURN(data->nodelist ? IN3_OK : chain_change(data, c))
+      MUTEX_RETURN(data->nodelist ? IN3_OK : chain_change(w->data, c))
     }
     case PLGN_ACT_GET_DATA: {
       in3_get_data_ctx_t* pctx = plugin_ctx;
