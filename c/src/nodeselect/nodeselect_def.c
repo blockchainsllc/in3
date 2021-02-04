@@ -630,12 +630,21 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_NL_OFFLINE:
       MUTEX_RETURN(handle_offline(data, plugin_ctx))
     case PLGN_ACT_CHAIN_CHANGE: {
+#ifdef THREADSAFE
+      in3_mutex_t m  = data->mutex;
+      uint32_t    re = data->reentrance;
+#endif
       data->ref_counter--;
       if (data->ref_counter == 0) chain_free(data);
       in3_nodeselect_wrapper_t* w = plugin_data;
       in3_t*                    c = plugin_ctx;
       w->data                     = assign_nodelist(c->chain.chain_id);
-      MUTEX_RETURN(chain_change(w->data, c))
+#ifdef THREADSAFE
+      data = w->data;
+      MUTEX_UNLOCK(m, re);
+      MUTEX_LOCK(data->mutex, data->reentrance)
+#endif
+      MUTEX_RETURN(data->nodelist ? IN3_OK : chain_change(data, c))
     }
     case PLGN_ACT_GET_DATA: {
       in3_get_data_ctx_t* pctx = plugin_ctx;
