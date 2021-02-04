@@ -32,15 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_static_library(
-  NAME     zkcrypto 
-  
-  SOURCES 
-    wasm-rt-impl.c
-    zk-crypto.c
-    lib.c
-  DEPENDS 
-    core
-)
-
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-value -Wno-unused-function")
+if(ZKCRYPTO_LIB)
+  add_subdirectory(rust)
+else()
+  add_subdirectory(wasm)
+endif()

@@ -39,6 +39,11 @@
 
 #ifndef in3_eth_rpc_h__
 #define in3_eth_rpc_h__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -57,5 +62,9 @@ typedef struct v_result {
  * verifies a request and responses for a valid data structure.
  */
 verify_res_t verify_rpc_structure(d_token_t* request, d_token_t* response);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // in3_eth_rpc_h__

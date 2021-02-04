@@ -49,7 +49,7 @@ public class TempStorageProvider implements StorageProvider {
   private static String in3Prefix = "in3_cache_";
 
   @Override
-  public byte[] getItem(String key) {
+  public synchronized byte[] getItem(String key) {
 
     File f = new File(tmp, in3Prefix + key);
     if (f.exists()) {
@@ -75,7 +75,7 @@ public class TempStorageProvider implements StorageProvider {
   }
 
   @Override
-  public void setItem(String key, byte[] content) {
+  public synchronized void setItem(String key, byte[] content) {
     try {
       FileOutputStream os = new FileOutputStream(new File(tmp, in3Prefix + key));
       os.write(content);

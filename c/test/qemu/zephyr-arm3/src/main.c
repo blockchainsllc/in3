@@ -36,9 +36,11 @@
 #include "client/plugin.h"
 #include "eth_api.h"   //wrapper for easier use
 #include "eth_basic.h" // the full ethereum verifier containing the EVM
+#include "nodeselect_def.h"
 #include "receipt.h"
 #include "util/log.h"
 #include "util/mem.h"
+#include "util/stringbuilder.h"
 /**
  * In3 Setup and usage
  * **/
@@ -66,24 +68,16 @@ in3_ret_t transport_mock(void* plugin_data, in3_plugin_act_t action, void* plugi
   return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 
-in3_t* init_in3(plgn_register custom_transport, chain_id_t chain) {
+in3_t* init_in3_goerli(in3_plugin_act_fn custom_transport) {
   in3_t* in3 = NULL;
   //int    err;
-  in3_log_set_quiet(0);
-  in3_log_set_level(LOG_DEBUG);
   in3_register_default(in3_register_eth_basic);
-  in3 = in3_for_chain(chain);
+  in3_register_default(in3_register_nodeselect_def);
+  in3 = in3_for_chain(0x5);
   if (custom_transport)
-    plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
-  in3->request_count = 1; // number of requests to sendp
-  in3->max_attempts  = 1;
-  in3->request_count = 1; // number of requests to sendp
-  in3->chain_id      = chain;
-  in3->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY;
-  for (int i = 0; i < in3->chains_length; i++) {
-    _free(in3->chains[i].nodelist_upd8_params);
-    in3->chains[i].nodelist_upd8_params = NULL;
-  }
+    in3_plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
+  in3->flags = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY;
+  in3_configure(in3, "{\"chainId\":\"0x5\",\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
   return in3;
 }
 
@@ -98,7 +92,7 @@ static inline void _exit_qemu() {
 
 void main() {
   // the hash of transaction whose receipt we want to get
-  in3_t*    in3 = init_in3(transport_mock, 0x5);
+  in3_t*    in3 = init_in3_goerli(transport_mock);
   bytes32_t tx_hash;
   hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
   // get the tx receipt by hash

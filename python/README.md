@@ -27,8 +27,8 @@ print(block_number) # Mainnet's block number
 
 in3_client  # incubed network api
 in3_client.eth  # ethereum api
-in3_client.account  # ethereum account api
-in3_client.contract  # ethereum smart-contract api
+in3_client.eth.account  # ethereum account api
+in3_client.eth.contract  # ethereum smart-contract api
 ```
 
 #### Developing & Tests

@@ -64,13 +64,9 @@ public class IN3 {
   private static IN3Transport transport = new IN3DefaultTransport();
   private ClientConfiguration config;
 
-  @Deprecated
-  public IN3() {
-    ptr = init(0);
-  }
-
   private IN3(long chainAlias) {
-    ptr = init(chainAlias);
+    ptr         = init(chainAlias);
+    this.config = new ClientConfiguration(this.getDefaultConfig());
   }
 
   /**
@@ -285,6 +281,8 @@ public class IN3 {
   private native long init(long chainId);
 
   private native void initcache();
+
+  private native Object getDefaultConfig();
 
   /**
    * returns the current incubed version.

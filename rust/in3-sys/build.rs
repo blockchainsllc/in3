@@ -76,8 +76,10 @@ fn main() {
         .define("TRANSPORTS", "OFF")
         .define("USE_CURL", "OFF")
         .define("CMD", "OFF")
-        .define("DEV_NO_INTRN_PTR", "OFF")
-        .define("DEV_NO_INC_RPC_ID", "OFF")
+        .define("PLGN_CLIENT_DATA", "ON")
+        .define("RECORDER", "ON")
+        .define("MULTISIG", "ON")
+        .define("ZKSYNC", "ON")
         .build_target("in3_bundle")
         .build();
 

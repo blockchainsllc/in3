@@ -1,0 +1,95 @@
+:: cmd in3 -zks http://localhost:3030 -c http://localhost:8545 -fi zksync_withdraw_c2.txt -zka 0x8f6883b78d71ac2871f4b01d6fc5e047ccecfd02 -zkat create2 -zsk 0xd818beb367732ed0bc2ada1750fcce827040edf96ea3cdacf420b5c3cb1456df zksync_withdraw 0xce93a4561fe6445653a8f6e4ff73c971ce1e9eec 0.05eth ETH
+
+:: time 1611139373
+
+:: cache nodelist_1_0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f 0
+
+:: cache nodelist_5_0x5f51e413581dd76759e9eed51e63d14c8d1379c8 0
+
+:: cache nodelist_2000_0xa93b57289070550c82edb1106e12bb37138948b8 0
+
+:: cache nodelist_153_0xc2c05fbfe76ee7748ae5f5b61b57a46cc4061c32 0
+
+:: cache nodelist_246_0x039562872008f7a76674a6e7842804f0ad37cb13 0
+
+:: cache nodelist_17_0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9 0
+
+:: cache zksync_ac8f6883b78d71ac2871f4b01d6fc5e047ccecfd02 1
+00000007
+
+:: cache zksync_tokens_69f5 1
+010044414900000000001264e9e65f1cee1fa5071d0075cd211e7b7274a444000300424154000000000012a41da0108ab9875d60169b8a9cd4c8a13b3b2ef20000004554480000000000120000000000000000000000000000000000000000000200774254430000000008cb18f9f65af976000931ca251741068e6aabbd2f0004004d4c545400000000124368e824754a7de8d8a82db5725c48a1e191cbc600
+
+:: request http://localhost:3030 
+     [{"id":2,"jsonrpc":"2.0","method":"account_info","params":["0x8f6883b78d71ac2871f4b01d6fc5e047ccecfd02"]}]
+
+:: response account_info 0 http://localhost:3030 0 255
+[{
+  "jsonrpc":"2.0",
+  "result":{
+    "address":"0x8f6883b78d71ac2871f4b01d6fc5e047ccecfd02",
+    "id":7,
+    "depositing":{
+      "balances":{
+        
+      }
+    },
+    "committed":{
+      "balances":{
+        "ETH":"1399789400000000000"
+      },
+      "nonce":2,
+      "pubKeyHash":"sync:41b98bc1f219e0defd42078d018826f4404f801c"
+    },
+    "verified":{
+      "balances":{
+        
+      },
+      "nonce":0,
+      "pubKeyHash":"sync:0000000000000000000000000000000000000000"
+    }
+  },
+  "id":2
+}]
+
+
+:: cache zksync_ac8f6883b78d71ac2871f4b01d6fc5e047ccecfd02 1
+00000007
+
+:: request http://localhost:3030 
+     [{"id":3,"jsonrpc":"2.0","method":"get_tx_fee","params":["Withdraw","0xce93a4561fe6445653a8f6e4ff73c971ce1e9eec","ETH"]}]
+
+:: response get_tx_fee 0 http://localhost:3030 0 67
+[{
+  "jsonrpc":"2.0",
+  "result":{
+    "feeType":"Withdraw",
+    "gasTxAmount":"96991",
+    "gasPriceWei":"9000000000",
+    "gasFee":"872919000000000",
+    "zkpFee":"32336663980566",
+    "totalFee":"905000000000000"
+  },
+  "id":3
+}]
+
+
+:: cache zksync_ac8f6883b78d71ac2871f4b01d6fc5e047ccecfd02 1
+00000007
+
+:: request http://localhost:3030 
+     [{"id":4,"jsonrpc":"2.0","method":"tx_submit","params":[{"type":"Withdraw","accountId":7,"from":"0x8f6883b78d71ac2871f4b01d6fc5e047ccecfd02","to":"0xce93a4561fe6445653a8f6e4ff73c971ce1e9eec","token":0,"amount":50000000000000000,"fee":905000000000000,"nonce":2,"signature":{"pubKey":"7232c12955637f5fb5495ab9279bba0a0830bc48f72c6e0c380a2fe40888c8ac","signature":"fb770eb76ac492d6a01e996fdff52fee747f057579a876866cfd695de44ac6169f34e1481b31f2379f90a42f9d10825239c496c978b85d3fe42dc2303a996a03"}},{"type":"EthereumSignature","signature":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001b"}]}]
+
+:: response tx_submit 0 http://localhost:3030 0 52
+[{
+  "jsonrpc":"2.0",
+  "result":"sync-tx:bd574e8b0d8f93a205801cdb1a6a15521e089b3b927436b22a7f9a24625c407e",
+  "id":4
+}]
+
+
+:: cache zksync_ac8f6883b78d71ac2871f4b01d6fc5e047ccecfd02 1
+00000007
+
+:: result
+{"type":"Withdraw","accountId":7,"from":"0x8f6883b78d71ac2871f4b01d6fc5e047ccecfd02","to":"0xce93a4561fe6445653a8f6e4ff73c971ce1e9eec","token":0,"amount":50000000000000000,"fee":905000000000000,"nonce":2,"txHash":"sync-tx:bd574e8b0d8f93a205801cdb1a6a15521e089b3b927436b22a7f9a24625c407e"}

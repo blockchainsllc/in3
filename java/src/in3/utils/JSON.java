@@ -70,11 +70,33 @@ public class JSON {
      * 
      * Internal use only!
      */
+  public void put(String key /** the key */
+                  ,
+                  Object val /** the value object */
+  ) {
+    map.put(key(key), val);
+  }
+
+  /**
+     * adds values. This function will be called from the JNI-Iterface.
+     * 
+     * Internal use only!
+     */
   public void put(int key /** the hash of the key */
                   ,
                   Object val /** the value object */
   ) {
     map.put(key, val);
+  }
+
+  /**
+     * returns the property as boolean
+     * 
+     * @return the boolean value
+     */
+  public boolean getBoolean(String key /** the propertyName */
+  ) {
+    return asBoolean(get(key));
   }
 
   /**
@@ -85,6 +107,26 @@ public class JSON {
   public long getLong(String key /** the propertyName */
   ) {
     return asLong(get(key));
+  }
+
+  /**
+   * returns the property as BigInteger
+   * 
+   * @return the BigInteger value
+   */
+  public Object getObject(String key /** the propertyName */
+  ) {
+    return get(key);
+  }
+
+  /**
+     * returns the property as BigInteger
+     * 
+     * @return the BigInteger value
+     */
+  public Integer getInteger(String key /** the propertyName */
+  ) {
+    return asInt(get(key));
   }
 
   /**
@@ -167,6 +209,16 @@ public class JSON {
     if (o instanceof Number)
       return ((Number) o).intValue();
     return 0;
+  }
+
+  public static boolean asBoolean(Object o) {
+    if (o == null)
+      return false;
+    if (o instanceof String)
+      return Boolean.valueOf(o.toString());
+    if (o instanceof Number)
+      return !o.equals(0);
+    return false;
   }
 
   public static String asString(Object o) {

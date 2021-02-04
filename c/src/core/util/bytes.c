@@ -137,6 +137,11 @@ bytes_t* b_dup(const bytes_t* a) {
   memcpy(out->data, a->data, a->len);
   return out;
 }
+bytes_t bytes_dup(const bytes_t a) {
+  bytes_t out = bytes(_malloc(a.len), a.len);
+  memcpy(out.data, a.data, a.len);
+  return out;
+}
 bytes_t cloned_bytes(bytes_t data) {
   uint8_t* p = _malloc(data.len);
   memcpy(p, data.data, data.len);

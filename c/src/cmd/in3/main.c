@@ -56,12 +56,12 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
-#include "../../core/client/cache.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/nodelist.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
+#include "../../nodeselect/cache.h"
+#include "../../nodeselect/nodelist.h"
 
 #if defined(LEDGER_NANO)
 #include "../../signer/ledger-nano/signer/ethereum_apdu_client.h"
@@ -69,6 +69,7 @@
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
+#include "../../nodeselect/nodeselect_def.h"
 #include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
@@ -125,8 +126,18 @@ void show_help(char* name) {
 -sigs          add additional signatures, which will be useds when sending through a multisig! \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-fi            reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging) \n\
+-fo            records a request and writes the reproducable data in a file (including all cache-data, timestamps ...) \n\
 -nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
 -bn            a coma seperated list of urls (or address:url) to be used as boot nodes\n\
+-zks           zksync server to use\n\
+-zkss          zksync signatures to pass along when signing\n\
+-zka           zksync account to use\n\
+-zkat          zksync account type could be one of 'pk'(default), 'contract' or 'create2'\n\
+-zsk           zksync signer seed (if not set this key will be derrived from account unless create2)\n\
+-zc2           zksync create2 arguments in the form <creator>:<codehash>:<saltarg>. if set the account type is also changed to create2\n\
+-zms           public keys of a musig schnorr signatures to sign with\n\
+-zmu           url for signing service matching the first remote public key\n\
 -os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
@@ -374,31 +385,33 @@ uint64_t getchain_id(char* name) {
 
 // set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
-  c->chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
-  if (c->chain_id == CHAIN_ID_LOCAL) {
-    BIT_CLEAR(c->chain_id, FLAGS_AUTO_UPDATE_LIST);
-    c->proof           = PROOF_NONE;
-    in3_chain_t* chain = in3_get_chain(c);
+  c->chain.chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
+  if (c->chain.chain_id == CHAIN_ID_LOCAL) {
+    sb_t* sb = sb_new("{\"autoUpdateList\":false,\"proof\":\"none\"");
     if (strstr(id, "://")) { // its a url
-      if (!chain->nodelist)
-        chain->nodelist = _calloc(1, sizeof(in3_node_t));
-      chain->nodelist[0].url = id;
+      sb_add_chars(sb, ",\"nodeRegistry\":{\"needsUpdate\":false,\"nodeList\":[");
+      sb_add_chars(sb, "{\"address\":\"0x0000000000000000000000000000000000000000\"");
+      sb_add_chars(sb, ",\"url\":\"");
+      sb_add_chars(sb, id);
+      sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+      sb_add_chars(sb, "]}}");
     }
-    if (chain->nodelist_upd8_params) {
-      _free(chain->nodelist_upd8_params);
-      chain->nodelist_upd8_params = NULL;
-    }
+    sb_add_chars(sb, "}");
+    char* err = in3_configure(c, sb->data);
+    if (err)
+      die(err);
+    sb_free(sb);
   }
 }
 
 // prepare a eth_call or eth_sendTransaction
-abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
+abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
   char*      error = NULL;
   bytes_t    rdata = {0};
   abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
   if (error) die(error);                                             // parse-error we stop here.
   if (req) {                                                         // if type is a tuple, it means we have areuments we need to parse.
-    json_ctx_t* in_data = parse_json(args);                          // the args are passed as a "[]"- json-array string.
+    json_ctx_t* in_data = parse_json(args->data);                    // the args are passed as a "[]"- json-array string.
     rdata               = abi_encode(req, in_data->result, &error);  //encode data
     if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
     json_free(in_data);                                              // of course we clean up ;-)
@@ -445,7 +458,8 @@ abi_sig_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, ui
     sb_add_bytes(params, "", &g_bytes, 1, false);
     sb_add_chars(params, "}]");
   }
-  strcpy(args, params->data);
+  args->len = 0;
+  sb_add_chars(args, params->data);
   sb_free(params);
   return req;
 }
@@ -513,43 +527,40 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
   }
 }
 
-static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
-  if (!upddate) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
-  char* cpy = alloca(strlen(nodes) + 1);
-  for (unsigned int i = 0; i < c->chains_length; i++) {
-    if (!upddate && c->chains[i].nodelist_upd8_params) {
-      _free(c->chains[i].nodelist_upd8_params);
-      c->chains[i].nodelist_upd8_params = NULL;
-    }
-    memcpy(cpy, nodes, strlen(nodes) + 1);
-    char* s  = NULL;
-    sb_t* sb = sb_new("{\"nodes\":{\"");
-    sb_add_hexuint(sb, c->chains[i].chain_id);
-    sb_add_chars(sb, "\":{\"nodeList\":[");
-    for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
-      if (next != cpy) sb_add_char(sb, ',');
-      str_range_t address, url;
-
-      if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
-        address = (str_range_t){.data = next, .len = s - next};
-        url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
-      }
-      else {
-        address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
-        url     = (str_range_t){.data = next, .len = strlen(next)};
-      }
-      sb_add_chars(sb, "{\"address\":\"");
-      sb_add_range(sb, address.data, 0, address.len);
-      sb_add_chars(sb, "\",\"url\":\"");
-      sb_add_range(sb, url.data, 0, url.len);
-      sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
-    }
-    sb_add_chars(sb, "]}}}");
-    char* err = in3_configure(c, sb->data);
-    if (err)
-      die(err);
-    sb_free(sb);
+static void set_nodelist(in3_t* c, char* nodes, bool update) {
+  if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
+  char*                 cpy = alloca(strlen(nodes) + 1);
+  in3_nodeselect_def_t* nl  = in3_nodeselect_def_data(c);
+  if (!update && nl->nodelist_upd8_params) {
+    _free(nl->nodelist_upd8_params);
+    nl->nodelist_upd8_params = NULL;
   }
+  memcpy(cpy, nodes, strlen(nodes) + 1);
+  char* s  = NULL;
+  sb_t* sb = sb_new("{\"nodeRegistry\":{\"nodeList\":[");
+  for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
+    if (next != cpy) sb_add_char(sb, ',');
+    str_range_t address, url;
+
+    if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
+      address = (str_range_t){.data = next, .len = s - next};
+      url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
+    }
+    else {
+      address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
+      url     = (str_range_t){.data = next, .len = strlen(next)};
+    }
+    sb_add_chars(sb, "{\"address\":\"");
+    sb_add_range(sb, address.data, 0, address.len);
+    sb_add_chars(sb, "\",\"url\":\"");
+    sb_add_range(sb, url.data, 0, url.len);
+    sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+  }
+  sb_add_chars(sb, "]}}}");
+  char* err = in3_configure(c, sb->data);
+  if (err)
+    die(err);
+  sb_free(sb);
 }
 
 static bytes_t*  last_response;
@@ -625,6 +636,7 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
 
 int main(int argc, char* argv[]) {
   // check for usage
+  bool use_pk = false;
   if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
     recorder_exit(0);
@@ -669,7 +681,7 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                    = in3_for_chain(0);
+  in3_t* c                    = in3_for_chain(CHAIN_ID_MAINNET);
   c->request_count            = 2;
   bool       out_response     = false;
   int        run_test_request = 0;
@@ -691,17 +703,20 @@ int main(int argc, char* argv[]) {
   char*      port             = NULL;
   char*      sig_type         = "raw";
   bool       to_eth           = false;
-  plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
+
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
 #ifndef USE_WINHTTP
   c->request_count = 1;
 #endif
   // handle clear cache opt before initializing cache
-  for (i = 1; i < argc; i++)
+  for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-fi") == 0) {
       recorder_update_cmd(argv[i + 1], &argc, &argv);
       break;
     }
+    if (strcmp(argv[i], "-pk") == 0) use_pk = true;
+  }
 
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
@@ -712,10 +727,19 @@ int main(int argc, char* argv[]) {
   in3_register_file_storage(c);
 
   // check env
-  if (getenv("IN3_PK")) {
+  if (getenv("IN3_PK") && !use_pk) {
     hex_to_bytes(getenv("IN3_PK"), -1, pk, 32);
     eth_set_pk_signer(c, pk);
   }
+
+#ifdef ZKSYNC
+  if (getenv("IN3_ZKS")) {
+    char tmp[500];
+    sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", getenv("IN3_ZKS"));
+    char* err = in3_configure(c, tmp);
+    if (err) die(err);
+  }
+#endif
 
   if (getenv("IN3_CHAIN"))
     set_chain_id(c, getenv("IN3_CHAIN"));
@@ -769,6 +793,46 @@ int main(int argc, char* argv[]) {
       char* err = in3_configure(c, tmp);
       if (err) die(err);
     }
+    else if (strcmp(argv[i], "-zka") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"account\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zkat") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"signer_type\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zms") == 0) {
+      char tmp[1000];
+      sprintf(tmp, "{\"zksync\":{\"musig_pub_keys\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zmu") == 0) {
+      char tmp[1000];
+      sprintf(tmp, "{\"zksync\":{\"musig_urls\":[null,\"%s\"]}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zsk") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"zksync\":{\"sync_key\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-zc2") == 0) {
+      char* c2val = argv[++i];
+      if (strlen(c2val) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
+      char tmp[177], t2[500];
+      memcpy(tmp, c2val, 177);
+      tmp[42] = tmp[109] = 0;
+      sprintf(t2, "{\"zksync\":{\"signer_type\":\"create2\",\"create2\":{\"creator\":\"%s\",\"codehash\":\"%s\",\"saltarg\":\"%s\"}}}", tmp, tmp + 43, tmp + 110);
+      char* err = in3_configure(c, t2);
+      if (err) die(err);
+    }
 #endif
     else if (strcmp(argv[i], "-tr") == 0)
       run_test_request = 1;
@@ -807,7 +871,7 @@ int main(int argc, char* argv[]) {
       gas_limit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-test") == 0) {
       test_name = argv[++i];
-      plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+      in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
     }
     else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
@@ -884,7 +948,7 @@ int main(int argc, char* argv[]) {
       else {
         // otherwise we add it to the params
         if (args->len > 1) sb_add_char(args, ',');
-        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain_id != CHAIN_ID_BTC)
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain.chain_id != CHAIN_ID_BTC)
           sb_print(args, "\"%s\"", get_wei(argv[i]));
         else
           sb_print(args,
@@ -908,14 +972,16 @@ int main(int argc, char* argv[]) {
   (void) (port);
 #endif
 
-  // load nodelist from cache
-  in3_cache_init(c);
-
   // handle private key
   if (pk_file) read_pk(pk_file, pwd, c, method);
 
   // no proof for rpc-chain
-  if (c->chain_id == 0xFFFF) c->proof = PROOF_NONE;
+  if (c->chain.chain_id == 0xFFFF) c->proof = PROOF_NONE;
+
+  // make sure boot nodes are initialized
+  char buf[15 + 11 /* UINT32_MAX */];
+  sprintf(buf, "{\"chainId\":%" PRIu32 "}", c->chain.chain_id);
+  in3_configure(c, buf);
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
@@ -928,7 +994,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, resolve(c, to), args->data, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), args, block_number, 0, NULL, data);
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
@@ -954,6 +1020,7 @@ int main(int argc, char* argv[]) {
     if (s && !error) {
       bytes_t     data = d_to_bytes(d_get_at(parse_json(args->data)->result, 0));
       json_ctx_t* res  = abi_decode(s, data, &error);
+      if (error) die(error);
       if (json)
         recorder_print(0, "%s\n", d_create_json(res, res->result));
       else
@@ -964,8 +1031,8 @@ int main(int argc, char* argv[]) {
 #ifdef IPFS
   }
   else if (strcmp(method, "ipfs_get") == 0) {
-    c->chain_id = CHAIN_ID_IPFS;
-    int size    = args->len;
+    c->chain.chain_id = CHAIN_ID_IPFS;
+    int size          = args->len;
     if (size == 2 || args->data[1] != '"' || size < 20 || strstr(args->data + 2, "\"") == NULL) die("missing ipfs hash");
     args->data[size - 2] = 0;
     bytes_t* content     = ipfs_get(c, args->data + 2);
@@ -975,7 +1042,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "ipfs_put") == 0) {
-    c->chain_id         = CHAIN_ID_IPFS;
+    c->chain.chain_id   = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
     recorder_print(0, "%s\n", ipfs_put(c, &data));
@@ -987,19 +1054,19 @@ int main(int argc, char* argv[]) {
     c->max_attempts = 1;
     uint32_t block = 0, b = 0;
     BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
-    uint64_t     now   = in3_time(NULL);
-    in3_chain_t* chain = in3_get_chain(c);
-    char*        more  = "WEIGHT";
+    uint64_t              now  = in3_time(NULL);
+    char*                 more = "WEIGHT";
+    in3_nodeselect_def_t* nl   = in3_nodeselect_def_data(c);
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
     recorder_print(0, "   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
-    for (unsigned int i = 0; i < chain->nodelist_length; i++) {
+    for (unsigned int i = 0; i < nl->nodelist_length; i++) {
       in3_ctx_t* ctx      = NULL;
       char*      health_s = NULL;
       if (run_test_request) {
         char req[300];
         char adr[41];
-        bytes_to_hex((chain->nodelist + i)->address, 20, adr);
+        bytes_to_hex((nl->nodelist + i)->address, 20, adr);
         sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
         ctx = ctx_new(c, req);
         if (ctx) in3_send_ctx(ctx);
@@ -1012,7 +1079,7 @@ int main(int argc, char* argv[]) {
           char        health_url[500];
           char*       urls[1];
           urls[0] = health_url;
-          sprintf(health_url, "%s/health", chain->nodelist[i].url);
+          sprintf(health_url, "%s/health", nl->nodelist[i].url);
           in3_request_t r;
           in3_ctx_t     ctx       = {0};
           ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
@@ -1056,8 +1123,8 @@ int main(int argc, char* argv[]) {
           if (health_res) json_free(health_res);
         }
       }
-      in3_node_t*        node        = chain->nodelist + i;
-      in3_node_weight_t* weight      = chain->weights + i;
+      in3_node_t*        node        = nl->nodelist + i;
+      in3_node_weight_t* weight      = nl->weights + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity, now);
       char *             tr = NULL, *warning = NULL;
@@ -1112,7 +1179,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, resolve(c, to), args->data, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, value, data);
     method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
@@ -1209,8 +1276,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "createkey") == 0) {
-    time_t t;
-    srand((unsigned) time(&t));
+    srand(current_ms() % 0xFFFFFFFF);
     recorder_print(0, "0x");
     for (i = 0; i < 32; i++) recorder_print(0, "%02x", rand() % 256);
     recorder_print(0, "\n");
@@ -1268,7 +1334,7 @@ int main(int argc, char* argv[]) {
   }
 
   in3_log_debug("..sending request %s %s\n", method, args->data);
-  in3_chain_t* chain = in3_get_chain(c);
+  in3_chain_t* chain = &c->chain;
 
   if (wait && strcmp(method, "eth_sendTransaction") == 0) method = "eth_sendTransactionAndWait";
 
@@ -1287,8 +1353,9 @@ int main(int argc, char* argv[]) {
 
   in3_client_rpc_raw(c, sb->data, &result, &error);
 
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   // Update nodelist if a newer latest block was reported
-  if (chain && chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
+  if (chain && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
     if (chain->type == CHAIN_ETH)
       in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);

@@ -40,6 +40,10 @@
 #ifndef in3_winhttp_h__
 #define in3_winhttp_h__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "client.h"
 in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
 
@@ -47,5 +51,9 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
  * registers http as a default transport.
  */
 in3_ret_t in3_register_winhttp(in3_t* c);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // in3_http_h__

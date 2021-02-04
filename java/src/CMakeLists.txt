@@ -60,9 +60,9 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/Proof.java
     in3/SignedBlockHash.java
     in3/config/ClientConfiguration.java
-    in3/config/ChainConfiguration.java
     in3/config/Configuration.java
     in3/config/NodeConfiguration.java
+    in3/config/NodeRegistryConfiguration.java
     in3/eth1/ENSMethod.java
     in3/eth1/API.java
     in3/eth1/Block.java

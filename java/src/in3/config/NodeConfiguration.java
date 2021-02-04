@@ -5,13 +5,14 @@ import in3.utils.JSON;
 /**
  * Configuration Object for Incubed Client. It represents the node of a nodelist.
  */
-public class NodeConfiguration {
-  private String url;
-  private Long   props;
-  private String address;
+public class NodeConfiguration implements Configuration {
+  private String  url;
+  private Long    props;
+  private String  address;
+  private boolean dirty;
 
-  public NodeConfiguration(ChainConfiguration config) {
-    config.addNodeConfig(this);
+  public NodeConfiguration(NodeRegistryConfiguration parent) {
+    parent.addNodeConfiguration(this);
   }
 
   public String getUrl() {
@@ -59,5 +60,20 @@ public class NodeConfiguration {
 
     sb.setCharAt(sb.length() - 1, '}');
     return sb.toString();
+  }
+
+  @Override
+  public String toJSON() {
+    return this.toString();
+  }
+
+  @Override
+  public void markAsSynced() {
+    dirty = false;
+  }
+
+  @Override
+  public boolean isSynced() {
+    return !dirty;
   }
 }

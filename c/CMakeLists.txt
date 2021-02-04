@@ -70,8 +70,13 @@ add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
 add_subdirectory(src/tools)
-
 add_subdirectory(docs)
+
+if (NODESELECT_DEF_WL AND NOT NODESELECT_DEF)
+    message(SEND_ERROR "Nodeselect - whitelisting enabled without enabling the plugin itself!")
+elseif (NODESELECT_DEF)
+    add_subdirectory(src/nodeselect)
+endif()
 
 link_directories(${CMAKE_BINARY_DIR}/lib/)
 
@@ -91,6 +96,12 @@ if (IN3_LIB)
     if(SENTRY)
         target_link_libraries(in3_lib sentry) 
     endif()
+
+    if (ZKSYNC AND ZKCRYPTO_LIB )
+        target_link_libraries(in3_bundle zk_crypto_rs )
+        target_link_libraries(in3_lib zk_crypto_rs )
+    endif()
+
 
     # install
     INSTALL(TARGETS in3_bundle

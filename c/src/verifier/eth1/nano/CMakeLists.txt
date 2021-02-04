@@ -43,7 +43,6 @@ add_static_library(
     blockheader.c
     signature.c
     txreceipt.c
-    registry.c
     chainspec.c
 
   DEPENDS 

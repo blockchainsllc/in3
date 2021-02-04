@@ -5,11 +5,6 @@ package in3;
  */
 public final class Chain {
   /**
-   * support for multiple chains, a client can then switch between different
-   * chains (but consumes more memory)
-   */
-  public static final long MULTICHAIN = 0x0;
-  /**
    * use mainnet
    */
   public static final long MAINNET = 0x01;

@@ -41,10 +41,8 @@
 
 #include "../../include/in3/error.h"
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/bytes.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -52,6 +50,8 @@
 #include "../../src/core/util/scache.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
 
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/third-party/crypto/ecdsa.h"
@@ -59,21 +59,16 @@
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
+#include <nodeselect/nodeselect_def.h>
 #include <stdio.h>
 #include <unistd.h>
 #define ETH_PRIVATE_KEY "0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
 static void test_sign() {
-  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->chain_id        = 0x1;
-  c->flags           = FLAGS_STATS;
-  c->proof           = PROOF_NONE;
-  c->signature_count = 0;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  c->flags = FLAGS_STATS;
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
 
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
   bytes32_t pk;
   hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
   eth_set_pk_signer(c, pk);
@@ -97,7 +92,7 @@ static void to_checksum_addr(uint8_t* address, chain_id_t chain, char* result) {
 static void test_tx() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
+  in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}");
   replace_transport(in3, test_transport);
   add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
                "\"0x309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f\"", NULL, NULL);
@@ -137,14 +132,10 @@ static void test_tx() {
 static void test_sign_hex() {
 
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-  c->proof = PROOF_NONE;
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = FLAGS_STATS;
   replace_transport(c, test_transport);
 
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
   eth_set_pk_signer_hex(c, "0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303");
 
   add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
@@ -242,6 +233,7 @@ int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
   in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_nodeselect_def);
   TESTS_BEGIN();
   RUN_TEST(test_tx);
   RUN_TEST(test_sign);

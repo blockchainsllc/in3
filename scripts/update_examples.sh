@@ -120,7 +120,7 @@ cd ../wasm/examples
 printf "## Examples\n\n" > $DOC
 printf "# Examples\n\n" > $README
 
-for f in *.js *.ts;
+for f in *.ts;
   do
     printf "### ${f%%.*}\n\nsource : [in3-c/wasm/examples/$f](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC

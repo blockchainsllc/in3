@@ -40,6 +40,10 @@
 #ifndef in3_http_h__
 #define in3_http_h__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "../../core/client/client.h"
 
 /**
@@ -59,5 +63,9 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
  * registers http as a default transport.
  */
 in3_ret_t in3_register_http(in3_t* c);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // in3_http_h__

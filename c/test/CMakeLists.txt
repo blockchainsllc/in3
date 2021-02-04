@@ -56,7 +56,7 @@ if (CODE_COVERAGE)
 endif()
 # first we build the runners
 add_executable(runner runner.c)
-target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API})
+target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API} ${IN3_NODESELECT})
 
 add_executable(junit util/junit.c)
 target_link_libraries(junit eth_full)
@@ -75,9 +75,9 @@ foreach (file ${files})
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
 
      if( LEDGER_NANO )
-       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API})
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API} ${IN3_NODESELECT})
      else()
-       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api recorder ${IN3_API})
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api recorder ${IN3_API} ${IN3_NODESELECT})
      endif()
 
      add_test(

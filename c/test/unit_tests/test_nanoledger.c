@@ -41,10 +41,8 @@
 
 #include "../../include/in3/error.h"
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/bytes.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -52,6 +50,8 @@
 #include "../../src/core/util/scache.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
 
 #if defined(LEDGER_NANO)
 #include "../../src/signer/ledger-nano/signer/ethereum_apdu_client.h"
@@ -75,7 +75,7 @@ static void test_tx() {
 #if defined(LEDGER_NANO)
   // create new incubed client
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
+  in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}");
   in3->transport = test_transport;
   add_response("eth_sendRawTransaction", "[\"0xf86b808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72a80820124a080f51ea2b39381d5c4f89b243649ef7b33878611b125145d96ac4459a6a089bba052fecd4b6151450f0887ccfa68120584cbf975414104d488c3e9dd71014a4a64\"]",
                "\"0x67681e9ca0e2a186f97ec63cc6c738005e6fa28c7d800558758245bf75b3c354\"", NULL, NULL);

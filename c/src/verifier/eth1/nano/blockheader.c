@@ -34,6 +34,7 @@
 
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/util/bitset.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
@@ -42,6 +43,8 @@
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "../../../verifier/eth1/nano/vhist.h"
+#include <assert.h>
+#include <limits.h>
 #include <string.h>
 
 #ifdef POA
@@ -364,6 +367,130 @@ NONULL IN3_EXPORT_TEST void add_verified(in3_t* c, in3_chain_t* chain, uint64_t 
   memcpy(chain->verified_hashes[last_free].hash, hash, 32);
 }
 
+static void mark_offline(in3_vctx_t* vc, unsigned int missing) {
+  in3_nl_offline_ctx_t octx = {.vctx = vc, .missing = missing};
+  in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_OFFLINE, &octx);
+}
+
+static bytes_t compute_msg_hash(uint8_t* msg_data, in3_vctx_t* vc, bytes32_t block_hash, uint64_t header_number) {
+  // get registry_id
+  in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
+  in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
+
+  bytes_t msg;
+  msg.data = msg_data;
+  msg.len  = vc->chain->version > 1 ? 96 : 64;
+
+  // blockhash + blocknumber + registry id
+  memcpy(msg_data, block_hash, 32);
+  memset(msg_data + 32, 0, 32);
+  long_to_bytes(header_number, msg_data + 56);
+  memcpy(msg_data + 64, dctx.data, 32);
+
+  // hash it to create the message hash
+  keccak(msg, msg_data);
+  msg.data = msg_data;
+  msg.len  = 32;
+  return msg;
+}
+
+static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
+  bytes_builder_t* bb = bb_new();
+  bb_write_int(bb, d_get_intk(err, K_CODE));
+
+  int        i   = 0;
+  d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
+  for (d_token_t* t = sig + 1; i < d_len(sig); t = d_next(t), i++) {
+    if (t->key == K_R || t->key == K_S || t->key == K_V || t->key == K_MSG_HASH)
+      continue;
+
+    switch (d_type(t)) {
+      case T_BYTES:
+        bb_write_fixed_bytes(bb, d_bytes(t));
+        break;
+      case T_STRING: {
+        char* s = d_string(t);
+        bb_write_chars(bb, s, strlen(s));
+        break;
+      }
+      case T_BOOLEAN:
+      case T_INTEGER:
+        bb_write_int(bb, d_int(t));
+        break;
+      default: break;
+    }
+  }
+
+  // hash
+  keccak(bb->b, err_data);
+  bb_free(bb);
+  return (bytes_t){.data = err_data, .len = 32};
+}
+
+static bool is_err_signed(d_token_t* err) {
+  return d_get(d_get(err, K_DATA), K_SIGNED_ERR) != NULL;
+}
+
+static in3_ret_t validate_err(in3_vctx_t* vc, d_token_t* err, uint64_t header_number) {
+  d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
+  if (d_get_longk(sig, K_BLOCK) != header_number)
+    return vc_err(vc, "wrong signature blocknumber");
+
+  uint8_t err_data[64] = {0};
+  bytes_t err_hash     = compute_err_hash(err_data, err);
+  return eth_verify_signature(vc, &err_hash, sig);
+}
+
+static in3_ret_t validate_sig(in3_vctx_t* vc, d_token_t* sig, uint64_t header_number, bytes32_t block_hash, bytes_t msg) {
+  if (d_get_longk(sig, K_BLOCK) != header_number)
+    return vc_err(vc, "wrong signature blocknumber");
+
+  bytes_t* sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32);
+  if (!sig_hash || memcmp(sig_hash->data, block_hash, 32) != 0)
+    return vc_err(vc, "wrong signature hash");
+
+  return eth_verify_signature(vc, &msg, sig);
+}
+
+static unsigned int idx_from_bs(unsigned int bs) {
+  const uint8_t blen = sizeof(bs) * CHAR_BIT;
+  for (unsigned int pos = 0; pos != blen; pos++)
+    if (BIT_CHECK(bs, pos))
+      return pos + 1;
+  return 0;
+}
+
+static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int bs, uint64_t header_number) {
+  // handle errors based on context
+  if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
+    uint8_t*           signer_addr = vc->ctx->signers + (20 * (idx_from_bs(bs) - 1));
+    in3_get_data_ctx_t dctx        = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = signer_addr};
+    ba_print(signer_addr, 20);
+    in3_plugin_execute_first(vc->ctx, PLGN_ACT_GET_DATA, &dctx);
+    uint32_t* min_blk_height = dctx.data;
+
+    if (DIFF_ATMOST(d_get_longk(d_get(d_get(err, K_DATA), K_SIGNED_ERR), K_CURRENT_BLOCK), header_number, *min_blk_height)) {
+      vc_err(vc, "blacklisting signer (reported wrong min block-height)");
+      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
+    }
+    else if (!DIFF_ATMOST(d_get_longk(err, K_CURRENT_BLOCK), vc->currentBlock, 1)) {
+      vc_err(vc, "blacklisting signer (out-of-sync)");
+      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
+      in3_plugin_execute_first(vc->ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
+    }
+    if (dctx.cleanup) dctx.cleanup(dctx.data);
+  }
+}
+
+static uint8_t* get_verified_hash(in3_vctx_t* vc, uint64_t block_number) {
+  if (vc->chain->verified_hashes)
+    for (uint_fast16_t i = 0; i < vc->ctx->client->max_verified_hashes; i++)
+      if (vc->chain->verified_hashes[i].block_number == block_number)
+        return vc->chain->verified_hashes[i].hash;
+  return NULL;
+}
+
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
@@ -373,8 +500,9 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   unsigned int i;
   bytes32_t    block_hash;
   uint64_t     header_number = 0;
-  d_token_t *  sig, *signatures;
-  bytes_t      temp, *sig_hash;
+  d_token_t *  sig, *signatures, *err;
+  bytes_t      temp;
+  in3_ret_t    res = IN3_OK;
 
   // generate the blockhash;
   keccak(*header, block_hash);
@@ -390,22 +518,14 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     return vc_err(vc, "wrong blockhash");
 
   // already verified?
-  if (vc->chain->verified_hashes) {
-    for (i = 0; i < vc->ctx->client->max_verified_hashes; i++) {
-      if (vc->chain->verified_hashes[i].block_number == header_number) {
-        if (memcmp(vc->chain->verified_hashes[i].hash, block_hash, 32))
-          return vc_err(vc, "invalid blockhash");
-        else
-          return IN3_OK;
-      }
-    }
-  }
+  uint8_t* hash = get_verified_hash(vc, header_number);
+  if (hash)
+    return memcmp(hash, block_hash, 32) ? vc_err(vc, "invalid blockhash") : IN3_OK;
 
   // if we expect no signatures ...
   if (vc->ctx->signers_length == 0) {
 #ifdef POA
-    in3_ret_t res = IN3_OK;
-    vhist_t*  vh  = NULL;
+    vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
     if (vc->chain && vc->chain->spec && eth_get_engine(vc, header, vc->chain->spec->result, &vh) == ENGINE_AURA) {
       // we merge the current header + finality blocks
@@ -421,44 +541,57 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       _free(blocks);
     }
     vh_free(vh);
-    return res;
 #endif
+    return res;
   }
-  else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->ctx->signers_length)
-    // no signatures found,even though we expected some.
-    return vc_err(vc, "missing signatures");
-  else {
-    // prepare the message to be sigfned
 
-    bytes_t msg;
-    uint8_t msg_data[96];
-    msg.data = (uint8_t*) &msg_data;
-    msg.len  = vc->chain->version > 1 ? 96 : 64;
+  // no signatures found,even though we expected some.
+  if (!(signatures = d_get(vc->proof, K_SIGNATURES)))
+    return vc_err(vc, "no signatures in proof");
 
-    // first the blockhash + blocknumber
-    memcpy(msg_data, block_hash, 32);
-    memset(msg_data + 32, 0, 32);
-    long_to_bytes(header_number, msg_data + 56);
-    if (vc->chain->version > 1) memcpy(msg_data + 64, vc->chain->registry_id, 32);
+  // calculate message hash
+  uint8_t msg_data[96] = {0};
+  bytes_t msg          = compute_msg_hash(msg_data, vc, block_hash, header_number);
 
-    // hash it to create the message hash
-    keccak(msg, msg_data);
-    msg.data = msg_data;
-    msg.len  = 32;
+  unsigned int confirmed = 0; // bitmask for signed block-hashes
+  unsigned int erred     = 0; // bitmask for signed errors
+  for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
+    if ((err = d_get(sig, K_ERROR))) {
+      if (!is_err_signed(err)) {
+        if (d_get_intk(err, K_CODE) != JSON_RPC_ERR_INTERNAL)
+          return vc_err(vc, "error not signed");
+        continue; // assume offline
+      }
 
-    int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
-    for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
-      // only if this signature has the correct blockhash and blocknumber we will verify it.
-      if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
-        confirmed |= eth_verify_signature(vc, &msg, sig);
+      res = validate_err(vc, err, header_number);
+      if (res < 0)
+        return res;
+      else if (res != 0) // `res = 0` indicates eth_verify_signature() failure - ignored
+        handle_signed_err(vc, err, res, header_number);
+
+      erred |= res;
     }
+    else {
+      res = validate_sig(vc, sig, header_number, block_hash, msg);
+      if (res < 0) return res; // `res = 0` indicates eth_verify_signature() failure - ignored
 
-    if (confirmed != (1 << vc->ctx->signers_length) - 1) // we must collect all signatures!
-      return vc_err(vc, "missing signatures");
-
-    // ok, is is verified, so we should add it to the verified hashes
-    add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
+      confirmed |= res;
+    }
   }
+
+  unsigned int signd = (confirmed | erred);
+  unsigned int all   = (1ULL << vc->ctx->signers_length) - 1;
+  if (signd != all) {
+    mark_offline(vc, all & ~signd);
+    vc->dont_blacklist = true;
+    return vc_err(vc, "missing signatures");
+  }
+  else if (erred) {
+    return vc_err(vc, "signers reported errors");
+  }
+
+  // ok, it is verified, so we should add it to the verified hashes
+  add_verified(vc->ctx->client, vc->chain, header_number, block_hash);
 
   return IN3_OK;
 }

@@ -37,14 +37,18 @@
  * util helper on byte arrays.
  * */
 
+#ifndef BYTES_H
+#define BYTES_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mem.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef BYTES_H
-#define BYTES_H
-
 /** creates a new bytes_builder with a initial size of 32 bytes */
 #define bb_new()                   bb_newl(32)
 #define bb_read(_bb_, _i_, _vptr_) bb_readl((_bb_), (_i_), (_vptr_), sizeof(*_vptr_))
@@ -87,6 +91,7 @@ int             bytes_cmp(const bytes_t a, const bytes_t b);                    
 void            b_free(bytes_t* a);                                                                             /**< frees the data */
 bytes_t         b_concat(int cnt, ...);                                                                         /**< duplicates the content of bytes*/
 NONULL bytes_t* b_dup(const bytes_t* a);                                                                        /**< clones a byte array*/
+NONULL bytes_t  bytes_dup(const bytes_t a);                                                                     /**< clones a byte array*/
 NONULL uint8_t  b_read_byte(bytes_t* b, size_t* pos);                                                           /**< reads a byte on the current position and updates the pos afterwards. */
 NONULL uint32_t b_read_int(bytes_t* b, size_t* pos);                                                            /**< reads a integer on the current position and updates the pos afterwards. */
 NONULL uint64_t b_read_long(bytes_t* b, size_t* pos);                                                           /**< reads a long on the current position and updates the pos afterwards. */
@@ -117,5 +122,7 @@ NONULL static inline void b_optimize_len(bytes_t* b) {                          
     b->len--;
   }
 }
-
+#ifdef __cplusplus
+}
+#endif
 #endif

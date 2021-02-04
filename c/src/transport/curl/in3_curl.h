@@ -40,6 +40,10 @@
 #ifndef in3_curl_h__
 #define in3_curl_h__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "../../core/client/client.h"
 
 /**
@@ -52,5 +56,9 @@ in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
  * registers curl as a default transport.
  */
 in3_ret_t in3_register_curl(in3_t* c);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // in3_curl_h__

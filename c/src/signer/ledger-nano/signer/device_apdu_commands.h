@@ -38,8 +38,8 @@
 #include "../../../core/client/client.h"
 #include "../../../third-party/hidapi/hidapi/hidapi.h"
 
-#define HID_CMD_MIN_LEN 64
-#define HID_CMD_MID_LEN 128
+#define HID_CMD_MIN_LEN  64
+#define HID_CMD_MID_LEN  128
 #define HID_CMD_HIGH_LEN 255
 
 extern uint8_t CLA;

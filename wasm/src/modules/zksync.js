@@ -51,6 +51,9 @@ class ZksyncAPI {
     return this.send('zksync_contract_address')
   }
 
+  getAccountAddress() {
+    return this.client.execLocal('zksync_account_address')
+  }
 
   getTokens() {
     return this.send('zksync_tokens')
@@ -62,8 +65,8 @@ class ZksyncAPI {
   }
 
 
-  setKey(tokenSymbol) {
-    return this.send('zksync_setKey', tokenSymbol || 'ETH')
+  setKey(tokenSymbol, newKey) {
+    return this.send('zksync_set_key', tokenSymbol || 'ETH', newKey || null)
   }
 
 
@@ -83,11 +86,15 @@ class ZksyncAPI {
 
 
   getSyncKey() {
-    return this.send('zksync_getKey')
+    return this.send('zksync_sync_key')
   }
 
   getSyncPubKeyHash() {
-    return this.send('zksync_getPubKeyHash')
+    return this.client.execLocal('zksync_pubkeyhash')
+  }
+
+  getSyncPubKey() {
+    return this.client.execLocal('zksync_pubkey')
   }
 
   deposit(amount, token, approveDepositAmountForERC20, account) {
@@ -115,7 +122,19 @@ class ZksyncAPI {
 
 
   emergencyWithdraw(token) {
-    return this.send('zksync_emergencyWithdraw', token)
+    return this.send('zksync_emergency_withdraw', token)
+  }
+
+  sign(message) {
+    return this.send('zksync_sign', message);
+  }
+
+  verify(msg, sig) {
+    return this.client.execLocal('zksync_verify', [msg, sig]) == 1
+  }
+
+  aggregatePubKey(pubkeys) {
+    return this.client.execLocal('zksync_aggregate_pubkey', [Array.isArray(pubkeys) ? '0x' + pubkeys.map(_ => toHex(_, 32).substr(2)).join('') : toHex(pubkeys)])
   }
 
 }

@@ -9,7 +9,7 @@ fn main() {
     //Config in3 api client
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(
-        r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
+        r#"{"proof":"none","autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#,
     );
     let responses = vec![
         (

@@ -33,15 +33,19 @@ class In3Runtime:
     Instantiate libin3 and frees it when garbage collected.
     Args:
         chain_id (int): Chain-id based on EIP-155. Default is 0x1 for Ethereum mainNet.
-        cache_enabled (bool): False will disable local storage cache.
         transport_fn: Transport function to handle the HTTP Incubed Network requests.
+        cache_enabled (bool): False will disable local storage cache.
+        deterministic_node_sel (bool): True will make node selection deterministic.
     """
 
-    def __init__(self, chain_id: int, cache_enabled: bool, transport_fn):
+    def __init__(self, chain_id: int, transport_fn, cache_enabled: bool = True, deterministic_node_sel: bool = False):
+        self.chain_id = chain_id
         self.transport_handler = transport.factory(transport_fn)
         self.cache_enabled = cache_enabled
-        self.in3 = libin3_new(chain_id, cache_enabled, self.transport_handler)
-        self.chain_id = chain_id
+        if deterministic_node_sel:
+            import warnings
+            warnings.warn("IN3 HIGH SECURITY RISK - Use deterministic node selection for tests ONLY!", RuntimeWarning)
+        self.in3 = libin3_new(chain_id, self.transport_handler, cache_enabled, deterministic_node_sel)
 
     def __del__(self):
         libin3_free(self.in3)

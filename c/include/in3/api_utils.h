@@ -40,6 +40,9 @@
 
 #ifndef IN3_API_UTILS_H
 #define IN3_API_UTILS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "client.h"
 
@@ -77,5 +80,8 @@ void api_get_error_fn(get_error_fn fn);
 
 /** returns current error or null if all is ok */
 char* api_last_error();
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IN3_API_UTILS_H

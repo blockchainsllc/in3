@@ -37,12 +37,17 @@
  * util helper on byte arrays.
  * */
 
+#ifndef UTIL_SCACHE_H
+#define UTIL_SCACHE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bytes.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#ifndef UTIL_SCACHE_H
-#define UTIL_SCACHE_H
 
 typedef enum cache_props {
   CACHE_PROP_MUST_FREE     = 0x1, /**< indicates the content must be freed*/
@@ -96,4 +101,7 @@ NONULL static inline cache_entry_t* in3_cache_add_ptr(
   return in3_cache_add_entry(cache, bytes(NULL, 0), bytes((uint8_t*) ptr, 1));
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif

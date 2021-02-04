@@ -46,8 +46,6 @@ add_static_library(
   SOURCES 
     client/context.c
     client/client.c
-    client/cache.c
-    client/nodelist.c
     client/verifier.c
     client/execute.c
     client/client_init.c
@@ -76,4 +74,5 @@ add_static_library(
     ${IN3_VERIFIER} 
     ${IN3_API} 
     ${IN3_TRANSPORT}
+    ${IN3_NODESELECT}
 )

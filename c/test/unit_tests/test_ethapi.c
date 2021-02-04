@@ -39,37 +39,32 @@
 #endif
 
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/scache.h"
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
-
 #include "../test_utils.h"
 #include "../util/transport.h"
+#include "nodeselect/cache.h"
+#include "nodeselect/nodelist.h"
+#include "nodeselect/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 
 in3_t* init_in3(in3_plugin_act_fn custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   int    err;
-  in3 = in3_for_chain(0);
+  in3 = in3_for_chain(chain);
   if (custom_transport)
     register_transport(in3, custom_transport);
-  in3->request_count = 1; // number of requests to sendp
-  in3->max_attempts  = 1;
-  in3->request_count = 1; // number of requests to sendp
-  in3->chain_id      = chain;
-  in3->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE; // no autoupdate nodelist
-  for (int i = 0; i < in3->chains_length; i++) {
-    _free(in3->chains[i].nodelist_upd8_params);
-    in3->chains[i].nodelist_upd8_params = NULL;
-  }
+  in3->flags   = FLAGS_STATS | FLAGS_INCLUDE_CODE; // no autoupdate nodelist
+  sb_t* config = sb_new("{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}}");
+  TEST_ASSERT_NULL(in3_configure(in3, config->data));
+  sb_free(config);
   return in3;
 }
 
@@ -308,7 +303,7 @@ static void test_send_tx() {
   // https://goerli.etherscan.io/tx/0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a
   // create new incubed client
   in3_t* in3 = in3_for_chain(CHAIN_ID_GOERLI);
-  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x5\": {\"needsUpdate\":false}}}");
+  in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}");
   replace_transport(in3, test_transport);
   add_response("eth_sendRawTransaction", "[\"0xf86d01850ee6b28000830668a094930e62afa9ceb9889c2177c858dc28810cedbf5d881bc16d674ec80000002ea0f07f44cd0a600823c392bd9d8a7c32ae99bd04014c451df0ebf4050556fe461ea01dd0cf7597621659eace230b0f0d36017b4ef565e0dbda6f34b9e680326318d3\"]",
                "\"0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a\"", NULL, NULL);
@@ -618,6 +613,7 @@ int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
   in3_register_default(in3_register_eth_full);
+  in3_register_default(in3_register_nodeselect_def);
 
   // now run tests
   TESTS_BEGIN();

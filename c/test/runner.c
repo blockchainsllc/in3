@@ -43,6 +43,8 @@
 #include "../src/verifier/btc/btc.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include "../src/verifier/ipfs/ipfs.h"
+#include <nodeselect/nodelist.h>
+#include <nodeselect/nodeselect_def.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -321,40 +323,38 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     sprintf(temp, "Request #%i", counter);
 
   in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
-  plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
+
   int j;
   c->max_attempts        = 1;
   c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST;
   c->finality            = d_get_intkd(test, key("finality"), 0);
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
-  for (j = 0; j < c->chains_length; j++) {
-    _free(c->chains[j].nodelist_upd8_params);
-    c->chains[j].nodelist_upd8_params = NULL;
 
-    if (registry_id) {
-      c->chains[j].version = 2;
-      memcpy(c->chains[j].registry_id, d_bytesl(registry_id, 32)->data, 32);
-      memcpy(c->chains[j].contract->data, d_get_byteskl(first_res, key("contract"), 20)->data, 20);
-    }
+  sb_t* config = sb_new("{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}}");
+  in3_configure(c, config->data);
+  sb_free(config);
+
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  if (registry_id) {
+    c->chain.version = 2;
+    memcpy(nl->registry_id, d_bytesl(registry_id, 32)->data, 32);
+    memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20)->data, 20);
   }
   c->proof = proof;
 
   d_token_t* signatures = d_get(test, key("signatures"));
-  c->chain_id           = d_get_longkd(test, key("chainId"), 1);
   if (signatures) {
     c->signature_count = d_len(signatures);
-    for (j = 0; j < c->chains_length; j++) {
-      if (c->chains[j].chain_id == c->chain_id) {
-        for (i = 0; i < c->chains[j].nodelist_length; i++) {
-          if (i < c->signature_count)
-            memcpy(c->chains[j].nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
-          else
-            c->chains[j].weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
-        }
-      }
+    for (i = 0; i < nl->nodelist_length; i++) {
+      if (i < c->signature_count)
+        memcpy(nl->nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
+      else
+        nl->weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
     }
   }
+
   int fail = execRequest(c, test, fuzz_prop != NULL, counter, temp);
   in3_free(c);
 
@@ -462,6 +462,7 @@ int main(int argc, char* argv[]) {
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_ipfs);
   in3_register_default(in3_register_btc);
+  in3_register_default(in3_register_nodeselect_def);
 
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;

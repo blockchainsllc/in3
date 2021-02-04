@@ -40,6 +40,10 @@
 #ifndef in3_signer_h__
 #define in3_signer_h__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "client.h"
 
 typedef enum {
@@ -83,4 +87,9 @@ void eth_set_pk_signer_hex(in3_t* in3, char* key);
 in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst);
 /** Signs message raw with the given private key*/
 in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

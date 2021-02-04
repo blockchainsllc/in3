@@ -45,6 +45,12 @@
 #include <stdio.h>
 #include <string.h>
 
+d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
+  return d_type(params + 1) == T_OBJECT
+             ? d_get(params + 1, k)
+             : d_get_at(params, index);
+}
+
 void set_quoted_address(char* c, uint8_t* address) {
   bytes_to_hex(address, 20, c + 3);
   c[0] = c[43] = '"';
@@ -52,14 +58,61 @@ void set_quoted_address(char* c, uint8_t* address) {
   c[2]         = 'x';
   c[44]        = 0;
 }
+
+static in3_ret_t ensure_provider(zksync_config_t* conf, in3_ctx_t* ctx) {
+  if (conf->provider_url) return IN3_OK;
+  switch (ctx->client->chain.chain_id) {
+    case CHAIN_ID_MAINNET:
+      conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
+      break;
+    default:
+      return ctx_set_error(ctx, "no provider_url in config", IN3_EINVAL);
+  }
+  return IN3_OK;
+}
+
 in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
   if (params == NULL) params = "";
-  char* in3 = conf ? alloca(strlen(conf->provider_url) + 26) : NULL;
-  if (in3) sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
+  char* in3 = NULL;
+  if (conf) {
+    TRY(ensure_provider(conf, parent))
+    in3 = alloca(strlen(conf->provider_url) + 26);
+    sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
+  }
   return ctx_send_sub_request(parent, method, params, in3, result);
 }
 
+void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t saltarg, address_t pub_key_hash, address_t dst) {
+  uint8_t tmp[85];
+  memset(tmp, 0, 85);
+  memcpy(tmp, saltarg, 32);
+  memcpy(tmp + 32 + 12, pub_key_hash, 20);
+  keccak(bytes(tmp, 64), tmp + 21);
+  *tmp = 0xff;
+  memcpy(tmp + 1, creator, 20);
+  memcpy(tmp + 53, codehash, 32);
+  keccak(bytes(tmp, 85), tmp);
+  memcpy(dst, tmp + 12, 20);
+}
+
+in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_ctx_t* ctx) {
+  if (conf->sign_type != ZK_SIGN_CREATE2) return IN3_OK;
+  if (conf->account) return IN3_OK;
+  if (!conf->create2) return ctx_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->creator, 20)) return ctx_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->codehash, 32)) return ctx_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->salt_arg, 32)) return ctx_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
+  if (!conf->account) {
+    address_t pub_key_hash;
+    TRY(zksync_get_pubkey_hash(conf, ctx, pub_key_hash))
+    conf->account = _malloc(20);
+    zksync_calculate_account(conf->create2->creator, conf->create2->codehash, conf->create2->salt_arg, pub_key_hash, conf->account);
+  }
+  return IN3_OK;
+}
+
 in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account) {
+  TRY(zksync_check_create2(conf, ctx))
   if (!conf->account) {
     in3_sign_account_ctx_t sctx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
     if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx) || !sctx.accounts_len) {
@@ -88,7 +141,7 @@ in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
   conf->nonce          = d_get_longk(committed, K_NONCE);
   char* kh             = d_get_stringk(committed, key("pubKeyHash"));
   if (kh && strlen(kh) == 45)
-    hex_to_bytes(kh + 5, 40, conf->pub_key_hash, 20);
+    hex_to_bytes(kh + 5, 40, conf->pub_key_hash_set, 20);
 
   return IN3_OK;
 }
@@ -141,10 +194,36 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sy
   TRY(zksync_get_account(conf, ctx, &account))
   assert(account);
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
-  if (signature.len == 65)
+  if (signature.len == 65 && signature.data[64] < 2)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);
   memcpy(sync_key, conf->sync_key, 32);
+  return IN3_OK;
+}
+
+in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash) {
+  if (!conf) return IN3_EUNKNOWN;
+  if (!memiszero(conf->pub_key_hash_pk, 20) && !conf->musig_pub_keys.data) {
+    memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
+    return IN3_OK;
+  }
+
+  bytes32_t tmp;
+  if (conf->musig_pub_keys.data) {
+    TRY(zkcrypto_compute_aggregated_pubkey(conf->musig_pub_keys, tmp))
+    return zkcrypto_pubkey_hash(bytes(tmp, 32), pubkey_hash);
+  }
+
+  if (!memiszero(conf->pub_key, 32)) {
+    TRY(zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key))
+    memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
+    return IN3_OK;
+  }
+
+  TRY(zksync_get_sync_key(conf, ctx, tmp))
+  TRY(zkcrypto_pk_to_pubkey_hash(tmp, conf->pub_key_hash_pk))
+
+  memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
   return IN3_OK;
 }
 
@@ -154,6 +233,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** 
   if (!conf->main_contract) {
     // check cache first
     if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+      TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
       sprintf(cache_name, "zksync_contracts_%x", key(conf->provider_url));
       in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
@@ -206,13 +286,7 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* non
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type,
-#ifdef ZKSYNC_256
-                         uint8_t* fee
-#else
-                         uint64_t* fee
-#endif
-) {
+in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
   if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
 #ifdef ZKSYNC_256
     bytes_t b = d_to_bytes(fee_in);
@@ -258,6 +332,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token
   if (!conf->token_len) {
     // check cache first
     if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
+      TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
       sprintf(cache_name, "zksync_tokens_%x", key(conf->provider_url));
       in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};

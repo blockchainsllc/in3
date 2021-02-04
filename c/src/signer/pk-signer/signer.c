@@ -129,7 +129,7 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   get_address(pk, k->account);
   memcpy(k->pk, pk, 32);
-  return plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM, eth_sign_pk, k, false);
+  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM, eth_sign_pk, k, false);
 }
 
 // RPC-Handler
@@ -236,11 +236,11 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
 in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   memcpy(k->pk, pk, 32);
-  return plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM, eth_sign_req, k, true);
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM, eth_sign_req, k, true);
 }
 
 in3_ret_t eth_register_pk_signer(in3_t* in3) {
-  return plugin_register(in3, PLGN_ACT_CONFIG_SET | PLGN_ACT_RPC_HANDLE, pk_rpc, NULL, true);
+  return in3_plugin_register(in3, PLGN_ACT_CONFIG_SET | PLGN_ACT_RPC_HANDLE, pk_rpc, NULL, true);
 }
 
 /** sets the signer and a pk to the client*/

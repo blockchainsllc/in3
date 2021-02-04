@@ -4,7 +4,7 @@ namespace In3.Configuration
 {
     /// <summary>
     /// Class that represents part of the configuration to be applied on the <see cref="IN3" /> (in particular to each boot node).
-    /// This is a child of <see cref="ChainConfiguration" />.
+    /// This is a child of <see cref="NodeRegistryConfiguration" />.
     /// </summary>
     public class NodeConfiguration : BaseConfiguration
     {
@@ -46,13 +46,13 @@ namespace In3.Configuration
         /// <summary>
         /// Constructor for the node configuration.
         /// </summary>
-        /// <param name="config">The <see cref="ChainConfiguration" /> of which this node belongs to.</param>
+        /// <param name="config">The <see cref="NodeRegistryConfiguration" /> of which this node belongs to.</param>
         /// <example>
         /// <code>
         /// NodeConfiguration myDeployedNode = new NodeConfiguration(mainnetChainConfiguration);
         /// </code>
         /// </example>
-        public NodeConfiguration(ChainConfiguration config)
+        public NodeConfiguration(NodeRegistryConfiguration config)
         {
             config.AddNodeConfiguration(this);
         }

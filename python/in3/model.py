@@ -121,7 +121,7 @@ class ClientConfig(DataTransferObject):
         self.keepIn3: bool = response_keep_proof
         self.useBinary: bool = transport_binary_format
         self.useHttp: bool = transport_ignore_tls
-        self.nodes: dict = in3_registry
+        self.nodeRegistry: dict = in3_registry
         if self.key:
             warnings.warn(
                 'In3 Config: `account_secret` may cause instability.', DeprecationWarning)

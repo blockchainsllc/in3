@@ -94,6 +94,7 @@
 #define K_TRANSACTION_LOG_INDEX key("transactionLogIndex")
 
 #define K_SIGNATURES        key("signatures")
+#define K_SIGNED_ERR        key("signedError")
 
 #define K_TRANSACTION_INDEX key("transactionIndex")
 #define K_TRANSACTION_HASH  key("transactionHash")

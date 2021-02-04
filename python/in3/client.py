@@ -17,12 +17,13 @@ class Client:
     Args:
         chain (str): Ethereum chain to connect to. Defaults to mainnet. Options: 'mainnet', 'goerli', 'ewc', 'btc', 'ipfs'.
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
-        cache_enabled (bool): False will disable local storage caching.
         transport (function): Transport function for custom request routing. Defaults to https.
+        cache_enabled (bool): False will disable local storage caching.
+        test_instance (bool): True will create a test instance of IN3. HIGH SECURITY RISK - USE FOR TESTS ONLY.
     """
 
-    def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, cache_enabled: bool = True,
-                 transport=https_transport):
+    def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, transport=https_transport,
+                 cache_enabled: bool = True, test_instance: bool = False):
 
         if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'goerli', 'ewc', 'btc', 'ipfs']:
             raise AssertionError('Client: Chain name not supported. Try mainnet, evan, goerli, ewc, or ipfs.')
@@ -30,7 +31,7 @@ class Client:
         if in3_config and not isinstance(in3_config, ClientConfig):
             raise AssertionError('Client: Use in3.ClientConfig to create a new client configuration instance.')
 
-        self._runtime = In3Runtime(chain_configs[chain.lower()].chain_id, cache_enabled, transport)
+        self._runtime = In3Runtime(chain_configs[chain.lower()].chain_id, transport, cache_enabled, test_instance)
         if in3_config:
             self._configure(in3_config)
         self.eth = EthereumApi(self._runtime)

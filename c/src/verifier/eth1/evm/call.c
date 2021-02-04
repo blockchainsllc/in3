@@ -178,7 +178,9 @@ int evm_sub_call(evm_t*    parent,
   int      res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
   uint32_t c_xfer = 0, old_gas = 0;
 
-  evm.parent          = parent;
+#ifdef EVM_GAS
+  evm.parent = parent;
+#endif
   evm.properties      = parent->properties;
   evm.chain_id        = parent->chain_id;
   evm.call_data.data  = data;
