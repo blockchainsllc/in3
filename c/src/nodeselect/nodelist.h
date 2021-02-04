@@ -42,6 +42,10 @@
 #include "../core/util/log.h"
 #include "../core/util/mem.h"
 #include <time.h>
+
+#ifndef NODELIST_H
+#define NODELIST_H
+
 #ifdef THREADSAFE
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <windows.h>
@@ -67,8 +71,6 @@ typedef pthread_mutex_t in3_mutex_t;
 #endif
 #endif
 
-#ifndef NODELIST_H
-#define NODELIST_H
 
 #define NODE_FILTER_INIT \
   (in3_node_filter_t) { .props = 0, .nodes = NULL }
