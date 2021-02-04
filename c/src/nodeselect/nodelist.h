@@ -71,7 +71,6 @@ typedef pthread_mutex_t in3_mutex_t;
 #endif
 #endif
 
-
 #define NODE_FILTER_INIT \
   (in3_node_filter_t) { .props = 0, .nodes = NULL }
 
