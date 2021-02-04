@@ -384,7 +384,8 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == key("replaceLatestBlock")) {
       EXPECT_TOK_U8(token);
       c->replace_latest_block = (uint8_t) d_int(token);
-      in3_node_props_set(&c->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
+      const uint64_t dp_      = c->replace_latest_block;
+      c->node_props           = (c->node_props & 0xFFFFFFFF) | (dp_ << 32U);
     }
     else if (token->key == key("requestCount")) {
       EXPECT_TOK_U8(token);
