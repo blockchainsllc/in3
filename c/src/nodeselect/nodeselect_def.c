@@ -595,11 +595,19 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
   switch (action) {
     case PLGN_ACT_INIT:
       MUTEX_RETURN(IN3_OK)
-    case PLGN_ACT_TERM:
+    case PLGN_ACT_TERM: {
+#ifdef THREADSAFE
+      in3_mutex_t m  = data->mutex;
+      uint32_t    re = data->reentrance;
+#endif
       data->ref_counter--;
       if (data->ref_counter == 0) chain_free(data);
       _free(plugin_data);
-      MUTEX_RETURN(IN3_OK)
+#ifdef THREADSAFE
+      MUTEX_UNLOCK(m, re);
+#endif
+      return IN3_OK;
+    }
     case PLGN_ACT_RPC_VERIFY:
       MUTEX_RETURN(rpc_verify(data, (in3_vctx_t*) plugin_ctx))
     case PLGN_ACT_CONFIG_SET:

@@ -45,6 +45,7 @@
 #ifdef THREADSAFE
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <windows.h>
+typedef HANDLE in3_mutex_t;
 #define MUTEX_INIT(mutex) mutex = CreateMutex(NULL, FALSE, NULL);
 #define MUTEX_LOCK(mutex, re)                                                                       \
   {                                                                                                 \
@@ -55,7 +56,8 @@
 #define MUTEX_FREE(mutex) CloseHandle(mutex);
 #else
 #include <pthread.h>
-#define MUTEX_INIT(mutex)                   \
+typedef pthread_mutex_t in3_mutex_t;
+#define MUTEX_INIT(mutex) \
   pthread_mutex_init(&(mutex), NULL);
 #define MUTEX_LOCK(mutex, re) \
   if ((++re) == 1) pthread_mutex_lock(&(mutex));
@@ -109,12 +111,8 @@ typedef struct in3_nodeselect_def {
   struct in3_nodeselect_def* next;        /**< the next in the linked list */
   uint32_t                   ref_counter; /**< number of client using this nodelist */
 #ifdef THREADSAFE
-  uint32_t reentrance; /**< reentrance count */
-#if defined(_MSC_VER) || defined(__MINGW32__)
-  HANDLE mutex;
-#else
-  pthread_mutex_t mutex;
-#endif
+  uint32_t    reentrance; /**< reentrance count */
+  in3_mutex_t mutex;
 #endif
 } in3_nodeselect_def_t;
 
