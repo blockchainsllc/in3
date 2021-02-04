@@ -45,7 +45,7 @@
 #ifdef THREADSAFE
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <windows.h>
-#define MUTEX_INIT(mutex) mutex = CreateMutex(NULL, FALSE, NULL)
+#define MUTEX_INIT(mutex) mutex = CreateMutex(NULL, FALSE, NULL);
 #define MUTEX_LOCK(mutex, re)                                                                       \
   {                                                                                                 \
     if ((++re) == 1 && WaitForSingleObject(mutex, INFINITE) == WAIT_ABANDONED) return IN3_EUNKNOWN; \
