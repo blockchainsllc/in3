@@ -45,3 +45,10 @@ add_static_library(
   DEPENDS
     core
 )
+
+if (MSVC OR MSYS OR MINGW)
+else()
+    # for detecting Windows compilers
+    target_link_libraries(nodeselect_def_o  pthread)
+    target_link_libraries(nodeselect_def pthread)
+endif ()

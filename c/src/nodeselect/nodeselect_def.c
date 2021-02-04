@@ -1,3 +1,7 @@
+#define __USE_GNU
+#define _XOPEN_SOURCE   600
+#define _POSIX_C_SOURCE 200809L
+
 #include "nodeselect_def.h"
 #include "../core/client/context_internal.h"
 #include "../core/client/keys.h"
@@ -107,6 +111,11 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   char*       res   = NULL;
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
+
+  if (!data || data->ref_counter > 1) {
+    ctx->error_msg = "Can not modify the nodelist, since there are other instance using this";
+    return IN3_EINVAL;
+  }
 
   if (token->key == key("nodeRegistry")) {
     EXPECT_TOK_OBJ(token);
@@ -576,11 +585,11 @@ in3_nodeselect_def_t* assign_nodelist(chain_id_t chain_id) {
   return data;
 }
 #ifdef THREADSAFE
-#define MUTEX_RETURN(val)                        \
-  {                                              \
-    in3_ret_t r = val;                           \
-    MUTEX_UNLOCK(data->mutex, data->reentrance); \
-    return r;                                    \
+#define MUTEX_RETURN(val)      \
+  {                            \
+    in3_ret_t r = val;         \
+    MUTEX_UNLOCK(data->mutex); \
+    return r;                  \
   }
 #else
 #define MUTEX_RETURN(val) return val;
@@ -589,7 +598,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
   in3_nodeselect_def_t* data = ((in3_nodeselect_wrapper_t*) plugin_data)->data;
 
 #ifdef THREADSAFE
-  MUTEX_LOCK(data->mutex, data->reentrance)
+  MUTEX_LOCK(data->mutex)
 #endif
 
   switch (action) {
@@ -597,14 +606,13 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
       MUTEX_RETURN(IN3_OK)
     case PLGN_ACT_TERM: {
 #ifdef THREADSAFE
-      in3_mutex_t m  = data->mutex;
-      uint32_t    re = data->reentrance;
+      in3_mutex_t m = data->mutex;
 #endif
       data->ref_counter--;
       if (data->ref_counter == 0) chain_free(data);
       _free(plugin_data);
 #ifdef THREADSAFE
-      MUTEX_UNLOCK(m, re);
+      MUTEX_UNLOCK(m);
 #endif
       return IN3_OK;
     }
@@ -633,13 +641,12 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
       data->ref_counter--;
 #ifdef THREADSAFE
       if (data->ref_counter == 0) {
-        in3_mutex_t m  = data->mutex;
-        uint32_t    re = data->reentrance;
+        in3_mutex_t m = data->mutex;
         chain_free(data);
-        MUTEX_UNLOCK(m, re);
+        MUTEX_UNLOCK(m);
       }
       else {
-        MUTEX_UNLOCK(data->mutex, data->reentrance);
+        MUTEX_UNLOCK(data->mutex);
       }
 #else
       if (data->ref_counter == 0) chain_free(data);
@@ -649,7 +656,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
       w->data                     = assign_nodelist(c->chain.chain_id);
 #ifdef THREADSAFE
       data = w->data;
-      MUTEX_LOCK(data->mutex, data->reentrance)
+      MUTEX_LOCK(data->mutex)
 #endif
       MUTEX_RETURN(data->nodelist ? IN3_OK : chain_change(w->data, c))
     }
