@@ -86,6 +86,7 @@ OPTION(PK_SIGNER "Enable Signing with private keys" ON)
 OPTION(NODESELECT_DEF "Enable default nodeselect implementation" ON)
 OPTION(NODESELECT_DEF_WL "Enable default nodeselect whitelist implementation" ON)
 OPTION(PLGN_CLIENT_DATA "Enable client-data plugin" OFF)
+OPTION(THREADSAFE "uses mutex to protect shared nodelist access" ON)
 
 
 IF (DEFINED ANDROID_ABI)
@@ -260,10 +261,14 @@ IF (WASM)
   set(CMD false)
   set(USE_CURL false)
   set(USE_WINHTTP false)
+  set(THREADSAFE false)
   ADD_DEFINITIONS(-DWASM)
   add_subdirectory(wasm/src)
 ENDIF (WASM)
 
+if (THREADSAFE)
+   ADD_DEFINITIONS(-DTHREADSAFE)
+ENDIF()
 
 # build tests
 if(TEST)

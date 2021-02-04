@@ -42,6 +42,31 @@
 #include "../core/util/log.h"
 #include "../core/util/mem.h"
 #include <time.h>
+#ifdef THREADSAFE
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <windows.h>
+#define MUTEX_INIT(mutex) mutex = CreateMutex(NULL, FALSE, NULL)
+#define MUTEX_LOCK(mutex, re)                                                                       \
+  {                                                                                                 \
+    if ((++re) == 1 && WaitForSingleObject(mutex, INFINITE) == WAIT_ABANDONED) return IN3_EUNKNOWN; \
+  }
+#define MUTEX_UNLOCK(mutex, re) \
+  if ((--re) == 0 && !ReleaseMutex(mutex)) return IN3_EUNKNOWN;
+#define MUTEX_FREE(mutex) CloseHandle(mutex);
+#else
+#include <pthread.h>
+#define MUTEX_INIT(mutex)                   \
+  if (pthread_mutex_init(&(mutex), NULL)) { \
+    _free(data);                            \
+    data = NULL;                            \
+  }
+#define MUTEX_LOCK(mutex, re) \
+  if ((++re) == 1) pthread_mutex_lock(&(mutex));
+#define MUTEX_UNLOCK(mutex, re) \
+  if ((--re) == 0) pthread_mutex_unlock(&(mutex));
+#define MUTEX_FREE(mutex) pthread_mutex_destroy(&(mutex));
+#endif
+#endif
 
 #ifndef NODELIST_H
 #define NODELIST_H
@@ -61,7 +86,7 @@ typedef struct node_offline_ {
   struct node_offline_* next;
 } node_offline_t;
 
-typedef struct {
+typedef struct in3_nodeselect_def {
   bool               dirty;           /**< indicates whether the nodelist has been modified after last read from cache */
   uint16_t           avg_block_time;  /**< average block time (seconds) for this data (calculated internally) */
   unsigned int       nodelist_length; /**< number of nodes in the nodeList */
@@ -82,7 +107,24 @@ typedef struct {
     uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
   } * nodelist_upd8_params;
+
+  chain_id_t                 chain_id;    /**< the chain_id of the data */
+  struct in3_nodeselect_def* next;        /**< the next in the linked list */
+  uint32_t                   ref_counter; /**< number of client using this nodelist */
+#ifdef THREADSAFE
+  uint32_t reentrance; /**< reentrance count */
+#if defined(_MSC_VER) || defined(__MINGW32__)
+  HANDLE mutex;
+#else
+  pthread_mutex_t mutex;
+#endif
+#endif
 } in3_nodeselect_def_t;
+
+/** wrapper for each client pointing to the global data*/
+typedef struct in3_nodelist_wrapper {
+  in3_nodeselect_def_t* data; /**< points to the global nodelist data*/
+} in3_nodeselect_wrapper_t;
 
 /** removes all nodes and their weights from the nodelist */
 NONULL void in3_nodelist_clear(in3_nodeselect_def_t* data);
