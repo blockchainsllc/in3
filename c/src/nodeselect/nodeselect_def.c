@@ -113,7 +113,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   d_token_t*  token = ctx->token;
 
   if (!data || data->ref_counter > 1) {
-    ctx->error_msg = "Can not modify the nodelist, since there are other instance using this";
+    ctx->error_msg = _strdupn("Can not modify the nodelist, since there are other instance using this", -1);
     return IN3_EINVAL;
   }
 

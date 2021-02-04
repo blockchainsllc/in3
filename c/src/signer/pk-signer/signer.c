@@ -140,7 +140,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       in3_configure_ctx_t* ctx = action_ctx;
       if (ctx->token->key == key("key")) {
         if (d_type(ctx->token) != T_BYTES || d_len(ctx->token) != 32) {
-          ctx->error_msg = "invalid key-length, must be 32";
+          ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
           return IN3_EINVAL;
         }
         eth_set_request_signer(ctx->client, ctx->token->data);
@@ -149,7 +149,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       if (ctx->token->key == key("pk")) {
         if (d_type(ctx->token) == T_BYTES) {
           if (d_len(ctx->token) != 32) {
-            ctx->error_msg = "invalid key-length, must be 32";
+            ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
             return IN3_EINVAL;
           }
           add_key(ctx->client, d_bytes(ctx->token)->data);
@@ -159,7 +159,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
           for (d_iterator_t iter = d_iter(ctx->token); iter.left; d_iter_next(&iter)) {
             if (d_type(iter.token) == T_BYTES) {
               if (d_len(iter.token) != 32) {
-                ctx->error_msg = "invalid key-length, must be 32";
+                ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
                 return IN3_EINVAL;
               }
               add_key(ctx->client, d_bytes(iter.token)->data);
@@ -167,7 +167,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
           }
           return IN3_OK;
         }
-        ctx->error_msg = "invalid type for a pk";
+        ctx->error_msg = _strdupn("invalid type for a pk", -1);
         return IN3_EINVAL;
       }
       return IN3_EIGNORE;
