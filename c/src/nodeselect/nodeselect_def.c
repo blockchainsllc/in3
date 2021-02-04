@@ -107,18 +107,31 @@ static in3_ret_t clear_nodes(in3_nodeselect_def_t* data) {
   return IN3_OK;
 }
 
-static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx) {
+static in3_ret_t ensure_custom_nodelist(in3_nodeselect_def_t** src, in3_nodeselect_wrapper_t* w) {
+  if (!w || (*src)->ref_counter == 1) return IN3_OK; // w==NULL if the config is taken from the default, and if ref_count=1 we keep it.
+  (*src)->ref_counter--;
+  in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
+  data->avg_block_time       = avg_block_time_for_chain_id((*src)->chain_id);
+  data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
+  data->chain_id             = (*src)->chain_id;
+  data->ref_counter          = 1;
+  w->data                    = data;
+  *src                       = data;
+#ifdef THREADSAFE
+  MUTEX_INIT(data->mutex)
+#endif
+  return IN3_OK;
+}
+
+static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx, in3_nodeselect_wrapper_t* w) {
   char*       res   = NULL;
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
 
-  if (!data || data->ref_counter > 1) {
-    ctx->error_msg = _strdupn("Can not modify the nodelist, since there are other instance using this", -1);
-    return IN3_EINVAL;
-  }
-
   if (token->key == key("nodeRegistry")) {
     EXPECT_TOK_OBJ(token);
+
+    TRY(ensure_custom_nodelist(&data, w))
 
 #ifdef NODESELECT_DEF_WL
     bool has_wlc = false, has_man_wl = false;
@@ -204,6 +217,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   }
   else if (token->key == key("rpc")) {
     EXPECT_TOK_STR(token);
+    TRY(ensure_custom_nodelist(&data, w))
     in3_t* c          = ctx->client;
     c->proof          = PROOF_NONE;
     c->chain.chain_id = CHAIN_ID_LOCAL;
@@ -217,10 +231,6 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     n->url = _strdupn(d_string(token), -1);
     _free(data->nodelist_upd8_params);
     data->nodelist_upd8_params = NULL;
-  }
-  else if (token->key == key("replaceLatestBlock")) {
-    EXPECT_TOK_U8(token);
-    in3_node_props_set(&ctx->client->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
   }
   else {
     return IN3_EIGNORE;
@@ -277,7 +287,7 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c) {
     return IN3_ECONFIG;
 
   in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result + 1, .error_msg = NULL};
-  in3_ret_t           ret  = config_set(data, &cctx);
+  in3_ret_t           ret  = config_set(data, &cctx, NULL);
   json_free(json);
   if (IN3_OK != ret) {
     in3_log_error("nodeselect config error: %s\n", cctx.error_msg);
@@ -619,7 +629,7 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_RPC_VERIFY:
       MUTEX_RETURN(rpc_verify(data, (in3_vctx_t*) plugin_ctx))
     case PLGN_ACT_CONFIG_SET:
-      MUTEX_RETURN(config_set(data, (in3_configure_ctx_t*) plugin_ctx))
+      MUTEX_RETURN(config_set(data, (in3_configure_ctx_t*) plugin_ctx, plugin_data))
     case PLGN_ACT_CONFIG_GET:
       MUTEX_RETURN(config_get(data, (in3_get_config_ctx_t*) plugin_ctx))
     case PLGN_ACT_NL_PICK: {
