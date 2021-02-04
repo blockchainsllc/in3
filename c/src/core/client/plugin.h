@@ -50,7 +50,7 @@ extern "C" {
 // ---------- plugin management -----------------
 
 /** checks if a plugin for specified action is registered with the client */
-#define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
+#define in3_plugin_is_registered(client, action) (((client)->plugin_acts & (action)) == (action))
 
 /** registers a plugin with the client */
 in3_ret_t in3_plugin_register(

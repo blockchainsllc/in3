@@ -713,6 +713,8 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
 }
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
+  if (in3_plugin_is_registered(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD))
+    return IN3_EIGNORE;
   in3_nodeselect_wrapper_t* data = _malloc(sizeof(*data));
   data->data                     = assign_nodelist(c->chain.chain_id);
   return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_def, data, false);
