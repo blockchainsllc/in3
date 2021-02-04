@@ -50,12 +50,13 @@ in3_ret_t  zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* no
 in3_ret_t  resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst);                             /**< resolve token list */
 in3_ret_t  zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash);                                                 /**< get pubkeyhash */
 
-#define CHECK_PARAM_TOKEN(ctx, params, index)                                                                           \
-  switch (d_type(d_get_at(params, index))) {                                                                            \
-    case T_STRING: break;                                                                                               \
-    case T_BYTES:                                                                                                       \
-      if (d_len(d_get_at(params, index)) == 20) break;                                                                  \
-    default: return ctx_set_error(ctx, "argument at index " #index " must be a token name or and address", IN3_EINVAL); \
+#define CHECK_PARAM_TOKEN(ctx, params, index)                                                                                                    \
+  switch (d_type(d_get_at(params, index))) {                                                                                                     \
+    case T_STRING: break;                                                                                                                        \
+    case T_BYTES:                                                                                                                                \
+      if (d_len(d_get_at(params, index)) != 20) return ctx_set_error(ctx, "argument at index " #index " must be a 20 byte address", IN3_EINVAL); \
+      break;                                                                                                                                     \
+    default: return ctx_set_error(ctx, "argument at index " #index " must be a token name or an address", IN3_EINVAL);                           \
   }
 
 #endif
