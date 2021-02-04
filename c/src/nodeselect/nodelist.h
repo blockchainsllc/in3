@@ -56,10 +56,7 @@
 #else
 #include <pthread.h>
 #define MUTEX_INIT(mutex)                   \
-  if (pthread_mutex_init(&(mutex), NULL)) { \
-    _free(data);                            \
-    data = NULL;                            \
-  }
+  pthread_mutex_init(&(mutex), NULL);
 #define MUTEX_LOCK(mutex, re) \
   if ((++re) == 1) pthread_mutex_lock(&(mutex));
 #define MUTEX_UNLOCK(mutex, re) \
