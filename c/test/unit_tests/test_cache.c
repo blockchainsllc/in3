@@ -339,7 +339,7 @@ int main() {
   TESTS_BEGIN();
   RUN_TEST(test_scache);
   RUN_TEST(test_cache);
-  RUN_TEST(test_newchain);
+//  RUN_TEST(test_newchain);
   RUN_TEST(test_whitelist_cache);
   return TESTS_END();
 }
