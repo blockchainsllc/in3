@@ -23,16 +23,19 @@ in3_nodeselect_def_t* nodelist_registry = NULL;
 #ifdef THREADSAFE
 #if defined(_MSC_VER) || defined(__MINGW32__)
 static HANDLE lock_registry = NULL;
-#define LOCK_REGISTRY(code) \
-  {                         \
-    if (!lock_registry) {
-HANDLE p = CreateMutex(NULL, FALSE, NULL);
-if (InterlockedCompareExchangePointer((PVOID*) &lock_registry, (PVOID) p, NULL)) CloseHandle(p);
+static void   _lock_registry() {
+  if (!lock_registry) {
+    HANDLE p = CreateMutex(NULL, FALSE, NULL);
+    if (InterlockedCompareExchangePointer((PVOID*) &lock_registry, (PVOID) p, NULL)) CloseHandle(p);
+  }
+  MUTEX_LOCK(lock_registry);
 }
-MUTEX_LOCK(lock_registry);
-code
-    MUTEX_UNLOCK(lock_registry)
-}
+#define LOCK_REGISTRY(code)         \
+  {                                 \
+    _lock_registry();               \
+    code                            \
+        MUTEX_UNLOCK(lock_registry) \
+  }
 #else
 static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
 #define LOCK_REGISTRY(code)     \
