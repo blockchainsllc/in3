@@ -16,16 +16,43 @@
 #define BLACKLISTTIME (24 * 3600)
 #define WAIT_TIME_CAP 3600
 
-// global nodelist-data
+// global nodelist-data for all nodelist instances without any special configurations
 in3_nodeselect_def_t* nodelist_registry = NULL;
+
+// define function to lock the registry while reading from or even changing the registry
+#ifdef THREADSAFE
+#if defined(_MSC_VER) || defined(__MINGW32__)
+static HANDLE lock_registry = NULL;
+#define LOCK_REGISTRY(code) \
+  {                         \
+    if (!lock_registry) {
+HANDLE p = CreateMutex(NULL, FALSE, NULL);
+if (InterlockedCompareExchangePointer((PVOID*) &lock_registry, (PVOID) p, NULL)) CloseHandle(p);
+}
+MUTEX_LOCK(lock_registry);
+code
+    MUTEX_UNLOCK(lock_registry)
+}
+#else
+static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
+#define LOCK_REGISTRY(code)     \
+  {                             \
+    MUTEX_LOCK(lock_registry);  \
+    code;                       \
+    MUTEX_UNLOCK(lock_registry) \
+  }
+#endif
+#else
+#define LOCK_REGISTRY(code) \
+  { code }
+#endif
 
 static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
   char*      method = NULL;
   d_token_t* params = d_get(vc->request, K_PARAMS);
 
   // do we support this request?
-  if (!(method = d_get_stringk(vc->request, K_METHOD)))
-    return vc_err(vc, "No Method in request defined!");
+  if (!(method = d_get_stringk(vc->request, K_METHOD))) return vc_err(vc, "No Method in request defined!");
   if (vc->chain->type != CHAIN_ETH && strcmp(method, "in3_nodeList")) return IN3_EIGNORE;
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
@@ -107,26 +134,29 @@ static in3_ret_t clear_nodes(in3_nodeselect_def_t* data) {
   return IN3_OK;
 }
 
-static in3_ret_t ensure_custom_nodelist(in3_nodeselect_def_t** src, in3_nodeselect_wrapper_t* w) {
-  //  if (!w || (*src)->ref_counter == 1) return IN3_OK; // w==NULL if the config is taken from the default, and if ref_count=1 we keep it.
-  if (!w) return IN3_OK; // w==NULL if the config is taken from the default, and if ref_count=1 we keep it.
-  in3_nodeselect_def_t* t = nodelist_registry;
-  for (; t; t = t->next) {
-    if (t == *src) break;
+static inline bool is_shared_nodelist(in3_nodeselect_def_t* n) {
+  for (in3_nodeselect_def_t* t = nodelist_registry; t; t = t->next) {
+    if (t == n) return true;
   }
-  if (!t) return IN3_OK; // the current nodelist is not part of the registry, so we keep using it.
-  (*src)->ref_counter--;
-  in3_log_trace("detaching nodelist.....\n");
-  in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-  data->avg_block_time       = avg_block_time_for_chain_id((*src)->chain_id);
-  data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
-  data->chain_id             = (*src)->chain_id;
-  data->ref_counter          = 1;
-  w->data                    = data;
-  *src                       = data;
+  return false;
+}
+
+static in3_ret_t ensure_custom_nodelist(in3_nodeselect_def_t** src, in3_nodeselect_wrapper_t* w) {
+  LOCK_REGISTRY(
+      if (w && is_shared_nodelist(*src)) {
+        // create a custom nodelist
+        (*src)->ref_counter--;                                                          // detach from old
+        in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));                         // create new empty list
+        data->avg_block_time       = avg_block_time_for_chain_id((*src)->chain_id);     // with default blocktime
+        data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params))); // but marked as needed to be updated
+        data->chain_id             = (*src)->chain_id;                                  // clone the chain_id
+        data->ref_counter          = 1;                                                 // this will never changed, since it is not a shared list
+        w->data                    = data;                                              // change the pointer in the wrapper
+        *src                       = data;                                              // and in the calling function
 #ifdef THREADSAFE
-  MUTEX_INIT(data->mutex)
+        MUTEX_INIT(data->mutex) // mutex is still needed to be threadsafe
 #endif
+      })
   return IN3_OK;
 }
 
@@ -138,6 +168,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   if (token->key == key("nodeRegistry")) {
     EXPECT_TOK_OBJ(token);
 
+    // this is changing the nodelist config, so we need to make sure we have our own nodelist
     TRY(ensure_custom_nodelist(&data, w))
 
 #ifdef NODESELECT_DEF_WL
@@ -564,12 +595,23 @@ static void free_(void* p) {
 }
 
 static void chain_free(in3_nodeselect_def_t* chain) {
-  for (in3_nodeselect_def_t** p = &nodelist_registry; *p; p = &((*p)->next)) {
-    if (*p == chain) {
-      *p = chain->next;
-      break;
-    }
-  }
+  bool needs_freeing = false;
+  LOCK_REGISTRY(
+      chain->ref_counter--;
+      if (chain->ref_counter == 0) {
+        needs_freeing = true;
+        for (in3_nodeselect_def_t** p = &nodelist_registry; *p; p = &((*p)->next)) {
+          if (*p == chain) {
+            *p = chain->next;
+            break;
+          }
+        }
+      })
+#ifdef THREADSAFE
+  MUTEX_UNLOCK(chain->mutex) // Important: this function is always called in a context where we have locked this mutex, so we need to unlock it here!
+#endif
+
+  if (!needs_freeing) return;
   offline_free(chain);
   in3_nodelist_clear(chain);
 #ifdef NODESELECT_DEF_WL
@@ -582,23 +624,29 @@ static void chain_free(in3_nodeselect_def_t* chain) {
   _free(chain);
 }
 
-in3_nodeselect_def_t* assign_nodelist(chain_id_t chain_id) {
-  for (in3_nodeselect_def_t* data = nodelist_registry; data; data = data->next) {
-    if (data->chain_id == chain_id) {
-      data->ref_counter++;
-      return data;
-    }
-  }
-  in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
-  data->avg_block_time       = avg_block_time_for_chain_id(chain_id);
-  data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
-  data->chain_id             = chain_id;
-  data->next                 = nodelist_registry;
-  data->ref_counter          = 1;
-  nodelist_registry          = data;
+// finds or creates a new nodelist
+static in3_nodeselect_def_t* assign_nodelist(chain_id_t chain_id) {
+  in3_nodeselect_def_t* data = NULL;
+  LOCK_REGISTRY(
+      for (data = nodelist_registry; data; data = data->next) {
+        if (data->chain_id == chain_id) {
+          data->ref_counter++;
+          break;
+        }
+      }
+
+      if (data == NULL) {
+        data                       = _calloc(1, sizeof(*data));
+        data->avg_block_time       = avg_block_time_for_chain_id(chain_id);
+        data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
+        data->chain_id             = chain_id;
+        data->next                 = nodelist_registry;
+        data->ref_counter          = 1;
+        nodelist_registry          = data;
 #ifdef THREADSAFE
-  MUTEX_INIT(data->mutex)
+        MUTEX_INIT(data->mutex)
 #endif
+      })
   return data;
 }
 #ifdef THREADSAFE
@@ -611,10 +659,12 @@ in3_nodeselect_def_t* assign_nodelist(chain_id_t chain_id) {
 #else
 #define MUTEX_RETURN(val) return val;
 #endif
+
 in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_nodeselect_def_t* data = ((in3_nodeselect_wrapper_t*) plugin_data)->data;
 
 #ifdef THREADSAFE
+  // lock only the nodelist
   MUTEX_LOCK(data->mutex)
 #endif
 
@@ -622,15 +672,8 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_INIT:
       MUTEX_RETURN(IN3_OK)
     case PLGN_ACT_TERM: {
-#ifdef THREADSAFE
-      in3_mutex_t m = data->mutex;
-#endif
-      data->ref_counter--;
-      if (data->ref_counter == 0) chain_free(data);
+      chain_free(data); // the unlocking of the mutex is done inside chain_free!
       _free(plugin_data);
-#ifdef THREADSAFE
-      MUTEX_UNLOCK(m);
-#endif
       return IN3_OK;
     }
     case PLGN_ACT_RPC_VERIFY:
@@ -655,25 +698,13 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
     case PLGN_ACT_NL_OFFLINE:
       MUTEX_RETURN(handle_offline(data, plugin_ctx))
     case PLGN_ACT_CHAIN_CHANGE: {
-      data->ref_counter--;
-#ifdef THREADSAFE
-      if (data->ref_counter == 0) {
-        in3_mutex_t m = data->mutex;
-        chain_free(data);
-        MUTEX_UNLOCK(m);
-      }
-      else {
-        MUTEX_UNLOCK(data->mutex);
-      }
-#else
-      if (data->ref_counter == 0) chain_free(data);
-#endif
+      chain_free(data); // this will always unlock the mutex of the nodelist adn update the ref_counter!
       in3_nodeselect_wrapper_t* w = plugin_data;
       in3_t*                    c = plugin_ctx;
       w->data                     = assign_nodelist(c->chain.chain_id);
 #ifdef THREADSAFE
-      data = w->data;
-      MUTEX_LOCK(data->mutex)
+      data = w->data;         // update data-pointer to the new nodelist
+      MUTEX_LOCK(data->mutex) // and lock it because we are about to initialize the chain
 #endif
       MUTEX_RETURN(data->nodelist ? IN3_OK : chain_change(w->data, c))
     }
