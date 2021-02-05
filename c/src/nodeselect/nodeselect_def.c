@@ -108,8 +108,15 @@ static in3_ret_t clear_nodes(in3_nodeselect_def_t* data) {
 }
 
 static in3_ret_t ensure_custom_nodelist(in3_nodeselect_def_t** src, in3_nodeselect_wrapper_t* w) {
-  if (!w || (*src)->ref_counter == 1) return IN3_OK; // w==NULL if the config is taken from the default, and if ref_count=1 we keep it.
+  //  if (!w || (*src)->ref_counter == 1) return IN3_OK; // w==NULL if the config is taken from the default, and if ref_count=1 we keep it.
+  if (!w) return IN3_OK; // w==NULL if the config is taken from the default, and if ref_count=1 we keep it.
+  in3_nodeselect_def_t* t = nodelist_registry;
+  for (; t; t = t->next) {
+    if (t == *src) break;
+  }
+  if (!t) return IN3_OK; // the current nodelist is not part of the registry, so we keep using it.
   (*src)->ref_counter--;
+  in3_log_trace("detaching nodelist.....\n");
   in3_nodeselect_def_t* data = _calloc(1, sizeof(*data));
   data->avg_block_time       = avg_block_time_for_chain_id((*src)->chain_id);
   data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
