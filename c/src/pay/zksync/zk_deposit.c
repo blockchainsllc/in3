@@ -20,11 +20,13 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   }
 
   //  amount
-  d_token_t* tmp           = NULL;
-  bytes_t    amount        = d_to_bytes(params_get(params, key("amount"), 0));
-  d_token_t* token         = params_get(params, key("token"), 1);
-  bool       approve       = d_int(params_get(params, key("approveDepositAmountForERC20"), 2));
-  uint8_t*   main_contract = conf->main_contract;
+  d_token_t*      tmp           = NULL;
+  d_token_t*      tx_receipt    = NULL;
+  zksync_token_t* token_conf    = NULL;
+  bytes_t         amount        = d_to_bytes(params_get(params, key("amount"), 0));
+  d_token_t*      token         = params_get(params, key("token"), 1);
+  bool            approve       = d_int(params_get(params, key("approveDepositAmountForERC20"), 2));
+  uint8_t*        main_contract = conf->main_contract;
 
   // make sure we have an account
   uint8_t* account = conf->account;
@@ -38,10 +40,8 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   // check main_contract
   if (!main_contract) TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
 
-  d_token_t*      tx_receipt = NULL;
-  zksync_token_t* token_conf = NULL;
+  // get token from the tokenlist
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_conf))
-  if (!token_conf) return IN3_EUNKNOWN;
 
   if (memiszero(token_conf->address, 20)) { // is eth
     sb_t sb = {0};
@@ -74,8 +74,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   }
 
   // now that we have the receipt, we need to find the opId in the log
-  bytes32_t event_hash;
-  hex_to_bytes("d0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830", -1, event_hash, 32);
+  const uint8_t event_hash[] = {0xd0, 0x94, 0x33, 0x72, 0xc0, 0x8b, 0x43, 0x8a, 0x88, 0xd4, 0xb3, 0x9d, 0x77, 0x21, 0x69, 0x01, 0x07, 0x9e, 0xda, 0x9c, 0xa5, 0x9d, 0x45, 0x34, 0x98, 0x41, 0xc0, 0x99, 0x08, 0x3b, 0x68, 0x30};
   for (d_iterator_t iter = d_iter(d_get(tx_receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
     bytes_t* ev = d_get_bytes_at(d_get(iter.token, K_TOPICS), 0);
     if (ev && ev->len == 32 && memcmp(event_hash, ev->data, 32) == 0) {
