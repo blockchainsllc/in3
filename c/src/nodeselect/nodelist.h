@@ -50,14 +50,10 @@
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <windows.h>
 typedef HANDLE in3_mutex_t;
-#define MUTEX_INIT(mutex) mutex = CreateMutex(NULL, FALSE, NULL);
-#define MUTEX_LOCK(mutex)                                                            \
-  {                                                                                  \
-    if (WaitForSingleObject(mutex, INFINITE) == WAIT_ABANDONED) return IN3_EUNKNOWN; \
-  }
-#define MUTEX_UNLOCK(mutex) \
-  if (!ReleaseMutex(mutex)) return IN3_EUNKNOWN;
-#define MUTEX_FREE(mutex) CloseHandle(mutex);
+#define MUTEX_INIT(mutex)   mutex = CreateMutex(NULL, FALSE, NULL);
+#define MUTEX_LOCK(mutex)   WaitForSingleObject(mutex, INFINITE);
+#define MUTEX_UNLOCK(mutex) ReleaseMutex(mutex);
+#define MUTEX_FREE(mutex)   CloseHandle(mutex);
 #else
 #include <pthread.h>
 typedef pthread_mutex_t in3_mutex_t;
@@ -68,11 +64,9 @@ typedef pthread_mutex_t in3_mutex_t;
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); \
     pthread_mutex_init(&(mutex), &attr);                       \
   }
-#define MUTEX_LOCK(mutex) \
-  pthread_mutex_lock(&(mutex));
-#define MUTEX_UNLOCK(mutex) \
-  pthread_mutex_unlock(&(mutex));
-#define MUTEX_FREE(mutex) pthread_mutex_destroy(&(mutex));
+#define MUTEX_LOCK(mutex)   pthread_mutex_lock(&(mutex));
+#define MUTEX_UNLOCK(mutex) pthread_mutex_unlock(&(mutex));
+#define MUTEX_FREE(mutex)   pthread_mutex_destroy(&(mutex));
 #endif
 #endif
 
@@ -117,7 +111,7 @@ typedef struct in3_nodeselect_def {
   struct in3_nodeselect_def* next;        /**< the next in the linked list */
   uint32_t                   ref_counter; /**< number of client using this nodelist */
 #ifdef THREADSAFE
-  in3_mutex_t mutex;
+  in3_mutex_t mutex; /**< mutex to lock this nodelist */
 #endif
 } in3_nodeselect_def_t;
 

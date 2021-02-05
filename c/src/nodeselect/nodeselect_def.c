@@ -38,11 +38,11 @@ static void   _lock_registry() {
   }
 #else
 static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
-#define LOCK_REGISTRY(code)     \
-  {                             \
-    MUTEX_LOCK(lock_registry);  \
-    code;                       \
-    MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)         \
+  {                                 \
+    MUTEX_LOCK(lock_registry);      \
+    code                            \
+        MUTEX_UNLOCK(lock_registry) \
   }
 #endif
 #else
@@ -144,7 +144,7 @@ static inline bool is_shared_nodelist(in3_nodeselect_def_t* n) {
   return false;
 }
 
-static in3_ret_t ensure_custom_nodelist(in3_nodeselect_def_t** src, in3_nodeselect_wrapper_t* w) {
+static in3_ret_t nodelist_seperate_from_registry(in3_nodeselect_def_t** src, in3_nodeselect_wrapper_t* w) {
   LOCK_REGISTRY(
       if (w && is_shared_nodelist(*src)) {
         // create a custom nodelist
@@ -172,7 +172,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     EXPECT_TOK_OBJ(token);
 
     // this is changing the nodelist config, so we need to make sure we have our own nodelist
-    TRY(ensure_custom_nodelist(&data, w))
+    TRY(nodelist_seperate_from_registry(&data, w))
 
 #ifdef NODESELECT_DEF_WL
     bool has_wlc = false, has_man_wl = false;
@@ -258,7 +258,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   }
   else if (token->key == key("rpc")) {
     EXPECT_TOK_STR(token);
-    TRY(ensure_custom_nodelist(&data, w))
+    TRY(nodelist_seperate_from_registry(&data, w))
     in3_t* c          = ctx->client;
     c->proof          = PROOF_NONE;
     c->chain.chain_id = CHAIN_ID_LOCAL;
@@ -597,7 +597,7 @@ static void free_(void* p) {
   _free(p);
 }
 
-static void chain_free(in3_nodeselect_def_t* chain) {
+static void nodelist_return_or_free(in3_nodeselect_def_t* chain) {
   bool needs_freeing = false;
   LOCK_REGISTRY(
       chain->ref_counter--;
@@ -628,7 +628,7 @@ static void chain_free(in3_nodeselect_def_t* chain) {
 }
 
 // finds or creates a new nodelist
-static in3_nodeselect_def_t* assign_nodelist(chain_id_t chain_id) {
+static in3_nodeselect_def_t* nodelist_get_or_create(chain_id_t chain_id) {
   in3_nodeselect_def_t* data = NULL;
   LOCK_REGISTRY(
       for (data = nodelist_registry; data; data = data->next) {
@@ -653,17 +653,17 @@ static in3_nodeselect_def_t* assign_nodelist(chain_id_t chain_id) {
   return data;
 }
 #ifdef THREADSAFE
-#define MUTEX_RETURN(val)      \
+#define UNLOCK_AND_RETURN(val) \
   {                            \
     in3_ret_t r = val;         \
     MUTEX_UNLOCK(data->mutex); \
     return r;                  \
   }
 #else
-#define MUTEX_RETURN(val) return val;
+#define UNLOCK_AND_RETURN(val) return val;
 #endif
 
-in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   in3_nodeselect_def_t* data = ((in3_nodeselect_wrapper_t*) plugin_data)->data;
 
 #ifdef THREADSAFE
@@ -673,50 +673,50 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
 
   switch (action) {
     case PLGN_ACT_INIT:
-      MUTEX_RETURN(IN3_OK)
+      UNLOCK_AND_RETURN(IN3_OK)
     case PLGN_ACT_TERM: {
-      chain_free(data); // the unlocking of the mutex is done inside chain_free!
+      nodelist_return_or_free(data); // the unlocking of the mutex is done inside nodelist_return_or_free!
       _free(plugin_data);
       return IN3_OK;
     }
     case PLGN_ACT_RPC_VERIFY:
-      MUTEX_RETURN(rpc_verify(data, (in3_vctx_t*) plugin_ctx))
+      UNLOCK_AND_RETURN(rpc_verify(data, (in3_vctx_t*) plugin_ctx))
     case PLGN_ACT_CONFIG_SET:
-      MUTEX_RETURN(config_set(data, (in3_configure_ctx_t*) plugin_ctx, plugin_data))
+      UNLOCK_AND_RETURN(config_set(data, (in3_configure_ctx_t*) plugin_ctx, plugin_data))
     case PLGN_ACT_CONFIG_GET:
-      MUTEX_RETURN(config_get(data, (in3_get_config_ctx_t*) plugin_ctx))
+      UNLOCK_AND_RETURN(config_get(data, (in3_get_config_ctx_t*) plugin_ctx))
     case PLGN_ACT_NL_PICK: {
       in3_nl_pick_ctx_t* pctx = plugin_ctx;
-      MUTEX_RETURN(pctx->type == NL_DATA ? pick_data(data, pctx->ctx) : pick_signer(data, pctx->ctx))
+      UNLOCK_AND_RETURN(pctx->type == NL_DATA ? pick_data(data, pctx->ctx) : pick_signer(data, pctx->ctx))
     }
     case PLGN_ACT_NL_PICK_FOLLOWUP:
-      MUTEX_RETURN(pick_followup(data, plugin_ctx))
+      UNLOCK_AND_RETURN(pick_followup(data, plugin_ctx))
     case PLGN_ACT_NL_BLACKLIST: {
       in3_nl_blacklist_ctx_t* bctx = plugin_ctx;
-      MUTEX_RETURN(bctx->is_addr ? blacklist_node_addr(data, bctx->address, BLACKLISTTIME)
-                                 : blacklist_node_url(data, bctx->url, BLACKLISTTIME))
+      UNLOCK_AND_RETURN(bctx->is_addr ? blacklist_node_addr(data, bctx->address, BLACKLISTTIME)
+                                      : blacklist_node_url(data, bctx->url, BLACKLISTTIME))
     }
     case PLGN_ACT_NL_FAILABLE:
-      MUTEX_RETURN(handle_failable(data, plugin_ctx))
+      UNLOCK_AND_RETURN(handle_failable(data, plugin_ctx))
     case PLGN_ACT_NL_OFFLINE:
-      MUTEX_RETURN(handle_offline(data, plugin_ctx))
+      UNLOCK_AND_RETURN(handle_offline(data, plugin_ctx))
     case PLGN_ACT_CHAIN_CHANGE: {
-      chain_free(data); // this will always unlock the mutex of the nodelist adn update the ref_counter!
+      nodelist_return_or_free(data); // this will always unlock the mutex of the nodelist and update the ref_counter!
       in3_nodeselect_wrapper_t* w = plugin_data;
       in3_t*                    c = plugin_ctx;
-      w->data                     = assign_nodelist(c->chain.chain_id);
+      w->data                     = nodelist_get_or_create(c->chain.chain_id);
+      data                        = w->data; // update data-pointer to the new nodelist
 #ifdef THREADSAFE
-      data = w->data;         // update data-pointer to the new nodelist
       MUTEX_LOCK(data->mutex) // and lock it because we are about to initialize the chain
 #endif
-      MUTEX_RETURN(data->nodelist ? IN3_OK : chain_change(w->data, c))
+      UNLOCK_AND_RETURN(data->nodelist ? IN3_OK : chain_change(w->data, c))
     }
     case PLGN_ACT_GET_DATA: {
       in3_get_data_ctx_t* pctx = plugin_ctx;
       if (pctx->type == GET_DATA_REGISTRY_ID) {
         pctx->data    = data->registry_id;
         pctx->cleanup = NULL;
-        MUTEX_RETURN(IN3_OK)
+        UNLOCK_AND_RETURN(IN3_OK)
       }
       else if (pctx->type == GET_DATA_NODE_MIN_BLK_HEIGHT) {
         assert(pctx->data);
@@ -744,9 +744,9 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
           pctx->data    = NULL;
           pctx->cleanup = NULL;
         }
-        MUTEX_RETURN(IN3_OK)
+        UNLOCK_AND_RETURN(IN3_OK)
       }
-      MUTEX_RETURN(IN3_EIGNORE)
+      UNLOCK_AND_RETURN(IN3_EIGNORE)
     }
     case PLGN_ACT_ADD_PAYLOAD: {
 #ifdef NODESELECT_DEF_WL
@@ -756,17 +756,17 @@ in3_ret_t in3_nodeselect_def(void* plugin_data, in3_plugin_act_t action, void* p
         sb_add_bytes(payload, ",\"whiteListContract\":", &adr, 1, false);
       }
 #endif
-      MUTEX_RETURN(IN3_OK)
+      UNLOCK_AND_RETURN(IN3_OK)
     }
     default: break;
   }
-  MUTEX_RETURN(IN3_EIGNORE)
+  UNLOCK_AND_RETURN(IN3_EIGNORE)
 }
 
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   if (in3_plugin_is_registered(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD))
     return IN3_EIGNORE;
   in3_nodeselect_wrapper_t* data = _malloc(sizeof(*data));
-  data->data                     = assign_nodelist(c->chain.chain_id);
-  return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_def, data, false);
+  data->data                     = nodelist_get_or_create(c->chain.chain_id);
+  return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_handle_action, data, false);
 }
