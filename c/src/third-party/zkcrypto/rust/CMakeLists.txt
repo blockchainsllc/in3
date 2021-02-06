@@ -57,5 +57,6 @@ add_static_library(
       core
       zk_crypto_rs
       dl
+      m
   )
 
