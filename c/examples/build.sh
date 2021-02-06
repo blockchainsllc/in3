@@ -12,7 +12,7 @@ if [ ! -d /usr/local/include/in3 ]; then
      cd ../c/examples
   fi
 
-  BUILDARGS="-L../../build/lib/  -I../../c/include/ -lin3"
+  BUILDARGS="-L../../build/lib/  -I../../c/include/ -lin3 -lm"
 
   # if you want to staticly link, uncomment the next lines
 
