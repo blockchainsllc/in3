@@ -12,8 +12,12 @@ if [ ! -d /usr/local/include/in3 ]; then
      cd ../c/examples
   fi
 
+  if [ -f ../../build/lib/libzkcrypto.a ]; then
+   ZKCRYPTO="../../build/lib/libzkcrypto.a"
+  fi
+
   # set the library path to use the local
-  BUILDARGS="-L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a -ltransport_curl -lcurl -pthread"
+  BUILDARGS="-L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a $ZKCRYPTO -ltransport_curl -lcurl -pthread"
 else
   BUILDARGS="-lin3"
 fi
