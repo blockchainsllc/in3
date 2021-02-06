@@ -51,6 +51,7 @@ gcc8:
       - x64_jni
       - x64_build/bin
       - x64_build/lib
+      - x64_build/rust
       - x64_build/c/docs/doc_doxygen
       - x64_build/java/docs/doc_doxygen
 
