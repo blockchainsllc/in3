@@ -12,13 +12,17 @@ if [ ! -d /usr/local/include/in3 ]; then
      cd ../c/examples
   fi
 
+  BUILDARGS="-L../../build/lib/  -I../../c/include/ -lin3"
+
+  # if you want to staticly link, uncomment the next lines
+
   # do we need to add zk_crypto?
-  if [ -f ../../build/rust/zkcrypto/release/libzk_crypto.a ]; then
-   ZKCRYPTO="../../build/rust/zkcrypto/release/libzk_crypto.a -lm -ldl"
-  fi
+  #  if [ -f ../../build/rust/zkcrypto/release/libzk_crypto.a ]; then
+  #   ZKCRYPTO="../../build/rust/zkcrypto/release/libzk_crypto.a -lm -ldl"
+  #  fi
 
   # set the library path to use the local
-  BUILDARGS="-L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a $ZKCRYPTO -ltransport_curl -lcurl -pthread"
+  #  BUILDARGS="-v -L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a $ZKCRYPTO -ltransport_curl -lcurl -pthread"
 else
   BUILDARGS="-lin3"
 fi
