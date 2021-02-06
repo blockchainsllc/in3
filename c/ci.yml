@@ -43,7 +43,7 @@ gcc8:
     - make in3_jni
     - cp lib/libin3_jni.so ../x64_jni/
     - rm -rf *
-    - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true -DZKCRYPTO_LIB=true ..
     - make
   artifacts:
     paths:
@@ -85,7 +85,7 @@ arm7:
   tags:
     - arm
   variables:
-    CONAN_OPTS: "-DJAVA=false"
+    CONAN_OPTS: "-DZKCRYPTO_LIB=true -DJAVA=false"
     BUILD: "arm7_build"
 
 arm_jni:
@@ -94,7 +94,7 @@ arm_jni:
   tags:
     - arm
   variables:
-    CONAN_OPTS: "-DJAVA=true -DUSE_CURL=false"
+    CONAN_OPTS: "-DJAVA=true -DZKCRYPTO_LIB=true -DUSE_CURL=false"
     BUILD: "arm_jni_build"
 
 gcc8-x86:
@@ -135,11 +135,11 @@ mac_os:
     - mkdir mac_build
     - mkdir mac_jni
     - cd mac_build
-    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true -DTRANSPORTS=false -DUSE_SCRYPT=true ..
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true -DZKCRYPTO_LIB=true -DTRANSPORTS=false -DUSE_SCRYPT=true ..
     - make in3_jni
     - cp lib/libin3_jni.dylib ../mac_jni/
     - rm -rf *
-    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true -DZKCRYPTO_LIB=true ..
     - make
 
   artifacts:
