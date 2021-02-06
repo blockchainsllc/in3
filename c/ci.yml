@@ -28,6 +28,7 @@
     paths:
       - $BUILD/bin
       - $BUILD/lib
+      - $BUILD/rust
 
 gcc8:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -149,6 +150,7 @@ mac_os:
       - mac_build/java/docs
       - mac_build/lib
       - mac_build/bin
+      - mac_build/rust
   tags:
     - mac-os
 
