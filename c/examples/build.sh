@@ -13,7 +13,7 @@ if [ ! -d /usr/local/include/in3 ]; then
   fi
 
   if [ -f ../../build/lib/libzkcrypto.a ]; then
-   ZKCRYPTO="../../build/lib/libzkcrypto.a"
+   ZKCRYPTO="../../build/lib/libzkcrypto.a -lm -dl"
   fi
 
   # set the library path to use the local
