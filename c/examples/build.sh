@@ -14,7 +14,7 @@ if [ ! -d /usr/local/include/in3 ]; then
 
   # do we need to add zk_crypto?
   if [ -f ../../build/rust/zkcrypto/release/libzk_crypto.a ]; then
-   ZKCRYPTO="../../build/rust/zkcrypto/release/libzk_crypto.a -lm -dl"
+   ZKCRYPTO="../../build/rust/zkcrypto/release/libzk_crypto.a -lm -ldl"
   fi
 
   # set the library path to use the local
