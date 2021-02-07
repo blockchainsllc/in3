@@ -159,7 +159,10 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
   struct curl_slist* headers = curl_slist_append(NULL, "Accept: application/json");
   if (req->payload && *req->payload)
     headers = curl_slist_append(headers, "Content-Type: application/json");
-  headers    = curl_slist_append(headers, "charsets: utf-8");
+  headers = curl_slist_append(headers, "charsets: utf-8");
+  for (in3_req_header_t* h = req->headers; h; h = h->next) {
+    if (strchr(h->value, ':')) headers = curl_slist_append(headers, h->value);
+  }
   c->headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
 
   // create requests
@@ -174,7 +177,7 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
   return res;
 }
 
-static void readDataBlocking(const char* url, char* payload, in3_response_t* r, uint32_t timeout) {
+static void readDataBlocking(const char* url, char* payload, in3_response_t* r, uint32_t timeout, in3_request_t* req) {
   CURL*    curl;
   CURLcode res;
 
@@ -191,6 +194,9 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
       headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "charsets: utf-8");
     headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
+    for (in3_req_header_t* h = req->headers; h; h = h->next) {
+      if (strchr(h->value, ':')) headers = curl_slist_append(headers, h->value);
+    }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
@@ -217,10 +223,10 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
   }
 }
 
-in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout) {
+in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout, in3_request_t* req) {
   int i;
   for (i = 0; i < urls_len; i++)
-    readDataBlocking(urls[i], payload, result + i, timeout);
+    readDataBlocking(urls[i], payload, result + i, timeout, req);
   for (i = 0; i < urls_len; i++) {
     if ((result + i)->state) {
       in3_log_debug("curl: failed for %s\n", urls[i]);
@@ -237,7 +243,7 @@ in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
 #ifdef CURL_BLOCKING
   in3_ret_t res;
   uint64_t  start = current_ms();
-  res             = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response, req->ctx->client->timeout);
+  res             = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response, req->ctx->client->timeout, req);
   uint32_t t      = (uint32_t)(current_ms() - start);
   for (int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = t;
   return res;

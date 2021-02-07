@@ -577,6 +577,9 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t
   node_match_t* node        = ctx->nodes;
   int           nodes_count = ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes);
 
+  // no node - nothing to do here.
+  if (!node) return IN3_EIGNORE;
+
   for (int n = 0; n < nodes_count; n++, node = node ? node->next : NULL)
     handle_times(data, node, ctx->raw_response + n);
 

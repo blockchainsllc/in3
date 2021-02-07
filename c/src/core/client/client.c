@@ -110,7 +110,8 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   }
 
   // do we have an error-property in the response?
-  d_token_t* r = d_get(ctx->responses[0], K_ERROR);
+  bool       is_obj = d_type(ctx->responses[0]) == T_OBJECT;
+  d_token_t* r      = is_obj ? d_get(ctx->responses[0], K_ERROR) : NULL;
   if (d_type(r) != T_NULL) {
     if (d_type(r) == T_STRING)
       *error = _strdupn(d_string(r), -1);
@@ -124,10 +125,18 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
     goto clean;
   }
 
-  if ((r = d_get(ctx->responses[0], K_RESULT)) == NULL) {
-    // we have no result
-    *error = _strdupn("no result or error in rpc-response", -1);
-    res    = IN3_ERPC;
+  if ((r = (is_obj ? d_get(ctx->responses[0], K_RESULT) : NULL)) == NULL) {
+    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "in3_http") == 0) {
+      *result = d_type(ctx->responses[0]) == T_BYTES
+                    ? _strdupn((void*) ctx->responses[0]->data, ctx->responses[0]->len + 1)
+                    : d_create_json(ctx->response_context, r);
+      res     = IN3_OK;
+    }
+    else {
+      // we have no result
+      *error = _strdupn("no result or error in rpc-response", -1);
+      res    = IN3_ERPC;
+    }
     goto clean;
   }
 

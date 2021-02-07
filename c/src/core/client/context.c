@@ -333,7 +333,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
       case CTX_ERROR:
         return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case CTX_SUCCESS:
-        *result = d_get(ctx->responses[0], K_RESULT);
+        *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
         if (!*result) {
           char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
           return ctx_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);

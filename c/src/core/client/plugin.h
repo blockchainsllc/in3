@@ -132,17 +132,26 @@ NONULL in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t va
 
 // -------------- TRANSPORT -------------
 
+/**
+ * optional request headers
+ */
+typedef struct in3_req_header {
+  char*                  value; /**< the value */
+  struct in3_req_header* next;  /**< pointer to next header */
+} in3_req_header_t;
+
 /** request-object. 
  * 
  * represents a RPC-request
  */
 typedef struct in3_request {
-  char*           payload;  /**< the payload to send */
-  char**          urls;     /**< array of urls */
-  uint_fast16_t   urls_len; /**< number of urls */
-  struct in3_ctx* ctx;      /**< the current context */
-  void*           cptr;     /**< a custom ptr to hold information during */
-  uint32_t        wait;     /**< time in ms to wait before sending out the request */
+  char*             payload;  /**< the payload to send */
+  char**            urls;     /**< array of urls */
+  uint_fast16_t     urls_len; /**< number of urls */
+  struct in3_ctx*   ctx;      /**< the current context */
+  void*             cptr;     /**< a custom ptr to hold information during */
+  uint32_t          wait;     /**< time in ms to wait before sending out the request */
+  in3_req_header_t* headers;  /**< optional additional headers to be send with the request */
 } in3_request_t;
 
 /**

@@ -45,6 +45,10 @@
 #include <stdint.h>
 #include <string.h>
 
+NONULL static bool is_raw_http(in3_ctx_t* ctx) {
+  return !ctx->nodes && strcmp("in3_http", d_get_stringk(ctx->requests[0], K_METHOD)) == 0;
+}
+
 NONULL static void response_free(in3_ctx_t* ctx) {
   assert_in3_ctx(ctx);
 
@@ -246,6 +250,22 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
   assert_in3_ctx(ctx);
   assert(response_data);
   assert(len);
+
+  if (is_raw_http(ctx)) {
+    ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : NULL;
+    if (!ctx->response_context) {
+      // we create a context only holding the raw data
+      ctx->response_context               = _calloc(1, sizeof(json_ctx_t));
+      ctx->response_context->c            = response_data;
+      ctx->response_context->len          = 1;
+      ctx->response_context->result       = _calloc(1, sizeof(d_token_t));
+      ctx->response_context->result->len  = len;
+      ctx->response_context->result->data = (uint8_t*) response_data;
+    }
+    ctx->responses    = _malloc(sizeof(d_token_t*));
+    ctx->responses[0] = ctx->response_context->result;
+    return IN3_OK;
+  }
 
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
 
@@ -498,6 +518,39 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     }
   }
 
+  if (is_raw_http(ctx)) {
+    // prepare response-object
+    d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
+    if (d_len(params) < 2) {
+      ctx_set_error(ctx, "invalid number of arguments, must be [METHOD,URL,PAYLOAD,HEADER]", IN3_EINVAL);
+      return NULL;
+    }
+    d_token_t*     tmp         = d_get_at(params, 2);
+    in3_request_t* request     = _calloc(sizeof(in3_request_t), 1);
+    request->ctx               = ctx;
+    request->urls_len          = 1;
+    request->urls              = _malloc(sizeof(char*));
+    request->urls[0]           = _strdupn(d_get_string_at(params, 1), -1);
+    request->payload           = !tmp ? _calloc(1, 1) : (d_type(tmp) == T_STRING ? _strdupn(d_string(tmp), -1) : d_create_json(ctx->request_context, tmp));
+    ctx->raw_response          = _calloc(sizeof(in3_response_t), 1);
+    ctx->raw_response[0].state = IN3_WAITING;
+    for (d_iterator_t iter = d_iter(d_get_at(params, 3)); iter.left; d_iter_next(&iter)) {
+      in3_req_header_t* t = _malloc(sizeof(in3_req_header_t));
+      t->value            = d_string(iter.token);
+      t->next             = request->headers;
+      request->headers    = t;
+    }
+
+    if (strcmp(d_string(params + 1), "post")) {
+      in3_req_header_t* t = _malloc(sizeof(in3_req_header_t));
+      t->value            = d_string(params + 1);
+      t->next             = request->headers;
+      request->headers    = t;
+    }
+
+    return request;
+  }
+
   in3_ret_t     res;
   char*         rpc         = d_get_stringk(d_get(ctx->requests[0], K_IN3), K_RPC);
   int           nodes_count = rpc ? 1 : ctx_nodes_len(ctx->nodes);
@@ -548,6 +601,10 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 NONULL void request_free(in3_request_t* req) {
   // free resources
   free_urls(req->urls, req->urls_len);
+  for (in3_req_header_t* h = req->headers; h; h = req->headers) {
+    req->headers = h->next;
+    _free(h);
+  }
   _free(req->payload);
   _free(req);
 }
@@ -837,7 +894,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         return ctx->error ? ret : ctx_set_error(ctx, "The request could not be handled", ret);
 
       // if we don't have a nodelist, we try to get it.
-      if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC)) {
+      if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC) && !is_raw_http(ctx)) {
         in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .ctx = ctx};
         if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) == IN3_OK) {
           pctx.type = NL_SIGNER;
