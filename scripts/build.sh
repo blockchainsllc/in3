@@ -47,6 +47,7 @@ if [ "$CONTAINER" = "--help" ]; then
    echo "  <TARGET> could be one of the following:"
    echo "     - android-clang8-armv8"
    echo "     - centos"
+   echo "     - android"
    echo "     - clang11"
    echo "     - clang10"
    echo "     - clang9"
@@ -95,6 +96,16 @@ elif [ "$CONTAINER" = "esp" ]; then
   echo $CONTAINER > build/container.txt
   docker run  --rm -v $RD:$RD  $CONTAINER \
     /bin/bash -c "cd $RD;cp -avi scripts/qemu_xtensa.sh /opt/qemu;cd c/test/qemu/esp32;idf.py build;./make-flash-img.sh in3-espidf flash_image.bin"
+elif [ "$CONTAINER" = "android" ]; then
+  CONTAINER=cangol/android-gradle
+  echo $CONTAINER > build/container.txt
+  CMD="cd $RD;export GRADLE_USER_HOME=$RD/.gradle"
+  CMD="$CMD;wget https://services.gradle.org/distributions/gradle-6.8.1-bin.zip && unzip gradle-6.8.1-bin.zip && export PATH=$RD/gradle-6.8.1/bin:/usr/local/bin:/android-sdk-linux/tools:/android-sdk-linux/platform-tools:/usr/local/gradle-5.4.1/bin:/usr/local/openjdk-8/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  CMD="$CMD;git clone https://github.com/slockit/in3-example-android.git;cd in3-example-android"
+  CMD="$CMD;ln -s ../ in3"
+  CMD="$CMD;gradle --stacktrace build"
+  echo $CMD
+  docker run  --rm -v $RD:$RD  $CONTAINER /bin/bash -c "$CMD"
 elif [ "$CONTAINER" = "wasm_local" ]; then
   cd build
   source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
@@ -103,11 +114,11 @@ elif [ "$CONTAINER" = "wasm_local" ]; then
 elif [ "$CONTAINER" = "wasm" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:clang11
   echo $CONTAINER > build/container.txt
-  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
+  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DBTC_PRE_BPI34=false -DWASM_EMMALLOC=true -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
 elif [ "$CONTAINER" = "asmjs_local" ]; then
   cd build
   source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
-  emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=true -DWASM_EMMALLOC=true  -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
+  emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=true -DZKSYNC=false -DBTC=true -DBTC_PRE_BPI34=false -DIPFS=true -DWASM_EMMALLOC=true  -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
   make -j8 in3_wasm
 elif [ "$CONTAINER" = "asmjs" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:clang11

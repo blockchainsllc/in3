@@ -24,7 +24,7 @@ if [ ! -d /usr/local/include/in3 ]; then
   # set the library path to use the local
   #  BUILDARGS="-v -L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a $ZKCRYPTO -ltransport_curl -lcurl -pthread"
 else
-  BUILDARGS="-lin3"
+  BUILDARGS="-lin3 -lm"
 fi
 # now build the examples build
 for f in *.c; 
