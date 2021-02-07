@@ -54,7 +54,7 @@ test_android:
       - .gradle/wrapper
       - .gradle/caches
   script:
-    - wget https://services.gradle.org/distributions/gradle-6.8.1-bin.zip ; unzip gradle-6.8.1-bin.zip ; export PATH=`pwd`/gradle-6.8.1/bin:$PATH
+    - wget https://services.gradle.org/distributions/gradle-6.8.1-bin.zip && unzip gradle-6.8.1-bin.zip && export PATH=`pwd`/gradle-6.8.1/bin:$PATH
     - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android
     - mkdir in3

@@ -39,7 +39,7 @@ class IN3DefaultTransport implements IN3Transport {
         is.close();
         result[i] = buffer.toByteArray();
       } catch (Exception ex) {
-        result[i] = null;
+        result[i] = ("[{\"error\":{\"code\":-12344,\"message\":\""+ex.getMessage()+"\"}}]").getBytes();
       }
     }
     return result;
