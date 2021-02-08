@@ -47,9 +47,9 @@ extern "C" {
 #include "../../core/client/client.h"
 
 typedef struct iamo_signer_config {
-  bytes32_t device_key;
-  address_t device_address;
-  int accounts_len;
+  bytes32_t  device_key;
+  address_t  device_address;
+  int        accounts_len;
   address_t* accounts;
   struct {
     char* account;

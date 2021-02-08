@@ -212,7 +212,10 @@ uint64_t current_ms();
 #define TRY_CATCH(exp, catch) \
   {                           \
     int _r = (exp);           \
-    if (_r < 0) { catch; return _r; }   \
+    if (_r < 0) {             \
+      catch;                  \
+      return _r;              \
+    }                         \
   }
 
 /**

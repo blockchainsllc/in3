@@ -36,16 +36,17 @@
 #include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
-#include "../../core/util/mem.h"
 #include "../../core/util/debug.h"
+#include "../../core/util/log.h"
+#include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/serialize.h"
-#include <time.h>
 #include <string.h>
+#include <time.h>
 #define ETH_SIGN_PREFIX32 "\x19" \
-                        "Ethereum Signed Message:\n32"
+                          "Ethereum Signed Message:\n32"
 
 static in3_ret_t iamo_free(iamo_signer_config_t* conf) {
   _free(conf->services.account);
@@ -62,41 +63,41 @@ static in3_ret_t iamo_free(iamo_signer_config_t* conf) {
     ctx->error_msg = _strdupn(msg, -1); \
     return IN3_EINVAL;                  \
   }
-#define CNF_SET_BYTES(dst, token, property, l)                        \
-  {                                                                     \
-    const bytes_t tmp = d_to_bytes(d_get(token, key(property)));        \
-    if (tmp.data) {                                                     \
+#define CNF_SET_BYTES(dst, token, property, l)                      \
+  {                                                                 \
+    const bytes_t tmp = d_to_bytes(d_get(token, key(property)));    \
+    if (tmp.data) {                                                 \
       if (tmp.len != l) CNF_ERROR(property " must be " #l " bytes") \
-      memcpy(dst, tmp.data, l);                                       \
-    }                                                                   \
+      memcpy(dst, tmp.data, l);                                     \
+    }                                                               \
   }
 
-static in3_ret_t create_iso_timestamp(in3_ctx_t* ctx,  time_t time, char* dst) {
-  struct tm *ptm = gmtime(&time);
-  if (!ptm) return ctx_set_error(ctx,"could not create the local time", IN3_EINVAL);
-  sprintf(dst,"%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",ptm->tm_year+1900,ptm->tm_mon+1, ptm->tm_mday,ptm->tm_hour, ptm->tm_min, ptm->tm_sec, 0);
+static in3_ret_t create_iso_timestamp(in3_ctx_t* ctx, time_t time, char* dst) {
+  struct tm* ptm = gmtime(&time);
+  if (!ptm) return ctx_set_error(ctx, "could not create the local time", IN3_EINVAL);
+  sprintf(dst, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec, 0);
   return IN3_OK;
 }
 
 static void set_string(char* prefix, char* postfix, char** dst) {
   if (*dst) _free(*dst);
-  int a=strlen(prefix);
-  int b=strlen(postfix);
-  *dst = _malloc(a+b+1);
-  memcpy(*dst,prefix,a);
-  memcpy(*dst+a,postfix,b+1);
+  int a = strlen(prefix);
+  int b = strlen(postfix);
+  *dst  = _malloc(a + b + 1);
+  memcpy(*dst, prefix, a);
+  memcpy(*dst + a, postfix, b + 1);
 }
 
 static in3_ret_t iamo_config_set(iamo_signer_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key == key("iamo")) {
     CNF_SET_BYTES(conf->device_key, ctx->token, "device_key", 32)
-    char* service = d_get_stringk(ctx->token,key("service"));
+    char* service = d_get_stringk(ctx->token, key("service"));
     if (service && strlen(service)) {
-      set_string("https://account.",service,&conf->services.account);
-      set_string("https://key.",service,&conf->services.key);                    
-      set_string("https://sign.",service,& conf->services.sign);
-       set_string("https://policy-management.",service,&conf->services.policy_management);
-       set_string("https://policy-processor.",service,&conf->services.policy_processor);
+      set_string("https://account.", service, &conf->services.account);
+      set_string("https://key.", service, &conf->services.key);
+      set_string("https://sign.", service, &conf->services.sign);
+      set_string("https://policy-management.", service, &conf->services.policy_management);
+      set_string("https://policy-processor.", service, &conf->services.policy_processor);
     }
 
     return IN3_OK;
@@ -105,23 +106,23 @@ static in3_ret_t iamo_config_set(iamo_signer_config_t* conf, in3_configure_ctx_t
 }
 
 NONULL static in3_ret_t check_device_key(in3_ctx_t* ctx, iamo_signer_config_t* conf) {
-  if (memiszero(conf->device_key,32)) return ctx_set_error(ctx,"No device key set", IN3_ECONFIG);
-  if (memiszero(conf->device_address,20)) {
-     uint8_t   public_key[65];
+  if (memiszero(conf->device_key, 32)) return ctx_set_error(ctx, "No device key set", IN3_ECONFIG);
+  if (memiszero(conf->device_address, 20)) {
+    uint8_t public_key[65];
     ecdsa_get_public_key65(&secp256k1, conf->device_key, public_key);
     keccak(bytes(public_key + 1, 64), public_key);
-    memcpy(conf->device_address,public_key+12,20);
+    memcpy(conf->device_address, public_key + 12, 20);
   }
   if (!conf->services.account) {
-    in3_configure_ctx_t c={.client=ctx->client,.json=parse_json("{\"iamo\":{\"service\":\"develop.iamo.dev\"}}"),.error_msg=NULL};
-    c.token=c.json->result+1;
-    in3_ret_t r=iamo_config_set(conf,&c);
+    in3_configure_ctx_t c = {.client = ctx->client, .json = parse_json("{\"iamo\":{\"service\":\"develop.iamo.dev\"}}"), .error_msg = NULL};
+    c.token               = c.json->result + 1;
+    in3_ret_t r           = iamo_config_set(conf, &c);
     json_free(c.json);
     if (c.error_msg) {
-      ctx_set_error(ctx,c.error_msg,r);
+      ctx_set_error(ctx, c.error_msg, r);
       _free(c.error_msg);
     }
-    if (r<0) return r;
+    if (r < 0) return r;
   }
   return IN3_OK;
 }
@@ -139,29 +140,29 @@ static in3_ctx_t* find_ctx_for(in3_ctx_t* ctx, char* data) {
 static in3_ret_t send_api_request(in3_ctx_t* ctx, iamo_signer_config_t* conf, char* url, char* method, char* path, char* payload, d_token_t** result) {
 
   bytes32_t hash;
-  uint8_t signature[65];
-  sb_t rp={0};
-  char timestamp[25];
-  char* rkey = NULL;
+  uint8_t   signature[65];
+  sb_t      rp = {0};
+  char      timestamp[25];
+  char*     rkey = NULL;
 
   // create proof message
-  sb_add_chars(&rp,"{\"host\":\"");
-  sb_add_escaped_chars(&rp,url+8);
-  sb_add_chars(&rp,"\",\"body\":\"");
-  sb_add_escaped_chars(&rp,payload?payload:"");
-  sb_add_chars(&rp,"\",\"path\":\"");
-  sb_add_escaped_chars(&rp,path);
+  sb_add_chars(&rp, "{\"host\":\"");
+  sb_add_escaped_chars(&rp, url + 8);
+  sb_add_chars(&rp, "\",\"body\":\"");
+  sb_add_escaped_chars(&rp, payload ? payload : "");
+  sb_add_chars(&rp, "\",\"path\":\"");
+  sb_add_escaped_chars(&rp, path);
 
   // look for an existing message
-  in3_ctx_t* found = find_ctx_for(ctx,rp.data);
+  in3_ctx_t* found = find_ctx_for(ctx, rp.data);
   if (found) {
     _free(rp.data);
-     switch (in3_ctx_state(found)) {
+    switch (in3_ctx_state(found)) {
       case CTX_ERROR:
         return ctx_set_error(ctx, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
       case CTX_SUCCESS:
         *result = ctx->responses[0];
-        if (!*result) 
+        if (!*result)
           return ctx_set_error(ctx, "error executing provider call", IN3_ERPC);
         return IN3_OK;
       case CTX_WAITING_TO_SEND:
@@ -169,42 +170,51 @@ static in3_ret_t send_api_request(in3_ctx_t* ctx, iamo_signer_config_t* conf, ch
         return IN3_WAITING;
     }
   }
-    
-  TRY(create_iso_timestamp(ctx,time(NULL),timestamp))
-  rkey=_strdupn(rp.data,-1);
+
+  TRY(create_iso_timestamp(ctx, time(NULL), timestamp))
+  // strcpy(timestamp,"2021-02-08T17:10:21.351Z");
+  rkey = _strdupn(rp.data, -1);
 
   // continue the proof data and add the timestamp
-  sb_add_chars(&rp,"\",\"qs\":[],\"headers\":[{\"key\":\"X-AUTH-TS\",\"value\":\"");  // TODO [{\"key\":\"abc\",\"value\":\"abc\"}]
-  sb_add_chars(&rp,timestamp);
-  sb_add_chars(&rp,"\"}]}");
+  sb_add_chars(&rp, "\",\"qs\":[],\"headers\":[{\"key\":\"X-AUTH-TS\",\"value\":\""); // TODO [{\"key\":\"abc\",\"value\":\"abc\"}]
+  sb_add_chars(&rp, timestamp);
+  sb_add_chars(&rp, "\"}]}");
+
+  in3_log_debug("requestProof : %s\n", rp.data);
 
   // hash it
   SHA256_CTX c;
   sha256_Init(&c);
-  sha256_Update(&c,(void*)rp.data,rp.len);
-  sha256_Final(&c,hash);
+  sha256_Update(&c, (void*) rp.data, rp.len);
+  sha256_Final(&c, hash);
+
+  in3_log_debug("sha256 : ", rp.data);
+  ba_print(hash, 32);
 
   // add ETH Prefix & sign it
-  rp.len=0;
-  sb_add_chars(&rp,ETH_SIGN_PREFIX32);
-  sb_add_range(&rp,(void*) hash,0,32);
-  ecdsa_sign(&secp256k1, HASHER_SHA3K, conf->device_key, (void*)rp.data, rp.len, signature, signature + 64, NULL);
+  rp.len = 0;
+  sb_add_chars(&rp, ETH_SIGN_PREFIX32);
+  sb_add_range(&rp, (void*) hash, 0, 32);
+  in3_log_debug("\nmessage to sign : %s\n", rp.data);
+  ecdsa_sign(&secp256k1, HASHER_SHA3K, conf->device_key, (void*) rp.data, rp.len, signature, signature + 64, NULL);
   signature[64] += 27;
 
   // now create the request
-  rp.len=0;
-  sb_add_chars(&rp,"{\"method\":\"in3_http\",\"params\":[\"");
-  sb_add_chars(&rp,method);
-  sb_add_chars(&rp,"\",\"");
-  sb_add_chars(&rp,url);
-  sb_add_chars(&rp,path);
-  sb_add_chars(&rp,"\",");
-  sb_add_chars(&rp,payload?payload:"null");
-  sb_add_chars(&rp,",[\"X-AUTH-TS:");
-  sb_add_chars(&rp,timestamp);
-  sb_add_rawbytes(&rp,"\",\"X-AUTH-SIGNATURE:0x",bytes(signature,65),65);
-  sb_add_rawbytes(&rp,"\",\"X-AUTH-ADDRESS:0x",bytes(conf->device_address,20),20);
-  sb_add_chars(&rp,"\"]]}");
+  rp.len = 0;
+  sb_add_chars(&rp, "{\"method\":\"in3_http\",\"params\":[\"");
+  sb_add_chars(&rp, method);
+  sb_add_chars(&rp, "\",\"");
+  sb_add_chars(&rp, url);
+  sb_add_chars(&rp, path);
+  sb_add_chars(&rp, "\",");
+  sb_add_chars(&rp, payload ? payload : "null");
+  sb_add_chars(&rp, ",[\"X-AUTH-TS:");
+  sb_add_chars(&rp, timestamp);
+  sb_add_rawbytes(&rp, "\",\"X-AUTH-SIGNATURE:0x", bytes(signature, 65), 65);
+  sb_add_rawbytes(&rp, "\",\"X-AUTH-ADDRESS:0x", bytes(conf->device_address, 20), 20);
+  sb_add_chars(&rp, "\"]]}");
+
+  in3_log_debug("http-request: %s\n", rp.data);
 
   found = ctx_new(ctx->client, rp.data);
   if (!found) {
@@ -218,39 +228,36 @@ static in3_ret_t send_api_request(in3_ctx_t* ctx, iamo_signer_config_t* conf, ch
 
 static in3_ret_t add_response(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {
   str_range_t r = d_to_json(result);
-  r.data[r.len]=0;
-  return in3_rpc_handle_with_string(ctx,r.data);
+  r.data[r.len] = 0;
+  return in3_rpc_handle_with_string(ctx, r.data);
 }
 
 in3_ret_t iamo_add_user(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  TRY(check_device_key(ctx->ctx,conf))
+  TRY(check_device_key(ctx->ctx, conf))
 
-  d_token_t* params = d_get(ctx->request,K_PARAMS);
-  CHECK_PARAMS_LEN(ctx->ctx,params,2);
-  char* email = d_get_string_at(params,0);
-  char* phone = d_get_string_at(params,1);
-  d_token_t* result=NULL;
-  char* payload = alloca(strlen(email)+strlen(phone)+50);
-  sprintf(payload,"{\"email\":\"%s\",\"phone\":\"%s\"}", email, phone);
-  TRY(send_api_request(ctx->ctx,conf,conf->services.account,"post","/api/user",payload,&result))
-  return add_response(ctx,result);
+  d_token_t* params = d_get(ctx->request, K_PARAMS);
+  CHECK_PARAMS_LEN(ctx->ctx, params, 2);
+  char*      email   = d_get_string_at(params, 0);
+  char*      phone   = d_get_string_at(params, 1);
+  d_token_t* result  = NULL;
+  char*      payload = alloca(strlen(email) + strlen(phone) + 50);
+  sprintf(payload, "{\"email\":\"%s\",\"phone\":\"%s\"}", email, phone);
+  TRY(send_api_request(ctx->ctx, conf, conf->services.account, "post", "/api/user", payload, &result))
+  return add_response(ctx, result);
 }
-
-
 
 static in3_ret_t rpc_timestamp(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   char result[100];
-  TRY(create_iso_timestamp(ctx->ctx,time(NULL),result))
-  return in3_rpc_handle_with_string(ctx,result);
+  TRY(create_iso_timestamp(ctx->ctx, time(NULL), result))
+  return in3_rpc_handle_with_string(ctx, result);
 }
 
 static in3_ret_t iamo_rpc(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  char* method = d_get_stringk(ctx->request,K_METHOD);
-  TRY_RPC("iamo_timestamp", rpc_timestamp(conf,ctx))
-  TRY_RPC("iamo_add_user",iamo_add_user(conf,ctx))
+  char* method = d_get_stringk(ctx->request, K_METHOD);
+  TRY_RPC("iamo_timestamp", rpc_timestamp(conf, ctx))
+  TRY_RPC("iamo_add_user", iamo_add_user(conf, ctx))
   return IN3_EIGNORE;
 }
-
 
 static in3_ret_t iamo_handle(void* data, in3_plugin_act_t action, void* action_ctx) {
   switch (action) {
@@ -261,7 +268,6 @@ static in3_ret_t iamo_handle(void* data, in3_plugin_act_t action, void* action_c
   }
   return IN3_ENOTSUP;
 }
-
 
 in3_ret_t register_iamo_signer(in3_t* in3) {
   return in3_plugin_register(in3, PLGN_ACT_TERM | PLGN_ACT_CONFIG_SET | PLGN_ACT_RPC_HANDLE | PLGN_ACT_SIGN | PLGN_ACT_SIGN_ACCOUNT, iamo_handle, _calloc(1, sizeof(iamo_signer_config_t)), true);

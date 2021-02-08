@@ -147,12 +147,12 @@ static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 }
 static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   if (!params || d_len(params) != 1) return ctx_set_error(ctx->ctx, "no data", IN3_EINVAL);
-  bytes32_t hash;
-  bytes_t data=d_to_bytes(params + 1);
+  bytes32_t  hash;
+  bytes_t    data = d_to_bytes(params + 1);
   SHA256_CTX c;
   sha256_Init(&c);
-  sha256_Update(&c,data.data,data.len);
-  sha256_Final(&c,hash);
+  sha256_Update(&c, data.data, data.len);
+  sha256_Final(&c, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 static const char* UNITS[] = {
