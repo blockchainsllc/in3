@@ -315,12 +315,15 @@ NONULL static void clear_response(in3_response_t* response) {
 static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response) {
   assert_in3_ctx(ctx);
   assert_in3_response(response);
+  
+  // and copy the error to the ctx
+  ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); 
+  
   // we block this node
   in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
-  if (node && IN3_OK != in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx)) {
-    ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
+  if (node && IN3_OK != in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx)) 
     clear_response(response);                                                                         // free up memory
-  }
+  
   return IN3_ERPC;
 }
 
