@@ -145,6 +145,16 @@ static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   keccak(d_to_bytes(params + 1), hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
+static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+  if (!params || d_len(params) != 1) return ctx_set_error(ctx->ctx, "no data", IN3_EINVAL);
+  bytes32_t hash;
+  bytes_t data=d_to_bytes(params + 1);
+  SHA256_CTX c;
+  sha256_Init(&c);
+  sha256_Update(&c,data.data,data.len);
+  sha256_Final(&c,hash);
+  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+}
 static const char* UNITS[] = {
     "wei", "",
     "kwei", "\x03",
@@ -484,6 +494,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_ens", in3_ens(rpc_ctx, params))
   TRY_RPC("web3_sha3", in3_sha3(rpc_ctx, params))
   TRY_RPC("keccak", in3_sha3(rpc_ctx, params))
+  TRY_RPC("sha256", in3_sha256(rpc_ctx, params))
   TRY_RPC("in3_toWei", in3_toWei(rpc_ctx, params))
   TRY_RPC("in3_config", in3_config(rpc_ctx, params))
   TRY_RPC("in3_getConfig", in3_getConfig(rpc_ctx))
