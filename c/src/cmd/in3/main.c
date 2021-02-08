@@ -139,6 +139,7 @@ void show_help(char* name) {
 -zms           public keys of a musig schnorr signatures to sign with\n\
 -zmu           url for signing service matching the first remote public key\n\
 -os            only sign, don't send the raw Transaction \n\
+-idk           iamo device key \n\
 -version       displays the version \n\
 -help          displays this help message \n\
 \n\
@@ -786,6 +787,20 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
+#ifdef IAMO_SIGNER
+    else if (strcmp(argv[i], "-idk") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"iamo\":{\"device_key\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-is") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"iamo\":{\"service\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+#endif
 #ifdef ZKSYNC
     else if (strcmp(argv[i], "-zks") == 0) {
       char tmp[500];

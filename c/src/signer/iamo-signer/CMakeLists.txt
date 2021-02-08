@@ -31,19 +31,16 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (PK_SIGNER)
-  add_subdirectory(pk-signer)
-endif()
+#cmake_minimum_required(VERSION 3.15)
 
-if (IAMO_SIGNER)
-  add_subdirectory(iamo-signer)
-endif()
+add_static_library(
+  NAME     iamo_signer 
+  
+  SOURCES 
+    iamo_signer.c
 
-if (LEDGER_NANO)
-  add_subdirectory(ledger-nano/signer)
-endif()
+  DEPENDS 
+    eth_nano
+)
 
-if (MULTISIG)
-  add_subdirectory(multisig)
-endif()
 
