@@ -64,7 +64,7 @@ static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, voi
   return size * nmemb;
 }
 
-static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, struct curl_slist* headers, in3_response_t* r, uint32_t timeout) {
+static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, struct curl_slist* headers, in3_response_t* r, uint32_t timeout, char* method) {
   CURL*     curl;
   CURLMcode res;
 
@@ -80,6 +80,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
     curl_easy_setopt(curl, CURLOPT_PRIVATE, (void*) r);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
 
     /* Perform the request, res will get the return code */
     res = curl_multi_add_handle(cm, curl);
@@ -166,14 +167,12 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
   if (req->payload && *req->payload)
     headers = curl_slist_append(headers, "Content-Type: application/json");
   headers = curl_slist_append(headers, "charsets: utf-8");
-  for (in3_req_header_t* h = req->headers; h; h = h->next) {
-    if (strchr(h->value, ':')) headers = curl_slist_append(headers, h->value);
-  }
+  for (in3_req_header_t* h = req->headers; h; h = h->next) headers = curl_slist_append(headers, h->value);
   c->headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
 
   // create requests
   for (unsigned int i = 0; i < req->urls_len; i++)
-    readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout);
+    readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout, req->method);
 
   in3_ret_t res = receive_next(req);
   if (req->urls_len == 1) {
@@ -207,6 +206,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, req->method);
 
     /* Perform the request, res will get the return code */
     res = curl_easy_perform(curl);

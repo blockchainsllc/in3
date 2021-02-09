@@ -528,6 +528,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
       ctx_set_error(ctx, "invalid number of arguments, must be [METHOD,URL,PAYLOAD,HEADER]", IN3_EINVAL);
       return NULL;
     }
+    char*          method      = d_get_string_at(params, 0);
     d_token_t*     tmp         = d_get_at(params, 2);
     in3_request_t* request     = _calloc(sizeof(in3_request_t), 1);
     request->ctx               = ctx;
@@ -535,18 +536,12 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     request->urls              = _malloc(sizeof(char*));
     request->urls[0]           = _strdupn(d_get_string_at(params, 1), -1);
     request->payload           = !tmp ? _calloc(1, 1) : (d_type(tmp) == T_STRING ? _strdupn(d_string(tmp), -1) : d_create_json(ctx->request_context, tmp));
+    request->method            = method ? method : (*request->payload ? "POST" : "GET");
     ctx->raw_response          = _calloc(sizeof(in3_response_t), 1);
     ctx->raw_response[0].state = IN3_WAITING;
     for (d_iterator_t iter = d_iter(d_get_at(params, 3)); iter.left; d_iter_next(&iter)) {
       in3_req_header_t* t = _malloc(sizeof(in3_req_header_t));
       t->value            = d_string(iter.token);
-      t->next             = request->headers;
-      request->headers    = t;
-    }
-
-    if (strcmp(d_string(params + 1), "post")) {
-      in3_req_header_t* t = _malloc(sizeof(in3_req_header_t));
-      t->value            = d_string(params + 1);
       t->next             = request->headers;
       request->headers    = t;
     }

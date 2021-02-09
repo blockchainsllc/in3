@@ -49,9 +49,9 @@ if (isBrowserEnvironment) {
         get: key => window.localStorage.getItem('in3.' + key),
         set: (key, value) => window.localStorage.setItem('in3.' + key, value)
     }
-    in3w.transport = (url, payload, timeout, headers) => Promise.race([
+    in3w.transport = (url, payload, timeout, method, headers) => Promise.race([
         fetch(url, {
-            method: 'POST',
+            method: method || 'POST',
             mode: 'cors', // makes it possible to access them even from the filesystem.
             headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), ...headers },
             body: payload
@@ -81,19 +81,19 @@ else {
     try {
         // if axios is available, we use it
         const axios = require('' + 'axios')
-        in3w.transport = (url, payload, timeout = 30000, headers = {}) => axios.post(url, JSON.parse(payload), { timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion(), ...headers } })
+        in3w.transport = (url, payload, timeout = 30000, method = "POST", headers = {}) => axios({ method: method || 'POST', url, data: JSON.parse(payload), timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion(), ...headers } })
             .then(res => {
                 if (res.status != 200) throw new HttpError("Invalid satus", res.status)
                 return JSON.stringify(res.data)
             })
     } catch (xx) {
         // if not we use the raw http-implementation of nodejs
-        in3w.transport = (url, payload, timeout = 30000, headers = {}) => new Promise((resolve, reject) => {
+        in3w.transport = (url, payload, timeout = 30000, method = 'POST', headers = {}) => new Promise((resolve, reject) => {
             try {
                 const postData = payload;//JSON.stringify(payload);
                 const m = require(url.startsWith('https') ? 'https' : 'http')
                 const req = m.request(url, {
-                    method: 'POST',
+                    method: method || 'POST',
                     headers: {
                         'User-Agent': 'in3 wasm ' + getVersion(),
                         in3: 'wasm ' + getVersion(),
@@ -187,7 +187,7 @@ class IN3 {
 
     // here we are creating the instance lazy, when the first function is called.
     constructor(config) {
-        const def = { requestCount: 2 }
+        const def = { requestCount: 2, chainId: 'mainnet' }
         this.ptr = 0;
         this.setConfig(config ? { ...def, ...config } : def)
         in3w.extensions.forEach(_ => _(this))
@@ -416,7 +416,7 @@ function url_queue(req) {
     const promises = [], responses = []
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
     const transport = req.in3.transport || in3w.transport
-    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000, req.headers.reduce(map_header, {})).then(
+    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000, req.method, req.headers.reduce(map_header, {})).then(
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))

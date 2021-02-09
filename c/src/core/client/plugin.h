@@ -145,6 +145,7 @@ typedef struct in3_req_header {
  * represents a RPC-request
  */
 typedef struct in3_request {
+  char*             method;   /**< the http-method to be used */
   char*             payload;  /**< the payload to send */
   char**            urls;     /**< array of urls */
   uint_fast16_t     urls_len; /**< number of urls */

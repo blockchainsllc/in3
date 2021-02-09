@@ -266,7 +266,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
         sb_add_chars(sb, request->payload);
-        sb_add_chars(sb, ",\"urls\":[");
+        sb_add_chars(sb, ",\"method\":\"");
+        sb_add_chars(sb, request->method);
+        sb_add_chars(sb, "\",\"urls\":[");
         for (int i = 0; i < request->urls_len; i++) {
           request->ctx->raw_response[i].time = start;
           if (i) sb_add_char(sb, ',');

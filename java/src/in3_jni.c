@@ -362,19 +362,11 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   for (unsigned int i = 0; i < req->urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, req->urls[i]));
 
   // headers
-  int               header_len = 0, hi = 0;
-  in3_req_header_t* headers = req->headers;
+  int header_len = 0, hi = 0;
   for (in3_req_header_t* h = req->headers; h; h = h->next) header_len++;
-  char* method = payload_len ? "POST" : "GET";
-  if (req->headers && strchr(req->headers->value, ':') == 0) {
-    method = req->headers->value;
-    header_len--;
-    hi++;
-    headers = headers->next;
-  }
-  jstring jmethod  = (*jni)->NewStringUTF(jni, method);
+  jstring jmethod  = (*jni)->NewStringUTF(jni, req->method);
   jobject jheaders = (*jni)->NewObjectArray(jni, header_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
-  for (in3_req_header_t* h = headers; h; h = h->next, hi++) (*jni)->SetObjectArrayElement(jni, jheaders, hi, (*jni)->NewStringUTF(jni, h->value));
+  for (in3_req_header_t* h = req->headers; h; h = h->next, hi++) (*jni)->SetObjectArrayElement(jni, jheaders, hi, (*jni)->NewStringUTF(jni, h->value));
 
   jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
   jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "(Ljava/lang/String;[Ljava/lang/String;[B;[Ljava/lang/String)[[B");
