@@ -25,7 +25,7 @@ namespace In3.Native
             string method = Marshal.PtrToStringAnsi(in3_get_request_method(reqPtr));
             string[] urls = Utils.GetAllStrings(in3_get_request_urls(reqPtr), urlsLength);
             string[] headers = new string[in3_get_request_headers_len(reqPtr)];
-            for (int i=0;i<headers.Length;i++) headers[i] = Marshal.PtrToStringAnsi(in3_get_request_headers_at(reqPtr,i)));
+            for (int i=0;i<headers.Length;i++) headers[i] = Marshal.PtrToStringAnsi(in3_get_request_headers_at(reqPtr,i));
 
 
             IEnumerable<Task> requestsTasks = urls.Select(async (url, i) =>
