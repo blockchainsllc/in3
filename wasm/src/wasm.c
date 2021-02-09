@@ -274,6 +274,13 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
           sb_add_escaped_chars(sb, request->urls[i]);
           sb_add_char(sb, '"');
         }
+        sb_add_chars(sb, "],\"headers\":[");
+        for (in3_req_header_t* h=request->headers;h;h=h->next ) {
+          if (h!=request->headers) sb_add_char(sb, ',');
+          sb_add_char(sb, '"');
+          sb_add_escaped_chars(sb, h->value);
+          sb_add_char(sb, '"');
+        }
         sb_add_chars(sb, "],\"ctx\":");
         sb_add_int(sb, (uint64_t) request->ctx);
         sb_add_char(sb, '}');
@@ -305,7 +312,7 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
   if (!ctx->raw_response) ctx->raw_response = _calloc(sizeof(in3_response_t), i + 1);
   ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
-  ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
+  ctx->raw_response[i].state = is_error;
   if (ctx->type == CT_SIGN && !is_error) {
     int l = (strlen(msg) + 1) / 2;
     if (l && msg[0] == '0' && msg[1] == 'x') l--;

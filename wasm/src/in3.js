@@ -35,7 +35,12 @@
 const isBrowserEnvironment = (function () {
     return (typeof window !== "undefined") && (this === window);
 }).call();
-
+class HttpError extends Error {
+    constructor(msg, status) {
+        super(msg)
+        this.status = status
+    }
+}
 // implement the transport and storage handlers
 /* istanbul ignore next */
 if (isBrowserEnvironment) {
@@ -44,16 +49,16 @@ if (isBrowserEnvironment) {
         get: key => window.localStorage.getItem('in3.' + key),
         set: (key, value) => window.localStorage.setItem('in3.' + key, value)
     }
-    in3w.transport = (url, payload, timeout) => Promise.race([
+    in3w.transport = (url, payload, timeout, headers) => Promise.race([
         fetch(url, {
             method: 'POST',
             mode: 'cors', // makes it possible to access them even from the filesystem.
-            headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion() },
+            headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), ...headers },
             body: payload
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout || 30000))]
     ).then(res => {
-        if (res.status < 200 || res.status >= 400) throw new Error("Error fetching" + url + ":" + res.statusText)
+        if (res.status < 200 || res.status >= 400) throw new HttpError("Error fetching" + url + ":" + res.statusText, res.status)
         return res.text()
     })
 }
@@ -76,14 +81,14 @@ else {
     try {
         // if axios is available, we use it
         const axios = require('' + 'axios')
-        in3w.transport = (url, payload, timeout = 30000) => axios.post(url, JSON.parse(payload), { timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion() } })
+        in3w.transport = (url, payload, timeout = 30000, headers = {}) => axios.post(url, JSON.parse(payload), { timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion(), ...headers } })
             .then(res => {
-                if (res.status != 200) throw new Error("Invalid satus")
+                if (res.status != 200) throw new HttpError("Invalid satus", res.status)
                 return JSON.stringify(res.data)
             })
     } catch (xx) {
         // if not we use the raw http-implementation of nodejs
-        in3w.transport = (url, payload, timeout = 30000) => new Promise((resolve, reject) => {
+        in3w.transport = (url, payload, timeout = 30000, headers = {}) => new Promise((resolve, reject) => {
             try {
                 const postData = payload;//JSON.stringify(payload);
                 const m = require(url.startsWith('https') ? 'https' : 'http')
@@ -93,12 +98,13 @@ else {
                         'User-Agent': 'in3 wasm ' + getVersion(),
                         in3: 'wasm ' + getVersion(),
                         'Content-Type': 'application/json',
-                        'Content-Length': Buffer.byteLength(postData)
+                        'Content-Length': Buffer.byteLength(postData),
+                        ...headers
                     },
                     body: payload // body data type must match "Content-Type" header
                 }, (res) => {
                     if (res.statusCode < 200 || res.statusCode >= 400)
-                        reject(new Error("Invalid Status (" + res.statusCode + ') from server'))
+                        reject(new HttpError("Invalid Status (" + res.statusCode + ') from server', res.statusCode))
                     else {
                         res.setEncoding('utf8');
                         let result = ''
@@ -310,7 +316,7 @@ class IN3 {
                                     if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
                                     setResponse(req.ctx, toHex(await this.signer.sign(message, account, true, false)), 0, false)
                                 } catch (ex) {
-                                    setResponse(req.ctx, ex.message || ex, 0, true)
+                                    setResponse(req.ctx, ex.message || ex, 0, ex.status || true)
                                 }
                                 break;
 
@@ -399,12 +405,18 @@ function getNextResponse(map, req) {
     return res.getNext()
 }
 
+function map_header(headers, entry) {
+    let p = entry.indexOf(':')
+    if (p > 0) headers[entry.substr(0, p).trim()] = entry.substr(p + 1).trim()
+    return headers
+}
+
 function url_queue(req) {
     let counter = 0
     const promises = [], responses = []
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
     const transport = req.in3.transport || in3w.transport
-    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
+    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000, req.headers.reduce(map_header, {})).then(
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))
@@ -414,14 +426,14 @@ function url_queue(req) {
             if (!req.cleanUp && req.in3.ptr && in3w.ccall('in3_is_alive', 'number', ['number', 'number'], [req.root, req.ctx])) {
                 if (r.error) {
                     if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + r.url + ") : " + r.error)
-                    setResponse(req.ctx, r.error.message || r.error, r.i, true)
+                    setResponse(req.ctx, r.error.message || r.error, r.i, r.error.status || true)
                 }
                 else {
                     try {
                         if (req.in3.config.debug) console.log("res (" + req.ctx + "," + r.url + ") : " + JSON.stringify(JSON.parse(r.response), null, 2))
                         setResponse(req.ctx, r.response, r.i, false)
                     } catch (x) {
-                        setResponse(req.ctx, r.error.message || r.error, r.i, true)
+                        setResponse(req.ctx, r.error.message || r.error, r.i, r.error.status || true)
                     }
                 }
             }
@@ -519,6 +531,8 @@ if (typeof module !== "undefined")
 
 // helper functions
 function setResponse(ctx, msg, i, isError) {
+    if (isError === true) isError = -11
+    else if (isError > 0) isError = 0 - isError
     if (msg.length > 5000) {
         // here we pass the string as pointer using malloc before
         const len = (msg.length << 2) + 1;
