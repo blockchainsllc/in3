@@ -272,8 +272,8 @@ public class IN3 {
   }
 
   /** internal function to handle the internal requests */
-  static byte[][] sendRequest(String[] urls, byte[] payload) {
-    return IN3.transport.handle(urls, payload);
+  static byte[][] sendRequest(String method, String[] urls, byte[] payload, String[] headers) {
+    return IN3.transport.handle(method, urls, payload, headers);
   }
 
   private native void free();

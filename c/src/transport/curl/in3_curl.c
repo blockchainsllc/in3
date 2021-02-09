@@ -127,8 +127,8 @@ in3_ret_t receive_next(in3_request_t* req) {
           response->state = -response_code;
         }
         if (!response->data.data) {
-          response->data.data=_calloc(1,1);
-          response->data.allocted=1;
+          response->data.data     = _calloc(1, 1);
+          response->data.allocted = 1;
         }
         curl_multi_remove_handle(c->cm, e);
         curl_easy_cleanup(e);
@@ -212,7 +212,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
     res = curl_easy_perform(curl);
     /* Check for errors */
     if (res != CURLE_OK) {
-      long            response_code;
+      long response_code;
       curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 
       sb_add_chars(&r->data, "Invalid response:");
@@ -222,8 +222,8 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
     else
       r->state = IN3_OK;
     if (!r->data.data) {
-      r->data.data=_calloc(1,1);
-      r->data.allocted=1;
+      r->data.data     = _calloc(1, 1);
+      r->data.allocted = 1;
     }
 
     curl_slist_free_all(headers);

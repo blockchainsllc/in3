@@ -9,7 +9,7 @@ import java.net.*;
 class IN3DefaultTransport implements IN3Transport {
 
   @Override
-  public byte[][] handle(String[] urls, byte[] payload) {
+  public byte[][] handle(String method, String[] urls, byte[] payload, String[] headers) {
     byte[][] result = new byte[urls.length][];
 
     for (int i = 0; i < urls.length; i++) {
@@ -17,13 +17,17 @@ class IN3DefaultTransport implements IN3Transport {
         URL               url  = new URL(urls[i]);
         URLConnection     con  = url.openConnection();
         HttpURLConnection http = (HttpURLConnection) con;
-        http.setRequestMethod("POST");
+        http.setRequestMethod(method);
         http.setUseCaches(false);
         http.setDoOutput(true);
         http.setRequestProperty("Content-Type", "application/json");
         http.setRequestProperty("Accept", "application/json");
         http.setRequestProperty("charsets", "utf-8");
         http.setRequestProperty("User-Agent", "in3 java " + IN3.getVersion());
+        for (int n = 0; n < headers.length; n++) {
+          int p = headers[n].indexOf(':');
+          if (p > 0) http.setRequestProperty(headers[n].substring(0, p).trim(), headers[n].substring(p + 1).trim());
+        }
         http.connect();
         OutputStream os = http.getOutputStream();
         os.write(payload);
@@ -35,9 +39,13 @@ class IN3DefaultTransport implements IN3Transport {
         while ((nRead = is.read(data, 0, data.length)) != -1)
           buffer.write(data, 0, nRead);
 
+        int status = http.getResponseCode();
         buffer.flush();
         is.close();
-        result[i] = buffer.toByteArray();
+        if (status > 300)
+          result[i] = ("[{\"error\":{\"code\":-" + status + " ,\"message\":\"" + buffer.toString().replaceAll("\"", " ") + "\"}}]").getBytes();
+        else
+          result[i] = buffer.toByteArray();
       } catch (Exception ex) {
         result[i] = ("[{\"error\":{\"code\":-12344,\"message\":\"" + ex.getMessage() + "\"}}]").getBytes();
       }
