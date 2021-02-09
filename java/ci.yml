@@ -82,7 +82,7 @@ java_linux:
   script:
     - mv java_build build
     - cd java
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - short-jobs
   artifacts:
@@ -108,7 +108,7 @@ java_arm:
   script:
     - mv java_build build
     - cd java
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - arm
   artifacts:
@@ -132,7 +132,7 @@ java_macos:
   script:
     - mv java_build build
     - cd java; cp test/build_test.gradle build.gradle
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - mac-os
 
@@ -145,7 +145,7 @@ java_win:
   script:
     - mv java_build build
     - cd java; cp test/build_test.gradle build.gradle
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - windows
 #  artifacts:
