@@ -27,12 +27,13 @@ namespace In3.Transport
         /// <param name="url">The url of the node.</param>
         /// <param name="payload">Json for the body of the POST request to the node.</param>
         /// <returns>The http json response.</returns>
-        public async Task<string> Handle(string url, string payload)
+        public async Task<string> Handle(string method, string url, string payload, string[] headers)
         {
             var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
             httpWebRequest.ContentType = "application/json";
-            httpWebRequest.Method = "POST";
+            httpWebRequest.Method = method;
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            foreach (var header in headers) httpWebRequest.Headers.Add(header);
 
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
             {

@@ -22,13 +22,17 @@ namespace In3.Native
 
             // This is marshaled in a non-declarative way to prevent double freeing of the string (sometimes necessary when the string is declared as a char*).
             string payload = Marshal.PtrToStringAnsi(in3_get_request_payload(reqPtr));
+            string method = Marshal.PtrToStringAnsi(in3_get_request_method(reqPtr));
             string[] urls = Utils.GetAllStrings(in3_get_request_urls(reqPtr), urlsLength);
+            string[] headers = new string[in3_get_request_headers_len(reqPtr)];
+            for (int i=0;i<headers.Length;i++) headers[i] = Marshal.PtrToStringAnsi(in3_get_request_headers_at(reqPtr,i)));
+
 
             IEnumerable<Task> requestsTasks = urls.Select(async (url, i) =>
             {
                 try
                 {
-                    string result = await NativeClient.Client.Transport.Handle(urls[i], payload);
+                    string result = await NativeClient.Client.Transport.Handle(method, urls[i], payload, headers);
                     // This is freed here (by the declartive marshall) and it works because internally this is an sb_add which copies the string (same with error).
                     in3_req_add_response(reqPtr, i, false, result, result.Length,0);
                 }
@@ -42,9 +46,12 @@ namespace In3.Native
             request_free(reqPtr, NativeClient.Pointer, false);
         }
 
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_method(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_payload(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_urls(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_get_request_urls_len(IntPtr request);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_get_request_headers_len(IntPtr request);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_headers_at(IntPtr request, int index);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_req_add_response(IntPtr req, int index, bool is_error, string data, int data_len, int time);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void request_free(IntPtr req, IntPtr ctx, bool free_response);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_create_request(IntPtr ctx);

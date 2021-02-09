@@ -163,6 +163,27 @@ char* in3_get_request_payload(
 );
 
 /**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+int in3_get_request_headers_len(
+    in3_request_t* request /**< request struct */
+);
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+char* in3_get_request_headers_at(
+    in3_request_t* request, /**< request struct */
+    int            index    /**< the inde xof the header */
+);
+
+/**
+ * getter to retrieve the http-method from a in3_request_t struct
+ */
+char* in3_get_request_method(
+    in3_request_t* request /**< request struct */
+);
+
+/**
  * getter to retrieve the urls list from a in3_request_t struct
  */
 char** in3_get_request_urls(
