@@ -8,18 +8,21 @@ class NativeRequest(c.Structure):
     """
     Based on in3/client/.h in3_request_t struct
     """
-    _fields_ = [("payload", c.POINTER(c.c_char)),
+    _fields_ = [("method", c.POINTER(c.c_char)),
+                ("payload", c.POINTER(c.c_char)),
                 ("urls", c.POINTER(c.POINTER(c.c_char))),
                 ("urls_len", c.c_int),
                 ("results", c.c_void_p),
                 ("timeout", c.c_uint32),
-                ("times", c.c_uint32)]
+                ("times", c.c_uint32),
+                ("headers", c.c_void_p)]
     """
     /** request-object. 
      * 
      * represents a RPC-request
      */
     typedef struct in3_request {
+      char*           method    /**< http-method */
       char*           payload;  /**< the payload to send */
       char**          urls;     /**< array of urls */
       uint_fast16_t   urls_len; /**< number of urls */
@@ -84,6 +87,13 @@ class In3Request:
         Gets the payload to be sent
         """
         return c.string_at(self.in3_request.contents.payload)
+
+    def method(self):
+        """
+        Gets the http-method to be used
+        """
+        return c.string_at(self.in3_request.contents.method)
+
 
     def timeout(self):
         """

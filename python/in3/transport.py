@@ -22,7 +22,7 @@ def https_transport(in3_request: In3Request, in3_response: In3Response):
         try:
             request_params = {
                 'url': str(in3_request.url_at(i), 'utf8'),
-                'method': 'POST',
+                'method': in3_request.method(),
                 'data': in3_request.payload(),
                 'headers': {'Content-type': 'application/json', 'Accept': 'application/json'},
             }
