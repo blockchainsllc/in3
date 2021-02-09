@@ -369,7 +369,7 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   for (in3_req_header_t* h = req->headers; h; h = h->next, hi++) (*jni)->SetObjectArrayElement(jni, jheaders, hi, (*jni)->NewStringUTF(jni, h->value));
 
   jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
-  jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "(Ljava/lang/String;[Ljava/lang/String;[B;[Ljava/lang/String)[[B");
+  jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "(Ljava/lang/String;[Ljava/lang/String;[B[Ljava/lang/String;)[[B");
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jmethod, jurls, jpayload, jheaders);
 
   for (unsigned int i = 0; i < req->urls_len; i++) {
@@ -625,6 +625,9 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
   in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
   jni = env;
+  // turn to debug
+//  in3_log_set_level(LOG_TRACE);
+//  in3_log_set_quiet(false);
 
   return (jlong)(size_t) in3;
 }
