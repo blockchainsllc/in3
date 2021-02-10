@@ -39,6 +39,7 @@ import in3.utils.Crypto;
 import in3.utils.JSON;
 import in3.utils.Signer;
 import in3.utils.StorageProvider;
+import in3.utils.TransportException;
 
 /**
  * This is the main class creating the incubed client. The client can then be
@@ -272,7 +273,7 @@ public class IN3 {
   }
 
   /** internal function to handle the internal requests */
-  static byte[][] sendRequest(String method, String[] urls, byte[] payload, String[] headers) {
+  static byte[][] sendRequest(String method, String[] urls, byte[] payload, String[] headers) throws TransportException {
     return IN3.transport.handle(method, urls, payload, headers);
   }
 

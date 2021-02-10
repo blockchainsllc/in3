@@ -368,27 +368,45 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   jobject jheaders = (*jni)->NewObjectArray(jni, header_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
   for (in3_req_header_t* h = req->headers; h; h = h->next, hi++) (*jni)->SetObjectArrayElement(jni, jheaders, hi, (*jni)->NewStringUTF(jni, h->value));
 
+  (*jni)->ExceptionClear(jni);
   jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
   jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "(Ljava/lang/String;[Ljava/lang/String;[B[Ljava/lang/String;)[[B");
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jmethod, jurls, jpayload, jheaders);
+  uint64_t     end    = current_ms();
 
-  for (unsigned int i = 0; i < req->urls_len; i++) {
-    jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
-    if (content) {
-      const size_t l     = (*jni)->GetArrayLength(jni, content);
-      uint8_t*     bytes = _malloc(l);
-      (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
-      sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
-      req->ctx->raw_response[i].state = IN3_OK;
-      _free(bytes);
-    }
-    else {
-      sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
-      req->ctx->raw_response[i].state = IN3_ERPC;
-    }
-    if (req->ctx->raw_response[i].state) success = IN3_ERPC;
+  // handle exception
+  jthrowable transport_exception = (*jni)->ExceptionOccurred(jni);
+  if (transport_exception) {
+    jclass    cls    = (*jni)->GetObjectClass(jni, transport_exception);
+    jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getStatus", "()I");
+    int       status = (*jni)->CallIntMethod(jni, transport_exception, mid);
+    mid              = (*jni)->GetMethodID(jni, cls, "getIndex", "()I");
+    int index        = (*jni)->CallIntMethod(jni, transport_exception, mid);
+    mid              = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
+    jstring     jmsg = (*jni)->CallObjectMethod(jni, transport_exception, mid);
+    const char* msg  = (*jni)->GetStringUTFChars(jni, jmsg, 0);
+    in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t)(end - start));
+    (*jni)->ReleaseStringUTFChars(jni, jmsg, msg);
+    (*jni)->ExceptionClear(jni);
   }
-  uint64_t end = current_ms();
+  else {
+    for (unsigned int i = 0; i < req->urls_len; i++) {
+      jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
+      if (content) {
+        const size_t l     = (*jni)->GetArrayLength(jni, content);
+        uint8_t*     bytes = _malloc(l);
+        (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
+        sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
+        req->ctx->raw_response[i].state = IN3_OK;
+        _free(bytes);
+      }
+      else {
+        sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
+        req->ctx->raw_response[i].state = IN3_ERPC;
+      }
+      if (req->ctx->raw_response[i].state) success = IN3_ERPC;
+    }
+  }
 
   for (unsigned int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = (uint32_t)(end - start);
 
@@ -626,8 +644,8 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
   jni = env;
   // turn to debug
-  //  in3_log_set_level(LOG_TRACE);
-  //  in3_log_set_quiet(false);
+  in3_log_set_level(LOG_TRACE);
+  in3_log_set_quiet(false);
 
   return (jlong)(size_t) in3;
 }

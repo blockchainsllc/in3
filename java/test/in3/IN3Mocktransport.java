@@ -22,7 +22,7 @@ class IN3MockTransport implements IN3Transport {
   }
 
   @Override
-  public byte[][] handle(String method, String[] urls, byte[] payload, String[] headers) {
+  public byte[][] handle(String method, String[] urls, byte[] payload, String[] headers) throws TransportException {
     byte[][] result   = new byte[urls.length][];
     String methodName = this.getPayloadMethod(new String(payload));
 

@@ -1,5 +1,6 @@
 package in3;
 
+import in3.utils.TransportException;
 import java.io.*;
 import java.net.*;
 
@@ -9,7 +10,7 @@ import java.net.*;
 class IN3DefaultTransport implements IN3Transport {
 
   @Override
-  public byte[][] handle(String method, String[] urls, byte[] payload, String[] headers) {
+  public byte[][] handle(String method, String[] urls, byte[] payload, String[] headers) throws TransportException {
     byte[][] result = new byte[urls.length][];
 
     for (int i = 0; i < urls.length; i++) {
@@ -43,11 +44,11 @@ class IN3DefaultTransport implements IN3Transport {
         buffer.flush();
         is.close();
         if (status > 300)
-          result[i] = ("[{\"error\":{\"code\":-" + status + " ,\"message\":\"" + buffer.toString().replaceAll("\"", " ") + "\"}}]").getBytes();
+          throw new TransportException(buffer.toString().replaceAll("\"", " "), status, i);
         else
           result[i] = buffer.toByteArray();
       } catch (Exception ex) {
-        result[i] = ("[{\"error\":{\"code\":-12344,\"message\":\"" + ex.getMessage() + "\"}}]").getBytes();
+        throw new TransportException("Error during request transport:" + ex.getMessage(), 11, 0);
       }
     }
     return result;

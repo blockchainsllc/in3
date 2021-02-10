@@ -585,6 +585,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   request->urls          = urls;
   request->cptr          = NULL;
   request->wait          = d_get_intk(d_get(ctx->requests[0], K_IN3), K_WAIT);
+  request->method        = payload->len ? "POST" : "GET";
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
   ctx->raw_response = _calloc(sizeof(in3_response_t), nodes_count);

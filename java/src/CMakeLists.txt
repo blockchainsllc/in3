@@ -81,6 +81,7 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/utils/Signer.java
     in3/utils/StorageProvider.java
     in3/utils/TempStorageProvider.java
+    in3/utils/TransportException.java
   )
 
   if(JAVA_MULTI_LIBS)
