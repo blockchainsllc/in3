@@ -104,7 +104,7 @@ impl Ctx {
                         in3_sys::in3_req_add_response(
                             request,
                             0.try_into().unwrap(),
-                            false,
+                            0,
                             res_str.0.as_mut_ptr() as *const c_char,
                             65,
                             0,
@@ -151,7 +151,7 @@ impl Ctx {
                                     in3_sys::in3_req_add_response(
                                         request,
                                         i.try_into().unwrap(), // cannot fail
-                                        true,
+                                        -11, // TODO: here we need the status-code of the failed http-request as negative-value
                                         err_str.as_ptr(),
                                         -1i32,
                                         0,
@@ -162,7 +162,7 @@ impl Ctx {
                                     in3_sys::in3_req_add_response(
                                         request,
                                         i.try_into().unwrap(), // cannot fail
-                                        false,
+                                        0,
                                         res_str.as_ptr(),
                                         -1i32,
                                         0,
