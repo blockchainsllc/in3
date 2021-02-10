@@ -265,8 +265,8 @@ in3_ret_t iamo_add_user(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   char*      payload = alloca(strlen(email) + strlen(phone) + 50);
   sprintf(payload, "{\"email\":\"%s\",\"phone\":\"%s\"}", email, phone);
   TRY(send_api_request(ctx->ctx, conf, conf->services.account, "post", "/api/user", payload, &result))
-  return in3_rpc_handle_with_boolean(ctx, true);
-  //  return add_response(ctx, result);
+  //return in3_rpc_handle_with_boolean(ctx, true);
+  return add_response(ctx, result);
 }
 
 static in3_ret_t iamo_rpc(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {

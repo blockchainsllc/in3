@@ -113,6 +113,9 @@ impl Ctx {
                         Err(SysError::TryAgain)
                     }
                     in3_sys::ctx_type::CT_RPC => {
+                        let method = CStr::from_ptr((*request).method)
+                            .to_str()
+                            .expect("method is not valid UTF-8");
                         let payload = CStr::from_ptr((*request).payload)
                             .to_str()
                             .expect("payload is not valid UTF-8");
@@ -124,13 +127,21 @@ impl Ctx {
                                 .expect("URL is not valid UTF-8");
                             urls.push(url);
                         }
+                        let mut headers = Vec::new();
+                        let header_len =  in3_sys::in3_get_request_headers_len(request);       
+                        for i in 0..header_len as usize {
+                            let header = CStr::from_ptr(in3_sys::in3_get_request_headers_at(request,i as i32))
+                                .to_str()
+                                .expect("header is not valid UTF-8");
+                            headers.push(header);
+                        }
 
                         let responses: Vec<Result<String, String>> = {
                             let transport = {
                                 let c: &mut Client = (*self.ptr).client.into();
                                 &mut c.transport
                             };
-                            transport.fetch(payload, &urls).await
+                            transport.fetch(method, payload, &urls, &headers).await
                         };
                         // println!("{:?}", responses);
                         for (i, resp) in responses.iter().enumerate() {
@@ -458,6 +469,9 @@ impl Client {
         let mut urls = Vec::new();
 
         unsafe {
+            let method = CStr::from_ptr((*request).method)
+                .to_str()
+                .expect("method is not valid UTF-8");
             let payload = CStr::from_ptr((*request).payload)
                 .to_str()
                 .expect("URL is not valid UTF-8");
@@ -468,9 +482,11 @@ impl Client {
                     .expect("URL is not valid UTF-8");
                 urls.push(url);
             }
+            let mut headers = Vec::new();
+            // TODO fill headers
 
             let c: &mut Client = (*request).in3.into();
-            let responses: Vec<Result<String, String>> = c.transport.fetch_blocking(payload, &urls);
+            let responses: Vec<Result<String, String>> = c.transport.fetch_blocking(method, payload, &urls, &headers);
 
             let mut any_err = false;
             for (i, resp) in responses.iter().enumerate() {

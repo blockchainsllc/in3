@@ -15,11 +15,11 @@ type ClientTypeId = u32;
 pub trait Transport {
     /// Sends the request to all of the uris (endpoints) and delivers the response as Strings
     /// in an async fashion.
-    async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
+    async fn fetch(&mut self, method: &str, request: &str, uris: &[&str],headers: &[&str]) -> Vec<Result<String, String>>;
 
     /// Same as fetch() but may block.
     #[cfg(feature = "blocking")]
-    fn fetch_blocking(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
+    fn fetch_blocking(&mut self, method: &str, request: &str, uris: &[&str],headers: &[&str]) -> Vec<Result<String, String>>;
 }
 
 /// Signer trait methods.

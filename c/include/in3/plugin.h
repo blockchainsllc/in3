@@ -50,7 +50,7 @@ extern "C" {
 // ---------- plugin management -----------------
 
 /** checks if a plugin for specified action is registered with the client */
-#define in3_plugin_is_registered(client, action) ((client)->plugin_acts & (action))
+#define in3_plugin_is_registered(client, action) (((client)->plugin_acts & (action)) == (action))
 
 /** registers a plugin with the client */
 in3_ret_t in3_plugin_register(
@@ -132,23 +132,54 @@ NONULL in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t va
 
 // -------------- TRANSPORT -------------
 
+/**
+ * optional request headers
+ */
+typedef struct in3_req_header {
+  char*                  value; /**< the value */
+  struct in3_req_header* next;  /**< pointer to next header */
+} in3_req_header_t;
+
 /** request-object. 
  * 
  * represents a RPC-request
  */
 typedef struct in3_request {
-  char*           payload;  /**< the payload to send */
-  char**          urls;     /**< array of urls */
-  uint_fast16_t   urls_len; /**< number of urls */
-  struct in3_ctx* ctx;      /**< the current context */
-  void*           cptr;     /**< a custom ptr to hold information during */
-  uint32_t        wait;     /**< time in ms to wait before sending out the request */
+  char*             method;   /**< the http-method to be used */
+  char*             payload;  /**< the payload to send */
+  char**            urls;     /**< array of urls */
+  uint_fast16_t     urls_len; /**< number of urls */
+  struct in3_ctx*   ctx;      /**< the current context */
+  void*             cptr;     /**< a custom ptr to hold information during */
+  uint32_t          wait;     /**< time in ms to wait before sending out the request */
+  in3_req_header_t* headers;  /**< optional additional headers to be send with the request */
 } in3_request_t;
 
 /**
  * getter to retrieve the payload from a in3_request_t struct
  */
 char* in3_get_request_payload(
+    in3_request_t* request /**< request struct */
+);
+
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+int in3_get_request_headers_len(
+    in3_request_t* request /**< request struct */
+);
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+char* in3_get_request_headers_at(
+    in3_request_t* request, /**< request struct */
+    int            index    /**< the inde xof the header */
+);
+
+/**
+ * getter to retrieve the http-method from a in3_request_t struct
+ */
+char* in3_get_request_method(
     in3_request_t* request /**< request struct */
 );
 

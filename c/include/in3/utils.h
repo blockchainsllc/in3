@@ -206,6 +206,19 @@ uint64_t current_ms();
   }
 
 /**
+ * executes the expression and expects the return value to be a int indicating the error. 
+ * if the return value is negative it will stop and return this value otherwise continue.
+ */
+#define TRY_CATCH(exp, catch) \
+  {                           \
+    int _r = (exp);           \
+    if (_r < 0) {             \
+      catch;                  \
+      return _r;              \
+    }                         \
+  }
+
+/**
  * executes the expression and expects value to equal val. 
  * if not it will return IN3_EINVAL
  */
