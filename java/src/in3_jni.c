@@ -644,8 +644,8 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
   jni = env;
   // turn to debug
-  in3_log_set_level(LOG_TRACE);
-  in3_log_set_quiet(false);
+  //  in3_log_set_level(LOG_TRACE);
+  //  in3_log_set_quiet(false);
 
   return (jlong)(size_t) in3;
 }
