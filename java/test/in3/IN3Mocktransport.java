@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.*;
 import org.json.*;
+import in3.utils.TransportException;
 
 class IN3MockTransport implements IN3Transport {
 
