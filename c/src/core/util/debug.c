@@ -101,6 +101,21 @@ char* in3_errmsg(in3_ret_t err /**< the error code */) {
     case IN3_ENODEVICE: return "no hardware wallet connected";
     case IN3_EAPDU: return "error in usb communication protocol";
     case IN3_EPLGN_NONE: return "no plugin could handle specified action";
+    case IN3_HTTP_BAD_REQUEST: return "400 - Bad Request";
+    case IN3_HTTP_UNAUTHORIZED: return "401 - Unauthorized";
+    case IN3_HTTP_PAYMENT_REQUIRED: return "402 - Payment required";
+    case IN3_HTTP_FORBIDDEN: return "403 - Forbidden";
+    case IN3_HTTP_NOT_FOUND: return "404 - Not found";
+    case IN3_HTTP_M_NOT_ALLOWED: return "405 - Method not allowed";
+    case IN3_HTTP_NOT_ACCEPTABLE: return "406 - Not acceptable";
+    case IN3_HTTP_PROX_AUTH_REQUIRED: return "407 - Proxy Authetification required";
+    case IN3_HTTP_TIMEOUT: return "408 - Request timeout";
+    case IN3_HTTP_CONFLICT: return "409 - Conclict";
+    case IN3_HTTP_GONE: return "410 - Gone";
+    case IN3_HTTP_INTERNAL_ERROR: return "500 - Internal Server Error";
+    case IN3_HTTP_NOT_IMPLEMENTED: return "501 - Not Implemented";
+    case IN3_HTTP_BAD_GATEWAY: return "502 - Bad Gateway";
+    case IN3_HTTP_UNAVAILABLE: return "503 - Service Unavailable";
   }
   return NULL;
 #else
