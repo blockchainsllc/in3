@@ -51,22 +51,20 @@ static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
-  char*      method = NULL;
-  d_token_t* params = d_get(vc->request, K_PARAMS);
 
   // do we support this request?
-  if (!(method = d_get_stringk(vc->request, K_METHOD))) return vc_err(vc, "No Method in request defined!");
-  if (vc->chain->type != CHAIN_ETH && strcmp(method, "in3_nodeList")) return IN3_EIGNORE;
+  if (vc->chain->type != CHAIN_ETH && strcmp(vc->method, "in3_nodeList")) return IN3_EIGNORE;
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
-  if (!vc->result)
-    return IN3_OK;
+  if (!vc->result) return IN3_OK;
 
-  if (strcmp(method, "in3_nodeList") == 0)
+  if (strcmp(vc->method, "in3_nodeList") == 0) {
+    d_token_t* params = d_get(vc->request, K_PARAMS);
     return eth_verify_in3_nodelist(data, vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
+  }
 #ifdef NODESELECT_DEF_WL
-  else if (strcmp(method, "in3_whiteList") == 0)
+  else if (strcmp(vc->method, "in3_whiteList") == 0)
     return eth_verify_in3_whitelist(data, vc);
 #endif
   else

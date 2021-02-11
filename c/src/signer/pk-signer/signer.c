@@ -174,18 +174,16 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
     }
 
     case PLGN_ACT_RPC_HANDLE: {
-      in3_rpc_handle_ctx_t* ctx    = action_ctx;
-      char*                 method = d_get_stringk(ctx->request, K_METHOD);
-      if (strcmp(method, "in3_addRawKey") == 0) {
-        d_token_t* t = d_get(ctx->request, K_PARAMS);
-        if (d_len(t) != 1 || d_type(t + 1) != T_BYTES || d_len(t + 1) != 32)
+      in3_rpc_handle_ctx_t* ctx = action_ctx;
+      if (strcmp(ctx->method, "in3_addRawKey") == 0) {
+        if (d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_BYTES || d_len(ctx->params + 1) != 32)
           return ctx_set_error(ctx->ctx, "one argument with 32 bytes is required!", IN3_EINVAL);
         address_t adr;
-        get_address(d_bytes(t + 1)->data, adr);
-        add_key(ctx->ctx->client, d_bytes(t + 1)->data);
+        get_address(d_bytes(ctx->params + 1)->data, adr);
+        add_key(ctx->ctx->client, d_bytes(ctx->params + 1)->data);
         return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
       }
-      if (strcmp(method, "eth_accounts") == 0) {
+      if (strcmp(ctx->method, "eth_accounts") == 0) {
         sb_t*                  sb    = in3_rpc_handle_start(ctx);
         bool                   first = true;
         in3_sign_account_ctx_t sc    = {.ctx = ctx->ctx, .accounts = NULL, .accounts_len = 0, .signer_type = 0};

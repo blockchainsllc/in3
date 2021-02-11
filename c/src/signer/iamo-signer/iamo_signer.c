@@ -270,7 +270,6 @@ in3_ret_t iamo_add_user(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t iamo_rpc(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  char* method = d_get_stringk(ctx->request, K_METHOD);
   TRY_RPC("iamo_add_user", iamo_add_user(conf, ctx))
   return IN3_EIGNORE;
 }

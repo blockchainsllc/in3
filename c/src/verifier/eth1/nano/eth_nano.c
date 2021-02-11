@@ -54,20 +54,17 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
   d_token_t*  params = d_get(vc->request, K_PARAMS);
   int         i;
   // do we support this request?
-  if (!(method = d_get_stringk(vc->request, K_METHOD)))
-    return vc_err(vc, "No Method in request defined!");
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
-  if (!vc->result)
-    return IN3_OK;
+  if (!vc->result) return IN3_OK;
   // check if this call is part of the not verifieable calls
   for (i = 0; i < MAX_METHODS; i++) {
-    if (strcmp(ALLOWED_METHODS[i], method) == 0)
+    if (strcmp(ALLOWED_METHODS[i], vc->method) == 0)
       return IN3_OK;
   }
 
-  if (strcmp(method, "eth_getTransactionReceipt") == 0)
+  if (strcmp(vc->method, "eth_getTransactionReceipt") == 0)
     // for txReceipt, we need the txhash
     return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(params, 0));
   else

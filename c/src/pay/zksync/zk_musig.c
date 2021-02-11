@@ -125,19 +125,19 @@ static bool is_complete(bytes_t data) {
   return true;
 }
 
-in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
-  CHECK_PARAMS_LEN(ctx->ctx, params, 1);
+  CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 1);
   d_token_t* result = NULL;
   bytes_t    message;
 
-  if (d_type(params + 1) == T_OBJECT) {
-    result  = params + 1;
+  if (d_type(ctx->params + 1) == T_OBJECT) {
+    result  = ctx->params + 1;
     message = d_to_bytes(d_get(result, key("message")));
     if (!message.data) return ctx_set_error(ctx->ctx, "missing message in request", IN3_EINVAL);
   }
   else {
-    message = d_to_bytes(params + 1);
+    message = d_to_bytes(ctx->params + 1);
     if (!conf->musig_pub_keys.data) {
       bytes32_t pk;
       uint8_t   sig[96];
@@ -220,7 +220,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_
     }
   }
 
-  if (is_complete(s->signature_shares) && d_type(params + 1) != T_OBJECT) {
+  if (is_complete(s->signature_shares) && d_type(ctx->params + 1) != T_OBJECT) {
     uint8_t res[96];
     TRY_SIG(zkcrypto_compute_aggregated_pubkey(s->pub_keys, res))
     TRY_SIG(zkcrypto_signer_receive_signature_shares(s->signer, s->signature_shares, res + 32))

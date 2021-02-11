@@ -11,26 +11,26 @@
 #include <stdio.h>
 #include <string.h>
 
-in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  // check params
-  if (!(d_len(params) == 1 && d_type(params + 1) == T_OBJECT)) {
-    CHECK_PARAMS_LEN(ctx->ctx, params, 2)
-    CHECK_PARAM_NUMBER(ctx->ctx, params, 0)
-    CHECK_PARAM_TOKEN(ctx->ctx, params, 1)
+in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  // check ctx->params
+  if (!(d_len(ctx->params) == 1 && d_type(ctx->params + 1) == T_OBJECT)) {
+    CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 2)
+    CHECK_PARAM_NUMBER(ctx->ctx, ctx->params, 0)
+    CHECK_PARAM_TOKEN(ctx->ctx, ctx->params, 1)
   }
 
   //  amount
   d_token_t*      tmp           = NULL;
   d_token_t*      tx_receipt    = NULL;
   zksync_token_t* token_conf    = NULL;
-  bytes_t         amount        = d_to_bytes(params_get(params, key("amount"), 0));
-  d_token_t*      token         = params_get(params, key("token"), 1);
-  bool            approve       = d_int(params_get(params, key("approveDepositAmountForERC20"), 2));
+  bytes_t         amount        = d_to_bytes(params_get(ctx->params, key("amount"), 0));
+  d_token_t*      token         = params_get(ctx->params, key("token"), 1);
+  bool            approve       = d_int(params_get(ctx->params, key("approveDepositAmountForERC20"), 2));
   uint8_t*        main_contract = conf->main_contract;
 
   // make sure we have an account
   uint8_t* account = conf->account;
-  if ((tmp = params_get(params, key("depositTo"), 3))) {
+  if ((tmp = params_get(ctx->params, key("depositTo"), 3))) {
     if (tmp->len != 20) return ctx_set_error(ctx->ctx, "invalid depositTo", IN3_ERPC);
     account = tmp->data;
   }
@@ -96,7 +96,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_tok
   return ctx_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
 }
 
-in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   uint8_t         aid[4];
   zksync_token_t* token_conf    = NULL;
   uint8_t*        main_contract = conf->main_contract;
@@ -105,11 +105,11 @@ in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
   d_token_t*      tx_receipt    = NULL;
   sb_t            sb            = {0};
 
-  CHECK_PARAM_TOKEN(ctx->ctx, params, 0)
+  CHECK_PARAM_TOKEN(ctx->ctx, ctx->params, 0)
 
   // check main_contract
   TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
-  TRY(resolve_tokens(conf, ctx->ctx, params_get(params, key("token"), 0), &token_conf))
+  TRY(resolve_tokens(conf, ctx->ctx, params_get(ctx->params, key("token"), 0), &token_conf))
   TRY(zksync_get_account_id(conf, ctx->ctx, &account_id))
   TRY(zksync_get_account(conf, ctx->ctx, &account))
 

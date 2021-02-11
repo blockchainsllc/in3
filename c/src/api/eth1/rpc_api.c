@@ -56,13 +56,13 @@
 #define ETH_SIGN_PREFIX "\x19" \
                         "Ethereum Signed Message:\n%u"
 
-static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_STRING)
+static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx) {
+  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_STRING)
   in3_ret_t  ret   = IN3_OK;
   bytes_t    data  = {0};
   char*      error = NULL;
-  char*      sig   = d_get_string_at(params, 0);
-  d_token_t* para  = d_get_at(params, 1);
+  char*      sig   = d_get_string_at(ctx->params, 0);
+  d_token_t* para  = d_get_at(ctx->params, 1);
   if (!sig) return ctx_set_error(ctx->ctx, "missing signature", IN3_EINVAL);
   if (!para) return ctx_set_error(ctx->ctx, "missing values", IN3_EINVAL);
   abi_sig_t* s = abi_sig_create(sig, &error);
@@ -75,15 +75,15 @@ static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   return error ? ctx_set_error(ctx->ctx, error, IN3_EINVAL) : ret;
 }
 
-static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_STRING)
-  CHECK_PARAM_TYPE(ctx->ctx, params, 1, T_BYTES)
-  CHECK_PARAM(ctx->ctx, params, 1, val->len % 32 == 0)
+static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
+  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_STRING)
+  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 1, T_BYTES)
+  CHECK_PARAM(ctx->ctx, ctx->params, 1, val->len % 32 == 0)
   char*       error = NULL;
   json_ctx_t* res   = NULL;
-  char*       sig   = d_get_string_at(params, 0);
-  bytes_t     data  = d_to_bytes(d_get_at(params, 1));
-  if (d_len(params) > 2) return ctx_set_error(ctx->ctx, "too many arguments (only 2 alllowed)", IN3_EINVAL);
+  char*       sig   = d_get_string_at(ctx->params, 0);
+  bytes_t     data  = d_to_bytes(d_get_at(ctx->params, 1));
+  if (d_len(ctx->params) > 2) return ctx_set_error(ctx->ctx, "too many arguments (only 2 alllowed)", IN3_EINVAL);
 
   abi_sig_t* req = abi_sig_create(sig, &error);
   if (!error) res = abi_decode(req, data, &error);
@@ -96,13 +96,13 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   return IN3_OK;
 }
 
-static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  CHECK_PARAM_ADDRESS(ctx->ctx, params, 0)
-  if (d_len(params) > 2) return ctx_set_error(ctx->ctx, "must be max 2 arguments", IN3_EINVAL);
+static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
+  CHECK_PARAM_ADDRESS(ctx->ctx, ctx->params, 0)
+  if (d_len(ctx->params) > 2) return ctx_set_error(ctx->ctx, "must be max 2 arguments", IN3_EINVAL);
   char     result[45];
-  bytes_t* adr = d_get_bytes_at(params, 0);
+  bytes_t* adr = d_get_bytes_at(ctx->params, 0);
   if (!adr || adr->len != 20) return ctx_set_error(ctx->ctx, "the address must have 20 bytes", IN3_EINVAL);
-  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->ctx->client->chain.chain_id : 0, result + 1);
+  in3_ret_t res = to_checksum(adr->data, d_get_int_at(ctx->params, 1) ? ctx->ctx->client->chain.chain_id : 0, result + 1);
   if (res) return ctx_set_error(ctx->ctx, "Could not create the checksum address", res);
   result[0]  = '\'';
   result[43] = '\'';
@@ -111,10 +111,10 @@ static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx, d_token_t* param
   return in3_rpc_handle_with_string(ctx, result);
 }
 
-static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  char*        name     = d_get_string_at(params, 0);
-  char*        type     = d_get_string_at(params, 1);
-  bytes_t      registry = d_to_bytes(d_get_at(params, 2));
+static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx) {
+  char*        name     = d_get_string_at(ctx->params, 0);
+  char*        type     = d_get_string_at(ctx->params, 1);
+  bytes_t      registry = d_to_bytes(d_get_at(ctx->params, 2));
   int          res_len  = 20;
   in3_ens_type ens_type = ENS_ADDR;
   bytes32_t    result;
@@ -139,16 +139,16 @@ static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   return in3_rpc_handle_with_bytes(ctx, bytes(result, res_len));
 }
 
-static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  if (!params || d_len(params) != 1) return ctx_set_error(ctx->ctx, "no data", IN3_EINVAL);
+static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || d_len(ctx->params) != 1) return ctx_set_error(ctx->ctx, "no data", IN3_EINVAL);
   bytes32_t hash;
-  keccak(d_to_bytes(params + 1), hash);
+  keccak(d_to_bytes(ctx->params + 1), hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
-static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  if (!params || d_len(params) != 1) return ctx_set_error(ctx->ctx, "no data", IN3_EINVAL);
+static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || d_len(ctx->params) != 1) return ctx_set_error(ctx->ctx, "no data", IN3_EINVAL);
   bytes32_t  hash;
-  bytes_t    data = d_to_bytes(params + 1);
+  bytes_t    data = d_to_bytes(ctx->params + 1);
   SHA256_CTX c;
   sha256_Init(&c);
   sha256_Update(&c, data.data, data.len);
@@ -257,29 +257,29 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
 #endif
 }
 
-static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  if (!params || d_len(params) != 2 || d_type(params + 2) != T_STRING) return ctx_set_error(ctx->ctx, "must have 2 params as strings", IN3_EINVAL);
-  char* val = d_get_string_at(params, 0);
+static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || d_len(ctx->params) != 2 || d_type(ctx->params + 2) != T_STRING) return ctx_set_error(ctx->ctx, "must have 2 params as strings", IN3_EINVAL);
+  char* val = d_get_string_at(ctx->params, 0);
   if (!val) {
-    if (d_type(params + 1) == T_INTEGER) {
+    if (d_type(ctx->params + 1) == T_INTEGER) {
       val = alloca(20);
-      sprintf(val, "%i", d_int(params + 1));
+      sprintf(val, "%i", d_int(ctx->params + 1));
     }
     else
       return ctx_set_error(ctx->ctx, "the value must be a string", IN3_EINVAL);
   }
   bytes32_t tmp;
-  int       s = string_val_to_bytes(val, d_get_string_at(params, 1), tmp);
+  int       s = string_val_to_bytes(val, d_get_string_at(ctx->params, 1), tmp);
   return s < 0
              ? ctx_set_error(ctx->ctx, "invalid number string", IN3_EINVAL)
              : in3_rpc_handle_with_bytes(ctx, bytes(tmp, (uint32_t) s));
 }
 
-static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  if (!params || d_len(params) != 1 || d_type(params + 1) != T_OBJECT) return ctx_set_error(ctx->ctx, "no valid config-object as argument", IN3_EINVAL);
+static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_OBJECT) return ctx_set_error(ctx->ctx, "no valid config-object as argument", IN3_EINVAL);
 
   ctx->ctx->client->pending--; // we need to to temporarly decrees it in order to allow configuring
-  str_range_t r   = d_to_json(params + 1);
+  str_range_t r   = d_to_json(ctx->params + 1);
   char        old = r.data[r.len];
   r.data[r.len]   = 0;
   char* ret       = in3_configure(ctx->ctx->client, r.data);
@@ -302,14 +302,14 @@ static in3_ret_t in3_getConfig(in3_rpc_handle_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  bytes_t* pk = d_get_bytes_at(params, 0);
-  if (!pk || pk->len != 32 || d_len(params) != 1) return ctx_set_error(ctx->ctx, "Invalid private key! must be 32 bytes long", IN3_EINVAL);
+static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t* pk = d_get_bytes_at(ctx->params, 0);
+  if (!pk || pk->len != 32 || d_len(ctx->params) != 1) return ctx_set_error(ctx->ctx, "Invalid private key! must be 32 bytes long", IN3_EINVAL);
 
   uint8_t public_key[65], sdata[32];
   ecdsa_get_public_key65(&secp256k1, pk->data, public_key);
 
-  if (strcmp(d_get_stringk(ctx->ctx->requests[0], K_METHOD), "in3_pk2address") == 0) {
+  if (strcmp(ctx->method, "in3_pk2address") == 0) {
     keccak(bytes(public_key + 1, 64), sdata);
     return in3_rpc_handle_with_bytes(ctx, bytes(sdata + 12, 20));
   }
@@ -317,10 +317,10 @@ static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
     return in3_rpc_handle_with_bytes(ctx, bytes(public_key + 1, 64));
 }
 
-static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  bytes_t  msg      = d_to_bytes(d_get_at(params, 0));
-  bytes_t* sig      = d_get_bytes_at(params, 1);
-  char*    sig_type = d_get_string_at(params, 2);
+static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t  msg      = d_to_bytes(d_get_at(ctx->params, 0));
+  bytes_t* sig      = d_get_bytes_at(ctx->params, 1);
+  char*    sig_type = d_get_string_at(ctx->params, 2);
   if (!sig_type) sig_type = "raw";
   if (!sig || sig->len != 65) return ctx_set_error(ctx->ctx, "Invalid signature! must be 65 bytes long", IN3_EINVAL);
   if (!msg.data) return ctx_set_error(ctx->ctx, "Missing message", IN3_EINVAL);
@@ -358,10 +358,10 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   return in3_rpc_handle_finish(ctx);
 }
 
-static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  bytes_t        data     = d_to_bytes(d_get_at(params, 0));
-  const bytes_t* pk       = d_get_bytes_at(params, 1);
-  char*          sig_type = d_get_string_at(params, 2);
+static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t        data     = d_to_bytes(d_get_at(ctx->params, 0));
+  const bytes_t* pk       = d_get_bytes_at(ctx->params, 1);
+  char*          sig_type = d_get_string_at(ctx->params, 2);
   if (!sig_type) sig_type = "raw";
 
   //  if (!pk) return ctx_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
@@ -435,9 +435,9 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
-static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  d_token_t* keyfile        = d_get_at(params, 0);
-  bytes_t    password_bytes = d_to_bytes(d_get_at(params, 1));
+static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
+  d_token_t* keyfile        = d_get_at(ctx->params, 0);
+  bytes_t    password_bytes = d_to_bytes(d_get_at(ctx->params, 1));
   bytes32_t  dst;
 
   if (!password_bytes.data) return ctx_set_error(ctx->ctx, "you need to specify a passphrase", IN3_EINVAL);
@@ -450,22 +450,22 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
   return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
 }
 
-static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  d_token_t* tx  = d_get_at(params, 0);
+static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
+  d_token_t* tx  = d_get_at(ctx->params, 0);
   bytes_t    dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   TRY(eth_prepare_unsigned_tx(tx, ctx->ctx, &dst))
 #else
-  if (params || tx || ctx) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+  if (ctx->params || tx || ctx) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
   return IN3_OK;
 }
 
-static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
-  bytes_t*  data   = d_get_bytes_at(params, 0);
-  bytes_t*  from_b = d_get_bytes_at(params, 1);
+static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t*  data   = d_get_bytes_at(ctx->params, 0);
+  bytes_t*  from_b = d_get_bytes_at(ctx->params, 1);
   address_t from;
   memset(from, 0, 20);
   if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
@@ -473,7 +473,7 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   TRY(eth_sign_raw_tx(*data, ctx->ctx, from, &dst))
 #else
-  if (data || ctx || from[0] || params) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+  if (data || ctx || from[0] || ctx->params) return ctx_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
@@ -484,28 +484,26 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(pdata);
   UNUSED_VAR(action);
 
-  in3_rpc_handle_ctx_t* rpc_ctx = plugin_ctx;
-  char*                 method  = d_get_stringk(rpc_ctx->request, K_METHOD);
-  d_token_t*            params  = d_get(rpc_ctx->request, K_PARAMS);
+  in3_rpc_handle_ctx_t* ctx = plugin_ctx;
 
-  TRY_RPC("in3_abiEncode", in3_abiEncode(rpc_ctx, params))
-  TRY_RPC("in3_abiDecode", in3_abiDecode(rpc_ctx, params))
-  TRY_RPC("in3_checksumAddress", in3_checkSumAddress(rpc_ctx, params))
-  TRY_RPC("in3_ens", in3_ens(rpc_ctx, params))
-  TRY_RPC("web3_sha3", in3_sha3(rpc_ctx, params))
-  TRY_RPC("keccak", in3_sha3(rpc_ctx, params))
-  TRY_RPC("sha256", in3_sha256(rpc_ctx, params))
-  TRY_RPC("in3_toWei", in3_toWei(rpc_ctx, params))
-  TRY_RPC("in3_config", in3_config(rpc_ctx, params))
-  TRY_RPC("in3_getConfig", in3_getConfig(rpc_ctx))
-  TRY_RPC("in3_pk2address", in3_pk2address(rpc_ctx, params))
-  TRY_RPC("in3_pk2public", in3_pk2address(rpc_ctx, params))
-  TRY_RPC("in3_ecrecover", in3_ecrecover(rpc_ctx, params))
-  TRY_RPC("in3_signData", in3_sign_data(rpc_ctx, params))
-  TRY_RPC("in3_cacheClear", in3_cacheClear(rpc_ctx))
-  TRY_RPC("in3_decryptKey", in3_decryptKey(rpc_ctx, params))
-  TRY_RPC("in3_prepareTx", in3_prepareTx(rpc_ctx, params))
-  TRY_RPC("in3_signTx", in3_signTx(rpc_ctx, params))
+  TRY_RPC("in3_abiEncode", in3_abiEncode(ctx))
+  TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
+  TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))
+  TRY_RPC("in3_ens", in3_ens(ctx))
+  TRY_RPC("web3_sha3", in3_sha3(ctx))
+  TRY_RPC("keccak", in3_sha3(ctx))
+  TRY_RPC("sha256", in3_sha256(ctx))
+  TRY_RPC("in3_toWei", in3_toWei(ctx))
+  TRY_RPC("in3_config", in3_config(ctx))
+  TRY_RPC("in3_getConfig", in3_getConfig(ctx))
+  TRY_RPC("in3_pk2address", in3_pk2address(ctx))
+  TRY_RPC("in3_pk2public", in3_pk2address(ctx))
+  TRY_RPC("in3_ecrecover", in3_ecrecover(ctx))
+  TRY_RPC("in3_signData", in3_sign_data(ctx))
+  TRY_RPC("in3_cacheClear", in3_cacheClear(ctx))
+  TRY_RPC("in3_decryptKey", in3_decryptKey(ctx))
+  TRY_RPC("in3_prepareTx", in3_prepareTx(ctx))
+  TRY_RPC("in3_signTx", in3_signTx(ctx))
 
   return IN3_EIGNORE;
 }

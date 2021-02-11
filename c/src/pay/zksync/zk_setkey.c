@@ -57,11 +57,11 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
   return IN3_OK;
 }
 
-in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   address_t       pub_hash;
   uint32_t        nonce;
-  d_token_t*      token      = d_len(params) == 1 ? params + 1 : NULL;
-  bytes_t*        new_key    = d_get_bytes_at(params, 1);
+  d_token_t*      token      = d_len(ctx->params) == 1 ? ctx->params + 1 : NULL;
+  bytes_t*        new_key    = d_get_bytes_at(ctx->params, 1);
   zksync_token_t* token_data = NULL;
   if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
   zk_fee_t fee;

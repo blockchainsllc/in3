@@ -429,43 +429,39 @@ in3_ret_t btc_verify_target_proof(btc_target_conf_t* conf, in3_vctx_t* vc, d_tok
 }
 
 static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
-  char*      method = d_get_stringk(vc->request, K_METHOD);
-  d_token_t* params = d_get(vc->request, K_PARAMS);
-  bytes32_t  hash;
   // we only verify BTC
   if (vc->chain->type != CHAIN_BTC) return IN3_EIGNORE;
 
   // make sure we want to verify
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
-  // do we support this request?
-  if (!method) return vc_err(vc, "No Method in request defined!");
-
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
 
   // make sure the conf is filled with data from the cache
   btc_check_conf(vc->client, conf);
+  d_token_t* params = d_get(vc->request, K_PARAMS);
+  bytes32_t  hash;
 
-  if (strcmp(method, "getblock") == 0) {
+  if (strcmp(vc->method, "getblock") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, true);
   }
-  if (strcmp(method, "getblockcount") == 0) {
+  if (strcmp(vc->method, "getblockcount") == 0) {
     return btc_verify_blockcount(conf, vc);
   }
-  if (strcmp(method, "getblockheader") == 0) {
+  if (strcmp(vc->method, "getblockheader") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid blockhash");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, false);
   }
-  if (strcmp(method, "btc_proofTarget") == 0) {
+  if (strcmp(vc->method, "btc_proofTarget") == 0) {
     return btc_verify_target_proof(conf, vc, params);
   }
-  if (strcmp(method, "getrawtransaction") == 0) {
+  if (strcmp(vc->method, "getrawtransaction") == 0) {
     d_token_t* tx_id      = d_get_at(params, 0);
     bool       json       = d_len(params) < 2 ? d_type(vc->result) == T_OBJECT : d_get_int_at(params, 1);
     d_token_t* block_hash = d_get_at(params, 2);

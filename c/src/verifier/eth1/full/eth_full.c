@@ -48,20 +48,14 @@
 in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(pdata);
   UNUSED_VAR(action);
-  in3_vctx_t* vc     = pctx;
-  char*       method = d_get_stringk(vc->request, K_METHOD);
+  in3_vctx_t* vc = pctx;
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
-  if (!vc->result)
-    return 0;
+  if (!vc->result) return IN3_OK;
 
-  // do we support this request?
-  if (!method)
-    return vc_err(vc, "No Method in request defined!");
-
-  if (strcmp(method, "eth_call") == 0) {
+  if (strcmp(vc->method, "eth_call") == 0) {
     if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
     d_token_t* tx      = d_get_at(d_get(vc->request, K_PARAMS), 0);
     bytes_t*   address = d_get_byteskl(tx, K_TO, 20);

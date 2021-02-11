@@ -36,6 +36,7 @@
 #include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/debug.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include "../../../verifier/eth1/basic/filter.h"
@@ -50,48 +51,43 @@
 
 in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
-  char* method = d_get_stringk(vc->request, K_METHOD);
 
   // make sure we want to verify
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
-  if (!vc->result) {
+  if (!vc->result)
     return IN3_OK;
-  }
   else if (d_type(vc->result) == T_NULL) {
     // check if there's a proof for non-existence
-    if (!strcmp(method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(method, "eth_getTransactionByBlockNumberAndIndex")) {
+    if (!strcmp(vc->method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(vc->method, "eth_getTransactionByBlockNumberAndIndex")) {
       return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
     }
     return IN3_OK;
   }
 
-  // do we support this request?
-  if (!method) return vc_err(vc, "No Method in request defined!");
-
-  if (strcmp(method, "eth_getTransactionByHash") == 0)
+  if (strcmp(vc->method, "eth_getTransactionByHash") == 0)
     return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
-  else if (!strcmp(method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(method, "eth_getTransactionByBlockNumberAndIndex")) {
+  else if (!strcmp(vc->method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(vc->method, "eth_getTransactionByBlockNumberAndIndex")) {
     return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
   }
-  else if (strcmp(method, "eth_getBlockByNumber") == 0)
+  else if (strcmp(vc->method, "eth_getBlockByNumber") == 0)
     return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (strcmp(method, "eth_getBlockTransactionCountByHash") == 0)
+  else if (strcmp(vc->method, "eth_getBlockTransactionCountByHash") == 0)
     return eth_verify_eth_getBlockTransactionCount(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (strcmp(method, "eth_getBlockTransactionCountByNumber") == 0)
+  else if (strcmp(vc->method, "eth_getBlockTransactionCountByNumber") == 0)
     return eth_verify_eth_getBlockTransactionCount(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (strcmp(method, "eth_getBlockByHash") == 0)
+  else if (strcmp(vc->method, "eth_getBlockByHash") == 0)
     return eth_verify_eth_getBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (strcmp(method, "eth_getBalance") == 0 || strcmp(method, "eth_getCode") == 0 || strcmp(method, "eth_getStorageAt") == 0 || strcmp(method, "eth_getTransactionCount") == 0)
+  else if (strcmp(vc->method, "eth_getBalance") == 0 || strcmp(vc->method, "eth_getCode") == 0 || strcmp(vc->method, "eth_getStorageAt") == 0 || strcmp(vc->method, "eth_getTransactionCount") == 0)
     return eth_verify_account_proof(vc);
-  else if (strcmp(method, "eth_gasPrice") == 0)
+  else if (strcmp(vc->method, "eth_gasPrice") == 0)
     return IN3_OK;
-  else if (!strcmp(method, "eth_newFilter") || !strcmp(method, "eth_newBlockFilter") || !strcmp(method, "eth_newPendingFilter") || !strcmp(method, "eth_uninstallFilter") || !strcmp(method, "eth_getFilterChanges"))
+  else if (!strcmp(vc->method, "eth_newFilter") || !strcmp(vc->method, "eth_newBlockFilter") || !strcmp(vc->method, "eth_newPendingFilter") || !strcmp(vc->method, "eth_uninstallFilter") || !strcmp(vc->method, "eth_getFilterChanges"))
     return IN3_OK;
-  else if (strcmp(method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
+  else if (strcmp(vc->method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
     return eth_verify_eth_getLog(vc, d_len(vc->result));
-  else if (strcmp(method, "eth_sendRawTransaction") == 0) {
+  else if (strcmp(vc->method, "eth_sendRawTransaction") == 0) {
     bytes32_t hash;
     keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
@@ -100,108 +96,108 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return IN3_EIGNORE;
 }
 
-/** called to see if we can handle the request internally */
-static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* rctx) {
+static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
+  d_token_t * tx_hash, *tx_receipt;
+  str_range_t r       = d_to_json(ctx->params + 1);
+  char*       tx_data = alloca(r.len + 1);
+  memcpy(tx_data, r.data, r.len);
+  tx_data[r.len] = 0;
+  TRY(ctx_send_sub_request(ctx->ctx, "eth_sendTransaction", tx_data, NULL, &tx_hash))
+  // tx was sent, we have a tx_hash
+  char tx_hash_hex[69];
+  bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
+  tx_hash_hex[0] = tx_hash_hex[67] = '"';
+  tx_hash_hex[1]                   = '0';
+  tx_hash_hex[2]                   = 'x';
+  tx_hash_hex[68]                  = 0;
 
-  in3_ctx_t* ctx    = rctx->ctx;
-  char*      method = d_get_stringk(rctx->request, K_METHOD);
-  d_token_t* params = d_get(rctx->request, K_PARAMS);
+  // get the tx_receipt
+  TRY(ctx_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
+
+  if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
+    // no tx yet
+    // we remove it and try again
+    in3_ctx_t* last_r = ctx_find_required(ctx->ctx, "eth_getTransactionReceipt");
+    uint32_t   wait   = d_get_intk(d_get(last_r->requests[0], K_IN3), K_WAIT);
+    wait              = wait ? wait * 2 : 1000;
+    ctx_remove_required(ctx->ctx, last_r, false);
+    if (wait > 120000) // more than 2 minutes is too long, so we stop here
+      return ctx_set_error(ctx->ctx, "Waited too long for the transaction to be minded", IN3_ELIMIT);
+    char in3[20];
+    sprintf(in3, "{\"wait\":%d}", wait);
+
+    return ctx_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
+  }
+  else {
+    // we have a result and we keep it
+    str_range_t r = d_to_json(tx_receipt);
+    sb_add_range(in3_rpc_handle_start(ctx), r.data, 0, r.len);
+    ctx_remove_required(ctx->ctx, ctx_find_required(ctx->ctx, "eth_getTransactionReceipt"), false);
+    ctx_remove_required(ctx->ctx, ctx_find_required(ctx->ctx, "eth_sendRawTransaction"), false);
+    return in3_rpc_handle_finish(ctx);
+  }
+}
+
+static in3_ret_t eth_newFilter(in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || d_type(ctx->params) != T_ARRAY || !d_len(ctx->params) || d_type(ctx->params + 1) != T_OBJECT)
+    return ctx_set_error(ctx->ctx, "invalid type of params, expected object", IN3_EINVAL);
+  else if (!filter_opt_valid(ctx->params + 1))
+    return ctx_set_error(ctx->ctx, "filter option parsing failed", IN3_EINVAL);
+  if (!ctx->params->data) return ctx_set_error(ctx->ctx, "binary request are not supported!", IN3_ENOTSUP);
+
+  char*     fopt = d_create_json(ctx->ctx->request_context, ctx->params + 1);
+  in3_ret_t res  = filter_add(ctx->ctx, FILTER_EVENT, fopt);
+  if (res < 0) {
+    _free(fopt);
+    return ctx_set_error(ctx->ctx, "filter creation failed", res);
+  }
+
+  return in3_rpc_handle_with_int(ctx, (uint64_t) res);
+}
+
+static in3_ret_t eth_newBlockFilter(in3_rpc_handle_ctx_t* ctx) {
+  in3_ret_t res = filter_add(ctx->ctx, FILTER_BLOCK, NULL);
+  if (res < 0) return ctx_set_error(ctx->ctx, "filter creation failed", res);
+  return in3_rpc_handle_with_int(ctx, (uint64_t) res);
+}
+
+static in3_ret_t eth_getFilterChanges(in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
+    return ctx_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
+
+  uint64_t  id  = d_get_long_at(ctx->params, 0);
+  sb_t      sb  = {0};
+  in3_ret_t ret = filter_get_changes(ctx->ctx, id, &sb);
+  if (ret != IN3_OK) {
+    if (sb.data) _free(sb.data);
+    return ctx_set_error(ctx->ctx, "failed to get filter changes", ret);
+  }
+  in3_rpc_handle_with_string(ctx, sb.data);
+  _free(sb.data);
+  return IN3_OK;
+}
+
+/** called to see if we can handle the request internally */
+static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* ctx) {
 
   // we only support ETH in this module
-  if (ctx->client->chain.type != CHAIN_ETH) return IN3_EIGNORE;
+  if (ctx->ctx->client->chain.type != CHAIN_ETH) return IN3_EIGNORE;
 
   // check method to handle internally
-  if (strcmp(method, "eth_sendTransaction") == 0)
-    return handle_eth_sendTransaction(ctx, rctx->request);
+  TRY_RPC("eth_sendTransaction", handle_eth_sendTransaction(ctx->ctx, ctx->request))
+  TRY_RPC("eth_sendTransactionAndWait", eth_send_transaction_and_wait(ctx))
+  TRY_RPC("eth_newFilter", eth_newFilter(ctx))
+  TRY_RPC("eth_newBlockFilter", eth_newBlockFilter(ctx))
+  TRY_RPC("eth_newPendingTransactionFilter", ctx_set_error(ctx->ctx, "pending filter not supported", IN3_ENOTSUP))
+  TRY_RPC("eth_getFilterChanges", eth_getFilterChanges(ctx))
+  TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(ctx))
+  TRY_RPC("eth_uninstallFilter", (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
+                                     ? ctx_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
+                                     : in3_rpc_handle_with_string(ctx, filter_remove(ctx->ctx->client, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
 
-  else if (strcmp(method, "eth_sendTransactionAndWait") == 0) {
-    d_token_t * tx_hash, *tx_receipt;
-    str_range_t r       = d_to_json(params + 1);
-    char*       tx_data = alloca(r.len + 1);
-    memcpy(tx_data, r.data, r.len);
-    tx_data[r.len] = 0;
-    TRY(ctx_send_sub_request(ctx, "eth_sendTransaction", tx_data, NULL, &tx_hash))
-    // tx was sent, we have a tx_hash
-    char tx_hash_hex[69];
-    bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
-    tx_hash_hex[0] = tx_hash_hex[67] = '"';
-    tx_hash_hex[1]                   = '0';
-    tx_hash_hex[2]                   = 'x';
-    tx_hash_hex[68]                  = 0;
+  if (strcmp(ctx->method, "eth_chainId") == 0 && ctx->ctx->client->chain.chain_id != CHAIN_ID_LOCAL)
+    return in3_rpc_handle_with_int(ctx, ctx->ctx->client->chain.chain_id);
 
-    // get the tx_receipt
-    TRY(ctx_send_sub_request(ctx, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
-
-    if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
-      // no tx yet
-      // we remove it and try again
-      in3_ctx_t* last_r = ctx_find_required(ctx, "eth_getTransactionReceipt");
-      uint32_t   wait   = d_get_intk(d_get(last_r->requests[0], K_IN3), K_WAIT);
-      wait              = wait ? wait * 2 : 1000;
-      ctx_remove_required(ctx, last_r, false);
-      if (wait > 120000) // more than 2 minutes is too long, so we stop here
-        return ctx_set_error(ctx, "Waited too long for the transaction to be minded", IN3_ELIMIT);
-      char in3[20];
-      sprintf(in3, "{\"wait\":%d}", wait);
-
-      return ctx_send_sub_request(ctx, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
-    }
-    else {
-      // we have a result and we keep it
-      str_range_t r = d_to_json(tx_receipt);
-      sb_add_range(in3_rpc_handle_start(rctx), r.data, 0, r.len);
-      ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionReceipt"), false);
-      ctx_remove_required(ctx, ctx_find_required(ctx, "eth_sendRawTransaction"), false);
-      return in3_rpc_handle_finish(rctx);
-    }
-  }
-
-  else if (strcmp(method, "eth_newFilter") == 0) {
-    if (!params || d_type(params) != T_ARRAY || !d_len(params) || d_type(params + 1) != T_OBJECT)
-      return ctx_set_error(ctx, "invalid type of params, expected object", IN3_EINVAL);
-    else if (!filter_opt_valid(params + 1))
-      return ctx_set_error(ctx, "filter option parsing failed", IN3_EINVAL);
-    if (!params->data) return ctx_set_error(ctx, "binary request are not supported!", IN3_ENOTSUP);
-
-    char*     fopt = d_create_json(ctx->request_context, params + 1);
-    in3_ret_t res  = filter_add(ctx, FILTER_EVENT, fopt);
-    if (res < 0) {
-      _free(fopt);
-      return ctx_set_error(ctx, "filter creation failed", res);
-    }
-
-    return in3_rpc_handle_with_int(rctx, (uint64_t) res);
-  }
-  else if (strcmp(method, "eth_chainId") == 0 && ctx->client->chain.chain_id != CHAIN_ID_LOCAL)
-    return in3_rpc_handle_with_int(rctx, ctx->client->chain.chain_id);
-  else if (strcmp(method, "eth_newBlockFilter") == 0) {
-    in3_ret_t res = filter_add(ctx, FILTER_BLOCK, NULL);
-    if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
-    return in3_rpc_handle_with_int(rctx, (uint64_t) res);
-  }
-  else if (strcmp(method, "eth_newPendingTransactionFilter") == 0)
-    return ctx_set_error(ctx, "pending filter not supported", IN3_ENOTSUP);
-
-  else if (strcmp(method, "eth_uninstallFilter") == 0)
-    return (!params || d_len(params) == 0 || d_type(params + 1) != T_INTEGER)
-               ? ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
-               : in3_rpc_handle_with_string(rctx, filter_remove(ctx->client, d_get_long_at(params, 0)) ? "true" : "false");
-
-  else if (strcmp(method, "eth_getFilterChanges") == 0 || strcmp(method, "eth_getFilterLogs") == 0) {
-    if (!params || d_len(params) == 0 || d_type(params + 1) != T_INTEGER)
-      return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
-
-    uint64_t  id  = d_get_long_at(params, 0);
-    sb_t      sb  = {0};
-    in3_ret_t ret = filter_get_changes(ctx, id, &sb);
-    if (ret != IN3_OK) {
-      if (sb.data) _free(sb.data);
-      return ctx_set_error(ctx, "failed to get filter changes", ret);
-    }
-    in3_rpc_handle_with_string(rctx, sb.data);
-    _free(sb.data);
-    return IN3_OK;
-  }
   return IN3_EIGNORE;
 }
 
