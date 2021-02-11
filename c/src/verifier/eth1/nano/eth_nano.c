@@ -49,24 +49,21 @@ char* ALLOWED_METHODS[MAX_METHODS] = {"eth_chainId", "in3_stats", "eth_blockNumb
 in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(p_data);
   UNUSED_VAR(action);
-  in3_vctx_t* vc     = pctx;
-  char*       method = NULL;
-  d_token_t*  params = d_get(vc->request, K_PARAMS);
-  int         i;
+  in3_vctx_t* vc = pctx;
   // do we support this request?
   if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result) return IN3_OK;
   // check if this call is part of the not verifieable calls
-  for (i = 0; i < MAX_METHODS; i++) {
+  for (int i = 0; i < MAX_METHODS; i++) {
     if (strcmp(ALLOWED_METHODS[i], vc->method) == 0)
       return IN3_OK;
   }
 
   if (strcmp(vc->method, "eth_getTransactionReceipt") == 0)
     // for txReceipt, we need the txhash
-    return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(params, 0));
+    return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
   else
     return IN3_EIGNORE;
 }
