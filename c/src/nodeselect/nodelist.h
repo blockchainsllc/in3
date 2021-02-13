@@ -107,9 +107,11 @@ typedef struct in3_nodeselect_def {
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
   } * nodelist_upd8_params;
 
-  chain_id_t                 chain_id;    /**< the chain_id of the data */
-  struct in3_nodeselect_def* next;        /**< the next in the linked list */
-  uint32_t                   ref_counter; /**< number of client using this nodelist */
+  chain_id_t                 chain_id;           /**< the chain_id of the data */
+  struct in3_nodeselect_def* next;               /**< the next in the linked list */
+  uint32_t                   ref_counter;        /**< number of client using this nodelist */
+  bytes_t*                   pre_address_filter; /**< addresses of allowed list (usually because those nodes where paid for) */
+
 #ifdef THREADSAFE
   in3_mutex_t mutex; /**< mutex to lock this nodelist */
 #endif
@@ -141,7 +143,7 @@ NONULL in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, b
  * filters and fills the weights on a returned linked list.
  */
 NONULL_FOR((1, 2, 3, 4, 7, 8))
-node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights, unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found, const in3_node_filter_t* filter);
+node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights, unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found, const in3_node_filter_t* filter, bytes_t* pre_filter);
 
 /**
  * calculates the weight for a node.

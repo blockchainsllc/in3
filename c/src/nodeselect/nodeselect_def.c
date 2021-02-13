@@ -166,7 +166,15 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
 
-  if (token->key == key("nodeRegistry")) {
+  if (token->key == key("preselect_nodes")) {
+    if (data->pre_address_filter) b_free(data->pre_address_filter);
+    if (d_type(token) == T_BYTES && d_len(token) % 20 == 0)
+      data->pre_address_filter = b_dup(d_bytes(token));
+    else {
+      EXPECT_CFG(d_type(token) == T_NULL, "invalid preselect_nodes ");
+    }
+  }
+  else if (token->key == key("nodeRegistry")) {
     EXPECT_TOK_OBJ(token);
 
     // this is changing the nodelist config, so we need to make sure we have our own nodelist
@@ -374,6 +382,8 @@ static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
   filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
   filter.exclusions        = parse_signers(d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES)); // we must exclude any manually specified signer nodes
+
+  // if incentive is active we should now
 
   // Send parallel requests if signatures have been requested
   int rc = ctx->client->request_count;
@@ -624,6 +634,7 @@ static void nodelist_return_or_free(in3_nodeselect_def_t* chain) {
 #ifdef THREADSAFE
   MUTEX_FREE(chain->mutex)
 #endif
+  b_free(chain->pre_address_filter);
   _free(chain->nodelist_upd8_params);
   _free(chain);
 }
