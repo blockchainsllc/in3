@@ -10,7 +10,7 @@
     <Description>Incubed client and provider for web3. Based on in3-c runtime.</Description>
     <RuntimeIdentifiers>osx-x64;linux-x64;win-x64;linux-arm64</RuntimeIdentifiers>
     <Version Condition="'$(version)' != ''">${version}</Version>
-    <RepositoryUrl>https://github.com/blockchainsllc/in3-c</RepositoryUrl>
+    <RepositoryUrl>https://github.com/blockchainsllc/in3</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageId>Blockchains.In3</PackageId>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>

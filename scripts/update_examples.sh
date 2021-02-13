@@ -12,7 +12,7 @@ printf "# Examples\n\n" > $README
 
 for f in *.c;
   do
-    printf "### ${f%%.*}\n\nsource : [in3-c/c/examples/$f](https://github.com/slockit/in3-c/blob/master/c/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/c/examples/$f](https://github.com/blockchainsllc/in3/blob/master/c/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
     printf "\n\n\`\`\`c\n" >> $DOC
     cat $f >> $DOC
@@ -40,7 +40,7 @@ printf "# Examples\n\n" > $README
 
 for f in *.java;
   do
-    printf "### ${f%%.*}\n\nsource : [in3-c/java/examples/$f](https://github.com/slockit/in3-c/blob/master/java/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/java/examples/$f](https://github.com/blockchainsllc/in3/blob/master/java/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
     printf "\n\n\`\`\`java\n" >> $DOC
     cat $f >> $DOC
@@ -68,7 +68,7 @@ printf "# Examples\n\n" > $README
 
 for f in */;
   do
-    printf "### ${f%/*}\n\nsource : [in3-c/dotnet/Examples/$f/${f%/*}](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/$f/${f%/*}/Program.cs)\n\n" >> $DOC
+    printf "### ${f%/*}\n\nsource : [in3-c/dotnet/Examples/$f/${f%/*}](https://github.com/blockchainsllc/in3/blob/master/dotnet/Examples/$f/${f%/*}/Program.cs)\n\n" >> $DOC
     printf "\n\n\`\`\`c#\n" >> $DOC
     cat $f/${f%/*}/Program.cs >> $DOC
     printf "\n\`\`\`\n\n" >> $DOC
@@ -95,7 +95,7 @@ printf "# Examples\n\n" > $README
 
 for f in *.py;
   do
-    printf "### ${f%%.*}\n\nsource : [in3-c/python/examples/$f](https://github.com/slockit/in3-c/blob/master/python/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/python/examples/$f](https://github.com/blockchainsllc/in3/blob/master/python/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/### //g" >> $DOC
     printf "\n\n\`\`\`python\n" >> $DOC
     cat $f >> $DOC
@@ -122,7 +122,7 @@ printf "# Examples\n\n" > $README
 
 for f in *.ts;
   do
-    printf "### ${f%%.*}\n\nsource : [in3-c/wasm/examples/$f](https://github.com/slockit/in3-c/blob/master/wasm/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/wasm/examples/$f](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
     printf "\n\n\`\`\`js\n" >> $DOC
     cat $f >> $DOC
@@ -133,7 +133,7 @@ for f in *.ts;
 done
 for f in *.html;
   do
-    printf "### ${f%%.*}\n\nsource : [in3-c/wasm/examples/$f](https://github.com/slockit/in3-c/blob/master/wasm/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/wasm/examples/$f](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/$f)\n\n" >> $DOC
     cat $f | grep "^<!--" | sed "s/<!-- \(.*\)-->/\\1/g" >> $DOC
     printf "\n\n\`\`\`html\n" >> $DOC
     cat $f >> $DOC

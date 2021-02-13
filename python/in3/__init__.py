@@ -4,8 +4,8 @@ from in3.exception import EthAddressFormatException, HashFormatException, Privat
 from in3.model import ClientConfig, NodeList
 
 __name__ = 'in3'
-__author__ = 'Slock.it <github.com/slockit>'
-__repository__ = 'github.com/slockit/in3-c'
+__author__ = 'Slock.it <github.com/blockchainsllc>'
+__repository__ = 'github.com/blockchainsllc/in3'
 __status__ = "beta"
 __version__ = "2.1"
 __date__ = "May 2020"
