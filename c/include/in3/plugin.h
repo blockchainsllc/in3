@@ -452,6 +452,14 @@ typedef struct {
   uint8_t    signature[65]; /**< the signature */
 } in3_pay_sign_req_ctx_t;
 
+// ---- PLGN_ACT_ADD_PAYLOAD -----------
+
+typedef struct {
+  in3_ctx_t* ctx;     /**< Request context. */
+  d_token_t* request; /**< the request sent. */
+  sb_t*      sb;      /**< the string builder in the in3-section */
+} in3_pay_payload_ctx_t;
+
 // ---- LOG_ERROR -----------
 
 typedef struct {

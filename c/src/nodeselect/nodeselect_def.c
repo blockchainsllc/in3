@@ -762,10 +762,10 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
     }
     case PLGN_ACT_ADD_PAYLOAD: {
 #ifdef NODESELECT_DEF_WL
-      sb_t* payload = plugin_ctx;
+      in3_pay_payload_ctx_t* payload = plugin_ctx;
       if (data->whitelist) {
         const bytes_t adr = bytes(data->whitelist->contract, 20);
-        sb_add_bytes(payload, ",\"whiteListContract\":", &adr, 1, false);
+        sb_add_bytes(payload->sb, ",\"whiteListContract\":", &adr, 1, false);
       }
 #endif
       UNLOCK_AND_RETURN(IN3_OK)

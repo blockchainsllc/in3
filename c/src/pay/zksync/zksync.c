@@ -287,12 +287,20 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
+static in3_ret_t add_payload(in3_pay_payload_ctx_t* ctx) {
+  // we only use this, if we also have a request signer
+  if (ctx->ctx->client->plugin_acts & PLGN_ACT_PAY_SIGN_REQ)
+    sb_add_chars(ctx->sb, ",\"payType\":\"zksync\"");
+  return IN3_OK;
+}
+
 static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
   switch (action) {
     case PLGN_ACT_TERM: return config_free(conf);
     case PLGN_ACT_CONFIG_GET: return config_get(conf, arg);
     case PLGN_ACT_CONFIG_SET: return config_set(conf, arg);
     case PLGN_ACT_RPC_HANDLE: return zksync_rpc(conf, arg);
+    case PLGN_ACT_ADD_PAYLOAD: return add_payload(arg);
     default: return IN3_ENOTSUP;
   }
   return IN3_EIGNORE;
@@ -301,5 +309,5 @@ static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
 in3_ret_t in3_register_zksync(in3_t* c) {
   zksync_config_t* conf = _calloc(sizeof(zksync_config_t), 1);
   conf->version         = 1;
-  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_zksync, conf, false);
+  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET | PLGN_ACT_ADD_PAYLOAD, handle_zksync, conf, false);
 }

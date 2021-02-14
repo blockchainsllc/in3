@@ -184,7 +184,8 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain.chain_id));
 
       // allow plugins to add their metadata
-      in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, sb);
+      in3_pay_payload_ctx_t pctx = {.ctx = c, .request = request_token, .sb = sb};
+      TRY(in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, &pctx))
 
       if (msg_hash) {
         in3_pay_sign_req_ctx_t sctx      = {.ctx = c, .request = request_token, .signature = {0}};
@@ -232,8 +233,8 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
         }
       }
 
-      in3_pay_handle_ctx_t pctx = {.ctx = c, .payload = sb};
-      in3_ret_t            ret  = in3_plugin_execute_first_or_none(c, PLGN_ACT_PAY_HANDLE, &pctx);
+      in3_pay_handle_ctx_t payload_ctx = {.ctx = c, .payload = sb};
+      in3_ret_t            ret         = in3_plugin_execute_first_or_none(c, PLGN_ACT_PAY_HANDLE, &payload_ctx);
       if (ret != IN3_OK)
         return ret;
 
@@ -337,31 +338,29 @@ static void clean_up_ctx(in3_ctx_t* ctx) {
   ctx->error = NULL;
 }
 
+NONULL in3_ret_t in3_retry_same_node(in3_ctx_t* ctx) {
+  int nodes_count = ctx_nodes_len(ctx->nodes);
+  // this means we need to retry with the same node
+  ctx->attempt++;
+  for (int i = 0; i < nodes_count; i++) {
+    if (ctx->raw_response[i].data.data)
+      _free(ctx->raw_response[i].data.data);
+  }
+  _free(ctx->raw_response);
+  _free(ctx->responses);
+  json_free(ctx->response_context);
+
+  ctx->raw_response     = NULL;
+  ctx->response_context = NULL;
+  ctx->responses        = NULL;
+  return IN3_OK;
+}
+
 static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
   in3_ctx_t*             ctx  = vc->ctx;
   in3_pay_followup_ctx_t fctx = {.ctx = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
   in3_ret_t              res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx);
-
-  if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
-    int nodes_count = ctx_nodes_len(ctx->nodes);
-    // this means we need to retry with the same node
-    ctx->attempt++;
-    for (int i = 0; i < nodes_count; i++) {
-      if (ctx->raw_response[i].data.data)
-        _free(ctx->raw_response[i].data.data);
-    }
-    _free(ctx->raw_response);
-    _free(ctx->responses);
-    json_free(ctx->response_context);
-
-    ctx->raw_response     = NULL;
-    ctx->response_context = NULL;
-    ctx->responses        = NULL;
-    return res;
-  }
-  else if (res)
-    return ctx_set_error(ctx, "Error following up the payment data", res);
-  return IN3_OK;
+  return res ? ctx_set_error(ctx, "Error following up the payment data", res) : IN3_OK;
 }
 
 static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
