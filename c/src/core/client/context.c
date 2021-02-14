@@ -43,6 +43,18 @@
 #include <stdio.h>
 #include <string.h>
 
+static in3_ret_t in3_plugin_init(in3_ctx_t* ctx) {
+  if ((ctx->client->plugin_acts & PLGN_ACT_INIT) == 0) return IN3_OK;
+  for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
+    if (p->acts & PLGN_ACT_INIT) {
+      TRY(p->action_fn(p->data, PLGN_ACT_INIT, ctx))
+      p->acts &= ~((uint64_t) PLGN_ACT_INIT);
+    }
+  }
+  ctx->client->plugin_acts &= ~((uint64_t) PLGN_ACT_INIT);
+  return IN3_OK;
+}
+
 in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
@@ -88,6 +100,8 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
     else if (d_type(t) == T_INTEGER)
       ctx->id = d_int(t);
   }
+  // if this is the first request, we initialize the plugins now
+  in3_plugin_init(ctx);
   return ctx;
 }
 

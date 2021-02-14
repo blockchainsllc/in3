@@ -103,6 +103,8 @@ typedef struct {
   in3_ctx_t*       ctx;      /**< Request context. */
   d_token_t*       request;  /**< request */
   in3_response_t** response; /**< the responses which a prehandle-method should set*/
+  char*            method;   /**< the method of the request */
+  d_token_t*       params;   /**< the params */
 } in3_rpc_handle_ctx_t;
 
 /**
@@ -409,6 +411,7 @@ typedef struct {
   int           index;                 /**< the index of the request within the bulk */
   node_match_t* node;                  /**< the node who delivered this response */
   bool          dont_blacklist;        /**< indicates whether the plugin would like the node to be blacklisted */
+  char*         method;                /**< the rpc-method to verify agains */
 } in3_vctx_t;
 
 #ifdef LOGGING
