@@ -359,8 +359,7 @@ NONULL in3_ret_t in3_retry_same_node(in3_ctx_t* ctx) {
 static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
   in3_ctx_t*             ctx  = vc->ctx;
   in3_pay_followup_ctx_t fctx = {.ctx = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
-  in3_ret_t              res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx);
-  return res ? ctx_set_error(ctx, "Error following up the payment data", res) : IN3_OK;
+  return ctx_set_error(ctx, "Error following up the payment data", in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx));
 }
 
 static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
@@ -403,16 +402,17 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
     vc.method         = d_get_stringk(vc.request, K_METHOD);
     vc.node           = node;
     vc.dont_blacklist = false;
+    res=IN3_OK;
 
     if ((vc.proof = d_get(ctx->responses[i], K_IN3))) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-      if ((res = handle_payment(&vc, node, i))) return res;
+      res = handle_payment(&vc, node, i);
       vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
       vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
       vc.proof                 = d_get(vc.proof, K_PROOF);
     }
 
     // no result?
-    if (!vc.result) {
+    if (!res && !vc.result) {
       char* err_msg;
       // if we don't have a result, the node reported an error
       if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg)) {
@@ -428,7 +428,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
     }
 
     // verify the response
-    res = ctx->verification_state = in3_plugin_execute_first(ctx, PLGN_ACT_RPC_VERIFY, &vc);
+    if (res==IN3_OK) res = ctx->verification_state = in3_plugin_execute_first(ctx, PLGN_ACT_RPC_VERIFY, &vc);
 
     // Waiting is ok, but we stop here
     if (res == IN3_WAITING)

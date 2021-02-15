@@ -219,6 +219,20 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
       in3_pay_sign_req_ctx_t* ctx = action_ctx;
       return ec_sign_pk_raw(ctx->request_hash, k->pk, ctx->signature);
     }
+    case PLGN_ACT_SIGN: {
+      in3_sign_ctx_t* ctx = action_ctx;
+      if (ctx->account.len != 20 || memcmp(k->account, ctx->account.data, 20)) return IN3_EIGNORE;
+      ctx->signature = bytes(_malloc(65), 65);
+      switch (ctx->type) {
+        case SIGN_EC_RAW:
+          return ec_sign_pk_raw(ctx->message.data, k->pk, ctx->signature.data);
+        case SIGN_EC_HASH:
+          return ec_sign_pk_hash(ctx->message.data, ctx->message.len, k->pk, hasher_sha3k, ctx->signature.data);
+        default:
+          _free(ctx->signature.data);
+          return IN3_ENOTSUP;
+      }
+    }
 
     case PLGN_ACT_TERM: {
       _free(k);
@@ -234,7 +248,8 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
 in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   memcpy(k->pk, pk, 32);
-  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM, eth_sign_req, k, true);
+  get_address(pk, k->account);
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_SIGN , eth_sign_req, k, true);
 }
 
 in3_ret_t eth_register_pk_signer(in3_t* in3) {

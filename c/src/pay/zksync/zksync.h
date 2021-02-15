@@ -100,8 +100,10 @@ typedef struct zk_musig_session {
   struct zk_musig_session* next;             /**< next session */
 } zk_musig_session_t;
 
+struct pay_criteria;
+
 /** internal configuration-object */
-typedef struct {
+typedef struct zksync_config {
   char*               provider_url;     /**< url of the zksync-server */
   uint8_t*            account;          /**< address of the account */
   uint8_t*            main_contract;    /**< address of the main zksync contract*/
@@ -120,7 +122,16 @@ typedef struct {
   bytes_t             musig_pub_keys;   /**< the public keys of all participants of a schnorr musig signature */
   zk_musig_session_t* musig_sessions;   /**< linked list of open musig sessions */
   char**              musig_urls;       /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
+  struct pay_criteria*     incentive;        /**< incentive payment configuration */
 } zksync_config_t;
+
+
+typedef struct pay_criteria {
+  uint_fast32_t payed_nodes; /**< max number of nodes payed at the same time*/
+  uint64_t max_price_per_hundred_igas; /**< the max price per 100 gas units to accept a payment offer */
+  char* token; /**< token-name */
+  zksync_config_t config; /**< the account configuration */  
+} pay_criteria_t;
 
 /** a transaction */
 typedef struct {
@@ -159,6 +170,8 @@ NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* s
 in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
 in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig);
+in3_ret_t zksync_check_payment(zksync_config_t* conf,in3_pay_followup_ctx_t* ctx);
+in3_ret_t zksync_add_payload(in3_pay_payload_ctx_t* ctx);
 
 #ifdef __cplusplus
 }

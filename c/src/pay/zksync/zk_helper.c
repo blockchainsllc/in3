@@ -183,7 +183,7 @@ in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t*
 in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key) {
   if (!conf) return IN3_EUNKNOWN;
   if (!memiszero(conf->sync_key, 32)) {
-    memcpy(sync_key, conf->sync_key, 32);
+    if (sync_key) memcpy(sync_key, conf->sync_key, 32);
     return IN3_OK;
   }
   uint8_t* account = NULL;
@@ -197,7 +197,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sy
   if (signature.len == 65 && signature.data[64] < 2)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);
-  memcpy(sync_key, conf->sync_key, 32);
+  if (sync_key) memcpy(sync_key, conf->sync_key, 32);
   return IN3_OK;
 }
 

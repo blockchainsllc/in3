@@ -34,20 +34,11 @@
 
 
 add_static_library(
-  NAME     zksync 
+  NAME     pay_incentive 
   
   SOURCES 
-    zksync.c
-    zk_message.c
-    zk_helper.c
-    zk_setkey.c
-    zk_transfer.c
-    zk_deposit.c
-    zk_musig.c
-    zk_incentive.c
+    pay_incentive.c 
 
   DEPENDS 
-    eth_basic
-    zkcrypto
+    eth_nano
 )
-

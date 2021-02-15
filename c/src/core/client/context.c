@@ -156,7 +156,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
   assert(ctx);
 
   // if this is just waiting, it is not an error!
-  if (errnumber == IN3_WAITING) return errnumber;
+  if (errnumber == IN3_WAITING || errnumber == IN3_OK) return errnumber;
   if (message) {
     const size_t l   = strlen(message);
     char*        dst = NULL;
