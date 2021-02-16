@@ -114,10 +114,12 @@ static in3_ret_t get_payed_addresses(in3_ctx_t* ctx, bytes_t* dst) {
   return IN3_OK;
 }
 
-static in3_ret_t update_payed_addresses(in3_ctx_t* ctx, unsigned int nodes, bytes_t payed) {
-  in3_cache_ctx_t c = {.content = &payed, .ctx = ctx, .key = alloca(20)};
-  sprintf(c.key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
-  TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &c))
+static in3_ret_t update_payed_addresses(in3_ctx_t* ctx, unsigned int nodes, bytes_t payed, bool update_cache) {
+  if (update_cache) {
+    in3_cache_ctx_t c = {.content = &payed, .ctx = ctx, .key = alloca(20)};
+    sprintf(c.key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
+    TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &c))
+  }
 
   sb_t sb = {0};
   if (nodes > payed.len / 20)
@@ -188,10 +190,20 @@ static in3_ret_t add_to_payed_nodelist(in3_ctx_t* ctx, address_t address, unsign
 
   if (payed_addresses.len) {
     memcpy(addresses + payed_addresses.len, address, 20);
-    TRY(update_payed_addresses(ctx, nodelen, bytes(addresses, payed_addresses.len + 20)))
+    TRY(update_payed_addresses(ctx, nodelen, bytes(addresses, payed_addresses.len + 20), true))
   }
   else
-    TRY(update_payed_addresses(ctx, nodelen, bytes(address, 20)))
+    TRY(update_payed_addresses(ctx, nodelen, bytes(address, 20), true))
+
+  return IN3_OK;
+}
+
+in3_ret_t update_nodelist_from_cache(in3_ctx_t* ctx, unsigned int nodelen) {
+  bytes_t payed_addresses = bytes(NULL, 0);
+  TRY(get_payed_addresses(ctx, &payed_addresses))
+
+  if (payed_addresses.len)
+    TRY(update_payed_addresses(ctx, nodelen, payed_addresses, false))
 
   return IN3_OK;
 }

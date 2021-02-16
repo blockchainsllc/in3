@@ -293,8 +293,16 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (incentive) {
     if (!conf->incentive) conf->incentive = _calloc(1, sizeof(pay_criteria_t));
     for (d_iterator_t iter = d_iter(incentive); iter.left; d_iter_next(&iter)) {
-      if (iter.token->key == key("nodes"))
+      if (iter.token->key == key("nodes")) {
         conf->incentive->payed_nodes = d_int(iter.token);
+        in3_ctx_t c                  = {0};
+        c.client                     = ctx->client;
+        in3_ret_t ret                = update_nodelist_from_cache(&c, conf->incentive->payed_nodes);
+        if (c.error) {
+          ctx->error_msg = c.error;
+          return ret;
+        }
+      }
       else if (iter.token->key == key("max_price"))
         conf->incentive->max_price_per_hundred_igas = d_long(iter.token);
       else if (iter.token->key == key("token")) {

@@ -171,6 +171,7 @@ zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
 in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig);
 in3_ret_t           zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ctx);
 in3_ret_t           zksync_add_payload(in3_pay_payload_ctx_t* ctx);
+in3_ret_t           update_nodelist_from_cache(in3_ctx_t* ctx, unsigned int nodelen);
 
 #ifdef __cplusplus
 }
