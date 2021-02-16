@@ -52,8 +52,8 @@ extern "C" {
 typedef enum cache_props {
   CACHE_PROP_MUST_FREE     = 0x1, /**< indicates the content must be freed*/
   CACHE_PROP_SRC_REQ       = 0x2, /**< the value holds the src-request */
-  CACHE_PROP_ONLY_EXTERNAL = 0x4,  /**< should only be freed if the context is external */
-  CACHE_PROP_PAYMENT = 0x80  /**< This cache-entry is a payment.data */
+  CACHE_PROP_ONLY_EXTERNAL = 0x4, /**< should only be freed if the context is external */
+  CACHE_PROP_PAYMENT       = 0x80 /**< This cache-entry is a payment.data */
 } cache_props_t;
 /**
  * represents a single cache entry in a linked list.
