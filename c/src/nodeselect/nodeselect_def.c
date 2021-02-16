@@ -170,6 +170,8 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     if (data->pre_address_filter) b_free(data->pre_address_filter);
     if (d_type(token) == T_BYTES && d_len(token) % 20 == 0)
       data->pre_address_filter = b_dup(d_bytes(token));
+    else if (d_type(token) == T_NULL)
+      data->pre_address_filter = NULL;
     else {
       EXPECT_CFG(d_type(token) == T_NULL, "invalid preselect_nodes ");
     }
