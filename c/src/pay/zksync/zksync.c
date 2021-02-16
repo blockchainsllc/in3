@@ -206,7 +206,7 @@ static in3_ret_t config_free(zksync_config_t* conf) {
   if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
   if (conf->incentive && conf->incentive->token) _free(conf->incentive->token);
   if (conf->incentive) _free(conf->incentive);
-  
+
   while (conf->musig_sessions) conf->musig_sessions = zk_musig_session_free(conf->musig_sessions);
   _free(conf);
   return IN3_OK;
@@ -291,15 +291,15 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
 
   d_token_t* incentive = d_get(ctx->token, key("incentive"));
   if (incentive) {
-    if (!conf->incentive) conf->incentive = _calloc(1,sizeof(pay_criteria_t));
-    for (d_iterator_t iter = d_iter( incentive ); iter.left ; d_iter_next(&iter)) {
-      if (iter.token->key==key("nodes"))
-         conf->incentive->payed_nodes = d_int(iter.token);
-      else if (iter.token->key==key("max_price"))
-         conf->incentive->max_price_per_hundred_igas = d_long(iter.token);
-      else if (iter.token->key==key("token")) {
+    if (!conf->incentive) conf->incentive = _calloc(1, sizeof(pay_criteria_t));
+    for (d_iterator_t iter = d_iter(incentive); iter.left; d_iter_next(&iter)) {
+      if (iter.token->key == key("nodes"))
+        conf->incentive->payed_nodes = d_int(iter.token);
+      else if (iter.token->key == key("max_price"))
+        conf->incentive->max_price_per_hundred_igas = d_long(iter.token);
+      else if (iter.token->key == key("token")) {
         _free(conf->incentive->token);
-        conf->incentive->token = _strdupn(d_string(iter.token),-1);
+        conf->incentive->token = _strdupn(d_string(iter.token), -1);
       }
     }
   }
@@ -313,7 +313,7 @@ static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
     case PLGN_ACT_CONFIG_SET: return config_set(conf, arg);
     case PLGN_ACT_RPC_HANDLE: return zksync_rpc(conf, arg);
     case PLGN_ACT_ADD_PAYLOAD: return zksync_add_payload(arg);
-    case PLGN_ACT_PAY_FOLLOWUP: return zksync_check_payment(conf,arg);
+    case PLGN_ACT_PAY_FOLLOWUP: return zksync_check_payment(conf, arg);
     default: return IN3_ENOTSUP;
   }
   return IN3_EIGNORE;

@@ -249,7 +249,7 @@ in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   memcpy(k->pk, pk, 32);
   get_address(pk, k->account);
-  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_SIGN , eth_sign_req, k, true);
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_sign_req, k, true);
 }
 
 in3_ret_t eth_register_pk_signer(in3_t* in3) {
