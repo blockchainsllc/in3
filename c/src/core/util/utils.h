@@ -307,6 +307,47 @@ int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
 
+#ifdef THREADSAFE
+#define _NAME(x, y) x##y
+#if defined(_MSC_VER) || defined(__MINGW32__)
+
+#include <windows.h>
+
+#define INIT_LOCK(NAME)                                                                                               \
+  static HANDLE _NAME(_lock_handle_, NAME) = NULL;                                                                    \
+  static void   _NAME(_lock, NAME)() {                                                                                \
+    if (!_NAME(_lock_handle_, NAME)) {                                                                              \
+      HANDLE p = CreateMutex(NULL, FALSE, NULL);                                                                    \
+      if (InterlockedCompareExchangePointer((PVOID*) &_NAME(_lock_handle_, NAME), (PVOID) p, NULL)) CloseHandle(p); \
+    }                                                                                                               \
+    WaitForSingleObject(_NAME(_lock_handle_, NAME), INFINITE);                                                      \
+  }
+
+#define LOCK(NAME, code)                          \
+  {                                               \
+    _NAME(_lock, NAME)                            \
+    ();                                           \
+    code                                          \
+        ReleaseMutex(_NAME(_lock_handle_, NAME)); \
+  }
+
+#else
+#include <pthread.h>
+#define INIT_LOCK(NAME) static pthread_mutex_t _NAME(_lock_handle_, NAME) = PTHREAD_MUTEX_INITIALIZER;
+#define LOCK(NAME, code)                                     \
+  {                                                          \
+    pthread_mutex_lock(&(_NAME(_lock_handle_, NAME)));       \
+    code                                                     \
+        pthread_mutex_unlock(&(_NAME(_lock_handle_, NAME))); \
+  }
+#endif
+#else
+#define INIT_LOCK(NAME) \
+  {}
+#define LOCK(NAME, code) \
+  { code }
+#endif
+
 #ifdef __cplusplus
 }
 #endif
