@@ -341,7 +341,6 @@ static void clean_up_ctx(in3_ctx_t* ctx) {
 NONULL in3_ret_t in3_retry_same_node(in3_ctx_t* ctx) {
   int nodes_count = ctx_nodes_len(ctx->nodes);
   // this means we need to retry with the same node
-  ctx->attempt++;
   for (int i = 0; i < nodes_count; i++) {
     if (ctx->raw_response[i].data.data)
       _free(ctx->raw_response[i].data.data);
@@ -922,11 +921,12 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // we wait or are have successfully verified the response
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;
 
+      // we count this is an attempt
+      if (ctx->raw_response) ctx->attempt++;
+
       // if not, then we clean up
       response_free(ctx);
 
-      // we count this is an attempt
-      ctx->attempt++;
 
       // should we retry?
       if (ctx->attempt < ctx->client->max_attempts) {
