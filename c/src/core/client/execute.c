@@ -927,7 +927,6 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if not, then we clean up
       response_free(ctx);
 
-
       // should we retry?
       if (ctx->attempt < ctx->client->max_attempts) {
         in3_log_debug("Retrying send request...\n");
