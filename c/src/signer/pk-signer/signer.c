@@ -217,7 +217,9 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
   switch (action) {
     case PLGN_ACT_PAY_SIGN_REQ: {
       in3_pay_sign_req_ctx_t* ctx = action_ctx;
-      return ec_sign_pk_raw(ctx->request_hash, k->pk, ctx->signature);
+      in3_ret_t               r   = ec_sign_pk_raw(ctx->request_hash, k->pk, ctx->signature);
+      ctx->signature[64] += 27;
+      return r;
     }
     case PLGN_ACT_SIGN: {
       in3_sign_ctx_t* ctx = action_ctx;
