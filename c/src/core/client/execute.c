@@ -402,10 +402,10 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
     vc.method         = d_get_stringk(vc.request, K_METHOD);
     vc.node           = node;
     vc.dont_blacklist = false;
-    res               = IN3_OK;
+    vc.proof          = d_get(ctx->responses[i], K_IN3); // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
+    res               = handle_payment(&vc, node, i);
 
-    if ((vc.proof = d_get(ctx->responses[i], K_IN3))) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-      res                      = handle_payment(&vc, node, i);
+    if (vc.proof) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
       vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
       vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
       vc.proof                 = d_get(vc.proof, K_PROOF);

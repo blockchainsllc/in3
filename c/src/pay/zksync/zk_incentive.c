@@ -86,8 +86,9 @@ static in3_ret_t ensure_payment_data(in3_ctx_t* ctx, zksync_config_t* conf) {
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig_bytes.data, sctx.request_hash, sig_bytes.data[64] >= 27 ? sig_bytes.data[64] - 27 : sig_bytes.data[64]))
     return ctx_set_error(ctx, "Invalid Signature", IN3_EINVAL);
   keccak(pubkey_bytes, sctx.request_hash);
+  if (conf->account) _free(conf->account);
+  conf->account = _malloc(20);
   memcpy(conf->account, sctx.request_hash + 12, 20);
-
   return IN3_OK;
 }
 
