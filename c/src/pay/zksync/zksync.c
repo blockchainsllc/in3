@@ -191,7 +191,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t config_free(zksync_config_t* conf) {
+static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->musig_urls) {
     for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
       if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
@@ -205,10 +205,13 @@ static in3_ret_t config_free(zksync_config_t* conf) {
   if (conf->create2) _free(conf->create2);
   if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
   if (conf->incentive && conf->incentive->token) _free(conf->incentive->token);
-  if (conf->incentive) _free(conf->incentive);
+  if (conf->incentive) {
+    config_free(&conf->incentive->config, false);
+    _free(conf->incentive);
+  }
 
   while (conf->musig_sessions) conf->musig_sessions = zk_musig_session_free(conf->musig_sessions);
-  _free(conf);
+  if (free_conf) _free(conf);
   return IN3_OK;
 }
 
@@ -314,14 +317,26 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
+static in3_ret_t zksync_init(zksync_config_t* conf, in3_ctx_t* ctx) {
+  if (ctx->client->plugin_acts & PLGN_ACT_PAY_SIGN_REQ) {
+    if (!conf->incentive) {
+      conf->incentive              = _calloc(1, sizeof(pay_criteria_t));
+      conf->incentive->payed_nodes = 1;
+    }
+    return update_nodelist_from_cache(ctx, conf->incentive->payed_nodes);
+  }
+  return IN3_OK;
+}
+
 static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
   switch (action) {
-    case PLGN_ACT_TERM: return config_free(conf);
+    case PLGN_ACT_TERM: return config_free(conf, true);
     case PLGN_ACT_CONFIG_GET: return config_get(conf, arg);
     case PLGN_ACT_CONFIG_SET: return config_set(conf, arg);
     case PLGN_ACT_RPC_HANDLE: return zksync_rpc(conf, arg);
     case PLGN_ACT_ADD_PAYLOAD: return zksync_add_payload(arg);
     case PLGN_ACT_PAY_FOLLOWUP: return zksync_check_payment(conf, arg);
+    case PLGN_ACT_INIT: return zksync_init(conf, arg);
     default: return IN3_ENOTSUP;
   }
   return IN3_EIGNORE;
