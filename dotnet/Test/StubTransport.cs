@@ -17,9 +17,9 @@ namespace Test
             Responses = new Dictionary<string, string>();
         }
 
-        public Task<string> Handle(string method,string url, string payload, string[] headers)
+        public Task<string> Handle(string method,string url, byte[] payload, string[] headers)
         {
-            return Task.Run(() => Responses[GetMethod(payload)]);
+            return Task.Run(() => Responses[GetMethod(System.Text.Encoding.UTF8.GetString(payload))]);
         }
 
         public void AddMockedresponse(string methodName, string filename)

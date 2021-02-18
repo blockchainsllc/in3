@@ -19,8 +19,11 @@ namespace In3.Native
         {
             IntPtr reqPtr = in3_create_request(ctx);
             int urlsLength = in3_get_request_urls_len(reqPtr);
+            int payloadLength = in3_get_request_payload_len(reqPtr);
 
             // This is marshaled in a non-declarative way to prevent double freeing of the string (sometimes necessary when the string is declared as a char*).
+            byte[] payload = new byte[payloadLength];
+            Marshal.Copy(in3_get_request_payload(reqPtr), payload, 0, payloadLength);
             string payload = Marshal.PtrToStringAnsi(in3_get_request_payload(reqPtr));
             string method = Marshal.PtrToStringAnsi(in3_get_request_method(reqPtr));
             string[] urls = Utils.GetAllStrings(in3_get_request_urls(reqPtr), urlsLength);
@@ -48,6 +51,7 @@ namespace In3.Native
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_method(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_payload(IntPtr request);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_get_request_payload_len(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_request_urls(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_get_request_urls_len(IntPtr request);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_get_request_headers_len(IntPtr request);
