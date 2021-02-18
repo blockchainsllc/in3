@@ -534,10 +534,28 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     request->urls_len          = 1;
     request->urls              = _malloc(sizeof(char*));
     request->urls[0]           = _strdupn(d_get_string_at(params, 1), -1);
-    request->payload           = !tmp ? _calloc(1, 1) : (d_type(tmp) == T_STRING ? _strdupn(d_string(tmp), -1) : d_create_json(ctx->request_context, tmp));
     request->method            = method ? method : (*request->payload ? "POST" : "GET");
     ctx->raw_response          = _calloc(sizeof(in3_response_t), 1);
     ctx->raw_response[0].state = IN3_WAITING;
+
+    switch (d_type(tmp)) {
+      case T_NULL:
+        request->payload = _calloc(1, 1);
+        break;
+      case T_STRING:
+        request->payload     = _strdupn(d_string(tmp), -1);
+        request->payload_len = d_len(tmp);
+        break;
+      case T_BYTES:
+        request->payload     = _strdupn((void*) tmp->data, tmp->len);
+        request->payload_len = d_len(tmp);
+        break;
+      default:
+        request->payload     = d_create_json(ctx->request_context, tmp);
+        request->payload_len = strlen(request->payload);
+        break;
+    }
+
     for (d_iterator_t iter = d_iter(d_get_at(params, 3)); iter.left; d_iter_next(&iter)) {
       in3_req_header_t* t = _malloc(sizeof(in3_req_header_t));
       t->value            = d_string(iter.token);
@@ -580,6 +598,7 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   in3_request_t* request = _calloc(sizeof(in3_request_t), 1);
   request->ctx           = ctx;
   request->payload       = payload->data;
+  request->payload_len   = payload->len;
   request->urls_len      = nodes_count;
   request->urls          = urls;
   request->cptr          = NULL;

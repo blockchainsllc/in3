@@ -266,6 +266,15 @@ char* in3_get_request_payload(
 }
 
 /**
+ * getter to retrieve the length of the payload from a in3_request_t struct
+ */
+uint32_t in3_get_request_payload_len(
+    in3_request_t* request /**< request struct */
+) {
+  return request->payload_len;
+}
+
+/**
  * getter to retrieve the http-method from a in3_request_t struct
  */
 char* in3_get_request_method(

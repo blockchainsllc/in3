@@ -10,6 +10,7 @@ class NativeRequest(c.Structure):
     """
     _fields_ = [("method", c.POINTER(c.c_char)),
                 ("payload", c.POINTER(c.c_char)),
+                ("payload_len", c.c_uint32),
                 ("urls", c.POINTER(c.POINTER(c.c_char))),
                 ("urls_len", c.c_int),
                 ("results", c.c_void_p),
@@ -87,6 +88,12 @@ class In3Request:
         Gets the payload to be sent
         """
         return c.string_at(self.in3_request.contents.payload)
+
+    def payload_len(self):
+        """
+        Gets the length of the payload to be sent
+        """
+        return self.in3_request.contents.payload_len
 
     def method(self):
         """

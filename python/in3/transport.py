@@ -20,6 +20,9 @@ def https_transport(in3_request: In3Request, in3_response: In3Response):
 
     for i in range(0, in3_request.urls_len()):
         try:
+            # TODO
+            # currently the payload is passed as string, but this should be changed sind the request has a payload pointing to the bytes and payload_len, 
+            # which also could be image as raw bytes being send 
             request_params = {
                 'url': str(in3_request.url_at(i), 'utf8'),
                 'method': in3_request.method(),

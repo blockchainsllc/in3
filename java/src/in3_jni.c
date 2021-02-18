@@ -353,9 +353,8 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
-  size_t     payload_len = strlen(req->payload);
-  jbyteArray jpayload    = (*jni)->NewByteArray(jni, payload_len);
-  (*jni)->SetByteArrayRegion(jni, jpayload, 0, payload_len, (jbyte*) req->payload);
+  jbyteArray jpayload = (*jni)->NewByteArray(jni, req->payload_len);
+  (*jni)->SetByteArrayRegion(jni, jpayload, 0, req->payload_len, (jbyte*) req->payload);
 
   // url-array
   jobject jurls = (*jni)->NewObjectArray(jni, req->urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);

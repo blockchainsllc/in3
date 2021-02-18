@@ -147,20 +147,27 @@ typedef struct in3_req_header {
  * represents a RPC-request
  */
 typedef struct in3_request {
-  char*             method;   /**< the http-method to be used */
-  char*             payload;  /**< the payload to send */
-  char**            urls;     /**< array of urls */
-  uint_fast16_t     urls_len; /**< number of urls */
-  struct in3_ctx*   ctx;      /**< the current context */
-  void*             cptr;     /**< a custom ptr to hold information during */
-  uint32_t          wait;     /**< time in ms to wait before sending out the request */
-  in3_req_header_t* headers;  /**< optional additional headers to be send with the request */
+  char*             method;      /**< the http-method to be used */
+  char*             payload;     /**< the payload to send */
+  char**            urls;        /**< array of urls */
+  uint_fast16_t     urls_len;    /**< number of urls */
+  uint32_t          payload_len; /**< length of the payload in bytes. */
+  struct in3_ctx*   ctx;         /**< the current context */
+  void*             cptr;        /**< a custom ptr to hold information during */
+  uint32_t          wait;        /**< time in ms to wait before sending out the request */
+  in3_req_header_t* headers;     /**< optional additional headers to be send with the request */
 } in3_request_t;
 
 /**
  * getter to retrieve the payload from a in3_request_t struct
  */
 char* in3_get_request_payload(
+    in3_request_t* request /**< request struct */
+);
+/**
+ * getter to retrieve the length of the payload from a in3_request_t struct
+ */
+uint32_t in3_get_request_payload_len(
     in3_request_t* request /**< request struct */
 );
 

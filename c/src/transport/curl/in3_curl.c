@@ -64,16 +64,16 @@ static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, voi
   return size * nmemb;
 }
 
-static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, struct curl_slist* headers, in3_response_t* r, uint32_t timeout, char* method) {
+static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, uint32_t payload_len, struct curl_slist* headers, in3_response_t* r, uint32_t timeout, char* method) {
   CURL*     curl;
   CURLMcode res;
 
   curl = curl_easy_init();
   if (curl) {
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    if (payload && *payload) {
+    if (payload && payload_len) {
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) strlen(payload));
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) payload_len);
     }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
@@ -172,7 +172,7 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
 
   // create requests
   for (unsigned int i = 0; i < req->urls_len; i++)
-    readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout, req->method);
+    readDataNonBlocking(c->cm, req->urls[i], req->payload, req->payload_len, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout, req->method);
 
   in3_ret_t res = receive_next(req);
   if (req->urls_len == 1) {
@@ -189,13 +189,13 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
   curl = curl_easy_init();
   if (curl) {
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    if (payload && *payload) {
+    if (payload && req->payload_len) {
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) strlen(payload));
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) req->payload_len);
     }
     struct curl_slist* headers = NULL;
     headers                    = curl_slist_append(headers, "Accept: application/json");
-    if (payload && *payload)
+    if (payload && req->payload_len)
       headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "charsets: utf-8");
     headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
