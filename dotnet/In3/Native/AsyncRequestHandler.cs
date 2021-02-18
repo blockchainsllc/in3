@@ -24,7 +24,6 @@ namespace In3.Native
             // This is marshaled in a non-declarative way to prevent double freeing of the string (sometimes necessary when the string is declared as a char*).
             byte[] payload = new byte[payloadLength];
             Marshal.Copy(in3_get_request_payload(reqPtr), payload, 0, payloadLength);
-            string payload = Marshal.PtrToStringAnsi(in3_get_request_payload(reqPtr));
             string method = Marshal.PtrToStringAnsi(in3_get_request_method(reqPtr));
             string[] urls = Utils.GetAllStrings(in3_get_request_urls(reqPtr), urlsLength);
             string[] headers = new string[in3_get_request_headers_len(reqPtr)];
