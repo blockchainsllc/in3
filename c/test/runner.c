@@ -359,13 +359,12 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   in3_free(c);
 
   d_token_t*       response = d_get(test, key("response"));
-  size_t           max_heap = mem_get_max_heap();
   str_range_t      res_size = d_to_json(response);
   bytes_builder_t* bb       = bb_new();
 
   d_serialize_binary(bb, response);
 
-  printf(" ( heap: %zu json: %lu bin: %u) ", max_heap, res_size.len, bb->b.len);
+  printf(" ( json: %lu bin: %u) ", res_size.len, bb->b.len);
   bb_free(bb);
   return fail;
 }

@@ -134,7 +134,7 @@ int run_test(json_ctx_t* jc, d_token_t* test, int counter, char* name, uint32_t 
   }
   if (!fail) print_success("OK");
 
-  in3_log_debug(" ( heap: %zu, %" PRIu64 " ms) ", mem_get_max_heap(), ms);
+  in3_log_debug(" ( %" PRIu64 " ms) ", ms);
 
   return fail;
 }

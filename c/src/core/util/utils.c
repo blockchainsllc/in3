@@ -87,7 +87,7 @@ static time_func  in3_time_fn  = time_libc;
 static rand_func  in3_rand_fn  = rand_libc;
 static srand_func in3_srand_fn = srand_libc;
 #endif /* __ZEPHYR__ */
-
+#define MAX_UINT64 0xFFFFFFFFFFFFFFFF
 void in3_sleep(uint32_t ms) {
 #if defined(_WIN32) || defined(WIN32)
   Sleep(ms);
@@ -115,10 +115,7 @@ void long_to_bytes(uint64_t val, uint8_t* dst) {
 }
 
 void int_to_bytes(uint32_t val, uint8_t* dst) {
-  *dst       = val >> 24 & 0xFF;
-  *(dst + 1) = val >> 16 & 0xFF;
-  *(dst + 2) = val >> 8 & 0xFF;
-  *(dst + 3) = val & 0xFF;
+  for (int i = 3; i >= 0; i--, val >>= 8) dst[i] = val & 0xFF;
 }
 
 uint8_t hexchar_to_int(char c) {
@@ -130,6 +127,7 @@ uint8_t hexchar_to_int(char c) {
     return c - 'A' + 10;
   return 255;
 }
+
 #ifdef __ZEPHYR__
 
 const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
@@ -212,10 +210,11 @@ uint64_t bytes_to_long(const uint8_t* data, int len) {
   }
   return res;
 }
+
 uint64_t char_to_long(const char* a, int l) {
-  if (!a) return -1;
+  if (!a || l < -1) return MAX_UINT64;
   if (l == -1) l = strlen(a);
-  if (a[0] == '0' && a[1] == 'x') {
+  if (a[0] == '0' && a[1] == 'x') { // it's a hex number
     long val = 0;
     for (int i = l - 1; i > 1; i--)
       val |= ((uint64_t) hexchar_to_int(a[i])) << (4 * (l - 1 - i));
@@ -227,7 +226,7 @@ uint64_t char_to_long(const char* a, int l) {
     temp[l] = 0;
     return atoi(temp);
   }
-  return -1;
+  return MAX_UINT64;
 }
 
 char* _strdupn(const char* src, int len) {
@@ -237,6 +236,7 @@ char* _strdupn(const char* src, int len) {
   dst[len] = 0;
   return dst;
 }
+
 int min_bytes_len(uint64_t val) {
   for (int i = 0; i < 8; i++, val >>= 8) {
     if (val == 0) return i;
