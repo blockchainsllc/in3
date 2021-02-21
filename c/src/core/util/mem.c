@@ -151,8 +151,7 @@ int mem_get_memleak_cnt() {
   return mem_count;
 }
 
-void mem_reset(int cnt) {
-  UNUSED_VAR(cnt);
+void mem_reset() {
   mem_count = 0;
 }
 

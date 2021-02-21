@@ -139,7 +139,7 @@ int run_test(json_ctx_t* jc, d_token_t* test, int counter, char* name, uint32_t 
   return fail;
 }
 
-int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
+int runRequests(char** names, int test_index, uint32_t props) {
   int   res = 0, n = 0;
   char* name   = names[n];
   int   failed = 0, total = 0, count = 0;
@@ -168,7 +168,7 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
         count++;
         if (test_index < 0 || count == test_index) {
           total++;
-          mem_reset(mem_track);
+          mem_reset();
           if (run_test(parsed, test, count, name, props)) failed++;
         }
       }
@@ -191,7 +191,7 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
 
 int main(int argc, char* argv[]) {
   int    i = 0, size = 1;
-  int    testIndex = -1, membrk = -1;
+  int    testIndex    = -1;
   char** names        = malloc(sizeof(char*));
   names[0]            = NULL;
   uint32_t props      = 0;
@@ -214,8 +214,6 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)
       testIndex = atoi(argv[++i]);
-    else if (strcmp(argv[i], "-m") == 0)
-      membrk = atoi(argv[++i]);
     else if (strcmp(argv[i], "-d") == 0)
       in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-c") == 0)
@@ -235,7 +233,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  int ret = runRequests(names, testIndex, membrk, props);
+  int ret = runRequests(names, testIndex, props);
   free(names);
   return ret;
 }

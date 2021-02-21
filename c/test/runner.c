@@ -369,7 +369,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   return fail;
 }
 
-int runRequests(char** names, int test_index, int mem_track) {
+int runRequests(char** names, int test_index) {
   int   res = 0, n = 0;
   char* name   = names[n];
   int   failed = 0, total = 0, count = 0;
@@ -410,7 +410,7 @@ int runRequests(char** names, int test_index, int mem_track) {
         if (test_index < 0 || count == test_index) {
           total++;
           prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), -1);
-          mem_reset(mem_track);
+          mem_reset();
           if (run_test(test, count, NULL, proof)) failed++;
         }
 
@@ -428,7 +428,7 @@ int runRequests(char** names, int test_index, int mem_track) {
             if (test_index > 0 && count != test_index) continue;
             total++;
             prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), fuzz_pos);
-            mem_reset(mem_track);
+            mem_reset();
             if (run_test(test, count, tmp, proof)) failed++;
           }
         }
@@ -460,9 +460,9 @@ int main(int argc, char* argv[]) {
   in3_register_default(in3_register_nodeselect_def);
 
   int    i = 0, size = 1;
-  int    testIndex = -1, membrk = -1;
-  char** names = malloc(sizeof(char*));
-  names[0]     = NULL;
+  int    testIndex = -1;
+  char** names     = malloc(sizeof(char*));
+  names[0]         = NULL;
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)
       testIndex = atoi(argv[++i]);
@@ -470,8 +470,6 @@ int main(int argc, char* argv[]) {
       in3_log_set_level(LOG_TRACE);
       in3_log_set_quiet(false);
     }
-    else if (strcmp(argv[i], "-m") == 0)
-      membrk = atoi(argv[++i]);
     else {
       char** t = malloc((size + 1) * sizeof(char*));
       memmove(t, names, size * sizeof(char*));
@@ -482,7 +480,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  int res = runRequests(names, testIndex, membrk);
+  int res = runRequests(names, testIndex);
   free(names);
   return res;
 }
