@@ -140,7 +140,7 @@ uint8_t hexchar_to_int(char c) {
 
 const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
   // buffer has to be at least 21 bytes (max u64 val = 18446744073709551615 has 20 digits + '\0')
-  if (buffer_len < 21) return "<ERR(u64tostr): buffer too small>";
+  if (buffer_len < 21) return "<ERR(u64_to_str): buffer too small>";
 
   buffer[buffer_len - 1] = '\0';
   int pos                = buffer_len - 1;
@@ -161,9 +161,11 @@ int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
     len -= 2;
   }
   if (len == 0) return 0;
+
   int bytes_len = (len + 1) / 2, i = 0, j = 0;
   if (bytes_len > outbuf_size) return -1;
   if (len & 1) {
+    // for a odd number of bytes, we use the first 4bit and then start with index 1
     out[0] = hexchar_to_int(buf[0]);
     j = i = 1;
   }
@@ -173,6 +175,7 @@ int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
 
   return bytes_len;
 }
+
 bytes_t* hex_to_new_bytes(const char* buf, int len) {
   bytes_t* bytes = _malloc(sizeof(bytes_t));
   bytes->len     = (len + 1) / 2;
@@ -202,23 +205,8 @@ int keccak(bytes_t data, void* dst) {
   return 0;
 }
 
-bytes_t* sha3(const bytes_t* data) {
-  bytes_t*        out = NULL;
-  struct SHA3_CTX ctx;
-
-  out = _calloc(1, sizeof(bytes_t));
-
-  sha3_256_Init(&ctx);
-  sha3_Update(&ctx, data->data, data->len);
-
-  out->data = _calloc(1, 32 * sizeof(uint8_t));
-  out->len  = 32;
-
-  keccak_Final(&ctx, out->data);
-  return out;
-}
-
 uint64_t bytes_to_long(const uint8_t* data, int len) {
+  assert(len > 0 && len < 9);
   uint64_t res = 0;
   int      i;
   for (i = 0; i < len; i++) {
@@ -253,8 +241,7 @@ char* _strdupn(const char* src, int len) {
   return dst;
 }
 int min_bytes_len(uint64_t val) {
-  int i;
-  for (i = 0; i < 8; i++, val >>= 8) {
+  for (int i = 0; i < 8; i++, val >>= 8) {
     if (val == 0) return i;
   }
   return 8;

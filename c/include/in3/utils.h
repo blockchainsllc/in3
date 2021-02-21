@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 #include "bytes.h"
+#include <assert.h>
 #include <stdint.h>
 
 #ifdef __ZEPHYR__
@@ -53,6 +54,7 @@ extern "C" {
 #else
 #define _strtoull(str, endptr, base) strtoull(str, endptr, base)
 #endif
+
 /** simple swap macro for integral types */
 #define SWAP(a, b) \
   {                \
@@ -85,7 +87,7 @@ extern "C" {
 #define STR_IMPL_(x) #x
 #define STR(x)       STR_IMPL_(x)
 
-/** converts the bytes to a unsigned long (at least the last max len bytes) */
+/** converts the bytes to a unsigned long (at least the last max len bytes). */
 uint64_t bytes_to_long(const uint8_t* data, int len);
 
 /** converts the bytes to a unsigned int (at least the last max len bytes) */
@@ -105,11 +107,16 @@ static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
 /** converts a character into a uint64_t*/
 uint64_t char_to_long(const char* a, int l);
 
-/**  converts a hexchar to byte (4bit) */
+/**  converts a hexchar to byte (4bit). In case of a nonhex char 0xff will be returned. */
 uint8_t hexchar_to_int(char c);
+
+#ifdef __ZEPHYR__
+// this function is only used in zephyr, because there it does not support printf("%ull",u64);
 
 /** converts a uint64_t to string (char*); buffer-size min. 21 bytes */
 const char* u64_to_str(uint64_t value, char* pBuf, int szBuf);
+
+#endif
 
 /**
  * convert a c hex string to a byte array storing it into an existing buffer.
@@ -128,19 +135,16 @@ bytes_t* hex_to_new_bytes(const char* buf, int len);
 /** convefrts a bytes into hex */
 int bytes_to_hex(const uint8_t* buffer, int len, char* out);
 
-/** hashes the bytes and creates a new bytes_t */
-bytes_t* sha3(const bytes_t* data);
-
 /** writes 32 bytes to the pointer. */
 int keccak(bytes_t data, void* dst);
 
-/** converts a long to 8 bytes */
+/** converts a a uin64_t to 8 bytes written to dst using big endian*/
 void long_to_bytes(uint64_t val, uint8_t* dst);
 
-/** converts a int to 4 bytes */
+/** converts a unsigned int to 4 bytes written to dst using big endian*/
 void int_to_bytes(uint32_t val, uint8_t* dst);
 
-/** duplicate the string */
+/** duplicate the string. A len=-1 will determine the len with strlen. */
 char* _strdupn(const char* src, int len);
 
 /** calculate the min number of byte to represents the len */
@@ -148,6 +152,9 @@ int min_bytes_len(uint64_t val);
 
 /**
  * sets a variable value to 32byte word.
+ * @param src The src data
+ * @param src_len the number of bytes 
+ * @param dst target pointer
  */
 void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst);
 
@@ -168,7 +175,7 @@ char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
 char* str_find(char* haystack, const char* needle);
 
 /**
- * remove all html-tags in the text.
+ * remove all html-tags in the text. This function will modify the orifinal data and return the same pointer as the input.
  */
 char* str_remove_html(char* data);
 
@@ -177,7 +184,7 @@ char* str_remove_html(char* data);
  */
 uint64_t current_ms();
 
-/** changes to pointer (a) and it length (l) to remove leading 0 bytes.*/
+/** changes to pointer (a) and it length (l) to remove leading 0 bytes. it will reduce  it to max len=1*/
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \
     l--;                     \
@@ -247,12 +254,17 @@ uint64_t current_ms();
     if (res < 0) goto clean; \
   }
 
+/**
+ * returns true if all pytes (specified by l) of pts have a value of zero.
+ */
 static inline bool memiszero(uint8_t* ptr, size_t l) {
-  while (l > 0 && *ptr == 0) {
+  assert(l > 0);
+  while (l) {
+    if (*ptr) return false;
     l--;
     ptr++;
   }
-  return !l;
+  return true;
 }
 
 /**

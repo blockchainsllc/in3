@@ -129,6 +129,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
 
   in3_ret_t  res = IN3_OK;
   int        i;
+  bytes32_t  tmp_hash;
   d_token_t *transactions, *t, *t2, *tx_hashs = NULL, *txh = NULL;
   bytes_t    tmp, *bhash;
   uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
@@ -181,7 +182,9 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
       bool     is_raw_tx = d_type(t) == T_BYTES;
       bytes_t* path      = create_tx_path(i);
       bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
-      bytes_t* h         = (full_proof || !include_full_tx) ? sha3(tx) : NULL;
+      uint8_t* h         = (full_proof || !include_full_tx) ? tmp_hash : NULL;
+
+      if (h) keccak(*tx, h);
 
       if (!is_raw_tx) {
         if (eth_verify_tx_values(vc, t, tx))
@@ -198,14 +201,13 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
       }
 
       if (h && txh) {
-        if (!b_cmp(d_bytes(txh), h))
+        if (d_len(txh) != 32 || memcmp(txh->data, h, 32))
           res = vc_err(vc, "Wrong Transactionhash");
         txh = d_next(txh);
       }
       trie_set_value(trie, path, tx);
       if (!is_raw_tx) b_free(tx);
       b_free(path);
-      if (h) b_free(h);
     }
 
     bytes_t t_root = d_to_bytes(d_getl(vc->result, K_TRANSACTIONS_ROOT, 32));
