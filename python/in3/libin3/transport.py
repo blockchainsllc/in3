@@ -3,16 +3,15 @@ import ctypes as c
 from in3.libin3.enum import PluginAction
 from in3.libin3.rpc_api import libin3_in3_req_add_response
 
-
 class NativeRequest(c.Structure):
     """
     Based on in3/client/.h in3_request_t struct
     """
     _fields_ = [("method", c.POINTER(c.c_char)),
                 ("payload", c.POINTER(c.c_char)),
-                ("payload_len", c.c_uint32),
                 ("urls", c.POINTER(c.POINTER(c.c_char))),
                 ("urls_len", c.c_int),
+                ("payload_len", c.c_uint32),
                 ("results", c.c_void_p),
                 ("timeout", c.c_uint32),
                 ("times", c.c_uint32),
