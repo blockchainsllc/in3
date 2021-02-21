@@ -206,7 +206,10 @@ int keccak(bytes_t data, void* dst) {
 }
 
 uint64_t bytes_to_long(const uint8_t* data, int len) {
-  assert(len > 0 && len < 9);
+  if (len > 8) {
+    data += len - 8;
+    len = 8;
+  }
   uint64_t res = 0;
   int      i;
   for (i = 0; i < len; i++) {
