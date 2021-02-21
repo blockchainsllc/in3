@@ -111,15 +111,9 @@ void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst) {
 }
 
 void long_to_bytes(uint64_t val, uint8_t* dst) {
-  *dst       = val >> 56 & 0xFF;
-  *(dst + 1) = val >> 48 & 0xFF;
-  *(dst + 2) = val >> 40 & 0xFF;
-  *(dst + 3) = val >> 32 & 0xFF;
-  *(dst + 4) = val >> 24 & 0xFF;
-  *(dst + 5) = val >> 16 & 0xFF;
-  *(dst + 6) = val >> 8 & 0xFF;
-  *(dst + 7) = val & 0xFF;
+  for (int i = 7; i >= 0; i--, val >>= 8) dst[i] = val & 0xFF;
 }
+
 void int_to_bytes(uint32_t val, uint8_t* dst) {
   *dst       = val >> 24 & 0xFF;
   *(dst + 1) = val >> 16 & 0xFF;
