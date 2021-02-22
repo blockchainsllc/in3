@@ -286,11 +286,11 @@ bool d_eq(const d_token_t* a, const d_token_t* b) {
 }
 
 d_token_t* d_get(d_token_t* item, const uint16_t key) {
-  if (item == NULL /*|| item->len & 0xF0000000 != 0x30000000*/) return NULL;
-  int i = 0, l = item->len & 0xFFFFFFF;
-  item += 1;
-  for (; i < l; i++, item += d_token_size(item)) {
-    if (item->key == key) return item;
+  if (item == NULL || (item->len & 0xF0000000) != 0x30000000) return NULL; // is it an object?
+  int i = 0, l = item->len & 0xFFFFFFF;                                    // l is the number of properties in the object
+  item += 1;                                                               // we start with the first, which is the next token
+  for (; i < l; i++, item += d_token_size(item)) {                         // and iterate through all
+    if (item->key == key) return item;                                     // until we find the one with the matching key
   }
   return NULL;
 }
@@ -307,7 +307,7 @@ d_token_t* d_get_or(d_token_t* item, const uint16_t key, const uint16_t key2) {
 }
 
 d_token_t* d_get_at(d_token_t* item, const uint32_t index) {
-  if (item == NULL) return NULL;
+  if (item == NULL || (item->len & 0xF0000000) != 0x20000000) return NULL; // is it an array?
   uint32_t i = 0, l = item->len & 0xFFFFFFF;
   item += 1;
   for (; i < l; i++, item += d_token_size(item)) {
