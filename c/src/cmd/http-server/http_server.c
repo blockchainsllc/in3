@@ -48,14 +48,76 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define MAX_CON 100
+static int listenfd;
+void*      respond(void* arg);
+typedef struct {
+  int    con;
+  int    s;
+  in3_t* in3;
+} req_t;
 
-static int listenfd, clients[MAX_CON];
+#ifdef THREADSAFE
+#include <pthread.h>
+
+#define POOL_SIZE 10
+
+pthread_t       thread_pool[POOL_SIZE];
+pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  queue_cond  = PTHREAD_COND_INITIALIZER;
+
+typedef struct queue {
+  struct queue* next;
+  req_t*        r;
+} queue_t;
+
+queue_t *q_head = NULL, *q_tail = NULL;
+
+static void queue_add(req_t* r) {
+  pthread_mutex_lock(&queue_mutex);
+  queue_t* q = _malloc(sizeof(queue_t));
+  q->next    = NULL;
+  q->r       = r;
+  if (q_tail)
+    q_tail->next = q;
+  else
+    q_head = q_tail = q;
+  pthread_cond_signal(&queue_cond);
+  pthread_mutex_unlock(&queue_mutex);
+}
+
+static req_t* queue_next() {
+  pthread_mutex_lock(&queue_mutex);
+  if (!q_head) pthread_cond_wait(&queue_cond, &queue_mutex);
+
+  req_t* r = NULL;
+  if (q_head) {
+    queue_t* q = q_head;
+    q_head     = q_head->next;
+    r          = q->r;
+    _free(q);
+    if (!q_head) q_tail = NULL;
+  }
+  pthread_mutex_unlock(&queue_mutex);
+  return r;
+}
+static void* thread_run(void* p) {
+  UNUSED_VAR(p);
+  while (true) {
+    req_t* r = queue_next();
+    if (r) respond(r);
+  }
+}
+
+#else
+#define MAX_CON 100
+static int clients[MAX_CON];
+#endif
 
 //client connection
-static void respond(int s, in3_t* in3) {
-  char* buf  = malloc(65535);
-  int   rcvd = recv(clients[s], buf, 65535, 0);
+void* respond(void* arg) {
+  req_t* r    = arg;
+  char*  buf  = malloc(65535);
+  int    rcvd = recv(r->con, buf, 65535, 0);
 
   if (rcvd < 0) // receive error
     fprintf(stderr, ("recv() error\n"));
@@ -70,20 +132,26 @@ static void respond(int s, in3_t* in3) {
     char* prot   = uri ? strtok(NULL, " \t\r\n") : NULL;
     char* rest   = prot ? strstr(prot + strlen(prot) + 1, "\n\r\n") : NULL;
 
-    dup2(clients[s], STDOUT_FILENO);
-    close(clients[s]);
+    dup2(r->con, STDOUT_FILENO);
+    //    close(r->con);
     if (rest) {
       rest += 3;
       if (strlen(rest) > 2 && (rest[0] == '{' || rest[0] == '[')) {
         // execute in3
-        in3_ctx_t* ctx = ctx_new(in3, rest);
+        in3_ctx_t* ctx = ctx_new(r->in3, rest);
         if (ctx == NULL)
           printf("HTTP/1.1 500 Not Handled\r\n\r\nInvalid request.\r\n");
         else if (ctx->error)
           printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", ctx->error);
         else {
           // execute it
-          fprintf(stderr, "RPC %s\n", d_get_string(ctx->request_context->result, "method")); //conceal typing and save position
+          str_range_t range  = d_to_json(d_get(ctx->request_context->result, key("params")));
+          char*       params = range.data ? alloca(range.len) : NULL;
+          if (params) {
+            memcpy(params, range.data + 1, range.len - 2);
+            params[range.len - 2] = 0;
+          }
+          fprintf(stderr, "RPC %s %s\n", d_get_string(ctx->request_context->result, "method"), params); //conceal typing and save position
           if (in3_send_ctx(ctx) == IN3_OK) {
             // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
             if (ctx->error) _free(ctx->error);
@@ -122,21 +190,28 @@ static void respond(int s, in3_t* in3) {
   }
 
   //Closing SOCKET
-  shutdown(clients[s], SHUT_RDWR); //All further send and recieve operations are DISABLED...
-  close(clients[s]);
-  clients[s] = -1;
+  shutdown(r->con, SHUT_RDWR); //All further send and recieve operations are DISABLED...
+  close(r->con);
+#ifdef THREADSAFE
+  _free(r);
+#endif
+  return NULL;
 }
 
 void http_run_server(const char* port, in3_t* in3) {
   struct sockaddr_in clientaddr;
   socklen_t          addrlen;
-  int                s = 0;
 
   printf(
       "Server started %shttp://127.0.0.1:%s%s\n",
       COLORT_LIGHTGREEN, port, COLORT_RESET);
 
+#ifdef THREADSAFE
+  for (int i = 0; i < POOL_SIZE; i++) pthread_create(&thread_pool[i], NULL, thread_run, NULL);
+#else
+  int s = 0;
   for (int i = 0; i < MAX_CON; i++) clients[i] = -1;
+#endif
 
   // start the serevr
   struct addrinfo hints, *res, *p;
@@ -174,19 +249,35 @@ void http_run_server(const char* port, in3_t* in3) {
 
   // ACCEPT connections
   while (1) {
-    addrlen    = sizeof(clientaddr);
-    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    addrlen = sizeof(clientaddr);
+
+#ifdef THREADSAFE
+    int con = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    if (con < 0)
+      perror("accept() error");
+    else {
+      req_t* r = _malloc(sizeof(req_t));
+      r->con   = con;
+      r->s     = 0;
+      r->in3   = in3;
+      queue_add(r);
+    }
+
+#else
+    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");
     }
     else {
+      req_t r = {.con = clients[s], .s = s, .in3 = in3};
       if (fork() == 0) {
-        respond(s, in3);
+        respond(&r);
+        clients[s] = -1;
         exit(0);
       }
     }
-
     while (clients[s] != -1) s = (s + 1) % MAX_CON;
+#endif
   }
 }
