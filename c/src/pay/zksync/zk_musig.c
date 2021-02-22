@@ -23,7 +23,7 @@
       return _r;                                                     \
     }                                                                \
   }
-
+void       cleanup_session(zk_musig_session_t* s, zksync_config_t* conf);
 static int get_pubkey_pos(zksync_config_t* conf, bytes_t pub_keys, in3_ctx_t* ctx) {
   if (!pub_keys.data) return ctx_set_error(ctx, "missing public keys in config", IN3_EINVAL);
   if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "missing signing keys in config", IN3_EINVAL);
