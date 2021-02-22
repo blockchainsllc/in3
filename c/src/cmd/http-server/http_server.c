@@ -106,6 +106,7 @@ static void* thread_run(void* p) {
     req_t* r = queue_next();
     if (r) respond(r);
   }
+  return NULL;
 }
 
 #else
