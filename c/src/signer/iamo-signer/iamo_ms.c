@@ -32,45 +32,21 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * Ethereum Nano verification.
- * */
-
-#ifndef iamo_signer_h__
-#define iamo_signer_h__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "../../core/client/client.h"
+#include "../../core/client/context_internal.h"
+#include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/util/debug.h"
+#include "../../core/util/log.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
+#include "../../verifier/eth1/nano/serialize.h"
+#include "iamo_signer.h"
+#include <string.h>
+#include <time.h>
 
-typedef struct iamo_signer_config {
-  bytes32_t  device_key;
-  address_t  device_address;
-  int        accounts_len;
-  address_t* accounts;
-  struct {
-    char* account;
-    char* sign;
-    char* key;
-    char* policy_management;
-    char* policy_processor;
-  } services;
-
-} iamo_signer_config_t;
-
-/**
- * registers pk signer as plugin so you can use config or in3_addKeys as rpc
- */
-in3_ret_t register_iamo_signer(in3_t* in3);
-
-in3_ret_t iamo_add_ms(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx);
-
-#ifdef __cplusplus
+in3_ret_t iamo_add_ms(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || !conf) return IN3_EINVAL;
+  return IN3_OK;
 }
-#endif
-
-#endif

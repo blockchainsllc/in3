@@ -271,6 +271,7 @@ in3_ret_t iamo_add_user(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t iamo_rpc(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY_RPC("iamo_add_user", iamo_add_user(conf, ctx))
+  TRY_RPC("iamo_add_ms", iamo_add_ms(conf, ctx))
   return IN3_EIGNORE;
 }
 
@@ -279,6 +280,8 @@ static in3_ret_t iamo_handle(void* data, in3_plugin_act_t action, void* action_c
     case PLGN_ACT_TERM: return iamo_free(data);
     case PLGN_ACT_CONFIG_SET: return iamo_config_set(data, action_ctx);
     case PLGN_ACT_RPC_HANDLE: return iamo_rpc(data, action_ctx);
+    case PLGN_ACT_SIGN_ACCOUNT: return IN3_EIGNORE;
+    case PLGN_ACT_SIGN: return IN3_EIGNORE;
     default: return IN3_ENOTSUP;
   }
   return IN3_ENOTSUP;
