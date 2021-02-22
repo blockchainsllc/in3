@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <limits.h> /* strtoull */
 #include <stdlib.h> /* strtoull */
+#define MAX_SESSIONS 20
 
 #define TRY_SIGNER(x) TRY_FINAL(x, zkcrypto_signer_free(signer))
 #define TRY_SIG(exp)                                                 \
@@ -96,6 +97,16 @@ static zk_musig_session_t* get_session(zksync_config_t* conf, uint64_t id) {
   return NULL;
 }
 
+static void check_max_sessions(zksync_config_t* conf) {
+  int c = 0;
+  for (zk_musig_session_t* s = conf->musig_sessions; s; s = s->next, c++) {
+    if (c == MAX_SESSIONS) {
+      cleanup_session(s, conf);
+      return;
+    }
+  }
+}
+
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s) {
   in3_log_debug("Freeing session %p\n", s);
   if (!s) return NULL;
@@ -129,6 +140,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
   CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 1);
   d_token_t* result = NULL;
+  d_token_t* proof  = NULL;
   bytes_t    message;
 
   if (d_type(ctx->params + 1) == T_OBJECT) {
@@ -138,6 +150,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   }
   else {
     message = d_to_bytes(ctx->params + 1);
+    if (d_len(ctx->params) > 1) proof = d_get_at(ctx->params, 1);
     if (!conf->musig_pub_keys.data) {
       bytes32_t pk;
       uint8_t   sig[96];
@@ -157,6 +170,9 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     int pos = get_pubkey_pos(conf, pub_keys, ctx->ctx);
     in3_log_debug("create new session with pub_key pos %d\n", pos);
     TRY(pos)
+
+    // make sure we don't have too many old sessions.
+    check_max_sessions(conf);
 
     // create a new session
     s                    = _calloc(1, sizeof(zk_musig_session_t));
