@@ -210,7 +210,7 @@ in3_ret_t update_nodelist_from_cache(in3_ctx_t* ctx, unsigned int nodelen) {
 }
 
 in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ctx) {
-  if (!ctx->resp_error || d_get_intk(ctx->resp_error, K_CODE) != ERROR_PAYMENT_REQUIRED || get_payment_data(ctx->ctx)) return IN3_OK;
+  if (!ctx->resp_error || d_type(ctx->resp_error) != T_OBJECT || d_get_intk(ctx->resp_error, K_CODE) != ERROR_PAYMENT_REQUIRED || get_payment_data(ctx->ctx)) return IN3_OK;
 
   // the server wants payment
   d_token_t* offer = d_get(ctx->resp_error, key("offer"));
