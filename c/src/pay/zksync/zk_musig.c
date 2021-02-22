@@ -129,6 +129,11 @@ void cleanup_session(zk_musig_session_t* s, zksync_config_t* conf) {
   }
 }
 
+static in3_ret_t verify_proof(in3_ctx_t* ctx, d_token_t* proof, bytes_t* msg) {
+  if (proof || !msg) return ctx_set_error(ctx, "no proof", IN3_EINVAL);
+  return IN3_OK;
+}
+
 static bool is_complete(bytes_t data) {
   for (unsigned int i = 0; i < data.len; i += 32) {
     if (memiszero(data.data + i, 32)) return false;
@@ -170,6 +175,9 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     int pos = get_pubkey_pos(conf, pub_keys, ctx->ctx);
     in3_log_debug("create new session with pub_key pos %d\n", pos);
     TRY(pos)
+
+    // make sure the data is valid
+    TRY(verify_proof(ctx->ctx, proof, &message))
 
     // make sure we don't have too many old sessions.
     check_max_sessions(conf);
