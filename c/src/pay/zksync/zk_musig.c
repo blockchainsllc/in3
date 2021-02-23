@@ -1,4 +1,5 @@
 #include "../../core/client/context_internal.h"
+#include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
@@ -129,9 +130,23 @@ void cleanup_session(zk_musig_session_t* s, zksync_config_t* conf) {
   }
 }
 
-static in3_ret_t verify_proof(in3_ctx_t* ctx, d_token_t* proof, bytes_t* msg) {
-  if (proof || !msg) return ctx_set_error(ctx, "no proof", IN3_EINVAL);
-  return IN3_OK;
+static in3_ret_t verify_proof(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* proof, bytes_t* msg) {
+  if (!conf->proof_verify_method && !proof) return IN3_OK; // no method to verify configured -> so we accept all
+  if (!conf->proof_verify_method) return ctx_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
+
+  d_token_t* result     = NULL;
+  char*      proof_data = d_create_json(ctx->request_context, proof);
+  sb_t       sb         = {0};
+  sb_add_rawbytes(&sb, "\"0x", *msg, 0);
+  sb_add_chars(&sb, "\",");
+  sb_add_chars(&sb, proof_data);
+  _free(proof_data);
+
+  TRY_FINAL(ctx_send_sub_request(ctx, conf->proof_verify_method, sb.data, NULL, &result), _free(sb.data))
+
+  in3_ret_t ret = (d_type(result) == T_BOOLEAN && d_int(result)) ? IN3_OK : ctx_set_error(ctx, "Proof could not be verified!", IN3_EINVAL);
+  ctx_remove_required(ctx, ctx_find_required(ctx, conf->proof_verify_method), false);
+  return ret;
 }
 
 static bool is_complete(bytes_t data) {
@@ -151,6 +166,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (d_type(ctx->params + 1) == T_OBJECT) {
     result  = ctx->params + 1;
     message = d_to_bytes(d_get(result, key("message")));
+    proof   = d_get(result, K_PROOF);
     if (!message.data) return ctx_set_error(ctx->ctx, "missing message in request", IN3_EINVAL);
   }
   else {
@@ -159,6 +175,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     if (!conf->musig_pub_keys.data) {
       bytes32_t pk;
       uint8_t   sig[96];
+      TRY(verify_proof(conf, ctx->ctx, proof, &message));
       TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
       TRY(zkcrypto_sign_musig(pk, message, sig))
       return in3_rpc_handle_with_bytes(ctx, bytes(sig, 96));
@@ -177,7 +194,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY(pos)
 
     // make sure the data is valid
-    TRY(verify_proof(ctx->ctx, proof, &message))
+    TRY(verify_proof(conf, ctx->ctx, proof, &message))
 
     // make sure we don't have too many old sessions.
     check_max_sessions(conf);
@@ -249,12 +266,6 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY_SIG(zkcrypto_compute_aggregated_pubkey(s->pub_keys, res))
     TRY_SIG(zkcrypto_signer_receive_signature_shares(s->signer, s->signature_shares, res + 32))
     cleanup_session(s, conf);
-    in3_log_debug("message:\n");
-    b_print(&message);
-    in3_log_debug("sig:\n");
-    ba_print(res, 96);
-    ;
-    in3_log_debug("check signature:\n");
     if (!zkcrypto_verify_signatures(message, conf->musig_pub_keys, bytes(res, 96)))
       return ctx_set_error(ctx->ctx, "invalid signature", IN3_EINVAL);
     return in3_rpc_handle_with_bytes(ctx, bytes(res, 96));
@@ -263,6 +274,12 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   sb_t* rr = in3_rpc_handle_start(ctx);
   sb_add_char(rr, '{');
   add_sessiondata(rr, s);
+  if (proof) {
+    sb_add_chars(rr, ",\"proof\":");
+    char* proof_data = d_create_json(ctx->ctx->request_context, proof);
+    sb_add_chars(rr, proof_data);
+    _free(proof_data);
+  }
   sb_add_char(rr, '}');
   return in3_rpc_handle_finish(ctx);
 }

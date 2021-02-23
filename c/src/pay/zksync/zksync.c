@@ -203,6 +203,7 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->account) _free(conf->account);
   if (conf->tokens) _free(conf->tokens);
   if (conf->create2) _free(conf->create2);
+  if (conf->proof_verify_method) _free(conf->proof_verify_method);
   if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
   if (conf->incentive && conf->incentive->token) _free(conf->incentive->token);
   if (conf->incentive) {
@@ -242,6 +243,11 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (provider) {
     if (conf->provider_url) _free(conf->provider_url);
     conf->provider_url = _strdupn(provider, -1);
+  }
+  const char* pvm = d_get_string(ctx->token, "proof_method");
+  if (pvm) {
+    if (conf->proof_verify_method) _free(conf->proof_verify_method);
+    conf->proof_verify_method = _strdupn(pvm, -1);
   }
   bytes_t* account = d_get_bytes(ctx->token, "account");
   if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
