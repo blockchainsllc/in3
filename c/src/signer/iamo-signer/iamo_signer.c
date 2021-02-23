@@ -86,6 +86,7 @@ static in3_ret_t iamo_free(iamo_signer_config_t* conf) {
   _free(conf->services.key);
   _free(conf->services.policy_management);
   _free(conf->accounts);
+  _free(conf->cosign_rpc);
   _free(conf);
   return IN3_OK;
 }
@@ -109,6 +110,8 @@ static void set_string(char* prefix, char* postfix, char** dst) {
 static in3_ret_t iamo_config_set(iamo_signer_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key == key("iamo")) {
     CNF_SET_BYTES(conf->device_key, ctx->token, "device_key", 32)
+    char* cosign_rpc = d_get_stringk(ctx->token, key("cosign_rpc"));
+    if (cosign_rpc) conf->cosign_rpc = _strdupn(cosign_rpc, -1);
     char* service = d_get_stringk(ctx->token, key("service"));
     if (service && strlen(service)) {
       set_string("https://account.", service, &conf->services.account);

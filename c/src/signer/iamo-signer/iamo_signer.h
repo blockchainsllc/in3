@@ -52,6 +52,7 @@ typedef struct iamo_signer_config {
   address_t  device_address;
   int        accounts_len;
   address_t* accounts;
+  char*      cosign_rpc;
   struct {
     char* account;
     char* sign;
