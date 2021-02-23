@@ -97,8 +97,7 @@ void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* 
 void* t_calloc(size_t n, size_t size, char* file, const char* func, int line);
 void  t_free(void* ptr, char* file, const char* func, int line);
 int   mem_get_memleak_cnt();
-void  mem_reset(int cnt);
-void  memstack();
+void  mem_reset();
 #else /* TEST */
 #ifdef LOGGING
 #define _malloc(s)        _malloc_(s, __FILE__, __func__, __LINE__)
