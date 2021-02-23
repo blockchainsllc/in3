@@ -671,10 +671,9 @@ int main(int argc, char* argv[]) {
   }
 
   // define vars
-  char*     method = NULL;
-  sb_t*     args   = sb_new("[");
-  int       i;
-  bytes32_t pk;
+  char* method = NULL;
+  sb_t* args   = sb_new("[");
+  int   i;
 #ifdef LEDGER_NANO
   uint8_t path[5];
 #endif
@@ -730,8 +729,12 @@ int main(int argc, char* argv[]) {
 
   // check env
   if (getenv("IN3_PK") && !use_pk) {
-    hex_to_bytes(getenv("IN3_PK"), -1, pk, 32);
-    eth_set_pk_signer(c, pk);
+    char*     pks = _strdupn(getenv("IN3_PK"), -1);
+    bytes32_t pk;
+    for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) {
+      hex_to_bytes(cc, -1, pk, 32);
+      eth_set_pk_signer(c, pk);
+    }
   }
 
 #ifdef ZKSYNC
@@ -750,8 +753,8 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) { // private key?
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
+        bytes32_t pk;
         hex_to_bytes(argv[++i], -1, pk, 32);
-
         eth_set_pk_signer(c, pk);
       }
       else
