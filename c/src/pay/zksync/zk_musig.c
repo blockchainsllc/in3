@@ -134,10 +134,13 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* 
   if (!conf->proof_verify_method && !proof) return IN3_OK; // no method to verify configured -> so we accept all
   if (!conf->proof_verify_method) return ctx_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
 
-  d_token_t* result     = NULL;
-  char*      proof_data = d_create_json(ctx->request_context, proof);
-  sb_t       sb         = {0};
+  d_token_t* result = NULL;
+  uint8_t*   account;
+  TRY(zksync_get_account(conf, ctx, &account))
+  char* proof_data = d_create_json(ctx->request_context, proof);
+  sb_t  sb         = {0};
   sb_add_rawbytes(&sb, "\"0x", *msg, 0);
+  sb_add_rawbytes(&sb, "\",\"0x", bytes(account, 20), 0);
   sb_add_chars(&sb, "\",");
   sb_add_chars(&sb, proof_data);
   _free(proof_data);
