@@ -122,6 +122,15 @@ NONULL static inline void b_optimize_len(bytes_t* b) {                          
     b->len--;
   }
 }
+
+#define b_to_stack(d)              \
+  {                                \
+    bytes_t o = d;                 \
+    d.data    = alloca(d.len);     \
+    memcpy(d.data, o.data, o.len); \
+    _free(o.data);                 \
+  } /**< converts bytes from heap to stack */
+
 #ifdef __cplusplus
 }
 #endif
