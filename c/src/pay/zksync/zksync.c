@@ -334,7 +334,7 @@ static in3_ret_t zksync_init(zksync_config_t* conf, in3_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
+in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
   switch (action) {
     case PLGN_ACT_TERM: return config_free(conf, true);
     case PLGN_ACT_CONFIG_GET: return config_get(conf, arg);

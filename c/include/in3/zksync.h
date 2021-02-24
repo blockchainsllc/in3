@@ -173,7 +173,7 @@ in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* c
 in3_ret_t           zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ctx);
 in3_ret_t           zksync_add_payload(in3_pay_payload_ctx_t* ctx);
 in3_ret_t           update_nodelist_from_cache(in3_ctx_t* ctx, unsigned int nodelen);
-
+in3_ret_t           handle_zksync(void* conf, in3_plugin_act_t action, void* arg);
 #ifdef __cplusplus
 }
 #endif

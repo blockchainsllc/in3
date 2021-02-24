@@ -49,7 +49,7 @@ in3_ret_t  zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t**
 in3_ret_t  zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce);                                       /**< resolves the nonce */
 in3_ret_t  resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst);                             /**< resolve token list */
 in3_ret_t  zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash);                                                 /**< get pubkeyhash */
-
+void       zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t saltarg, address_t pub_key_hash, address_t dst);
 #define CHECK_PARAM_TOKEN(ctx, params, index)                                                                                                    \
   switch (d_type(d_get_at(params, index))) {                                                                                                     \
     case T_STRING: break;                                                                                                                        \
