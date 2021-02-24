@@ -34,31 +34,16 @@
 # main incubed module defining the interfaces for transport, verifier and storage. 
 #
 # This module does not have any dependencies and cannot be used without additional modules providing verification and transport.
-OPTION(IN3_STAGING "if true, the client will use the staging-network instead of the live ones" OFF)
-IF (IN3_STAGING)
-    ADD_DEFINITIONS(-DIN3_STAGING)
-ENDIF (IN3_STAGING)
-
 
 add_static_library(
-  NAME     core 
+  NAME     init 
   
   SOURCES 
-    client/context.c
-    client/client.c
-    client/verifier.c
-    client/execute.c
-    client/client_init.c
-    util/debug.c
-    util/bytes.c
-    util/utils.c
-    util/scache.c
-    util/data.c
-    util/log.c
-    util/mem.c
-    util/stringbuilder.c
-    util/bitset.c
+    in3_init.c
 
   DEPENDS 
-    crypto
+    ${IN3_VERIFIER} 
+    ${IN3_API} 
+    ${IN3_TRANSPORT}
+    ${IN3_NODESELECT}
 )

@@ -36,11 +36,11 @@
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
+#include "../../c/src/init/in3_init.h"
 #include "../../c/src/nodeselect/cache.h"
 #include "../../c/src/nodeselect/nodelist.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
-#include "../../c/src/verifier/in3_init.h"
 #ifdef ETH_FULL
 #include "../../c/src/third-party/tommath/tommath.h"
 #endif
@@ -277,8 +277,8 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"headers\":[");
-        for (in3_req_header_t* h=request->headers;h;h=h->next ) {
-          if (h!=request->headers) sb_add_char(sb, ',');
+        for (in3_req_header_t* h = request->headers; h; h = h->next) {
+          if (h != request->headers) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
           sb_add_escaped_chars(sb, h->value);
           sb_add_char(sb, '"');

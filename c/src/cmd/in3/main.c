@@ -69,12 +69,12 @@
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
+#include "../../init/in3_init.h"
 #include "../../nodeselect/nodeselect_def.h"
 #include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
 #include "../../verifier/eth1/nano/chainspec.h"
-#include "../../verifier/in3_init.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>

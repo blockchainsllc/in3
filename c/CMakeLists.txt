@@ -64,6 +64,7 @@ IF (TRANSPORTS)
 ENDIF (TRANSPORTS)
 
 add_subdirectory(src/core)
+add_subdirectory(src/init)
 add_subdirectory(src/verifier)
 add_subdirectory(src/signer)
 add_subdirectory(src/pay)
