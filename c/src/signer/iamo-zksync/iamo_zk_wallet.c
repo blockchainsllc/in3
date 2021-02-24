@@ -67,6 +67,30 @@ typedef struct wallet {
   owner_t*  owners;
 } wallet_t;
 
+static in3_ret_t find_zksync_conf(in3_ctx_t* ctx, zksync_config_t** conf) {
+  for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
+    if (p->action_fn == handle_zksync) {
+      *conf = p->data;
+      return IN3_OK;
+    }
+  }
+  return ctx_set_error(ctx, "no zksync plugin found!", IN3_ECONFIG);
+}
+static in3_ret_t iamo_zk_check_rpc(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  if (conf->cosign_rpc) return IN3_OK;
+  zksync_config_t* zconf;
+  TRY(find_zksync_conf(ctx->ctx, &zconf))
+  if (zconf->musig_urls) {
+    for (size_t i = 0; i < 2; i++) {
+      if (zconf->musig_urls[i]) {
+        conf->cosign_rpc = _strdupn(zconf->musig_urls[i], -1);
+        return IN3_OK;
+      }
+    }
+  }
+  return IN3_OK;
+}
+
 static in3_ret_t wallet_from_json(in3_ctx_t* ctx, d_token_t* data, wallet_t* w) {
   bytes_t    address = d_to_bytes(d_get(data, K_ADDRESS));
   d_token_t* owners  = d_get(data, key("owners"));
@@ -244,6 +268,7 @@ in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_ctx_t* ctx, wallet_t*
 }
 
 in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  TRY(iamo_zk_check_rpc(conf, ctx))
   CHECK_PARAMS_LEN(ctx->ctx, ctx->params, (conf->cosign_rpc ? 1 : 2))
   CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_OBJECT)                       // wallet-data
   if (!conf->cosign_rpc) CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 1, T_ARRAY) // signatures
@@ -308,15 +333,6 @@ static in3_ret_t zksync_get_user_pubkey(zksync_config_t* conf, in3_ctx_t* ctx, u
   return IN3_OK;
 }
 
-static in3_ret_t find_zksync_conf(in3_ctx_t* ctx, zksync_config_t** conf) {
-  for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
-    if (p->action_fn == handle_zksync) {
-      *conf = p->data;
-      return IN3_OK;
-    }
-  }
-  return ctx_set_error(ctx, "no zksync plugin found!", IN3_ECONFIG);
-}
 static bytes_t encode_setup(wallet_t* wallet) {
   bytes_t res = bytes(NULL, wallet->owner_len * 64 + 388);
   res.data    = _calloc(res.len, 1);
@@ -410,7 +426,7 @@ static in3_ret_t wallet_from_args(in3_rpc_handle_ctx_t* ctx, wallet_t* wallet) {
 }
 
 in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-
+  TRY(iamo_zk_check_rpc(conf, ctx))
   CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 1)
   CHECK_PARAM_NUMBER(ctx->ctx, ctx->params, 0) // threshold
   wallet_t wallet = {0};
@@ -484,6 +500,7 @@ in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ct
 in3_ret_t iamo_zk_get_config(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   zksync_config_t* zconf;
   bytes32_t        pubkey;
+  TRY(iamo_zk_check_rpc(conf, ctx))
   if (conf->cosign_rpc) return ctx_set_error(ctx->ctx, "getting config only works for server without a cosign_rpc ", IN3_ECONFIG);
 
   //TODO read from config
