@@ -1,6 +1,6 @@
 ###############################################################################
 # This file is part of the Incubed project.
-# Sources: https://github.com/blockchainsllc/in3
+# Sources: https://github.com/slockit/in3-c
 # 
 # Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
@@ -31,23 +31,18 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (PK_SIGNER)
-  add_subdirectory(pk-signer)
-endif()
+#cmake_minimum_required(VERSION 3.15)
 
-if (IAMO_SIGNER)
-  add_subdirectory(iamo-signer)
-endif()
+add_static_library(
+  NAME     iamo_zk 
+  
+  SOURCES 
+    iamo_zk_wallet.c
+    iamo_zk.c
 
-if (IAMO_ZK)
-  add_subdirectory(iamo-zksync)
-endif()
+  DEPENDS 
+    eth_nano
+    zksync
+)
 
-if (LEDGER_NANO)
-  add_subdirectory(ledger-nano/signer)
-endif()
-
-if (MULTISIG)
-  add_subdirectory(multisig)
-endif()
 

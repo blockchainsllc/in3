@@ -88,6 +88,7 @@ OPTION(NODESELECT_DEF_WL "Enable default nodeselect whitelist implementation" ON
 OPTION(PLGN_CLIENT_DATA "Enable client-data plugin" OFF)
 OPTION(THREADSAFE "uses mutex to protect shared nodelist access" ON)
 OPTION(IAMO_SIGNER "uses the IAMO-Backend to sign" OFF)
+OPTION(IAMO_ZK "uses the IAMO L2 (zksync) Wallet" OFF)
 
 IF (DEFINED ANDROID_ABI)
   set(TRANSPORTS,false)
@@ -100,6 +101,13 @@ ENDIF()
 IF (BTC_PRE_BPI34)
   ADD_DEFINITIONS(-DBTC_PRE_BPI34)
 ENDIF (BTC_PRE_BPI34)
+
+IF (IAMO_ZK)
+  set(IAMO_SIGNER,true)
+  set(ZKSYNC,true)
+  ADD_DEFINITIONS(-DIAMO_ZK)
+  set(IN3_API ${IN3_API} iamo_zk)
+ENDIF(IAMO_ZK)
 
 IF (IAMO_SIGNER)
   ADD_DEFINITIONS(-DIAMO_SIGNER)

@@ -38,7 +38,6 @@ add_static_library(
   
   SOURCES 
     iamo_signer.c
-    iamo_ms.c
 
   DEPENDS 
     eth_nano

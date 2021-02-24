@@ -52,7 +52,6 @@ typedef struct iamo_signer_config {
   address_t  device_address;
   int        accounts_len;
   address_t* accounts;
-  char*      cosign_rpc;
   struct {
     char* account;
     char* sign;
@@ -67,8 +66,6 @@ typedef struct iamo_signer_config {
  * registers pk signer as plugin so you can use config or in3_addKeys as rpc
  */
 in3_ret_t register_iamo_signer(in3_t* in3);
-
-in3_ret_t iamo_add_ms(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 
 #ifdef __cplusplus
 }

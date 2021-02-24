@@ -37,35 +37,26 @@
  * Ethereum Nano verification.
  * */
 
-#ifndef iamo_signer_h__
-#define iamo_signer_h__
+#ifndef iamo_zk_h__
+#define iamo_zk_h__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "../../core/client/client.h"
-#include "../../core/client/plugin.h"
+#include "client.h"
+#include "plugin.h"
 
-typedef struct iamo_signer_config {
-  bytes32_t  device_key;
-  address_t  device_address;
-  int        accounts_len;
-  address_t* accounts;
-  struct {
-    char* account;
-    char* sign;
-    char* key;
-    char* policy_management;
-    char* policy_processor;
-  } services;
-
-} iamo_signer_config_t;
+typedef struct iamo_zk_config {
+  char* cosign_rpc;
+} iamo_zk_config_t;
 
 /**
  * registers pk signer as plugin so you can use config or in3_addKeys as rpc
  */
-in3_ret_t register_iamo_signer(in3_t* in3);
+in3_ret_t register_iamo_zk(in3_t* in3);
+
+in3_ret_t iamo_zk_add_ms(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 
 #ifdef __cplusplus
 }

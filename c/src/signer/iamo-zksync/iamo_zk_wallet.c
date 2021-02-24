@@ -42,7 +42,7 @@
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/serialize.h"
-#include "iamo_signer.h"
+#include "iamo_zk.h"
 #include <string.h>
 #include <time.h>
 
@@ -200,9 +200,9 @@ static in3_ret_t wallet_sign(in3_ctx_t* ctx, bytes_t message, wallet_t* wallet, 
   return IN3_OK;
 }
 
-in3_ret_t wallet_sign_and_send(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx, wallet_t* wallet, bytes_t message) {
+in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx, wallet_t* wallet, bytes_t message) {
   // we are sending this the the server
-  in3_ctx_t* sub = ctx_find_required(ctx->ctx, "iamo_add_ms");
+  in3_ctx_t* sub = ctx_find_required(ctx->ctx, "iamo_zk_add_ms");
   if (sub) { // do we have a result?
     switch (in3_ctx_state(sub)) {
       case CTX_ERROR:
@@ -217,7 +217,7 @@ in3_ret_t wallet_sign_and_send(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t*
 
   sb_t  req         = {0};
   char* wallet_data = d_create_json(ctx->ctx->request_context, ctx->params + 1);
-  sb_add_chars(&req, "{\"method\":\"iamo_add_ms\",\"params\":[");
+  sb_add_chars(&req, "{\"method\":\"iamo_zk_add_ms\",\"params\":[");
   sb_add_chars(&req, wallet_data);
   sb_add_char(&req, ',');
   _free(wallet_data);
@@ -228,7 +228,7 @@ in3_ret_t wallet_sign_and_send(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t*
   return ctx_add_required(ctx->ctx, ctx_new(ctx->ctx->client, req.data));
 }
 
-in3_ret_t iamo_add_ms(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+in3_ret_t iamo_zk_add_ms(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->ctx, ctx->params, (conf->cosign_rpc ? 1 : 2))
   CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_OBJECT)                       // wallet-data
   if (!conf->cosign_rpc) CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 1, T_ARRAY) // signatures
@@ -259,7 +259,7 @@ in3_ret_t iamo_add_ms(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
-in3_ret_t iamo_is_valid(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+in3_ret_t iamo_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
   CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 3)
   CHECK_PARAM_ADDRESS(ctx->ctx, ctx->params, 1)
@@ -281,7 +281,7 @@ in3_ret_t iamo_is_valid(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
-in3_ret_t iamo_create_zksync_wallet(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+in3_ret_t iamo_create_zksync_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // first get from server:
   // - the pubkey
   // - the codehash (deploycode + mastercopy)
