@@ -48,9 +48,9 @@
 
 #define TRY_WALLETS(expr, w1, w2) TRY_CATCH(expr, wallet_free(&w1, false); wallet_free(&w2, false))
 typedef enum role {
-  ROLE_INITIATOR  = 1,
-  ROLE_APPROVER   = 2,
-  ROLE_CHALLENGER = 4
+  ROLE_CHALLENGER = 1,
+  ROLE_INITIATOR  = 2,
+  ROLE_APPROVER   = 4
 } role_t;
 typedef struct owner {
   address_t address;
@@ -118,13 +118,6 @@ static bytes_t wallet_to_bytes(wallet_t* w) {
 static void wallet_free(wallet_t* w, bool is_heap) {
   if (w->owners) _free(w->owners);
   if (is_heap) _free(w);
-}
-
-static in3_ret_t wallet_create_hash(wallet_t* w, bytes32_t hash) {
-  bytes_t data = wallet_to_bytes(w);
-  keccak(data, hash);
-  _free(data.data);
-  return IN3_OK;
 }
 
 static in3_ret_t wallet_get_from_cache(in3_ctx_t* ctx, address_t address, wallet_t* wallet) {
@@ -267,6 +260,7 @@ in3_ret_t iamo_add_ms(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 }
 
 in3_ret_t iamo_is_valid(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
   CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 3)
   CHECK_PARAM_ADDRESS(ctx->ctx, ctx->params, 1)
   CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 2, T_ARRAY)
@@ -282,6 +276,75 @@ in3_ret_t iamo_is_valid(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // check signatures (and free the wallet)
   TRY_FINAL(wallet_verify_signatures(ctx->ctx, msg, &wallet, d_get_at(ctx->params, 2)), wallet_free(&wallet, false))
+
+  // if we made it here, signatures are valid
+  return in3_rpc_handle_with_string(ctx, "true");
+}
+
+in3_ret_t iamo_create_zksync_wallet(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  // first get from server:
+  // - the pubkey
+  // - the codehash (deploycode + mastercopy)
+  // - creator (iamo factory)
+  UNUSED_VAR(conf);
+
+  CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 1)
+  CHECK_PARAM_NUMBER(ctx->ctx, ctx->params, 0) // threshold
+  bool     has_initiator = false;
+  wallet_t wallet        = {0};
+  wallet.owners          = alloca((d_len(ctx->params) - 1) * sizeof(owner_t));
+  for (d_iterator_t iter = d_iter(ctx->params); iter.left; d_iter_next(&iter)) {
+    switch (d_type(iter.token)) {
+      case T_STRING: {
+        role_t role = 0;
+        char*  c    = d_string(iter.token);
+        for (int i = 0; i < 4 && *c && *c != ':'; i++, c++) {
+          switch (*c) {
+            case 'R':
+            case 'r':
+            case 'C':
+            case 'c':
+              role |= ROLE_CHALLENGER;
+              break;
+            case 'A':
+            case 'a':
+              role |= ROLE_APPROVER;
+              break;
+            case 'I':
+            case 'i':
+              has_initiator = true;
+              role |= ROLE_INITIATOR;
+              break;
+            default:
+              return ctx_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C", IN3_EINVAL);
+          }
+        }
+        if (*c != ':') return ctx_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C, followed by : and the address", IN3_EINVAL);
+        c++;
+        if (hex_to_bytes(c, -1, wallet.owners[wallet.owner_len].address, 20) != 20) return ctx_set_error(ctx->ctx, "invalid address of owner, must be 20 bytes", IN3_EINVAL);
+        wallet.owners[wallet.owner_len++].role = role;
+        break;
+      }
+      case T_INTEGER:
+        if (wallet.threshold) return ctx_set_error(ctx->ctx, "threshold already set", IN3_EINVAL);
+        wallet.threshold = (uint32_t) d_int(iter.token);
+        break;
+      case T_BYTES:
+        if (d_len(iter.token) != 20) return ctx_set_error(ctx->ctx, "a owner must be a adddress of 20 bytes", IN3_EINVAL);
+        memcpy(wallet.owners[wallet.owner_len].address, d_bytes(iter.token)->data, 20);
+        wallet.owners[wallet.owner_len++].role = ROLE_APPROVER;
+        break;
+
+      default:
+        return ctx_set_error(ctx->ctx, "Invalid argument for owner of multisig", IN3_EINVAL);
+    }
+  }
+
+  if (!wallet.threshold) return ctx_set_error(ctx->ctx, "threshold is missing", IN3_EINVAL);
+  if (wallet.threshold > wallet.owner_len) return ctx_set_error(ctx->ctx, "threshold must be less or equal to the number of owners", IN3_EINVAL);
+  if (!has_initiator) return ctx_set_error(ctx->ctx, "at least one owner must have a initiator role", IN3_EINVAL);
+
+  // encode the setup-tx
 
   // if we made it here, signatures are valid
   return in3_rpc_handle_with_string(ctx, "true");
