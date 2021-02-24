@@ -91,7 +91,7 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
       continue;
     }
     bool      https   = strstr(req->urls[n], "https") == req->urls[n];
-    HINTERNET request = WinHttpOpenRequest(connect, to_wstr("POST"),
+    HINTERNET request = WinHttpOpenRequest(connect, to_wstr(req->method),
                                            url_components.lpszUrlPath, NULL, WINHTTP_NO_REFERER,
                                            WINHTTP_DEFAULT_ACCEPT_TYPES, https ? WINHTTP_FLAG_SECURE : 0);
     if (!request) {
@@ -103,11 +103,17 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
       WinHttpCloseHandle(hSession);
       continue;
     }
-    int  plen    = strlen(req->payload);
+    sb_t headers = {0};
+    sb_add_chars(&headers, "Accept: application/json\r\nContent-Type: application/json\r\ncharsets: utf-8\r\n");
+    for (in3_req_header_t* h = req->headers; h; h = h->next) {
+      sb_add_chars(&headers, h->value);
+      sb_add_chars(&headers, "\r\n");
+    }
+    int  plen    = req->payload_len;
     bool success = plen
                        ? WinHttpSendRequest(
                              request,
-                             to_wstr("Accept: application/json\r\nContent-Type: application/json\r\ncharsets: utf-8\r\n"),
+                             to_wstr(headers.data),
                              (DWORD) -1,
                              (LPVOID) req->payload,
                              (DWORD) plen, (DWORD) plen, 0)
@@ -115,6 +121,7 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
                              request,
                              WINHTTP_NO_ADDITIONAL_HEADERS,
                              0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
+    _free(headers.data);
 
     if (success) {
       WinHttpReceiveResponse(request, NULL);
