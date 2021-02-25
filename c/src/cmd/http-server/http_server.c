@@ -146,13 +146,13 @@ void* respond(void* arg) {
           printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", ctx->error);
         else {
           // execute it
-          str_range_t range  = d_to_json(d_get(ctx->request_context->result, key("params")));
+          str_range_t range  = d_to_json(d_get(ctx->requests[0], key("params")));
           char*       params = range.data ? alloca(range.len) : NULL;
           if (params) {
             memcpy(params, range.data + 1, range.len - 2);
             params[range.len - 2] = 0;
           }
-          fprintf(stderr, "RPC %s %s\n", d_get_string(ctx->request_context->result, "method"), params); //conceal typing and save position
+          fprintf(stderr, "RPC %s %s\n", d_get_string(ctx->requests[0], "method"), params); //conceal typing and save position
           if (in3_send_ctx(ctx) == IN3_OK) {
             // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
             if (ctx->error) _free(ctx->error);
@@ -265,7 +265,7 @@ void http_run_server(const char* port, in3_t* in3) {
     }
 
 #else
-    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");
