@@ -37,6 +37,7 @@
 #include "../../../core/client/keys.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
+#include "eth_basic.h"
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -171,7 +172,7 @@ static in3_filter_t* filter_new(in3_filter_type_t ft) {
   return f;
 }
 
-in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
+in3_ret_t filter_add(in3_filter_handler_t* filters, in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
   if (type == FILTER_PENDING)
     return IN3_ENOTSUP;
   else if (options == NULL && type != FILTER_BLOCK)
@@ -206,42 +207,37 @@ in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
   // Reuse filter ids that have been uninstalled
   // Note: filter ids are 1 indexed, and the associated in3_filter_t object is stored
   // at pos (id - 1) internally in in3->filters->array
-  if (ctx->client->filters == NULL)
-    ctx->client->filters = _calloc(1, sizeof *(ctx->client->filters));
-  in3_filter_handler_t* fh = ctx->client->filters;
-  for (size_t i = 0; i < fh->count; i++) {
-    if (fh->array[i] == NULL) {
-      fh->array[i] = f;
+  for (size_t i = 0; i < filters->count; i++) {
+    if (filters->array[i] == NULL) {
+      filters->array[i] = f;
       return i + 1;
     }
   }
   in3_filter_t** arr_;
-  if (fh->array)
-    arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1), sizeof(in3_filter_t*) * (fh->count));
+  if (filters->array)
+    arr_ = _realloc(filters->array, sizeof(in3_filter_t*) * (filters->count + 1), sizeof(in3_filter_t*) * (filters->count));
   else
-    arr_ = _malloc(sizeof(in3_filter_t*) * (fh->count + 1));
+    arr_ = _malloc(sizeof(in3_filter_t*) * (filters->count + 1));
 
   if (arr_ == NULL) {
     return IN3_ENOMEM;
   }
-  fh->array            = arr_;
-  fh->array[fh->count] = f;
-  fh->count += 1;
-  return fh->count;
+  filters->array                 = arr_;
+  filters->array[filters->count] = f;
+  filters->count += 1;
+  return filters->count;
 }
 
-bool filter_remove(in3_t* in3, size_t id) {
-  if (in3->filters == NULL)
-    return false;
-  if (id == 0 || id > in3->filters->count)
+bool filter_remove(in3_filter_handler_t* filters, size_t id) {
+  if (id == 0 || id > filters->count)
     return false;
 
   // We don't realloc the array here, instead we simply set this slot to NULL to indicate
   // that it has been removed and reuse it in add_filter()
-  in3_filter_t* f = in3->filters->array[id - 1];
+  in3_filter_t* f = filters->array[id - 1];
   if (!f) return false;
   f->release(f);
-  in3->filters->array[id - 1] = NULL;
+  filters->array[id - 1] = NULL;
   return true;
 }
 
@@ -256,12 +252,9 @@ static in3_ctx_t* ctx_find_required_for_block(in3_ctx_t* ctx, uint64_t block_num
   return NULL;
 }
 
-in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
+in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_ctx_t* ctx, size_t id, sb_t* result) {
   in3_ret_t res = IN3_OK;
-  in3_t*    in3 = ctx->client;
-  if (in3->filters == NULL)
-    return ctx_set_error(ctx, "no filters found", IN3_EUNKNOWN);
-  if (id == 0 || id > in3->filters->count)
+  if (id == 0 || id > filters->count)
     return ctx_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
 
   // fetch the current block number
@@ -282,7 +275,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   }
   uint64_t blkno = d_get_longk(block_ctx->responses[0], K_RESULT);
 
-  in3_filter_t* f = in3->filters->array[id - 1];
+  in3_filter_t* f = filters->array[id - 1];
   if (!f)
     return ctx_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
 

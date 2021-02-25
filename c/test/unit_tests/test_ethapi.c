@@ -187,7 +187,7 @@ static void test_get_filter_changes() {
   _free(hashes);
 
   // Test with non-existent filter id
-  TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterChanges(in3, 1234, NULL, NULL));
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterChanges(in3, 1234, NULL, NULL));
 
   // Test with all filters uninstalled
   TEST_ASSERT_TRUE(eth_uninstallFilter(in3, fid));
@@ -224,7 +224,7 @@ static void test_get_logs() {
   json_free(jopt);
 
   // Test with non-existent filter id
-  TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterLogs(in3, 1234, NULL));
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, 1234, NULL));
 
   // Test with all filters uninstalled
   TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, fid, NULL));

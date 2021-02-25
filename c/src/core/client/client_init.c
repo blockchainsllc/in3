@@ -106,7 +106,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->proof                 = PROOF_STANDARD;
   c->replace_latest_block  = 0;
   c->request_count         = 1;
-  c->filters               = NULL;
   c->timeout               = 10000;
   c->id_count              = 1;
 
@@ -157,16 +156,6 @@ void in3_free(in3_t* a) {
   }
 
   chain_free(&a->chain);
-
-  if (a->filters) {
-    in3_filter_t* f = NULL;
-    for (size_t j = 0; j < a->filters->count; j++) {
-      f = a->filters->array[j];
-      if (f) f->release(f);
-    }
-    _free(a->filters->array);
-    _free(a->filters);
-  }
   _free(a);
 }
 

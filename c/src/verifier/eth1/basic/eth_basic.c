@@ -138,7 +138,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   }
 }
 
-static in3_ret_t eth_newFilter(in3_rpc_handle_ctx_t* ctx) {
+static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_type(ctx->params) != T_ARRAY || !d_len(ctx->params) || d_type(ctx->params + 1) != T_OBJECT)
     return ctx_set_error(ctx->ctx, "invalid type of params, expected object", IN3_EINVAL);
   else if (!filter_opt_valid(ctx->params + 1))
@@ -146,7 +146,7 @@ static in3_ret_t eth_newFilter(in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params->data) return ctx_set_error(ctx->ctx, "binary request are not supported!", IN3_ENOTSUP);
 
   char*     fopt = d_create_json(ctx->ctx->request_context, ctx->params + 1);
-  in3_ret_t res  = filter_add(ctx->ctx, FILTER_EVENT, fopt);
+  in3_ret_t res  = filter_add(filters, ctx->ctx, FILTER_EVENT, fopt);
   if (res < 0) {
     _free(fopt);
     return ctx_set_error(ctx->ctx, "filter creation failed", res);
@@ -155,19 +155,19 @@ static in3_ret_t eth_newFilter(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_int(ctx, (uint64_t) res);
 }
 
-static in3_ret_t eth_newBlockFilter(in3_rpc_handle_ctx_t* ctx) {
-  in3_ret_t res = filter_add(ctx->ctx, FILTER_BLOCK, NULL);
+static in3_ret_t eth_newBlockFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
+  in3_ret_t res = filter_add(filters, ctx->ctx, FILTER_BLOCK, NULL);
   if (res < 0) return ctx_set_error(ctx->ctx, "filter creation failed", res);
   return in3_rpc_handle_with_int(ctx, (uint64_t) res);
 }
 
-static in3_ret_t eth_getFilterChanges(in3_rpc_handle_ctx_t* ctx) {
+static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
     return ctx_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
 
   uint64_t  id  = d_get_long_at(ctx->params, 0);
   sb_t      sb  = {0};
-  in3_ret_t ret = filter_get_changes(ctx->ctx, id, &sb);
+  in3_ret_t ret = filter_get_changes(filters, ctx->ctx, id, &sb);
   if (ret != IN3_OK) {
     if (sb.data) _free(sb.data);
     return ctx_set_error(ctx->ctx, "failed to get filter changes", ret);
@@ -178,7 +178,7 @@ static in3_ret_t eth_getFilterChanges(in3_rpc_handle_ctx_t* ctx) {
 }
 
 /** called to see if we can handle the request internally */
-static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* ctx) {
+static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
 
   // we only support ETH in this module
   if (ctx->ctx->client->chain.type != CHAIN_ETH) return IN3_EIGNORE;
@@ -186,14 +186,14 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* ctx) {
   // check method to handle internally
   TRY_RPC("eth_sendTransaction", handle_eth_sendTransaction(ctx->ctx, ctx->request))
   TRY_RPC("eth_sendTransactionAndWait", eth_send_transaction_and_wait(ctx))
-  TRY_RPC("eth_newFilter", eth_newFilter(ctx))
-  TRY_RPC("eth_newBlockFilter", eth_newBlockFilter(ctx))
+  TRY_RPC("eth_newFilter", eth_newFilter(filters, ctx))
+  TRY_RPC("eth_newBlockFilter", eth_newBlockFilter(filters, ctx))
   TRY_RPC("eth_newPendingTransactionFilter", ctx_set_error(ctx->ctx, "pending filter not supported", IN3_ENOTSUP))
-  TRY_RPC("eth_getFilterChanges", eth_getFilterChanges(ctx))
-  TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(ctx))
+  TRY_RPC("eth_getFilterChanges", eth_getFilterChanges(filters, ctx))
+  TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(filters, ctx))
   TRY_RPC("eth_uninstallFilter", (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
                                      ? ctx_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
-                                     : in3_rpc_handle_with_string(ctx, filter_remove(ctx->ctx->client, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
+                                     : in3_rpc_handle_with_string(ctx, filter_remove(filters, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
 
   if (strcmp(ctx->method, "eth_chainId") == 0 && ctx->ctx->client->chain.chain_id != CHAIN_ID_LOCAL)
     return in3_rpc_handle_with_int(ctx, ctx->ctx->client->chain.chain_id);
@@ -201,16 +201,33 @@ static in3_ret_t eth_handle_intern(in3_rpc_handle_ctx_t* ctx) {
   return IN3_EIGNORE;
 }
 
+static in3_ret_t free_filters(in3_filter_handler_t* f) {
+  for (size_t i = 0; i < f->count; i++) {
+    if (f->array[i]) f->array[i]->release(f->array[i]);
+  }
+  if (f->array) _free(f->array);
+  _free(f);
+  return IN3_OK;
+}
+
 in3_ret_t handle_basic(void* pdata, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(pdata);
   switch (action) {
     case PLGN_ACT_RPC_VERIFY: return in3_verify_eth_basic(pctx);
-    case PLGN_ACT_RPC_HANDLE: return eth_handle_intern(pctx);
+    case PLGN_ACT_RPC_HANDLE: return eth_handle_intern(pdata, pctx);
+    case PLGN_ACT_TERM: return free_filters(pdata);
     default: return IN3_EINVAL;
   }
 }
+in3_filter_handler_t* eth_basic_get_filters(in3_t* c) {
+  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+    if (p->action_fn == handle_basic) return p->data;
+  }
+  return NULL;
+}
 
 in3_ret_t in3_register_eth_basic(in3_t* c) {
+  in3_filter_handler_t* handler = _calloc(1, sizeof(in3_filter_handler_t));
   in3_register_eth_nano(c);
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_RPC_HANDLE, handle_basic, NULL, false);
+  return in3_plugin_register(c, PLGN_ACT_TERM | PLGN_ACT_RPC_VERIFY | PLGN_ACT_RPC_HANDLE, handle_basic, handler, false);
 }

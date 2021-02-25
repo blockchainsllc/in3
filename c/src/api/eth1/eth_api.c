@@ -37,6 +37,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "../utils/api_utils_priv.h"
@@ -461,16 +462,16 @@ in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
 }
 
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
-  return filter_remove(in3, id);
+  return filter_remove(eth_basic_get_filters(in3), id);
 }
 
 in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
-  if (in3->filters == NULL)
+  in3_filter_handler_t* filters = eth_basic_get_filters(in3);
+  if (filters == NULL) return IN3_EFIND;
+  if (id == 0 || id > filters->count)
     return IN3_EFIND;
-  if (id == 0 || id > in3->filters->count)
-    return IN3_EINVAL;
 
-  in3_filter_t* f = in3->filters->array[id - 1];
+  in3_filter_t* f = filters->array[id - 1];
   if (!f)
     return IN3_EFIND;
 
@@ -510,12 +511,12 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
 }
 
 in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
-  if (in3->filters == NULL)
+  in3_filter_handler_t* filters = eth_basic_get_filters(in3);
+  if (filters == NULL) return IN3_EFIND;
+  if (id == 0 || id > filters->count)
     return IN3_EFIND;
-  if (id == 0 || id > in3->filters->count)
-    return IN3_EINVAL;
 
-  in3_filter_t* f = in3->filters->array[id - 1];
+  in3_filter_t* f = filters->array[id - 1];
   if (!f)
     return IN3_EFIND;
 

@@ -42,6 +42,36 @@
 #include "../../../core/client/plugin.h"
 
 /**
+ * Filter type used internally when managing filters.
+ */
+typedef enum {
+  FILTER_EVENT   = 0, /**< Event filter */
+  FILTER_BLOCK   = 1, /**< Block filter */
+  FILTER_PENDING = 2, /**< Pending filter (Unsupported) */
+} in3_filter_type_t;
+
+typedef struct in3_filter_t_ {
+  bool              is_first_usage;         /**< if true the filter was not used previously */
+  in3_filter_type_t type;                   /**< filter type: (event, block or pending) */
+  uint64_t          last_block;             /**< block no. when filter was created OR eth_getFilterChanges was called */
+  char*             options;                /**< associated filter options */
+  void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
+} in3_filter_t;
+
+/**
+ * Handler which is added to client config in order to handle filter.
+ */
+typedef struct in3_filter_handler_t_ {
+  in3_filter_t** array; /** array of filters */
+  size_t         count; /** counter for filters */
+} in3_filter_handler_t;
+
+/**
+ * returns the filters
+ */
+in3_filter_handler_t* eth_basic_get_filters(in3_t* c);
+
+/**
  * verifies internal tx-values.
  */
 in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw);

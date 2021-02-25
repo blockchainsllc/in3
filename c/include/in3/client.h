@@ -57,13 +57,13 @@ extern "C" {
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MAINNET    0x01 /**< chain_id for mainnet */
-#define CHAIN_ID_GOERLI     0x5 /**< chain_id for goerlii */
-#define CHAIN_ID_EWC        0xf6 /**< chain_id for ewc */
+#define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
+#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
+#define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
-#define CHAIN_ID_BTC        0x99 /**< chain_id for btc */
-#define CHAIN_ID_LOCAL      0x11 /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6 /**< default replace_latest_block */
+#define CHAIN_ID_BTC        0x99  /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0x11  /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6     /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -232,23 +232,6 @@ typedef struct in3_chain {
  */
 typedef struct in3_t_ in3_t;
 
-/**
- * Filter type used internally when managing filters.
- */
-typedef enum {
-  FILTER_EVENT   = 0, /**< Event filter */
-  FILTER_BLOCK   = 1, /**< Block filter */
-  FILTER_PENDING = 2, /**< Pending filter (Unsupported) */
-} in3_filter_type_t;
-
-typedef struct in3_filter_t_ {
-  bool              is_first_usage;         /**< if true the filter was not used previously */
-  in3_filter_type_t type;                   /**< filter type: (event, block or pending) */
-  uint64_t          last_block;             /**< block no. when filter was created OR eth_getFilterChanges was called */
-  char*             options;                /**< associated filter options */
-  void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
-} in3_filter_t;
-
 #define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
 #define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST | PLGN_ACT_NL_FAILABLE | PLGN_ACT_NL_OFFLINE)
@@ -312,14 +295,6 @@ struct in3_plugin {
   in3_plugin_t*          next;      /**< pointer to next plugin in list */
 };
 
-/**
- * Handler which is added to client config in order to handle filter.
- */
-typedef struct in3_filter_handler_t_ {
-  in3_filter_t** array; /** array of filters */
-  size_t         count; /** counter for filters */
-} in3_filter_handler_t;
-
 /** Incubed Configuration.
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
@@ -344,7 +319,6 @@ struct in3_t_ {
   uint64_t               min_deposit;           /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
   in3_node_props_t       node_props;            /**< used to identify the capabilities of the node. */
   in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
-  in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
 };
 
