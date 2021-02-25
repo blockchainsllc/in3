@@ -50,6 +50,9 @@
 #include <time.h>
 
 #define TRY_WALLETS(expr, w1, w2) TRY_CATCH(expr, wallet_free(&w1, false); wallet_free(&w2, false))
+#define ONLY_SERVER(ctx) \
+  if (d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
+
 typedef enum role {
   ROLE_CHALLENGER = 1,
   ROLE_INITIATOR  = 2,
@@ -224,7 +227,7 @@ static in3_ret_t wallet_sign(in3_ctx_t* ctx, bytes_t message, wallet_t* wallet, 
   for (unsigned int i = 0; i < wallet->owner_len && valid_signatures < wallet->threshold; i++) {
     if ((wallet->owners[i].role & (ROLE_APPROVER | ROLE_INITIATOR)) == 0) continue;
     bytes_t sig;
-    TRY(ctx_require_signature(ctx, SIGN_EC_RAW, &sig, bytes(msg_hash, 32), bytes(wallet->account, 20)))
+    TRY(ctx_require_signature(ctx, SIGN_EC_RAW, &sig, bytes(msg_hash, 32), bytes(wallet->owners[i].address, 20)))
     if (sig.data[64] < 27) sig.data[64] += 27;
 
     // find owner
@@ -500,6 +503,7 @@ in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ct
 in3_ret_t iamo_zk_get_config(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   zksync_config_t* zconf;
   bytes32_t        pubkey;
+  ONLY_SERVER(ctx)
   TRY(iamo_zk_check_rpc(conf, ctx))
   if (conf->cosign_rpc) return ctx_set_error(ctx->ctx, "getting config only works for server without a cosign_rpc ", IN3_ECONFIG);
 
