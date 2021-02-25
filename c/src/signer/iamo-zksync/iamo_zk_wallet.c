@@ -45,6 +45,7 @@
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "../../verifier/eth1/nano/serialize.h"
+#include "iamo_deploy.h"
 #include "iamo_zk.h"
 #include <string.h>
 #include <time.h>
@@ -440,7 +441,6 @@ in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ct
   TRY(read_server_config(conf, ctx->ctx, &server_config))
 
   // encode the setup-tx
-
   bytes32_t        saltarg;
   zksync_config_t* zksync_conf;
   TRY(find_zksync_conf(ctx->ctx, &zksync_conf))
@@ -507,18 +507,21 @@ in3_ret_t iamo_zk_get_config(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) 
   TRY(iamo_zk_check_rpc(conf, ctx))
   if (conf->cosign_rpc) return ctx_set_error(ctx->ctx, "getting config only works for server without a cosign_rpc ", IN3_ECONFIG);
 
-  //TODO read from config
-  address_t master_copy = {0};
-  address_t creator     = {0}; // factory
-  bytes32_t codehash    = {0};
+  bytes32_t codehash = {0};
+  memcpy(codehash + 12, conf->master_copy, 20);
+  struct SHA3_CTX sctx;
+  sha3_256_Init(&sctx);
+  sha3_Update(&sctx, code_iamo_proxy, code_iamo_proxy_len);
+  sha3_Update(&sctx, codehash, 32);
+  keccak_Final(&sctx, codehash);
 
   TRY(find_zksync_conf(ctx->ctx, &zconf))
   TRY(zksync_get_user_pubkey(zconf, ctx->ctx, pubkey))
 
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_rawbytes(sb, "{\"pubkey\":\"0x", bytes(pubkey, 32), 0);
-  sb_add_rawbytes(sb, "\",\"mastercopy\":\"0x", bytes(master_copy, 20), 0);
-  sb_add_rawbytes(sb, "\",\"creator\":\"0x", bytes(creator, 20), 0);
+  sb_add_rawbytes(sb, "\",\"mastercopy\":\"0x", bytes(conf->master_copy, 20), 0);
+  sb_add_rawbytes(sb, "\",\"creator\":\"0x", bytes(conf->creator, 20), 0);
   sb_add_rawbytes(sb, "\",\"codehash\":\"0x", bytes(codehash, 32), 0);
   sb_add_chars(sb, "\"}");
   return in3_rpc_handle_finish(ctx);

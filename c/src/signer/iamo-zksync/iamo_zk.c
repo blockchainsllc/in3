@@ -54,8 +54,13 @@ static in3_ret_t iamo_free(iamo_zk_config_t* conf) {
 
 static in3_ret_t iamo_config_set(iamo_zk_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key == key("iamo_zk")) {
-    char* cosign_rpc = d_get_stringk(ctx->token, key("cosign_rpc"));
+    bytes_t* tmp;
+    char*    cosign_rpc = d_get_stringk(ctx->token, key("cosign_rpc"));
     if (cosign_rpc) conf->cosign_rpc = _strdupn(cosign_rpc, -1);
+    if ((tmp = d_get_bytesk(ctx->token, key("master_copy"))) && tmp && tmp->len == 20)
+      memcpy(conf->master_copy, tmp->data, 20);
+    if ((tmp = d_get_bytesk(ctx->token, key("creator"))) && tmp && tmp->len == 20)
+      memcpy(conf->creator, tmp->data, 20);
     return IN3_OK;
   }
   return IN3_EIGNORE;

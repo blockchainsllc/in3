@@ -141,6 +141,8 @@ void show_help(char* name) {
 -zpm           method for calling to verify the proof\n\
 -os            only sign, don't send the raw Transaction \n\
 -idk           iamo device key \n\
+-imc           the master copy address to be used\n\
+-if            iamo factory address\n\
 -version       displays the version \n\
 -help          displays this help message \n\
 \n\
@@ -801,6 +803,20 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-is") == 0) {
       char tmp[500];
       sprintf(tmp, "{\"iamo\":{\"service\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+#endif
+#ifdef IAMO_ZK
+    else if (strcmp(argv[i], "-imc") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"iamo_zk\":{\"master_copy\":\"%s\"}}", argv[++i]);
+      char* err = in3_configure(c, tmp);
+      if (err) die(err);
+    }
+    else if (strcmp(argv[i], "-if") == 0) {
+      char tmp[500];
+      sprintf(tmp, "{\"iamo_zk\":{\"creator\":\"%s\"}}", argv[++i]);
       char* err = in3_configure(c, tmp);
       if (err) die(err);
     }
