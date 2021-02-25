@@ -393,7 +393,7 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t
       *signature = sc.signature;
       return IN3_OK;
     }
-    else if (r != IN3_EIGNORE)
+    else if (r != IN3_EIGNORE && r != IN3_OK)
       return r;
   }
 
