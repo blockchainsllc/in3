@@ -876,6 +876,13 @@ static inline in3_ret_t handle_internally(in3_ctx_t* ctx) {
   return res == IN3_EIGNORE ? IN3_OK : res;
 }
 
+static inline char* get_error_message(in3_ctx_t* ctx) {
+  for (; ctx; ctx = ctx->required) {
+    if (ctx->error) return ctx->error;
+  }
+  return "The request could not be handled";
+}
+
 in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
   in3_ctx_execute(ctx);
   return in3_ctx_state(ctx);
@@ -908,7 +915,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // do we need to handle it internaly?
       if (!ctx->raw_response && !ctx->response_context && (ret = handle_internally(ctx)) < 0)
-        return ctx->error ? ret : ctx_set_error(ctx, "The request could not be handled", ret);
+        return ctx->error ? ret : ctx_set_error(ctx, get_error_message(ctx), ret);
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC) && !is_raw_http(ctx)) {
