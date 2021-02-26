@@ -141,7 +141,7 @@ java_win:
   allow_failure: true
   extends: .only_java
   variables:
-    - GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   needs:
     - java
   script:
