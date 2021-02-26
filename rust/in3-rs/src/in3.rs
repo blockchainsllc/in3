@@ -44,7 +44,7 @@ impl Ctx {
         let config = CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_req_t;
         unsafe {
-            ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
+            ptr = in3_sys::req_new(in3.ptr, config.as_ptr());
         }
         Ctx { ptr, config }
     }
@@ -58,7 +58,7 @@ impl Ctx {
     }
 
     async unsafe fn execute(&mut self) -> Result<String, SysError> {
-        match in3_sys::in3_ctx_exec_state(self.ptr) {
+        match in3_sys::in3_req_exec_state(self.ptr) {
             in3_sys::state::REQ_ERROR => {
                 while (*self.ptr).required != std::ptr::null_mut()
                     && (*self.ptr).error == std::ptr::null_mut()
@@ -191,7 +191,7 @@ impl Ctx {
     #[cfg(feature = "blocking")]
     fn send(&mut self) -> In3Result<()> {
         unsafe {
-            let ret = in3_sys::in3_send_ctx(self.ptr);
+            let ret = in3_sys::in3_send_req(self.ptr);
             match ret {
                 in3_sys::in3_ret_t::IN3_OK => Ok(()),
                 _ => Err(ret.into()),
@@ -203,7 +203,7 @@ impl Ctx {
 impl Drop for Ctx {
     fn drop(&mut self) {
         unsafe {
-            in3_sys::ctx_free(self.ptr);
+            in3_sys::req_free(self.ptr);
         }
     }
 }
@@ -463,7 +463,7 @@ impl Client {
 
     #[cfg(feature = "blocking")]
     extern "C" fn in3_rust_transport(
-        request: *mut in3_sys::in3_request_t,
+        request: *mut in3_sys::in3_http_request_t,
     ) -> in3_sys::in3_ret_t::Type {
         // internally calls the rust transport impl, i.e. Client.transport
         let mut urls = Vec::new();

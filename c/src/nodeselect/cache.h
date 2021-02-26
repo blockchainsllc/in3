@@ -40,7 +40,7 @@
  * */
 
 #include "../core/client/client.h"
-#include "../core/client/context.h"
+#include "../core/client/request.h"
 #include "../core/util/bytes.h"
 #include "nodelist.h"
 

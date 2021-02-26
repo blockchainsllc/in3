@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 #include "http_server.h"
-#include "../../core/client/context.h"
+#include "../../core/client/request.h"
 #include "../../core/util/colors.h"
 #include "../../core/util/mem.h"
 #include <arpa/inet.h>
@@ -139,7 +139,7 @@ void* respond(void* arg) {
       rest += 3;
       if (strlen(rest) > 2 && (rest[0] == '{' || rest[0] == '[')) {
         // execute in3
-        in3_req_t* ctx = ctx_new(r->in3, rest);
+        in3_req_t* ctx = req_new(r->in3, rest);
         if (ctx == NULL)
           printf("HTTP/1.1 500 Not Handled\r\n\r\nInvalid request.\r\n");
         else if (ctx->error)
@@ -153,7 +153,7 @@ void* respond(void* arg) {
             params[range.len - 2] = 0;
           }
           fprintf(stderr, "RPC %s %s\n", d_get_string(ctx->requests[0], "method"), params); //conceal typing and save position
-          if (in3_send_ctx(ctx) == IN3_OK) {
+          if (in3_send_req(ctx) == IN3_OK) {
             // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
             if (ctx->error) _free(ctx->error);
             ctx->error            = NULL;
@@ -175,7 +175,7 @@ void* respond(void* arg) {
             printf("HTTP/1.1 500 Not Handled\r\n\r\nCould not execute\r\n");
         }
         if (ctx)
-          ctx_free(ctx);
+          req_free(ctx);
       }
       else
         rest = NULL;
@@ -265,7 +265,7 @@ void http_run_server(const char* port, in3_t* in3) {
     }
 
 #else
-    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");

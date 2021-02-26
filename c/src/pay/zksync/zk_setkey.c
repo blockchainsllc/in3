@@ -1,6 +1,6 @@
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"

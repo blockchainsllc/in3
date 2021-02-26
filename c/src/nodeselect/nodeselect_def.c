@@ -3,8 +3,8 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "nodeselect_def.h"
-#include "../core/client/context_internal.h"
 #include "../core/client/keys.h"
+#include "../core/client/request_internal.h"
 #include "../core/util/bitset.h"
 #include "../core/util/debug.h"
 #include "../core/util/log.h"
@@ -54,7 +54,7 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
 
   // do we support this request?
   if (vc->chain->type != CHAIN_ETH && strcmp(vc->method, "in3_nodeList")) return IN3_EIGNORE;
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result) return IN3_OK;
@@ -411,7 +411,7 @@ static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_req_t* ctx) {
 
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
-  filter.props             = (w->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
+  filter.props             = (w->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_req_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
   filter.exclusions        = parse_signers(d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES)); // we must exclude any manually specified signer nodes
 
   // if incentive is active we should now
@@ -434,7 +434,7 @@ static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_req_t* ctx) {
   in3_nodeselect_def_t* data = w->data;
   const in3_t*          c    = ctx->client;
 
-  if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
+  if (in3_req_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
@@ -462,7 +462,7 @@ static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_req_t* ctx) {
       if (n) memcpy(ctx->signers + i * 20, n->address, 20);
       w = w->next;
     }
-    if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
+    if (signer_nodes) in3_req_free_nodes(signer_nodes);
   }
 
   return IN3_OK;
@@ -484,7 +484,7 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_req_t* ctx) {
     if (nodelist_first_upd8(data))
       res = ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
 
-    if (res == IN3_OK) res = ctx_remove_required(ctx, ctx->required, true);
+    if (res == IN3_OK) res = req_remove_required(ctx, ctx->required, true);
   }
 
   return res;

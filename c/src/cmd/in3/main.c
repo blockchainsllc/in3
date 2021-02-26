@@ -293,11 +293,11 @@ static void execute(in3_t* c, FILE* f) {
     if (d == stop) level--;
     if (level == 0) {
       // time to execute
-      in3_req_t* ctx = ctx_new(c, sb->data);
+      in3_req_t* ctx = req_new(c, sb->data);
       if (ctx->error)
         recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
-        in3_ret_t ret = in3_send_ctx(ctx);
+        in3_ret_t ret = in3_send_req(ctx);
         uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
         if (ctx->error) {
           for (char* x = ctx->error; *x; x++) {
@@ -325,7 +325,7 @@ static void execute(in3_t* c, FILE* f) {
         else
           recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
-      ctx_free(ctx);
+      req_free(ctx);
       first   = 0;
       sb->len = 0;
     }
@@ -595,7 +595,7 @@ static bool      only_show_raw_tx = false;
 static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
 
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
   if (action == PLGN_ACT_TRANSPORT_SEND) {
 #ifndef DEBUG
     if (debug_mode)
@@ -641,7 +641,7 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
 static char*     test_name = NULL;
 static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
 #ifdef USE_CURL
   in3_ret_t r = send_curl(NULL, action, plugin_ctx);
 #elif USE_WINHTTP
@@ -1085,8 +1085,8 @@ int main(int argc, char* argv[]) {
         char adr[41];
         bytes_to_hex((nl->nodelist + i)->address, 20, adr);
         sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
-        ctx = ctx_new(c, req);
-        if (ctx) in3_send_ctx(ctx);
+        ctx = req_new(c, req);
+        if (ctx) in3_send_req(ctx);
         if (run_test_request == 2) {
           int         health     = 1;
           char*       version    = "";
@@ -1097,8 +1097,8 @@ int main(int argc, char* argv[]) {
           char*       urls[1];
           urls[0] = health_url;
           sprintf(health_url, "%s/health", nl->nodelist[i].url);
-          in3_request_t r;
-          in3_req_t     ctx       = {0};
+          in3_http_request_t r;
+          in3_req_t          ctx  = {0};
           ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
           ctx.raw_response->state = IN3_WAITING;
           ctx.client              = c;
@@ -1190,7 +1190,7 @@ int main(int argc, char* argv[]) {
       recorder_print(0, COLORT_RESET "\n");
       if (tr && tr != ctx->error) _free(tr);
       if (health_s) _free(health_s);
-      if (ctx) ctx_free(ctx);
+      if (ctx) req_free(ctx);
     }
 
     recorder_exit(0);

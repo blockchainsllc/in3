@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "eth_api.h"
-#include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
@@ -403,7 +403,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
   d_token_t* result = get_result(ctx);
   if (result) {
     if (d_type(result) == T_NULL) {
-      ctx_free(ctx);
+      req_free(ctx);
       if (count) {
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
@@ -422,12 +422,12 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
     else {
       //
       char* c = d_create_json(ctx->response_context, result);
-      ctx_free(ctx);
+      req_free(ctx);
       return c;
     }
   }
   api_set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
-  ctx_free(ctx);
+  req_free(ctx);
   return NULL;
 }
 

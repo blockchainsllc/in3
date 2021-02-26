@@ -34,9 +34,9 @@
 
 #include "multisig.h"
 #include "../../core/client/client.h"
-#include "../../core/client/context.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
@@ -102,7 +102,7 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
   }
 
   if (ctx)
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       case REQ_ERROR:
         return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
@@ -123,7 +123,7 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
   sb_add_bytes(&sb, "{\"method\":\"eth_call\",\"params\":[{\"to\":", &tmp, 1, false);
   sb_add_bytes(&sb, ",\"data\":", &data, 1, false);
   sb_add_chars(&sb, "},\"latest\"]}");
-  return ctx_add_required(parent, ctx_new(parent->client, sb.data));
+  return req_add_required(parent, req_new(parent->client, sb.data));
 }
 
 static void cpy_right(uint8_t* raw, int index, bytes_t data) {

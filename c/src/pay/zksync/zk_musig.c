@@ -1,6 +1,6 @@
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../third-party/crypto/bignum.h"
@@ -148,7 +148,7 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, d_token_t* 
   TRY_FINAL(ctx_send_sub_request(ctx, conf->proof_verify_method, sb.data, NULL, &result), _free(sb.data))
 
   in3_ret_t ret = (d_type(result) == T_BOOLEAN && d_int(result)) ? IN3_OK : ctx_set_error(ctx, "Proof could not be verified!", IN3_EINVAL);
-  ctx_remove_required(ctx, ctx_find_required(ctx, conf->proof_verify_method), false);
+  req_remove_required(ctx, req_find_required(ctx, conf->proof_verify_method), false);
   return ret;
 }
 

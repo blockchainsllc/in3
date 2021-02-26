@@ -176,9 +176,9 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   _tmp_pos       = 0;
 }
 static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
-  in3_request_t* req = plugin_ctx;
-  int            i;
-  bytes_t        response;
+  in3_http_request_t* req = plugin_ctx;
+  int                 i;
+  bytes_t             response;
   if (d_len(_tmp_responses) <= _tmp_pos) {
     for (i = 0; i < req->urls_len; i++) {
       req->ctx->raw_response[i].state = IN3_ECONFIG;

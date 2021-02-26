@@ -45,7 +45,7 @@
 extern "C" {
 #endif
 #include "client.h"
-#include "context.h"
+#include "request.h"
 
 // ---------- plugin management -----------------
 
@@ -146,7 +146,7 @@ typedef struct in3_req_header {
  * 
  * represents a RPC-request
  */
-typedef struct in3_request {
+typedef struct in3_http_request {
   char*             method;      /**< the http-method to be used */
   char*             payload;     /**< the payload to send */
   char**            urls;        /**< array of urls */
@@ -156,61 +156,61 @@ typedef struct in3_request {
   void*             cptr;        /**< a custom ptr to hold information during */
   uint32_t          wait;        /**< time in ms to wait before sending out the request */
   in3_req_header_t* headers;     /**< optional additional headers to be send with the request */
-} in3_request_t;
+} in3_http_request_t;
 
 /**
- * getter to retrieve the payload from a in3_request_t struct
+ * getter to retrieve the payload from a in3_http_request_t struct
  */
 char* in3_get_request_payload(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 );
 /**
- * getter to retrieve the length of the payload from a in3_request_t struct
+ * getter to retrieve the length of the payload from a in3_http_request_t struct
  */
 uint32_t in3_get_request_payload_len(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 );
 
 /**
- * getter to retrieve the urls list length from a in3_request_t struct
+ * getter to retrieve the urls list length from a in3_http_request_t struct
  */
 int in3_get_request_headers_len(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 );
 /**
- * getter to retrieve the urls list length from a in3_request_t struct
+ * getter to retrieve the urls list length from a in3_http_request_t struct
  */
 char* in3_get_request_headers_at(
-    in3_request_t* request, /**< request struct */
-    int            index    /**< the inde xof the header */
+    in3_http_request_t* request, /**< request struct */
+    int                 index    /**< the inde xof the header */
 );
 
 /**
- * getter to retrieve the http-method from a in3_request_t struct
+ * getter to retrieve the http-method from a in3_http_request_t struct
  */
 char* in3_get_request_method(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 );
 
 /**
- * getter to retrieve the urls list from a in3_request_t struct
+ * getter to retrieve the urls list from a in3_http_request_t struct
  */
 char** in3_get_request_urls(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 );
 
 /**
- * getter to retrieve the urls list length from a in3_request_t struct
+ * getter to retrieve the urls list length from a in3_http_request_t struct
  */
 int in3_get_request_urls_len(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 );
 
 /**
- * getter to retrieve the urls list length from a in3_request_t struct
+ * getter to retrieve the urls list length from a in3_http_request_t struct
  */
 uint32_t in3_get_request_timeout(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 );
 
 /**
@@ -218,12 +218,12 @@ uint32_t in3_get_request_timeout(
  * This function should be used in the transport-function to set the response.
  */
 NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in]the the request */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    int            error,    /**< [in] if <0 this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-    uint32_t       time      /**<  the time this request took in ms or 0 if not possible (it will be used to calculate the weights)*/
+    in3_http_request_t* req,      /**< [in]the the request */
+    int                 index,    /**< [in] the index of the url, since this request could go out to many urls */
+    int                 error,    /**< [in] if <0 this will be reported as error. the message should then be the error-message */
+    const char*         data,     /**<  the data or the the string*/
+    int                 data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    uint32_t            time      /**<  the time this request took in ms or 0 if not possible (it will be used to calculate the weights)*/
 );
 
 /**
@@ -239,7 +239,7 @@ NONULL void in3_ctx_add_response(
     uint32_t    time      /**<  the time this request took in ms or 0 if not possible (it will be used to calculate the weights)*/
 );
 
-typedef in3_ret_t (*in3_transport_legacy)(in3_request_t* request);
+typedef in3_ret_t (*in3_transport_legacy)(in3_http_request_t* request);
 /**
  * defines a default transport which is used when creating a new client.
  */

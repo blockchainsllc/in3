@@ -32,9 +32,9 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
@@ -247,9 +247,9 @@ static in3_ret_t wallet_sign(in3_req_t* ctx, bytes_t message, wallet_t* wallet, 
 
 in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_req_t* ctx, wallet_t* wallet, bytes_t message) {
   // we are sending this the the server
-  in3_req_t* sub = ctx_find_required(ctx, "iamo_zk_add_wallet");
+  in3_req_t* sub = req_find_required(ctx, "iamo_zk_add_wallet");
   if (sub) { // do we have a result?
-    switch (in3_ctx_state(sub)) {
+    switch (in3_req_state(sub)) {
       case REQ_ERROR:
         return ctx_set_error(ctx, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
@@ -268,7 +268,7 @@ in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_req_t* ctx, wallet_t*
   sb_add_chars(&req, "],\"in3\":{\"rpc\":\"");
   sb_add_chars(&req, conf->cosign_rpc);
   sb_add_chars(&req, "\"}}");
-  return ctx_add_required(ctx, ctx_new(ctx->client, req.data));
+  return req_add_required(ctx, req_new(ctx->client, req.data));
 }
 
 in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {

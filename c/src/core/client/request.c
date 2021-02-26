@@ -32,13 +32,13 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "context.h"
+#include "request.h"
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "client.h"
-#include "context_internal.h"
 #include "keys.h"
 #include "plugin.h"
+#include "request_internal.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -55,7 +55,7 @@ static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
   return IN3_OK;
 }
 
-in3_req_t* ctx_new(in3_t* client, const char* req_data) {
+in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
 
@@ -105,11 +105,11 @@ in3_req_t* ctx_new(in3_t* client, const char* req_data) {
   return ctx;
 }
 
-char* ctx_get_error_data(in3_req_t* ctx) {
+char* req_get_error_data(in3_req_t* ctx) {
   return ctx ? ctx->error : "No request context";
 }
 
-char* ctx_get_response_data(in3_req_t* ctx) {
+char* req_get_response_data(in3_req_t* ctx) {
   assert_in3_ctx(ctx);
 
   sb_t sb = {0};
@@ -130,12 +130,12 @@ char* ctx_get_response_data(in3_req_t* ctx) {
   return sb.data;
 }
 
-req_type_t ctx_get_type(in3_req_t* ctx) {
+req_type_t req_get_type(in3_req_t* ctx) {
   assert_in3_ctx(ctx);
   return ctx->type;
 }
 
-in3_ret_t ctx_check_response_error(in3_req_t* c, int i) {
+in3_ret_t req_check_response_error(in3_req_t* c, int i) {
   assert_in3_ctx(c);
 
   d_token_t* r = d_get(c->responses[i], K_ERROR);
@@ -187,7 +187,7 @@ in3_ret_t ctx_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
   return errnumber;
 }
 
-in3_ret_t ctx_get_error(in3_req_t* ctx, int id) {
+in3_ret_t req_get_error(in3_req_t* ctx, int id) {
   if (ctx->error)
     return IN3_ERPC;
   else if (id >= (int) ctx->len)
@@ -199,7 +199,7 @@ in3_ret_t ctx_get_error(in3_req_t* ctx, int id) {
   return IN3_OK;
 }
 
-void in3_ctx_free_nodes(node_match_t* node) {
+void in3_req_free_nodes(node_match_t* node) {
   node_match_t* last_node = NULL;
   while (node) {
     last_node = node;
@@ -223,7 +223,7 @@ bool ctx_is_method(const in3_req_t* ctx, const char* method) {
   return (required_method && strcmp(required_method, method) == 0);
 }
 
-in3_proof_t in3_ctx_get_proof(in3_req_t* ctx, int i) {
+in3_proof_t in3_req_get_proof(in3_req_t* ctx, int i) {
   if (ctx->requests) {
     char* verfification = d_get_stringk(d_get(ctx->requests[i], K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
@@ -234,12 +234,12 @@ in3_proof_t in3_ctx_get_proof(in3_req_t* ctx, int i) {
 }
 
 NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in]the the request */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    int            error,    /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-    uint32_t       time) {
+    in3_http_request_t* req,      /**< [in]the the request */
+    int                 index,    /**< [in] the index of the url, since this request could go out to many urls */
+    int                 error,    /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char*         data,     /**<  the data or the the string*/
+    int                 data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    uint32_t            time) {
   in3_ctx_add_response(req->ctx, index, error, data, data_len, time);
 }
 
@@ -344,7 +344,7 @@ in3_ret_t ctx_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   }
 
   if (ctx)
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       case REQ_ERROR:
         return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
@@ -367,11 +367,11 @@ in3_ret_t ctx_send_sub_request(in3_req_t* parent, char* method, char* params, ch
     else
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
-  ctx = ctx_new(parent->client, req);
+  ctx = req_new(parent->client, req);
   if (!ctx) return ctx_set_error(parent, "Invalid request!", IN3_ERPC);
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
-  return ctx_add_required(parent, ctx);
+  return req_add_required(parent, ctx);
 }
 
 in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
@@ -399,9 +399,9 @@ in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
 
   // get the signature from required
   const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : "sign_ec_raw";
-  in3_req_t*  c      = ctx_find_required(ctx, method);
+  in3_req_t*  c      = req_find_required(ctx, method);
   if (c)
-    switch (in3_ctx_state(c)) {
+    switch (in3_req_state(c)) {
       case REQ_ERROR:
         return ctx_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
       case REQ_WAITING_FOR_RESPONSE:
@@ -411,7 +411,7 @@ in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
         if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len == 65) {
           *signature = cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, c->raw_response->data.len));
           in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), *signature);
-          ctx_remove_required(ctx, c, false);
+          req_remove_required(ctx, c, false);
           return IN3_OK;
         }
         else if (c->raw_response && c->raw_response->state)
@@ -430,9 +430,9 @@ in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
     sb_add_chars(&req, ",");
     sb_add_bytes(&req, NULL, &from, 1, false);
     sb_add_chars(&req, "]}");
-    c = ctx_new(ctx->client, req.data);
+    c = req_new(ctx->client, req.data);
     if (!c) return IN3_ECONFIG;
     c->type = RT_SIGN;
-    return ctx_add_required(ctx, c);
+    return req_add_required(ctx, c);
   }
 }

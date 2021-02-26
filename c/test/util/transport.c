@@ -130,7 +130,7 @@ in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
 
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
@@ -161,13 +161,13 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
 
-  in3_request_t* req      = plugin_ctx;
-  json_ctx_t*    r        = parse_json(req->payload);
-  d_token_t*     request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
-  char*          method   = d_get_string(request, "method");
-  str_range_t    params   = d_to_json(d_get(request, key("params")));
-  char*          p        = alloca(params.len + 1);
-  sb_t*          filename = sb_new(method);
+  in3_http_request_t* req      = plugin_ctx;
+  json_ctx_t*         r        = parse_json(req->payload);
+  d_token_t*          request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  char*               method   = d_get_string(request, "method");
+  str_range_t         params   = d_to_json(d_get(request, key("params")));
+  char*               p        = alloca(params.len + 1);
+  sb_t*               filename = sb_new(method);
   for (d_iterator_t iter = d_iter(d_get(request, key("params"))); iter.left; d_iter_next(&iter)) {
     switch (d_type(iter.token)) {
       case T_BOOLEAN:

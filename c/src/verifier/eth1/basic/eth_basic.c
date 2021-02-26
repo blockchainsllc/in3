@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "eth_basic.h"
-#include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request_internal.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/debug.h"
 #include "../../../core/util/mem.h"
@@ -53,7 +53,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
 
   // make sure we want to verify
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result)
@@ -117,10 +117,10 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
     // we remove it and try again
-    in3_req_t* last_r = ctx_find_required(ctx->ctx, "eth_getTransactionReceipt");
+    in3_req_t* last_r = req_find_required(ctx->ctx, "eth_getTransactionReceipt");
     uint32_t   wait   = d_get_intk(d_get(last_r->requests[0], K_IN3), K_WAIT);
     wait              = wait ? wait * 2 : 1000;
-    ctx_remove_required(ctx->ctx, last_r, false);
+    req_remove_required(ctx->ctx, last_r, false);
     if (wait > 120000) // more than 2 minutes is too long, so we stop here
       return ctx_set_error(ctx->ctx, "Waited too long for the transaction to be minded", IN3_ELIMIT);
     char in3[20];
@@ -132,8 +132,8 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
     // we have a result and we keep it
     str_range_t r = d_to_json(tx_receipt);
     sb_add_range(in3_rpc_handle_start(ctx), r.data, 0, r.len);
-    ctx_remove_required(ctx->ctx, ctx_find_required(ctx->ctx, "eth_getTransactionReceipt"), false);
-    ctx_remove_required(ctx->ctx, ctx_find_required(ctx->ctx, "eth_sendRawTransaction"), false);
+    req_remove_required(ctx->ctx, req_find_required(ctx->ctx, "eth_getTransactionReceipt"), false);
+    req_remove_required(ctx->ctx, req_find_required(ctx->ctx, "eth_sendRawTransaction"), false);
     return in3_rpc_handle_finish(ctx);
   }
 }

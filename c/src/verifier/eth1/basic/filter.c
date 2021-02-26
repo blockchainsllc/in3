@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "filter.h"
-#include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request_internal.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "eth_basic.h"
@@ -182,21 +182,21 @@ in3_ret_t filter_add(in3_filter_handler_t* filters, in3_req_t* ctx, in3_filter_t
 
   in3_ret_t  res           = IN3_OK;
   uint64_t   current_block = 0;
-  in3_req_t* block_ctx     = ctx_find_required(ctx, "eth_blockNumber");
+  in3_req_t* block_ctx     = req_find_required(ctx, "eth_blockNumber");
   if (!block_ctx)
-    return ctx_add_required(ctx, ctx_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
+    return req_add_required(ctx, req_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
   else {
-    switch (in3_ctx_state(block_ctx)) {
+    switch (in3_req_state(block_ctx)) {
       case REQ_ERROR:
         return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
       case REQ_SUCCESS:
-        if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
+        if (IN3_OK != (res = req_get_error(block_ctx, 0)))
           return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
         current_block = d_get_longk(block_ctx->responses[0], K_RESULT);
-        TRY(ctx_remove_required(ctx, block_ctx, false));
+        TRY(req_remove_required(ctx, block_ctx, false));
     }
   }
 
@@ -241,7 +241,7 @@ bool filter_remove(in3_filter_handler_t* filters, size_t id) {
   return true;
 }
 
-static in3_req_t* ctx_find_required_for_block(in3_req_t* ctx, uint64_t block_number) {
+static in3_req_t* req_find_required_for_block(in3_req_t* ctx, uint64_t block_number) {
   // find the subctx for the current blocknumber
   for (in3_req_t* sub_ctx = ctx->required; sub_ctx; sub_ctx = sub_ctx->required) {
     if (!sub_ctx->requests) continue;
@@ -258,18 +258,18 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
     return ctx_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
 
   // fetch the current block number
-  in3_req_t* block_ctx = ctx_find_required(ctx, "eth_blockNumber");
+  in3_req_t* block_ctx = req_find_required(ctx, "eth_blockNumber");
   if (!block_ctx)
-    return ctx_add_required(ctx, ctx_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
+    return req_add_required(ctx, req_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
   else {
-    switch (in3_ctx_state(block_ctx)) {
+    switch (in3_req_state(block_ctx)) {
       case REQ_ERROR:
         return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
       case REQ_SUCCESS:
-        if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
+        if (IN3_OK != (res = req_get_error(block_ctx, 0)))
           return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
     }
   }
@@ -288,7 +288,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
         return IN3_OK;
       }
 
-      in3_req_t* logs_ctx = ctx_find_required(ctx, "eth_getLogs");
+      in3_req_t* logs_ctx = req_find_required(ctx, "eth_getLogs");
       if (!logs_ctx) {
         // create request
         char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
@@ -298,17 +298,17 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
         _free(fopt_);
         char* req = sb_req->data;
         _free(sb_req);
-        return ctx_add_required(ctx, ctx_new(ctx->client, req));
+        return req_add_required(ctx, req_new(ctx->client, req));
       }
       // check existing ctx
-      switch (in3_ctx_state(logs_ctx)) {
+      switch (in3_req_state(logs_ctx)) {
         case REQ_ERROR:
           return ctx_set_error(logs_ctx, logs_ctx->error ? logs_ctx->error : "Error fetching logs", logs_ctx->verification_state ? logs_ctx->verification_state : IN3_ERPC);
         case REQ_WAITING_FOR_RESPONSE:
         case REQ_WAITING_TO_SEND:
           return IN3_WAITING;
         case REQ_SUCCESS:
-          if (IN3_OK != (res = ctx_get_error(logs_ctx, 0)))
+          if (IN3_OK != (res = req_get_error(logs_ctx, 0)))
             return ctx_set_error(logs_ctx, logs_ctx->error ? logs_ctx->error : "Error fetching logs", res);
       }
       d_token_t* r = d_get(logs_ctx->responses[0], K_RESULT);
@@ -329,23 +329,23 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
       else {
         sb_add_char(result, '[');
         for (uint64_t i = f->last_block + 1; i <= blkno; i++) {
-          in3_req_t* block_ctx = ctx_find_required_for_block(ctx, i);
+          in3_req_t* block_ctx = req_find_required_for_block(ctx, i);
 
           if (!block_ctx) {
             char* req = _malloc(150);
             sprintf(req, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
-            res = ctx_add_required(ctx, ctx_new(ctx->client, req));
+            res = req_add_required(ctx, req_new(ctx->client, req));
           }
           else {
             // check existing ctx
-            switch (in3_ctx_state(block_ctx)) {
+            switch (in3_req_state(block_ctx)) {
               case REQ_ERROR:
                 return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching blocks", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
               case REQ_WAITING_FOR_RESPONSE:
               case REQ_WAITING_TO_SEND:
                 return IN3_WAITING;
               case REQ_SUCCESS:
-                if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
+                if (IN3_OK != (res = req_get_error(block_ctx, 0)))
                   return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching blocks", res);
             }
 

@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request.h"
 #include "../../../core/util/bitset.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -109,14 +109,14 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   vhist_t*  vh  = *vhp;
 
   // get validators from contract
-  in3_proof_t proof_ = in3_ctx_get_proof(vc->ctx, vc->index);
+  in3_proof_t proof_ = in3_req_get_proof(vc->ctx, vc->index);
   // TODO we need to make this async and use "in3":{"verification":"none"}
   vc->ctx->client->proof = PROOF_NONE;
   in3_req_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorList", "[]");
   vc->ctx->client->proof = proof_;
-  res                    = ctx_get_error(ctx_, 0);
+  res                    = req_get_error(ctx_, 0);
   if (res != IN3_OK) {
-    ctx_free(ctx_);
+    req_free(ctx_);
     return vc_err(vc, ctx_->error);
   }
 
@@ -246,7 +246,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
   vh_free(vh);
   *vhp = vh_init_nodelist(d_get(ctx_->responses[0], K_RESULT));
-  ctx_free(ctx_);
+  req_free(ctx_);
   return res;
 }
 

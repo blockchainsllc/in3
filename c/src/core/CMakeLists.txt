@@ -44,7 +44,7 @@ add_static_library(
   NAME     core 
   
   SOURCES 
-    client/context.c
+    client/request.c
     client/client.c
     client/verifier.c
     client/execute.c

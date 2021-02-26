@@ -33,9 +33,9 @@
  *******************************************************************************/
 
 #include "zk_helper.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
@@ -269,7 +269,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
     }
 
     // clean up
-    ctx_remove_required(ctx, ctx_find_required(ctx, "contract_address"), false);
+    req_remove_required(ctx, req_find_required(ctx, "contract_address"), false);
   }
 
   if (main) *main = conf->main_contract;
@@ -364,7 +364,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
     }
 
     // clean up
-    ctx_remove_required(ctx, ctx_find_required(ctx, "tokens"), false);
+    req_remove_required(ctx, req_find_required(ctx, "tokens"), false);
 
     if (cache_name) {
       bytes_t         data = bytes((void*) conf->tokens, conf->token_len * sizeof(zksync_token_t));

@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../core/client/context.h"
+#include "../../core/client/request.h"
 
 #ifndef _ETH_API_ENS_H_
 #define _ETH_API_ENS_H_

@@ -62,16 +62,16 @@ For Transport implementations you should always register for those 3 `PLGN_ACT_T
 
 Send will be triggered only if the request is executed synchron, whenever a new request needs to be send out. This request may contain multiple urls, but the same payload.
 
-`arguments` : `in3_request_t*` - a request-object holding the following data:
+`arguments` : `in3_http_request_t*` - a request-object holding the following data:
 
 ```c
-typedef struct in3_request {
+typedef struct in3_http_request {
   char*           payload;  // the payload to send 
   char**          urls;     // array of urls 
   uint_fast16_t   urls_len; // number of urls 
   in3_req_t*      ctx;      // the current context 
   void*           cptr;     // a custom ptr to hold information during 
-} in3_request_t;
+} in3_http_request_t;
 ```
 
 It is expected that a plugin will send out http-requests to each (iterating until `urls_len`) url from `urls` with the `payload`. 
@@ -85,7 +85,7 @@ in3_ret_t transport_handle(void* custom_data, in3_plugin, in3_plugin_act_t actio
   switch (action) {
 
     case PLGN_ACT_TRANSPORT_SEND: {
-      in3_request_t* req = arguments; // cast it to in3_request_t* 
+      in3_http_request_t* req = arguments; // cast it to in3_http_request_t* 
 
       // init the cptr
       in3_curl_t* c = _malloc(sizeof(in3_curl_t));
@@ -121,13 +121,13 @@ This will only triggered if the previously triggered `PLGN_ACT_TRANSPORT_SEND`
 - if the responses were not all set yet.
 - if a `cptr` was set
 
-`arguments` : `in3_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
+`arguments` : `in3_http_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
 
 The plugin needs to wait until the first response was received ( or runs into a timeout). To report, please use `in3_req_add_response()``
 
 ```c
 void in3_req_add_response(
-    in3_request_t* req,      //  the the request 
+    in3_http_request_t* req,      //  the the request 
     int            index,    //  the index of the url, since this request could go out to many urls 
     bool           is_error, //  if true this will be reported as error. the message should then be the error-message 
     const char*    data,     //  the data or the the string of the response
@@ -152,7 +152,7 @@ in3_req_add_response(request, index, true, "Timeout waiting for a response", -1,
 
 If a previous `PLGN_ACT_TRANSPORT_SEND` has set a `cptr` this will be triggered in order to clean up memory.
 
-`arguments` : `in3_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
+`arguments` : `in3_http_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
 
 ### Signing
 
@@ -383,10 +383,10 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
   uint64_t  nonce =0;
 
   // check if a request is already existing
-  in3_req_t* ctx = ctx_find_required(rpc->ctx, "eth_getTransactionCount");
+  in3_req_t* ctx = req_find_required(rpc->ctx, "eth_getTransactionCount");
   if (ctx) {
     // found one - so we check if it is ready.
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       // in case of an error, we report it back to the parent context
       case REQ_ERROR:
         return ctx_set_error(rpc->ctx, ctx->error, IN3_EUNKNOWN);
@@ -398,7 +398,7 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
       // if it is useable, we can now handle the result.
       case REQ_SUCCESS: {
         // check if the response contains a error.
-        TRY(ctx_check_response_error(ctx, 0))
+        TRY(req_check_response_error(ctx, 0))
 
         // read the nonce
         nonce = d_get_longk(ctx->responses[0], K_RESULT);
@@ -414,7 +414,7 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
     // create it
     sprintf(req, "{\"method\":\"eth_getTransactionCount\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"%s\",\"latest\"]}", account_hex_string);
     // and add the request context to the parent.
-    return ctx_add_required(parent, ctx_new(parent->client, req));
+    return req_add_required(parent, req_new(parent->client, req));
   }
 
   // continue here and use the nonce....
@@ -499,7 +499,7 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* args) {
   d_token_t*  params = d_get(vc->request, K_PARAMS);
 
   // did we ask for proof?
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)

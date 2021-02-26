@@ -19,13 +19,13 @@ digraph G {
     sign[label="sign",color=lightgrey, style=""]
     request[label="fetch http",color=lightgrey, style=""]
     
-    exec[ label="in3_ctx_exec_state()",color=lightgrey, style="", shape=ellipse ]
-    free[label="ctx_free()",color=lightgrey, style=""]
+    exec[ label="in3_req_exec_state()",color=lightgrey, style="", shape=ellipse ]
+    free[label="req_free()",color=lightgrey, style=""]
 
     waiting[label="need input"]
 
 
-    RPC -> CTX [label="ctx_new()"]
+    RPC -> CTX [label="req_new()"]
     CTX -> exec
     
     
@@ -55,21 +55,21 @@ digraph G {
 ```
 
 In order to process a request we follow these steps.
-1. `ctx_new` which creates a new context by parsing a JSON-RPC request.
-2. `in3_ctx_exec_state` this will try to process the state and returns the new state, which will be one of he following:
+1. `req_new` which creates a new context by parsing a JSON-RPC request.
+2. `in3_req_exec_state` this will try to process the state and returns the new state, which will be one of he following:
 
     - `REQ_SUCCESS` - we have a response
     - `REQ_ERROR` - we stop because of an unrecoverable error
-    - `REQ_WAITING_TO_SEND` - we need input and need to send out a request. By calling `in3_create_request()` the ctx will switch to the state to `REQ_WAITING_FOR_RESPONSE` until all the needed responses are repoorted. While it is possible to fetch all responses and add them before calling `in3_ctx_exec_state()`, but it would be more efficient if can send all requests out, but then create a response-queue and set one response add a time so we can return as soon as we have the first verifiable  response.
-    - `REQ_WAITING_FOR_RESPONSE` - the request has been send, but no verifieable response is available. Once the next (or more) responses have been added, we call `in3_ctx_exec_state()` again, which will verify all available responses. If we could verify it, we have a respoonse, if not we may either wait for more responses ( in case we send out multiple requests -> `REQ_WAITING_FOR_RESPONSE` ) or we send out new requests (`REQ_WAITING_TO_SEND`)
+    - `REQ_WAITING_TO_SEND` - we need input and need to send out a request. By calling `in3_create_request()` the ctx will switch to the state to `REQ_WAITING_FOR_RESPONSE` until all the needed responses are repoorted. While it is possible to fetch all responses and add them before calling `in3_req_exec_state()`, but it would be more efficient if can send all requests out, but then create a response-queue and set one response add a time so we can return as soon as we have the first verifiable  response.
+    - `REQ_WAITING_FOR_RESPONSE` - the request has been send, but no verifieable response is available. Once the next (or more) responses have been added, we call `in3_req_exec_state()` again, which will verify all available responses. If we could verify it, we have a respoonse, if not we may either wait for more responses ( in case we send out multiple requests -> `REQ_WAITING_FOR_RESPONSE` ) or we send out new requests (`REQ_WAITING_TO_SEND`)
 
-the `in3_send_ctx`-function will executly this:
+the `in3_send_req`-function will executly this:
 
 ```c
-in3_ret_t in3_send_ctx(in3_req_t* ctx) {
+in3_ret_t in3_send_req(in3_req_t* ctx) {
   ctx_req_transports_t transports = {0};
   while (true) {
-    switch (in3_ctx_exec_state(ctx)) {
+    switch (in3_req_exec_state(ctx)) {
       case REQ_ERROR:
       case REQ_SUCCESS:
         transport_cleanup(ctx, &transports, true);
@@ -80,7 +80,7 @@ in3_ret_t in3_send_ctx(in3_req_t* ctx) {
         break;
 
       case REQ_WAITING_TO_SEND: {
-        in3_req_t* last = in3_ctx_last_waiting(ctx);
+        in3_req_t* last = in3_req_last_waiting(ctx);
         switch (last->type) {
           case RT_SIGN:
             in3_handle_sign(last);
@@ -94,9 +94,9 @@ in3_ret_t in3_send_ctx(in3_req_t* ctx) {
 }
 ```
 
-### sync calls with in3_send_ctx
+### sync calls with in3_send_req
 
-This statemachine can be used to process requests synchronously or asynchronously. The  `in3_send_ctx` function, which is used in most convinience-functions will do this synchronously. In order to get user input it relies on 2 callback-functions:
+This statemachine can be used to process requests synchronously or asynchronously. The  `in3_send_req` function, which is used in most convinience-functions will do this synchronously. In order to get user input it relies on 2 callback-functions:
 
 - to sign : [`in3_signer_t`](#in3-signer-t) struct including its callback function is set in the `in3_t` configuration.
 - to fetch data : a [in3_transport_send](#in3-transport-send) function-pointer will be set in the `in3_t` configuration.
@@ -134,7 +134,7 @@ The pk-signer uses the wallet-pointer to point to the raw 32 bytes private key a
 
 #### transport
 
-The transport function is a function-pointer set in the client configuration (`in3_t`) which will be used in the `in3_send_ctx()` function whenever data are required to get from the network. the function will get a [`request_t`](#request-t) object as argument.
+The transport function is a function-pointer set in the client configuration (`in3_t`) which will be used in the `in3_send_req()` function whenever data are required to get from the network. the function will get a [`request_t`](#request-t) object as argument.
 
 The main responsibility of this function is to fetch the requested data and the call [`in3_ctx_add_response`](#in3-ctx-add-response) to report this to the context.
 if the request only sends one request to one url, this is all you have to do.
@@ -146,7 +146,7 @@ In order to process multiple calls to the same resouces the request-object conta
     - `cptr` - a custom `void*` which can be set in the first call pointing to recources you may need to continue in the subsequent calls. 
     - `action` - This value is enum ( [`#in3_req_action_t`](#in3-req-action-t) ), which indicates these current state
 
-So only if you need to continue your call later, because you don't want to and can't set all the responses yet, you need set the `cptr` to a non NULL value. And only in this case `in3_send_ctx()` will follow this process with these states:
+So only if you need to continue your call later, because you don't want to and can't set all the responses yet, you need set the `cptr` to a non NULL value. And only in this case `in3_send_req()` will follow this process with these states:
 
 
 ```

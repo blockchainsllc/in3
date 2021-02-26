@@ -433,7 +433,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   if (vc->chain->type != CHAIN_BTC) return IN3_EIGNORE;
 
   // make sure we want to verify
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;

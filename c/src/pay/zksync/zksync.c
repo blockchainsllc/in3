@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "zksync.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"

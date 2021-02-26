@@ -2,7 +2,7 @@
 #include <windows.h>
 #endif
 
-#include "../../../core/client/context.h"
+#include "../../../core/client/request.h"
 #include "../../../core/util/bytes.h"
 #include "../../../core/util/log.h"
 #include "device_apdu_commands.h"

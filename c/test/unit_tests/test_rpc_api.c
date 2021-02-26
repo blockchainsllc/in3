@@ -40,8 +40,8 @@
 #endif
 #include "../../src/api/eth1/abi.h"
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/request_internal.h"
 #include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -91,7 +91,7 @@ static void test_in3_config() {
 
   TEST_ASSERT_NULL(ctx->error);
   TEST_ASSERT_EQUAL(1, d_get_intk(ctx->responses[0], K_RESULT));
-  ctx_free(ctx);
+  req_free(ctx);
 
   TEST_ASSERT_EQUAL(7, c->chain.chain_id);
   TEST_ASSERT_EQUAL(FLAGS_AUTO_UPDATE_LIST, c->flags & FLAGS_AUTO_UPDATE_LIST);
@@ -167,7 +167,7 @@ static void test_in3_client_rpc() {
   // Invalid calls to in3_client_rpc_ctx()
   in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_blockNumber", "[\"]");
   TEST_ASSERT_NOT_NULL(ctx->error);
-  ctx_free(ctx);
+  req_free(ctx);
 
   // test in3_client_exec_req() with keep_in3 set to true
   c->flags |= FLAGS_KEEP_IN3;
@@ -226,33 +226,33 @@ static void test_in3_checksum_rpc() {
 
 static void test_in3_client_context() {
   in3_t*     c   = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_req_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
+  in3_req_t* ctx = req_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
                               "\"method\":\"eth_getBlockByHash\","
                               "\"params\":[\"0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331\", false],"
                               "\"in3\":{\"version\": \"" IN3_PROTO_VER "\",\"chainId\":\"0x1\"}}]");
-  TEST_ASSERT_EQUAL(IN3_EINVAL, ctx_get_error(ctx, 1));
-  TEST_ASSERT_EQUAL(IN3_ERPCNRES, ctx_get_error(ctx, 0));
+  TEST_ASSERT_EQUAL(IN3_EINVAL, req_get_error(ctx, 1));
+  TEST_ASSERT_EQUAL(IN3_ERPCNRES, req_get_error(ctx, 0));
 
   // null maybe a valid result
   json_ctx_t* json  = parse_json("{\"result\":null}");
   ctx->responses    = malloc(sizeof(d_token_t*));
   ctx->responses[0] = json->result;
-  TEST_ASSERT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
+  TEST_ASSERT_EQUAL(IN3_OK, req_get_error(ctx, 0));
   json_free(json);
 
   // Test with error
   json              = parse_json("{\"error\":\"Unknown\"}");
   ctx->responses[0] = json->result;
-  TEST_ASSERT_EQUAL(IN3_EINVALDT, ctx_get_error(ctx, 0));
-  // Test ctx_check_response_error() which internally also calls ctx_set_error()
-  TEST_ASSERT_EQUAL(IN3_ERPC, ctx_check_response_error(ctx, 0));
+  TEST_ASSERT_EQUAL(IN3_EINVALDT, req_get_error(ctx, 0));
+  // Test req_check_response_error() which internally also calls ctx_set_error()
+  TEST_ASSERT_EQUAL(IN3_ERPC, req_check_response_error(ctx, 0));
   TEST_ASSERT_EQUAL_STRING("Unknown", ctx->error);
   json_free(json);
 
   // Test with error obj
   json              = parse_json("{\"error\":{\"msg\":\"Unknown\",\"id\":\"0xf1\"}}");
   ctx->responses[0] = json->result;
-  TEST_ASSERT_EQUAL(IN3_ERPC, ctx_check_response_error(ctx, 0));
+  TEST_ASSERT_EQUAL(IN3_ERPC, req_check_response_error(ctx, 0));
   TEST_ASSERT_EQUAL_STRING("{\"msg\":\"Unknown\",\"id\":\"0xf1\"}:Unknown", ctx->error);
   json_free(json);
   free(ctx->responses);
@@ -260,10 +260,10 @@ static void test_in3_client_context() {
 
   // Test getter/setter
   TEST_ASSERT_EQUAL(IN3_ERPC, ctx_set_error(ctx, "RPC failure", IN3_ERPC));
-  TEST_ASSERT_EQUAL(IN3_ERPC, ctx_get_error(ctx, 0));
+  TEST_ASSERT_EQUAL(IN3_ERPC, req_get_error(ctx, 0));
   TEST_ASSERT_EQUAL_STRING("RPC failure:{\"msg\":\"Unknown\",\"id\":\"0xf1\"}:Unknown", ctx->error);
 
-  ctx_free(ctx);
+  req_free(ctx);
   in3_free(c);
 }
 

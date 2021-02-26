@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "eth_full.h"
-#include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request_internal.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
@@ -50,7 +50,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
   UNUSED_VAR(action);
   in3_vctx_t* vc = pctx;
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result) return IN3_OK;

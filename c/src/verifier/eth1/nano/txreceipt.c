@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -148,7 +148,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
         return vc_err(vc, "wrong block number in log");
       if (!d_eq(block_hash, d_getl(l, K_BLOCK_HASH, 32)))
         return vc_err(vc, "wrong block hash in log");
-      if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_FULL && d_get_intk(l, K_LOG_INDEX) != i)
+      if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_FULL && d_get_intk(l, K_LOG_INDEX) != i)
         return vc_err(vc, "wrong log index");
       if (!b_cmp(d_get_bytesk(l, K_TRANSACTION_HASH), tx_hash))
         return vc_err(vc, "wrong tx Hash");

@@ -54,7 +54,7 @@ static inline wchar_t* convert_wstr(const char* src, void* dst) {
 
 in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
   if (action != PLGN_ACT_TRANSPORT_SEND) return IN3_ENOTSUP;
   for (unsigned int n = 0; n < req->urls_len; n++) {
     uint32_t  start    = current_ms();

@@ -1,6 +1,6 @@
 #include "recorder.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request_internal.h"
 #include <errno.h>
 #include <math.h>
 #include <stdio.h>
@@ -120,7 +120,7 @@ static int rand_in(void* s) {
 
 static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     entry_free(next_entry("request", NULL));
     req->cptr = &rec;
@@ -139,9 +139,9 @@ static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t actio
 
 static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req = plugin_ctx;
-  node_match_t*  m   = req->ctx->nodes;
-  in3_ret_t      res = rec.transport(NULL, action, plugin_ctx);
+  in3_http_request_t* req = plugin_ctx;
+  node_match_t*       m   = req->ctx->nodes;
+  in3_ret_t           res = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     fprintf(rec.f, ":: request ");
     char* rpc = d_get_stringk(d_get(req->ctx->requests[0], K_IN3), K_RPC);

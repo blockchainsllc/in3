@@ -38,7 +38,7 @@
  * */
 
 #include "../core/client/client.h"
-#include "../core/client/context.h"
+#include "../core/client/request.h"
 #include "../core/util/log.h"
 #include "../core/util/mem.h"
 #include <time.h>

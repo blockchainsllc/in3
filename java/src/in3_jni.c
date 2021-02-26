@@ -174,10 +174,10 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
   int         res;
   jstring     js = NULL;
 
-  in3_req_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
+  in3_req_t* ctx = req_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
-    res = in3_send_ctx(ctx);
+    res = in3_send_req(ctx);
     if (res >= 0) {
       d_token_t* r = d_get(ctx->responses[0], K_RESULT);
       if (r)
@@ -209,7 +209,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
   //need to release this string when done with it in order to
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
-  ctx_free(ctx);
+  req_free(ctx);
 
   if (result) {
     js = (*env)->NewStringUTF(env, result);
@@ -282,10 +282,10 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
   int         res;
   jobject     js = NULL;
 
-  in3_req_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
+  in3_req_t* ctx = req_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
-    res = in3_send_ctx(ctx);
+    res = in3_send_req(ctx);
     if (res >= 0) {
       d_token_t* r = d_get(ctx->responses[0], K_RESULT);
       if (r)
@@ -318,7 +318,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
 
-  ctx_free(ctx);
+  req_free(ctx);
 
   if (result)
     return js;
@@ -348,8 +348,8 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
 
-  in3_request_t* req   = plugin_ctx;
-  uint64_t       start = current_ms();
+  in3_http_request_t* req   = plugin_ctx;
+  uint64_t            start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload

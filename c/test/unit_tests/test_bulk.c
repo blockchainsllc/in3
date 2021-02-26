@@ -49,10 +49,10 @@
 #include <unistd.h>
 
 static in3_ret_t test_bulk_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
-  in3_request_t* req    = plugin_ctx;
-  char*          buffer = NULL;
-  long           length;
-  FILE*          f = fopen("../c/test/testdata/mock/get_blocks.json", "r");
+  in3_http_request_t* req    = plugin_ctx;
+  char*               buffer = NULL;
+  long                length;
+  FILE*               f = fopen("../c/test/testdata/mock/get_blocks.json", "r");
   if (f) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
@@ -101,8 +101,8 @@ static void test_context_bulk() {
       sb_add_chars(req, ",");
   }
   sb_add_chars(req, "]");
-  in3_req_t* block_ctx = ctx_new(in3, req->data);
-  in3_ret_t  ret       = in3_send_ctx(block_ctx);
+  in3_req_t* block_ctx = req_new(in3, req->data);
+  in3_ret_t  ret       = in3_send_req(block_ctx);
   for (uint64_t i = 0; i < blkno; i++) {
     d_token_t* hash = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);
     TEST_ASSERT_NOT_NULL(hash);
@@ -110,7 +110,7 @@ static void test_context_bulk() {
     bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
     in3_log_trace("HASH %s\n", h);
   }
-  ctx_free(block_ctx);
+  req_free(block_ctx);
   _free(req);
   in3_free(in3);
 }

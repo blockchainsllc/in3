@@ -36,7 +36,7 @@
 #define FILTER_H
 
 #include "../../../core/client/client.h"
-#include "../../../core/client/context.h"
+#include "../../../core/client/request.h"
 #include "eth_basic.h"
 
 in3_ret_t filter_add(in3_filter_handler_t* filters, in3_req_t* ctx, in3_filter_type_t type, char* options);

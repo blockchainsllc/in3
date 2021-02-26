@@ -33,9 +33,9 @@
  *******************************************************************************/
 
 #include "iamo_signer.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
@@ -175,7 +175,7 @@ static in3_ret_t send_api_request(in3_req_t* ctx, iamo_signer_config_t* conf, ch
   in3_req_t* found = find_ctx_for(ctx, rp.data);
   if (found) {
     _free(rp.data);
-    switch (in3_ctx_state(found)) {
+    switch (in3_req_state(found)) {
       case REQ_ERROR:
         return ctx_set_error(ctx, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
@@ -238,14 +238,14 @@ static in3_ret_t send_api_request(in3_req_t* ctx, iamo_signer_config_t* conf, ch
 
   in3_log_debug("http-request: %s\n", rp.data);
 
-  found = ctx_new(ctx->client, rp.data);
+  found = req_new(ctx->client, rp.data);
   if (!found) {
     _free(rkey);
     _free(rp.data);
     return ctx_set_error(ctx, "Invalid request!", IN3_ERPC);
   }
   in3_cache_add_ptr(&found->cache, rkey)->props = CACHE_PROP_SRC_REQ;
-  return ctx_add_required(ctx, found);
+  return req_add_required(ctx, found);
 }
 
 static in3_ret_t add_response(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {

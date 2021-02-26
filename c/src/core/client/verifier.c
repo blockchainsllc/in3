@@ -33,9 +33,9 @@
  *******************************************************************************/
 
 #include "client.h"
-#include "context_internal.h"
 #include "keys.h"
 #include "plugin.h"
+#include "request_internal.h"
 
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
 #ifdef LOGGING

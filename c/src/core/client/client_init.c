@@ -37,8 +37,8 @@
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "client.h"
-#include "context_internal.h"
 #include "plugin.h"
+#include "request_internal.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>

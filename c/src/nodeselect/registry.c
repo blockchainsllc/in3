@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "registry.h"
-#include "../core/client/context.h"
 #include "../core/client/keys.h"
+#include "../core/client/request.h"
 #include "../core/util/mem.h"
 #include "../verifier/eth1/nano/eth_nano.h"
 #include "../verifier/eth1/nano/merkle.h"

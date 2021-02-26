@@ -41,8 +41,8 @@
 
 #include "../../include/in3/error.h"
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/request.h"
 #include "../../src/core/util/bytes.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -113,7 +113,7 @@ static void test_signer() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   eth_ledger_set_signer_txn(c, bip_path);
 
-  in3_req_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_req_t* ctx      = req_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   char*      data_str = "msgABCDEF"; // prefixing messages with msg to differentiate between transaction and message signing
   bytes_t*   data     = b_new((uint8_t*) data_str, strlen(data_str));
 

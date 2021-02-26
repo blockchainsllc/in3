@@ -1,7 +1,7 @@
 #include "ens.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
@@ -30,12 +30,12 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
   in3_req_t* ctx = find_pending_ctx(parent, calldata);
 
   if (ctx) {
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       case REQ_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result && d_type(rpc_result) == T_BYTES && d_len(rpc_result) >= 20) {
           *result = d_bytes(rpc_result);
-          //          ctx_remove_required(parent, ctx);
+          //          req_remove_required(parent, ctx);
           return IN3_OK;
         }
         else
@@ -53,7 +53,7 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
     char  data[73];
     bytes_to_hex(calldata.data, 36, data);
     sprintf(req, "{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"0x%s\"},\"latest\"]}", to, data);
-    return ctx_add_required(parent, ctx_new(parent->client, req));
+    return req_add_required(parent, req_new(parent->client, req));
   }
 }
 

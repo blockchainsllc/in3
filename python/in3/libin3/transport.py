@@ -6,7 +6,7 @@ from in3.libin3.rpc_api import libin3_in3_req_add_response
 
 class NativeRequest(c.Structure):
     """
-    Based on in3/client/.h in3_request_t struct
+    Based on in3/client/.h in3_http_request_t struct
     """
     _fields_ = [("method", c.POINTER(c.c_char)),
                 ("payload", c.POINTER(c.c_char)),
@@ -22,7 +22,7 @@ class NativeRequest(c.Structure):
      * 
      * represents a RPC-request
      */
-    typedef struct in3_request {
+    typedef struct in3_http_request {
       char*           method    /**< http-method */
       char*           payload;  /**< the payload to send */
       char**          urls;     /**< array of urls */
@@ -30,7 +30,7 @@ class NativeRequest(c.Structure):
       struct in3_req* ctx;      /**< the current context */
       void*           cptr;     /**< a custom ptr to hold information during */
       uint32_t        wait;     /**< time in ms to wait before sending out the request */
-    } in3_request_t;
+    } in3_http_request_t;
     """
 
 
@@ -49,7 +49,7 @@ class NativeResponse(c.Structure):
          * This function should be used in the transport-function to set the response.
          */
         NONULL void in3_req_add_response(
-            in3_request_t* req,      /**< [in]the the request */
+            in3_http_request_t* req,      /**< [in]the the request */
             int            index,    /**< [in] the index of the url, since this request could go out to many urls */
             bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
             const char*    data,     /**<  the data or the the string*/

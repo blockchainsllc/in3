@@ -96,7 +96,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
   }
 }
 
-in3_ret_t receive_next(in3_request_t* req) {
+in3_ret_t receive_next(in3_http_request_t* req) {
   in3_curl_t* c = req->cptr;
   CURLMsg*    msg;
   int         msgs_left   = -1;
@@ -153,7 +153,7 @@ in3_ret_t cleanup(in3_curl_t* c) {
   return IN3_OK;
 }
 
-in3_ret_t send_curl_nonblocking(in3_request_t* req) {
+in3_ret_t send_curl_nonblocking(in3_http_request_t* req) {
 
   // init the cptr
   in3_curl_t* c = _malloc(sizeof(in3_curl_t));
@@ -182,7 +182,7 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
   return res;
 }
 
-static void readDataBlocking(const char* url, char* payload, in3_response_t* r, uint32_t timeout, in3_request_t* req) {
+static void readDataBlocking(const char* url, char* payload, in3_response_t* r, uint32_t timeout, in3_http_request_t* req) {
   CURL*    curl;
   CURLcode res;
 
@@ -236,7 +236,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
   }
 }
 
-in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout, in3_request_t* req) {
+in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout, in3_http_request_t* req) {
   int i;
   for (i = 0; i < urls_len; i++)
     readDataBlocking(urls[i], payload, result + i, timeout, req);
@@ -251,7 +251,7 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
 
 in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
   // set the init-time
 #ifdef CURL_BLOCKING
   in3_ret_t res;

@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "usn_api.h"
-#include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
@@ -121,13 +121,13 @@ static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t
   in3_req_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", op);
 
   // do we have a valid result?
-  in3_ret_t res = ctx_get_error(ctx, 0);
+  in3_ret_t res = req_get_error(ctx, 0);
   if (res != IN3_OK) {
-    ctx_free(ctx);
+    req_free(ctx);
     return res;
   }
   l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, max);
-  ctx_free(ctx);
+  req_free(ctx);
   return l == max ? l : IN3_EINVALDT;
 }
 
@@ -151,14 +151,14 @@ static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t 
   in3_req_t* ctx = in3_client_rpc_ctx(conf->c, "eth_sendTransaction", op);
 
   // do we have a valid result?
-  in3_ret_t res = ctx_get_error(ctx, 0);
+  in3_ret_t res = req_get_error(ctx, 0);
   if (res != IN3_OK) {
-    ctx_free(ctx);
+    req_free(ctx);
     return res;
   }
 
   int l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), tx_hash, 32);
-  ctx_free(ctx);
+  req_free(ctx);
   return l;
 }
 
@@ -271,7 +271,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   strcpy(result->action, d_get_stringk(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
 
 clean:
-  if (ctx) ctx_free(ctx);
+  if (ctx) req_free(ctx);
 }
 
 usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
@@ -373,13 +373,13 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
 in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
   // first we get the current BlockNumber
   in3_req_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
-  in3_ret_t  res = ctx_get_error(ctx, 0);
+  in3_ret_t  res = req_get_error(ctx, 0);
   if (res != IN3_OK) {
-    ctx_free(ctx);
+    req_free(ctx);
     return res;
   }
   uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
-  ctx_free(ctx);
+  req_free(ctx);
   if (conf->last_checked_block == current_block) return IN3_OK;
 
   if (!conf->last_checked_block) {
@@ -444,8 +444,8 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
     ctx = in3_client_rpc_ctx(conf->c, "eth_getLogs", params);
 
     // do we have a valid result?
-    if ((res = ctx_get_error(ctx, 0))) {
-      ctx_free(ctx);
+    if ((res = req_get_error(ctx, 0))) {
+      req_free(ctx);
       return res;
     }
 
@@ -463,7 +463,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
                       d_get_bytesk(iter.token, K_TRANSACTION_HASH)->data);
     }
 
-    ctx_free(ctx);
+    req_free(ctx);
   }
 
   // update the last_block

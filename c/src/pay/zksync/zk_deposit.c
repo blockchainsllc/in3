@@ -1,6 +1,6 @@
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
@@ -87,7 +87,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
         sb_add_chars(sb, ",\"priorityOpId\":");
         sb_add_int(sb, bytes_to_long(data->data + 64 - 8, 8));
         sb_add_chars(sb, "}");
-        ctx_remove_required(ctx->ctx, ctx_find_required(ctx->ctx, "eth_sendTransactionAndWait"), true);
+        req_remove_required(ctx->ctx, req_find_required(ctx->ctx, "eth_sendTransactionAndWait"), true);
         return in3_rpc_handle_finish(ctx);
       }
     }

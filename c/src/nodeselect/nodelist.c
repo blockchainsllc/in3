@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "nodelist.h"
-#include "../core/client/context_internal.h"
 #include "../core/client/keys.h"
+#include "../core/client/request_internal.h"
 #include "../core/util/bitset.h"
 #include "../core/util/data.h"
 #include "../core/util/debug.h"
@@ -214,10 +214,10 @@ NONULL static in3_ret_t in3_client_fill_chain_whitelist(in3_nodeselect_def_t* da
 
 NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in3_req_t* parent_ctx) {
   // is there a useable required ctx?
-  in3_req_t* ctx = ctx_find_required(parent_ctx, "in3_nodeList");
+  in3_req_t* ctx = req_find_required(parent_ctx, "in3_nodeList");
 
   if (ctx) {
-    if (in3_ctx_state(ctx) == REQ_ERROR || (in3_ctx_state(ctx) == REQ_SUCCESS && !d_get(ctx->responses[0], K_RESULT))) {
+    if (in3_req_state(ctx) == REQ_ERROR || (in3_req_state(ctx) == REQ_SUCCESS && !d_get(ctx->responses[0], K_RESULT))) {
       // blacklist node that gave us an error response for nodelist (if not first update)
       // and clear nodelist params
       if (nodelist_not_first_upd8(data))
@@ -232,7 +232,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
                  : IN3_OK;
     }
 
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       case REQ_ERROR: return IN3_OK; /* already handled before*/
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
@@ -250,7 +250,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
         if (res < 0)
           return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
         in3_cache_store_nodelist(ctx->client, data);
-        ctx_remove_required(parent_ctx, ctx, true);
+        req_remove_required(parent_ctx, ctx, true);
 
 #ifdef NODESELECT_DEF_WL
         in3_client_run_chain_whitelisting(data);
@@ -283,16 +283,16 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   sb_free(in3_sec);
 
   // new client
-  return ctx_add_required(parent_ctx, ctx_new(c, req));
+  return req_add_required(parent_ctx, req_new(c, req));
 }
 
 #ifdef NODESELECT_DEF_WL
 NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, in3_req_t* parent_ctx) {
   // is there a useable required ctx?
-  in3_req_t* ctx = ctx_find_required(parent_ctx, "in3_whiteList");
+  in3_req_t* ctx = req_find_required(parent_ctx, "in3_whiteList");
 
   if (ctx)
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       case REQ_ERROR:
         return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
       case REQ_WAITING_FOR_RESPONSE:
@@ -307,11 +307,11 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
             return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, res));
           in3_cache_store_whitelist(ctx->client, data);
           in3_client_run_chain_whitelisting(data);
-          ctx_remove_required(parent_ctx, ctx, true);
+          req_remove_required(parent_ctx, ctx, true);
           return IN3_OK;
         }
         else
-          return ctx_set_error(parent_ctx, "Error updating white_list", ctx_check_response_error(ctx, 0));
+          return ctx_set_error(parent_ctx, "Error updating white_list", req_check_response_error(ctx, 0));
       }
     }
 
@@ -324,7 +324,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
   sprintf(req, "{\"method\":\"in3_whiteList\",\"jsonrpc\":\"2.0\",\"params\":[\"0x%s\"]}", tmp);
 
   // new client
-  return ctx_add_required(parent_ctx, ctx_new(c, req));
+  return req_add_required(parent_ctx, req_new(c, req));
 }
 #endif
 
@@ -340,11 +340,11 @@ in3_ret_t update_nodes(in3_t* c, in3_nodeselect_def_t* data) {
 
   in3_ret_t ret = update_nodelist(c, data, ctx);
   if (ret == IN3_WAITING && ctx->required) {
-    ret = in3_send_ctx(ctx->required);
+    ret = in3_send_req(ctx->required);
     if (!ret) ret = update_nodelist(c, data, ctx);
   }
 
-  ctx_free(ctx);
+  req_free(ctx);
   return ret;
 }
 
@@ -473,7 +473,7 @@ in3_ret_t in3_node_list_get(in3_req_t* ctx, in3_nodeselect_def_t* data, bool upd
   in3_ret_t res;
 
   // do we need to update the nodelist?
-  if (data->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
+  if (data->nodelist_upd8_params || update || req_find_required(ctx, "in3_nodeList")) {
     // skip update if update has been postponed or there's already one in progress
     if (postpone_update(data) || update_in_progress(ctx))
       goto SKIP_UPDATE;
@@ -488,7 +488,7 @@ SKIP_UPDATE:
 #ifdef NODESELECT_DEF_WL
   // do we need to update the whitelist?
   if (data->whitelist                                                                         // only if we have a whitelist
-      && (data->whitelist->needs_update || update || ctx_find_required(ctx, "in3_whiteList")) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result
+      && (data->whitelist->needs_update || update || req_find_required(ctx, "in3_whiteList")) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result
       && !memiszero(data->whitelist->contract, 20)) {                                         // and we need to have a contract set, zero-contract = manual whitelist, which will not be updated.
     data->whitelist->needs_update = false;
     // now update the whiteList
@@ -593,7 +593,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_req_t* ctx, in3_nodeselect_config_t* w, n
   }
 
   *nodes = first;
-  if (found) in3_ctx_free_nodes(found);
+  if (found) in3_req_free_nodes(found);
 
   // select them based on random
   return res;

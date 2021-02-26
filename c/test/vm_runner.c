@@ -36,8 +36,8 @@
 #define TEST
 #endif
 #include "vm_runner.h"
-#include "../src/core/client/context.h"
 #include "../src/core/client/keys.h"
+#include "../src/core/client/request.h"
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"

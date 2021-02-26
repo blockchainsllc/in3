@@ -39,7 +39,7 @@
 #define DEBUG
 #endif
 
-#include "../../src/core/client/context.h"
+#include "../../src/core/client/request.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/debug.h"
 #include "../../src/core/util/utils.h"

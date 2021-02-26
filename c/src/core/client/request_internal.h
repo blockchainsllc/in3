@@ -34,8 +34,8 @@
 #ifndef CONTEXT_INTERNAL_H
 #define CONTEXT_INTERNAL_H
 
-#include "context.h"
 #include "plugin.h"
+#include "request.h"
 
 #ifdef LOGGING
 #define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
@@ -55,7 +55,7 @@
  * sb_add_chars(&request->results[0].error, my_error);
  * ```
  */
-NONULL in3_request_t* in3_create_request(
+NONULL in3_http_request_t* in3_create_request(
     in3_req_t* ctx /**< [in] the request context. */
 );
 
@@ -63,7 +63,7 @@ NONULL in3_request_t* in3_create_request(
  * frees a previuosly allocated request.
  */
 NONULL void request_free(
-    in3_request_t* req /**< [in] the request. */
+    in3_http_request_t* req /**< [in] the request. */
 );
 
 /**
@@ -85,7 +85,7 @@ in3_ret_t ctx_set_error_intern(
 /**
  * handles a failable context
  *
- * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
+ * This context *MUST* be freed with req_free(ctx) after usage to release the resources.
 */
 in3_ret_t ctx_handle_failable(
     in3_req_t* ctx /**< [in] the current request context. */
@@ -113,7 +113,7 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx);
   assert(r);                   \
   assert(r->state != IN3_OK || r->data.data);
 
-NONULL void in3_ctx_free_nodes(node_match_t* c);
+NONULL void in3_req_free_nodes(node_match_t* c);
 int         ctx_nodes_len(node_match_t* root);
 NONULL bool ctx_is_method(const in3_req_t* ctx, const char* method);
 

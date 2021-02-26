@@ -722,7 +722,7 @@ static void test_nodelist_pick_signer_exclusions() {
 
   size_t test_count = 100; /* we should surely hit a collision by then (unless the code is handling exclusions correctly) */
   for (size_t i = 0; i < test_count; i++) {
-    in3_req_t*        ctx  = ctx_new(in3, "{\"jsonrpc\":\"2.0\","
+    in3_req_t*        ctx  = req_new(in3, "{\"jsonrpc\":\"2.0\","
                                   "\"method\":\"eth_getTransactionByHash\","
                                   "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]}");
     in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .ctx = ctx};
@@ -732,7 +732,7 @@ static void test_nodelist_pick_signer_exclusions() {
     TEST_ASSERT_NOT_NULL(ctx->nodes);
     TEST_ASSERT_EQUAL(1, ctx->signers_length);
     TEST_ASSERT(memcmp(ctx->nodes->address, ctx->signers, 20) != 0);
-    ctx_free(ctx);
+    req_free(ctx);
   }
 
   in3_free(in3);

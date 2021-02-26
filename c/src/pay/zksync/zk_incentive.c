@@ -31,8 +31,8 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"

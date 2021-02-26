@@ -39,8 +39,8 @@
 #endif
 
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/request.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/scache.h"

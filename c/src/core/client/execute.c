@@ -38,9 +38,9 @@
 #include "../../third-party/crypto/secp256k1.h"
 #include "../util/data.h"
 #include "client.h"
-#include "context_internal.h"
 #include "keys.h"
 #include "plugin.h"
+#include "request_internal.h"
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
@@ -55,7 +55,7 @@ NONULL static void response_free(in3_req_t* ctx) {
   int nodes_count = 1;
   if (ctx->nodes) {
     nodes_count = ctx_nodes_len(ctx->nodes);
-    in3_ctx_free_nodes(ctx->nodes);
+    in3_req_free_nodes(ctx->nodes);
   }
   if (ctx->raw_response) {
     for (int i = 0; i < nodes_count; i++) {
@@ -89,7 +89,7 @@ NONULL void in3_check_verified_hashes(in3_t* c) {
   }
 }
 
-NONULL static void ctx_free_intern(in3_req_t* ctx, bool is_sub) {
+NONULL static void req_free_intern(in3_req_t* ctx, bool is_sub) {
   assert_in3_ctx(ctx);
   // only for intern requests, we actually free the original request-string
   if (is_sub && ctx->request_context)
@@ -102,7 +102,7 @@ NONULL static void ctx_free_intern(in3_req_t* ctx, bool is_sub) {
 
   if (ctx->requests) _free(ctx->requests);
   if (ctx->cache) in3_cache_free(ctx->cache, !is_sub);
-  if (ctx->required) ctx_free_intern(ctx->required, true);
+  if (ctx->required) req_free_intern(ctx->required, true);
 
   in3_check_verified_hashes(ctx->client);
   _free(ctx);
@@ -150,7 +150,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
 
   for (uint16_t i = 0; i < c->len; i++) {
     d_token_t * request_token = c->requests[i], *t;
-    in3_proof_t proof         = no_in3 ? PROOF_NONE : in3_ctx_get_proof(c, i);
+    in3_proof_t proof         = no_in3 ? PROOF_NONE : in3_req_get_proof(c, i);
     if (msg_hash) sha3_256_Init(msg_hash);
 
     if (i > 0) sb_add_char(sb, ',');
@@ -502,8 +502,8 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, int nodes_count, in3_response
   return IN3_OK;
 }
 
-NONULL in3_request_t* in3_create_request(in3_req_t* ctx) {
-  switch (in3_ctx_state(ctx)) {
+NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
+  switch (in3_req_state(ctx)) {
     case REQ_ERROR:
       ctx_set_error(ctx, "You cannot create an request if the was an error!", IN3_EINVAL);
       return NULL;
@@ -527,16 +527,16 @@ NONULL in3_request_t* in3_create_request(in3_req_t* ctx) {
       ctx_set_error(ctx, "invalid number of arguments, must be [METHOD,URL,PAYLOAD,HEADER]", IN3_EINVAL);
       return NULL;
     }
-    char*          method      = d_get_string_at(params, 0);
-    d_token_t*     tmp         = d_get_at(params, 2);
-    in3_request_t* request     = _calloc(sizeof(in3_request_t), 1);
-    request->ctx               = ctx;
-    request->urls_len          = 1;
-    request->urls              = _malloc(sizeof(char*));
-    request->urls[0]           = _strdupn(d_get_string_at(params, 1), -1);
-    request->method            = method ? method : (*request->payload ? "POST" : "GET");
-    ctx->raw_response          = _calloc(sizeof(in3_response_t), 1);
-    ctx->raw_response[0].state = IN3_WAITING;
+    char*               method  = d_get_string_at(params, 0);
+    d_token_t*          tmp     = d_get_at(params, 2);
+    in3_http_request_t* request = _calloc(sizeof(in3_http_request_t), 1);
+    request->ctx                = ctx;
+    request->urls_len           = 1;
+    request->urls               = _malloc(sizeof(char*));
+    request->urls[0]            = _strdupn(d_get_string_at(params, 1), -1);
+    request->method             = method ? method : (*request->payload ? "POST" : "GET");
+    ctx->raw_response           = _calloc(sizeof(in3_response_t), 1);
+    ctx->raw_response[0].state  = IN3_WAITING;
 
     switch (d_type(tmp)) {
       case T_NULL:
@@ -595,15 +595,15 @@ NONULL in3_request_t* in3_create_request(in3_req_t* ctx) {
   }
 
   // prepare response-object
-  in3_request_t* request = _calloc(sizeof(in3_request_t), 1);
-  request->ctx           = ctx;
-  request->payload       = payload->data;
-  request->payload_len   = payload->len;
-  request->urls_len      = nodes_count;
-  request->urls          = urls;
-  request->cptr          = NULL;
-  request->wait          = d_get_intk(d_get(ctx->requests[0], K_IN3), K_WAIT);
-  request->method        = payload->len ? "POST" : "GET";
+  in3_http_request_t* request = _calloc(sizeof(in3_http_request_t), 1);
+  request->ctx                = ctx;
+  request->payload            = payload->data;
+  request->payload_len        = payload->len;
+  request->urls_len           = nodes_count;
+  request->urls               = urls;
+  request->cptr               = NULL;
+  request->wait               = d_get_intk(d_get(ctx->requests[0], K_IN3), K_WAIT);
+  request->method             = payload->len ? "POST" : "GET";
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
   ctx->raw_response = _calloc(sizeof(in3_response_t), nodes_count);
@@ -615,7 +615,7 @@ NONULL in3_request_t* in3_create_request(in3_req_t* ctx) {
   return request;
 }
 
-NONULL void request_free(in3_request_t* req) {
+NONULL void request_free(in3_http_request_t* req) {
   // free resources
   free_urls(req->urls, req->urls_len);
   for (in3_req_header_t* h = req->headers; h; h = req->headers) {
@@ -630,7 +630,7 @@ NONULL static bool ctx_is_allowed_to_fail(in3_req_t* ctx) {
   return ctx_is_method(ctx, "in3_nodeList");
 }
 
-in3_req_t* in3_ctx_last_waiting(in3_req_t* ctx) {
+in3_req_t* in3_req_last_waiting(in3_req_t* ctx) {
   in3_req_t* last = ctx;
   for (; ctx; ctx = ctx->required) {
     if (!ctx->response_context) last = ctx;
@@ -681,7 +681,7 @@ typedef struct {
 static void transport_cleanup(in3_req_t* ctx, ctx_req_transports_t* transports, bool free_all) {
   for (int i = 0; i < transports->len; i++) {
     if (free_all || transports->req[i].ctx == ctx) {
-      in3_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+      in3_http_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first_or_none(ctx, PLGN_ACT_TRANSPORT_CLEAN, &req);
       if (!free_all) {
         transports->req[i].ctx = NULL;
@@ -694,10 +694,10 @@ static void transport_cleanup(in3_req_t* ctx, ctx_req_transports_t* transports, 
 
 static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports) {
   in3_log_debug("waiting for the next response ...\n");
-  ctx = in3_ctx_last_waiting(ctx);
+  ctx = in3_req_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
     if (transports->req[i].ctx == ctx) {
-      in3_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+      in3_http_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_RECEIVE, &req);
 #ifdef DEBUG
       node_match_t* w = ctx->nodes;
@@ -724,7 +724,7 @@ static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports
 
 void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   // if we can't create the request, this function will put it into error-state
-  in3_request_t* request = in3_create_request(ctx);
+  in3_http_request_t* request = in3_create_request(ctx);
   if (!request) return;
 
   // do we need to wait?
@@ -782,10 +782,10 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   request_free(request);
 }
 
-in3_ret_t in3_send_ctx(in3_req_t* ctx) {
+in3_ret_t in3_send_req(in3_req_t* ctx) {
   ctx_req_transports_t transports = {0};
   while (true) {
-    switch (in3_ctx_exec_state(ctx)) {
+    switch (in3_req_exec_state(ctx)) {
       case REQ_ERROR:
       case REQ_SUCCESS:
         transport_cleanup(ctx, &transports, true);
@@ -794,7 +794,7 @@ in3_ret_t in3_send_ctx(in3_req_t* ctx) {
         in3_handle_rpc_next(ctx, &transports);
         break;
       case REQ_WAITING_TO_SEND: {
-        in3_req_t* last = in3_ctx_last_waiting(ctx);
+        in3_req_t* last = in3_req_last_waiting(ctx);
         switch (last->type) {
           case RT_SIGN:
             in3_handle_sign(last);
@@ -819,7 +819,7 @@ void in3_sign_ctx_set_signature(
   _free(sign_ctx->signature.data);
 }
 
-in3_req_t* ctx_find_required(const in3_req_t* parent, const char* search_method) {
+in3_req_t* req_find_required(const in3_req_t* parent, const char* search_method) {
   in3_req_t* sub_ctx = parent->required;
   while (sub_ctx) {
     if (!sub_ctx->requests) continue;
@@ -829,14 +829,14 @@ in3_req_t* ctx_find_required(const in3_req_t* parent, const char* search_method)
   return NULL;
 }
 
-in3_ret_t ctx_add_required(in3_req_t* parent, in3_req_t* ctx) {
+in3_ret_t req_add_required(in3_req_t* parent, in3_req_t* ctx) {
   //  printf(" ++ add required %s > %s\n", ctx_name(parent), ctx_name(ctx));
   ctx->required    = parent->required;
   parent->required = ctx;
-  return in3_ctx_execute(ctx);
+  return in3_req_execute(ctx);
 }
 
-in3_ret_t ctx_remove_required(in3_req_t* parent, in3_req_t* ctx, bool rec) {
+in3_ret_t req_remove_required(in3_req_t* parent, in3_req_t* ctx, bool rec) {
   if (!ctx) return IN3_OK;
   in3_req_t* p = parent;
   while (p) {
@@ -844,7 +844,7 @@ in3_ret_t ctx_remove_required(in3_req_t* parent, in3_req_t* ctx, bool rec) {
       //      printf(" -- remove required %s > %s\n", ctx_name(parent), ctx_name(ctx));
       in3_req_t* next = rec ? NULL : ctx->required;
       if (!rec) ctx->required = NULL;
-      ctx_free_intern(ctx, true);
+      req_free_intern(ctx, true);
       p->required = next;
       return IN3_OK;
     }
@@ -853,9 +853,9 @@ in3_ret_t ctx_remove_required(in3_req_t* parent, in3_req_t* ctx, bool rec) {
   return IN3_EFIND;
 }
 
-in3_req_state_t in3_ctx_state(in3_req_t* ctx) {
+in3_req_state_t in3_req_state(in3_req_t* ctx) {
   if (ctx == NULL) return REQ_SUCCESS;
-  in3_req_state_t required_state = ctx->required ? in3_ctx_state(ctx->required) : REQ_SUCCESS;
+  in3_req_state_t required_state = ctx->required ? in3_req_state(ctx->required) : REQ_SUCCESS;
   if (required_state == REQ_ERROR || ctx->error) return REQ_ERROR;
   if (ctx->required && required_state != REQ_SUCCESS) return required_state;
   if (!ctx->raw_response) return REQ_WAITING_TO_SEND;
@@ -864,8 +864,8 @@ in3_req_state_t in3_ctx_state(in3_req_t* ctx) {
   return REQ_SUCCESS;
 }
 
-void ctx_free(in3_req_t* ctx) {
-  if (ctx) ctx_free_intern(ctx, false);
+void req_free(in3_req_t* ctx) {
+  if (ctx) req_free_intern(ctx, false);
 }
 
 static inline in3_ret_t handle_internally(in3_req_t* ctx) {
@@ -883,12 +883,12 @@ static inline char* get_error_message(in3_req_t* ctx) {
   return "The request could not be handled";
 }
 
-in3_req_state_t in3_ctx_exec_state(in3_req_t* ctx) {
-  in3_ctx_execute(ctx);
-  return in3_ctx_state(ctx);
+in3_req_state_t in3_req_exec_state(in3_req_t* ctx) {
+  in3_req_execute(ctx);
+  return in3_req_state(ctx);
 }
 
-in3_ret_t in3_ctx_execute(in3_req_t* ctx) {
+in3_ret_t in3_req_execute(in3_req_t* ctx) {
   in3_ret_t ret = IN3_OK;
 
   // if there is an error it does not make sense to execute.
@@ -901,7 +901,7 @@ in3_ret_t in3_ctx_execute(in3_req_t* ctx) {
   if (ctx->response_context && ctx->verification_state == IN3_OK) return IN3_OK;
 
   // if we have required-contextes, we need to check them first
-  if (ctx->required && (ret = in3_ctx_execute(ctx->required))) {
+  if (ctx->required && (ret = in3_req_execute(ctx->required))) {
     if (ret == IN3_EIGNORE)
       in3_plugin_execute_first(ctx, PLGN_ACT_NL_FAILABLE, ctx);
     else
@@ -961,7 +961,7 @@ in3_ret_t in3_ctx_execute(in3_req_t* ctx) {
         ctx->error              = NULL;
         ctx->verification_state = IN3_WAITING;
         // now try again, which should end in waiting for the next request.
-        return in3_ctx_execute(ctx);
+        return in3_req_execute(ctx);
       }
       else {
         if (ctx_is_allowed_to_fail(ctx))

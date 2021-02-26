@@ -88,7 +88,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
 
   // if we have found one, we verify the result and return the bytes.
   if (ctx)
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       case REQ_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result) {
@@ -97,7 +97,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           keccak(code, calculated_code_hash);
           if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");
-            ctx_remove_required(vc->ctx, ctx, false);
+            req_remove_required(vc->ctx, ctx, false);
             return IN3_EINVAL;
           }
 
@@ -129,7 +129,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
 
     // we can use the cache_key, since it contains the hexencoded string with a "C"-prefix.
     snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"params\":[\"0x%s\",\"latest\"],\"in3\":{\"verification\":\"none\"}}", cache_key + 1);
-    return ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
+    return req_add_required(vc->ctx, req_new(vc->ctx->client, req));
   }
 }
 

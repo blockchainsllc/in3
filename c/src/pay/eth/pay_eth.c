@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "pay_eth.h"
-#include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"

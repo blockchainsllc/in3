@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request_internal.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
@@ -62,10 +62,10 @@ static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
 /**  return data from the client.*/
 static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
-  in3_req_t* ctx = ctx_find_required(parent, method);
+  in3_req_t* ctx = req_find_required(parent, method);
   if (ctx) {
     // found one - so we check if it is useable.
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       // in case of an error, we report it back to the parent context
       case REQ_ERROR:
         return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
@@ -84,7 +84,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
         }
         else
           // or check the error and report it
-          return ctx_check_response_error(ctx, 0);
+          return req_check_response_error(ctx, 0);
       }
     }
   }
@@ -97,7 +97,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
   // create it
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params);
   // and add the request context to the parent.
-  return ctx_add_required(parent, ctx_new(parent->client, req));
+  return req_add_required(parent, req_new(parent->client, req));
 }
 
 /** gets the from-fied from the tx or ask the signer */
@@ -197,8 +197,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   }
 
   // cleanup subcontexts
-  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionCount"), false))
-  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_gasPrice"), false))
+  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount"), false))
+  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice"), false))
 
   return IN3_OK;
 }
@@ -268,7 +268,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
 
   // is there a pending signature?
   // we get the raw transaction from this request
-  in3_req_t* sig_ctx = ctx_find_required(ctx, "sign_ec_hash");
+  in3_req_t* sig_ctx = req_find_required(ctx, "sign_ec_hash");
   if (sig_ctx) {
     bytes_t raw = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
     unsigned_tx = bytes(_malloc(raw.len), raw.len);
