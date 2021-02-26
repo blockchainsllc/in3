@@ -13,9 +13,9 @@ class NativeRequest(c.Structure):
                 ("urls", c.POINTER(c.POINTER(c.c_char))),
                 ("urls_len", c.c_int),
                 ("payload_len", c.c_uint32),
-                ("results", c.c_void_p),
-                ("timeout", c.c_uint32),
-                ("times", c.c_uint32),
+                ("req", c.c_void_p),
+                ("cptr", c.c_void_p),
+                ("wait", c.c_uint32),
                 ("headers", c.c_void_p)]
     """
     /** request-object. 
