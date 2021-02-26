@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "../../c/src/core/client/client.h"
-#include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/client/request_internal.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
@@ -227,11 +227,11 @@ void EMSCRIPTEN_KEEPALIVE wasm_set_sign_account(in3_sign_account_ctx_t* ctx, int
  * The resulting string needs to be freed by the caller!
  */
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
-  in3_req_t*     p   = ctx;
-  in3_request_t* req = NULL;
-  sb_t*          sb  = sb_new("{\"status\":");
+  in3_req_t*          p   = ctx;
+  in3_http_request_t* req = NULL;
+  sb_t*               sb  = sb_new("{\"status\":");
 
-  switch (in3_ctx_exec_state(ctx)) {
+  switch (in3_req_exec_state(ctx)) {
     case REQ_SUCCESS:
       sb_add_chars(sb, "\"ok\", \"result\":");
       sb_add_chars(sb, ctx->response_context->c);
@@ -245,12 +245,12 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       sb_add_chars(sb, "\"waiting\",\"request\":{ \"type\": ");
       sb_add_chars(sb, ctx->type == RT_SIGN ? "\"sign\"" : "\"rpc\"");
       sb_add_chars(sb, ",\"ctx\":");
-      sb_add_int(sb, (unsigned int) in3_ctx_last_waiting(ctx));
+      sb_add_int(sb, (unsigned int) in3_req_last_waiting(ctx));
       sb_add_char(sb, '}');
       break;
     case REQ_WAITING_TO_SEND:
       sb_add_chars(sb, "\"request\"");
-      in3_request_t* request = in3_create_request(ctx);
+      in3_http_request_t* request = in3_create_request(ctx);
       if (request == NULL) {
         sb_add_chars(sb, ",\"error\",\"");
         sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
@@ -368,10 +368,10 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
 
 in3_req_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
   char*      src_data = _strdupn(payload, -1);
-  in3_req_t* ctx      = ctx_new(c, src_data);
+  in3_req_t* ctx      = req_new(c, src_data);
   if (ctx->error) {
     in3_set_error(ctx->error);
-    ctx_free(ctx);
+    req_free(ctx);
     return NULL;
   }
   // add the src-string as cache-entry so it will be freed when finalizing.
@@ -381,7 +381,7 @@ in3_req_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) 
 }
 
 void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_req_t* ctx) {
-  ctx_free(ctx);
+  req_free(ctx);
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
