@@ -101,11 +101,7 @@ class In3Request:
         """
         return c.string_at(self.in3_request.contents.method)
 
-    def timeout(self):
-        """
-        Get timeout of the request, `0` being no set timeout
-        """
-        return self.in3_request.contents.timeout
+
 
 
 class In3Response:
