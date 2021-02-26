@@ -140,8 +140,6 @@ java_win:
   stage: java
   allow_failure: true
   extends: .only_java
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   needs:
     - java
   script:
@@ -150,6 +148,8 @@ java_win:
     - ./gradlew  --info  test
   tags:
     - windows
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 #  artifacts:
 #    reports:
 #      junit: java/build/test-results/test/TEST-*.xml
