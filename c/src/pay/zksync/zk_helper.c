@@ -156,7 +156,7 @@ in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_req_t* ctx, uint32_t*
     cache_name = alloca(60);
     strcpy(cache_name, "zksync_ac_");
     bytes_to_hex(account, 20, cache_name + 9);
-    in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
+    in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = NULL};
     TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
     if (cctx.content) {
       conf->account_id = bytes_to_int(cctx.content->data, 4);
@@ -173,7 +173,7 @@ in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_req_t* ctx, uint32_t*
     uint8_t data[4];
     bytes_t content = bytes(data, 4);
     int_to_bytes(conf->account_id, data);
-    in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &content};
+    in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = &content};
     TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
   }
 
@@ -236,7 +236,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
       TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
       sprintf(cache_name, "zksync_contracts_%x", key(conf->provider_url));
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
+      in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = NULL};
       TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
       if (cctx.content) {
         conf->main_contract = _malloc(20);
@@ -264,7 +264,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
       bytes_t content = bytes(data, 40);
       memcpy(data, main_contract->data, 20);
       memcpy(data + 20, gov_contract->data, 20);
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &content};
+      in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = &content};
       TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
     }
 
@@ -335,7 +335,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
       TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
       sprintf(cache_name, "zksync_tokens_%x", key(conf->provider_url));
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = NULL};
+      in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = NULL};
       TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
       if (cctx.content) {
         conf->token_len = cctx.content->len / sizeof(zksync_token_t);
@@ -368,7 +368,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
 
     if (cache_name) {
       bytes_t         data = bytes((void*) conf->tokens, conf->token_len * sizeof(zksync_token_t));
-      in3_cache_ctx_t cctx = {.ctx = ctx, .key = cache_name, .content = &data};
+      in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = &data};
       TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
     }
   }

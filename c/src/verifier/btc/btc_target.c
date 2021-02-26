@@ -94,7 +94,7 @@ in3_ret_t btc_check_conf(in3_t* c, btc_target_conf_t* conf) {
   if (!conf->data.data) {
     char cache_key[50];
     set_cachekey(conf->chain_id, cache_key);
-    in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = cache_key};
+    in3_cache_ctx_t cctx = {.req = NULL, .content = NULL, .key = cache_key};
     in3_plugin_execute_all(c, PLGN_ACT_CACHE_GET, &cctx);
 
     if (cctx.content) {
@@ -125,7 +125,7 @@ void btc_set_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t dap, uint8_t
   // add to cache
   char cache_key[50];
   set_cachekey(vc->chain->chain_id, cache_key);
-  in3_cache_ctx_t cctx = {.ctx = NULL, .content = &tc->data, .key = cache_key};
+  in3_cache_ctx_t cctx = {.req = NULL, .content = &tc->data, .key = cache_key};
   in3_plugin_execute_first_or_none(vc->ctx, PLGN_ACT_CACHE_SET, &cctx);
 }
 

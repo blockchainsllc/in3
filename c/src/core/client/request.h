@@ -140,21 +140,21 @@ NONULL in3_req_t* req_new(
  * In order to handle calls asynchronously, you need to call the `in3_req_execute` function and provide the data as needed.
  */
 NONULL in3_ret_t in3_send_req(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
  * finds the last waiting request-context.
  */
 NONULL in3_req_t* in3_req_last_waiting(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
  * executes the request and returns its state.
  */
 NONULL in3_req_state_t in3_req_exec_state(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 /**
  * execute the context, but stops whenever data are required.
@@ -213,7 +213,7 @@ NONULL in3_req_state_t in3_req_exec_state(
  * 
  * ```c
  * 
- in3_ret_t in3_send_req(in3_req_t* ctx) {
+ in3_ret_t in3_send_req(in3_req_t* req) {
   in3_ret_t ret;
   // execute the context and store the return value.
   // if the return value is 0 == IN3_OK, it was successful and we return,
@@ -288,35 +288,35 @@ NONULL in3_req_state_t in3_req_exec_state(
  * 
  */
 NONULL in3_ret_t in3_req_execute(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
  * returns the current state of the context.
  */
 NONULL in3_req_state_t in3_req_state(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
  * returns the error of the context.
  */
 char* req_get_error_data(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
  * returns json response for that context
  */
 char* req_get_response_data(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
  * returns the type of the request
  */
 NONULL req_type_t req_get_type(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
@@ -325,7 +325,7 @@ NONULL req_type_t req_get_type(
  * But this will not free the request string passed when creating the context!
  */
 NONULL void req_free(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 /**
  * adds a new context as a requirment.
@@ -339,7 +339,7 @@ NONULL void req_free(
  * ```c
 in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
-  in3_req_t* ctx = req_find_required(parent, method);
+  in3_req_t* req = req_find_required(parent, method);
   if (ctx) {
     // found one - so we check if it is useable.
     switch (in3_req_state(ctx)) {
@@ -379,7 +379,7 @@ in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t*
  */
 NONULL in3_ret_t req_add_required(
     in3_req_t* parent, /**< [in] the current request context. */
-    in3_req_t* ctx     /**< [in] the new request context to add. */
+    in3_req_t* req     /**< [in] the new request context to add. */
 );
 /**
  * searches within the required request contextes for one with the given method.
@@ -396,7 +396,7 @@ NONULL in3_req_t* req_find_required(
  */
 NONULL in3_ret_t req_remove_required(
     in3_req_t* parent, /**< [in] the current request context. */
-    in3_req_t* ctx,    /**< [in] the request context to remove. */
+    in3_req_t* req,    /**< [in] the request context to remove. */
     bool       rec     /**< [in] if true all sub contexts will aösp be removed*/
 );
 /**
@@ -411,7 +411,7 @@ NONULL in3_ret_t req_check_response_error(
  * determins the errorcode for the given request.
  */
 NONULL in3_ret_t req_get_error(
-    in3_req_t* ctx, /**< [in] the current request context. */
+    in3_req_t* req, /**< [in] the current request context. */
     int        id   /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
 
@@ -440,7 +440,7 @@ NONULL in3_req_t* in3_client_rpc_ctx(
  * determines the proof as set in the request.
  */
 NONULL in3_proof_t in3_req_get_proof(
-    in3_req_t* ctx, /**< [in] the current request. */
+    in3_req_t* req, /**< [in] the current request. */
     int        i    /**< [in] the index within the request. */
 );
 #ifdef __cplusplus

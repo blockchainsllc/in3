@@ -55,16 +55,16 @@ static char* get_payment_data(in3_req_t* ctx) {
 
 in3_ret_t zksync_add_payload(in3_pay_payload_ctx_t* ctx) {
   // we only use this, if we also have a request signer
-  if (ctx->ctx->client->plugin_acts & PLGN_ACT_PAY_SIGN_REQ) {
+  if (ctx->req->client->plugin_acts & PLGN_ACT_PAY_SIGN_REQ) {
     sb_add_chars(ctx->sb, ",\"payType\":\"zksync\"");
-    char* payment_data = get_payment_data(ctx->ctx);
+    char* payment_data = get_payment_data(ctx->req);
     if (payment_data)
       sb_add_chars(ctx->sb, payment_data);
   }
   return IN3_OK;
 }
 
-static in3_ret_t ensure_payment_data(in3_req_t* ctx, zksync_config_t* conf) {
+static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
   // do we have a sync_key and account already?
   if (!memiszero(conf->sync_key, 32)) return IN3_OK;
   uint8_t pub[65];
@@ -73,10 +73,10 @@ static in3_ret_t ensure_payment_data(in3_req_t* ctx, zksync_config_t* conf) {
                   "Ethereum Signed Message:\n68"
                   "Access zkSync account.\n\nOnly sign this message for a trusted client!";
 
-  in3_pay_sign_req_ctx_t sctx      = {.ctx = ctx, .request = NULL, .signature = {0}};
+  in3_pay_sign_req_ctx_t sctx      = {.req = req, .request = NULL, .signature = {0}};
   bytes_t                sig_bytes = bytes(sctx.signature, 65);
   keccak(bytes((void*) message, strlen(message)), sctx.request_hash);
-  TRY(in3_plugin_execute_first(ctx, PLGN_ACT_PAY_SIGN_REQ, &sctx))
+  TRY(in3_plugin_execute_first(req, PLGN_ACT_PAY_SIGN_REQ, &sctx))
   if (sig_bytes.len == 65 && sig_bytes.data[64] < 2) sig_bytes.data[64] += 27;
 
   // copy sync_key based on signature as seed
@@ -84,7 +84,7 @@ static in3_ret_t ensure_payment_data(in3_req_t* ctx, zksync_config_t* conf) {
 
   // determine address
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig_bytes.data, sctx.request_hash, sig_bytes.data[64] >= 27 ? sig_bytes.data[64] - 27 : sig_bytes.data[64]))
-    return ctx_set_error(ctx, "Invalid Signature", IN3_EINVAL);
+    return ctx_set_error(req, "Invalid Signature", IN3_EINVAL);
   keccak(pubkey_bytes, sctx.request_hash);
   if (conf->account) _free(conf->account);
   conf->account = _malloc(20);
@@ -105,7 +105,7 @@ static in3_ret_t set_amount(zk_fee_t* dst, in3_req_t* ctx, d_token_t* t) {
 }
 
 static in3_ret_t get_payed_addresses(in3_req_t* ctx, bytes_t* dst) {
-  in3_cache_ctx_t c = {.content = NULL, .ctx = ctx, .key = alloca(20)};
+  in3_cache_ctx_t c = {.content = NULL, .req = ctx, .key = alloca(20)};
   sprintf(c.key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
   TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &c))
   if (c.content) {
@@ -117,7 +117,7 @@ static in3_ret_t get_payed_addresses(in3_req_t* ctx, bytes_t* dst) {
 
 static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, bytes_t payed, bool update_cache) {
   if (update_cache) {
-    in3_cache_ctx_t c = {.content = &payed, .ctx = ctx, .key = alloca(20)};
+    in3_cache_ctx_t c = {.content = &payed, .req = ctx, .key = alloca(20)};
     sprintf(c.key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
     TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &c))
   }

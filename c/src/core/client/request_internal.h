@@ -56,7 +56,7 @@
  * ```
  */
 NONULL in3_http_request_t* in3_create_request(
-    in3_req_t* ctx /**< [in] the request context. */
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
@@ -88,13 +88,13 @@ in3_ret_t ctx_set_error_intern(
  * This context *MUST* be freed with req_free(ctx) after usage to release the resources.
 */
 in3_ret_t ctx_handle_failable(
-    in3_req_t* ctx /**< [in] the current request context. */
+    in3_req_t* req /**< [in] the current request context. */
 );
 
 NONULL_FOR((1, 2, 3, 5))
 in3_ret_t        ctx_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result);
-NONULL in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
-NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx);
+NONULL in3_ret_t ctx_require_signature(in3_req_t* req, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
+NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
 #define assert_in3_ctx(ctx)                                                                    \
   assert(ctx);                                                                                 \
@@ -115,6 +115,6 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx);
 
 NONULL void in3_req_free_nodes(node_match_t* c);
 int         ctx_nodes_len(node_match_t* root);
-NONULL bool ctx_is_method(const in3_req_t* ctx, const char* method);
+NONULL bool ctx_is_method(const in3_req_t* req, const char* method);
 
 #endif // CONTEXT_INTERNAL_H

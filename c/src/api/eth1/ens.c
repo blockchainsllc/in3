@@ -85,7 +85,7 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
   if (in3_plugin_is_registered(parent->client, PLGN_ACT_CACHE)) {
     cachekey = alloca(strlen(name) + 5);
     sprintf(cachekey, "ens:%s:%i:%d", name, type, (int) parent->client->chain.chain_id);
-    in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = NULL};
+    in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = NULL};
     TRY(in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_GET, &cctx))
     if (cctx.content) {
       memcpy(dst, cctx.content->data, 20);
@@ -146,7 +146,7 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
 
   if (type == ENS_RESOLVER || type == ENS_OWNER) {
     memcpy(dst, resolver, 20);
-    in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = &dst_bytes};
+    in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = &dst_bytes};
     in3_plugin_execute_all(parent->client, PLGN_ACT_CACHE_SET, &cctx);
     return IN3_OK;
   }
@@ -182,7 +182,7 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
   else if (type == ENS_NAME) {
   }
 
-  in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = &dst_bytes};
+  in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = &dst_bytes};
   in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_SET, &cctx);
   return IN3_OK;
 }

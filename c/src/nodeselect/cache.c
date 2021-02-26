@@ -97,7 +97,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
   write_cache_key(key, c->chain.chain_id, data->contract);
 
   // get from cache
-  in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = key};
+  in3_cache_ctx_t cctx = {.req = NULL, .content = NULL, .key = key};
   in3_plugin_execute_all(c, PLGN_ACT_CACHE_GET, &cctx);
   bytes_t* b = cctx.content;
   if (!b) return IN3_OK;
@@ -193,7 +193,7 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
   write_cache_key(key, c->chain.chain_id, data->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
-  in3_cache_ctx_t cctx = {.ctx = NULL, .content = &bb->b, .key = key};
+  in3_cache_ctx_t cctx = {.req = NULL, .content = &bb->b, .key = key};
   in3_plugin_execute_all(c, PLGN_ACT_CACHE_SET, &cctx);
 
   data->dirty = false;
@@ -218,7 +218,7 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
   write_cache_key(key, c->chain.chain_id, wl->contract);
 
   // get from cache
-  in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = key};
+  in3_cache_ctx_t cctx = {.req = NULL, .content = NULL, .key = key};
   in3_plugin_execute_all(c, PLGN_ACT_CACHE_GET, &cctx);
   bytes_t* cached_data = cctx.content;
   if (cached_data) {
@@ -263,7 +263,7 @@ in3_ret_t in3_cache_store_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
 
   // store it and ignore return value since failing when writing cache should not stop us.
   in3_req_t       tmp_ctx = {.client = c};
-  in3_cache_ctx_t cctx    = {.ctx = &tmp_ctx, .key = key, .content = &bb->b};
+  in3_cache_ctx_t cctx    = {.req = &tmp_ctx, .key = key, .content = &bb->b};
   in3_plugin_execute_first_or_none(&tmp_ctx, PLGN_ACT_CACHE_SET, &cctx);
 
   // clear buffer

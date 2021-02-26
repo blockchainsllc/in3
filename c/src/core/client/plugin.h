@@ -74,12 +74,12 @@ in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin
  * returns IN3_EPLGN_NONE if no plugin was able to handle specified action, otherwise returns IN3_OK
  * plugin errors are reported via the in3_req_t
  */
-in3_ret_t in3_plugin_execute_first(in3_req_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t in3_plugin_execute_first(in3_req_t* req, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * same as in3_plugin_execute_first(), but returns IN3_OK even if no plugin could handle specified action
  */
-in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* req, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * get direct access to plugin data (if registered) based on action function
@@ -323,7 +323,7 @@ void in3_sign_ctx_set_signature_hex(
  * creates a signer ctx to be used for async signing.
  */
 NONULL in3_sign_ctx_t* create_sign_ctx(
-    in3_req_t* ctx /**< [in] the rpc context */
+    in3_req_t* req /**< [in] the rpc context */
 );
 
 // -------- SET_CONFIG ---------
@@ -377,7 +377,7 @@ typedef void (*in3_storage_clear)(
  * context used during get config
  */
 typedef struct in3_cache_ctx {
-  in3_req_t* ctx;     /**< the request context  */
+  in3_req_t* req;     /**< the request context  */
   char*      key;     /**< the key to fetch */
   bytes_t*   content; /**< the content to set */
 } in3_cache_ctx_t;
@@ -445,7 +445,7 @@ typedef struct {
 // ---- PLGN_ACT_PAY_HANDLE -----------
 
 typedef struct {
-  in3_req_t* ctx;     /**< Request context. */
+  in3_req_t* req;     /**< Request context. */
   sb_t*      payload; /**< the request payload */
   bytes32_t  pk;      /**< the private-key to sign with */
 } in3_pay_handle_ctx_t;
@@ -453,7 +453,7 @@ typedef struct {
 // ---- PAY_SIGN_REQ -----------
 
 typedef struct {
-  in3_req_t* ctx;           /**< Request context. */
+  in3_req_t* req;           /**< Request context. */
   d_token_t* request;       /**< the request sent. */
   bytes32_t  request_hash;  /**< the hash to sign */
   uint8_t    signature[65]; /**< the signature */
@@ -462,7 +462,7 @@ typedef struct {
 // ---- PLGN_ACT_ADD_PAYLOAD -----------
 
 typedef struct {
-  in3_req_t* ctx;     /**< Request context. */
+  in3_req_t* req;     /**< Request context. */
   d_token_t* request; /**< the request sent. */
   sb_t*      sb;      /**< the string builder in the in3-section */
 } in3_pay_payload_ctx_t;
@@ -472,7 +472,7 @@ typedef struct {
 typedef struct {
   char*      msg;   /**< the error message. */
   uint16_t   error; /**< error code. */
-  in3_req_t* ctx;   /**< ctx . */
+  in3_req_t* req;   /**< ctx . */
 } error_log_ctx_t;
 
 // -------- NL_PICK ---------

@@ -139,25 +139,25 @@ void* respond(void* arg) {
       rest += 3;
       if (strlen(rest) > 2 && (rest[0] == '{' || rest[0] == '[')) {
         // execute in3
-        in3_req_t* ctx = req_new(r->in3, rest);
-        if (ctx == NULL)
+        in3_req_t* req = req_new(r->in3, rest);
+        if (req == NULL)
           printf("HTTP/1.1 500 Not Handled\r\n\r\nInvalid request.\r\n");
-        else if (ctx->error)
-          printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", ctx->error);
+        else if (req->error)
+          printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", req->error);
         else {
           // execute it
-          str_range_t range  = d_to_json(d_get(ctx->requests[0], key("params")));
+          str_range_t range  = d_to_json(d_get(req->requests[0], key("params")));
           char*       params = range.data ? alloca(range.len) : NULL;
           if (params) {
             memcpy(params, range.data + 1, range.len - 2);
             params[range.len - 2] = 0;
           }
-          fprintf(stderr, "RPC %s %s\n", d_get_string(ctx->requests[0], "method"), params); //conceal typing and save position
-          if (in3_send_req(ctx) == IN3_OK) {
+          fprintf(stderr, "RPC %s %s\n", d_get_string(req->requests[0], "method"), params); //conceal typing and save position
+          if (in3_send_req(req) == IN3_OK) {
             // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
-            if (ctx->error) _free(ctx->error);
-            ctx->error            = NULL;
-            str_range_t range     = d_to_json(ctx->responses[0]);
+            if (req->error) _free(req->error);
+            req->error            = NULL;
+            str_range_t range     = d_to_json(req->responses[0]);
             range.data[range.len] = 0;
 
             // remove in3
@@ -169,13 +169,13 @@ void* respond(void* arg) {
             range.len = strlen(range.data);
             printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %i\r\n\r\n%s\r\n", (int) range.len, range.data);
           }
-          else if (ctx->error)
-            printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", ctx->error);
+          else if (req->error)
+            printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", req->error);
           else
             printf("HTTP/1.1 500 Not Handled\r\n\r\nCould not execute\r\n");
         }
-        if (ctx)
-          req_free(ctx);
+        if (req)
+          req_free(req);
       }
       else
         rest = NULL;

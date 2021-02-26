@@ -169,7 +169,7 @@ static in3_ret_t wallet_get_from_cache(in3_req_t* ctx, address_t address, wallet
   char account[42];
   account[0] = 'W';
   bytes_to_hex(address, 20, account + 1);
-  in3_cache_ctx_t cc = {.content = NULL, .ctx = ctx, .key = account};
+  in3_cache_ctx_t cc = {.content = NULL, .req = ctx, .key = account};
   TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cc))
   if (cc.content)
     TRY_FINAL(wallet_from_bytes(*cc.content, wallet), b_free(cc.content))
@@ -183,7 +183,7 @@ static in3_ret_t wallet_store_in_cache(in3_req_t* ctx, wallet_t* wallet) {
   account[0] = 'W';
   bytes_to_hex(wallet->account, 20, account + 1);
   bytes_t         data = wallet_to_bytes(wallet);
-  in3_cache_ctx_t cc   = {.content = &data, .ctx = ctx, .key = account};
+  in3_cache_ctx_t cc   = {.content = &data, .req = ctx, .key = account};
   TRY_FINAL(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cc), _free(data.data))
   return IN3_OK;
 }

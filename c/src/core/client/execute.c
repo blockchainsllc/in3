@@ -184,11 +184,11 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain.chain_id));
 
       // allow plugins to add their metadata
-      in3_pay_payload_ctx_t pctx = {.ctx = c, .request = request_token, .sb = sb};
+      in3_pay_payload_ctx_t pctx = {.req = c, .request = request_token, .sb = sb};
       TRY(in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, &pctx))
 
       if (msg_hash) {
-        in3_pay_sign_req_ctx_t sctx      = {.ctx = c, .request = request_token, .signature = {0}};
+        in3_pay_sign_req_ctx_t sctx      = {.req = c, .request = request_token, .signature = {0}};
         bytes_t                sig_bytes = bytes(sctx.signature, 65);
         keccak_Final(msg_hash, sctx.request_hash);
         TRY(in3_plugin_execute_first(c, PLGN_ACT_PAY_SIGN_REQ, &sctx))
@@ -233,7 +233,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
         }
       }
 
-      in3_pay_handle_ctx_t payload_ctx = {.ctx = c, .payload = sb};
+      in3_pay_handle_ctx_t payload_ctx = {.req = c, .payload = sb};
       in3_ret_t            ret         = in3_plugin_execute_first_or_none(c, PLGN_ACT_PAY_HANDLE, &payload_ctx);
       if (ret != IN3_OK)
         return ret;

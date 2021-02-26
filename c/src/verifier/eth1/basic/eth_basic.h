@@ -115,7 +115,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
 in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing the transaction */
-                                  in3_req_t* ctx, /**< the current context */
+                                  in3_req_t* req, /**< the current context */
                                   bytes_t*   dst  /**< the bytes to write the result to. */
 );
 
@@ -123,7 +123,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing th
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
 in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction to sign */
-                          in3_req_t* ctx,    /**< the current context */
+                          in3_req_t* req,    /**< the current context */
                           address_t  from,   /**< the address of the account to sign with */
                           bytes_t*   dst     /**< the bytes to write the result to. */
 );
@@ -131,8 +131,8 @@ in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction t
 /**
  * expects a req-object for a transaction and converts it into a sendRawTransaction after signing.
  */
-in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, /**< the current context */
-                                     d_token_t* req  /**< the request */
+in3_ret_t handle_eth_sendTransaction(in3_req_t* req,     /**< the current context */
+                                     d_token_t* req_data /**< the request */
 );
 
 /**
