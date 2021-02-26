@@ -61,8 +61,8 @@ static void test_in3_config() {
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
   register_transport(c, test_transport);
-
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
+  in3_nodeselect_wrapper_t* w   = in3_get_nodelist(c);
+  in3_ctx_t*                ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
      \"chainId\":7,\
      \"autoUpdateList\":true,\
      \"finality\":50,\
@@ -98,11 +98,11 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(50, c->finality);
   TEST_ASSERT_EQUAL(FLAGS_INCLUDE_CODE, c->flags & FLAGS_INCLUDE_CODE);
   TEST_ASSERT_EQUAL(99, c->max_attempts);
-  TEST_ASSERT_EQUAL(96, c->min_deposit);
+  TEST_ASSERT_EQUAL(96, w->min_deposit);
   TEST_ASSERT_EQUAL(PROOF_FULL, c->proof);
-  TEST_ASSERT_EQUAL(95, c->node_limit);
+  TEST_ASSERT_EQUAL(95, w->node_limit);
   TEST_ASSERT_EQUAL(94, c->replace_latest_block);
-  TEST_ASSERT_EQUAL(93, c->request_count);
+  TEST_ASSERT_EQUAL(93, w->request_count);
   TEST_ASSERT_EQUAL(92, c->signature_count);
   TEST_ASSERT_EQUAL(FLAGS_KEEP_IN3, c->flags & FLAGS_KEEP_IN3);
 

@@ -101,11 +101,8 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->max_attempts          = 7;
   c->max_verified_hashes   = 5;
   c->alloc_verified_hashes = 0;
-  c->min_deposit           = 0;
-  c->node_limit            = 0;
   c->proof                 = PROOF_STANDARD;
   c->replace_latest_block  = 0;
-  c->request_count         = 1;
   c->timeout               = 10000;
   c->id_count              = 1;
 
@@ -235,13 +232,9 @@ char* in3_get_config(in3_t* c) {
   add_bool(sb, ',', "useHttp", c->flags & FLAGS_HTTP);
   add_uint(sb, ',', "maxVerifiedHashes", c->max_verified_hashes);
   add_uint(sb, ',', "timeout", c->timeout);
-  add_uint(sb, ',', "minDeposit", c->min_deposit);
-  add_uint(sb, ',', "nodeProps", c->node_props);
-  add_uint(sb, ',', "nodeLimit", c->node_limit);
   add_string(sb, ',', "proof", (c->proof == PROOF_NONE) ? "none" : (c->proof == PROOF_STANDARD ? "standard" : "full"));
   if (c->replace_latest_block)
     add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
-  add_uint(sb, ',', "requestCount", c->request_count);
 
   in3_get_config_ctx_t cctx = {.client = c, .sb = sb};
   in3_plugin_execute_all(c, PLGN_ACT_CONFIG_GET, &cctx);
@@ -351,35 +344,12 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK_U32(token);
       c->timeout = d_long(token);
     }
-    else if (token->key == key("minDeposit")) {
-      EXPECT_TOK_U64(token);
-      c->min_deposit = d_long(token);
-    }
-    else if (token->key == key("nodeProps")) {
-      EXPECT_TOK_U64(token);
-      c->node_props = d_long(token);
-    }
-    else if (token->key == key("nodeLimit")) {
-      EXPECT_TOK_U16(token);
-      c->node_limit = (uint16_t) d_int(token);
-    }
     else if (token->key == key("proof")) {
       EXPECT_TOK_STR(token);
       EXPECT_TOK(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");
       c->proof = strcmp(d_string(token), "full") == 0
                      ? PROOF_FULL
                      : (strcmp(d_string(token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
-    }
-    else if (token->key == key("replaceLatestBlock")) {
-      EXPECT_TOK_U8(token);
-      c->replace_latest_block = (uint8_t) d_int(token);
-      const uint64_t dp_      = c->replace_latest_block;
-      c->node_props           = (c->node_props & 0xFFFFFFFF) | (dp_ << 32U);
-    }
-    else if (token->key == key("requestCount")) {
-      EXPECT_TOK_U8(token);
-      EXPECT_CFG(d_int(token), "requestCount must be at least 1");
-      c->request_count = (uint8_t) d_int(token);
     }
     else if (token->key == key("verifiedHashes")) {
       EXPECT_TOK_ARR(token);

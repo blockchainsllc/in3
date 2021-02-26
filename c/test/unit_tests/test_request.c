@@ -243,7 +243,7 @@ static void test_configure() {
   tmp = in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
   TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
   TEST_ASSERT_EQUAL(CHAIN_ID_LOCAL, c->chain.chain_id);
-  TEST_ASSERT_EQUAL(1, c->request_count);
+  TEST_ASSERT_EQUAL(1, in3_get_nodelist(c)->request_count);
   TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_nodeselect_def_data(c)->nodelist->url);
   free(tmp);
 
@@ -259,7 +259,8 @@ static void test_configure() {
 }
 
 static void test_configure_validation() {
-  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  in3_t*                    c = in3_for_chain(CHAIN_ID_MAINNET);
+  in3_nodeselect_wrapper_t* w = in3_get_nodelist(c);
   eth_register_pk_signer(c);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
@@ -387,14 +388,14 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":false}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"0x012345678901234567\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":1}");
-  TEST_ASSERT_EQUAL(c->min_deposit, 1);
+  TEST_ASSERT_EQUAL(w->min_deposit, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":0}");
-  TEST_ASSERT_EQUAL(c->min_deposit, 0);
+  TEST_ASSERT_EQUAL(w->min_deposit, 0);
   // fixme:
   // TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":18446744073709551615}"); // UINT64_MAX
   // TEST_ASSERT_EQUAL(c->min_deposit, 18446744073709551615ULL);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":\"0xffffffffffffffff\"}"); // UINT64_MAX
-  TEST_ASSERT_EQUAL(c->min_deposit, 0xffffffffffffffff);
+  TEST_ASSERT_EQUAL(w->min_deposit, 0xffffffffffffffff);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"-1\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"\"}", "expected uint64");
@@ -402,14 +403,14 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":false}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"0x012345678901234567\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":1}");
-  TEST_ASSERT_EQUAL(c->node_props, 1);
+  TEST_ASSERT_EQUAL(w->node_props, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":0}");
-  TEST_ASSERT_EQUAL(c->node_props, 0);
+  TEST_ASSERT_EQUAL(w->node_props, 0);
   // fixme:
   // TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":18446744073709551615}"); // UINT64_MAX
   // TEST_ASSERT_EQUAL(c->node_props, 18446744073709551615ULL);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":\"0xffffffffffffffff\"}"); // UINT64_MAX
-  TEST_ASSERT_EQUAL(c->node_props, 0xffffffffffffffff);
+  TEST_ASSERT_EQUAL(w->node_props, 0xffffffffffffffff);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":\"-1\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":\"0x123412341234\"}", "expected uint16");
@@ -440,7 +441,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"replaceLatestBlock\":255}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"replaceLatestBlock\":\"0xff\"}");
   TEST_ASSERT_EQUAL(c->replace_latest_block, 255);
-  TEST_ASSERT_EQUAL(in3_node_props_get(c->node_props, NODE_PROP_MIN_BLOCK_HEIGHT), c->replace_latest_block);
+  TEST_ASSERT_EQUAL(in3_node_props_get(w->node_props, NODE_PROP_MIN_BLOCK_HEIGHT), c->replace_latest_block);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"0x123412341234\"}", "expected uint8");
@@ -450,7 +451,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":1}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":255}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":\"0xff\"}");
-  TEST_ASSERT_EQUAL(c->request_count, 255);
+  TEST_ASSERT_EQUAL(w->request_count, 255);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":false}", "expected string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":\"0x123412341234\"}", "expected string");
@@ -458,8 +459,8 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"rpc\":\"rpc.local\"}");
   TEST_ASSERT_EQUAL(c->proof, PROOF_NONE);
   TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_LOCAL);
-  TEST_ASSERT_EQUAL(c->request_count, 1);
-  TEST_ASSERT_EQUAL_STRING(in3_nodeselect_def_data(c)->nodelist[0].url, "rpc.local");
+  TEST_ASSERT_EQUAL(w->request_count, 1);
+  TEST_ASSERT_EQUAL_STRING(w->data->nodelist[0].url, "rpc.local");
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":false}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":\"0x123412341234\"}", "expected object");

@@ -274,9 +274,10 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   }
 
   // create request
-  char* req = _malloc(350);
+  in3_nodeselect_wrapper_t* w   = in3_get_nodelist(c);
+  char*                     req = _malloc(350);
   sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"params\":[%i,\"%s\",[]%s],\"in3\":%s}",
-          c->node_limit, seed,
+          w->node_limit, seed,
           ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(data)) ? ",true" : "",
           sb_add_char(in3_sec, '}')->data);
   sb_free(in3_sec);
@@ -388,18 +389,19 @@ static bool in_address_list(bytes_t* filter, address_t adr) {
   return false;
 }
 
-node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights,
+node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_wrapper_t* w, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found,
                                         const in3_node_filter_t* filter, bytes_t* pre_filter) {
 
-  int                found      = 0;
-  uint32_t           weight_sum = 0;
-  in3_node_t*        node_def   = NULL;
-  in3_node_weight_t* weight_def = NULL;
-  node_match_t*      prev       = NULL;
-  node_match_t*      current    = NULL;
-  node_match_t*      first      = NULL;
-  *total_found                  = 0;
+  in3_nodeselect_def_t* data       = w->data;
+  int                   found      = 0;
+  uint32_t              weight_sum = 0;
+  in3_node_t*           node_def   = NULL;
+  in3_node_weight_t*    weight_def = NULL;
+  node_match_t*         prev       = NULL;
+  node_match_t*         current    = NULL;
+  node_match_t*         first      = NULL;
+  *total_found                     = 0;
 
   for (unsigned int i = 0; i < len; i++) {
     node_def   = all_nodes + i;
@@ -440,7 +442,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_def_t* data, in
     UNUSED_VAR(data);
 #endif
 
-    if (node_def->deposit < c->min_deposit) continue;
+    if (node_def->deposit < w->min_deposit) continue;
     if (filter && !in3_node_props_match(filter->props, node_def->props)) continue;
 
   SKIP_FILTERING:
@@ -502,13 +504,14 @@ SKIP_UPDATE:
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_wrapper_t* w, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter) {
   // get all nodes from the nodelist
-  uint64_t           now       = in3_time(NULL);
-  in3_node_t*        all_nodes = NULL;
-  in3_node_weight_t* weights   = NULL;
-  uint32_t           total_weight;
-  unsigned int       all_nodes_len, total_found;
+  in3_nodeselect_def_t* data      = w->data;
+  uint64_t              now       = in3_time(NULL);
+  in3_node_t*           all_nodes = NULL;
+  in3_node_weight_t*    weights   = NULL;
+  uint32_t              total_weight;
+  unsigned int          all_nodes_len, total_found;
 
   in3_ret_t res = in3_node_list_get(ctx, data, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
@@ -516,7 +519,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
 
   // filter out nodes
   node_match_t* found = in3_node_list_fill_weight(
-      ctx->client, data, all_nodes, weights, all_nodes_len,
+      ctx->client, w, all_nodes, weights, all_nodes_len,
       now, &total_weight, &total_found, filter, data->pre_address_filter);
 
   if (total_found == 0) {
@@ -530,7 +533,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_def_t* data, n
     if (blacklisted > all_nodes_len / 2 || data->pre_address_filter) {
       for (unsigned int i = 0; i < all_nodes_len; i++)
         weights[i].blacklisted_until = 0;
-      found = in3_node_list_fill_weight(ctx->client, data, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter, NULL);
+      found = in3_node_list_fill_weight(ctx->client, w, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter, NULL);
     }
 
     if (total_found == 0)

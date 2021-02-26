@@ -226,7 +226,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   char       params[10000];
 
   // configure in3
-  c->request_count   = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
+  sprintf(params, "{\"requestCount\":%d}", (t = d_get(config, key("requestCount"))) ? d_int(t) : 1);
+  in3_configure(c, params);
   method             = d_get_string(request, "method");
   bool        intern = d_get_int(test, "intern");
   str_range_t s      = d_to_json(d_get(request, key("params")));

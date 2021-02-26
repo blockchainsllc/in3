@@ -63,7 +63,7 @@ void test_get_config() {
   if (error) printf("ERROR: %s\n", error);
   TEST_ASSERT_NULL(error);
   TEST_ASSERT_EQUAL_STRING(result,
-                           "{\"autoUpdateList\":true,\"chainId\":5,\"signatureCount\":0,\"finality\":0,\"includeCode\":false,\"bootWeights\":true,\"maxAttempts\":7,\"keepIn3\":false,\"stats\":true,\"useBinary\":false,\"useHttp\":false,\"maxVerifiedHashes\":5,\"timeout\":10000,\"minDeposit\":0,\"nodeProps\":0,\"nodeLimit\":0,\"proof\":\"standard\",\"requestCount\":1,\"nodeRegistry\":{\"contract\":\"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\",\"registryId\":\"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\",\"needsUpdate\":true,\"avgBlockTime\":15}}");
+                           "{\"autoUpdateList\":true,\"chainId\":5,\"signatureCount\":0,\"finality\":0,\"includeCode\":false,\"bootWeights\":true,\"maxAttempts\":7,\"keepIn3\":false,\"stats\":true,\"useBinary\":false,\"useHttp\":false,\"maxVerifiedHashes\":5,\"timeout\":10000,\"proof\":\"standard\",\"requestCount\":1,\"minDeposit\":0,\"nodeProps\":0,\"nodeLimit\":0,\"nodeRegistry\":{\"contract\":\"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\",\"registryId\":\"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\",\"needsUpdate\":true,\"avgBlockTime\":15}}");
   _free(result);
   in3_free(c);
 }

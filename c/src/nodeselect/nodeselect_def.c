@@ -176,6 +176,29 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
       EXPECT_CFG(d_type(token) == T_NULL, "invalid preselect_nodes ");
     }
   }
+  else if (token->key == key("replaceLatestBlock")) {
+    EXPECT_TOK_U8(token);
+    ctx->client->replace_latest_block = (uint8_t) d_int(token);
+    const uint64_t dp_                = ctx->client->replace_latest_block;
+    w->node_props                     = (w->node_props & 0xFFFFFFFF) | (dp_ << 32U);
+  }
+  else if (token->key == key("requestCount")) {
+    EXPECT_TOK_U8(token);
+    EXPECT_CFG(d_int(token), "requestCount must be at least 1");
+    w->request_count = (uint8_t) d_int(token);
+  }
+  else if (token->key == key("minDeposit")) {
+    EXPECT_TOK_U64(token);
+    w->min_deposit = d_long(token);
+  }
+  else if (token->key == key("nodeProps")) {
+    EXPECT_TOK_U64(token);
+    w->node_props = d_long(token);
+  }
+  else if (token->key == key("nodeLimit")) {
+    EXPECT_TOK_U16(token);
+    w->node_limit = (uint16_t) d_int(token);
+  }
   else if (token->key == key("nodeRegistry")) {
     EXPECT_TOK_OBJ(token);
 
@@ -270,7 +293,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     in3_t* c          = ctx->client;
     c->proof          = PROOF_NONE;
     c->chain.chain_id = CHAIN_ID_LOCAL;
-    c->request_count  = 1;
+    w->request_count  = 1;
 
     clear_nodes(data);
     data->nodelist = _calloc(1, sizeof(in3_node_t));
@@ -294,12 +317,17 @@ cleanup:
   return ctx->error_msg ? IN3_ECONFIG : IN3_OK;
 }
 
-static in3_ret_t config_get(in3_nodeselect_def_t* data, in3_get_config_ctx_t* ctx) {
-  sb_t*  sb = ctx->sb;
-  in3_t* c  = ctx->client;
+static in3_ret_t config_get(in3_nodeselect_wrapper_t* w, in3_get_config_ctx_t* ctx) {
+  in3_nodeselect_def_t* data = w->data;
+  sb_t*                 sb   = ctx->sb;
+  in3_t*                c    = ctx->client;
 
   if (c->chain.chain_id == CHAIN_ID_LOCAL)
     add_string(sb, ',', "rpc", data->nodelist->url);
+  add_uint(sb, ',', "requestCount", w->request_count);
+  add_uint(sb, ',', "minDeposit", w->min_deposit);
+  add_uint(sb, ',', "nodeProps", w->node_props);
+  add_uint(sb, ',', "nodeLimit", w->node_limit);
 
   sb_add_chars(sb, ",\"nodeRegistry\":");
   add_hex(sb, '{', "contract", bytes(data->contract, 20));
@@ -375,24 +403,26 @@ static void free_signers(node_match_t* signers) {
   }
 }
 
-static in3_ret_t pick_data(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
+static in3_ret_t pick_data(in3_nodeselect_wrapper_t* w, in3_ctx_t* ctx) {
+  in3_nodeselect_def_t* data = w->data;
+
   // init cache lazily this also means we can be sure that all other related plugins are registered by now
   if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client))
     return IN3_ECONFIG;
 
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
-  filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
+  filter.props             = (w->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
   filter.exclusions        = parse_signers(d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES)); // we must exclude any manually specified signer nodes
 
   // if incentive is active we should now
 
   // Send parallel requests if signatures have been requested
-  int rc = ctx->client->request_count;
-  if (ctx->client->signature_count && ctx->client->request_count <= 1)
+  int rc = w->request_count;
+  if (ctx->client->signature_count && w->request_count <= 1)
     rc = 2;
 
-  in3_ret_t ret = in3_node_list_pick_nodes(ctx, data, &ctx->nodes, rc, &filter);
+  in3_ret_t ret = in3_node_list_pick_nodes(ctx, w, &ctx->nodes, rc, &filter);
   free_signers(filter.exclusions);
   return ret;
 }
@@ -401,8 +431,9 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
 }
 
-static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
-  const in3_t* c = ctx->client;
+static in3_ret_t pick_signer(in3_nodeselect_wrapper_t* w, in3_ctx_t* ctx) {
+  in3_nodeselect_def_t* data = w->data;
+  const in3_t*          c    = ctx->client;
 
   if (in3_ctx_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
@@ -416,9 +447,9 @@ static in3_ret_t pick_signer(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
     node_match_t*     signer_nodes = NULL;
     in3_node_filter_t filter       = NODE_FILTER_INIT;
     filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
-    filter.props                   = c->node_props | NODE_PROP_SIGNER;
+    filter.props                   = w->node_props | NODE_PROP_SIGNER;
     filter.exclusions              = ctx->nodes;
-    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, data, &signer_nodes, total_sig_cnt, &filter);
+    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, w, &signer_nodes, total_sig_cnt, &filter);
     if (res < 0)
       return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
     if (ctx->signers) _free(ctx->signers);
@@ -678,7 +709,8 @@ static in3_nodeselect_def_t* nodelist_get_or_create(chain_id_t chain_id) {
 #endif
 
 in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
-  in3_nodeselect_def_t* data = ((in3_nodeselect_wrapper_t*) plugin_data)->data;
+  in3_nodeselect_wrapper_t* w    = plugin_data;
+  in3_nodeselect_def_t*     data = w->data;
 
 #ifdef THREADSAFE
   // lock only the nodelist
@@ -698,10 +730,10 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
     case PLGN_ACT_CONFIG_SET:
       UNLOCK_AND_RETURN(config_set(data, (in3_configure_ctx_t*) plugin_ctx, plugin_data))
     case PLGN_ACT_CONFIG_GET:
-      UNLOCK_AND_RETURN(config_get(data, (in3_get_config_ctx_t*) plugin_ctx))
+      UNLOCK_AND_RETURN(config_get(w, (in3_get_config_ctx_t*) plugin_ctx))
     case PLGN_ACT_NL_PICK: {
       in3_nl_pick_ctx_t* pctx = plugin_ctx;
-      UNLOCK_AND_RETURN(pctx->type == NL_DATA ? pick_data(data, pctx->ctx) : pick_signer(data, pctx->ctx))
+      UNLOCK_AND_RETURN(pctx->type == NL_DATA ? pick_data(w, pctx->ctx) : pick_signer(w, pctx->ctx))
     }
     case PLGN_ACT_NL_PICK_FOLLOWUP:
       UNLOCK_AND_RETURN(pick_followup(data, plugin_ctx))
@@ -781,6 +813,16 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   if (in3_plugin_is_registered(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD))
     return IN3_EIGNORE;
   in3_nodeselect_wrapper_t* data = _malloc(sizeof(*data));
+  data->request_count            = 1;
+  data->min_deposit              = 0;
+  data->node_limit               = 0;
   data->data                     = nodelist_get_or_create(c->chain.chain_id);
   return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_handle_action, data, false);
+}
+
+in3_nodeselect_wrapper_t* in3_get_nodelist(in3_t* c) {
+  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+    if (p->action_fn == in3_nodeselect_handle_action) return p->data;
+  }
+  return NULL;
 }

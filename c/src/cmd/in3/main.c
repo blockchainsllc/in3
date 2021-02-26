@@ -199,11 +199,27 @@ in3_ens <domain> <field>\n\
 \n",
                  name);
 }
-
 _Noreturn static void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
   recorder_exit(EXIT_FAILURE);
 }
+static void _configure(in3_t* c, char* k, char* val) {
+  char* data = alloca(strlen(val) + strlen(k) + 8);
+  sprintf(data, "{\"%s\": \"%s\"}", k, val);
+  char* e = in3_configure(c, data);
+  if (e) die(e);
+}
+static void _configure2(in3_t* c, char* k1, char* k2, const char* p, char* val) {
+  char* pattern = alloca(strlen(val) + strlen(k1) + strlen(k2) + 16);
+  char* data    = alloca(strlen(val) + strlen(k1) + strlen(k2) + 16);
+  sprintf(pattern, "{\"%s\":{\"%s\" : %s}}", "%s", "%s", p);
+  sprintf(data, pattern, k1, k2, val);
+  char* e = in3_configure(c, data);
+  if (e) die(e);
+}
+
+#define configure(s, p)        _configure(c, s, p)
+#define configure_2(s1, s2, p) _configure2(c, s1, s2, "\"%s\"", p)
 
 static bool debug_mode = false;
 static void print_hex(uint8_t* data, int len) {
@@ -684,8 +700,7 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                    = in3_for_chain(CHAIN_ID_MAINNET);
-  c->request_count            = 2;
+  in3_t*     c                = in3_for_chain(CHAIN_ID_MAINNET);
   bool       out_response     = false;
   int        run_test_request = 0;
   bool       force_hex        = false;
@@ -706,12 +721,16 @@ int main(int argc, char* argv[]) {
   char*      port             = NULL;
   char*      sig_type         = "raw";
   bool       to_eth           = false;
+  char*      rc               = "2";
 
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
 #ifndef USE_WINHTTP
-  c->request_count = 1;
+  rc = "1";
 #endif
+
+  configure("requestCount", rc);
+
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-fi") == 0) {
@@ -740,12 +759,7 @@ int main(int argc, char* argv[]) {
   }
 
 #ifdef ZKSYNC
-  if (getenv("IN3_ZKS")) {
-    char tmp[500];
-    sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", getenv("IN3_ZKS"));
-    char* err = in3_configure(c, tmp);
-    if (err) die(err);
-  }
+  if (getenv("IN3_ZKS")) configure_2("zksync", "provider_url", getenv("IN3_ZKS"));
 #endif
 
   if (getenv("IN3_CHAIN"))
@@ -794,76 +808,32 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
 #ifdef IAMO_SIGNER
-    else if (strcmp(argv[i], "-idk") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"iamo\":{\"device_key\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-is") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"iamo\":{\"service\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
+    else if (strcmp(argv[i], "-idk") == 0)
+      configure_2("iamo", "device_key", argv[++i]);
+    else if (strcmp(argv[i], "-is") == 0)
+      configure_2("iamo", "service", argv[++i]);
 #endif
 #ifdef IAMO_ZK
-    else if (strcmp(argv[i], "-imc") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"iamo_zk\":{\"master_copy\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-if") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"iamo_zk\":{\"creator\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
+    else if (strcmp(argv[i], "-imc") == 0)
+      configure_2("iamo_zk", "master_copy", argv[++i]);
+    else if (strcmp(argv[i], "-if") == 0)
+      configure_2("iamo_zk", "creator", argv[++i]);
 #endif
 #ifdef ZKSYNC
-    else if (strcmp(argv[i], "-zks") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"zksync\":{\"provider_url\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-zka") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"zksync\":{\"account\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-zpm") == 0) {
-      char tmp[100];
-      sprintf(tmp, "{\"zksync\":{\"proof_method\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-zkat") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"zksync\":{\"signer_type\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-zms") == 0) {
-      char tmp[1000];
-      sprintf(tmp, "{\"zksync\":{\"musig_pub_keys\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-zmu") == 0) {
-      char tmp[1000];
-      sprintf(tmp, "{\"zksync\":{\"musig_urls\":[null,\"%s\"]}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
-    else if (strcmp(argv[i], "-zsk") == 0) {
-      char tmp[500];
-      sprintf(tmp, "{\"zksync\":{\"sync_key\":\"%s\"}}", argv[++i]);
-      char* err = in3_configure(c, tmp);
-      if (err) die(err);
-    }
+    else if (strcmp(argv[i], "-zks") == 0)
+      configure_2("zksync", "provider_url", argv[++i]);
+    else if (strcmp(argv[i], "-zka") == 0)
+      configure_2("zksync", "account", argv[++i]);
+    else if (strcmp(argv[i], "-zpm") == 0)
+      configure_2("zksync", "proof_method", argv[++i]);
+    else if (strcmp(argv[i], "-zkat") == 0)
+      configure_2("zksync", "signer_type", argv[++i]);
+    else if (strcmp(argv[i], "-zms") == 0)
+      configure_2("zksync", "musig_pub_keys", argv[++i]);
+    else if (strcmp(argv[i], "-zmu") == 0)
+      _configure2(c, "zksync", "musig_urls", "[null,\"%s\"]", argv[++i]);
+    else if (strcmp(argv[i], "-zsk") == 0)
+      configure_2("zksync", "sync_key", argv[++i]);
     else if (strcmp(argv[i], "-zc2") == 0) {
       char* c2val = argv[++i];
       if (strlen(c2val) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
@@ -901,7 +871,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
-      c->min_deposit = atoll(argv[++i]);
+      configure("minDeposit", argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->flags |= FLAGS_KEEP_IN3;
     else if (strcmp(argv[i], "-bw") == 0)
@@ -925,7 +895,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-os") == 0)
       only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)
-      c->request_count = atoi(argv[++i]);
+      configure("requestCount", argv[++i]);
     else if (strcmp(argv[i], "-a") == 0)
       c->max_attempts = atoi(argv[++i]);
     else if (strcmp(argv[i], "-name") == 0)
