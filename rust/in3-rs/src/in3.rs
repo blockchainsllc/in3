@@ -84,7 +84,7 @@ impl Ctx {
             in3_sys::state::REQ_WAITING_TO_SEND => {
                 let request = in3_sys::in3_create_request(self.ptr);
                 match (*(*request).ctx).type_ {
-                    in3_sys::ctx_type::CT_SIGN => {
+                    in3_sys::ctx_type::RT_SIGN => {
                         let slice = CStr::from_ptr((*request).payload)
                             .to_str()
                             .expect("result is not valid UTF-8");
@@ -112,7 +112,7 @@ impl Ctx {
                         in3_sys::request_free(request);
                         Err(SysError::TryAgain)
                     }
-                    in3_sys::ctx_type::CT_RPC => {
+                    in3_sys::ctx_type::RT_RPC => {
                         let method = CStr::from_ptr((*request).method)
                             .to_str()
                             .expect("method is not valid UTF-8");

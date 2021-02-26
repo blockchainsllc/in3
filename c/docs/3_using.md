@@ -35,8 +35,8 @@ digraph G {
     exec -> request[label="REQ_WAITING_FOR_RESPONSE"]
 
     
-    waiting -> sign[label=CT_SIGN]
-    waiting -> request[label=CT_RPC] 
+    waiting -> sign[label=RT_SIGN]
+    waiting -> request[label=RT_RPC] 
     
     sign -> exec [label="in3_ctx_add_response()"]
     request -> exec[label="in3_ctx_add_response()"]

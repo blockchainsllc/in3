@@ -45,11 +45,11 @@
 extern "C" {
 #endif
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 /**
@@ -192,8 +192,8 @@ NONULL in3_req_state_t in3_req_exec_state(
   exec -> response[label="IN3_OK"]
   exec -> waiting[label="IN3_WAITING"]
   
-  waiting -> sign[label=CT_SIGN]
-  waiting -> request[label=CT_RPC] 
+  waiting -> sign[label=RT_SIGN]
+  waiting -> request[label=RT_RPC] 
   
   sign -> exec [label="in3_ctx_add_response()"]
   request -> exec[label="in3_ctx_add_response()"]
