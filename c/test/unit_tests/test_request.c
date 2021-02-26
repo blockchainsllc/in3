@@ -82,10 +82,10 @@ static void test_configure_request() {
   json_ctx_t*         json    = parse_json(request->payload);
   d_token_t*          in3     = d_get(d_get_at(json->result, 0), K_IN3);
   TEST_ASSERT_NOT_NULL(in3);
-  TEST_ASSERT_EQUAL(1, d_get_int(in3, "useFullProof"));
-  TEST_ASSERT_EQUAL(1, d_get_int(in3, "useBinary"));
-  TEST_ASSERT_EQUAL(10, d_get_int(in3, "finality"));
-  TEST_ASSERT_EQUAL(6, d_get_int(in3, "latestBlock"));
+  TEST_ASSERT_EQUAL(1, d_get_intk(in3, key("useFullProof")));
+  TEST_ASSERT_EQUAL(1, d_get_intk(in3, key("useBinary")));
+  TEST_ASSERT_EQUAL(10, d_get_intk(in3, key("finality")));
+  TEST_ASSERT_EQUAL(6, d_get_intk(in3, key("latestBlock")));
   d_token_t* signers = d_get(in3, key("signers"));
   TEST_ASSERT_NOT_NULL(signers);
   TEST_ASSERT_EQUAL(2, d_len(signers));
@@ -136,7 +136,7 @@ static void test_configure_signed_request() {
   json_ctx_t*         json    = parse_json(request->payload);
   d_token_t*          in3     = d_get(d_get_at(json->result, 0), K_IN3);
   TEST_ASSERT_NOT_NULL(in3);
-  bytes_t* sig = d_get_bytes(in3, "sig");
+  bytes_t* sig = d_get_bytesk(in3, key("sig"));
   TEST_ASSERT_NOT_NULL(sig);
   TEST_ASSERT_EQUAL(65, sig->len);
   char hex[150];

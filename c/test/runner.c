@@ -228,8 +228,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   // configure in3
   sprintf(params, "{\"requestCount\":%d}", (t = d_get(config, key("requestCount"))) ? d_int(t) : 1);
   in3_configure(c, params);
-  method             = d_get_string(request, "method");
-  bool        intern = d_get_int(test, "intern");
+  method             = d_get_stringk(request, key("method"));
+  bool        intern = d_get_intk(test, key("intern"));
   str_range_t s      = d_to_json(d_get(request, key("params")));
 
   if (!method) {
@@ -248,7 +248,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   if (intern) _tmp_pos++; // if this is a intern, then the first response is the expected, while the all other come after this.
 
   //  _tmp_response = response;
-  int is_bin = d_get_int(test, "binaryFormat");
+  int is_bin = d_get_intk(test, key("binaryFormat"));
 
   in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err);
   fflush(stdout);
@@ -314,7 +314,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   int   i;
   in3_log_set_prefix("");
 
-  if ((descr = d_get_string(test, "descr"))) {
+  if ((descr = d_get_stringk(test, key("descr")))) {
     if (fuzz_prop)
       sprintf(temp, "  ...  manipulate #%s", fuzz_prop);
     else
@@ -401,7 +401,7 @@ int runRequests(char** names, int test_index) {
 
         fuzz_pos          = -1;
         in3_proof_t proof = PROOF_STANDARD;
-        if ((str_proof = d_get_string(test, "proof"))) {
+        if ((str_proof = d_get_stringk(test, key("proof")))) {
           if (strcmp(str_proof, "none") == 0) proof = PROOF_NONE;
           if (strcmp(str_proof, "standard") == 0) proof = PROOF_STANDARD;
           if (strcmp(str_proof, "full") == 0) proof = PROOF_FULL;
@@ -410,12 +410,12 @@ int runRequests(char** names, int test_index) {
         count++;
         if (test_index < 0 || count == test_index) {
           total++;
-          prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), -1);
+          prepare_response(1, d_get(test, key("response")), d_get_intk(test, key("binaryFormat")), -1);
           mem_reset();
           if (run_test(test, count, NULL, proof)) failed++;
         }
 
-        if (d_get_int(test, "fuzzer")) {
+        if (d_get_intk(test, key("fuzzer"))) {
           str_range_t resp = d_to_json(d_get_at(d_get(test, key("response")), 0));
           while ((fuzz_pos = find_hex(resp.data, fuzz_pos + 1, resp.len)) > 0) {
             str_range_t prop = find_prop_name(resp.data + fuzz_pos, resp.data);
@@ -428,7 +428,7 @@ int runRequests(char** names, int test_index) {
             count++;
             if (test_index > 0 && count != test_index) continue;
             total++;
-            prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), fuzz_pos);
+            prepare_response(1, d_get(test, key("response")), d_get_intk(test, key("binaryFormat")), fuzz_pos);
             mem_reset();
             if (run_test(test, count, tmp, proof)) failed++;
           }

@@ -273,7 +273,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
           EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
           EXPECT_TOK_STR(d_get(n.token, key("url")));
           EXPECT_TOK_ADDR(d_get(n.token, key("address")));
-          EXPECT_CFG(add_node(data, d_get_string(n.token, "url"),
+          EXPECT_CFG(add_node(data, d_get_stringk(n.token, key("url")),
                               d_get_longkd(n.token, key("props"), 65535),
                               d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                      "add node failed");

@@ -166,18 +166,14 @@ NONULL static inline d_key_t key(const char* c) {
 }
 
 static inline char*    d_get_stringk(d_token_t* r, d_key_t k) { return d_string(d_get(r, k)); }              /**< reads token of a property as string. */
-static inline char*    d_get_string(d_token_t* r, char* k) { return d_get_stringk(r, key(k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string_at(d_token_t* r, uint32_t pos) { return d_string(d_get_at(r, pos)); }    /**< reads string at given pos of an array. */
 static inline int32_t  d_get_intk(d_token_t* r, d_key_t k) { return d_int(d_get(r, k)); }                    /**< reads token of a property as int. */
 static inline int32_t  d_get_intkd(d_token_t* r, d_key_t k, uint32_t d) { return d_intd(d_get(r, k), d); }   /**< reads token of a property as int. */
-static inline int32_t  d_get_int(d_token_t* r, char* k) { return d_get_intk(r, key(k)); }                    /**< reads token of a property as int. */
 static inline int32_t  d_get_int_at(d_token_t* r, uint32_t pos) { return d_int(d_get_at(r, pos)); }          /**< reads a int at given pos of an array. */
 static inline uint64_t d_get_longk(d_token_t* r, d_key_t k) { return d_long(d_get(r, k)); }                  /**< reads token of a property as long. */
 static inline uint64_t d_get_longkd(d_token_t* r, d_key_t k, uint64_t d) { return d_longd(d_get(r, k), d); } /**< reads token of a property as long. */
-static inline uint64_t d_get_long(d_token_t* r, char* k) { return d_get_longk(r, key(k)); }                  /**< reads token of a property as long. */
 static inline uint64_t d_get_long_at(d_token_t* r, uint32_t pos) { return d_long(d_get_at(r, pos)); }        /**< reads long at given pos of an array. */
 static inline bytes_t* d_get_bytesk(d_token_t* r, d_key_t k) { return d_bytes(d_get(r, k)); }                /**< reads token of a property as bytes. */
-static inline bytes_t* d_get_bytes(d_token_t* r, char* k) { return d_get_bytesk(r, key(k)); }                /**< reads token of a property as bytes. */
 static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_bytes(d_get_at(r, pos)); }      /**< reads bytes at given pos of an array. */
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                      /**< check if the parser context was created from binary data. */
 bytes_t*               d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);

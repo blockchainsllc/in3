@@ -156,21 +156,21 @@ btc_transaction_t* btc_d_to_tx(d_token_t* t) {
 
 static in3_ret_t fill_blockheader(d_token_t* t, btc_blockheader_t* res) {
   EXPECT_EQ(d_type(t), T_OBJECT)
-  EXPECT_EQ(hex_to_bytes(d_get_string(t, "hash"), 64, res->hash, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_string(t, "merkleroot"), 64, res->merkleroot, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_string(t, "bits"), 8, res->bits, 4), 4);
-  EXPECT_EQ(hex_to_bytes(d_get_string(t, "chainwork"), 64, res->chainwork, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_string(t, "previousblockhash"), 64, res->previous_hash, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_string(t, "nextblockhash"), 64, res->next_hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, K_HASH), 64, res->hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("merkleroot")), 64, res->merkleroot, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("bits")), 8, res->bits, 4), 4);
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("chainwork")), 64, res->chainwork, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("previousblockhash")), 64, res->previous_hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("nextblockhash")), 64, res->next_hash, 32), 32);
 
   TRY(btc_serialize_block_header(t, res->data))
 
-  res->confirmations = d_get_int(t, "confirmations");
-  res->height        = d_get_int(t, "height");
-  res->version       = d_get_int(t, "version");
-  res->time          = d_get_int(t, "time");
-  res->nonce         = d_get_int(t, "nonce");
-  res->n_tx          = d_get_int(t, "nTx");
+  res->confirmations = d_get_intk(t, key("confirmations"));
+  res->height        = d_get_intk(t, key("height"));
+  res->version       = d_get_intk(t, key("version"));
+  res->time          = d_get_intk(t, key("time"));
+  res->nonce         = d_get_intk(t, key("nonce"));
+  res->n_tx          = d_get_intk(t, key("nTx"));
 
   return IN3_OK;
 }

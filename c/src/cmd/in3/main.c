@@ -1120,10 +1120,10 @@ int main(int argc, char* argv[]) {
             if (!health_res)
               health = 0;
             else {
-              node_name    = d_get_string(health_res->result, "name");
-              version      = d_get_string(health_res->result, "version");
-              running      = d_get_int(health_res->result, "running");
-              char* status = d_get_string(health_res->result, "status");
+              node_name    = d_get_stringk(health_res->result, key("name"));
+              version      = d_get_stringk(health_res->result, key("version"));
+              running      = d_get_intk(health_res->result, key("running"));
+              char* status = d_get_stringk(health_res->result, key("status"));
               if (!status || strcmp(status, "healthy")) health = 0;
             }
           }

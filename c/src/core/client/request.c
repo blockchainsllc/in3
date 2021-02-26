@@ -436,3 +436,13 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
     return req_add_required(ctx, c);
   }
 }
+
+in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
+#ifdef LOGGING
+  (void) req_set_error(vc->req, msg, IN3_EUNKNOWN);
+#else
+  (void) msg;
+  (void) vc;
+#endif
+  return IN3_EUNKNOWN;
+}

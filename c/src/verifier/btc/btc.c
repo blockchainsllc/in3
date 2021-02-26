@@ -360,9 +360,9 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
                                                                                                                                       //
       btc_target_from_block(bytes(block_header, 80), tmp2);                                                                           // get current target
       uint64_t difficulty = 0xFFFF000000000000L / bytes_to_long(tmp2 + 4, 8);                                                         // and calc the difficulty
-      if (difficulty >> 2 != d_get_long(vc->result, "difficulty") >> 2) return vc_err(vc, "Wrong difficulty");                        // which must match the one in the json
-      if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, "hash"))) return vc_err(vc, "Wrong blockhash in json");         // check the requested hash
-      if (d_get_int(vc->result, "nTx") != (int32_t) tx_count) return vc_err(vc, "Wrong nTx");                                         // check the nuumber of transactions
+      if (difficulty >> 2 != d_get_longk(vc->result, key("difficulty")) >> 2) return vc_err(vc, "Wrong difficulty");                  // which must match the one in the json
+      if (!equals_hex(bytes(block_hash, 32), d_get_stringk(vc->result, K_HASH))) return vc_err(vc, "Wrong blockhash in json");        // check the requested hash
+      if (d_get_intk(vc->result, key("nTx")) != (int32_t) tx_count) return vc_err(vc, "Wrong nTx");                                   // check the nuumber of transactions
     }
     else {
       char*    block_hex  = d_string(vc->result);

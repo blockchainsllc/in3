@@ -411,7 +411,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   TRY(get_tx_hash(ctx, ms, &tx_data, tx_hash, nonce))
 
   // verifiy and copy the passed signatures into sig_data
-  TRY(fill_signature(ctx, d_get_bytes(d_get(ctx->requests[0], K_IN3), "msSigs"), &sig_count, ms, sig_data, tx_hash))
+  TRY(fill_signature(ctx, d_get_bytesk(d_get(ctx->requests[0], K_IN3), key("msSigs")), &sig_count, ms, sig_data, tx_hash))
 
   // look for already approved messages from owners where we don't have the signature yet.
   TRY(add_approved(ctx, &sig_count, sig_data, tx_hash, ms))

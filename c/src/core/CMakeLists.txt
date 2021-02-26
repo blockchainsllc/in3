@@ -46,7 +46,6 @@ add_static_library(
   SOURCES 
     client/request.c
     client/client.c
-    client/verifier.c
     client/execute.c
     client/client_init.c
     util/debug.c

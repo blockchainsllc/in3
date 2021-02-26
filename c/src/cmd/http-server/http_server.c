@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "http_server.h"
+#include "../../core/client/keys.h"
 #include "../../core/client/request.h"
 #include "../../core/util/colors.h"
 #include "../../core/util/mem.h"
@@ -152,7 +153,7 @@ void* respond(void* arg) {
             memcpy(params, range.data + 1, range.len - 2);
             params[range.len - 2] = 0;
           }
-          fprintf(stderr, "RPC %s %s\n", d_get_string(req->requests[0], "method"), params); //conceal typing and save position
+          fprintf(stderr, "RPC %s %s\n", d_get_stringk(req->requests[0], K_METHOD), params); //conceal typing and save position
           if (in3_send_req(req) == IN3_OK) {
             // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
             if (req->error) _free(req->error);
@@ -265,7 +266,7 @@ void http_run_server(const char* port, in3_t* in3) {
     }
 
 #else
-    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");
