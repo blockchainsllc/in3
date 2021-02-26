@@ -38,9 +38,9 @@
 #include "request.h"
 
 #ifdef LOGGING
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, msg, err)
 #else
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err)
 #endif
 
 /**
@@ -73,10 +73,10 @@ NONULL void request_free(
  * the return value will simply be passed so you can use it like
  *
  * ```c
- *   return ctx_set_error(ctx, "wrong number of arguments", IN3_EINVAL)
+ *   return req_set_error(ctx, "wrong number of arguments", IN3_EINVAL)
  * ```
  */
-in3_ret_t ctx_set_error_intern(
+in3_ret_t req_set_error_intern(
     in3_req_t* c,        /**< [in] the current request context. */
     char*      msg,      /**< [in] the error message. (This string will be copied) */
     in3_ret_t  errnumber /**< [in] the error code to return */

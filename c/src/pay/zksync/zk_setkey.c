@@ -52,7 +52,7 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
 
   // was it successfull?
   if (result == NULL || d_type(result) != T_OBJECT || d_get_intk(result, K_STATUS) == 0)
-    return ctx_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
+    return req_set_error(ctx->ctx, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
 
   return IN3_OK;
 }
@@ -63,15 +63,15 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   d_token_t*      token      = d_len(ctx->params) == 1 ? ctx->params + 1 : NULL;
   bytes_t*        new_key    = d_get_bytes_at(ctx->params, 1);
   zksync_token_t* token_data = NULL;
-  if (!token) return ctx_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
+  if (!token) return req_set_error(ctx->ctx, "Missing fee token as first token", IN3_EINVAL);
   zk_fee_t fee;
   if (new_key && new_key->len == 32) memcpy(conf->sync_key, new_key->data, 32);
   TRY(zksync_get_nonce(conf, ctx->ctx, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->ctx, token, &token_data))
   TRY(zksync_get_pubkey_hash(conf, ctx->ctx, pub_hash))
 
-  if (memcmp(pub_hash, conf->pub_key_hash_set, 20) == 0) return ctx_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL); // and check if it is already set
-  if (!conf->account_id) return ctx_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
+  if (memcmp(pub_hash, conf->pub_key_hash_set, 20) == 0) return req_set_error(ctx->ctx, "Signer key is already set", IN3_EINVAL); // and check if it is already set
+  if (!conf->account_id) return req_set_error(ctx->ctx, "No Account set yet", IN3_EINVAL);
 
   // for contracts we need to pre authorized on layer 1
   if (conf->sign_type == ZK_SIGN_CONTRACT) TRY(auth_pub_key(conf, ctx, nonce, pub_hash))

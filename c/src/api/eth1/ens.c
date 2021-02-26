@@ -39,7 +39,7 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
           return IN3_OK;
         }
         else
-          return ctx_set_error(parent, "could not get the resolver", IN3_EFIND);
+          return req_set_error(parent, "could not get the resolver", IN3_EFIND);
       }
       case REQ_ERROR:
         return IN3_ERPC;
@@ -135,14 +135,14 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
         registry_address = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
         break;
       default:
-        return ctx_set_error(parent, "There is no ENS-contract for the current chain", IN3_ENOTSUP);
+        return req_set_error(parent, "There is no ENS-contract for the current chain", IN3_ENOTSUP);
     }
 
   in3_ret_t res = exec_call(callbytes, registry_address, parent, &last_result);
   if (res < 0) return res;
   if (last_result && last_result->data)
     memcpy(resolver, last_result->data + last_result->len - 20, 20);
-  if (memiszero(resolver, 20)) return ctx_set_error(parent, "resolver not registered", IN3_EFIND);
+  if (memiszero(resolver, 20)) return req_set_error(parent, "resolver not registered", IN3_EFIND);
 
   if (type == ENS_RESOLVER || type == ENS_OWNER) {
     memcpy(dst, resolver, 20);
@@ -175,7 +175,7 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
   if (res < 0) return res;
   if (!last_result || !last_result->data) return IN3_ENOMEM;
 
-  if (last_result->len < 20 || memiszero(last_result->data, 20)) return ctx_set_error(parent, "address not registered", IN3_EFIND);
+  if (last_result->len < 20 || memiszero(last_result->data, 20)) return req_set_error(parent, "address not registered", IN3_EFIND);
 
   if (type == ENS_ADDR)
     memcpy(dst, last_result->data + last_result->len - 20, 20);

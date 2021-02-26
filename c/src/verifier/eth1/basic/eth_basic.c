@@ -122,7 +122,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
     wait              = wait ? wait * 2 : 1000;
     req_remove_required(ctx->ctx, last_r, false);
     if (wait > 120000) // more than 2 minutes is too long, so we stop here
-      return ctx_set_error(ctx->ctx, "Waited too long for the transaction to be minded", IN3_ELIMIT);
+      return req_set_error(ctx->ctx, "Waited too long for the transaction to be minded", IN3_ELIMIT);
     char in3[20];
     sprintf(in3, "{\"wait\":%d}", wait);
 
@@ -140,16 +140,16 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_type(ctx->params) != T_ARRAY || !d_len(ctx->params) || d_type(ctx->params + 1) != T_OBJECT)
-    return ctx_set_error(ctx->ctx, "invalid type of params, expected object", IN3_EINVAL);
+    return req_set_error(ctx->ctx, "invalid type of params, expected object", IN3_EINVAL);
   else if (!filter_opt_valid(ctx->params + 1))
-    return ctx_set_error(ctx->ctx, "filter option parsing failed", IN3_EINVAL);
-  if (!ctx->params->data) return ctx_set_error(ctx->ctx, "binary request are not supported!", IN3_ENOTSUP);
+    return req_set_error(ctx->ctx, "filter option parsing failed", IN3_EINVAL);
+  if (!ctx->params->data) return req_set_error(ctx->ctx, "binary request are not supported!", IN3_ENOTSUP);
 
   char*     fopt = d_create_json(ctx->ctx->request_context, ctx->params + 1);
   in3_ret_t res  = filter_add(filters, ctx->ctx, FILTER_EVENT, fopt);
   if (res < 0) {
     _free(fopt);
-    return ctx_set_error(ctx->ctx, "filter creation failed", res);
+    return req_set_error(ctx->ctx, "filter creation failed", res);
   }
 
   return in3_rpc_handle_with_int(ctx, (uint64_t) res);
@@ -157,20 +157,20 @@ static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx
 
 static in3_ret_t eth_newBlockFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
   in3_ret_t res = filter_add(filters, ctx->ctx, FILTER_BLOCK, NULL);
-  if (res < 0) return ctx_set_error(ctx->ctx, "filter creation failed", res);
+  if (res < 0) return req_set_error(ctx->ctx, "filter creation failed", res);
   return in3_rpc_handle_with_int(ctx, (uint64_t) res);
 }
 
 static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-    return ctx_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
+    return req_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
 
   uint64_t  id  = d_get_long_at(ctx->params, 0);
   sb_t      sb  = {0};
   in3_ret_t ret = filter_get_changes(filters, ctx->ctx, id, &sb);
   if (ret != IN3_OK) {
     if (sb.data) _free(sb.data);
-    return ctx_set_error(ctx->ctx, "failed to get filter changes", ret);
+    return req_set_error(ctx->ctx, "failed to get filter changes", ret);
   }
   in3_rpc_handle_with_string(ctx, sb.data);
   _free(sb.data);
@@ -188,11 +188,11 @@ static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle
   TRY_RPC("eth_sendTransactionAndWait", eth_send_transaction_and_wait(ctx))
   TRY_RPC("eth_newFilter", eth_newFilter(filters, ctx))
   TRY_RPC("eth_newBlockFilter", eth_newBlockFilter(filters, ctx))
-  TRY_RPC("eth_newPendingTransactionFilter", ctx_set_error(ctx->ctx, "pending filter not supported", IN3_ENOTSUP))
+  TRY_RPC("eth_newPendingTransactionFilter", req_set_error(ctx->ctx, "pending filter not supported", IN3_ENOTSUP))
   TRY_RPC("eth_getFilterChanges", eth_getFilterChanges(filters, ctx))
   TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(filters, ctx))
   TRY_RPC("eth_uninstallFilter", (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-                                     ? ctx_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
+                                     ? req_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
                                      : in3_rpc_handle_with_string(ctx, filter_remove(filters, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
 
   if (strcmp(ctx->method, "eth_chainId") == 0 && ctx->ctx->client->chain.chain_id != CHAIN_ID_LOCAL)

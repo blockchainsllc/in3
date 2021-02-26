@@ -69,7 +69,7 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   if (req_data != NULL) {
     ctx->request_context = parse_json(req_data);
     if (!ctx->request_context) {
-      ctx_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
+      req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
       return ctx;
     }
 
@@ -88,7 +88,7 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
         ctx->requests[i] = t;
     }
     else {
-      ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
+      req_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
       return ctx;
     }
 
@@ -146,13 +146,13 @@ in3_ret_t req_check_response_error(in3_req_t* c, int i) {
     char*       req = alloca(s.len + 1);
     strncpy(req, s.data, s.len);
     req[s.len] = '\0';
-    return ctx_set_error(c, req, IN3_ERPC);
+    return req_set_error(c, req, IN3_ERPC);
   }
   else
-    return ctx_set_error(c, d_string(r), IN3_ERPC);
+    return req_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t ctx_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber) {
+in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber) {
   assert(ctx);
 
   // if this is just waiting, it is not an error!
@@ -256,7 +256,7 @@ void in3_ctx_add_response(
   if (error == 1) error = IN3_ERPC;
 
   if (!ctx->raw_response) {
-    ctx_set_error(ctx, "no request created yet!", IN3_EINVAL);
+    req_set_error(ctx, "no request created yet!", IN3_EINVAL);
     return;
   }
   in3_response_t* response = ctx->raw_response + index;
@@ -346,12 +346,12 @@ in3_ret_t ctx_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   if (ctx)
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
-        return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
+        return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
         *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
         if (!*result) {
           char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
-          return ctx_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
+          return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
         }
         return IN3_OK;
       case REQ_WAITING_TO_SEND:
@@ -368,7 +368,7 @@ in3_ret_t ctx_send_sub_request(in3_req_t* parent, char* method, char* params, ch
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
   ctx = req_new(parent->client, req);
-  if (!ctx) return ctx_set_error(parent, "Invalid request!", IN3_ERPC);
+  if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   return req_add_required(parent, ctx);
@@ -403,7 +403,7 @@ in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
   if (c)
     switch (in3_req_state(c)) {
       case REQ_ERROR:
-        return ctx_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
+        return req_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
@@ -415,11 +415,11 @@ in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
           return IN3_OK;
         }
         else if (c->raw_response && c->raw_response->state)
-          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
+          return req_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
         else
-          return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
+          return req_set_error(ctx, "no data to sign", IN3_EINVAL);
         default:
-          return ctx_set_error(ctx, "invalid state", IN3_EINVAL);
+          return req_set_error(ctx, "invalid state", IN3_EINVAL);
       }
     }
   else {

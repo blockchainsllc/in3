@@ -140,7 +140,7 @@ namespace In3.Context
         public void ReportError(string errorMessage)
         {
             IntPtr rpcPtr = Marshal.StringToHGlobalAnsi(errorMessage);
-            ctx_set_error_intern(_nativeCtx, rpcPtr, (int)In3Code.IN3_ERPC);
+            req_set_error_intern(_nativeCtx, rpcPtr, (int)In3Code.IN3_ERPC);
             // This needs to be freed since our pointer is copied into the context by the function and needs to be freed this way else it will lead to Heap Corruption and its platform independent.
             Marshal.FreeHGlobal(rpcPtr);
         }
@@ -159,7 +159,7 @@ namespace In3.Context
         }
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr req_get_error_rpc(IntPtr ctx, int ret);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void ctx_set_error_intern(IntPtr ctx, IntPtr message, int errnumber);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void req_set_error_intern(IntPtr ctx, IntPtr message, int errnumber);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern uint req_get_type(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr req_new(IntPtr client, IntPtr req_data);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern string req_get_error_data(IntPtr ctx);

@@ -31,7 +31,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // make sure we have an account
   uint8_t* account = conf->account;
   if ((tmp = params_get(ctx->params, key("depositTo"), 3))) {
-    if (tmp->len != 20) return ctx_set_error(ctx->ctx, "invalid depositTo", IN3_ERPC);
+    if (tmp->len != 20) return req_set_error(ctx->ctx, "invalid depositTo", IN3_ERPC);
     account = tmp->data;
   }
   else if (!account)
@@ -93,7 +93,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     }
   }
 
-  return ctx_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
+  return req_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
 }
 
 in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
@@ -120,7 +120,7 @@ in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
   sb_add_rawbytes(&sb, "\",\"from\":\"0x", bytes(account, 20), 20);
   sb_add_chars(&sb, "\",\"gas\":\"0x7a120\"}");
   TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
-  if (d_type(tx_receipt) != T_OBJECT) return ctx_set_error(ctx->ctx, "no txreceipt found, which means the transaction was not succesful", IN3_EFIND);
+  if (d_type(tx_receipt) != T_OBJECT) return req_set_error(ctx->ctx, "no txreceipt found, which means the transaction was not succesful", IN3_EFIND);
   str_range_t r = d_to_json(tx_receipt);
   r.data[r.len] = 0;
   return in3_rpc_handle_with_string(ctx, r.data);

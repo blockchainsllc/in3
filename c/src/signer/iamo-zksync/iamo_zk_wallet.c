@@ -78,7 +78,7 @@ static in3_ret_t find_zksync_conf(in3_req_t* ctx, zksync_config_t** conf) {
       return IN3_OK;
     }
   }
-  return ctx_set_error(ctx, "no zksync plugin found!", IN3_ECONFIG);
+  return req_set_error(ctx, "no zksync plugin found!", IN3_ECONFIG);
 }
 static in3_ret_t iamo_zk_check_rpc(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (conf->cosign_rpc) return IN3_OK;
@@ -98,8 +98,8 @@ static in3_ret_t iamo_zk_check_rpc(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t*
 static in3_ret_t wallet_from_json(in3_req_t* ctx, d_token_t* data, wallet_t* w) {
   bytes_t    address = d_to_bytes(d_get(data, K_ADDRESS));
   d_token_t* owners  = d_get(data, key("owners"));
-  if (address.len != 20) return ctx_set_error(ctx, "Invalid address in wallet!", IN3_EINVAL);
-  if (!owners || d_type(owners) != T_ARRAY) return ctx_set_error(ctx, "Invalid owners in wallet!", IN3_EINVAL);
+  if (address.len != 20) return req_set_error(ctx, "Invalid address in wallet!", IN3_EINVAL);
+  if (!owners || d_type(owners) != T_ARRAY) return req_set_error(ctx, "Invalid owners in wallet!", IN3_EINVAL);
   memcpy(w->account, address.data, 20);
   w->threshold = (uint32_t) d_get_intk(data, key("threshold"));
   w->owner_len = (uint32_t) d_len(owners);
@@ -108,13 +108,13 @@ static in3_ret_t wallet_from_json(in3_req_t* ctx, d_token_t* data, wallet_t* w) 
     d_token_t* o = d_get_at(owners, i);
     if (d_type(o) != T_OBJECT) {
       _free(w->owners);
-      return ctx_set_error(ctx, "Invalid owner, must be an object!", IN3_EINVAL);
+      return req_set_error(ctx, "Invalid owner, must be an object!", IN3_EINVAL);
     }
     w->owners[i].role = (role_t) d_get_intk(o, key("roles"));
     address           = d_to_bytes(d_get(o, K_ADDRESS));
     if (address.len != 20) {
       _free(w->owners);
-      return ctx_set_error(ctx, "Invalid owner-addres", IN3_EINVAL);
+      return req_set_error(ctx, "Invalid owner-addres", IN3_EINVAL);
     }
     memcpy(w->owners[i].address, address.data, 20);
   }
@@ -198,9 +198,9 @@ static in3_ret_t wallet_verify_signatures(in3_req_t* ctx, bytes_t message, walle
   keccak(message, msg_hash);
   for (d_iterator_t iter = d_iter(signatures); iter.left; d_iter_next(&iter)) {
     bytes_t sig = d_to_bytes(iter.token);
-    if (sig.len != 65) return ctx_set_error(ctx, "Invalid signature (must be 65 bytes)", IN3_EINVAL);
+    if (sig.len != 65) return req_set_error(ctx, "Invalid signature (must be 65 bytes)", IN3_EINVAL);
     if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig.data, msg_hash, sig.data[64] >= 27 ? sig.data[64] - 27 : sig.data[64]))
-      return ctx_set_error(ctx, "Invalid Signature", IN3_EINVAL);
+      return req_set_error(ctx, "Invalid Signature", IN3_EINVAL);
     keccak(pubkey_bytes, tmp);
 
     // find owner
@@ -213,8 +213,8 @@ static in3_ret_t wallet_verify_signatures(in3_req_t* ctx, bytes_t message, walle
     }
   }
 
-  if (!initiator) return ctx_set_error(ctx, "No initiator signature!", IN3_EINVAL);
-  if (wallet->threshold > valid_signatures) return ctx_set_error(ctx, "threshold not reached", IN3_EINVAL);
+  if (!initiator) return req_set_error(ctx, "No initiator signature!", IN3_EINVAL);
+  if (wallet->threshold > valid_signatures) return req_set_error(ctx, "threshold not reached", IN3_EINVAL);
 
   return IN3_OK;
 }
@@ -239,8 +239,8 @@ static in3_ret_t wallet_sign(in3_req_t* ctx, bytes_t message, wallet_t* wallet, 
 
   sb_add_chars(sb, valid_signatures ? "\"]" : "[]");
 
-  if (!initiator) return ctx_set_error(ctx, "No initiator signature!", IN3_EINVAL);
-  if (wallet->threshold > valid_signatures) return ctx_set_error(ctx, "threshold not reached", IN3_EINVAL);
+  if (!initiator) return req_set_error(ctx, "No initiator signature!", IN3_EINVAL);
+  if (wallet->threshold > valid_signatures) return req_set_error(ctx, "threshold not reached", IN3_EINVAL);
 
   return IN3_OK;
 }
@@ -251,7 +251,7 @@ in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_req_t* ctx, wallet_t*
   if (sub) { // do we have a result?
     switch (in3_req_state(sub)) {
       case REQ_ERROR:
-        return ctx_set_error(ctx, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
+        return req_set_error(ctx, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
         return IN3_OK;
       case REQ_WAITING_TO_SEND:
@@ -316,7 +316,7 @@ in3_ret_t iamo_zk_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // is the wallet registered?
   wallet_t wallet;
   TRY(wallet_get_from_cache(ctx->ctx, account, &wallet))
-  if (!wallet.owners) return ctx_set_error(ctx->ctx, "The Account is not registered!", IN3_EINVAL);
+  if (!wallet.owners) return req_set_error(ctx->ctx, "The Account is not registered!", IN3_EINVAL);
 
   // check signatures (and free the wallet)
   TRY_FINAL(wallet_verify_signatures(ctx->ctx, msg, &wallet, d_get_at(ctx->params, 2)), wallet_free(&wallet, false))
@@ -367,7 +367,7 @@ static bytes_t encode_deploy_data(address_t master_copy, bytes_t setup, bytes32_
 }
 
 static in3_ret_t read_server_config(iamo_zk_config_t* conf, in3_req_t* ctx, d_token_t** result) {
-  if (!conf->cosign_rpc) return ctx_set_error(ctx, "No cosign-rpc set in config!", IN3_ECONFIG);
+  if (!conf->cosign_rpc) return req_set_error(ctx, "No cosign-rpc set in config!", IN3_ECONFIG);
   char* in3 = alloca(strlen(conf->cosign_rpc) + 20);
   sprintf(in3, "{\"rpc\":\"%s\"}", conf->cosign_rpc);
   return ctx_send_sub_request(ctx, "iamo_zk_get_config", "", in3, result);
@@ -399,33 +399,33 @@ static in3_ret_t wallet_from_args(in3_rpc_handle_ctx_t* ctx, wallet_t* wallet) {
               role |= ROLE_INITIATOR;
               break;
             default:
-              return ctx_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C", IN3_EINVAL);
+              return req_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C", IN3_EINVAL);
           }
         }
-        if (*c != ':') return ctx_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C, followed by : and the address", IN3_EINVAL);
+        if (*c != ':') return req_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C, followed by : and the address", IN3_EINVAL);
         c++;
-        if (hex_to_bytes(c, -1, wallet->owners[wallet->owner_len].address, 20) != 20) return ctx_set_error(ctx->ctx, "invalid address of owner, must be 20 bytes", IN3_EINVAL);
+        if (hex_to_bytes(c, -1, wallet->owners[wallet->owner_len].address, 20) != 20) return req_set_error(ctx->ctx, "invalid address of owner, must be 20 bytes", IN3_EINVAL);
         wallet->owners[wallet->owner_len++].role = role;
         break;
       }
       case T_INTEGER:
-        if (wallet->threshold) return ctx_set_error(ctx->ctx, "threshold already set", IN3_EINVAL);
+        if (wallet->threshold) return req_set_error(ctx->ctx, "threshold already set", IN3_EINVAL);
         wallet->threshold = (uint32_t) d_int(iter.token);
         break;
       case T_BYTES:
-        if (d_len(iter.token) != 20) return ctx_set_error(ctx->ctx, "a owner must be a adddress of 20 bytes", IN3_EINVAL);
+        if (d_len(iter.token) != 20) return req_set_error(ctx->ctx, "a owner must be a adddress of 20 bytes", IN3_EINVAL);
         memcpy(wallet->owners[wallet->owner_len].address, d_bytes(iter.token)->data, 20);
         wallet->owners[wallet->owner_len++].role = ROLE_APPROVER;
         break;
 
       default:
-        return ctx_set_error(ctx->ctx, "Invalid argument for owner of multisig", IN3_EINVAL);
+        return req_set_error(ctx->ctx, "Invalid argument for owner of multisig", IN3_EINVAL);
     }
   }
 
-  if (!wallet->threshold) return ctx_set_error(ctx->ctx, "threshold is missing", IN3_EINVAL);
-  if (wallet->threshold > wallet->owner_len) return ctx_set_error(ctx->ctx, "threshold must be less or equal to the number of owners", IN3_EINVAL);
-  if (!has_initiator) return ctx_set_error(ctx->ctx, "at least one owner must have a initiator role", IN3_EINVAL);
+  if (!wallet->threshold) return req_set_error(ctx->ctx, "threshold is missing", IN3_EINVAL);
+  if (wallet->threshold > wallet->owner_len) return req_set_error(ctx->ctx, "threshold must be less or equal to the number of owners", IN3_EINVAL);
+  if (!has_initiator) return req_set_error(ctx->ctx, "at least one owner must have a initiator role", IN3_EINVAL);
   return IN3_OK;
 }
 
@@ -452,10 +452,10 @@ in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ct
   bytes_t creator       = d_to_bytes(d_get(server_config, key("creator")));
   bytes_t codehash      = d_to_bytes(d_get(server_config, key("codehash")));
   bytes_t server_pubkey = d_to_bytes(d_get(server_config, key("pubkey")));
-  if (mastercopy.len != 20) return ctx_set_error(ctx->ctx, "Invalid mastercopy from the server!", IN3_EINVAL);
-  if (creator.len != 20) return ctx_set_error(ctx->ctx, "Invalid creator from the server!", IN3_EINVAL);
-  if (codehash.len != 32) return ctx_set_error(ctx->ctx, "Invalid codehash from the server!", IN3_EINVAL);
-  if (server_pubkey.len != 32) return ctx_set_error(ctx->ctx, "Invalid public key from the server!", IN3_EINVAL);
+  if (mastercopy.len != 20) return req_set_error(ctx->ctx, "Invalid mastercopy from the server!", IN3_EINVAL);
+  if (creator.len != 20) return req_set_error(ctx->ctx, "Invalid creator from the server!", IN3_EINVAL);
+  if (codehash.len != 32) return req_set_error(ctx->ctx, "Invalid codehash from the server!", IN3_EINVAL);
+  if (server_pubkey.len != 32) return req_set_error(ctx->ctx, "Invalid public key from the server!", IN3_EINVAL);
   memcpy(pubkeys + 32, server_pubkey.data, 32);
 
   bytes32_t pubkeyhash = {0};
@@ -505,7 +505,7 @@ in3_ret_t iamo_zk_get_config(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) 
   bytes32_t        pubkey;
   ONLY_SERVER(ctx)
   TRY(iamo_zk_check_rpc(conf, ctx))
-  if (conf->cosign_rpc) return ctx_set_error(ctx->ctx, "getting config only works for server without a cosign_rpc ", IN3_ECONFIG);
+  if (conf->cosign_rpc) return req_set_error(ctx->ctx, "getting config only works for server without a cosign_rpc ", IN3_ECONFIG);
 
   bytes32_t codehash = {0};
   memcpy(codehash + 12, conf->master_copy, 20);

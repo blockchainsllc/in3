@@ -78,13 +78,13 @@ typedef struct {
 } sig_data_t;
 
 static in3_ret_t decode_tx(in3_req_t* ctx, bytes_t raw, tx_data_t* result) {
-  if (rlp_decode_in_list(&raw, 0, &result->nonce) != 1) return ctx_set_error(ctx, "invalid nonce in txdata", IN3_EINVAL);
-  if (rlp_decode_in_list(&raw, 1, &result->gas_price) != 1) return ctx_set_error(ctx, "invalid gasprice in txdata", IN3_EINVAL);
-  if (rlp_decode_in_list(&raw, 2, &result->gas) != 1) return ctx_set_error(ctx, "invalid gas in txdata", IN3_EINVAL);
-  if (rlp_decode_in_list(&raw, 3, &result->to) != 1) return ctx_set_error(ctx, "invalid to in txdata", IN3_EINVAL);
-  if (rlp_decode_in_list(&raw, 4, &result->value) != 1) return ctx_set_error(ctx, "invalid value in txdata", IN3_EINVAL);
-  if (rlp_decode_in_list(&raw, 5, &result->data) != 1) return ctx_set_error(ctx, "invalid data in txdata", IN3_EINVAL);
-  if (rlp_decode_in_list(&raw, 6, &result->v) != 1) return ctx_set_error(ctx, "invalid v in txdata", IN3_EINVAL);
+  if (rlp_decode_in_list(&raw, 0, &result->nonce) != 1) return req_set_error(ctx, "invalid nonce in txdata", IN3_EINVAL);
+  if (rlp_decode_in_list(&raw, 1, &result->gas_price) != 1) return req_set_error(ctx, "invalid gasprice in txdata", IN3_EINVAL);
+  if (rlp_decode_in_list(&raw, 2, &result->gas) != 1) return req_set_error(ctx, "invalid gas in txdata", IN3_EINVAL);
+  if (rlp_decode_in_list(&raw, 3, &result->to) != 1) return req_set_error(ctx, "invalid to in txdata", IN3_EINVAL);
+  if (rlp_decode_in_list(&raw, 4, &result->value) != 1) return req_set_error(ctx, "invalid value in txdata", IN3_EINVAL);
+  if (rlp_decode_in_list(&raw, 5, &result->data) != 1) return req_set_error(ctx, "invalid data in txdata", IN3_EINVAL);
+  if (rlp_decode_in_list(&raw, 6, &result->v) != 1) return req_set_error(ctx, "invalid v in txdata", IN3_EINVAL);
   return IN3_OK;
 }
 
@@ -104,12 +104,12 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
   if (ctx)
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
-        return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
+        return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
         *result = d_get_bytesk(ctx->responses[0], K_RESULT);
         if (!*result) {
           char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
-          return ctx_set_error(parent, s ? s : "error executing eth_call", IN3_ERPC);
+          return req_set_error(parent, s ? s : "error executing eth_call", IN3_ERPC);
         }
         return IN3_OK;
       case REQ_WAITING_TO_SEND:
@@ -174,7 +174,7 @@ in3_ret_t get_tx_hash(in3_req_t* ctx, multisig_t* ms, tx_data_t* tx_data, bytes3
   long_to_bytes(nonce, raw + 4 + 9 * 32 + 24);
 
   TRY(call(ctx, ms->address, bytes(raw, size), &rpc_result))
-  if (rpc_result->len != 32) return ctx_set_error(ctx, "invalid getTransactionHash result!", IN3_EINVAL);
+  if (rpc_result->len != 32) return req_set_error(ctx, "invalid getTransactionHash result!", IN3_EINVAL);
   memcpy(result, rpc_result->data, 32);
   return IN3_OK;
 }
@@ -240,12 +240,12 @@ static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t* signatures, uint32_t* s
       sig_data[index].data    = bytes(NULL, 0);
     }
     else if (v > 26) {
-      if (!ecrecover_sig(tx_hash, signatures->data + i, sig_data[index].address)) return ctx_set_error(ctx, "could not recover the signature", IN3_EINVAL);
+      if (!ecrecover_sig(tx_hash, signatures->data + i, sig_data[index].address)) return req_set_error(ctx, "could not recover the signature", IN3_EINVAL);
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].data = bytes(NULL, 0);
     }
     else
-      return ctx_set_error(ctx, "invalid signature (v-value)", IN3_EINVAL);
+      return req_set_error(ctx, "invalid signature (v-value)", IN3_EINVAL);
     if (is_valid(sig_data, ms, sig_data[index].address, index)) index++;
   }
   *sig_count = index;
@@ -264,7 +264,7 @@ static in3_ret_t add_approved(in3_req_t* ctx, uint32_t* sig_count, sig_data_t* s
       memcpy(check_approved + 16, ms->owners + i, 20);
       memcpy(check_approved + 36, tx_hash, 32);
       TRY(call(ctx, ms->address, bytes(check_approved, 68), &result))
-      if (!result || result->len != 32) return ctx_set_error(ctx, "invalid response for approved check", IN3_EINVAL);
+      if (!result || result->len != 32) return req_set_error(ctx, "invalid response for approved check", IN3_EINVAL);
       if (result->data[31]) {
         memset(sig_data + *sig_count, 0, sizeof(sig_data_t));
         memcpy(sig_data[*sig_count].sig + 12, ms->owners + i, 20);
@@ -328,14 +328,14 @@ static in3_ret_t ensure_ms_type(multisig_t* ms, in3_req_t* ctx) {
   if (ms->type == MS_UNKNOWN) {
     bytes_t* tmp = NULL;
     TRY(call(ctx, ms->address, bytes((uint8_t*) "\xa3\xf4\xdf\x7e", 4), &tmp))
-    if (!tmp || tmp->len < 96) return ctx_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
+    if (!tmp || tmp->len < 96) return req_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
     char* name = (void*) tmp->data + 64;
     if (strcmp(name, "Gnosis Safe") == 0)
       ms->type = MS_GNOSIS_SAFE;
     else if (strcmp(name, "IAMO Safe") == 0)
       ms->type = MS_IAMO_SAFE;
     else
-      return ctx_set_error(ctx, "unknwon MultiSig TYPE", IN3_ENOTSUP);
+      return req_set_error(ctx, "unknwon MultiSig TYPE", IN3_ENOTSUP);
   }
   return IN3_OK;
 }
@@ -345,10 +345,10 @@ static in3_ret_t ensure_owners(multisig_t* ms, in3_req_t* ctx) {
     bytes_t*  tmp = NULL;
     in3_ret_t ret = call(ctx, ms->address, bytes((uint8_t*) "\xa0\xe6\x7e\x2b", 4), &tmp);
     if (ret == IN3_OK) {
-      if (!tmp || tmp->len < 64) return ctx_set_error(ctx, "invalid owner result", IN3_ERPC);
+      if (!tmp || tmp->len < 64) return req_set_error(ctx, "invalid owner result", IN3_ERPC);
       ms->owners_len = bytes_to_int(tmp->data + 32 + 28, 4);
       ms->owners     = _malloc(sizeof(address_t) * ms->owners_len);
-      if (tmp->len != 64 + 32 * ms->owners_len) return ctx_set_error(ctx, "invalid owner result length", IN3_ERPC);
+      if (tmp->len != 64 + 32 * ms->owners_len) return req_set_error(ctx, "invalid owner result length", IN3_ERPC);
       for (unsigned int i = 0; i < ms->owners_len; i++) memcpy(ms->owners + i, tmp->data + i * 32 + 64 + 12, 20);
     }
     else if (ret != IN3_WAITING)
@@ -357,7 +357,7 @@ static in3_ret_t ensure_owners(multisig_t* ms, in3_req_t* ctx) {
     // get the threshold
     in3_ret_t ret2 = call(ctx, ms->address, bytes((uint8_t*) "\xe7\x52\x35\xb8", 4), &tmp);
     if (ret2 == IN3_OK) {
-      if (!tmp || tmp->len != 32) return ctx_set_error(ctx, "invalid threshold result", IN3_ERPC);
+      if (!tmp || tmp->len != 32) return req_set_error(ctx, "invalid threshold result", IN3_ERPC);
       ms->threshold = bytes_to_int(tmp->data + 28, 4);
     }
 
@@ -384,7 +384,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   // get nonce
   in3_ret_t ret2 = call(ctx, ms->address, bytes((uint8_t*) "\xaf\xfe\xd0\xe0", 4), &tmp);
   if (ret2 == IN3_OK) {
-    if (!tmp || tmp->len != 32) return ctx_set_error(ctx, "invalid nonce result", IN3_ERPC);
+    if (!tmp || tmp->len != 32) return req_set_error(ctx, "invalid nonce result", IN3_ERPC);
     nonce = bytes_to_long(tmp->data + 24, 8);
   }
   else
@@ -423,7 +423,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
     // if not we simply approve it
     approve_hash(new_raw_tx, &tx_data, tx_hash, ms->address);
   else
-    return ctx_set_error(ctx, "the account is not an owner and does not have enough signatures to exwecute the transaction!", IN3_EINVAL);
+    return req_set_error(ctx, "the account is not an owner and does not have enough signatures to exwecute the transaction!", IN3_EINVAL);
 
   return IN3_OK;
 }
@@ -439,7 +439,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
   bytes32_t hash;
   switch (ctx->type) {
     case SIGN_EC_RAW: // already hashed
-      if (ctx->message.len != 32) return ctx_set_error(ctx->ctx, "invalid message, must be a 256bit hash", IN3_EINVAL);
+      if (ctx->message.len != 32) return req_set_error(ctx->ctx, "invalid message, must be a 256bit hash", IN3_EINVAL);
       if (ms->type == MS_IAMO_SAFE)
         keccak(ctx->message, hash);
       else
@@ -451,7 +451,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
         // TODO get it from cache
         bytes_t* result = NULL;
         TRY(call(ctx->ctx, ms->address, bytes((uint8_t*) "\xf6\x98\xda\x25", 4), &result))
-        if (!result || result->len != 32) return ctx_set_error(ctx->ctx, "invalid domain_seperator", IN3_EINVAL);
+        if (!result || result->len != 32) return req_set_error(ctx->ctx, "invalid domain_seperator", IN3_EINVAL);
         memcpy(ms->domain_sep, result->data, 32);
         // TODO put it in cache
       }
@@ -514,7 +514,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
   if (sig_count >= ms->threshold)
     ctx->signature = create_signatures(sig_data, sig_count);
   else
-    return ctx_set_error(ctx->ctx, "the account is not an owner and does not have enough signatures to sign this messagen!", IN3_EINVAL);
+    return req_set_error(ctx->ctx, "the account is not an owner and does not have enough signatures to sign this messagen!", IN3_EINVAL);
 
   return IN3_OK;
 }

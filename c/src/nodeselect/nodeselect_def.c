@@ -450,7 +450,7 @@ static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_req_t* ctx) {
     filter.exclusions              = ctx->nodes;
     const in3_ret_t res            = in3_node_list_pick_nodes(ctx, w, &signer_nodes, total_sig_cnt, &filter);
     if (res < 0)
-      return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
+      return req_set_error(ctx, "Could not find any nodes for requesting signatures", res);
     if (ctx->signers) _free(ctx->signers);
     const int node_count  = ctx_nodes_len(signer_nodes);
     ctx->signers_length   = node_count;
@@ -482,7 +482,7 @@ NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_req_t* ctx) {
     // if first update return error otherwise return IN3_OK, this is because first update is
     // always from a boot node which is presumed to be trusted
     if (nodelist_first_upd8(data))
-      res = ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
+      res = req_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
 
     if (res == IN3_OK) res = req_remove_required(ctx, ctx->required, true);
   }

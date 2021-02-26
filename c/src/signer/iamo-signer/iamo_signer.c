@@ -92,7 +92,7 @@ static in3_ret_t iamo_free(iamo_signer_config_t* conf) {
 
 static in3_ret_t create_iso_timestamp(in3_req_t* ctx, time_t time, char* dst) {
   struct tm* ptm = gmtime(&time);
-  if (!ptm) return ctx_set_error(ctx, "could not create the local time", IN3_EINVAL);
+  if (!ptm) return req_set_error(ctx, "could not create the local time", IN3_EINVAL);
   sprintf(dst, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec, 0);
   return IN3_OK;
 }
@@ -124,7 +124,7 @@ static in3_ret_t iamo_config_set(iamo_signer_config_t* conf, in3_configure_ctx_t
 }
 
 NONULL static in3_ret_t check_device_key(in3_req_t* ctx, iamo_signer_config_t* conf) {
-  if (memiszero(conf->device_key, 32)) return ctx_set_error(ctx, "No device key set", IN3_ECONFIG);
+  if (memiszero(conf->device_key, 32)) return req_set_error(ctx, "No device key set", IN3_ECONFIG);
   if (memiszero(conf->device_address, 20)) {
     uint8_t public_key[65];
     ecdsa_get_public_key65(&secp256k1, conf->device_key, public_key);
@@ -137,7 +137,7 @@ NONULL static in3_ret_t check_device_key(in3_req_t* ctx, iamo_signer_config_t* c
     in3_ret_t r           = iamo_config_set(conf, &c);
     json_free(c.json);
     if (c.error_msg) {
-      ctx_set_error(ctx, c.error_msg, r);
+      req_set_error(ctx, c.error_msg, r);
       _free(c.error_msg);
     }
     if (r < 0) return r;
@@ -177,11 +177,11 @@ static in3_ret_t send_api_request(in3_req_t* ctx, iamo_signer_config_t* conf, ch
     _free(rp.data);
     switch (in3_req_state(found)) {
       case REQ_ERROR:
-        return ctx_set_error(ctx, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
+        return req_set_error(ctx, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
         *result = ctx->responses[0];
         if (!*result)
-          return ctx_set_error(ctx, "error executing provider call", IN3_ERPC);
+          return req_set_error(ctx, "error executing provider call", IN3_ERPC);
         return IN3_OK;
       case REQ_WAITING_TO_SEND:
       case REQ_WAITING_FOR_RESPONSE:
@@ -242,7 +242,7 @@ static in3_ret_t send_api_request(in3_req_t* ctx, iamo_signer_config_t* conf, ch
   if (!found) {
     _free(rkey);
     _free(rp.data);
-    return ctx_set_error(ctx, "Invalid request!", IN3_ERPC);
+    return req_set_error(ctx, "Invalid request!", IN3_ERPC);
   }
   in3_cache_add_ptr(&found->cache, rkey)->props = CACHE_PROP_SRC_REQ;
   return req_add_required(ctx, found);

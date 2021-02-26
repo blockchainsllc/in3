@@ -45,11 +45,11 @@
 extern "C" {
 #endif
 
-#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 /**
@@ -271,7 +271,7 @@ NONULL in3_req_state_t in3_req_exec_state(
             // use the signer to create the signature
             ret = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
             // if it fails we report this as error
-            if (ret < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, ret);
+            if (ret < 0) return req_set_error(ctx, ctx->raw_response->error.data, ret);
             // otherwise we simply add the raw 65 bytes to the response.
             sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
         }
@@ -345,7 +345,7 @@ in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t*
     switch (in3_req_state(ctx)) {
       // in case of an error, we report it back to the parent context
       case REQ_ERROR:
-        return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
+        return req_set_error(parent, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
       case CTX_WAITING_FOR_REQUIRED_CTX:
       case REQ_WAITING_FOR_RESPONSE:

@@ -506,7 +506,7 @@ in3_ret_t in3_plugin_execute_first(in3_req_t* ctx, in3_plugin_act_t action, void
 #else
   char* msg = "E";
 #endif
-  return ctx_set_error(ctx, msg, IN3_EPLGN_NONE);
+  return req_set_error(ctx, msg, IN3_EPLGN_NONE);
 }
 
 in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {

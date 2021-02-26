@@ -117,7 +117,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
       case IN3_WAITING:
         return IN3_WAITING;
       default:
-        return ctx_set_error(vc->ctx, "General Error during execution", (in3_ret_t) ret);
+        return req_set_error(vc->ctx, "General Error during execution", (in3_ret_t) ret);
     }
   }
   else

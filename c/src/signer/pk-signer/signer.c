@@ -177,7 +177,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       in3_rpc_handle_ctx_t* ctx = action_ctx;
       if (strcmp(ctx->method, "in3_addRawKey") == 0) {
         if (d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_BYTES || d_len(ctx->params + 1) != 32)
-          return ctx_set_error(ctx->ctx, "one argument with 32 bytes is required!", IN3_EINVAL);
+          return req_set_error(ctx->ctx, "one argument with 32 bytes is required!", IN3_EINVAL);
         address_t adr;
         get_address(d_bytes(ctx->params + 1)->data, adr);
         add_key(ctx->ctx->client, d_bytes(ctx->params + 1)->data);

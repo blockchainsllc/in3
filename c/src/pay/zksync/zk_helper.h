@@ -54,9 +54,9 @@ void       zksync_calculate_account(address_t creator, bytes32_t codehash, bytes
   switch (d_type(d_get_at(params, index))) {                                                                                                     \
     case T_STRING: break;                                                                                                                        \
     case T_BYTES:                                                                                                                                \
-      if (d_len(d_get_at(params, index)) != 20) return ctx_set_error(ctx, "argument at index " #index " must be a 20 byte address", IN3_EINVAL); \
+      if (d_len(d_get_at(params, index)) != 20) return req_set_error(ctx, "argument at index " #index " must be a 20 byte address", IN3_EINVAL); \
       break;                                                                                                                                     \
-    default: return ctx_set_error(ctx, "argument at index " #index " must be a token name or an address", IN3_EINVAL);                           \
+    default: return req_set_error(ctx, "argument at index " #index " must be a token name or an address", IN3_EINVAL);                           \
   }
 
 #endif

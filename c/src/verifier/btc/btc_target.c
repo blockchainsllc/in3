@@ -178,7 +178,7 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
   if (ctx)                                                                                                         // yes, we do!
     switch (in3_req_state(ctx)) {                                                                                  // but what is the state?
       case REQ_ERROR:                                                                                              // there was an error,
-        return ctx_set_error(vc->ctx, "Error verifying the target", ctx_set_error(vc->ctx, ctx->error, IN3_ERPC)); // so we report it!
+        return req_set_error(vc->ctx, "Error verifying the target", req_set_error(vc->ctx, ctx->error, IN3_ERPC)); // so we report it!
       case REQ_WAITING_FOR_RESPONSE:                                                                               // for an response
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;                                                                                         // we keep on waiting.

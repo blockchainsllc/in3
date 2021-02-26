@@ -44,7 +44,7 @@ Except for `PLGN_ACT_TERM` we will loop until the first plugin handles it. The h
 - `IN3_OK` - the plugin handled it and it was succesful
 - `IN3_WAITING` - the plugin handled the action, but is waiting for more data, which happens in a sub context added. As soon as this was resolved, the plugin will be called again.
 - `IN3_EIGNORE` - the plugin did **NOT** handle the action and we should continue with the other plugins.
-- `IN3_E...` - the plugin did handle it, but raised a error and returned the error-code. In addition you should always use the current `in3_req_t`to report a detailed error-message (using `ctx_set_error()`)
+- `IN3_E...` - the plugin did handle it, but raised a error and returned the error-code. In addition you should always use the current `in3_req_t`to report a detailed error-message (using `req_set_error()`)
 
 ### Lifecycle
 
@@ -310,7 +310,7 @@ In order to decode the data you must use rlp.h:
 
 
 ```c
-#define decode(data,index,dst,msg) if (rlp_decode_in_list(data, index, dst) != 1) return ctx_set_error(ctx, "invalid" msg "in txdata", IN3_EINVAL);
+#define decode(data,index,dst,msg) if (rlp_decode_in_list(data, index, dst) != 1) return req_set_error(ctx, "invalid" msg "in txdata", IN3_EINVAL);
 
 in3_ret_t decode_tx(in3_req_t* ctx, bytes_t raw, tx_data_t* result) {
   decode(&raw, 0, &result->nonce    , "nonce");
@@ -372,7 +372,7 @@ return in3_rpc_handle_finish(rpc);
 4. In case of an error, simply set the error in the context, with the right message and error-code:
 
 ```c
-if (d_len(params)<1) return ctx_set_error(rpc->ctx, "Not enough parameters", IN3_EINVAL);
+if (d_len(params)<1) return req_set_error(rpc->ctx, "Not enough parameters", IN3_EINVAL);
 ```
 
 If the reequest needs additional subrequests, you need to follow the pattern of sending a request asynchron in a state machine:
@@ -389,7 +389,7 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
     switch (in3_req_state(ctx)) {
       // in case of an error, we report it back to the parent context
       case REQ_ERROR:
-        return ctx_set_error(rpc->ctx, ctx->error, IN3_EUNKNOWN);
+        return req_set_error(rpc->ctx, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
@@ -441,7 +441,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* args)
       // do we support it?
       if (strcmp(method, "web3_sha3") == 0) {
         // check the params
-        if (!params || d_len(params) != 1) return ctx_set_error(rpc->ctx, "invalid params", IN3_EINVAL);
+        if (!params || d_len(params) != 1) return req_set_error(rpc->ctx, "invalid params", IN3_EINVAL);
         bytes32_t hash;
         // hash the first param
         keccak(d_to_bytes(d_get_at(params,0)), hash);

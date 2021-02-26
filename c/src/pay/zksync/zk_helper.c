@@ -66,7 +66,7 @@ static in3_ret_t ensure_provider(zksync_config_t* conf, in3_req_t* ctx) {
       conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
       break;
     default:
-      return ctx_set_error(ctx, "no provider_url in config", IN3_EINVAL);
+      return req_set_error(ctx, "no provider_url in config", IN3_EINVAL);
   }
   return IN3_OK;
 }
@@ -98,10 +98,10 @@ void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t s
 in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_req_t* ctx) {
   if (conf->sign_type != ZK_SIGN_CREATE2) return IN3_OK;
   if (conf->account) return IN3_OK;
-  if (!conf->create2) return ctx_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->creator, 20)) return ctx_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->codehash, 32)) return ctx_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->salt_arg, 32)) return ctx_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
+  if (!conf->create2) return req_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->creator, 20)) return req_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->codehash, 32)) return req_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2->salt_arg, 32)) return req_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
   if (!conf->account) {
     address_t pub_key_hash;
     TRY(zksync_get_pubkey_hash(conf, ctx, pub_key_hash))
@@ -117,7 +117,7 @@ in3_ret_t zksync_get_account(zksync_config_t* conf, in3_req_t* ctx, uint8_t** ac
     in3_sign_account_ctx_t sctx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
     if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx) || !sctx.accounts_len) {
       if (sctx.accounts) _free(sctx.accounts);
-      return ctx_set_error(ctx, "No account configured or signer set", IN3_ECONFIG);
+      return req_set_error(ctx, "No account configured or signer set", IN3_ECONFIG);
     }
     conf->account = (uint8_t*) sctx.accounts;
   }
@@ -165,7 +165,7 @@ in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_req_t* ctx, uint32_t*
   }
 
   if (!conf->account_id) TRY(zksync_update_account(conf, ctx))
-  if (!conf->account_id) return ctx_set_error(ctx, "This user has no account yet!", IN3_EFIND);
+  if (!conf->account_id) return req_set_error(ctx, "This user has no account yet!", IN3_EFIND);
   if (account_id) *account_id = conf->account_id;
 
   // add to cache
@@ -252,11 +252,11 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
     d_token_t* result;
     TRY(send_provider_request(ctx, conf, "contract_address", "", &result))
     bytes_t* main_contract = d_get_bytesk(result, key("mainContract"));
-    if (!main_contract || main_contract->len != 20) return ctx_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
+    if (!main_contract || main_contract->len != 20) return req_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
     memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
 
     bytes_t* gov_contract = d_get_bytesk(result, key("govContract"));
-    if (!gov_contract || gov_contract->len != 20) return ctx_set_error(ctx, "could not get the gov_contract from provider", IN3_ERPC);
+    if (!gov_contract || gov_contract->len != 20) return req_set_error(ctx, "could not get the gov_contract from provider", IN3_ERPC);
     memcpy(conf->gov_contract = _malloc(20), gov_contract->data, 20);
 
     if (cache_name) {
@@ -315,7 +315,7 @@ in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_i
       break;
     }
     default:
-      return ctx_set_error(ctx, "invalid token-value", IN3_EINVAL);
+      return req_set_error(ctx, "invalid token-value", IN3_EINVAL);
   }
   TRY(send_provider_request(ctx, conf, "get_tx_fee", sb.data, &result))
 #ifdef ZKSYNC_256
@@ -356,10 +356,10 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
       conf->tokens[i].id       = d_get_intk(it.token, K_ID);
       conf->tokens[i].decimals = d_get_intk(it.token, key("decimals"));
       char* name               = d_get_stringk(it.token, key("symbol"));
-      if (!name || strlen(name) > 7) return ctx_set_error(ctx, "invalid token name", IN3_EINVAL);
+      if (!name || strlen(name) > 7) return req_set_error(ctx, "invalid token name", IN3_EINVAL);
       strcpy(conf->tokens[i].symbol, name);
       bytes_t* adr = d_get_bytesk(it.token, K_ADDRESS);
-      if (!adr || !adr->data || adr->len != 20) return ctx_set_error(ctx, "invalid token addr", IN3_EINVAL);
+      if (!adr || !adr->data || adr->len != 20) return req_set_error(ctx, "invalid token addr", IN3_EINVAL);
       memcpy(conf->tokens[i].address, adr->data, 20);
     }
 
@@ -388,5 +388,5 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
     }
   }
 
-  return ctx_set_error(ctx, "could not find the specifed token", IN3_EFIND);
+  return req_set_error(ctx, "could not find the specifed token", IN3_EFIND);
 }

@@ -26,8 +26,8 @@
   }
 void       cleanup_session(zk_musig_session_t* s, zksync_config_t* conf);
 static int get_pubkey_pos(zksync_config_t* conf, bytes_t pub_keys, in3_req_t* ctx) {
-  if (!pub_keys.data) return ctx_set_error(ctx, "missing public keys in config", IN3_EINVAL);
-  if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "missing signing keys in config", IN3_EINVAL);
+  if (!pub_keys.data) return req_set_error(ctx, "missing public keys in config", IN3_EINVAL);
+  if (memiszero(conf->sync_key, 32)) return req_set_error(ctx, "missing signing keys in config", IN3_EINVAL);
   if (memiszero(conf->pub_key, 32)) {
     TRY(zkcrypto_pk_to_pubkey(conf->sync_key, conf->pub_key));
   }
@@ -40,29 +40,29 @@ static int get_pubkey_pos(zksync_config_t* conf, bytes_t pub_keys, in3_req_t* ct
 static in3_ret_t send_sign_request(in3_req_t* parent, int pos, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
   if (params == NULL) params = "";
   char* url = conf->musig_urls ? conf->musig_urls[pos] : NULL;
-  if (!url) return ctx_set_error(parent, "missing url to fetch a signature", IN3_EINVAL);
+  if (!url) return req_set_error(parent, "missing url to fetch a signature", IN3_EINVAL);
   char* in3 = alloca(strlen(url) + 26);
   sprintf(in3, "{\"rpc\":\"%s\"}", url);
   return ctx_send_sub_request(parent, method, params, in3, result);
 }
 
 static in3_ret_t update_session(zk_musig_session_t* s, in3_req_t* ctx, d_token_t* data) {
-  if (!data || d_type(data) != T_OBJECT) return ctx_set_error(ctx, "invalid response from signer handler", IN3_EINVAL);
+  if (!data || d_type(data) != T_OBJECT) return req_set_error(ctx, "invalid response from signer handler", IN3_EINVAL);
   bytes_t d = d_to_bytes(d_get(data, key("pre_commitment")));
-  if (!d.data || d.len != s->len * 32) return ctx_set_error(ctx, "invalid precommitment from signer handler", IN3_EINVAL);
+  if (!d.data || d.len != s->len * 32) return req_set_error(ctx, "invalid precommitment from signer handler", IN3_EINVAL);
   for (unsigned int i = 0; i < s->len; i++) {
     if (i != s->pos && memiszero(s->precommitments.data + i * 32, 32) && !memiszero(d.data + i * 32, 32)) memcpy(s->precommitments.data + i * 32, d.data + i * 32, 32);
   }
   d = d_to_bytes(d_get(data, key("commitment")));
   if (d.data) {
-    if (d.len != s->len * 32) return ctx_set_error(ctx, "invalid commitment from signer handler", IN3_EINVAL);
+    if (d.len != s->len * 32) return req_set_error(ctx, "invalid commitment from signer handler", IN3_EINVAL);
     for (unsigned int i = 0; i < s->len; i++) {
       if (i != s->pos && memiszero(s->commitments.data + i * 32, 32) && !memiszero(d.data + i * 32, 32)) memcpy(s->commitments.data + i * 32, d.data + i * 32, 32);
     }
   }
   d = d_to_bytes(d_get(data, key("sig")));
   if (d.data) {
-    if (d.len != s->len * 32) return ctx_set_error(ctx, "invalid sigshares from signer handler", IN3_EINVAL);
+    if (d.len != s->len * 32) return req_set_error(ctx, "invalid sigshares from signer handler", IN3_EINVAL);
     for (unsigned int i = 0; i < s->len; i++) {
       if (i != s->pos && memiszero(s->signature_shares.data + i * 32, 32) && !memiszero(d.data + i * 32, 32)) memcpy(s->signature_shares.data + i * 32, d.data + i * 32, 32);
     }
@@ -132,7 +132,7 @@ void cleanup_session(zk_musig_session_t* s, zksync_config_t* conf) {
 
 static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, d_token_t* proof, bytes_t* msg) {
   if (!conf->proof_verify_method && !proof) return IN3_OK; // no method to verify configured -> so we accept all
-  if (!conf->proof_verify_method) return ctx_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
+  if (!conf->proof_verify_method) return req_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
 
   d_token_t* result = NULL;
   uint8_t*   account;
@@ -147,7 +147,7 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, d_token_t* 
 
   TRY_FINAL(ctx_send_sub_request(ctx, conf->proof_verify_method, sb.data, NULL, &result), _free(sb.data))
 
-  in3_ret_t ret = (d_type(result) == T_BOOLEAN && d_int(result)) ? IN3_OK : ctx_set_error(ctx, "Proof could not be verified!", IN3_EINVAL);
+  in3_ret_t ret = (d_type(result) == T_BOOLEAN && d_int(result)) ? IN3_OK : req_set_error(ctx, "Proof could not be verified!", IN3_EINVAL);
   req_remove_required(ctx, req_find_required(ctx, conf->proof_verify_method), false);
   return ret;
 }
@@ -170,7 +170,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     result  = ctx->params + 1;
     message = d_to_bytes(d_get(result, key("message")));
     proof   = d_get(result, K_PROOF);
-    if (!message.data) return ctx_set_error(ctx->ctx, "missing message in request", IN3_EINVAL);
+    if (!message.data) return req_set_error(ctx->ctx, "missing message in request", IN3_EINVAL);
   }
   else {
     message = d_to_bytes(ctx->params + 1);
@@ -191,7 +191,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (s == NULL) {
     bytes_t pub_keys = result ? d_to_bytes(d_get(result, key("pub_keys"))) : bytes(NULL, 0);
     if (!pub_keys.data && conf->musig_pub_keys.data) pub_keys = conf->musig_pub_keys;
-    if (!pub_keys.data) return ctx_set_error(ctx->ctx, "no public keys found for musig signature", IN3_EINVAL);
+    if (!pub_keys.data) return req_set_error(ctx->ctx, "no public keys found for musig signature", IN3_EINVAL);
     int pos = get_pubkey_pos(conf, pub_keys, ctx->ctx);
     in3_log_debug("create new session with pub_key pos %d\n", pos);
     TRY(pos)
@@ -235,7 +235,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   for (unsigned int i = 0; i < s->len; i++) {
     if (s->pos != i && memiszero(s->precommitments.data + i * 32, 32) && conf->musig_urls && conf->musig_urls[i]) {
       TRY_SIG(request_message(conf, s, i, &message, ctx->ctx, &result))
-      if (memiszero(s->precommitments.data + i * 32, 32)) TRY_SIG(ctx_set_error(ctx->ctx, "no precommit from signer set", IN3_EINVAL))
+      if (memiszero(s->precommitments.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->ctx, "no precommit from signer set", IN3_EINVAL))
     }
   }
 
@@ -246,7 +246,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   for (unsigned int i = 0; i < s->len; i++) {
     if (s->pos != i && memiszero(s->commitments.data + i * 32, 32) && conf->musig_urls && conf->musig_urls[i]) {
       TRY_SIG(request_message(conf, s, i, &message, ctx->ctx, &result))
-      if (memiszero(s->commitments.data + i * 32, 32)) TRY_SIG(ctx_set_error(ctx->ctx, "no commit from signer set", IN3_EINVAL))
+      if (memiszero(s->commitments.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->ctx, "no commit from signer set", IN3_EINVAL))
     }
   }
 
@@ -260,7 +260,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   for (unsigned int i = 0; i < s->len; i++) {
     if (s->pos != i && memiszero(s->signature_shares.data + i * 32, 32) && conf->musig_urls && conf->musig_urls[i]) {
       TRY_SIG(request_message(conf, s, i, &message, ctx->ctx, &result))
-      if (memiszero(s->signature_shares.data + i * 32, 32)) TRY_SIG(ctx_set_error(ctx->ctx, "no signature from signer set", IN3_EINVAL))
+      if (memiszero(s->signature_shares.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->ctx, "no signature from signer set", IN3_EINVAL))
     }
   }
 
@@ -270,7 +270,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY_SIG(zkcrypto_signer_receive_signature_shares(s->signer, s->signature_shares, res + 32))
     cleanup_session(s, conf);
     if (!zkcrypto_verify_signatures(message, conf->musig_pub_keys, bytes(res, 96)))
-      return ctx_set_error(ctx->ctx, "invalid signature", IN3_EINVAL);
+      return req_set_error(ctx->ctx, "invalid signature", IN3_EINVAL);
     return in3_rpc_handle_with_bytes(ctx, bytes(res, 96));
   }
 

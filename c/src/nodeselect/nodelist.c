@@ -76,10 +76,10 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
   unsigned int len   = d_len(nodes);
 
   if (!nodes || d_type(nodes) != T_ARRAY)
-    return ctx_set_error(ctx, "No Nodes in the result", IN3_EINVALDT);
+    return req_set_error(ctx, "No Nodes in the result", IN3_EINVALDT);
 
   if (!(t = d_get(result, K_LAST_BLOCK_NUMBER)))
-    return ctx_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
+    return req_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
 
   // update last blockNumber
   const uint64_t last_block = d_long(t);
@@ -98,7 +98,7 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
     in3_node_t* n = newList + i;
     node          = node ? d_next(node) : d_get_at(nodes, i);
     if (!node) {
-      res = ctx_set_error(ctx, "node missing", IN3_EINVALDT);
+      res = req_set_error(ctx, "node missing", IN3_EINVALDT);
       break;
     }
 
@@ -112,7 +112,7 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
     if (adr_bytes && adr_bytes->len == 20)
       memcpy(n->address, adr_bytes->data, 20);
     else {
-      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
+      res = req_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
       break;
     }
     BIT_CLEAR(n->attrs, ATTR_BOOT_NODE); // nodes are considered boot nodes only until first nodeList update succeeds
@@ -144,7 +144,7 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
     if (n->url)
       n->url = _strdupn(n->url, -1);
     else {
-      res = ctx_set_error(ctx, "missing url in nodelist", IN3_EINVALDT);
+      res = req_set_error(ctx, "missing url in nodelist", IN3_EINVALDT);
       break;
     }
   }
@@ -186,12 +186,12 @@ NONULL static in3_ret_t in3_client_fill_chain_whitelist(in3_nodeselect_def_t* da
   int              i     = 0;
   d_token_t *      nodes = d_get(result, K_NODES), *t = NULL;
 
-  if (!wl) return ctx_set_error(ctx, "No whitelist set", IN3_EINVALDT);
-  if (!nodes || d_type(nodes) != T_ARRAY) return ctx_set_error(ctx, "No Nodes in the result", IN3_EINVALDT);
+  if (!wl) return req_set_error(ctx, "No whitelist set", IN3_EINVALDT);
+  if (!nodes || d_type(nodes) != T_ARRAY) return req_set_error(ctx, "No Nodes in the result", IN3_EINVALDT);
 
   const int len = d_len(nodes);
   if (!(t = d_get(result, K_LAST_BLOCK_NUMBER)))
-    return ctx_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
+    return req_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
 
   // update last blockNumber
   const uint64_t last_block = d_long(t);
@@ -228,7 +228,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
       // if first update return error otherwise return IN3_OK, this is because first update is
       // always from a boot node which is presumed to be trusted
       return nodelist_first_upd8(data)
-                 ? ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC))
+                 ? req_set_error(parent_ctx, "Error updating node_list", req_set_error(parent_ctx, ctx->error, IN3_ERPC))
                  : IN3_OK;
     }
 
@@ -248,7 +248,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
 
         const in3_ret_t res = fill_chain(data, ctx, r);
         if (res < 0)
-          return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
+          return req_set_error(parent_ctx, "Error updating node_list", req_set_error(parent_ctx, ctx->error, res));
         in3_cache_store_nodelist(ctx->client, data);
         req_remove_required(parent_ctx, ctx, true);
 
@@ -294,7 +294,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
   if (ctx)
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
-        return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
+        return req_set_error(parent_ctx, "Error updating white_list", req_set_error(parent_ctx, ctx->error, IN3_ERPC));
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
@@ -304,14 +304,14 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
           // we have a result....
           const in3_ret_t res = in3_client_fill_chain_whitelist(data, ctx, result);
           if (res < 0)
-            return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, res));
+            return req_set_error(parent_ctx, "Error updating white_list", req_set_error(parent_ctx, ctx->error, res));
           in3_cache_store_whitelist(ctx->client, data);
           in3_client_run_chain_whitelisting(data);
           req_remove_required(parent_ctx, ctx, true);
           return IN3_OK;
         }
         else
-          return ctx_set_error(parent_ctx, "Error updating white_list", req_check_response_error(ctx, 0));
+          return req_set_error(parent_ctx, "Error updating white_list", req_check_response_error(ctx, 0));
       }
     }
 
@@ -515,7 +515,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_req_t* ctx, in3_nodeselect_config_t* w, n
 
   in3_ret_t res = in3_node_list_get(ctx, data, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
-    return ctx_set_error(ctx, "could not find the data", res);
+    return req_set_error(ctx, "could not find the data", res);
 
   // filter out nodes
   node_match_t* found = in3_node_list_fill_weight(
@@ -537,7 +537,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_req_t* ctx, in3_nodeselect_config_t* w, n
     }
 
     if (total_found == 0)
-      return ctx_set_error(ctx, "No nodes found that match the criteria", IN3_EFIND);
+      return req_set_error(ctx, "No nodes found that match the criteria", IN3_EFIND);
   }
 
   unsigned int filled_len = total_found < request_count ? total_found : request_count;

@@ -165,14 +165,14 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
     sb_add_key_value(sb, "jsonrpc", "2.0", 3, true);
     sb_add_char(sb, ',');
     if ((t = d_get(request_token, K_METHOD)) == NULL)
-      return ctx_set_error(c, "missing method-property in request", IN3_EINVAL);
+      return req_set_error(c, "missing method-property in request", IN3_EINVAL);
     else
       sb_add_key_value(sb, "method", d_string(t), add_bytes_to_hash(msg_hash, d_string(t), d_len(t)), true);
     sb_add_char(sb, ',');
     if ((t = d_get(request_token, K_PARAMS)) == NULL)
       sb_add_key_value(sb, "params", "[]", 2, false);
     else {
-      if (d_is_binary_ctx(c->request_context)) return ctx_set_error(c, "only text json input is allowed", IN3_EINVAL);
+      if (d_is_binary_ctx(c->request_context)) return req_set_error(c, "only text json input is allowed", IN3_EINVAL);
       const str_range_t ps = d_to_json(t);
       if (msg_hash) add_token_to_hash(msg_hash, t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
@@ -271,25 +271,25 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
 
   if (!ctx->response_context)
-    return ctx_set_error(ctx, "Error in JSON-response : ", ctx_set_error(ctx, str_remove_html(response_data), IN3_EINVALDT));
+    return req_set_error(ctx, "Error in JSON-response : ", req_set_error(ctx, str_remove_html(response_data), IN3_EINVALDT));
 
   if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
     ctx->responses    = _malloc(sizeof(d_token_t*));
     ctx->responses[0] = ctx->response_context->result;
-    if (ctx->len != 1) return ctx_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
+    if (ctx->len != 1) return req_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
   }
   else if (d_type(ctx->response_context->result) == T_ARRAY) {
     int        i;
     d_token_t* t = NULL;
     if (d_len(ctx->response_context->result) != (int) ctx->len)
-      return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
+      return req_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
     ctx->responses = _malloc(sizeof(d_token_t*) * ctx->len);
     for (i = 0, t = ctx->response_context->result + 1; i < (int) ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
   }
   else
-    return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
+    return req_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
 
   return IN3_OK;
 }
@@ -318,7 +318,7 @@ static in3_ret_t handle_error_response(in3_req_t* ctx, node_match_t* node, in3_r
   assert_in3_response(response);
 
   // and copy the error to the ctx
-  ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC);
+  req_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC);
 
   // we block this node
   in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
@@ -358,7 +358,7 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx) {
 static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
   in3_req_t*             ctx  = vc->ctx;
   in3_pay_followup_ctx_t fctx = {.ctx = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
-  return ctx_set_error(ctx, "Error following up the payment data", in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx));
+  return req_set_error(ctx, "Error following up the payment data", in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx));
 }
 
 static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
@@ -422,7 +422,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
         in3_log_debug("we have a system-error from node, so we block it ..\n");
         in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
         in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
-        return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
+        return req_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
       }
     }
 
@@ -505,12 +505,12 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, int nodes_count, in3_response
 NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   switch (in3_req_state(ctx)) {
     case REQ_ERROR:
-      ctx_set_error(ctx, "You cannot create an request if the was an error!", IN3_EINVAL);
+      req_set_error(ctx, "You cannot create an request if the was an error!", IN3_EINVAL);
       return NULL;
     case REQ_SUCCESS:
       return NULL;
     case REQ_WAITING_FOR_RESPONSE:
-      ctx_set_error(ctx, "There are pending requests, finish them before creating a new one!", IN3_EINVAL);
+      req_set_error(ctx, "There are pending requests, finish them before creating a new one!", IN3_EINVAL);
       return NULL;
     case REQ_WAITING_TO_SEND: {
       in3_req_t* p = ctx;
@@ -524,7 +524,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
     // prepare response-object
     d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
     if (d_len(params) < 2) {
-      ctx_set_error(ctx, "invalid number of arguments, must be [METHOD,URL,PAYLOAD,HEADER]", IN3_EINVAL);
+      req_set_error(ctx, "invalid number of arguments, must be [METHOD,URL,PAYLOAD,HEADER]", IN3_EINVAL);
       return NULL;
     }
     char*               method  = d_get_string_at(params, 0);
@@ -590,7 +590,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
     sb_free(payload);
     free_urls(urls, nodes_count);
     // since we cannot return an error, we set the error in the context and return NULL, indicating the error.
-    ctx_set_error(ctx, "could not generate the payload", res);
+    req_set_error(ctx, "could not generate the payload", res);
     return NULL;
   }
 
@@ -656,8 +656,8 @@ in3_sign_ctx_t* create_sign_ctx(in3_req_t* ctx) {
 in3_ret_t in3_handle_sign(in3_req_t* ctx) {
   in3_sign_ctx_t sign_ctx;
   init_sign_ctx(ctx, &sign_ctx);
-  if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
-  if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+  if (!sign_ctx.message.data) return req_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+  if (!sign_ctx.account.data) return req_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
   ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
   sb_init(&ctx->raw_response[0].data);
@@ -719,7 +719,7 @@ static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports
     }
   }
 
-  ctx_set_error(ctx, "waiting to fetch more responses, but no cptr was registered", IN3_ENOTSUP);
+  req_set_error(ctx, "waiting to fetch more responses, but no cptr was registered", IN3_ENOTSUP);
 }
 
 void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
@@ -895,7 +895,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
   if (ctx->error) return (ctx->verification_state && ctx->verification_state != IN3_WAITING) ? ctx->verification_state : IN3_EUNKNOWN;
 
   // is it a valid request?
-  if (!ctx->request_context || d_type(d_get(ctx->requests[0], K_METHOD)) != T_STRING) return ctx_set_error(ctx, "No Method defined", IN3_ECONFIG);
+  if (!ctx->request_context || d_type(d_get(ctx->requests[0], K_METHOD)) != T_STRING) return req_set_error(ctx, "No Method defined", IN3_ECONFIG);
 
   // if there is response we are done.
   if (ctx->response_context && ctx->verification_state == IN3_OK) return IN3_OK;
@@ -905,7 +905,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
     if (ret == IN3_EIGNORE)
       in3_plugin_execute_first(ctx, PLGN_ACT_NL_FAILABLE, ctx);
     else
-      return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
+      return req_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
   }
 
   in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_stringk(ctx->requests[0], K_METHOD), ctx->attempt + 1);
@@ -915,7 +915,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
 
       // do we need to handle it internaly?
       if (!ctx->raw_response && !ctx->response_context && (ret = handle_internally(ctx)) < 0)
-        return ctx->error ? ret : ctx_set_error(ctx, get_error_message(ctx), ret);
+        return ctx->error ? ret : req_set_error(ctx, get_error_message(ctx), ret);
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC) && !is_raw_http(ctx)) {
@@ -923,13 +923,13 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
         if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) == IN3_OK) {
           pctx.type = NL_SIGNER;
           if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) < 0)
-            return ctx_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
+            return req_set_error(ctx, "error configuring the config for request", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
 
           if ((ret = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_PREPARE, ctx)) != IN3_OK) return ret;
         }
         else
           // since we could not get the nodes, we either report it as error or wait.
-          return ctx_set_error(ctx, "could not find any node", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
+          return req_set_error(ctx, "could not find any node", ret < 0 && ret != IN3_WAITING && ctx_is_allowed_to_fail(ctx) ? IN3_EIGNORE : ret);
       }
 
       // if we still don't have an response, we keep on waiting
@@ -967,7 +967,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
         if (ctx_is_allowed_to_fail(ctx))
           ctx->verification_state = ret = IN3_EIGNORE;
         // we give up
-        return ctx->error ? (ret ? ret : IN3_ERPC) : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
+        return ctx->error ? (ret ? ret : IN3_ERPC) : req_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
       }
     }
 

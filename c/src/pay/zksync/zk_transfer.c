@@ -28,13 +28,13 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_m
   zksync_tx_data_t tx_data = {0};
   tx_data.conf             = conf;
   bytes_t to               = d_to_bytes(params_get(ctx->params, type == ZK_WITHDRAW ? key("ethAddress") : K_TO, 0));
-  if (!to.data || to.len != 20) return ctx_set_error(ctx->ctx, "invalid to address", IN3_EINVAL);
+  if (!to.data || to.len != 20) return req_set_error(ctx->ctx, "invalid to address", IN3_EINVAL);
   memcpy(tx_data.to, to.data, 20);
   tx_data.type = type;
 
 #ifdef ZKSYNC_256
   bytes_t amount = d_to_bytes(params_get(ctx->params, key("amount"), 1));
-  if (amount.len > 33) return ctx_set_error(ctx->ctx, "invalid to amount", IN3_EINVAL);
+  if (amount.len > 33) return req_set_error(ctx->ctx, "invalid to amount", IN3_EINVAL);
   memcpy(tx_data.amount + 32 - amount.len, amount.data, amount.len);
 #else
   tx_data.amount = d_long(params_get(ctx->params, key("amount"), 1));

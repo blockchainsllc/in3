@@ -68,7 +68,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
     switch (in3_req_state(ctx)) {
       // in case of an error, we report it back to the parent context
       case REQ_ERROR:
-        return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
+        return req_set_error(parent, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
@@ -105,17 +105,17 @@ static in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) 
   d_token_t* t = d_get(tx, K_FROM);
   if (t) {
     // we only accept valid from addresses which need to be 20 bytes
-    if (d_type(t) != T_BYTES || d_len(t) != 20) return ctx_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
+    if (d_type(t) != T_BYTES || d_len(t) != 20) return req_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
     memcpy(res, d_bytes(t)->data, 20);
     return IN3_OK;
   }
 
   // if it is not specified, we rely on the from-address of the signer.
-  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
+  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return req_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
   in3_sign_account_ctx_t actx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
   TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
-  if (!actx.accounts) return ctx_set_error(ctx, "no from address found", IN3_EINVAL);
+  if (!actx.accounts) return req_set_error(ctx, "no from address found", IN3_EINVAL);
   memcpy(res, actx.accounts, 20);
   _free(actx.accounts);
   return IN3_OK;
@@ -218,7 +218,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
   }
 
   TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
-  if (signature.len != 65) return ctx_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
+  if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required
 
@@ -262,7 +262,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   d_token_t* tx_params   = d_get(req, K_PARAMS);
   bytes_t    unsigned_tx = bytes(NULL, 0), signed_tx = bytes(NULL, 0);
   address_t  from;
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
+  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
 
   TRY(get_from_address(tx_params + 1, ctx, from));
 

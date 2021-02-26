@@ -84,7 +84,7 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
 
   // determine address
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig_bytes.data, sctx.request_hash, sig_bytes.data[64] >= 27 ? sig_bytes.data[64] - 27 : sig_bytes.data[64]))
-    return ctx_set_error(req, "Invalid Signature", IN3_EINVAL);
+    return req_set_error(req, "Invalid Signature", IN3_EINVAL);
   keccak(pubkey_bytes, sctx.request_hash);
   if (conf->account) _free(conf->account);
   conf->account = _malloc(20);
@@ -93,7 +93,7 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
 }
 
 static in3_ret_t set_amount(zk_fee_t* dst, in3_req_t* ctx, d_token_t* t) {
-  if (!t) return ctx_set_error(ctx, "No value set", IN3_EINVAL);
+  if (!t) return req_set_error(ctx, "No value set", IN3_EINVAL);
 #ifdef ZKSYNC_256
   bytes_t tmp = d_to_bytes(t);
   memset(*dst, 0, 32);
@@ -132,7 +132,7 @@ static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, byte
   in3_configure_ctx_t cctx = {.client = ctx->client, .json = parse_json(sb.data), .token = NULL, .error_msg = NULL};
   cctx.token               = cctx.json->result + 1;
   in3_ret_t ret            = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CONFIG_SET, &cctx);
-  if (ret && ret != IN3_EIGNORE) ctx_set_error(ctx, cctx.error_msg ? cctx.error_msg : "Could not update the preselect nodelist", ret);
+  if (ret && ret != IN3_EIGNORE) req_set_error(ctx, cctx.error_msg ? cctx.error_msg : "Could not update the preselect nodelist", ret);
   if (cctx.error_msg) _free(cctx.error_msg);
   json_free(cctx.json);
   _free(sb.data);
@@ -142,7 +142,7 @@ static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, byte
 static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria, d_token_t* offer, d_token_t** dst_offer, d_token_t** dst_price) {
 
   d_token_t* price_list = d_get(offer, key("priceList"));
-  if (!price_list || d_type(price_list) != T_ARRAY || d_len(price_list) < 0) return ctx_set_error(ctx, "no pricelist in the offer", IN3_ERPC);
+  if (!price_list || d_type(price_list) != T_ARRAY || d_len(price_list) < 0) return req_set_error(ctx, "no pricelist in the offer", IN3_ERPC);
 
   // find a acceptable offer
   d_token_t* price          = NULL;
@@ -160,8 +160,8 @@ static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria,
     if (price) {
       uint64_t amount       = d_get_longk(offer_iter.token, key("amount"));
       uint64_t price_amount = d_get_longk(price, key("amount"));
-      if (!amount) return ctx_set_error(ctx, "no amount defined in offer from node", IN3_ERPC);
-      if (!price_amount) return ctx_set_error(ctx, "no price defined in offer from node", IN3_ERPC);
+      if (!amount) return req_set_error(ctx, "no amount defined in offer from node", IN3_ERPC);
+      if (!price_amount) return req_set_error(ctx, "no price defined in offer from node", IN3_ERPC);
       if (!criteria->max_price_per_hundred_igas || ((price_amount * 100) / amount) <= criteria->max_price_per_hundred_igas) {
         selected_offer = offer_iter.token;
         break;
@@ -169,7 +169,7 @@ static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria,
     }
   }
 
-  if (!selected_offer) return ctx_set_error(ctx, "no accetable offer found in node response", IN3_ERPC);
+  if (!selected_offer) return req_set_error(ctx, "no accetable offer found in node response", IN3_ERPC);
 
   *dst_offer = selected_offer;
   *dst_price = price;
@@ -214,11 +214,11 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
 
   // the server wants payment
   d_token_t* offer = d_get(ctx->resp_error, key("offer"));
-  if (!offer) return ctx_set_error(ctx->ctx, "A payment rejection without an offer", IN3_ERPC);
+  if (!offer) return req_set_error(ctx->ctx, "A payment rejection without an offer", IN3_ERPC);
 
   // TODO right now we always accept any offer within the range if it matches the config
   pay_criteria_t* criteria = conf->incentive;
-  if (!criteria) return ctx_set_error(ctx->ctx, "No Payment configuration set in zksync.incentive", IN3_ECONFIG);
+  if (!criteria) return req_set_error(ctx->ctx, "No Payment configuration set in zksync.incentive", IN3_ECONFIG);
 
   d_token_t* price          = NULL;
   d_token_t* selected_offer = NULL;
@@ -251,7 +251,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   TRY(set_amount(&tx.amount, ctx->ctx, d_get(price, key("amount"))))
   TRY(set_amount(&tx.fee, ctx->ctx, d_get(price, key("fee"))))
   tmp = d_to_bytes(d_get(selected_offer, K_ADDRESS));
-  if (tmp.len != 20) return ctx_set_error(ctx->ctx, "invalid address in offer", IN3_ERPC);
+  if (tmp.len != 20) return req_set_error(ctx->ctx, "invalid address in offer", IN3_ERPC);
   memcpy(tx.to, tmp.data, 20);
   memcpy(tx.from, criteria->config.account, 20);
 
