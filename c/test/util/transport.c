@@ -146,7 +146,7 @@ in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   for (int i = 0; i < req->urls_len; ++i) {
     TEST_ASSERT_EQUAL_STRING(resp->request_method, method);
     TEST_ASSERT_EQUAL_STRING(resp->request_params, p);
-    in3_ctx_add_response(req->ctx, i, false, resp->response, -1, 0);
+    in3_ctx_add_response(req->req, i, false, resp->response, -1, 0);
     _free(resp->response);
     responses = resp->next;
     _free(resp);
@@ -199,8 +199,8 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_params, p);
   json_free(r);
 
-  sb_add_chars(&req->ctx->raw_response->data, response_buffer->response);
-  req->ctx->raw_response->state = IN3_OK;
+  sb_add_chars(&req->req->raw_response->data, response_buffer->response);
+  req->req->raw_response->state = IN3_OK;
   clean_last_response();
   return IN3_OK;
 }

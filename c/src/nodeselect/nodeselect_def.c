@@ -54,7 +54,7 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
 
   // do we support this request?
   if (vc->chain->type != CHAIN_ETH && strcmp(vc->method, "in3_nodeList")) return IN3_EIGNORE;
-  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result) return IN3_OK;
@@ -535,7 +535,7 @@ NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t
     if (!BIT_CHECK(ctx->missing, pos))
       continue;
 
-    const uint8_t* address = ctx->vctx->ctx->signers + (pos * 20);
+    const uint8_t* address = ctx->vctx->req->signers + (pos * 20);
     for (unsigned int i = 0; i < data->nodelist_length; ++i) {
       if (memcmp(data->nodelist[i].address, address, 20) != 0)
         continue;
@@ -612,7 +612,7 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
 }
 
 static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t* fctx) {
-  in3_req_t*    ctx         = fctx->ctx;
+  in3_req_t*    ctx         = fctx->req;
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;
   int           nodes_count = ctx->nodes == NULL ? 1 : req_nodes_len(ctx->nodes);
@@ -732,7 +732,7 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
       UNLOCK_AND_RETURN(config_get(w, (in3_get_config_ctx_t*) plugin_ctx))
     case PLGN_ACT_NL_PICK: {
       in3_nl_pick_ctx_t* pctx = plugin_ctx;
-      UNLOCK_AND_RETURN(pctx->type == NL_DATA ? pick_data(w, pctx->ctx) : pick_signer(w, pctx->ctx))
+      UNLOCK_AND_RETURN(pctx->type == NL_DATA ? pick_data(w, pctx->req) : pick_signer(w, pctx->req))
     }
     case PLGN_ACT_NL_PICK_FOLLOWUP:
       UNLOCK_AND_RETURN(pick_followup(data, plugin_ctx))

@@ -114,7 +114,7 @@ in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_req_t* ctx) {
 in3_ret_t zksync_get_account(zksync_config_t* conf, in3_req_t* ctx, uint8_t** account) {
   TRY(zksync_check_create2(conf, ctx))
   if (!conf->account) {
-    in3_sign_account_ctx_t sctx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
+    in3_sign_account_ctx_t sctx = {.req = ctx, .accounts = NULL, .accounts_len = 0};
     if (in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &sctx) || !sctx.accounts_len) {
       if (sctx.accounts) _free(sctx.accounts);
       return req_set_error(ctx, "No account configured or signer set", IN3_ECONFIG);

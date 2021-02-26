@@ -108,9 +108,9 @@ static void test_bulk_response() {
   in3_http_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
-  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1, 0);
+  in3_ctx_add_response(req->req, 0, true, "500 from server", -1, 0);
   TEST_ASSERT_EQUAL(REQ_WAITING_FOR_RESPONSE, in3_req_exec_state(ctx));
-  in3_ctx_add_response(req->ctx, 1, false, "[{\"result\":\"0x1\"},{\"result\":\"0x2\",\"in3\":{\"currentBlock\":\"0x1\"}}]", -1, 0);
+  in3_ctx_add_response(req->req, 1, false, "[{\"result\":\"0x1\"},{\"result\":\"0x2\",\"in3\":{\"currentBlock\":\"0x1\"}}]", -1, 0);
   request_free(req);
   TEST_ASSERT_EQUAL(REQ_SUCCESS, in3_req_exec_state(ctx));
 
@@ -180,14 +180,14 @@ static void test_partial_response() {
   in3_http_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
-  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1, 0);
+  in3_ctx_add_response(req->req, 0, true, "500 from server", -1, 0);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_req_execute(ctx));
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_req_execute(ctx));                               // calling twice will give the same result
   TEST_ASSERT_TRUE(get_node(in3_nodeselect_def_data(c), ctx->nodes)->blocked);        // first node is blacklisted
   TEST_ASSERT_FALSE(get_node(in3_nodeselect_def_data(c), ctx->nodes->next)->blocked); // second node is not blacklisted
 
   // now we have a valid response and should get a accaptable response
-  in3_ctx_add_response(req->ctx, 2, false, "{\"result\":\"0x100\"}", -1, 0);
+  in3_ctx_add_response(req->req, 2, false, "{\"result\":\"0x100\"}", -1, 0);
   TEST_ASSERT_EQUAL(IN3_OK, in3_req_execute(ctx));
 
   request_free(req);
@@ -206,13 +206,13 @@ static void test_retry_response() {
   in3_http_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
-  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1, 0);
+  in3_ctx_add_response(req->req, 0, true, "500 from server", -1, 0);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_req_execute(ctx));                               // calling twice will give the same result
   TEST_ASSERT_TRUE(get_node(in3_nodeselect_def_data(c), ctx->nodes)->blocked);        // first node is blacklisted
   TEST_ASSERT_FALSE(get_node(in3_nodeselect_def_data(c), ctx->nodes->next)->blocked); // second node is not blacklisted
   TEST_ASSERT_NOT_NULL(ctx->raw_response);                                            // we still keep the raw response
 
-  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"Error:no internet\"}", -1, 0);
+  in3_ctx_add_response(req->req, 1, false, "{\"error\":\"Error:no internet\"}", -1, 0);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_req_execute(ctx));
 
   TEST_ASSERT_NULL(ctx->raw_response);
@@ -222,7 +222,7 @@ static void test_retry_response() {
   req = in3_create_request(ctx);
   TEST_ASSERT_NOT_NULL(ctx->raw_response); // now the raw response is set
 
-  in3_ctx_add_response(req->ctx, 0, false, "{\"result\":\"0x100\"}", -1, 0);
+  in3_ctx_add_response(req->req, 0, false, "{\"result\":\"0x100\"}", -1, 0);
   TEST_ASSERT_EQUAL(IN3_OK, in3_req_execute(ctx));
 
   request_free(req);

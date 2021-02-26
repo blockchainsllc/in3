@@ -88,7 +88,7 @@ static void node_free(in3_pay_eth_t* data) {
 }
 
 static in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* plugin_ctx) {
-  in3_req_t* ctx = plugin_ctx->ctx;
+  in3_req_t* ctx = plugin_ctx->req;
   d_token_t *pay = d_get(plugin_ctx->resp_in3, key("pay")), *t;
   if (!pay || !ctx) return IN3_OK;
 
@@ -137,7 +137,7 @@ static void create_signed_tx(in3_pay_eth_t* data, bytes32_t key, sb_t* sb, addre
 }
 
 static in3_ret_t pay_eth_handle_request(in3_pay_eth_t* data, in3_pay_handle_ctx_t* plugin_ctx) {
-  in3_req_t*     ctx     = plugin_ctx->ctx;
+  in3_req_t*     ctx     = plugin_ctx->req;
   const uint64_t units   = calc_request_units(ctx);
   bool           started = false;
   sb_t*          sb      = plugin_ctx->payload;

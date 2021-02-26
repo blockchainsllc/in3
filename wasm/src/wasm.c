@@ -176,7 +176,7 @@ in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
     case PLGN_ACT_TERM: return plgn_exec_term(ctx, index);
     case PLGN_ACT_SIGN_ACCOUNT: {
       in3_sign_account_ctx_t* sctx = ctx;
-      return plgn_exec_sign_accounts(sctx->ctx->client, sctx, index);
+      return plgn_exec_sign_accounts(sctx->req->client, sctx, index);
     }
     case PLGN_ACT_RPC_HANDLE: {
       // extract the request as string, so we can pass it to js
@@ -185,7 +185,7 @@ in3_ret_t wasm_plgn(void* data, in3_plugin_act_t action, void* ctx) {
       char*                 req = alloca(sr.len + 1);
       memcpy(req, sr.data, sr.len);
       req[sr.len] = 0;
-      return plgn_exec_rpc_handle(rc->ctx->client, rc->ctx, req, index);
+      return plgn_exec_rpc_handle(rc->req->client, rc->req, req, index);
     }
     default: break;
   }
@@ -259,9 +259,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       else {
         uint32_t start = now();
         sb_add_chars(sb, ",\"request\":{ \"type\": ");
-        sb_add_chars(sb, request->ctx->type == RT_SIGN ? "\"sign\"" : "\"rpc\"");
+        sb_add_chars(sb, request->req->type == RT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
-        sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
+        sb_add_int(sb, (uint64_t) request->req->client->timeout);
         sb_add_chars(sb, ",\"wait\":");
         sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
@@ -270,7 +270,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
         sb_add_chars(sb, request->method);
         sb_add_chars(sb, "\",\"urls\":[");
         for (int i = 0; i < request->urls_len; i++) {
-          request->ctx->raw_response[i].time = start;
+          request->req->raw_response[i].time = start;
           if (i) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
           sb_add_escaped_chars(sb, request->urls[i]);
@@ -284,7 +284,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"ctx\":");
-        sb_add_int(sb, (uint64_t) request->ctx);
+        sb_add_int(sb, (uint64_t) request->req);
         sb_add_char(sb, '}');
         request_free(request);
       }

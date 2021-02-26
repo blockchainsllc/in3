@@ -725,7 +725,7 @@ static void test_nodelist_pick_signer_exclusions() {
     in3_req_t*        ctx  = req_new(in3, "{\"jsonrpc\":\"2.0\","
                                   "\"method\":\"eth_getTransactionByHash\","
                                   "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]}");
-    in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .ctx = ctx};
+    in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .req = ctx};
     TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx));
     pctx.type = NL_SIGNER;
     TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx));

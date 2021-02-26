@@ -240,7 +240,7 @@ NONULL void in3_req_add_response(
     const char*         data,     /**<  the data or the the string*/
     int                 data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
     uint32_t            time) {
-  in3_ctx_add_response(req->ctx, index, error, data, data_len, time);
+  in3_ctx_add_response(req->req, index, error, data, data_len, time);
 }
 
 void in3_ctx_add_response(
@@ -271,13 +271,13 @@ void in3_ctx_add_response(
 
 sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
   assert(hctx);
-  assert_in3_req(hctx->ctx);
+  assert_in3_req(hctx->req);
   assert(hctx->request);
   assert(hctx->response);
 
   *hctx->response = _calloc(1, sizeof(in3_response_t));
   sb_add_chars(&(*hctx->response)->data, "{\"id\":");
-  sb_add_int(&(*hctx->response)->data, hctx->ctx->id);
+  sb_add_int(&(*hctx->response)->data, hctx->req->id);
   return sb_add_chars(&(*hctx->response)->data, ",\"jsonrpc\":\"2.0\",\"result\":");
 }
 in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx) {
@@ -386,7 +386,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
-    in3_sign_ctx_t sc = {.account = from, .ctx = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
+    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
     in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
     if (r == IN3_OK && sc.signature.data) {
       in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);

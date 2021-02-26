@@ -161,7 +161,7 @@ static bool is_complete(bytes_t data) {
 
 in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
-  CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 1);
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 1);
   d_token_t* result = NULL;
   d_token_t* proof  = NULL;
   bytes_t    message;
@@ -170,7 +170,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     result  = ctx->params + 1;
     message = d_to_bytes(d_get(result, key("message")));
     proof   = d_get(result, K_PROOF);
-    if (!message.data) return req_set_error(ctx->ctx, "missing message in request", IN3_EINVAL);
+    if (!message.data) return req_set_error(ctx->req, "missing message in request", IN3_EINVAL);
   }
   else {
     message = d_to_bytes(ctx->params + 1);
@@ -178,8 +178,8 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     if (!conf->musig_pub_keys.data) {
       bytes32_t pk;
       uint8_t   sig[96];
-      TRY(verify_proof(conf, ctx->ctx, proof, &message));
-      TRY(zksync_get_sync_key(conf, ctx->ctx, pk))
+      TRY(verify_proof(conf, ctx->req, proof, &message));
+      TRY(zksync_get_sync_key(conf, ctx->req, pk))
       TRY(zkcrypto_sign_musig(pk, message, sig))
       return in3_rpc_handle_with_bytes(ctx, bytes(sig, 96));
     }
@@ -191,13 +191,13 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (s == NULL) {
     bytes_t pub_keys = result ? d_to_bytes(d_get(result, key("pub_keys"))) : bytes(NULL, 0);
     if (!pub_keys.data && conf->musig_pub_keys.data) pub_keys = conf->musig_pub_keys;
-    if (!pub_keys.data) return req_set_error(ctx->ctx, "no public keys found for musig signature", IN3_EINVAL);
-    int pos = get_pubkey_pos(conf, pub_keys, ctx->ctx);
+    if (!pub_keys.data) return req_set_error(ctx->req, "no public keys found for musig signature", IN3_EINVAL);
+    int pos = get_pubkey_pos(conf, pub_keys, ctx->req);
     in3_log_debug("create new session with pub_key pos %d\n", pos);
     TRY(pos)
 
     // make sure the data is valid
-    TRY(verify_proof(conf, ctx->ctx, proof, &message))
+    TRY(verify_proof(conf, ctx->req, proof, &message))
 
     // make sure we don't have too many old sessions.
     check_max_sessions(conf);
@@ -229,13 +229,13 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   bool commit_complete     = is_complete(s->commitments);
 
   // update data from incoming request
-  if (result) TRY_SIG(update_session(s, ctx->ctx, result))
+  if (result) TRY_SIG(update_session(s, ctx->req, result))
 
   // do we have all precommits?
   for (unsigned int i = 0; i < s->len; i++) {
     if (s->pos != i && memiszero(s->precommitments.data + i * 32, 32) && conf->musig_urls && conf->musig_urls[i]) {
-      TRY_SIG(request_message(conf, s, i, &message, ctx->ctx, &result))
-      if (memiszero(s->precommitments.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->ctx, "no precommit from signer set", IN3_EINVAL))
+      TRY_SIG(request_message(conf, s, i, &message, ctx->req, &result))
+      if (memiszero(s->precommitments.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->req, "no precommit from signer set", IN3_EINVAL))
     }
   }
 
@@ -245,8 +245,8 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // do we have all commits?
   for (unsigned int i = 0; i < s->len; i++) {
     if (s->pos != i && memiszero(s->commitments.data + i * 32, 32) && conf->musig_urls && conf->musig_urls[i]) {
-      TRY_SIG(request_message(conf, s, i, &message, ctx->ctx, &result))
-      if (memiszero(s->commitments.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->ctx, "no commit from signer set", IN3_EINVAL))
+      TRY_SIG(request_message(conf, s, i, &message, ctx->req, &result))
+      if (memiszero(s->commitments.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->req, "no commit from signer set", IN3_EINVAL))
     }
   }
 
@@ -259,8 +259,8 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // do we have all signatures?
   for (unsigned int i = 0; i < s->len; i++) {
     if (s->pos != i && memiszero(s->signature_shares.data + i * 32, 32) && conf->musig_urls && conf->musig_urls[i]) {
-      TRY_SIG(request_message(conf, s, i, &message, ctx->ctx, &result))
-      if (memiszero(s->signature_shares.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->ctx, "no signature from signer set", IN3_EINVAL))
+      TRY_SIG(request_message(conf, s, i, &message, ctx->req, &result))
+      if (memiszero(s->signature_shares.data + i * 32, 32)) TRY_SIG(req_set_error(ctx->req, "no signature from signer set", IN3_EINVAL))
     }
   }
 
@@ -270,7 +270,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY_SIG(zkcrypto_signer_receive_signature_shares(s->signer, s->signature_shares, res + 32))
     cleanup_session(s, conf);
     if (!zkcrypto_verify_signatures(message, conf->musig_pub_keys, bytes(res, 96)))
-      return req_set_error(ctx->ctx, "invalid signature", IN3_EINVAL);
+      return req_set_error(ctx->req, "invalid signature", IN3_EINVAL);
     return in3_rpc_handle_with_bytes(ctx, bytes(res, 96));
   }
 
@@ -279,7 +279,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   add_sessiondata(rr, s);
   if (proof) {
     sb_add_chars(rr, ",\"proof\":");
-    char* proof_data = d_create_json(ctx->ctx->request_context, proof);
+    char* proof_data = d_create_json(ctx->req->request_context, proof);
     sb_add_chars(rr, proof_data);
     _free(proof_data);
   }

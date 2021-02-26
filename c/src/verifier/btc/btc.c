@@ -157,7 +157,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
     if (!t || d_type(t) != T_STRING) return vc_err(vc, "missing hex");
     data.len  = (d_len(t) + 1) >> 1;
     data.data = _malloc(data.len);
-    in3_cache_add_ptr(&vc->ctx->cache, data.data);
+    in3_cache_add_ptr(&vc->req->cache, data.data);
     hex_to_bytes(d_string(t), d_len(t), data.data, data.len);
 
     // parse tx
@@ -274,7 +274,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
     if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
     data.len  = (d_len(vc->result) + 1) >> 1;
     data.data = _malloc(data.len);
-    in3_cache_add_ptr(&vc->ctx->cache, data.data);
+    in3_cache_add_ptr(&vc->req->cache, data.data);
     hex_to_bytes(d_string(vc->result), d_len(vc->result), data.data, data.len);
 
     // parse tx
@@ -433,7 +433,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   if (vc->chain->type != CHAIN_BTC) return IN3_EIGNORE;
 
   // make sure we want to verify
-  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;

@@ -122,7 +122,7 @@ static void test_signer() {
   sc.message        = *data;
   sc.account        = bytes(NULL, 0);
   sc.wallet         = c->signer->wallet;
-  sc.ctx            = ctx;
+  sc.req            = ctx;
 
   TEST_ASSERT_EQUAL(IN3_OK, eth_ledger_sign_txn(&sc));
   TEST_ASSERT_FALSE(memiszero(sc.signature.data, 65));

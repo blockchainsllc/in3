@@ -603,9 +603,9 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
 #endif
     if (in_response.len) {
       for (unsigned int i = 0; i < req->urls_len; i++) {
-        req->ctx->raw_response[i].state = IN3_OK;
-        sb_add_range(&req->ctx->raw_response[i].data, (char*) in_response.data, 0, in_response.len);
-        req->ctx->raw_response[i].state = IN3_OK;
+        req->req->raw_response[i].state = IN3_OK;
+        sb_add_range(&req->req->raw_response[i].data, (char*) in_response.data, 0, in_response.len);
+        req->req->raw_response[i].state = IN3_OK;
       }
       return 0;
     }
@@ -626,13 +626,13 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
   in3_ret_t r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
 #endif
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
-    last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
+    last_response = b_new((uint8_t*) req->req->raw_response[0].data.data, req->req->raw_response[0].data.len);
 #ifndef DEBUG
     if (debug_mode) {
-      if (req->ctx->raw_response[0].state == IN3_OK)
-        fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+      if (req->req->raw_response[0].state == IN3_OK)
+        fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->req->raw_response[0].data.data);
       else
-        fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+        fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->req->raw_response[0].data.data);
     }
 #endif
   }
@@ -653,7 +653,7 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
-    recorder_print(0, "[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->ctx->raw_response->data.data);
+    recorder_print(0, "[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->req->raw_response->data.data);
     recorder_exit(0);
   }
 
@@ -1102,7 +1102,7 @@ int main(int argc, char* argv[]) {
           ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
           ctx.raw_response->state = IN3_WAITING;
           ctx.client              = c;
-          r.ctx                   = &ctx;
+          r.req                   = &ctx;
           r.urls                  = urls;
           r.urls_len              = 1;
           r.payload               = "";
@@ -1217,7 +1217,7 @@ int main(int argc, char* argv[]) {
     in3_req_t ctx;
     ctx.client        = c;
     in3_sign_ctx_t sc = {0};
-    sc.ctx            = &ctx;
+    sc.req            = &ctx;
     sc.account        = bytes(NULL, 0);
     sc.message        = *data;
     sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;

@@ -330,7 +330,7 @@ char* in3_get_request_headers_at(
 uint32_t in3_get_request_timeout(
     in3_http_request_t* request /**< request struct */
 ) {
-  return request->ctx->client->timeout;
+  return request->req->client->timeout;
 }
 
 /** 

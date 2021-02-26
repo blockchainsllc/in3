@@ -177,17 +177,17 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       in3_rpc_handle_ctx_t* ctx = action_ctx;
       if (strcmp(ctx->method, "in3_addRawKey") == 0) {
         if (d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_BYTES || d_len(ctx->params + 1) != 32)
-          return req_set_error(ctx->ctx, "one argument with 32 bytes is required!", IN3_EINVAL);
+          return req_set_error(ctx->req, "one argument with 32 bytes is required!", IN3_EINVAL);
         address_t adr;
         get_address(d_bytes(ctx->params + 1)->data, adr);
-        add_key(ctx->ctx->client, d_bytes(ctx->params + 1)->data);
+        add_key(ctx->req->client, d_bytes(ctx->params + 1)->data);
         return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
       }
       if (strcmp(ctx->method, "eth_accounts") == 0) {
         sb_t*                  sb    = in3_rpc_handle_start(ctx);
         bool                   first = true;
-        in3_sign_account_ctx_t sc    = {.ctx = ctx->ctx, .accounts = NULL, .accounts_len = 0, .signer_type = 0};
-        for (in3_plugin_t* p = ctx->ctx->client->plugins; p; p = p->next) {
+        in3_sign_account_ctx_t sc    = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0};
+        for (in3_plugin_t* p = ctx->req->client->plugins; p; p = p->next) {
           if (p->acts & PLGN_ACT_SIGN_ACCOUNT && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc) == IN3_OK) {
             for (int i = 0; i < sc.accounts_len; i++) {
               sb_add_rawbytes(sb, first ? "[\"0x" : "\",\"0x", bytes(sc.accounts + i * 20, 20), 20);

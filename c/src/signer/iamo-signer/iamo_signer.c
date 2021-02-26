@@ -255,16 +255,16 @@ static in3_ret_t add_response(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {
 }
 
 in3_ret_t iamo_add_user(iamo_signer_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  TRY(check_device_key(ctx->ctx, conf))
+  TRY(check_device_key(ctx->req, conf))
 
   d_token_t* params = d_get(ctx->request, K_PARAMS);
-  CHECK_PARAMS_LEN(ctx->ctx, params, 2);
+  CHECK_PARAMS_LEN(ctx->req, params, 2);
   char*      email   = d_get_string_at(params, 0);
   char*      phone   = d_get_string_at(params, 1);
   d_token_t* result  = NULL;
   char*      payload = alloca(strlen(email) + strlen(phone) + 50);
   sprintf(payload, "{\"email\":\"%s\",\"phone\":\"%s\"}", email, phone);
-  TRY(send_api_request(ctx->ctx, conf, conf->services.account, "post", "/api/user", payload, &result))
+  TRY(send_api_request(ctx->req, conf, conf->services.account, "post", "/api/user", payload, &result))
   //return in3_rpc_handle_with_boolean(ctx, true);
   return add_response(ctx, result);
 }

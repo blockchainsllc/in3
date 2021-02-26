@@ -396,19 +396,19 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
         const size_t l     = (*jni)->GetArrayLength(jni, content);
         uint8_t*     bytes = _malloc(l);
         (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
-        sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
-        req->ctx->raw_response[i].state = IN3_OK;
+        sb_add_range(&req->req->raw_response[i].data, (char*) bytes, 0, l);
+        req->req->raw_response[i].state = IN3_OK;
         _free(bytes);
       }
       else {
-        sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
-        req->ctx->raw_response[i].state = IN3_ERPC;
+        sb_add_chars(&req->req->raw_response[i].data, "Could not fetch the data!");
+        req->req->raw_response[i].state = IN3_ERPC;
       }
-      if (req->ctx->raw_response[i].state) success = IN3_ERPC;
+      if (req->req->raw_response[i].state) success = IN3_ERPC;
     }
   }
 
-  for (unsigned int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = (uint32_t)(end - start);
+  for (unsigned int i = 0; i < req->urls_len; i++) req->req->raw_response[i].time = (uint32_t)(end - start);
 
   return success;
 }
@@ -548,7 +548,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 
 //in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
-  in3_req_t* ctx    = (in3_req_t*) sc->ctx;
+  in3_req_t* ctx    = (in3_req_t*) sc->req;
   void*      jp     = get_java_obj_ptr(ctx->client);
   jclass     cls    = (*jni)->GetObjectClass(jni, jp);
   jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");

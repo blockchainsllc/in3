@@ -83,7 +83,7 @@ static in3_ret_t find_zksync_conf(in3_req_t* ctx, zksync_config_t** conf) {
 static in3_ret_t iamo_zk_check_rpc(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (conf->cosign_rpc) return IN3_OK;
   zksync_config_t* zconf;
-  TRY(find_zksync_conf(ctx->ctx, &zconf))
+  TRY(find_zksync_conf(ctx->req, &zconf))
   if (zconf->musig_urls) {
     for (size_t i = 0; i < 2; i++) {
       if (zconf->musig_urls[i]) {
@@ -273,41 +273,41 @@ in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_req_t* ctx, wallet_t*
 
 in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY(iamo_zk_check_rpc(conf, ctx))
-  CHECK_PARAMS_LEN(ctx->ctx, ctx->params, (conf->cosign_rpc ? 1 : 2))
-  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_OBJECT)                       // wallet-data
-  if (!conf->cosign_rpc) CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 1, T_ARRAY) // signatures
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, (conf->cosign_rpc ? 1 : 2))
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT)                       // wallet-data
+  if (!conf->cosign_rpc) CHECK_PARAM_TYPE(ctx->req, ctx->params, 1, T_ARRAY) // signatures
   if (conf->cosign_rpc && d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
 
   // fill wallet
   wallet_t wallet = {0};
-  TRY(wallet_from_json(ctx->ctx, ctx->params + 1, &wallet))
+  TRY(wallet_from_json(ctx->req, ctx->params + 1, &wallet))
   bytes_t message = wallet_to_bytes(&wallet);
   b_to_stack(message);
 
   if (conf->cosign_rpc)
     // we will sign the message and send it to the server
-    TRY_FINAL(wallet_sign_and_send(conf, ctx->ctx, &wallet, message), wallet_free(&wallet, false))
+    TRY_FINAL(wallet_sign_and_send(conf, ctx->req, &wallet, message), wallet_free(&wallet, false))
   else {
 
     // get existing wallet
     wallet_t existing;
-    TRY_CATCH(wallet_get_from_cache(ctx->ctx, wallet.account, &existing), wallet_free(&wallet, false))
+    TRY_CATCH(wallet_get_from_cache(ctx->req, wallet.account, &existing), wallet_free(&wallet, false))
 
     // check signatures
-    TRY_WALLETS(wallet_verify_signatures(ctx->ctx, message, existing.owners ? &existing : &wallet, d_get_at(ctx->params, 1)), wallet, existing)
+    TRY_WALLETS(wallet_verify_signatures(ctx->req, message, existing.owners ? &existing : &wallet, d_get_at(ctx->params, 1)), wallet, existing)
 
     // first check the cache
     wallet_free(&existing, false);
-    TRY_FINAL(wallet_store_in_cache(ctx->ctx, &wallet), wallet_free(&wallet, false))
+    TRY_FINAL(wallet_store_in_cache(ctx->req, &wallet), wallet_free(&wallet, false))
   }
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
 in3_ret_t iamo_zk_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
-  CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 3)
-  CHECK_PARAM_ADDRESS(ctx->ctx, ctx->params, 1)
-  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 2, T_ARRAY)
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 3)
+  CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 1)
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 2, T_ARRAY)
 
   // read arguments
   bytes_t  msg     = d_to_bytes(ctx->params + 1);
@@ -315,11 +315,11 @@ in3_ret_t iamo_zk_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // is the wallet registered?
   wallet_t wallet;
-  TRY(wallet_get_from_cache(ctx->ctx, account, &wallet))
-  if (!wallet.owners) return req_set_error(ctx->ctx, "The Account is not registered!", IN3_EINVAL);
+  TRY(wallet_get_from_cache(ctx->req, account, &wallet))
+  if (!wallet.owners) return req_set_error(ctx->req, "The Account is not registered!", IN3_EINVAL);
 
   // check signatures (and free the wallet)
-  TRY_FINAL(wallet_verify_signatures(ctx->ctx, msg, &wallet, d_get_at(ctx->params, 2)), wallet_free(&wallet, false))
+  TRY_FINAL(wallet_verify_signatures(ctx->req, msg, &wallet, d_get_at(ctx->params, 2)), wallet_free(&wallet, false))
 
   // if we made it here, signatures are valid
   return in3_rpc_handle_with_string(ctx, "true");
@@ -399,63 +399,63 @@ static in3_ret_t wallet_from_args(in3_rpc_handle_ctx_t* ctx, wallet_t* wallet) {
               role |= ROLE_INITIATOR;
               break;
             default:
-              return req_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C", IN3_EINVAL);
+              return req_set_error(ctx->req, "invalid role-prefix. Must be I,A or C", IN3_EINVAL);
           }
         }
-        if (*c != ':') return req_set_error(ctx->ctx, "invalid role-prefix. Must be I,A or C, followed by : and the address", IN3_EINVAL);
+        if (*c != ':') return req_set_error(ctx->req, "invalid role-prefix. Must be I,A or C, followed by : and the address", IN3_EINVAL);
         c++;
-        if (hex_to_bytes(c, -1, wallet->owners[wallet->owner_len].address, 20) != 20) return req_set_error(ctx->ctx, "invalid address of owner, must be 20 bytes", IN3_EINVAL);
+        if (hex_to_bytes(c, -1, wallet->owners[wallet->owner_len].address, 20) != 20) return req_set_error(ctx->req, "invalid address of owner, must be 20 bytes", IN3_EINVAL);
         wallet->owners[wallet->owner_len++].role = role;
         break;
       }
       case T_INTEGER:
-        if (wallet->threshold) return req_set_error(ctx->ctx, "threshold already set", IN3_EINVAL);
+        if (wallet->threshold) return req_set_error(ctx->req, "threshold already set", IN3_EINVAL);
         wallet->threshold = (uint32_t) d_int(iter.token);
         break;
       case T_BYTES:
-        if (d_len(iter.token) != 20) return req_set_error(ctx->ctx, "a owner must be a adddress of 20 bytes", IN3_EINVAL);
+        if (d_len(iter.token) != 20) return req_set_error(ctx->req, "a owner must be a adddress of 20 bytes", IN3_EINVAL);
         memcpy(wallet->owners[wallet->owner_len].address, d_bytes(iter.token)->data, 20);
         wallet->owners[wallet->owner_len++].role = ROLE_APPROVER;
         break;
 
       default:
-        return req_set_error(ctx->ctx, "Invalid argument for owner of multisig", IN3_EINVAL);
+        return req_set_error(ctx->req, "Invalid argument for owner of multisig", IN3_EINVAL);
     }
   }
 
-  if (!wallet->threshold) return req_set_error(ctx->ctx, "threshold is missing", IN3_EINVAL);
-  if (wallet->threshold > wallet->owner_len) return req_set_error(ctx->ctx, "threshold must be less or equal to the number of owners", IN3_EINVAL);
-  if (!has_initiator) return req_set_error(ctx->ctx, "at least one owner must have a initiator role", IN3_EINVAL);
+  if (!wallet->threshold) return req_set_error(ctx->req, "threshold is missing", IN3_EINVAL);
+  if (wallet->threshold > wallet->owner_len) return req_set_error(ctx->req, "threshold must be less or equal to the number of owners", IN3_EINVAL);
+  if (!has_initiator) return req_set_error(ctx->req, "at least one owner must have a initiator role", IN3_EINVAL);
   return IN3_OK;
 }
 
 in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY(iamo_zk_check_rpc(conf, ctx))
-  CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 1)
-  CHECK_PARAM_NUMBER(ctx->ctx, ctx->params, 0) // threshold
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
+  CHECK_PARAM_NUMBER(ctx->req, ctx->params, 0) // threshold
   wallet_t wallet = {0};
   wallet.owners   = alloca((d_len(ctx->params) - 1) * sizeof(owner_t));
   TRY(wallet_from_args(ctx, &wallet))
   // first get from server:
   d_token_t* server_config;
-  TRY(read_server_config(conf, ctx->ctx, &server_config))
+  TRY(read_server_config(conf, ctx->req, &server_config))
 
   // encode the setup-tx
   bytes32_t        saltarg;
   zksync_config_t* zksync_conf;
-  TRY(find_zksync_conf(ctx->ctx, &zksync_conf))
+  TRY(find_zksync_conf(ctx->req, &zksync_conf))
 
   // build common pubkey
   uint8_t pubkeys[64];
-  TRY(zksync_get_user_pubkey(zksync_conf, ctx->ctx, pubkeys))
+  TRY(zksync_get_user_pubkey(zksync_conf, ctx->req, pubkeys))
   bytes_t mastercopy    = d_to_bytes(d_get(server_config, key("mastercopy")));
   bytes_t creator       = d_to_bytes(d_get(server_config, key("creator")));
   bytes_t codehash      = d_to_bytes(d_get(server_config, key("codehash")));
   bytes_t server_pubkey = d_to_bytes(d_get(server_config, key("pubkey")));
-  if (mastercopy.len != 20) return req_set_error(ctx->ctx, "Invalid mastercopy from the server!", IN3_EINVAL);
-  if (creator.len != 20) return req_set_error(ctx->ctx, "Invalid creator from the server!", IN3_EINVAL);
-  if (codehash.len != 32) return req_set_error(ctx->ctx, "Invalid codehash from the server!", IN3_EINVAL);
-  if (server_pubkey.len != 32) return req_set_error(ctx->ctx, "Invalid public key from the server!", IN3_EINVAL);
+  if (mastercopy.len != 20) return req_set_error(ctx->req, "Invalid mastercopy from the server!", IN3_EINVAL);
+  if (creator.len != 20) return req_set_error(ctx->req, "Invalid creator from the server!", IN3_EINVAL);
+  if (codehash.len != 32) return req_set_error(ctx->req, "Invalid codehash from the server!", IN3_EINVAL);
+  if (server_pubkey.len != 32) return req_set_error(ctx->req, "Invalid public key from the server!", IN3_EINVAL);
   memcpy(pubkeys + 32, server_pubkey.data, 32);
 
   bytes32_t pubkeyhash = {0};
@@ -472,7 +472,7 @@ in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ct
   b_to_stack(message);
 
   // we will sign the message and send it to the server
-  TRY_CATCH(wallet_sign_and_send(conf, ctx->ctx, &wallet, message), _free(setup_data.data))
+  TRY_CATCH(wallet_sign_and_send(conf, ctx->req, &wallet, message), _free(setup_data.data))
 
   // cal txdata for deployment
   bytes_t deploy_tx = encode_deploy_data(mastercopy.data, setup_data, pubkeyhash);
@@ -505,7 +505,7 @@ in3_ret_t iamo_zk_get_config(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) 
   bytes32_t        pubkey;
   ONLY_SERVER(ctx)
   TRY(iamo_zk_check_rpc(conf, ctx))
-  if (conf->cosign_rpc) return req_set_error(ctx->ctx, "getting config only works for server without a cosign_rpc ", IN3_ECONFIG);
+  if (conf->cosign_rpc) return req_set_error(ctx->req, "getting config only works for server without a cosign_rpc ", IN3_ECONFIG);
 
   bytes32_t codehash = {0};
   memcpy(codehash + 12, conf->master_copy, 20);
@@ -515,8 +515,8 @@ in3_ret_t iamo_zk_get_config(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) 
   sha3_Update(&sctx, codehash, 32);
   keccak_Final(&sctx, codehash);
 
-  TRY(find_zksync_conf(ctx->ctx, &zconf))
-  TRY(zksync_get_user_pubkey(zconf, ctx->ctx, pubkey))
+  TRY(find_zksync_conf(ctx->req, &zconf))
+  TRY(zksync_get_user_pubkey(zconf, ctx->req, pubkey))
 
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_rawbytes(sb, "{\"pubkey\":\"0x", bytes(pubkey, 32), 0);

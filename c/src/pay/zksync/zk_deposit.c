@@ -14,9 +14,9 @@
 in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // check ctx->params
   if (!(d_len(ctx->params) == 1 && d_type(ctx->params + 1) == T_OBJECT)) {
-    CHECK_PARAMS_LEN(ctx->ctx, ctx->params, 2)
-    CHECK_PARAM_NUMBER(ctx->ctx, ctx->params, 0)
-    CHECK_PARAM_TOKEN(ctx->ctx, ctx->params, 1)
+    CHECK_PARAMS_LEN(ctx->req, ctx->params, 2)
+    CHECK_PARAM_NUMBER(ctx->req, ctx->params, 0)
+    CHECK_PARAM_TOKEN(ctx->req, ctx->params, 1)
   }
 
   //  amount
@@ -31,17 +31,17 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // make sure we have an account
   uint8_t* account = conf->account;
   if ((tmp = params_get(ctx->params, key("depositTo"), 3))) {
-    if (tmp->len != 20) return req_set_error(ctx->ctx, "invalid depositTo", IN3_ERPC);
+    if (tmp->len != 20) return req_set_error(ctx->req, "invalid depositTo", IN3_ERPC);
     account = tmp->data;
   }
   else if (!account)
-    TRY(zksync_get_account(conf, ctx->ctx, &account))
+    TRY(zksync_get_account(conf, ctx->req, &account))
 
   // check main_contract
-  if (!main_contract) TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
+  if (!main_contract) TRY(zksync_get_contracts(conf, ctx->req, &main_contract))
 
   // get token from the tokenlist
-  TRY(resolve_tokens(conf, ctx->ctx, token, &token_conf))
+  TRY(resolve_tokens(conf, ctx->req, token, &token_conf))
 
   if (memiszero(token_conf->address, 20)) { // is eth
     sb_t sb = {0};
@@ -49,7 +49,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_add_rawbytes(&sb, "\",\"data\":\"0x2d2da806", bytes(account, 20), 32);
     sb_add_rawbytes(&sb, "\",\"value\":\"0x", amount, 0);
     sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
-    TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+    TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
   }
   else {
 
@@ -60,7 +60,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
       sb_add_rawbytes(&sb, NULL, amount, 32);
       sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
 
-      TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+      TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
     }
 
     sb_t sb = {0};
@@ -70,7 +70,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_add_rawbytes(&sb, NULL, bytes(account, 20), 32);
     sb_add_chars(&sb, "\",\"gas\":\"0xffd40\"}");
 
-    TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+    TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
   }
 
   // now that we have the receipt, we need to find the opId in the log
@@ -87,13 +87,13 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
         sb_add_chars(sb, ",\"priorityOpId\":");
         sb_add_int(sb, bytes_to_long(data->data + 64 - 8, 8));
         sb_add_chars(sb, "}");
-        req_remove_required(ctx->ctx, req_find_required(ctx->ctx, "eth_sendTransactionAndWait"), true);
+        req_remove_required(ctx->req, req_find_required(ctx->req, "eth_sendTransactionAndWait"), true);
         return in3_rpc_handle_finish(ctx);
       }
     }
   }
 
-  return req_set_error(ctx->ctx, "Could not find the serial in the receipt", IN3_EFIND);
+  return req_set_error(ctx->req, "Could not find the serial in the receipt", IN3_EFIND);
 }
 
 in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
@@ -105,13 +105,13 @@ in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
   d_token_t*      tx_receipt    = NULL;
   sb_t            sb            = {0};
 
-  CHECK_PARAM_TOKEN(ctx->ctx, ctx->params, 0)
+  CHECK_PARAM_TOKEN(ctx->req, ctx->params, 0)
 
   // check main_contract
-  TRY(zksync_get_contracts(conf, ctx->ctx, &main_contract))
-  TRY(resolve_tokens(conf, ctx->ctx, params_get(ctx->params, key("token"), 0), &token_conf))
-  TRY(zksync_get_account_id(conf, ctx->ctx, &account_id))
-  TRY(zksync_get_account(conf, ctx->ctx, &account))
+  TRY(zksync_get_contracts(conf, ctx->req, &main_contract))
+  TRY(resolve_tokens(conf, ctx->req, params_get(ctx->params, key("token"), 0), &token_conf))
+  TRY(zksync_get_account_id(conf, ctx->req, &account_id))
+  TRY(zksync_get_account(conf, ctx->req, &account))
 
   int_to_bytes(account_id, aid);
   sb_add_rawbytes(&sb, "{\"to\":\"0x", bytes(main_contract, 20), 0);
@@ -119,8 +119,8 @@ in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
   sb_add_rawbytes(&sb, "", bytes(token_conf->address, 20), 32);
   sb_add_rawbytes(&sb, "\",\"from\":\"0x", bytes(account, 20), 20);
   sb_add_chars(&sb, "\",\"gas\":\"0x7a120\"}");
-  TRY_FINAL(send_provider_request(ctx->ctx, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
-  if (d_type(tx_receipt) != T_OBJECT) return req_set_error(ctx->ctx, "no txreceipt found, which means the transaction was not succesful", IN3_EFIND);
+  TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+  if (d_type(tx_receipt) != T_OBJECT) return req_set_error(ctx->req, "no txreceipt found, which means the transaction was not succesful", IN3_EFIND);
   str_range_t r = d_to_json(tx_receipt);
   r.data[r.len] = 0;
   return in3_rpc_handle_with_string(ctx, r.data);

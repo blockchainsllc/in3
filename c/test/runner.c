@@ -181,8 +181,8 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   bytes_t             response;
   if (d_len(_tmp_responses) <= _tmp_pos) {
     for (i = 0; i < req->urls_len; i++) {
-      req->ctx->raw_response[i].state = IN3_ECONFIG;
-      sb_add_chars(&(req->ctx->raw_response + i)->data, "Reached end of available responses!");
+      req->req->raw_response[i].state = IN3_ECONFIG;
+      sb_add_chars(&(req->req->raw_response + i)->data, "Reached end of available responses!");
     }
     return IN3_EINVAL;
   }
@@ -208,8 +208,8 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
 
   // printf("payload: %s\n",payload);
   for (i = 0; i < req->urls_len; i++) {
-    sb_add_range(&(req->ctx->raw_response + i)->data, (char*) response.data, 0, response.len);
-    req->ctx->raw_response[i].state = IN3_OK;
+    sb_add_range(&(req->req->raw_response + i)->data, (char*) response.data, 0, response.len);
+    req->req->raw_response[i].state = IN3_OK;
   }
 
   _free(response.data);

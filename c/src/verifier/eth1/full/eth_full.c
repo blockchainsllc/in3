@@ -50,7 +50,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
   UNUSED_VAR(action);
   in3_vctx_t* vc = pctx;
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
-  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result) return IN3_OK;
@@ -112,12 +112,12 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
           //          b_print(result);
           //          b_print(d_bytes(vc->result));
         }
-        if (vc->ctx->error) return IN3_EINVAL;
+        if (vc->req->error) return IN3_EINVAL;
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
       case IN3_WAITING:
         return IN3_WAITING;
       default:
-        return req_set_error(vc->ctx, "General Error during execution", (in3_ret_t) ret);
+        return req_set_error(vc->req, "General Error during execution", (in3_ret_t) ret);
     }
   }
   else

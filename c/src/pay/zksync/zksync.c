@@ -52,19 +52,19 @@ static zk_sign_type_t get_sign_type(d_token_t* type) {
 
 static in3_ret_t zksync_get_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   bytes32_t k;
-  TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+  TRY(zksync_get_sync_key(conf, ctx->req, k))
   return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
 }
 
 static in3_ret_t zksync_get_pubkeyhash(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   address_t pubkey_hash;
   if (d_len(ctx->params) == 1) {
-    CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_BYTES)
-    CHECK_PARAM_LEN(ctx->ctx, ctx->params, 0, 32)
+    CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
+    CHECK_PARAM_LEN(ctx->req, ctx->params, 0, 32)
     TRY(zkcrypto_pubkey_hash(d_to_bytes(ctx->params + 1), pubkey_hash));
   }
   else
-    TRY(zksync_get_pubkey_hash(conf, ctx->ctx, pubkey_hash))
+    TRY(zksync_get_pubkey_hash(conf, ctx->req, pubkey_hash))
   char res[48];
   strcpy(res, "\"sync:");
   bytes_to_hex(pubkey_hash, 20, res + 6);
@@ -80,7 +80,7 @@ static in3_ret_t zksync_get_pubkey(zksync_config_t* conf, in3_rpc_handle_ctx_t* 
     memcpy(pubkey, conf->pub_key, 32);
   else {
     bytes32_t k;
-    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+    TRY(zksync_get_sync_key(conf, ctx->req, k))
     TRY(zkcrypto_pk_to_pubkey(k, pubkey))
     memcpy(conf->pub_key, pubkey, 32);
   }
@@ -89,8 +89,8 @@ static in3_ret_t zksync_get_pubkey(zksync_config_t* conf, in3_rpc_handle_ctx_t* 
 
 static in3_ret_t zksync_aggregate_pubkey(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t dst;
-  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_BYTES)
-  CHECK_PARAM(ctx->ctx, ctx->params, 0, d_len(val) % 32 == 0)
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
+  CHECK_PARAM(ctx->req, ctx->params, 0, d_len(val) % 32 == 0)
 
   TRY(zkcrypto_compute_aggregated_pubkey(d_to_bytes(ctx->params + 1), dst))
   return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
@@ -98,13 +98,13 @@ static in3_ret_t zksync_aggregate_pubkey(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t zksync_account_address(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   uint8_t* account = NULL;
-  TRY(zksync_get_account(conf, ctx->ctx, &account));
+  TRY(zksync_get_account(conf, ctx->req, &account));
   return in3_rpc_handle_with_bytes(ctx, bytes(account, 20));
 }
 
 static in3_ret_t zksync_contract_address(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   uint8_t* adr;
-  TRY(zksync_get_contracts(conf, ctx->ctx, &adr))
+  TRY(zksync_get_contracts(conf, ctx->req, &adr))
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_rawbytes(sb, "{\"govContract\":\"0x", bytes(conf->gov_contract, 20), 0);
   sb_add_rawbytes(sb, "\",\"mainContract\":\"0x", bytes(conf->main_contract, 20), 0);
@@ -112,7 +112,7 @@ static in3_ret_t zksync_contract_address(zksync_config_t* conf, in3_rpc_handle_c
   return in3_rpc_handle_finish(ctx);
 }
 static in3_ret_t zksync_tokens(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  TRY(resolve_tokens(conf, ctx->ctx, NULL, NULL))
+  TRY(resolve_tokens(conf, ctx->req, NULL, NULL))
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_char(sb, '{');
   for (unsigned int i = 0; i < conf->token_len; i++) {
@@ -168,12 +168,12 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   if (strcmp(ctx->method, "account_info") == 0) {
     if (*param_string == 0) {
-      TRY(zksync_get_account(conf, ctx->ctx, NULL))
+      TRY(zksync_get_account(conf, ctx->req, NULL))
       param_string = alloca(45);
       set_quoted_address(param_string, conf->account);
     }
     else
-      CHECK_PARAM_ADDRESS(ctx->ctx, ctx->params, 0)
+      CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
   }
 
   // we need to show the arguments as integers
@@ -182,7 +182,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // send request to the server
   d_token_t* result;
-  TRY(send_provider_request(ctx->ctx, conf, ctx->method, param_string, &result))
+  TRY(send_provider_request(ctx->req, conf, ctx->method, param_string, &result))
 
   // format result
   char* json = d_create_json(NULL, result);

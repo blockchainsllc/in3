@@ -133,13 +133,6 @@ typedef struct in3_chain {
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
 } in3_chain_t;
 
-/** Incubed Configuration.
- * 
- * This struct holds the configuration and also point to internal resources such as filters or chain configs.
- * 
- */
-typedef struct in3_t_ in3_t;
-
 #define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
 #define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST | PLGN_ACT_NL_FAILABLE | PLGN_ACT_NL_OFFLINE)
@@ -208,7 +201,7 @@ struct in3_plugin {
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
  */
-struct in3_t_ {
+typedef struct in3_t_ {
   uint8_t                signature_count;       /**< the number of signatures used to proof the blockhash. */
   uint8_t                replace_latest_block;  /**< if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
   uint_fast8_t           flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
@@ -224,7 +217,7 @@ struct in3_t_ {
   in3_proof_t            proof;                 /**< the type of proof used */
   in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
   in3_plugin_t*          plugins;               /**< list of registered plugins */
-};
+} in3_t;
 
 /** creates a new Incubed configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 

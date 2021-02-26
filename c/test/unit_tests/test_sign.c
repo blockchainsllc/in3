@@ -167,7 +167,7 @@ static void test_signer() {
   char*          data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
   bytes_t*       data     = hex_to_new_bytes(data_str, strlen(data_str));
   in3_sign_ctx_t sc       = {0};
-  sc.ctx                  = ctx;
+  sc.req                  = ctx;
   sc.message              = *data;
   sc.type                 = SIGN_EC_RAW;
   sc.account              = bytes(NULL, 0);

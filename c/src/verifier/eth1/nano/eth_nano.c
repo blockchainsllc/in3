@@ -51,7 +51,7 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
   UNUSED_VAR(action);
   in3_vctx_t* vc = pctx;
   // do we support this request?
-  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result) return IN3_OK;

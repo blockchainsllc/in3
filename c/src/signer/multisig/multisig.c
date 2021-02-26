@@ -369,7 +369,7 @@ static in3_ret_t ensure_owners(multisig_t* ms, in3_req_t* ctx) {
 in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   bytes_t    raw_tx     = prepare_ctx->old_tx;
   bytes_t*   new_raw_tx = &prepare_ctx->new_tx;
-  in3_req_t* ctx        = prepare_ctx->ctx;
+  in3_req_t* ctx        = prepare_ctx->req;
   bytes_t*   tmp        = NULL;
   uint32_t   sig_count  = 0;
   uint64_t   nonce      = 0;
@@ -433,13 +433,13 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
   if (ctx->account.len != 20 || memcmp(ms->address, ctx->account.data, 20)) return IN3_EIGNORE;
 
   // make sure we know the type of Multisig
-  TRY(ensure_ms_type(ms, ctx->ctx))
+  TRY(ensure_ms_type(ms, ctx->req))
 
   // calculate the hash
   bytes32_t hash;
   switch (ctx->type) {
     case SIGN_EC_RAW: // already hashed
-      if (ctx->message.len != 32) return req_set_error(ctx->ctx, "invalid message, must be a 256bit hash", IN3_EINVAL);
+      if (ctx->message.len != 32) return req_set_error(ctx->req, "invalid message, must be a 256bit hash", IN3_EINVAL);
       if (ms->type == MS_IAMO_SAFE)
         keccak(ctx->message, hash);
       else
@@ -450,8 +450,8 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       if (memiszero(ms->domain_sep, 32)) {
         // TODO get it from cache
         bytes_t* result = NULL;
-        TRY(call(ctx->ctx, ms->address, bytes((uint8_t*) "\xf6\x98\xda\x25", 4), &result))
-        if (!result || result->len != 32) return req_set_error(ctx->ctx, "invalid domain_seperator", IN3_EINVAL);
+        TRY(call(ctx->req, ms->address, bytes((uint8_t*) "\xf6\x98\xda\x25", 4), &result))
+        if (!result || result->len != 32) return req_set_error(ctx->req, "invalid domain_seperator", IN3_EINVAL);
         memcpy(ms->domain_sep, result->data, 32);
         // TODO put it in cache
       }
@@ -476,15 +476,15 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
   }
 
   // get Owners
-  TRY(ensure_owners(ms, ctx->ctx))
+  TRY(ensure_owners(ms, ctx->req))
 
   // prepare signatures
   sig_data_t*  sig_data  = alloca(sizeof(sig_data_t) * ms->threshold);
   unsigned int sig_count = 0;
 
   // find all available signer-accounts
-  in3_sign_account_ctx_t sctx = {.ctx = ctx->ctx, .accounts = NULL, .accounts_len = 0};
-  for (in3_plugin_t* p = ctx->ctx->client->plugins; p && sig_count < ms->threshold; p = p->next) {
+  in3_sign_account_ctx_t sctx = {.req = ctx->req, .accounts = NULL, .accounts_len = 0};
+  for (in3_plugin_t* p = ctx->req->client->plugins; p && sig_count < ms->threshold; p = p->next) {
     sctx.accounts     = NULL;
     sctx.accounts_len = 0;
     if (p->acts & (PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sctx) == IN3_OK && sctx.accounts_len) {
@@ -492,7 +492,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
         uint8_t* account = sctx.accounts + i * 20;
         if (is_valid(sig_data, ms, account, sig_count)) {
           bytes_t signature = bytes(NULL, 0);
-          TRY(req_require_signature(ctx->ctx, SIGN_EC_RAW, &signature, bytes(hash, 32), bytes(account, 20)))
+          TRY(req_require_signature(ctx->req, SIGN_EC_RAW, &signature, bytes(hash, 32), bytes(account, 20)))
           sig_data[sig_count].address = NULL;
           for (unsigned int n = 0; n < ms->owners_len; n++) {
             if (memcmp(ms->owners + n, account, 20) == 0) sig_data[sig_count].address = (void*) (ms->owners + n);
@@ -509,12 +509,12 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
   }
 
   // look for already approved messages from owners where we don't have the signature yet.
-  TRY(add_approved(ctx->ctx, &sig_count, sig_data, hash, ms))
+  TRY(add_approved(ctx->req, &sig_count, sig_data, hash, ms))
 
   if (sig_count >= ms->threshold)
     ctx->signature = create_signatures(sig_data, sig_count);
   else
-    return req_set_error(ctx->ctx, "the account is not an owner and does not have enough signatures to sign this messagen!", IN3_EINVAL);
+    return req_set_error(ctx->req, "the account is not an owner and does not have enough signatures to sign this messagen!", IN3_EINVAL);
 
   return IN3_OK;
 }

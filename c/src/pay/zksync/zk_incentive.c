@@ -210,20 +210,20 @@ in3_ret_t update_nodelist_from_cache(in3_req_t* ctx, unsigned int nodelen) {
 }
 
 in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ctx) {
-  if (!ctx->resp_error || d_type(ctx->resp_error) != T_OBJECT || d_get_intk(ctx->resp_error, K_CODE) != ERROR_PAYMENT_REQUIRED || get_payment_data(ctx->ctx)) return IN3_OK;
+  if (!ctx->resp_error || d_type(ctx->resp_error) != T_OBJECT || d_get_intk(ctx->resp_error, K_CODE) != ERROR_PAYMENT_REQUIRED || get_payment_data(ctx->req)) return IN3_OK;
 
   // the server wants payment
   d_token_t* offer = d_get(ctx->resp_error, key("offer"));
-  if (!offer) return req_set_error(ctx->ctx, "A payment rejection without an offer", IN3_ERPC);
+  if (!offer) return req_set_error(ctx->req, "A payment rejection without an offer", IN3_ERPC);
 
   // TODO right now we always accept any offer within the range if it matches the config
   pay_criteria_t* criteria = conf->incentive;
-  if (!criteria) return req_set_error(ctx->ctx, "No Payment configuration set in zksync.incentive", IN3_ECONFIG);
+  if (!criteria) return req_set_error(ctx->req, "No Payment configuration set in zksync.incentive", IN3_ECONFIG);
 
   d_token_t* price          = NULL;
   d_token_t* selected_offer = NULL;
-  TRY(find_acceptable_offer(ctx->ctx, criteria, offer, &selected_offer, &price))
-  TRY(ensure_payment_data(ctx->ctx, &criteria->config))
+  TRY(find_acceptable_offer(ctx->req, criteria, offer, &selected_offer, &price))
+  TRY(ensure_payment_data(ctx->req, &criteria->config))
 
   // now prepare the payment
   criteria->config.account_id = d_get_longk(offer, key("accountId"));
@@ -248,10 +248,10 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
       .nonce      = (uint32_t) criteria->config.nonce,
       .token      = &_token,
       .type       = ZK_TRANSFER};
-  TRY(set_amount(&tx.amount, ctx->ctx, d_get(price, key("amount"))))
-  TRY(set_amount(&tx.fee, ctx->ctx, d_get(price, key("fee"))))
+  TRY(set_amount(&tx.amount, ctx->req, d_get(price, key("amount"))))
+  TRY(set_amount(&tx.fee, ctx->req, d_get(price, key("fee"))))
   tmp = d_to_bytes(d_get(selected_offer, K_ADDRESS));
-  if (tmp.len != 20) return req_set_error(ctx->ctx, "invalid address in offer", IN3_ERPC);
+  if (tmp.len != 20) return req_set_error(ctx->req, "invalid address in offer", IN3_ERPC);
   memcpy(tx.to, tmp.data, 20);
   memcpy(tx.from, criteria->config.account, 20);
 
@@ -262,7 +262,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   sb_add_chars(&sb, ",\"method\":\"tx_submit\",\"params\":[");
 
   // sign tx
-  in3_ret_t ret = zksync_sign_transfer(&sb, &tx, ctx->ctx, &criteria->config);
+  in3_ret_t ret = zksync_sign_transfer(&sb, &tx, ctx->req, &criteria->config);
   if (ret) {
     _free(sb.data);
     return ret;
@@ -270,12 +270,12 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   sb_add_chars(&sb, "]}");
 
   // add data as cache, so we can add it when we create the next payload.
-  in3_cache_add_entry(&ctx->ctx->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT;
+  in3_cache_add_entry(&ctx->req->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT;
 
   // now we make sure we try again.
-  TRY(in3_retry_same_node(ctx->ctx))
+  TRY(in3_retry_same_node(ctx->req))
 
-  TRY(add_to_payed_nodelist(ctx->ctx, ctx->node->address, criteria->payed_nodes))
+  TRY(add_to_payed_nodelist(ctx->req, ctx->node->address, criteria->payed_nodes))
 
   // we use IN3_WAITING, which causes it to cancel verification and try again.
   return IN3_WAITING;

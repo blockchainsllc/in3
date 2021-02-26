@@ -57,14 +57,14 @@
                         "Ethereum Signed Message:\n%u"
 
 static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx) {
-  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_STRING)
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_STRING)
   in3_ret_t  ret   = IN3_OK;
   bytes_t    data  = {0};
   char*      error = NULL;
   char*      sig   = d_get_string_at(ctx->params, 0);
   d_token_t* para  = d_get_at(ctx->params, 1);
-  if (!sig) return req_set_error(ctx->ctx, "missing signature", IN3_EINVAL);
-  if (!para) return req_set_error(ctx->ctx, "missing values", IN3_EINVAL);
+  if (!sig) return req_set_error(ctx->req, "missing signature", IN3_EINVAL);
+  if (!para) return req_set_error(ctx->req, "missing values", IN3_EINVAL);
   abi_sig_t* s = abi_sig_create(sig, &error);
   if (!error)
     data = abi_encode(s, para, &error);
@@ -72,23 +72,23 @@ static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx) {
     ret = in3_rpc_handle_with_bytes(ctx, data);
   if (s) abi_sig_free(s);
   if (data.data) _free(data.data);
-  return error ? req_set_error(ctx->ctx, error, IN3_EINVAL) : ret;
+  return error ? req_set_error(ctx->req, error, IN3_EINVAL) : ret;
 }
 
 static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
-  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 0, T_STRING)
-  CHECK_PARAM_TYPE(ctx->ctx, ctx->params, 1, T_BYTES)
-  CHECK_PARAM(ctx->ctx, ctx->params, 1, val->len % 32 == 0)
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_STRING)
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 1, T_BYTES)
+  CHECK_PARAM(ctx->req, ctx->params, 1, val->len % 32 == 0)
   char*       error = NULL;
   json_ctx_t* res   = NULL;
   char*       sig   = d_get_string_at(ctx->params, 0);
   bytes_t     data  = d_to_bytes(d_get_at(ctx->params, 1));
-  if (d_len(ctx->params) > 2) return req_set_error(ctx->ctx, "too many arguments (only 2 alllowed)", IN3_EINVAL);
+  if (d_len(ctx->params) > 2) return req_set_error(ctx->req, "too many arguments (only 2 alllowed)", IN3_EINVAL);
 
   abi_sig_t* req = abi_sig_create(sig, &error);
   if (!error) res = abi_decode(req, data, &error);
   if (req) abi_sig_free(req);
-  if (error) return req_set_error(ctx->ctx, error, IN3_EINVAL);
+  if (error) return req_set_error(ctx->req, error, IN3_EINVAL);
   char* result = d_create_json(res, res->result);
   in3_rpc_handle_with_string(ctx, result);
   _free(result);
@@ -97,13 +97,13 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
-  CHECK_PARAM_ADDRESS(ctx->ctx, ctx->params, 0)
-  if (d_len(ctx->params) > 2) return req_set_error(ctx->ctx, "must be max 2 arguments", IN3_EINVAL);
+  CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
+  if (d_len(ctx->params) > 2) return req_set_error(ctx->req, "must be max 2 arguments", IN3_EINVAL);
   char     result[45];
   bytes_t* adr = d_get_bytes_at(ctx->params, 0);
-  if (!adr || adr->len != 20) return req_set_error(ctx->ctx, "the address must have 20 bytes", IN3_EINVAL);
-  in3_ret_t res = to_checksum(adr->data, d_get_int_at(ctx->params, 1) ? ctx->ctx->client->chain.chain_id : 0, result + 1);
-  if (res) return req_set_error(ctx->ctx, "Could not create the checksum address", res);
+  if (!adr || adr->len != 20) return req_set_error(ctx->req, "the address must have 20 bytes", IN3_EINVAL);
+  in3_ret_t res = to_checksum(adr->data, d_get_int_at(ctx->params, 1) ? ctx->req->client->chain.chain_id : 0, result + 1);
+  if (res) return req_set_error(ctx->req, "Could not create the checksum address", res);
   result[0]  = '\'';
   result[43] = '\'';
   result[44] = 0;
@@ -121,7 +121,7 @@ static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx) {
 
   // verify input
   if (!type) type = "addr";
-  if (!name || !strchr(name, '.')) return req_set_error(ctx->ctx, "the first param msut be a valid domain name", IN3_EINVAL);
+  if (!name || !strchr(name, '.')) return req_set_error(ctx->req, "the first param msut be a valid domain name", IN3_EINVAL);
   if (strcmp(type, "addr") == 0)
     ens_type = ENS_ADDR;
   else if (strcmp(type, "resolver") == 0)
@@ -131,22 +131,22 @@ static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx) {
   else if (strcmp(type, "hash") == 0)
     ens_type = ENS_HASH;
   else
-    return req_set_error(ctx->ctx, "currently only 'hash','addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
-  if (registry.data && registry.len != 20) return req_set_error(ctx->ctx, "the registry must be a 20 bytes address", IN3_EINVAL);
+    return req_set_error(ctx->req, "currently only 'hash','addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
+  if (registry.data && registry.len != 20) return req_set_error(ctx->req, "the registry must be a 20 bytes address", IN3_EINVAL);
 
-  TRY(ens_resolve(ctx->ctx, name, registry.data, ens_type, result, &res_len))
+  TRY(ens_resolve(ctx->req, name, registry.data, ens_type, result, &res_len))
 
   return in3_rpc_handle_with_bytes(ctx, bytes(result, res_len));
 }
 
 static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->ctx, "no data", IN3_EINVAL);
+  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
   bytes32_t hash;
   keccak(d_to_bytes(ctx->params + 1), hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->ctx, "no data", IN3_EINVAL);
+  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
   bytes32_t  hash;
   bytes_t    data = d_to_bytes(ctx->params + 1);
   SHA256_CTX c;
@@ -258,7 +258,7 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
 }
 
 static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 2 || d_type(ctx->params + 2) != T_STRING) return req_set_error(ctx->ctx, "must have 2 params as strings", IN3_EINVAL);
+  if (!ctx->params || d_len(ctx->params) != 2 || d_type(ctx->params + 2) != T_STRING) return req_set_error(ctx->req, "must have 2 params as strings", IN3_EINVAL);
   char* val = d_get_string_at(ctx->params, 0);
   if (!val) {
     if (d_type(ctx->params + 1) == T_INTEGER) {
@@ -266,28 +266,28 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
       sprintf(val, "%i", d_int(ctx->params + 1));
     }
     else
-      return req_set_error(ctx->ctx, "the value must be a string", IN3_EINVAL);
+      return req_set_error(ctx->req, "the value must be a string", IN3_EINVAL);
   }
   bytes32_t tmp;
   int       s = string_val_to_bytes(val, d_get_string_at(ctx->params, 1), tmp);
   return s < 0
-             ? req_set_error(ctx->ctx, "invalid number string", IN3_EINVAL)
+             ? req_set_error(ctx->req, "invalid number string", IN3_EINVAL)
              : in3_rpc_handle_with_bytes(ctx, bytes(tmp, (uint32_t) s));
 }
 
 static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_OBJECT) return req_set_error(ctx->ctx, "no valid config-object as argument", IN3_EINVAL);
+  if (!ctx->params || d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_OBJECT) return req_set_error(ctx->req, "no valid config-object as argument", IN3_EINVAL);
 
-  ctx->ctx->client->pending--; // we need to to temporarly decrees it in order to allow configuring
+  ctx->req->client->pending--; // we need to to temporarly decrees it in order to allow configuring
   str_range_t r   = d_to_json(ctx->params + 1);
   char        old = r.data[r.len];
   r.data[r.len]   = 0;
-  char* ret       = in3_configure(ctx->ctx->client, r.data);
+  char* ret       = in3_configure(ctx->req->client, r.data);
   r.data[r.len]   = old;
-  ctx->ctx->client->pending++;
+  ctx->req->client->pending++;
 
   if (ret) {
-    req_set_error(ctx->ctx, ret, IN3_ECONFIG);
+    req_set_error(ctx->req, ret, IN3_ECONFIG);
     free(ret);
     return IN3_ECONFIG;
   }
@@ -296,7 +296,7 @@ static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_getConfig(in3_rpc_handle_ctx_t* ctx) {
-  char* ret = in3_get_config(ctx->ctx->client);
+  char* ret = in3_get_config(ctx->req->client);
   in3_rpc_handle_with_string(ctx, ret);
   _free(ret);
   return IN3_OK;
@@ -304,7 +304,7 @@ static in3_ret_t in3_getConfig(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
   bytes_t* pk = d_get_bytes_at(ctx->params, 0);
-  if (!pk || pk->len != 32 || d_len(ctx->params) != 1) return req_set_error(ctx->ctx, "Invalid private key! must be 32 bytes long", IN3_EINVAL);
+  if (!pk || pk->len != 32 || d_len(ctx->params) != 1) return req_set_error(ctx->req, "Invalid private key! must be 32 bytes long", IN3_EINVAL);
 
   uint8_t public_key[65], sdata[32];
   ecdsa_get_public_key65(&secp256k1, pk->data, public_key);
@@ -322,8 +322,8 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   bytes_t* sig      = d_get_bytes_at(ctx->params, 1);
   char*    sig_type = d_get_string_at(ctx->params, 2);
   if (!sig_type) sig_type = "raw";
-  if (!sig || sig->len != 65) return req_set_error(ctx->ctx, "Invalid signature! must be 65 bytes long", IN3_EINVAL);
-  if (!msg.data) return req_set_error(ctx->ctx, "Missing message", IN3_EINVAL);
+  if (!sig || sig->len != 65) return req_set_error(ctx->req, "Invalid signature! must be 65 bytes long", IN3_EINVAL);
+  if (!msg.data) return req_set_error(ctx->req, "Missing message", IN3_EINVAL);
 
   bytes32_t hash;
   uint8_t   pub[65];
@@ -336,14 +336,14 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
     msg.len += l;
   }
   if (strcmp(sig_type, "hash") == 0) {
-    if (msg.len != 32) return req_set_error(ctx->ctx, "The message hash must be 32 byte", IN3_EINVAL);
+    if (msg.len != 32) return req_set_error(ctx->req, "The message hash must be 32 byte", IN3_EINVAL);
     memcpy(hash, msg.data, 32);
   }
   else
     keccak(msg, hash);
 
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig->data, hash, sig->data[64] >= 27 ? sig->data[64] - 27 : sig->data[64]))
-    return req_set_error(ctx->ctx, "Invalid Signature", IN3_EINVAL);
+    return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
 
   sb_t* sb = in3_rpc_handle_start(ctx);
 
@@ -365,7 +365,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   if (!sig_type) sig_type = "raw";
 
   //  if (!pk) return req_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
-  if (!data.data) return req_set_error(ctx->ctx, "Missing message", IN3_EINVAL);
+  if (!data.data) return req_set_error(ctx->req, "Missing message", IN3_EINVAL);
 
   if (strcmp(sig_type, "eth_sign") == 0) {
     char*     tmp = alloca(data.len + 30);
@@ -377,13 +377,13 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   }
 
   in3_sign_ctx_t sc = {0};
-  sc.ctx            = ctx->ctx;
+  sc.req            = ctx->req;
   sc.message        = data;
   sc.account        = pk ? *pk : bytes(NULL, 0);
   sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 
-  if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->ctx->client, PLGN_ACT_SIGN)) {
-    TRY(in3_plugin_execute_first(ctx->ctx, PLGN_ACT_SIGN, &sc));
+  if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
+    TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));
   }
   else if (sc.account.len == 32) {
     sc.signature = bytes(_malloc(65), 65);
@@ -393,11 +393,11 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
       ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature.data, sc.signature.data + 64, NULL);
     else {
       _free(sc.signature.data);
-      return req_set_error(ctx->ctx, "unsupported sigType", IN3_EINVAL);
+      return req_set_error(ctx->req, "unsupported sigType", IN3_EINVAL);
     }
   }
   else
-    return req_set_error(ctx->ctx, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
+    return req_set_error(ctx->req, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
   bytes_t sig_bytes = sc.signature;
   if (sc.signature.len == 65 && sc.signature.data[64] < 2)
@@ -431,7 +431,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
-  TRY(in3_plugin_execute_first(ctx->ctx, PLGN_ACT_CACHE_CLEAR, NULL));
+  TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_CACHE_CLEAR, NULL));
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
@@ -440,13 +440,13 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
   bytes_t    password_bytes = d_to_bytes(d_get_at(ctx->params, 1));
   bytes32_t  dst;
 
-  if (!password_bytes.data) return req_set_error(ctx->ctx, "you need to specify a passphrase", IN3_EINVAL);
-  if (!keyfile || d_type(keyfile) != T_OBJECT) return req_set_error(ctx->ctx, "no valid key given", IN3_EINVAL);
+  if (!password_bytes.data) return req_set_error(ctx->req, "you need to specify a passphrase", IN3_EINVAL);
+  if (!keyfile || d_type(keyfile) != T_OBJECT) return req_set_error(ctx->req, "no valid key given", IN3_EINVAL);
   char* passphrase = alloca(password_bytes.len + 1);
   memcpy(passphrase, password_bytes.data, password_bytes.len);
   passphrase[password_bytes.len] = 0;
   in3_ret_t res                  = decrypt_key(keyfile, passphrase, dst);
-  if (res) return req_set_error(ctx->ctx, "Invalid key", res);
+  if (res) return req_set_error(ctx->req, "Invalid key", res);
   return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
 }
 
@@ -454,9 +454,9 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   d_token_t* tx  = d_get_at(ctx->params, 0);
   bytes_t    dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_prepare_unsigned_tx(tx, ctx->ctx, &dst))
+  TRY(eth_prepare_unsigned_tx(tx, ctx->req, &dst))
 #else
-  if (ctx->params || tx || ctx) return req_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+  if (ctx->params || tx || ctx) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
@@ -471,9 +471,9 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
   bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_sign_raw_tx(*data, ctx->ctx, from, &dst))
+  TRY(eth_sign_raw_tx(*data, ctx->req, from, &dst))
 #else
-  if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+  if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);

@@ -53,7 +53,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
 
   // make sure we want to verify
-  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result)
@@ -102,7 +102,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   char*       tx_data = alloca(r.len + 1);
   memcpy(tx_data, r.data, r.len);
   tx_data[r.len] = 0;
-  TRY(req_send_sub_request(ctx->ctx, "eth_sendTransaction", tx_data, NULL, &tx_hash))
+  TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash))
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];
   bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
@@ -112,65 +112,65 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   tx_hash_hex[68]                  = 0;
 
   // get the tx_receipt
-  TRY(req_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
+  TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
 
   if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
     // we remove it and try again
-    in3_req_t* last_r = req_find_required(ctx->ctx, "eth_getTransactionReceipt");
+    in3_req_t* last_r = req_find_required(ctx->req, "eth_getTransactionReceipt");
     uint32_t   wait   = d_get_intk(d_get(last_r->requests[0], K_IN3), K_WAIT);
     wait              = wait ? wait * 2 : 1000;
-    req_remove_required(ctx->ctx, last_r, false);
+    req_remove_required(ctx->req, last_r, false);
     if (wait > 120000) // more than 2 minutes is too long, so we stop here
-      return req_set_error(ctx->ctx, "Waited too long for the transaction to be minded", IN3_ELIMIT);
+      return req_set_error(ctx->req, "Waited too long for the transaction to be minded", IN3_ELIMIT);
     char in3[20];
     sprintf(in3, "{\"wait\":%d}", wait);
 
-    return req_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
+    return req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
   }
   else {
     // we have a result and we keep it
     str_range_t r = d_to_json(tx_receipt);
     sb_add_range(in3_rpc_handle_start(ctx), r.data, 0, r.len);
-    req_remove_required(ctx->ctx, req_find_required(ctx->ctx, "eth_getTransactionReceipt"), false);
-    req_remove_required(ctx->ctx, req_find_required(ctx->ctx, "eth_sendRawTransaction"), false);
+    req_remove_required(ctx->req, req_find_required(ctx->req, "eth_getTransactionReceipt"), false);
+    req_remove_required(ctx->req, req_find_required(ctx->req, "eth_sendRawTransaction"), false);
     return in3_rpc_handle_finish(ctx);
   }
 }
 
 static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_type(ctx->params) != T_ARRAY || !d_len(ctx->params) || d_type(ctx->params + 1) != T_OBJECT)
-    return req_set_error(ctx->ctx, "invalid type of params, expected object", IN3_EINVAL);
+    return req_set_error(ctx->req, "invalid type of params, expected object", IN3_EINVAL);
   else if (!filter_opt_valid(ctx->params + 1))
-    return req_set_error(ctx->ctx, "filter option parsing failed", IN3_EINVAL);
-  if (!ctx->params->data) return req_set_error(ctx->ctx, "binary request are not supported!", IN3_ENOTSUP);
+    return req_set_error(ctx->req, "filter option parsing failed", IN3_EINVAL);
+  if (!ctx->params->data) return req_set_error(ctx->req, "binary request are not supported!", IN3_ENOTSUP);
 
-  char*     fopt = d_create_json(ctx->ctx->request_context, ctx->params + 1);
-  in3_ret_t res  = filter_add(filters, ctx->ctx, FILTER_EVENT, fopt);
+  char*     fopt = d_create_json(ctx->req->request_context, ctx->params + 1);
+  in3_ret_t res  = filter_add(filters, ctx->req, FILTER_EVENT, fopt);
   if (res < 0) {
     _free(fopt);
-    return req_set_error(ctx->ctx, "filter creation failed", res);
+    return req_set_error(ctx->req, "filter creation failed", res);
   }
 
   return in3_rpc_handle_with_int(ctx, (uint64_t) res);
 }
 
 static in3_ret_t eth_newBlockFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
-  in3_ret_t res = filter_add(filters, ctx->ctx, FILTER_BLOCK, NULL);
-  if (res < 0) return req_set_error(ctx->ctx, "filter creation failed", res);
+  in3_ret_t res = filter_add(filters, ctx->req, FILTER_BLOCK, NULL);
+  if (res < 0) return req_set_error(ctx->req, "filter creation failed", res);
   return in3_rpc_handle_with_int(ctx, (uint64_t) res);
 }
 
 static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-    return req_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
+    return req_set_error(ctx->req, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
 
   uint64_t  id  = d_get_long_at(ctx->params, 0);
   sb_t      sb  = {0};
-  in3_ret_t ret = filter_get_changes(filters, ctx->ctx, id, &sb);
+  in3_ret_t ret = filter_get_changes(filters, ctx->req, id, &sb);
   if (ret != IN3_OK) {
     if (sb.data) _free(sb.data);
-    return req_set_error(ctx->ctx, "failed to get filter changes", ret);
+    return req_set_error(ctx->req, "failed to get filter changes", ret);
   }
   in3_rpc_handle_with_string(ctx, sb.data);
   _free(sb.data);
@@ -181,22 +181,22 @@ static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_han
 static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
 
   // we only support ETH in this module
-  if (ctx->ctx->client->chain.type != CHAIN_ETH) return IN3_EIGNORE;
+  if (ctx->req->client->chain.type != CHAIN_ETH) return IN3_EIGNORE;
 
   // check method to handle internally
-  TRY_RPC("eth_sendTransaction", handle_eth_sendTransaction(ctx->ctx, ctx->request))
+  TRY_RPC("eth_sendTransaction", handle_eth_sendTransaction(ctx->req, ctx->request))
   TRY_RPC("eth_sendTransactionAndWait", eth_send_transaction_and_wait(ctx))
   TRY_RPC("eth_newFilter", eth_newFilter(filters, ctx))
   TRY_RPC("eth_newBlockFilter", eth_newBlockFilter(filters, ctx))
-  TRY_RPC("eth_newPendingTransactionFilter", req_set_error(ctx->ctx, "pending filter not supported", IN3_ENOTSUP))
+  TRY_RPC("eth_newPendingTransactionFilter", req_set_error(ctx->req, "pending filter not supported", IN3_ENOTSUP))
   TRY_RPC("eth_getFilterChanges", eth_getFilterChanges(filters, ctx))
   TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(filters, ctx))
   TRY_RPC("eth_uninstallFilter", (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-                                     ? req_set_error(ctx->ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
+                                     ? req_set_error(ctx->req, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
                                      : in3_rpc_handle_with_string(ctx, filter_remove(filters, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
 
-  if (strcmp(ctx->method, "eth_chainId") == 0 && ctx->ctx->client->chain.chain_id != CHAIN_ID_LOCAL)
-    return in3_rpc_handle_with_int(ctx, ctx->ctx->client->chain.chain_id);
+  if (strcmp(ctx->method, "eth_chainId") == 0 && ctx->req->client->chain.chain_id != CHAIN_ID_LOCAL)
+    return in3_rpc_handle_with_int(ctx, ctx->req->client->chain.chain_id);
 
   return IN3_EIGNORE;
 }

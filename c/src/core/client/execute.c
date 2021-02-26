@@ -356,8 +356,8 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx) {
 }
 
 static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
-  in3_req_t*             ctx  = vc->ctx;
-  in3_pay_followup_ctx_t fctx = {.ctx = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
+  in3_req_t*             ctx  = vc->req;
+  in3_pay_followup_ctx_t fctx = {.req = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
   return req_set_error(ctx, "Error following up the payment data", in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx));
 }
 
@@ -392,7 +392,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
     in3_vctx_t vc;
-    vc.ctx            = ctx;
+    vc.req            = ctx;
     vc.chain          = chain;
     vc.request        = ctx->requests[i];
     vc.result         = d_get(ctx->responses[i], K_RESULT);
@@ -530,7 +530,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
     char*               method  = d_get_string_at(params, 0);
     d_token_t*          tmp     = d_get_at(params, 2);
     in3_http_request_t* request = _calloc(sizeof(in3_http_request_t), 1);
-    request->ctx                = ctx;
+    request->req                = ctx;
     request->urls_len           = 1;
     request->urls               = _malloc(sizeof(char*));
     request->urls[0]            = _strdupn(d_get_string_at(params, 1), -1);
@@ -596,7 +596,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
 
   // prepare response-object
   in3_http_request_t* request = _calloc(sizeof(in3_http_request_t), 1);
-  request->ctx                = ctx;
+  request->req                = ctx;
   request->payload            = payload->data;
   request->payload_len        = payload->len;
   request->urls_len           = nodes_count;
@@ -643,7 +643,7 @@ static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->message   = d_to_bytes(d_get_at(params, 0));
   sign_ctx->account   = d_to_bytes(d_get_at(params, 1));
   sign_ctx->type      = SIGN_EC_HASH;
-  sign_ctx->ctx       = ctx;
+  sign_ctx->req       = ctx;
   sign_ctx->signature = bytes(NULL, 0);
 }
 
@@ -670,7 +670,7 @@ in3_ret_t in3_handle_sign(in3_req_t* ctx) {
 }
 
 typedef struct {
-  in3_req_t* ctx;
+  in3_req_t* req;
   void*      ptr;
 } ctx_req_t;
 typedef struct {
@@ -680,11 +680,11 @@ typedef struct {
 
 static void transport_cleanup(in3_req_t* ctx, ctx_req_transports_t* transports, bool free_all) {
   for (int i = 0; i < transports->len; i++) {
-    if (free_all || transports->req[i].ctx == ctx) {
-      in3_http_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+    if (free_all || transports->req[i].req == ctx) {
+      in3_http_request_t req = {.req = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first_or_none(ctx, PLGN_ACT_TRANSPORT_CLEAN, &req);
       if (!free_all) {
-        transports->req[i].ctx = NULL;
+        transports->req[i].req = NULL;
         return;
       }
     }
@@ -696,8 +696,8 @@ static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports
   in3_log_debug("waiting for the next response ...\n");
   ctx = in3_req_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
-    if (transports->req[i].ctx == ctx) {
-      in3_http_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+    if (transports->req[i].req == ctx) {
+      in3_http_request_t req = {.req = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_RECEIVE, &req);
 #ifdef DEBUG
       node_match_t* w = ctx->nodes;
@@ -741,14 +741,14 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_SEND, request);
 
   // debug output
-  node_match_t* node = request->ctx->nodes;
+  node_match_t* node = request->req->nodes;
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
-    if (request->ctx->raw_response[i].state != IN3_WAITING) {
-      char* data = request->ctx->raw_response[i].data.data;
+    if (request->req->raw_response[i].state != IN3_WAITING) {
+      char* data = request->req->raw_response[i].data.data;
 #ifdef DEBUG
       data = format_json(data);
 #endif
-      in3_log_trace(request->ctx->raw_response[i].state
+      in3_log_trace(request->req->raw_response[i].state
                         ? "... response(%s): \n... " COLOR_RED_STR "\n"
                         : "... response(%s): \n... " COLOR_GREEN_STR "\n",
                     node ? node->url : "intern", data);
@@ -763,7 +763,7 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
     // find a free spot
     int index = -1;
     for (int i = 0; i < transports->len; i++) {
-      if (!transports->req[i].ctx) {
+      if (!transports->req[i].req) {
         index = i;
         break;
       }
@@ -774,7 +774,7 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
     }
 
     // store the pointers
-    transports->req[index].ctx = request->ctx;
+    transports->req[index].req = request->req;
     transports->req[index].ptr = request->cptr;
   }
 
@@ -870,7 +870,7 @@ void req_free(in3_req_t* ctx) {
 
 static inline in3_ret_t handle_internally(in3_req_t* ctx) {
   if (ctx->len != 1) return IN3_OK; //  currently we do not support bulk requests forr internal calls
-  in3_rpc_handle_ctx_t vctx = {.ctx = ctx, .response = &ctx->raw_response, .request = ctx->requests[0], .method = d_get_stringk(ctx->requests[0], K_METHOD), .params = d_get(ctx->requests[0], K_PARAMS)};
+  in3_rpc_handle_ctx_t vctx = {.req = ctx, .response = &ctx->raw_response, .request = ctx->requests[0], .method = d_get_stringk(ctx->requests[0], K_METHOD), .params = d_get(ctx->requests[0], K_PARAMS)};
   in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
   if (res == IN3_OK && ctx->raw_response && ctx->raw_response->data.data) in3_log_debug("internal response: %s\n", ctx->raw_response->data.data);
   return res == IN3_EIGNORE ? IN3_OK : res;
@@ -919,7 +919,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes && !d_get(d_get(ctx->requests[0], K_IN3), K_RPC) && !is_raw_http(ctx)) {
-        in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .ctx = ctx};
+        in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .req = ctx};
         if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) == IN3_OK) {
           pctx.type = NL_SIGNER;
           if ((ret = in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx)) < 0)
@@ -940,7 +940,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
       node_match_t* node = NULL;
       ret                = find_valid_result(ctx, ctx->nodes == NULL ? 1 : req_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain, &node);
       if (ret == IN3_OK) {
-        in3_nl_followup_ctx_t fctx = {.ctx = ctx, .node = node};
+        in3_nl_followup_ctx_t fctx = {.req = ctx, .node = node};
         in3_plugin_execute_first_or_none(ctx, PLGN_ACT_NL_PICK_FOLLOWUP, &fctx);
       }
 

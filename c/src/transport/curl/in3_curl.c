@@ -172,7 +172,7 @@ in3_ret_t send_curl_nonblocking(in3_http_request_t* req) {
 
   // create requests
   for (unsigned int i = 0; i < req->urls_len; i++)
-    readDataNonBlocking(c->cm, req->urls[i], req->payload, req->payload_len, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout, req->method);
+    readDataNonBlocking(c->cm, req->urls[i], req->payload, req->payload_len, c->headers, req->req->raw_response + i, req->req->client->timeout, req->method);
 
   in3_ret_t res = receive_next(req);
   if (req->urls_len == 1) {
@@ -256,9 +256,9 @@ in3_ret_t send_curl(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
 #ifdef CURL_BLOCKING
   in3_ret_t res;
   uint64_t  start = current_ms();
-  res             = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response, req->ctx->client->timeout, req);
+  res             = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->req->raw_response, req->req->client->timeout, req);
   uint32_t t      = (uint32_t)(current_ms() - start);
-  for (int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = t;
+  for (int i = 0; i < req->urls_len; i++) req->req->raw_response[i].time = t;
   return res;
 #else
   switch (action) {
