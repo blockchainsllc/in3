@@ -45,8 +45,8 @@ NONULL static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address,
   for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
     if (memcmp(d_get_byteskl(iter.token, K_ADDRESS, 20)->data, address, 20) == 0) {
       // even if we don't have a code, we still set the code_hash, since we need it later to verify
-      *code_hash    = d_get_bytesk(iter.token, K_CODE_HASH);
-      bytes_t* code = d_get_bytesk(iter.token, K_CODE);
+      *code_hash    = d_get_bytes(iter.token, K_CODE_HASH);
+      bytes_t* code = d_get_bytes(iter.token, K_CODE);
       if (code) {
         bytes32_t calculated_hash;
         keccak(*code, calculated_hash);
@@ -66,7 +66,7 @@ NONULL static in3_req_t* find_pending_code_request(in3_vctx_t* vc, address_t add
   // ok, we need a request, do we have a useable?
   in3_req_t* ctx = vc->req->required;
   while (ctx) {
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
       // the first param of the eth_getCode is the address
       bytes_t adr = d_to_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
       if (adr.len == 20 && memcmp(adr.data, address, 20) == 0) return ctx;

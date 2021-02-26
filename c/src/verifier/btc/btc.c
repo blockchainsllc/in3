@@ -57,7 +57,7 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
   btc_tx_in_t tx_in;
 
   if (*header.data == 1 && memiszero(header.data + 1, 3)) {
-    *dst_block_number = (uint32_t) d_get_intk(proof, key("height"));
+    *dst_block_number = (uint32_t) d_get_int(proof, key("height"));
     if (!*dst_block_number) return vc_err(vc, "missing height in proof for blocks pre bip34");
 #ifdef BTC_PRE_BPI34
     return check_pre_bip34(vc, d_to_bytes(d_get(proof, key("final"))), *dst_block_number);
@@ -176,35 +176,35 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
     hex_to_bytes(d_string(t), d_len(t), expected_block_hash, 32);
     if (block_hash) {
       if (memcmp(expected_block_hash, block_hash, 32)) return vc_err(vc, "invalid blockhash");
-      in_active_chain = d_get_intk(vc->result, key("in_active_chain"));
+      in_active_chain = d_get_int(vc->result, key("in_active_chain"));
     }
 
     // check version
-    if (d_get_intk(vc->result, key("version")) != (int32_t) tx_data.version) return vc_err(vc, "invalid version");
+    if (d_get_int(vc->result, key("version")) != (int32_t) tx_data.version) return vc_err(vc, "invalid version");
 
     // check size
-    if (d_get_intk(vc->result, key("size")) != (int32_t) data.len) return vc_err(vc, "invalid size");
+    if (d_get_int(vc->result, key("size")) != (int32_t) data.len) return vc_err(vc, "invalid size");
 
     // check vsize
-    if (d_get_intk(vc->result, key("vsize")) != (int32_t) btc_vsize(&tx_data)) return vc_err(vc, "invalid vsize");
+    if (d_get_int(vc->result, key("vsize")) != (int32_t) btc_vsize(&tx_data)) return vc_err(vc, "invalid vsize");
 
     // weight
-    if (d_get_intk(vc->result, key("weight")) != (int32_t) btc_weight(&tx_data)) return vc_err(vc, "invalid weight");
+    if (d_get_int(vc->result, key("weight")) != (int32_t) btc_weight(&tx_data)) return vc_err(vc, "invalid weight");
 
     // locktime
-    if (d_get_longk(vc->result, key("locktime")) != tx_data.lock_time) return vc_err(vc, "invalid locktime");
+    if (d_get_long(vc->result, key("locktime")) != tx_data.lock_time) return vc_err(vc, "invalid locktime");
 
     // blocktime
     if (!d_eq(d_get(vc->result, key("time")), d_get(vc->result, key("blocktime")))) return vc_err(vc, "invalid blocktime");
 
     // time
     tmp = btc_block_get(header, BTC_B_TIMESTAMP);
-    if (tmp.len == 4 && le_to_int(tmp.data) != (uint32_t) d_get_longk(vc->result, key("time"))) return vc_err(vc, "invalid time");
+    if (tmp.len == 4 && le_to_int(tmp.data) != (uint32_t) d_get_long(vc->result, key("time"))) return vc_err(vc, "invalid time");
 
     // check vin
     uint8_t*    p        = tx_data.input.data;
     uint8_t*    end      = p + tx_data.input.len;
-    uint32_t    tx_index = d_get_intk(vc->proof, key("txIndex"));
+    uint32_t    tx_index = d_get_int(vc->proof, key("txIndex"));
     btc_tx_in_t tx_in;
     char*       hex;
     list = d_get(vc->result, key("vin"));
@@ -215,23 +215,23 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
       if (!p) return vc_err(vc, "invalid vin");
 
       // sequence
-      if (d_get_longk(iter.token, key("sequence")) != tx_in.sequence) return vc_err(vc, "invalid vin.sequence");
+      if (d_get_long(iter.token, key("sequence")) != tx_in.sequence) return vc_err(vc, "invalid vin.sequence");
 
       if (tx_index == 0) {
         // coinbase
-        hex = d_get_stringk(iter.token, key("coinbase"));
+        hex = d_get_string(iter.token, key("coinbase"));
         if (!hex || !equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid coinbase");
       }
       else {
         // txid
-        hex = d_get_stringk(iter.token, key("txid"));
+        hex = d_get_string(iter.token, key("txid"));
         if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
 
         // vout
-        if (d_get_intk(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) return vc_err(vc, "invalid vin.vout");
+        if (d_get_int(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) return vc_err(vc, "invalid vin.vout");
 
         // sig.hex
-        hex = d_get_stringk(d_get(iter.token, key("scriptSig")), key("hex"));
+        hex = d_get_string(d_get(iter.token, key("scriptSig")), key("hex"));
         if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
       }
     }
@@ -248,10 +248,10 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
       if (p > end) return vc_err(vc, "invalid vout");
 
       // n
-      if (d_get_intk(iter.token, key("n")) != n) return vc_err(vc, "invalid vout.n");
+      if (d_get_int(iter.token, key("n")) != n) return vc_err(vc, "invalid vout.n");
 
       // sig.hex
-      char* hex = d_get_stringk(d_get(iter.token, key("scriptPubKey")), key("hex"));
+      char* hex = d_get_string(d_get(iter.token, key("scriptPubKey")), key("hex"));
       if (!equals_hex(tx_out.script, hex)) return vc_err(vc, "invalid vout.hex");
       d_token_t* value = d_get(iter.token, K_VALUE);
       if (!value) return vc_err(vc, "no value found!");
@@ -352,7 +352,7 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
       int        tx_count = d_len(tx), i = 0;                                                                                         // and count its length
       bytes32_t* tx_hashes = _malloc(tx_count * sizeof(bytes32_t));                                                                   // to reserve hashes-array
       for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), i++)                                                        // iterate through all txs
-        hex_to_bytes(verbose == 1 ? d_string(iter.token) : d_get_stringk(iter.token, key("txid")), 64, tx_hashes[i], 32);             // and copy the hash into the array
+        hex_to_bytes(verbose == 1 ? d_string(iter.token) : d_get_string(iter.token, key("txid")), 64, tx_hashes[i], 32);              // and copy the hash into the array
       btc_merkle_create_root(tx_hashes, tx_count, tmp);                                                                               // calculate the merkle root
       _free(tx_hashes);                                                                                                               // cleanup
       rev_copy(tmp2, tmp);                                                                                                            // we need to turn it into little endian be cause ini the header it is store as le.
@@ -360,9 +360,9 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
                                                                                                                                       //
       btc_target_from_block(bytes(block_header, 80), tmp2);                                                                           // get current target
       uint64_t difficulty = 0xFFFF000000000000L / bytes_to_long(tmp2 + 4, 8);                                                         // and calc the difficulty
-      if (difficulty >> 2 != d_get_longk(vc->result, key("difficulty")) >> 2) return vc_err(vc, "Wrong difficulty");                  // which must match the one in the json
-      if (!equals_hex(bytes(block_hash, 32), d_get_stringk(vc->result, K_HASH))) return vc_err(vc, "Wrong blockhash in json");        // check the requested hash
-      if (d_get_intk(vc->result, key("nTx")) != (int32_t) tx_count) return vc_err(vc, "Wrong nTx");                                   // check the nuumber of transactions
+      if (difficulty >> 2 != d_get_long(vc->result, key("difficulty")) >> 2) return vc_err(vc, "Wrong difficulty");                   // which must match the one in the json
+      if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, K_HASH))) return vc_err(vc, "Wrong blockhash in json");         // check the requested hash
+      if (d_get_int(vc->result, key("nTx")) != (int32_t) tx_count) return vc_err(vc, "Wrong nTx");                                    // check the nuumber of transactions
     }
     else {
       char*    block_hex  = d_string(vc->result);
@@ -395,11 +395,11 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
     // check nextblockhash
     if (finality_headers.len) {
       btc_hash(bytes(finality_headers.data, 80), hash);
-      if (!equals_hex(bytes(hash, 32), d_get_stringk(vc->result, key("nextblockhash"))))
+      if (!equals_hex(bytes(hash, 32), d_get_string(vc->result, key("nextblockhash"))))
         return vc_err(vc, "Invalid nextblockhash");
     }
     int32_t v = (block_header[3] << 24) | (block_header[2] << 16) | (block_header[1] << 8) | block_header[0];
-    if (v != d_get_intk(vc->result, key("version"))) return vc_err(vc, "Invalid version");
+    if (v != d_get_int(vc->result, key("version"))) return vc_err(vc, "Invalid version");
   }
 
   return IN3_OK;

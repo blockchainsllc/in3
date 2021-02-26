@@ -160,7 +160,7 @@ _NOINLINE_ static void create_node_hash(d_token_t* t, bytes32_t dst) {
 
 static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses, d_token_t* server_list, d_token_t* storage_proofs) {
   bytes32_t skey, svalue;
-  uint32_t  total_servers = d_get_intk(vc->result, K_TOTAL_SERVERS);
+  uint32_t  total_servers = d_get_int(vc->result, K_TOTAL_SERVERS);
 
   TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, 0, 0, 0, skey), as_bytes32(svalue, d_to_bytes(d_get(vc->result, K_TOTAL_SERVERS)))));
 
@@ -178,7 +178,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
         for (d_iterator_t itn = d_iter(server_list); itn.left; d_iter_next(&itn)) {
           if (b_cmp(d_get_byteskl(itn.token, K_ADDRESS, 20), adr)) {
             found           = true;
-            seed_indexes[i] = d_get_intk(itn.token, K_INDEX);
+            seed_indexes[i] = d_get_int(itn.token, K_INDEX);
             break;
           }
         }
@@ -193,7 +193,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
     // check that we have the correct indexes in the nodelist
     i = 0;
     for (d_iterator_t it = d_iter(server_list); it.left && i < node_limit; d_iter_next(&it), i++) {
-      uint32_t index = d_get_intk(it.token, K_INDEX);
+      uint32_t index = d_get_int(it.token, K_INDEX);
       if (index != indexes[i]) return vc_err(vc, "wrong index in partial nodelist");
     }
   }
@@ -202,7 +202,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
 
   // now check the content of the nodelist
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it)) {
-    uint32_t index = d_get_intk(it.token, K_INDEX);
+    uint32_t index = d_get_int(it.token, K_INDEX);
     create_node_hash(it.token, svalue);
     TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), svalue));
   }
@@ -213,7 +213,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
 #ifdef NODESELECT_DEF_WL
 static in3_ret_t verify_whitelist_data(in3_vctx_t* vc, d_token_t* server_list, d_token_t* storage_proofs) {
   bytes32_t skey;
-  uint32_t  total_servers = d_get_intk(vc->result, K_TOTAL_SERVERS);
+  uint32_t  total_servers = d_get_int(vc->result, K_TOTAL_SERVERS);
 
   if ((int) total_servers != d_len(server_list))
     return vc_err(vc, "wrong number of nodes in the whitelist");
@@ -242,7 +242,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
   if (d_type(vc->result) != T_OBJECT || !vc->proof || !server_list) return vc_err(vc, "Invalid nodelist response!");
 
   // verify the header
-  bytes_t* blockHeader = d_get_bytesk(vc->proof, K_BLOCK);
+  bytes_t* blockHeader = d_get_bytes(vc->proof, K_BLOCK);
   if (!blockHeader) return vc_err(vc, "No Block-Proof!");
   TRY(eth_verify_blockheader(vc, blockHeader, NULL));
 
@@ -252,7 +252,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
     return vc_err(vc, "No or wrong Contract!");
 
   // check last block
-  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER))
+  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_long(vc->result, K_LAST_BLOCK_NUMBER))
     return vc_err(vc, "The signature is based on older block!");
 
   // check accounts

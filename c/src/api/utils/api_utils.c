@@ -113,7 +113,7 @@ d_token_t* get_result(in3_req_t* ctx) {
   t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
   api_set_error(ETIMEDOUT, !t
                                ? "No result or error in response"
-                               : (d_type(t) != T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
+                               : (d_type(t) != T_OBJECT ? d_string(t) : d_get_string(t, K_MESSAGE)));
   return NULL;
 }
 

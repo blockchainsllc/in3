@@ -46,7 +46,7 @@
 #include <string.h>
 
 NONULL static bool is_raw_http(in3_req_t* ctx) {
-  return !ctx->nodes && strcmp("in3_http", d_get_stringk(ctx->requests[0], K_METHOD)) == 0;
+  return !ctx->nodes && strcmp("in3_http", d_get_string(ctx->requests[0], K_METHOD)) == 0;
 }
 
 NONULL static void response_free(in3_req_t* ctx) {
@@ -204,7 +204,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
           s[j] = bytes(c->signers + j * 20, 20);
         sb_add_bytes(sb, ",\"signers\":", s, c->signers_length, true);
       }
-      if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
+      if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_string(request_token, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
       if (proof == PROOF_FULL)
         sb_add_chars(sb, ",\"useFullProof\":true");
@@ -295,7 +295,7 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
 }
 
 static bool is_user_error(d_token_t* error, char** err_msg) {
-  *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
+  *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_string(error, K_MESSAGE);
   // here we need to find a better way to detect user errors
   // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
   return *err_msg && strncmp(*err_msg, "Error:", 6) != 0 && strncmp(*err_msg, "TypeError:", 10) != 0;
@@ -398,15 +398,15 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
     vc.result         = d_get(ctx->responses[i], K_RESULT);
     vc.client         = ctx->client;
     vc.index          = (int) i;
-    vc.method         = d_get_stringk(vc.request, K_METHOD);
+    vc.method         = d_get_string(vc.request, K_METHOD);
     vc.node           = node;
     vc.dont_blacklist = false;
     vc.proof          = d_get(ctx->responses[i], K_IN3); // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
     res               = handle_payment(&vc, node, i);
 
     if (vc.proof) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-      vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
-      vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
+      vc.last_validator_change = d_get_long(vc.proof, K_LAST_VALIDATOR_CHANGE);
+      vc.currentBlock          = d_get_long(vc.proof, K_CURRENT_BLOCK);
       vc.proof                 = d_get(vc.proof, K_PROOF);
     }
 
@@ -473,7 +473,7 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, int nodes_count, in3_response
 
     state = verify_response(ctx, chain, node, response + n);
     if (state == IN3_OK) {
-      in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_stringk(ctx->requests[0], K_METHOD), node ? node->url : "intern");
+      in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_string(ctx->requests[0], K_METHOD), node ? node->url : "intern");
       break;
     }
     else if (state == IN3_WAITING)
@@ -567,7 +567,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   }
 
   in3_ret_t     res;
-  char*         rpc         = d_get_stringk(d_get(ctx->requests[0], K_IN3), K_RPC);
+  char*         rpc         = d_get_string(d_get(ctx->requests[0], K_IN3), K_RPC);
   int           nodes_count = rpc ? 1 : req_nodes_len(ctx->nodes);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_match_t* node        = ctx->nodes;
@@ -602,7 +602,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   request->urls_len           = nodes_count;
   request->urls               = urls;
   request->cptr               = NULL;
-  request->wait               = d_get_intk(d_get(ctx->requests[0], K_IN3), K_WAIT);
+  request->wait               = d_get_int(d_get(ctx->requests[0], K_IN3), K_WAIT);
   request->method             = payload->len ? "POST" : "GET";
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
@@ -870,7 +870,7 @@ void req_free(in3_req_t* ctx) {
 
 static inline in3_ret_t handle_internally(in3_req_t* ctx) {
   if (ctx->len != 1) return IN3_OK; //  currently we do not support bulk requests forr internal calls
-  in3_rpc_handle_ctx_t vctx = {.req = ctx, .response = &ctx->raw_response, .request = ctx->requests[0], .method = d_get_stringk(ctx->requests[0], K_METHOD), .params = d_get(ctx->requests[0], K_PARAMS)};
+  in3_rpc_handle_ctx_t vctx = {.req = ctx, .response = &ctx->raw_response, .request = ctx->requests[0], .method = d_get_string(ctx->requests[0], K_METHOD), .params = d_get(ctx->requests[0], K_PARAMS)};
   in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
   if (res == IN3_OK && ctx->raw_response && ctx->raw_response->data.data) in3_log_debug("internal response: %s\n", ctx->raw_response->data.data);
   return res == IN3_EIGNORE ? IN3_OK : res;
@@ -908,7 +908,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
       return req_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
   }
 
-  in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_stringk(ctx->requests[0], K_METHOD), ctx->attempt + 1);
+  in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_string(ctx->requests[0], K_METHOD), ctx->attempt + 1);
 
   switch (ctx->type) {
     case RT_RPC: {

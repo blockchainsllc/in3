@@ -63,8 +63,8 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
     memset(zeros, 0, 20);
     int      res       = 0;
     bytes_t* from      = d_get_byteskl(tx, K_FROM, 20);
-    bytes_t* value     = d_get_bytesk(tx, K_VALUE);
-    bytes_t* data      = d_get_bytesk(tx, K_DATA);
+    bytes_t* value     = d_get_bytes(tx, K_VALUE);
+    bytes_t* data      = d_get_bytes(tx, K_DATA);
     bytes_t  gas       = d_to_bytes(d_get(tx, K_GAS_LIMIT));
     bytes_t* result    = NULL;
     uint64_t gas_limit = bytes_to_long(gas.data, gas.len);

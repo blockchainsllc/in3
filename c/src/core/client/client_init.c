@@ -363,7 +363,7 @@ char* in3_configure(in3_t* c, const char* config) {
       for (d_iterator_t n = d_iter(token); n.left; d_iter_next(&n), i++) {
         EXPECT_TOK_U64(d_get(n.token, key("block")));
         EXPECT_TOK_B256(d_get(n.token, key("hash")));
-        c->chain.verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
+        c->chain.verified_hashes[i].block_number = d_get_long(n.token, key("block"));
         memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
       }
       c->alloc_verified_hashes = c->max_verified_hashes;

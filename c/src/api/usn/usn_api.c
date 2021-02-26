@@ -167,12 +167,12 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   address_t  sender;
   char       tmp[400], mhash[500];
   in3_req_t* ctx = NULL;
-  result->device = find_device(conf, d_get_stringk(msg, K_URL));
+  result->device = find_device(conf, d_get_string(msg, K_URL));
   rejectp_if(!result->device, "the device with this url does not exist");
 
   // prepare message hash
   // the timestamp would run out space around 2106, so please make sure we update by then. !
-  sprintf(tmp, "%s%u%s{}", result->device->url, d_get_intk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
+  sprintf(tmp, "%s%u%s{}", result->device->url, d_get_int(msg, K_TIMESTAMP), d_get_string(msg, K_ACTION));
   sprintf(mhash, "\031Ethereum Signed Message:\n%u%s", (int) strlen(tmp), tmp);
   bytes_t msg_data = {.data = (uint8_t*) mhash, .len = strlen(mhash)};
   keccak(msg_data, hash);
@@ -189,7 +189,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   b_free(signer);
 
   // look for a transaction hash
-  bytes_t* tx_hash = d_get_bytesk(msg, K_TRANSACTIONHASH);
+  bytes_t* tx_hash = d_get_bytes(msg, K_TRANSACTIONHASH);
   rejectp_if(tx_hash && tx_hash->len != 32, "incorrect transactionhash");
 
   if (!tx_hash) {
@@ -242,7 +242,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       rejectp_if(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
 
       // extract the values
-      bytes_t* data      = d_get_bytesk(event, K_DATA);
+      bytes_t* data      = d_get_bytes(event, K_DATA);
       bytes_t* address   = d_get_byteskl(event, K_ADDRESS, 20);
       bytes_t* device_id = d_bytesl(d_get_at(d_get(event, K_TOPICS), 2), 32);
       r.rented_from      = bytes_to_long(data->data + 32, 32);
@@ -260,7 +260,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     }
 
     // check if the time and sender is correct
-    uint64_t now = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
+    uint64_t now = conf->now ? conf->now : d_get_long(msg, K_TIMESTAMP);
     rejectp_if(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
     dbg_log("sender      : 0x%02x%02x%02x%02x\n", sender[0], sender[1], sender[2], sender[3]);
     dbg_log("controller  : 0x%02x%02x%02x%02x\n", r.controller[0], r.controller[1], r.controller[2], r.controller[3]);
@@ -268,7 +268,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   }
 
   result->accepted = true;
-  strcpy(result->action, d_get_stringk(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
+  strcpy(result->action, d_get_string(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
 
 clean:
   if (ctx) req_free(ctx);
@@ -285,8 +285,8 @@ usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
   reject_if(!conf->chain_id, "chain_id missing in config");
 
   // check message type
-  char* msgType = d_get_stringk(parsed->result, K_MSG_TYPE);
-  result.id     = d_get_intk(parsed->result, K_ID);
+  char* msgType = d_get_string(parsed->result, K_MSG_TYPE);
+  result.id     = d_get_int(parsed->result, K_ID);
   reject_if(!parsed->result || d_type(parsed->result) != T_OBJECT, "no message-object passed");
   reject_if(!msgType || strlen(msgType) == 0, "the messageType is missing");
 
@@ -378,7 +378,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
     req_free(ctx);
     return res;
   }
-  uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
+  uint64_t current_block = d_get_long(ctx->responses[0], K_RESULT);
   req_free(ctx);
   if (conf->last_checked_block == current_block) return IN3_OK;
 
@@ -454,13 +454,13 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
       d_token_t*    topics = d_get(iter.token, K_TOPICS);
       bytes_t*      t0     = d_bytesl(d_get_at(topics, 0), 32);
       usn_device_t* device = find_device_by_id(conf, d_to_bytes(d_get_at(topics, 2)).data);
-      bytes_t*      data   = d_get_bytesk(iter.token, K_DATA);
+      bytes_t*      data   = d_get_bytes(iter.token, K_DATA);
       if (t0->len != 32 || !device || !data) continue;
       usn_add_booking(device, data->data + 12,
                       bytes_to_long(data->data + 32 + 24, 8),
                       bytes_to_long(data->data + 64 + 24, 8),
                       *(t0->data) == 0x63 ? NULL : data->data + 6 + 32 + 16,
-                      d_get_bytesk(iter.token, K_TRANSACTION_HASH)->data);
+                      d_get_bytes(iter.token, K_TRANSACTION_HASH)->data);
     }
 
     req_free(ctx);

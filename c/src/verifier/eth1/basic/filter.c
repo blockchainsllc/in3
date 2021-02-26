@@ -195,7 +195,7 @@ in3_ret_t filter_add(in3_filter_handler_t* filters, in3_req_t* ctx, in3_filter_t
       case REQ_SUCCESS:
         if (IN3_OK != (res = req_get_error(block_ctx, 0)))
           return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
-        current_block = d_get_longk(block_ctx->responses[0], K_RESULT);
+        current_block = d_get_long(block_ctx->responses[0], K_RESULT);
         TRY(req_remove_required(ctx, block_ctx, false));
     }
   }
@@ -245,7 +245,7 @@ static in3_req_t* req_find_required_for_block(in3_req_t* ctx, uint64_t block_num
   // find the subctx for the current blocknumber
   for (in3_req_t* sub_ctx = ctx->required; sub_ctx; sub_ctx = sub_ctx->required) {
     if (!sub_ctx->requests) continue;
-    const char* required_method = d_get_stringk(sub_ctx->requests[0], K_METHOD);
+    const char* required_method = d_get_string(sub_ctx->requests[0], K_METHOD);
     if (required_method && strcmp(required_method, "eth_getBlockByNumber")) continue;
     if (block_number == d_get_long_at(d_get(sub_ctx->requests[0], K_PARAMS), 0)) return sub_ctx;
   }
@@ -273,7 +273,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
           return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
     }
   }
-  uint64_t blkno = d_get_longk(block_ctx->responses[0], K_RESULT);
+  uint64_t blkno = d_get_long(block_ctx->responses[0], K_RESULT);
 
   in3_filter_t* f = filters->array[id - 1];
   if (!f)

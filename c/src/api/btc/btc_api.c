@@ -89,30 +89,30 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
   d_token_t* t_vout = d_get(t, key("vout"));
   if (!t_hex || !t_vin || !t_vout) return IN3_EFIND;
 
-  res->in_active_chain = !!d_get_intkd(t, key("in_active_chain"), 1);
+  res->in_active_chain = !!d_get_intd(t, key("in_active_chain"), 1);
   res->vin             = data;
   res->vout            = ((void*) res->vin) + d_len(t_vin) * sizeof(btc_transaction_in_t);
   res->data            = bytes(((void*) res->vout) + d_len(t_vout) * sizeof(btc_transaction_out_t), d_len(t_hex) / 2);
   res->vin_len         = d_len(t_vin),
   res->vout_len        = d_len(t_vout);
-  res->size            = d_get_intk(t, key("size"));
-  res->vsize           = d_get_intk(t, key("vsize"));
-  res->weight          = d_get_intk(t, key("weight"));
-  res->version         = d_get_intk(t, key("version"));
-  res->locktime        = d_get_intk(t, key("locktime"));
-  res->time            = d_get_intk(t, key("time"));
-  res->blocktime       = d_get_intk(t, key("blocktime"));
-  res->confirmations   = d_get_intk(t, key("confirmations"));
+  res->size            = d_get_int(t, key("size"));
+  res->vsize           = d_get_int(t, key("vsize"));
+  res->weight          = d_get_int(t, key("weight"));
+  res->version         = d_get_int(t, key("version"));
+  res->locktime        = d_get_int(t, key("locktime"));
+  res->time            = d_get_int(t, key("time"));
+  res->blocktime       = d_get_int(t, key("blocktime"));
+  res->confirmations   = d_get_int(t, key("confirmations"));
 
   TRY(hex_to_bytes(d_string(t_hex), -1, res->data.data, res->data.len))
   TRY(btc_parse_tx(res->data, &txdata));
 
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("txid")), -1, res->txid, 32), 32)
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("hash")), -1, res->hash, 32), 32)
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, key("txid")), -1, res->txid, 32), 32)
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, key("hash")), -1, res->hash, 32), 32)
   if (block_hash)
     memcpy(res->blockhash, block_hash, 32);
   else
-    EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
+    EXPECT_EQ(hex_to_bytes(d_get_string(t, key("blockhash")), -1, res->blockhash, 32), 32)
 
   // handle vin
   uint8_t* p     = txdata.input.data;
@@ -156,21 +156,21 @@ btc_transaction_t* btc_d_to_tx(d_token_t* t) {
 
 static in3_ret_t fill_blockheader(d_token_t* t, btc_blockheader_t* res) {
   EXPECT_EQ(d_type(t), T_OBJECT)
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, K_HASH), 64, res->hash, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("merkleroot")), 64, res->merkleroot, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("bits")), 8, res->bits, 4), 4);
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("chainwork")), 64, res->chainwork, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("previousblockhash")), 64, res->previous_hash, 32), 32);
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("nextblockhash")), 64, res->next_hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, K_HASH), 64, res->hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, key("merkleroot")), 64, res->merkleroot, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, key("bits")), 8, res->bits, 4), 4);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, key("chainwork")), 64, res->chainwork, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, key("previousblockhash")), 64, res->previous_hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, key("nextblockhash")), 64, res->next_hash, 32), 32);
 
   TRY(btc_serialize_block_header(t, res->data))
 
-  res->confirmations = d_get_intk(t, key("confirmations"));
-  res->height        = d_get_intk(t, key("height"));
-  res->version       = d_get_intk(t, key("version"));
-  res->time          = d_get_intk(t, key("time"));
-  res->nonce         = d_get_intk(t, key("nonce"));
-  res->n_tx          = d_get_intk(t, key("nTx"));
+  res->confirmations = d_get_int(t, key("confirmations"));
+  res->height        = d_get_int(t, key("height"));
+  res->version       = d_get_int(t, key("version"));
+  res->time          = d_get_int(t, key("time"));
+  res->nonce         = d_get_int(t, key("nonce"));
+  res->n_tx          = d_get_int(t, key("nTx"));
 
   return IN3_OK;
 }

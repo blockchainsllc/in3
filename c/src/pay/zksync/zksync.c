@@ -239,17 +239,17 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key != key("zksync")) return IN3_EIGNORE;
   // TODO error-reporting for invalid config
 
-  const char* provider = d_get_stringk(ctx->token, key("provider_url"));
+  const char* provider = d_get_string(ctx->token, key("provider_url"));
   if (provider) {
     if (conf->provider_url) _free(conf->provider_url);
     conf->provider_url = _strdupn(provider, -1);
   }
-  const char* pvm = d_get_stringk(ctx->token, key("proof_method"));
+  const char* pvm = d_get_string(ctx->token, key("proof_method"));
   if (pvm) {
     if (conf->proof_verify_method) _free(conf->proof_verify_method);
     conf->proof_verify_method = _strdupn(pvm, -1);
   }
-  bytes_t* account = d_get_bytesk(ctx->token, key("account"));
+  bytes_t* account = d_get_bytes(ctx->token, key("account"));
   if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
   bytes_t sync_key = d_to_bytes(d_get(ctx->token, key("sync_key")));
   if (sync_key.len) {
@@ -258,7 +258,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key_hash_pk);
   }
 
-  bytes_t* main_contract = d_get_bytesk(ctx->token, key("main_contract"));
+  bytes_t* main_contract = d_get_bytes(ctx->token, key("main_contract"));
   if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
   d_token_t* st = d_get(ctx->token, key("signer_type"));
   if (st)
@@ -290,11 +290,11 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (create2) {
     conf->sign_type = ZK_SIGN_CREATE2;
     if (!conf->create2) conf->create2 = _calloc(1, sizeof(zk_create2_t));
-    bytes_t* t = d_get_bytesk(create2, key("creator"));
+    bytes_t* t = d_get_bytes(create2, key("creator"));
     if (t && t->len == 20) memcpy(conf->create2->creator, t->data, 20);
-    t = d_get_bytesk(create2, key("saltarg"));
+    t = d_get_bytes(create2, key("saltarg"));
     if (t && t->len == 32) memcpy(conf->create2->salt_arg, t->data, 32);
-    t = d_get_bytesk(create2, key("codehash"));
+    t = d_get_bytes(create2, key("codehash"));
     if (t && t->len == 32) memcpy(conf->create2->codehash, t->data, 32);
   }
 

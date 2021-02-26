@@ -103,11 +103,11 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
     }
 
     int old_index      = (int) i;
-    n->capacity        = d_get_intkd(node, K_CAPACITY, 1);
-    n->index           = d_get_intkd(node, K_INDEX, i);
-    n->deposit         = d_get_longk(node, K_DEPOSIT);
-    n->props           = d_get_longkd(node, K_PROPS, 65535);
-    n->url             = d_get_stringk(node, K_URL);
+    n->capacity        = d_get_intd(node, K_CAPACITY, 1);
+    n->index           = d_get_intd(node, K_INDEX, i);
+    n->deposit         = d_get_long(node, K_DEPOSIT);
+    n->props           = d_get_longd(node, K_PROPS, 65535);
+    n->url             = d_get_string(node, K_URL);
     bytes_t* adr_bytes = d_get_byteskl(node, K_ADDRESS, 20);
     if (adr_bytes && adr_bytes->len == 20)
       memcpy(n->address, adr_bytes->data, 20);
@@ -118,9 +118,9 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
     BIT_CLEAR(n->attrs, ATTR_BOOT_NODE); // nodes are considered boot nodes only until first nodeList update succeeds
 
     if ((ctx->client->flags & FLAGS_BOOT_WEIGHTS) && (t = d_get(node, K_PERFORMANCE))) {
-      weights[i].blacklisted_until   = d_get_longk(t, K_LAST_FAILED) / 1000 + (24 * 3600);
-      weights[i].response_count      = d_get_intk(t, K_COUNT);
-      weights[i].total_response_time = d_get_intk(t, K_TOTAL);
+      weights[i].blacklisted_until   = d_get_long(t, K_LAST_FAILED) / 1000 + (24 * 3600);
+      weights[i].response_count      = d_get_int(t, K_COUNT);
+      weights[i].total_response_time = d_get_int(t, K_TOTAL);
     }
 
     // restore the nodeweights if the address was known in the old nodeList
@@ -136,7 +136,7 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
     if (old_index >= 0) memcpy(weights + i, data->weights + old_index, sizeof(in3_node_weight_t));
 
     // if this is a newly registered node, we wait 24h before we use it, since this is the time where mallicous nodes may be unregistered.
-    const uint64_t register_time = d_get_longk(node, K_REGISTER_TIME);
+    const uint64_t register_time = d_get_long(node, K_REGISTER_TIME);
     if (now && register_time + DAY > now && now > register_time)
       weights[i].blacklisted_until = register_time + DAY;
 
@@ -241,7 +241,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `data->nodelist_upd8_params->node` lied to us
         // about the nodelist update, so we blacklist it for an hour
-        if (nodelist_exp_last_block_neq(data, d_get_longk(r, K_LAST_BLOCK_NUMBER)))
+        if (nodelist_exp_last_block_neq(data, d_get_long(r, K_LAST_BLOCK_NUMBER)))
           blacklist_node_addr(data, data->nodelist_upd8_params->node, BLACKLISTTIME);
         _free(data->nodelist_upd8_params);
         data->nodelist_upd8_params = NULL;

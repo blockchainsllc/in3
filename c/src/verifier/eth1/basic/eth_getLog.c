@@ -221,7 +221,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   if (d_len(d_get(vc->proof, K_LOG_PROOF)) > l_logs) return vc_err(vc, "too many proofs");
 
   for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
-    sprintf(xtmp, "0x%" PRIx64, d_get_longk(it.token, K_NUMBER));
+    sprintf(xtmp, "0x%" PRIx64, d_get_long(it.token, K_NUMBER));
     if (strlen(xtmp) % 2) {
       memmove(xtmp + 3, xtmp + 2, strlen(xtmp) - 1);
       xtmp[2] = '0';
@@ -250,7 +250,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
       // verify tx data first
       r->data              = bytes(NULL, 0);
-      r->transaction_index = d_get_intk(receipt.token, K_TX_INDEX);
+      r->transaction_index = d_get_int(receipt.token, K_TX_INDEX);
       bytes_t** proof      = d_create_bytes_vec(d_get(receipt.token, K_TX_PROOF));
       bytes_t*  path       = create_tx_path(r->transaction_index);
 
@@ -298,7 +298,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
     // verify the log-data
     if (rlp_decode(&tmp, 3, &logddata) != 2) return vc_err(vc, "invalid log-data");
-    if (rlp_decode(&logddata, d_get_intk(it.token, K_TRANSACTION_LOG_INDEX), &logddata) != 2) return vc_err(vc, "invalid log index");
+    if (rlp_decode(&logddata, d_get_int(it.token, K_TRANSACTION_LOG_INDEX), &logddata) != 2) return vc_err(vc, "invalid log index");
 
     // check address
     if (!rlp_decode(&logddata, 0, &tmp) || !bytes_cmp(tmp, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)))) return vc_err(vc, "invalid address");
@@ -310,20 +310,20 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, *d_bytesl(t.token, 32))) return vc_err(vc, "invalid topic");
     }
 
-    if (d_get_longk(it.token, K_BLOCK_NUMBER) != bytes_to_long(r->block_number.data, r->block_number.len)) return vc_err(vc, "invalid blocknumber");
+    if (d_get_long(it.token, K_BLOCK_NUMBER) != bytes_to_long(r->block_number.data, r->block_number.len)) return vc_err(vc, "invalid blocknumber");
     if (!bytes_cmp(d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), bytes(r->block_hash, 32))) return vc_err(vc, "invalid blockhash");
-    if (d_get_intk(it.token, K_REMOVED)) return vc_err(vc, "must be removed=false");
-    if ((unsigned) d_get_intk(it.token, K_TRANSACTION_INDEX) != r->transaction_index) return vc_err(vc, "wrong transactionIndex");
+    if (d_get_int(it.token, K_REMOVED)) return vc_err(vc, "must be removed=false");
+    if ((unsigned) d_get_int(it.token, K_TRANSACTION_INDEX) != r->transaction_index) return vc_err(vc, "wrong transactionIndex");
 
-    if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_longk(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
-    if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
-    if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
+    if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_long(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
+    if (!prev_blk) prev_blk = d_get_long(it.token, K_BLOCK_NUMBER);
+    if (filter_from_equals_to(vc->request) && prev_blk != d_get_long(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
 
     // Check for prev_blk > blockNumber is also required for filter_check_latest() to work properly,
     // this is because we expect the result to be sorted (ascending by blockNumber) and only check
     // latest toBlock for last log in result.
-    if (prev_blk > d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "result not sorted");
-    if (filter_check_latest(vc->request, d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock, it.left == 1) != IN3_OK) return vc_err(vc, "latest check failed");
+    if (prev_blk > d_get_long(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "result not sorted");
+    if (filter_check_latest(vc->request, d_get_long(it.token, K_BLOCK_NUMBER), vc->currentBlock, it.left == 1) != IN3_OK) return vc_err(vc, "latest check failed");
   }
 
   return res;

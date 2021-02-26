@@ -114,11 +114,11 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   // get the tx_receipt
   TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
 
-  if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
+  if (d_type(tx_receipt) == T_NULL || d_get_long(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
     // we remove it and try again
     in3_req_t* last_r = req_find_required(ctx->req, "eth_getTransactionReceipt");
-    uint32_t   wait   = d_get_intk(d_get(last_r->requests[0], K_IN3), K_WAIT);
+    uint32_t   wait   = d_get_int(d_get(last_r->requests[0], K_IN3), K_WAIT);
     wait              = wait ? wait * 2 : 1000;
     req_remove_required(ctx->req, last_r, false);
     if (wait > 120000) // more than 2 minutes is too long, so we stop here

@@ -101,7 +101,7 @@ static in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* 
   if (node) {
     if ((t = d_get(pay, key("payed")))) node->payed = d_long(t);
     if ((t = d_get(pay, key("price")))) node->price = d_long(t);
-    if (plugin_ctx->resp_error && d_get_intk(plugin_ctx->resp_error, K_CODE) == IN3_EPAYMENT_REQUIRED) {
+    if (plugin_ctx->resp_error && d_get_int(plugin_ctx->resp_error, K_CODE) == IN3_EPAYMENT_REQUIRED) {
       // TODO now we need to decide whether it's worth to pay
       if (node->price && (data->max_price == 0 || node->price < data->max_price))
         return IN3_WAITING;

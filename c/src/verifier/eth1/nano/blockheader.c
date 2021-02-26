@@ -123,7 +123,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   // Validate proof
   d_token_t *ss = d_get(d_get(ctx_->responses[0], K_RESULT), K_STATES), *prf = NULL;
   for (d_iterator_t sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
-    blk = d_get_longk(sitr.token, K_BLOCK);
+    blk = d_get_long(sitr.token, K_BLOCK);
     if (blk <= vh->last_change_block) continue;
 
     prf = d_get(sitr.token, K_PROOF);
@@ -131,7 +131,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
       return vc_err(vc, "validator list has no proof");
     }
 
-    bytes_t* prf_blk = d_get_bytesk(prf, K_BLOCK);
+    bytes_t* prf_blk = d_get_bytes(prf, K_BLOCK);
     rlp_decode_in_list(prf_blk, BLOCKHEADER_NUMBER, &tmp);
     uint64_t prf_blkno = bytes_to_long(tmp.data, tmp.len);
     if (blk != prf_blkno) {
@@ -188,7 +188,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
       return vc_err(vc, "not enough finality to accept state");
 
     // Verify receipt
-    bytes_t* path = create_tx_path(d_get_intk(prf, K_TX_INDEX));
+    bytes_t* path = create_tx_path(d_get_int(prf, K_TX_INDEX));
 
     // verify the merkle proof for the receipt
     if (rlp_decode_in_list(prf_blk, BLOCKHEADER_RECEIPT_ROOT, &tmp) != 1)
@@ -203,10 +203,10 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
     bytes_t log_data;
     rlp_decode(&raw_receipt, rlp_decode_len(&raw_receipt) - 1, &log_data);
-    rlp_decode(&log_data, d_get_intk(prf, K_LOG_INDEX), &log_data);
+    rlp_decode(&log_data, d_get_int(prf, K_LOG_INDEX), &log_data);
 
     rlp_decode(&log_data, 0, &tmp);
-    if (!b_cmp(&tmp, d_get_bytesk(vc->chain->spec->result, K_VALIDATOR_CONTRACT)))
+    if (!b_cmp(&tmp, d_get_bytes(vc->chain->spec->result, K_VALIDATOR_CONTRACT)))
       return vc_err(vc, "Wrong address in log");
 
     rlp_decode(&log_data, 1, &tmp);
@@ -396,7 +396,7 @@ static bytes_t compute_msg_hash(uint8_t* msg_data, in3_vctx_t* vc, bytes32_t blo
 
 static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   bytes_builder_t* bb = bb_new();
-  bb_write_int(bb, d_get_intk(err, K_CODE));
+  bb_write_int(bb, d_get_int(err, K_CODE));
 
   int        i   = 0;
   d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
@@ -433,7 +433,7 @@ static bool is_err_signed(d_token_t* err) {
 
 static in3_ret_t validate_err(in3_vctx_t* vc, d_token_t* err, uint64_t header_number) {
   d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
-  if (d_get_longk(sig, K_BLOCK) != header_number)
+  if (d_get_long(sig, K_BLOCK) != header_number)
     return vc_err(vc, "wrong signature blocknumber");
 
   uint8_t err_data[64] = {0};
@@ -442,7 +442,7 @@ static in3_ret_t validate_err(in3_vctx_t* vc, d_token_t* err, uint64_t header_nu
 }
 
 static in3_ret_t validate_sig(in3_vctx_t* vc, d_token_t* sig, uint64_t header_number, bytes32_t block_hash, bytes_t msg) {
-  if (d_get_longk(sig, K_BLOCK) != header_number)
+  if (d_get_long(sig, K_BLOCK) != header_number)
     return vc_err(vc, "wrong signature blocknumber");
 
   bytes_t* sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32);
@@ -462,19 +462,19 @@ static unsigned int idx_from_bs(unsigned int bs) {
 
 static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int bs, uint64_t header_number) {
   // handle errors based on context
-  if (d_get_intk(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
+  if (d_get_int(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
     uint8_t*           signer_addr = vc->req->signers + (20 * (idx_from_bs(bs) - 1));
     in3_get_data_ctx_t dctx        = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = signer_addr};
     ba_print(signer_addr, 20);
     in3_plugin_execute_first(vc->req, PLGN_ACT_GET_DATA, &dctx);
     uint32_t* min_blk_height = dctx.data;
 
-    if (DIFF_ATMOST(d_get_longk(d_get(d_get(err, K_DATA), K_SIGNED_ERR), K_CURRENT_BLOCK), header_number, *min_blk_height)) {
+    if (DIFF_ATMOST(d_get_long(d_get(d_get(err, K_DATA), K_SIGNED_ERR), K_CURRENT_BLOCK), header_number, *min_blk_height)) {
       vc_err(vc, "blacklisting signer (reported wrong min block-height)");
       in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
       in3_plugin_execute_first(vc->req, PLGN_ACT_NL_BLACKLIST, &bctx);
     }
-    else if (!DIFF_ATMOST(d_get_longk(err, K_CURRENT_BLOCK), vc->currentBlock, 1)) {
+    else if (!DIFF_ATMOST(d_get_long(err, K_CURRENT_BLOCK), vc->currentBlock, 1)) {
       vc_err(vc, "blacklisting signer (out-of-sync)");
       in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
       in3_plugin_execute_first(vc->req, PLGN_ACT_NL_BLACKLIST, &bctx);
@@ -558,7 +558,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
     if ((err = d_get(sig, K_ERROR))) {
       if (!is_err_signed(err)) {
-        if (d_get_intk(err, K_CODE) != JSON_RPC_ERR_INTERNAL)
+        if (d_get_int(err, K_CODE) != JSON_RPC_ERR_INTERNAL)
           return vc_err(vc, "error not signed");
         continue; // assume offline
       }

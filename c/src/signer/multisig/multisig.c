@@ -92,7 +92,7 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
   if (!parent) return IN3_EINVAL;
   in3_req_t* ctx = parent;
   for (; ctx; ctx = ctx->required) {
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_call")) continue;
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_call")) continue;
     d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
     if (!t || d_type(t) != T_ARRAY || !d_len(t)) continue;
     t = t + 1;
@@ -106,9 +106,9 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
       case REQ_ERROR:
         return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
-        *result = d_get_bytesk(ctx->responses[0], K_RESULT);
+        *result = d_get_bytes(ctx->responses[0], K_RESULT);
         if (!*result) {
-          char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+          char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
           return req_set_error(parent, s ? s : "error executing eth_call", IN3_ERPC);
         }
         return IN3_OK;
@@ -411,7 +411,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   TRY(get_tx_hash(ctx, ms, &tx_data, tx_hash, nonce))
 
   // verifiy and copy the passed signatures into sig_data
-  TRY(fill_signature(ctx, d_get_bytesk(d_get(ctx->requests[0], K_IN3), key("msSigs")), &sig_count, ms, sig_data, tx_hash))
+  TRY(fill_signature(ctx, d_get_bytes(d_get(ctx->requests[0], K_IN3), key("msSigs")), &sig_count, ms, sig_data, tx_hash))
 
   // look for already approved messages from owners where we don't have the signature yet.
   TRY(add_approved(ctx, &sig_count, sig_data, tx_hash, ms))

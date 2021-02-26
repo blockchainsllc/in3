@@ -126,7 +126,7 @@ static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t actio
     req->cptr = &rec;
   }
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
-    recorder_entry_t* entry = next_entry("response", d_get_stringk(req->req->requests[0], K_METHOD));
+    recorder_entry_t* entry = next_entry("response", d_get_string(req->req->requests[0], K_METHOD));
     in3_response_t*   r     = req->req->raw_response + atoi(entry->args[1]);
     sb_add_chars(&r->data, entry->content.data);
     r->state = atoi(entry->args[3]);
@@ -144,7 +144,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
   in3_ret_t           res = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     fprintf(rec.f, ":: request ");
-    char* rpc = d_get_stringk(d_get(req->req->requests[0], K_IN3), K_RPC);
+    char* rpc = d_get_string(d_get(req->req->requests[0], K_IN3), K_RPC);
     if (rpc)
       fprintf(rec.f, "%s ", rpc);
     else {
@@ -156,13 +156,13 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
   }
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     m         = req->req->nodes;
-    char* rpc = d_get_stringk(d_get(req->req->requests[0], K_IN3), K_RPC);
+    char* rpc = d_get_string(d_get(req->req->requests[0], K_IN3), K_RPC);
     int   l   = rpc ? 1 : req_nodes_len(m);
     for (int i = 0; i < l; i++, m = m ? m->next : NULL) {
       in3_response_t* r = req->req->raw_response + i;
       if (m) rpc = m->url;
       if (r->time) {
-        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_stringk(req->req->requests[0], K_METHOD), i, rpc, r->state, r->time);
+        fprintf(rec.f, ":: response %s %i %s %i %i\n", d_get_string(req->req->requests[0], K_METHOD), i, rpc, r->state, r->time);
         char* data = format_json(r->data.data ? r->data.data : "");
         fprintf(rec.f, "%s\n\n", data);
         fflush(rec.f);

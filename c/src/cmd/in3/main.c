@@ -298,7 +298,7 @@ static void execute(in3_t* c, FILE* f) {
         recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
         in3_ret_t ret = in3_send_req(ctx);
-        uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
+        uint32_t  id  = d_get_int(ctx->requests[0], K_ID);
         if (ctx->error) {
           for (char* x = ctx->error; *x; x++) {
             if (*x == '\n') *x = ' ';
@@ -1120,10 +1120,10 @@ int main(int argc, char* argv[]) {
             if (!health_res)
               health = 0;
             else {
-              node_name    = d_get_stringk(health_res->result, key("name"));
-              version      = d_get_stringk(health_res->result, key("version"));
-              running      = d_get_intk(health_res->result, key("running"));
-              char* status = d_get_stringk(health_res->result, key("status"));
+              node_name    = d_get_string(health_res->result, key("name"));
+              version      = d_get_string(health_res->result, key("version"));
+              running      = d_get_int(health_res->result, key("running"));
+              char* status = d_get_string(health_res->result, key("status"));
               if (!status || strcmp(status, "healthy")) health = 0;
             }
           }
@@ -1153,16 +1153,16 @@ int main(int argc, char* argv[]) {
           sprintf((warning = tr), "%s", msg ? d_string(msg) : "Error-Response!");
         }
         else if (!ctx->error) {
-          b = d_get_intk(ctx->responses[0], K_RESULT);
+          b = d_get_int(ctx->responses[0], K_RESULT);
           if (block < b) block = b;
 
           if (b < block - 1)
             sprintf((warning = tr), "#%i ( out of sync : %i blocks behind latest )", b, block - b);
           else if (strncmp(node->url, "https://", 8))
             sprintf((warning = tr), "#%i (missing https, which is required in a browser )", b);
-          else if (!IS_APPROX(d_get_intk(ctx->responses[0], K_RESULT), d_get_intk(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK), 1))
+          else if (!IS_APPROX(d_get_int(ctx->responses[0], K_RESULT), d_get_int(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK), 1))
             sprintf((warning = tr), "#%i ( current block mismatch: %i blocks apart )", b,
-                    d_get_intk(ctx->responses[0], K_RESULT) - d_get_intk(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
+                    d_get_int(ctx->responses[0], K_RESULT) - d_get_int(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
           else
             sprintf(tr, "#%i", b);
         }

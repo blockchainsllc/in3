@@ -90,7 +90,7 @@ static void test_in3_config() {
    }]");
 
   TEST_ASSERT_NULL(ctx->error);
-  TEST_ASSERT_EQUAL(1, d_get_intk(ctx->responses[0], K_RESULT));
+  TEST_ASSERT_EQUAL(1, d_get_int(ctx->responses[0], K_RESULT));
   req_free(ctx);
 
   TEST_ASSERT_EQUAL(7, c->chain.chain_id);

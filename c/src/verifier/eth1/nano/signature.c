@@ -50,7 +50,7 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
   uint8_t  pubkey[65], sdata[64];
   bytes_t* r = d_get_byteskl(sig, K_R, 32);
   bytes_t* s = d_get_byteskl(sig, K_S, 32);
-  int      v = d_get_intk(sig, K_V);
+  int      v = d_get_int(sig, K_V);
 
   // correct v
   if (v >= 27) v -= 27;

@@ -109,7 +109,7 @@ static void set_string(char* prefix, char* postfix, char** dst) {
 static in3_ret_t iamo_config_set(iamo_signer_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key == key("iamo")) {
     CNF_SET_BYTES(conf->device_key, ctx->token, "device_key", 32)
-    char* service = d_get_stringk(ctx->token, key("service"));
+    char* service = d_get_string(ctx->token, key("service"));
     if (service && strlen(service)) {
       set_string("https://account.", service, &conf->services.account);
       set_string("https://key.", service, &conf->services.key);

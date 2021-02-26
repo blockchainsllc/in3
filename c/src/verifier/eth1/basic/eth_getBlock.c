@@ -84,7 +84,7 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
     return vc_err(vc, "Proof is missing!");
 
   // verify the blockdata
-  bytes_t* header = d_get_bytesk(vc->proof, K_BLOCK);
+  bytes_t* header = d_get_bytes(vc->proof, K_BLOCK);
   if (!header)
     return vc_err(vc, "no blockheader");
   if (eth_verify_blockheader(vc, header, block_hash) != IN3_OK)
@@ -132,7 +132,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
   bytes32_t  tmp_hash;
   d_token_t *transactions, *t, *t2, *tx_hashs = NULL, *txh = NULL;
   bytes_t    tmp, *bhash;
-  uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
+  uint64_t   bnumber = d_get_long(vc->result, K_NUMBER);
   bhash              = d_get_byteskl(vc->result, K_HASH, 32);
 
   if (block_hash && !b_cmp(block_hash, bhash))
@@ -160,7 +160,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
   if ((t = d_getl(vc->result, K_MIX_HASH, 32)) && (t2 = d_get(vc->result, K_SEAL_FIELDS))) {
     if (rlp_decode(d_get_bytes_at(t2, 0), 0, &tmp) != 1 || !b_cmp(d_bytes(t), &tmp))
       return vc_err(vc, "invalid mixhash");
-    if (rlp_decode(d_get_bytes_at(t2, 1), 0, &tmp) != 1 || !b_cmp(d_get_bytesk(vc->result, K_NONCE), &tmp))
+    if (rlp_decode(d_get_bytes_at(t2, 1), 0, &tmp) != 1 || !b_cmp(d_get_bytes(vc->result, K_NONCE), &tmp))
       return vc_err(vc, "invalid nonce");
   }
 
@@ -219,7 +219,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
 
     // verify uncles
     if (res == IN3_OK && full_proof)
-      return eth_verify_uncles(vc, d_get_bytesk(vc->result, K_SHA3_UNCLES)->data, d_get(vc->proof, K_UNCLES), d_get(vc->result, K_UNCLES));
+      return eth_verify_uncles(vc, d_get_bytes(vc->result, K_SHA3_UNCLES)->data, d_get(vc->proof, K_UNCLES), d_get(vc->result, K_UNCLES));
   }
   else
     res = vc_err(vc, "Missing transaction-properties");

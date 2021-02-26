@@ -150,7 +150,7 @@ static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria,
   for (d_iterator_t offer_iter = d_iter(price_list); offer_iter.left; d_iter_next(&offer_iter)) {
     price = NULL;
     for (d_iterator_t p_iter = d_iter(d_get(offer_iter.token, key("price"))); p_iter.left; d_iter_next(&p_iter)) {
-      char* token = d_get_stringk(p_iter.token, key("token"));
+      char* token = d_get_string(p_iter.token, key("token"));
       if (token && strcmp(token, criteria->token ? criteria->token : "ETH") == 0) {
         price = p_iter.token;
         break;
@@ -158,8 +158,8 @@ static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria,
     }
 
     if (price) {
-      uint64_t amount       = d_get_longk(offer_iter.token, key("amount"));
-      uint64_t price_amount = d_get_longk(price, key("amount"));
+      uint64_t amount       = d_get_long(offer_iter.token, key("amount"));
+      uint64_t price_amount = d_get_long(price, key("amount"));
       if (!amount) return req_set_error(ctx, "no amount defined in offer from node", IN3_ERPC);
       if (!price_amount) return req_set_error(ctx, "no price defined in offer from node", IN3_ERPC);
       if (!criteria->max_price_per_hundred_igas || ((price_amount * 100) / amount) <= criteria->max_price_per_hundred_igas) {
@@ -210,7 +210,7 @@ in3_ret_t update_nodelist_from_cache(in3_req_t* ctx, unsigned int nodelen) {
 }
 
 in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ctx) {
-  if (!ctx->resp_error || d_type(ctx->resp_error) != T_OBJECT || d_get_intk(ctx->resp_error, K_CODE) != ERROR_PAYMENT_REQUIRED || get_payment_data(ctx->req)) return IN3_OK;
+  if (!ctx->resp_error || d_type(ctx->resp_error) != T_OBJECT || d_get_int(ctx->resp_error, K_CODE) != ERROR_PAYMENT_REQUIRED || get_payment_data(ctx->req)) return IN3_OK;
 
   // the server wants payment
   d_token_t* offer = d_get(ctx->resp_error, key("offer"));
@@ -226,15 +226,15 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   TRY(ensure_payment_data(ctx->req, &criteria->config))
 
   // now prepare the payment
-  criteria->config.account_id = d_get_longk(offer, key("accountId"));
-  criteria->config.nonce      = d_get_longk(offer, key("nonce"));
+  criteria->config.account_id = d_get_long(offer, key("accountId"));
+  criteria->config.nonce      = d_get_long(offer, key("nonce"));
   criteria->config.sign_type  = ZK_SIGN_PK;
 
   // prepare the token-struct
   zksync_token_t _token = {
-      .id       = d_get_intk(price, K_ID),
-      .decimals = d_get_intk(price, key("decimals"))};
-  strncpy(_token.symbol, d_get_stringk(price, key("token")), 6);
+      .id       = d_get_int(price, K_ID),
+      .decimals = d_get_int(price, key("decimals"))};
+  strncpy(_token.symbol, d_get_string(price, key("token")), 6);
   bytes_t tmp = d_to_bytes(d_get(price, K_ADDRESS));
   if (tmp.len == 20)
     memcpy(_token.address, tmp.data, 20);
@@ -258,7 +258,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   // prepare the payTx
   sb_t sb = {0};
   sb_add_chars(&sb, ",\"payTx\":{\"offer_id\":");
-  sb_add_int(&sb, d_get_intk(selected_offer, K_ID));
+  sb_add_int(&sb, d_get_int(selected_offer, K_ID));
   sb_add_chars(&sb, ",\"method\":\"tx_submit\",\"params\":[");
 
   // sign tx

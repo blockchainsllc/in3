@@ -219,13 +219,13 @@ int req_nodes_len(node_match_t* node) {
 }
 
 bool req_is_method(const in3_req_t* ctx, const char* method) {
-  const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
+  const char* required_method = d_get_string(ctx->requests[0], K_METHOD);
   return (required_method && strcmp(required_method, method) == 0);
 }
 
 in3_proof_t in3_req_get_proof(in3_req_t* ctx, int i) {
   if (ctx->requests) {
-    char* verfification = d_get_stringk(d_get(ctx->requests[i], K_IN3), key("verification"));
+    char* verfification = d_get_string(d_get(ctx->requests[i], K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;
   }
@@ -336,7 +336,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
       }
       if (found) break;
     }
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method) != 0) continue;
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), method) != 0) continue;
     d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
     if (!t) continue;
     str_range_t p = d_to_json(t);
@@ -350,7 +350,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
       case REQ_SUCCESS:
         *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
         if (!*result) {
-          char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+          char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
           return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
         }
         return IN3_OK;

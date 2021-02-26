@@ -18,8 +18,8 @@ static int next_token(const char* c, int p) {
 static in3_req_t* find_pending_ctx(in3_req_t* ctx, bytes_t data) {
   // ok, we need a request, do we have a useable?
   for (ctx = ctx->required; ctx; ctx = ctx->required) {
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_call") == 0) {
-      bytes_t* ctx_data = d_get_bytesk(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0), K_DATA);
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_call") == 0) {
+      bytes_t* ctx_data = d_get_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0), K_DATA);
       if (ctx_data && b_cmp(ctx_data, &data)) return ctx;
     }
   }

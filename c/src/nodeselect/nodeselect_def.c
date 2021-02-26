@@ -273,8 +273,8 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
           EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
           EXPECT_TOK_STR(d_get(n.token, key("url")));
           EXPECT_TOK_ADDR(d_get(n.token, key("address")));
-          EXPECT_CFG(add_node(data, d_get_stringk(n.token, key("url")),
-                              d_get_longkd(n.token, key("props"), 65535),
+          EXPECT_CFG(add_node(data, d_get_string(n.token, key("url")),
+                              d_get_longd(n.token, key("props"), 65535),
                               d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                      "add node failed");
 #ifndef __clang_analyzer__
@@ -575,28 +575,28 @@ static void check_autoupdate(const in3_req_t* ctx, in3_nodeselect_def_t* data, d
   assert(data);
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
 
-  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
+  if (d_get_long(response_in3, K_LAST_NODE_LIST) > d_get_long(response_in3, K_CURRENT_BLOCK)) {
     // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
     return;
   }
 
-  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > data->last_block) {
+  if (d_get_long(response_in3, K_LAST_NODE_LIST) > data->last_block) {
     if (data->nodelist_upd8_params == NULL)
       data->nodelist_upd8_params = _malloc(sizeof(*(data->nodelist_upd8_params)));
     in3_node_t* n = get_node(data, node);
     if (n) {
       // overwrite old params since we have a newer nodelist update now
       memcpy(data->nodelist_upd8_params->node, n->address, 20);
-      data->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
-      data->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
-                                                                               d_get_longk(response_in3, K_CURRENT_BLOCK),
+      data->nodelist_upd8_params->exp_last_block = d_get_long(response_in3, K_LAST_NODE_LIST);
+      data->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_long(response_in3, K_LAST_NODE_LIST),
+                                                                               d_get_long(response_in3, K_CURRENT_BLOCK),
                                                                                ctx->client->replace_latest_block,
                                                                                data->avg_block_time);
     }
   }
 
 #ifdef NODESELECT_DEF_WL
-  if (data->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > data->whitelist->last_block)
+  if (data->whitelist && d_get_long(response_in3, K_LAST_WHITE_LIST) > data->whitelist->last_block)
     data->whitelist->needs_update = true;
 #endif
 }

@@ -116,7 +116,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
     if (d_type(r) == T_STRING)
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
-      char* msg = d_get_stringk(r, K_MESSAGE);
+      char* msg = d_get_string(r, K_MESSAGE);
       *error    = msg ? _strdupn(msg, -1) : d_create_json(ctx->response_context, r);
     }
     else
@@ -126,7 +126,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   }
 
   if ((r = (is_obj ? d_get(ctx->responses[0], K_RESULT) : NULL)) == NULL) {
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "in3_http") == 0) {
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "in3_http") == 0) {
       *result = d_type(ctx->responses[0]) == T_BYTES
                     ? _strdupn((void*) ctx->responses[0]->data, ctx->responses[0]->len + 1)
                     : d_create_json(ctx->response_context, r);
@@ -168,7 +168,7 @@ static char* create_rpc_error(in3_req_t* ctx, int code, char* error) {
   for (uint_fast16_t i = 0; i < len; i++) {
     if (i) sb_add_char(&sb, ',');
     sb_add_chars(&sb, "{\"id\":");
-    sb_add_int(&sb, (ctx && ctx->requests && i < ctx->len) ? d_get_intk(ctx->requests[i], K_ID) : 0);
+    sb_add_int(&sb, (ctx && ctx->requests && i < ctx->len) ? d_get_int(ctx->requests[i], K_ID) : 0);
     sb_add_chars(&sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
     sb_add_int(&sb, code);
     sb_add_chars(&sb, ",\"message\":\"");

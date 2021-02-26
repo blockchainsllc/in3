@@ -180,7 +180,7 @@ static void test_signer() {
 }
 
 static in3_ret_t prep_tx(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx) {
-  if (d_get_intk(old_tx, key("success"))) {
+  if (d_get_int(old_tx, key("success"))) {
     *new_tx = parse_json("{\"from\": \"0xb60e8dd61c5d32be8058bb8eb970870f07233155\","
                          "\"to\": \"0xd46e8dd67c5d32be8058bb8eb970870f07244567\","
                          "\"gas\": \"0x76c0\","

@@ -419,7 +419,7 @@ static void read_accounts(evm_t* evm, d_token_t* accounts) {
 static d_token_t* get_test_val(d_token_t* root, char* name, d_token_t* indexes) {
   d_token_t* array = d_get(root, ikey(jc, name));
   if (!array) return NULL;
-  return d_get_at(array, d_get_intk(indexes, ikey(jc, strcmp(name, "gasLimit") == 0 ? "gas" : name)));
+  return d_get_at(array, d_get_int(indexes, ikey(jc, strcmp(name, "gasLimit") == 0 ? "gas" : name)));
 }
 int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int test_index) {
   jc = jctx;
@@ -470,14 +470,14 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.call_data  = d_to_bytes(d_get(exec, ikey(jc, "data")));
     evm.call_value = d_to_bytes(d_get(exec, ikey(jc, "value")));
 
-    evm.caller  = d_get_bytesk(exec, ikey(jc, "caller"))->data;
-    evm.origin  = d_get_bytesk(exec, ikey(jc, "origin"))->data;
-    evm.address = d_get_bytesk(exec, ikey(jc, "address"))->data;
-    evm.account = d_get_bytesk(exec, ikey(jc, "address"))->data;
+    evm.caller  = d_get_bytes(exec, ikey(jc, "caller"))->data;
+    evm.origin  = d_get_bytes(exec, ikey(jc, "origin"))->data;
+    evm.address = d_get_bytes(exec, ikey(jc, "address"))->data;
+    evm.account = d_get_bytes(exec, ikey(jc, "address"))->data;
 
 #ifdef EVM_GAS
     evm.accounts = NULL;
-    evm.gas      = d_get_longk(exec, ikey(jc, "gas"));
+    evm.gas      = d_get_long(exec, ikey(jc, "gas"));
     evm.code     = d_to_bytes(d_get(exec, ikey(jc, "code")));
     evm.parent   = NULL;
     evm.logs     = NULL;
@@ -490,7 +490,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.call_data  = d_to_bytes(get_test_val(transaction, "data", indexes));
     evm.call_value = d_to_bytes(get_test_val(transaction, "value", indexes));
 
-    uint8_t *pk = d_get_bytesk(transaction, ikey(jc, "secretKey"))->data, public_key[65], sdata[32];
+    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey"))->data, public_key[65], sdata[32];
     ecdsa_get_public_key65(&secp256k1, pk, public_key);
     // hash it and return the last 20 bytes as address
     if (keccak(bytes(public_key + 1, 64), sdata) == 0)
@@ -508,7 +508,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.account = evm.address;
 
     if (d_getl(transaction, ikey(jc, "to"), 20) && d_len(d_getl(transaction, ikey(jc, "to"), 20)))
-      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytesk(transaction, ikey(jc, "to"))->data), ikey(jc, "code")));
+      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to"))->data), ikey(jc, "code")));
     else
       evm.code = evm.call_data;
 
@@ -656,7 +656,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
       }
 
       // pay the miner the total gas
-      account_t* miner = evm_get_account(&evm, d_get_bytesk(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1);
+      account_t* miner = evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1);
 
       // increase balance of the miner
       long_to_bytes(total_gas, tmp);
@@ -695,9 +695,9 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
       // check post state
       fail = check_post_state(&evm, post);
 #ifdef EVM_GAS
-      if (!fail && d_get_longk(test, ikey(jc, "gas")) != evm.gas) {
+      if (!fail && d_get_long(test, ikey(jc, "gas")) != evm.gas) {
         print_error("Wrong Gas");
-        printf(" (expected : %" PRIu64 ", but got %" PRIu64 "", d_get_longk(test, ikey(jc, "gas")), evm.gas);
+        printf(" (expected : %" PRIu64 ", but got %" PRIu64 "", d_get_long(test, ikey(jc, "gas")), evm.gas);
         fail = 1;
       }
 #endif

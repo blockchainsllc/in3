@@ -348,7 +348,7 @@ the steps to add a new custom rpc-method will be the following.
 1. get the method and params:
 
 ```c
-char* method      = d_get_stringk(rpc->request, K_METHOD);
+char* method      = d_get_string(rpc->request, K_METHOD);
 d_token_t* params = d_get(rpc->request, K_PARAMS);
 ```
 2. check if you can handle it
@@ -401,7 +401,7 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
         TRY(req_check_response_error(ctx, 0))
 
         // read the nonce
-        nonce = d_get_longk(ctx->responses[0], K_RESULT);
+        nonce = d_get_long(ctx->responses[0], K_RESULT);
       }
     }
   }
@@ -435,7 +435,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* args)
   swtch (action) {
     case PLGN_ACT_RPC_HANDLE: {
       // get method and params
-      char*                 method  = d_get_stringk(rpc->request, K_METHOD);
+      char*                 method  = d_get_string(rpc->request, K_METHOD);
       d_token_t*            params  = d_get(rpc->request, K_PARAMS);
 
       // do we support it?
@@ -495,7 +495,7 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* args) {
 
 
   in3_vctx_t* vc     = args;
-  char*       method = d_get_stringk(vc->request, K_METHOD);
+  char*       method = d_get_string(vc->request, K_METHOD);
   d_token_t*  params = d_get(vc->request, K_PARAMS);
 
   // did we ask for proof?

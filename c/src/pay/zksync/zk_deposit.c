@@ -78,7 +78,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   for (d_iterator_t iter = d_iter(d_get(tx_receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
     bytes_t* ev = d_get_bytes_at(d_get(iter.token, K_TOPICS), 0);
     if (ev && ev->len == 32 && memcmp(event_hash, ev->data, 32) == 0) {
-      bytes_t* data = d_get_bytesk(iter.token, K_DATA);
+      bytes_t* data = d_get_bytes(iter.token, K_DATA);
       if (data && data->len > 64) {
         str_range_t r  = d_to_json(tx_receipt);
         sb_t*       sb = in3_rpc_handle_start(ctx);

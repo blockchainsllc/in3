@@ -101,7 +101,7 @@ static in3_ret_t wallet_from_json(in3_req_t* ctx, d_token_t* data, wallet_t* w) 
   if (address.len != 20) return req_set_error(ctx, "Invalid address in wallet!", IN3_EINVAL);
   if (!owners || d_type(owners) != T_ARRAY) return req_set_error(ctx, "Invalid owners in wallet!", IN3_EINVAL);
   memcpy(w->account, address.data, 20);
-  w->threshold = (uint32_t) d_get_intk(data, key("threshold"));
+  w->threshold = (uint32_t) d_get_int(data, key("threshold"));
   w->owner_len = (uint32_t) d_len(owners);
   w->owners    = _malloc(w->owner_len * sizeof(owner_t));
   for (unsigned int i = 0; i < w->owner_len; i++) {
@@ -110,7 +110,7 @@ static in3_ret_t wallet_from_json(in3_req_t* ctx, d_token_t* data, wallet_t* w) 
       _free(w->owners);
       return req_set_error(ctx, "Invalid owner, must be an object!", IN3_EINVAL);
     }
-    w->owners[i].role = (role_t) d_get_intk(o, key("roles"));
+    w->owners[i].role = (role_t) d_get_int(o, key("roles"));
     address           = d_to_bytes(d_get(o, K_ADDRESS));
     if (address.len != 20) {
       _free(w->owners);

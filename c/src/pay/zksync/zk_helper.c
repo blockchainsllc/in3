@@ -137,9 +137,9 @@ in3_ret_t zksync_update_account(zksync_config_t* conf, in3_req_t* ctx) {
   TRY(send_provider_request(ctx, conf, "account_info", adr, &result))
 
   d_token_t* committed = d_get(result, key("committed"));
-  conf->account_id     = d_get_intk(result, K_ID);
-  conf->nonce          = d_get_longk(committed, K_NONCE);
-  char* kh             = d_get_stringk(committed, key("pubKeyHash"));
+  conf->account_id     = d_get_int(result, K_ID);
+  conf->nonce          = d_get_long(committed, K_NONCE);
+  char* kh             = d_get_string(committed, key("pubKeyHash"));
   if (kh && strlen(kh) == 45)
     hex_to_bytes(kh + 5, 40, conf->pub_key_hash_set, 20);
 
@@ -251,11 +251,11 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
   if (!conf->main_contract) {
     d_token_t* result;
     TRY(send_provider_request(ctx, conf, "contract_address", "", &result))
-    bytes_t* main_contract = d_get_bytesk(result, key("mainContract"));
+    bytes_t* main_contract = d_get_bytes(result, key("mainContract"));
     if (!main_contract || main_contract->len != 20) return req_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
     memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
 
-    bytes_t* gov_contract = d_get_bytesk(result, key("govContract"));
+    bytes_t* gov_contract = d_get_bytes(result, key("govContract"));
     if (!gov_contract || gov_contract->len != 20) return req_set_error(ctx, "could not get the gov_contract from provider", IN3_ERPC);
     memcpy(conf->gov_contract = _malloc(20), gov_contract->data, 20);
 
@@ -320,9 +320,9 @@ in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_i
   TRY(send_provider_request(ctx, conf, "get_tx_fee", sb.data, &result))
 #ifdef ZKSYNC_256
   memset(fee, 0, 32);
-  long_to_bytes(d_get_longk(result, key("totalFee")), fee + 24);
+  long_to_bytes(d_get_long(result, key("totalFee")), fee + 24);
 #else
-  *fee = d_get_longk(result, key("totalFee"));
+  *fee = d_get_long(result, key("totalFee"));
 #endif
   return IN3_OK;
 }
@@ -353,12 +353,12 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
     conf->tokens    = _calloc(conf->token_len, sizeof(zksync_token_t));
     int i           = 0;
     for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it), i++) {
-      conf->tokens[i].id       = d_get_intk(it.token, K_ID);
-      conf->tokens[i].decimals = d_get_intk(it.token, key("decimals"));
-      char* name               = d_get_stringk(it.token, key("symbol"));
+      conf->tokens[i].id       = d_get_int(it.token, K_ID);
+      conf->tokens[i].decimals = d_get_int(it.token, key("decimals"));
+      char* name               = d_get_string(it.token, key("symbol"));
       if (!name || strlen(name) > 7) return req_set_error(ctx, "invalid token name", IN3_EINVAL);
       strcpy(conf->tokens[i].symbol, name);
-      bytes_t* adr = d_get_bytesk(it.token, K_ADDRESS);
+      bytes_t* adr = d_get_bytes(it.token, K_ADDRESS);
       if (!adr || !adr->data || adr->len != 20) return req_set_error(ctx, "invalid token addr", IN3_EINVAL);
       memcpy(conf->tokens[i].address, adr->data, 20);
     }

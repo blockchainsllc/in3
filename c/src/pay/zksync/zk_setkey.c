@@ -51,7 +51,7 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
   TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &result), _free(sb.data))
 
   // was it successfull?
-  if (result == NULL || d_type(result) != T_OBJECT || d_get_intk(result, K_STATUS) == 0)
+  if (result == NULL || d_type(result) != T_OBJECT || d_get_int(result, K_STATUS) == 0)
     return req_set_error(ctx->req, "setAuthPubkeyHash-Transaction failed", IN3_EINVAL);
 
   return IN3_OK;

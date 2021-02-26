@@ -113,13 +113,13 @@ static size_t align(size_t val) {
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   bytes_t b = d_to_bytes(d_get(t, K_INPUT));
 
-  tx->signature[64]     = d_get_intk(t, K_V);
-  tx->block_number      = d_get_longk(t, K_BLOCK_NUMBER);
-  tx->gas               = d_get_longk(t, K_GAS);
-  tx->gas_price         = d_get_longk(t, K_GAS_PRICE);
-  tx->nonce             = d_get_longk(t, K_NONCE);
+  tx->signature[64]     = d_get_int(t, K_V);
+  tx->block_number      = d_get_long(t, K_BLOCK_NUMBER);
+  tx->gas               = d_get_long(t, K_GAS);
+  tx->gas_price         = d_get_long(t, K_GAS_PRICE);
+  tx->nonce             = d_get_long(t, K_NONCE);
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
-  tx->transaction_index = d_get_intk(t, K_TRANSACTION_INDEX);
+  tx->transaction_index = d_get_int(t, K_TRANSACTION_INDEX);
   memcpy((uint8_t*) tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
   copy_fixed(tx->block_hash, 32, d_to_bytes(d_getl(t, K_BLOCK_HASH, 32)));
   copy_fixed(tx->from, 20, d_to_bytes(d_getl(t, K_FROM, 20)));
@@ -192,10 +192,10 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
 
       copy_fixed(b->sha3_uncles, 32, d_to_bytes(d_getl(result, K_SHA3_UNCLES, 32)));
       copy_fixed(b->state_root, 32, d_to_bytes(d_getl(result, K_STATE_ROOT, 32)));
-      b->gasLimit          = d_get_longk(result, K_GAS_LIMIT);
-      b->gasUsed           = d_get_longk(result, K_GAS_USED);
-      b->number            = d_get_longk(result, K_NUMBER);
-      b->timestamp         = d_get_longk(result, K_TIMESTAMP);
+      b->gasLimit          = d_get_long(result, K_GAS_LIMIT);
+      b->gasUsed           = d_get_long(result, K_GAS_USED);
+      b->number            = d_get_long(result, K_NUMBER);
+      b->timestamp         = d_get_long(result, K_TIMESTAMP);
       b->tx_count          = d_len(txs);
       b->seal_fields_count = d_len(sealed);
       b->extra_data        = bytes(p, extra.len);
@@ -279,10 +279,10 @@ static eth_log_t* parse_logs(d_token_t* result) {
   prev = first = NULL;
   for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
     eth_log_t* log         = _calloc(1, sizeof(*log));
-    log->removed           = d_get_intk(it.token, K_REMOVED);
-    log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
-    log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
-    log->block_number      = d_get_longk(it.token, K_BLOCK_NUMBER);
+    log->removed           = d_get_int(it.token, K_REMOVED);
+    log->log_index         = d_get_int(it.token, K_LOG_INDEX);
+    log->transaction_index = d_get_int(it.token, K_TRANSACTION_INDEX);
+    log->block_number      = d_get_long(it.token, K_BLOCK_NUMBER);
     log->data.len          = d_len(d_get(it.token, K_DATA));
     log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
     log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
@@ -624,11 +624,11 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
       api_set_error(EAGAIN, "Error getting the Receipt!");
     else {
       eth_tx_receipt_t* txr    = _malloc(sizeof(*txr));
-      txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);
-      txr->block_number        = d_get_longk(result, K_BLOCK_NUMBER);
-      txr->cumulative_gas_used = d_get_longk(result, K_CUMULATIVE_GAS_USED);
-      txr->gas_used            = d_get_longk(result, K_GAS_USED);
-      txr->status              = (d_get_intk(result, K_STATUS) == 1);
+      txr->transaction_index   = d_get_int(result, K_TRANSACTION_INDEX);
+      txr->block_number        = d_get_long(result, K_BLOCK_NUMBER);
+      txr->cumulative_gas_used = d_get_long(result, K_CUMULATIVE_GAS_USED);
+      txr->gas_used            = d_get_long(result, K_GAS_USED);
+      txr->status              = (d_get_int(result, K_STATUS) == 1);
       txr->contract_address    = b_dup(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
       txr->logs                = parse_logs(d_get(result, K_LOGS));
       copy_fixed(txr->transaction_hash, 32, d_to_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));
