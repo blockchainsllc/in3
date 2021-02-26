@@ -203,11 +203,17 @@ _Noreturn static void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
   recorder_exit(EXIT_FAILURE);
 }
-static void _configure(in3_t* c, char* k, char* val) {
-  char* data = alloca(strlen(val) + strlen(k) + 8);
-  sprintf(data, "{\"%s\": \"%s\"}", k, val);
+static void _configure(in3_t* c, char* k, const char* p, char* val) {
+  char* pattern = alloca(strlen(val) + strlen(k) + strlen(p) + 8);
+  char* data    = alloca(strlen(val) + strlen(k) + 8);
+  sprintf(pattern, "{\"%s\": %s}", "%s", p);
+  sprintf(data, pattern, k, val);
   char* e = in3_configure(c, data);
-  if (e) die(e);
+  if (e) {
+    char* tmp = alloca(strlen(data) + strlen(e) + 60);
+    sprintf(tmp, "Error configuring the client with config (%s): %s", data, e);
+    die(tmp);
+  }
 }
 static void _configure2(in3_t* c, char* k1, char* k2, const char* p, char* val) {
   char* pattern = alloca(strlen(val) + strlen(k1) + strlen(k2) + 16);
@@ -218,7 +224,7 @@ static void _configure2(in3_t* c, char* k1, char* k2, const char* p, char* val) 
   if (e) die(e);
 }
 
-#define configure(s, p)        _configure(c, s, p)
+#define configure(s, p)        _configure(c, s, "\"%s\"", p)
 #define configure_2(s1, s2, p) _configure2(c, s1, s2, "\"%s\"", p)
 
 static bool debug_mode = false;
@@ -729,7 +735,7 @@ int main(int argc, char* argv[]) {
   rc = "1";
 #endif
 
-  configure("requestCount", rc);
+  _configure(c, "requestCount", "%s", rc);
 
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++) {
@@ -871,7 +877,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
-      configure("minDeposit", argv[++i]);
+      _configure(c, "minDeposit", "%s", argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->flags |= FLAGS_KEEP_IN3;
     else if (strcmp(argv[i], "-bw") == 0)
@@ -895,7 +901,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-os") == 0)
       only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)
-      configure("requestCount", argv[++i]);
+      _configure(c, "requestCount", "%s", argv[++i]);
     else if (strcmp(argv[i], "-a") == 0)
       c->max_attempts = atoi(argv[++i]);
     else if (strcmp(argv[i], "-name") == 0)

@@ -48,8 +48,9 @@ extern "C" {
 #include "plugin.h"
 
 typedef struct iamo_zk_config {
-  char* cosign_rpc;
-
+  char*     cosign_rpc;
+  address_t creator;
+  address_t master_copy;
 } iamo_zk_config_t;
 
 /**
