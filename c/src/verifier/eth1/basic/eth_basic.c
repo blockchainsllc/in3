@@ -219,6 +219,7 @@ in3_ret_t handle_basic(void* pdata, in3_plugin_act_t action, void* pctx) {
     default: return IN3_EINVAL;
   }
 }
+
 in3_filter_handler_t* eth_basic_get_filters(in3_t* c) {
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
     if (p->action_fn == handle_basic) return p->data;
