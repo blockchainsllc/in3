@@ -140,7 +140,7 @@ java_win:
   stage: java
   allow_failure: true
   extends: .only_java
-  vatiables:
+  variables:
     - GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   needs:
     - java
