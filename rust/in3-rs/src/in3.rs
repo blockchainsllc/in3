@@ -83,7 +83,7 @@ impl Ctx {
             in3_sys::state::REQ_WAITING_FOR_RESPONSE => Err(SysError::NotSupported),
             in3_sys::state::REQ_WAITING_TO_SEND => {
                 let request = in3_sys::in3_create_request(self.ptr);
-                match (*(*request).ctx).type_ {
+                match (*(*request).req).type_ {
                     in3_sys::ctx_type::RT_SIGN => {
                         let slice = CStr::from_ptr((*request).payload)
                             .to_str()
@@ -170,9 +170,9 @@ impl Ctx {
                                 }
                             }
                         }
-                        let res = *(*(*request).ctx).raw_response.offset(0);
+                        let res = *(*(*request).req).raw_response.offset(0);
                         let err = if res.state != in3_sys::in3_ret_t::IN3_OK {
-                            let error = (*(*(*request).ctx).raw_response.offset(0)).data;
+                            let error = (*(*(*request).req).raw_response.offset(0)).data;
                             let error = CStr::from_ptr(error.data)
                                 .to_str()
                                 .expect("err is not valid UTF-8");
