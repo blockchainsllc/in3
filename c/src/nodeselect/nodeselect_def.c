@@ -815,6 +815,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   data->request_count            = 1;
   data->min_deposit              = 0;
   data->node_limit               = 0;
+  data->node_props               = 0;
   data->data                     = nodelist_get_or_create(c->chain.chain_id);
   return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_handle_action, data, false);
 }
