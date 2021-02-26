@@ -163,10 +163,13 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max_size) {
     switch (d_type(item)) {
       case T_BYTES:
         if (max > l) {
-          d_bytesl(item, max);
+          memset(dst, 0, max - l);
+          memcpy(dst + max - l, item->data, l);
+          d_bytesl(item, max); //TODO we should not need this!
           l = max;
         }
-        memcpy(dst, item->data, l);
+        else
+          memcpy(dst, item->data, l);
         return l;
 
       case T_STRING:

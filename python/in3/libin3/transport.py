@@ -102,8 +102,6 @@ class In3Request:
         return c.string_at(self.in3_request.contents.method)
 
 
-
-
 class In3Response:
     """
     C level abstraction of an Incubed response.
