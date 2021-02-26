@@ -266,7 +266,7 @@ void http_run_server(const char* port, in3_t* in3) {
     }
 
 #else
-    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");
