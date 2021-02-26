@@ -259,8 +259,8 @@ static void test_configure() {
 }
 
 static void test_configure_validation() {
-  in3_t*                    c = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_nodeselect_wrapper_t* w = in3_get_nodelist(c);
+  in3_t*                   c = in3_for_chain(CHAIN_ID_MAINNET);
+  in3_nodeselect_config_t* w = in3_get_nodelist(c);
   eth_register_pk_signer(c);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");

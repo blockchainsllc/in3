@@ -274,8 +274,8 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   }
 
   // create request
-  in3_nodeselect_wrapper_t* w   = in3_get_nodelist(c);
-  char*                     req = _malloc(350);
+  in3_nodeselect_config_t* w   = in3_get_nodelist(c);
+  char*                    req = _malloc(350);
   sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"params\":[%i,\"%s\",[]%s],\"in3\":%s}",
           w->node_limit, seed,
           ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(data)) ? ",true" : "",
@@ -389,7 +389,7 @@ static bool in_address_list(bytes_t* filter, address_t adr) {
   return false;
 }
 
-node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_wrapper_t* w, in3_node_t* all_nodes, in3_node_weight_t* weights,
+node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found,
                                         const in3_node_filter_t* filter, bytes_t* pre_filter) {
 
@@ -504,7 +504,7 @@ SKIP_UPDATE:
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_wrapper_t* w, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_config_t* w, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter) {
   // get all nodes from the nodelist
   in3_nodeselect_def_t* data      = w->data;
   uint64_t              now       = in3_time(NULL);

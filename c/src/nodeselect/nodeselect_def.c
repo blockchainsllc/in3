@@ -142,7 +142,7 @@ static inline bool is_shared_nodelist(in3_nodeselect_def_t* n) {
   return false;
 }
 
-static in3_ret_t nodelist_seperate_from_registry(in3_nodeselect_def_t** src, in3_nodeselect_wrapper_t* w) {
+static in3_ret_t nodelist_seperate_from_registry(in3_nodeselect_def_t** src, in3_nodeselect_config_t* w) {
   LOCK_REGISTRY(
       if (w && is_shared_nodelist(*src)) {
         // create a custom nodelist
@@ -161,7 +161,7 @@ static in3_ret_t nodelist_seperate_from_registry(in3_nodeselect_def_t** src, in3
   return IN3_OK;
 }
 
-static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx, in3_nodeselect_wrapper_t* w) {
+static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx, in3_nodeselect_config_t* w) {
   char*       res   = NULL;
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
@@ -316,7 +316,7 @@ cleanup:
   return ctx->error_msg ? IN3_ECONFIG : IN3_OK;
 }
 
-static in3_ret_t config_get(in3_nodeselect_wrapper_t* w, in3_get_config_ctx_t* ctx) {
+static in3_ret_t config_get(in3_nodeselect_config_t* w, in3_get_config_ctx_t* ctx) {
   in3_nodeselect_def_t* data = w->data;
   sb_t*                 sb   = ctx->sb;
   in3_t*                c    = ctx->client;
@@ -402,7 +402,7 @@ static void free_signers(node_match_t* signers) {
   }
 }
 
-static in3_ret_t pick_data(in3_nodeselect_wrapper_t* w, in3_ctx_t* ctx) {
+static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_ctx_t* ctx) {
   in3_nodeselect_def_t* data = w->data;
 
   // init cache lazily this also means we can be sure that all other related plugins are registered by now
@@ -430,7 +430,7 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
 }
 
-static in3_ret_t pick_signer(in3_nodeselect_wrapper_t* w, in3_ctx_t* ctx) {
+static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_ctx_t* ctx) {
   in3_nodeselect_def_t* data = w->data;
   const in3_t*          c    = ctx->client;
 
@@ -708,8 +708,8 @@ static in3_nodeselect_def_t* nodelist_get_or_create(chain_id_t chain_id) {
 #endif
 
 in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
-  in3_nodeselect_wrapper_t* w    = plugin_data;
-  in3_nodeselect_def_t*     data = w->data;
+  in3_nodeselect_config_t* w    = plugin_data;
+  in3_nodeselect_def_t*    data = w->data;
 
 #ifdef THREADSAFE
   // lock only the nodelist
@@ -747,10 +747,10 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
       UNLOCK_AND_RETURN(handle_offline(data, plugin_ctx))
     case PLGN_ACT_CHAIN_CHANGE: {
       nodelist_return_or_free(data); // this will always unlock the mutex of the nodelist and update the ref_counter!
-      in3_nodeselect_wrapper_t* w = plugin_data;
-      in3_t*                    c = plugin_ctx;
-      w->data                     = nodelist_get_or_create(c->chain.chain_id);
-      data                        = w->data; // update data-pointer to the new nodelist
+      in3_nodeselect_config_t* w = plugin_data;
+      in3_t*                   c = plugin_ctx;
+      w->data                    = nodelist_get_or_create(c->chain.chain_id);
+      data                       = w->data; // update data-pointer to the new nodelist
 #ifdef THREADSAFE
       MUTEX_LOCK(data->mutex) // and lock it because we are about to initialize the chain
 #endif
@@ -811,16 +811,16 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
 in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   if (in3_plugin_is_registered(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD))
     return IN3_EIGNORE;
-  in3_nodeselect_wrapper_t* data = _malloc(sizeof(*data));
-  data->request_count            = 1;
-  data->min_deposit              = 0;
-  data->node_limit               = 0;
-  data->node_props               = 0;
-  data->data                     = nodelist_get_or_create(c->chain.chain_id);
+  in3_nodeselect_config_t* data = _malloc(sizeof(*data));
+  data->request_count           = 1;
+  data->min_deposit             = 0;
+  data->node_limit              = 0;
+  data->node_props              = 0;
+  data->data                    = nodelist_get_or_create(c->chain.chain_id);
   return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_handle_action, data, false);
 }
 
-in3_nodeselect_wrapper_t* in3_get_nodelist(in3_t* c) {
+in3_nodeselect_config_t* in3_get_nodelist(in3_t* c) {
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
     if (p->action_fn == in3_nodeselect_handle_action) return p->data;
   }

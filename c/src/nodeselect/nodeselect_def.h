@@ -16,7 +16,7 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
  * get access to internal plugin data if registered
  */
 static inline in3_nodeselect_def_t* in3_nodeselect_def_data(in3_t* c) {
-  in3_nodeselect_wrapper_t* w = in3_plugin_get_data(c, in3_nodeselect_handle_action);
+  in3_nodeselect_config_t* w = in3_plugin_get_data(c, in3_nodeselect_handle_action);
   return w ? w->data : NULL;
 }
 
