@@ -79,7 +79,7 @@ in3_ret_t send_provider_request(in3_req_t* parent, zksync_config_t* conf, char* 
     in3 = alloca(strlen(conf->provider_url) + 26);
     sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
   }
-  return ctx_send_sub_request(parent, method, params, in3, result);
+  return req_send_sub_request(parent, method, params, in3, result);
 }
 
 void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t saltarg, address_t pub_key_hash, address_t dst) {
@@ -193,7 +193,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_req_t* ctx, uint8_t* sy
                   "Access zkSync account.\n\nOnly sign this message for a trusted client!";
   TRY(zksync_get_account(conf, ctx, &account))
   assert(account);
-  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20)))
   if (signature.len == 65 && signature.data[64] < 2)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);

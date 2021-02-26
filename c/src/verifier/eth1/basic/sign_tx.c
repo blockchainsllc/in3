@@ -168,7 +168,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
-    TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
     chain_id = d_long(r);
   }
   TRY(get_from_address(tx, ctx, from))
@@ -213,11 +213,11 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
   chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
-    TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
     chain_id = d_long(r);
   }
 
-  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required

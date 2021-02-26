@@ -427,7 +427,7 @@ static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_req_t* ctx) {
 }
 
 NONULL static bool auto_ask_sig(const in3_req_t* ctx) {
-  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
+  return (req_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
 }
 
 static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_req_t* ctx) {
@@ -452,7 +452,7 @@ static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_req_t* ctx) {
     if (res < 0)
       return req_set_error(ctx, "Could not find any nodes for requesting signatures", res);
     if (ctx->signers) _free(ctx->signers);
-    const int node_count  = ctx_nodes_len(signer_nodes);
+    const int node_count  = req_nodes_len(signer_nodes);
     ctx->signers_length   = node_count;
     ctx->signers          = _malloc(20 * node_count); // 20 bytes per address
     const node_match_t* w = signer_nodes;
@@ -571,7 +571,7 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
 }
 
 static void check_autoupdate(const in3_req_t* ctx, in3_nodeselect_def_t* data, d_token_t* response_in3, node_match_t* node) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   assert(data);
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
 
@@ -615,7 +615,7 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t
   in3_req_t*    ctx         = fctx->ctx;
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;
-  int           nodes_count = ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes);
+  int           nodes_count = ctx->nodes == NULL ? 1 : req_nodes_len(ctx->nodes);
 
   // no node - nothing to do here.
   if (!node) return IN3_EIGNORE;

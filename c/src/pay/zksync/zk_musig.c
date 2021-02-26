@@ -43,7 +43,7 @@ static in3_ret_t send_sign_request(in3_req_t* parent, int pos, zksync_config_t* 
   if (!url) return req_set_error(parent, "missing url to fetch a signature", IN3_EINVAL);
   char* in3 = alloca(strlen(url) + 26);
   sprintf(in3, "{\"rpc\":\"%s\"}", url);
-  return ctx_send_sub_request(parent, method, params, in3, result);
+  return req_send_sub_request(parent, method, params, in3, result);
 }
 
 static in3_ret_t update_session(zk_musig_session_t* s, in3_req_t* ctx, d_token_t* data) {
@@ -145,7 +145,7 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, d_token_t* 
   sb_add_chars(&sb, proof_data);
   _free(proof_data);
 
-  TRY_FINAL(ctx_send_sub_request(ctx, conf->proof_verify_method, sb.data, NULL, &result), _free(sb.data))
+  TRY_FINAL(req_send_sub_request(ctx, conf->proof_verify_method, sb.data, NULL, &result), _free(sb.data))
 
   in3_ret_t ret = (d_type(result) == T_BOOLEAN && d_int(result)) ? IN3_OK : req_set_error(ctx, "Proof could not be verified!", IN3_EINVAL);
   req_remove_required(ctx, req_find_required(ctx, conf->proof_verify_method), false);

@@ -466,7 +466,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in
 }
 
 static bool update_in_progress(const in3_req_t* ctx) {
-  return ctx_is_method(ctx, "in3_nodeList");
+  return req_is_method(ctx, "in3_nodeList");
 }
 
 in3_ret_t in3_node_list_get(in3_req_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, unsigned int* nodelist_length, in3_node_weight_t** weights) {

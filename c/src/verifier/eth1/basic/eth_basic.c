@@ -102,7 +102,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   char*       tx_data = alloca(r.len + 1);
   memcpy(tx_data, r.data, r.len);
   tx_data[r.len] = 0;
-  TRY(ctx_send_sub_request(ctx->ctx, "eth_sendTransaction", tx_data, NULL, &tx_hash))
+  TRY(req_send_sub_request(ctx->ctx, "eth_sendTransaction", tx_data, NULL, &tx_hash))
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];
   bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
@@ -112,7 +112,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   tx_hash_hex[68]                  = 0;
 
   // get the tx_receipt
-  TRY(ctx_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
+  TRY(req_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
 
   if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
@@ -126,7 +126,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
     char in3[20];
     sprintf(in3, "{\"wait\":%d}", wait);
 
-    return ctx_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
+    return req_send_sub_request(ctx->ctx, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
   }
   else {
     // we have a result and we keep it

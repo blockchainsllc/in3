@@ -50,11 +50,11 @@ NONULL static bool is_raw_http(in3_req_t* ctx) {
 }
 
 NONULL static void response_free(in3_req_t* ctx) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
 
   int nodes_count = 1;
   if (ctx->nodes) {
-    nodes_count = ctx_nodes_len(ctx->nodes);
+    nodes_count = req_nodes_len(ctx->nodes);
     in3_req_free_nodes(ctx->nodes);
   }
   if (ctx->raw_response) {
@@ -90,7 +90,7 @@ NONULL void in3_check_verified_hashes(in3_t* c) {
 }
 
 NONULL static void req_free_intern(in3_req_t* ctx, bool is_sub) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   // only for intern requests, we actually free the original request-string
   if (is_sub && ctx->request_context)
     _free(ctx->request_context->c);
@@ -139,7 +139,7 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
 }
 
 NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) {
-  assert_in3_ctx(c);
+  assert_in3_req(c);
   assert(sb);
 
   char             temp[100];
@@ -248,7 +248,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
 }
 
 NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, int len) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   assert(response_data);
   assert(len);
 
@@ -314,7 +314,7 @@ NONULL static void clear_response(in3_response_t* response) {
 }
 
 static in3_ret_t handle_error_response(in3_req_t* ctx, node_match_t* node, in3_response_t* response) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   assert_in3_response(response);
 
   // and copy the error to the ctx
@@ -329,7 +329,7 @@ static in3_ret_t handle_error_response(in3_req_t* ctx, node_match_t* node, in3_r
 }
 
 static void clean_up_ctx(in3_req_t* ctx) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
 
   if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
   if (ctx->error) _free(ctx->error);
@@ -339,7 +339,7 @@ static void clean_up_ctx(in3_req_t* ctx) {
 }
 
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx) {
-  int nodes_count = ctx_nodes_len(ctx->nodes);
+  int nodes_count = req_nodes_len(ctx->nodes);
   // this means we need to retry with the same node
   for (int i = 0; i < nodes_count; i++) {
     if (ctx->raw_response[i].data.data)
@@ -362,7 +362,7 @@ static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
 }
 
 static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   assert(chain);
   assert_in3_response(response);
 
@@ -568,7 +568,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
 
   in3_ret_t     res;
   char*         rpc         = d_get_stringk(d_get(ctx->requests[0], K_IN3), K_RPC);
-  int           nodes_count = rpc ? 1 : ctx_nodes_len(ctx->nodes);
+  int           nodes_count = rpc ? 1 : req_nodes_len(ctx->nodes);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_match_t* node        = ctx->nodes;
 
@@ -627,7 +627,7 @@ NONULL void request_free(in3_http_request_t* req) {
 }
 
 NONULL static bool ctx_is_allowed_to_fail(in3_req_t* ctx) {
-  return ctx_is_method(ctx, "in3_nodeList");
+  return req_is_method(ctx, "in3_nodeList");
 }
 
 in3_req_t* in3_req_last_waiting(in3_req_t* ctx) {
@@ -823,7 +823,7 @@ in3_req_t* req_find_required(const in3_req_t* parent, const char* search_method)
   in3_req_t* sub_ctx = parent->required;
   while (sub_ctx) {
     if (!sub_ctx->requests) continue;
-    if (ctx_is_method(sub_ctx, search_method)) return sub_ctx;
+    if (req_is_method(sub_ctx, search_method)) return sub_ctx;
     sub_ctx = sub_ctx->required;
   }
   return NULL;
@@ -938,7 +938,7 @@ in3_ret_t in3_req_execute(in3_req_t* ctx) {
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
       node_match_t* node = NULL;
-      ret                = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain, &node);
+      ret                = find_valid_result(ctx, ctx->nodes == NULL ? 1 : req_nodes_len(ctx->nodes), ctx->raw_response, &ctx->client->chain, &node);
       if (ret == IN3_OK) {
         in3_nl_followup_ctx_t fctx = {.ctx = ctx, .node = node};
         in3_plugin_execute_first_or_none(ctx, PLGN_ACT_NL_PICK_FOLLOWUP, &fctx);

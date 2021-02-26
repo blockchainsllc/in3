@@ -157,7 +157,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     m         = req->ctx->nodes;
     char* rpc = d_get_stringk(d_get(req->ctx->requests[0], K_IN3), K_RPC);
-    int   l   = rpc ? 1 : ctx_nodes_len(m);
+    int   l   = rpc ? 1 : req_nodes_len(m);
     for (int i = 0; i < l; i++, m = m ? m->next : NULL) {
       in3_response_t* r = req->ctx->raw_response + i;
       if (m) rpc = m->url;

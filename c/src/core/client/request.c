@@ -110,7 +110,7 @@ char* req_get_error_data(in3_req_t* ctx) {
 }
 
 char* req_get_response_data(in3_req_t* ctx) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
 
   sb_t sb = {0};
   if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, '[');
@@ -131,12 +131,12 @@ char* req_get_response_data(in3_req_t* ctx) {
 }
 
 req_type_t req_get_type(in3_req_t* ctx) {
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   return ctx->type;
 }
 
 in3_ret_t req_check_response_error(in3_req_t* c, int i) {
-  assert_in3_ctx(c);
+  assert_in3_req(c);
 
   d_token_t* r = d_get(c->responses[i], K_ERROR);
   if (!r)
@@ -209,7 +209,7 @@ void in3_req_free_nodes(node_match_t* node) {
   }
 }
 
-int ctx_nodes_len(node_match_t* node) {
+int req_nodes_len(node_match_t* node) {
   int all = 0;
   while (node) {
     all++;
@@ -218,7 +218,7 @@ int ctx_nodes_len(node_match_t* node) {
   return all;
 }
 
-bool ctx_is_method(const in3_req_t* ctx, const char* method) {
+bool req_is_method(const in3_req_t* ctx, const char* method) {
   const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
   return (required_method && strcmp(required_method, method) == 0);
 }
@@ -251,7 +251,7 @@ void in3_ctx_add_response(
     int         data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
     uint32_t    time) {
 
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   assert(data);
   if (error == 1) error = IN3_ERPC;
 
@@ -271,7 +271,7 @@ void in3_ctx_add_response(
 
 sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
   assert(hctx);
-  assert_in3_ctx(hctx->ctx);
+  assert_in3_req(hctx->ctx);
   assert(hctx->request);
   assert(hctx->response);
 
@@ -312,7 +312,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   return in3_rpc_handle_with_string(hctx, s);
 }
 
-in3_ret_t ctx_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result) {
+in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result) {
   bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
   if (params == NULL) params = "";
   char* req = NULL;
@@ -374,7 +374,7 @@ in3_ret_t ctx_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   return req_add_required(parent, ctx);
 }
 
-in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
+in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
   bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
   memcpy(cache_key.data, raw_data.data, raw_data.len);
   if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);

@@ -492,7 +492,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
         uint8_t* account = sctx.accounts + i * 20;
         if (is_valid(sig_data, ms, account, sig_count)) {
           bytes_t signature = bytes(NULL, 0);
-          TRY(ctx_require_signature(ctx->ctx, SIGN_EC_RAW, &signature, bytes(hash, 32), bytes(account, 20)))
+          TRY(req_require_signature(ctx->ctx, SIGN_EC_RAW, &signature, bytes(hash, 32), bytes(account, 20)))
           sig_data[sig_count].address = NULL;
           for (unsigned int n = 0; n < ms->owners_len; n++) {
             if (memcmp(ms->owners + n, account, 20) == 0) sig_data[sig_count].address = (void*) (ms->owners + n);

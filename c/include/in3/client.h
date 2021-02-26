@@ -70,8 +70,6 @@ extern "C" {
  */
 typedef uint32_t chain_id_t;
 
-struct in3_ctx;
-
 /** the type of the chain. 
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
@@ -103,19 +101,6 @@ typedef enum {
  */
 typedef uint64_t in3_node_props_t;
 
-typedef enum {
-  NODE_PROP_PROOF            = 0x1,   /**< filter out nodes which are providing no proof */
-  NODE_PROP_MULTICHAIN       = 0x2,   /**< filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
-  NODE_PROP_ARCHIVE          = 0x4,   /**< filter out non-archive supporting nodes */
-  NODE_PROP_HTTP             = 0x8,   /**< filter out non-http nodes  */
-  NODE_PROP_BINARY           = 0x10,  /**< filter out nodes that don't support binary encoding */
-  NODE_PROP_ONION            = 0x20,  /**< filter out non-onion nodes */
-  NODE_PROP_SIGNER           = 0x40,  /**< filter out non-signer nodes */
-  NODE_PROP_DATA             = 0x80,  /**< filter out non-data provider nodes */
-  NODE_PROP_STATS            = 0x100, /**< filter out nodes that do not provide stats */
-  NODE_PROP_MIN_BLOCK_HEIGHT = 0x400, /**< filter out nodes that will sign blocks with lower min block height than specified */
-} in3_node_props_type_t;
-
 /**
  * a list of flags defining the behavior of the incubed client. They should be used as bitmask for the flags-property.
  */
@@ -129,83 +114,6 @@ typedef enum {
   FLAGS_NODE_LIST_NO_SIG = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
   FLAGS_BOOT_WEIGHTS     = 0x80  /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
 } in3_flags_type_t;
-
-/**
- * a list of node attributes (mostly used internally)
- */
-typedef enum {
-  ATTR_WHITELISTED = 1, /**< indicates if node exists in whiteList */
-  ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
-} in3_node_attr_type_t;
-
-/** incubed node-configuration. 
- * 
- * These information are read from the Registry contract and stored in this struct representing a server or node.
- */
-typedef struct in3_node {
-  address_t        address;  /**< address of the server */
-  bool             blocked;  /**< if true this node has  been blocked for sending wrong responses */
-  uint_fast16_t    index;    /**< index within the nodelist, also used in the contract as key */
-  uint_fast16_t    capacity; /**< the maximal capacity able to handle */
-  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
-  char*            url;      /**< the url of the node */
-  uint_fast8_t     attrs;    /**< bitmask of internal attributes */
-} in3_node_t;
-
-/**
- * Weight or reputation of a node.
- * 
- * Based on the past performance of the node a weight is calculated given faster nodes a higher weight
- * and chance when selecting the next node from the nodelist.
- * These weights will also be stored in the cache (if available)
- */
-typedef struct in3_node_weight {
-  uint32_t response_count;      /**< counter for responses */
-  uint32_t total_response_time; /**< total of all response times */
-  uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
-} in3_node_weight_t;
-
-/**
- * Initializer for in3_node_props_t
- */
-#define in3_node_props_init(np) *(np) = 0
-
-/**
- * setter method for interacting with in3_node_props_t.
- */
-NONULL void in3_node_props_set(in3_node_props_t*     node_props, /**< pointer to the properties to change */
-                               in3_node_props_type_t type,       /**< key or type of the property */
-                               uint8_t               value       /**< value to set */
-);
-
-/**
- * returns the value of the specified property-type.
- * @return value as a number
- */
-static inline uint32_t in3_node_props_get(in3_node_props_t      np,  /**< property to read from */
-                                          in3_node_props_type_t t) { /**< the value to extract  */
-  return ((t == NODE_PROP_MIN_BLOCK_HEIGHT) ? ((np >> 32U) & 0xFFU) : !!(np & t));
-}
-
-/**
- * checks if the given type is set in the properties
- * @return true if set
- */
-static inline bool in3_node_props_matches(in3_node_props_t      np,  /**< property to read from */
-                                          in3_node_props_type_t t) { /**< the value to extract */
-  return !!(np & t);
-}
-
-/**
- * defines a whitelist structure used for the nodelist.
- */
-typedef struct in3_whitelist {
-  bool      needs_update; /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
-  uint64_t  last_block;   /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
-  address_t contract;     /**< address of whiteList contract. If specified, whiteList is always auto-updated and manual whiteList is overridden */
-  bytes_t   addresses;    /**< serialized list of node addresses that constitute the whiteList */
-} in3_whitelist_t;
 
 /** represents a blockhash which was previously verified */
 typedef struct in3_verified_hash {

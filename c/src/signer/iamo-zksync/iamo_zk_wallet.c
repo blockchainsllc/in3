@@ -228,7 +228,7 @@ static in3_ret_t wallet_sign(in3_req_t* ctx, bytes_t message, wallet_t* wallet, 
   for (unsigned int i = 0; i < wallet->owner_len && valid_signatures < wallet->threshold; i++) {
     if ((wallet->owners[i].role & (ROLE_APPROVER | ROLE_INITIATOR)) == 0) continue;
     bytes_t sig;
-    TRY(ctx_require_signature(ctx, SIGN_EC_RAW, &sig, bytes(msg_hash, 32), bytes(wallet->owners[i].address, 20)))
+    TRY(req_require_signature(ctx, SIGN_EC_RAW, &sig, bytes(msg_hash, 32), bytes(wallet->owners[i].address, 20)))
     if (sig.data[64] < 27) sig.data[64] += 27;
 
     // find owner
@@ -370,7 +370,7 @@ static in3_ret_t read_server_config(iamo_zk_config_t* conf, in3_req_t* ctx, d_to
   if (!conf->cosign_rpc) return req_set_error(ctx, "No cosign-rpc set in config!", IN3_ECONFIG);
   char* in3 = alloca(strlen(conf->cosign_rpc) + 20);
   sprintf(in3, "{\"rpc\":\"%s\"}", conf->cosign_rpc);
-  return ctx_send_sub_request(ctx, "iamo_zk_get_config", "", in3, result);
+  return req_send_sub_request(ctx, "iamo_zk_get_config", "", in3, result);
 }
 
 static in3_ret_t wallet_from_args(in3_rpc_handle_ctx_t* ctx, wallet_t* wallet) {

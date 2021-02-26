@@ -184,7 +184,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
     memset(signature.data, 0, 65);
   }
   else
-    TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+    TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
   in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
   if (signature.len == 65 && signature.data[64] < 27)
@@ -245,7 +245,7 @@ in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_
   p[msg.len * 2 + 3] = '"';
   p[msg.len * 2 + 4] = 0;
   d_token_t* result;
-  TRY(ctx_send_sub_request(ctx, "zk_sign", p, NULL, &result))
+  TRY(req_send_sub_request(ctx, "zk_sign", p, NULL, &result))
   if (d_type(result) != T_BYTES || d_len(result) != 96) return req_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
   memcpy(sig, result->data, 96);
   return IN3_OK;
@@ -283,7 +283,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   create_signed_bytes(&msg);
 
   if (conf->sign_type != ZK_SIGN_CONTRACT)
-    TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(conf->account, 20)))
+    TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(conf->account, 20)))
 
   if (signature.len == 65 && signature.data[64] < 27)
     signature.data[64] += 27; //because EIP155 chainID = 0
