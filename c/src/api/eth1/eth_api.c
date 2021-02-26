@@ -399,7 +399,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
 static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) {
   errno             = 0;
-  in3_ctx_t* ctx    = in3_client_rpc_ctx(in3, "eth_getTransactionReceipt", params);
+  in3_req_t* ctx    = in3_client_rpc_ctx(in3, "eth_getTransactionReceipt", params);
   d_token_t* result = get_result(ctx);
   if (result) {
     if (d_type(result) == T_NULL) {

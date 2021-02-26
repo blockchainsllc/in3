@@ -57,13 +57,13 @@ extern "C" {
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MAINNET    0x01 /**< chain_id for mainnet */
-#define CHAIN_ID_GOERLI     0x5 /**< chain_id for goerlii */
-#define CHAIN_ID_EWC        0xf6 /**< chain_id for ewc */
+#define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
+#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
+#define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
-#define CHAIN_ID_BTC        0x99 /**< chain_id for btc */
-#define CHAIN_ID_LOCAL      0x11 /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6 /**< default replace_latest_block */
+#define CHAIN_ID_BTC        0x99  /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0x11  /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6     /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -240,7 +240,7 @@ typedef struct in3_t_ in3_t;
 
 /** plugin action list */
 typedef enum {
-  PLGN_ACT_INIT              = 0x1,       /**< initialize plugin - use for allocating/setting-up internal resources . Plugins will be initialized before first used. The plgn_ctx will be the first request ctx in3_ctx_t */
+  PLGN_ACT_INIT              = 0x1,       /**< initialize plugin - use for allocating/setting-up internal resources . Plugins will be initialized before first used. The plgn_ctx will be the first request ctx in3_req_t */
   PLGN_ACT_TERM              = 0x2,       /**< terminate plugin - use for releasing internal resources and cleanup. */
   PLGN_ACT_TRANSPORT_SEND    = 0x4,       /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more responses. */
   PLGN_ACT_TRANSPORT_RECEIVE = 0x8,       /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
@@ -260,10 +260,10 @@ typedef enum {
   PLGN_ACT_PAY_HANDLE        = 0x20000,   /**< handles the payment */
   PLGN_ACT_PAY_SIGN_REQ      = 0x40000,   /**< signs a request */
   PLGN_ACT_LOG_ERROR         = 0x80000,   /**< report an error */
-  PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_req_t */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_req_t */
   PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to the node's address. */
-  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_req_t */
   PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to in3_nl_offline_ctx_t. */
   PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
   PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */

@@ -68,7 +68,7 @@ typedef enum {
   IN3_EVERS             = -8,  /**< Version mismatch */
   IN3_EINVALDT          = -9,  /**< Data invalid, eg. invalid/incomplete JSON */
   IN3_EPASS             = -10, /**< Wrong password */
-  IN3_ERPC              = -11, /**< RPC error (i.e. in3_ctx_t::error set) */
+  IN3_ERPC              = -11, /**< RPC error (i.e. in3_req_t::error set) */
   IN3_ERPCNRES          = -12, /**< RPC no response */
   IN3_EUSNURL           = -13, /**< USN URL parse error */
   IN3_ETRANS            = -14, /**< Transport error */

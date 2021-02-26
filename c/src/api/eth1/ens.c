@@ -15,7 +15,7 @@ static int next_token(const char* c, int p) {
   return -1;
 }
 
-static in3_ctx_t* find_pending_ctx(in3_ctx_t* ctx, bytes_t data) {
+static in3_req_t* find_pending_ctx(in3_req_t* ctx, bytes_t data) {
   // ok, we need a request, do we have a useable?
   for (ctx = ctx->required; ctx; ctx = ctx->required) {
     if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_call") == 0) {
@@ -26,12 +26,12 @@ static in3_ctx_t* find_pending_ctx(in3_ctx_t* ctx, bytes_t data) {
   return NULL;
 }
 
-static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_t** result) {
-  in3_ctx_t* ctx = find_pending_ctx(parent, calldata);
+static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_t** result) {
+  in3_req_t* ctx = find_pending_ctx(parent, calldata);
 
   if (ctx) {
     switch (in3_ctx_state(ctx)) {
-      case CTX_SUCCESS: {
+      case REQ_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result && d_type(rpc_result) == T_BYTES && d_len(rpc_result) >= 20) {
           *result = d_bytes(rpc_result);
@@ -41,7 +41,7 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_
         else
           return ctx_set_error(parent, "could not get the resolver", IN3_EFIND);
       }
-      case CTX_ERROR:
+      case REQ_ERROR:
         return IN3_ERPC;
       default:
         return IN3_WAITING;
@@ -69,7 +69,7 @@ static void ens_hash(const char* domain, bytes32_t dst) {
   memcpy(dst, hash, 32);                                                                       // we only the first 32 bytes - the root
 }
 
-in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
+in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
   const int len = strlen(name);
   if (*name == '0' && name[1] == 'x' && len == 42) {
     hex_to_bytes(name, 40, dst, 20);

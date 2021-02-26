@@ -43,11 +43,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
+in3_req_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
   assert_in3(c);
   assert(req);
   // create a new context by parsing the request
-  in3_ctx_t* ctx = ctx_new(c, req);
+  in3_req_t* ctx = ctx_new(c, req);
 
   // this happens if the request is not parseable (JSON-error in params)
   if (ctx->error) {
@@ -68,7 +68,7 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
   return ctx; // return context and hope the calle will clean it.
 }
 
-in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) {
+in3_req_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) {
   assert_in3(c);
   assert(method);
   assert(params);
@@ -79,13 +79,13 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
   char*      req  = heap ? _malloc(max) : alloca(max);                                         // allocate memory in heap or stack
   snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params); // create request
 
-  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
+  in3_req_t* ctx = in3_client_rpc_ctx_raw(c, req);
 
   if (heap) _free(req); // free request string if we created it in heap
   return ctx;           // return context and hope the calle will clean it.
 }
 
-static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
+static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   assert(ctx);
   assert_in3(ctx->client);
   if (result) result[0] = 0;
@@ -160,7 +160,7 @@ in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char*
   return ctx_rpc(in3_client_rpc_ctx_raw(c, request), result, error);
 }
 
-static char* create_rpc_error(in3_ctx_t* ctx, int code, char* error) {
+static char* create_rpc_error(in3_req_t* ctx, int code, char* error) {
   sb_t          sb       = {0};
   bool          is_array = ctx && ctx->request_context && d_type(ctx->request_context->result) == T_ARRAY;
   uint_fast16_t len      = (ctx && ctx->len) ? ctx->len : 1;
@@ -179,7 +179,7 @@ static char* create_rpc_error(in3_ctx_t* ctx, int code, char* error) {
   return sb.data;
 }
 
-char* ctx_get_error_rpc(in3_ctx_t* ctx, in3_ret_t ret) {
+char* ctx_get_error_rpc(in3_req_t* ctx, in3_ret_t ret) {
   return create_rpc_error(ctx, ret ? ret : ctx->verification_state, ctx->error);
 }
 
@@ -189,7 +189,7 @@ char* in3_client_exec_req(
 ) {
   // parse it
   char*      res = NULL;
-  in3_ctx_t* ctx = ctx_new(c, req);
+  in3_req_t* ctx = ctx_new(c, req);
   in3_ret_t  ret;
 
   //  not enough memory

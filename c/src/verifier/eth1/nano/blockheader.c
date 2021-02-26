@@ -112,7 +112,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   in3_proof_t proof_ = in3_ctx_get_proof(vc->ctx, vc->index);
   // TODO we need to make this async and use "in3":{"verification":"none"}
   vc->ctx->client->proof = PROOF_NONE;
-  in3_ctx_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorList", "[]");
+  in3_req_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorList", "[]");
   vc->ctx->client->proof = proof_;
   res                    = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {

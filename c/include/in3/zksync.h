@@ -162,17 +162,17 @@ NONULL in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx
 NONULL in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 
 /** creates message data and signs a transfer-message */
-NONULL in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf);
+NONULL in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf);
 
 /** creates message data and signs a change_pub_key-message */
-NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token);
+NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token);
 
 in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
-in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig);
+in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_t* sig);
 in3_ret_t           zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ctx);
 in3_ret_t           zksync_add_payload(in3_pay_payload_ctx_t* ctx);
-in3_ret_t           update_nodelist_from_cache(in3_ctx_t* ctx, unsigned int nodelen);
+in3_ret_t           update_nodelist_from_cache(in3_req_t* ctx, unsigned int nodelen);
 in3_ret_t           handle_zksync(void* conf, in3_plugin_act_t action, void* arg);
 #ifdef __cplusplus
 }

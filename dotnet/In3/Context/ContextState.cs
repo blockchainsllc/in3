@@ -1,9 +1,9 @@
 
 internal enum ContextState
 {
-    CTX_SUCCESS = 0,
-    CTX_WAITING_TO_SEND = 1,
-    CTX_WAITING_FOR_RESPONSE = 2,
-    CTX_ERROR = -1,
+    REQ_SUCCESS = 0,
+    REQ_WAITING_TO_SEND = 1,
+    REQ_WAITING_FOR_RESPONSE = 2,
+    REQ_ERROR = -1,
 
 }

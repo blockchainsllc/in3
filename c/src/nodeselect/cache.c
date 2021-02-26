@@ -262,7 +262,7 @@ in3_ret_t in3_cache_store_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
   write_cache_key(key, c->chain.chain_id, wl->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
-  in3_ctx_t       tmp_ctx = {.client = c};
+  in3_req_t       tmp_ctx = {.client = c};
   in3_cache_ctx_t cctx    = {.ctx = &tmp_ctx, .key = key, .content = &bb->b};
   in3_plugin_execute_first_or_none(&tmp_ctx, PLGN_ACT_CACHE_SET, &cctx);
 

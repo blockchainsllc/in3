@@ -174,7 +174,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
   int         res;
   jstring     js = NULL;
 
-  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
+  in3_req_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
     res = in3_send_ctx(ctx);
@@ -282,7 +282,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
   int         res;
   jobject     js = NULL;
 
-  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
+  in3_req_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
     res = in3_send_ctx(ctx);
@@ -547,7 +547,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 
 //in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
-  in3_ctx_t* ctx    = (in3_ctx_t*) sc->ctx;
+  in3_req_t* ctx    = (in3_req_t*) sc->ctx;
   void*      jp     = get_java_obj_ptr(ctx->client);
   jclass     cls    = (*jni)->GetObjectClass(jni, jp);
   jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");

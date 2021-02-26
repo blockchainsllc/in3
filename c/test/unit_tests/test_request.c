@@ -76,7 +76,7 @@ static void test_configure_request() {
   c->flags                = FLAGS_INCLUDE_CODE | FLAGS_BINARY | FLAGS_HTTP;
   c->replace_latest_block = 6;
 
-  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_req_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
   json_ctx_t*    json    = parse_json(request->payload);
@@ -103,16 +103,16 @@ static void test_bulk_response() {
   c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
-  in3_ctx_t* ctx = ctx_new(c, "[{\"method\":\"eth_blockNumber\",\"params\":[]},{\"method\":\"eth_blockNumber\",\"params\":[]}]");
-  TEST_ASSERT_EQUAL(CTX_WAITING_TO_SEND, in3_ctx_exec_state(ctx));
+  in3_req_t* ctx = ctx_new(c, "[{\"method\":\"eth_blockNumber\",\"params\":[]},{\"method\":\"eth_blockNumber\",\"params\":[]}]");
+  TEST_ASSERT_EQUAL(REQ_WAITING_TO_SEND, in3_ctx_exec_state(ctx));
   in3_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
   in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1, 0);
-  TEST_ASSERT_EQUAL(CTX_WAITING_FOR_RESPONSE, in3_ctx_exec_state(ctx));
+  TEST_ASSERT_EQUAL(REQ_WAITING_FOR_RESPONSE, in3_ctx_exec_state(ctx));
   in3_ctx_add_response(req->ctx, 1, false, "[{\"result\":\"0x1\"},{\"result\":\"0x2\",\"in3\":{\"currentBlock\":\"0x1\"}}]", -1, 0);
   request_free(req);
-  TEST_ASSERT_EQUAL(CTX_SUCCESS, in3_ctx_exec_state(ctx));
+  TEST_ASSERT_EQUAL(REQ_SUCCESS, in3_ctx_exec_state(ctx));
 
   char* res = ctx_get_response_data(ctx);
   TEST_ASSERT_EQUAL_STRING("[{\"result\":\"0x1\"},{\"result\":\"0x2\"}]", res);
@@ -130,7 +130,7 @@ static void test_configure_signed_request() {
   TEST_ASSERT_NULL_MESSAGE(err, err);
   c->flags = FLAGS_INCLUDE_CODE;
 
-  in3_ctx_t* ctx = ctx_new(c, "{\"id\":2,\"method\":\"eth_blockNumber\",\"params\":[]}");
+  in3_req_t* ctx = ctx_new(c, "{\"id\":2,\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
   json_ctx_t*    json    = parse_json(request->payload);
@@ -175,7 +175,7 @@ static void test_partial_response() {
   c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
-  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  in3_req_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* req = in3_create_request(ctx);
 
@@ -201,7 +201,7 @@ static void test_retry_response() {
   c->flags = 0;
 
   //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
-  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  in3_req_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* req = in3_create_request(ctx);
 
@@ -698,7 +698,7 @@ static void test_parallel_signatures() {
   // we ask nd-1 and nd-5 for signatures of 3 nodes - nd-2, nd-3 & nd-4.
   // nd-1's response is missing a signature from nd-4, therefore we mark nd-4 as offline.
   // nd-5's response however has all 3 signatures, so we accept this response.
-  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
+  in3_req_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
                                                "\"method\":\"eth_getTransactionByHash\","
                                                "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
                                                "\"in3\":{\"dataNodes\":[\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"0xbcdf4e3e90cc7288b578329efd7bcc90655148d2\"],"
@@ -847,7 +847,7 @@ static void test_sigs() {
   // we ask nd-1 and nd-5 for signatures of 3 nodes - nd-2, nd-3 & nd-4.
   // nd-1's response is missing a signature from nd-4, therefore we mark nd-4 as offline.
   // nd-5's response however has all 3 signatures, so we accept this response.
-  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
+  in3_req_t* ctx = in3_client_rpc_ctx_raw(in3, "{\"jsonrpc\":\"2.0\","
                                                "\"method\":\"eth_getTransactionByHash\","
                                                "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"],"
                                                "\"in3\":{\"dataNodes\":[\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"0xbcdf4e3e90cc7288b578329efd7bcc90655148d2\"],"

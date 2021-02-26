@@ -130,7 +130,7 @@ EM_JS(int, plgn_exec_term, (in3_t * c, int index), {
   return plgn.term(client) || 0;
 })
 
-EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_ctx_t* ctx, char* req, int index), {
+EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_req_t* ctx, char* req, int index), {
   var client = Module.clients[c];
   var plgn   = client && client.plugins[index];
   if (!plgn) return -4;
@@ -202,7 +202,7 @@ void EMSCRIPTEN_KEEPALIVE wasm_register_plugin(in3_t* c, in3_plugin_act_t action
 /**
  * repareses the request for the context with a new input.
  */
-void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_ctx_t* ctx, char* req) {
+void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_req_t* ctx, char* req) {
   if (!ctx->request_context) return;
   char* src = ctx->request_context->c;                                     // we keep the old pointer since this may be an internal request where this needs to be freed.
   json_free(ctx->request_context);                                         // throw away the old pares context
@@ -226,29 +226,29 @@ void EMSCRIPTEN_KEEPALIVE wasm_set_sign_account(in3_sign_account_ctx_t* ctx, int
  * main execute function which generates a json representing the status and all required data to be handled in js.
  * The resulting string needs to be freed by the caller!
  */
-char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
-  in3_ctx_t*     p   = ctx;
+char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
+  in3_req_t*     p   = ctx;
   in3_request_t* req = NULL;
   sb_t*          sb  = sb_new("{\"status\":");
 
   switch (in3_ctx_exec_state(ctx)) {
-    case CTX_SUCCESS:
+    case REQ_SUCCESS:
       sb_add_chars(sb, "\"ok\", \"result\":");
       sb_add_chars(sb, ctx->response_context->c);
       break;
-    case CTX_ERROR:
+    case REQ_ERROR:
       sb_add_chars(sb, "\"error\",\"error\":\"");
       sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
       sb_add_chars(sb, "\"");
       break;
-    case CTX_WAITING_FOR_RESPONSE:
+    case REQ_WAITING_FOR_RESPONSE:
       sb_add_chars(sb, "\"waiting\",\"request\":{ \"type\": ");
-      sb_add_chars(sb, ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+      sb_add_chars(sb, ctx->type == RT_SIGN ? "\"sign\"" : "\"rpc\"");
       sb_add_chars(sb, ",\"ctx\":");
       sb_add_int(sb, (unsigned int) in3_ctx_last_waiting(ctx));
       sb_add_char(sb, '}');
       break;
-    case CTX_WAITING_TO_SEND:
+    case REQ_WAITING_TO_SEND:
       sb_add_chars(sb, "\"request\"");
       in3_request_t* request = in3_create_request(ctx);
       if (request == NULL) {
@@ -259,7 +259,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
       else {
         uint32_t start = now();
         sb_add_chars(sb, ",\"request\":{ \"type\": ");
-        sb_add_chars(sb, request->ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+        sb_add_chars(sb, request->ctx->type == RT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
         sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
         sb_add_chars(sb, ",\"wait\":");
@@ -311,11 +311,11 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
   in3_plugin_execute_all(in3, PLGN_ACT_NL_BLACKLIST, &bctx);
 }
 
-void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
+void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_req_t* ctx, int i, int is_error, char* msg) {
   if (!ctx->raw_response) ctx->raw_response = _calloc(sizeof(in3_response_t), i + 1);
   ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
   ctx->raw_response[i].state = is_error;
-  if (ctx->type == CT_SIGN && !is_error) {
+  if (ctx->type == RT_SIGN && !is_error) {
     int l = (strlen(msg) + 1) / 2;
     if (l && msg[0] == '0' && msg[1] == 'x') l--;
     uint8_t* sig = alloca(l);
@@ -350,7 +350,7 @@ void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
   in3_set_error(NULL);
 }
 /* frees the references of the client */
-bool EMSCRIPTEN_KEEPALIVE in3_is_alive(in3_ctx_t* root, in3_ctx_t* ctx) {
+bool EMSCRIPTEN_KEEPALIVE in3_is_alive(in3_req_t* root, in3_req_t* ctx) {
   while (root) {
     if (ctx == root) return true;
     root = root->required;
@@ -366,9 +366,9 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
   return last_error;
 }
 
-in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
+in3_req_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
   char*      src_data = _strdupn(payload, -1);
-  in3_ctx_t* ctx      = ctx_new(c, src_data);
+  in3_req_t* ctx      = ctx_new(c, src_data);
   if (ctx->error) {
     in3_set_error(ctx->error);
     ctx_free(ctx);
@@ -380,7 +380,7 @@ in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) 
   return ctx;
 }
 
-void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_ctx_t* ctx) {
+void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_req_t* ctx) {
   ctx_free(ctx);
 }
 

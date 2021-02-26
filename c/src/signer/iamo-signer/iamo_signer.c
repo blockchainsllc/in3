@@ -90,7 +90,7 @@ static in3_ret_t iamo_free(iamo_signer_config_t* conf) {
   return IN3_OK;
 }
 
-static in3_ret_t create_iso_timestamp(in3_ctx_t* ctx, time_t time, char* dst) {
+static in3_ret_t create_iso_timestamp(in3_req_t* ctx, time_t time, char* dst) {
   struct tm* ptm = gmtime(&time);
   if (!ptm) return ctx_set_error(ctx, "could not create the local time", IN3_EINVAL);
   sprintf(dst, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec, 0);
@@ -123,7 +123,7 @@ static in3_ret_t iamo_config_set(iamo_signer_config_t* conf, in3_configure_ctx_t
   return IN3_EIGNORE;
 }
 
-NONULL static in3_ret_t check_device_key(in3_ctx_t* ctx, iamo_signer_config_t* conf) {
+NONULL static in3_ret_t check_device_key(in3_req_t* ctx, iamo_signer_config_t* conf) {
   if (memiszero(conf->device_key, 32)) return ctx_set_error(ctx, "No device key set", IN3_ECONFIG);
   if (memiszero(conf->device_address, 20)) {
     uint8_t public_key[65];
@@ -145,7 +145,7 @@ NONULL static in3_ret_t check_device_key(in3_ctx_t* ctx, iamo_signer_config_t* c
   return IN3_OK;
 }
 
-static in3_ctx_t* find_ctx_for(in3_ctx_t* ctx, char* data) {
+static in3_req_t* find_ctx_for(in3_req_t* ctx, char* data) {
   for (; ctx; ctx = ctx->required) {
     // only check first entry
     for (cache_entry_t* e = ctx->cache; e; e = e->next) {
@@ -155,7 +155,7 @@ static in3_ctx_t* find_ctx_for(in3_ctx_t* ctx, char* data) {
   return NULL;
 }
 
-static in3_ret_t send_api_request(in3_ctx_t* ctx, iamo_signer_config_t* conf, char* url, char* method, char* path, char* payload, d_token_t** result) {
+static in3_ret_t send_api_request(in3_req_t* ctx, iamo_signer_config_t* conf, char* url, char* method, char* path, char* payload, d_token_t** result) {
 
   bytes32_t hash;
   uint8_t   signature[65];
@@ -172,19 +172,19 @@ static in3_ret_t send_api_request(in3_ctx_t* ctx, iamo_signer_config_t* conf, ch
   sb_add_escaped_chars(&rp, path);
 
   // look for an existing message
-  in3_ctx_t* found = find_ctx_for(ctx, rp.data);
+  in3_req_t* found = find_ctx_for(ctx, rp.data);
   if (found) {
     _free(rp.data);
     switch (in3_ctx_state(found)) {
-      case CTX_ERROR:
+      case REQ_ERROR:
         return ctx_set_error(ctx, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
-      case CTX_SUCCESS:
+      case REQ_SUCCESS:
         *result = ctx->responses[0];
         if (!*result)
           return ctx_set_error(ctx, "error executing provider call", IN3_ERPC);
         return IN3_OK;
-      case CTX_WAITING_TO_SEND:
-      case CTX_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
     }
   }

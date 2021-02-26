@@ -117,7 +117,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   if (d_type(tx_receipt) == T_NULL || d_get_longk(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
     // we remove it and try again
-    in3_ctx_t* last_r = ctx_find_required(ctx->ctx, "eth_getTransactionReceipt");
+    in3_req_t* last_r = ctx_find_required(ctx->ctx, "eth_getTransactionReceipt");
     uint32_t   wait   = d_get_intk(d_get(last_r->requests[0], K_IN3), K_WAIT);
     wait              = wait ? wait * 2 : 1000;
     ctx_remove_required(ctx->ctx, last_r, false);

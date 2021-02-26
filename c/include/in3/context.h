@@ -45,20 +45,20 @@
 extern "C" {
 #endif
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 /**
  * type of the request context,
  */
 typedef enum ctx_type {
-  CT_RPC  = 0, /**< a json-rpc request, which needs to be send to a incubed node */
-  CT_SIGN = 1  /**< a sign request */
-} ctx_type_t;
+  RT_RPC  = 0, /**< a json-rpc request, which needs to be send to a incubed node */
+  RT_SIGN = 1  /**< a sign request */
+} req_type_t;
 
 /**
  * the weight of a certain node as linked list. 
@@ -89,12 +89,12 @@ typedef struct in3_response {
  * 
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
-typedef struct in3_ctx {
+typedef struct in3_req {
   uint_fast8_t    signers_length;     /**< number or addresses */
   uint16_t        len;                /**< the number of requests */
   uint_fast16_t   attempt;            /**< the number of attempts */
   uint32_t        id;                 /**< JSON RPC id of request at index 0 */
-  ctx_type_t      type;               /**< the type of the request */
+  req_type_t      type;               /**< the type of the request */
   in3_ret_t       verification_state; /**< state of the verification */
   char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
   json_ctx_t*     request_context;    /**< the result of the json-parser for the request.*/
@@ -105,9 +105,9 @@ typedef struct in3_ctx {
   uint8_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
-  struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
+  struct in3_req* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
   in3_t*          client;             /**< reference to the client*/
-} in3_ctx_t;
+} in3_req_t;
 
 /**
  * The current state of the context.
@@ -115,11 +115,11 @@ typedef struct in3_ctx {
  * you can check this state after each execute-call.
  */
 typedef enum state {
-  CTX_SUCCESS              = 0,  /**< The ctx has a verified result. */
-  CTX_WAITING_TO_SEND      = 1,  /**< the request has not been sent yet */
-  CTX_WAITING_FOR_RESPONSE = 2,  /**< the request is sent but not all of the response are set () */
-  CTX_ERROR                = -1, /**< the request has a error */
-} in3_ctx_state_t;
+  REQ_SUCCESS              = 0,  /**< The ctx has a verified result. */
+  REQ_WAITING_TO_SEND      = 1,  /**< the request has not been sent yet */
+  REQ_WAITING_FOR_RESPONSE = 2,  /**< the request is sent but not all of the response are set () */
+  REQ_ERROR                = -1, /**< the request has a error */
+} in3_req_state_t;
 
 /** 
  * creates a new context.
@@ -129,7 +129,7 @@ typedef enum state {
  * 
  *  *Important*: the req_data will not be cloned but used during the execution. The caller of the this function is also responsible for freeing this string afterwards.
  */
-NONULL in3_ctx_t* ctx_new(
+NONULL in3_req_t* ctx_new(
     in3_t*      client,  /**< [in] the client-config. */
     const char* req_data /**< [in] the rpc-request as json string. */
 );
@@ -140,21 +140,21 @@ NONULL in3_ctx_t* ctx_new(
  * In order to handle calls asynchronously, you need to call the `in3_ctx_execute` function and provide the data as needed.
  */
 NONULL in3_ret_t in3_send_ctx(
-    in3_ctx_t* ctx /**< [in] the request context. */
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
  * finds the last waiting request-context.
  */
-NONULL in3_ctx_t* in3_ctx_last_waiting(
-    in3_ctx_t* ctx /**< [in] the request context. */
+NONULL in3_req_t* in3_ctx_last_waiting(
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
  * executes the context and returns its state.
  */
-NONULL in3_ctx_state_t in3_ctx_exec_state(
-    in3_ctx_t* ctx /**< [in] the request context. */
+NONULL in3_req_state_t in3_ctx_exec_state(
+    in3_req_t* ctx /**< [in] the request context. */
 );
 /**
  * execute the context, but stops whenever data are required.
@@ -175,7 +175,7 @@ NONULL in3_ctx_state_t in3_ctx_exec_state(
   rankdir = LR;
   
   RPC[label="RPC-Request"]
-  CTX[label="in3_ctx_t"]
+  CTX[label="in3_req_t"]
   
   sign[label="sign data",color=lightgrey, style=""]
   request[label="fetch data",color=lightgrey, style=""]
@@ -213,7 +213,7 @@ NONULL in3_ctx_state_t in3_ctx_exec_state(
  * 
  * ```c
  * 
- in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
+ in3_ret_t in3_send_ctx(in3_req_t* ctx) {
   in3_ret_t ret;
   // execute the context and store the return value.
   // if the return value is 0 == IN3_OK, it was successful and we return,
@@ -223,7 +223,7 @@ NONULL in3_ctx_state_t in3_ctx_exec_state(
     if (ret != IN3_WAITING) return ret;
 
     // handle subcontexts first, if they have not been finished
-    while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
+    while (ctx->required && in3_ctx_state(ctx->required) != REQ_SUCCESS) {
       // exxecute them, and return the status if still waiting or error
       if ((ret = in3_send_ctx(ctx->required))) return ret;
 
@@ -239,7 +239,7 @@ NONULL in3_ctx_state_t in3_ctx_exec_state(
       switch (ctx->type) {
 
         // RPC-request to send to the nodes
-        case CT_RPC: {
+        case RT_RPC: {
 
             // build the request
             in3_request_t* request = in3_create_request(ctx);
@@ -253,7 +253,7 @@ NONULL in3_ctx_state_t in3_ctx_exec_state(
         }
 
         // this is a request to sign a transaction
-        case CT_SIGN: {
+        case RT_SIGN: {
             // read the data to sign from the request
             d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
             // the data to sign
@@ -288,35 +288,35 @@ NONULL in3_ctx_state_t in3_ctx_exec_state(
  * 
  */
 NONULL in3_ret_t in3_ctx_execute(
-    in3_ctx_t* ctx /**< [in] the request context. */
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
  * returns the current state of the context.
  */
-NONULL in3_ctx_state_t in3_ctx_state(
-    in3_ctx_t* ctx /**< [in] the request context. */
+NONULL in3_req_state_t in3_ctx_state(
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
  * returns the error of the context.
  */
 char* ctx_get_error_data(
-    in3_ctx_t* ctx /**< [in] the request context. */
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
  * returns json response for that context
  */
 char* ctx_get_response_data(
-    in3_ctx_t* ctx /**< [in] the request context. */
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
  * returns the type of the request
  */
-NONULL ctx_type_t ctx_get_type(
-    in3_ctx_t* ctx /**< [in] the request context. */
+NONULL req_type_t ctx_get_type(
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
@@ -325,7 +325,7 @@ NONULL ctx_type_t ctx_get_type(
  * But this will not free the request string passed when creating the context!
  */
 NONULL void ctx_free(
-    in3_ctx_t* ctx /**< [in] the request context. */
+    in3_req_t* ctx /**< [in] the request context. */
 );
 /**
  * adds a new context as a requirment.
@@ -337,22 +337,22 @@ NONULL void ctx_free(
  * Here is an example of how to use it:
  * 
  * ```c
-in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t* dst) {
+in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
-  in3_ctx_t* ctx = ctx_find_required(parent, method);
+  in3_req_t* ctx = ctx_find_required(parent, method);
   if (ctx) {
     // found one - so we check if it is useable.
     switch (in3_ctx_state(ctx)) {
       // in case of an error, we report it back to the parent context
-      case CTX_ERROR:
+      case REQ_ERROR:
         return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
       case CTX_WAITING_FOR_REQUIRED_CTX:
-      case CTX_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
 
       // if it is useable, we can now handle the result.
-      case CTX_SUCCESS: {
+      case REQ_SUCCESS: {
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result, so write it back to the dst
@@ -378,16 +378,16 @@ in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t*
  * ```
  */
 NONULL in3_ret_t ctx_add_required(
-    in3_ctx_t* parent, /**< [in] the current request context. */
-    in3_ctx_t* ctx     /**< [in] the new request context to add. */
+    in3_req_t* parent, /**< [in] the current request context. */
+    in3_req_t* ctx     /**< [in] the new request context to add. */
 );
 /**
  * searches within the required request contextes for one with the given method.
  * 
  * This method is used internaly to find a previously added context.
  */
-NONULL in3_ctx_t* ctx_find_required(
-    const in3_ctx_t* parent, /**< [in] the current request context. */
+NONULL in3_req_t* ctx_find_required(
+    const in3_req_t* parent, /**< [in] the current request context. */
     const char*      method  /**< [in] the method of the rpc-request. */
 );
 /**
@@ -395,15 +395,15 @@ NONULL in3_ctx_t* ctx_find_required(
  * removing will also call free_ctx to free resources.
  */
 NONULL in3_ret_t ctx_remove_required(
-    in3_ctx_t* parent, /**< [in] the current request context. */
-    in3_ctx_t* ctx,    /**< [in] the request context to remove. */
+    in3_req_t* parent, /**< [in] the current request context. */
+    in3_req_t* ctx,    /**< [in] the request context to remove. */
     bool       rec     /**< [in] if true all sub contexts will aösp be removed*/
 );
 /**
  * check if the response contains a error-property and reports this as error in the context.
  */
 NONULL in3_ret_t ctx_check_response_error(
-    in3_ctx_t* c, /**< [in] the current request context. */
+    in3_req_t* c, /**< [in] the current request context. */
     int        i  /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
 
@@ -411,7 +411,7 @@ NONULL in3_ret_t ctx_check_response_error(
  * determins the errorcode for the given request.
  */
 NONULL in3_ret_t ctx_get_error(
-    in3_ctx_t* ctx, /**< [in] the current request context. */
+    in3_req_t* ctx, /**< [in] the current request context. */
     int        id   /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
 
@@ -420,7 +420,7 @@ NONULL in3_ret_t ctx_get_error(
  * 
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
-NONULL in3_ctx_t* in3_client_rpc_ctx_raw(
+NONULL in3_req_t* in3_client_rpc_ctx_raw(
     in3_t*      c,      /**< [in] the client config. */
     const char* request /**< [in] rpc request. */
 );
@@ -430,7 +430,7 @@ NONULL in3_ctx_t* in3_client_rpc_ctx_raw(
  *
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
-NONULL in3_ctx_t* in3_client_rpc_ctx(
+NONULL in3_req_t* in3_client_rpc_ctx(
     in3_t*      c,      /**< [in] the clientt config. */
     const char* method, /**< [in] rpc method. */
     const char* params  /**< [in] params as string. */
@@ -440,7 +440,7 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
  * determines the proof as set in the request.
  */
 NONULL in3_proof_t in3_ctx_get_proof(
-    in3_ctx_t* ctx, /**< [in] the current request. */
+    in3_req_t* ctx, /**< [in] the current request. */
     int        i    /**< [in] the index within the request. */
 );
 #ifdef __cplusplus

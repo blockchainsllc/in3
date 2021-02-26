@@ -139,7 +139,7 @@ void* respond(void* arg) {
       rest += 3;
       if (strlen(rest) > 2 && (rest[0] == '{' || rest[0] == '[')) {
         // execute in3
-        in3_ctx_t* ctx = ctx_new(r->in3, rest);
+        in3_req_t* ctx = ctx_new(r->in3, rest);
         if (ctx == NULL)
           printf("HTTP/1.1 500 Not Handled\r\n\r\nInvalid request.\r\n");
         else if (ctx->error)
@@ -265,7 +265,7 @@ void http_run_server(const char* port, in3_t* in3) {
     }
 
 #else
-    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");

@@ -34,7 +34,7 @@ pub mod chain {
 }
 
 struct Ctx {
-    ptr: *mut in3_sys::in3_ctx_t,
+    ptr: *mut in3_sys::in3_req_t,
     #[allow(dead_code)]
     config: CString,
 }
@@ -42,7 +42,7 @@ struct Ctx {
 impl Ctx {
     fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = CString::new(config_str).expect("CString::new failed");
-        let ptr: *mut in3_sys::in3_ctx_t;
+        let ptr: *mut in3_sys::in3_req_t;
         unsafe {
             ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
         }
@@ -59,7 +59,7 @@ impl Ctx {
 
     async unsafe fn execute(&mut self) -> Result<String, SysError> {
         match in3_sys::in3_ctx_exec_state(self.ptr) {
-            in3_sys::state::CTX_ERROR => {
+            in3_sys::state::REQ_ERROR => {
                 while (*self.ptr).required != std::ptr::null_mut()
                     && (*self.ptr).error == std::ptr::null_mut()
                 {
@@ -74,14 +74,14 @@ impl Ctx {
                     Err(SysError::UnknownIn3Error)
                 }
             }
-            in3_sys::state::CTX_SUCCESS => {
+            in3_sys::state::REQ_SUCCESS => {
                 let response = CStr::from_ptr((*(*self.ptr).response_context).c)
                     .to_str()
                     .expect("err is not valid UTF-8");
                 Ok(response.to_owned())
             }
-            in3_sys::state::CTX_WAITING_FOR_RESPONSE => Err(SysError::NotSupported),
-            in3_sys::state::CTX_WAITING_TO_SEND => {
+            in3_sys::state::REQ_WAITING_FOR_RESPONSE => Err(SysError::NotSupported),
+            in3_sys::state::REQ_WAITING_TO_SEND => {
                 let request = in3_sys::in3_create_request(self.ptr);
                 match (*(*request).ctx).type_ {
                     in3_sys::ctx_type::CT_SIGN => {

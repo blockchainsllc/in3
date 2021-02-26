@@ -25,7 +25,7 @@
     }                                                                \
   }
 void       cleanup_session(zk_musig_session_t* s, zksync_config_t* conf);
-static int get_pubkey_pos(zksync_config_t* conf, bytes_t pub_keys, in3_ctx_t* ctx) {
+static int get_pubkey_pos(zksync_config_t* conf, bytes_t pub_keys, in3_req_t* ctx) {
   if (!pub_keys.data) return ctx_set_error(ctx, "missing public keys in config", IN3_EINVAL);
   if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "missing signing keys in config", IN3_EINVAL);
   if (memiszero(conf->pub_key, 32)) {
@@ -37,7 +37,7 @@ static int get_pubkey_pos(zksync_config_t* conf, bytes_t pub_keys, in3_ctx_t* ct
   return -1;
 }
 
-static in3_ret_t send_sign_request(in3_ctx_t* parent, int pos, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
+static in3_ret_t send_sign_request(in3_req_t* parent, int pos, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
   if (params == NULL) params = "";
   char* url = conf->musig_urls ? conf->musig_urls[pos] : NULL;
   if (!url) return ctx_set_error(parent, "missing url to fetch a signature", IN3_EINVAL);
@@ -46,7 +46,7 @@ static in3_ret_t send_sign_request(in3_ctx_t* parent, int pos, zksync_config_t* 
   return ctx_send_sub_request(parent, method, params, in3, result);
 }
 
-static in3_ret_t update_session(zk_musig_session_t* s, in3_ctx_t* ctx, d_token_t* data) {
+static in3_ret_t update_session(zk_musig_session_t* s, in3_req_t* ctx, d_token_t* data) {
   if (!data || d_type(data) != T_OBJECT) return ctx_set_error(ctx, "invalid response from signer handler", IN3_EINVAL);
   bytes_t d = d_to_bytes(d_get(data, key("pre_commitment")));
   if (!d.data || d.len != s->len * 32) return ctx_set_error(ctx, "invalid precommitment from signer handler", IN3_EINVAL);
@@ -78,7 +78,7 @@ static void add_sessiondata(sb_t* sb, zk_musig_session_t* s) {
     sb_add_bytes(sb, ",\"sig\":", &s->signature_shares, 1, false);
 }
 
-static in3_ret_t request_message(zksync_config_t* conf, zk_musig_session_t* s, int pos, bytes_t* message, in3_ctx_t* ctx, d_token_t** result) {
+static in3_ret_t request_message(zksync_config_t* conf, zk_musig_session_t* s, int pos, bytes_t* message, in3_req_t* ctx, d_token_t** result) {
   sb_t sb = {0};
   sb_add_bytes(&sb, "{\"message\":", message, 1, false);
   sb_add_bytes(&sb, ",\"pub_keys\":", &s->pub_keys, 1, false);
@@ -130,7 +130,7 @@ void cleanup_session(zk_musig_session_t* s, zksync_config_t* conf) {
   }
 }
 
-static in3_ret_t verify_proof(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* proof, bytes_t* msg) {
+static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, d_token_t* proof, bytes_t* msg) {
   if (!conf->proof_verify_method && !proof) return IN3_OK; // no method to verify configured -> so we accept all
   if (!conf->proof_verify_method) return ctx_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
 

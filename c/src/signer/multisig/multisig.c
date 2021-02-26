@@ -77,7 +77,7 @@ typedef struct {
   bytes_t  data;
 } sig_data_t;
 
-static in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
+static in3_ret_t decode_tx(in3_req_t* ctx, bytes_t raw, tx_data_t* result) {
   if (rlp_decode_in_list(&raw, 0, &result->nonce) != 1) return ctx_set_error(ctx, "invalid nonce in txdata", IN3_EINVAL);
   if (rlp_decode_in_list(&raw, 1, &result->gas_price) != 1) return ctx_set_error(ctx, "invalid gasprice in txdata", IN3_EINVAL);
   if (rlp_decode_in_list(&raw, 2, &result->gas) != 1) return ctx_set_error(ctx, "invalid gas in txdata", IN3_EINVAL);
@@ -88,9 +88,9 @@ static in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
   return IN3_OK;
 }
 
-static in3_ret_t call(in3_ctx_t* parent, address_t ms, bytes_t data, bytes_t** result) {
+static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** result) {
   if (!parent) return IN3_EINVAL;
-  in3_ctx_t* ctx = parent;
+  in3_req_t* ctx = parent;
   for (; ctx; ctx = ctx->required) {
     if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_call")) continue;
     d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
@@ -103,17 +103,17 @@ static in3_ret_t call(in3_ctx_t* parent, address_t ms, bytes_t data, bytes_t** r
 
   if (ctx)
     switch (in3_ctx_state(ctx)) {
-      case CTX_ERROR:
+      case REQ_ERROR:
         return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
-      case CTX_SUCCESS:
+      case REQ_SUCCESS:
         *result = d_get_bytesk(ctx->responses[0], K_RESULT);
         if (!*result) {
           char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
           return ctx_set_error(parent, s ? s : "error executing eth_call", IN3_ERPC);
         }
         return IN3_OK;
-      case CTX_WAITING_TO_SEND:
-      case CTX_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
     }
 
@@ -143,7 +143,7 @@ static bytes_t create_signatures(sig_data_t* signatures, uint32_t sig_count) {
   return bb.b;
 }
 
-in3_ret_t get_tx_hash(in3_ctx_t* ctx, multisig_t* ms, tx_data_t* tx_data, bytes32_t result, uint64_t nonce) {
+in3_ret_t get_tx_hash(in3_req_t* ctx, multisig_t* ms, tx_data_t* tx_data, bytes32_t result, uint64_t nonce) {
   /*
   d8d11f78: getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)
 '  address to,'+
@@ -221,7 +221,7 @@ static bool is_valid(sig_data_t* data, multisig_t* ms, address_t new_sig, int si
   return true;
 }
 
-static in3_ret_t fill_signature(in3_ctx_t* ctx, bytes_t* signatures, uint32_t* sig_count, multisig_t* ms, sig_data_t* sig_data, bytes32_t tx_hash) {
+static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t* signatures, uint32_t* sig_count, multisig_t* ms, sig_data_t* sig_data, bytes32_t tx_hash) {
   // check passed signatures
   if (!signatures) return IN3_OK;
   uint32_t index = *sig_count;
@@ -252,7 +252,7 @@ static in3_ret_t fill_signature(in3_ctx_t* ctx, bytes_t* signatures, uint32_t* s
   return IN3_OK;
 }
 
-static in3_ret_t add_approved(in3_ctx_t* ctx, uint32_t* sig_count, sig_data_t* sig_data, bytes32_t tx_hash, multisig_t* ms) {
+static in3_ret_t add_approved(in3_req_t* ctx, uint32_t* sig_count, sig_data_t* sig_data, bytes32_t tx_hash, multisig_t* ms) {
   // we don't have enough signatures, so we need to check if owners have preapproved
   for (unsigned int i = 0; i < ms->owners_len && *sig_count < ms->threshold; i++) {
     if (is_valid(sig_data, ms, (void*) ms->owners + i, *sig_count)) {
@@ -324,7 +324,7 @@ static void approve_hash(bytes_t* target, tx_data_t* tx_data, bytes32_t hash, ad
   *target = bb.b;
 }
 
-static in3_ret_t ensure_ms_type(multisig_t* ms, in3_ctx_t* ctx) {
+static in3_ret_t ensure_ms_type(multisig_t* ms, in3_req_t* ctx) {
   if (ms->type == MS_UNKNOWN) {
     bytes_t* tmp = NULL;
     TRY(call(ctx, ms->address, bytes((uint8_t*) "\xa3\xf4\xdf\x7e", 4), &tmp))
@@ -339,7 +339,7 @@ static in3_ret_t ensure_ms_type(multisig_t* ms, in3_ctx_t* ctx) {
   }
   return IN3_OK;
 }
-static in3_ret_t ensure_owners(multisig_t* ms, in3_ctx_t* ctx) {
+static in3_ret_t ensure_owners(multisig_t* ms, in3_req_t* ctx) {
   if (ms->owners == NULL) {
     // init the owners first
     bytes_t*  tmp = NULL;
@@ -369,7 +369,7 @@ static in3_ret_t ensure_owners(multisig_t* ms, in3_ctx_t* ctx) {
 in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
   bytes_t    raw_tx     = prepare_ctx->old_tx;
   bytes_t*   new_raw_tx = &prepare_ctx->new_tx;
-  in3_ctx_t* ctx        = prepare_ctx->ctx;
+  in3_req_t* ctx        = prepare_ctx->ctx;
   bytes_t*   tmp        = NULL;
   uint32_t   sig_count  = 0;
   uint64_t   nonce      = 0;

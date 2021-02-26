@@ -61,7 +61,7 @@
 // execute the request after the params have been set.
 #define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                                      \
   errno              = 0;                                                                 \
-  in3_ctx_t*  _ctx_  = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
+  in3_req_t*  _ctx_  = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
   d_token_t*  result = get_result(_ctx_);                                                 \
   RETURN_TYPE _res_;                                                                      \
   if (result)                                                                             \
@@ -89,6 +89,6 @@
 void api_set_error(int err, const char* msg);
 
 /** returns the result from a previously executed ctx */
-d_token_t* get_result(in3_ctx_t* ctx);
+d_token_t* get_result(in3_req_t* ctx);
 
 #endif //IN3_API_UTILS_PRIV_H

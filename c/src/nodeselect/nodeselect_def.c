@@ -402,7 +402,7 @@ static void free_signers(node_match_t* signers) {
   }
 }
 
-static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_ctx_t* ctx) {
+static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_req_t* ctx) {
   in3_nodeselect_def_t* data = w->data;
 
   // init cache lazily this also means we can be sure that all other related plugins are registered by now
@@ -426,11 +426,11 @@ static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_ctx_t* ctx) {
   return ret;
 }
 
-NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
+NONULL static bool auto_ask_sig(const in3_req_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
 }
 
-static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_ctx_t* ctx) {
+static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_req_t* ctx) {
   in3_nodeselect_def_t* data = w->data;
   const in3_t*          c    = ctx->client;
 
@@ -468,7 +468,7 @@ static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_ctx_t* ctx) {
   return IN3_OK;
 }
 
-NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_ctx_t* ctx) {
+NONULL in3_ret_t handle_failable(in3_nodeselect_def_t* data, in3_req_t* ctx) {
   in3_ret_t res = IN3_OK;
 
   // blacklist node that gave us an error response for nodelist (if not first update)
@@ -570,7 +570,7 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
   return min((repl_latest - diff) * avg_blktime, WAIT_TIME_CAP);
 }
 
-static void check_autoupdate(const in3_ctx_t* ctx, in3_nodeselect_def_t* data, d_token_t* response_in3, node_match_t* node) {
+static void check_autoupdate(const in3_req_t* ctx, in3_nodeselect_def_t* data, d_token_t* response_in3, node_match_t* node) {
   assert_in3_ctx(ctx);
   assert(data);
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
@@ -612,7 +612,7 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
 }
 
 static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t* fctx) {
-  in3_ctx_t*    ctx         = fctx->ctx;
+  in3_req_t*    ctx         = fctx->ctx;
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;
   int           nodes_count = ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes);

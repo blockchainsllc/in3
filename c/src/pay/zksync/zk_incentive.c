@@ -46,7 +46,7 @@
 
 #define ERROR_PAYMENT_REQUIRED -33005
 
-static char* get_payment_data(in3_ctx_t* ctx) {
+static char* get_payment_data(in3_req_t* ctx) {
   for (cache_entry_t* ce = ctx->cache; ce; ce = ce->next) {
     if (ce->props & CACHE_PROP_PAYMENT) return (char*) (void*) ce->value.data;
   }
@@ -64,7 +64,7 @@ in3_ret_t zksync_add_payload(in3_pay_payload_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t ensure_payment_data(in3_ctx_t* ctx, zksync_config_t* conf) {
+static in3_ret_t ensure_payment_data(in3_req_t* ctx, zksync_config_t* conf) {
   // do we have a sync_key and account already?
   if (!memiszero(conf->sync_key, 32)) return IN3_OK;
   uint8_t pub[65];
@@ -92,7 +92,7 @@ static in3_ret_t ensure_payment_data(in3_ctx_t* ctx, zksync_config_t* conf) {
   return IN3_OK;
 }
 
-static in3_ret_t set_amount(zk_fee_t* dst, in3_ctx_t* ctx, d_token_t* t) {
+static in3_ret_t set_amount(zk_fee_t* dst, in3_req_t* ctx, d_token_t* t) {
   if (!t) return ctx_set_error(ctx, "No value set", IN3_EINVAL);
 #ifdef ZKSYNC_256
   bytes_t tmp = d_to_bytes(t);
@@ -104,7 +104,7 @@ static in3_ret_t set_amount(zk_fee_t* dst, in3_ctx_t* ctx, d_token_t* t) {
   return IN3_OK;
 }
 
-static in3_ret_t get_payed_addresses(in3_ctx_t* ctx, bytes_t* dst) {
+static in3_ret_t get_payed_addresses(in3_req_t* ctx, bytes_t* dst) {
   in3_cache_ctx_t c = {.content = NULL, .ctx = ctx, .key = alloca(20)};
   sprintf(c.key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
   TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &c))
@@ -115,7 +115,7 @@ static in3_ret_t get_payed_addresses(in3_ctx_t* ctx, bytes_t* dst) {
   return IN3_OK;
 }
 
-static in3_ret_t update_payed_addresses(in3_ctx_t* ctx, unsigned int nodes, bytes_t payed, bool update_cache) {
+static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, bytes_t payed, bool update_cache) {
   if (update_cache) {
     in3_cache_ctx_t c = {.content = &payed, .ctx = ctx, .key = alloca(20)};
     sprintf(c.key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
@@ -139,7 +139,7 @@ static in3_ret_t update_payed_addresses(in3_ctx_t* ctx, unsigned int nodes, byte
   return ret;
 }
 
-static in3_ret_t find_acceptable_offer(in3_ctx_t* ctx, pay_criteria_t* criteria, d_token_t* offer, d_token_t** dst_offer, d_token_t** dst_price) {
+static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria, d_token_t* offer, d_token_t** dst_offer, d_token_t** dst_price) {
 
   d_token_t* price_list = d_get(offer, key("priceList"));
   if (!price_list || d_type(price_list) != T_ARRAY || d_len(price_list) < 0) return ctx_set_error(ctx, "no pricelist in the offer", IN3_ERPC);
@@ -176,7 +176,7 @@ static in3_ret_t find_acceptable_offer(in3_ctx_t* ctx, pay_criteria_t* criteria,
   return IN3_OK;
 }
 
-static in3_ret_t add_to_payed_nodelist(in3_ctx_t* ctx, address_t address, unsigned int nodelen) {
+static in3_ret_t add_to_payed_nodelist(in3_req_t* ctx, address_t address, unsigned int nodelen) {
   bytes_t payed_addresses = bytes(NULL, 0);
   TRY(get_payed_addresses(ctx, &payed_addresses))
   uint8_t* addresses = alloca(payed_addresses.len + 20);
@@ -199,7 +199,7 @@ static in3_ret_t add_to_payed_nodelist(in3_ctx_t* ctx, address_t address, unsign
   return IN3_OK;
 }
 
-in3_ret_t update_nodelist_from_cache(in3_ctx_t* ctx, unsigned int nodelen) {
+in3_ret_t update_nodelist_from_cache(in3_req_t* ctx, unsigned int nodelen) {
   bytes_t payed_addresses = bytes(NULL, 0);
   TRY(get_payed_addresses(ctx, &payed_addresses))
 

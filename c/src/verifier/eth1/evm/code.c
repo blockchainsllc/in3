@@ -62,9 +62,9 @@ NONULL static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address,
   return IN3_EFIND;
 }
 
-NONULL static in3_ctx_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
+NONULL static in3_req_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
   // ok, we need a request, do we have a useable?
-  in3_ctx_t* ctx = vc->ctx->required;
+  in3_req_t* ctx = vc->ctx->required;
   while (ctx) {
     if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
       // the first param of the eth_getCode is the address
@@ -84,12 +84,12 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
   if (res != IN3_EFIND) return res;
 
   // ok, we need a request, do we have a useable?
-  in3_ctx_t* ctx = find_pending_code_request(vc, address);
+  in3_req_t* ctx = find_pending_code_request(vc, address);
 
   // if we have found one, we verify the result and return the bytes.
   if (ctx)
     switch (in3_ctx_state(ctx)) {
-      case CTX_SUCCESS: {
+      case REQ_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result) {
           bytes32_t calculated_code_hash;
@@ -118,7 +118,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
         else
           return vc_err(vc, ctx->error ? ctx->error : "Missing result");
       }
-      case CTX_ERROR:
+      case REQ_ERROR:
         return IN3_ERPC;
       default:
         return IN3_WAITING;

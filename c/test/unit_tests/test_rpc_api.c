@@ -62,7 +62,7 @@ static void test_in3_config() {
   c->signature_count = 0;
   register_transport(c, test_transport);
   in3_nodeselect_config_t* w   = in3_get_nodelist(c);
-  in3_ctx_t*               ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
+  in3_req_t*               ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
      \"chainId\":7,\
      \"autoUpdateList\":true,\
      \"finality\":50,\
@@ -165,7 +165,7 @@ static void test_in3_client_rpc() {
   TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[]", NULL, NULL));
 
   // Invalid calls to in3_client_rpc_ctx()
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_blockNumber", "[\"]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_blockNumber", "[\"]");
   TEST_ASSERT_NOT_NULL(ctx->error);
   ctx_free(ctx);
 
@@ -226,7 +226,7 @@ static void test_in3_checksum_rpc() {
 
 static void test_in3_client_context() {
   in3_t*     c   = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_ctx_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
+  in3_req_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
                               "\"method\":\"eth_getBlockByHash\","
                               "\"params\":[\"0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331\", false],"
                               "\"in3\":{\"version\": \"" IN3_PROTO_VER "\",\"chainId\":\"0x1\"}}]");

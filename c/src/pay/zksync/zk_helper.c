@@ -59,7 +59,7 @@ void set_quoted_address(char* c, uint8_t* address) {
   c[44]        = 0;
 }
 
-static in3_ret_t ensure_provider(zksync_config_t* conf, in3_ctx_t* ctx) {
+static in3_ret_t ensure_provider(zksync_config_t* conf, in3_req_t* ctx) {
   if (conf->provider_url) return IN3_OK;
   switch (ctx->client->chain.chain_id) {
     case CHAIN_ID_MAINNET:
@@ -71,7 +71,7 @@ static in3_ret_t ensure_provider(zksync_config_t* conf, in3_ctx_t* ctx) {
   return IN3_OK;
 }
 
-in3_ret_t send_provider_request(in3_ctx_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
+in3_ret_t send_provider_request(in3_req_t* parent, zksync_config_t* conf, char* method, char* params, d_token_t** result) {
   if (params == NULL) params = "";
   char* in3 = NULL;
   if (conf) {
@@ -95,7 +95,7 @@ void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t s
   memcpy(dst, tmp + 12, 20);
 }
 
-in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_ctx_t* ctx) {
+in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_req_t* ctx) {
   if (conf->sign_type != ZK_SIGN_CREATE2) return IN3_OK;
   if (conf->account) return IN3_OK;
   if (!conf->create2) return ctx_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
@@ -111,7 +111,7 @@ in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_ctx_t* ctx) {
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** account) {
+in3_ret_t zksync_get_account(zksync_config_t* conf, in3_req_t* ctx, uint8_t** account) {
   TRY(zksync_check_create2(conf, ctx))
   if (!conf->account) {
     in3_sign_account_ctx_t sctx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
@@ -127,7 +127,7 @@ in3_ret_t zksync_get_account(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** ac
 }
 
 // sends a account_info request and updates the config
-in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
+in3_ret_t zksync_update_account(zksync_config_t* conf, in3_req_t* ctx) {
   uint8_t*   account = NULL;
   d_token_t* result;
   char       adr[45];
@@ -147,7 +147,7 @@ in3_ret_t zksync_update_account(zksync_config_t* conf, in3_ctx_t* ctx) {
 }
 
 // resolves the account_id
-in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t* account_id) {
+in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_req_t* ctx, uint32_t* account_id) {
   uint8_t* account    = NULL;
   char*    cache_name = NULL;
   TRY(zksync_get_account(conf, ctx, &account))
@@ -180,7 +180,7 @@ in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_ctx_t* ctx, uint32_t*
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sync_key) {
+in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_req_t* ctx, uint8_t* sync_key) {
   if (!conf) return IN3_EUNKNOWN;
   if (!memiszero(conf->sync_key, 32)) {
     if (sync_key) memcpy(sync_key, conf->sync_key, 32);
@@ -201,7 +201,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* sy
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey_hash) {
+in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_req_t* ctx, uint8_t* pubkey_hash) {
   if (!conf) return IN3_EUNKNOWN;
   if (!memiszero(conf->pub_key_hash_pk, 20) && !conf->musig_pub_keys.data) {
     memcpy(pubkey_hash, conf->pub_key_hash_pk, 20);
@@ -227,7 +227,7 @@ in3_ret_t zksync_get_pubkey_hash(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t*
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** main) {
+in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** main) {
 
   char* cache_name = NULL;
   if (!conf->main_contract) {
@@ -276,7 +276,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t** 
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* nonce_in, uint32_t* nonce) {
+in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_req_t* ctx, d_token_t* nonce_in, uint32_t* nonce) {
   if (nonce_in && (d_type(nonce_in) == T_INTEGER || d_type(nonce_in) == T_BYTES)) {
     *nonce = d_long(nonce_in);
     return IN3_OK;
@@ -286,7 +286,7 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* non
   return IN3_OK;
 }
 
-in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
+in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
   if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
 #ifdef ZKSYNC_256
     bytes_t b = d_to_bytes(fee_in);
@@ -327,7 +327,7 @@ in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* fee_i
   return IN3_OK;
 }
 
-in3_ret_t resolve_tokens(zksync_config_t* conf, in3_ctx_t* ctx, d_token_t* token_src, zksync_token_t** token_dst) {
+in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token_src, zksync_token_t** token_dst) {
   char* cache_name = NULL;
   if (!conf->token_len) {
     // check cache first

@@ -71,7 +71,7 @@ typedef struct wallet {
   owner_t*  owners;
 } wallet_t;
 
-static in3_ret_t find_zksync_conf(in3_ctx_t* ctx, zksync_config_t** conf) {
+static in3_ret_t find_zksync_conf(in3_req_t* ctx, zksync_config_t** conf) {
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->action_fn == handle_zksync) {
       *conf = p->data;
@@ -95,7 +95,7 @@ static in3_ret_t iamo_zk_check_rpc(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t*
   return IN3_OK;
 }
 
-static in3_ret_t wallet_from_json(in3_ctx_t* ctx, d_token_t* data, wallet_t* w) {
+static in3_ret_t wallet_from_json(in3_req_t* ctx, d_token_t* data, wallet_t* w) {
   bytes_t    address = d_to_bytes(d_get(data, K_ADDRESS));
   d_token_t* owners  = d_get(data, key("owners"));
   if (address.len != 20) return ctx_set_error(ctx, "Invalid address in wallet!", IN3_EINVAL);
@@ -165,7 +165,7 @@ static void wallet_free(wallet_t* w, bool is_heap) {
   if (is_heap) _free(w);
 }
 
-static in3_ret_t wallet_get_from_cache(in3_ctx_t* ctx, address_t address, wallet_t* wallet) {
+static in3_ret_t wallet_get_from_cache(in3_req_t* ctx, address_t address, wallet_t* wallet) {
   char account[42];
   account[0] = 'W';
   bytes_to_hex(address, 20, account + 1);
@@ -178,7 +178,7 @@ static in3_ret_t wallet_get_from_cache(in3_ctx_t* ctx, address_t address, wallet
   return IN3_OK;
 }
 
-static in3_ret_t wallet_store_in_cache(in3_ctx_t* ctx, wallet_t* wallet) {
+static in3_ret_t wallet_store_in_cache(in3_req_t* ctx, wallet_t* wallet) {
   char account[42];
   account[0] = 'W';
   bytes_to_hex(wallet->account, 20, account + 1);
@@ -188,7 +188,7 @@ static in3_ret_t wallet_store_in_cache(in3_ctx_t* ctx, wallet_t* wallet) {
   return IN3_OK;
 }
 
-static in3_ret_t wallet_verify_signatures(in3_ctx_t* ctx, bytes_t message, wallet_t* wallet, d_token_t* signatures) {
+static in3_ret_t wallet_verify_signatures(in3_req_t* ctx, bytes_t message, wallet_t* wallet, d_token_t* signatures) {
   bytes32_t    msg_hash;
   bytes32_t    tmp;
   uint8_t      pub[65];
@@ -219,7 +219,7 @@ static in3_ret_t wallet_verify_signatures(in3_ctx_t* ctx, bytes_t message, walle
   return IN3_OK;
 }
 
-static in3_ret_t wallet_sign(in3_ctx_t* ctx, bytes_t message, wallet_t* wallet, sb_t* sb) {
+static in3_ret_t wallet_sign(in3_req_t* ctx, bytes_t message, wallet_t* wallet, sb_t* sb) {
   bytes32_t    msg_hash;
   unsigned int valid_signatures = 0;
   bool         initiator        = false;
@@ -245,17 +245,17 @@ static in3_ret_t wallet_sign(in3_ctx_t* ctx, bytes_t message, wallet_t* wallet, 
   return IN3_OK;
 }
 
-in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_ctx_t* ctx, wallet_t* wallet, bytes_t message) {
+in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_req_t* ctx, wallet_t* wallet, bytes_t message) {
   // we are sending this the the server
-  in3_ctx_t* sub = ctx_find_required(ctx, "iamo_zk_add_wallet");
+  in3_req_t* sub = ctx_find_required(ctx, "iamo_zk_add_wallet");
   if (sub) { // do we have a result?
     switch (in3_ctx_state(sub)) {
-      case CTX_ERROR:
+      case REQ_ERROR:
         return ctx_set_error(ctx, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
-      case CTX_SUCCESS:
+      case REQ_SUCCESS:
         return IN3_OK;
-      case CTX_WAITING_TO_SEND:
-      case CTX_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
     }
   }
@@ -325,7 +325,7 @@ in3_ret_t iamo_zk_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
-static in3_ret_t zksync_get_user_pubkey(zksync_config_t* conf, in3_ctx_t* ctx, uint8_t* pubkey) {
+static in3_ret_t zksync_get_user_pubkey(zksync_config_t* conf, in3_req_t* ctx, uint8_t* pubkey) {
   if (!memiszero(conf->pub_key, 32))
     memcpy(pubkey, conf->pub_key, 32);
   else {
@@ -366,7 +366,7 @@ static bytes_t encode_deploy_data(address_t master_copy, bytes_t setup, bytes32_
   return res;
 }
 
-static in3_ret_t read_server_config(iamo_zk_config_t* conf, in3_ctx_t* ctx, d_token_t** result) {
+static in3_ret_t read_server_config(iamo_zk_config_t* conf, in3_req_t* ctx, d_token_t** result) {
   if (!conf->cosign_rpc) return ctx_set_error(ctx, "No cosign-rpc set in config!", IN3_ECONFIG);
   char* in3 = alloca(strlen(conf->cosign_rpc) + 20);
   sprintf(in3, "{\"rpc\":\"%s\"}", conf->cosign_rpc);

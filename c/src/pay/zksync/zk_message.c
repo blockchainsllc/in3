@@ -70,7 +70,7 @@ static int bitlen(uint64_t val) {
 const char* MAX_MANTISSA_35 = "34359738368";
 const char* MAX_MANTISSA_11 = "2048";
 
-static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in3_ctx_t* ctx) {
+static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in3_req_t* ctx) {
   while (*dec == '0') dec++;                // remove leading zeros (if any)
   int l     = strlen(dec);                  // trimmed size
   int total = (exp_len + mantissa_len) / 8; // the target size in bytes
@@ -138,7 +138,7 @@ static void create_signed_bytes(sb_t* sb) {
   memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
 }
 
-static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig) {
+static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig) {
   uint32_t total;
   char     dec[80];
   uint16_t tid = data->token ? data->token->id : 0;
@@ -173,7 +173,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, zksy
   return zksync_sign(conf, bytes(raw, total), ctx, sig);
 }
 
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf) {
+in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf) {
   char    msg_data[200];
   bytes_t signature;
   sb_t    msg = sb_stack(msg_data);
@@ -234,7 +234,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig) {
+in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_t* sig) {
   if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "no signing key set", IN3_ECONFIG);
   if (!conf->musig_pub_keys.data) return zkcrypto_sign_musig(conf->sync_key, msg, sig);
   char* p = alloca(msg.len * 2 + 5);
@@ -251,7 +251,7 @@ in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token) {
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token) {
 
   // create sign_msg for the rollup
   char    dec[80];

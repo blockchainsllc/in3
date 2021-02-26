@@ -304,7 +304,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     for (d_iterator_t iter = d_iter(incentive); iter.left; d_iter_next(&iter)) {
       if (iter.token->key == key("nodes")) {
         conf->incentive->payed_nodes = d_int(iter.token);
-        in3_ctx_t c                  = {0};
+        in3_req_t c                  = {0};
         c.client                     = ctx->client;
         in3_ret_t ret                = update_nodelist_from_cache(&c, conf->incentive->payed_nodes);
         if (c.error) {
@@ -323,7 +323,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t zksync_init(zksync_config_t* conf, in3_ctx_t* ctx) {
+static in3_ret_t zksync_init(zksync_config_t* conf, in3_req_t* ctx) {
   if (ctx->client->plugin_acts & PLGN_ACT_PAY_SIGN_REQ) {
     if (!conf->incentive) {
       conf->incentive              = _calloc(1, sizeof(pay_criteria_t));

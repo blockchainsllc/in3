@@ -12,7 +12,6 @@
 */
 plugins {
     id 'java'
-    id 'jacoco'
     id 'com.github.ksoichiro.console.reporter' version '0.6.2'
 }
 
@@ -49,7 +48,7 @@ sourceSets {
 }
 
 test {
-//    systemProperty "java.library.path", "../build/lib"
+    systemProperty "java.library.path", "../build/lib"
     useJUnitPlatform()
 }
 
@@ -68,30 +67,6 @@ dependencies {
 	testImplementation 'commons-io:commons-io:2.6'
 }
 
-jacocoTestReport {
-    sourceSets {
-        main {
-            java {
-                srcDirs = ['./src']
-            }
-            resources {
-                srcDirs = ['./src']
-            }
-        }
-    }
-}
-
-/*
-  * Custom sourceSets definition for running the tasks. Since building the .jar has a point of failure (aka the CMakeLists.txt) its desirable to test the .jar
-  * For the actual coverage report to work, jacoco plugin must know the source code hence the specific sourceMaps.
-*/
-consoleReporter {
-    jacoco {
-        onlyWhenCoverageTaskExecuted true
-        reportAfterBuildFinished false
-    }
-}
-
 /*
   * Testing tasks pipeline. Since the key task is testing, this sequence was built arround it.
   * Also note that the coverage report plugin has a bug on it so we had to disable the attachment of the report after the build
@@ -99,5 +74,5 @@ consoleReporter {
 */
 test.dependsOn 'createLibDir'
 test.dependsOn 'copyJarToBindings'
-test.finalizedBy jacocoTestReport
-jacocoTestReport.finalizedBy reportCoverage
+// test.finalizedBy jacocoTestReport
+//jacocoTestReport.finalizedBy reportCoverage

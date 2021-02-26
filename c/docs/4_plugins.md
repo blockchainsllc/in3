@@ -44,7 +44,7 @@ Except for `PLGN_ACT_TERM` we will loop until the first plugin handles it. The h
 - `IN3_OK` - the plugin handled it and it was succesful
 - `IN3_WAITING` - the plugin handled the action, but is waiting for more data, which happens in a sub context added. As soon as this was resolved, the plugin will be called again.
 - `IN3_EIGNORE` - the plugin did **NOT** handle the action and we should continue with the other plugins.
-- `IN3_E...` - the plugin did handle it, but raised a error and returned the error-code. In addition you should always use the current `in3_ctx_t`to report a detailed error-message (using `ctx_set_error()`)
+- `IN3_E...` - the plugin did handle it, but raised a error and returned the error-code. In addition you should always use the current `in3_req_t`to report a detailed error-message (using `ctx_set_error()`)
 
 ### Lifecycle
 
@@ -69,7 +69,7 @@ typedef struct in3_request {
   char*           payload;  // the payload to send 
   char**          urls;     // array of urls 
   uint_fast16_t   urls_len; // number of urls 
-  in3_ctx_t*      ctx;      // the current context 
+  in3_req_t*      ctx;      // the current context 
   void*           cptr;     // a custom ptr to hold information during 
 } in3_request_t;
 ```
@@ -170,7 +170,7 @@ This action is triggered as a request to sign data.
 typedef struct sign_ctx {
   uint8_t            signature[65]; // the resulting signature needs to be writte into these bytes 
   d_signature_type_t type;          // the type of signature
-  in3_ctx_t*         ctx;           // the context of the request in order report errors 
+  in3_req_t*         ctx;           // the context of the request in order report errors 
   bytes_t            message;       // the message to sign
   bytes_t            account;       // the account to use for the signature  (if set)
 } in3_sign_ctx_t;
@@ -251,7 +251,7 @@ if we are about to sign data and need to know the address of the account abnout 
 
 ```c
 typedef struct sign_account_ctx {
-  in3_ctx_t* ctx;     // the context of the request in order report errors 
+  in3_req_t* ctx;     // the context of the request in order report errors 
   address_t  account; // the account to use for the signature 
 } in3_sign_account_ctx_t;
 ```
@@ -296,7 +296,7 @@ The Prepare-action is triggered before signing and gives a plugin the chance to 
 ```c
 
 typedef struct sign_prepare_ctx {
-  struct in3_ctx* ctx;     // the context of the request in order report errors 
+  struct in3_req* ctx;     // the context of the request in order report errors 
   address_t       account; // the account to use for the signature 
   bytes_t         old_tx;  // the data to sign 
   bytes_t         new_tx;  // the new data to be set 
@@ -312,7 +312,7 @@ In order to decode the data you must use rlp.h:
 ```c
 #define decode(data,index,dst,msg) if (rlp_decode_in_list(data, index, dst) != 1) return ctx_set_error(ctx, "invalid" msg "in txdata", IN3_EINVAL);
 
-in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
+in3_ret_t decode_tx(in3_req_t* ctx, bytes_t raw, tx_data_t* result) {
   decode(&raw, 0, &result->nonce    , "nonce");
   decode(&raw, 1, &result->gas_price, "gas_price");
   decode(&raw, 2, &result->gas      , "gas");
@@ -337,7 +337,7 @@ Triggered for each rpc-request in order to give plugins a chance to directly han
 
 ```c
 typedef struct {
-  in3_ctx_t*       ctx;      // Request context. 
+  in3_req_t*       ctx;      // Request context. 
   d_token_t*       request;  // request 
   in3_response_t** response; // the response which a prehandle-method should set
 } in3_rpc_handle_ctx_t;
@@ -383,20 +383,20 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
   uint64_t  nonce =0;
 
   // check if a request is already existing
-  in3_ctx_t* ctx = ctx_find_required(rpc->ctx, "eth_getTransactionCount");
+  in3_req_t* ctx = ctx_find_required(rpc->ctx, "eth_getTransactionCount");
   if (ctx) {
     // found one - so we check if it is ready.
     switch (in3_ctx_state(ctx)) {
       // in case of an error, we report it back to the parent context
-      case CTX_ERROR:
+      case REQ_ERROR:
         return ctx_set_error(rpc->ctx, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
-      case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
 
       // if it is useable, we can now handle the result.
-      case CTX_SUCCESS: {
+      case REQ_SUCCESS: {
         // check if the response contains a error.
         TRY(ctx_check_response_error(ctx, 0))
 
@@ -471,7 +471,7 @@ This plugin reprresents a verifier. It will be triggered after we have received 
 
 ```c
 typedef struct {
-  in3_ctx_t*   ctx;                   // Request context. 
+  in3_req_t*   ctx;                   // Request context. 
   in3_chain_t* chain;                 // the chain definition. 
   d_token_t*   result;                // the result to verify 
   d_token_t*   request;               // the request sent. 
@@ -532,7 +532,7 @@ This action will be triggered whenever there is something worth putting in a cac
 
 ```c
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx;     // the request context  
+  in3_req_t* ctx;     // the request context  
   char*      key;     // the key to fetch 
   bytes_t*   content; // the content to set 
 } in3_cache_ctx_t;
@@ -578,7 +578,7 @@ This action will be triggered whenever we access the cache in order to get value
 
 ```c
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx;     // the request context  
+  in3_req_t* ctx;     // the request context  
   char*      key;     // the key to fetch 
   bytes_t*   content; // the content to set 
 } in3_cache_ctx_t;
@@ -728,7 +728,7 @@ this will be triggered in order to sign a request. It will provide a request_has
 
 ```c
 typedef struct {
-  in3_ctx_t* ctx;           /**< Request context. */
+  in3_req_t* ctx;           /**< Request context. */
   d_token_t* request;       /**< the request sent. */
   bytes32_t  request_hash;  /**< the hash to sign */
   uint8_t    signature[65]; /**< the signature */

@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static uint64_t calc_request_units(in3_ctx_t* ctx) {
+static uint64_t calc_request_units(in3_req_t* ctx) {
   return ctx->len;
 }
 
@@ -88,7 +88,7 @@ static void node_free(in3_pay_eth_t* data) {
 }
 
 static in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* plugin_ctx) {
-  in3_ctx_t* ctx = plugin_ctx->ctx;
+  in3_req_t* ctx = plugin_ctx->ctx;
   d_token_t *pay = d_get(plugin_ctx->resp_in3, key("pay")), *t;
   if (!pay || !ctx) return IN3_OK;
 
@@ -111,7 +111,7 @@ static in3_ret_t pay_eth_follow_up(in3_pay_eth_t* data, in3_pay_followup_ctx_t* 
   return IN3_OK;
 }
 
-static in3_ret_t pay_eth_prepare(in3_pay_eth_t* data, in3_ctx_t* ctx) {
+static in3_ret_t pay_eth_prepare(in3_pay_eth_t* data, in3_req_t* ctx) {
   if (data == NULL || ctx == NULL) return IN3_EINVAL;
   return IN3_OK;
 }
@@ -137,7 +137,7 @@ static void create_signed_tx(in3_pay_eth_t* data, bytes32_t key, sb_t* sb, addre
 }
 
 static in3_ret_t pay_eth_handle_request(in3_pay_eth_t* data, in3_pay_handle_ctx_t* plugin_ctx) {
-  in3_ctx_t*     ctx     = plugin_ctx->ctx;
+  in3_req_t*     ctx     = plugin_ctx->ctx;
   const uint64_t units   = calc_request_units(ctx);
   bool           started = false;
   sb_t*          sb      = plugin_ctx->payload;

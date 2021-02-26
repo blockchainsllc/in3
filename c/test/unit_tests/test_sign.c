@@ -78,7 +78,7 @@ static void test_sign() {
   add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
   add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
 
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
   TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
   ctx_free(ctx);
@@ -143,7 +143,7 @@ static void test_sign_hex() {
   add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
   add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
 
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
   TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
   ctx_free(ctx);
@@ -152,7 +152,7 @@ static void test_sign_hex() {
 
 static void test_sign_sans_signer_and_from() {
   in3_t*     c   = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
   TEST_ASSERT_NOT_NULL(ctx->error);
   ctx_free(ctx);
   in3_free(c);
@@ -163,7 +163,7 @@ static void test_signer() {
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
   eth_set_pk_signer(c, pk);
-  in3_ctx_t*     ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_req_t*     ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   char*          data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
   bytes_t*       data     = hex_to_new_bytes(data_str, strlen(data_str));
   in3_sign_ctx_t sc       = {0};
@@ -201,7 +201,7 @@ static void test_signer_prepare_tx() {
   eth_set_pk_signer(c, pk);
 
   // prepare request
-  in3_ctx_t* ctx        = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_req_t* ctx        = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   c->signer->prepare_tx = prep_tx;
   json_ctx_t* jtx       = parse_json("{\"success\":false}");
   bytes_t     raw_tx    = sign_tx(jtx->result, ctx);
@@ -214,7 +214,7 @@ static void test_signer_prepare_tx() {
   jtx    = parse_json("{\"success\":true}");
 
   raw_tx = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_TRUE(ctx->type == CT_RPC && ctx->verification_state == IN3_WAITING && ctx->required);
+  TEST_ASSERT_TRUE(ctx->type == RT_RPC && ctx->verification_state == IN3_WAITING && ctx->required);
   TEST_ASSERT_EQUAL(IN3_OK, in3_send_ctx(ctx->required));
 
   raw_tx = sign_tx(jtx->result, ctx);

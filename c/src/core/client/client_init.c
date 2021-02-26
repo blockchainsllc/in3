@@ -491,7 +491,7 @@ static char* action_name(in3_plugin_act_t action) {
 }
 #endif
 
-in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+in3_ret_t in3_plugin_execute_first(in3_req_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
   assert(ctx);
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->acts & action) {
@@ -509,7 +509,7 @@ in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void
   return ctx_set_error(ctx, msg, IN3_EPLGN_NONE);
 }
 
-in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
+in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* ctx, in3_plugin_act_t action, void* plugin_ctx) {
   assert(ctx);
   if (!in3_plugin_is_registered(ctx->client, action))
     return IN3_OK;

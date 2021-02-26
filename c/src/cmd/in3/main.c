@@ -293,7 +293,7 @@ static void execute(in3_t* c, FILE* f) {
     if (d == stop) level--;
     if (level == 0) {
       // time to execute
-      in3_ctx_t* ctx = ctx_new(c, sb->data);
+      in3_req_t* ctx = ctx_new(c, sb->data);
       if (ctx->error)
         recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
@@ -1078,7 +1078,7 @@ int main(int argc, char* argv[]) {
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
     recorder_print(0, "   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
     for (unsigned int i = 0; i < nl->nodelist_length; i++) {
-      in3_ctx_t* ctx      = NULL;
+      in3_req_t* ctx      = NULL;
       char*      health_s = NULL;
       if (run_test_request) {
         char req[300];
@@ -1098,7 +1098,7 @@ int main(int argc, char* argv[]) {
           urls[0] = health_url;
           sprintf(health_url, "%s/health", nl->nodelist[i].url);
           in3_request_t r;
-          in3_ctx_t     ctx       = {0};
+          in3_req_t     ctx       = {0};
           ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
           ctx.raw_response->state = IN3_WAITING;
           ctx.client              = c;
@@ -1214,7 +1214,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (!in3_plugin_is_registered(c, PLGN_ACT_SIGN)) die("No private key/path given");
-    in3_ctx_t ctx;
+    in3_req_t ctx;
     ctx.client        = c;
     in3_sign_ctx_t sc = {0};
     sc.ctx            = &ctx;

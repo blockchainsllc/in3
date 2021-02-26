@@ -101,7 +101,7 @@ static void test_context_bulk() {
       sb_add_chars(req, ",");
   }
   sb_add_chars(req, "]");
-  in3_ctx_t* block_ctx = ctx_new(in3, req->data);
+  in3_req_t* block_ctx = ctx_new(in3, req->data);
   in3_ret_t  ret       = in3_send_ctx(block_ctx);
   for (uint64_t i = 0; i < blkno; i++) {
     d_token_t* hash = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);

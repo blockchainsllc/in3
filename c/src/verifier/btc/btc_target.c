@@ -174,15 +174,15 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
   if (block_number < BIP34_START) return IN3_OK; // for pre bip34, this finalityheader already checked it
 
   // is there a required ctx, which we need to clean up?
-  in3_ctx_t* ctx = ctx_find_required(vc->ctx, "btc_proofTarget");                                                  // do we have an existing required proofTarget-request?
+  in3_req_t* ctx = ctx_find_required(vc->ctx, "btc_proofTarget");                                                  // do we have an existing required proofTarget-request?
   if (ctx)                                                                                                         // yes, we do!
     switch (in3_ctx_state(ctx)) {                                                                                  // but what is the state?
-      case CTX_ERROR:                                                                                              // there was an error,
+      case REQ_ERROR:                                                                                              // there was an error,
         return ctx_set_error(vc->ctx, "Error verifying the target", ctx_set_error(vc->ctx, ctx->error, IN3_ERPC)); // so we report it!
-      case CTX_WAITING_FOR_RESPONSE:                                                                               // for an response
-      case CTX_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:                                                                               // for an response
+      case REQ_WAITING_TO_SEND:
         return IN3_WAITING;                                                                                         // we keep on waiting.
-      case CTX_SUCCESS:                                                                                             // if it was successful,
+      case REQ_SUCCESS:                                                                                             // if it was successful,
         if (ctx_remove_required(vc->ctx, ctx, false)) return vc_err(vc, "could not clean up proofTarget-request!"); //  we remove it,
         break;                                                                                                      // since gthe verification already added the verified targets.
     }

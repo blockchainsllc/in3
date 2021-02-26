@@ -173,7 +173,7 @@ static void test_cache() {
   TEST_ASSERT_EQUAL_INT32(7, nl2->nodelist_length);
 
   // test request
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c2, "in3_nodeList", "[]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c2, "in3_nodeList", "[]");
   if (ctx->error) printf("ERROR : %s\n", ctx->error);
   TEST_ASSERT(ctx && ctx->error == NULL);
   ctx_free(ctx);
@@ -306,7 +306,7 @@ static void test_whitelist_cache() {
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, wlc, 20);
   TEST_ASSERT_EQUAL_MEMORY(nl->whitelist->contract, wlc, 20);
-  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_req_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_OK, in3_cache_store_whitelist(ctx->client, nl));
 
   // fixme: nl_sep
@@ -338,8 +338,8 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   RUN_TEST(test_scache);
-//  RUN_TEST(test_cache);
-//  RUN_TEST(test_newchain);
+  //  RUN_TEST(test_cache);
+  //  RUN_TEST(test_newchain);
   RUN_TEST(test_whitelist_cache);
   return TESTS_END();
 }

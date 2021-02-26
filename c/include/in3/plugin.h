@@ -72,14 +72,14 @@ in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin
 /**
  * executes all plugin actions one-by-one, stops when a plugin returns anything other than IN3_EIGNORE.
  * returns IN3_EPLGN_NONE if no plugin was able to handle specified action, otherwise returns IN3_OK
- * plugin errors are reported via the in3_ctx_t
+ * plugin errors are reported via the in3_req_t
  */
-in3_ret_t in3_plugin_execute_first(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t in3_plugin_execute_first(in3_req_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * same as in3_plugin_execute_first(), but returns IN3_OK even if no plugin could handle specified action
  */
-in3_ret_t in3_plugin_execute_first_or_none(in3_ctx_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
+in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* ctx, in3_plugin_act_t action, void* plugin_ctx);
 
 /**
  * get direct access to plugin data (if registered) based on action function
@@ -100,7 +100,7 @@ static inline void* in3_plugin_get_data(in3_t* c, in3_plugin_act_fn fn) {
  * verification context holding the pointers to all relevant toknes.
  */
 typedef struct {
-  in3_ctx_t*       ctx;      /**< Request context. */
+  in3_req_t*       ctx;      /**< Request context. */
   d_token_t*       request;  /**< request */
   in3_response_t** response; /**< the responses which a prehandle-method should set*/
   char*            method;   /**< the method of the request */
@@ -152,7 +152,7 @@ typedef struct in3_request {
   char**            urls;        /**< array of urls */
   uint_fast16_t     urls_len;    /**< number of urls */
   uint32_t          payload_len; /**< length of the payload in bytes. */
-  struct in3_ctx*   ctx;         /**< the current context */
+  struct in3_req*   ctx;         /**< the current context */
   void*             cptr;        /**< a custom ptr to hold information during */
   uint32_t          wait;        /**< time in ms to wait before sending out the request */
   in3_req_header_t* headers;     /**< optional additional headers to be send with the request */
@@ -231,7 +231,7 @@ NONULL void in3_req_add_response(
  * This function should be used in the transport-function to set the response.
  */
 NONULL void in3_ctx_add_response(
-    in3_ctx_t*  ctx,      /**< [in]the current context */
+    in3_req_t*  ctx,      /**< [in]the current context */
     int         index,    /**< [in] the index of the url, since this request could go out to many urls */
     int         error,    /**< [in] if <0 this will be reported as error. the message should then be the error-message */
     const char* data,     /**<  the data or the the string*/
@@ -259,7 +259,7 @@ typedef enum {
  * action context when retrieving the account of a signer.
  */
 typedef struct sign_account_ctx {
-  struct in3_ctx*   ctx;          /**< the context of the request in order report errors */
+  struct in3_req*   ctx;          /**< the context of the request in order report errors */
   uint8_t*          accounts;     /**< the account to use for the signature */
   int               accounts_len; /**< number of accounts */
   in3_signer_type_t signer_type;  /**< the type of the signer used for this account.*/
@@ -271,7 +271,7 @@ typedef struct sign_account_ctx {
  * action context when retrieving the account of a signer.
  */
 typedef struct sign_prepare_ctx {
-  struct in3_ctx* ctx;     /**< the context of the request in order report errors */
+  struct in3_req* ctx;     /**< the context of the request in order report errors */
   address_t       account; /**< the account to use for the signature */
   bytes_t         old_tx;
   bytes_t         new_tx;
@@ -292,7 +292,7 @@ typedef enum {
 typedef struct sign_ctx {
   bytes_t            signature; /**< the resulting signature  */
   d_signature_type_t type;      /**< the type of signature*/
-  struct in3_ctx*    ctx;       /**< the context of the request in order report errors */
+  struct in3_req*    ctx;       /**< the context of the request in order report errors */
   bytes_t            message;   /**< the message to sign*/
   bytes_t            account;   /**< the account to use for the signature */
 } in3_sign_ctx_t;
@@ -323,7 +323,7 @@ void in3_sign_ctx_set_signature_hex(
  * creates a signer ctx to be used for async signing.
  */
 NONULL in3_sign_ctx_t* create_sign_ctx(
-    in3_ctx_t* ctx /**< [in] the rpc context */
+    in3_req_t* ctx /**< [in] the rpc context */
 );
 
 // -------- SET_CONFIG ---------
@@ -377,7 +377,7 @@ typedef void (*in3_storage_clear)(
  * context used during get config
  */
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx;     /**< the request context  */
+  in3_req_t* ctx;     /**< the request context  */
   char*      key;     /**< the key to fetch */
   bytes_t*   content; /**< the content to set */
 } in3_cache_ctx_t;
@@ -407,7 +407,7 @@ void in3_set_storage_handler(
  * verification context holding the pointers to all relevant toknes.
  */
 typedef struct {
-  in3_ctx_t*    ctx;                   /**< Request context. */
+  in3_req_t*    ctx;                   /**< Request context. */
   in3_chain_t*  chain;                 /**< the chain definition. */
   d_token_t*    result;                /**< the result to verify */
   d_token_t*    request;               /**< the request sent. */
@@ -436,7 +436,7 @@ in3_ret_t vc_set_error(
 // ---- PLGN_ACT_PAY_FOLLOWUP -----------
 
 typedef struct {
-  in3_ctx_t*    ctx;        /**< Request context. */
+  in3_req_t*    ctx;        /**< Request context. */
   node_match_t* node;       /**< the responding node. */
   d_token_t*    resp_in3;   /**< the response's in3 section */
   d_token_t*    resp_error; /**< the response's error section */
@@ -445,7 +445,7 @@ typedef struct {
 // ---- PLGN_ACT_PAY_HANDLE -----------
 
 typedef struct {
-  in3_ctx_t* ctx;     /**< Request context. */
+  in3_req_t* ctx;     /**< Request context. */
   sb_t*      payload; /**< the request payload */
   bytes32_t  pk;      /**< the private-key to sign with */
 } in3_pay_handle_ctx_t;
@@ -453,7 +453,7 @@ typedef struct {
 // ---- PAY_SIGN_REQ -----------
 
 typedef struct {
-  in3_ctx_t* ctx;           /**< Request context. */
+  in3_req_t* ctx;           /**< Request context. */
   d_token_t* request;       /**< the request sent. */
   bytes32_t  request_hash;  /**< the hash to sign */
   uint8_t    signature[65]; /**< the signature */
@@ -462,7 +462,7 @@ typedef struct {
 // ---- PLGN_ACT_ADD_PAYLOAD -----------
 
 typedef struct {
-  in3_ctx_t* ctx;     /**< Request context. */
+  in3_req_t* ctx;     /**< Request context. */
   d_token_t* request; /**< the request sent. */
   sb_t*      sb;      /**< the string builder in the in3-section */
 } in3_pay_payload_ctx_t;
@@ -472,7 +472,7 @@ typedef struct {
 typedef struct {
   char*      msg;   /**< the error message. */
   uint16_t   error; /**< error code. */
-  in3_ctx_t* ctx;   /**< ctx . */
+  in3_req_t* ctx;   /**< ctx . */
 } error_log_ctx_t;
 
 // -------- NL_PICK ---------
@@ -483,12 +483,12 @@ typedef enum {
 
 typedef struct {
   in3_nl_pick_type_t type; /**< type of node to pick. */
-  in3_ctx_t*         ctx;  /**< Request context. */
+  in3_req_t*         ctx;  /**< Request context. */
 } in3_nl_pick_ctx_t;
 
 // -------- NL_FOLLOWUP ---------
 typedef struct {
-  in3_ctx_t*    ctx;  /**< Request context. */
+  in3_req_t*    ctx;  /**< Request context. */
   node_match_t* node; /**< Node that gave us a valid response */
 } in3_nl_followup_ctx_t;
 

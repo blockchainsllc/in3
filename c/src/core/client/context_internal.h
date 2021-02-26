@@ -56,7 +56,7 @@
  * ```
  */
 NONULL in3_request_t* in3_create_request(
-    in3_ctx_t* ctx /**< [in] the request context. */
+    in3_req_t* ctx /**< [in] the request context. */
 );
 
 /**
@@ -77,7 +77,7 @@ NONULL void request_free(
  * ```
  */
 in3_ret_t ctx_set_error_intern(
-    in3_ctx_t* c,        /**< [in] the current request context. */
+    in3_req_t* c,        /**< [in] the current request context. */
     char*      msg,      /**< [in] the error message. (This string will be copied) */
     in3_ret_t  errnumber /**< [in] the error code to return */
 );
@@ -88,18 +88,18 @@ in3_ret_t ctx_set_error_intern(
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
 in3_ret_t ctx_handle_failable(
-    in3_ctx_t* ctx /**< [in] the current request context. */
+    in3_req_t* ctx /**< [in] the current request context. */
 );
 
 NONULL_FOR((1, 2, 3, 5))
-in3_ret_t        ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
-NONULL in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
-NONULL in3_ret_t in3_retry_same_node(in3_ctx_t* ctx);
+in3_ret_t        ctx_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result);
+NONULL in3_ret_t ctx_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
+NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx);
 
 #define assert_in3_ctx(ctx)                                                                    \
   assert(ctx);                                                                                 \
   assert_in3(ctx->client);                                                                     \
-  assert(ctx->signers_length <= (ctx->type == CT_RPC ? ctx->client->signature_count + 1 : 0)); \
+  assert(ctx->signers_length <= (ctx->type == RT_RPC ? ctx->client->signature_count + 1 : 0)); \
   assert(ctx->signers_length ? (ctx->signers != NULL) : (ctx->signers == NULL));               \
   assert(ctx->len >= 1 || ctx->error);                                                         \
   assert(ctx->attempt <= ctx->client->max_attempts);                                           \
@@ -115,6 +115,6 @@ NONULL in3_ret_t in3_retry_same_node(in3_ctx_t* ctx);
 
 NONULL void in3_ctx_free_nodes(node_match_t* c);
 int         ctx_nodes_len(node_match_t* root);
-NONULL bool ctx_is_method(const in3_ctx_t* ctx, const char* method);
+NONULL bool ctx_is_method(const in3_req_t* ctx, const char* method);
 
 #endif // CONTEXT_INTERNAL_H

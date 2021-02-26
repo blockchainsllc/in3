@@ -4,7 +4,7 @@ The core of incubed is the processing of json-rpc requests by fetching data from
 
 ### the statemachine
 
-Each request is represented internally by the `in3_ctx_t` -struct. This context is responsible for trying to find a verifyable answer to the request and acts as a statemachine.
+Each request is represented internally by the `in3_req_t` -struct. This context is responsible for trying to find a verifyable answer to the request and acts as a statemachine.
 
 ```
 
@@ -14,7 +14,7 @@ digraph G {
     rankdir = TB;
     
     RPC[label="RPC-Request"]
-    CTX[label="in3_ctx_t"]
+    CTX[label="in3_req_t"]
     
     sign[label="sign",color=lightgrey, style=""]
     request[label="fetch http",color=lightgrey, style=""]
@@ -29,10 +29,10 @@ digraph G {
     CTX -> exec
     
     
-    exec -> error [label="CTX_ERROR"]
-    exec -> response[label="CTX_SUCCESS"]
-    exec -> waiting[label="CTX_WAITING_TO_SEND"]
-    exec -> request[label="CTX_WAITING_FOR_RESPONSE"]
+    exec -> error [label="REQ_ERROR"]
+    exec -> response[label="REQ_SUCCESS"]
+    exec -> waiting[label="REQ_WAITING_TO_SEND"]
+    exec -> request[label="REQ_WAITING_FOR_RESPONSE"]
 
     
     waiting -> sign[label=CT_SIGN]
@@ -58,34 +58,34 @@ In order to process a request we follow these steps.
 1. `ctx_new` which creates a new context by parsing a JSON-RPC request.
 2. `in3_ctx_exec_state` this will try to process the state and returns the new state, which will be one of he following:
 
-    - `CTX_SUCCESS` - we have a response
-    - `CTX_ERROR` - we stop because of an unrecoverable error
-    - `CTX_WAITING_TO_SEND` - we need input and need to send out a request. By calling `in3_create_request()` the ctx will switch to the state to `CTX_WAITING_FOR_RESPONSE` until all the needed responses are repoorted. While it is possible to fetch all responses and add them before calling `in3_ctx_exec_state()`, but it would be more efficient if can send all requests out, but then create a response-queue and set one response add a time so we can return as soon as we have the first verifiable  response.
-    - `CTX_WAITING_FOR_RESPONSE` - the request has been send, but no verifieable response is available. Once the next (or more) responses have been added, we call `in3_ctx_exec_state()` again, which will verify all available responses. If we could verify it, we have a respoonse, if not we may either wait for more responses ( in case we send out multiple requests -> `CTX_WAITING_FOR_RESPONSE` ) or we send out new requests (`CTX_WAITING_TO_SEND`)
+    - `REQ_SUCCESS` - we have a response
+    - `REQ_ERROR` - we stop because of an unrecoverable error
+    - `REQ_WAITING_TO_SEND` - we need input and need to send out a request. By calling `in3_create_request()` the ctx will switch to the state to `REQ_WAITING_FOR_RESPONSE` until all the needed responses are repoorted. While it is possible to fetch all responses and add them before calling `in3_ctx_exec_state()`, but it would be more efficient if can send all requests out, but then create a response-queue and set one response add a time so we can return as soon as we have the first verifiable  response.
+    - `REQ_WAITING_FOR_RESPONSE` - the request has been send, but no verifieable response is available. Once the next (or more) responses have been added, we call `in3_ctx_exec_state()` again, which will verify all available responses. If we could verify it, we have a respoonse, if not we may either wait for more responses ( in case we send out multiple requests -> `REQ_WAITING_FOR_RESPONSE` ) or we send out new requests (`REQ_WAITING_TO_SEND`)
 
 the `in3_send_ctx`-function will executly this:
 
 ```c
-in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
+in3_ret_t in3_send_ctx(in3_req_t* ctx) {
   ctx_req_transports_t transports = {0};
   while (true) {
     switch (in3_ctx_exec_state(ctx)) {
-      case CTX_ERROR:
-      case CTX_SUCCESS:
+      case REQ_ERROR:
+      case REQ_SUCCESS:
         transport_cleanup(ctx, &transports, true);
         return ctx->verification_state;
 
-      case CTX_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_FOR_RESPONSE:
         in3_handle_rpc_next(ctx, &transports);
         break;
 
-      case CTX_WAITING_TO_SEND: {
-        in3_ctx_t* last = in3_ctx_last_waiting(ctx);
+      case REQ_WAITING_TO_SEND: {
+        in3_req_t* last = in3_ctx_last_waiting(ctx);
         switch (last->type) {
-          case CT_SIGN:
+          case RT_SIGN:
             in3_handle_sign(last);
             break;
-          case CT_RPC:
+          case RT_RPC:
             in3_handle_rpc(last, &transports);
         }
       }
@@ -189,21 +189,21 @@ For the js for example the main-loop is part of a async function.
               // execute and fetch the new state ( in this case the ctx_execute-function will return the status including the created request as json)
               const state = JSON.parse(call_string('ctx_execute', r))
               switch (state.status) {
-                  // CTX_ERROR
+                  // REQ_ERROR
                   case 'error':
                       throw new Error(state.error || 'Unknown error')
                       
-                  // CTX_SUCCESS
+                  // REQ_SUCCESS
                   case 'ok':
                       return state.result
 
-                  // CTX_WAITING_FOR_RESPONSE
+                  // REQ_WAITING_FOR_RESPONSE
                   case 'waiting':
                       // await the promise for the next response ( the state.request contains the context-pointer to know which queue)
                       await getNextResponse(responses, state.request)
                       break
 
-                  // CTX_WAITING_TO_SEND
+                  // REQ_WAITING_TO_SEND
                   case 'request': {
                       // the request already contains the type, urls and payload.
                       const req = state.request

@@ -96,7 +96,7 @@ void api_set_error(int err, const char* msg) {
   return set_error_impl(err, msg ? msg : "unknown error");
 }
 
-d_token_t* get_result(in3_ctx_t* ctx) {
+d_token_t* get_result(in3_req_t* ctx) {
   if (ctx->error) {                       // error means something went wrong during verification or a timeout occured.
     api_set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;

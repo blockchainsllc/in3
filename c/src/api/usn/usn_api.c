@@ -118,7 +118,7 @@ static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t
   sprintf(p, "\"},\"latest\"]");
 
   // send the request
-  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", op);
+  in3_req_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", op);
 
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
@@ -148,7 +148,7 @@ static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t 
   sprintf(p, "\"}]");
 
   // send the request
-  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_sendTransaction", op);
+  in3_req_t* ctx = in3_client_rpc_ctx(conf->c, "eth_sendTransaction", op);
 
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
@@ -166,7 +166,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   bytes32_t  hash;
   address_t  sender;
   char       tmp[400], mhash[500];
-  in3_ctx_t* ctx = NULL;
+  in3_req_t* ctx = NULL;
   result->device = find_device(conf, d_get_stringk(msg, K_URL));
   rejectp_if(!result->device, "the device with this url does not exist");
 
@@ -372,7 +372,7 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
 
 in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
   // first we get the current BlockNumber
-  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
+  in3_req_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
   in3_ret_t  res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
     ctx_free(ctx);

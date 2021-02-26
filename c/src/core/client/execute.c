@@ -45,11 +45,11 @@
 #include <stdint.h>
 #include <string.h>
 
-NONULL static bool is_raw_http(in3_ctx_t* ctx) {
+NONULL static bool is_raw_http(in3_req_t* ctx) {
   return !ctx->nodes && strcmp("in3_http", d_get_stringk(ctx->requests[0], K_METHOD)) == 0;
 }
 
-NONULL static void response_free(in3_ctx_t* ctx) {
+NONULL static void response_free(in3_req_t* ctx) {
   assert_in3_ctx(ctx);
 
   int nodes_count = 1;
@@ -89,7 +89,7 @@ NONULL void in3_check_verified_hashes(in3_t* c) {
   }
 }
 
-NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
+NONULL static void ctx_free_intern(in3_req_t* ctx, bool is_sub) {
   assert_in3_ctx(ctx);
   // only for intern requests, we actually free the original request-string
   if (is_sub && ctx->request_context)
@@ -138,7 +138,7 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
   }
 }
 
-NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) {
+NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) {
   assert_in3_ctx(c);
   assert(sb);
 
@@ -247,7 +247,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool no_in3) 
   return IN3_OK;
 }
 
-NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
+NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, int len) {
   assert_in3_ctx(ctx);
   assert(response_data);
   assert(len);
@@ -313,7 +313,7 @@ NONULL static void clear_response(in3_response_t* response) {
   }
 }
 
-static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response) {
+static in3_ret_t handle_error_response(in3_req_t* ctx, node_match_t* node, in3_response_t* response) {
   assert_in3_ctx(ctx);
   assert_in3_response(response);
 
@@ -328,7 +328,7 @@ static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_r
   return IN3_ERPC;
 }
 
-static void clean_up_ctx(in3_ctx_t* ctx) {
+static void clean_up_ctx(in3_req_t* ctx) {
   assert_in3_ctx(ctx);
 
   if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
@@ -338,7 +338,7 @@ static void clean_up_ctx(in3_ctx_t* ctx) {
   ctx->error = NULL;
 }
 
-NONULL in3_ret_t in3_retry_same_node(in3_ctx_t* ctx) {
+NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx) {
   int nodes_count = ctx_nodes_len(ctx->nodes);
   // this means we need to retry with the same node
   for (int i = 0; i < nodes_count; i++) {
@@ -356,12 +356,12 @@ NONULL in3_ret_t in3_retry_same_node(in3_ctx_t* ctx) {
 }
 
 static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
-  in3_ctx_t*             ctx  = vc->ctx;
+  in3_req_t*             ctx  = vc->ctx;
   in3_pay_followup_ctx_t fctx = {.ctx = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
   return ctx_set_error(ctx, "Error following up the payment data", in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx));
 }
 
-static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
+static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_t* node, in3_response_t* response) {
   assert_in3_ctx(ctx);
   assert(chain);
   assert_in3_response(response);
@@ -457,7 +457,7 @@ static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, node_match_
   return (ctx->verification_state = IN3_OK);
 }
 
-static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, node_match_t** vnode) {
+static in3_ret_t find_valid_result(in3_req_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, node_match_t** vnode) {
   node_match_t* node          = ctx->nodes;
   bool          still_pending = false;
   in3_ret_t     state         = IN3_ERPC;
@@ -502,18 +502,18 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   return IN3_OK;
 }
 
-NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
+NONULL in3_request_t* in3_create_request(in3_req_t* ctx) {
   switch (in3_ctx_state(ctx)) {
-    case CTX_ERROR:
+    case REQ_ERROR:
       ctx_set_error(ctx, "You cannot create an request if the was an error!", IN3_EINVAL);
       return NULL;
-    case CTX_SUCCESS:
+    case REQ_SUCCESS:
       return NULL;
-    case CTX_WAITING_FOR_RESPONSE:
+    case REQ_WAITING_FOR_RESPONSE:
       ctx_set_error(ctx, "There are pending requests, finish them before creating a new one!", IN3_EINVAL);
       return NULL;
-    case CTX_WAITING_TO_SEND: {
-      in3_ctx_t* p = ctx;
+    case REQ_WAITING_TO_SEND: {
+      in3_req_t* p = ctx;
       for (; p; p = p->required) {
         if (!p->raw_response) ctx = p;
       }
@@ -626,19 +626,19 @@ NONULL void request_free(in3_request_t* req) {
   _free(req);
 }
 
-NONULL static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
+NONULL static bool ctx_is_allowed_to_fail(in3_req_t* ctx) {
   return ctx_is_method(ctx, "in3_nodeList");
 }
 
-in3_ctx_t* in3_ctx_last_waiting(in3_ctx_t* ctx) {
-  in3_ctx_t* last = ctx;
+in3_req_t* in3_ctx_last_waiting(in3_req_t* ctx) {
+  in3_req_t* last = ctx;
   for (; ctx; ctx = ctx->required) {
     if (!ctx->response_context) last = ctx;
   }
   return last;
 }
 
-static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
+static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
   d_token_t* params   = d_get(ctx->requests[0], K_PARAMS);
   sign_ctx->message   = d_to_bytes(d_get_at(params, 0));
   sign_ctx->account   = d_to_bytes(d_get_at(params, 1));
@@ -647,13 +647,13 @@ static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->signature = bytes(NULL, 0);
 }
 
-in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
+in3_sign_ctx_t* create_sign_ctx(in3_req_t* ctx) {
   in3_sign_ctx_t* res = _malloc(sizeof(in3_sign_ctx_t));
   init_sign_ctx(ctx, res);
   return res;
 }
 
-in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
+in3_ret_t in3_handle_sign(in3_req_t* ctx) {
   in3_sign_ctx_t sign_ctx;
   init_sign_ctx(ctx, &sign_ctx);
   if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
@@ -670,7 +670,7 @@ in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
 }
 
 typedef struct {
-  in3_ctx_t* ctx;
+  in3_req_t* ctx;
   void*      ptr;
 } ctx_req_t;
 typedef struct {
@@ -678,7 +678,7 @@ typedef struct {
   ctx_req_t* req;
 } ctx_req_transports_t;
 
-static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, bool free_all) {
+static void transport_cleanup(in3_req_t* ctx, ctx_req_transports_t* transports, bool free_all) {
   for (int i = 0; i < transports->len; i++) {
     if (free_all || transports->req[i].ctx == ctx) {
       in3_request_t req = {.ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
@@ -692,7 +692,7 @@ static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, 
   if (free_all && transports->req) _free(transports->req);
 }
 
-static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
+static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports) {
   in3_log_debug("waiting for the next response ...\n");
   ctx = in3_ctx_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
@@ -722,7 +722,7 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
   ctx_set_error(ctx, "waiting to fetch more responses, but no cptr was registered", IN3_ENOTSUP);
 }
 
-void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
+void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   // if we can't create the request, this function will put it into error-state
   in3_request_t* request = in3_create_request(ctx);
   if (!request) return;
@@ -782,24 +782,24 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   request_free(request);
 }
 
-in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
+in3_ret_t in3_send_ctx(in3_req_t* ctx) {
   ctx_req_transports_t transports = {0};
   while (true) {
     switch (in3_ctx_exec_state(ctx)) {
-      case CTX_ERROR:
-      case CTX_SUCCESS:
+      case REQ_ERROR:
+      case REQ_SUCCESS:
         transport_cleanup(ctx, &transports, true);
         return ctx->verification_state;
-      case CTX_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_FOR_RESPONSE:
         in3_handle_rpc_next(ctx, &transports);
         break;
-      case CTX_WAITING_TO_SEND: {
-        in3_ctx_t* last = in3_ctx_last_waiting(ctx);
+      case REQ_WAITING_TO_SEND: {
+        in3_req_t* last = in3_ctx_last_waiting(ctx);
         switch (last->type) {
-          case CT_SIGN:
+          case RT_SIGN:
             in3_handle_sign(last);
             break;
-          case CT_RPC:
+          case RT_RPC:
             in3_handle_rpc(last, &transports);
         }
       }
@@ -811,7 +811,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
  * helper function to set the signature on the signer context and rpc context
  */
 void in3_sign_ctx_set_signature(
-    in3_ctx_t*      ctx,
+    in3_req_t*      ctx,
     in3_sign_ctx_t* sign_ctx) {
   ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
   sb_init(&ctx->raw_response[0].data);
@@ -819,8 +819,8 @@ void in3_sign_ctx_set_signature(
   _free(sign_ctx->signature.data);
 }
 
-in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {
-  in3_ctx_t* sub_ctx = parent->required;
+in3_req_t* ctx_find_required(const in3_req_t* parent, const char* search_method) {
+  in3_req_t* sub_ctx = parent->required;
   while (sub_ctx) {
     if (!sub_ctx->requests) continue;
     if (ctx_is_method(sub_ctx, search_method)) return sub_ctx;
@@ -829,20 +829,20 @@ in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method)
   return NULL;
 }
 
-in3_ret_t ctx_add_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
+in3_ret_t ctx_add_required(in3_req_t* parent, in3_req_t* ctx) {
   //  printf(" ++ add required %s > %s\n", ctx_name(parent), ctx_name(ctx));
   ctx->required    = parent->required;
   parent->required = ctx;
   return in3_ctx_execute(ctx);
 }
 
-in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx, bool rec) {
+in3_ret_t ctx_remove_required(in3_req_t* parent, in3_req_t* ctx, bool rec) {
   if (!ctx) return IN3_OK;
-  in3_ctx_t* p = parent;
+  in3_req_t* p = parent;
   while (p) {
     if (p->required == ctx) {
       //      printf(" -- remove required %s > %s\n", ctx_name(parent), ctx_name(ctx));
-      in3_ctx_t* next = rec ? NULL : ctx->required;
+      in3_req_t* next = rec ? NULL : ctx->required;
       if (!rec) ctx->required = NULL;
       ctx_free_intern(ctx, true);
       p->required = next;
@@ -853,22 +853,22 @@ in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx, bool rec) {
   return IN3_EFIND;
 }
 
-in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
-  if (ctx == NULL) return CTX_SUCCESS;
-  in3_ctx_state_t required_state = ctx->required ? in3_ctx_state(ctx->required) : CTX_SUCCESS;
-  if (required_state == CTX_ERROR || ctx->error) return CTX_ERROR;
-  if (ctx->required && required_state != CTX_SUCCESS) return required_state;
-  if (!ctx->raw_response) return CTX_WAITING_TO_SEND;
-  if (ctx->type == CT_RPC && !ctx->response_context) return CTX_WAITING_FOR_RESPONSE;
-  if (ctx->type == CT_SIGN && ctx->raw_response->state == IN3_WAITING) return CTX_WAITING_FOR_RESPONSE;
-  return CTX_SUCCESS;
+in3_req_state_t in3_ctx_state(in3_req_t* ctx) {
+  if (ctx == NULL) return REQ_SUCCESS;
+  in3_req_state_t required_state = ctx->required ? in3_ctx_state(ctx->required) : REQ_SUCCESS;
+  if (required_state == REQ_ERROR || ctx->error) return REQ_ERROR;
+  if (ctx->required && required_state != REQ_SUCCESS) return required_state;
+  if (!ctx->raw_response) return REQ_WAITING_TO_SEND;
+  if (ctx->type == RT_RPC && !ctx->response_context) return REQ_WAITING_FOR_RESPONSE;
+  if (ctx->type == RT_SIGN && ctx->raw_response->state == IN3_WAITING) return REQ_WAITING_FOR_RESPONSE;
+  return REQ_SUCCESS;
 }
 
-void ctx_free(in3_ctx_t* ctx) {
+void ctx_free(in3_req_t* ctx) {
   if (ctx) ctx_free_intern(ctx, false);
 }
 
-static inline in3_ret_t handle_internally(in3_ctx_t* ctx) {
+static inline in3_ret_t handle_internally(in3_req_t* ctx) {
   if (ctx->len != 1) return IN3_OK; //  currently we do not support bulk requests forr internal calls
   in3_rpc_handle_ctx_t vctx = {.ctx = ctx, .response = &ctx->raw_response, .request = ctx->requests[0], .method = d_get_stringk(ctx->requests[0], K_METHOD), .params = d_get(ctx->requests[0], K_PARAMS)};
   in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
@@ -876,19 +876,19 @@ static inline in3_ret_t handle_internally(in3_ctx_t* ctx) {
   return res == IN3_EIGNORE ? IN3_OK : res;
 }
 
-static inline char* get_error_message(in3_ctx_t* ctx) {
+static inline char* get_error_message(in3_req_t* ctx) {
   for (; ctx; ctx = ctx->required) {
     if (ctx->error) return ctx->error;
   }
   return "The request could not be handled";
 }
 
-in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
+in3_req_state_t in3_ctx_exec_state(in3_req_t* ctx) {
   in3_ctx_execute(ctx);
   return in3_ctx_state(ctx);
 }
 
-in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
+in3_ret_t in3_ctx_execute(in3_req_t* ctx) {
   in3_ret_t ret = IN3_OK;
 
   // if there is an error it does not make sense to execute.
@@ -911,7 +911,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_stringk(ctx->requests[0], K_METHOD), ctx->attempt + 1);
 
   switch (ctx->type) {
-    case CT_RPC: {
+    case RT_RPC: {
 
       // do we need to handle it internaly?
       if (!ctx->raw_response && !ctx->response_context && (ret = handle_internally(ctx)) < 0)
@@ -971,7 +971,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       }
     }
 
-    case CT_SIGN: {
+    case RT_SIGN: {
       if (!ctx->raw_response || ctx->raw_response->state == IN3_WAITING)
         return IN3_WAITING;
       else if (ctx->raw_response->state)

@@ -144,7 +144,7 @@ NONULL void in3_client_run_chain_whitelisting(in3_nodeselect_def_t* data);
  * 
  * if not it will fetch a new version first (if the needs_update-flag is set).
  */
-NONULL in3_ret_t in3_node_list_get(in3_ctx_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, unsigned int* nodelist_length, in3_node_weight_t** weights);
+NONULL in3_ret_t in3_node_list_get(in3_req_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, unsigned int* nodelist_length, in3_node_weight_t** weights);
 
 /**
  * filters and fills the weights on a returned linked list.
@@ -160,7 +160,7 @@ NONULL uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, u
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
 NONULL_FOR((1, 2, 3))
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, in3_nodeselect_config_t* w, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter);
+in3_ret_t in3_node_list_pick_nodes(in3_req_t* ctx, in3_nodeselect_config_t* w, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter);
 
 /**
  * forces the client to update the nodelist
