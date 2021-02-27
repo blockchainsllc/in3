@@ -169,8 +169,7 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   }
 
   // init from default plugins
-  for (default_fn_t* d = default_registry; d; d = d->next)
-    d->fn(c);
+  for (default_fn_t* d = default_registry; d; d = d->next) d->fn(c);
 
   return c;
 }
@@ -437,8 +436,7 @@ in3_ret_t in3_plugin_register(in3_t* c, in3_plugin_supp_acts_t acts, in3_plugin_
 }
 
 in3_ret_t in3_plugin_execute_all(in3_t* c, in3_plugin_act_t action, void* plugin_ctx) {
-  if (!in3_plugin_is_registered(c, action))
-    return IN3_OK;
+  if (!in3_plugin_is_registered(c, action)) return IN3_OK;
 
   in3_plugin_t* p   = c->plugins;
   in3_ret_t     ret = IN3_OK, ret_;

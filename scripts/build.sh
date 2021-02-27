@@ -30,7 +30,7 @@ if [ "$CONTAINER" = "bindings-debug" ]; then
    OPTS="-DUSE_CURL=false"
 fi
 if [ -z "$BUILDTYPE" ]; then
-   BUILDTYPE=DEBUG
+   BUILDTYPE=DEBUGG
    #TEST=true
 fi
 if [ "$BUILDTYPE" = "release" ]; then
@@ -40,7 +40,7 @@ if [ "$BUILDTYPE" = "debug" ]; then
    BUILDTYPE=DEBUG
    TEST=true
 fi
-OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DZKSYNC=true -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
+OPTS="-G Ninja -DIAMO_SIGNER=true -DIAMO_ZK=true -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DZKCRYPTO_LIB=true -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DZKSYNC=true -DIAMO_SIGNER=true -DIN3_SERVER=true -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
 
 if [ "$CONTAINER" = "--help" ]; then
    echo "usage $0 <TARGET> <DEBUG|MINSIZEREL|RELEASE|debug|release> "
@@ -80,7 +80,7 @@ if [ -z "$CONTAINER" ]; then
   echo "local_build"
   touch build/container.txt
   cd build
-  cmake $OPTS .. && make -j8
+  cmake $OPTS .. && ninja
 elif [ "$CONTAINER" = "win" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:gcc7-mingw
   echo $CONTAINER > build/container.txt
