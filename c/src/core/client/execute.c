@@ -957,7 +957,7 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
       node_match_t* node = NULL;
-      if ((ret = find_valid_result(req, &node) == IN3_OK) {
+      if ((ret = find_valid_result(req, &node)) == IN3_OK) {
         // allow payments to to handle post actions
         in3_nl_followup_ctx_t fctx = {.req = req, .node = node};
         in3_plugin_execute_first_or_none(req, PLGN_ACT_NL_PICK_FOLLOWUP, &fctx);
