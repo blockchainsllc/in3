@@ -65,7 +65,7 @@ readthedocs:
     - cp ../../in3_wasm/index.d.ts .
     - npm --cache .npm i typedoc
     - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json index.d.ts
-    - cat doc.json | ../../generator/bin/slockit-docu index.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
+    - cat doc.json | ../../generator/bin/slockit-docu index.d blockchainsllc/in3/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
     - cd ../../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:
@@ -410,7 +410,7 @@ brew_release:
   script:
     - git clone https://github.com/blockchainsllc/homebrew-in3.git
     - cd homebrew-in3
-    - sed '4s/.*/url "https:\/\/github.com\/slockit\/in3-c\/releases\/download\/'"${CI_COMMIT_TAG}"'\/in3_'"${CI_COMMIT_TAG}"'_mac.tar.gz"/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
+    - sed '4s/.*/url "https:\/\/github.com\/blockchainsllc\/in3\/releases\/download\/'"${CI_COMMIT_TAG}"'\/in3_'"${CI_COMMIT_TAG}"'_mac.tar.gz"/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
     - curl -jksSL -o /tmp/mac.tar.gz  https://github.com/blockchainsllc/in3/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz
     - export sha256_hash=$(sha256sum /tmp/mac.tar.gz | awk '{ print $1 }')
     - sed -e '5s/.*/sha256 '"\"$sha256_hash"\"'/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
