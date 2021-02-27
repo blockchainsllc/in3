@@ -55,7 +55,7 @@ test_android:
       - .gradle/caches
   script:
     - wget https://services.gradle.org/distributions/gradle-6.8.1-bin.zip ; unzip gradle-6.8.1-bin.zip ; export PATH=`pwd`/gradle-6.8.1/bin:$PATH
-    - git clone https://github.com/slockit/in3-example-android.git
+    - git clone https://github.com/blockchainsllc/in3-example-android.git
     - cd in3-example-android
     - mkdir in3
     - mv ../c ../CMakeLists.txt  ../java in3/
@@ -163,4 +163,4 @@ release_maven:
   script:
     - touch settings.xml
     - echo $MAVEN_SETTINGS > settings.xml
-    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.blockchainsllc  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/blockchainsllc/in3-c
+    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.blockchainsllc  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/blockchainsllc/in3

@@ -1,9 +1,7 @@
 ## Installing
 
-
-
 The Incubed Java client uses JNI in order to call native functions. But all the native-libraries are bundled inside the jar-file.
-This jar file ha **no** dependencies and can even be used standalone: 
+This jar file ha **no** dependencies and can even be used standalone:
 
 like
 
@@ -13,21 +11,21 @@ java -cp in3.jar in3.IN3 eth_getBlockByNumber latest false
 
 ### Downloading
 
-
-The jar file can be downloaded from the latest release. [here](https://github.com/slockit/in3-c/releases).
+The jar file can be downloaded from the latest release. [here](https://github.com/blockchainsllc/in3/releases).
 
 Alternatively, If you wish to download Incubed using the maven package manager, add this to your pom.xml
+
 ```
 <dependency>
   <groupId>it.slock</groupId>
   <artifactId>in3</artifactId>
   <version>2.21</version>
-</dependency> 
+</dependency>
 ```
 
-After which, install in3 with ```mvn install ```.
+After which, install in3 with `mvn install `.
 
-###  Building
+### Building
 
 For building the shared library you need to enable java by using the `-DJAVA=true` flag:
 
@@ -89,9 +87,6 @@ For possible options, see https://in3.readthedocs.io/en/develop/api-c.html#cmake
 
 Now you can use any Functions as defined here https://in3.readthedocs.io/en/develop/api-java.html
 
-
 Here is example how to use it:
 
-https://github.com/slockit/in3-example-android
-
-
+https://github.com/blockchainsllc/in3-example-android

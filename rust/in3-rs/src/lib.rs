@@ -1,7 +1,7 @@
-//! Bindings to the [Incubed](https://github.com/slockit/in3-c/) C library.
+//! Bindings to the [Incubed](https://github.com/blockchainsllc/in3/) C library.
 //!
 //! This crate is a wrapper around the
-//! [Incubed](https://github.com/slockit/in3-c/) C library."
+//! [Incubed](https://github.com/blockchainsllc/in3/) C library."
 //!
 //! The IN3 client is a
 //! * Crypto-Economic
