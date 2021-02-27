@@ -91,7 +91,7 @@ typedef struct in3_response {
  * */
 typedef struct in3_req {
   uint_fast8_t    signers_length;     /**< number or addresses */
-  uint16_t        len;                /**< the number of requests */
+  uint_fast16_t   len;                /**< the number of requests */
   uint_fast16_t   attempt;            /**< the number of attempts */
   uint32_t        id;                 /**< JSON RPC id of request at index 0 */
   req_type_t      type;               /**< the type of the request */

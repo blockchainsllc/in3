@@ -190,7 +190,6 @@ char* in3_client_exec_req(
   // parse it
   char*      res = NULL;
   in3_req_t* ctx = req_new(c, req);
-  in3_ret_t  ret;
 
   //  not enough memory
   if (!ctx) return NULL;
@@ -202,7 +201,8 @@ char* in3_client_exec_req(
     goto clean;
   }
 
-  ret = in3_send_req(ctx);
+  // execute the request
+  in3_ret_t ret = in3_send_req(ctx);
 
   // do we have an error?
   if (ctx->error) {
