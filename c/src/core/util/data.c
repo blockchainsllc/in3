@@ -38,7 +38,6 @@
 #include "mem.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "verify.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -46,8 +45,6 @@
 #ifdef LOGGING
 #include "used_keys.h"
 #endif
-// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
-verify(sizeof(void*) >= 4);
 
 // number of tokens to allocate memory for when parsing
 #define JSON_INIT_TOKENS        10

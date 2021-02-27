@@ -35,8 +35,6 @@
 #include "context.h"
 #include "../util/debug.h"
 #include "../util/log.h"
-#include "../util/mem.h"
-#include "../util/stringbuilder.h"
 #include "client.h"
 #include "context_internal.h"
 #include "keys.h"
@@ -82,7 +80,6 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
       return ctx;
     }
 
-#ifndef DEV_NO_INC_RPC_ID
     d_token_t* t = d_get(ctx->request_context->result, K_ID);
     if (t == NULL) {
       ctx->id = client->id_count;
@@ -90,7 +87,6 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
     }
     else if (d_type(t) == T_INTEGER)
       ctx->id = d_int(t);
-#endif
   }
   return ctx;
 }
@@ -148,8 +144,8 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING) return errnumber;
   if (message) {
-    const int l   = strlen(message);
-    char*     dst = NULL;
+    const size_t l   = strlen(message);
+    char*        dst = NULL;
     if (ctx->error) {
       dst = _malloc(l + 2 + strlen(ctx->error));
       strcpy(dst, message);
@@ -189,6 +185,16 @@ in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   return IN3_OK;
 }
 
+void in3_ctx_free_nodes(node_match_t* node) {
+  node_match_t* last_node = NULL;
+  while (node) {
+    last_node = node;
+    node      = node->next;
+    _free(last_node->url);
+    _free(last_node);
+  }
+}
+
 int ctx_nodes_len(node_match_t* node) {
   int all = 0;
   while (node) {
@@ -196,6 +202,11 @@ int ctx_nodes_len(node_match_t* node) {
     node = node->next;
   }
   return all;
+}
+
+bool ctx_is_method(const in3_ctx_t* ctx, const char* method) {
+  const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
+  return (required_method && strcmp(required_method, method) == 0);
 }
 
 in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {
@@ -251,11 +262,7 @@ sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
 
   *hctx->response = _calloc(1, sizeof(in3_response_t));
   sb_add_chars(&(*hctx->response)->data, "{\"id\":");
-#ifndef DEV_NO_INC_RPC_ID
   sb_add_int(&(*hctx->response)->data, hctx->ctx->id);
-#else
-  sb_add_int(&(*hctx->response)->data, 1);
-#endif
   return sb_add_chars(&(*hctx->response)->data, ",\"jsonrpc\":\"2.0\",\"result\":");
 }
 in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx) {
@@ -281,7 +288,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   char* s = alloca(b.len * 2 + 5);
   bytes_to_hex(b.data, b.len, s + 3);
   if (s[3] == '0') s++;
-  int l    = strlen(s + 3) + 3;
+  size_t l = strlen(s + 3) + 3;
   s[0]     = '"';
   s[1]     = '0';
   s[2]     = 'x';
@@ -314,7 +321,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
       }
       if (found) break;
     }
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method)) continue;
+    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method) != 0) continue;
     d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
     if (!t) continue;
     str_range_t p = d_to_json(t);

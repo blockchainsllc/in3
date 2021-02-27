@@ -31,13 +31,13 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#include "../../c/src/core/client/cache.h"
+#include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
-#include "../../c/src/core/client/nodelist.h"
-#include "../../c/src/core/client/plugin.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
+#include "../../c/src/nodeselect/cache.h"
+#include "../../c/src/nodeselect/nodelist.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/in3_init.h"
@@ -196,7 +196,7 @@ void EMSCRIPTEN_KEEPALIVE wasm_register_plugin(in3_t* c, in3_plugin_act_t action
   // the index is used as the custom void* or data for the plugin.
   // This way we can cast it backward in order doing the call to js to find the plugin
   // if a js-plugin needs custom data, the it should do this in js withihn its own plugin object
-  in3_plugin_register(NULL, c, action, wasm_plgn, (void*) index, false);
+  in3_plugin_register(c, action, wasm_plgn, (void*) index, false);
 }
 
 /**
@@ -298,17 +298,8 @@ void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
-  in3_chain_t* chain = in3_get_chain(in3);
-  if (!chain) return;
-  for (int i = 0; i < chain->nodelist_length; i++) {
-    if (strcmp(chain->nodelist[i].url, url) == 0) {
-      chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
-      // we don't update weights for local chains.
-      if (in3->chain_id == CHAIN_ID_LOCAL) return;
-      in3_cache_store_nodelist(in3, chain);
-      return;
-    }
-  }
+  in3_nl_blacklist_ctx_t bctx = {.url = url, .is_addr = false};
+  in3_plugin_execute_all(in3, PLGN_ACT_NL_BLACKLIST, &bctx);
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {

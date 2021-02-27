@@ -2,11 +2,7 @@ namespace In3
 {
     /// <summary>Represents the multiple chains supported by Incubed.</summary>
     public enum Chain : uint
-    {
-        /// <summary>Support for multiple chains, a client can then switch between different chains (but consumes more memory).</summary>
-        Multichain = 0x0,
-
-        /// <summary>Ethereum mainnet.</summary>
+    {        /// <summary>Ethereum mainnet.</summary>
         Mainnet = 0x1,
 
         /// <summary>Tobalaba testnet.</summary>

@@ -21,10 +21,10 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
   switch (action) {
     case PLGN_ACT_LOG_ERROR: {
       init_sentry_once(conf);
-      error_log_ctx_t* t     = arg;
+      error_log_ctx_t* t = arg;
 
-      char* res  = NULL;
-      char* req  = NULL;
+      char* res = NULL;
+      char* req = NULL;
       if (t->ctx->request_context) {
         req = t->ctx->request_context->c;
       }
@@ -34,23 +34,20 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
       else if (t->ctx->raw_response) {
         res = t->ctx->raw_response->data.data;
       }
- 
-      if(req){
-          sentry_value_t crumb_req
-            = sentry_value_new_breadcrumb(0, req);
+
+      if (req) {
+        sentry_value_t crumb_req = sentry_value_new_breadcrumb(0, req);
         sentry_add_breadcrumb(crumb_req);
       }
-      if (res){
-          sentry_value_t crumb_res
-            = sentry_value_new_breadcrumb(0, res);
+      if (res) {
+        sentry_value_t crumb_res = sentry_value_new_breadcrumb(0, res);
         sentry_add_breadcrumb(crumb_res);
       }
       char* conf = in3_get_config(t->ctx->client);
-      sentry_add_breadcrumb( sentry_value_new_breadcrumb( 0, conf));
+      sentry_add_breadcrumb(sentry_value_new_breadcrumb(0, conf));
       _free(conf);
-      
-      
-      sentry_value_t   event = sentry_value_new_message_event(
+
+      sentry_value_t event = sentry_value_new_message_event(
           SENTRY_LEVEL_ERROR, IN3_VERSION, t->msg);
       sentry_event_value_add_stacktrace(event, NULL, 64);
       sentry_capture_event(event);
@@ -78,5 +75,5 @@ in3_ret_t in3_register_sentry(in3_t* c) {
   sc->db            = ".sentry-native";
   sc->debug         = 0;
   sc->stack         = 20;
-  return plugin_register(c, PLGN_ACT_LOG_ERROR | PLGN_ACT_TERM, handle_sentry, sc, false);
+  return in3_plugin_register(c, PLGN_ACT_LOG_ERROR | PLGN_ACT_TERM, handle_sentry, sc, false);
 }

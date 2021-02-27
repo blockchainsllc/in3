@@ -98,10 +98,12 @@ unsigned char io_event(unsigned char channel) {
         if (!display_text_part()) {
           //PRINTF ("io_event:display_text_part");
           ui_approval();
-        } else {
+        }
+        else {
           UX_REDISPLAY();
         }
-      } else {
+      }
+      else {
         UX_DISPLAYED_EVENT();
       }
       break;

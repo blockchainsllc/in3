@@ -267,13 +267,13 @@ examples_macos:
     - mac-os
 
 
-integration_longrun:
-  stage: integration
-  extends: .only_release
-  trigger:
-    project: qa/long-run
-    strategy: depend
-    branch: develop
+#integration_longrun:
+#  stage: integration
+#  extends: .only_release
+#  trigger:
+#    project: qa/long-run
+#    strategy: depend
+#    branch: develop
 
 #integration_browser:
 #  stage: integration

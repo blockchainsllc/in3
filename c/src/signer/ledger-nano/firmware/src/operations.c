@@ -96,7 +96,8 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
         }
         return 0; // nothing received from the master so far (it's a tx
                   // transaction)
-      } else {
+      }
+      else {
         return io_seproxyhal_spi_recv(G_io_apdu_buffer, sizeof(G_io_apdu_buffer), 0);
       }
 

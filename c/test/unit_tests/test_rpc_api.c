@@ -42,15 +42,15 @@
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
-#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
+#include "nodeselect/nodelist.h"
+#include "nodeselect/nodeselect_def.h"
 #include <stdio.h>
-#include <unistd.h>
 
 #define err_string(msg) ("Error:" msg)
 
@@ -76,18 +76,16 @@ static void test_in3_config() {
      \"replaceLatestBlock\":94,\
      \"requestCount\":93,\
      \"signatureCount\":92,\
-     \"nodes\":{\
-        \"0x7\":{\
+     \"nodeRegistry\":{\
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
            \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
-           \"registryId\":\"0x3456789012345678901234567890123456789012345678901234567890ffff\",\
+           \"registryId\":\"0x003456789012345678901234567890123456789012345678901234567890ffff\",\
            \"needsUpdate\":false,\
            \"nodeList\":[{\
               \"url\":\"#1\",\
               \"props\":\"0xffff\",\
               \"address\":\"0x1234567890123456789012345678901234567890\"\
            }]\
-       }\
      }\
    }]");
 
@@ -95,7 +93,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(1, d_get_intk(ctx->responses[0], K_RESULT));
   ctx_free(ctx);
 
-  TEST_ASSERT_EQUAL(7, c->chain_id);
+  TEST_ASSERT_EQUAL(7, c->chain.chain_id);
   TEST_ASSERT_EQUAL(FLAGS_AUTO_UPDATE_LIST, c->flags & FLAGS_AUTO_UPDATE_LIST);
   TEST_ASSERT_EQUAL(50, c->finality);
   TEST_ASSERT_EQUAL(FLAGS_INCLUDE_CODE, c->flags & FLAGS_INCLUDE_CODE);
@@ -108,39 +106,35 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(92, c->signature_count);
   TEST_ASSERT_EQUAL(FLAGS_KEEP_IN3, c->flags & FLAGS_KEEP_IN3);
 
-  in3_chain_t* chain = in3_find_chain(c, 7);
+  in3_chain_t* chain = &c->chain;
   TEST_ASSERT_NOT_NULL(chain);
 
-  char tmp[64];
-  bytes_to_hex(chain->contract->data, chain->contract->len, tmp);
-  TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
-  bytes_to_hex(chain->registry_id, 32, tmp);
-  TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
-  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
-  TEST_ASSERT_EQUAL(1, chain->nodelist_length);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
 
-  bytes_to_hex(chain->whitelist->contract, 20, tmp);
-  TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
-  bytes_to_hex(chain->nodelist->address, 20, tmp);
+  char tmp[66];
+  bytes_to_hex(nl->contract, 20, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
-  TEST_ASSERT_EQUAL_STRING("#1", chain->nodelist->url);
-  TEST_ASSERT_EQUAL(0xffff, chain->nodelist->props);
+  bytes_to_hex(nl->registry_id, 32, tmp);
+  TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
+  TEST_ASSERT_NULL(nl->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(1, nl->nodelist_length);
+
+  bytes_to_hex(nl->whitelist->contract, 20, tmp);
+  TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
+  bytes_to_hex(nl->nodelist->address, 20, tmp);
+  TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
+  TEST_ASSERT_EQUAL_STRING("#1", nl->nodelist->url);
+  TEST_ASSERT_EQUAL(0xffff, nl->nodelist->props);
 
   in3_free(c);
 }
 
 static void test_in3_client_rpc() {
   char * result = NULL, *error = NULL;
-  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
-  c->flags           = FLAGS_STATS;
-  c->proof           = PROOF_NONE;
-  c->signature_count = 0;
-  c->max_attempts    = 1;
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
+  c->flags = FLAGS_STATS;
+  TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
-  }
 
   // Error response string
   add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
@@ -203,40 +197,6 @@ static void test_in3_client_rpc() {
 
 IN3_IMPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract);
 
-static void test_in3_client_chain() {
-  // Leading zeros in registry id
-  in3_chain_t chain;
-  initChain(&chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", 2, 2, CHAIN_ETH, NULL);
-  uint8_t reg_id[32];
-  hex_to_bytes("0023d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", -1, reg_id, 32);
-  TEST_ASSERT_EQUAL_MEMORY(chain.registry_id, reg_id, 32);
-  in3_nodelist_clear(&chain);
-  b_free(chain.contract);
-  _free(chain.nodelist_upd8_params);
-
-  // Reregister chains with same chain id
-  in3_t*    c = in3_for_chain(CHAIN_ID_MULTICHAIN);
-  address_t contract1, contract2;
-  hex_to_bytes("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract1, 20);
-  hex_to_bytes("0x5f51e413581dd76759e9eed51e63d14c8d1379c8", -1, contract2, 20);
-  bytes32_t registry_id;
-  hex_to_bytes("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract1, registry_id, 2, NULL);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract2, registry_id, 2, NULL);
-  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->contract->data, contract2, 20);
-
-  // Add node with same address
-  in3_client_add_node(c, 0x8, "http://test1.com", 0xFF, contract1);
-  in3_client_add_node(c, 0x8, "http://test2.com", 0xFF, contract1);
-  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, 0x8)->nodelist[0].url, "http://test2.com");
-  TEST_ASSERT_EQUAL_UINT64(in3_find_chain(c, 0x8)->nodelist[0].props, 0xFF);
-
-  // remove last node
-  TEST_ASSERT_EQUAL(IN3_OK, in3_client_remove_node(c, 0x8, contract1));
-
-  in3_free(c);
-}
-
 static void checksum(d_token_t* params, chain_id_t chain, char* result) {
   bytes_t*  adr = d_get_bytes_at(params, 0);
   in3_ret_t res = to_checksum(adr->data, 0, result);
@@ -265,7 +225,7 @@ static void test_in3_checksum_rpc() {
 }
 
 static void test_in3_client_context() {
-  in3_t*     c   = in3_for_chain(CHAIN_ID_MULTICHAIN);
+  in3_t*     c   = in3_for_chain(CHAIN_ID_MAINNET);
   in3_ctx_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
                               "\"method\":\"eth_getBlockByHash\","
                               "\"params\":[\"0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331\", false],"
@@ -323,34 +283,33 @@ static uint16_t vh_equals(in3_verified_hash_t* hashes, const uint64_t blocknumbe
 }
 
 static void test_in3_verified_hashes() {
-  in3_chain_t chain = {.chain_id = 1};
-  bytes32_t   hash  = {0};
-  in3_t       c     = {.max_verified_hashes = 3, .chains_length = 1, .chain_id = 1, .pending = 0, .chains = &chain};
-  add_verified(&c, &chain, 500, hash);
-  TEST_ASSERT_EQUAL(1, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-  add_verified(&c, &chain, 501, hash);
-  TEST_ASSERT_EQUAL(2, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-  add_verified(&c, &chain, 502, hash);
-  TEST_ASSERT_EQUAL(3, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  bytes32_t hash = {0};
+  in3_t     c    = {.max_verified_hashes = 3, .pending = 0, .chain = {.chain_id = 1}};
+  add_verified(&c, &c.chain, 500, hash);
+  TEST_ASSERT_EQUAL(1, vh_size(c.chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &c.chain, 501, hash);
+  TEST_ASSERT_EQUAL(2, vh_size(c.chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &c.chain, 502, hash);
+  TEST_ASSERT_EQUAL(3, vh_size(c.chain.verified_hashes, c.alloc_verified_hashes));
 
-  add_verified(&c, &chain, 503, hash);
-  TEST_ASSERT_EQUAL(4, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-  add_verified(&c, &chain, 504, hash);
-  TEST_ASSERT_EQUAL(5, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
-  add_verified(&c, &chain, 505, hash);
-  TEST_ASSERT_EQUAL(6, vh_size(chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &c.chain, 503, hash);
+  TEST_ASSERT_EQUAL(4, vh_size(c.chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &c.chain, 504, hash);
+  TEST_ASSERT_EQUAL(5, vh_size(c.chain.verified_hashes, c.alloc_verified_hashes));
+  add_verified(&c, &c.chain, 505, hash);
+  TEST_ASSERT_EQUAL(6, vh_size(c.chain.verified_hashes, c.alloc_verified_hashes));
 
   uint64_t hashes1[] = {500, 501, 502, 503, 504, 505};
-  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
+  TEST_ASSERT_TRUE(vh_equals(c.chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
   c.pending = 2;
   in3_check_verified_hashes(&c);
-  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
+  TEST_ASSERT_TRUE(vh_equals(c.chain.verified_hashes, hashes1, sizeof(hashes1) / sizeof(*hashes1)));
   c.pending = 1;
   in3_check_verified_hashes(&c);
 
   uint64_t hashes2[] = {503, 504, 505};
-  TEST_ASSERT_TRUE(vh_equals(chain.verified_hashes, hashes2, sizeof(hashes2) / sizeof(*hashes2)));
-  _free(chain.verified_hashes);
+  TEST_ASSERT_TRUE(vh_equals(c.chain.verified_hashes, hashes2, sizeof(hashes2) / sizeof(*hashes2)));
+  _free(c.chain.verified_hashes);
 }
 
 /*
@@ -359,6 +318,7 @@ static void test_in3_verified_hashes() {
 int main() {
   in3_register_default(in3_register_eth_full);
   in3_register_default(in3_register_eth_api);
+  in3_register_default(in3_register_nodeselect_def);
   in3_log_set_quiet(true);
 
   // now run tests
@@ -366,7 +326,6 @@ int main() {
   RUN_TEST(test_in3_config);
   RUN_TEST(test_in3_client_rpc);
   RUN_TEST(test_in3_checksum_rpc);
-  RUN_TEST(test_in3_client_chain);
   RUN_TEST(test_in3_client_context);
   RUN_TEST(test_in3_verified_hashes);
   return TESTS_END();

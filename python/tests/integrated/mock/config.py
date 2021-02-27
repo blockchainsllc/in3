@@ -12,9 +12,11 @@ _registry = {
         'avgBlockTime': 15,
         'nodeList': [
             {'url': 'https://in3-v2.slock.it/mainnet/nd-1',
-             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe'},
+             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe',
+             'props': 0xFFFF},
             {'url': 'https://in3-v2.slock.it/mainnet/nd-2',
-             'address': '0x1fe2e9bf29aa1938859af64c413361227d04059a'},
+             'address': '0x1fe2e9bf29aa1938859af64c413361227d04059a',
+             'props': 0xFFFF},
         ]},
     '0x5': {
         'contract': '0x5f51e413581dd76759e9eed51e63d14c8d1379c8',
@@ -23,9 +25,11 @@ _registry = {
         'avgBlockTime': 15,
         'nodeList': [
             {'url': 'https://in3-v2.slock.it/goerli/nd-1',
-             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe'},
+             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe',
+             'props': 0xFFFF},
             {'url': 'https://in3-v2.slock.it/goerli/nd-2',
-             'address': '0x1fe2e9bf29aa1938859af64c413361227d04059a'},
+             'address': '0x1fe2e9bf29aa1938859af64c413361227d04059a',
+             'props': 0xFFFF},
         ]},
     '0x7d0': {
         'contract': '0xa93b57289070550c82edb1106e12bb37138948b8',
@@ -33,9 +37,11 @@ _registry = {
         'needsUpdate': False,
         'nodeList': [
             {'url': 'https://in3-v2.slock.it/ipfs/nd-1',
-             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe'},
+             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe',
+             'props': 0xFFFF},
             {'url': 'https://in3-v2.slock.it/ipfs/nd-2',
-             'address': '0x1fe2e9bf29aa1938859af64c413361227d04059a'},
+             'address': '0x1fe2e9bf29aa1938859af64c413361227d04059a',
+             'props': 0xFFFF},
         ]},
     '0x99': {
         'contract': '0xed7bb275ca33c46ef3875a9c959c91553ca6acb8',
@@ -44,13 +50,34 @@ _registry = {
         'avgBlockTime': 600,
         'nodeList': [
             {'url': 'https://in3-v2.slock.it/btc/nd-1',
-             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe'},
+             'address': '0x45d45e6ff99e6c34a235d263965910298985fcfe',
+             'props': 0xFFFF},
         ]},
 }
 
-mock_config = ClientConfig(node_list_auto_update=False,
-                           node_signature_consensus=2,
-                           node_signatures=2,
-                           latest_block_stall=10,
-                           request_retries=1,
-                           in3_registry=_registry)
+mainchain_mock_config = ClientConfig(node_list_auto_update=False,
+                                     # node_signature_consensus=2,
+                                     # node_signatures=2,
+                                     latest_block_stall=10,
+                                     request_retries=1,
+                                     in3_registry=_registry['0x1'])
+
+goerli_mock_config = ClientConfig(node_list_auto_update=False,
+                                  # node_signature_consensus=2,
+                                  # node_signatures=2,
+                                  latest_block_stall=6,
+                                  request_retries=1,
+                                  in3_registry=_registry['0x5'])
+
+ipfs_mock_config = ClientConfig(node_list_auto_update=False,
+                                # node_signature_consensus=2,
+                                # node_signatures=2,
+                                request_retries=1,
+                                in3_registry=_registry['0x7d0'])
+
+btc_mock_config = ClientConfig(node_list_auto_update=False,
+                               node_signature_consensus=1,
+                               node_signatures=1,
+                               latest_block_stall=4,
+                               request_retries=1,
+                               in3_registry=_registry['0x99'])

@@ -40,6 +40,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bytes.h"
 #include <stdint.h>
 
@@ -68,7 +72,9 @@
  *  Check if n1 & n2 are at max err apart
  * Expects n1 & n2 to be integral types
  */
-#define IS_APPROX(n1, n2, err) ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
+#define IS_APPROX(n1, n2, err)    ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
+#define DIFF_ATMOST(n1, n2, diff) IS_APPROX(n1, n2, diff)
+#define DIFF_ATLEAST(n1, n2, err) ((n1 > n2) ? ((n1 - n2) >= err) : ((n2 - n1) >= err))
 
 /**
  * simple macro to stringify other macro defs
@@ -287,5 +293,9 @@ void in3_sleep(uint32_t ms);
 int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

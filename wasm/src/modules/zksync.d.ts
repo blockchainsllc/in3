@@ -31,6 +31,10 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+
+/**
+ * return structure after fetching the current account info.
+ */
 export declare interface ZKAccountInfo {
     address: string,
     committed: {
@@ -54,13 +58,18 @@ export declare interface ZKAccountInfo {
         pubKeyHash: string
     }
 }
-
+/**
+ * Block state.
+ */
 export declare interface BlockInfo {
     blockNumber: number,
     committed: boolean,
     verified: boolean
 }
 
+/**
+ * Transaction state
+ */
 export declare interface TxInfo {
     block: BlockInfo,
     executed: boolean,
@@ -68,15 +77,24 @@ export declare interface TxInfo {
     success: boolean
 }
 
+/**
+ * L1 Operation State
+ */
 export declare interface ETHOpInfoResp {
     executed: boolean,
     block: BlockInfo
 }
 
+/**
+ * Defines the type of a transaction.
+ */
 export declare interface TxType {
     type: "Withdraw" | "Transfer" | "TransferToNew"
 }
 
+/**
+ * fee collection.
+ */
 export declare interface Fee {
     feeType: TxType,
     totalGas: number,
@@ -86,10 +104,13 @@ export declare interface Fee {
     totalFee: number
 }
 
+/**
+ * Token List.
+ */
 export declare interface Tokens {
     [key: string]: Token
 }
-
+/** Token representation */
 export declare interface Token {
     address: String,
     decimals: number,
@@ -97,6 +118,9 @@ export declare interface Token {
     symbol: String
 }
 
+/**
+ * Response of a Deposit-Transaction.
+ */
 export declare interface DepositResponse {
     receipt: TransactionReceipt
 }
@@ -118,6 +142,11 @@ export declare interface ZksyncAPI<BufferType> {
     getContractAddress(): Promise<String>
 
     /**
+     * returns the address of the account used.
+     */
+    getAccountAddress(): String
+
+    /**
      * returns an object containing Token objects with its short name as key
      */
     getTokens(): Promise<Tokens>
@@ -131,8 +160,9 @@ export declare interface ZksyncAPI<BufferType> {
     /**
      * set the signer key based on the current pk
      * @param tokenSymbol the address of the token
+     * @param newKey the seed of the new key ( this is optional, if ommited the derrived key will be set in the rollup)
      */
-    setKey(tokenSymbol: string): Promise<String>
+    setKey(tokenSymbol?: string, newKey?: BufferType | string): Promise<String>
 
     /**
      * returns the state of receipt of the PriorityOperation
@@ -163,6 +193,11 @@ export declare interface ZksyncAPI<BufferType> {
      * returns public key used for signing zksync transactions
      */
     getSyncPubKeyHash(): String
+
+    /**
+     * returns public key used for signing zksync transactions
+     */
+    getSyncPubKey(): String
 
     /**
      * deposits the declared amount into the rollup
@@ -196,6 +231,25 @@ export declare interface ZksyncAPI<BufferType> {
      * @param token the token identifier e.g. ETH
      */
     emergencyWithdraw(token: string): Promise<String> //in3 error type?
+
+    /**
+     * signs the message based on the config and returns a Musig Schnorr signature
+     * @param msg the message
+     */
+    sign(msg: string): Promise<String> //in3 error type?
+
+    /**
+     * verifies a Musig Schnorr signature
+     * @param msg the message
+     * @param sig the 96byte long signature
+     */
+    verify(msg: string, sig: string): boolean
+
+    /**
+     * aggregates the given publickeys into one public key for a Musig Schnorr signature
+     * @param pubkeys the packed public keys (either a concatenated string or as array of public keys)
+     */
+    aggregatePubKey(pubkeys: string | string[]): string
 }
 
 
@@ -217,6 +271,44 @@ export declare interface zksync_config {
      * defines the type of the signer. Must be one of those 3 values. (default: pk)
      */
     signer_type?: 'pk' | 'contract' | 'create2'
+
+    /**
+     * optionaly the private seephrase to use when signing sync-transaction.
+     * If ommited this key is derrived from the signer.
+     */
+    sync_key?: string
+
+    /**
+     * create2 arguments
+     */
+    create2?: {
+        /**
+         * the address of creator of the contract
+         */
+        creator: string
+
+        /**
+         * the codehash of the deploy-tx (including constructor arguments)
+         */
+        codehash: string
+
+        /**
+         * the saltarg, which is added to the pub_key_has of the sync_key
+         */
+        saltarg: string
+    }
+
+    /** 
+     * if used as a musig-signature the 
+     */
+    musig_urls?: string[]
+
+    /** 
+     * concated packed public keys of the signers of the multisig
+     */
+    musig_pub_keys?: string
+
+
 
 }
 
