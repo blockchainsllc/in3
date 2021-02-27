@@ -144,7 +144,8 @@ NONULL json_ctx_t* parse_json_indexed(const char* js);              /**< parses 
 NONULL void        json_free(json_ctx_t* parser_ctx);               /**< frees the parse-context after usage */
 NONULL str_range_t d_to_json(const d_token_t* item);                /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
 char*              d_create_json(json_ctx_t* ctx, d_token_t* item); /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
-json_ctx_t*        json_create();
+
+json_ctx_t* json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
 NONULL d_token_t* json_create_bool(json_ctx_t* jp, bool value);
 NONULL d_token_t* json_create_int(json_ctx_t* jp, uint64_t value);
