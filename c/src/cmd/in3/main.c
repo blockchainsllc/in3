@@ -106,6 +106,7 @@ void show_help(char* name) {
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
+-gp,-gas_price the gas price to use when sending transactions. (default: use eth_gasPrice) \n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
 -path          the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000 \n\
@@ -405,7 +406,7 @@ void set_chain_id(in3_t* c, char* id) {
 }
 
 // prepare a eth_call or eth_sendTransaction
-abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
+abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, uint64_t gas_price, char* value, bytes_t* data) {
   char*      error = NULL;
   bytes_t    rdata = {0};
   abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
@@ -445,17 +446,23 @@ abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, ui
     sb_add_chars(params, "\"]");
   }
   else {
+    uint8_t gasdata[8];
+    bytes_t g_bytes = bytes(gasdata, 8);
+
     if (value) {
       sb_add_chars(params, ", \"value\":\"");
       sb_add_chars(params, value);
       sb_add_chars(params, "\"");
     }
-    sb_add_chars(params, ", \"gasLimit\":");
-    uint8_t gasdata[8];
-    bytes_t g_bytes = bytes(gasdata, 8);
+    if (gas_price) {
+      long_to_bytes(gas_price, gasdata);
+      b_optimize_len(&g_bytes);
+      sb_add_bytes(params, ", \"gasPrice\":", &g_bytes, 1, false);
+    }
     long_to_bytes(gas ? gas : 100000, gasdata);
+    g_bytes = bytes(gasdata, 8);
     b_optimize_len(&g_bytes);
-    sb_add_bytes(params, "", &g_bytes, 1, false);
+    sb_add_bytes(params, ", \"gasLimit\":", &g_bytes, 1, false);
     sb_add_chars(params, "}]");
   }
   args->len = 0;
@@ -694,6 +701,7 @@ int main(int argc, char* argv[]) {
   bool       json             = false;
   char*      ms_sigs          = NULL;
   uint64_t   gas_limit        = 100000;
+  uint64_t   gas_price        = 0;
   char*      value            = NULL;
   bool       wait             = false;
   char*      pwd              = NULL;
@@ -869,6 +877,8 @@ int main(int argc, char* argv[]) {
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
       gas_limit = atoll(argv[++i]);
+    else if (strcmp(argv[i], "-gp") == 0 || strcmp(argv[i], "-gas_price") == 0)
+      gas_price = atoll(argv[++i]);
     else if (strcmp(argv[i], "-test") == 0) {
       test_name = argv[++i];
       in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
@@ -1179,7 +1189,7 @@ int main(int argc, char* argv[]) {
     recorder_exit(0);
   }
   else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, gas_price, value, data);
     method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
