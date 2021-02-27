@@ -1004,7 +1004,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, resolve(c, to), args, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), args, block_number, 0, 0, NULL, data);
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
