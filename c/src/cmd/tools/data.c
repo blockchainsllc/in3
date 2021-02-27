@@ -247,9 +247,10 @@ int main(int argc, char* argv[]) {
   if (!input.len) return 0;
 
   if (!strcmp(format, "auto")) {
-    if (input.data[0] == '0' && input.data[1] == 'x') {
-      input.data = malloc(strlen(argv[i]) / 2);
-      input.len  = hex_to_bytes(argv[i], -1, input.data, strlen(argv[i]) / 2);
+    if ((input.data[0] == '0' && input.data[1] == 'x') || hexchar_to_int(*input.data) >> 1 == T_BOOLEAN) {
+      char* hex  = (char*) input.data;
+      input.data = malloc(strlen(hex) / 2);
+      input.len  = hex_to_bytes(hex, -1, input.data, strlen(hex) / 2);
       format     = "json";
     }
     else
