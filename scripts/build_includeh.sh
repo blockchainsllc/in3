@@ -34,13 +34,13 @@ rm include/in3/.dirs
 cat <<EOF >../c/include/in3.rs.h
 // AUTO-GENERATED FILE
 // See scripts/build_includeh.sh
-#include "../src/core/client/context_internal.h"
+#include "../src/core/client/request_internal.h"
 #include "../src/signer/pk-signer/signer.h"
 #include "../src/tools/clientdata/client_data.h"
 #include "../src/api/btc/btc_api.h"
 #include "in3/bytes.h"
 #include "in3/client.h"
-#include "in3/context.h"
+#include "in3/request.h"
 #include "in3/plugin.h"
 #include "in3/error.h"
 #include "in3/eth_api.h"
