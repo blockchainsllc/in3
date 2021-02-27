@@ -552,7 +552,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
       eth_set_pk_signer(c, pk_seed);
   }
 }
-
+#ifdef NODESELECT_DEF
 static void set_nodelist(in3_t* c, char* nodes, bool update) {
   if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
   char*                 cpy = alloca(strlen(nodes) + 1);
@@ -588,7 +588,7 @@ static void set_nodelist(in3_t* c, char* nodes, bool update) {
     die(err);
   sb_free(sb);
 }
-
+#endif
 static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
@@ -735,7 +735,9 @@ int main(int argc, char* argv[]) {
   rc = "1";
 #endif
 
+#ifdef NODESELECT_DEF
   _configure(c, "requestCount", "%s", rc);
+#endif
 
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++) {
@@ -859,10 +861,12 @@ int main(int argc, char* argv[]) {
       recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)
       recorder_read_start(c, argv[++i]);
+#ifdef NODESELECT_DEF
     else if (strcmp(argv[i], "-nl") == 0)
       set_nodelist(c, argv[++i], false);
     else if (strcmp(argv[i], "-bn") == 0)
       set_nodelist(c, argv[++i], true);
+#endif
     else if (strcmp(argv[i], "-mss") == 0 || strcmp(argv[i], "-sigs") == 0)
       ms_sigs = argv[++i];
     else if (strcmp(argv[i], "-ms") == 0) {
@@ -1067,6 +1071,7 @@ int main(int argc, char* argv[]) {
 
 #endif
   }
+#ifdef NODESELECT_DEF
   else if (strcmp(method, "in3_weights") == 0) {
     c->max_attempts = 1;
     uint32_t block = 0, b = 0;
@@ -1195,6 +1200,7 @@ int main(int argc, char* argv[]) {
 
     recorder_exit(0);
   }
+#endif
   else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, value, data);
     method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
@@ -1351,7 +1357,9 @@ int main(int argc, char* argv[]) {
   }
 
   in3_log_debug("..sending request %s %s\n", method, args->data);
+#ifdef NODESELECT_DEF
   in3_chain_t* chain = &c->chain;
+#endif
 
   if (wait && strcmp(method, "eth_sendTransaction") == 0) method = "eth_sendTransactionAndWait";
 
@@ -1370,6 +1378,7 @@ int main(int argc, char* argv[]) {
 
   in3_client_rpc_raw(c, sb->data, &result, &error);
 
+#ifdef NODESELECT_DEF
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   // Update nodelist if a newer latest block was reported
   if (chain && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
@@ -1379,6 +1388,7 @@ int main(int argc, char* argv[]) {
     //    else if (chain->type == CHAIN_BTC)
     //     in3_client_rpc(c, "getblockcount", "[]", &r, &e);
   }
+#endif
 
   if (error)
     die(error);
