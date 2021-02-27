@@ -51,6 +51,30 @@
 
 static int listenfd;
 void*      respond(void* arg);
+typedef struct m {
+  char*     method;
+  struct m* next;
+} method_t;
+
+method_t* allowed_methods = NULL;
+void      set_allowed_methods(char* allowed) {
+  if (!allowed) return;
+  allowed = _strdupn(allowed, -1);
+  for (char* m = strtok(allowed, ","); m; m = strtok(NULL, ",")) {
+    method_t* method = _malloc(sizeof(method_t));
+    method->method   = m;
+    method->next     = allowed_methods;
+    allowed_methods  = method;
+  }
+}
+
+static bool is_allowed(char* method) {
+  if (allowed_methods == NULL) return true;
+  for (method_t* m = allowed_methods; m; m = m->next) {
+    if (strcmp(m->method, method) == 0) return true;
+  }
+  return false;
+}
 typedef struct {
   int    con;
   int    s;
@@ -71,8 +95,12 @@ typedef struct queue {
   req_t*        r;
 } queue_t;
 
-queue_t *q_head = NULL, *q_tail = NULL;
-
+queue_t *   q_head = NULL, *q_tail = NULL;
+static void error_response(char* message, int error_code) {
+  char* payload = alloca(strlen(message) + 100);
+  sprintf(payload, "{\"id\":1,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"%s\",\"code\":%i}}", message, error_code);
+  printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %lu\r\n\r\n%s\r\n", strlen(payload), payload);
+}
 static void queue_add(req_t* r) {
   pthread_mutex_lock(&queue_mutex);
   queue_t* q = _malloc(sizeof(queue_t));
@@ -142,9 +170,11 @@ void* respond(void* arg) {
         // execute in3
         in3_req_t* req = req_new(r->in3, rest);
         if (req == NULL)
-          printf("HTTP/1.1 500 Not Handled\r\n\r\nInvalid request.\r\n");
+          error_response("Request can not be parsed", -32700);
         else if (req->error)
-          printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", req->error);
+          error_response(req->error, -32603);
+        else if (!is_allowed(d_get_string(req->requests[0], K_METHOD)))
+          error_response("Method not allowed", -32601);
         else {
           // execute it
           str_range_t range  = d_to_json(d_get(req->requests[0], key("params")));
@@ -171,9 +201,9 @@ void* respond(void* arg) {
             printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %i\r\n\r\n%s\r\n", (int) range.len, range.data);
           }
           else if (req->error)
-            printf("HTTP/1.1 500 Not Handled\r\n\r\n%s\r\n", req->error);
+            error_response(req->error, req->verification_state);
           else
-            printf("HTTP/1.1 500 Not Handled\r\n\r\nCould not execute\r\n");
+            error_response("Could not execute the request", req->verification_state);
         }
         if (req)
           req_free(req);
@@ -183,7 +213,7 @@ void* respond(void* arg) {
     }
 
     if (!rest)
-      printf("HTTP/1.1 500 Not Handled\r\n\r\nThe server has no handler to the request.\r\n");
+      error_response("The server has no handler to the request", -32603);
 
     // tidy up
     fflush(stdout);
@@ -200,7 +230,8 @@ void* respond(void* arg) {
   return NULL;
 }
 
-void http_run_server(const char* port, in3_t* in3) {
+void http_run_server(const char* port, in3_t* in3, char* allowed_methods) {
+  set_allowed_methods(allowed_methods);
   struct sockaddr_in clientaddr;
   socklen_t          addrlen;
 
@@ -266,7 +297,7 @@ void http_run_server(const char* port, in3_t* in3) {
     }
 
 #else
-    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");

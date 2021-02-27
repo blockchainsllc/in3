@@ -103,6 +103,7 @@ void show_help(char* name) {
 -s, -signs     number of signatures to use when verifying.\n\
 -f             finality : number of blocks on top of the current one.\n\
 -port          if specified it will run as http-server listening to the given port.\n\
+-am            only works if port is specified and declares a comma-seperated list of rpc-methods which are allowed. All other will be rejected.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
@@ -717,6 +718,7 @@ int main(int argc, char* argv[]) {
   abi_sig_t* req              = NULL;
   bool       json             = false;
   char*      ms_sigs          = NULL;
+  char*      allowed_methods  = NULL;
   uint64_t   gas_limit        = 100000;
   char*      value            = NULL;
   bool       wait             = false;
@@ -902,6 +904,8 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-am") == 0)
+      allowed_methods = argv[++i];
     else if (strcmp(argv[i], "-os") == 0)
       only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)
@@ -986,11 +990,12 @@ int main(int argc, char* argv[]) {
 #ifdef IN3_SERVER
   // start server
   if (!method && port) {
-    http_run_server(port, c);
+    http_run_server(port, c, allowed_methods);
     recorder_exit(0);
   }
 #else
   (void) (port);
+  (void) (allowed_methods);
 #endif
 
   // handle private key
