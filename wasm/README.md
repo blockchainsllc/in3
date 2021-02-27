@@ -47,63 +47,54 @@ const web3 = new Web3(c)
 
 ### Without web3 (Direct API)
 
-
 IN3 includes a light API, allowinng not only to use all RPC-Methods in a typesafe way, but also to sign transactions and call funnctions of a contract without the web3-library.
 
-For more details see the [API-Doc](https://github.com/slockit/in3/blob/master/docs/api.md#type-api)
+For more details see the [API-Doc](https://github.com/blockchainsllc/in3/blob/master/docs/api.md#type-api)
 
 ```js
-
 // import in3-Module
-import IN3 from 'in3'
+import IN3 from "in3";
 
 // use the In3Client
 const in3 = new IN3({
-    proof              : 'standard',
-    signatureCount     : 1,
-    chainId            : 'mainnet',
-    replaceLatestBlock : 10
-})
-
-(async () => {
-
-    // use the IN3 directly
-    const block = await in3.eth.getBlockByNumber('latest')
-
+  proof: "standard",
+  signatureCount: 1,
+  chainId: "mainnet",
+  replaceLatestBlock: 10
+})(async () => {
+  // use the IN3 directly
+  const block = await in3.eth.getBlockByNumber("latest");
 })().catch(console.error);
-
 ```
 
 ### Direct include in a website
 
 ```html
 <html>
+  <head>
+    <script src="in3.js"></script>
+  </head>
 
-    <head>
-        <script src="in3.js"></script>
-    </head>
-
-    <body>
-        IN3-Demo
-        <div>
-            result:
-            <pre id="result">
+  <body>
+    IN3-Demo
+    <div>
+      result:
+      <pre id="result">
                 ...waiting...
-            </pre>
-        </div>
-        <script>
-            var c = new IN3({
-                   chainId: 0x5
-            })
-            c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
-                .then(r => document.getElementById('result').innerHTML = JSON.stringify(r, null, 2))
-                .catch(alert)
-        </script>
-    </body>
-
+            </pre
+      >
+    </div>
+    <script>
+      var c = new IN3({
+        chainId: 0x5
+      });
+      c.send({ method: "eth_getBlockByNumber", params: ["latest", false] })
+        .then((r) => (document.getElementById("result").innerHTML = JSON.stringify(r, null, 2)))
+        .catch(alert);
+    </script>
+  </body>
 </html>
 ```
-
 
 ### LICENSE
 

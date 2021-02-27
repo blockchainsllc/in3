@@ -1,6 +1,6 @@
 ###############################################################################
 # This file is part of the Incubed project.
-# Sources: https://github.com/slockit/in3-c
+# Sources: https://github.com/blockchainsllc/in3
 # 
 # Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
 # 

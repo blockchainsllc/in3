@@ -6,7 +6,7 @@ description = "High-level bindings to IN3 library"
 license-file = "LICENSE"
 homepage = "https://slock.it/incubed/"
 documentation = "https://in3.readthedocs.io"
-repository = "https://github.com/blockchainsllc/in3-c/releases"
+repository = "https://github.com/blockchainsllc/in3/releases"
 readme = "README.md"
 edition = "2018"
 
