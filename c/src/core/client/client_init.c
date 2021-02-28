@@ -51,14 +51,20 @@ typedef struct default_fn {
 
 static default_fn_t* default_registry = NULL;
 
+// registers a default plugin, which means all registered reg_fn
+// will be called whenever a new client is created
 void in3_register_default(plgn_register reg_fn) {
   assert(reg_fn);
+
   // check if it already exists
   default_fn_t** d   = &default_registry;
   default_fn_t** pre = NULL;
   for (; *d; d = &(*d)->next) {
     if ((*d)->fn == reg_fn) pre = d;
   }
+
+  // so the plugin is already registered,
+  // but if registered again, we need to change the order.
   if (pre) {
     if ((*pre)->next) { // we are not the last one, so we need to make it the last
       default_fn_t* p = *pre;
@@ -69,27 +75,9 @@ void in3_register_default(plgn_register reg_fn) {
     return;
   }
 
+  // not registered yet, so we create one and put it at the end
   (*d)     = _calloc(1, sizeof(default_fn_t));
   (*d)->fn = reg_fn;
-}
-
-static void init_ipfs(in3_t* c) {
-  in3_client_register_chain(c, 0x7d0, CHAIN_IPFS, 2);
-}
-
-static void init_mainnet(in3_t* c) {
-  in3_client_register_chain(c, 0x01, CHAIN_ETH, 2);
-}
-static void init_ewf(in3_t* c) {
-  in3_client_register_chain(c, 0xf6, CHAIN_ETH, 2);
-}
-
-static void init_btc(in3_t* c) {
-  in3_client_register_chain(c, 0x99, CHAIN_BTC, 2);
-}
-
-static void init_goerli(in3_t* c) {
-  in3_client_register_chain(c, 0x05, CHAIN_ETH, 2);
 }
 
 static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
@@ -107,21 +95,22 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->id_count              = 1;
 
   if (chain_id == CHAIN_ID_MAINNET)
-    init_mainnet(c);
+    in3_client_register_chain(c, 0x01, CHAIN_ETH, 2);
   else if (chain_id == CHAIN_ID_GOERLI)
-    init_goerli(c);
+    in3_client_register_chain(c, 0x05, CHAIN_ETH, 2);
   else if (chain_id == CHAIN_ID_IPFS)
-    init_ipfs(c);
+    in3_client_register_chain(c, 0x7d0, CHAIN_IPFS, 2);
   else if (chain_id == CHAIN_ID_BTC)
-    init_btc(c);
+    in3_client_register_chain(c, 0x99, CHAIN_BTC, 2);
   else if (chain_id == CHAIN_ID_EWC)
-    init_ewf(c);
+    in3_client_register_chain(c, 0xf6, CHAIN_ETH, 2);
   else if (chain_id == CHAIN_ID_LOCAL)
     in3_client_register_chain(c, 0x11, CHAIN_ETH, 1);
 
   return IN3_OK;
 }
 
+// init the chain with the given parameters
 in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, uint8_t version) {
   assert(c);
 
@@ -134,25 +123,20 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   return IN3_OK;
 }
 
-static void chain_free(in3_chain_t* chain) {
-  if (chain->verified_hashes) _free(chain->verified_hashes);
-}
-
 /* frees the data */
 void in3_free(in3_t* a) {
   if (!a) return;
 
   // cleanup plugins
-  in3_plugin_t *p = a->plugins, *n;
-  while (p) {
-    if (p->acts & PLGN_ACT_TERM)
-      p->action_fn(p->data, PLGN_ACT_TERM, a);
-    n = p->next;
+  for (in3_plugin_t* p = a->plugins; p;) {
+    // we let the plugin free the resources, but don't care about the return-value.
+    if (p->acts & PLGN_ACT_TERM) p->action_fn(p->data, PLGN_ACT_TERM, a);
+    in3_plugin_t* n = p->next;
     _free(p);
     p = n;
   }
 
-  chain_free(&a->chain);
+  if (a->chain.verified_hashes) _free(a->chain.verified_hashes);
   _free(a);
 }
 
@@ -191,7 +175,7 @@ static chain_id_t chain_id(d_token_t* t) {
 
 static int chain_type(d_token_t* t) {
   if (d_type(t) == T_STRING) {
-    char* c = d_string(t);
+    const char* c = d_string(t);
     if (!strcmp(c, "btc")) return CHAIN_BTC;
     if (!strcmp(c, "eth")) return CHAIN_ETH;
     if (!strcmp(c, "ipfs")) return CHAIN_IPFS;
@@ -212,7 +196,8 @@ static in3_chain_type_t chain_type_from_id(chain_id_t id) {
       return CHAIN_IPFS;
     case CHAIN_ID_BTC:
       return CHAIN_BTC;
-    default: return CHAIN_GENERIC;
+    default:
+      return CHAIN_GENERIC;
   }
 }
 
@@ -245,13 +230,20 @@ char* in3_get_config(in3_t* c) {
 }
 
 char* in3_configure(in3_t* c, const char* config) {
-  json_ctx_t* json = parse_json((char*) config);
-  char*       res  = NULL;
-
-  if (!json || !json->result) return config_err("in3_configure", "parse error");
+  // config can not be changed as long as there are pending requests.
   if (c->pending) return config_err("in3_configure", "can not change config because there are pending requests!");
+
+  // make sure the json-config is parseable.
+  json_ctx_t* json = parse_json((char*) config);
+  if (!json || !json->result) return config_err("in3_configure", "parse error");
+
+  // the error-message we will return in case of an error.
+  char* res = NULL;
+
+  // we iterate over the root-props
   for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter)) {
     d_token_t* token = iter.token;
+
     if (token->key == key("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
@@ -268,9 +260,8 @@ char* in3_configure(in3_t* c, const char* config) {
         ct_ = chain_type(ct_token);
         EXPECT_TOK(ct_token, ct_ != -1, "expected (btc|eth|ipfs|<u8-value>)");
       }
-      else {
+      else
         ct_ = chain_type_from_id(c->chain.chain_id);
-      }
 
       bool changed      = (c->chain.chain_id != chain_id(token));
       c->chain.chain_id = chain_id(token);
@@ -368,6 +359,7 @@ char* in3_configure(in3_t* c, const char* config) {
       c->alloc_verified_hashes = c->max_verified_hashes;
     }
     else {
+      // since the token was not handled yet, we will ask the plugins..
       in3_configure_ctx_t cctx    = {.client = c, .json = json, .token = token, .error_msg = NULL};
       bool                handled = false;
       for (in3_plugin_t* p = c->plugins; p; p = p->next) {
