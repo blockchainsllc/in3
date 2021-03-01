@@ -169,10 +169,10 @@ safe_c2_create() {
 
   # calculate 
   export G_SALTARG=`in3 web3_sha3 $setup`
-  export G_SEED=`in3 createkey`
+  export G_SEED=`test -n "$G_SEED" && echo $G_SEED || in3 createkey`
   export G_SEED_BUNKER=`in3 createkey`
   export G_PUB_KEY=`in3 -zsk $G_SEED zk_pubkey`
-  export G_PUB_KEY_BUNKER=`in3 -zsk $G_SEED_BUNKER zk_pubkey`
+  export G_PUB_KEY_BUNKER=`test -n "$G_PUB_KEY_BUNKER" && echo $G_PUB_KEY_BUNKER || in3 -zsk $G_SEED_BUNKER zk_pubkey`
   export G_PUB_KEYS="$G_PUB_KEY${G_PUB_KEY_BUNKER:2}"
 
   export G_CODEHASH=`in3 web3_sha3 ${CODE}000000000000000000000000${IAMO_MASTER_COPY:2}`
@@ -183,9 +183,12 @@ safe_c2_create() {
 
   #prepare deploy tx
   export G_RAWTX=`in3 send -os -gas 5000000 -to $IAMO_FACTORY  "createProxyWithNonce(address,bytes,uint256)" $IAMO_MASTER_COPY $setup $G_NONCE`
+  export G_SETUP_DATA=`in3 abi_encode "createProxyWithNonce(address,bytes,uint256)" $IAMO_MASTER_COPY $setup $G_NONCE`
 
   echo "iamo safe succesfully NOT deployed.  G_SAFE  : $G_SAFE "
 }
+
+#s2=0x1688f0b900000000000000000000000044c9b4495aad374b227f1aafa64130602ca73e9f0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000ef85a3f9f7d34f49ad4b694baf64db256f0b6a5900000000000000000000000000000000000000000000000000000000000002046efc73ce000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000008a91dc2d28b689474298d91899f0c1baf62cb85b00000000000000000000000092f2d27ceb31b90d07e6dad1db443a5160c45096000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 
 safe_c2_setkey() {
  in3 -debug -zka $G_SAFE -zc2 $G_CREATOR:$G_CODEHASH:$G_SALTARG -zsk $G_SEED -zms $G_PUB_KEYS -zmu http://127.0.0.1:8099  zksync_set_key ETH
@@ -200,6 +203,29 @@ safe_c2_withdraw() {
  in3  -zka $G_SAFE -zkat create2 -zsk $G_SEED -zms $G_PUB_KEYS -zmu http://127.0.0.1:8099 zksync_withdraw $1 $2 ETH
 }
 
-safe_c2_start_bunker() {
- nohup in3 -zsk $G_SEED_BUNKER -port 8099 -debug 2>bunker_sign.log  > bunker_sign.log &
+safe_c3_start_bunker() {
+  # check factory ready
+  test -n "$IAMO_FACTORY" || deploy_iamo_factory
+  test -n "$IAMO_MASTER_COPY" || deploy_iamo_master_copy
+  export G_SEED_BUNKER=`test -n "$G_SEED_BUNKER" && echo $G_SEED_BUNKER || in3 createkey`
+
+  in3 -port 8099 -am iamo_zk_get_config,iamo_zk_add_wallet,zk_sign -zsk $G_SEED_BUNKER -imc $IAMO_MASTER_COPY -if $IAMO_FACTORY  -zvpm iamo_zk_verify_signatures -debug 
 }
+
+safe_c3_create_1_of_wallet() {
+  export G_SEED=`test -n "$G_SEED" && echo $G_SEED || in3 createkey`
+  w=`in3 iamo_zk_create_wallet 1 IA:$ZK_ACCOUNT $1 -zmu http://localhost:8099 -zsk $G_SEED  -zcpm iamo_zk_create_signatures`
+  export G_SAFE=`echo "$w" | jq -r .account`
+  export G_CREATOR=`echo "$w" | jq -r .create2.creator`
+  export G_SALTARG=`echo "$w" | jq -r .create2.saltarg`
+  export G_CODEHASH=`echo "$w" | jq -r .create2.codehash`
+  export G_DEPLOY_TXDATA=`echo "$w" | jq -r .deploy_tx.data`
+  export G_PUB_KEYS=`echo "$w" | jq -r .musig_pub_keys`
+  echo $w | jq
+}
+
+safe_c2_sign() {
+  in3 zk_sign $1 -zka $G_SAFE -zsk $G_SEED -zmu http://localhost:8099 -zms $G_PUB_KEYS  -zcpm iamo_zk_create_signatures 
+}
+
+

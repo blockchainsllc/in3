@@ -377,16 +377,16 @@ static in3_ret_t zksync_get_user_pubkey(zksync_config_t* conf, in3_req_t* ctx, u
 static bytes_t encode_setup(wallet_t* wallet) {
   bytes_t res = bytes(NULL, wallet->owner_len * 64 + 388);
   res.data    = _calloc(res.len, 1);
-  memcpy(res.data, "\x6e\xfc\x73\xce", 4);                                                 // setup(address[],uint8[],uint32,address,bytes,address,address,uint256,address)
-  int_to_bytes(288, res.data + 4 + 32 - 4);                                                // offset for owners
-  int_to_bytes(320 + 32 * wallet->owner_len, res.data + 4 + 64 - 4);                       // offset for roles
-  int_to_bytes(wallet->threshold, res.data + 4 + 96 - 4);                                  // threshold
-  int_to_bytes(352 + 64 * wallet->owner_len, res.data + 4 + 160 - 4);                      // offset for txdata ( currently empty)
-  int_to_bytes(wallet->owner_len, res.data + 4 + 320 - 4);                                 // owner address array len
-  int_to_bytes(wallet->owner_len, res.data + 4 + 352 + wallet->owner_len * 32 - 4);        // role array len
-  for (unsigned int i = 0; i < wallet->owner_len; i++) {                                   // handle all owners
-    memcpy(res.data + 4 + 320 + 12 + i * 32, wallet->owners[i].address, 20);               // copy owner address
-    int_to_bytes(wallet->owners[i].role, res.data + 4 + 384 + wallet->owner_len * 32 - 4); // roles
+  memcpy(res.data, "\x6e\xfc\x73\xce", 4);                                                          // setup(address[],uint8[],uint32,address,bytes,address,address,uint256,address)
+  int_to_bytes(288, res.data + 4 + 32 - 4);                                                         // offset for owners
+  int_to_bytes(320 + 32 * wallet->owner_len, res.data + 4 + 64 - 4);                                // offset for roles
+  int_to_bytes(wallet->threshold, res.data + 4 + 96 - 4);                                           // threshold
+  int_to_bytes(352 + 64 * wallet->owner_len, res.data + 4 + 160 - 4);                               // offset for txdata ( currently empty)
+  int_to_bytes(wallet->owner_len, res.data + 4 + 320 - 4);                                          // owner address array len
+  int_to_bytes(wallet->owner_len, res.data + 4 + 352 + wallet->owner_len * 32 - 4);                 // role array len
+  for (unsigned int i = 0; i < wallet->owner_len; i++) {                                            // handle all owners
+    memcpy(res.data + 4 + 320 + 12 + i * 32, wallet->owners[i].address, 20);                        // copy owner address
+    int_to_bytes(wallet->owners[i].role, res.data + 4 + 384 + wallet->owner_len * 32 - 4 + i * 32); // roles
   }
   return res;
 }
