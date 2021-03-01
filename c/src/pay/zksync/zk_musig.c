@@ -82,6 +82,14 @@ static in3_ret_t request_message(zksync_config_t* conf, zk_musig_session_t* s, i
   sb_t sb = {0};
   sb_add_bytes(&sb, "{\"message\":", message, 1, false);
   sb_add_bytes(&sb, ",\"pub_keys\":", &s->pub_keys, 1, false);
+  if (s->proof_data) {
+    sb_add_chars(&sb, ",\"proof\":");
+    sb_add_chars(&sb, s->proof_data);
+    if (conf->account) {
+      sb_add_rawbytes(&sb, ",\"account\":\"0x", bytes(conf->account, 20), 0);
+      sb_add_chars(&sb, "\"");
+    }
+  }
   sb_add_char(&sb, ',');
   add_sessiondata(&sb, s);
   sb_add_char(&sb, '}');
@@ -131,17 +139,34 @@ void cleanup_session(zk_musig_session_t* s, zksync_config_t* conf) {
   }
 }
 
-static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, d_token_t* proof, bytes_t* msg) {
+static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* account, d_token_t* proof, bytes_t* msg, bytes_t* pub_keys) {
   if (!conf->proof_verify_method && !proof) return IN3_OK; // no method to verify configured -> so we accept all
   if (!conf->proof_verify_method) return req_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
+  if (!account || account->len != 20) return req_set_error(ctx, "The account is missing in the sign data", IN3_EINVAL);
 
-  d_token_t* result = NULL;
-  uint8_t*   account;
-  TRY(zksync_get_account(conf, ctx, &account))
-  char* proof_data = d_create_json(ctx->request_context, proof);
-  sb_t  sb         = {0};
+  bytes32_t pubkey;
+  uint8_t*  signer_key = NULL;
+
+  if (memiszero(conf->pub_key, 32)) {
+    bytes32_t k;
+    TRY(zksync_get_sync_key(conf, ctx, k))
+    TRY(zkcrypto_pk_to_pubkey(k, pubkey))
+  }
+  else
+    memcpy(pubkey, conf->pub_key, 32);
+  for (unsigned int i = 0; i < pub_keys->len; i += 32) {
+    if (memcmp(pubkey, pub_keys->data + i, 32) == 0) continue;
+    signer_key = pub_keys->data + i;
+    break;
+  }
+
+  if (!signer_key) return req_set_error(ctx, "the signer key could not be found!", IN3_EINVAL);
+  d_token_t* result     = NULL;
+  char*      proof_data = d_create_json(ctx->request_context, proof);
+  sb_t       sb         = {0};
   sb_add_rawbytes(&sb, "\"0x", *msg, 0);
-  sb_add_rawbytes(&sb, "\",\"0x", bytes(account, 20), 0);
+  sb_add_rawbytes(&sb, "\",\"0x", *account, 0);
+  sb_add_rawbytes(&sb, "\",\"0x", bytes(signer_key, 32), 0);
   sb_add_chars(&sb, "\",");
   sb_add_chars(&sb, proof_data);
   _free(proof_data);
@@ -193,13 +218,15 @@ static bool is_complete(bytes_t data) {
 in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1);
-  d_token_t* result = NULL;
-  d_token_t* proof  = NULL;
+  d_token_t* result  = NULL;
+  d_token_t* proof   = NULL;
+  bytes_t*   account = NULL;
   bytes_t    message;
 
   if (d_type(ctx->params + 1) == T_OBJECT) {
     result  = ctx->params + 1;
     message = d_to_bytes(d_get(result, key("message")));
+    account = d_get_bytes(result, key("account"));
     proof   = d_get(result, K_PROOF);
     if (!message.data) return req_set_error(ctx->req, "missing message in request", IN3_EINVAL);
   }
@@ -219,6 +246,8 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   uint64_t            session_id = *((uint64_t*) (void*) hash);
   zk_musig_session_t* s          = get_session(conf, session_id);
   if (s == NULL) {
+    TRY(zksync_get_sync_key(conf, ctx->req, NULL))
+
     char*   proof_data = NULL;
     bytes_t pub_keys   = result ? d_to_bytes(d_get(result, key("pub_keys"))) : bytes(NULL, 0);
     if (!pub_keys.data && conf->musig_pub_keys.data) pub_keys = conf->musig_pub_keys;
@@ -231,7 +260,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     if (conf->proof_create_method && proof == NULL)
       TRY(create_proof(conf, ctx->req, &message, &proof_data))
     else
-      TRY(verify_proof(conf, ctx->req, proof, &message))
+      TRY(verify_proof(conf, ctx->req, account, proof, &message, &pub_keys))
 
     // make sure we don't have too many old sessions.
     check_max_sessions(conf);
@@ -312,11 +341,9 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   sb_t* rr = in3_rpc_handle_start(ctx);
   sb_add_char(rr, '{');
   add_sessiondata(rr, s);
-  if (proof) {
+  if (s->proof_data) {
     sb_add_chars(rr, ",\"proof\":");
-    char* proof_data = d_create_json(ctx->req->request_context, proof);
-    sb_add_chars(rr, proof_data);
-    _free(proof_data);
+    sb_add_chars(rr, s->proof_data);
   }
   sb_add_char(rr, '}');
   return in3_rpc_handle_finish(ctx);

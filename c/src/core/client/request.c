@@ -371,7 +371,15 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
-  return req_add_required(parent, ctx);
+  in3_ret_t ret = req_add_required(parent, ctx);
+  if (ret == IN3_OK && ctx->responses[0]) {
+    *result = d_get(ctx->responses[0], K_RESULT);
+    if (!*result) {
+      char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+      return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
+    }
+  }
+  return ret;
 }
 
 in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {

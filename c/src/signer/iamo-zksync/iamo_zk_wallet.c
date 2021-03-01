@@ -69,6 +69,7 @@ typedef struct wallet {
   uint32_t  threshold;
   uint32_t  owner_len;
   owner_t*  owners;
+  bytes32_t signer; // public key of the signer
 } wallet_t;
 
 static in3_ret_t find_zksync_conf(in3_req_t* ctx, zksync_config_t** conf) {
@@ -101,9 +102,11 @@ static in3_ret_t wallet_from_json(in3_req_t* ctx, d_token_t* data, wallet_t* w) 
   if (address.len != 20) return req_set_error(ctx, "Invalid address in wallet!", IN3_EINVAL);
   if (!owners || d_type(owners) != T_ARRAY) return req_set_error(ctx, "Invalid owners in wallet!", IN3_EINVAL);
   memcpy(w->account, address.data, 20);
-  w->threshold = (uint32_t) d_get_int(data, key("threshold"));
-  w->owner_len = (uint32_t) d_len(owners);
-  w->owners    = _malloc(w->owner_len * sizeof(owner_t));
+  w->threshold    = (uint32_t) d_get_int(data, key("threshold"));
+  w->owner_len    = (uint32_t) d_len(owners);
+  w->owners       = _malloc(w->owner_len * sizeof(owner_t));
+  bytes_t* signer = d_get_bytes(data, key("signer"));
+  if (signer && signer->len == 32) memcpy(w->signer, signer->data, 32);
   for (unsigned int i = 0; i < w->owner_len; i++) {
     d_token_t* o = d_get_at(owners, i);
     if (d_type(o) != T_OBJECT) {
@@ -125,7 +128,8 @@ static void wallet_to_json(wallet_t* w, sb_t* sb) {
   sb_add_rawbytes(sb, "{\"address\":\"0x", bytes(w->account, 20), 0);
   sb_add_chars(sb, "\",\"threshold\":");
   sb_add_int(sb, w->threshold);
-  sb_add_chars(sb, ",\"owners\":");
+  sb_add_rawbytes(sb, ",\"signer\":\"0x", bytes(w->signer, 32), 0);
+  sb_add_chars(sb, "\",\"owners\":");
   for (unsigned int i = 0; i < w->owner_len; i++) {
     sb_add_chars(sb, i ? ",{\"roles\":" : "[{\"roles\":");
     sb_add_int(sb, w->owners[i].role);
@@ -136,26 +140,28 @@ static void wallet_to_json(wallet_t* w, sb_t* sb) {
 }
 
 static in3_ret_t wallet_from_bytes(bytes_t data, wallet_t* w) {
-  w->owner_len = (data.len - 24) / 21;
+  w->owner_len = (data.len - 24 - 32) / 21;
   w->threshold = bytes_to_int(data.data + 20, 4);
+  w->owners    = _malloc(w->owner_len * sizeof(owner_t));
   memcpy(w->account, data.data, 20);
-  w->owners = _malloc(w->owner_len * sizeof(owner_t));
+  memcpy(w->signer, data.data + 24, 32);
   for (unsigned int i = 0; i < w->owner_len; i++) {
-    w->owners[i].role = (role_t) data.data[i * 21 + 24];
-    memcpy(w->owners[i].address, data.data + i * 21 + 25, 20);
+    w->owners[i].role = (role_t) data.data[i * 21 + 24 + 32];
+    memcpy(w->owners[i].address, data.data + i * 21 + 25 + 32, 20);
   }
   return IN3_OK;
   ;
 }
 
 static bytes_t wallet_to_bytes(wallet_t* w) {
-  bytes_t data = bytes(NULL, 24 + w->owner_len * 21);
+  bytes_t data = bytes(NULL, 24 + 32 + w->owner_len * 21);
   data.data    = _malloc(data.len);
   memcpy(data.data, w->account, 20);
+  memcpy(data.data + 24, w->signer, 32);
   int_to_bytes(w->threshold, data.data + 20);
   for (unsigned int i = 0; i < w->owner_len; i++) {
-    data.data[i * 21 + 24] = (uint8_t) w->owners[i].role;
-    memcpy(data.data + i * 21 + 25, w->owners[i].address, 20);
+    data.data[i * 21 + 24 + 32] = (uint8_t) w->owners[i].role;
+    memcpy(data.data + i * 21 + 25 + 32, w->owners[i].address, 20);
   }
   return data;
 }
@@ -311,21 +317,25 @@ in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) 
 
 in3_ret_t iamo_zk_verify_signatures(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
-  CHECK_PARAMS_LEN(ctx->req, ctx->params, 3) // msg, account, signatures as array
-  CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 1)
-  CHECK_PARAM_TYPE(ctx->req, ctx->params, 2, T_ARRAY)
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 4)          // msg, account, signer, signatures as array
+  CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 1)       // account
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 2, T_BYTES) // signer
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 3, T_ARRAY) // signatures
 
   // read arguments
   bytes_t  msg     = d_to_bytes(ctx->params + 1);
   uint8_t* account = d_get_bytes_at(ctx->params, 1)->data;
+  bytes_t* signer  = d_get_bytes_at(ctx->params, 2);
+  if (signer->len != 32) return req_set_error(ctx->req, "Invalid signer length!", IN3_EINVAL);
 
   // is the wallet registered?
   wallet_t wallet;
   TRY(wallet_get_from_cache(ctx->req, account, &wallet))
   if (!wallet.owners) return req_set_error(ctx->req, "The Account is not registered!", IN3_EINVAL);
+  if (memcmp(wallet.signer, signer->data, 32)) return req_set_error(ctx->req, "Invalid signer!", IN3_EINVAL);
 
   // check signatures (and free the wallet)
-  TRY_FINAL(wallet_verify_signatures(ctx->req, msg, &wallet, d_get_at(ctx->params, 2)), wallet_free(&wallet, false))
+  TRY_FINAL(wallet_verify_signatures(ctx->req, msg, &wallet, d_get_at(ctx->params, 3)), wallet_free(&wallet, false))
 
   // if we made it here, signatures are valid
   return in3_rpc_handle_with_string(ctx, "true");
@@ -484,6 +494,7 @@ in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ct
   if (codehash.len != 32) return req_set_error(ctx->req, "Invalid codehash from the server!", IN3_EINVAL);
   if (server_pubkey.len != 32) return req_set_error(ctx->req, "Invalid public key from the server!", IN3_EINVAL);
   memcpy(pubkeys + 32, server_pubkey.data, 32);
+  memcpy(wallet.signer, pubkeys, 32);
 
   bytes32_t pubkeyhash = {0};
   bytes32_t common_pubkey;
