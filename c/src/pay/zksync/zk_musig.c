@@ -175,9 +175,12 @@ static in3_ret_t create_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ms
   in3_req_t* sub = req_find_required(ctx, conf->proof_create_method);
 
   // only copy the data as json, so we can store them without a json_ctx and can clean up.
-  if (sub) *proof_data = d_create_json(sub->response_context, result);
-  req_remove_required(ctx, sub, false);
-  return IN3_OK;
+  if (sub) {
+    *proof_data = d_create_json(sub->response_context, result);
+    req_remove_required(ctx, sub, false);
+    return IN3_OK;
+  }
+  return IN3_ERPC;
 }
 
 static bool is_complete(bytes_t data) {
