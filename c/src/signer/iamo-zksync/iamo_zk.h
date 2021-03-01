@@ -60,7 +60,8 @@ in3_ret_t register_iamo_zk(in3_t* in3);
 
 in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx);
-in3_ret_t iamo_zk_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+in3_ret_t iamo_zk_verify_signatures(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+in3_ret_t iamo_zk_create_signatures(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 in3_ret_t iamo_zk_get_config(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 
 #ifdef __cplusplus

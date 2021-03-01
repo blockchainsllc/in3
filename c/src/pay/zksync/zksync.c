@@ -244,10 +244,15 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     if (conf->provider_url) _free(conf->provider_url);
     conf->provider_url = _strdupn(provider, -1);
   }
-  const char* pvm = d_get_string(ctx->token, key("proof_method"));
+  const char* pvm = d_get_string(ctx->token, key("verify_proof_method"));
   if (pvm) {
     if (conf->proof_verify_method) _free(conf->proof_verify_method);
     conf->proof_verify_method = _strdupn(pvm, -1);
+  }
+  const char* pcm = d_get_string(ctx->token, key("create_proof_method"));
+  if (pcm) {
+    if (conf->proof_create_method) _free(conf->proof_create_method);
+    conf->proof_create_method = _strdupn(pcm, -1);
   }
   bytes_t* account = d_get_bytes(ctx->token, key("account"));
   if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);

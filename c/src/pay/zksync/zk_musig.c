@@ -116,6 +116,7 @@ zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s) {
   if (s->precommitments.data) _free(s->precommitments.data);
   if (s->signature_shares.data) _free(s->signature_shares.data);
   if (s->pub_keys.data) _free(s->pub_keys.data);
+  if (s->proof_data) _free(s->proof_data);
   if (s->signer) zkcrypto_signer_free(s->signer);
   _free(s);
   return next;
@@ -152,6 +153,33 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, d_token_t* 
   return ret;
 }
 
+static in3_ret_t create_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* msg, char** proof_data) {
+  if (!conf->proof_create_method) return req_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
+
+  // prepare the arguments to create the proof
+  d_token_t* result = NULL;
+  uint8_t*   account;
+  TRY(zksync_get_account(conf, ctx, &account))
+  sb_t sb = {0};
+  sb_add_rawbytes(&sb, "\"0x", *msg, 0);
+  sb_add_rawbytes(&sb, "\",\"0x", bytes(account, 20), 0);
+  sb_add_chars(&sb, "\"");
+
+  // send the subrequest and wait for a response
+  TRY_FINAL(req_send_sub_request(ctx, conf->proof_create_method, sb.data, NULL, &result), _free(sb.data))
+
+  // handle error
+  if (!result) req_set_error(ctx, "Proof could not be created!", IN3_EINVAL);
+
+  // all is well, so we find the subrequest
+  in3_req_t* sub = req_find_required(ctx, conf->proof_create_method);
+
+  // only copy the data as json, so we can store them without a json_ctx and can clean up.
+  if (sub) *proof_data = d_create_json(sub->response_context, result);
+  req_remove_required(ctx, sub, false);
+  return IN3_OK;
+}
+
 static bool is_complete(bytes_t data) {
   for (unsigned int i = 0; i < data.len; i += 32) {
     if (memiszero(data.data + i, 32)) return false;
@@ -178,7 +206,6 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     if (!conf->musig_pub_keys.data) {
       bytes32_t pk;
       uint8_t   sig[96];
-      TRY(verify_proof(conf, ctx->req, proof, &message));
       TRY(zksync_get_sync_key(conf, ctx->req, pk))
       TRY(zkcrypto_sign_musig(pk, message, sig))
       return in3_rpc_handle_with_bytes(ctx, bytes(sig, 96));
@@ -189,15 +216,19 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   uint64_t            session_id = *((uint64_t*) (void*) hash);
   zk_musig_session_t* s          = get_session(conf, session_id);
   if (s == NULL) {
-    bytes_t pub_keys = result ? d_to_bytes(d_get(result, key("pub_keys"))) : bytes(NULL, 0);
+    char*   proof_data = NULL;
+    bytes_t pub_keys   = result ? d_to_bytes(d_get(result, key("pub_keys"))) : bytes(NULL, 0);
     if (!pub_keys.data && conf->musig_pub_keys.data) pub_keys = conf->musig_pub_keys;
     if (!pub_keys.data) return req_set_error(ctx->req, "no public keys found for musig signature", IN3_EINVAL);
     int pos = get_pubkey_pos(conf, pub_keys, ctx->req);
     in3_log_debug("create new session with pub_key pos %d\n", pos);
     TRY(pos)
 
-    // make sure the data is valid
-    TRY(verify_proof(conf, ctx->req, proof, &message))
+    // if a method is specified we create the proof here
+    if (conf->proof_create_method && proof == NULL)
+      TRY(create_proof(conf, ctx->req, &message, &proof_data))
+    else
+      TRY(verify_proof(conf, ctx->req, proof, &message))
 
     // make sure we don't have too many old sessions.
     check_max_sessions(conf);
@@ -206,6 +237,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     s                    = _calloc(1, sizeof(zk_musig_session_t));
     s->id                = session_id;
     s->pos               = (unsigned int) pos;
+    s->proof_data        = proof_data;
     s->next              = conf->musig_sessions;
     conf->musig_sessions = s;
     s->pub_keys          = bytes_dup(pub_keys);

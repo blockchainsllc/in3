@@ -274,9 +274,9 @@ in3_ret_t wallet_sign_and_send(iamo_zk_config_t* conf, in3_req_t* ctx, wallet_t*
 in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY(iamo_zk_check_rpc(conf, ctx))
   CHECK_PARAMS_LEN(ctx->req, ctx->params, (conf->cosign_rpc ? 1 : 2))
-  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT)                       // wallet-data
-  if (!conf->cosign_rpc) CHECK_PARAM_TYPE(ctx->req, ctx->params, 1, T_ARRAY) // signatures
-  if (conf->cosign_rpc && d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE;
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT)                                            // wallet-data
+  if (!conf->cosign_rpc) CHECK_PARAM_TYPE(ctx->req, ctx->params, 1, T_ARRAY)                      // signatures
+  if (conf->cosign_rpc && d_get(d_get(ctx->request, key("in3")), key("rpc"))) return IN3_EIGNORE; // if this is meant to go out to the server, we ignore it here
 
   // fill wallet
   wallet_t wallet = {0};
@@ -284,10 +284,12 @@ in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) 
   bytes_t message = wallet_to_bytes(&wallet);
   b_to_stack(message);
 
+  // are we executing it locally?
   if (conf->cosign_rpc)
     // we will sign the message and send it to the server
-    TRY_FINAL(wallet_sign_and_send(conf, ctx->req, &wallet, message), wallet_free(&wallet, false))
+    TRY_CATCH(wallet_sign_and_send(conf, ctx->req, &wallet, message), wallet_free(&wallet, false))
   else {
+    // or as incoming request on the server
 
     // get existing wallet
     wallet_t existing;
@@ -298,14 +300,18 @@ in3_ret_t iamo_zk_add_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) 
 
     // first check the cache
     wallet_free(&existing, false);
-    TRY_FINAL(wallet_store_in_cache(ctx->req, &wallet), wallet_free(&wallet, false))
   }
+
+  // store the wallet in cache (this is done locally and remote!)
+  TRY_FINAL(wallet_store_in_cache(ctx->req, &wallet), wallet_free(&wallet, false))
+
+  // all is well, so we return true
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
-in3_ret_t iamo_zk_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+in3_ret_t iamo_zk_verify_signatures(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
-  CHECK_PARAMS_LEN(ctx->req, ctx->params, 3)
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 3) // msg, account, signatures as array
   CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 1)
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 2, T_ARRAY)
 
@@ -323,6 +329,27 @@ in3_ret_t iamo_zk_is_valid(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // if we made it here, signatures are valid
   return in3_rpc_handle_with_string(ctx, "true");
+}
+
+in3_ret_t iamo_zk_create_signatures(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 2) // msg account
+  CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 1)
+
+  // read arguments
+  bytes_t  msg     = d_to_bytes(ctx->params + 1);
+  uint8_t* account = d_get_bytes_at(ctx->params, 1)->data;
+
+  // is the wallet registered?
+  wallet_t wallet;
+  TRY(wallet_get_from_cache(ctx->req, account, &wallet))
+  if (!wallet.owners) return req_set_error(ctx->req, "The Account is not registered!", IN3_EINVAL);
+
+  // create signatures (and free the wallet)
+  TRY_FINAL(wallet_sign(ctx->req, msg, &wallet, in3_rpc_handle_start(ctx)), wallet_free(&wallet, false))
+
+  // if we made it here, signatures are valid
+  return in3_rpc_handle_finish(ctx);
 }
 
 static in3_ret_t zksync_get_user_pubkey(zksync_config_t* conf, in3_req_t* ctx, uint8_t* pubkey) {
@@ -473,6 +500,9 @@ in3_ret_t iamo_zk_create_wallet(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ct
 
   // we will sign the message and send it to the server
   TRY_CATCH(wallet_sign_and_send(conf, ctx->req, &wallet, message), _free(setup_data.data))
+
+  // store the wallet in cache
+  TRY_CATCH(wallet_store_in_cache(ctx->req, &wallet), _free(setup_data.data))
 
   // cal txdata for deployment
   bytes_t deploy_tx = encode_deploy_data(mastercopy.data, setup_data, pubkeyhash);

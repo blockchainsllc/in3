@@ -140,7 +140,8 @@ void show_help(char* name) {
 -zc2           zksync create2 arguments in the form <creator>:<codehash>:<saltarg>. if set the account type is also changed to create2\n\
 -zms           public keys of a musig schnorr signatures to sign with\n\
 -zmu           url for signing service matching the first remote public key\n\
--zpm           method for calling to verify the proof\n\
+-zvpm          method for calling to verify the proof\n\
+-zcpm          method for calling to create the proof\n\
 -os            only sign, don't send the raw Transaction \n\
 -idk           iamo device key \n\
 -imc           the master copy address to be used\n\
@@ -842,8 +843,10 @@ int main(int argc, char* argv[]) {
       configure_2("zksync", "provider_url", argv[++i]);
     else if (strcmp(argv[i], "-zka") == 0)
       configure_2("zksync", "account", argv[++i]);
-    else if (strcmp(argv[i], "-zpm") == 0)
-      configure_2("zksync", "proof_method", argv[++i]);
+    else if (strcmp(argv[i], "-zcpm") == 0)
+      configure_2("zksync", "create_proof_method", argv[++i]);
+    else if (strcmp(argv[i], "-zvpm") == 0)
+      configure_2("zksync", "verify_proof_method", argv[++i]);
     else if (strcmp(argv[i], "-zkat") == 0)
       configure_2("zksync", "signer_type", argv[++i]);
     else if (strcmp(argv[i], "-zms") == 0)

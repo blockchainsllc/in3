@@ -68,7 +68,8 @@ static in3_ret_t iamo_config_set(iamo_zk_config_t* conf, in3_configure_ctx_t* ct
 
 static in3_ret_t iamo_rpc(iamo_zk_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY_RPC("iamo_zk_add_wallet", iamo_zk_add_wallet(conf, ctx))
-  TRY_RPC("iamo_zk_is_valid", iamo_zk_is_valid(conf, ctx))
+  TRY_RPC("iamo_zk_verify_signatures", iamo_zk_verify_signatures(conf, ctx))
+  TRY_RPC("iamo_zk_create_signatures", iamo_zk_create_signatures(conf, ctx))
   TRY_RPC("iamo_zk_create_wallet", iamo_zk_create_wallet(conf, ctx))
   TRY_RPC("iamo_zk_get_config", iamo_zk_get_config(conf, ctx))
   return IN3_EIGNORE;
