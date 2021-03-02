@@ -73,6 +73,11 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/eth1/TransactionReceipt.java
     in3/eth1/TransactionRequest.java
     in3/ipfs/API.java
+    in3/zksync/API.java
+    in3/zksync/Account.java
+    in3/zksync/AccountState.java
+    in3/zksync/Token.java
+    in3/zksync/Tx.java
     in3/utils/Account.java
     in3/utils/Crypto.java
     in3/utils/JSON.java
