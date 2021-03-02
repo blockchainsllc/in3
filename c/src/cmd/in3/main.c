@@ -1094,9 +1094,10 @@ int main(int argc, char* argv[]) {
     c->max_attempts = 1;
     uint32_t block = 0, b = 0;
     BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
-    uint64_t              now  = in3_time(NULL);
-    char*                 more = "WEIGHT";
-    in3_nodeselect_def_t* nl   = in3_nodeselect_def_data(c);
+    uint64_t now  = in3_time(NULL);
+    char*    more = "WEIGHT";
+    in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
+    in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
     if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
     if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
     recorder_print(0, "   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
@@ -1120,7 +1121,7 @@ int main(int argc, char* argv[]) {
           char*       urls[1];
           urls[0] = health_url;
           sprintf(health_url, "%s/health", nl->nodelist[i].url);
-          in3_http_request_t r;
+          in3_http_request_t r    = {0};
           in3_req_t          ctx  = {0};
           ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
           ctx.raw_response->state = IN3_WAITING;
