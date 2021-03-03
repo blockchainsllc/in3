@@ -50,7 +50,7 @@
 #include <unistd.h>
 
 void term(int signum) {
-  printf("Finishing..!\n");
+  printf("Finishing..!(caught signal  %i)\n", signum);
   exit(EXIT_SUCCESS);
 }
 
@@ -240,6 +240,8 @@ void http_run_server(const char* port, in3_t* in3, char* allowed_methods) {
   memset(&action, 0, sizeof(action));
   action.sa_handler = term;
   sigaction(SIGTERM, &action, NULL);
+  sigaction(SIGKILL, &action, NULL);
+  sigaction(SIGINT, &action, NULL);
 
   set_allowed_methods(allowed_methods);
   struct sockaddr_in clientaddr;
