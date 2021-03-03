@@ -49,6 +49,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+void term(int signum) {
+  printf("Finishing..!\n");
+  exit(EXIT_SUCCESS);
+}
+
 static int listenfd;
 void*      respond(void* arg);
 typedef struct m {
@@ -231,6 +236,11 @@ void* respond(void* arg) {
 }
 
 void http_run_server(const char* port, in3_t* in3, char* allowed_methods) {
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_handler = term;
+  sigaction(SIGTERM, &action, NULL);
+
   set_allowed_methods(allowed_methods);
   struct sockaddr_in clientaddr;
   socklen_t          addrlen;
@@ -297,7 +307,7 @@ void http_run_server(const char* port, in3_t* in3, char* allowed_methods) {
     }
 
 #else
-    clients[s] = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
+    clients[s]                                 = accept(listenfd, (struct sockaddr*) &clientaddr, &addrlen);
 
     if (clients[s] < 0) {
       perror("accept() error");
