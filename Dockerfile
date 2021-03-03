@@ -49,3 +49,4 @@ COPY --from=build /in3/build/bin/in3 /bin/in3
 RUN apt-get update && apt-get install -y curl 
 EXPOSE 8545
 ENTRYPOINT ["/bin/in3"]
+CMD ["--help"]
