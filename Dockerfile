@@ -41,7 +41,7 @@ USER root
 RUN apt-get update && apt-get install -y libcurl4-openssl-dev curl cmake build-essential
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y 
 ENV PATH="/root/.cargo/bin:${PATH}"
-RUN cd /in3/ && ls -ltr  && mkdir build && cd build && cmake  -DZKCRYPTO_LIB=true -DCMAKE_BUILD_TYPE=MinSizeRel -DIN3_SERVER=true  .. && make in3
+RUN cd /in3/  && mkdir build && cd build && cmake  -DZKCRYPTO_LIB=true -DCMAKE_BUILD_TYPE=MinSizeRel -DIN3_SERVER=true  .. && make in3
 
 
 FROM debian
