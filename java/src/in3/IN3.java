@@ -207,21 +207,30 @@ public class IN3 {
   private native Object sendobjectinternal(String request);
 
   private String toRPC(String method, Object[] params) {
-    String p = "";
+    StringBuilder p = new StringBuilder();
     for (int i = 0; i < params.length; i++) {
       if (p.length() > 0)
-        p += ",";
+        p.append(",");
       if (params[i] == null)
-        p += "null";
+        p.append("null");
+      else if (params[i] instanceof byte[]) {
+        byte[] b = (byte[]) params[i];
+        p.append("\"0x");
+        for (int j = 0; j < b.length; j++) {
+          p.append(Character.forDigit((b[j] >> 4) & 0xF, 16));
+          p.append(Character.forDigit(b[j] & 0xF, 16));
+        }
+        p.append("\"");
+      }
       else if (params[i] instanceof String) {
         String s = (String) params[i];
         if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
-          p += s;
+          p.append(s);
         else
-          p += "\"" + s + "\"";
+          p.append("\"" + s + "\"");
       }
       else
-        p += JSON.toJson(params[i]);
+        p.append(JSON.toJson(params[i]));
     }
     return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
   }
