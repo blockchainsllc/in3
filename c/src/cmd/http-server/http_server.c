@@ -248,8 +248,8 @@ void http_run_server(const char* port, in3_t* in3, char* allowed_methods) {
   socklen_t          addrlen;
 
   printf(
-      "Server started %shttp://127.0.0.1:%s%s\n",
-      COLORT_LIGHTGREEN, port, COLORT_RESET);
+      "Server started %shttp://127.0.0.1:%s%s [%s]\n",
+      COLORT_LIGHTGREEN, port, COLORT_RESET, allowed_methods ? allowed_methods : "all methods");
 
 #ifdef THREADSAFE
   for (int i = 0; i < POOL_SIZE; i++) pthread_create(&thread_pool[i], NULL, thread_run, NULL);
