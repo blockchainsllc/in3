@@ -44,7 +44,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cd /in3/  && mkdir build && cd build && cmake  -DZKCRYPTO_LIB=true -DCMAKE_BUILD_TYPE=MinSizeRel -DIN3_SERVER=true  .. && make in3
 
 
-FROM debian
+FROM debian:buster-slim
 COPY --from=build /in3/build/bin/in3 /bin/in3
 RUN apt-get update && apt-get install -y curl 
 EXPOSE 8545
