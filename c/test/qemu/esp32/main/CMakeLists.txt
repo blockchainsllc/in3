@@ -22,7 +22,7 @@ add_subdirectory(${IN3_SRC}/src/third-party/tommath build_tommath)
 add_subdirectory(${IN3_SRC}/src/third-party/crypto build_crypto)
 
 add_subdirectory(${IN3_SRC}/src/signer/pk-signer build_signer) 
-add_subdirectory(${IN3_SRC}/src/nodeselect build_nodeselect)
+add_subdirectory(${IN3_SRC}/src/nodeselect/full build_nodeselect)
 add_subdirectory(${IN3_SRC}/src/verifier/eth1/basic build_basic)
 add_subdirectory(${IN3_SRC}/src/verifier/eth1/nano build_nano)
 add_subdirectory(${IN3_SRC}/src/verifier/eth1/full build_full)
