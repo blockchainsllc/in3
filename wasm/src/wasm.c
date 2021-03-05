@@ -37,8 +37,8 @@
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
-#include "../../c/src/nodeselect/cache.h"
-#include "../../c/src/nodeselect/nodelist.h"
+#include "../../c/src/nodeselect/full/cache.h"
+#include "../../c/src/nodeselect/full/nodelist.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #ifdef ETH_FULL
