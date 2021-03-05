@@ -129,6 +129,16 @@ public class ClientConfiguration implements Configuration {
     data.put("useHttp", useHttp);
   }
 
+  public Boolean isExperimental() {
+    return data.getBoolean("experimental");
+  }
+
+  /* allow experimental features to be used */
+  public void setExperimental(boolean val) {
+    setDirty(val != isExperimental());
+    data.put("experimental", val);
+  }
+
   public Long getTimeout() {
     return data.getLong("timeout");
   }
@@ -243,6 +253,9 @@ public class ClientConfiguration implements Configuration {
     }
     if (isUseHttp() != null) {
       JSON.appendKey(sb, "useHttp", isUseHttp());
+    }
+    if (isExperimental() != null) {
+      JSON.appendKey(sb, "experimental", isExperimental());
     }
     if (getTimeout() != null) {
       JSON.appendKey(sb, "timeout", getTimeout());
