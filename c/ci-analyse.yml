@@ -138,6 +138,7 @@ vulnerabilities:
     - if: '$CI_COMMIT_BRANCH == "develop"'
     - if: '$CI_COMMIT_REF_PROTECTED == "true"'
   stage: analysis
+  when: manual
   extends: .only_full
   allow_failure: true
   needs:
