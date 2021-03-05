@@ -126,6 +126,13 @@ public class IN3 {
   }
 
   /**
+   * gets the zksync-api
+   */
+  public in3.zksync.API getZksync() {
+    return new in3.zksync.API(this);
+  }
+
+  /**
    * gets the btc-api
    */
   public in3.btc.API getBtcAPI() {
