@@ -224,7 +224,7 @@ mod tests {
     fn test_btc_get_blockheader_bytes() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::BTC));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"experimental":true,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "getblockheader",
