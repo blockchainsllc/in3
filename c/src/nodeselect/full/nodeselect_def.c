@@ -3,11 +3,11 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "nodeselect_def.h"
-#include "../core/client/keys.h"
-#include "../core/client/request_internal.h"
-#include "../core/util/bitset.h"
-#include "../core/util/debug.h"
-#include "../core/util/log.h"
+#include "../../core/client/keys.h"
+#include "../../core/client/request_internal.h"
+#include "../../core/util/bitset.h"
+#include "../../core/util/debug.h"
+#include "../../core/util/log.h"
 #include "cache.h"
 #include "nodeselect_def_cfg.h"
 #include "registry.h"

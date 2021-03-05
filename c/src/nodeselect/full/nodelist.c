@@ -33,11 +33,11 @@
  *******************************************************************************/
 
 #include "nodelist.h"
-#include "../core/client/keys.h"
-#include "../core/client/request_internal.h"
-#include "../core/util/bitset.h"
-#include "../core/util/data.h"
-#include "../core/util/debug.h"
+#include "../../core/client/keys.h"
+#include "../../core/client/request_internal.h"
+#include "../../core/util/bitset.h"
+#include "../../core/util/data.h"
+#include "../../core/util/debug.h"
 #include "cache.h"
 #include <stdio.h>
 #include <string.h>

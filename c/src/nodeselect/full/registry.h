@@ -1,9 +1,9 @@
 #ifndef IN3_NODE_SELECT_REGISTRY_H
 #define IN3_NODE_SELECT_REGISTRY_H
 
-#include "../core/client/plugin.h"
-#include "../core/util/data.h"
-#include "../core/util/error.h"
+#include "../../core/client/plugin.h"
+#include "../../core/util/data.h"
+#include "../../core/util/error.h"
 #include "nodeselect_def.h"
 
 NONULL_FOR((1))

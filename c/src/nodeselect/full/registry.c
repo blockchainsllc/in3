@@ -33,13 +33,13 @@
  *******************************************************************************/
 
 #include "registry.h"
-#include "../core/client/keys.h"
-#include "../core/client/request.h"
-#include "../core/util/mem.h"
-#include "../verifier/eth1/nano/eth_nano.h"
-#include "../verifier/eth1/nano/merkle.h"
-#include "../verifier/eth1/nano/rlp.h"
-#include "../verifier/eth1/nano/serialize.h"
+#include "../../core/client/keys.h"
+#include "../../core/client/request.h"
+#include "../../core/util/mem.h"
+#include "../../verifier/eth1/nano/eth_nano.h"
+#include "../../verifier/eth1/nano/merkle.h"
+#include "../../verifier/eth1/nano/rlp.h"
+#include "../../verifier/eth1/nano/serialize.h"
 #include <string.h>
 
 #define SERVER_STRUCT_SIZE 6

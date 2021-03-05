@@ -3,7 +3,6 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/util/mem.h"
-#include "../../nodeselect/cache.h"
 #include "btc_serialize.h"
 
 in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target) {

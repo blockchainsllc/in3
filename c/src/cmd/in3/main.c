@@ -60,8 +60,8 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
-#include "../../nodeselect/cache.h"
-#include "../../nodeselect/nodelist.h"
+#include "../../nodeselect/full/cache.h"
+#include "../../nodeselect/full/nodelist.h"
 
 #if defined(LEDGER_NANO)
 #include "../../signer/ledger-nano/signer/ethereum_apdu_client.h"
@@ -70,7 +70,7 @@
 #endif
 
 #include "../../init/in3_init.h"
-#include "../../nodeselect/nodeselect_def.h"
+#include "../../nodeselect/full/nodeselect_def.h"
 #include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
@@ -415,15 +415,12 @@ void set_chain_id(in3_t* c, char* id) {
   c->chain.chain_id = strstr(id, "://") ? CHAIN_ID_LOCAL : getchain_id(id);
   if (c->chain.chain_id == CHAIN_ID_LOCAL) {
     sb_t* sb = sb_new("{\"autoUpdateList\":false,\"proof\":\"none\"");
-    if (strstr(id, "://")) { // its a url
-      sb_add_chars(sb, ",\"nodeRegistry\":{\"needsUpdate\":false,\"nodeList\":[");
-      sb_add_chars(sb, "{\"address\":\"0x0000000000000000000000000000000000000000\"");
-      sb_add_chars(sb, ",\"url\":\"");
-      sb_add_chars(sb, id);
-      sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
-      sb_add_chars(sb, "]}}");
-    }
-    sb_add_chars(sb, "}");
+    sb_add_chars(sb, ",\"nodeRegistry\":{\"needsUpdate\":false,\"nodeList\":[");
+    sb_add_chars(sb, "{\"address\":\"0x0000000000000000000000000000000000000000\"");
+    sb_add_chars(sb, ",\"url\":\"");
+    sb_add_chars(sb, strstr(id, "://") ? id : "http://localhost:8545");
+    sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+    sb_add_chars(sb, "]}}}");
     char* err = in3_configure(c, sb->data);
     if (err)
       die(err);

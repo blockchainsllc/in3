@@ -37,10 +37,10 @@
  * 
  * */
 
-#include "../core/client/client.h"
-#include "../core/client/request.h"
-#include "../core/util/log.h"
-#include "../core/util/mem.h"
+#include "../../core/client/client.h"
+#include "../../core/client/request.h"
+#include "../../core/util/log.h"
+#include "../../core/util/mem.h"
 #include <time.h>
 
 #ifndef NODELIST_H

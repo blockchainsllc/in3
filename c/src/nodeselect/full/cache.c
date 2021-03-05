@@ -33,12 +33,12 @@
  *******************************************************************************/
 
 #include "cache.h"
-#include "../core/client/plugin.h"
-#include "../core/client/request.h"
-#include "../core/util/bitset.h"
-#include "../core/util/log.h"
-#include "../core/util/mem.h"
-#include "../core/util/utils.h"
+#include "../../core/client/plugin.h"
+#include "../../core/client/request.h"
+#include "../../core/util/bitset.h"
+#include "../../core/util/log.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "nodelist.h"
 #include "stdio.h"
 #include <assert.h>

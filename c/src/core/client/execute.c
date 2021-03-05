@@ -32,11 +32,10 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../nodeselect/cache.h"
-#include "../../nodeselect/nodelist.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../util/data.h"
+#include "../util/log.h"
 #include "client.h"
 #include "keys.h"
 #include "plugin.h"

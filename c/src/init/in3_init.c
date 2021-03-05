@@ -13,7 +13,7 @@
 #include "../transport/http/in3_http.h"
 #endif
 #ifdef NODESELECT_DEF
-#include "../nodeselect/nodeselect_def.h"
+#include "../nodeselect/full/nodeselect_def.h"
 #endif
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"

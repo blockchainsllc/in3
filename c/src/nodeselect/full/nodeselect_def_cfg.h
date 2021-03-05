@@ -3,7 +3,7 @@
 
 #define JSON_TO_BIN(x) x // marker for pre-build stage
 
-#include "../core/client/client.h"
+#include "../../core/client/client.h"
 
 #ifndef NO_BOOT_NODES_MAINNET
 /*

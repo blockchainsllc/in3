@@ -1,8 +1,8 @@
 #ifndef IN3_NODE_SELECT_DEF_H
 #define IN3_NODE_SELECT_DEF_H
 
-#include "../core/client/plugin.h"
-#include "../core/client/request.h"
+#include "../../core/client/plugin.h"
+#include "../../core/client/request.h"
 #include "nodelist.h"
 
 #ifdef NODESELECT_DEF
