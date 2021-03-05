@@ -143,9 +143,6 @@ void show_help(char* name) {
 -zvpm          method for calling to verify the proof\n\
 -zcpm          method for calling to create the proof\n\
 -os            only sign, don't send the raw Transaction \n\
--idk           iamo device key \n\
--imc           the master copy address to be used\n\
--if            iamo factory address\n\
 -version       displays the version \n\
 -help          displays this help message \n\
 \n\
@@ -826,18 +823,6 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
-#ifdef IAMO_SIGNER
-    else if (strcmp(argv[i], "-idk") == 0)
-      configure_2("iamo", "device_key", argv[++i]);
-    else if (strcmp(argv[i], "-is") == 0)
-      configure_2("iamo", "service", argv[++i]);
-#endif
-#ifdef IAMO_ZK
-    else if (strcmp(argv[i], "-imc") == 0)
-      configure_2("iamo_zk", "master_copy", argv[++i]);
-    else if (strcmp(argv[i], "-if") == 0)
-      configure_2("iamo_zk", "creator", argv[++i]);
-#endif
 #ifdef ZKSYNC
     else if (strcmp(argv[i], "-zks") == 0)
       configure_2("zksync", "provider_url", argv[++i]);

@@ -35,14 +35,6 @@ if (PK_SIGNER)
   add_subdirectory(pk-signer)
 endif()
 
-if (IAMO_SIGNER)
-  add_subdirectory(iamo-signer)
-endif()
-
-if (IAMO_ZK)
-  add_subdirectory(iamo-zksync)
-endif()
-
 if (LEDGER_NANO)
   add_subdirectory(ledger-nano/signer)
 endif()

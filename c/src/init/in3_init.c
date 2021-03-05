@@ -3,8 +3,6 @@
 #include "../core/client/plugin.h"
 #include "../pay/eth/pay_eth.h"
 #include "../pay/zksync/zksync.h"
-#include "../signer/iamo-signer/iamo_signer.h"
-#include "../signer/iamo-zksync/iamo_zk.h"
 #include "../signer/pk-signer/signer.h"
 #include "../third-party/zkcrypto/lib.h"
 #ifdef USE_CURL
@@ -58,12 +56,6 @@ static void init_verifier() {
 #endif
 #ifdef PK_SIGNER
   in3_register_default(eth_register_pk_signer);
-#endif
-#ifdef IAMO_SIGNER
-  in3_register_default(register_iamo_signer);
-#endif
-#ifdef IAMO_ZK
-  in3_register_default(register_iamo_zk);
 #endif
 }
 
