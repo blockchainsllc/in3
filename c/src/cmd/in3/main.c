@@ -143,6 +143,7 @@ void show_help(char* name) {
 -zvpm          method for calling to verify the proof\n\
 -zcpm          method for calling to create the proof\n\
 -os            only sign, don't send the raw Transaction \n\
+-x             support experimental features \n\
 -version       displays the version \n\
 -help          displays this help message \n\
 \n\
@@ -904,6 +905,8 @@ int main(int argc, char* argv[]) {
       port = argv[++i];
     else if (strcmp(argv[i], "-am") == 0)
       allowed_methods = argv[++i];
+    else if (strcmp(argv[i], "-x") == 0)
+      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
     else if (strcmp(argv[i], "-os") == 0)
       only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)

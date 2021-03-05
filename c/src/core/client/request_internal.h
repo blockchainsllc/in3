@@ -42,7 +42,8 @@
 #else
 #define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err)
 #endif
-
+#define REQUIRE_EXPERIMENTAL(req, feature) \
+  if ((req->client->flags & FLAGS_ALLOW_EXPERIMENTAL) == 0) return req_set_error(req, "The feature " feature " is still experimental. You need to explicitly allow it in the config.", IN3_ECONFIG);
 /**
  * creates a request-object, which then need to be filled with the responses.
  *

@@ -57,13 +57,13 @@ extern "C" {
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MAINNET    0x01 /**< chain_id for mainnet */
-#define CHAIN_ID_GOERLI     0x5 /**< chain_id for goerlii */
-#define CHAIN_ID_EWC        0xf6 /**< chain_id for ewc */
+#define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
+#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
+#define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
-#define CHAIN_ID_BTC        0x99 /**< chain_id for btc */
-#define CHAIN_ID_LOCAL      0x11 /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6 /**< default replace_latest_block */
+#define CHAIN_ID_BTC        0x99  /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0x11  /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6     /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -105,14 +105,15 @@ typedef uint64_t in3_node_props_t;
  * a list of flags defining the behavior of the incubed client. They should be used as bitmask for the flags-property.
  */
 typedef enum {
-  FLAGS_KEEP_IN3         = 0x1,  /**< the in3-section with the proof will also returned */
-  FLAGS_AUTO_UPDATE_LIST = 0x2,  /**< the nodelist will be automatically updated if the last_block is newer  */
-  FLAGS_INCLUDE_CODE     = 0x4,  /**< the code is included when sending eth_call-requests  */
-  FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
-  FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
-  FLAGS_STATS            = 0x20, /**< nodes will keep track of the stats (default=true)  */
-  FLAGS_NODE_LIST_NO_SIG = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
-  FLAGS_BOOT_WEIGHTS     = 0x80  /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
+  FLAGS_KEEP_IN3           = 0x1,  /**< the in3-section with the proof will also returned */
+  FLAGS_AUTO_UPDATE_LIST   = 0x2,  /**< the nodelist will be automatically updated if the last_block is newer  */
+  FLAGS_INCLUDE_CODE       = 0x4,  /**< the code is included when sending eth_call-requests  */
+  FLAGS_BINARY             = 0x8,  /**< the client will use binary format  */
+  FLAGS_HTTP               = 0x10, /**< the client will try to use http instead of https  */
+  FLAGS_STATS              = 0x20, /**< nodes will keep track of the stats (default=true)  */
+  FLAGS_NODE_LIST_NO_SIG   = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
+  FLAGS_BOOT_WEIGHTS       = 0x80, /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
+  FLAGS_ALLOW_EXPERIMENTAL = 0x100 /**< if true the client will support experimental features.*/
 } in3_flags_type_t;
 
 /** represents a blockhash which was previously verified */

@@ -443,6 +443,7 @@ NONULL in3_proof_t in3_req_get_proof(
     in3_req_t* req, /**< [in] the current request. */
     int        i    /**< [in] the index within the request. */
 );
+
 #ifdef __cplusplus
 }
 #endif

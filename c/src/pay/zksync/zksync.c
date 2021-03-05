@@ -142,6 +142,9 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   else
     return IN3_EIGNORE;
 
+  // mark zksync as experimental
+  REQUIRE_EXPERIMENTAL(ctx->req, "zksync")
+
   // handle rpc -functions
   TRY_RPC("deposit", zksync_deposit(conf, ctx))
   TRY_RPC("transfer", zksync_transfer(conf, ctx, ZK_TRANSFER))
