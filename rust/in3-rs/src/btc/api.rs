@@ -224,7 +224,7 @@ mod tests {
     fn test_btc_get_blockheader_bytes() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::BTC));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"experimental":true,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "getblockheader",
@@ -260,7 +260,7 @@ mod tests {
     fn test_btc_get_blockheader() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::BTC));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"experimental":true,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "getblockheader",
@@ -327,7 +327,7 @@ mod tests {
     fn test_btc_get_transaction_bytes() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::BTC));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"experimental":true,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "getrawtransaction",
@@ -364,7 +364,7 @@ mod tests {
     fn test_btc_get_transaction() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::BTC));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodeRegistry":{"needsUpdate":false}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"experimental":true,"nodeRegistry":{"needsUpdate":false}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "getrawtransaction",

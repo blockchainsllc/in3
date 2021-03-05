@@ -79,8 +79,8 @@ static void test_binary_primitives() {
   bytes_t*    d          = d_bytes(d_get(ctx->result, k_result));
   char*       str_result = malloc(d->len * 2 + 2);
   bytes_to_hex(d->data, d->len, str_result);
-  char*   jsonrpc = d_get_stringk(ctx->result, k_jsonrpc);
-  int32_t id_     = d_get_intk(ctx->result, k_id);
+  char*   jsonrpc = d_get_string(ctx->result, k_jsonrpc);
+  int32_t id_     = d_get_int(ctx->result, k_id);
   TEST_ASSERT_EQUAL_STRING(str_result, "0000000000000000000000000000000000000000000000000000000000000001");
   TEST_ASSERT_EQUAL_STRING(jsonrpc, "2.0");
   TEST_ASSERT_EQUAL_INT32(id_, 1);

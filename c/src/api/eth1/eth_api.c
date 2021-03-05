@@ -33,10 +33,11 @@
  *******************************************************************************/
 
 #include "eth_api.h"
-#include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "../utils/api_utils_priv.h"
@@ -112,13 +113,13 @@ static size_t align(size_t val) {
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   bytes_t b = d_to_bytes(d_get(t, K_INPUT));
 
-  tx->signature[64]     = d_get_intk(t, K_V);
-  tx->block_number      = d_get_longk(t, K_BLOCK_NUMBER);
-  tx->gas               = d_get_longk(t, K_GAS);
-  tx->gas_price         = d_get_longk(t, K_GAS_PRICE);
-  tx->nonce             = d_get_longk(t, K_NONCE);
+  tx->signature[64]     = d_get_int(t, K_V);
+  tx->block_number      = d_get_long(t, K_BLOCK_NUMBER);
+  tx->gas               = d_get_long(t, K_GAS);
+  tx->gas_price         = d_get_long(t, K_GAS_PRICE);
+  tx->nonce             = d_get_long(t, K_NONCE);
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
-  tx->transaction_index = d_get_intk(t, K_TRANSACTION_INDEX);
+  tx->transaction_index = d_get_int(t, K_TRANSACTION_INDEX);
   memcpy((uint8_t*) tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
   copy_fixed(tx->block_hash, 32, d_to_bytes(d_getl(t, K_BLOCK_HASH, 32)));
   copy_fixed(tx->from, 20, d_to_bytes(d_getl(t, K_FROM, 20)));
@@ -191,10 +192,10 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
 
       copy_fixed(b->sha3_uncles, 32, d_to_bytes(d_getl(result, K_SHA3_UNCLES, 32)));
       copy_fixed(b->state_root, 32, d_to_bytes(d_getl(result, K_STATE_ROOT, 32)));
-      b->gasLimit          = d_get_longk(result, K_GAS_LIMIT);
-      b->gasUsed           = d_get_longk(result, K_GAS_USED);
-      b->number            = d_get_longk(result, K_NUMBER);
-      b->timestamp         = d_get_longk(result, K_TIMESTAMP);
+      b->gasLimit          = d_get_long(result, K_GAS_LIMIT);
+      b->gasUsed           = d_get_long(result, K_GAS_USED);
+      b->number            = d_get_long(result, K_NUMBER);
+      b->timestamp         = d_get_long(result, K_TIMESTAMP);
       b->tx_count          = d_len(txs);
       b->seal_fields_count = d_len(sealed);
       b->extra_data        = bytes(p, extra.len);
@@ -278,10 +279,10 @@ static eth_log_t* parse_logs(d_token_t* result) {
   prev = first = NULL;
   for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
     eth_log_t* log         = _calloc(1, sizeof(*log));
-    log->removed           = d_get_intk(it.token, K_REMOVED);
-    log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
-    log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
-    log->block_number      = d_get_longk(it.token, K_BLOCK_NUMBER);
+    log->removed           = d_get_int(it.token, K_REMOVED);
+    log->log_index         = d_get_int(it.token, K_LOG_INDEX);
+    log->transaction_index = d_get_int(it.token, K_TRANSACTION_INDEX);
+    log->block_number      = d_get_long(it.token, K_BLOCK_NUMBER);
     log->data.len          = d_len(d_get(it.token, K_DATA));
     log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
     log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
@@ -398,11 +399,11 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
 static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) {
   errno             = 0;
-  in3_ctx_t* ctx    = in3_client_rpc_ctx(in3, "eth_getTransactionReceipt", params);
+  in3_req_t* ctx    = in3_client_rpc_ctx(in3, "eth_getTransactionReceipt", params);
   d_token_t* result = get_result(ctx);
   if (result) {
     if (d_type(result) == T_NULL) {
-      ctx_free(ctx);
+      req_free(ctx);
       if (count) {
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
@@ -421,12 +422,12 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
     else {
       //
       char* c = d_create_json(ctx->response_context, result);
-      ctx_free(ctx);
+      req_free(ctx);
       return c;
     }
   }
   api_set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
-  ctx_free(ctx);
+  req_free(ctx);
   return NULL;
 }
 
@@ -461,16 +462,16 @@ in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
 }
 
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
-  return filter_remove(in3, id);
+  return filter_remove(eth_basic_get_filters(in3), id);
 }
 
 in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
-  if (in3->filters == NULL)
+  in3_filter_handler_t* filters = eth_basic_get_filters(in3);
+  if (filters == NULL) return IN3_EFIND;
+  if (id == 0 || id > filters->count)
     return IN3_EFIND;
-  if (id == 0 || id > in3->filters->count)
-    return IN3_EINVAL;
 
-  in3_filter_t* f = in3->filters->array[id - 1];
+  in3_filter_t* f = filters->array[id - 1];
   if (!f)
     return IN3_EFIND;
 
@@ -510,12 +511,12 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
 }
 
 in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
-  if (in3->filters == NULL)
+  in3_filter_handler_t* filters = eth_basic_get_filters(in3);
+  if (filters == NULL) return IN3_EFIND;
+  if (id == 0 || id > filters->count)
     return IN3_EFIND;
-  if (id == 0 || id > in3->filters->count)
-    return IN3_EINVAL;
 
-  in3_filter_t* f = in3->filters->array[id - 1];
+  in3_filter_t* f = filters->array[id - 1];
   if (!f)
     return IN3_EFIND;
 
@@ -623,11 +624,11 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
       api_set_error(EAGAIN, "Error getting the Receipt!");
     else {
       eth_tx_receipt_t* txr    = _malloc(sizeof(*txr));
-      txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);
-      txr->block_number        = d_get_longk(result, K_BLOCK_NUMBER);
-      txr->cumulative_gas_used = d_get_longk(result, K_CUMULATIVE_GAS_USED);
-      txr->gas_used            = d_get_longk(result, K_GAS_USED);
-      txr->status              = (d_get_intk(result, K_STATUS) == 1);
+      txr->transaction_index   = d_get_int(result, K_TRANSACTION_INDEX);
+      txr->block_number        = d_get_long(result, K_BLOCK_NUMBER);
+      txr->cumulative_gas_used = d_get_long(result, K_CUMULATIVE_GAS_USED);
+      txr->gas_used            = d_get_long(result, K_GAS_USED);
+      txr->status              = (d_get_int(result, K_STATUS) == 1);
       txr->contract_address    = b_dup(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
       txr->logs                = parse_logs(d_get(result, K_LOGS));
       copy_fixed(txr->transaction_hash, 32, d_to_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));

@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../core/client/context.h"
+#include "../../core/client/request.h"
 
 #ifndef _ETH_API_ENS_H_
 #define _ETH_API_ENS_H_
@@ -45,6 +45,6 @@ typedef enum {
   ENS_HASH     = 4  /**< hash */
 } in3_ens_type;
 
-in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* len);
+in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* len);
 
 #endif // _ETH_API_ENS_H_

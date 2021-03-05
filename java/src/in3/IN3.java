@@ -39,6 +39,7 @@ import in3.utils.Crypto;
 import in3.utils.JSON;
 import in3.utils.Signer;
 import in3.utils.StorageProvider;
+import in3.utils.TransportException;
 
 /**
  * This is the main class creating the incubed client. The client can then be
@@ -125,6 +126,13 @@ public class IN3 {
   }
 
   /**
+   * gets the zksync-api
+   */
+  public in3.zksync.API getZksync() {
+    return new in3.zksync.API(this);
+  }
+
+  /**
    * gets the btc-api
    */
   public in3.btc.API getBtcAPI() {
@@ -206,21 +214,30 @@ public class IN3 {
   private native Object sendobjectinternal(String request);
 
   private String toRPC(String method, Object[] params) {
-    String p = "";
+    StringBuilder p = new StringBuilder();
     for (int i = 0; i < params.length; i++) {
       if (p.length() > 0)
-        p += ",";
+        p.append(",");
       if (params[i] == null)
-        p += "null";
+        p.append("null");
+      else if (params[i] instanceof byte[]) {
+        byte[] b = (byte[]) params[i];
+        p.append("\"0x");
+        for (int j = 0; j < b.length; j++) {
+          p.append(Character.forDigit((b[j] >> 4) & 0xF, 16));
+          p.append(Character.forDigit(b[j] & 0xF, 16));
+        }
+        p.append("\"");
+      }
       else if (params[i] instanceof String) {
         String s = (String) params[i];
         if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
-          p += s;
+          p.append(s);
         else
-          p += "\"" + s + "\"";
+          p.append("\"" + s + "\"");
       }
       else
-        p += JSON.toJson(params[i]);
+        p.append(JSON.toJson(params[i]));
     }
     return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
   }
@@ -272,8 +289,8 @@ public class IN3 {
   }
 
   /** internal function to handle the internal requests */
-  static byte[][] sendRequest(String[] urls, byte[] payload) {
-    return IN3.transport.handle(urls, payload);
+  static byte[][] sendRequest(String method, String[] urls, byte[] payload, String[] headers) throws TransportException {
+    return IN3.transport.handle(method, urls, payload, headers);
   }
 
   private native void free();

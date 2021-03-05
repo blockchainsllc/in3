@@ -68,7 +68,7 @@ typedef enum {
   IN3_EVERS             = -8,  /**< Version mismatch */
   IN3_EINVALDT          = -9,  /**< Data invalid, eg. invalid/incomplete JSON */
   IN3_EPASS             = -10, /**< Wrong password */
-  IN3_ERPC              = -11, /**< RPC error (i.e. in3_ctx_t::error set) */
+  IN3_ERPC              = -11, /**< RPC error (i.e. in3_req_t::error set) */
   IN3_ERPCNRES          = -12, /**< RPC no response */
   IN3_EUSNURL           = -13, /**< USN URL parse error */
   IN3_ETRANS            = -14, /**< Transport error */
@@ -79,6 +79,23 @@ typedef enum {
   IN3_ENODEVICE         = -19, /**< harware wallet device not connected */
   IN3_EAPDU             = -20, /**< error in hardware wallet communication  */
   IN3_EPLGN_NONE        = -21, /**< no plugin could handle specified action */
+
+  IN3_HTTP_BAD_REQUEST        = -400, /**< Bad Request */
+  IN3_HTTP_UNAUTHORIZED       = -401, /**< Unauthorized */
+  IN3_HTTP_PAYMENT_REQUIRED   = -402, /**< Unauthorized */
+  IN3_HTTP_FORBIDDEN          = -403, /**< Forbidden */
+  IN3_HTTP_NOT_FOUND          = -404, /**< not found */
+  IN3_HTTP_M_NOT_ALLOWED      = -405, /**< method not allowed */
+  IN3_HTTP_NOT_ACCEPTABLE     = -406, /**< Not acceptable */
+  IN3_HTTP_PROX_AUTH_REQUIRED = -407, /**< Proxy Authentification required */
+  IN3_HTTP_TIMEOUT            = -408, /**< Request timeout */
+  IN3_HTTP_CONFLICT           = -409, /**< conflict */
+  IN3_HTTP_GONE               = -410, /**< gone */
+  IN3_HTTP_INTERNAL_ERROR     = -500, /**< Internal Server Error */
+  IN3_HTTP_NOT_IMPLEMENTED    = -501, /**< not implemented */
+  IN3_HTTP_BAD_GATEWAY        = -502, /**< Bad Gateway */
+  IN3_HTTP_UNAVAILABLE        = -503  /**< service unavailable */
+
 } in3_ret_t;
 
 /** Optional type similar to C++ std::optional

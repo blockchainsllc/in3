@@ -1,7 +1,7 @@
 #include "ens.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
@@ -15,35 +15,33 @@ static int next_token(const char* c, int p) {
   return -1;
 }
 
-static in3_ctx_t* find_pending_ctx(in3_ctx_t* ctx, bytes_t data) {
+static in3_req_t* find_pending_ctx(in3_req_t* ctx, bytes_t data) {
   // ok, we need a request, do we have a useable?
-  ctx = ctx->required;
-  while (ctx) {
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_call") == 0) {
-      bytes_t* ctx_data = d_get_bytesk(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0), K_DATA);
+  for (ctx = ctx->required; ctx; ctx = ctx->required) {
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_call") == 0) {
+      bytes_t* ctx_data = d_get_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0), K_DATA);
       if (ctx_data && b_cmp(ctx_data, &data)) return ctx;
     }
-    ctx = ctx->required;
   }
   return NULL;
 }
 
-static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_t** result) {
-  in3_ctx_t* ctx = find_pending_ctx(parent, calldata);
+static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_t** result) {
+  in3_req_t* ctx = find_pending_ctx(parent, calldata);
 
   if (ctx) {
-    switch (in3_ctx_state(ctx)) {
-      case CTX_SUCCESS: {
+    switch (in3_req_state(ctx)) {
+      case REQ_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result && d_type(rpc_result) == T_BYTES && d_len(rpc_result) >= 20) {
           *result = d_bytes(rpc_result);
-          //          ctx_remove_required(parent, ctx);
+          //          req_remove_required(parent, ctx);
           return IN3_OK;
         }
         else
-          return ctx_set_error(parent, "could not get the resolver", IN3_EFIND);
+          return req_set_error(parent, "could not get the resolver", IN3_EFIND);
       }
-      case CTX_ERROR:
+      case REQ_ERROR:
         return IN3_ERPC;
       default:
         return IN3_WAITING;
@@ -55,7 +53,7 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_
     char  data[73];
     bytes_to_hex(calldata.data, 36, data);
     sprintf(req, "{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"0x%s\"},\"latest\"]}", to, data);
-    return ctx_add_required(parent, ctx_new(parent->client, req));
+    return req_add_required(parent, req_new(parent->client, req));
   }
 }
 
@@ -71,7 +69,7 @@ static void ens_hash(const char* domain, bytes32_t dst) {
   memcpy(dst, hash, 32);                                                                       // we only the first 32 bytes - the root
 }
 
-in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
+in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
   const int len = strlen(name);
   if (*name == '0' && name[1] == 'x' && len == 42) {
     hex_to_bytes(name, 40, dst, 20);
@@ -87,7 +85,7 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
   if (in3_plugin_is_registered(parent->client, PLGN_ACT_CACHE)) {
     cachekey = alloca(strlen(name) + 5);
     sprintf(cachekey, "ens:%s:%i:%d", name, type, (int) parent->client->chain.chain_id);
-    in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = NULL};
+    in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = NULL};
     TRY(in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_GET, &cctx))
     if (cctx.content) {
       memcpy(dst, cctx.content->data, 20);
@@ -137,18 +135,18 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
         registry_address = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
         break;
       default:
-        return ctx_set_error(parent, "There is no ENS-contract for the current chain", IN3_ENOTSUP);
+        return req_set_error(parent, "There is no ENS-contract for the current chain", IN3_ENOTSUP);
     }
 
   in3_ret_t res = exec_call(callbytes, registry_address, parent, &last_result);
   if (res < 0) return res;
   if (last_result && last_result->data)
     memcpy(resolver, last_result->data + last_result->len - 20, 20);
-  if (memiszero(resolver, 20)) return ctx_set_error(parent, "resolver not registered", IN3_EFIND);
+  if (memiszero(resolver, 20)) return req_set_error(parent, "resolver not registered", IN3_EFIND);
 
   if (type == ENS_RESOLVER || type == ENS_OWNER) {
     memcpy(dst, resolver, 20);
-    in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = &dst_bytes};
+    in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = &dst_bytes};
     in3_plugin_execute_all(parent->client, PLGN_ACT_CACHE_SET, &cctx);
     return IN3_OK;
   }
@@ -177,14 +175,14 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
   if (res < 0) return res;
   if (!last_result || !last_result->data) return IN3_ENOMEM;
 
-  if (last_result->len < 20 || memiszero(last_result->data, 20)) return ctx_set_error(parent, "address not registered", IN3_EFIND);
+  if (last_result->len < 20 || memiszero(last_result->data, 20)) return req_set_error(parent, "address not registered", IN3_EFIND);
 
   if (type == ENS_ADDR)
     memcpy(dst, last_result->data + last_result->len - 20, 20);
   else if (type == ENS_NAME) {
   }
 
-  in3_cache_ctx_t cctx = {.ctx = parent, .key = cachekey, .content = &dst_bytes};
+  in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = &dst_bytes};
   in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_SET, &cctx);
   return IN3_OK;
 }

@@ -82,6 +82,8 @@ python_arm:
       junit: python_multilib/report.xml
   tags:
     - arm
+  variables:
+    CRYPTOGRAPHY_DONT_BUILD_RUST : 1
 
 python_win:
   extends: .only_python

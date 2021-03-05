@@ -32,23 +32,35 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "context.h"
+#include "request.h"
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "client.h"
-#include "context_internal.h"
 #include "keys.h"
 #include "plugin.h"
+#include "request_internal.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
-in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
+static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
+  if ((ctx->client->plugin_acts & PLGN_ACT_INIT) == 0) return IN3_OK;
+  for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
+    if (p->acts & PLGN_ACT_INIT) {
+      TRY(p->action_fn(p->data, PLGN_ACT_INIT, ctx))
+      p->acts &= ~((uint64_t) PLGN_ACT_INIT);
+    }
+  }
+  ctx->client->plugin_acts &= ~((uint64_t) PLGN_ACT_INIT);
+  return IN3_OK;
+}
+
+in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
 
   if (client->pending == 0xFFFF) return NULL; // avoid overflows by not creating any new ctx anymore
-  in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
+  in3_req_t* ctx = _calloc(1, sizeof(in3_req_t));
   if (!ctx) return NULL;
   ctx->client             = client;
   ctx->verification_state = IN3_WAITING;
@@ -57,7 +69,7 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   if (req_data != NULL) {
     ctx->request_context = parse_json(req_data);
     if (!ctx->request_context) {
-      ctx_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
+      req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
       return ctx;
     }
 
@@ -76,7 +88,7 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
         ctx->requests[i] = t;
     }
     else {
-      ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
+      req_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
       return ctx;
     }
 
@@ -88,15 +100,17 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
     else if (d_type(t) == T_INTEGER)
       ctx->id = d_int(t);
   }
+  // if this is the first request, we initialize the plugins now
+  in3_plugin_init(ctx);
   return ctx;
 }
 
-char* ctx_get_error_data(in3_ctx_t* ctx) {
+char* req_get_error_data(in3_req_t* ctx) {
   return ctx ? ctx->error : "No request context";
 }
 
-char* ctx_get_response_data(in3_ctx_t* ctx) {
-  assert_in3_ctx(ctx);
+char* req_get_response_data(in3_req_t* ctx) {
+  assert_in3_req(ctx);
 
   sb_t sb = {0};
   if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, '[');
@@ -116,13 +130,13 @@ char* ctx_get_response_data(in3_ctx_t* ctx) {
   return sb.data;
 }
 
-ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
-  assert_in3_ctx(ctx);
+req_type_t req_get_type(in3_req_t* ctx) {
+  assert_in3_req(ctx);
   return ctx->type;
 }
 
-in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
-  assert_in3_ctx(c);
+in3_ret_t req_check_response_error(in3_req_t* c, int i) {
+  assert_in3_req(c);
 
   d_token_t* r = d_get(c->responses[i], K_ERROR);
   if (!r)
@@ -132,17 +146,17 @@ in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
     char*       req = alloca(s.len + 1);
     strncpy(req, s.data, s.len);
     req[s.len] = '\0';
-    return ctx_set_error(c, req, IN3_ERPC);
+    return req_set_error(c, req, IN3_ERPC);
   }
   else
-    return ctx_set_error(c, d_string(r), IN3_ERPC);
+    return req_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumber) {
+in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber) {
   assert(ctx);
 
   // if this is just waiting, it is not an error!
-  if (errnumber == IN3_WAITING) return errnumber;
+  if (errnumber == IN3_WAITING || errnumber == IN3_OK) return errnumber;
   if (message) {
     const size_t l   = strlen(message);
     char*        dst = NULL;
@@ -159,7 +173,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
     }
     ctx->error = dst;
 
-    error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .ctx = ctx};
+    error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .req = ctx};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
 
     in3_log_trace("Intermediate error -> %s\n", message);
@@ -173,7 +187,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
   return errnumber;
 }
 
-in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
+in3_ret_t req_get_error(in3_req_t* ctx, int id) {
   if (ctx->error)
     return IN3_ERPC;
   else if (id >= (int) ctx->len)
@@ -185,7 +199,7 @@ in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   return IN3_OK;
 }
 
-void in3_ctx_free_nodes(node_match_t* node) {
+void in3_req_free_nodes(node_match_t* node) {
   node_match_t* last_node = NULL;
   while (node) {
     last_node = node;
@@ -195,7 +209,7 @@ void in3_ctx_free_nodes(node_match_t* node) {
   }
 }
 
-int ctx_nodes_len(node_match_t* node) {
+int req_nodes_len(node_match_t* node) {
   int all = 0;
   while (node) {
     all++;
@@ -204,14 +218,14 @@ int ctx_nodes_len(node_match_t* node) {
   return all;
 }
 
-bool ctx_is_method(const in3_ctx_t* ctx, const char* method) {
-  const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
+bool req_is_method(const in3_req_t* ctx, const char* method) {
+  const char* required_method = d_get_string(ctx->requests[0], K_METHOD);
   return (required_method && strcmp(required_method, method) == 0);
 }
 
-in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {
+in3_proof_t in3_req_get_proof(in3_req_t* ctx, int i) {
   if (ctx->requests) {
-    char* verfification = d_get_stringk(d_get(ctx->requests[i], K_IN3), key("verification"));
+    char* verfification = d_get_string(d_get(ctx->requests[i], K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;
   }
@@ -220,34 +234,35 @@ in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx, int i) {
 }
 
 NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in]the the request */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-    uint32_t       time) {
-  in3_ctx_add_response(req->ctx, index, is_error, data, data_len, time);
+    in3_http_request_t* req,      /**< [in]the the request */
+    int                 index,    /**< [in] the index of the url, since this request could go out to many urls */
+    int                 error,    /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char*         data,     /**<  the data or the the string*/
+    int                 data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    uint32_t            time) {
+  in3_ctx_add_response(req->req, index, error, data, data_len, time);
 }
 
 void in3_ctx_add_response(
-    in3_ctx_t*  ctx,      /**< [in] the context */
+    in3_req_t*  ctx,      /**< [in] the context */
     int         index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    int         error,    /**< [in] if true this will be reported as error. the message should then be the error-message */
     const char* data,     /**<  the data or the the string*/
     int         data_len, /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
     uint32_t    time) {
 
-  assert_in3_ctx(ctx);
+  assert_in3_req(ctx);
   assert(data);
+  if (error == 1) error = IN3_ERPC;
 
   if (!ctx->raw_response) {
-    ctx_set_error(ctx, "no request created yet!", IN3_EINVAL);
+    req_set_error(ctx, "no request created yet!", IN3_EINVAL);
     return;
   }
   in3_response_t* response = ctx->raw_response + index;
   response->time += time;
-  if (response->state == IN3_OK && is_error) response->data.len = 0;
-  response->state = is_error ? IN3_ERPC : IN3_OK;
+  if (response->state == IN3_OK && error) response->data.len = 0;
+  response->state = error;
   if (data_len == -1)
     sb_add_chars(&response->data, data);
   else
@@ -256,13 +271,13 @@ void in3_ctx_add_response(
 
 sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx) {
   assert(hctx);
-  assert_in3_ctx(hctx->ctx);
+  assert_in3_req(hctx->req);
   assert(hctx->request);
   assert(hctx->response);
 
   *hctx->response = _calloc(1, sizeof(in3_response_t));
   sb_add_chars(&(*hctx->response)->data, "{\"id\":");
-  sb_add_int(&(*hctx->response)->data, hctx->ctx->id);
+  sb_add_int(&(*hctx->response)->data, hctx->req->id);
   return sb_add_chars(&(*hctx->response)->data, ",\"jsonrpc\":\"2.0\",\"result\":");
 }
 in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx) {
@@ -297,7 +312,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   return in3_rpc_handle_with_string(hctx, s);
 }
 
-in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result) {
+in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result) {
   bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
   if (params == NULL) params = "";
   char* req = NULL;
@@ -309,7 +324,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
 
-  in3_ctx_t* ctx = parent->required;
+  in3_req_t* ctx = parent->required;
   for (; ctx; ctx = ctx->required) {
     if (use_cache) {
       // only check first entry
@@ -321,7 +336,7 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
       }
       if (found) break;
     }
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), method) != 0) continue;
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), method) != 0) continue;
     d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
     if (!t) continue;
     str_range_t p = d_to_json(t);
@@ -329,18 +344,18 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
   }
 
   if (ctx)
-    switch (in3_ctx_state(ctx)) {
-      case CTX_ERROR:
-        return ctx_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
-      case CTX_SUCCESS:
-        *result = d_get(ctx->responses[0], K_RESULT);
+    switch (in3_req_state(ctx)) {
+      case REQ_ERROR:
+        return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
+      case REQ_SUCCESS:
+        *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
         if (!*result) {
-          char* s = d_get_stringk(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
-          return ctx_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
+          char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+          return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
         }
         return IN3_OK;
-      case CTX_WAITING_TO_SEND:
-      case CTX_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
     }
 
@@ -352,14 +367,22 @@ in3_ret_t ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, ch
     else
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
-  ctx = ctx_new(parent->client, req);
-  if (!ctx) return ctx_set_error(parent, "Invalid request!", IN3_ERPC);
+  ctx = req_new(parent->client, req);
+  if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
-  return ctx_add_required(parent, ctx);
+  in3_ret_t ret = req_add_required(parent, ctx);
+  if (ret == IN3_OK && ctx->responses[0]) {
+    *result = d_get(ctx->responses[0], K_RESULT);
+    if (!*result) {
+      char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+      return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
+    }
+  }
+  return ret;
 }
 
-in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
+in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
   bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
   memcpy(cache_key.data, raw_data.data, raw_data.len);
   if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
@@ -371,40 +394,40 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
-    in3_sign_ctx_t sc = {.account = from, .ctx = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
+    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
     in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
     if (r == IN3_OK && sc.signature.data) {
       in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);
       *signature = sc.signature;
       return IN3_OK;
     }
-    else if (r != IN3_EIGNORE)
+    else if (r != IN3_EIGNORE && r != IN3_OK)
       return r;
   }
 
   // get the signature from required
   const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : "sign_ec_raw";
-  in3_ctx_t*  c      = ctx_find_required(ctx, method);
+  in3_req_t*  c      = req_find_required(ctx, method);
   if (c)
-    switch (in3_ctx_state(c)) {
-      case CTX_ERROR:
-        return ctx_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
-      case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_SEND:
+    switch (in3_req_state(c)) {
+      case REQ_ERROR:
+        return req_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
+      case REQ_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
-      case CTX_SUCCESS: {
+      case REQ_SUCCESS: {
         if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len == 65) {
           *signature = cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, c->raw_response->data.len));
           in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), *signature);
-          ctx_remove_required(ctx, c, false);
+          req_remove_required(ctx, c, false);
           return IN3_OK;
         }
         else if (c->raw_response && c->raw_response->state)
-          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
+          return req_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
         else
-          return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
+          return req_set_error(ctx, "no data to sign", IN3_EINVAL);
         default:
-          return ctx_set_error(ctx, "invalid state", IN3_EINVAL);
+          return req_set_error(ctx, "invalid state", IN3_EINVAL);
       }
     }
   else {
@@ -415,9 +438,19 @@ in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t
     sb_add_chars(&req, ",");
     sb_add_bytes(&req, NULL, &from, 1, false);
     sb_add_chars(&req, "]}");
-    c = ctx_new(ctx->client, req.data);
+    c = req_new(ctx->client, req.data);
     if (!c) return IN3_ECONFIG;
-    c->type = CT_SIGN;
-    return ctx_add_required(ctx, c);
+    c->type = RT_SIGN;
+    return req_add_required(ctx, c);
   }
+}
+
+in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
+#ifdef LOGGING
+  (void) req_set_error(vc->req, msg, IN3_EUNKNOWN);
+#else
+  (void) msg;
+  (void) vc;
+#endif
+  return IN3_EUNKNOWN;
 }

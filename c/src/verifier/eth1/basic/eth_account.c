@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
@@ -48,7 +48,7 @@ static const uint8_t* EMPTY_HASH      = (uint8_t*) "\xc5\xd2\x46\x01\x86\xf7\x23
 static const uint8_t* EMPTY_ROOT_HASH = (uint8_t*) "\x56\xe8\x1f\x17\x1b\xcc\x55\xa6\xff\x83\x45\xe6\x92\xc0\xf8\x6e\x5b\x48\xe0\x1b\x99\x6c\xad\xc0\x01\x62\x2f\xb5\xe3\x63\xb4\x21";
 static int            is_not_existened(d_token_t* account) {
   d_token_t* t = NULL;
-  return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_longk(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
+  return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_long(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
 }
 
 static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
@@ -138,7 +138,6 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
 in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   d_token_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
-  char*      method = d_get_stringk(vc->request, K_METHOD);
   bytes_t    tmp;
   uint8_t    hash[32];
   int        i;
@@ -146,24 +145,24 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   // no result -> nothing to verify
   if (!vc->result) return IN3_OK;
   if (!vc->proof) {
-    printf("Missing proof for %s\n", method);
+    printf("Missing proof for %s\n", vc->method);
     return vc_err(vc, "no proof");
   }
 
   // verify header
-  bytes_t* header = d_get_bytesk(vc->proof, K_BLOCK);
+  bytes_t* header = d_get_bytes(vc->proof, K_BLOCK);
   if (!header) return vc_err(vc, "no blockheader");
   if (eth_verify_blockheader(vc, header, NULL)) return vc_err(vc, "invalid blockheader");
 
   // make sure we blockheader is based on the right blocknumber (unless it is a nodelist or a 'latest'-string)
   t = d_get(vc->request, K_PARAMS);
-  if (strcmp(method, "in3_nodeList") && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
+  if (strcmp(vc->method, "in3_nodeList") && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
     return vc_err(vc, "the blockheader has the wrong blocknumber");
 
   // get the account this proof is based on
-  if (!(contract = strcmp(method, "in3_nodeList") == 0 ? d_get(vc->result, K_CONTRACT) : d_get_at(d_get(vc->request, K_PARAMS), 0)))
+  if (!(contract = strcmp(vc->method, "in3_nodeList") == 0 ? d_get(vc->result, K_CONTRACT) : d_get_at(d_get(vc->request, K_PARAMS), 0)))
     return vc_err(vc, "no account found in request");
-  if (strcmp(method, "eth_call") == 0)
+  if (strcmp(vc->method, "eth_call") == 0)
     contract = d_getl(d_get_at(d_get(vc->request, K_PARAMS), 0), K_TO, 20);
 
   //now check the results
@@ -177,15 +176,15 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   if (!proofed_account) return vc_err(vc, "the contract this proof is based on was not part of the proof");
 
-  if (strcmp(method, "eth_getBalance") == 0) {
+  if (strcmp(vc->method, "eth_getBalance") == 0) {
     if (!d_eq(vc->result, d_get(proofed_account, K_BALANCE)))
       return vc_err(vc, "the balance in the proof is different");
   }
-  else if (strcmp(method, "eth_getTransactionCount") == 0) {
+  else if (strcmp(vc->method, "eth_getTransactionCount") == 0) {
     if (!d_eq(vc->result, d_get(proofed_account, K_NONCE)))
       return vc_err(vc, "the nonce in the proof is different");
   }
-  else if (strcmp(method, "eth_getCode") == 0) {
+  else if (strcmp(vc->method, "eth_getCode") == 0) {
     bytes_t data = d_to_bytes(vc->result);
     if (data.len) {
       if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
@@ -194,7 +193,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");
   }
-  else if (strcmp(method, "eth_getStorageAt") == 0) {
+  else if (strcmp(vc->method, "eth_getStorageAt") == 0) {
     uint8_t result[32], proofed_result[32];
     d_bytes_to(vc->result, result, 32);
     d_token_t* storage       = d_get(proofed_account, K_STORAGE_PROOF);
@@ -215,7 +214,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     }
     return vc_err(vc, "the storage result does not match");
   }
-  else if (strcmp(method, "eth_call") == 0) {
+  else if (strcmp(vc->method, "eth_call") == 0) {
     return IN3_OK;
   }
   else

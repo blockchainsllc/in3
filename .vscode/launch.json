@@ -5,6 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "lldb",
+            "request": "attach",
+            "name": "Attach to python-test",
+            "program": "/usr/local/Cellar/python/3.7.4_1/Frameworks/Python.framework/Versions/3.7/Resources/Python.app/Contents/MacOS/Python"
+        },
+        {
+            "type": "lldb",
+            "request": "attach",
+            "name": "Attach to dotnet-test",
+            "pid": "${command:pickMyProcess}"
+        },
+        {
+            "type": "java",
+            "name": "Test-Java",
+            "request": "launch",
+            "mainClass": "in3.IN3",
+            "classPaths": [
+                ""
+            ]
+        },
+
+        {
             "type": "java",
             "name": "Debug (Attach)",
             "request": "attach",
@@ -64,11 +86,11 @@
             "request": "launch",
             "name": "in3 withdraw",
             "program": "${workspaceFolder}/build/bin/in3",
-            "cwd": "${workspaceFolder}/build/bin",
+            "cwd": "${workspaceFolder}/c/test/testdata/cmd",
             "externalConsole": true,
             "args": [
                 "-fi",
-                "debugWithdraw.txt",
+                "eth_blockNumber.txt",
                 "-debug"
             ]
         },
@@ -137,7 +159,7 @@
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../c/test/testdata/requests/in3_total_nodes.json",
+                "../c/test/testdata/requests/eth_getBlockByNumber.json",
                 "-d",
                 "-t",
                 "1"
@@ -169,7 +191,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "run request test",
-            "program": "${workspaceFolder}/build/test/test_request",
+            "program": "${workspaceFolder}/build/test/test_nodelist",
             "cwd": "${workspaceFolder}/build"
         },
         {

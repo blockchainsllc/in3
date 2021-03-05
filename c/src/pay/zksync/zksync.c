@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "zksync.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"
@@ -52,19 +52,19 @@ static zk_sign_type_t get_sign_type(d_token_t* type) {
 
 static in3_ret_t zksync_get_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   bytes32_t k;
-  TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+  TRY(zksync_get_sync_key(conf, ctx->req, k))
   return in3_rpc_handle_with_bytes(ctx, bytes(k, 32));
 }
 
-static in3_ret_t zksync_get_pubkeyhash(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+static in3_ret_t zksync_get_pubkeyhash(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   address_t pubkey_hash;
-  if (d_len(params) == 1) {
-    CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_BYTES)
-    CHECK_PARAM_LEN(ctx->ctx, params, 0, 32)
-    TRY(zkcrypto_pubkey_hash(d_to_bytes(params + 1), pubkey_hash));
+  if (d_len(ctx->params) == 1) {
+    CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
+    CHECK_PARAM_LEN(ctx->req, ctx->params, 0, 32)
+    TRY(zkcrypto_pubkey_hash(d_to_bytes(ctx->params + 1), pubkey_hash));
   }
   else
-    TRY(zksync_get_pubkey_hash(conf, ctx->ctx, pubkey_hash))
+    TRY(zksync_get_pubkey_hash(conf, ctx->req, pubkey_hash))
   char res[48];
   strcpy(res, "\"sync:");
   bytes_to_hex(pubkey_hash, 20, res + 6);
@@ -80,31 +80,31 @@ static in3_ret_t zksync_get_pubkey(zksync_config_t* conf, in3_rpc_handle_ctx_t* 
     memcpy(pubkey, conf->pub_key, 32);
   else {
     bytes32_t k;
-    TRY(zksync_get_sync_key(conf, ctx->ctx, k))
+    TRY(zksync_get_sync_key(conf, ctx->req, k))
     TRY(zkcrypto_pk_to_pubkey(k, pubkey))
     memcpy(conf->pub_key, pubkey, 32);
   }
   return in3_rpc_handle_with_bytes(ctx, bytes(pubkey, 32));
 }
 
-static in3_ret_t zksync_aggregate_pubkey(in3_rpc_handle_ctx_t* ctx, d_token_t* params) {
+static in3_ret_t zksync_aggregate_pubkey(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t dst;
-  CHECK_PARAM_TYPE(ctx->ctx, params, 0, T_BYTES)
-  CHECK_PARAM(ctx->ctx, params, 0, d_len(val) % 32 == 0)
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
+  CHECK_PARAM(ctx->req, ctx->params, 0, d_len(val) % 32 == 0)
 
-  TRY(zkcrypto_compute_aggregated_pubkey(d_to_bytes(params + 1), dst))
+  TRY(zkcrypto_compute_aggregated_pubkey(d_to_bytes(ctx->params + 1), dst))
   return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
 }
 
 static in3_ret_t zksync_account_address(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   uint8_t* account = NULL;
-  TRY(zksync_get_account(conf, ctx->ctx, &account));
+  TRY(zksync_get_account(conf, ctx->req, &account));
   return in3_rpc_handle_with_bytes(ctx, bytes(account, 20));
 }
 
 static in3_ret_t zksync_contract_address(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   uint8_t* adr;
-  TRY(zksync_get_contracts(conf, ctx->ctx, &adr))
+  TRY(zksync_get_contracts(conf, ctx->req, &adr))
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_rawbytes(sb, "{\"govContract\":\"0x", bytes(conf->gov_contract, 20), 0);
   sb_add_rawbytes(sb, "\",\"mainContract\":\"0x", bytes(conf->main_contract, 20), 0);
@@ -112,7 +112,7 @@ static in3_ret_t zksync_contract_address(zksync_config_t* conf, in3_rpc_handle_c
   return in3_rpc_handle_finish(ctx);
 }
 static in3_ret_t zksync_tokens(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  TRY(resolve_tokens(conf, ctx->ctx, NULL, NULL))
+  TRY(resolve_tokens(conf, ctx->req, NULL, NULL))
   sb_t* sb = in3_rpc_handle_start(ctx);
   sb_add_char(sb, '{');
   for (unsigned int i = 0; i < conf->token_len; i++) {
@@ -134,58 +134,58 @@ static in3_ret_t zksync_tokens(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx)
 
 // --- handle rpc----
 static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  char*      method = d_get_stringk(ctx->ctx->requests[0], K_METHOD);
-  d_token_t* params = d_get(ctx->ctx->requests[0], K_PARAMS);
-
   // check the prefix (zksync_ or zk_ is supported)
-  if (strncmp(method, "zksync_", 7) == 0)
-    method += 7;
-  else if (strncmp(method, "zk_", 3) == 0)
-    method += 3;
+  if (strncmp(ctx->method, "zksync_", 7) == 0)
+    ctx->method += 7;
+  else if (strncmp(ctx->method, "zk_", 3) == 0)
+    ctx->method += 3;
   else
     return IN3_EIGNORE;
 
+  // mark zksync as experimental
+  REQUIRE_EXPERIMENTAL(ctx->req, "zksync")
+
   // handle rpc -functions
-  TRY_RPC("deposit", zksync_deposit(conf, ctx, params))
-  TRY_RPC("transfer", zksync_transfer(conf, ctx, params, ZK_TRANSFER))
-  TRY_RPC("withdraw", zksync_transfer(conf, ctx, params, ZK_WITHDRAW))
-  TRY_RPC("set_key", zksync_set_key(conf, ctx, params))
-  TRY_RPC("emergency_withdraw", zksync_emergency_withdraw(conf, ctx, params))
+  TRY_RPC("deposit", zksync_deposit(conf, ctx))
+  TRY_RPC("transfer", zksync_transfer(conf, ctx, ZK_TRANSFER))
+  TRY_RPC("withdraw", zksync_transfer(conf, ctx, ZK_WITHDRAW))
+  TRY_RPC("set_key", zksync_set_key(conf, ctx))
+  TRY_RPC("emergency_withdraw", zksync_emergency_withdraw(conf, ctx))
   TRY_RPC("sync_key", zksync_get_key(conf, ctx))
-  TRY_RPC("aggregate_pubkey", zksync_aggregate_pubkey(ctx, params))
-  TRY_RPC("pubkeyhash", zksync_get_pubkeyhash(conf, ctx, params))
+  TRY_RPC("aggregate_pubkey", zksync_aggregate_pubkey(ctx))
+  TRY_RPC("pubkeyhash", zksync_get_pubkeyhash(conf, ctx))
   TRY_RPC("pubkey", zksync_get_pubkey(conf, ctx))
   TRY_RPC("account_address", zksync_account_address(conf, ctx))
   TRY_RPC("contract_address", zksync_contract_address(conf, ctx))
   TRY_RPC("tokens", zksync_tokens(conf, ctx))
-  TRY_RPC("sign", zksync_musig_sign(conf, ctx, params))
+  TRY_RPC("sign", zksync_musig_sign(conf, ctx))
   TRY_RPC("verify", in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
-                                                     ? zkcrypto_verify_signatures(d_to_bytes(params + 1), conf->musig_pub_keys, d_to_bytes(params + 2))
-                                                     : zkcrypto_verify_musig(d_to_bytes(params + 1), d_to_bytes(params + 2))))
+                                                     ? zkcrypto_verify_signatures(d_to_bytes(ctx->params + 1), conf->musig_pub_keys, d_to_bytes(ctx->params + 2))
+                                                     : zkcrypto_verify_musig(d_to_bytes(ctx->params + 1), d_to_bytes(ctx->params + 2))))
 
   // prepare fallback to send to zksync-server
-  str_range_t p            = d_to_json(params);
+  str_range_t p            = d_to_json(ctx->params);
   char*       param_string = alloca(p.len - 1);
   memcpy(param_string, p.data + 1, p.len - 2);
   param_string[p.len - 2] = 0;
 
-  if (strcmp(method, "account_info") == 0) {
+  if (strcmp(ctx->method, "account_info") == 0) {
     if (*param_string == 0) {
-      TRY(zksync_get_account(conf, ctx->ctx, NULL))
+      TRY(zksync_get_account(conf, ctx->req, NULL))
       param_string = alloca(45);
       set_quoted_address(param_string, conf->account);
     }
     else
-      CHECK_PARAM_ADDRESS(ctx->ctx, params, 0)
+      CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
   }
 
   // we need to show the arguments as integers
-  if (strcmp(method, "ethop_info") == 0)
-    sprintf(param_string, "%i", d_get_int_at(params, 0));
+  if (strcmp(ctx->method, "ethop_info") == 0)
+    sprintf(param_string, "%i", d_get_int_at(ctx->params, 0));
 
   // send request to the server
   d_token_t* result;
-  TRY(send_provider_request(ctx->ctx, conf, method, param_string, &result))
+  TRY(send_provider_request(ctx->req, conf, ctx->method, param_string, &result))
 
   // format result
   char* json = d_create_json(NULL, result);
@@ -194,7 +194,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   return IN3_OK;
 }
 
-static in3_ret_t config_free(zksync_config_t* conf) {
+static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->musig_urls) {
     for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
       if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
@@ -206,9 +206,16 @@ static in3_ret_t config_free(zksync_config_t* conf) {
   if (conf->account) _free(conf->account);
   if (conf->tokens) _free(conf->tokens);
   if (conf->create2) _free(conf->create2);
+  if (conf->proof_verify_method) _free(conf->proof_verify_method);
   if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
+  if (conf->incentive && conf->incentive->token) _free(conf->incentive->token);
+  if (conf->incentive) {
+    config_free(&conf->incentive->config, false);
+    _free(conf->incentive);
+  }
+
   while (conf->musig_sessions) conf->musig_sessions = zk_musig_session_free(conf->musig_sessions);
-  _free(conf);
+  if (free_conf) _free(conf);
   return IN3_OK;
 }
 
@@ -233,13 +240,24 @@ static in3_ret_t config_get(zksync_config_t* conf, in3_get_config_ctx_t* ctx) {
 
 static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key != key("zksync")) return IN3_EIGNORE;
+  // TODO error-reporting for invalid config
 
-  const char* provider = d_get_string(ctx->token, "provider_url");
+  const char* provider = d_get_string(ctx->token, key("provider_url"));
   if (provider) {
     if (conf->provider_url) _free(conf->provider_url);
     conf->provider_url = _strdupn(provider, -1);
   }
-  bytes_t* account = d_get_bytes(ctx->token, "account");
+  const char* pvm = d_get_string(ctx->token, key("verify_proof_method"));
+  if (pvm) {
+    if (conf->proof_verify_method) _free(conf->proof_verify_method);
+    conf->proof_verify_method = _strdupn(pvm, -1);
+  }
+  const char* pcm = d_get_string(ctx->token, key("create_proof_method"));
+  if (pcm) {
+    if (conf->proof_create_method) _free(conf->proof_create_method);
+    conf->proof_create_method = _strdupn(pcm, -1);
+  }
+  bytes_t* account = d_get_bytes(ctx->token, key("account"));
   if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
   bytes_t sync_key = d_to_bytes(d_get(ctx->token, key("sync_key")));
   if (sync_key.len) {
@@ -248,7 +266,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key_hash_pk);
   }
 
-  bytes_t* main_contract = d_get_bytes(ctx->token, "main_contract");
+  bytes_t* main_contract = d_get_bytes(ctx->token, key("main_contract"));
   if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
   d_token_t* st = d_get(ctx->token, key("signer_type"));
   if (st)
@@ -280,22 +298,59 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (create2) {
     conf->sign_type = ZK_SIGN_CREATE2;
     if (!conf->create2) conf->create2 = _calloc(1, sizeof(zk_create2_t));
-    bytes_t* t = d_get_bytesk(create2, key("creator"));
+    bytes_t* t = d_get_bytes(create2, key("creator"));
     if (t && t->len == 20) memcpy(conf->create2->creator, t->data, 20);
-    t = d_get_bytesk(create2, key("saltarg"));
+    t = d_get_bytes(create2, key("saltarg"));
     if (t && t->len == 32) memcpy(conf->create2->salt_arg, t->data, 32);
-    t = d_get_bytesk(create2, key("codehash"));
+    t = d_get_bytes(create2, key("codehash"));
     if (t && t->len == 32) memcpy(conf->create2->codehash, t->data, 32);
+  }
+
+  d_token_t* incentive = d_get(ctx->token, key("incentive"));
+  if (incentive) {
+    if (!conf->incentive) conf->incentive = _calloc(1, sizeof(pay_criteria_t));
+    for (d_iterator_t iter = d_iter(incentive); iter.left; d_iter_next(&iter)) {
+      if (iter.token->key == key("nodes")) {
+        conf->incentive->payed_nodes = d_int(iter.token);
+        in3_req_t c                  = {0};
+        c.client                     = ctx->client;
+        in3_ret_t ret                = update_nodelist_from_cache(&c, conf->incentive->payed_nodes);
+        if (c.error) {
+          ctx->error_msg = c.error;
+          return ret;
+        }
+      }
+      else if (iter.token->key == key("max_price"))
+        conf->incentive->max_price_per_hundred_igas = d_long(iter.token);
+      else if (iter.token->key == key("token")) {
+        _free(conf->incentive->token);
+        conf->incentive->token = _strdupn(d_string(iter.token), -1);
+      }
+    }
   }
   return IN3_OK;
 }
 
-static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
+static in3_ret_t zksync_init(zksync_config_t* conf, in3_req_t* ctx) {
+  if (ctx->client->plugin_acts & PLGN_ACT_PAY_SIGN_REQ) {
+    if (!conf->incentive) {
+      conf->incentive              = _calloc(1, sizeof(pay_criteria_t));
+      conf->incentive->payed_nodes = 1;
+    }
+    return update_nodelist_from_cache(ctx, conf->incentive->payed_nodes);
+  }
+  return IN3_OK;
+}
+
+in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
   switch (action) {
-    case PLGN_ACT_TERM: return config_free(conf);
+    case PLGN_ACT_TERM: return config_free(conf, true);
     case PLGN_ACT_CONFIG_GET: return config_get(conf, arg);
     case PLGN_ACT_CONFIG_SET: return config_set(conf, arg);
     case PLGN_ACT_RPC_HANDLE: return zksync_rpc(conf, arg);
+    case PLGN_ACT_ADD_PAYLOAD: return zksync_add_payload(arg);
+    case PLGN_ACT_PAY_FOLLOWUP: return zksync_check_payment(conf, arg);
+    case PLGN_ACT_INIT: return zksync_init(conf, arg);
     default: return IN3_ENOTSUP;
   }
   return IN3_EIGNORE;
@@ -304,5 +359,7 @@ static in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
 in3_ret_t in3_register_zksync(in3_t* c) {
   zksync_config_t* conf = _calloc(sizeof(zksync_config_t), 1);
   conf->version         = 1;
-  return in3_plugin_register(c, PLGN_ACT_RPC_HANDLE | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_zksync, conf, false);
+  return in3_plugin_register(c,
+                             PLGN_ACT_RPC_HANDLE | PLGN_ACT_INIT | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET | PLGN_ACT_ADD_PAYLOAD | PLGN_ACT_PAY_FOLLOWUP,
+                             handle_zksync, conf, false);
 }

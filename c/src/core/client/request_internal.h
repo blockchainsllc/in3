@@ -31,18 +31,19 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#ifndef CONTEXT_INTERNAL_H
-#define CONTEXT_INTERNAL_H
+#ifndef REQ_INTERNAL_H
+#define REQ_INTERNAL_H
 
-#include "context.h"
 #include "plugin.h"
+#include "request.h"
 
 #ifdef LOGGING
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, msg, err)
 #else
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err)
 #endif
-
+#define REQUIRE_EXPERIMENTAL(req, feature) \
+  if ((req->client->flags & FLAGS_ALLOW_EXPERIMENTAL) == 0) return req_set_error(req, "The feature " feature " is still experimental. You need to explicitly allow it in the config.", IN3_ECONFIG);
 /**
  * creates a request-object, which then need to be filled with the responses.
  *
@@ -55,15 +56,15 @@
  * sb_add_chars(&request->results[0].error, my_error);
  * ```
  */
-NONULL in3_request_t* in3_create_request(
-    in3_ctx_t* ctx /**< [in] the request context. */
+NONULL in3_http_request_t* in3_create_request(
+    in3_req_t* req /**< [in] the request context. */
 );
 
 /**
  * frees a previuosly allocated request.
  */
 NONULL void request_free(
-    in3_request_t* req /**< [in] the request. */
+    in3_http_request_t* req /**< [in] the request. */
 );
 
 /**
@@ -73,11 +74,11 @@ NONULL void request_free(
  * the return value will simply be passed so you can use it like
  *
  * ```c
- *   return ctx_set_error(ctx, "wrong number of arguments", IN3_EINVAL)
+ *   return req_set_error(ctx, "wrong number of arguments", IN3_EINVAL)
  * ```
  */
-in3_ret_t ctx_set_error_intern(
-    in3_ctx_t* c,        /**< [in] the current request context. */
+in3_ret_t req_set_error_intern(
+    in3_req_t* c,        /**< [in] the current request context. */
     char*      msg,      /**< [in] the error message. (This string will be copied) */
     in3_ret_t  errnumber /**< [in] the error code to return */
 );
@@ -85,20 +86,21 @@ in3_ret_t ctx_set_error_intern(
 /**
  * handles a failable context
  *
- * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
+ * This context *MUST* be freed with req_free(ctx) after usage to release the resources.
 */
-in3_ret_t ctx_handle_failable(
-    in3_ctx_t* ctx /**< [in] the current request context. */
+in3_ret_t req_handle_failable(
+    in3_req_t* req /**< [in] the current request context. */
 );
 
 NONULL_FOR((1, 2, 3, 5))
-in3_ret_t        ctx_send_sub_request(in3_ctx_t* parent, char* method, char* params, char* in3, d_token_t** result);
-NONULL in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
+in3_ret_t        req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result);
+NONULL in3_ret_t req_require_signature(in3_req_t* req, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
+NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
-#define assert_in3_ctx(ctx)                                                                    \
+#define assert_in3_req(ctx)                                                                    \
   assert(ctx);                                                                                 \
   assert_in3(ctx->client);                                                                     \
-  assert(ctx->signers_length <= (ctx->type == CT_RPC ? ctx->client->signature_count + 1 : 0)); \
+  assert(ctx->signers_length <= (ctx->type == RT_RPC ? ctx->client->signature_count + 1 : 0)); \
   assert(ctx->signers_length ? (ctx->signers != NULL) : (ctx->signers == NULL));               \
   assert(ctx->len >= 1 || ctx->error);                                                         \
   assert(ctx->attempt <= ctx->client->max_attempts);                                           \
@@ -112,8 +114,8 @@ NONULL in3_ret_t ctx_require_signature(in3_ctx_t* ctx, d_signature_type_t type, 
   assert(r);                   \
   assert(r->state != IN3_OK || r->data.data);
 
-NONULL void in3_ctx_free_nodes(node_match_t* c);
-int         ctx_nodes_len(node_match_t* root);
-NONULL bool ctx_is_method(const in3_ctx_t* ctx, const char* method);
+NONULL void in3_req_free_nodes(node_match_t* c);
+int         req_nodes_len(node_match_t* root);
+NONULL bool req_is_method(const in3_req_t* req, const char* method);
 
-#endif // CONTEXT_INTERNAL_H
+#endif // REQ_INTERNAL_H

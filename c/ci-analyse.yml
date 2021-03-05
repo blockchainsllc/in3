@@ -70,7 +70,7 @@ gcc10check:
   script:
     - mkdir _build
     - cd _build
-    - cmake -DGCC_ANALYZER=true ..
+    - cmake -DGCC_ANALYZER=true -DIN3_SERVER=true ..
     - make
 
 valgrind:
@@ -127,7 +127,7 @@ cpd:
   tags:
     - short-jobs
   script:
-    - cpd --minimum-tokens 180 --language cpp --exclude c/src/third-party --files c/src
+    - cpd --minimum-tokens 180 --language cpp --exclude c/src/third-party   --exclude c/src/signer/iamo-zksync/iamo_deploy.h  --files c/src
     - cpd --minimum-tokens 150 --language java --files java/src
     - cpd --minimum-tokens 150 --language python --files python
 

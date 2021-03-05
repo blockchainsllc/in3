@@ -219,7 +219,7 @@ static void test_json() {
   for (d_iterator_t iter = d_iter(jctx->result); iter.left; d_iter_next(&iter)) {
     count++;
     char*      error      = NULL;
-    char*      sig        = d_get_string(iter.token, "sig");
+    char*      sig        = d_get_string(iter.token, key("sig"));
     d_token_t* values     = d_get(iter.token, key("values"));
     d_token_t* rev_values = d_get(iter.token, key("revValues"));
     //    printf("%02i ## %s : %s\n", count, d_get_string(iter.token, "name"), sig);

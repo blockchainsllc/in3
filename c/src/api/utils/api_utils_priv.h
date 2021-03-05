@@ -35,8 +35,8 @@
 #ifndef IN3_API_UTILS_PRIV_H
 #define IN3_API_UTILS_PRIV_H
 
-#include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/request.h"
 #include "../../core/util/data.h"
 #include "../../core/util/error.h"
 #include "../../core/util/log.h"
@@ -61,14 +61,14 @@
 // execute the request after the params have been set.
 #define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                                      \
   errno              = 0;                                                                 \
-  in3_ctx_t*  _ctx_  = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
+  in3_req_t*  _ctx_  = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
   d_token_t*  result = get_result(_ctx_);                                                 \
   RETURN_TYPE _res_;                                                                      \
   if (result)                                                                             \
     _res_ = (HANDLE_RESULT);                                                              \
   else                                                                                    \
     memset(&_res_, 0, sizeof(RETURN_TYPE));                                               \
-  ctx_free(_ctx_);                                                                        \
+  req_free(_ctx_);                                                                        \
   sb_free(params);                                                                        \
   return _res_;
 
@@ -89,6 +89,6 @@
 void api_set_error(int err, const char* msg);
 
 /** returns the result from a previously executed ctx */
-d_token_t* get_result(in3_ctx_t* ctx);
+d_token_t* get_result(in3_req_t* req);
 
 #endif //IN3_API_UTILS_PRIV_H

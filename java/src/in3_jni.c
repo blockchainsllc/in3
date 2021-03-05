@@ -42,13 +42,14 @@
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
+#include "../../c/src/init/in3_init.h"
 #include "../../c/src/nodeselect/cache.h"
 #include "../../c/src/nodeselect/nodeselect_def.h"
 #include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/eth1/basic/eth_basic.h"
-#include "../../c/src/verifier/in3_init.h"
+
 #ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
@@ -174,10 +175,10 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
   int         res;
   jstring     js = NULL;
 
-  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
+  in3_req_t* ctx = req_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
-    res = in3_send_ctx(ctx);
+    res = in3_send_req(ctx);
     if (res >= 0) {
       d_token_t* r = d_get(ctx->responses[0], K_RESULT);
       if (r)
@@ -209,7 +210,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
   //need to release this string when done with it in order to
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
-  ctx_free(ctx);
+  req_free(ctx);
 
   if (result) {
     js = (*env)->NewStringUTF(env, result);
@@ -282,10 +283,10 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
   int         res;
   jobject     js = NULL;
 
-  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
+  in3_req_t* ctx = req_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
-    res = in3_send_ctx(ctx);
+    res = in3_send_req(ctx);
     if (res >= 0) {
       d_token_t* r = d_get(ctx->responses[0], K_RESULT);
       if (r)
@@ -318,7 +319,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
 
-  ctx_free(ctx);
+  req_free(ctx);
 
   if (result)
     return js;
@@ -348,42 +349,66 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
 
-  in3_request_t* req   = plugin_ctx;
-  uint64_t       start = current_ms();
+  in3_http_request_t* req   = plugin_ctx;
+  uint64_t            start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
-  size_t     payload_len = strlen(req->payload);
-  jbyteArray jpayload    = (*jni)->NewByteArray(jni, payload_len);
-  (*jni)->SetByteArrayRegion(jni, jpayload, 0, payload_len, (jbyte*) req->payload);
+  jbyteArray jpayload = (*jni)->NewByteArray(jni, req->payload_len);
+  (*jni)->SetByteArrayRegion(jni, jpayload, 0, req->payload_len, (jbyte*) req->payload);
 
   // url-array
   jobject jurls = (*jni)->NewObjectArray(jni, req->urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
   for (unsigned int i = 0; i < req->urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, req->urls[i]));
 
+  // headers
+  int header_len = 0, hi = 0;
+  for (in3_req_header_t* h = req->headers; h; h = h->next) header_len++;
+  jstring jmethod  = (*jni)->NewStringUTF(jni, req->method);
+  jobject jheaders = (*jni)->NewObjectArray(jni, header_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
+  for (in3_req_header_t* h = req->headers; h; h = h->next, hi++) (*jni)->SetObjectArrayElement(jni, jheaders, hi, (*jni)->NewStringUTF(jni, h->value));
+
+  (*jni)->ExceptionClear(jni);
   jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
-  jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "([Ljava/lang/String;[B)[[B");
-  jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
+  jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "(Ljava/lang/String;[Ljava/lang/String;[B[Ljava/lang/String;)[[B");
+  jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jmethod, jurls, jpayload, jheaders);
+  uint64_t     end    = current_ms();
 
-  for (unsigned int i = 0; i < req->urls_len; i++) {
-    jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
-    if (content) {
-      const size_t l     = (*jni)->GetArrayLength(jni, content);
-      uint8_t*     bytes = _malloc(l);
-      (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
-      sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
-      req->ctx->raw_response[i].state = IN3_OK;
-      _free(bytes);
-    }
-    else {
-      sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
-      req->ctx->raw_response[i].state = IN3_ERPC;
-    }
-    if (req->ctx->raw_response[i].state) success = IN3_ERPC;
+  // handle exception
+  jthrowable transport_exception = (*jni)->ExceptionOccurred(jni);
+  if (transport_exception) {
+    jclass    cls    = (*jni)->GetObjectClass(jni, transport_exception);
+    jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getStatus", "()I");
+    int       status = (*jni)->CallIntMethod(jni, transport_exception, mid);
+    mid              = (*jni)->GetMethodID(jni, cls, "getIndex", "()I");
+    int index        = (*jni)->CallIntMethod(jni, transport_exception, mid);
+    mid              = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
+    jstring     jmsg = (*jni)->CallObjectMethod(jni, transport_exception, mid);
+    const char* msg  = (*jni)->GetStringUTFChars(jni, jmsg, 0);
+    in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t)(end - start));
+    (*jni)->ReleaseStringUTFChars(jni, jmsg, msg);
+    (*jni)->ExceptionClear(jni);
   }
-  uint64_t end = current_ms();
+  else {
+    for (unsigned int i = 0; i < req->urls_len; i++) {
+      jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
+      if (content) {
+        const size_t l     = (*jni)->GetArrayLength(jni, content);
+        uint8_t*     bytes = _malloc(l);
+        (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
+        sb_add_range(&req->req->raw_response[i].data, (char*) bytes, 0, l);
+        req->req->raw_response[i].state = IN3_OK;
+        _free(bytes);
+      }
+      else {
+        sb_add_chars(&req->req->raw_response[i].data, "Could not fetch the data!");
+        req->req->raw_response[i].state = IN3_ERPC;
+      }
+      if (req->req->raw_response[i].state) success = IN3_ERPC;
+    }
+  }
 
-  for (unsigned int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = (uint32_t)(end - start);
+  for (unsigned int i = 0; i < req->urls_len; i++) req->req->raw_response[i].time = (uint32_t)(end - start);
 
   return success;
 }
@@ -523,7 +548,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 
 //in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
-  in3_ctx_t* ctx    = (in3_ctx_t*) sc->ctx;
+  in3_req_t* ctx    = (in3_req_t*) sc->req;
   void*      jp     = get_java_obj_ptr(ctx->client);
   jclass     cls    = (*jni)->GetObjectClass(jni, jp);
   jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
@@ -618,6 +643,9 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
   in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
   jni = env;
+  // turn to debug
+  //  in3_log_set_level(LOG_TRACE);
+  //  in3_log_set_quiet(false);
 
   return (jlong)(size_t) in3;
 }

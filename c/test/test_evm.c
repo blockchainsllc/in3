@@ -37,8 +37,8 @@
 #ifndef TEST
 #define TEST
 #endif
-#include "../src/core/client/context.h"
 #include "../src/core/client/keys.h"
+#include "../src/core/client/request.h"
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
@@ -419,20 +419,20 @@ static void read_accounts(evm_t* evm, d_token_t* accounts) {
 static d_token_t* get_test_val(d_token_t* root, char* name, d_token_t* indexes) {
   d_token_t* array = d_get(root, ikey(jc, name));
   if (!array) return NULL;
-  return d_get_at(array, d_get_intk(indexes, ikey(jc, strcmp(name, "gasLimit") == 0 ? "gas" : name)));
+  return d_get_at(array, d_get_int(indexes, ikey(jc, strcmp(name, "gasLimit") == 0 ? "gas" : name)));
 }
 int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int test_index) {
   jc = jctx;
   uint8_t caller[32];
 
-  d_token_t* exec        = d_get(test, ikey(jc, "exec"));
-  d_token_t* transaction = d_get(test, ikey(jc, "transaction"));
-  d_token_t* post        = d_get(test, ikey(jc, "post"));
-  d_token_t* indexes     = NULL;
-  uint64_t   total_gas   = 0;
-  bool  has_enough_gas   = true;
+  d_token_t* exec           = d_get(test, ikey(jc, "exec"));
+  d_token_t* transaction    = d_get(test, ikey(jc, "transaction"));
+  d_token_t* post           = d_get(test, ikey(jc, "post"));
+  d_token_t* indexes        = NULL;
+  uint64_t   total_gas      = 0;
+  bool       has_enough_gas = true;
 
-  address_t  _to;
+  address_t _to;
   memset(_to, 0, 20);
 
   // create vm
@@ -470,14 +470,14 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.call_data  = d_to_bytes(d_get(exec, ikey(jc, "data")));
     evm.call_value = d_to_bytes(d_get(exec, ikey(jc, "value")));
 
-    evm.caller  = d_get_bytesk(exec, ikey(jc, "caller"))->data;
-    evm.origin  = d_get_bytesk(exec, ikey(jc, "origin"))->data;
-    evm.address = d_get_bytesk(exec, ikey(jc, "address"))->data;
-    evm.account = d_get_bytesk(exec, ikey(jc, "address"))->data;
+    evm.caller  = d_get_bytes(exec, ikey(jc, "caller"))->data;
+    evm.origin  = d_get_bytes(exec, ikey(jc, "origin"))->data;
+    evm.address = d_get_bytes(exec, ikey(jc, "address"))->data;
+    evm.account = d_get_bytes(exec, ikey(jc, "address"))->data;
 
 #ifdef EVM_GAS
     evm.accounts = NULL;
-    evm.gas      = d_get_longk(exec, ikey(jc, "gas"));
+    evm.gas      = d_get_long(exec, ikey(jc, "gas"));
     evm.code     = d_to_bytes(d_get(exec, ikey(jc, "code")));
     evm.parent   = NULL;
     evm.logs     = NULL;
@@ -490,7 +490,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.call_data  = d_to_bytes(get_test_val(transaction, "data", indexes));
     evm.call_value = d_to_bytes(get_test_val(transaction, "value", indexes));
 
-    uint8_t *pk = d_get_bytesk(transaction, ikey(jc, "secretKey"))->data, public_key[65], sdata[32];
+    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey"))->data, public_key[65], sdata[32];
     ecdsa_get_public_key65(&secp256k1, pk, public_key);
     // hash it and return the last 20 bytes as address
     if (keccak(bytes(public_key + 1, 64), sdata) == 0)
@@ -508,7 +508,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.account = evm.address;
 
     if (d_getl(transaction, ikey(jc, "to"), 20) && d_len(d_getl(transaction, ikey(jc, "to"), 20)))
-      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytesk(transaction, ikey(jc, "to"))->data), ikey(jc, "code")));
+      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to"))->data), ikey(jc, "code")));
     else
       evm.code = evm.call_data;
 
@@ -525,7 +525,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     // -- add the cost for transaction data
     for (int i = 0; i < evm.call_data.len; i++) {
       tx_intrinsic_gas += evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
-    }      
+    }
     // -- check if we are executing a creation transaction
     if (transaction && !d_len(d_get(transaction, ikey(jc, "to")))) {
       tx_intrinsic_gas += G_TXCREATE;
@@ -534,7 +534,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     has_enough_gas = (tx_intrinsic_gas < evm.init_gas);
 
     // execution should only continue if gasLimit is enough to pay for the transaction
-    if(has_enough_gas) {    
+    if (has_enough_gas) {
 
       // prepare all accounts
       read_accounts(&evm, d_get(test, ikey(jc, "pre")));
@@ -601,12 +601,12 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
   prepare_header(d_get(test, ikey(jc, "env")));
 
   uint64_t start = clock(), gas_before = evm.gas;
-  int fail = has_enough_gas ? evm_run(&evm, evm.account) : 0;
-  *ms      = (clock() - start) / 1000;
+  int      fail = has_enough_gas ? evm_run(&evm, evm.account) : 0;
+  *ms           = (clock() - start) / 1000;
 
   if (transaction) {
 #ifdef EVM_GAS
-    if(has_enough_gas) {
+    if (has_enough_gas) {
       total_gas += gas_before - evm.gas;
       if (fail) {
         // it failed, so the transaction used up all the gas and we reverse all accounts
@@ -656,7 +656,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
       }
 
       // pay the miner the total gas
-      account_t* miner = evm_get_account(&evm, d_get_bytesk(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1);
+      account_t* miner = evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1);
 
       // increase balance of the miner
       long_to_bytes(total_gas, tmp);
@@ -695,9 +695,9 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
       // check post state
       fail = check_post_state(&evm, post);
 #ifdef EVM_GAS
-      if (!fail && d_get_longk(test, ikey(jc, "gas")) != evm.gas) {
+      if (!fail && d_get_long(test, ikey(jc, "gas")) != evm.gas) {
         print_error("Wrong Gas");
-        printf(" (expected : %" PRIu64 ", but got %" PRIu64 "", d_get_longk(test, ikey(jc, "gas")), evm.gas);
+        printf(" (expected : %" PRIu64 ", but got %" PRIu64 "", d_get_long(test, ikey(jc, "gas")), evm.gas);
         fail = 1;
       }
 #endif

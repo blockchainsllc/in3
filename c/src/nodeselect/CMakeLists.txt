@@ -45,3 +45,13 @@ add_static_library(
   DEPENDS
     core
 )
+
+
+if (THREADSAFE)
+if (MSVC OR MSYS OR MINGW)
+elseif (NOT DEFINED ANDROID_ABI)
+    # for detecting Windows compilers
+    #    target_link_libraries(nodeselect_def_o  pthread)
+    target_link_libraries(nodeselect_def pthread)
+endif ()
+endif()

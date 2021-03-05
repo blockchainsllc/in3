@@ -70,8 +70,6 @@ extern "C" {
  */
 typedef uint32_t chain_id_t;
 
-struct in3_ctx;
-
 /** the type of the chain. 
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
@@ -103,109 +101,20 @@ typedef enum {
  */
 typedef uint64_t in3_node_props_t;
 
-typedef enum {
-  NODE_PROP_PROOF            = 0x1,   /**< filter out nodes which are providing no proof */
-  NODE_PROP_MULTICHAIN       = 0x2,   /**< filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
-  NODE_PROP_ARCHIVE          = 0x4,   /**< filter out non-archive supporting nodes */
-  NODE_PROP_HTTP             = 0x8,   /**< filter out non-http nodes  */
-  NODE_PROP_BINARY           = 0x10,  /**< filter out nodes that don't support binary encoding */
-  NODE_PROP_ONION            = 0x20,  /**< filter out non-onion nodes */
-  NODE_PROP_SIGNER           = 0x40,  /**< filter out non-signer nodes */
-  NODE_PROP_DATA             = 0x80,  /**< filter out non-data provider nodes */
-  NODE_PROP_STATS            = 0x100, /**< filter out nodes that do not provide stats */
-  NODE_PROP_MIN_BLOCK_HEIGHT = 0x400, /**< filter out nodes that will sign blocks with lower min block height than specified */
-} in3_node_props_type_t;
-
 /**
  * a list of flags defining the behavior of the incubed client. They should be used as bitmask for the flags-property.
  */
 typedef enum {
-  FLAGS_KEEP_IN3         = 0x1,  /**< the in3-section with the proof will also returned */
-  FLAGS_AUTO_UPDATE_LIST = 0x2,  /**< the nodelist will be automatically updated if the last_block is newer  */
-  FLAGS_INCLUDE_CODE     = 0x4,  /**< the code is included when sending eth_call-requests  */
-  FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
-  FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
-  FLAGS_STATS            = 0x20, /**< nodes will keep track of the stats (default=true)  */
-  FLAGS_NODE_LIST_NO_SIG = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
-  FLAGS_BOOT_WEIGHTS     = 0x80  /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
+  FLAGS_KEEP_IN3           = 0x1,  /**< the in3-section with the proof will also returned */
+  FLAGS_AUTO_UPDATE_LIST   = 0x2,  /**< the nodelist will be automatically updated if the last_block is newer  */
+  FLAGS_INCLUDE_CODE       = 0x4,  /**< the code is included when sending eth_call-requests  */
+  FLAGS_BINARY             = 0x8,  /**< the client will use binary format  */
+  FLAGS_HTTP               = 0x10, /**< the client will try to use http instead of https  */
+  FLAGS_STATS              = 0x20, /**< nodes will keep track of the stats (default=true)  */
+  FLAGS_NODE_LIST_NO_SIG   = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
+  FLAGS_BOOT_WEIGHTS       = 0x80, /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
+  FLAGS_ALLOW_EXPERIMENTAL = 0x100 /**< if true the client will support experimental features.*/
 } in3_flags_type_t;
-
-/**
- * a list of node attributes (mostly used internally)
- */
-typedef enum {
-  ATTR_WHITELISTED = 1, /**< indicates if node exists in whiteList */
-  ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
-} in3_node_attr_type_t;
-
-/** incubed node-configuration. 
- * 
- * These information are read from the Registry contract and stored in this struct representing a server or node.
- */
-typedef struct in3_node {
-  address_t        address;  /**< address of the server */
-  bool             blocked;  /**< if true this node has  been blocked for sending wrong responses */
-  uint_fast16_t    index;    /**< index within the nodelist, also used in the contract as key */
-  uint_fast16_t    capacity; /**< the maximal capacity able to handle */
-  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
-  char*            url;      /**< the url of the node */
-  uint_fast8_t     attrs;    /**< bitmask of internal attributes */
-} in3_node_t;
-
-/**
- * Weight or reputation of a node.
- * 
- * Based on the past performance of the node a weight is calculated given faster nodes a higher weight
- * and chance when selecting the next node from the nodelist.
- * These weights will also be stored in the cache (if available)
- */
-typedef struct in3_node_weight {
-  uint32_t response_count;      /**< counter for responses */
-  uint32_t total_response_time; /**< total of all response times */
-  uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
-} in3_node_weight_t;
-
-/**
- * Initializer for in3_node_props_t
- */
-#define in3_node_props_init(np) *(np) = 0
-
-/**
- * setter method for interacting with in3_node_props_t.
- */
-NONULL void in3_node_props_set(in3_node_props_t*     node_props, /**< pointer to the properties to change */
-                               in3_node_props_type_t type,       /**< key or type of the property */
-                               uint8_t               value       /**< value to set */
-);
-
-/**
- * returns the value of the specified property-type.
- * @return value as a number
- */
-static inline uint32_t in3_node_props_get(in3_node_props_t      np,  /**< property to read from */
-                                          in3_node_props_type_t t) { /**< the value to extract  */
-  return ((t == NODE_PROP_MIN_BLOCK_HEIGHT) ? ((np >> 32U) & 0xFFU) : !!(np & t));
-}
-
-/**
- * checks if the given type is set in the properties
- * @return true if set
- */
-static inline bool in3_node_props_matches(in3_node_props_t      np,  /**< property to read from */
-                                          in3_node_props_type_t t) { /**< the value to extract */
-  return !!(np & t);
-}
-
-/**
- * defines a whitelist structure used for the nodelist.
- */
-typedef struct in3_whitelist {
-  bool      needs_update; /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
-  uint64_t  last_block;   /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
-  address_t contract;     /**< address of whiteList contract. If specified, whiteList is always auto-updated and manual whiteList is overridden */
-  bytes_t   addresses;    /**< serialized list of node addresses that constitute the whiteList */
-} in3_whitelist_t;
 
 /** represents a blockhash which was previously verified */
 typedef struct in3_verified_hash {
@@ -225,30 +134,6 @@ typedef struct in3_chain {
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
 } in3_chain_t;
 
-/** Incubed Configuration.
- * 
- * This struct holds the configuration and also point to internal resources such as filters or chain configs.
- * 
- */
-typedef struct in3_t_ in3_t;
-
-/**
- * Filter type used internally when managing filters.
- */
-typedef enum {
-  FILTER_EVENT   = 0, /**< Event filter */
-  FILTER_BLOCK   = 1, /**< Block filter */
-  FILTER_PENDING = 2, /**< Pending filter (Unsupported) */
-} in3_filter_type_t;
-
-typedef struct in3_filter_t_ {
-  bool              is_first_usage;         /**< if true the filter was not used previously */
-  in3_filter_type_t type;                   /**< filter type: (event, block or pending) */
-  uint64_t          last_block;             /**< block no. when filter was created OR eth_getFilterChanges was called */
-  char*             options;                /**< associated filter options */
-  void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
-} in3_filter_t;
-
 #define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
 #define PLGN_ACT_TRANSPORT (PLGN_ACT_TRANSPORT_SEND | PLGN_ACT_TRANSPORT_RECEIVE | PLGN_ACT_TRANSPORT_CLEAN)
 #define PLGN_ACT_NODELIST  (PLGN_ACT_NL_PICK | PLGN_ACT_NL_PICK_FOLLOWUP | PLGN_ACT_NL_BLACKLIST | PLGN_ACT_NL_FAILABLE | PLGN_ACT_NL_OFFLINE)
@@ -257,7 +142,7 @@ typedef struct in3_filter_t_ {
 
 /** plugin action list */
 typedef enum {
-  PLGN_ACT_INIT              = 0x1,       /**< initialize plugin - use for allocating/setting-up internal resources */
+  PLGN_ACT_INIT              = 0x1,       /**< initialize plugin - use for allocating/setting-up internal resources . Plugins will be initialized before first used. The plgn_ctx will be the first request ctx in3_req_t */
   PLGN_ACT_TERM              = 0x2,       /**< terminate plugin - use for releasing internal resources and cleanup. */
   PLGN_ACT_TRANSPORT_SEND    = 0x4,       /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more responses. */
   PLGN_ACT_TRANSPORT_RECEIVE = 0x8,       /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
@@ -277,10 +162,10 @@ typedef enum {
   PLGN_ACT_PAY_HANDLE        = 0x20000,   /**< handles the payment */
   PLGN_ACT_PAY_SIGN_REQ      = 0x40000,   /**< signs a request */
   PLGN_ACT_LOG_ERROR         = 0x80000,   /**< report an error */
-  PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_req_t */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_req_t */
   PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to the node's address. */
-  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_ctx_t */
+  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_req_t */
   PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to in3_nl_offline_ctx_t. */
   PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
   PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
@@ -312,25 +197,15 @@ struct in3_plugin {
   in3_plugin_t*          next;      /**< pointer to next plugin in list */
 };
 
-/**
- * Handler which is added to client config in order to handle filter.
- */
-typedef struct in3_filter_handler_t_ {
-  in3_filter_t** array; /** array of filters */
-  size_t         count; /** counter for filters */
-} in3_filter_handler_t;
-
 /** Incubed Configuration.
  * 
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
  */
-struct in3_t_ {
-  uint8_t                request_count;         /**< the number of request send when getting a first answer */
+typedef struct in3_t_ {
   uint8_t                signature_count;       /**< the number of signatures used to proof the blockhash. */
   uint8_t                replace_latest_block;  /**< if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
-  uint_fast8_t           flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
-  uint16_t               node_limit;            /**< the limit of nodes to store in the client. */
+  uint_fast16_t          flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
   uint16_t               finality;              /**< the number of signatures in percent required for the request*/
   uint_fast16_t          max_attempts;          /**< the max number of attempts before giving up*/
   uint_fast16_t          max_verified_hashes;   /**< max number of verified hashes to cache (actual number may temporarily exceed this value due to pending requests) */
@@ -341,12 +216,9 @@ struct in3_t_ {
   uint32_t               id_count;              /**< counter for use as JSON RPC id - incremented for every request */
   in3_plugin_supp_acts_t plugin_acts;           /**< bitmask of supported actions of all plugins registered with this client */
   in3_proof_t            proof;                 /**< the type of proof used */
-  uint64_t               min_deposit;           /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
-  in3_node_props_t       node_props;            /**< used to identify the capabilities of the node. */
   in3_chain_t            chain;                 /**< chain spec and nodeList definitions*/
-  in3_filter_handler_t*  filters;               /**< filter handler */
   in3_plugin_t*          plugins;               /**< list of registered plugins */
-};
+} in3_t;
 
 /** creates a new Incubed configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 
@@ -445,7 +317,6 @@ typedef in3_ret_t (*plgn_register)(in3_t* c);
   assert(c);                                           \
   assert((c)->chain.chain_id);                         \
   assert((c)->plugins);                                \
-  assert((c)->request_count > 0);                      \
   assert((c)->max_attempts > 0);                       \
   assert((c)->proof >= 0 && (c)->proof <= PROOF_FULL); \
   assert((c)->proof >= 0 && (c)->proof <= PROOF_FULL);

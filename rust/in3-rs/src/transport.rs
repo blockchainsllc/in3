@@ -13,8 +13,10 @@ use crate::logging::LOGGER;
 use crate::traits::Transport;
 
 async fn http_async(
+    _method : &str,
     url: &str,
     payload: &str,
+    _headers: &[&str],
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync + 'static>> {
     let res = surf::post(url)
         .body_string(payload.to_string())
@@ -102,7 +104,7 @@ impl Transport for MockJsonTransport {
     /// Async fetch implementation
     ///
     /// Read responses from json
-    async fn fetch(&mut self, request_: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+    async fn fetch(&mut self, _method: &str,request_: &str, _uris: &[&str],_headers: &[&str]) -> Vec<Result<String, String>> {
         let request: Value = from_str(request_).unwrap();
         let method_ = request[0]["method"].as_str();
         let response = self.read_json(String::from(method_.unwrap()));
@@ -110,7 +112,7 @@ impl Transport for MockJsonTransport {
     }
 
     #[cfg(feature = "blocking")]
-    fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+    fn fetch_blocking(&mut self,_method: &str, _request: &str, _uris: &[&str],_headers: &[&str]) -> Vec<Result<String, String>> {
         unimplemented!()
     }
 }
@@ -135,7 +137,7 @@ impl Transport for MockTransport<'_> {
     ///
     /// Pops the responses vector and returns it if it's associated request matches the i/p.
     /// Otherwise, returns an error string.
-    async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+    async fn fetch(&mut self, _method: &str, request: &str, _uris: &[&str],_headers: &[&str]) -> Vec<Result<String, String>> {
         let response = self.responses.pop();
         let request: Value = from_str(request).unwrap();
         unsafe {
@@ -153,7 +155,7 @@ impl Transport for MockTransport<'_> {
     }
 
     #[cfg(feature = "blocking")]
-    fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+    fn fetch_blocking(&mut self, _method: &str, _request: &str, _uris: &[&str],_headers: &[&str]) -> Vec<Result<String, String>> {
         unimplemented!()
     }
 }
@@ -168,13 +170,13 @@ pub struct HttpTransport;
 impl Transport for HttpTransport {
     /// Fetches the responses from specified URLs over HTTP.
     /// Errors are reported as strings.
-    async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
+    async fn fetch(&mut self, method: &str, request: &str, uris: &[&str],headers: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
             unsafe {
                 LOGGER.trace(&format!("request to node '{}' ->\n {:?}\n", url, request));
             }
-            let res = http_async(url, request).await;
+            let res = http_async(method, url, request, headers).await;
             unsafe {
                 LOGGER.trace(&format!("response -> {:?}\n", res));
             }
@@ -187,11 +189,11 @@ impl Transport for HttpTransport {
     }
 
     #[cfg(feature = "blocking")]
-    fn fetch_blocking(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
+    fn fetch_blocking(&mut self, method: &str, request: &str, uris: &[&str],headers: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
             // println!("{:?} {:?}", url, request);
-            let res = async_std::task::block_on(http_async(url, request));
+            let res = async_std::task::block_on(http_async(method, url, request, headers));
             // println!("{:?}", res);
             match res {
                 Err(_) => responses.push(Err("Transport error".to_string())),

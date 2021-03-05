@@ -180,6 +180,7 @@ async function runSingleTest(test, c) {
         autoUpdateList: false,
         includeCode: true,
         bootWeights: false,
+        experimental: true,
         proof: test.proof || 'standard',
         maxAttempts: 1,
         finality: test.finality || 0,

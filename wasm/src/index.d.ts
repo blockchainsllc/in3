@@ -91,6 +91,14 @@ export declare interface IN3Config {
     includeCode?: boolean
 
     /**
+     * if true, features marked as experimental are allowed. 
+     * Otherwise an exception would be thrown if those features would be used.
+     *
+     * default: false
+     */
+    experimental?: boolean
+
+    /**
     * if true, the first request (updating the nodelist) will also fetch the current health status
     * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
     *

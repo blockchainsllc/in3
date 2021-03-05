@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "eth_full.h"
-#include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request_internal.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
@@ -48,20 +48,14 @@
 in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(pdata);
   UNUSED_VAR(action);
-  in3_vctx_t* vc     = pctx;
-  char*       method = d_get_stringk(vc->request, K_METHOD);
+  in3_vctx_t* vc = pctx;
   if (vc->chain->type != CHAIN_ETH) return IN3_EIGNORE;
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
-  if (!vc->result)
-    return 0;
+  if (!vc->result) return IN3_OK;
 
-  // do we support this request?
-  if (!method)
-    return vc_err(vc, "No Method in request defined!");
-
-  if (strcmp(method, "eth_call") == 0) {
+  if (strcmp(vc->method, "eth_call") == 0) {
     if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
     d_token_t* tx      = d_get_at(d_get(vc->request, K_PARAMS), 0);
     bytes_t*   address = d_get_byteskl(tx, K_TO, 20);
@@ -69,8 +63,8 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
     memset(zeros, 0, 20);
     int      res       = 0;
     bytes_t* from      = d_get_byteskl(tx, K_FROM, 20);
-    bytes_t* value     = d_get_bytesk(tx, K_VALUE);
-    bytes_t* data      = d_get_bytesk(tx, K_DATA);
+    bytes_t* value     = d_get_bytes(tx, K_VALUE);
+    bytes_t* data      = d_get_bytes(tx, K_DATA);
     bytes_t  gas       = d_to_bytes(d_get(tx, K_GAS_LIMIT));
     bytes_t* result    = NULL;
     uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
@@ -118,12 +112,12 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
           //          b_print(result);
           //          b_print(d_bytes(vc->result));
         }
-        if (vc->ctx->error) return IN3_EINVAL;
+        if (vc->req->error) return IN3_EINVAL;
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
       case IN3_WAITING:
         return IN3_WAITING;
       default:
-        return ctx_set_error(vc->ctx, "General Error during execution", (in3_ret_t) ret);
+        return req_set_error(vc->req, "General Error during execution", (in3_ret_t) ret);
     }
   }
   else

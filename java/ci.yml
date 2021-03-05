@@ -54,8 +54,8 @@ test_android:
       - .gradle/wrapper
       - .gradle/caches
   script:
-    - wget https://services.gradle.org/distributions/gradle-6.8.1-bin.zip ; unzip gradle-6.8.1-bin.zip ; export PATH=`pwd`/gradle-6.8.1/bin:$PATH
-    - git clone https://github.com/blockchainsllc/in3-example-android.git
+    - wget https://services.gradle.org/distributions/gradle-6.8.1-bin.zip && unzip gradle-6.8.1-bin.zip && export PATH=`pwd`/gradle-6.8.1/bin:$PATH
+    - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android
     - mkdir in3
     - mv ../c ../CMakeLists.txt  ../java in3/
@@ -82,7 +82,7 @@ java_linux:
   script:
     - mv java_build build
     - cd java
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - short-jobs
   artifacts:
@@ -108,7 +108,7 @@ java_arm:
   script:
     - mv java_build build
     - cd java
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - arm
   artifacts:
@@ -132,7 +132,7 @@ java_macos:
   script:
     - mv java_build build
     - cd java; cp test/build_test.gradle build.gradle
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - mac-os
 
@@ -145,9 +145,11 @@ java_win:
   script:
     - mv java_build build
     - cd java; cp test/build_test.gradle build.gradle
-    - ./gradlew test
+    - ./gradlew  --info  test
   tags:
     - windows
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 #  artifacts:
 #    reports:
 #      junit: java/build/test-results/test/TEST-*.xml

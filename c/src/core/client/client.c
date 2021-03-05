@@ -34,20 +34,20 @@
 
 #include "../util/data.h"
 #include "../util/mem.h"
-#include "context.h"
 #include "keys.h"
 #include "plugin.h"
+#include "request.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
+in3_req_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
   assert_in3(c);
   assert(req);
   // create a new context by parsing the request
-  in3_ctx_t* ctx = ctx_new(c, req);
+  in3_req_t* ctx = req_new(c, req);
 
   // this happens if the request is not parseable (JSON-error in params)
   if (ctx->error) {
@@ -56,7 +56,7 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
   }
 
   // execute it
-  in3_ret_t ret = in3_send_ctx(ctx);
+  in3_ret_t ret = in3_send_req(ctx);
   if (ret == IN3_OK) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
@@ -68,7 +68,7 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
   return ctx; // return context and hope the calle will clean it.
 }
 
-in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) {
+in3_req_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) {
   assert_in3(c);
   assert(method);
   assert(params);
@@ -79,13 +79,13 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
   char*      req  = heap ? _malloc(max) : alloca(max);                                         // allocate memory in heap or stack
   snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params); // create request
 
-  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
+  in3_req_t* ctx = in3_client_rpc_ctx_raw(c, req);
 
   if (heap) _free(req); // free request string if we created it in heap
   return ctx;           // return context and hope the calle will clean it.
 }
 
-static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
+static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   assert(ctx);
   assert_in3(ctx->client);
   if (result) result[0] = 0;
@@ -110,12 +110,13 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   }
 
   // do we have an error-property in the response?
-  d_token_t* r = d_get(ctx->responses[0], K_ERROR);
+  bool       is_obj = d_type(ctx->responses[0]) == T_OBJECT;
+  d_token_t* r      = is_obj ? d_get(ctx->responses[0], K_ERROR) : NULL;
   if (d_type(r) != T_NULL) {
     if (d_type(r) == T_STRING)
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
-      char* msg = d_get_stringk(r, K_MESSAGE);
+      char* msg = d_get_string(r, K_MESSAGE);
       *error    = msg ? _strdupn(msg, -1) : d_create_json(ctx->response_context, r);
     }
     else
@@ -124,10 +125,18 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
     goto clean;
   }
 
-  if ((r = d_get(ctx->responses[0], K_RESULT)) == NULL) {
-    // we have no result
-    *error = _strdupn("no result or error in rpc-response", -1);
-    res    = IN3_ERPC;
+  if ((r = (is_obj ? d_get(ctx->responses[0], K_RESULT) : NULL)) == NULL) {
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "in3_http") == 0) {
+      *result = d_type(ctx->responses[0]) == T_BYTES
+                    ? _strdupn((void*) ctx->responses[0]->data, ctx->responses[0]->len + 1)
+                    : d_create_json(ctx->response_context, r);
+      res     = IN3_OK;
+    }
+    else {
+      // we have no result
+      *error = _strdupn("no result or error in rpc-response", -1);
+      res    = IN3_ERPC;
+    }
     goto clean;
   }
 
@@ -135,7 +144,7 @@ static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   if (result) *result = d_create_json(ctx->response_context, r);
 
 clean:
-  ctx_free(ctx);
+  req_free(ctx);
 
   // if we have an error, we always return IN3_EUNKNOWN
   return res;
@@ -151,7 +160,7 @@ in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char*
   return ctx_rpc(in3_client_rpc_ctx_raw(c, request), result, error);
 }
 
-static char* create_rpc_error(in3_ctx_t* ctx, int code, char* error) {
+static char* create_rpc_error(in3_req_t* ctx, int code, char* error) {
   sb_t          sb       = {0};
   bool          is_array = ctx && ctx->request_context && d_type(ctx->request_context->result) == T_ARRAY;
   uint_fast16_t len      = (ctx && ctx->len) ? ctx->len : 1;
@@ -159,7 +168,7 @@ static char* create_rpc_error(in3_ctx_t* ctx, int code, char* error) {
   for (uint_fast16_t i = 0; i < len; i++) {
     if (i) sb_add_char(&sb, ',');
     sb_add_chars(&sb, "{\"id\":");
-    sb_add_int(&sb, (ctx && ctx->requests && i < ctx->len) ? d_get_intk(ctx->requests[i], K_ID) : 0);
+    sb_add_int(&sb, (ctx && ctx->requests && i < ctx->len) ? d_get_int(ctx->requests[i], K_ID) : 0);
     sb_add_chars(&sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
     sb_add_int(&sb, code);
     sb_add_chars(&sb, ",\"message\":\"");
@@ -170,7 +179,7 @@ static char* create_rpc_error(in3_ctx_t* ctx, int code, char* error) {
   return sb.data;
 }
 
-char* ctx_get_error_rpc(in3_ctx_t* ctx, in3_ret_t ret) {
+char* req_get_error_rpc(in3_req_t* ctx, in3_ret_t ret) {
   return create_rpc_error(ctx, ret ? ret : ctx->verification_state, ctx->error);
 }
 
@@ -180,8 +189,7 @@ char* in3_client_exec_req(
 ) {
   // parse it
   char*      res = NULL;
-  in3_ctx_t* ctx = ctx_new(c, req);
-  in3_ret_t  ret;
+  in3_req_t* ctx = req_new(c, req);
 
   //  not enough memory
   if (!ctx) return NULL;
@@ -193,11 +201,12 @@ char* in3_client_exec_req(
     goto clean;
   }
 
-  ret = in3_send_ctx(ctx);
+  // execute the request
+  in3_ret_t ret = in3_send_req(ctx);
 
   // do we have an error?
   if (ctx->error) {
-    res = ctx_get_error_rpc(ctx, ret);
+    res = req_get_error_rpc(ctx, ret);
     goto clean;
   }
 
@@ -208,11 +217,11 @@ char* in3_client_exec_req(
   }
 
   // looks good, so we use the resonse and return it
-  res = ctx_get_response_data(ctx);
+  res = req_get_response_data(ctx);
 
 clean:
 
-  ctx_free(ctx);
+  req_free(ctx);
   return res;
 }
 
@@ -248,39 +257,80 @@ void in3_sign_ctx_set_signature_hex(
 }
 
 /**
- * getter to retrieve the payload from a in3_request_t struct
+ * getter to retrieve the payload from a in3_http_request_t struct
  */
 char* in3_get_request_payload(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 ) {
   return request->payload;
 }
 
 /**
- * getter to retrieve the urls list from a in3_request_t struct
+ * getter to retrieve the length of the payload from a in3_http_request_t struct
+ */
+uint32_t in3_get_request_payload_len(
+    in3_http_request_t* request /**< request struct */
+) {
+  return request->payload_len;
+}
+
+/**
+ * getter to retrieve the http-method from a in3_http_request_t struct
+ */
+char* in3_get_request_method(
+    in3_http_request_t* request /**< request struct */
+) {
+  return request->method;
+}
+/**
+ * getter to retrieve the urls list from a in3_http_request_t struct
  */
 char** in3_get_request_urls(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 ) {
   return request->urls;
 }
 
 /**
- * getter to retrieve the urls list length from a in3_request_t struct
+ * getter to retrieve the urls list length from a in3_http_request_t struct
  */
 int in3_get_request_urls_len(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 ) {
   return request->urls_len;
 }
 
 /**
- * getter to retrieve the urls list length from a in3_request_t struct
+ * getter to retrieve the urls list length from a in3_http_request_t struct
+ */
+int in3_get_request_headers_len(
+    in3_http_request_t* request /**< request struct */
+) {
+  int n = 0;
+  for (in3_req_header_t* h = request->headers; h; h = h->next) n++;
+  return n;
+}
+/**
+ * getter to retrieve the urls list length from a in3_http_request_t struct
+ */
+char* in3_get_request_headers_at(
+    in3_http_request_t* request, /**< request struct */
+    int                 index    /**< the inde xof the header */
+) {
+  int n = 0;
+  for (in3_req_header_t* h = request->headers; h; h = h->next, n++) {
+    if (n == index) return h->value;
+  }
+  return NULL;
+}
+
+/**
+ * getter to retrieve the urls list length from a in3_http_request_t struct
  */
 uint32_t in3_get_request_timeout(
-    in3_request_t* request /**< request struct */
+    in3_http_request_t* request /**< request struct */
 ) {
-  return request->ctx->client->timeout;
+  return request->req->client->timeout;
 }
 
 /** 

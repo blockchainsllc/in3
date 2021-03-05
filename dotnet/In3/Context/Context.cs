@@ -47,23 +47,23 @@ namespace In3.Context
         private static IntPtr CreateNativeCtx(IntPtr nativeIn3Ptr, string rpc)
         {
             IntPtr rpcPtr = Marshal.StringToHGlobalAnsi(rpc);
-            IntPtr context = ctx_new(nativeIn3Ptr, rpcPtr);
-            string err = ctx_get_error_data(context);
+            IntPtr context = req_new(nativeIn3Ptr, rpcPtr);
+            string err = req_get_error_data(context);
             if (!String.IsNullOrEmpty(err))
             {
-                ctx_free(context);
+                req_free(context);
                 throw new ContextException(err);
             }
             return context;
         }
 
         /// <summary>
-        /// Proxy to in3_ctx_execute, every invocation generates a new state.
+        /// Proxy to in3_req_execute, every invocation generates a new state.
         /// </summary>
-        /// <returns>The state as computed by in3_ctx_execute.</returns>
+        /// <returns>The state as computed by in3_req_execute.</returns>
         public async Task<IState> Execute()
         {
-            return await new StateMachine(in3_ctx_exec_state(this._nativeCtx))
+            return await new StateMachine(in3_req_exec_state(this._nativeCtx))
                 .HandleChange(this);
         }
 
@@ -73,7 +73,7 @@ namespace In3.Context
         /// <returns>A context object.</returns>
         public Context GetLastWaiting()
         {
-            return new Context(in3_ctx_last_waiting(_nativeCtx), _wrapper);
+            return new Context(in3_req_last_waiting(_nativeCtx), _wrapper);
         }
 
 
@@ -92,7 +92,7 @@ namespace In3.Context
         /// <returns>The final result.</returns>
         public string GetResponse()
         {
-            IntPtr rspPtr = ctx_get_response_data(_nativeCtx);
+            IntPtr rspPtr = req_get_response_data(_nativeCtx);
             string msg = Marshal.PtrToStringUTF8(rspPtr);
             // This needs to be freed since it is a copy of the response context.
             Native.Utils._free_(rspPtr);
@@ -106,7 +106,7 @@ namespace In3.Context
         /// <returns>The final result.</returns>
         public new CtxType GetType()
         {
-            uint type = ctx_get_type(_nativeCtx);
+            uint type = req_get_type(_nativeCtx);
             return (CtxType)type;
         }
 
@@ -115,7 +115,7 @@ namespace In3.Context
         /// </summary>
         public void Dispose()
         {
-            ctx_free(_nativeCtx);
+            req_free(_nativeCtx);
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace In3.Context
         public void ReportError(string errorMessage)
         {
             IntPtr rpcPtr = Marshal.StringToHGlobalAnsi(errorMessage);
-            ctx_set_error_intern(_nativeCtx, rpcPtr, (int)In3Code.IN3_ERPC);
+            req_set_error_intern(_nativeCtx, rpcPtr, (int)In3Code.IN3_ERPC);
             // This needs to be freed since our pointer is copied into the context by the function and needs to be freed this way else it will lead to Heap Corruption and its platform independent.
             Marshal.FreeHGlobal(rpcPtr);
         }
@@ -151,22 +151,22 @@ namespace In3.Context
         /// <returns>A string describing the encountered error.</returns>
         public string GetErrorMessage()
         {
-            IntPtr msgPtr = ctx_get_error_rpc(_nativeCtx, 0);
+            IntPtr msgPtr = req_get_error_rpc(_nativeCtx, 0);
             string msg = Marshal.PtrToStringUTF8(msgPtr);
             // This needs to be freed since it is a copy of the error context.
             Native.Utils._free_(msgPtr);
             return msg;
         }
 
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr ctx_get_error_rpc(IntPtr ctx, int ret);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void ctx_set_error_intern(IntPtr ctx, IntPtr message, int errnumber);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern uint ctx_get_type(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr ctx_new(IntPtr client, IntPtr req_data);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern string ctx_get_error_data(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void ctx_free(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_ctx_exec_state(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_ctx_last_waiting(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr ctx_get_response_data(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr req_get_error_rpc(IntPtr ctx, int ret);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void req_set_error_intern(IntPtr ctx, IntPtr message, int errnumber);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern uint req_get_type(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr req_new(IntPtr client, IntPtr req_data);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern string req_get_error_data(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void req_free(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_req_exec_state(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_req_last_waiting(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr req_get_response_data(IntPtr ctx);
 
     }
 }

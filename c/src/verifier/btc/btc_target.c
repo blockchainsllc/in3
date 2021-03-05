@@ -1,7 +1,7 @@
 #include "btc_target.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/mem.h"
 #include "../../nodeselect/cache.h"
 #include "btc_serialize.h"
@@ -94,7 +94,7 @@ in3_ret_t btc_check_conf(in3_t* c, btc_target_conf_t* conf) {
   if (!conf->data.data) {
     char cache_key[50];
     set_cachekey(conf->chain_id, cache_key);
-    in3_cache_ctx_t cctx = {.ctx = NULL, .content = NULL, .key = cache_key};
+    in3_cache_ctx_t cctx = {.req = NULL, .content = NULL, .key = cache_key};
     in3_plugin_execute_all(c, PLGN_ACT_CACHE_GET, &cctx);
 
     if (cctx.content) {
@@ -125,8 +125,8 @@ void btc_set_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t dap, uint8_t
   // add to cache
   char cache_key[50];
   set_cachekey(vc->chain->chain_id, cache_key);
-  in3_cache_ctx_t cctx = {.ctx = NULL, .content = &tc->data, .key = cache_key};
-  in3_plugin_execute_first_or_none(vc->ctx, PLGN_ACT_CACHE_SET, &cctx);
+  in3_cache_ctx_t cctx = {.req = NULL, .content = &tc->data, .key = cache_key};
+  in3_plugin_execute_first_or_none(vc->req, PLGN_ACT_CACHE_SET, &cctx);
 }
 
 uint32_t btc_get_closest_target(btc_target_conf_t* tc, uint32_t dap, uint8_t* target) {
@@ -174,16 +174,16 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
   if (block_number < BIP34_START) return IN3_OK; // for pre bip34, this finalityheader already checked it
 
   // is there a required ctx, which we need to clean up?
-  in3_ctx_t* ctx = ctx_find_required(vc->ctx, "btc_proofTarget");                                                  // do we have an existing required proofTarget-request?
+  in3_req_t* ctx = req_find_required(vc->req, "btc_proofTarget");                                                  // do we have an existing required proofTarget-request?
   if (ctx)                                                                                                         // yes, we do!
-    switch (in3_ctx_state(ctx)) {                                                                                  // but what is the state?
-      case CTX_ERROR:                                                                                              // there was an error,
-        return ctx_set_error(vc->ctx, "Error verifying the target", ctx_set_error(vc->ctx, ctx->error, IN3_ERPC)); // so we report it!
-      case CTX_WAITING_FOR_RESPONSE:                                                                               // for an response
-      case CTX_WAITING_TO_SEND:
+    switch (in3_req_state(ctx)) {                                                                                  // but what is the state?
+      case REQ_ERROR:                                                                                              // there was an error,
+        return req_set_error(vc->req, "Error verifying the target", req_set_error(vc->req, ctx->error, IN3_ERPC)); // so we report it!
+      case REQ_WAITING_FOR_RESPONSE:                                                                               // for an response
+      case REQ_WAITING_TO_SEND:
         return IN3_WAITING;                                                                                         // we keep on waiting.
-      case CTX_SUCCESS:                                                                                             // if it was successful,
-        if (ctx_remove_required(vc->ctx, ctx, false)) return vc_err(vc, "could not clean up proofTarget-request!"); //  we remove it,
+      case REQ_SUCCESS:                                                                                             // if it was successful,
+        if (req_remove_required(vc->req, ctx, false)) return vc_err(vc, "could not clean up proofTarget-request!"); //  we remove it,
         break;                                                                                                      // since gthe verification already added the verified targets.
     }
 
@@ -213,5 +213,5 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
   // we need more proof, so we create a request
   char* req = _malloc(300);
   sprintf(req, "{\"method\":\"btc_proofTarget\",\"jsonrpc\":\"2.0\",\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, (int) tc->max_diff, (int) tc->max_daps, (int) tc->dap_limit);
-  return ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
+  return req_add_required(vc->req, req_new(vc->req->client, req));
 }

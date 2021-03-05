@@ -140,31 +140,25 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
 in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(pdata);
   UNUSED_VAR(action);
-  in3_vctx_t* vc     = pctx;
-  char*       method = NULL;
-  d_token_t*  params = d_get(vc->request, K_PARAMS);
+  in3_vctx_t* vc = pctx;
   if (vc->chain->type != CHAIN_IPFS) return IN3_EIGNORE;
-
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
-  if (!vc->result)
-    return IN3_OK;
+  if (!vc->result) return IN3_OK;
+  d_token_t* params = d_get(vc->request, K_PARAMS);
 
   // do we support this request?
-  if (!(method = d_get_stringk(vc->request, K_METHOD)))
-    return vc_err(vc, "No Method in request defined!");
-
-  if (strcmp(method, "in3_nodeList") && d_type(vc->result) != T_STRING)
+  if (strcmp(vc->method, "in3_nodeList") && d_type(vc->result) != T_STRING)
     return vc_err(vc, "Invalid response!");
 
-  if (strcmp(method, "in3_nodeList") == 0)
+  if (strcmp(vc->method, "in3_nodeList") == 0)
     return true;
-  else if (strcmp(method, "ipfs_get") == 0)
+  else if (strcmp(vc->method, "ipfs_get") == 0)
     return ipfs_verify_hash(d_string(vc->result),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_get_string_at(params, 0));
-  else if (strcmp(method, "ipfs_put") == 0)
+  else if (strcmp(vc->method, "ipfs_put") == 0)
     return ipfs_verify_hash(d_get_string_at(params, 0),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_string(vc->result));

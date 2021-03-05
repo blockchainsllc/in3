@@ -44,7 +44,7 @@ Except for `PLGN_ACT_TERM` we will loop until the first plugin handles it. The h
 - `IN3_OK` - the plugin handled it and it was succesful
 - `IN3_WAITING` - the plugin handled the action, but is waiting for more data, which happens in a sub context added. As soon as this was resolved, the plugin will be called again.
 - `IN3_EIGNORE` - the plugin did **NOT** handle the action and we should continue with the other plugins.
-- `IN3_E...` - the plugin did handle it, but raised a error and returned the error-code. In addition you should always use the current `in3_ctx_t`to report a detailed error-message (using `ctx_set_error()`)
+- `IN3_E...` - the plugin did handle it, but raised a error and returned the error-code. In addition you should always use the current `in3_req_t`to report a detailed error-message (using `req_set_error()`)
 
 ### Lifecycle
 
@@ -62,16 +62,16 @@ For Transport implementations you should always register for those 3 `PLGN_ACT_T
 
 Send will be triggered only if the request is executed synchron, whenever a new request needs to be send out. This request may contain multiple urls, but the same payload.
 
-`arguments` : `in3_request_t*` - a request-object holding the following data:
+`arguments` : `in3_http_request_t*` - a request-object holding the following data:
 
 ```c
-typedef struct in3_request {
+typedef struct in3_http_request {
   char*           payload;  // the payload to send 
   char**          urls;     // array of urls 
   uint_fast16_t   urls_len; // number of urls 
-  in3_ctx_t*      ctx;      // the current context 
+  in3_req_t*      ctx;      // the current context 
   void*           cptr;     // a custom ptr to hold information during 
-} in3_request_t;
+} in3_http_request_t;
 ```
 
 It is expected that a plugin will send out http-requests to each (iterating until `urls_len`) url from `urls` with the `payload`. 
@@ -85,7 +85,7 @@ in3_ret_t transport_handle(void* custom_data, in3_plugin, in3_plugin_act_t actio
   switch (action) {
 
     case PLGN_ACT_TRANSPORT_SEND: {
-      in3_request_t* req = arguments; // cast it to in3_request_t* 
+      in3_http_request_t* req = arguments; // cast it to in3_http_request_t* 
 
       // init the cptr
       in3_curl_t* c = _malloc(sizeof(in3_curl_t));
@@ -121,13 +121,13 @@ This will only triggered if the previously triggered `PLGN_ACT_TRANSPORT_SEND`
 - if the responses were not all set yet.
 - if a `cptr` was set
 
-`arguments` : `in3_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
+`arguments` : `in3_http_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
 
 The plugin needs to wait until the first response was received ( or runs into a timeout). To report, please use `in3_req_add_response()``
 
 ```c
 void in3_req_add_response(
-    in3_request_t* req,      //  the the request 
+    in3_http_request_t* req,      //  the the request 
     int            index,    //  the index of the url, since this request could go out to many urls 
     bool           is_error, //  if true this will be reported as error. the message should then be the error-message 
     const char*    data,     //  the data or the the string of the response
@@ -152,7 +152,7 @@ in3_req_add_response(request, index, true, "Timeout waiting for a response", -1,
 
 If a previous `PLGN_ACT_TRANSPORT_SEND` has set a `cptr` this will be triggered in order to clean up memory.
 
-`arguments` : `in3_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
+`arguments` : `in3_http_request_t*` - a request-object holding the data. ( the payload and urls may not be set!)
 
 ### Signing
 
@@ -170,7 +170,7 @@ This action is triggered as a request to sign data.
 typedef struct sign_ctx {
   uint8_t            signature[65]; // the resulting signature needs to be writte into these bytes 
   d_signature_type_t type;          // the type of signature
-  in3_ctx_t*         ctx;           // the context of the request in order report errors 
+  in3_req_t*         ctx;           // the context of the request in order report errors 
   bytes_t            message;       // the message to sign
   bytes_t            account;       // the account to use for the signature  (if set)
 } in3_sign_ctx_t;
@@ -251,7 +251,7 @@ if we are about to sign data and need to know the address of the account abnout 
 
 ```c
 typedef struct sign_account_ctx {
-  in3_ctx_t* ctx;     // the context of the request in order report errors 
+  in3_req_t* ctx;     // the context of the request in order report errors 
   address_t  account; // the account to use for the signature 
 } in3_sign_account_ctx_t;
 ```
@@ -296,7 +296,7 @@ The Prepare-action is triggered before signing and gives a plugin the chance to 
 ```c
 
 typedef struct sign_prepare_ctx {
-  struct in3_ctx* ctx;     // the context of the request in order report errors 
+  struct in3_req* ctx;     // the context of the request in order report errors 
   address_t       account; // the account to use for the signature 
   bytes_t         old_tx;  // the data to sign 
   bytes_t         new_tx;  // the new data to be set 
@@ -310,9 +310,9 @@ In order to decode the data you must use rlp.h:
 
 
 ```c
-#define decode(data,index,dst,msg) if (rlp_decode_in_list(data, index, dst) != 1) return ctx_set_error(ctx, "invalid" msg "in txdata", IN3_EINVAL);
+#define decode(data,index,dst,msg) if (rlp_decode_in_list(data, index, dst) != 1) return req_set_error(ctx, "invalid" msg "in txdata", IN3_EINVAL);
 
-in3_ret_t decode_tx(in3_ctx_t* ctx, bytes_t raw, tx_data_t* result) {
+in3_ret_t decode_tx(in3_req_t* ctx, bytes_t raw, tx_data_t* result) {
   decode(&raw, 0, &result->nonce    , "nonce");
   decode(&raw, 1, &result->gas_price, "gas_price");
   decode(&raw, 2, &result->gas      , "gas");
@@ -337,7 +337,7 @@ Triggered for each rpc-request in order to give plugins a chance to directly han
 
 ```c
 typedef struct {
-  in3_ctx_t*       ctx;      // Request context. 
+  in3_req_t*       ctx;      // Request context. 
   d_token_t*       request;  // request 
   in3_response_t** response; // the response which a prehandle-method should set
 } in3_rpc_handle_ctx_t;
@@ -348,7 +348,7 @@ the steps to add a new custom rpc-method will be the following.
 1. get the method and params:
 
 ```c
-char* method      = d_get_stringk(rpc->request, K_METHOD);
+char* method      = d_get_string(rpc->request, K_METHOD);
 d_token_t* params = d_get(rpc->request, K_PARAMS);
 ```
 2. check if you can handle it
@@ -372,7 +372,7 @@ return in3_rpc_handle_finish(rpc);
 4. In case of an error, simply set the error in the context, with the right message and error-code:
 
 ```c
-if (d_len(params)<1) return ctx_set_error(rpc->ctx, "Not enough parameters", IN3_EINVAL);
+if (d_len(params)<1) return req_set_error(rpc->ctx, "Not enough parameters", IN3_EINVAL);
 ```
 
 If the reequest needs additional subrequests, you need to follow the pattern of sending a request asynchron in a state machine:
@@ -383,25 +383,25 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
   uint64_t  nonce =0;
 
   // check if a request is already existing
-  in3_ctx_t* ctx = ctx_find_required(rpc->ctx, "eth_getTransactionCount");
+  in3_req_t* ctx = req_find_required(rpc->ctx, "eth_getTransactionCount");
   if (ctx) {
     // found one - so we check if it is ready.
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       // in case of an error, we report it back to the parent context
-      case CTX_ERROR:
-        return ctx_set_error(rpc->ctx, ctx->error, IN3_EUNKNOWN);
+      case REQ_ERROR:
+        return req_set_error(rpc->ctx, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
-      case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
 
       // if it is useable, we can now handle the result.
-      case CTX_SUCCESS: {
+      case REQ_SUCCESS: {
         // check if the response contains a error.
-        TRY(ctx_check_response_error(ctx, 0))
+        TRY(req_check_response_error(ctx, 0))
 
         // read the nonce
-        nonce = d_get_longk(ctx->responses[0], K_RESULT);
+        nonce = d_get_long(ctx->responses[0], K_RESULT);
       }
     }
   }
@@ -414,7 +414,7 @@ If the reequest needs additional subrequests, you need to follow the pattern of 
     // create it
     sprintf(req, "{\"method\":\"eth_getTransactionCount\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"%s\",\"latest\"]}", account_hex_string);
     // and add the request context to the parent.
-    return ctx_add_required(parent, ctx_new(parent->client, req));
+    return req_add_required(parent, req_new(parent->client, req));
   }
 
   // continue here and use the nonce....
@@ -435,13 +435,13 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* args)
   swtch (action) {
     case PLGN_ACT_RPC_HANDLE: {
       // get method and params
-      char*                 method  = d_get_stringk(rpc->request, K_METHOD);
+      char*                 method  = d_get_string(rpc->request, K_METHOD);
       d_token_t*            params  = d_get(rpc->request, K_PARAMS);
 
       // do we support it?
       if (strcmp(method, "web3_sha3") == 0) {
         // check the params
-        if (!params || d_len(params) != 1) return ctx_set_error(rpc->ctx, "invalid params", IN3_EINVAL);
+        if (!params || d_len(params) != 1) return req_set_error(rpc->ctx, "invalid params", IN3_EINVAL);
         bytes32_t hash;
         // hash the first param
         keccak(d_to_bytes(d_get_at(params,0)), hash);
@@ -471,7 +471,7 @@ This plugin reprresents a verifier. It will be triggered after we have received 
 
 ```c
 typedef struct {
-  in3_ctx_t*   ctx;                   // Request context. 
+  in3_req_t*   ctx;                   // Request context. 
   in3_chain_t* chain;                 // the chain definition. 
   d_token_t*   result;                // the result to verify 
   d_token_t*   request;               // the request sent. 
@@ -495,11 +495,11 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* args) {
 
 
   in3_vctx_t* vc     = args;
-  char*       method = d_get_stringk(vc->request, K_METHOD);
+  char*       method = d_get_string(vc->request, K_METHOD);
   d_token_t*  params = d_get(vc->request, K_PARAMS);
 
   // did we ask for proof?
-  if (in3_ctx_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
+  if (in3_req_get_proof(vc->ctx, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)
@@ -532,7 +532,7 @@ This action will be triggered whenever there is something worth putting in a cac
 
 ```c
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx;     // the request context  
+  in3_req_t* ctx;     // the request context  
   char*      key;     // the key to fetch 
   bytes_t*   content; // the content to set 
 } in3_cache_ctx_t;
@@ -578,7 +578,7 @@ This action will be triggered whenever we access the cache in order to get value
 
 ```c
 typedef struct in3_cache_ctx {
-  in3_ctx_t* ctx;     // the request context  
+  in3_req_t* ctx;     // the request context  
   char*      key;     // the key to fetch 
   bytes_t*   content; // the content to set 
 } in3_cache_ctx_t;
@@ -728,7 +728,7 @@ this will be triggered in order to sign a request. It will provide a request_has
 
 ```c
 typedef struct {
-  in3_ctx_t* ctx;           /**< Request context. */
+  in3_req_t* ctx;           /**< Request context. */
   d_token_t* request;       /**< the request sent. */
   bytes32_t  request_hash;  /**< the hash to sign */
   uint8_t    signature[65]; /**< the signature */

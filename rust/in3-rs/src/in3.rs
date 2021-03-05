@@ -34,7 +34,7 @@ pub mod chain {
 }
 
 struct Ctx {
-    ptr: *mut in3_sys::in3_ctx_t,
+    ptr: *mut in3_sys::in3_req_t,
     #[allow(dead_code)]
     config: CString,
 }
@@ -42,9 +42,9 @@ struct Ctx {
 impl Ctx {
     fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = CString::new(config_str).expect("CString::new failed");
-        let ptr: *mut in3_sys::in3_ctx_t;
+        let ptr: *mut in3_sys::in3_req_t;
         unsafe {
-            ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
+            ptr = in3_sys::req_new(in3.ptr, config.as_ptr());
         }
         Ctx { ptr, config }
     }
@@ -58,8 +58,8 @@ impl Ctx {
     }
 
     async unsafe fn execute(&mut self) -> Result<String, SysError> {
-        match in3_sys::in3_ctx_exec_state(self.ptr) {
-            in3_sys::state::CTX_ERROR => {
+        match in3_sys::in3_req_exec_state(self.ptr) {
+            in3_sys::state::REQ_ERROR => {
                 while (*self.ptr).required != std::ptr::null_mut()
                     && (*self.ptr).error == std::ptr::null_mut()
                 {
@@ -74,17 +74,17 @@ impl Ctx {
                     Err(SysError::UnknownIn3Error)
                 }
             }
-            in3_sys::state::CTX_SUCCESS => {
+            in3_sys::state::REQ_SUCCESS => {
                 let response = CStr::from_ptr((*(*self.ptr).response_context).c)
                     .to_str()
                     .expect("err is not valid UTF-8");
                 Ok(response.to_owned())
             }
-            in3_sys::state::CTX_WAITING_FOR_RESPONSE => Err(SysError::NotSupported),
-            in3_sys::state::CTX_WAITING_TO_SEND => {
+            in3_sys::state::REQ_WAITING_FOR_RESPONSE => Err(SysError::NotSupported),
+            in3_sys::state::REQ_WAITING_TO_SEND => {
                 let request = in3_sys::in3_create_request(self.ptr);
-                match (*(*request).ctx).type_ {
-                    in3_sys::ctx_type::CT_SIGN => {
+                match (*(*request).req).type_ {
+                    in3_sys::ctx_type::RT_SIGN => {
                         let slice = CStr::from_ptr((*request).payload)
                             .to_str()
                             .expect("result is not valid UTF-8");
@@ -104,7 +104,7 @@ impl Ctx {
                         in3_sys::in3_req_add_response(
                             request,
                             0.try_into().unwrap(),
-                            false,
+                            0,
                             res_str.0.as_mut_ptr() as *const c_char,
                             65,
                             0,
@@ -112,7 +112,10 @@ impl Ctx {
                         in3_sys::request_free(request);
                         Err(SysError::TryAgain)
                     }
-                    in3_sys::ctx_type::CT_RPC => {
+                    in3_sys::ctx_type::RT_RPC => {
+                        let method = CStr::from_ptr((*request).method)
+                            .to_str()
+                            .expect("method is not valid UTF-8");
                         let payload = CStr::from_ptr((*request).payload)
                             .to_str()
                             .expect("payload is not valid UTF-8");
@@ -124,13 +127,21 @@ impl Ctx {
                                 .expect("URL is not valid UTF-8");
                             urls.push(url);
                         }
+                        let mut headers = Vec::new();
+                        let header_len =  in3_sys::in3_get_request_headers_len(request);       
+                        for i in 0..header_len as usize {
+                            let header = CStr::from_ptr(in3_sys::in3_get_request_headers_at(request,i as i32))
+                                .to_str()
+                                .expect("header is not valid UTF-8");
+                            headers.push(header);
+                        }
 
                         let responses: Vec<Result<String, String>> = {
                             let transport = {
                                 let c: &mut Client = (*self.ptr).client.into();
                                 &mut c.transport
                             };
-                            transport.fetch(payload, &urls).await
+                            transport.fetch(method, payload, &urls, &headers).await
                         };
                         // println!("{:?}", responses);
                         for (i, resp) in responses.iter().enumerate() {
@@ -140,7 +151,7 @@ impl Ctx {
                                     in3_sys::in3_req_add_response(
                                         request,
                                         i.try_into().unwrap(), // cannot fail
-                                        true,
+                                        -11, // TODO: here we need the status-code of the failed http-request as negative-value
                                         err_str.as_ptr(),
                                         -1i32,
                                         0,
@@ -151,7 +162,7 @@ impl Ctx {
                                     in3_sys::in3_req_add_response(
                                         request,
                                         i.try_into().unwrap(), // cannot fail
-                                        false,
+                                        0,
                                         res_str.as_ptr(),
                                         -1i32,
                                         0,
@@ -159,9 +170,9 @@ impl Ctx {
                                 }
                             }
                         }
-                        let res = *(*(*request).ctx).raw_response.offset(0);
+                        let res = *(*(*request).req).raw_response.offset(0);
                         let err = if res.state != in3_sys::in3_ret_t::IN3_OK {
-                            let error = (*(*(*request).ctx).raw_response.offset(0)).data;
+                            let error = (*(*(*request).req).raw_response.offset(0)).data;
                             let error = CStr::from_ptr(error.data)
                                 .to_str()
                                 .expect("err is not valid UTF-8");
@@ -180,7 +191,7 @@ impl Ctx {
     #[cfg(feature = "blocking")]
     fn send(&mut self) -> In3Result<()> {
         unsafe {
-            let ret = in3_sys::in3_send_ctx(self.ptr);
+            let ret = in3_sys::in3_send_req(self.ptr);
             match ret {
                 in3_sys::in3_ret_t::IN3_OK => Ok(()),
                 _ => Err(ret.into()),
@@ -192,7 +203,7 @@ impl Ctx {
 impl Drop for Ctx {
     fn drop(&mut self) {
         unsafe {
-            in3_sys::ctx_free(self.ptr);
+            in3_sys::req_free(self.ptr);
         }
     }
 }
@@ -452,12 +463,15 @@ impl Client {
 
     #[cfg(feature = "blocking")]
     extern "C" fn in3_rust_transport(
-        request: *mut in3_sys::in3_request_t,
+        request: *mut in3_sys::in3_http_request_t,
     ) -> in3_sys::in3_ret_t::Type {
         // internally calls the rust transport impl, i.e. Client.transport
         let mut urls = Vec::new();
 
         unsafe {
+            let method = CStr::from_ptr((*request).method)
+                .to_str()
+                .expect("method is not valid UTF-8");
             let payload = CStr::from_ptr((*request).payload)
                 .to_str()
                 .expect("URL is not valid UTF-8");
@@ -468,9 +482,11 @@ impl Client {
                     .expect("URL is not valid UTF-8");
                 urls.push(url);
             }
+            let mut headers = Vec::new();
+            // TODO fill headers
 
             let c: &mut Client = (*request).in3.into();
-            let responses: Vec<Result<String, String>> = c.transport.fetch_blocking(payload, &urls);
+            let responses: Vec<Result<String, String>> = c.transport.fetch_blocking(method, payload, &urls, &headers);
 
             let mut any_err = false;
             for (i, resp) in responses.iter().enumerate() {

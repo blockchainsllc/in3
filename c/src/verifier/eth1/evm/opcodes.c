@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 #include "opcodes.h"
-#include "../../../core/client/context.h"
+#include "../../../core/client/request.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"

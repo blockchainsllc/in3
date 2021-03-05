@@ -13,6 +13,6 @@ namespace In3.Transport
         /// <param name="url">Url of the node.</param>
         /// <param name="payload">Content for the RPC request.</param>
         /// <returns>The rpc response.</returns>
-        public Task<string> Handle(string url, string payload);
+        public Task<string> Handle(string method, string url, byte[] payload, string[] headers);
     }
 }

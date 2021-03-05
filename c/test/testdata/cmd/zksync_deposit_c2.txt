@@ -1,4 +1,4 @@
-:: cmd in3 -zks http://localhost:3030 -pk 0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8 -c http://localhost:8545 -fi zksync_deposit_c2.txt -zkat contract zksync_deposit 10.0eth ETH false 0x89eb15687f7b55be70ac2faffcc5a52589c42d1e
+:: cmd in3 -x -zks http://localhost:3030 -pk 0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8 -c http://localhost:8545 -fi zksync_deposit_c2.txt -zkat contract zksync_deposit 10.0eth ETH false 0x89eb15687f7b55be70ac2faffcc5a52589c42d1e
 
 :: time 1611138822
 

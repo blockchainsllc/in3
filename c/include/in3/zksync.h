@@ -97,30 +97,43 @@ typedef struct zk_musig_session {
   bytes_t                  commitments;      /**< all commits */
   bytes_t                  signature_shares; /**< all signatures shares */
   void*                    signer;           /**< handle for the signer */
+  char*                    proof_data;       /**< the proof needed by the server to verify. This is created by the client and checked in the server. */
   struct zk_musig_session* next;             /**< next session */
 } zk_musig_session_t;
 
+struct pay_criteria;
+
 /** internal configuration-object */
-typedef struct {
-  char*               provider_url;     /**< url of the zksync-server */
-  uint8_t*            account;          /**< address of the account */
-  uint8_t*            main_contract;    /**< address of the main zksync contract*/
-  uint8_t*            gov_contract;     /**< address of the government contract */
-  uint64_t            account_id;       /**< the id of the account as used in the messages */
-  uint64_t            nonce;            /**< the current nonce */
-  address_t           pub_key_hash_set; /**< the pub_key_hash as set in the account*/
-  address_t           pub_key_hash_pk;  /**< the pub_key_hash based on the sync_key*/
-  bytes32_t           pub_key;          /**< the pub_key */
-  uint16_t            token_len;        /**< number of tokens in the tokenlist */
-  bytes32_t           sync_key;         /**< the raw key to sign with*/
-  zksync_token_t*     tokens;           /**< the token-list */
-  zk_sign_type_t      sign_type;        /**< the signature-type to use*/
-  uint32_t            version;          /**< zksync version */
-  zk_create2_t*       create2;          /**< create2 args */
-  bytes_t             musig_pub_keys;   /**< the public keys of all participants of a schnorr musig signature */
-  zk_musig_session_t* musig_sessions;   /**< linked list of open musig sessions */
-  char**              musig_urls;       /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
+typedef struct zksync_config {
+  char*                provider_url;        /**< url of the zksync-server */
+  uint8_t*             account;             /**< address of the account */
+  uint8_t*             main_contract;       /**< address of the main zksync contract*/
+  uint8_t*             gov_contract;        /**< address of the government contract */
+  uint64_t             account_id;          /**< the id of the account as used in the messages */
+  uint64_t             nonce;               /**< the current nonce */
+  address_t            pub_key_hash_set;    /**< the pub_key_hash as set in the account*/
+  address_t            pub_key_hash_pk;     /**< the pub_key_hash based on the sync_key*/
+  bytes32_t            pub_key;             /**< the pub_key */
+  uint16_t             token_len;           /**< number of tokens in the tokenlist */
+  bytes32_t            sync_key;            /**< the raw key to sign with*/
+  zksync_token_t*      tokens;              /**< the token-list */
+  zk_sign_type_t       sign_type;           /**< the signature-type to use*/
+  uint32_t             version;             /**< zksync version */
+  zk_create2_t*        create2;             /**< create2 args */
+  bytes_t              musig_pub_keys;      /**< the public keys of all participants of a schnorr musig signature */
+  zk_musig_session_t*  musig_sessions;      /**< linked list of open musig sessions */
+  char**               musig_urls;          /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
+  struct pay_criteria* incentive;           /**< incentive payment configuration */
+  char*                proof_verify_method; /**< the rpc-method used to verify the proof before creating a signature */
+  char*                proof_create_method; /**< the rpc-method used to create the proof before creating a signature */
 } zksync_config_t;
+
+typedef struct pay_criteria {
+  uint_fast32_t   payed_nodes;                /**< max number of nodes payed at the same time*/
+  uint64_t        max_price_per_hundred_igas; /**< the max price per 100 gas units to accept a payment offer */
+  char*           token;                      /**< token-name */
+  zksync_config_t config;                     /**< the account configuration */
+} pay_criteria_t;
 
 /** a transaction */
 typedef struct {
@@ -139,27 +152,30 @@ typedef struct {
 NONULL in3_ret_t in3_register_zksync(in3_t* c);
 
 /** sets a PubKeyHash for the current Account */
-NONULL in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+NONULL in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 
 /** sends a transfer transaction in Layer 2*/
-NONULL in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params, zk_msg_type_t type);
+NONULL in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_msg_type_t type);
 
 /** sends a deposit transaction in Layer 1*/
-NONULL in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+NONULL in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 
 /** sends a emergency withdraw  transaction in Layer 1*/
-NONULL in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+NONULL in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 
 /** creates message data and signs a transfer-message */
-NONULL in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf);
+NONULL in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* req, zksync_config_t* conf);
 
 /** creates message data and signs a change_pub_key-message */
-NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token);
+NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* req, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token);
 
-in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, d_token_t* params);
+in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
-in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig);
-
+in3_ret_t           zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* req, uint8_t* sig);
+in3_ret_t           zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ctx);
+in3_ret_t           zksync_add_payload(in3_pay_payload_ctx_t* ctx);
+in3_ret_t           update_nodelist_from_cache(in3_req_t* req, unsigned int nodelen);
+in3_ret_t           handle_zksync(void* conf, in3_plugin_act_t action, void* arg);
 #ifdef __cplusplus
 }
 #endif

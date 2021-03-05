@@ -23,16 +23,13 @@ static int handle_booking(usn_event_t* ev) {
 
 int main(int argc, char* argv[]) {
   // create new incubed client
-  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-
-  // switch to goerli
-  c->chain_id = 0x5;
+  in3_t* c = in3_for_chain(CHAIN_ID_GOERLI);
 
   // setting up a usn-device-config
   usn_device_conf_t usn;
   usn.booking_handler    = handle_booking;                                          // this is the handler, which is called for each rent/return or start/stop
   usn.c                  = c;                                                       // the incubed client
-  usn.chain_id           = c->chain_id;                                             // the chain_id
+  usn.chain_id           = c->chain.chain_id;                                       // the chain_id
   usn.devices            = NULL;                                                    // this will contain the list of devices supported
   usn.len_devices        = 0;                                                       // and length of this list
   usn.now                = 0;                                                       // the current timestamp

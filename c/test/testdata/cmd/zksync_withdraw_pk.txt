@@ -1,4 +1,4 @@
-:: cmd in3 -zks http://localhost:3030 -pk 0xc073624ce79d35f60581134500771cecf21c34e07f5f599033cabaceeb187fef -c http://localhost:8545 -fi zksync_withdraw_pk.txt zksync_withdraw 0xec8b8b4e05f647b36fa31d76273a7dc2860d0e73 90493664000000000 ETH
+:: cmd in3 -x -zks http://localhost:3030 -pk 0xc073624ce79d35f60581134500771cecf21c34e07f5f599033cabaceeb187fef -c http://localhost:8545 -fi zksync_withdraw_pk.txt zksync_withdraw 0xec8b8b4e05f647b36fa31d76273a7dc2860d0e73 90493664000000000 ETH
 
 :: time 1610972724
 

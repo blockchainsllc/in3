@@ -32,16 +32,21 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-FROM jianann/alpine-clang as build
-COPY . /in3/
+FROM debian as build
+COPY CMakeLists.txt /in3/
+COPY c /in3/c/
+COPY scripts /in3/scripts/
 WORKDIR /in3/
 USER root
-RUN cd /in3/ && rm -rf build; 
-RUN cd /in3/ && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DIN3_SERVER=true -DUSE_CURL=false .. && make in3
+RUN apt-get update && apt-get install -y libcurl4-openssl-dev curl cmake build-essential
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y 
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cd /in3/  && mkdir build && cd build && cmake  -DZKCRYPTO_LIB=true -DCMAKE_BUILD_TYPE=MinSizeRel -DIN3_SERVER=true  .. && make in3
 
 
-FROM alpine:edge
+FROM debian:buster-slim
 COPY --from=build /in3/build/bin/in3 /bin/in3
+RUN apt-get update && apt-get install -y curl 
 EXPOSE 8545
 ENTRYPOINT ["/bin/in3"]
 CMD ["--help"]
