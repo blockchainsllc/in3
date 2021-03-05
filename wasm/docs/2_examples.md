@@ -2,7 +2,7 @@
 
 ### get_block_api
 
-source : [in3-c/wasm/examples/get_block_api.ts](https://github.com/slockit/in3-c/blob/master/wasm/examples/get_block_api.ts)
+source : [in3-c/wasm/examples/get_block_api.ts](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/get_block_api.ts)
 
 Reads the latest block by calling IN3's web3.js-compatible eth API.
 Read the eth api from web3.js docs: https://web3js.readthedocs.io/en/v1.3.0/web3-eth.html
@@ -34,7 +34,7 @@ showLatestBlock().catch(console.error)
 
 ### get_block_rpc
 
-source : [in3-c/wasm/examples/get_block_rpc.ts](https://github.com/slockit/in3-c/blob/master/wasm/examples/get_block_rpc.ts)
+source : [in3-c/wasm/examples/get_block_rpc.ts](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/get_block_rpc.ts)
 
 Reads the latest block by calling IN3's internal RPC to the WASM core.
 Learn other exclusive IN3 RPC calls here: https://in3.readthedocs.io/en/develop/rpc.html
@@ -65,7 +65,7 @@ showLatestBlock().catch(console.error)
 
 ### register_pugin
 
-source : [in3-c/wasm/examples/register_pugin.ts](https://github.com/slockit/in3-c/blob/master/wasm/examples/register_pugin.ts)
+source : [in3-c/wasm/examples/register_pugin.ts](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/register_pugin.ts)
 
 
 
@@ -118,7 +118,7 @@ registerPlugin().catch(console.error)
 
 ### use_web3
 
-source : [in3-c/wasm/examples/use_web3.ts](https://github.com/slockit/in3-c/blob/master/wasm/examples/use_web3.ts)
+source : [in3-c/wasm/examples/use_web3.ts](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/use_web3.ts)
 
 use IN3 as Web3Provider in web3.js
 
@@ -149,7 +149,7 @@ const web3 = new Web3(in3.createWeb3Provider());
 
 ### in3_in_browser
 
-source : [in3-c/wasm/examples/in3_in_browser.html](https://github.com/slockit/in3-c/blob/master/wasm/examples/in3_in_browser.html)
+source : [in3-c/wasm/examples/in3_in_browser.html](https://github.com/blockchainsllc/in3/blob/master/wasm/examples/in3_in_browser.html)
 
 use IN3 in html 
 

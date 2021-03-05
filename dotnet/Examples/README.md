@@ -64,7 +64,7 @@ namespace ConnectToEthereum
             Console.Out.WriteLine($"Latest Block Number: {mainnetLatest}");
             Console.Out.WriteLine($"Gas Price: {mainnetCurrentGasPrice} Wei");
 
-            Console.Out.WriteLine("Ethereum Ewc Test Network");
+            Console.Out.WriteLine("Ethereum EWC Network");
             IN3 ewcClient = IN3.ForChain(Chain.Ewc);
             BigInteger ewcLatest = await ewcClient.Eth1.BlockNumber();
             BigInteger ewcCurrentGasPrice = await ewcClient.Eth1.GetGasPrice();

@@ -62,7 +62,7 @@ fi
 ```js
     externalNativeBuild {
         cmake {
-            path file('in3/CMakeLists.txt')
+            path file('../in3/CMakeLists.txt')
         }
     }
     sourceSets {
