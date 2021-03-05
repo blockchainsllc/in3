@@ -97,6 +97,7 @@ typedef struct zk_musig_session {
   bytes_t                  commitments;      /**< all commits */
   bytes_t                  signature_shares; /**< all signatures shares */
   void*                    signer;           /**< handle for the signer */
+  char*                    proof_data;       /**< the proof needed by the server to verify. This is created by the client and checked in the server. */
   struct zk_musig_session* next;             /**< next session */
 } zk_musig_session_t;
 
@@ -124,6 +125,7 @@ typedef struct zksync_config {
   char**               musig_urls;          /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
   struct pay_criteria* incentive;           /**< incentive payment configuration */
   char*                proof_verify_method; /**< the rpc-method used to verify the proof before creating a signature */
+  char*                proof_create_method; /**< the rpc-method used to create the proof before creating a signature */
 } zksync_config_t;
 
 typedef struct pay_criteria {

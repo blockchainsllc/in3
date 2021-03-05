@@ -40,7 +40,11 @@ if [ "$BUILDTYPE" = "debug" ]; then
    BUILDTYPE=DEBUG
    TEST=true
 fi
-OPTS="-G Ninja -DIAMO_SIGNER=true -DIAMO_ZK=true -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DZKCRYPTO_LIB=true -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DZKSYNC=true -DIAMO_SIGNER=true -DIN3_SERVER=true -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
+[ -z "$VERSION" ] && VERSION=$CI_COMMIT_TAG
+[ -z "$VERSION" ] && VERSION=3.1.0-debug
+
+OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DTAG_VERSION=$VERSION -DZKCRYPTO_LIB=false -DTEST=$TEST -DBUILD_DOC=$TEST -DJAVA=$TEST -DZKSYNC=true -DIN3_SERVER=true -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS "
+#OPTS="-G Ninja -DTAG_VERSION=3.1.0-debug -DZKCRYPTO_LIB=true -DIAMO_SIGNER=true -DIAMO_ZK=true -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DTEST=$TEST -DBUILD_DOC=false -DJAVA=false -DZKSYNC=true -DJAVA=$TEST -DCMAKE_BUILD_TYPE=$BUILDTYPE $OPTS -DIN3_SERVER=true"
 
 if [ "$CONTAINER" = "--help" ]; then
    echo "usage $0 <TARGET> <DEBUG|MINSIZEREL|RELEASE|debug|release> "
@@ -80,7 +84,7 @@ if [ -z "$CONTAINER" ]; then
   echo "local_build"
   touch build/container.txt
   cd build
-  cmake $OPTS .. && ninja
+  cmake $OPTS .. && make -j 8
 elif [ "$CONTAINER" = "win" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:gcc7-mingw
   echo $CONTAINER > build/container.txt
