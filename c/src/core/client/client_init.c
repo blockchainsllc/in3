@@ -214,6 +214,7 @@ char* in3_get_config(in3_t* c) {
   add_bool(sb, ',', "stats", c->flags & FLAGS_STATS);
   add_bool(sb, ',', "useBinary", c->flags & FLAGS_BINARY);
   add_bool(sb, ',', "useHttp", c->flags & FLAGS_HTTP);
+  add_bool(sb, ',', "experimental", c->flags & FLAGS_ALLOW_EXPERIMENTAL);
   add_uint(sb, ',', "maxVerifiedHashes", c->max_verified_hashes);
   add_uint(sb, ',', "timeout", c->timeout);
   add_string(sb, ',', "proof", (c->proof == PROOF_NONE) ? "none" : (c->proof == PROOF_STANDARD ? "standard" : "full"));
