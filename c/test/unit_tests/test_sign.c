@@ -50,8 +50,8 @@
 #include "../../src/core/util/scache.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
 
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/third-party/crypto/ecdsa.h"
@@ -59,7 +59,7 @@
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
-#include <nodeselect/nodeselect_def.h>
+#include <nodeselect/full/nodeselect_def.h>
 #include <stdio.h>
 #include <unistd.h>
 #define ETH_PRIVATE_KEY "0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"

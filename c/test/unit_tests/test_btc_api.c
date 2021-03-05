@@ -45,7 +45,7 @@
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include <core/util/log.h>
-#include <nodeselect/nodeselect_def.h>
+#include <nodeselect/full/nodeselect_def.h>
 
 static in3_t* in3_init_test() {
   in3_t* in3 = in3_for_chain(CHAIN_ID_BTC);

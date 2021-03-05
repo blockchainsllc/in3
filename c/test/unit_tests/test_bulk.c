@@ -44,7 +44,7 @@
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../test_utils.h"
-#include "nodeselect/nodeselect_def.h"
+#include "nodeselect/full/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 

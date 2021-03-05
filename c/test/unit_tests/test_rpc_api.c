@@ -48,8 +48,8 @@
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
-#include "nodeselect/nodelist.h"
-#include "nodeselect/nodeselect_def.h"
+#include "nodeselect/full/nodelist.h"
+#include "nodeselect/full/nodeselect_def.h"
 #include <stdio.h>
 
 #define err_string(msg) ("Error:" msg)

@@ -42,8 +42,8 @@
 #include "../src/core/util/log.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
-#include "nodeselect/nodelist.h"
-#include "nodeselect/nodeselect_def.h"
+#include "nodeselect/full/nodelist.h"
+#include "nodeselect/full/nodeselect_def.h"
 
 #define ADD_RESPONSE_NODELIST_3(last_block) add_response("in3_nodeList",                                                                            \
                                                          "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",           \

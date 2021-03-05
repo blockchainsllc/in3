@@ -50,8 +50,8 @@
 #include "../../src/core/util/scache.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
 
 #if defined(LEDGER_NANO)
 #include "../../src/signer/ledger-nano/signer/ethereum_apdu_client.h"

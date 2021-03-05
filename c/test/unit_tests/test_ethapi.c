@@ -49,9 +49,9 @@
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
-#include "nodeselect/nodeselect_def.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
+#include "nodeselect/full/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 

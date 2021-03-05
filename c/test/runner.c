@@ -43,8 +43,8 @@
 #include "../src/verifier/btc/btc.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include "../src/verifier/ipfs/ipfs.h"
-#include <nodeselect/nodelist.h>
-#include <nodeselect/nodeselect_def.h>
+#include <nodeselect/full/nodelist.h>
+#include <nodeselect/full/nodeselect_def.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

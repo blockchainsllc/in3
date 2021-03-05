@@ -2,8 +2,8 @@
 #include "../../src/core/client/keys.h"
 #include "../../src/core/util/data.h"
 #include "../test_utils.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
 #include <stdio.h>
 #include <unistd.h>
 #define MOCK_PATH "../c/test/testdata/mock/%s.json"
