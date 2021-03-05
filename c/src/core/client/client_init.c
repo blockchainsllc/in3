@@ -314,6 +314,10 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_BINARY, (d_int(token) ? true : false));
     }
+    else if (token->key == key("experimental")) {
+      EXPECT_TOK_BOOL(token);
+      BITMASK_SET_BOOL(c->flags, FLAGS_ALLOW_EXPERIMENTAL, (d_int(token) ? true : false));
+    }
     else if (token->key == key("useHttp")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_HTTP, (d_int(token) ? true : false));

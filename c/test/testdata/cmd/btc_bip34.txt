@@ -1,4 +1,4 @@
-:: cmd ./bin/in3 -fi ../c/test/testdata/cmd/btc_bip34.txt -c btc -nl http://localhost:8500 -f 5 getblockheader 000000002afcaf0e0d78e698e71c26fdd5f87b7703c18ed48e27ab133dc3d4bb true -debug -rc 1 -a 1
+:: cmd ./bin/in3 -x -fi ../c/test/testdata/cmd/btc_bip34.txt -c btc -nl http://localhost:8500 -f 5 getblockheader 000000002afcaf0e0d78e698e71c26fdd5f87b7703c18ed48e27ab133dc3d4bb true -debug -rc 1 -a 1
 
 :: time 1612516368
 

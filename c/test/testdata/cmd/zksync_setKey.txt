@@ -1,4 +1,4 @@
-:: cmd ./in3 -fi ../../c/test/testdata/cmd/zksync_set_key.txt -zks http://localhost:3030 -c http://localhost:8545 -pk 0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8 zksync_set_key ETH -debug
+:: cmd ./in3 -x -fi ../../c/test/testdata/cmd/zksync_set_key.txt -zks http://localhost:3030 -c http://localhost:8545 -pk 0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8 zksync_set_key ETH -debug
 
 :: time 1608290665
 

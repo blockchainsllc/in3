@@ -561,7 +561,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 }
 #ifdef NODESELECT_DEF
 static void set_nodelist(in3_t* c, char* nodes, bool update) {
-  if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS;
+  if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS | (c->flags & FLAGS_ALLOW_EXPERIMENTAL);
   char*                 cpy = alloca(strlen(nodes) + 1);
   in3_nodeselect_def_t* nl  = in3_nodeselect_def_data(c);
   if (!update && nl->nodelist_upd8_params) {
@@ -856,6 +856,8 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
+    else if (strcmp(argv[i], "-x") == 0)
+      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
     else if (strcmp(argv[i], "-fo") == 0)
       recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)
@@ -905,8 +907,6 @@ int main(int argc, char* argv[]) {
       port = argv[++i];
     else if (strcmp(argv[i], "-am") == 0)
       allowed_methods = argv[++i];
-    else if (strcmp(argv[i], "-x") == 0)
-      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
     else if (strcmp(argv[i], "-os") == 0)
       only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)

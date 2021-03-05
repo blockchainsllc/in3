@@ -1,4 +1,4 @@
-:: cmd in3 -zks http://localhost:3030 -pk 0xc073624ce79d35f60581134500771cecf21c34e07f5f599033cabaceeb187fef -c http://localhost:8545 -fi zksync_setkey_pk_again.txt zksync_set_key ETH -debug
+:: cmd in3 -x -zks http://localhost:3030 -pk 0xc073624ce79d35f60581134500771cecf21c34e07f5f599033cabaceeb187fef -c http://localhost:8545 -fi zksync_setkey_pk_again.txt zksync_set_key ETH -debug
 
 :: time 1610972451
 

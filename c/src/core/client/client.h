@@ -205,7 +205,7 @@ struct in3_plugin {
 typedef struct in3_t_ {
   uint8_t                signature_count;       /**< the number of signatures used to proof the blockhash. */
   uint8_t                replace_latest_block;  /**< if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
-  uint_fast8_t           flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
+  uint_fast16_t          flags;                 /**< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
   uint16_t               finality;              /**< the number of signatures in percent required for the request*/
   uint_fast16_t          max_attempts;          /**< the max number of attempts before giving up*/
   uint_fast16_t          max_verified_hashes;   /**< max number of verified hashes to cache (actual number may temporarily exceed this value due to pending requests) */
