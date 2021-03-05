@@ -84,6 +84,7 @@ function createClient(config = {}, recordName) {
         autoUpdateList: false,
         proof: 'standard',
         maxAttempts: 1,
+        experimental: true,
         signatureCount: 0,
         nodeRegistry: {
             needsUpdate: false
