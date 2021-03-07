@@ -314,32 +314,32 @@ const unsigned int BOOT_NODES_LOCAL_BIN_LEN = 85;
 static inline bytes_t nodeselect_def_cfg_data(chain_id_t chain_id) {
 #ifndef NO_BOOT_NODES_MAINNET
   if (chain_id == CHAIN_ID_MAINNET)
-    return bytes(BOOT_NODES_MAINNET_BIN, BOOT_NODES_MAINNET_BIN_LEN);
+    return bytes((uint8_t*) BOOT_NODES_MAINNET_BIN, BOOT_NODES_MAINNET_BIN_LEN);
 #endif // NO_BOOT_NODES_MAINNET
 
 #ifndef NO_BOOT_NODES_GOERLI
   if (chain_id == CHAIN_ID_GOERLI)
-    return bytes(BOOT_NODES_GOERLI_BIN, BOOT_NODES_GOERLI_BIN_LEN);
+    return bytes((uint8_t*) BOOT_NODES_GOERLI_BIN, BOOT_NODES_GOERLI_BIN_LEN);
 #endif // NO_BOOT_NODES_GOERLI
 
 #ifndef NO_BOOT_NODES_IPFS
   if (chain_id == CHAIN_ID_IPFS)
-    return bytes(BOOT_NODES_IPFS_BIN, BOOT_NODES_IPFS_BIN_LEN);
+    return bytes((uint8_t*) BOOT_NODES_IPFS_BIN, BOOT_NODES_IPFS_BIN_LEN);
 #endif // NO_BOOT_NODES_IPFS
 
 #ifndef NO_BOOT_NODES_BTC
   if (chain_id == CHAIN_ID_BTC)
-    return bytes(BOOT_NODES_BTC_BIN, BOOT_NODES_BTC_BIN_LEN);
+    return bytes((uint8_t*) BOOT_NODES_BTC_BIN, BOOT_NODES_BTC_BIN_LEN);
 #endif // NO_BOOT_NODES_BTC
 
 #ifndef NO_BOOT_NODES_EWC
   if (chain_id == CHAIN_ID_EWC)
-    return bytes(BOOT_NODES_EWC_BIN, BOOT_NODES_EWC_BIN_LEN);
+    return bytes((uint8_t*) BOOT_NODES_EWC_BIN, BOOT_NODES_EWC_BIN_LEN);
 #endif // NO_BOOT_NODES_EWC
 
 #ifndef NO_BOOT_NODES_LOCAL
   if (chain_id == CHAIN_ID_LOCAL)
-    return bytes(BOOT_NODES_LOCAL_BIN, BOOT_NODES_LOCAL_BIN_LEN);
+    return bytes((uint8_t*) BOOT_NODES_LOCAL_BIN, BOOT_NODES_LOCAL_BIN_LEN);
 #endif // NO_BOOT_NODES_LOCAL
 
   return bytes(NULL, 0);
