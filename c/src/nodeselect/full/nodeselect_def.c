@@ -268,8 +268,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
       else if (cp.token->key == key("nodeList")) {
         EXPECT_TOK_ARR(cp.token);
         if (clear_nodes(data) < 0) goto cleanup;
-        int i = 0;
-        for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
+        for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
           EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
           EXPECT_TOK_STR(d_get(n.token, key("url")));
           EXPECT_TOK_ADDR(d_get(n.token, key("address")));
@@ -277,9 +276,8 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
                               d_get_longd(n.token, key("props"), 65535),
                               d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                      "add node failed");
-#ifndef __clang_analyzer__
-          BIT_SET(data->nodelist[i].attrs, ATTR_BOOT_NODE);
-#endif
+          assert(data->nodelist_length > 0);
+          BIT_SET(data->nodelist[data->nodelist_length - 1].attrs, ATTR_BOOT_NODE);
         }
       }
     }

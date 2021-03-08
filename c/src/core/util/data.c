@@ -725,10 +725,11 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
     jp->result    = _malloc(10 * sizeof(d_token_t));
     jp->allocated = 10;
   }
-  else if (jp->len + 1 > jp->allocated) {
+  else if (jp->len >= jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
   }
+  assert(jp->len < jp->allocated);
   d_token_t* n = jp->result + jp->len;
   jp->len += 1;
   n->key  = 0;
@@ -782,6 +783,7 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
       for (i = 0; i < len; i++) {
         ll = jp->len;
         TRY(read_token(jp, d, p, max));
+        assert(ll < jp->allocated);
         jp->result[ll].key = i;
       }
       break;
@@ -792,6 +794,7 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
         *p += 2;
         ll = jp->len;
         TRY(read_token(jp, d, p, max));
+        assert(ll < jp->allocated);
         jp->result[ll].key = key;
       }
       break;
