@@ -67,14 +67,14 @@ while IFS="" read -r p || [ -n "$p" ]; do
       echo -n "${NEWDEF} "
       DEF=$(echo -n "$DEF" | sed 's/\\//g' | json)
       printf "0x${DEF}" | xxd -r -p >"${NEWDEF}"".bin"
-      xxd -i -a -C "${NEWDEF}"".bin"
+      xxd -i -a -C "${NEWDEF}"".bin" | sed -e 's/unsigned/const unsigned/'
       DEF=""
       NEWDEF=""
       continue
     fi
 
     # use old-style comments for multi-liners
-    printf '/*\n'
+#    printf '/*\n'
     MACRO=1
   fi
 
@@ -98,7 +98,7 @@ while IFS="" read -r p || [ -n "$p" ]; do
       DEF="$DEF$temp"
       DEF=$(echo -n "$DEF" | sed 's/\\//g' | json)
       printf "0x${DEF}" | xxd -r -p >"${NEWDEF}"".bin"
-      xxd -i -a -C "${NEWDEF}"".bin"
+      xxd -i -a -C "${NEWDEF}"".bin" | sed -e 's/unsigned/const unsigned/'
       DEF=""
       NEWDEF=""
     else
