@@ -1,5 +1,6 @@
 package in3;
 
+import in3.utils.TransportException;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,7 +23,7 @@ class IN3MockTransport implements IN3Transport {
   }
 
   @Override
-  public byte[][] handle(String[] urls, byte[] payload) {
+  public byte[][] handle(String method, String[] urls, byte[] payload, String[] headers) throws TransportException {
     byte[][] result   = new byte[urls.length][];
     String methodName = this.getPayloadMethod(new String(payload));
 

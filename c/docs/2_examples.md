@@ -6,6 +6,7 @@ source : [in3-c/c/examples/btc_transaction.c](https://github.com/blockchainsllc/
 
 checking a Bitcoin transaction data
 
+
 ```c
 /// checking a Bitcoin transaction data
 
@@ -50,6 +51,7 @@ int main() {
 source : [in3-c/c/examples/call_a_function.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/call_a_function.c)
 
 This example shows how to call functions on a smart contract eiither directly or using the api to encode the arguments
+
 
 ```c
 /// This example shows how to call functions on a smart contract eiither directly or using the api to encode the arguments
@@ -161,7 +163,8 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
 
 source : [in3-c/c/examples/get_balance.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/get_balance.c)
 
-get the Balance with the API and also as direct RPC-call
+ get the Balance with the API and also as direct RPC-call
+
 
 ```c
 ///  get the Balance with the API and also as direct RPC-call
@@ -230,7 +233,8 @@ void get_balance_api(in3_t* in3) {
 
 source : [in3-c/c/examples/get_block.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/get_block.c)
 
-using the basic-module to get and verify a Block with the API and also as direct RPC-call
+ using the basic-module to get and verify a Block with the API and also as direct RPC-call
+
 
 ```c
 ///  using the basic-module to get and verify a Block with the API and also as direct RPC-call
@@ -301,7 +305,8 @@ void get_block_api(in3_t* in3) {
 
 source : [in3-c/c/examples/get_logs.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/get_logs.c)
 
-fetching events and verify them with eth_getLogs
+ fetching events and verify them with eth_getLogs
+
 
 ```c
 ///  fetching events and verify them with eth_getLogs
@@ -406,6 +411,7 @@ source : [in3-c/c/examples/get_transaction.c](https://github.com/blockchainsllc/
 
 checking the transaction data
 
+
 ```c
 /// checking the transaction data
 
@@ -478,7 +484,8 @@ void get_tx_api(in3_t* in3) {
 
 source : [in3-c/c/examples/get_transaction_receipt.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/get_transaction_receipt.c)
 
-validating the result or receipt of an transaction
+ validating the result or receipt of an transaction
+
 
 ```c
 ///  validating the result or receipt of an transaction
@@ -553,7 +560,8 @@ void get_tx_receipt_api(in3_t* in3) {
 
 source : [in3-c/c/examples/ipfs_put_get.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/ipfs_put_get.c)
 
-using the IPFS module
+ using the IPFS module
+
 
 ```c
 ///  using the IPFS module
@@ -640,6 +648,8 @@ int main() {
 
 source : [in3-c/c/examples/ledger_sign.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/ledger_sign.c)
 
+
+
 ```c
 
 #include <in3/client.h>  // the core client
@@ -698,6 +708,7 @@ void send_tx_api(in3_t* in3) {
 source : [in3-c/c/examples/send_transaction.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/send_transaction.c)
 
 sending a transaction including signing it with a private key
+
 
 ```c
 /// sending a transaction including signing it with a private key
@@ -792,6 +803,7 @@ source : [in3-c/c/examples/usn_device.c](https://github.com/blockchainsllc/in3/b
 
 a example how to watch usn events and act upon it.
 
+
 ```c
 /// a example how to watch usn events and act upon it.
 
@@ -818,16 +830,13 @@ static int handle_booking(usn_event_t* ev) {
 
 int main(int argc, char* argv[]) {
   // create new incubed client
-  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-
-  // switch to goerli
-  c->chain_id = 0x5;
+  in3_t* c = in3_for_chain(CHAIN_ID_GOERLI);
 
   // setting up a usn-device-config
   usn_device_conf_t usn;
   usn.booking_handler    = handle_booking;                                          // this is the handler, which is called for each rent/return or start/stop
   usn.c                  = c;                                                       // the incubed client
-  usn.chain_id           = c->chain_id;                                             // the chain_id
+  usn.chain_id           = c->chain.chain_id;                                       // the chain_id
   usn.devices            = NULL;                                                    // this will contain the list of devices supported
   usn.len_devices        = 0;                                                       // and length of this list
   usn.now                = 0;                                                       // the current timestamp
@@ -862,6 +871,7 @@ int main(int argc, char* argv[]) {
 source : [in3-c/c/examples/usn_rent.c](https://github.com/blockchainsllc/in3/blob/master/c/examples/usn_rent.c)
 
 how to send a rent transaction to a usn contract usinig the usn-api.
+
 
 ```c
 /// how to send a rent transaction to a usn contract usinig the usn-api.
@@ -941,7 +951,8 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-### Building
+
+### Building 
 
 In order to run those examples, you only need a c-compiler (gcc or clang) and curl installed.
 
@@ -955,3 +966,4 @@ You can build them individually by executing:
 ```
 gcc -o get_block_api get_block_api.c -lin3 -lcurl
 ```
+

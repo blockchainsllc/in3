@@ -42,6 +42,36 @@
 #include "../../../core/client/plugin.h"
 
 /**
+ * Filter type used internally when managing filters.
+ */
+typedef enum {
+  FILTER_EVENT   = 0, /**< Event filter */
+  FILTER_BLOCK   = 1, /**< Block filter */
+  FILTER_PENDING = 2, /**< Pending filter (Unsupported) */
+} in3_filter_type_t;
+
+typedef struct in3_filter_t_ {
+  bool              is_first_usage;         /**< if true the filter was not used previously */
+  in3_filter_type_t type;                   /**< filter type: (event, block or pending) */
+  uint64_t          last_block;             /**< block no. when filter was created OR eth_getFilterChanges was called */
+  char*             options;                /**< associated filter options */
+  void (*release)(struct in3_filter_t_* f); /**< method to release owned resources */
+} in3_filter_t;
+
+/**
+ * Handler which is added to client config in order to handle filter.
+ */
+typedef struct in3_filter_handler_t_ {
+  in3_filter_t** array; /** array of filters */
+  size_t         count; /** counter for filters */
+} in3_filter_handler_t;
+
+/**
+ * returns the filters
+ */
+in3_filter_handler_t* eth_basic_get_filters(in3_t* c);
+
+/**
  * verifies internal tx-values.
  */
 in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw);
@@ -85,7 +115,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
 in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing the transaction */
-                                  in3_ctx_t* ctx, /**< the current context */
+                                  in3_req_t* req, /**< the current context */
                                   bytes_t*   dst  /**< the bytes to write the result to. */
 );
 
@@ -93,7 +123,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing th
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
 in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction to sign */
-                          in3_ctx_t* ctx,    /**< the current context */
+                          in3_req_t* req,    /**< the current context */
                           address_t  from,   /**< the address of the account to sign with */
                           bytes_t*   dst     /**< the bytes to write the result to. */
 );
@@ -101,8 +131,8 @@ in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction t
 /**
  * expects a req-object for a transaction and converts it into a sendRawTransaction after signing.
  */
-in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, /**< the current context */
-                                     d_token_t* req  /**< the request */
+in3_ret_t handle_eth_sendTransaction(in3_req_t* req,     /**< the current context */
+                                     d_token_t* req_data /**< the request */
 );
 
 /**

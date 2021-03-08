@@ -25,14 +25,14 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
 
       char* res = NULL;
       char* req = NULL;
-      if (t->ctx->request_context) {
-        req = t->ctx->request_context->c;
+      if (t->req->request_context) {
+        req = t->req->request_context->c;
       }
-      if (t->ctx->response_context) {
-        res = t->ctx->response_context->c;
+      if (t->req->response_context) {
+        res = t->req->response_context->c;
       }
-      else if (t->ctx->raw_response) {
-        res = t->ctx->raw_response->data.data;
+      else if (t->req->raw_response) {
+        res = t->req->raw_response->data.data;
       }
 
       if (req) {
@@ -43,7 +43,7 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
         sentry_value_t crumb_res = sentry_value_new_breadcrumb(0, res);
         sentry_add_breadcrumb(crumb_res);
       }
-      char* conf = in3_get_config(t->ctx->client);
+      char* conf = in3_get_config(t->req->client);
       sentry_add_breadcrumb(sentry_value_new_breadcrumb(0, conf));
       _free(conf);
 

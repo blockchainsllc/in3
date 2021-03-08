@@ -6,6 +6,7 @@ source : [in3-c/java/examples/CallFunction.java](https://github.com/blockchainsl
 
 Calling Functions of Contracts
 
+
 ```java
 /// Calling Functions of Contracts
 
@@ -41,6 +42,7 @@ source : [in3-c/java/examples/Configure.java](https://github.com/blockchainsllc/
 
 Changing the default configuration
 
+
 ```java
 /// Changing the default configuration
 
@@ -66,12 +68,10 @@ public class Configure {
     clientConfig.setProof(Proof.none);     // does not require proof (not recommended)
 
     // Setup the ChainConfiguration object for the nodes on a certain chain
-    ChainConfiguration chainConfiguration = new ChainConfiguration(Chain.GOERLI, clientConfig);
+    NodeRegistryConfiguration chainConfiguration = clientConfig.getNodeRegistry();
     chainConfiguration.setNeedsUpdate(false);
     chainConfiguration.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     chainConfiguration.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
-
-    in3.setConfig(clientConfig);
 
     Block block = in3.getEth1API().getBlockByNumber(Block.LATEST, true);
     System.out.println(block.getHash());
@@ -84,6 +84,7 @@ public class Configure {
 source : [in3-c/java/examples/GetBalance.java](https://github.com/blockchainsllc/in3/blob/master/java/examples/GetBalance.java)
 
 getting the Balance with or without API
+
 
 ```java
 /// getting the Balance with or without API
@@ -122,6 +123,7 @@ public class GetBalance {
 source : [in3-c/java/examples/GetBlockAPI.java](https://github.com/blockchainsllc/in3/blob/master/java/examples/GetBlockAPI.java)
 
 getting a block with API
+
 
 ```java
 /// getting a block with API
@@ -162,6 +164,7 @@ source : [in3-c/java/examples/GetBlockRPC.java](https://github.com/blockchainsll
 
 getting a block without API
 
+
 ```java
 /// getting a block without API
 
@@ -190,6 +193,7 @@ public class GetBlockRPC {
 source : [in3-c/java/examples/GetTransaction.java](https://github.com/blockchainsllc/in3/blob/master/java/examples/GetTransaction.java)
 
 getting a Transaction with or without API
+
 
 ```java
 /// getting a Transaction with or without API
@@ -229,6 +233,7 @@ source : [in3-c/java/examples/GetTransactionReceipt.java](https://github.com/blo
 
 getting a TransactionReceipt with or without API
 
+
 ```java
 /// getting a TransactionReceipt with or without API
 
@@ -267,6 +272,7 @@ public class GetTransactionReceipt {
 source : [in3-c/java/examples/SendTransaction.java](https://github.com/blockchainsllc/in3/blob/master/java/examples/SendTransaction.java)
 
 Sending Transactions
+
 
 ```java
 
@@ -323,7 +329,8 @@ public class SendTransaction {
 
 ```
 
-### Building
+
+### Building 
 
 In order to run those examples, you only need a Java SDK installed.
 
@@ -338,3 +345,4 @@ In order to run a example use
 ```
 java -cp $IN3/build/lib/in3.jar:. GetBlockAPI
 ```
+

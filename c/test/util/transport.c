@@ -1,8 +1,9 @@
 #include "transport.h"
+#include "../../src/core/client/keys.h"
 #include "../../src/core/util/data.h"
 #include "../test_utils.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
 #include <stdio.h>
 #include <unistd.h>
 #define MOCK_PATH "../c/test/testdata/mock/%s.json"
@@ -117,7 +118,7 @@ int add_response_test(char* test, char* needed_params) {
     clean_json_str(params);
 
     response_buffer                 = _calloc(1, sizeof(response_t));
-    response_buffer->request_method = _strdupn(d_get_stringk(req, key("method")), -1);
+    response_buffer->request_method = _strdupn(d_get_string(req, key("method")), -1);
     response_buffer->request_params = params;
     response_buffer->response       = _strdupn(res.data, res.len);
   }
@@ -130,12 +131,12 @@ in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
 
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
   d_token_t*  request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
-  char*       method  = d_get_string(request, "method");
+  char*       method  = d_get_string(request, K_METHOD);
   str_range_t params  = d_to_json(d_get(request, key("params")));
   char*       p       = alloca(params.len + 1);
   strncpy(p, params.data, params.len);
@@ -146,7 +147,7 @@ in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   for (int i = 0; i < req->urls_len; ++i) {
     TEST_ASSERT_EQUAL_STRING(resp->request_method, method);
     TEST_ASSERT_EQUAL_STRING(resp->request_params, p);
-    in3_ctx_add_response(req->ctx, i, false, resp->response, -1, 0);
+    in3_ctx_add_response(req->req, i, false, resp->response, -1, 0);
     _free(resp->response);
     responses = resp->next;
     _free(resp);
@@ -161,14 +162,14 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(plugin_data);
   UNUSED_VAR(action);
 
-  in3_request_t* req      = plugin_ctx;
-  json_ctx_t*    r        = parse_json(req->payload);
-  d_token_t*     request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
-  char*          method   = d_get_string(request, "method");
-  str_range_t    params   = d_to_json(d_get(request, key("params")));
-  char*          p        = alloca(params.len + 1);
-  sb_t*          filename = sb_new(method);
-  for (d_iterator_t iter = d_iter(d_get(request, key("params"))); iter.left; d_iter_next(&iter)) {
+  in3_http_request_t* req      = plugin_ctx;
+  json_ctx_t*         r        = parse_json(req->payload);
+  d_token_t*          request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  char*               method   = d_get_string(request, K_METHOD);
+  str_range_t         params   = d_to_json(d_get(request, K_PARAMS));
+  char*               p        = alloca(params.len + 1);
+  sb_t*               filename = sb_new(method);
+  for (d_iterator_t iter = d_iter(d_get(request, K_PARAMS)); iter.left; d_iter_next(&iter)) {
     switch (d_type(iter.token)) {
       case T_BOOLEAN:
       case T_INTEGER:
@@ -199,8 +200,8 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_params, p);
   json_free(r);
 
-  sb_add_chars(&req->ctx->raw_response->data, response_buffer->response);
-  req->ctx->raw_response->state = IN3_OK;
+  sb_add_chars(&req->req->raw_response->data, response_buffer->response);
+  req->req->raw_response->state = IN3_OK;
   clean_last_response();
   return IN3_OK;
 }

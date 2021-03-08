@@ -318,14 +318,11 @@ void write(bytes_t* data, char* l, char** tt) {
       printf("[ %s", t2 ? t2[0] : "");
 
       if (first) {
-        bytes_t* hash = sha3(data);
+        bytes32_t hash;
+        keccak(*data, hash);
         printf("  Hash : 0x");
         first = 0;
-
-        for (int j = 0; j < 32; j++)
-          printf("%02x", hash->data[j]);
-
-        b_free(hash);
+        for (int j = 0; j < 32; j++) printf("%02x", hash[j]);
       }
       printf("\n");
 

@@ -64,19 +64,15 @@ IF (TRANSPORTS)
 ENDIF (TRANSPORTS)
 
 add_subdirectory(src/core)
+add_subdirectory(src/init)
 add_subdirectory(src/verifier)
 add_subdirectory(src/signer)
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
 add_subdirectory(src/tools)
+add_subdirectory(src/nodeselect)
 add_subdirectory(docs)
-
-if (NODESELECT_DEF_WL AND NOT NODESELECT_DEF)
-    message(SEND_ERROR "Nodeselect - whitelisting enabled without enabling the plugin itself!")
-elseif (NODESELECT_DEF)
-    add_subdirectory(src/nodeselect)
-endif()
 
 link_directories(${CMAKE_BINARY_DIR}/lib/)
 

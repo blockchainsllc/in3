@@ -26,6 +26,7 @@ ADD_DEFINITIONS(-DIN3_MATH_LITE)
 set(IN3_SRC ../../..)
 set(IN3_DEPS 
 ${IN3_SRC}/src/core 
+${IN3_SRC}/src/init 
 ${IN3_SRC}/src/verifier/eth1/basic 
 ${IN3_SRC}/src/verifier/eth1/nano 
 ${IN3_SRC}/src/signer/pk-signer 
@@ -33,7 +34,7 @@ ${IN3_SRC}/src/api/eth1
 ${IN3_SRC}/src/api/utils
 ${IN3_SRC}/src/third-party/crypto
 ${IN3_SRC}/src/third-party/tommath
-${IN3_SRC}/src/nodeselect
+${IN3_SRC}/src/nodeselect/full
 )
 
 foreach(dep ${IN3_DEPS})

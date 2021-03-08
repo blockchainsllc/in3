@@ -44,9 +44,8 @@ add_static_library(
   NAME     core 
   
   SOURCES 
-    client/context.c
+    client/request.c
     client/client.c
-    client/verifier.c
     client/execute.c
     client/client_init.c
     util/debug.c
@@ -61,18 +60,4 @@ add_static_library(
 
   DEPENDS 
     crypto
-)
-
-
-add_static_library(
-  NAME     init 
-  
-  SOURCES 
-    ../verifier/in3_init.c
-
-  DEPENDS 
-    ${IN3_VERIFIER} 
-    ${IN3_API} 
-    ${IN3_TRANSPORT}
-    ${IN3_NODESELECT}
 )

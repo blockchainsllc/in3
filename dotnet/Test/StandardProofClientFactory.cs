@@ -23,6 +23,7 @@ namespace Test
             clientConfig.Proof = Proof.Standard;
             clientConfig.MaxAttempts = 10;
             clientConfig.SignatureCount = 0;
+            clientConfig.Experimental = true;
         }
     }
 }

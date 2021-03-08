@@ -45,7 +45,7 @@
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
-#include <nodeselect/nodeselect_def.h>
+#include <nodeselect/full/nodeselect_def.h>
 #include <unistd.h>
 
 in3_t* init_in3(in3_plugin_act_fn custom_transport, chain_id_t chain) {

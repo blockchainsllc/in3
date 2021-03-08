@@ -2110,11 +2110,11 @@ This method has no parameters.
 
 #### Execute() `method`
 
-Proxy to in3_ctx_execute, every invocation generates a new state.
+Proxy to in3_req_execute, every invocation generates a new state.
 
 ###### Returns
 
-The state as computed by in3_ctx_execute.
+The state as computed by in3_req_execute.
 
 ###### Parameters
 

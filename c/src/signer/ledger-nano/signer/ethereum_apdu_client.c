@@ -1,5 +1,5 @@
 #include "ethereum_apdu_client.h"
-#include "../../../core/client/context.h"
+#include "../../../core/client/request.h"
 #include "../../../core/util/log.h"
 #include "device_apdu_commands.h"
 #include "ethereum_apdu_client_priv.h"

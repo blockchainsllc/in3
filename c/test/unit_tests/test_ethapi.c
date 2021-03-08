@@ -39,8 +39,8 @@
 #endif
 
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/request.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/scache.h"
@@ -49,9 +49,9 @@
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
-#include "nodeselect/nodeselect_def.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
+#include "nodeselect/full/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -187,7 +187,7 @@ static void test_get_filter_changes() {
   _free(hashes);
 
   // Test with non-existent filter id
-  TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterChanges(in3, 1234, NULL, NULL));
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterChanges(in3, 1234, NULL, NULL));
 
   // Test with all filters uninstalled
   TEST_ASSERT_TRUE(eth_uninstallFilter(in3, fid));
@@ -224,7 +224,7 @@ static void test_get_logs() {
   json_free(jopt);
 
   // Test with non-existent filter id
-  TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterLogs(in3, 1234, NULL));
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, 1234, NULL));
 
   // Test with all filters uninstalled
   TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, fid, NULL));

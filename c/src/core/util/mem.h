@@ -92,14 +92,12 @@
 #define _calloc(n, s)     t_calloc(n, s, __FILE__, __func__, __LINE__)
 #define _free(p)          t_free(p, __FILE__, __func__, __LINE__)
 #define _realloc(p, s, o) t_realloc(p, s, o, __FILE__, __func__, __LINE__)
-size_t mem_get_max_heap();
-void*  t_malloc(size_t size, char* file, const char* func, int line);
-void*  t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line);
-void*  t_calloc(size_t n, size_t size, char* file, const char* func, int line);
-void   t_free(void* ptr, char* file, const char* func, int line);
-int    mem_get_memleak_cnt();
-void   mem_reset(int cnt);
-void   memstack();
+void* t_malloc(size_t size, char* file, const char* func, int line);
+void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line);
+void* t_calloc(size_t n, size_t size, char* file, const char* func, int line);
+void  t_free(void* ptr, char* file, const char* func, int line);
+int   mem_get_memleak_cnt();
+void  mem_reset();
 #else /* TEST */
 #ifdef LOGGING
 #define _malloc(s)        _malloc_(s, __FILE__, __func__, __LINE__)

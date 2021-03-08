@@ -1,4 +1,4 @@
-#include "../../core/client/context_internal.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/log.h"
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
@@ -70,7 +70,7 @@ static int bitlen(uint64_t val) {
 const char* MAX_MANTISSA_35 = "34359738368";
 const char* MAX_MANTISSA_11 = "2048";
 
-static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in3_ctx_t* ctx) {
+static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in3_req_t* ctx) {
   while (*dec == '0') dec++;                // remove leading zeros (if any)
   int l     = strlen(dec);                  // trimmed size
   int total = (exp_len + mantissa_len) / 8; // the target size in bytes
@@ -88,18 +88,18 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
     }
 
     if (dec[i] != '0')
-      return ctx_set_error(ctx, "The value (mantissa) can not be packed", IN3_EINVAL); // its an error
+      return req_set_error(ctx, "The value (mantissa) can not be packed", IN3_EINVAL); // its an error
   }
   dec[cl]    = 0;                                                                    // terminate the string after the value cutting off all zeros
   uint64_t c = strtoull(dec, NULL, 10);                                              // and convert this value
   if (c == ULLONG_MAX || bitlen(c) > mantissa_len)                                   // if the value can be represented with the max bits
-    return ctx_set_error(ctx, "The value (mantissa) can not be packed", IN3_EINVAL); // its an error
+    return req_set_error(ctx, "The value (mantissa) can not be packed", IN3_EINVAL); // its an error
   long_to_bytes(c, tmp);                                                             // we copy the value to bytes
   shift_left(tmp, 64 - mantissa_len);                                                // and shift it so the bits are on the start and
   memcpy(dst, tmp, total);                                                           // copy the bytes to the dest
   long_to_bytes(l - cl, tmp);                                                        // now we do the same wit the exp which are the number of zeros counted (l-cl)
   if (bitlen(l - cl) > exp_len)                                                      // if the exp does not fit in the expected bytes
-    return ctx_set_error(ctx, "The value (exp) can not be packed", IN3_EINVAL);      // its an error
+    return req_set_error(ctx, "The value (exp) can not be packed", IN3_EINVAL);      // its an error
   shift_left(tmp, 64 - exp_len - mantissa_len);                                      // now we shift it to the  position after the mantissa
   for (int i = 0; i < total; i++) dst[i] |= tmp[i];                                  // and copy them to the destination using or since we already have bytes there
   return IN3_OK;
@@ -138,7 +138,7 @@ static void create_signed_bytes(sb_t* sb) {
   memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
 }
 
-static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig) {
+static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig) {
   uint32_t total;
   char     dec[80];
   uint16_t tid = data->token ? data->token->id : 0;
@@ -173,7 +173,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_ctx_t* ctx, zksy
   return zksync_sign(conf, bytes(raw, total), ctx, sig);
 }
 
-in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx, zksync_config_t* conf) {
+in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf) {
   char    msg_data[200];
   bytes_t signature;
   sb_t    msg = sb_stack(msg_data);
@@ -184,7 +184,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
     memset(signature.data, 0, 65);
   }
   else
-    TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+    TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
   in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
   if (signature.len == 65 && signature.data[64] < 27)
@@ -234,8 +234,8 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_ctx_t* ctx,
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_t* sig) {
-  if (memiszero(conf->sync_key, 32)) return ctx_set_error(ctx, "no signing key set", IN3_ECONFIG);
+in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_t* sig) {
+  if (memiszero(conf->sync_key, 32)) return req_set_error(ctx, "no signing key set", IN3_ECONFIG);
   if (!conf->musig_pub_keys.data) return zkcrypto_sign_musig(conf->sync_key, msg, sig);
   char* p = alloca(msg.len * 2 + 5);
   p[0]    = '"';
@@ -245,13 +245,13 @@ in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_ctx_t* ctx, uint8_
   p[msg.len * 2 + 3] = '"';
   p[msg.len * 2 + 4] = 0;
   d_token_t* result;
-  TRY(ctx_send_sub_request(ctx, "zk_sign", p, NULL, &result))
-  if (d_type(result) != T_BYTES || d_len(result) != 96) return ctx_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
+  TRY(req_send_sub_request(ctx, "zk_sign", p, NULL, &result))
+  if (d_type(result) != T_BYTES || d_len(result) != 96) return req_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
   memcpy(sig, result->data, 96);
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token) {
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token) {
 
   // create sign_msg for the rollup
   char    dec[80];
@@ -283,7 +283,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_ctx_t* ctx, uint8_t* sync_pub
   create_signed_bytes(&msg);
 
   if (conf->sign_type != ZK_SIGN_CONTRACT)
-    TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(conf->account, 20)))
+    TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(conf->account, 20)))
 
   if (signature.len == 65 && signature.data[64] < 27)
     signature.data[64] += 27; //because EIP155 chainID = 0

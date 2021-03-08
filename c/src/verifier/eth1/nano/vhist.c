@@ -84,7 +84,7 @@ vhist_t* vh_init_spec(d_token_t* spec) {
 
   d_iterator_t sitr;
   for (sitr = d_iter(spec); sitr.left; d_iter_next(&sitr)) {
-    vh->last_change_block = d_get_longk(sitr.token, K_BLOCK);
+    vh->last_change_block = d_get_long(sitr.token, K_BLOCK);
     vh_add_state(vh, sitr.token, true);
   }
   return vh;
@@ -100,7 +100,7 @@ vhist_t* vh_init_nodelist(d_token_t* nodelist) {
 
   d_iterator_t sitr;
   for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
-    vh->last_change_block = d_get_longk(sitr.token, K_BLOCK);
+    vh->last_change_block = d_get_long(sitr.token, K_BLOCK);
     vh_add_state(vh, sitr.token, false);
   }
   return vh;
@@ -167,7 +167,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   vhist_engine_t engine = ENGINE_UNKNOWN;
 
   vs     = d_get(state, is_spec ? K_LIST : K_VALIDATORS);
-  engine = stoengine(d_get_stringk(state, K_ENGINE));
+  engine = stoengine(d_get_string(state, K_ENGINE));
 
   d_token_t* tmp;
   if ((tmp = d_get(state, K_BYPASS_FINALITY))) {
@@ -179,7 +179,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
     blk = bytes_to_long(b->data, b->len);
   }
   else
-    blk = d_get_longk(state, K_BLOCK);
+    blk = d_get_long(state, K_BLOCK);
 
   bb_write_long(vh->diffs, blk);
   bb_write_raw_bytes(vh->diffs, &engine, sizeof(engine));

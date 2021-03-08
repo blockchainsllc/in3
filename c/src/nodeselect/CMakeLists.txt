@@ -1,8 +1,8 @@
 ###############################################################################
 # This file is part of the Incubed project.
-# Sources: https://github.com/slockit/in3-c
+# Sources: https://github.com/blockchainsllc/in3
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -31,17 +31,8 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-
-
-add_static_library(
-  NAME  nodeselect_def
-
-  SOURCES
-    nodeselect_def.c
-    nodelist.c
-    cache.c
-    registry.c
-
-  DEPENDS
-    core
-)
+if (NODESELECT_DEF_WL AND NOT NODESELECT_DEF)
+    message(SEND_ERROR "Nodeselect - whitelisting enabled without enabling the plugin itself!")
+elseif (NODESELECT_DEF)
+    add_subdirectory(full)
+endif()

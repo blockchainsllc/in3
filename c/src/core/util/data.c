@@ -45,6 +45,8 @@
 #ifdef LOGGING
 #include "used_keys.h"
 #endif
+// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
+// verify(sizeof(void*) >= 4);
 
 // number of tokens to allocate memory for when parsing
 #define JSON_INIT_TOKENS        10
@@ -161,10 +163,13 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max_size) {
     switch (d_type(item)) {
       case T_BYTES:
         if (max > l) {
-          d_bytesl(item, max);
+          memset(dst, 0, max - l);
+          memcpy(dst + max - l, item->data, l);
+          d_bytesl(item, max); //TODO we should not need this!
           l = max;
         }
-        memcpy(dst, item->data, l);
+        else
+          memcpy(dst, item->data, l);
         return l;
 
       case T_STRING:
@@ -284,11 +289,11 @@ bool d_eq(const d_token_t* a, const d_token_t* b) {
 }
 
 d_token_t* d_get(d_token_t* item, const uint16_t key) {
-  if (item == NULL /*|| item->len & 0xF0000000 != 0x30000000*/) return NULL;
-  int i = 0, l = item->len & 0xFFFFFFF;
-  item += 1;
-  for (; i < l; i++, item += d_token_size(item)) {
-    if (item->key == key) return item;
+  if (item == NULL || (item->len & 0xF0000000) != 0x30000000) return NULL; // is it an object?
+  int i = 0, l = item->len & 0xFFFFFFF;                                    // l is the number of properties in the object
+  item += 1;                                                               // we start with the first, which is the next token
+  for (; i < l; i++, item += d_token_size(item)) {                         // and iterate through all
+    if (item->key == key) return item;                                     // until we find the one with the matching key
   }
   return NULL;
 }
@@ -305,7 +310,7 @@ d_token_t* d_get_or(d_token_t* item, const uint16_t key, const uint16_t key2) {
 }
 
 d_token_t* d_get_at(d_token_t* item, const uint32_t index) {
-  if (item == NULL) return NULL;
+  if (item == NULL || (item->len & 0xF0000000) != 0x20000000) return NULL; // is it an array?
   uint32_t i = 0, l = item->len & 0xFFFFFFF;
   item += 1;
   for (; i < l; i++, item += d_token_size(item)) {
@@ -720,10 +725,11 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
     jp->result    = _malloc(10 * sizeof(d_token_t));
     jp->allocated = 10;
   }
-  else if (jp->len + 1 > jp->allocated) {
+  else if (jp->len >= jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
   }
+  assert(jp->len < jp->allocated);
   d_token_t* n = jp->result + jp->len;
   jp->len += 1;
   n->key  = 0;
@@ -777,6 +783,7 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
       for (i = 0; i < len; i++) {
         ll = jp->len;
         TRY(read_token(jp, d, p, max));
+        assert(ll < jp->allocated);
         jp->result[ll].key = i;
       }
       break;
@@ -787,6 +794,7 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
         *p += 2;
         ll = jp->len;
         TRY(read_token(jp, d, p, max));
+        assert(ll < jp->allocated);
         jp->result[ll].key = key;
       }
       break;

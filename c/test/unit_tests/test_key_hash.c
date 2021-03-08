@@ -74,7 +74,10 @@ static int compare(const void* a, const void* b) {
 
 static bool is_allowed(char* a, char* b) {
   // this function may contains exceptions which are ok
+  if (strcmp(b, "provider_url") == 0 && strcmp(a, "nodeRegistry") == 0) return true; // params and autoupdateList will not appear in the same object
+  if (strcmp(b, "nodeRegistry") == 0 && strcmp(a, "provider_url") == 0) return true; // params and autoupdateList will not appear in the same object
 
+  if (strcmp(b, "autoUpdateList") == 0 && strcmp(a, "params") == 0) return true; // params and autoupdateList will not appear in the same object
   if (strcmp(a, "autoUpdateList") == 0 && strcmp(b, "params") == 0) return true; // params and autoupdateList will not appear in the same object
   return false;
 }

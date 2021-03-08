@@ -133,6 +133,17 @@ namespace In3.Configuration
         }
 
         /// <summary>
+        /// allow experimental features to be used.
+        /// </summary>
+        /// <value>If <see langword="true"/> the client will not throw Excewptions, if a experimental feature is used.</value>
+        [JsonPropertyName("experimental")]
+        public bool Experimental
+        {
+            get => (bool)GetState("experimental");
+            set => SetState("experimental", value);
+        }
+
+        /// <summary>
         /// Milliseconds before a request times out.
         /// </summary>
         [JsonPropertyName("timeout")]

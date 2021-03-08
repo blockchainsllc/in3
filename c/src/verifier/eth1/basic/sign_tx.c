@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request_internal.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
@@ -60,22 +60,22 @@ static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
 }
 
 /**  return data from the client.*/
-static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t* dst) {
+static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
-  in3_ctx_t* ctx = ctx_find_required(parent, method);
+  in3_req_t* ctx = req_find_required(parent, method);
   if (ctx) {
     // found one - so we check if it is useable.
-    switch (in3_ctx_state(ctx)) {
+    switch (in3_req_state(ctx)) {
       // in case of an error, we report it back to the parent context
-      case CTX_ERROR:
-        return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
+      case REQ_ERROR:
+        return req_set_error(parent, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
-      case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
+      case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
 
       // if it is useable, we can now handle the result.
-      case CTX_SUCCESS: {
+      case REQ_SUCCESS: {
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result, so write it back to the dst
@@ -84,7 +84,7 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
         }
         else
           // or check the error and report it
-          return ctx_check_response_error(ctx, 0);
+          return req_check_response_error(ctx, 0);
       }
     }
   }
@@ -97,32 +97,32 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
   // create it
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params);
   // and add the request context to the parent.
-  return ctx_add_required(parent, ctx_new(parent->client, req));
+  return req_add_required(parent, req_new(parent->client, req));
 }
 
 /** gets the from-fied from the tx or ask the signer */
-static in3_ret_t get_from_address(d_token_t* tx, in3_ctx_t* ctx, address_t res) {
+static in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
   d_token_t* t = d_get(tx, K_FROM);
   if (t) {
     // we only accept valid from addresses which need to be 20 bytes
-    if (d_type(t) != T_BYTES || d_len(t) != 20) return ctx_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
+    if (d_type(t) != T_BYTES || d_len(t) != 20) return req_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
     memcpy(res, d_bytes(t)->data, 20);
     return IN3_OK;
   }
 
   // if it is not specified, we rely on the from-address of the signer.
-  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return ctx_set_error(ctx, "missing from address in tx", IN3_EINVAL);
+  if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return req_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
-  in3_sign_account_ctx_t actx = {.ctx = ctx, .accounts = NULL, .accounts_len = 0};
+  in3_sign_account_ctx_t actx = {.req = ctx, .accounts = NULL, .accounts_len = 0};
   TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
-  if (!actx.accounts) return ctx_set_error(ctx, "no from address found", IN3_EINVAL);
+  if (!actx.accounts) return req_set_error(ctx, "no from address found", IN3_EINVAL);
   memcpy(res, actx.accounts, 20);
   _free(actx.accounts);
   return IN3_OK;
 }
 
 /** checks if the nonce and gas is set  or fetches it from the nodes */
-static in3_ret_t get_nonce_and_gasprice(bytes_t* nonce, bytes_t* gas_price, in3_ctx_t* ctx, address_t from) {
+static in3_ret_t get_nonce_and_gasprice(bytes_t* nonce, bytes_t* gas_price, in3_req_t* ctx, address_t from) {
   in3_ret_t ret = IN3_OK;
   if (!nonce->data) {
     bytes_t from_bytes = bytes(from, 20);
@@ -146,14 +146,14 @@ static in3_ret_t get_nonce_and_gasprice(bytes_t* nonce, bytes_t* gas_price, in3_
 /** gets the v-value from the chain_id */
 static inline uint64_t get_v(chain_id_t chain) {
   uint64_t v = chain;
-  if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
+  if (v > 0xFF && v != 1337) v = 0; // this is only valid for ethereum chains.
   return v;
 }
 
 /**
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
-in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
+in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   address_t from;
 
   // read the values
@@ -168,7 +168,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
-    TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
     chain_id = d_long(r);
   }
   TRY(get_from_address(tx, ctx, from))
@@ -181,7 +181,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
 
   // do we need to change it?
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
-    in3_sign_prepare_ctx_t pctx = {.ctx = ctx, .old_tx = *dst, .new_tx = {0}};
+    in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = {0}};
     memcpy(pctx.account, from, 20);
     in3_ret_t prep_res = in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
 
@@ -197,8 +197,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   }
 
   // cleanup subcontexts
-  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_getTransactionCount"), false))
-  TRY(ctx_remove_required(ctx, ctx_find_required(ctx, "eth_gasPrice"), false))
+  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount"), false))
+  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice"), false))
 
   return IN3_OK;
 }
@@ -206,19 +206,19 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
 /**
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
-in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_t* dst) {
+in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_t* dst) {
   bytes_t signature;
 
   // make sure, we have the correct chain_id
   chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
-    TRY(ctx_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
     chain_id = d_long(r);
   }
 
-  TRY(ctx_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
-  if (signature.len != 65) return ctx_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
+  if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required
 
@@ -257,18 +257,18 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
 }
 
 /** handle the sendTransaction internally */
-in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
+in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // get the transaction-object
   d_token_t* tx_params   = d_get(req, K_PARAMS);
   bytes_t    unsigned_tx = bytes(NULL, 0), signed_tx = bytes(NULL, 0);
   address_t  from;
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
+  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
 
   TRY(get_from_address(tx_params + 1, ctx, from));
 
   // is there a pending signature?
   // we get the raw transaction from this request
-  in3_ctx_t* sig_ctx = ctx_find_required(ctx, "sign_ec_hash");
+  in3_req_t* sig_ctx = req_find_required(ctx, "sign_ec_hash");
   if (sig_ctx) {
     bytes_t raw = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
     unsigned_tx = bytes(_malloc(raw.len), raw.len);

@@ -6,27 +6,31 @@ from in3.libin3.rpc_api import libin3_in3_req_add_response
 
 class NativeRequest(c.Structure):
     """
-    Based on in3/client/.h in3_request_t struct
+    Based on in3/client/.h in3_http_request_t struct
     """
-    _fields_ = [("payload", c.POINTER(c.c_char)),
+    _fields_ = [("method", c.POINTER(c.c_char)),
+                ("payload", c.POINTER(c.c_char)),
                 ("urls", c.POINTER(c.POINTER(c.c_char))),
                 ("urls_len", c.c_int),
-                ("results", c.c_void_p),
-                ("timeout", c.c_uint32),
-                ("times", c.c_uint32)]
+                ("payload_len", c.c_uint32),
+                ("req", c.c_void_p),
+                ("cptr", c.c_void_p),
+                ("wait", c.c_uint32),
+                ("headers", c.c_void_p)]
     """
     /** request-object. 
      * 
      * represents a RPC-request
      */
-    typedef struct in3_request {
+    typedef struct in3_http_request {
+      char*           method    /**< http-method */
       char*           payload;  /**< the payload to send */
       char**          urls;     /**< array of urls */
       uint_fast16_t   urls_len; /**< number of urls */
-      struct in3_ctx* ctx;      /**< the current context */
+      struct in3_req* ctx;      /**< the current context */
       void*           cptr;     /**< a custom ptr to hold information during */
       uint32_t        wait;     /**< time in ms to wait before sending out the request */
-    } in3_request_t;
+    } in3_http_request_t;
     """
 
 
@@ -45,7 +49,7 @@ class NativeResponse(c.Structure):
          * This function should be used in the transport-function to set the response.
          */
         NONULL void in3_req_add_response(
-            in3_request_t* req,      /**< [in]the the request */
+            in3_http_request_t* req,      /**< [in]the the request */
             int            index,    /**< [in] the index of the url, since this request could go out to many urls */
             bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
             const char*    data,     /**<  the data or the the string*/
@@ -85,11 +89,17 @@ class In3Request:
         """
         return c.string_at(self.in3_request.contents.payload)
 
-    def timeout(self):
+    def payload_len(self):
         """
-        Get timeout of the request, `0` being no set timeout
+        Gets the length of the payload to be sent
         """
-        return self.in3_request.contents.timeout
+        return self.in3_request.contents.payload_len
+
+    def method(self):
+        """
+        Gets the http-method to be used
+        """
+        return c.string_at(self.in3_request.contents.method)
 
 
 class In3Response:

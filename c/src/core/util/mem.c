@@ -147,16 +147,11 @@ void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* 
   return _realloc_(ptr, size, oldsize, file, func, line);
 }
 
-size_t mem_get_max_heap() {
-  return 0;
-}
-
 int mem_get_memleak_cnt() {
   return mem_count;
 }
 
-void mem_reset(int cnt) {
-  UNUSED_VAR(cnt);
+void mem_reset() {
   mem_count = 0;
 }
 

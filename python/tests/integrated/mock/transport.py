@@ -25,7 +25,7 @@ def mock_transport(in3_request: In3Request, in3_response: In3Response):
                 'url': in3_request.url_at(i),
                 'data': in3_request.payload(),
                 'headers': {'Content-type': 'application/json'},
-                'timeout': in3_request.timeout()
+                'timeout': 10000
             }
             request_data = json.loads(http_request['data'])[0]
             request_method = request_data['method']

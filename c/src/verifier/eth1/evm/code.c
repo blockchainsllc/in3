@@ -45,8 +45,8 @@ NONULL static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address,
   for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
     if (memcmp(d_get_byteskl(iter.token, K_ADDRESS, 20)->data, address, 20) == 0) {
       // even if we don't have a code, we still set the code_hash, since we need it later to verify
-      *code_hash    = d_get_bytesk(iter.token, K_CODE_HASH);
-      bytes_t* code = d_get_bytesk(iter.token, K_CODE);
+      *code_hash    = d_get_bytes(iter.token, K_CODE_HASH);
+      bytes_t* code = d_get_bytes(iter.token, K_CODE);
       if (code) {
         bytes32_t calculated_hash;
         keccak(*code, calculated_hash);
@@ -62,11 +62,11 @@ NONULL static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address,
   return IN3_EFIND;
 }
 
-NONULL static in3_ctx_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
+NONULL static in3_req_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
   // ok, we need a request, do we have a useable?
-  in3_ctx_t* ctx = vc->ctx->required;
+  in3_req_t* ctx = vc->req->required;
   while (ctx) {
-    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
+    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
       // the first param of the eth_getCode is the address
       bytes_t adr = d_to_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
       if (adr.len == 20 && memcmp(adr.data, address, 20) == 0) return ctx;
@@ -84,12 +84,12 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
   if (res != IN3_EFIND) return res;
 
   // ok, we need a request, do we have a useable?
-  in3_ctx_t* ctx = find_pending_code_request(vc, address);
+  in3_req_t* ctx = find_pending_code_request(vc, address);
 
   // if we have found one, we verify the result and return the bytes.
   if (ctx)
-    switch (in3_ctx_state(ctx)) {
-      case CTX_SUCCESS: {
+    switch (in3_req_state(ctx)) {
+      case REQ_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result) {
           bytes32_t calculated_code_hash;
@@ -97,7 +97,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           keccak(code, calculated_code_hash);
           if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");
-            ctx_remove_required(vc->ctx, ctx, false);
+            req_remove_required(vc->req, ctx, false);
             return IN3_EINVAL;
           }
 
@@ -110,15 +110,15 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           *must_free       = 1;
 
           // we always try to cache the code
-          in3_cache_ctx_t cctx = {.ctx = vc->ctx, .key = cache_key, .content = *target};
-          in3_plugin_execute_first_or_none(vc->ctx, PLGN_ACT_CACHE_SET, &cctx);
+          in3_cache_ctx_t cctx = {.req = vc->req, .key = cache_key, .content = *target};
+          in3_plugin_execute_first_or_none(vc->req, PLGN_ACT_CACHE_SET, &cctx);
 
           return IN3_OK;
         }
         else
           return vc_err(vc, ctx->error ? ctx->error : "Missing result");
       }
-      case CTX_ERROR:
+      case REQ_ERROR:
         return IN3_ERPC;
       default:
         return IN3_WAITING;
@@ -129,13 +129,13 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
 
     // we can use the cache_key, since it contains the hexencoded string with a "C"-prefix.
     snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"params\":[\"0x%s\",\"latest\"],\"in3\":{\"verification\":\"none\"}}", cache_key + 1);
-    return ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
+    return req_add_required(vc->req, req_new(vc->req->client, req));
   }
 }
 
 in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target) {
   // search in thew cache of the current context
-  for (cache_entry_t* en = vc->ctx->cache; en; en = en->next) {
+  for (cache_entry_t* en = vc->req->cache; en; en = en->next) {
     if (en->key.len == 20 && memcmp(address, en->key.data, 20) == 0) {
       *target = en;
       return IN3_OK;
@@ -152,8 +152,8 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   in3_ret_t res;
 
   // not cached yet
-  in3_cache_ctx_t cctx = {.ctx = vc->ctx, .key = key_str, .content = NULL};
-  in3_plugin_execute_all(vc->ctx->client, PLGN_ACT_CACHE_GET, &cctx);
+  in3_cache_ctx_t cctx = {.req = vc->req, .key = key_str, .content = NULL};
+  in3_plugin_execute_all(vc->req->client, PLGN_ACT_CACHE_GET, &cctx);
   code = cctx.content;
   in3_log_debug("try to get the code for %s from cache: %p\n", key_str, code);
 
@@ -167,7 +167,7 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   if (code) {
     bytes_t key = bytes(_malloc(20), 20);
     memcpy(key.data, address, 20);
-    *target          = in3_cache_add_entry(&vc->ctx->cache, key, *code);
+    *target          = in3_cache_add_entry(&vc->req->cache, key, *code);
     (*target)->props = must_free;
 
     // we also store the length into the 4 bytes buffer, so we can reference it later on.

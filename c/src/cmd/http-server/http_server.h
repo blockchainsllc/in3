@@ -35,10 +35,10 @@
 #ifndef _http_server_h___
 #define _http_server_h___
 
-#include "../../core/client/context.h"
+#include "../../core/client/request.h"
 #include <stdio.h>
 #include <string.h>
 
-void http_run_server(const char* port, in3_t* in3);
+void http_run_server(const char* port, in3_t* in3, char* allowed_methods);
 
 #endif

@@ -32,8 +32,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/client/request.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -50,7 +50,7 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
   uint8_t  pubkey[65], sdata[64];
   bytes_t* r = d_get_byteskl(sig, K_R, 32);
   bytes_t* s = d_get_byteskl(sig, K_S, 32);
-  int      v = d_get_intk(sig, K_V);
+  int      v = d_get_int(sig, K_V);
 
   // correct v
   if (v >= 27) v -= 27;
@@ -78,8 +78,8 @@ unsigned int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* 
   if (addr == NULL) return 0 * vc_err(vc, "could not recover the signature");
 
   // try to find the signature requested
-  for (i = 0; i < vc->ctx->signers_length; i++) {
-    if (memcmp(vc->ctx->signers + i * 20, addr->data, 20) == 0) {
+  for (i = 0; i < vc->req->signers_length; i++) {
+    if (memcmp(vc->req->signers + i * 20, addr->data, 20) == 0) {
       // adn set the bit depending on the index.
       res = 1 << i;
       break;

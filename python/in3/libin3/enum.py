@@ -88,7 +88,7 @@ class RPCCode(enum.Enum):
     IN3_EVERS = -8  # Version mismatch
     IN3_EINVALDT = -9  # Data invalid, eg. invalid/incomplete JSON
     IN3_EPASS = -10  # Wrong password
-    IN3_ERPC = -11  # RPC error (i.e. in3_ctx_t::error set)
+    IN3_ERPC = -11  # RPC error (i.e. in3_req_t::error set)
     IN3_ERPCNRES = -12  # RPC no response
     IN3_EUSNURL = -13  # USN URL parse error
     IN3_ETRANS = -14  # Transport error
@@ -141,10 +141,10 @@ class PluginAction(enum.Enum):
     PLGN_ACT_PAY_HANDLE = 0x20000  # handles the payment
     PLGN_ACT_PAY_SIGN_REQ = 0x40000  # signs a request
     PLGN_ACT_LOG_ERROR = 0x80000  # report an error
-    PLGN_ACT_NL_PICK = 0x100000  # picks the data nodes, plgn_ctx will be a pointer to in3_ctx_t
-    PLGN_ACT_NL_PICK_FOLLOWUP = 0x200000  # called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_ctx_t
+    PLGN_ACT_NL_PICK = 0x100000  # picks the data nodes, plgn_ctx will be a pointer to in3_req_t
+    PLGN_ACT_NL_PICK_FOLLOWUP = 0x200000  # called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_req_t
     PLGN_ACT_NL_BLACKLIST = 0x400000  # blacklist a particular node in the nodelist, plgn_ctx will be a pointer to the node's address.
-    PLGN_ACT_NL_FAILABLE = 0x800000  # handle fail-able request, plgn_ctx will be a pointer to in3_ctx_t
+    PLGN_ACT_NL_FAILABLE = 0x800000  # handle fail-able request, plgn_ctx will be a pointer to in3_req_t
     PLGN_ACT_NL_OFFLINE = 0x1000000  # mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to in3_nl_offline_ctx_t.* /
     PLGN_ACT_CHAIN_CHANGE = 0x2000000  # chain id change event, called after setting new chain id
     PLGN_ACT_GET_DATA = 0x4000000  # get access to plugin data as a void ptr

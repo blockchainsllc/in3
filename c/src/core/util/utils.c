@@ -87,7 +87,7 @@ static time_func  in3_time_fn  = time_libc;
 static rand_func  in3_rand_fn  = rand_libc;
 static srand_func in3_srand_fn = srand_libc;
 #endif /* __ZEPHYR__ */
-
+#define MAX_UINT64 0xFFFFFFFFFFFFFFFF
 void in3_sleep(uint32_t ms) {
 #if defined(_WIN32) || defined(WIN32)
   Sleep(ms);
@@ -111,20 +111,11 @@ void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst) {
 }
 
 void long_to_bytes(uint64_t val, uint8_t* dst) {
-  *dst       = val >> 56 & 0xFF;
-  *(dst + 1) = val >> 48 & 0xFF;
-  *(dst + 2) = val >> 40 & 0xFF;
-  *(dst + 3) = val >> 32 & 0xFF;
-  *(dst + 4) = val >> 24 & 0xFF;
-  *(dst + 5) = val >> 16 & 0xFF;
-  *(dst + 6) = val >> 8 & 0xFF;
-  *(dst + 7) = val & 0xFF;
+  for (int i = 7; i >= 0; i--, val >>= 8) dst[i] = val & 0xFF;
 }
+
 void int_to_bytes(uint32_t val, uint8_t* dst) {
-  *dst       = val >> 24 & 0xFF;
-  *(dst + 1) = val >> 16 & 0xFF;
-  *(dst + 2) = val >> 8 & 0xFF;
-  *(dst + 3) = val & 0xFF;
+  for (int i = 3; i >= 0; i--, val >>= 8) dst[i] = val & 0xFF;
 }
 
 uint8_t hexchar_to_int(char c) {
@@ -136,11 +127,12 @@ uint8_t hexchar_to_int(char c) {
     return c - 'A' + 10;
   return 255;
 }
+
 #ifdef __ZEPHYR__
 
 const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
   // buffer has to be at least 21 bytes (max u64 val = 18446744073709551615 has 20 digits + '\0')
-  if (buffer_len < 21) return "<ERR(u64tostr): buffer too small>";
+  if (buffer_len < 21) return "<ERR(u64_to_str): buffer too small>";
 
   buffer[buffer_len - 1] = '\0';
   int pos                = buffer_len - 1;
@@ -161,9 +153,11 @@ int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
     len -= 2;
   }
   if (len == 0) return 0;
+
   int bytes_len = (len + 1) / 2, i = 0, j = 0;
   if (bytes_len > outbuf_size) return -1;
   if (len & 1) {
+    // for a odd number of bytes, we use the first 4bit and then start with index 1
     out[0] = hexchar_to_int(buf[0]);
     j = i = 1;
   }
@@ -173,6 +167,7 @@ int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
 
   return bytes_len;
 }
+
 bytes_t* hex_to_new_bytes(const char* buf, int len) {
   bytes_t* bytes = _malloc(sizeof(bytes_t));
   bytes->len     = (len + 1) / 2;
@@ -202,23 +197,11 @@ int keccak(bytes_t data, void* dst) {
   return 0;
 }
 
-bytes_t* sha3(const bytes_t* data) {
-  bytes_t*        out = NULL;
-  struct SHA3_CTX ctx;
-
-  out = _calloc(1, sizeof(bytes_t));
-
-  sha3_256_Init(&ctx);
-  sha3_Update(&ctx, data->data, data->len);
-
-  out->data = _calloc(1, 32 * sizeof(uint8_t));
-  out->len  = 32;
-
-  keccak_Final(&ctx, out->data);
-  return out;
-}
-
 uint64_t bytes_to_long(const uint8_t* data, int len) {
+  if (len > 8) {
+    data += len - 8;
+    len = 8;
+  }
   uint64_t res = 0;
   int      i;
   for (i = 0; i < len; i++) {
@@ -227,10 +210,11 @@ uint64_t bytes_to_long(const uint8_t* data, int len) {
   }
   return res;
 }
+
 uint64_t char_to_long(const char* a, int l) {
-  if (!a) return -1;
+  if (!a || l < -1) return MAX_UINT64;
   if (l == -1) l = strlen(a);
-  if (a[0] == '0' && a[1] == 'x') {
+  if (a[0] == '0' && a[1] == 'x') { // it's a hex number
     long val = 0;
     for (int i = l - 1; i > 1; i--)
       val |= ((uint64_t) hexchar_to_int(a[i])) << (4 * (l - 1 - i));
@@ -242,7 +226,7 @@ uint64_t char_to_long(const char* a, int l) {
     temp[l] = 0;
     return atoi(temp);
   }
-  return -1;
+  return MAX_UINT64;
 }
 
 char* _strdupn(const char* src, int len) {
@@ -252,9 +236,9 @@ char* _strdupn(const char* src, int len) {
   dst[len] = 0;
   return dst;
 }
+
 int min_bytes_len(uint64_t val) {
-  int i;
-  for (i = 0; i < 8; i++, val >>= 8) {
+  for (int i = 0; i < 8; i++, val >>= 8) {
     if (val == 0) return i;
   }
   return 8;

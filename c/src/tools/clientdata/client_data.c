@@ -17,5 +17,5 @@ void* in3_plugin_get_client_data(in3_t* c) {
 }
 
 in3_ret_t in3_register_client_data(in3_t* c, void* data) {
-  return in3_plugin_register(c, PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_plugin_client_data, data, true);
+  return in3_plugin_register(c, PLGN_ACT_GET_DATA, in3_plugin_client_data, data, true);
 }

@@ -138,8 +138,8 @@ chainspec_t* chainspec_create_from_json(json_ctx_t* ctx) {
   d_token_t*   params = d_get(data, ikey(ctx, "params"));
   if (!params) return log_error("no params-tag in data");
 
-  spec->network_id          = d_get_longk(params, ikey(ctx, "networkID"));
-  spec->account_start_nonce = d_get_longk(params, ikey(ctx, "accountStartNonce"));
+  spec->network_id          = d_get_long(params, ikey(ctx, "networkID"));
+  spec->account_start_nonce = d_get_long(params, ikey(ctx, "accountStartNonce"));
 
   // find all eip transitions
   unsigned int allocated                  = 3;
@@ -188,7 +188,7 @@ chainspec_t* chainspec_create_from_json(json_ctx_t* ctx) {
       fill_aura(ctx, params, spec->consensus_transitions, NULL);
   }
   else if (d_get(d_get(engine, ikey(ctx, "clique")), ikey(ctx, "params"))) {
-    bytes_t* extra = d_get_bytesk(genesis, ikey(ctx, "extraData"));
+    bytes_t* extra = d_get_bytes(genesis, ikey(ctx, "extraData"));
     if (!extra) return log_error("no extra data in the genesis-block");
     spec->consensus_transitions->type            = ETH_POA_CLIQUE;
     spec->consensus_transitions->validators.data = _malloc(extra->len - 32 - 65);

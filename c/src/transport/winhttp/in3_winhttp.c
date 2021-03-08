@@ -54,17 +54,17 @@ static inline wchar_t* convert_wstr(const char* src, void* dst) {
 
 in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
-  in3_request_t* req = plugin_ctx;
+  in3_http_request_t* req = plugin_ctx;
   if (action != PLGN_ACT_TRANSPORT_SEND) return IN3_ENOTSUP;
   for (unsigned int n = 0; n < req->urls_len; n++) {
     uint32_t  start    = current_ms();
-    sb_t*     sb       = &req->ctx->raw_response[n].data;
+    sb_t*     sb       = &req->req->raw_response[n].data;
     HINTERNET hSession = WinHttpOpen(to_wstr("in3 winhttp " IN3_VERSION),
                                      WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                      WINHTTP_NO_PROXY_NAME,
                                      WINHTTP_NO_PROXY_BYPASS, 0);
     if (!hSession) {
-      in3_ctx_add_response(req->ctx, n, true, "could not create the session", -1, 0);
+      in3_ctx_add_response(req->req, n, true, "could not create the session", -1, 0);
       continue;
     }
 
@@ -83,7 +83,7 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
 
     HINTERNET connect = WinHttpConnect(hSession, url_components.lpszHostName, url_components.nPort, 0);
     if (!connect) {
-      in3_ctx_add_response(req->ctx, n, true, "could not connect to ", -1, 0);
+      in3_ctx_add_response(req->req, n, true, "could not connect to ", -1, 0);
       sb_add_chars(sb, req->urls[n]);
       sb_add_chars(sb, "Error code : ");
       sb_add_int(sb, GetLastError());
@@ -91,11 +91,11 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
       continue;
     }
     bool      https   = strstr(req->urls[n], "https") == req->urls[n];
-    HINTERNET request = WinHttpOpenRequest(connect, to_wstr("POST"),
+    HINTERNET request = WinHttpOpenRequest(connect, to_wstr(req->method),
                                            url_components.lpszUrlPath, NULL, WINHTTP_NO_REFERER,
                                            WINHTTP_DEFAULT_ACCEPT_TYPES, https ? WINHTTP_FLAG_SECURE : 0);
     if (!request) {
-      in3_ctx_add_response(req->ctx, n, true, "could not open the request to ", -1, 0);
+      in3_ctx_add_response(req->req, n, true, "could not open the request to ", -1, 0);
       sb_add_chars(sb, req->urls[n]);
       sb_add_chars(sb, "Error code : ");
       sb_add_int(sb, GetLastError());
@@ -103,11 +103,17 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
       WinHttpCloseHandle(hSession);
       continue;
     }
-    int  plen    = strlen(req->payload);
+    sb_t headers = {0};
+    sb_add_chars(&headers, "Accept: application/json\r\nContent-Type: application/json\r\ncharsets: utf-8\r\n");
+    for (in3_req_header_t* h = req->headers; h; h = h->next) {
+      sb_add_chars(&headers, h->value);
+      sb_add_chars(&headers, "\r\n");
+    }
+    int  plen    = req->payload_len;
     bool success = plen
                        ? WinHttpSendRequest(
                              request,
-                             to_wstr("Accept: application/json\r\nContent-Type: application/json\r\ncharsets: utf-8\r\n"),
+                             to_wstr(headers.data),
                              (DWORD) -1,
                              (LPVOID) req->payload,
                              (DWORD) plen, (DWORD) plen, 0)
@@ -115,6 +121,7 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
                              request,
                              WINHTTP_NO_ADDITIONAL_HEADERS,
                              0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
+    _free(headers.data);
 
     if (success) {
       WinHttpReceiveResponse(request, NULL);
@@ -127,7 +134,7 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
         dwSize = 0;
         if (!WinHttpQueryDataAvailable(request, &dwSize)) {
           sb->len = 0;
-          in3_ctx_add_response(req->ctx, n, true, "could not read the data from ", -1, 0);
+          in3_ctx_add_response(req->req, n, true, "could not read the data from ", -1, 0);
           sb_add_chars(sb, req->urls[n]);
           sb_add_chars(sb, "Error code : ");
           sb_add_int(sb, GetLastError());
@@ -144,7 +151,7 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
         if (!WinHttpReadData(request, (LPVOID) pszOutBuffer,
                              dwSize, &dwDownloaded)) {
           sb->len = 0;
-          in3_ctx_add_response(req->ctx, n, true, "could not read the data from ", -1, 0);
+          in3_ctx_add_response(req->req, n, true, "could not read the data from ", -1, 0);
           sb_add_chars(sb, req->urls[n]);
           sb_add_chars(sb, "Error code : ");
           sb_add_int(sb, GetLastError());
@@ -164,13 +171,13 @@ in3_ret_t send_winhttp(void* plugin_data, in3_plugin_act_t action, void* plugin_
 
       } while (dwSize > 0);
 
-      if (req->ctx->raw_response[n].state == IN3_WAITING) {
-        req->ctx->raw_response[n].state = IN3_OK;
-        req->ctx->raw_response[n].time  = current_ms() - start;
+      if (req->req->raw_response[n].state == IN3_WAITING) {
+        req->req->raw_response[n].state = IN3_OK;
+        req->req->raw_response[n].time  = current_ms() - start;
       }
     }
     else {
-      in3_ctx_add_response(req->ctx, n, true, "could not open send the request to ", -1, 0);
+      in3_ctx_add_response(req->req, n, true, "could not open send the request to ", -1, 0);
       sb_add_chars(sb, req->urls[n]);
       sb_add_chars(sb, "Error code : ");
       sb_add_int(sb, GetLastError());

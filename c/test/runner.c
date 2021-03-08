@@ -43,8 +43,8 @@
 #include "../src/verifier/btc/btc.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include "../src/verifier/ipfs/ipfs.h"
-#include <nodeselect/nodelist.h>
-#include <nodeselect/nodeselect_def.h>
+#include <nodeselect/full/nodelist.h>
+#include <nodeselect/full/nodeselect_def.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -176,13 +176,13 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   _tmp_pos       = 0;
 }
 static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
-  in3_request_t* req = plugin_ctx;
-  int            i;
-  bytes_t        response;
+  in3_http_request_t* req = plugin_ctx;
+  int                 i;
+  bytes_t             response;
   if (d_len(_tmp_responses) <= _tmp_pos) {
     for (i = 0; i < req->urls_len; i++) {
-      req->ctx->raw_response[i].state = IN3_ECONFIG;
-      sb_add_chars(&(req->ctx->raw_response + i)->data, "Reached end of available responses!");
+      req->req->raw_response[i].state = IN3_ECONFIG;
+      sb_add_chars(&(req->req->raw_response + i)->data, "Reached end of available responses!");
     }
     return IN3_EINVAL;
   }
@@ -208,8 +208,8 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
 
   // printf("payload: %s\n",payload);
   for (i = 0; i < req->urls_len; i++) {
-    sb_add_range(&(req->ctx->raw_response + i)->data, (char*) response.data, 0, response.len);
-    req->ctx->raw_response[i].state = IN3_OK;
+    sb_add_range(&(req->req->raw_response + i)->data, (char*) response.data, 0, response.len);
+    req->req->raw_response[i].state = IN3_OK;
   }
 
   _free(response.data);
@@ -226,9 +226,10 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   char       params[10000];
 
   // configure in3
-  c->request_count   = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
-  method             = d_get_string(request, "method");
-  bool        intern = d_get_int(test, "intern");
+  sprintf(params, "{\"requestCount\":%d}", (t = d_get(config, key("requestCount"))) ? d_int(t) : 1);
+  in3_configure(c, params);
+  method             = d_get_string(request, key("method"));
+  bool        intern = d_get_int(test, key("intern"));
   str_range_t s      = d_to_json(d_get(request, key("params")));
 
   if (!method) {
@@ -243,11 +244,11 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   params[s.len] = 0;
 
   char *res = NULL, *err = NULL;
-  int   success = must_fail ? 0 : d_get_intkd(test, key("success"), 1);
+  int   success = must_fail ? 0 : d_get_intd(test, key("success"), 1);
   if (intern) _tmp_pos++; // if this is a intern, then the first response is the expected, while the all other come after this.
 
   //  _tmp_response = response;
-  int is_bin = d_get_int(test, "binaryFormat");
+  int is_bin = d_get_int(test, key("binaryFormat"));
 
   in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err);
   fflush(stdout);
@@ -313,7 +314,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   int   i;
   in3_log_set_prefix("");
 
-  if ((descr = d_get_string(test, "descr"))) {
+  if ((descr = d_get_string(test, key("descr")))) {
     if (fuzz_prop)
       sprintf(temp, "  ...  manipulate #%s", fuzz_prop);
     else
@@ -322,13 +323,13 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   else
     sprintf(temp, "Request #%i", counter);
 
-  in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
+  in3_t* c = in3_for_chain(d_get_intd(test, key("chainId"), 1));
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
 
   int j;
   c->max_attempts        = 1;
-  c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST;
-  c->finality            = d_get_intkd(test, key("finality"), 0);
+  c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST | FLAGS_ALLOW_EXPERIMENTAL;
+  c->finality            = d_get_intd(test, key("finality"), 0);
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
 
@@ -358,23 +359,18 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   int fail = execRequest(c, test, fuzz_prop != NULL, counter, temp);
   in3_free(c);
 
-  if (mem_get_memleak_cnt()) {
-    printf(" -- Memory Leak detected by malloc #%i!", mem_get_memleak_cnt());
-    if (!fail) fail = 1;
-  }
   d_token_t*       response = d_get(test, key("response"));
-  size_t           max_heap = mem_get_max_heap();
   str_range_t      res_size = d_to_json(response);
   bytes_builder_t* bb       = bb_new();
 
   d_serialize_binary(bb, response);
 
-  printf(" ( heap: %zu json: %lu bin: %u) ", max_heap, res_size.len, bb->b.len);
+  printf(" ( json: %lu bin: %u) ", res_size.len, bb->b.len);
   bb_free(bb);
   return fail;
 }
 
-int runRequests(char** names, int test_index, int mem_track) {
+int runRequests(char** names, int test_index) {
   int   res = 0, n = 0;
   char* name   = names[n];
   int   failed = 0, total = 0, count = 0;
@@ -405,7 +401,7 @@ int runRequests(char** names, int test_index, int mem_track) {
 
         fuzz_pos          = -1;
         in3_proof_t proof = PROOF_STANDARD;
-        if ((str_proof = d_get_string(test, "proof"))) {
+        if ((str_proof = d_get_string(test, key("proof")))) {
           if (strcmp(str_proof, "none") == 0) proof = PROOF_NONE;
           if (strcmp(str_proof, "standard") == 0) proof = PROOF_STANDARD;
           if (strcmp(str_proof, "full") == 0) proof = PROOF_FULL;
@@ -414,12 +410,12 @@ int runRequests(char** names, int test_index, int mem_track) {
         count++;
         if (test_index < 0 || count == test_index) {
           total++;
-          prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), -1);
-          mem_reset(mem_track);
+          prepare_response(1, d_get(test, key("response")), d_get_int(test, key("binaryFormat")), -1);
+          mem_reset();
           if (run_test(test, count, NULL, proof)) failed++;
         }
 
-        if (d_get_int(test, "fuzzer")) {
+        if (d_get_int(test, key("fuzzer"))) {
           str_range_t resp = d_to_json(d_get_at(d_get(test, key("response")), 0));
           while ((fuzz_pos = find_hex(resp.data, fuzz_pos + 1, resp.len)) > 0) {
             str_range_t prop = find_prop_name(resp.data + fuzz_pos, resp.data);
@@ -432,8 +428,8 @@ int runRequests(char** names, int test_index, int mem_track) {
             count++;
             if (test_index > 0 && count != test_index) continue;
             total++;
-            prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), fuzz_pos);
-            mem_reset(mem_track);
+            prepare_response(1, d_get(test, key("response")), d_get_int(test, key("binaryFormat")), fuzz_pos);
+            mem_reset();
             if (run_test(test, count, tmp, proof)) failed++;
           }
         }
@@ -465,9 +461,9 @@ int main(int argc, char* argv[]) {
   in3_register_default(in3_register_nodeselect_def);
 
   int    i = 0, size = 1;
-  int    testIndex = -1, membrk = -1;
-  char** names = malloc(sizeof(char*));
-  names[0]     = NULL;
+  int    testIndex = -1;
+  char** names     = malloc(sizeof(char*));
+  names[0]         = NULL;
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)
       testIndex = atoi(argv[++i]);
@@ -475,8 +471,6 @@ int main(int argc, char* argv[]) {
       in3_log_set_level(LOG_TRACE);
       in3_log_set_quiet(false);
     }
-    else if (strcmp(argv[i], "-m") == 0)
-      membrk = atoi(argv[++i]);
     else {
       char** t = malloc((size + 1) * sizeof(char*));
       memmove(t, names, size * sizeof(char*));
@@ -487,7 +481,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  int res = runRequests(names, testIndex, membrk);
+  int res = runRequests(names, testIndex);
   free(names);
   return res;
 }

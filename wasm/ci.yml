@@ -23,7 +23,7 @@ test_asmjs:
   script:
     - mv in3_wasm wasm/test/in3
     - cd wasm/test
-    - sh /prepare.sh
+#    - sh /prepare.sh
     - npm install
     - npm run test_report
   artifacts:
@@ -58,7 +58,7 @@ test_wasm:
     - mv in3_wasm wasm/test/in3
     - cd wasm/test
     - mv in3/wasm.js in3/index.js
-    - sh /prepare.sh
+#    - sh /prepare.sh
     - npm install
     - npm run test_report
   artifacts:
@@ -79,7 +79,7 @@ test_zksync_wasm:
     - mv in3_wasm wasm/test/in3
     - cd wasm/test
     - mv in3/zksync-wasm.js in3/index.js
-    - sh /prepare.sh
+#    - sh /prepare.sh
     - npm install
     - npm run test_report
   artifacts:
@@ -99,7 +99,7 @@ test_zksync_asmjs:
     - mv in3_wasm wasm/test/in3
     - cd wasm/test
     - mv in3/zksync.js in3/index.js
-    - sh /prepare.sh
+#    - sh /prepare.sh
     - npm install
     - npm run test_report
   artifacts:

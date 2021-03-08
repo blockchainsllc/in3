@@ -1,4 +1,4 @@
-:: cmd in3 -zks http://localhost:3030 -c http://localhost:8545 -fi zksync_transfer_c2.txt -zka 0x8f6883b78d71ac2871f4b01d6fc5e047ccecfd02 -zkat create2 -zsk 0xd818beb367732ed0bc2ada1750fcce827040edf96ea3cdacf420b5c3cb1456df zksync_transfer 0xce93a4561fe6445653a8f6e4ff73c971ce1e9eec 0.1eth ETH
+:: cmd in3 -x -zks http://localhost:3030 -c http://localhost:8545 -fi zksync_transfer_c2.txt -zka 0x8f6883b78d71ac2871f4b01d6fc5e047ccecfd02 -zkat create2 -zsk 0xd818beb367732ed0bc2ada1750fcce827040edf96ea3cdacf420b5c3cb1456df zksync_transfer 0xce93a4561fe6445653a8f6e4ff73c971ce1e9eec 0.1eth ETH
 
 :: time 1611139221
 

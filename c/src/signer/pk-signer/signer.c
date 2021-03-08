@@ -33,9 +33,9 @@
  *******************************************************************************/
 
 #include "signer.h"
-#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/ecdsa.h"
@@ -140,7 +140,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       in3_configure_ctx_t* ctx = action_ctx;
       if (ctx->token->key == key("key")) {
         if (d_type(ctx->token) != T_BYTES || d_len(ctx->token) != 32) {
-          ctx->error_msg = "invalid key-length, must be 32";
+          ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
           return IN3_EINVAL;
         }
         eth_set_request_signer(ctx->client, ctx->token->data);
@@ -149,7 +149,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       if (ctx->token->key == key("pk")) {
         if (d_type(ctx->token) == T_BYTES) {
           if (d_len(ctx->token) != 32) {
-            ctx->error_msg = "invalid key-length, must be 32";
+            ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
             return IN3_EINVAL;
           }
           add_key(ctx->client, d_bytes(ctx->token)->data);
@@ -159,7 +159,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
           for (d_iterator_t iter = d_iter(ctx->token); iter.left; d_iter_next(&iter)) {
             if (d_type(iter.token) == T_BYTES) {
               if (d_len(iter.token) != 32) {
-                ctx->error_msg = "invalid key-length, must be 32";
+                ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
                 return IN3_EINVAL;
               }
               add_key(ctx->client, d_bytes(iter.token)->data);
@@ -167,29 +167,27 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
           }
           return IN3_OK;
         }
-        ctx->error_msg = "invalid type for a pk";
+        ctx->error_msg = _strdupn("invalid type for a pk", -1);
         return IN3_EINVAL;
       }
       return IN3_EIGNORE;
     }
 
     case PLGN_ACT_RPC_HANDLE: {
-      in3_rpc_handle_ctx_t* ctx    = action_ctx;
-      char*                 method = d_get_stringk(ctx->request, K_METHOD);
-      if (strcmp(method, "in3_addRawKey") == 0) {
-        d_token_t* t = d_get(ctx->request, K_PARAMS);
-        if (d_len(t) != 1 || d_type(t + 1) != T_BYTES || d_len(t + 1) != 32)
-          return ctx_set_error(ctx->ctx, "one argument with 32 bytes is required!", IN3_EINVAL);
+      in3_rpc_handle_ctx_t* ctx = action_ctx;
+      if (strcmp(ctx->method, "in3_addRawKey") == 0) {
+        if (d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_BYTES || d_len(ctx->params + 1) != 32)
+          return req_set_error(ctx->req, "one argument with 32 bytes is required!", IN3_EINVAL);
         address_t adr;
-        get_address(d_bytes(t + 1)->data, adr);
-        add_key(ctx->ctx->client, d_bytes(t + 1)->data);
+        get_address(d_bytes(ctx->params + 1)->data, adr);
+        add_key(ctx->req->client, d_bytes(ctx->params + 1)->data);
         return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
       }
-      if (strcmp(method, "eth_accounts") == 0) {
+      if (strcmp(ctx->method, "eth_accounts") == 0) {
         sb_t*                  sb    = in3_rpc_handle_start(ctx);
         bool                   first = true;
-        in3_sign_account_ctx_t sc    = {.ctx = ctx->ctx, .accounts = NULL, .accounts_len = 0, .signer_type = 0};
-        for (in3_plugin_t* p = ctx->ctx->client->plugins; p; p = p->next) {
+        in3_sign_account_ctx_t sc    = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0};
+        for (in3_plugin_t* p = ctx->req->client->plugins; p; p = p->next) {
           if (p->acts & PLGN_ACT_SIGN_ACCOUNT && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc) == IN3_OK) {
             for (int i = 0; i < sc.accounts_len; i++) {
               sb_add_rawbytes(sb, first ? "[\"0x" : "\",\"0x", bytes(sc.accounts + i * 20, 20), 20);
@@ -219,7 +217,23 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
   switch (action) {
     case PLGN_ACT_PAY_SIGN_REQ: {
       in3_pay_sign_req_ctx_t* ctx = action_ctx;
-      return ec_sign_pk_raw(ctx->request_hash, k->pk, ctx->signature);
+      in3_ret_t               r   = ec_sign_pk_raw(ctx->request_hash, k->pk, ctx->signature);
+      ctx->signature[64] += 27;
+      return r;
+    }
+    case PLGN_ACT_SIGN: {
+      in3_sign_ctx_t* ctx = action_ctx;
+      if (ctx->account.len != 20 || memcmp(k->account, ctx->account.data, 20)) return IN3_EIGNORE;
+      ctx->signature = bytes(_malloc(65), 65);
+      switch (ctx->type) {
+        case SIGN_EC_RAW:
+          return ec_sign_pk_raw(ctx->message.data, k->pk, ctx->signature.data);
+        case SIGN_EC_HASH:
+          return ec_sign_pk_hash(ctx->message.data, ctx->message.len, k->pk, hasher_sha3k, ctx->signature.data);
+        default:
+          _free(ctx->signature.data);
+          return IN3_ENOTSUP;
+      }
     }
 
     case PLGN_ACT_TERM: {
@@ -236,7 +250,8 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
 in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   memcpy(k->pk, pk, 32);
-  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM, eth_sign_req, k, true);
+  get_address(pk, k->account);
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_sign_req, k, true);
 }
 
 in3_ret_t eth_register_pk_signer(in3_t* in3) {

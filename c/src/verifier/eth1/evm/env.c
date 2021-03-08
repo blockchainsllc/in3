@@ -81,7 +81,7 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
 
   switch (evm_key) {
     case EVM_ENV_BLOCKHEADER:
-      if (!(res = d_get_bytesk(vc->proof, K_BLOCK)))
+      if (!(res = d_get_bytes(vc->proof, K_BLOCK)))
         INVALID("no blockheader found")
       *out_data = res->data;
       return res->len;

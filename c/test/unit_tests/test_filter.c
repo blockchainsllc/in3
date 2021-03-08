@@ -40,16 +40,16 @@
 #endif
 
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/context.h"
+#include "../../src/core/client/request.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../../src/verifier/eth1/basic/filter.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
-#include "nodeselect/nodeselect_def.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
+#include "nodeselect/full/nodeselect_def.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -179,23 +179,24 @@ static void test_filter_from_block_manip() {
 }
 
 static void test_filter_creation() {
-  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
-  c->flags = FLAGS_STATS;
+  in3_t*                c       = in3_for_chain(CHAIN_ID_MAINNET);
+  in3_filter_handler_t* filters = eth_basic_get_filters(c);
+  c->flags                      = FLAGS_STATS;
   TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"proof\":\"none\",\"signatureCount\":0,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   register_transport(c, test_transport);
 
-  TEST_ASSERT_FALSE(filter_remove(c, 1));
+  TEST_ASSERT_FALSE(filter_remove(filters, 1));
   TEST_ASSERT_EQUAL(0, eth_newFilter(c, NULL));
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   add_response("eth_blockNumber", "[]", "\"0x84cf5a\"", NULL, NULL);
   TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
-  TEST_ASSERT_TRUE(filter_remove(c, 1));
+  TEST_ASSERT_TRUE(filter_remove(filters, 1));
   add_response("eth_blockNumber", "[]", "\"0x84cf5f\"", NULL, NULL);
   TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
-  TEST_ASSERT_EQUAL(2, c->filters->count);
-  TEST_ASSERT_FALSE(filter_remove(c, 10));
-  TEST_ASSERT_FALSE(filter_remove(c, 0));
+  TEST_ASSERT_EQUAL(2, filters->count);
+  TEST_ASSERT_FALSE(filter_remove(filters, 10));
+  TEST_ASSERT_FALSE(filter_remove(filters, 0));
   TEST_ASSERT_FALSE(0);
   in3_free(c);
 }
@@ -256,7 +257,7 @@ static void test_filter_changes() {
   TEST_ASSERT_EQUAL_STRING("[]", result);
   _free(result);
 
-  TEST_ASSERT_TRUE(filter_remove(c, 1));
+  TEST_ASSERT_TRUE(filter_remove(eth_basic_get_filters(c), 1));
   in3_free(c);
 }
 

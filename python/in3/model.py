@@ -84,6 +84,7 @@ class ClientConfig(DataTransferObject):
         transport_binary_format: If true, the client will communicate with the server using a binary payload instead of json.
         transport_ignore_tls: The client usually verify https tls certificates. To communicate over insecure http, turn this on.
         boot_weights (bool): if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+        experimental (bool): if true the client allows features marked as experimental to be used.
         in3_registry (dict): In3 Registry Smart Contract configuration data
     """
 
@@ -104,6 +105,7 @@ class ClientConfig(DataTransferObject):
                  transport_binary_format: bool = None,
                  transport_ignore_tls: bool = None,
                  boot_weights: bool = None,
+                 experimental: bool = None,
                  in3_registry: dict = None):
         self.finality: int = chain_finality_threshold
         self.key: str = account_secret
@@ -121,6 +123,7 @@ class ClientConfig(DataTransferObject):
         self.keepIn3: bool = response_keep_proof
         self.useBinary: bool = transport_binary_format
         self.useHttp: bool = transport_ignore_tls
+        self.experimental: bool = experimental
         self.nodeRegistry: dict = in3_registry
         if self.key:
             warnings.warn(

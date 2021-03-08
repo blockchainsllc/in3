@@ -41,8 +41,8 @@
 
 #include "../../include/in3/error.h"
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/request.h"
 #include "../../src/core/util/bytes.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -50,8 +50,8 @@
 #include "../../src/core/util/scache.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
-#include "nodeselect/cache.h"
-#include "nodeselect/nodelist.h"
+#include "nodeselect/full/cache.h"
+#include "nodeselect/full/nodelist.h"
 
 #if defined(LEDGER_NANO)
 #include "../../src/signer/ledger-nano/signer/ethereum_apdu_client.h"
@@ -113,7 +113,7 @@ static void test_signer() {
   in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
   eth_ledger_set_signer_txn(c, bip_path);
 
-  in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_req_t* ctx      = req_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   char*      data_str = "msgABCDEF"; // prefixing messages with msg to differentiate between transaction and message signing
   bytes_t*   data     = b_new((uint8_t*) data_str, strlen(data_str));
 
@@ -122,7 +122,7 @@ static void test_signer() {
   sc.message        = *data;
   sc.account        = bytes(NULL, 0);
   sc.wallet         = c->signer->wallet;
-  sc.ctx            = ctx;
+  sc.req            = ctx;
 
   TEST_ASSERT_EQUAL(IN3_OK, eth_ledger_sign_txn(&sc));
   TEST_ASSERT_FALSE(memiszero(sc.signature.data, 65));
