@@ -93,7 +93,7 @@ in3_ret_t req_handle_failable(
 );
 
 NONULL_FOR((1, 2, 3, 5))
-in3_ret_t        req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result);
+in3_ret_t        req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
 NONULL in3_ret_t req_require_signature(in3_req_t* req, d_signature_type_t type, bytes_t* sig, bytes_t raw_data, bytes_t from);
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 

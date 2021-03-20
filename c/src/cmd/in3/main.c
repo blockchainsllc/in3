@@ -106,6 +106,7 @@ void show_help(char* name) {
 -am            only works if port is specified and declares a comma-seperated list of rpc-methods which are allowed. All other will be rejected.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
+-from          the sender of a call or tx (only needed if no signer is registered)\n\
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
 -gp,-gas_price the gas price to use when sending transactions. (default: use eth_gasPrice) \n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
@@ -122,6 +123,7 @@ void show_help(char* name) {
 -debug         if given incubed will output debug information when executing. \n\
 -k             32bytes raw private key to sign requests.\n\
 -q             quit. no additional output. \n\
+-h             human readable, which removes the json -structure and oly displays the values.\n\
 -tr            runs test request when showing in3_weights \n\
 -thr           runs test request including health-check when showing in3_weights \n\
 -ms            adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) \n\
@@ -429,7 +431,7 @@ void set_chain_id(in3_t* c, char* id) {
 }
 
 // prepare a eth_call or eth_sendTransaction
-abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, uint64_t gas_price, char* value, bytes_t* data) {
+abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, uint64_t gas_price, char* value, bytes_t* data, char* from) {
   char*      error = NULL;
   bytes_t    rdata = {0};
   abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
@@ -477,6 +479,12 @@ abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, ui
       sb_add_chars(params, value);
       sb_add_chars(params, "\"");
     }
+    if (from) {
+      sb_add_chars(params, ", \"from\":\"");
+      sb_add_chars(params, from);
+      sb_add_chars(params, "\"");
+    }
+
     if (gas_price) {
       long_to_bytes(gas_price, gasdata);
       b_optimize_len(&g_bytes);
@@ -497,10 +505,20 @@ abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, ui
 void print_val(d_token_t* t) {
   switch (d_type(t)) {
     case T_ARRAY:
-    case T_OBJECT:
-      for (d_iterator_t it = d_iter(t); it.left; d_iter_next(&it))
-        print_val(it.token);
-      break;
+    case T_OBJECT: {
+      char* level = d_get_string(t, key("level"));
+      if (level) {
+        char* msg = d_get_string(t, key("msg"));
+        if (strcmp(level, "main") == 0) recorder_print(0, COLOR_GREEN_STR "\n", msg);
+        if (strcmp(level, "info") == 0) recorder_print(0, "%s\n", msg);
+        if (strcmp(level, "warning") == 0) recorder_print(0, COLOR_YELLOW_STR "\n", msg);
+        if (strcmp(level, "error") == 0) recorder_print(0, COLOR_RED_STR "\n", msg);
+      }
+      else {
+        for (d_iterator_t it = d_iter(t); it.left; d_iter_next(&it))
+          print_val(it.token);
+      }
+    } break;
     case T_BOOLEAN:
       recorder_print(0, "%s\n", d_int(t) ? "true" : "false");
       break;
@@ -734,6 +752,8 @@ int main(int argc, char* argv[]) {
   char*      sig_type         = "raw";
   bool       to_eth           = false;
   char*      rc               = "2";
+  bool       human_readable   = false;
+  char*      from             = NULL;
 
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
@@ -859,6 +879,8 @@ int main(int argc, char* argv[]) {
       recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)
       recorder_read_start(c, argv[++i]);
+    else if (strcmp(argv[i], "-h") == 0)
+      human_readable = true;
 #ifdef NODESELECT_DEF
     else if (strcmp(argv[i], "-nl") == 0)
       set_nodelist(c, argv[++i], false);
@@ -902,6 +924,8 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-from") == 0)
+      from = argv[++i];
     else if (strcmp(argv[i], "-am") == 0)
       allowed_methods = argv[++i];
     else if (strcmp(argv[i], "-os") == 0)
@@ -1018,7 +1042,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, resolve(c, to), args, block_number, 0, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), args, block_number, 0, 0, NULL, data, from);
     method = "eth_call";
   }
   else if (strcmp(method, "abi_encode") == 0) {
@@ -1206,8 +1230,11 @@ int main(int argc, char* argv[]) {
   }
 #endif
   else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, gas_price, value, data);
-    method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
+    prepare_tx(sig, resolve(c, to), args, NULL, gas_limit, gas_price, value, data, from);
+    if (only_show_raw_tx && (c->plugin_acts & (PLGN_ACT_SIGN | PLGN_ACT_SIGN_ACCOUNT)) == 0)
+      method = "in3_prepareTx";
+    else
+      method = wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
   }
   else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
@@ -1409,7 +1436,7 @@ int main(int argc, char* argv[]) {
     }
 
     // if the result is a string, we remove the quotes
-    if (result[0] == '"' && result[strlen(result) - 1] == '"') {
+    if (!human_readable && result[0] == '"' && result[strlen(result) - 1] == '"') {
       memmove(result, result + 1, strlen(result));
       result[strlen(result) - 1] = 0;
     }
@@ -1429,6 +1456,15 @@ int main(int argc, char* argv[]) {
       }
       // if not we simply print the result
     }
+    else if (human_readable) {
+      json_ctx_t* jctx = parse_json(result);
+      if (jctx)
+        print_val(jctx->result);
+      else
+        recorder_print(0, "%s\n", result);
+    }
+    else if (only_show_raw_tx && strcmp(method, "in3_prepareTx") == 0 && from)
+      recorder_print(0, "%s %s\n", result, from);
     else {
       if (to_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
         double val = char_to_long(result, strlen(result));

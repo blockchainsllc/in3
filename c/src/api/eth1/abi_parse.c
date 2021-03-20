@@ -126,13 +126,20 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
   int          tl    = 0;
   abi_coder_t* tuple = _calloc(1, sizeof(abi_coder_t));
   tuple->type        = ABI_TUPLE;
+  bool indexed       = false;
 
   for (char c = *val; !*error; c = *(++val)) {
     if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+      if (tl == 40) return abi_error(error, "toke too long", tuple);
       token[tl++] = c;
       continue;
     }
     if (c == ' ' && !tl) continue;
+    if (c == ' ' && tl == 7 && strncmp(token, "indexed", 7) == 0) {
+      tl      = 0;
+      indexed = true;
+      continue;
+    }
 
     abi_coder_t* coder = NULL;
     if (tl) {
@@ -162,6 +169,8 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
     }
 
     if (coder) {
+      coder->indexed                                        = indexed;
+      indexed                                               = false;
       tuple->data.tuple.components                          = tuple->data.tuple.len
                                                                   ? _realloc(tuple->data.tuple.components, (tuple->data.tuple.len + 1) * sizeof(abi_coder_t*), tuple->data.tuple.len * sizeof(abi_coder_t*))
                                                                   : _malloc(sizeof(abi_coder_t*));

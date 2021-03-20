@@ -219,7 +219,8 @@ int check_post_state(evm_t* evm, d_token_t* post) {
       uint8_t    s_key[32];
       int        l_key    = hex_to_bytes(s_str + 2, strlen(s_str) - 2, s_key, 32);
       bytes_t    val_must = d_to_bytes(s);
-      storage_t* st       = evm_get_storage(evm, address, s_key, l_key, 0);
+      storage_t* st       = NULL;
+      TRY(evm_get_storage(evm, address, s_key, l_key, 0, &st))
       if (!st) {
         print_error("Missing the storage key!");
         return -1;
@@ -340,6 +341,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
   uint8_t    hash[32];
   bytes_t    hash_bytes = {.data = hash, .len = 32};
   d_token_t* test       = (d_token_t*) evm->env_ptr;
+  account_t* tmp;
 #ifdef EVM_GAS
   // make sure we have all accounts
   d_token_t *accounts = d_get(test, ikey(jc, "pre")), *t;
@@ -347,7 +349,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     uint8_t adr[20];
     hex_to_bytes(d_get_keystr(jc, t->key) + 2, 40, adr, 20);
-    evm_get_account(evm, adr, 1);
+    TRY(evm_get_account(evm, adr, 1, &tmp))
   }
   EVM_DEBUG_BLOCK({
     in3_log_trace("\n::: ================ ");
@@ -397,19 +399,21 @@ static void uint256_setb(uint8_t* dst, uint8_t* data, int len) {
 #ifdef EVM_GAS
 static void read_accounts(evm_t* evm, d_token_t* accounts) {
   int        i, j;
+  account_t* tmp = NULL;
+  storage_t* st  = NULL;
   d_token_t *t, *storage, *s;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     char*   adr_str = d_get_keystr(jc, t->key);
     uint8_t address[20];
     hex_to_bytes(adr_str + 2, strlen(adr_str) - 2, address, 20);
-    evm_get_account(evm, address, true);
+    evm_get_account(evm, address, true, &tmp);
     storage = d_get(t, ikey(jc, "storage"));
     if (storage) {
       for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
         char*   k = d_get_keystr(jc, s->key);
         uint8_t kk[32];
         hex_to_bytes(k + 2, strlen(k) - 2, kk, 32);
-        evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true);
+        evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true, &st);
       }
     }
   }
@@ -541,9 +545,11 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
       // we need to create an account since we don't have one
       if (big_is_zero(evm.address, 20)) {
+        account_t* atmp = NULL;
 
         //  calculate the generated address
-        uint8_t*         nonce = evm_get_account(&evm, caller, true)->nonce;
+        TRY(evm_get_account(&evm, caller, true, &atmp))
+        uint8_t*         nonce = atmp->nonce;
         bytes_builder_t* bb    = bb_new();
         bytes_t          tmp   = bytes(caller, 20);
         bytes32_t        hash;
@@ -561,11 +567,13 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
         bb_free(bb);
         memcpy(_to, hash + 12, 20);
 
-        evm_get_account(&evm, _to, true)->nonce[31]++;
+        TRY(evm_get_account(&evm, _to, true, &atmp))
+        atmp->nonce[31]++;
       }
 
       // increase the nonce and pay for gas
-      account_t* c_adr = evm_get_account(&evm, evm.caller, true);
+      account_t* c_adr = NULL;
+      TRY(evm_get_account(&evm, evm.caller, true, &c_adr))
       uint256_setn(c_adr->nonce, bytes_to_long(c_adr->nonce, 32) + 1);
       uint8_t tmp[32], txval[64];
       int     l;
@@ -583,7 +591,8 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
       uint256_setb(c_adr->balance, txval, l);
 
       // handle balance for receiver
-      account_t* to_adr = evm_get_account(&evm, evm.address, true);
+      account_t* to_adr = NULL;
+      TRY(evm_get_account(&evm, evm.address, true, &to_adr))
       uint256_setb(to_adr->balance, tmp, big_add(to_adr->balance, 32, evm.call_value.data, evm.call_value.len, tmp, 32));
 
       total_gas = tx_intrinsic_gas;
@@ -634,7 +643,8 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
         read_accounts(&evm, d_get(test, ikey(jc, "pre")));
 
         // reduce the gasLimit*price from caller the
-        account_t* sender = evm_get_account(&evm, evm.caller, true);
+        account_t* sender = NULL;
+        TRY(evm_get_account(&evm, evm.caller, true, &sender))
         long_to_bytes(total_gas, gas_tmp);
         int l = big_mul(evm.gas_price.data, evm.gas_price.len, gas_tmp, 8, gas_tmp2, 32);
         uint256_setb(sender->balance, gas_tmp, big_sub(sender->balance, 32, gas_tmp2, l, gas_tmp));
@@ -648,7 +658,8 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
       // if there is gas left we return it to the sender
       if (evm.gas > 0) {
-        account_t* c_adr = evm_get_account(&evm, evm.caller, true);
+        account_t* c_adr = NULL;
+        TRY(evm_get_account(&evm, evm.caller, true, &c_adr))
         long_to_bytes(evm.gas, tmp);
         l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, tmp2, 32);
         l = big_add(tmp2, l, c_adr->balance, 32, tmp, 32);
@@ -656,7 +667,8 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
       }
 
       // pay the miner the total gas
-      account_t* miner = evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1);
+      account_t* miner = NULL;
+      TRY(evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1, &miner))
 
       // increase balance of the miner
       long_to_bytes(total_gas, tmp);

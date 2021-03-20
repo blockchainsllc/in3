@@ -37,6 +37,7 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
+#include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/bignum.h"
 #include "../nano/merkle.h"
 #include "../nano/serialize.h"
@@ -516,8 +517,9 @@ int evm_run(evm_t* evm, address_t code_address) {
       // subtract gas cost for ceation transactions
       subgas(evm->return_data.len * G_CODEDEPOSIT);
       // Modify state
-      account_t* acc_adr = evm_get_account(evm, evm->account, true);
-      acc_adr->code      = evm->return_data;
+      account_t* acc_adr = NULL;
+      TRY(evm_get_account(evm, evm->account, true, &acc_adr))
+      acc_adr->code = evm->return_data;
     }
   }
   // debug gas output

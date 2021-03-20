@@ -822,12 +822,14 @@ void in3_sign_ctx_set_signature(
   _free(sign_ctx->signature.data);
 }
 
-in3_req_t* req_find_required(const in3_req_t* parent, const char* search_method) {
-  in3_req_t* sub_ctx = parent->required;
-  while (sub_ctx) {
-    if (!sub_ctx->requests) continue;
-    if (req_is_method(sub_ctx, search_method)) return sub_ctx;
-    sub_ctx = sub_ctx->required;
+in3_req_t* req_find_required(const in3_req_t* parent, const char* search_method, const char* param_query) {
+  for (in3_req_t* r = parent->required; r; r = r->required) {
+    if (!r->requests) continue;
+    if (req_is_method(r, search_method)) {
+      d_token_t* params = d_get(r->requests[0], K_PARAMS);
+      if (param_query && (!params || !params->data || !str_find((void*) params->data, param_query))) continue;
+      return r;
+    }
   }
   return NULL;
 }
@@ -927,9 +929,6 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   // is it a valid request?
   if (!req->request_context || d_type(d_get(req->requests[0], K_METHOD)) != T_STRING) return req_set_error(req, "No Method defined", IN3_ECONFIG);
 
-  // if there is response we are done.
-  if (req->response_context && req->verification_state == IN3_OK) return IN3_OK;
-
   // if we have required-contextes, we need to check them first
   if (req->required && (ret = in3_req_execute(req->required))) {
     if (ret == IN3_EIGNORE)
@@ -937,6 +936,9 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
     else
       return req_set_error(req, get_error_message(req->required, ret), ret);
   }
+
+  // if there is response we are done.
+  if (req->response_context && req->verification_state == IN3_OK) return IN3_OK;
 
   in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_string(req->requests[0], K_METHOD), req->attempt + 1);
 

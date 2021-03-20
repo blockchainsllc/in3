@@ -56,7 +56,8 @@ typedef enum {
  * Depending on the type the config is stored in the union-structs.
  */
 typedef struct signature {
-  abi_coder_type_t type; /**< the type of the coder */
+  abi_coder_type_t type;    /**< the type of the coder */
+  bool             indexed; /**< marks a tuple as being indexed, which is relevant for event decoding */
   union {
     struct {
       struct signature** components; /**< the pointer to an array of ponters to the types */
@@ -157,4 +158,17 @@ json_ctx_t* abi_decode(
     char**     error /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
 
 );
+
+/**
+   * decodes bytes to a JSON-structure.
+   * The resulting json_ctx MUST be freed using `json_free` if not NULL.
+   */
+json_ctx_t* abi_decode_event(
+    abi_sig_t* s,      /**< the signature to use */
+    bytes_t    topics, /**< the topics to decode */
+    bytes_t    data,   /**< the data to decode */
+    char**     error   /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
+
+);
+
 #endif // _ETH_API__ABI_H_

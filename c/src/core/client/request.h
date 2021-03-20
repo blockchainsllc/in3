@@ -339,7 +339,7 @@ NONULL void req_free(
  * ```c
 in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
-  in3_req_t* req = req_find_required(parent, method);
+  in3_req_t* req = req_find_required(parent, method, NULL);
   if (ctx) {
     // found one - so we check if it is useable.
     switch (in3_req_state(ctx)) {
@@ -386,9 +386,11 @@ NONULL in3_ret_t req_add_required(
  * 
  * This method is used internaly to find a previously added context.
  */
-NONULL in3_req_t* req_find_required(
-    const in3_req_t* parent, /**< [in] the current request context. */
-    const char*      method  /**< [in] the method of the rpc-request. */
+NONULL_FOR((1, 2))
+in3_req_t* req_find_required(
+    const in3_req_t* parent,     /**< [in] the current request context. */
+    const char*      method,     /**< [in] the method of the rpc-request. */
+    const char*      param_query /**< [in] a optional string within thew params. */
 );
 /**
  * removes a required context after usage.

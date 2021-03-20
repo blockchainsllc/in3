@@ -151,10 +151,10 @@ NONULL d_token_t* json_create_bool(json_ctx_t* jp, bool value);
 NONULL d_token_t* json_create_int(json_ctx_t* jp, uint64_t value);
 NONULL d_token_t* json_create_string(json_ctx_t* jp, char* value, int len);
 NONULL d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value);
-NONULL d_token_t* json_create_object(json_ctx_t* jp);
-NONULL d_token_t* json_create_array(json_ctx_t* jp);
-NONULL d_token_t* json_object_add_prop(d_token_t* object, d_key_t key, d_token_t* value);
-NONULL d_token_t* json_array_add_value(d_token_t* object, d_token_t* value);
+NONULL int        json_create_object(json_ctx_t* jp);
+NONULL int        json_create_array(json_ctx_t* jp);
+NONULL void       json_object_add_prop(json_ctx_t* jp, int ob_index, d_key_t key, d_token_t* value);
+NONULL void       json_array_add_value(json_ctx_t* jp, int parent_index, d_token_t* value);
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
 char* d_get_keystr(json_ctx_t* json, d_key_t k); /**< returns the string for a key. This only works for index keys or known keys! */

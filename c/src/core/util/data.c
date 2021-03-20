@@ -418,6 +418,7 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
+  bool   ishex = false;
 
   while (true) {
     switch (*(jp->c++)) {
@@ -426,8 +427,17 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
       case '\'':
       case '"':
         if (start[-1] != jp->c[-1]) continue;
-        l = jp->c - start - 1;
-        if (l > 1 && *start == '0' && start[1] == 'x' && *(start - 1) != '\'') {
+        l     = jp->c - start - 1;
+        ishex = l > 1 && *start == '0' && start[1] == 'x' && *(start - 1) != '\'';
+        if (ishex)
+          for (size_t n = 2; n < l; n++) {
+            char cc = start[n];
+            if (!((cc >= '0' && cc <= '9') || (cc >= 'a' && cc <= 'f') || (cc >= 'A' && cc <= 'F'))) {
+              ishex = false;
+              break;
+            }
+          }
+        if (ishex) {
           // this is a hex-value
           if (l == 2) {
             // empty byte array
@@ -880,24 +890,25 @@ d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {
   return r;
 }
 
-d_token_t* json_create_object(json_ctx_t* jp) {
-  return next_item(jp, T_OBJECT, 0);
+int json_create_object(json_ctx_t* jp) {
+  next_item(jp, T_OBJECT, 0);
+  return jp->len - 1;
 }
 
-d_token_t* json_create_array(json_ctx_t* jp) {
-  return next_item(jp, T_ARRAY, 0);
+int json_create_array(json_ctx_t* jp) {
+  next_item(jp, T_ARRAY, 0);
+  return jp->len - 1;
 }
 
-d_token_t* json_object_add_prop(d_token_t* object, d_key_t key, d_token_t* value) {
-  object->len++;
+void json_object_add_prop(json_ctx_t* jp, int ob_index, d_key_t key, d_token_t* value) {
+  jp->result[ob_index].len++;
   value->key = key;
-  return object;
 }
 
-d_token_t* json_array_add_value(d_token_t* object, d_token_t* value) {
-  value->key = object->len;
+void json_array_add_value(json_ctx_t* jp, int ob_index, d_token_t* value) {
+  d_token_t* object = jp->result + ob_index;
+  value->key        = object->len;
   object->len++;
-  return object;
 }
 
 static void write_token_count(bytes_builder_t* bb, int len) {

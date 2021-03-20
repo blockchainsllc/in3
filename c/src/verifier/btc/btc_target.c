@@ -173,7 +173,7 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
   if (block_number < BIP34_START) return IN3_OK; // for pre bip34, this finalityheader already checked it
 
   // is there a required ctx, which we need to clean up?
-  in3_req_t* ctx = req_find_required(vc->req, "btc_proofTarget");                                                  // do we have an existing required proofTarget-request?
+  in3_req_t* ctx = req_find_required(vc->req, "btc_proofTarget", NULL);                                            // do we have an existing required proofTarget-request?
   if (ctx)                                                                                                         // yes, we do!
     switch (in3_req_state(ctx)) {                                                                                  // but what is the state?
       case REQ_ERROR:                                                                                              // there was an error,

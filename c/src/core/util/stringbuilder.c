@@ -183,9 +183,9 @@ sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l) {
   return sb;
 }
 
-sb_t* sb_add_int(sb_t* sb, uint64_t val) {
-  char tmp[19]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
-  int  l = sprintf(tmp, "%" PRId64, val);
+sb_t* sb_add_int(sb_t* sb, int64_t val) {
+  char tmp[30]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  int  l = sprintf(tmp, "%" PRIi64, val);
   check_size(sb, l);
   memcpy(sb->data + sb->len, tmp, l);
   sb->len += l;
@@ -227,10 +227,17 @@ char* format_json(const char* json) {
   return _sb.data;
 }
 
-sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size) {
+static const uint8_t zero = 0;
+
+sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size) {
+  if (fix_size == -1) {
+    if (b.len == 0) b = bytes((uint8_t*) &zero, 1);
+    b_optimize_len(&b);
+  }
   int l  = prefix ? strlen(prefix) : 0;
   int bl = b.len * 2;
-  if (fix_size > b.len) bl = fix_size * 2;
+  if (fix_size > (int) b.len) bl = fix_size * 2;
+  if (fix_size == -1 && b.len && *b.data < 16) bl--;
   l += bl;
   if (l == 0) return sb;
   check_size(sb, l);
@@ -238,9 +245,16 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size) 
   sb->len += l;
   sb->data[sb->len] = 0;
   int p             = sb->len - bl;
-  for (unsigned int i = b.len; i < fix_size; i++, p += 2)
+  for (int i = (int) b.len; i < fix_size; i++, p += 2)
     sb->data[p] = sb->data[p + 1] = '0';
-  bytes_to_hex(b.data, b.len, sb->data + p);
+  if (fix_size == -1 && b.len && *b.data < 16) {
+    char tmp[3];
+    bytes_to_hex(b.data, 1, tmp);
+    sb->data[p] = tmp[1];
+    bytes_to_hex(b.data + 1, b.len - 1, sb->data + p + 1);
+  }
+  else
+    bytes_to_hex(b.data, b.len, sb->data + p);
   return sb;
 }
 
