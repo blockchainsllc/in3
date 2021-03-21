@@ -38,6 +38,16 @@ class AccountAPI {
     add(pk) {
         return this.client.sendRPC("in3_addRawKey", [toHex(pk)]).then(toChecksumAddress)
     }
+
+
+    decryptKeystore(keystore, passphrase) {
+        return this.client.sendRPC('in3_decryptKey', [keystore, passphrase]).then(toBuffer)
+    }
+
+    addKeyStore(keystore, passphrase) {
+        return this.client.sendRPC('in3_decryptKey', [keystore, passphrase]).then(pk => this.add(pk))
+    }
+
 }
 class EthAPI {
 
@@ -309,6 +319,14 @@ class EthAPI {
     }
 
     /**
+     * adds a filter for pending transaction (only available for local rpc)
+     * @returns 
+     */
+    newPendingFilter() {
+        return this.send('eth_newPendingFilter')
+    }
+
+    /**
      * Creates a filter in the node, to notify when new pending transactions arrive.
      *
      * To check if the state h, call eth_getFilterChanges.
@@ -342,8 +360,6 @@ class EthAPI {
     getAccounts() {
         return this.send('eth_accounts')
     }
-
-
 
     /**
      * Creates new message call transaction or a contract creation for signed transactions.
@@ -388,7 +404,7 @@ class EthAPI {
         const txHash = await this.send('eth_sendTransaction', tx)
 
 
-        if (args.confirmations === undefined) args.confirmations = 1
+        if (args.confirmations === undefined) args.confirmations = 1 // same as 'eth_sendTransactionAndWait'
 
         // send it
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations, args.timeout || 60) : txHash

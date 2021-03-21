@@ -77,6 +77,12 @@ class BtcAPI {
   }
 
 
+  getBlockCount() {
+    return this.client.sendRPC('getblockcount', [])
+      .then(response => response || Promise.reject(new Error(response.error)))
+  }
+
+
 
 
 }

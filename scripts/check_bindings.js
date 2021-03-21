@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const fs = require('fs')
 const { execSync } = require('child_process')
 
@@ -17,29 +19,32 @@ const getRPCVerifiers = () => grep('VERIFY_RPC', '../c/src').reduce((p, line) =>
     }
     return p
 }, [])
-const check = val => val ? '   \u2705  ' : '   \u274c  '
-
+const check = (val, c) => val ? ((++res[c]) && '   \u2705  ') : '   \u274c  '
+const res = { doc: 0, java: 0, wasm: 0, python: 0, rust: 0, dotnet: 0, c: 0 }
 const doc_rpc = grep('\"### \"', '../../../doc/docs/rpc.md').map(_ => _.substring(_.indexOf('# ') + 2).trim())
 const java_rpc = strings('../java/src', '"')
 const wasm_rpc = strings('../wasm/src', '\'')
 const python_rpc = strings('../python/in3', '"')
 const rust_rpc = strings('../rust/in3-rs/src', '"')
 const dotnet_rpc = strings('../dotnet/In3', '"', '*.cs')
+const c_api = strings('../c/src/api', '"',)
 const all_rpc_names = [...getRPCHandlers(), ...getRPCVerifiers()].map(_ => _.name).filter((v, i, a) => a.indexOf(v) === i)
 all_rpc_names.sort()
-console.log('RPC-Method'.padEnd(40) + '     doc   java   wasm   python  rust dotnet')
-console.log('-'.padEnd(42 + 7 * 6, '-'))
+console.log('RPC-Method'.padEnd(40) + '     doc   java   wasm   python  rust dotnet  c_api')
+console.log('-'.padEnd(42 + 7 * 7, '-'))
 
 
 all_rpc_names.forEach(rpc =>
     console.log(rpc.padEnd(40) + ' : '
-        + check(doc_rpc.indexOf(rpc) != -1)
-        + check(java_rpc.indexOf(rpc) != -1)
-        + check(wasm_rpc.indexOf(rpc) != -1)
-        + check(python_rpc.indexOf(rpc) != -1)
-        + check(rust_rpc.indexOf(rpc) != -1)
-        + check(dotnet_rpc.indexOf(rpc) != -1)
+        + check(doc_rpc.indexOf(rpc) != -1, 'doc')
+        + check(java_rpc.indexOf(rpc) != -1, 'java')
+        + check(wasm_rpc.indexOf(rpc) != -1, 'wasm')
+        + check(python_rpc.indexOf(rpc) != -1, 'python')
+        + check(rust_rpc.indexOf(rpc) != -1, 'rust')
+        + check(dotnet_rpc.indexOf(rpc) != -1, 'dotnet')
+        + check(c_api.indexOf(rpc) != -1, 'c')
     )
 )
-
+console.log("\nSummary:")
+Object.keys(res).forEach(k => console.log(k.padEnd(8) + ': ' + (res[k] * 100 / all_rpc_names.length).toFixed(0) + ' % '))
 

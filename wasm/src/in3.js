@@ -215,7 +215,7 @@ class IN3 {
                 this.transport = this.config.transport
                 delete this.config.transport
             }
-            const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
+            const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]); // shortcut for 'in3_config'
             if (r) {
                 const ex = new Error(UTF8ToString(r))
                 _free(r)

@@ -157,7 +157,7 @@ function keccak(val) {
 
 function toChecksumAddress(val, chainId = 0) {
     if (!val) return val
-    return call_string('to_checksum_address', toUint8Array(val, 20), chainId);
+    return call_string('to_checksum_address', toUint8Array(val, 20), chainId); // shortcut for 'in3_checksumAddress'
 }
 
 function private2address(pk) {
@@ -177,7 +177,7 @@ function abiEncode(sig, ...params) {
             ? convert(Object.values(a))
             : toHex(a)
     try {
-        return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params)))
+        return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params))) // shortcut for 'in3_abiDecode'-method
     }
     catch (x) {
         throw new Error("Error trying to abi encode '" + sig + '": ' + x.message + ' with ' + JSON.stringify(params))
@@ -200,7 +200,7 @@ function abiDecode(sig, data) {
         else return []
     }
     try {
-        let res = JSON.parse(call_string('wasm_abi_decode', sig, data, data.byteLength))
+        let res = JSON.parse(call_string('wasm_abi_decode', sig, data, data.byteLength)) // shortcut for 'in3_abiEncode'-method
         return allowOne ? convertType(res, types[0]) : convertTypes(types, res)
     } catch (x) {
         throw new Error('Error decoding ' + sig + ' with ' + toHex(data) + ' : ' + x.message)

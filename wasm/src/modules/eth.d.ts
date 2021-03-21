@@ -259,6 +259,19 @@ export interface AccountAPI<BufferType> {
      */
     add(pk: string | BufferType): Promise<string>
 
+    /**
+     * decrypts a JSON Keystore file as defined in the Web3 Secret Storage Definition . The result is the raw private key.
+     * @param keystore the keystore data
+     * @param passphrase the passphrase
+     */
+    decryptKeystore(keystore: any, passphrase: string): Promise<BufferType>
+
+    /**
+     * adds a key from a JSON Keystore file as defined in the Web3 Secret Storage Definition . This method returns address of the pk.
+     * @param keystore the keystore data
+     * @param passphrase the passphrase
+     */
+    addKeyStore(keystore: any, passphrase: string): Promise<String>
 
 }
 
@@ -462,6 +475,12 @@ export interface EthAPI<BigIntType, BufferType> {
      * Returns the number of uncles in a block from a block matching the given block hash.
      */
     getUncleCountByBlockNumber(block: BlockType): Promise<number>;
+
+    /**
+     * adds a filter for pending transaction (only available for local rpc)
+     */
+    newPendingFilter(): Promise<string>;
+
     /**
      * Creates a filter in the node, to notify when a new block arrives. To check if the state has changed, call eth_getFilterChanges.
      */
