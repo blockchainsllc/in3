@@ -2,6 +2,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
@@ -444,7 +445,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   d_token_t* params = d_get(vc->request, K_PARAMS);
   bytes32_t  hash;
 
-  if (strcmp(vc->method, "getblock") == 0) {
+  if (VERIFY_RPC("getblock")) {
     // mark zksync as experimental
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
 
@@ -453,22 +454,22 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, true);
   }
-  if (strcmp(vc->method, "getblockcount") == 0) {
+  if (VERIFY_RPC("getblockcount")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_blockcount(conf, vc);
   }
-  if (strcmp(vc->method, "getblockheader") == 0) {
+  if (VERIFY_RPC("getblockheader")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid blockhash");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, false);
   }
-  if (strcmp(vc->method, "btc_proofTarget") == 0) {
+  if (VERIFY_RPC("btc_proofTarget")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_target_proof(conf, vc, params);
   }
-  if (strcmp(vc->method, "getrawtransaction") == 0) {
+  if (VERIFY_RPC("getrawtransaction")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     d_token_t* tx_id      = d_get_at(params, 0);
     bool       json       = d_len(params) < 2 ? d_type(vc->result) == T_OBJECT : d_get_int_at(params, 1);

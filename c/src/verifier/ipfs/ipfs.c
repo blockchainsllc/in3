@@ -2,6 +2,7 @@
 #include "ipfs.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/base58.h"
 #include "../../third-party/crypto/sha2.h"
@@ -154,11 +155,11 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* pctx) {
 
   if (strcmp(vc->method, "in3_nodeList") == 0)
     return true;
-  else if (strcmp(vc->method, "ipfs_get") == 0)
+  else if (VERIFY_RPC("ipfs_get"))
     return ipfs_verify_hash(d_string(vc->result),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_get_string_at(params, 0));
-  else if (strcmp(vc->method, "ipfs_put") == 0)
+  else if (VERIFY_RPC("ipfs_put"))
     return ipfs_verify_hash(d_get_string_at(params, 0),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_string(vc->result));

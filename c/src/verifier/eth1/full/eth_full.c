@@ -36,6 +36,7 @@
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/debug.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -55,7 +56,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result) return IN3_OK;
 
-  if (strcmp(vc->method, "eth_call") == 0) {
+  if (VERIFY_RPC("eth_call")) {
     if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
     d_token_t* tx      = d_get_at(d_get(vc->request, K_PARAMS), 0);
     bytes_t*   address = d_get_byteskl(tx, K_TO, 20);

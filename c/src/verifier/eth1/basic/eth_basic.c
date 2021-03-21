@@ -60,34 +60,32 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return IN3_OK;
   else if (d_type(vc->result) == T_NULL) {
     // check if there's a proof for non-existence
-    if (!strcmp(vc->method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(vc->method, "eth_getTransactionByBlockNumberAndIndex")) {
+    if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
       return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
-    }
     return IN3_OK;
   }
 
-  if (strcmp(vc->method, "eth_getTransactionByHash") == 0)
+  if (VERIFY_RPC("eth_getTransactionByHash"))
     return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
-  else if (!strcmp(vc->method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(vc->method, "eth_getTransactionByBlockNumberAndIndex")) {
+  else if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
     return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
-  }
-  else if (strcmp(vc->method, "eth_getBlockByNumber") == 0)
+  else if (VERIFY_RPC("eth_getBlockByNumber"))
     return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (strcmp(vc->method, "eth_getBlockTransactionCountByHash") == 0)
+  else if (VERIFY_RPC("eth_getBlockTransactionCountByHash"))
     return eth_verify_eth_getBlockTransactionCount(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (strcmp(vc->method, "eth_getBlockTransactionCountByNumber") == 0)
+  else if (VERIFY_RPC("eth_getBlockTransactionCountByNumber"))
     return eth_verify_eth_getBlockTransactionCount(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (strcmp(vc->method, "eth_getBlockByHash") == 0)
+  else if (VERIFY_RPC("eth_getBlockByHash"))
     return eth_verify_eth_getBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (strcmp(vc->method, "eth_getBalance") == 0 || strcmp(vc->method, "eth_getCode") == 0 || strcmp(vc->method, "eth_getStorageAt") == 0 || strcmp(vc->method, "eth_getTransactionCount") == 0)
+  else if (VERIFY_RPC("eth_getBalance") || VERIFY_RPC("eth_getCode") || VERIFY_RPC("eth_getStorageAt") || VERIFY_RPC("eth_getTransactionCount"))
     return eth_verify_account_proof(vc);
-  else if (strcmp(vc->method, "eth_gasPrice") == 0)
+  else if (VERIFY_RPC("eth_gasPrice"))
     return IN3_OK;
-  else if (!strcmp(vc->method, "eth_newFilter") || !strcmp(vc->method, "eth_newBlockFilter") || !strcmp(vc->method, "eth_newPendingFilter") || !strcmp(vc->method, "eth_uninstallFilter") || !strcmp(vc->method, "eth_getFilterChanges"))
+  else if (VERIFY_RPC("eth_newFilter") || VERIFY_RPC("eth_newBlockFilter") || VERIFY_RPC("eth_newPendingFilter") || VERIFY_RPC("eth_uninstallFilter") || VERIFY_RPC("eth_getFilterChanges"))
     return IN3_OK;
-  else if (strcmp(vc->method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
+  else if (VERIFY_RPC("eth_getLogs")) // for txReceipt, we need the txhash
     return eth_verify_eth_getLog(vc, d_len(vc->result));
-  else if (strcmp(vc->method, "eth_sendRawTransaction") == 0) {
+  else if (VERIFY_RPC("eth_sendRawTransaction")) {
     bytes32_t hash;
     keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");

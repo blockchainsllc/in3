@@ -36,6 +36,7 @@
 #include "../../../core/client/keys.h"
 #include "../../../core/client/plugin.h"
 #include "../../../core/client/request.h"
+#include "../../../core/util/debug.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "merkle.h"
@@ -61,7 +62,7 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
       return IN3_OK;
   }
 
-  if (strcmp(vc->method, "eth_getTransactionReceipt") == 0)
+  if (VERIFY_RPC("eth_getTransactionReceipt"))
     // for txReceipt, we need the txhash
     return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
   else
