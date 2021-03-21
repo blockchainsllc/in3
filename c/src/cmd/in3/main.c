@@ -757,7 +757,7 @@ int main(int argc, char* argv[]) {
 
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, debug_transport, NULL, true);
 
-#ifndef USE_WINHTTP
+#ifdef USE_WINHTTP
   rc = "1";
 #endif
 
