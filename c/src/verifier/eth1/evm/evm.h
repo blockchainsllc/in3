@@ -85,7 +85,7 @@ typedef enum evm_state {
 #define EVM_PROP_ISTANBUL              32
 #define EVM_PROP_NO_FINALIZE           32768
 #define EVM_PROP_STATIC                256
-#define EVM_PROP_TXCREATE              512  /**< executing a creation transaction > */
+#define EVM_PROP_TXCREATE              512 /**< executing a creation transaction > */
 #define EVM_PROP_CALL_DEPEND_ON_REFUND 1024 /**< executing code that depends on subcall gas refund to succeed > */
 
 #define EVM_ENV_BALANCE     1
