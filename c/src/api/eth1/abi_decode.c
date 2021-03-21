@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool as_array, char** error);
+static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool as_array, bytes_t* topics, char** error);
 
 static in3_ret_t next_word(int* offset, bytes_t* data, uint8_t** dst, char** error) {
   if (*offset + 32 > (int) data->len) {
@@ -82,7 +82,7 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       break;
     }
     case ABI_TUPLE:
-      return decode_tuple(c, data, res, data_read, true, error);
+      return decode_tuple(c, data, res, data_read, true, NULL, error);
     case ABI_ARRAY: {
       int len = c->data.array.len;
       if (!len) {
@@ -91,7 +91,8 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       }
       bool is_dynamic = abi_is_dynamic(c->data.array.component);
       int  offset     = pos;
-      json_create_array(res)->len |= len;
+      json_create_array(res);
+      res->result[res->len - 1].len |= len;
       for (int i = 0; i < len; i++) {
         int r = 0, start = pos;
         if (is_dynamic) {
@@ -108,13 +109,25 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
   return IN3_OK;
 }
 
-static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool add_array, char** error) {
-  if (add_array) json_create_array(res)->len |= tuple->data.tuple.len;
-  uint8_t* word = NULL;
-  int      pos  = 0;
+static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool add_array, bytes_t* topics, char** error) {
+  if (add_array) {
+    json_create_array(res);
+    res->result[res->len - 1].len |= tuple->data.tuple.len;
+  }
+  uint8_t* word      = NULL;
+  int      pos       = 0;
+  unsigned topic_pos = 1;
   for (int i = 0; i < tuple->data.tuple.len; i++) {
     abi_coder_t* c = tuple->data.tuple.components[i];
-    if (abi_is_dynamic(c)) {
+    if (c->indexed) {
+      if (!topics || topics->len < (topic_pos + 1) * 32) {
+        *error = "topics are too short";
+        return IN3_EINVAL;
+      }
+      TRY(decode_value(c, bytes(topics->data + topic_pos * 32, 32), res, NULL, error))
+      topic_pos++;
+    }
+    else if (abi_is_dynamic(c)) {
       TRY(next_word(&pos, &data, &word, error))
       int offset = bytes_to_int(word + 28, 4);
       if (offset + 32 > (int) data.len) {
@@ -141,7 +154,25 @@ static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res,
 json_ctx_t* abi_decode(abi_sig_t* s, bytes_t data, char** error) {
   json_ctx_t*  res    = json_create();
   abi_coder_t* c      = s->output ? s->output : s->input;
-  in3_ret_t    failed = decode_tuple(c, data, res, NULL, s->return_tuple || c->data.tuple.len != 1, error);
+  in3_ret_t    failed = decode_tuple(c, data, res, NULL, s->return_tuple || c->data.tuple.len != 1, NULL, error);
+  if (failed && res) json_free(res);
+  return *error ? NULL : res;
+}
+
+json_ctx_t* abi_decode_event(
+    abi_sig_t* s,      /**< the signature to use */
+    bytes_t    topics, /**< the topics to decode */
+    bytes_t    data,   /**< the data to decode */
+    char**     error   /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
+
+) {
+  if (topics.len < 32 || memcmp(topics.data, s->fn_hash, 4)) {
+    *error = "The Topic does not match the event signature";
+    return NULL;
+  }
+  json_ctx_t*  res    = json_create();
+  abi_coder_t* c      = s->output ? s->output : s->input;
+  in3_ret_t    failed = decode_tuple(c, data, res, NULL, s->return_tuple || c->data.tuple.len != 1, &topics, error);
   if (failed && res) json_free(res);
   return *error ? NULL : res;
 }

@@ -319,6 +319,11 @@ int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
 
+/**
+ * simple add function, which adds the bytes (b) to a
+ */
+void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b);
+
 #ifdef THREADSAFE
 #define _NAME(x, y) x##y
 #if defined(_MSC_VER) || defined(__MINGW32__)

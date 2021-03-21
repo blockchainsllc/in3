@@ -50,7 +50,7 @@ static int            is_not_existened(d_token_t* account) {
   d_token_t* t = NULL;
   return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_long(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
 }
-
+const uint8_t*   empty_hash() { return EMPTY_HASH; }
 static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
   d_token_t *     t, *storage_proof, *p;
   int             i;

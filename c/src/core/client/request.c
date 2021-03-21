@@ -312,7 +312,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   return in3_rpc_handle_with_string(hctx, s);
 }
 
-in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result) {
+in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
   bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
   if (params == NULL) params = "";
   char* req = NULL;
@@ -343,6 +343,8 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
     if (strncmp(params, p.data + 1, p.len - 2) == 0) break;
   }
 
+  if (ctx && child) *child = ctx;
+
   if (ctx)
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
@@ -369,6 +371,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   }
   ctx = req_new(parent->client, req);
   if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
+  if (child) *child = ctx;
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   in3_ret_t ret = req_add_required(parent, ctx);
@@ -407,7 +410,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
 
   // get the signature from required
   const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : "sign_ec_raw";
-  in3_req_t*  c      = req_find_required(ctx, method);
+  in3_req_t*  c      = req_find_required(ctx, method, NULL);
   if (c)
     switch (in3_req_state(c)) {
       case REQ_ERROR:

@@ -136,6 +136,11 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* req,     /**< the current contex
 );
 
 /**
+ * returns a pointer to 32 bytes marking a empty hash (keccakc(0x))
+ */
+const uint8_t* empty_hash();
+
+/**
  * minimum signer for the wallet, returns the signed message which needs to be freed
  */
 RETURNS_NONULL NONULL char* eth_wallet_sign(const char* key, const char* data);

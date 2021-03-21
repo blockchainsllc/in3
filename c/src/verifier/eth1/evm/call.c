@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "../../../core/client/plugin.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "big.h"
 #include "evm.h"
@@ -174,8 +175,9 @@ int evm_sub_call(evm_t*    parent,
   UNUSED_VAR(gas);
 
   // create a new evm
-  evm_t    evm;
-  int      res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
+  evm_t evm;
+  int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
+  if (res < 0) goto cleanup;
   uint32_t c_xfer = 0, old_gas = 0;
 
 #ifdef EVM_GAS
@@ -248,11 +250,41 @@ int evm_sub_call(evm_t*    parent,
     }
   }
   FINALIZE_SUBCALL_GAS(&evm, success, parent);
+
+cleanup:
   // clean up
   evm_free(&evm);
   // we always return 0 since a failure simply means we write a 0 on the stack.
   return res;
 }
+
+#ifdef EVM_GAS
+
+static void add_log(json_ctx_t* receipt, int logs, logs_t* log, uint32_t* index) {
+  if (!log) return;
+  add_log(receipt, logs, log->next, index);
+  int l = json_create_object(receipt);
+  json_array_add_value(receipt, logs, receipt->result + l);
+  json_object_add_prop(receipt, l, key("transactionLogIndex"), json_create_int(receipt, *index));
+  *index = *index + 1;
+  json_object_add_prop(receipt, l, key("address"), json_create_bytes(receipt, bytes(log->address, 20)));
+  json_object_add_prop(receipt, l, key("data"), json_create_bytes(receipt, log->data));
+  int topics = json_create_array(receipt);
+  json_object_add_prop(receipt, l, key("topics"), receipt->result + topics);
+
+  for (unsigned int i = 0; i < log->topics.len; i += 32)
+    json_array_add_value(receipt, topics, json_create_bytes(receipt, bytes(log->topics.data + i, 32)));
+}
+
+static void add_receipt(evm_t* evm, json_ctx_t* receipt, uint64_t gas_used) {
+  int r = json_create_object(receipt);
+  json_object_add_prop(receipt, r, key("gasUsed"), json_create_int(receipt, gas_used));
+  int logs = json_create_array(receipt);
+  json_object_add_prop(receipt, r, key("logs"), receipt->result + logs);
+  uint32_t log_index = 0;
+  add_log(receipt, logs, evm->logs, &log_index);
+}
+#endif
 
 /**
  * run a evm-call
@@ -261,10 +293,11 @@ int evm_call(void*     vc,
              address_t address,
              uint8_t* value, wlen_t l_value,
              uint8_t* data, uint32_t l_data,
-             address_t caller,
-             uint64_t  gas,
-             uint64_t  chain_id,
-             bytes_t** result) {
+             address_t   caller,
+             uint64_t    gas,
+             uint64_t    chain_id,
+             bytes_t**   result,
+             json_ctx_t* receipt) {
 
   evm_t evm;
   int   res    = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc, 0);
@@ -277,7 +310,7 @@ int evm_call(void*     vc,
 
 #ifdef EVM_GAS
   // we only transfer initial value if the we have caller
-  if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value, 0);
+  if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value, 0, true);
 #else
   UNUSED_VAR(gas);
   UNUSED_VAR(value);
@@ -288,11 +321,21 @@ int evm_call(void*     vc,
 #ifdef EVM_GAS
   evm.gas = gas;
 #endif
-  evm.call_data.data = data;
-  evm.call_data.len  = l_data;
+  evm.call_value.data = value;
+  evm.call_value.len  = l_value;
+  evm.call_data.data  = data;
+  evm.call_data.len   = l_data;
   if (res == 0) res = evm_run(&evm, address);
   if (res == 0 && evm.return_data.data)
     *result = b_dup(&evm.return_data);
+
+#ifdef EVM_GAS
+  if (receipt)
+    add_receipt(&evm, receipt, gas - evm.gas);
+#else
+  UNUSED_VAR(receipt);
+#endif
+
   evm_free(&evm);
 
   return res;

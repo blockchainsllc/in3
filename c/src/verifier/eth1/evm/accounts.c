@@ -38,23 +38,26 @@
 #include "big.h"
 #include "gas.h"
 #ifdef EVM_GAS
-/**
- * sets a variable value to 32byte word.
- */
 
-account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
-  if (!adr) return NULL;
+int evm_get_account(evm_t* evm, address_t adr, wlen_t create, account_t** dst) {
+  if (!adr) {
+    *dst = NULL;
+    return 0;
+  }
   account_t* ac = evm->accounts;
 
   // check if we already have the account.
   while (ac) {
-    if (memcmp(ac->address, adr, 20) == 0) return ac;
+    if (memcmp(ac->address, adr, 20) == 0) {
+      *dst = ac;
+      return 0;
+    }
     ac = ac->next;
   }
 
   // if this is a internal call take it from the parent
   if (evm->parent) {
-    ac = evm_get_account(evm->parent, adr, create);
+    TRY(evm_get_account(evm->parent, adr, create, &ac))
 
     if (ac) {
       // clone and add account
@@ -63,7 +66,8 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
       a->storage    = NULL;
       a->next       = evm->accounts;
       evm->accounts = a;
-      return a;
+      *dst          = a;
+      return 0;
     }
   }
 
@@ -73,9 +77,12 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   int      l_code_size = evm->env(evm, EVM_ENV_CODE_SIZE, adr, 20, &code_size, 0, 0);
   int      l_nonce     = evm->env(evm, EVM_ENV_NONCE, adr, 20, &nonce, 0, 0);
 
-  if (l_balance >= 0) optimize_len(balance, l_balance);
-  if (l_nonce >= 0) optimize_len(nonce, l_nonce);
-  if (l_code_size >= 0) optimize_len(code_size, l_code_size);
+  if (l_balance < 0) return l_balance;
+  if (l_code_size < 0) return l_code_size;
+  if (l_nonce < 0) return l_nonce;
+  optimize_len(balance, l_balance);
+  optimize_len(code_size, l_code_size);
+  optimize_len(nonce, l_nonce);
 
   // is this a non-empty account? (or do we have to create one)
   if (create || l_balance > 1 || l_nonce > 1 || l_code_size > 1 || (l_balance == 1 && *balance) || (l_nonce == 1 && *nonce) || (l_code_size == 1 && *code_size)) {
@@ -97,13 +104,17 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
     uint256_set(balance, l_balance, ac->balance);
     uint256_set(nonce, l_nonce, ac->nonce);
   }
-  return ac;
+
+  *dst = ac;
+  return 0;
 }
 
-account_t* evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller) {
+int evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller, account_t** dst) {
 
-  account_t* new_account = NULL;
-  new_account            = evm_get_account(evm, code_address, 1);
+  account_t* sender_account = NULL;
+  account_t* new_account    = NULL;
+  int        r              = evm_get_account(evm, code_address, 1, &new_account);
+  if (r < 0) return r;
   // this is a create-call
   evm->code              = bytes(data, l_data);
   evm->call_data.len     = 0;
@@ -111,15 +122,21 @@ account_t* evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, addres
   new_account->nonce[31] = 1;
 
   // increment the nonce of the sender
-  account_t* sender_account = evm_get_account(evm, caller, 1);
-  bytes32_t  new_nonce;
+  r = evm_get_account(evm, caller, 1, &sender_account);
+  if (r < 0) return r;
+  bytes32_t new_nonce;
   increment_nonce(sender_account, new_nonce);
-  return new_account;
+  *dst = new_account;
+  return 0;
 }
 
-storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_key_len, wlen_t create) {
-  account_t* ac = evm_get_account(evm, adr, create);
-  if (!ac) return NULL;
+int evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_key_len, wlen_t create, storage_t** dst) {
+  account_t* ac = NULL;
+  TRY(evm_get_account(evm, adr, create, &ac));
+  if (!ac) {
+    *dst = NULL;
+    return 0;
+  }
 
   storage_t* s = ac->storage;
 
@@ -129,20 +146,25 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
 
   // find existing entry
   while (s) {
-    if (memcmp(s->key, key_data, 32) == 0) return s;
+    if (memcmp(s->key, key_data, 32) == 0) {
+      *dst = s;
+      return 0;
+    }
     s = s->next;
   }
 
   // not found?, but if we have parents, we try to copy the entry from there first
   if (evm->parent) {
-    storage_t* parent_s = evm_get_storage(evm->parent, adr, s_key, s_key_len, create);
+    storage_t* parent_s = NULL;
+    TRY(evm_get_storage(evm->parent, adr, s_key, s_key_len, create, &parent_s));
     if (parent_s) {
       // clone and add account
       s = _malloc(sizeof(storage_t));
       memcpy(s, parent_s, sizeof(storage_t));
       s->next     = ac->storage;
       ac->storage = s;
-      return s;
+      *dst        = s;
+      return 0;
     }
   }
 
@@ -151,6 +173,8 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
   int l = (!create && memcmp(evm->address, adr, 20))
               ? 0
               : evm->env(evm, EVM_ENV_STORAGE, s_key, s_key_len, &data, 0, 0);
+
+  //  if (l < 0) return l;
 
   // if it does not exist and we have a value, we set it
   if (create || l > 1 || (l == 1 && *data)) {
@@ -165,7 +189,8 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
     // set the value
     uint256_set(data, l, s->value);
   }
-  return s;
+  *dst = s;
+  return 0;
 }
 
 void copy_state(evm_t* dst, evm_t* src) {
@@ -259,15 +284,17 @@ void copy_state(evm_t* dst, evm_t* src) {
 /**
  * transfer a value to a account.
  */
-int transfer_value(evm_t* current, address_t from_account, address_t to_account, uint8_t* value, wlen_t value_len, uint32_t base_gas) {
+int transfer_value(evm_t* current, address_t from_account, address_t to_account, uint8_t* value, wlen_t value_len, uint32_t base_gas, bool is_call) {
   if (big_is_zero(value, value_len)) return 0;
 
   // while the gas is handled by the parent, the new state is handled in the current evm, so we can roll it back.
-  evm_t* evm = current->parent ? current->parent : current;
-
-  account_t* ac_from = evm_get_account(current, from_account, true);
-  account_t* ac_to   = evm_get_account(current, to_account, false);
+  evm_t*     evm     = current->parent ? current->parent : current;
+  account_t* ac_from = NULL;
+  account_t* ac_to   = NULL;
   uint8_t    tmp[32], val[32];
+
+  TRY(evm_get_account(current, from_account, true, &ac_from))
+  TRY(evm_get_account(current, to_account, false, &ac_to))
 
   // we clone it because the value may point to the value we want to change.
   memcpy(val, value, value_len);
@@ -276,13 +303,13 @@ int transfer_value(evm_t* current, address_t from_account, address_t to_account,
   if (!ac_to) {
     // to account does exist, so we create it and manage gas for new account
     subgas(G_NEWACCOUNT);
-    ac_to = evm_get_account(current, to_account, true);
+    TRY(evm_get_account(current, to_account, true, &ac_to))
   }
   subgas(base_gas);
 
   if (ac_from) {
     // check if the balance of the sender is high enough
-    if (big_cmp(ac_from->balance, 32, value, value_len) < 0) return EVM_ERROR_BALANCE_TOO_LOW;
+    if (big_cmp(ac_from->balance, 32, value, value_len) < 0) return is_call ? 0 : EVM_ERROR_BALANCE_TOO_LOW;
 
     // sub balance from sender
     uint256_set(tmp, big_sub(ac_from->balance, 32, value, value_len, tmp), ac_from->balance);

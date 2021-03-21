@@ -1,4 +1,4 @@
-:: cmd ./bin/in3 -fi ../c/test/testdata/cmd/eth_getBlockByNumber.txt eth_getBlockByNumber latest false
+:: cmd ./bin/in3 -fi ../c/test/testdata/cmd/eth_getBlockByNumber.txt eth_getBlockByNumber latest false  -rc 1
 
 :: time 1607332862
 

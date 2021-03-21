@@ -36,6 +36,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/request.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
 #include "../../verifier/eth1/nano/merkle.h"
 #include "../../verifier/eth1/nano/rlp.h"
@@ -43,25 +44,6 @@
 #include <string.h>
 
 #define SERVER_STRUCT_SIZE 6
-
-static void big_add(bytes32_t a, uint8_t* b, wlen_t len_b) {
-  optimize_len(b, len_b);
-  uint8_t *     pa = a + 31, *pb = b + len_b - 1;
-  uint_fast16_t carry = 0;
-  do {
-    carry += *pa + *pb;
-    *pa = carry & 0xFF;
-    carry >>= 8;
-    pb--, pa--;
-  } while (b == pb);
-
-  while (carry && pa >= a) {
-    carry += *pa;
-    *pa = carry & 0xFF;
-    carry >>= 8;
-    pa--;
-  }
-}
 
 static in3_ret_t get_storage_value(d_token_t* storage_proofs, uint8_t* skey, bytes32_t value) {
   uint_fast16_t key_len = 32;
@@ -137,7 +119,7 @@ static uint8_t* get_storage_array_key(uint32_t pos, uint32_t array_index, uint32
 
   uint8_t tmp[4];
   int_to_bytes(array_index * struct_size + struct_pos, tmp);
-  big_add(dst, tmp, 4);
+  b256_add(dst, tmp, 4);
   return dst;
 }
 

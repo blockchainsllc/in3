@@ -1,4 +1,4 @@
-:: cmd ./bin/in3 -fi ../c/test/testdata/cmd/eth_blockNumber.txt eth_blockNumber
+:: cmd ./bin/in3 -fi ../c/test/testdata/cmd/eth_blockNumber.txt eth_blockNumber -rc 1
 
 :: time 1607332761
 

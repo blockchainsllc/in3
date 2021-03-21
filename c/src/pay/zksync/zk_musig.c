@@ -43,7 +43,7 @@ static in3_ret_t send_sign_request(in3_req_t* parent, int pos, zksync_config_t* 
   if (!url) return req_set_error(parent, "missing url to fetch a signature", IN3_EINVAL);
   char* in3 = alloca(strlen(url) + 26);
   sprintf(in3, "{\"rpc\":\"%s\"}", url);
-  return req_send_sub_request(parent, method, params, in3, result);
+  return req_send_sub_request(parent, method, params, in3, result, NULL);
 }
 
 static in3_ret_t update_session(zk_musig_session_t* s, in3_req_t* ctx, d_token_t* data) {
@@ -162,6 +162,7 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ac
 
   if (!signer_key) return req_set_error(ctx, "the signer key could not be found!", IN3_EINVAL);
   d_token_t* result     = NULL;
+  in3_req_t* sub        = NULL;
   char*      proof_data = d_create_json(ctx->request_context, proof);
   sb_t       sb         = {0};
   sb_add_rawbytes(&sb, "\"0x", *msg, 0);
@@ -171,10 +172,10 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ac
   sb_add_chars(&sb, proof_data);
   _free(proof_data);
 
-  TRY_FINAL(req_send_sub_request(ctx, conf->proof_verify_method, sb.data, NULL, &result), _free(sb.data))
+  TRY_FINAL(req_send_sub_request(ctx, conf->proof_verify_method, sb.data, NULL, &result, &sub), _free(sb.data))
 
   in3_ret_t ret = (d_type(result) == T_BOOLEAN && d_int(result)) ? IN3_OK : req_set_error(ctx, "Proof could not be verified!", IN3_EINVAL);
-  req_remove_required(ctx, req_find_required(ctx, conf->proof_verify_method), false);
+  req_remove_required(ctx, sub, false);
   return ret;
 }
 
@@ -184,6 +185,7 @@ static in3_ret_t create_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ms
   // prepare the arguments to create the proof
   d_token_t* result = NULL;
   uint8_t*   account;
+  in3_req_t* sub = NULL;
   TRY(zksync_get_account(conf, ctx, &account))
   sb_t sb = {0};
   sb_add_rawbytes(&sb, "\"0x", *msg, 0);
@@ -191,13 +193,10 @@ static in3_ret_t create_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ms
   sb_add_chars(&sb, "\"");
 
   // send the subrequest and wait for a response
-  TRY_FINAL(req_send_sub_request(ctx, conf->proof_create_method, sb.data, NULL, &result), _free(sb.data))
+  TRY_FINAL(req_send_sub_request(ctx, conf->proof_create_method, sb.data, NULL, &result, &sub), _free(sb.data))
 
   // handle error
   if (!result) req_set_error(ctx, "Proof could not be created!", IN3_EINVAL);
-
-  // all is well, so we find the subrequest
-  in3_req_t* sub = req_find_required(ctx, conf->proof_create_method);
 
   // only copy the data as json, so we can store them without a json_ctx and can clean up.
   if (sub) {

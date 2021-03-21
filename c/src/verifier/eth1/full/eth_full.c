@@ -65,7 +65,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
     bytes_t* from      = d_get_byteskl(tx, K_FROM, 20);
     bytes_t* value     = d_get_bytes(tx, K_VALUE);
     bytes_t* data      = d_get_bytes(tx, K_DATA);
-    bytes_t  gas       = d_to_bytes(d_get(tx, K_GAS_LIMIT));
+    bytes_t  gas       = d_to_bytes(d_get_or(tx, K_GAS_LIMIT, K_GAS));
     bytes_t* result    = NULL;
     uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
@@ -74,8 +74,16 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
     in3_log_disable_prefix();
     in3_log_set_level(LOG_ERROR);
 #endif
+    // is there a receipt-context we need to pass?
+    json_ctx_t* receipt = NULL;
+    for (cache_entry_t* ce = vc->req->cache; ce; ce = ce->next) {
+      if (ce->props & CACHE_PROP_JSON) {
+        receipt = (json_ctx_t*) (void*) ce->value.data;
+        break;
+      }
+    }
 
-    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result);
+    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result, receipt);
 #if defined(DEBUG) && defined(LOGGING)
     in3_log_set_level(old);
     in3_log_enable_prefix();
@@ -102,8 +110,10 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
         return vc_err(vc, "This op code is not supported with eth_call!");
       case EVM_ERROR_OUT_OF_GAS:
         return vc_err(vc, "Ran out of gas.");
+      case EVM_ERROR_BALANCE_TOO_LOW:
+        return vc_err(vc, "not enough funds to transfer the requested value.");
       case 0:
-        if (!result) return vc_err(vc, "no result");
+        if (!result) return d_len(vc->result) == 0 ? 0 : vc_err(vc, "no result");
         res = b_cmp(d_bytes(vc->result), result);
 
         b_free(result);

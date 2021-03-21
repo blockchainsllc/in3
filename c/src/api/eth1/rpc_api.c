@@ -38,6 +38,7 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/crypto/bignum.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/rand.h"
 #include "../../third-party/crypto/secp256k1.h"
@@ -219,7 +220,7 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
   char* dst = alloca(l + exp + 10);
   char* dot = strchr(val, '.');
   if (!dot)
-    memcpy(dst, val, (p = l) + 1);
+    memcpy(dst, val, (p = nl) + 1);
   else if (dot - val != 1 || *val != '0')
     memcpy(dst, val, (p = dot - val) + 1);
   dst[p + exp] = 0;
@@ -273,6 +274,70 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
   return s < 0
              ? req_set_error(ctx->req, "invalid number string", IN3_EINVAL)
              : in3_rpc_handle_with_bytes(ctx, bytes(tmp, (uint32_t) s));
+}
+
+char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
+  char      tmp[300];
+  bytes32_t val = {0};
+  memcpy(val + 32 - wei.len, wei.data, wei.len);
+  bignum256 bn;
+  bn_read_be(val, &bn);
+  size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, 300);
+  if (exp) {
+    if (l <= (size_t) exp) {
+      memmove(tmp + exp - l + 1, tmp, l + 1);
+      memset(tmp, '0', exp - l + 1);
+      l += exp - l + 1;
+    }
+    memmove(tmp + l - exp + 1, tmp + l - exp, exp + 1);
+    tmp[l - exp] = '.';
+    l++;
+  }
+  if (digits == -1 && exp)
+    for (int i = l - 1;; i--) {
+      if (tmp[i] == '0')
+        tmp[i] = 0;
+      else if (tmp[i] == '.') {
+        tmp[i] = 0;
+        break;
+      }
+      else
+        break;
+    }
+  else if (digits == 0)
+    tmp[l - exp + digits - 1] = 0;
+  else if (digits < exp)
+    tmp[l - exp + digits] = 0;
+
+  return _strdupn(tmp, -1);
+}
+
+static in3_ret_t in3_fromWei(in3_rpc_handle_ctx_t* ctx) {
+  if (!ctx->params || d_len(ctx->params) < 1) return req_set_error(ctx->req, "must have 1 params as number or bytes", IN3_EINVAL);
+  bytes_t    val  = d_to_bytes(ctx->params + 1);
+  d_token_t* unit = d_get_at(ctx->params, 1);
+  int        exp  = 0;
+  if (d_type(unit) == T_STRING) {
+    char* u = d_string(unit);
+    for (int i = 0; UNITS[i]; i += 2) {
+      if (strcmp(UNITS[i], u) == 0) {
+        exp = *UNITS[i + 1];
+        break;
+      }
+      else if (!UNITS[i + 2])
+        return req_set_error(ctx->req, "the unit can not be found", IN3_EINVAL);
+    }
+  }
+  else if (d_type(unit) == T_INTEGER)
+    exp = d_int(unit);
+  else
+    return req_set_error(ctx->req, "the unit must be eth-unit or a exponent", IN3_EINVAL);
+
+  int       digits = (unit = d_get_at(ctx->params, 2)) ? d_int(unit) : -1;
+  char*     s      = bytes_to_string_val(val, exp, digits);
+  in3_ret_t r      = in3_rpc_handle_with_string(ctx, s);
+  _free(s);
+  return r;
 }
 
 static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx) {
@@ -494,6 +559,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("keccak", in3_sha3(ctx))
   TRY_RPC("sha256", in3_sha256(ctx))
   TRY_RPC("in3_toWei", in3_toWei(ctx))
+  TRY_RPC("in3_fromWei", in3_fromWei(ctx))
   TRY_RPC("in3_config", in3_config(ctx))
   TRY_RPC("in3_getConfig", in3_getConfig(ctx))
   TRY_RPC("in3_pk2address", in3_pk2address(ctx))

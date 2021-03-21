@@ -79,7 +79,7 @@ in3_ret_t send_provider_request(in3_req_t* parent, zksync_config_t* conf, char* 
     in3 = alloca(strlen(conf->provider_url) + 26);
     sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
   }
-  return req_send_sub_request(parent, method, params, in3, result);
+  return req_send_sub_request(parent, method, params, in3, result, NULL);
 }
 
 void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t saltarg, address_t pub_key_hash, address_t dst) {
@@ -269,7 +269,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
     }
 
     // clean up
-    req_remove_required(ctx, req_find_required(ctx, "contract_address"), false);
+    req_remove_required(ctx, req_find_required(ctx, "contract_address", NULL), false);
   }
 
   if (main) *main = conf->main_contract;
@@ -364,7 +364,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
     }
 
     // clean up
-    req_remove_required(ctx, req_find_required(ctx, "tokens"), false);
+    req_remove_required(ctx, req_find_required(ctx, "tokens", NULL), false);
 
     if (cache_name) {
       bytes_t         data = bytes((void*) conf->tokens, conf->token_len * sizeof(zksync_token_t));

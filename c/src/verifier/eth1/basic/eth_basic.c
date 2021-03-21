@@ -101,8 +101,10 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   str_range_t r       = d_to_json(ctx->params + 1);
   char*       tx_data = alloca(r.len + 1);
   memcpy(tx_data, r.data, r.len);
-  tx_data[r.len] = 0;
-  TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash))
+  tx_data[r.len]      = 0;
+  in3_req_t* send_req = NULL;
+  in3_req_t* last_r   = NULL;
+  TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash, &send_req))
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];
   bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
@@ -112,28 +114,27 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   tx_hash_hex[68]                  = 0;
 
   // get the tx_receipt
-  TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
+  TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt, &last_r))
 
   if (d_type(tx_receipt) == T_NULL || d_get_long(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
     // we remove it and try again
-    in3_req_t* last_r = req_find_required(ctx->req, "eth_getTransactionReceipt");
-    uint32_t   wait   = d_get_int(d_get(last_r->requests[0], K_IN3), K_WAIT);
-    wait              = wait ? wait * 2 : 1000;
+    uint32_t wait = d_get_int(d_get(last_r->requests[0], K_IN3), K_WAIT);
+    wait          = wait ? wait * 2 : 1000;
     req_remove_required(ctx->req, last_r, false);
     if (wait > 120000) // more than 2 minutes is too long, so we stop here
       return req_set_error(ctx->req, "Waited too long for the transaction to be minded", IN3_ELIMIT);
     char in3[20];
     sprintf(in3, "{\"wait\":%d}", wait);
 
-    return req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
+    return req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt, &last_r);
   }
   else {
     // we have a result and we keep it
     str_range_t r = d_to_json(tx_receipt);
     sb_add_range(in3_rpc_handle_start(ctx), r.data, 0, r.len);
-    req_remove_required(ctx->req, req_find_required(ctx->req, "eth_getTransactionReceipt"), false);
-    req_remove_required(ctx->req, req_find_required(ctx->req, "eth_sendRawTransaction"), false);
+    req_remove_required(ctx->req, last_r, false);
+    req_remove_required(ctx->req, send_req, false);
     return in3_rpc_handle_finish(ctx);
   }
 }

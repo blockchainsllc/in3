@@ -37,6 +37,7 @@
  * */
 
 #include "../../../core/util/bytes.h"
+#include "../../../core/util/data.h"
 #ifndef evm_h__
 #define evm_h__
 int exit_zero(void);
@@ -125,31 +126,34 @@ typedef enum evm_state {
 
 #define OP_EXTCODECOPY_GAS(evm)                                                                                                                        \
   do {                                                                                                                                                 \
-    account_t* ac = evm_get_account(evm, address, 0);                                                                                                  \
+    account_t* ac = NULL;                                                                                                                              \
+    TRY(evm_get_account(evm, address, 0, &ac))                                                                                                         \
     if (ac && ac->code.len)                                                                                                                            \
       return evm_mem_write(evm, mem_pos, bytes(ac->code.data + code_pos, ac->code.len > (uint32_t) code_pos ? ac->code.len - code_pos : 0), data_len); \
   } while (0)
 
-#define OP_SLOAD_GAS(evm)                                         \
-  do {                                                            \
-    storage_t* s = evm_get_storage(evm, evm->account, key, l, 0); \
-    if (s) {                                                      \
-      value = s->value;                                           \
-      l     = 32;                                                 \
-      while (value[0] == 0 && l > 1) {                            \
-        l--;                                                      \
-        value++;                                                  \
-      }                                                           \
-      return evm_stack_push(evm, value, l);                       \
-    }                                                             \
+#define OP_SLOAD_GAS(evm)                                  \
+  do {                                                     \
+    storage_t* s = NULL;                                   \
+    TRY(evm_get_storage(evm, evm->account, key, l, 0, &s)) \
+    if (s) {                                               \
+      value = s->value;                                    \
+      l     = 32;                                          \
+      while (value[0] == 0 && l > 1) {                     \
+        l--;                                               \
+        value++;                                           \
+      }                                                    \
+      return evm_stack_push(evm, value, l);                \
+    }                                                      \
   } while (0)
 
 #define OP_ACCOUNT_GAS(evm, key, address, data, l)           \
   do {                                                       \
     if (key != EVM_ENV_BLOCKHASH) {                          \
-      account_t* ac = evm_get_account(evm, address, 0);      \
-      uint8_t    tmp[4];                                     \
-      uint8_t    hash[32];                                   \
+      account_t* ac = NULL;                                  \
+      TRY(evm_get_account(evm, address, 0, &ac))             \
+      uint8_t tmp[4];                                        \
+      uint8_t hash[32];                                      \
       if (ac) {                                              \
         data = NULL;                                         \
         if (key == EVM_ENV_BALANCE) {                        \
@@ -218,6 +222,7 @@ typedef struct account_storage {
 typedef struct logs {
   bytes_t      topics;
   bytes_t      data;
+  address_t    address;
   struct logs* next;
 } logs_t;
 
@@ -297,10 +302,11 @@ int  evm_call(void*    vc,
               uint8_t  address[20],
               uint8_t* value, wlen_t l_value,
               uint8_t* data, uint32_t l_data,
-              uint8_t   caller[20],
-              uint64_t  gas,
-              uint64_t  chain_id,
-              bytes_t** result);
+              uint8_t     caller[20],
+              uint64_t    gas,
+              uint64_t    chain_id,
+              bytes_t**   result,
+              json_ctx_t* receipt);
 void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
 void evm_free(evm_t* evm);
 
@@ -309,9 +315,9 @@ int evm_execute(evm_t* evm);
 int evm_run(evm_t* evm, address_t code_address);
 
 #ifdef EVM_GAS
-account_t* evm_get_account(evm_t* evm, uint8_t adr[20], wlen_t create);
-storage_t* evm_get_storage(evm_t* evm, uint8_t adr[20], uint8_t* key, wlen_t keylen, wlen_t create);
-int        transfer_value(evm_t* evm, uint8_t from_account[20], uint8_t to_account[20], uint8_t* value, wlen_t value_len, uint32_t base_gas);
+int evm_get_account(evm_t* evm, address_t adr, wlen_t create, account_t** dst);
+int evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_key_len, wlen_t create, storage_t** dst);
+int transfer_value(evm_t* evm, uint8_t from_account[20], uint8_t to_account[20], uint8_t* value, wlen_t value_len, uint32_t base_gas, bool is_call);
 
 #endif
 #endif

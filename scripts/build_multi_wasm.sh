@@ -1,4 +1,7 @@
 #!/bin/bash
+# exit if a command fails
+set -e
+
 function build {
   NAME=$1
   OPTIONS=$2
@@ -28,7 +31,7 @@ function build {
 }
 
 # define options
-source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
+source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null || echo "env should be set first"
 CWD=$PWD
 cd $(dirname $0)/..
 DST="$CWD/$1"

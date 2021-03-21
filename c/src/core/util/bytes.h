@@ -123,6 +123,12 @@ NONULL static inline void b_optimize_len(bytes_t* b) {                          
   }
 }
 
+static inline int b_compare(bytes_t a, bytes_t b) {
+  return (a.len == b.len)
+             ? memcmp(a.data, b.data, a.len)
+             : ((int) a.len) - ((int) b.len);
+}
+
 #define b_to_stack(d)              \
   {                                \
     bytes_t o = d;                 \
