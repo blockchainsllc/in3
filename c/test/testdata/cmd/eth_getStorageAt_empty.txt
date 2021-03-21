@@ -1,4 +1,4 @@
-:: cmd ./bin/in3 -fi ../c/test/testdata/cmd/eth_getStorageAt_empty.txt eth_getStorageAt 0xe0060c57527ff36122342daebbeb19e910f3038b 0x0000000000000000000000000000000000000000000000000000000000000000 latest
+:: cmd ./bin/in3 -fi ../c/test/testdata/cmd/eth_getStorageAt_empty.txt eth_getStorageAt 0xe0060c57527ff36122342daebbeb19e910f3038b 0x0000000000000000000000000000000000000000000000000000000000000000 latest  -rc 1
 
 :: time 1607333024
 
