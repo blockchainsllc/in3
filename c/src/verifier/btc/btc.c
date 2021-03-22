@@ -465,7 +465,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, false);
   }
-  if (VERIFY_RPC("btc_proofTarget")) {
+  if (strcmp(vc->method, "btc_proofTarget") == 0) { // we use strcmp directly here, because btc_proofTarget is an internal rpc-call, which does not have to be part of any API.
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_target_proof(conf, vc, params);
   }
