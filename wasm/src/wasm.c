@@ -41,6 +41,7 @@
 #include "../../c/src/nodeselect/full/nodelist.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/third-party/crypto/sha2.h"
 #ifdef ETH_FULL
 #include "../../c/src/third-party/tommath/tommath.h"
 #endif
@@ -394,6 +395,20 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
   return result;
 }
 
+uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
+  uint8_t* result = malloc(32);
+  if (result) {
+    SHA256_CTX c;
+    sha256_Init(&c);
+    sha256_Update(&c, data, len);
+    sha256_Final(&c, result);
+  }
+  else
+    in3_set_error("malloc failed");
+
+  return result;
+}
+
 char* EMSCRIPTEN_KEEPALIVE to_checksum_address(address_t adr, int chain_id) {
   char* result = malloc(43);
   if (!result) return err_string("malloc failed");
@@ -493,6 +508,15 @@ uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
   keccak(bytes(public_key + 1, 64), sdata);
   memcpy(dst, sdata + 12, 20);
+  return dst;
+}
+
+/** private key to address */
+uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
+  uint8_t* dst = malloc(64);
+  uint8_t  public_key[65], sdata[32];
+  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
+  memcpy(dst, public_key + 1, 64);
   return dst;
 }
 
