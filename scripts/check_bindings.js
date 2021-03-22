@@ -21,7 +21,7 @@ const getRPCVerifiers = () => grep('VERIFY_RPC', '../c/src').reduce((p, line) =>
 }, [])
 const check = (val, c) => val ? ((++res[c]) && '   \u2705  ') : '   \u274c  '
 const res = { doc: 0, java: 0, wasm: 0, python: 0, rust: 0, dotnet: 0, c: 0 }
-const doc_rpc = grep('\"### \"', '../../../doc/docs/rpc.md').map(_ => _.substring(_.indexOf('# ') + 2).trim())
+const doc_rpc = grep('\"### \"', '../../../doc/docs/rpc.md').map(_ => _.substring(_.indexOf('# ') + 2).trim()).map(_ => _ === 'proofTarget' ? 'btc_proofTarget' : _)
 const java_rpc = strings('../java/src', '"')
 const wasm_rpc = strings('../wasm/src', '\'')
 const python_rpc = strings('../python/in3', '"')
