@@ -149,10 +149,16 @@ function toBigInt(val) {
     return BigInt(toHex(val))
 }
 
-function keccak(val) {
+function keccak(val) { // shortcut for the 'keccak'  rpc-call
     if (!val) return val
     val = toUint8Array(val)
-    return toBuffer(call_buffer('hash_keccak', 32, val, val.byteLength)) // shortcut for 'web3_sha3' or 'keccak'
+    return toBuffer(call_buffer('hash_keccak', 32, val, val.byteLength)) // keccak is also a alias for 'web3_sha3' 
+}
+
+function sha256(val) {
+    if (!val) return val
+    val = toUint8Array(val)
+    return toBuffer(call_buffer('hash_sha256', 32, val, val.byteLength)) // shortcut for 'sha256'
 }
 
 function toChecksumAddress(val, chainId = 0) {
@@ -163,7 +169,13 @@ function toChecksumAddress(val, chainId = 0) {
 function private2address(pk) {
     if (!pk) return pk
     pk = toUint8Array(pk)
-    return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength))
+    return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength)) // alias for 'in3_pk2address'
+}
+
+function private2public(pk) {
+    if (!pk) return pk
+    pk = toUint8Array(pk)
+    return toChecksumAddress(call_buffer('private_to_public', 20, pk, pk.byteLength)) // alias for 'in3_pk2public'
 }
 
 function checkAddressChecksum(ad, chain = 0) {
@@ -573,12 +585,14 @@ const util = {
     padStart,
     padEnd,
     keccak,
+    sha256,
     toChecksumAddress,
     abiEncode,
     abiDecode,
     ecSign,
     splitSignature,
     private2address,
+    private2public,
     soliditySha3,
     randomBytes,
     createSignatureHash,

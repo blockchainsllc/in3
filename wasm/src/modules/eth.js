@@ -36,16 +36,32 @@ class AccountAPI {
     constructor(client) { this.client = client }
 
     add(pk) {
-        return this.client.sendRPC("in3_addRawKey", [toHex(pk)]).then(toChecksumAddress)
+        return toChecksumAddress(this.client.execLocal("in3_addRawKey", [toHex(pk)]))
     }
 
 
     decryptKeystore(keystore, passphrase) {
-        return this.client.sendRPC('in3_decryptKey', [keystore, passphrase]).then(toBuffer)
+        return toBuffer(this.client.execLocal('in3_decryptKey', [keystore, passphrase]))
     }
 
     addKeyStore(keystore, passphrase) {
-        return this.client.sendRPC('in3_decryptKey', [keystore, passphrase]).then(pk => this.add(pk))
+        return this.add(this.client.sendRPC('in3_decryptKey', [keystore, passphrase]))
+    }
+
+    ecrecover(msg, sig, sigtype) {
+        return this.client.execLocal('in3_ecrecover', [toHex(msg), toHex(sig), sigtype || 'raw'])
+    }
+
+    signData(msg, account, msgtype) {
+        return this.client.sendRPC('in3_signData', [toHex(msg), toHex(account), msgtype || 'raw'])
+    }
+
+    signRawTx(rawTx, account) {
+        return this.client.sendRPC('in3_signTx', [toHex(rawTx), toHex(account)]).then(toBuffer)
+    }
+
+    prepareTx(tx) {
+        return this.client.sendRPC('in3_prepareTx', [tx]).then(toBuffer)
     }
 
 }
@@ -77,10 +93,17 @@ class EthAPI {
     }
 
     /**
-     * Returns the number of most recent block. ()
+     * converts the tokens into wei
      */
     toWei(val, unit = 'eth') {
         return this.client.execLocal('in3_toWei', [val, unit])
+    }
+
+    /**
+     * converts the Wei in a formatted token string.
+     */
+    fromWei(val, unit = 'eth', digits = -1) {
+        return this.client.execLocal('in3_fromWei', digits == -1 ? [toHex(val), unit] : [toHex(val), unit, digits])
     }
 
     /**

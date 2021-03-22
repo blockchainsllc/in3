@@ -47,7 +47,8 @@ if (isBrowserEnvironment) {
     // for browsers
     in3w.in3_cache = {
         get: key => window.localStorage.getItem('in3.' + key),
-        set: (key, value) => window.localStorage.setItem('in3.' + key, value)
+        set: (key, value) => window.localStorage.setItem('in3.' + key, value),
+        clear: () => window.localStorage.clear()
     }
     in3w.transport = (url, payload, timeout, method, headers) => Promise.race([
         fetch(url, {
@@ -75,6 +76,12 @@ else {
         },
         set(key, value) {
             fs.writeFileSync('.in3/' + key, Buffer.from(value, 'hex'))
+        },
+        clear() {
+            try {
+                fs.rmdirSync('.in3', { recursive: true })
+                fs.mkdirSync('.in3')
+            } catch (x) { }
         }
     }
 
@@ -222,6 +229,10 @@ class IN3 {
                 throw ex
             }
         }
+    }
+
+    getConfig() {
+        return this.execLocal('in3_getConfig', [])
     }
 
     /**
@@ -482,6 +493,11 @@ IN3.setTransport = function (fn) {
 // change the transport
 IN3.setStorage = function (fn) {
     in3w.in3_cache = fn
+}
+
+// deletes the cache 
+IN3.clearStorage = function () { // same as 'in3_cacheClear'
+    if (in3w.in3_cache.clear) in3w.in3_cache.clear()
 }
 
 IN3.freeAll = function () {

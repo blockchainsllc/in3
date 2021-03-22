@@ -756,6 +756,12 @@ export declare interface Utils<BufferType> {
     keccak(data: BufferType | Data): BufferType
 
     /**
+    * calculates the sha256 hash for the given data.
+    * @param data the data as Uint8Array or hex data.
+    */
+    sha256(data: BufferType | Data): BufferType
+
+    /**
      * returns a Buffer with strong random bytes.
      * Thsi will use the browsers crypto-module or in case of nodejs use the crypto-module there.
      * @param len the number of bytes to generate.
@@ -820,4 +826,10 @@ export declare interface Utils<BufferType> {
      * @param pk the private key.
      */
     private2address(pk: Hex | BufferType): Address
+
+    /**
+     * generates the public address (64 bytes) from the private key
+     * @param pk the raw private key
+     */
+    private2public(pk: Hex | BufferType): BufferType
 }
