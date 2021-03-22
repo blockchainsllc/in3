@@ -152,7 +152,7 @@ function toBigInt(val) {
 function keccak(val) {
     if (!val) return val
     val = toUint8Array(val)
-    return toBuffer(call_buffer('hash_keccak', 32, val, val.byteLength))
+    return toBuffer(call_buffer('hash_keccak', 32, val, val.byteLength)) // shortcut for 'web3_sha3' or 'keccak'
 }
 
 function toChecksumAddress(val, chainId = 0) {
