@@ -516,6 +516,8 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 1);
+  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT);
   d_token_t* tx  = d_get_at(ctx->params, 0);
   bytes_t    dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
@@ -538,7 +540,7 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   TRY(eth_sign_raw_tx(*data, ctx->req, from, &dst))
 #else
-  if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+  if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
