@@ -1,0 +1,36 @@
+btc:
+  descr: |
+    *Important: This feature is still experimental and not considered stable yet. In order to use it, you need to set the experimental-flag (-x on the comandline or `"experimental":true`!*
+
+    For bitcoin incubed follows the specification as defined in [https://bitcoincore.org/en/doc/0.18.0/](https://bitcoincore.org/en/doc/0.18.0/).
+    Internally the in3-server will add proofs as part of the responses. The proof data differs between the methods. You will read which proof data will be provided and how the data can be used to prove the result for each method. 
+
+    Proofs will add a special `in3`-section to the response containing a `proof`- object. This object will contain parts or all of the following properties:
+
+    *  **block**
+    *  **final**
+    *  **txIndex**
+    *  **merkleProof**
+    *  **cbtx**
+    *  **cbtxMerkleProof**
+
+  # config
+  config:
+
+    btc:
+      descr: configure the Bitcoin verification
+      type: 
+        maxDAP:
+          descr: max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets.
+          type: uint
+          example: 10
+          default: 20
+          optional: true
+
+        maxDiff:
+          descr: max increase (in percent) of the difference between targets when accepting new targets.
+          type: uint
+          example: 5
+          default: 10
+          optional: true
+
