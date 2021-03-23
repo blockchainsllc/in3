@@ -552,14 +552,16 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(action);
 
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
+  TRY_RPC("web3_sha3", in3_sha3(ctx))
+  TRY_RPC("keccak", in3_sha3(ctx))
+  TRY_RPC("sha256", in3_sha256(ctx))
+
+  if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
   TRY_RPC("in3_abiEncode", in3_abiEncode(ctx))
   TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
   TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))
   TRY_RPC("in3_ens", in3_ens(ctx))
-  TRY_RPC("web3_sha3", in3_sha3(ctx))
-  TRY_RPC("keccak", in3_sha3(ctx))
-  TRY_RPC("sha256", in3_sha256(ctx))
   TRY_RPC("in3_toWei", in3_toWei(ctx))
   TRY_RPC("in3_fromWei", in3_fromWei(ctx))
   TRY_RPC("in3_config", in3_config(ctx))
