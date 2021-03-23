@@ -59,7 +59,7 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
   // do we have a result? if not it is a valid error-response
   if (!vc->result) return IN3_OK;
 
-  if (strcmp(vc->method, "in3_nodeList") == 0) {
+  if (VERIFY_RPC("in3_nodeList")) {
     d_token_t* params = d_get(vc->request, K_PARAMS);
     return eth_verify_in3_nodelist(data, vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
   }

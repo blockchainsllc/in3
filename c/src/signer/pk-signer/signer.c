@@ -204,8 +204,9 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
     }
 
     case PLGN_ACT_RPC_HANDLE: {
-      TRY_RPC("in3_addRawKey", add_raw_key(action_ctx))
-      TRY_RPC("eth_accounts", eth_accounts(action_ctx))
+      in3_rpc_handle_ctx_t* ctx = action_ctx;
+      TRY_RPC("in3_addRawKey", add_raw_key(ctx))
+      TRY_RPC("eth_accounts", eth_accounts(ctx))
       return IN3_EIGNORE;
     }
 
