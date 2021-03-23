@@ -35,6 +35,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/client/version.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
@@ -155,6 +156,11 @@ static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
   sha256_Update(&c, data.data, data.len);
   sha256_Final(&c, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+}
+static in3_ret_t web3_clientVersion(in3_rpc_handle_ctx_t* ctx) {
+  if (ctx->req->client->chain.chain_id == CHAIN_ID_LOCAL) return IN3_EIGNORE;
+
+  return in3_rpc_handle_with_string(ctx, "\"Incubed/" IN3_VERSION "\"");
 }
 static const char* UNITS[] = {
     "wei", "",
@@ -555,6 +561,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("web3_sha3", in3_sha3(ctx))
   TRY_RPC("keccak", in3_sha3(ctx))
   TRY_RPC("sha256", in3_sha256(ctx))
+  TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
 
   if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
