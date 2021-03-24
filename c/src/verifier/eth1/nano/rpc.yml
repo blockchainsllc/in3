@@ -1,3 +1,69 @@
+types:
+  transactionReceipt:
+    blockNumber:
+      descr: the blockNumber
+      type: uint
+    blockHash:
+      descr: blockhash if ther containing block
+      type: bytes32
+    contractAddress:
+      descr: the deployed contract in case the tx did deploy a new contract
+      type:  address
+    cumulativeGasUsed:
+      descr: gas used for all transaction up to this one in the block
+      type: uint
+    gasUsed:
+      descr: gas used by this transaction.
+      type: uint
+    logs:
+      descr: array of events created during execution of the tx
+      type: 
+        address:
+          descr: the address triggering the event.
+          type: address
+        blockNumber:
+          descr: the blockNumber
+          type: uint
+        blockHash:
+          descr: blockhash if ther containing block
+          type: bytes32
+        data:
+          descr: abi-encoded data of the event (all non indexed fields)
+          type: bytes
+        logIndex:
+          descr: the index of the even within the block.
+          type: uint
+        removed:
+          descr: the reorg-status of the event.
+          type: bool
+        topics:
+          descr: array of 32byte-topics of the indexed fields.
+          type: bytes32[]
+        transactionHash:
+          descr: requested transactionHash
+          type: bytes32
+        transactionIndex:
+          descr: transactionIndex within the containing block.
+          type: uint
+        transactionLogIndex:
+          descr: index of the event within the transaction. 
+          type: uint
+        type:
+          descr: mining-status
+          type: string
+    logsBloom:
+      descr: bloomfilter used to detect events for `eth_getLogs`
+      type: bytes128
+    status:
+      descr: error-status of the tx.  0x1 = success 0x0 = failure
+      type: uint
+    transactionHash:
+      descr: requested transactionHash
+      type: bytes32
+    transactionIndex:
+      descr: transactionIndex within the containing block.
+      type: uint
+
 eth:
   descr: |
     Standard JSON-RPC calls as described in https://eth.wiki/json-rpc/API.
@@ -34,70 +100,7 @@ eth:
         type: bytes32
     returns:
       descr: the TransactionReceipt or `null`  if it does not exist.
-      type:
-        blockNumber:
-          descr: the blockNumber
-          type: uint
-        blockHash:
-          descr: blockhash if ther containing block
-          type: bytes32
-        contractAddress:
-          descr: the deployed contract in case the tx did deploy a new contract
-          type:  address
-        cumulativeGasUsed:
-          descr: gas used for all transaction up to this one in the block
-          type: uint
-        gasUsed:
-          descr: gas used by this transaction.
-          type: uint
-        logs:
-          descr: array of events created during execution of the tx
-          type: 
-            address:
-              descr: the address triggering the event.
-              type: address
-            blockNumber:
-              descr: the blockNumber
-              type: uint
-            blockHash:
-              descr: blockhash if ther containing block
-              type: bytes32
-            data:
-              descr: abi-encoded data of the event (all non indexed fields)
-              type: bytes
-            logIndex:
-              descr: the index of the even within the block.
-              type: uint
-            removed:
-              descr: the reorg-status of the event.
-              type: bool
-            topics:
-              descr: array of 32byte-topics of the indexed fields.
-              type: bytes32[]
-            transactionHash:
-              descr: requested transactionHash
-              type: bytes32
-            transactionIndex:
-              descr: transactionIndex within the containing block.
-              type: uint
-            transactionLogIndex:
-              descr: index of the event within the transaction. 
-              type: uint
-            type:
-              descr: mining-status
-              type: string
-        logsBloom:
-          descr: bloomfilter used to detect events for `eth_getLogs`
-          type: bytes128
-        status:
-          descr: error-status of the tx.  0x1 = success 0x0 = failure
-          type: uint
-        transactionHash:
-          descr: requested transactionHash
-          type: bytes32
-        transactionIndex:
-          descr: transactionIndex within the containing block.
-          type: uint
+      type: transactionReceipt
     
     example:
       request:

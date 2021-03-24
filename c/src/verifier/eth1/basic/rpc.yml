@@ -1,6 +1,108 @@
-eth:
-  
+types:
+  blockdata:
+    number:
+      descr: the block number. `null` when its pending block.
+      type: uint
+    hash:
+      descr: hash of the block. `null` when its pending block.
+      type: bytes32
+    parentHash:
+      descr: hash of the parent block.
+      type: bytes32
+    nonce:
+      descr: hash of the generated proof-of-work. `null` when its pending block.
+      type: uint64
+    sha3Uncles:
+      descr: SHA3 of the uncles Merkle root in the block.
+      type: bytes32
+    logsBloom:
+      descr: the bloom filter for the logs of the block. `null` when its pending block.
+      type: bytes256
+    transactionsRoot:
+      descr: the root of the transaction trie of the block.
+      type: bytes32
+    stateRoot:
+      descr: the root of the final state trie of the block.
+      type: bytes32
+    receiptsRoot:
+      descr: the root of the receipts trie of the block.
+      type: bytes32
+    miner:
+      descr: the address of the beneficiary to whom the mining rewards were given.
+      type: address
+    difficulty:
+      descr: integer of the difficulty for this block.
+      type: uint
+    totalDifficulty:
+      descr: integer of the total difficulty of the chain until this block.
+      type: uint
+    extraData:
+      descr: the "extra data" field of this block.
+      type: bytes
+    size:
+      descr: integer the size of this block in bytes.
+      type: uint
+    gasLimit:
+      descr: the maximum gas allowed in this block.
+      type: uint
+    gasUsed:
+      descr: the total used gas by all transactions in this block.
+      type: uint
+    timestamp:
+      descr: the unix timestamp for when the block was collated.
+      type: uint
+    transactions:
+      descr: Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter.
+      type: transaction[]
+    uncles:
+      descr: Array of uncle hashes.
+      type: bytes32[]
 
+  transactiondata:
+    to:
+      descr: receipient of the transaction.
+      type: address
+    from:
+      descr: sender or signer of the transaction
+      type: address
+    value:
+      descr: value in wei to send
+      type: uint
+    gas:
+      descr: the gas to be send along
+      type: uint
+    gasPrice:
+      descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+      type: uint
+    nonce:
+      descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+      type: uint
+    blockHash:
+      descr: blockHash of the block holding this transaction or `null` if still pending.
+      type: bytes32
+    blockNumber:
+      descr: blockNumber of the block holding this transaction or `null` if still pending.
+      type: uint
+    hash:
+      descr: transactionHash
+      type: bytes32
+    input:
+      descr: data of the transaaction
+      type: bytes
+    transactionIndex:
+      descr: index of the transaaction in the block
+      type: uint
+    v:
+      descr: recovery-byte of the signature
+      type: byte
+    r:
+      descr: x-value of the EC-Point of the signature
+      type: bytes32
+    s:
+      descr: y-value of the EC-Point of the signature
+      type: bytes32
+
+eth:
 
   eth_blockNumber:
     descr: |
@@ -29,64 +131,8 @@ eth:
         type: bool
     result:
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-      type: 
-        number:
-          descr: the block number. `null` when its pending block.
-          type: uint
-        hash:
-          descr: hash of the block. `null` when its pending block.
-          type: bytes32
-        parentHash:
-          descr: hash of the parent block.
-          type: bytes32
-        nonce:
-          descr: hash of the generated proof-of-work. `null` when its pending block.
-          type: uint64
-        sha3Uncles:
-          descr: SHA3 of the uncles Merkle root in the block.
-          type: bytes32
-        logsBloom:
-          descr: the bloom filter for the logs of the block. `null` when its pending block.
-          type: bytes256
-        transactionsRoot:
-          descr: the root of the transaction trie of the block.
-          type: bytes32
-        stateRoot:
-          descr: the root of the final state trie of the block.
-          type: bytes32
-        receiptsRoot:
-          descr: the root of the receipts trie of the block.
-          type: bytes32
-        miner:
-          descr: the address of the beneficiary to whom the mining rewards were given.
-          type: address
-        difficulty:
-          descr: integer of the difficulty for this block.
-          type: uint
-        totalDifficulty:
-          descr: integer of the total difficulty of the chain until this block.
-          type: uint
-        extraData:
-          descr: the "extra data" field of this block.
-          type: bytes
-        size:
-          descr: integer the size of this block in bytes.
-          type: uint
-        gasLimit:
-          descr: the maximum gas allowed in this block.
-          type: uint
-        gasUsed:
-          descr: the total used gas by all transactions in this block.
-          type: uint
-        timestamp:
-          descr: the unix timestamp for when the block was collated.
-          type: uint
-        transactions:
-          descr: Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter.
-          type: transaction[]
-        uncles:
-          descr: Array of uncle hashes.
-          type: bytes32[]
+      type: blockdata
+
 
     example:
       request:
@@ -202,7 +248,8 @@ eth:
         type: bool
     returns:
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-      alias: eth_getBlockByNumber
+      type: blockdata
+
     proof:
       alias: eth_getBlockByNumber
     example:
@@ -317,7 +364,7 @@ eth:
         type: uint
     returns:
       descr: the transactiondata or `null` if it does not exist
-      alias: eth_getTransactionByHash
+      type: transactiondata
     proof:
       alias: eth_getTransactionByHash
 
@@ -369,7 +416,7 @@ eth:
         type: uint
     returns:
       descr: the transactiondata or `null` if it does not exist
-      alias: eth_getTransactionByHash
+      type: transactiondata
     proof:
       alias: eth_getTransactionByHash
 
@@ -418,50 +465,8 @@ eth:
         type: bytes32
     returns:
       descr: the transactiondata or `null` if it does not exist
-      type:
-        to:
-          descr: receipient of the transaction.
-          type: address
-        from:
-          descr: sender or signer of the transaction
-          type: address
-        value:
-          descr: value in wei to send
-          type: uint
-        gas:
-          descr: the gas to be send along
-          type: uint
-        gasPrice:
-          descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-          type: uint
-        nonce:
-          descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-          type: uint
-        blockHash:
-          descr: blockHash of the block holding this transaction or `null` if still pending.
-          type: bytes32
-        blockNumber:
-          descr: blockNumber of the block holding this transaction or `null` if still pending.
-          type: uint
-        hash:
-          descr: transactionHash
-          type: bytes32
-        input:
-          descr: data of the transaaction
-          type: bytes
-        transactionIndex:
-          descr: index of the transaaction in the block
-          type: uint
-        v:
-          descr: recovery-byte of the signature
-          type: byte
-        r:
-          descr: x-value of the EC-Point of the signature
-          type: bytes32
-        s:
-          descr: y-value of the EC-Point of the signature
-          type: bytes32
-          
+      type: transactiondata
+ 
 
     example:
       request:
@@ -600,8 +605,6 @@ eth:
 
         In order to create the proof, we group all events into their blocks and transactions, so we only need to provide the blockheader once per block. 
         The merkle-proofs for receipts are created as described in the [Receipt Proof](#eth-gettransactionreceipt).
-
-
 
 
         If the request requires proof (`verification`: `proof`) the node will provide an Transaction Proof as part of the in3-section of the response. 
@@ -990,3 +993,37 @@ eth:
                 - '0xf851a08a14eff77...08080808080808080'
                 - '0xe19f3decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56319'
 
+  eth_sendTransaction:
+    descr: signs and sends a Transaction
+    params:
+      tx:
+        descr: the transactiondata to send
+        type: transaction
+    returns:
+      descr: the transactionHash
+    proof:
+      descr: No proof from the nodes are required, because the client can generate the TransactionHash itself. This means to ensure the success of a transaction the receipt needs to be verified.
+
+  eth_sendTransactionAndWait:
+    descr: signs and sends a Transaction, but then waits until the transaction receipt can be verified. Depending on the finality of the nodes, this may take a while, since only final blocks will be signed by the nodes.
+    params:
+      tx:
+        descr: the transactiondata to send
+        type: transaction
+    returns:
+      descr: the transactionReceipt
+      type: transactionReceipt
+
+        
+  eth_sendRawTransaction:
+    descr: sends or broadcasts a prviously signed raw transaction. See [eth_sendRawTransaction](https://eth.wiki/json-rpc/API#eth_sendRawTransaction)
+    params:
+      tx:
+        descr: the raw signed transactiondata to send
+        type: bytes
+    returns:
+      descr: the transactionhash
+      type: bytes32
+
+        
+    

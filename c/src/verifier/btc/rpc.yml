@@ -34,3 +34,97 @@ btc:
           default: 10
           optional: true
 
+
+  getblockheader:
+    descr: Returns data of block header for given block hash. The returned level of details depends on the argument verbosity.
+    params:
+      hash:
+        descr: The block hash
+        type: bytes32
+      verbosity:
+        descr: 0 or false for the hex-encoded data, 1 or true for a json object
+        type: uint
+    in3Params:
+      verification:
+        descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
+        type: string
+      preBIP34:
+        descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
+        type: bool
+    returns:
+      descr: |
+        the blockheader. 
+        - verbose `0` or `false`: a hex string with 80 bytes representing the blockheader
+        - verbose `1` or `true`: an object representing the blockheader.
+      type:
+        hash:
+          descr: the block hash (same as provided)
+          type: bytes32
+        confirmations:
+          descr: The number of confirmations, or -1 if the block is not on the main chain
+          type: int
+        height:
+          descr: The block height or index
+          type: uint
+        version:
+          descr: The block version
+          type: uint
+        versionHex:
+          descr: The block version formatted in hexadecimal
+          type: hex
+        merkleroot:
+          descr:  The merkle root ( 32 bytes )
+          type: bytes32
+        time:
+          descr: The block time in seconds since epoch (Jan 1 1970 GMT)
+          type: uint
+        mediantime:
+          descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
+          type: uint
+        nonce:
+          descr: The nonce
+          type: uint
+        bits:
+          descr: The bits ( 4 bytes as hex) representing the target
+          type: bytes4
+        difficulty:
+          descr: The difficulty
+          type: uint
+        chainwork:
+          descr: Expected number of hashes required to produce the current chain (in hex)
+          type: uint
+        nTx:
+          descr: The number of transactions in the block.
+          type: uint
+        previousblockhash:
+          descr: The hash of the previous block
+          type: bytes32
+        nextblockhash:
+          descr: The hash of the next block
+          type: bytes32
+
+    example:
+      request:
+        - "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220"
+        - true
+      response:
+        hash: 000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220
+        confirmations: 8268
+        height: 624958
+        version: 536928256
+        versionHex: 2000e000
+        merkleroot: d786a334ea8c65f39272d5b9be505ac3170f3904842bd52525538a9377b359cb
+        time: 1586333924
+        mediantime: 1586332639
+        nonce: 1985217615
+        bits: 17143b41
+        difficulty: 13912524048945.91
+        chainwork: 00000000000000000000000000000000000000000e4c88b66c5ee78deff0d494
+        nTx: 33
+        previousblockhash: 00000000000000000013cba040837778744ce66961cfcf2e7c34bb3d194c7f49
+        nextblockhash: 0000000000000000000c799dc0e36302db7fbb471711f140dc308508ef19e343
+      in3:
+        proof:
+          final: 0x00e0ff2720723034053c305058beb92ed010...276470
+          cbtx: 0x0100000000010100000000000000000000000...39da2fc
+          cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a64667b...52e688

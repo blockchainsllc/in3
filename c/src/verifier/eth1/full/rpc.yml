@@ -5,35 +5,7 @@ eth:
     params:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
-        type:
-          to:
-            descr: address of the contract
-            type: address
-          from:
-            descr: sender of the address 
-            type: address
-            optional: true
-          value:
-            descr: value in wei to send
-            type: uint
-            optional: true
-          gas:
-            descr: the gas to be send along
-            type: uint
-            optional: true
-            default: 21000
-          gasPrice:
-            descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-            type: uint
-            optional: true
-          nonce:
-            descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-            type: uint
-            optional: true
-          data:
-            descr: the data-section of the transaction, which includes the functionhash and the abi-encoded arguments
-            type: bytes
-            optional: true
+        type: transaction
       block:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint | string

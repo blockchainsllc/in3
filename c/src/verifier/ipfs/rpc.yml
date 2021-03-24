@@ -1,0 +1,45 @@
+ipfs:
+  descr: |
+    A Node supporting IPFS must support these 2 RPC-Methods for uploading and downloading IPFS-Content. The node itself will run a ipfs-client to handle them.
+
+    Fetching ipfs-content can be easily verified by creating the ipfs-hash based on the received data and comparing it to the requested ipfs-hash. Since there is no chance of manipulating the data, there is also no need to put a deposit or convict a node. That's why the registry-contract allows a zero-deposit fot ipfs-nodes.
+
+  ipfs_get:
+    descr: Fetches the data for a requested ipfs-hash. If the node is not able to resolve the hash or find the data a error should be reported.
+    params:
+      ipfshash:
+        descr:  the ipfs multi hash
+        type: ipfshash
+      encoding:
+        descr: the encoding used for the response. ( `hex` , `base64` or `utf8`)
+        type: string
+    returns:
+      descr: the content matching the requested hash encoded in the defined encoding.
+    proof:
+      descr: No proof or verification needed on the server side. All the verification are done in the client by creating the ipfs multihash and comparing to the requested hash.
+    example:
+      request:
+        - QmSepGsypERjq71BSm4Cjq7j8tyAUnCw6ZDTeNdE8RUssD
+        - utf8
+      response: "I love Incubed"
+
+  ipfs_put:
+    descr: |
+      Stores ipfs-content to the ipfs network.
+      Important! As a client there is no garuantee that a node made this content available. ( just like `eth_sendRawTransaction` will only broadcast it). 
+      Even if the node stores the content there is no gurantee it will do it forever. 
+    params:
+      data:
+        descr:  the content encoded with the specified encoding.
+        type: bytes | string
+      encoding:
+        descr: the encoding used for the request. ( `hex` , `base64` or `utf8`)
+        type: string
+    returns:
+      descr:  the ipfs multi hash
+    example:
+      request:
+        - I love Incubed
+        - utf8
+      response: QmSepGsypERjq71BSm4Cjq7j8tyAUnCw6ZDTeNdE8RUssD
+
