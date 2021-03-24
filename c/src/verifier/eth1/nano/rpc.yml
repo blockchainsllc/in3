@@ -26,3 +26,191 @@ eth:
     *  **txIndex** `integer` - The transactionIndex within the block (for transaactions and receipts).   
     *  **signatures** `Signature[]` - Requested signatures.   
 
+  eth_getTransactionReceipt:
+    descr: The Receipt of a Transaction. For Details, see [eth_getTransactionReceipt](https://eth.wiki/json-rpc/API#eth_gettransactionreceipt).
+    params:
+      txHash:
+        descr: the transactionHash
+        type: bytes32
+    returns:
+      descr: the TransactionReceipt or `null`  if it does not exist.
+      type:
+        blockNumber:
+          descr: the blockNumber
+          type: uint
+        blockHash:
+          descr: blockhash if ther containing block
+          type: bytes32
+        contractAddress:
+          descr: the deployed contract in case the tx did deploy a new contract
+          type:  address
+        cumulativeGasUsed:
+          descr: gas used for all transaction up to this one in the block
+          type: uint
+        gasUsed:
+          descr: gas used by this transaction.
+          type: uint
+        logs:
+          descr: array of events created during execution of the tx
+          type: 
+            address:
+              descr: the address triggering the event.
+              type: address
+            blockNumber:
+              descr: the blockNumber
+              type: uint
+            blockHash:
+              descr: blockhash if ther containing block
+              type: bytes32
+            data:
+              descr: abi-encoded data of the event (all non indexed fields)
+              type: bytes
+            logIndex:
+              descr: the index of the even within the block.
+              type: uint
+            removed:
+              descr: the reorg-status of the event.
+              type: bool
+            topics:
+              descr: array of 32byte-topics of the indexed fields.
+              type: bytes32[]
+            transactionHash:
+              descr: requested transactionHash
+              type: bytes32
+            transactionIndex:
+              descr: transactionIndex within the containing block.
+              type: uint
+            transactionLogIndex:
+              descr: index of the event within the transaction. 
+              type: uint
+            type:
+              descr: mining-status
+              type: string
+        logsBloom:
+          descr: bloomfilter used to detect events for `eth_getLogs`
+          type: bytes128
+        status:
+          descr: error-status of the tx.  0x1 = success 0x0 = failure
+          type: uint
+        transactionHash:
+          descr: requested transactionHash
+          type: bytes32
+        transactionIndex:
+          descr: transactionIndex within the containing block.
+          type: uint
+    
+    example:
+      request:
+        - '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
+      response:
+        blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
+        blockNumber: '0x8c1e39'
+        contractAddress:
+        cumulativeGasUsed: '0x2466d'
+        gasUsed: '0x2466d'
+        logs:
+        - address: '0x85ec283a3ed4b66df4da23656d4bf8a507383bca'
+          blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
+          blockNumber: '0x8c1e39'
+          data: 0x00000000000...
+          logIndex: '0x0'
+          removed: false
+          topics:
+          - '0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8'
+          - '0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6'
+          - '0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000'
+          transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
+          transactionIndex: '0x0'
+          transactionLogIndex: '0x0'
+          type: mined
+        logsBloom: 0x00000000000000000000200000...
+        root:
+        status: '0x1'
+        transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
+        transactionIndex: '0x0'
+      in3:
+        proof:
+          type: receiptProof
+          block: 0xf9023fa019e9d929ab...
+          txProof:
+          - 0xf851a083c8446ab932130...
+          merkleProof:
+          - 0xf851a0b0f5b7429a54b10...
+          txIndex: 0
+          signatures:
+          - "..."
+          merkleProofPrev:
+          - 0xf851a0b0f5b7429a54b10...
+
+    proof:
+      descr: |
+        ```eval_rst
+        .. graphviz::
+
+            digraph minimal_nonplanar_graphs {
+            
+            fontname="Helvetica"
+              subgraph all {
+
+                node [ fontsize = "12", style="", color=black fontname="Helvetica", shape=record ]
+
+                subgraph blockheader {
+                    label="blocheader" style="" color=black
+
+                    bheader[ label="parentHash|...|transactionRoot|<tr>receiptRoot|stateRoot"]
+                    troot:a -> bheader:tr 
+                }
+
+                subgraph cluster_client_registry {
+                    label="Receipt Trie"  color=lightblue  style=filled
+
+                    troot[label="|<a>0x123456|||||"]  
+                    ta[label="|0x123456||<a>0xabcdef|||"]  
+                    tb[label="|0x98765||<a>0xfcab34|||"]  
+                    tval[label="transaction receipt"]  
+
+                    ta:a -> troot:a
+                    tb:a -> troot:a 
+                    tval:a -> ta:a
+                }
+
+
+              }
+            }
+
+        ```
+
+        The proof works similiar to the transaction proof.
+
+        In order to create the proof we need to serialize all transaction receipts 
+
+        ```js
+        transactionReceipt = rlp.encode([
+          uint( r.status || r.root ),
+          uint( r.cumulativeGasUsed ),
+          bytes256( r.logsBloom ),
+          r.logs.map(l => [
+            address( l.address ),
+            l.topics.map( bytes32 ),
+            bytes( l.data )
+          ])
+        ].slice(r.status === null && r.root === null ? 1 : 0))
+        ``` 
+
+        and store them in a merkle tree with `rlp.encode(transactionIndex)` as key or path, since the blockheader only contains the `receiptRoot`, which is the root-hash of the resulting merkle tree. A merkle proof with the transactionIndex of the target transaction receipt will then be created from this tree.
+
+        Since the merkle proof is only proving the value for the given transactionIndex, we also need to prove that the transactionIndex matches the transactionHash requested. This is done by adding another MerkleProof for the transaction itself as described in the [Transaction Proof](#eth-gettransactionbyhash).
+
+
+        If the request requires proof (`verification`: `proof`) the node will provide an Transaction Proof as part of the in3-section of the response. 
+        This proof section contains the following properties:
+
+        - `type` : constant : `receiptProof`
+        - `block` : the serialized blockheader of the requested transaction.
+        - `signatures` : a array of signatures from the signers (if requested) of the above block.
+        - `txIndex` : The TransactionIndex as used in the MerkleProof
+        - `txProof` : the serialized nodes of the Transaction trie starting with the root node. This is needed in order to proof that the required transactionHash matches the receipt.
+        - `merkleProof`: the serialized nodes of the Transaction Receipt trie starting with the root node.
+        - `merkleProofPrev`: the serialized nodes of the previous Transaction Receipt (if txInxdex>0) trie starting with the root node. This is only needed if full-verification is requested. With a verified previous Receipt we can proof the `usedGas`.
+        - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
+

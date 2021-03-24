@@ -214,6 +214,10 @@ in3:
             descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
             type: uint
             optional: true
+          data:
+            descr: the data-section of the transaction
+            type: bytes
+            optional: true
           
     returns:
       descr: the unsigned raw transaction as hex.
@@ -332,7 +336,81 @@ in3:
       request: []
       response: true
 
+eth:
+
   web3_clientVersion:
     descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
     returns:
-      descr: in3 + version
+      descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
+
+  keccak:
+    alias: web3_sha3
+
+  web3_sha3:
+    descr: |
+      Returns Keccak-256 (not the standardized SHA3-256) of the given data.
+
+      See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    returns:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
+
+  sha256:
+    descr: |
+      Returns sha-256 of the given data.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    returns:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
+
+  net_version:
+    descr: the Network Version (currently 1)
+    returns:
+       descr: the Version number
+  
+  
+
+  eth_sign:
+    descr: |
+      The sign method calculates an Ethereum specific signature with: 
+      
+      ```js
+      sign(keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))).
+      ```
+
+      By adding a prefix to the message makes the calculated signature recognisable as an Ethereum specific signature. This prevents misuse where a malicious DApp can sign arbitrary data (e.g. transaction) and use the signature to impersonate the victim.
+
+      For the address to sign a signer must be registered.
+    params:
+      account:
+        descr: the account to sign with
+        type: address
+      message:
+        descr: the message to sign
+        type: bytes
+    returns:
+      descr: the signature (65 bytes) for the given message.
+    example:
+      request:
+        - '0x9b2055d370f73ec7d8a03e965129118dc8f5bf83'
+        - '0xdeadbeaf'
+      response: '0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b'
+
+

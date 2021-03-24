@@ -432,10 +432,11 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t        data     = d_to_bytes(d_get_at(ctx->params, 0));
-  const bytes_t* pk       = d_get_bytes_at(ctx->params, 1);
+  const is_eth_sign       = strcmp(ctx->method, "eth_sign") == 0;
+  bytes_t        data     = d_to_bytes(d_get_at(ctx->params, is_eth_sign ? 1 : 0));
+  const bytes_t* pk       = d_get_bytes_at(ctx->params, is_eth_sign ? 0 : 1);
   char*          sig_type = d_get_string_at(ctx->params, 2);
-  if (!sig_type) sig_type = "raw";
+  if (!sig_type) sig_type = is_eth_sign ? "eth_sign" : "raw";
 
   //  if (!pk) return req_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
   if (!data.data) return req_set_error(ctx->req, "Missing message", IN3_EINVAL);
@@ -477,28 +478,35 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
     sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
-  sb_add_char(sb, '{');
-  sb_add_bytes(sb, "\"message\":", &data, 1, false);
-  sb_add_char(sb, ',');
-  if (strcmp(sig_type, "raw") == 0) {
-    bytes32_t hash_val;
-    bytes_t   hash_bytes = bytes(hash_val, 32);
-    keccak(data, hash_val);
-    sb_add_bytes(sb, "\"messageHash\":", &hash_bytes, 1, false);
+  if (is_eth_sign) {
+    sb_add_rawbytes(sb, "\"0x", sig_bytes, 0);
+    sb_add_char(sb, '"');
   }
-  else
-    sb_add_bytes(sb, "\"messageHash\":", &data, 1, false);
-  sb_add_char(sb, ',');
-  sb_add_bytes(sb, "\"signature\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature.data, 32);
-  sb_add_char(sb, ',');
-  sb_add_bytes(sb, "\"r\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature.data + 32, 32);
-  sb_add_char(sb, ',');
-  sb_add_bytes(sb, "\"s\":", &sig_bytes, 1, false);
-  char v[15];
-  sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature.data[64]);
-  sb_add_chars(sb, v);
+  else {
+    sb_add_char(sb, '{');
+    sb_add_bytes(sb, "\"message\":", &data, 1, false);
+    sb_add_char(sb, ',');
+    if (strcmp(sig_type, "raw") == 0) {
+      bytes32_t hash_val;
+      bytes_t   hash_bytes = bytes(hash_val, 32);
+      keccak(data, hash_val);
+      sb_add_bytes(sb, "\"messageHash\":", &hash_bytes, 1, false);
+    }
+    else
+      sb_add_bytes(sb, "\"messageHash\":", &data, 1, false);
+    sb_add_char(sb, ',');
+    sb_add_bytes(sb, "\"signature\":", &sig_bytes, 1, false);
+    sig_bytes = bytes(sc.signature.data, 32);
+    sb_add_char(sb, ',');
+    sb_add_bytes(sb, "\"r\":", &sig_bytes, 1, false);
+    sig_bytes = bytes(sc.signature.data + 32, 32);
+    sb_add_char(sb, ',');
+    sb_add_bytes(sb, "\"s\":", &sig_bytes, 1, false);
+    char v[15];
+    sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature.data[64]);
+    sb_add_chars(sb, v);
+  }
+
   _free(sc.signature.data);
   return in3_rpc_handle_finish(ctx);
 }
@@ -564,6 +572,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("keccak", in3_sha3(ctx))
   TRY_RPC("sha256", in3_sha256(ctx))
   TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
+  TRY_RPC("eth_sign", in3_sign_data(ctx))
 
   if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
