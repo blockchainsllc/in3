@@ -3,12 +3,18 @@ const fs = require('fs')
 
 const docs = {}
 let config = {}
+let types = {}
 const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
 const link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
+const getType = val => typeof val === 'object' ? val : (types['' + val] || val)
 function scan(dir) {
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         if (f.name == 'rpc.yml') {
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
+            if (ob.types) {
+                types = { ...types, ...ob.types }
+                delete ob.types
+            }
             for (const k of Object.keys(ob)) {
                 if (ob[k].config) config = { ...config, ...ob[k].config }
                 delete ob[k].config
@@ -22,14 +28,15 @@ function print_object(def, pad) {
     for (const prop of Object.keys(def)) {
         let s = pad + '* **' + prop + '**'
         const p = def[prop]
+        const pt = getType(p.type)
         if (p.type) s += ' : `' + (typeof p.type === 'string' ? p.type : 'object') + '`'
         if (p.optional) s += ' *(optional)*'
         if (p.descr) s += ' - ' + p.descr
         if (p.default) s += ' (default: `' + JSON.stringify(p.default) + '`)'
         console.log(s)
-        if (typeof p.type === 'object') {
+        if (typeof pt === 'object') {
             console.log('The ' + prop + ' object supports the following properties :\n' + pad)
-            print_object(p.type, pad + '    ')
+            print_object(pt, pad + '    ')
         }
 
         if (p.example) console.log('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
@@ -57,14 +64,15 @@ for (const s of Object.keys(docs).sort()) {
             let i = 1
             for (const par of Object.keys(def.params)) {
                 const p = def.params[par]
+                const pt = getType(p.type)
                 let s = (i++) + '. **' + par + '**'
                 if (p.type) s += ' : `' + (typeof p.type === 'string' ? p.type : 'object') + '`'
                 if (p.descr) s += ' - ' + p.descr
                 if (p.alias) s += ' The data structure of ' + par + ' is the same  as ' + link(def.returns.alias) + '. See Details there.'
                 console.log(s)
-                if (typeof p.type === 'object') {
+                if (typeof pt === 'object') {
                     console.log('\nThe ' + par + ' params support the following properties :\n')
-                    print_object(p.type, '')
+                    print_object(pt, '')
                 }
 
             }
@@ -76,9 +84,10 @@ for (const s of Object.keys(docs).sort()) {
         if (def.returns) {
             if (def.returns.type) {
                 console.log('*Returns:* ' + (typeof def.returns.type === 'string' ? def.returns.type : 'object') + '\n\n' + def.returns.descr + '\n')
-                if (typeof def.returns.type === 'object') {
+                const pt = getType(def.returns.type)
+                if (typeof pt === 'object') {
                     console.log('\nThe return value contains the following properties :\n')
-                    print_object(def.returns.type, '')
+                    print_object(pt, '')
                 }
             }
             else if (def.returns.alias)
@@ -89,12 +98,13 @@ for (const s of Object.keys(docs).sort()) {
 
         if (def.proof) {
             console.log('*Proof:*\n\n' + (def.proof.descr || '') + '\n')
+            const pt = getType(def.proof.type)
             if (def.proof.alias)
                 console.log('The proof will be calculated as described in ' + link(def.proof.alias) + '. See Details there.\n\n')
 
-            if (def.proof.type) {
+            if (pt) {
                 console.log("This proof section contains the following properties:\n\n")
-                print_object(def.proof.type, '')
+                print_object(pt, '')
                 console.log("\n\n")
             }
         }

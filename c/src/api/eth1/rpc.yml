@@ -1,3 +1,35 @@
+types:
+  transaction:
+    to:
+      descr: receipient of the transaction.
+      type: address
+    from:
+      descr: sender of the address (if not sepcified, the first signer will be the sender)
+      type: address
+    value:
+      descr: value in wei to send
+      type: uint
+      optional: true
+    gas:
+      descr: the gas to be send along
+      type: uint
+      optional: true
+      default: 21000
+    gasPrice:
+      descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+      type: uint
+      optional: true
+    nonce:
+      descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+      type: uint
+      optional: true
+    data:
+      descr: the data-section of the transaction
+      type: bytes
+      optional: true
+
+
+
 in3:
 
   in3_abiEncode:
@@ -190,34 +222,7 @@ in3:
     params:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
-        type:
-          to:
-            descr: receipient of the transaction.
-            type: address
-          from:
-            descr: sender of the address (if not sepcified, the first signer will be the sender)
-            type: address
-          value:
-            descr: value in wei to send
-            type: uint
-            optional: true
-          gas:
-            descr: the gas to be send along
-            type: uint
-            optional: true
-            default: 21000
-          gasPrice:
-            descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-            type: uint
-            optional: true
-          nonce:
-            descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-            type: uint
-            optional: true
-          data:
-            descr: the data-section of the transaction
-            type: bytes
-            optional: true
+        type: transaction
           
     returns:
       descr: the unsigned raw transaction as hex.
@@ -411,6 +416,26 @@ eth:
       request:
         - '0x9b2055d370f73ec7d8a03e965129118dc8f5bf83'
         - '0xdeadbeaf'
+      response: '0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b'
+
+
+
+  eth_signTransaction:
+    descr: Signs a transaction that can be submitted to the network at a later time using with eth_sendRawTransaction.
+    params:
+      tx:
+        descr: transaction to sign
+        type: transaction
+    returns:
+      descr: the raw signed transaction 
+    example:
+      request:
+        - data: "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"
+          from: "0xb60e8dd61c5d32be8058bb8eb970870f07233155"
+          gas: "0x76c0"
+          gasPrice: "0x9184e72a000"
+          to: "0xd46e8dd67c5d32be8058bb8eb970870f07244567"
+          value: "0x9184e72a"
       response: '0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b'
 
 
