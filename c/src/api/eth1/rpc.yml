@@ -332,3 +332,7 @@ in3:
       request: []
       response: true
 
+  web3_clientVersion:
+    descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
+    returns:
+      descr: in3 + version

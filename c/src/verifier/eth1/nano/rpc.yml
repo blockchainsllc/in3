@@ -1,0 +1,28 @@
+eth:
+  descr: |
+    Standard JSON-RPC calls as described in https://eth.wiki/json-rpc/API.
+
+    Whenever a request is made for a response with `verification`: `proof`, the node must provide the proof needed to validate the response result. The proof itself depends on the chain.
+
+    For ethereum, all proofs are based on the correct block hash. That's why verification differentiates between [Verifying the blockhash](poa.html) (which depends on the user consensus) the actual result data.
+
+    There is another reason why the BlockHash is so important. This is the only value you are able to access from within a SmartContract, because the evm supports a OpCode (`BLOCKHASH`), which allows you to read the last 256 blockhashes, which gives us the chance to verify even the blockhash onchain.
+
+    Depending on the method, different proofs are needed, which are described in this document.
+
+    Proofs will add a special in3-section to the response containing a `proof`- object. Each `in3`-section of the response containing proofs has a property with a proof-object with the following properties:
+
+    *  **type** `string` (required)  - The type of the proof.   
+    Must be one of the these values : `'transactionProof`', `'receiptProof`', `'blockProof`', `'accountProof`', `'callProof`', `'logProof`'
+    *  **block** `string` - The serialized blockheader as hex, required in most proofs. 
+    *  **finalityBlocks** `array` - The serialized following blockheaders as hex, required in case of finality asked (only relevant for PoA-chains). The server must deliver enough blockheaders to cover more then 50% of the validators. In order to verify them, they must be linkable (with the parentHash).    
+    *  **transactions** `array` - The list of raw transactions of the block if needed to create a merkle trie for the transactions. 
+    *  **uncles** `array` - The list of uncle-headers of the block. This will only be set if full verification is required in order to create a merkle tree for the uncles and so prove the uncle_hash.   
+    *  **merkleProof** `string[]` - The serialized merkle-nodes beginning with the root-node (depending on the content to prove).
+    *  **merkleProofPrev** `string[]` - The serialized merkle-nodes beginning with the root-node of the previous entry (only for full proof of receipts).   
+    *  **txProof** `string[]` - The serialized merkle-nodes beginning with the root-node in order to proof the transactionIndex (only needed for transaction receipts).
+    *  **logProof** [LogProof](#logproof) - The Log Proof in case of a `eth_getLogs`-request.   
+    *  **accounts** `object` - A map of addresses and their AccountProof.   
+    *  **txIndex** `integer` - The transactionIndex within the block (for transaactions and receipts).   
+    *  **signatures** `Signature[]` - Requested signatures.   
+

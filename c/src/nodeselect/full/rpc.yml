@@ -379,4 +379,125 @@ in3:
           v: 28
           msgHash: "0x40c23a32947f40a2560fcb633ab7fa4f3a96e33653096b17ec613fbf41f946ef"
 
+  in3_whitelist:
+    descr: Returns whitelisted in3-nodes addresses. The whitelist addressed are accquired from whitelist contract that user can specify in request params.
+    params: 
+      address:
+        descr: address of whitelist contract
+        type: address
+    returns:
+      descr: the whitelisted addresses
+      type:
+        nodes:
+          descr: array of whitelisted nodes addresses.
+          type: address
+        lastWhiteList: 
+          descr: the blockNumber of the last change of the in3 white list event.
+          type: uint
+        contract:
+          descr: whitelist contract address.
+          type: address
+        lastBlockNumber:
+          descr: the blockNumber of the last change of the list (usually the last event). 
+          type: uint
+        totalServer:
+          descr: the total numbers of whitelist nodes.
+          type: uint
+         
+    proof:
+      descr: |
+        if proof is requested, the proof will have the type `accountProof`. In the proof-section only the storage-keys of the addresses and the length (`0x0`)  will be included.
+
+        The blockNumber of the proof must be the latest final block (`latest`- minBlockHeight) and always greater or equal to the `lastBlockNumber` 
+
+      type:
+        type:
+          descr: the proofType
+          type: "accountProof"
+        block: 
+          descr: the serialized blockheader of the latest final block
+          type: bytes
+        signatures:
+          descr:  a array of signatures from the signers (if requested) of the above block.
+          type: bytes[]
+        accounts:
+          descr: a Object with the addresses of the db-contract as key and Proof as value. The Data Structure of the Proof is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof), but it must contain the above described keys.
+          type: 
+            "<accountAdr>":
+              descr: The Account of the data-contract.
+              type:
+                address:
+                  descr: the address of the account
+                  type: address
+                balance: 
+                  descr: current Balance
+                  type: uint
+                codeHash:
+                  descr: hash of the contract code
+                  type: bytes32
+                nonce:
+                  descr: nonce of the account
+                  type: uint
+                storageHash:
+                  descr: MerkleRoot of the Storage Trie
+                  type: bytes32
+                accountProof:
+                  descr: MerkleProof of this account-node
+                  type: bytes[]
+                storageProof:
+                  descr: Array of Proofs for all required storage values
+                  type:
+                    key:
+                      descr: the storage key (or hash)
+                      type: uint
+                    value:
+                      descr: the storage value
+                      type: bytes32
+                    proof:
+                      descr: the merkleProof of the value down to the storageHash as MerkleRoot
+                      type: bytes[]
+      
+    example:
+      request:
+        - "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b"
+      response:
+        totalServers: 2
+        contract: "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b"
+        lastBlockNumber: 1546354
+        nodes: 
+          - "0x1fe2e9bf29aa1938859af64c413361227d04059a"
+          - "0x45d45e6ff99e6c34a235d263965910298985fcfe"
+      in3:
+        proof:
+          type: accountProof
+          block: "0xf9021ca01...."
+          accounts:
+            "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b":
+              address: "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b"
+              balance: "0xb1a2bc2ec50000"
+              codeHash: "0x18e64869905158477a607a68e9c0074d78f56a9dd5665a5254f456f89d5be398"
+              nonce: "0x1"
+              storageHash: "0x4386ec93bd665ea07d7ed488e8b495b362a31dc4100cf762b22f4346ee925d1f"
+              accountProof: 
+                - "0xf90211a0e822..."
+                - "0xf90211a0f6d0..."
+                - "0xf90211a04d7b..."
+                - "0xf90211a0e749..."
+                - "0xf90211a059cb..."
+                - "0xf90211a0568f..."
+                - "0xf8d1a0ac2433..."
+                - "0xf86d9d33b981..."
+              storageProof:
+                - key: "0x0"
+                  proof: 
+                    - "0xf90211a0ccb6d2d5786..."
+                    - "0xf871808080808080800..."
+                    - "0xe2a0200decd9548b62a...05"
+                  value: "0x5"
+                - key: "0x1"
+                  proof: 
+                    - "0xf90211a0ccb6d2d5786..."
+                    - "0xf871808080808080800..."
+                    - "0xf843a0200e2d5276120...423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
+                  value: "0x6aa7bbfbb1778efa33da1ba032cc3a79b9ef57b428441b4de4f1c38c3f258874"
 
