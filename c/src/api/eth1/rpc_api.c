@@ -547,15 +547,29 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t*  data   = d_get_bytes_at(ctx->params, 0);
-  bytes_t*  from_b = d_get_bytes_at(ctx->params, 1);
+  CHECK_PARAMS_LEN(ctx->req, ctx->parmas, 1)
+  d_token_t* tx_data = ctx->params + 1;
+  bytes_t    tx_raw  = bytes(NULL, 0);
+  bytes_t*   from_b  = NULL;
+  bytes_t*   data    = NULL;
+  if (strcmp(ctx->method,"eth_signTransaction")==0 || d_type(tx_data)==T_OBJECT {
+    TRY(eth_prepare_unsigned_tx(tx_data,ctx->req,&tx_raw)))
+    from_b = d_get_bytes(tx_data,K_FROM);
+    data   = &tx_raw;
+  }
+  else {
+    data   = d_get_bytes_at(ctx->params, 0);
+    from_b = d_get_bytes_at(ctx->params, 1);
+  }
+
   address_t from;
   memset(from, 0, 20);
   if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
   bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_sign_raw_tx(*data, ctx->req, from, &dst))
+  TRY_FINAL(eth_sign_raw_tx(*data, ctx->req, from, &dst), _free(tx_raw.data))
 #else
+  _free(tx_raw.data);
   if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
@@ -573,6 +587,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("sha256", in3_sha256(ctx))
   TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
   TRY_RPC("eth_sign", in3_sign_data(ctx))
+  TRY_RPC("eth_signTransaction", in3_signTx(ctx))
 
   if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
