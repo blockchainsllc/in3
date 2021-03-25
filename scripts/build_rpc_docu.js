@@ -5,6 +5,7 @@ let docs = {}, config = {}, types = {}
 const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
 const link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
 const getType = val => typeof val === 'object' ? val : (types['' + val] || val)
+const toCmdParam = val => (typeof val == 'object' || Array.isArray(val) || ('' + val).indexOf(' ') >= 0) ? "'" + JSON.stringify(val) + "'" : ('' + val)
 function scan(dir) {
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         if (f.name == 'rpc.yml') {
@@ -70,6 +71,7 @@ for (const s of Object.keys(docs).sort()) {
             print_object(getType(def.in3Params), '')
             console.log()
         }
+        if (def.validation) console.log('\n' + def.validation + '\n')
 
         if (def.returns) {
             if (def.returns.type) {
@@ -103,17 +105,25 @@ for (const s of Object.keys(docs).sort()) {
             const req = { method: rpc, params: ex.request || [] }
             if (def.proof) req.in3 = { "verification": "proof", ...ex.in3Params }
             const data = { result: ex.response || null }
+            const is_json = (typeof data.result == 'object' || Array.isArray(data.result))
             if (ex.in3) data.in3 = ex.in3
 
             console.log('*Example:*\n')
+            if (ex.descr) console.log('\n' + ex.descr + '\n')
+
+            /*
+                        console.log('```yaml\n# ---- Request -----\n\n' + yaml.stringify(req))
+                        console.log('\n# ---- Response -----\n\n' + yaml.stringify(data))
+                        console.log('```\n')
+            */
+            console.log('```sh\n> in3 ' + (ex.cmdParams ? (ex.cmdParams + ' ') : '') + req.method + ' ' + (req.params.map(toCmdParam).join(' ').trim()) + (is_json ? ' | jq' : ''))
+            console.log(is_json ? JSON.stringify(data.result, null, 2) : '' + data.result)
+            console.log('```\n')
 
             console.log('```js\n//---- Request -----\n\n' + JSON.stringify(req, null, 2))
             console.log('\n//---- Response -----\n\n' + JSON.stringify(data, null, 2))
             console.log('```\n')
 
-            console.log('```yaml\n# ---- Request -----\n\n' + yaml.stringify(req))
-            console.log('\n# ---- Response -----\n\n' + yaml.stringify(data))
-            console.log('```\n')
         })
     }
 }

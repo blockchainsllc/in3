@@ -235,6 +235,7 @@ btc:
       in3Params:
         finality: 8
         preBIP34: true
+      cmdParams: -x -c btc -f 8 
       request:
         - "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220"
         - true
@@ -344,6 +345,7 @@ btc:
       in3Params:
         finality: 8
         preBIP34: true
+      cmdParams: -x -c btc -f 8 
       request:
         - "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220"
         - 1
@@ -435,6 +437,7 @@ btc:
     example:
       in3Params:
         finality: 8
+      cmdParams: -x -c btc -f 8 
       request:
         - 'f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf'
         - true
@@ -533,6 +536,7 @@ btc:
       descr: The actual latest block is block `#640395` and `in3.finality` is set to `8`. The server is going to calculate `640395` - `8` and returns `640387` as the latest block number to the client. The headers of block `640388`..`640395` will be returned as finality headers.
       in3Params:
         finality: 8
+      cmdParams: -x -c btc -f 8 
       response: 640387
       in3:
         proof:
@@ -604,6 +608,7 @@ btc:
     example:
       in3Params:
         finality: 8
+      cmdParams: -x -c btc -f 8 
       request:
         - 631910
       response: 15138043247082.88
@@ -688,6 +693,7 @@ btc:
 
         The goal is to verify the target of the `target_dap`. We will use the daps of the result to verify the target step by step starting with the `verified_dap`. For old blocks (height < 227,836) with `in3.preBIP34` disabled the target cannot be verified (proving the finality does not provide any security as explained in [preBIP34 proof](bitcoin.html#id1)). For old blocks with `in.preBIP34` enabled the block header can be verified by performing a [preBIP34 proof](bitcoin.html#id1). Verifying newer blocks requires multiple proofs. The block header from the `block`-field and the finality headers from the `final`-field will be used to perform a [finality proof](bitcoin.html#finality-proof). Having a verified block header allows us to consider the target of the block header as verified. Therefore, we have a verified target for the whole `dap`. Having a verified block header (and therefore a verified merkle root) enables the possibility of a [block number proof](bitcoin.html#block-number-proof) using the coinbase transaction (`cbtx`-field) and the [merkle proof](bitcoin.html#transaction-proof-merkle-proof) for the coinbase transaction (`cbtxMerkleProof`-field). This proof is needed to verify the dap number (`dap`). Having a verified dap number allows us to verify the mapping between the target and the dap number.
     example:
+      cmdParams: -x -c btc -f 8 
       request:
         - 230
         - 200
@@ -720,5 +726,51 @@ btc:
           final: 0x0400000092945abbd7b9f0d407fcccbf418e4fc20570040c...a9b240
           cbtx: 0x01000000...cf6e8f930acb8f38b588d76cd8c3da3258d5a7...000000
           cbtxMerkleProof: 0x25575bcaf3e11970ccf835e88d6f97bedd6b85...bfdf46
+
+
+  getbestblockhash:
+    descr: Returns the hash of the best (tip) block in the longest blockchain.
+    in3Params:
+      finality:
+        descr: defines the amount of finality headers
+        type: uint
+      verification:
+        descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
+        type: string
+      preBIP34:
+        descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
+        type: bool
+    returns:
+      descr: the hash of the best block
+      type: bytes32
+    proof:
+      descr: |
+        Since we can't prove the finality of the latest block we consider the `current block count` - `amount of finality` (set in `in3.finality`-field) as the latest block. The hash of this block will be returned. Setting `in3.finality`=`0` will return will return the hash of the actual latest block.
+
+        The `proof`-object contains the following properties:
+
+        - **block** - a hex string with 80 bytes representing the blockheader
+        - **final** - the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated, the number depends on the requested finality (`finality`-property in the `in3`-section of the request)
+        - **cbtx** - the serialized coinbase transaction of the block (this is needed to get the verified block number)
+        - **cbtxMerkleProof* - the merkle proof of the coinbase transaction, proving the correctness of the `cbtx`
+
+        The server is not able to prove the finality for the latest block (obviously there are no finality headers available yet). Instead the server will fetch the number of the latest block and subtracts the amount of finality headers (set in `in3.finality`-field) and returns the hash of this block to the client (the result is considered as the latest block hash). By doing so the server is able to provide finality headers. \
+        The block header from the `block`-field and the finality headers from the `final`-field will be used to perform a [finality proof](bitcoin.html#finality-proof). Having a verified block header (and therefore a verified merkle root) enables the possibility of a [block number proof](bitcoin.html#block-number-proof) using the coinbase transaction (`cbtx`-field) and the [merkle proof](bitcoin.html#transaction-proof-merkle-proof) for the coinbase transaction (`cbtxMerkleProof`-field).
+
+        The client can set `in3.finality` equal to `0` to get the actual latest block hash. **Caution**: This block is not final and could no longer be part of the blockchain later on due to the possibility of a fork. Additionally, there may already be a newer block that the server does not yet know about due to latency in the network.
+    example:
+      cmdParams: -x -c btc -f 8 
+      descr: The actual latest block is block `#640395` and `in3.finality` is set to `8`. The server is going to calculate `640395` - `8` and returns the hash of block `#640387` to the client. The headers of block `640388`..`640395` will be returned as finality headers.
+      in3Params:
+        finality: 8
+      response: '000000000000000000039cbb4e842de0de9651852122b117d7ae6d7ac4fc1df6'
+      in3:
+        proof:
+          block: "0x0000e020bd3eecbd741522e1aa78cd7b375744590502939aef9b...9c8b18"
+          final: "0x00008020f61dfcc47a6daed717b12221855196dee02d844ebb9c...774f4c"
+          cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
+          cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
+
+
 
 
