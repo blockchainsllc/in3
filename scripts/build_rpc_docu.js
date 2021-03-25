@@ -48,7 +48,8 @@ scan('../c/src')
 docs.in3.in3_config.params.config.type = config
 console.log('# API RPC\n\n')
 console.log('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
-
+const zsh_complete = fs.readFileSync('_in3.template', 'utf8')
+let zsh_cmds = []
 for (const s of Object.keys(docs).sort()) {
     const rpcs = docs[s]
     console.log("## " + s + "\n\n")
@@ -56,13 +57,23 @@ for (const s of Object.keys(docs).sort()) {
     delete rpcs.descr
     for (const rpc of Object.keys(rpcs).sort()) {
         const def = rpcs[rpc]
+        let z = "    '" + rpc + ': '
+        let zd = (def.descr || (def.alias && rpcs[def.alias].descr) || '').trim()
+        if (zd.indexOf('.') >= 0) zd = zd.substr(0, zd.indexOf('.'))
+        if (zd.indexOf('\n') >= 0) zd = zd.substr(0, zd.indexOf('\n'))
+        if (zd.indexOf('[') >= 0) zd = zd.substr(0, zd.indexOf('['))
+        if (zd.length > 100) zd = zd.substr(0, 100) + '...'
+        z += zd
+
         console.log('### ' + rpc + '\n\n')
         asArray(def.alias).forEach(_ => console.log(rpc + ' is just an alias for ' + link(_) + '.See Details there.\n\n'))
-        if (def.descr) console.log(def.descr + '\n')
+        if (def.descr)
+            console.log(def.descr + '\n')
         if (def.params) {
             console.log("*Parameters:*\n")
             print_object(def.params, '', true)
             console.log()
+            z += ' ' + Object.keys(def.params).map(_ => '<' + _ + '>').join(' ')
         }
         else if (!def.alias)
             console.log("*Parameters:* - \n")
@@ -125,7 +136,11 @@ for (const s of Object.keys(docs).sort()) {
             console.log('```\n')
 
         })
+        z += "'"
+        zsh_cmds.push(z)
     }
 }
+
+fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')), { encoding: 'utf8' })
 
 
