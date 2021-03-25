@@ -619,7 +619,7 @@ btc:
           cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
           cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
 
-  in3_proofTarget:
+  btc_proofTarget:
     descr: Whenever the client is not able to trust the changes of the target (which is the case if a block can't be found in the verified target cache *and* the value of the target changed more than the client's limit `max_diff`) he will call this method. It will return additional proof data to verify the changes of the target on the side of the client. This is not a standard Bitcoin rpc-method like the other ones, but more like an internal method.
     params: 
       target_dap:
