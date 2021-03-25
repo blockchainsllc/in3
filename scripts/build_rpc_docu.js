@@ -1,9 +1,7 @@
 const yaml = require('../wasm/test/node_modules/yaml')
 const fs = require('fs')
 
-const docs = {}
-let config = {}
-let types = {}
+let docs = {}, config = {}, types = {}
 const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
 const link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
 const getType = val => typeof val === 'object' ? val : (types['' + val] || val)
@@ -24,26 +22,27 @@ function scan(dir) {
         else if (f.isDirectory()) scan(dir + '/' + f.name)
     }
 }
-function print_object(def, pad) {
+function print_object(def, pad, useNum) {
+    let i = 1
     for (const prop of Object.keys(def)) {
-        let s = pad + '* **' + prop + '**'
+        let s = pad + (useNum ? ((i++) + '.') : '*') + ' **' + prop + '**'
         const p = def[prop]
         const pt = getType(p.type)
         if (p.type) s += ' : `' + (typeof p.type === 'string' ? p.type : 'object') + '`'
         if (p.optional) s += ' *(optional)*'
         if (p.descr) s += ' - ' + p.descr
         if (p.default) s += ' (default: `' + JSON.stringify(p.default) + '`)'
+        if (p.alias) s += '\n' + pad + 'The data structure of ' + prop + ' is the same  as ' + link(p.alias) + '. See Details there.'
         console.log(s)
         if (typeof pt === 'object') {
             console.log('The ' + prop + ' object supports the following properties :\n' + pad)
             print_object(pt, pad + '    ')
         }
-
         if (p.example) console.log('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
         console.log(pad + '\n')
     }
-
 }
+
 scan('../c/src')
 docs.in3.in3_config.params.config.type = config
 console.log('# API RPC\n\n')
@@ -61,29 +60,20 @@ for (const s of Object.keys(docs).sort()) {
         if (def.descr) console.log(def.descr + '\n')
         if (def.params) {
             console.log("*Parameters:*\n")
-            let i = 1
-            for (const par of Object.keys(def.params)) {
-                const p = def.params[par]
-                const pt = getType(p.type)
-                let s = (i++) + '. **' + par + '**'
-                if (p.type) s += ' : `' + (typeof p.type === 'string' ? p.type : 'object') + '`'
-                if (p.descr) s += ' - ' + p.descr
-                if (p.alias) s += ' The data structure of ' + par + ' is the same  as ' + link(def.returns.alias) + '. See Details there.'
-                console.log(s)
-                if (typeof pt === 'object') {
-                    console.log('\nThe ' + par + ' params support the following properties :\n')
-                    print_object(pt, '')
-                }
-
-            }
+            print_object(def.params, '', true)
             console.log()
         }
         else if (!def.alias)
             console.log("*Parameters:* - \n")
+        if (def.in3Params) {
+            console.log('The following in3-configuration will have an impact on the result:\n\n');
+            print_object(getType(def.in3Params), '')
+            console.log()
+        }
 
         if (def.returns) {
             if (def.returns.type) {
-                console.log('*Returns:* ' + (typeof def.returns.type === 'string' ? def.returns.type : 'object') + '\n\n' + def.returns.descr + '\n')
+                console.log('*Returns:* ' + (typeof def.returns.type === 'string' ? ('`' + def.returns.type + '`') : '`object`') + '\n\n' + def.returns.descr + '\n')
                 const pt = getType(def.returns.type)
                 if (typeof pt === 'object') {
                     console.log('\nThe return value contains the following properties :\n')
@@ -109,23 +99,22 @@ for (const s of Object.keys(docs).sort()) {
             }
         }
 
-
-
         asArray(def.example).forEach(ex => {
             const req = { method: rpc, params: ex.request || [] }
-            if (def.proof) req.in3 = { "verification": "proof" }
-            console.log('*Request:*\n')
-            console.log('```js\n' + JSON.stringify(req, null, 2))
-            console.log('```\n')
-            if (ex.response) {
-                const data = { result: ex.response }
-                if (ex.in3) data.in3 = ex.in3
-                console.log('*Response:*\n')
-                console.log('```js\n' + JSON.stringify(data, null, 2))
-                console.log('```\n')
-            }
-        })
+            if (def.proof) req.in3 = { "verification": "proof", ...ex.in3Params }
+            const data = { result: ex.response || null }
+            if (ex.in3) data.in3 = ex.in3
 
+            console.log('*Example:*\n')
+
+            console.log('```js\n//---- Request -----\n\n' + JSON.stringify(req, null, 2))
+            console.log('\n//---- Response -----\n\n' + JSON.stringify(data, null, 2))
+            console.log('```\n')
+
+            console.log('```yaml\n# ---- Request -----\n\n' + yaml.stringify(req))
+            console.log('\n# ---- Response -----\n\n' + yaml.stringify(data))
+            console.log('```\n')
+        })
     }
 }
 
