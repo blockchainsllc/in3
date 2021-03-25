@@ -115,7 +115,7 @@ in3:
           
   # Verified RPCs
   in3_nodeList:
-    descr: clears the incubed cache (usually found in the .in3-folder)
+    descr: fetches and verifies the nodeList from a node
     params:
       limit:
         descr: if the number is defined and >0 this method will return a partial nodeList limited to the given number.

@@ -1,3 +1,96 @@
+types:
+  btctransaction:
+    txid:
+      descr: txid
+      type: bytes32
+    in_active_chain:
+      descr: Whether specified block is in the active chain or not (only present with explicit "blockhash" argument)
+      type: bool
+    hex:
+      descr: The serialized, hex-encoded data for `txid`
+      type: bytes
+    hash:
+      descr: The transaction hash (differs from txid for witness transactions)
+      type: bytes32
+    size:
+      descr: The serialized transaction size
+      type: uint
+    vsize:
+      descr:  The virtual transaction size (differs from size for witness transactions)
+      type: uint
+    weight:
+      descr: The transaction's weight (between `vsize`\*4-3 and `vsize`\*4)
+      type: uint
+    version:
+      descr: The version
+      type: uint
+    locktime:
+      descr: The lock time
+      type: uint
+    vin:
+      descr: array of json objects of incoming txs to be used
+      type: 
+        txid: 
+          descr: the transaction id
+          type: bytes32
+        vout:
+          descr: the index of the transaction out to be used
+          type: uint
+        scriptSig:
+          descr: the script
+          type:
+            asm:
+              descr: the asm-codes
+              type: string
+            hex:
+              descr: hex representation
+              type: string
+        sequence:
+          descr:  The script sequence number
+          type: uint
+        txinwitness:
+          descr: hex-encoded witness data (if any)
+          type: string[]
+    vout:
+      descr: array of json objects describing the tx outputs
+      type:
+        value:
+          descr: The Value in BTC
+          type: uint
+        n:
+          descr: the index
+          type: uint
+        scriptPubKey:
+          descr: the script pubkey 
+          type:
+            asm:
+              descr: asm
+              type: string
+            hex:
+              descr: hex representation of the script
+              type: string
+            reqSigs:
+              descr: the required signatures
+              type: uint
+            type:
+              descr: The type, eg 'pubkeyhash' 
+              type: string
+            addresses:
+              descr: Array of address(each representing a bitcoin adress)
+              type: string[]
+    blockhash:
+      descr: the block hash
+      type: bytes32
+    confirmations:
+      descr: The confirmations
+      type: uint
+    blocktime:
+      descr: The block time in seconds since epoch (Jan 1 1970 GMT)
+      type: uint
+    time:
+      descr:  Same as "blocktime"
+      type: uint
+
 btc:
   descr: |
     *Important: This feature is still experimental and not considered stable yet. In order to use it, you need to set the experimental-flag (-x on the comandline or `"experimental":true`!*
@@ -103,7 +196,45 @@ btc:
           descr: The hash of the next block
           type: bytes32
 
+    proof:
+      descr: |
+        The `proof`-object contains the following properties:
+
+        - for blocks before BIP34 (height < 227,836) and `in3.preBIP34` = false
+
+            - **final**  - the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated, the number depends on the requested finality (`finality`-property in the `in3`-section of the request)
+
+        - for blocks before BIP34 (height < 227,836) and `in3.preBIP34` = true
+
+            - **final** - the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated up to the next checkpoint (maximum of 200 finality headers, since the distance between checkpoints = 200)
+            - **height** - the height of the block (block number)
+
+        - for blocks after BIP34 (height >= 227,836), *the value of `in3.preBIP34` does not matter*
+
+            - **final** - the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated, the number depends on the requested finality (`finality`-property in the `in3`-section of the request)
+            - **cbtx** - the serialized coinbase transaction of the block (this is needed to get the verified block number)
+            - **cbtxMerkleProof** - the merkle proof of the coinbase transaction, proofing the correctness of the cbtx.
+
+        Old blocks (height < 227,836) with `in3.preBIP34` disabled cannot be verified (proving the finality does not provide any security as explained in [preBIP34 proof](bitcoin.html#id1)). Old blocks with `in.preBIP34` enabled can be verified by performing a [preBIP34 proof](bitcoin.html#id1). Verifying newer blocks requires multiple proofs. The finality headers from the `final`-field will be used to perform a [finality proof](bitcoin.html#finality-proof). To verify the block number we are going to perform a [block number proof](bitcoin.html#block-number-proof) using the coinbase transaction (`cbtx`-field) and the [merkle proof](bitcoin.html#transaction-proof-merkle-proof) for the coinbase transaction (`cbtxMerkleProof`-field).
+      type:
+        final:
+          descr: the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated, the number depends on the requested finality (`finality`-property in the `in3`-section of the request)
+          type: bytes
+        cbtx:
+          descr: the serialized coinbase transaction of the block (this is needed to get the verified block number). It will only be included if the blocknumber supports BIP34 and is higher 227,836)
+          type: bytes
+        cbtxMerkleProof:
+          descr: the merkle proof of the coinbase transaction, proofing the correctness of the cbtx.
+          type: bytes
+        height:
+          descr: the height of the block (block number)
+          type: uint
+
+
     example:
+      in3Params:
+        finality: 8
+        preBIP34: true
       request:
         - "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220"
         - true
@@ -128,3 +259,174 @@ btc:
           final: 0x00e0ff2720723034053c305058beb92ed010...276470
           cbtx: 0x0100000000010100000000000000000000000...39da2fc
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a64667b...52e688
+
+
+
+
+  getblock:
+    descr: Returns data of block for given block hash. The returned level of details depends on the argument verbosity.
+    params:
+      hash:
+        descr: The block hash
+        type: bytes32
+      verbosity:
+        descr: 0 or false for hex-encoded data, 1 or true for a json object, and 2 for json object **with** transaction data
+        type: uint
+    in3Params:
+      finality:
+        descr: defines the amount of finality headers
+        type: uint
+      verification:
+        descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
+        type: string
+      preBIP34:
+        descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
+        type: bool
+    returns:
+      descr: |
+        the block. 
+        - verbose `0` or `false`: a hex string with 80 bytes representing the blockheader
+        - verbose `1` or `true`: an object representing the blockheader.
+      type:
+        hash:
+          descr: the block hash (same as provided)
+          type: bytes32
+        confirmations:
+          descr: The number of confirmations, or -1 if the block is not on the main chain
+          type: int
+        height:
+          descr: The block height or index
+          type: uint
+        version:
+          descr: The block version
+          type: uint
+        versionHex:
+          descr: The block version formatted in hexadecimal
+          type: hex
+        merkleroot:
+          descr:  The merkle root ( 32 bytes )
+          type: bytes32
+        time:
+          descr: The block time in seconds since epoch (Jan 1 1970 GMT)
+          type: uint
+        mediantime:
+          descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
+          type: uint
+        nonce:
+          descr: The nonce
+          type: uint
+        bits:
+          descr: The bits ( 4 bytes as hex) representing the target
+          type: bytes4
+        difficulty:
+          descr: The difficulty
+          type: uint
+        chainwork:
+          descr: Expected number of hashes required to produce the current chain (in hex)
+          type: uint
+        nTx:
+          descr: The number of transactions in the block.
+          type: uint
+        tx:
+          descr: the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
+          type: btctransaction
+        previousblockhash:
+          descr: The hash of the previous block
+          type: bytes32
+        nextblockhash:
+          descr: The hash of the next block
+          type: bytes32
+
+    proof:
+      alias: getblockheader
+
+    example:
+      in3Params:
+        finality: 8
+        preBIP34: true
+      request:
+        - "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220"
+        - 1
+      response:
+        hash: 000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220
+        confirmations: 8268
+        height: 624958
+        version: 536928256
+        versionHex: 2000e000
+        merkleroot: d786a334ea8c65f39272d5b9be505ac3170f3904842bd52525538a9377b359cb
+        time: 1586333924
+        mediantime: 1586332639
+        nonce: 1985217615
+        bits: 17143b41
+        difficulty: 13912524048945.91
+        chainwork: 00000000000000000000000000000000000000000e4c88b66c5ee78deff0d494
+        tx:
+          - d79ffc80e07fe9e0083319600c59d47afe69995b1357be6e5dba035675780290
+          - ...
+          - 6456819bfa019ba30788620153ea9a361083cb888b3662e2ff39c0f7adf16919
+        nTx: 33
+        previousblockhash: 00000000000000000013cba040837778744ce66961cfcf2e7c34bb3d194c7f49
+        nextblockhash: 0000000000000000000c799dc0e36302db7fbb471711f140dc308508ef19e343
+      in3:
+        proof:
+          final: 0x00e0ff2720723034053c305058beb92ed010...276470
+          cbtx: 0x0100000000010100000000000000000000000...39da2fc
+          cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a64667b...52e688
+
+  getrawtransaction:
+    descr: Returns the raw transaction data. The returned level of details depends on the argument verbosity.
+    params:
+      txid:
+        descr: The transaction id
+        type: bytes32
+      verbosity:
+        descr: 0 or false for the hex-encoded data for `txid`, 1 or true for a json object with information about `txid`
+        type: uint
+        optional: true
+        default: 1
+    in3Params:
+      finality:
+        descr: defines the amount of finality headers
+        type: uint
+      verification:
+        descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
+        type: string
+      preBIP34:
+        descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
+        type: bool
+    returns:
+      descr: |
+        - verbose `0` or `false`: a string that is serialized, hex-encoded data for `txid`
+        - verbose `1` or `false`: an object representing the transaction.        
+      type: btctransaction
+    
+    proof:
+      descr: |
+        - for blocks before BIP34 (height < 227836) and `in3.preBIP34` = false
+
+            - `block`: hex - a hex string with 80 bytes representing the blockheader
+            - `final`: hex - the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated, the number depends on the requested finality (`finality`-property in the `in3`-section of the request)
+            - `txIndex`: number - index of the transaction (`txIndex`=`0` for coinbase transaction, necessary to create/verify the merkle proof)
+            - `merkleProof`: hex - the merkle proof of the requested transaction, proving the correctness of the transaction
+
+        - for blocks before BIP34 (height < 227836) and `in3.preBIP34` = true
+
+            - `block`: hex - a hex string with 80 bytes representing the blockheader
+            - `final`: hex - the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated up to the next checkpoint (maximum of 200 finality headers, since the distance between checkpoints = 200)
+            - `txIndex`: number - index of the transaction (`txIndex`=`0` for coinbase transaction, necessary to create/verify the merkle proof)
+            - `merkleProof`: hex - the merkle proof of the requested transaction, proving the correctness of the transaction
+            - `height`: number - the height of the block (block number)
+
+        - for blocks after BIP34 (height >= 227836), *the value of `in3.preBIP34` does not matter*
+
+            - `block`: hex - a hex string with 80 bytes representing the blockheader
+            - `final`: hex - the finality headers, which are hexcoded bytes of the following headers (80 bytes each) concatenated, the number depends on the requested finality (`finality`-property in the `in3`-section of the request)
+            - `txIndex`: number - index of the transaction (`txIndex`=`0` for coinbase transaction, necessary to create/verify the merkle proof)
+            - `merkleProof`: hex - the merkle proof of the requested transaction, proving the correctness of the transaction
+            - `cbtx`:  hex - the serialized coinbase transaction of the block (this is needed to get the verified block number)
+            - `cbtxMerkleProof`: hex - the merkle proof of the coinbase transaction, proving the correctness of the `cbtx`
+
+
+        Transactions of old blocks (height < 227836) with `in3.preBIP34` disabled cannot be verified (proving the finality does not provide any security as explained in [preBIP34 proof](bitcoin.html#id1) and relying on the merkle proof is only possible when the block is final). Transactions of old blocks with `in3.preBIP34` enabled can be verified by performing a [preBIP34 proof](bitcoin.html#id1) and a [merkle proof](bitcoin.html#transaction-proof-merkle-proof). Verifying newer blocks requires multiple proofs. The block header from the `block`-field and the finality headers from the `final`-field will be used to perform a [finality proof](bitcoin.html#finality-proof). By doing a [merkle proof](bitcoin.html#transaction-proof-merkle-proof) using the `txIndex`-field and the `merkleProof`-field the correctness of the requested transation can be proven. Furthermore we are going to perform a [block number proof](bitcoin.html#block-number-proof) using the coinbase transaction (`cbtx`-field) and the [merkle proof](bitcoin.html#transaction-proof-merkle-proof) for the coinbase transaction (`cbtxMerkleProof`-field). 
+
+      
