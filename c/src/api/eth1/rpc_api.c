@@ -432,10 +432,10 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
-  const is_eth_sign       = strcmp(ctx->method, "eth_sign") == 0;
-  bytes_t        data     = d_to_bytes(d_get_at(ctx->params, is_eth_sign ? 1 : 0));
-  const bytes_t* pk       = d_get_bytes_at(ctx->params, is_eth_sign ? 0 : 1);
-  char*          sig_type = d_get_string_at(ctx->params, 2);
+  const bool     is_eth_sign = strcmp(ctx->method, "eth_sign") == 0;
+  bytes_t        data        = d_to_bytes(d_get_at(ctx->params, is_eth_sign ? 1 : 0));
+  const bytes_t* pk          = d_get_bytes_at(ctx->params, is_eth_sign ? 0 : 1);
+  char*          sig_type    = d_get_string_at(ctx->params, 2);
   if (!sig_type) sig_type = is_eth_sign ? "eth_sign" : "raw";
 
   //  if (!pk) return req_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
@@ -547,14 +547,14 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
-  CHECK_PARAMS_LEN(ctx->req, ctx->parmas, 1)
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
   d_token_t* tx_data = ctx->params + 1;
   bytes_t    tx_raw  = bytes(NULL, 0);
   bytes_t*   from_b  = NULL;
   bytes_t*   data    = NULL;
-  if (strcmp(ctx->method,"eth_signTransaction")==0 || d_type(tx_data)==T_OBJECT {
-    TRY(eth_prepare_unsigned_tx(tx_data,ctx->req,&tx_raw)))
-    from_b = d_get_bytes(tx_data,K_FROM);
+  if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
+    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw))
+    from_b = d_get_bytes(tx_data, K_FROM);
     data   = &tx_raw;
   }
   else {
