@@ -252,6 +252,53 @@ void read_pass(char* pw, int pwsize) {
   recorder_print(1, COLORT_RESETHIDDEN); //reveal typing
 }
 
+static bool configure_arg(in3_t* c, char* arg, int* i, int argc) {
+  UNUSED_VAR(i);
+  UNUSED_VAR(argc);
+  char* value = strchr(arg, '=');
+  char* name  = NULL;
+  if (!value) {
+    //    die("invalid syntax for --key=value");
+    value = "true";
+    name  = alloca(strlen(arg) + 1);
+    strcpy(name, arg);
+  }
+  else {
+    value++;
+    name = alloca(value - arg);
+    strncpy(name, arg, value - arg - 1);
+    name[value - arg - 1] = 0;
+  }
+  if (name[0] == '-' && name[1] == '-') {
+    name += 2;
+    char* p  = strtok(name, ".");
+    sb_t  sb = {0};
+    sb_add_char(&sb, '{');
+    int b = 1;
+    while (p) {
+      char* next = strtok(NULL, ".");
+      if (!next) {
+        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
+          sb_print(&sb, "\"%s\":", p, value);
+        else
+          sb_print(&sb, "\"%s\":\"%s\"", p, value);
+        break;
+      }
+      b++;
+      sb_print(&sb, "\"%s\":{", p);
+      p = next;
+      continue;
+    }
+    for (; b; b--) sb_add_char(&sb, '}');
+    in3_log_info("configure %s \n", sb.data);
+    char* error = in3_configure(c, sb.data);
+    if (error)
+      die(error);
+    return true;
+  }
+  return false;
+}
+
 // accepts a value as
 // 0.1eth
 // 2keth
@@ -981,15 +1028,15 @@ int main(int argc, char* argv[]) {
       i++;
     }
     // now handle arguments for special methods
+    else if (configure_arg(c, argv[i], &i, argc))
+      continue;
     else {
       if (method == NULL)
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
-      else if (strcmp(method, "sign") == 0 && !data) {
-
+      else if (strcmp(method, "sign") == 0 && !data)
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      }
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
