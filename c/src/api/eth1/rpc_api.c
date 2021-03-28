@@ -553,9 +553,13 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   bytes_t*   from_b  = NULL;
   bytes_t*   data    = NULL;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
+#if defined(ETH_BASIC)
     TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw))
     from_b = d_get_bytes(tx_data, K_FROM);
     data   = &tx_raw;
+#else
+    return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+#endif
   }
   else {
     data   = d_get_bytes_at(ctx->params, 0);
