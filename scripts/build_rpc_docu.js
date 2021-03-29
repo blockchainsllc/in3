@@ -1,6 +1,7 @@
 const yaml = require('../wasm/test/node_modules/yaml')
 const fs = require('fs')
 const doc_dir = process.argv[process.argv.length - 1]
+const main_conf = yaml.parse(fs.readFileSync('../c/src/cmd/in3/in3.yml', 'utf-8'))
 
 const rpc_doc = []
 const config_doc = []
@@ -51,11 +52,12 @@ function print_object(def, pad, useNum, doc) {
     }
 }
 
-function handle_config(conf, pre) {
+function handle_config(conf, pre, title, descr) {
+    if (title) config_doc.push('\n## ' + title + '\n')
     for (const key of Object.keys(conf)) {
         const c = conf[key]
         if (!pre) {
-            let s = '\n## ' + key + '\n\n' + c.descr
+            let s = '\n' + (title ? '#' : '') + '## ' + key + '\n\n' + c.descr
             if (c.optional) s += ' *This config is optional.*'
             if (c.default) s += ' (default: `' + JSON.stringify(c.default) + '`)'
             if (c.type) s += '\n\n Type: `' + (typeof c.type === 'string' ? c.type : 'object') + '`'
@@ -74,13 +76,14 @@ function handle_config(conf, pre) {
                     else
                         config_doc.push([...asArray(c.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> in3 ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
                     config_doc.push('```\n')
-                    config_doc.push('```js\nconst in3 = new IN3(' + JSON.stringify({ [key]: ex }, null, 2) + ')\n```\n')
+                    if (!title)
+                        config_doc.push('```js\nconst in3 = new IN3(' + JSON.stringify({ [key]: ex }, null, 2) + ')\n```\n')
                 })
 
             }
         }
         asArray(c.cmd).forEach(_ => main_aliases.push('    "' + _ + '", "' + pre + key + (c.type == 'bool' ? '=true' : '') + '",'));
-        main_help.push(('--' + pre + key).padEnd(30) + (c.cmd ? ('-' + c.cmd) : '').padEnd(6) + short_descr(c.descr))
+        main_help.push(('--' + pre + key).padEnd(30) + (c.cmd ? ('-' + c.cmd) : '').padEnd(7) + short_descr(c.descr))
         let s = ''
         if (c.descr) s += '[' + short_descr(c.descr) + ']'
         if (c.type != 'bool')
@@ -195,6 +198,14 @@ for (const s of Object.keys(docs).sort()) {
 }
 
 handle_config(config, '')
+handle_config(main_conf.config, '', 'cmdline options\n\nThose special options are used in the comandline client to pass additional options.\n')
+main_help.push('')
+main_help.push('In addition to the documented rpc-methods, those methods are also supported:')
+main_help.push('')
+Object.keys(main_conf.rpc).forEach(k => {
+    (k + ' ' + main_conf.rpc[k]).split("\n").map(_ => _.trim()).map((_, i) => i ? '   ' + _ : _)
+        .forEach(l => main_help.push(l))
+})
 
 fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
