@@ -1,0 +1,123 @@
+aliases:
+  nostats : ns
+  'proof=none' : np
+  eth : e
+  block : b
+  to : to
+  from: from
+  data : d
+  gas_price : gp
+  gas : gas
+  path : path
+  sigtype : st
+  password: pwd
+  value : value
+  wait : w
+  json: json
+  hex: h
+  keepin3 : kin3
+  debug : debug
+  quiet : q
+  human : h
+  test-request: tr
+  test-health-request: thr
+  multisig : ms
+  signatures : sigs
+  response-in : ri
+  response-out : ro
+  file-in: fi
+  file-out: fo
+  nodelist: nl
+  bootnodes: bn
+  onlysign: os
+  version: v
+  help: h
+
+config:
+  nostats : no stats if set requests will not be part of the official metrics and considered a service request
+  eth : converts the result (as wei) to ether.
+  port : if specified it will run as http-server listening to the given port.
+  am : only works if port is specified and declares a comma-seperated list of rpc-methods which are allowed. All other will be rejected.
+  block: the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner
+  to: the target address of the call
+  from : the sender of a call or tx (only needed if no signer is registered)
+  data : the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.
+  gas_price: 'the gas price to use when sending transactions. (default: use eth_gasPrice)'
+  gas : 'the gas limit to use when sending transactions. (default: 100000)'
+  path : 'the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000'
+  sigtype: 'the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw'
+  password: password to unlock the key 
+  value : 'the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)'
+  wait: if given, instead returning the transaction, it will wait until the transaction is mined and return the transactionreceipt.
+  json : if given the result will be returned as json, which is especially important for eth_call results with complex structres.
+  hex : if given the result will be returned as hex.
+  keepin3  : if specified, the response including in3-section is returned
+  debug : if given incubed will output debug information when executing. 
+  quiet:  quiet. no additional output. 
+  human : human readable, which removes the json -structure and oly displays the values.
+  test-request: runs test request when showing in3_weights 
+  test-health-request: runs test request including health-check when showing in3_weights 
+  multisig : adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) 
+  signatures : add additional signatures, which will be useds when sending through a multisig! 
+  response-in: read response from stdin 
+  response-out: write raw response to stdout 
+  file-in: reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging) 
+  file-out: records a request and writes the reproducable data in a file (including all cache-data, timestamps ...) 
+  nodelist: a coma seperated list of urls (or address:url) to be used as fixed nodelist
+  bootnodes: a coma seperated list of urls (or address:url) to be used as boot nodes
+  onlysign: only sign, don't send the raw Transaction 
+  version: displays the version 
+  help: displays this help message 
+
+As method, the following can be used:
+
+<JSON-RPC>-method
+  all official supported JSON-RPC-Method may be used.
+
+send <signature> ...args
+  based on the -to, -value and -pk a transaction is build, signed and send. 
+  if there is another argument after send, this would be taken as a function-signature of the smart contract followed by optional argument of the function.
+
+call <signature> ...args
+  uses eth_call to call a function. Following the call argument the function-signature and its arguments must follow. 
+
+in3_nodeList
+  returns the nodeList of the Incubed NodeRegistry as json.
+
+in3_sign <blocknumber>
+  requests a node to sign. in order to specify the signer, you need to pass the url with -c
+
+ipfs_get <ipfs_hash>
+  requests and verifies the content for a given ipfs-hash and write the content to stdout
+
+ipfs_put
+  reads a content from stdin and pushes to the ipfs-network. it write the ipfs-hash to stdout.
+
+in3_stats
+  returns the stats of a node. unless you specify the node with -c <rpcurl> it will pick a random node.
+
+abi_encode <signature> ...args
+  encodes the arguments as described in the method signature using ABI-Encoding
+
+abi_decode <signature> data
+  decodes the data based on the signature.
+
+pk2address <privatekey>
+  extracts the public address from a private key
+
+pk2public <privatekey>
+  extracts the public key from a private key
+
+ecrecover <msg> <signature>
+  extracts the address and public key from a signature
+
+key <keyfile>
+  reads the private key from JSON-Keystore file and returns the private key.
+
+in3_weights
+  list all current weights and stats
+
+in3_ens <domain> <field>
+  resolves a ens-domain. field can be addr(deault), owner, resolver or hash
+\n",
+

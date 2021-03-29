@@ -23,6 +23,7 @@ in3:
       optional: true
       example: true
       default: true
+      cmd: bw
 
     useHttp:
       descr: if true the client will try to use http instead of https.
