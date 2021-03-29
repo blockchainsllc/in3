@@ -79,7 +79,7 @@ function handle_config(conf, pre) {
 
             }
         }
-        asArray(c.cmd).forEach(_ => main_aliases.push('    "' + _ + '","' + pre + key + (c.type == 'bool' ? '=true' : '') + '",'));
+        asArray(c.cmd).forEach(_ => main_aliases.push('    "' + _ + '", "' + pre + key + (c.type == 'bool' ? '=true' : '') + '",'));
         main_help.push(('--' + pre + key).padEnd(30) + (c.cmd ? ('-' + c.cmd) : '').padEnd(6) + short_descr(c.descr))
         let s = ''
         if (c.descr) s += '[' + short_descr(c.descr) + ']'
@@ -199,6 +199,6 @@ handle_config(config, '')
 fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
-fs.writeFileSync('../c/src/cmd/in3/args.h', 'const char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\n const char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
+fs.writeFileSync('../c/src/cmd/in3/args.h', 'const char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
 
 
