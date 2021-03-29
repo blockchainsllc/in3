@@ -199,8 +199,13 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     EXPECT_TOK_U16(token);
     w->node_limit = (uint16_t) d_int(token);
   }
-  else if (token->key == CONFIG_KEY("nodeRegistry")) {
+  else if (token->key == CONFIG_KEY("nodeRegistry") || token->key == CONFIG_KEY("servers") || token->key == CONFIG_KEY("nodes")) {
     EXPECT_TOK_OBJ(token);
+
+    // this is legacy-support, if the object has a key with the chain_id, we simply use the value.
+    char node_id[10];
+    sprintf(node_id, "0x%x", ctx->client->chain.chain_id);
+    if (d_get(token, key(node_id))) token = d_get(token, key(node_id));
 
     // this is changing the nodelist config, so we need to make sure we have our own nodelist
     TRY(nodelist_seperate_from_registry(&data, w))

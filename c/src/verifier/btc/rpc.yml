@@ -112,6 +112,10 @@ btc:
 
     btc:
       descr: configure the Bitcoin verification
+      example:
+        maxDAP: 30
+        maxDiff: 5
+
       type: 
         maxDAP:
           descr: max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets.

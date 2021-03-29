@@ -75,6 +75,7 @@
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
 #include "../../verifier/eth1/nano/chainspec.h"
+#include "args.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
@@ -91,12 +92,8 @@
 void show_help(char* name) {
   recorder_print(0, "Usage: %s <options> method <params> ... \n\
 \n\
--c, -chain     the chain to use. (mainnet, goerli, ewc, btc, ipfs, local or any RPCURL)\n\
--a             max number of attempts before giving up (default 5)\n\
--rc            number of request per try (default 1)\n\
+%s\n\
 -ns            no stats if set requests will not be part of the official metrics and considered a service request\n\
--p, -proof     specifies the Verification level: (none, standard(default), full)\n\
--md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
 -eth           converts the result (as wei) to ether.\n\
 -l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
@@ -200,7 +197,7 @@ in3_weights\n\
 in3_ens <domain> <field>\n\
   resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
 \n",
-                 name);
+                 name, help_args);
 }
 _Noreturn static void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
@@ -252,11 +249,33 @@ void read_pass(char* pw, int pwsize) {
   recorder_print(1, COLORT_RESETHIDDEN); //reveal typing
 }
 
-static bool configure_arg(in3_t* c, char* arg, int* i, int argc) {
-  UNUSED_VAR(i);
+static bool configure_arg(in3_t* c, char** args, int* index, int argc) {
+  UNUSED_VAR(index);
   UNUSED_VAR(argc);
-  char* value = strchr(arg, '=');
-  char* name  = NULL;
+  const char* arg   = args[*index];
+  char*       value = strchr(arg, '=');
+  char*       name  = NULL;
+  if (arg[0] != '-') return false;
+  if (arg[1] && arg[1] != '-') {
+    for (int i = 0; aliases[i]; i += 2) {
+      if (strcmp(aliases[i], arg + 1) == 0) {
+        name    = alloca(strlen(aliases[i + 1] + 3));
+        name[0] = (name[1] = '-');
+        strcpy(name + 2, aliases[i + 1]);
+        value = strchr(name, '=');
+        if (!value) {
+          if (argc - 1 <= *index) die("missing value for option");
+          *index += 1;
+          value = args[*index];
+        }
+        else
+          *value = 0;
+        break;
+      }
+    }
+    if (!name) die("unknown option!");
+  }
+
   if (!value) {
     //    die("invalid syntax for --key=value");
     value = "true";
@@ -265,10 +284,13 @@ static bool configure_arg(in3_t* c, char* arg, int* i, int argc) {
   }
   else {
     value++;
-    name = alloca(value - arg);
-    strncpy(name, arg, value - arg - 1);
-    name[value - arg - 1] = 0;
+    if (!name) {
+      name = alloca(value - arg);
+      strncpy(name, arg, value - arg - 1);
+      name[value - arg - 1] = 0;
+    }
   }
+
   if (name[0] == '-' && name[1] == '-') {
     name += 2;
     char* p  = strtok(name, ".");
@@ -279,7 +301,7 @@ static bool configure_arg(in3_t* c, char* arg, int* i, int argc) {
       char* next = strtok(NULL, ".");
       if (!next) {
         if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
-          sb_print(&sb, "\"%s\":", p, value);
+          sb_print(&sb, "\"%s\":%s", p, value);
         else
           sb_print(&sb, "\"%s\":\"%s\"", p, value);
         break;
@@ -290,7 +312,6 @@ static bool configure_arg(in3_t* c, char* arg, int* i, int argc) {
       continue;
     }
     for (; b; b--) sb_add_char(&sb, '}');
-    in3_log_info("configure %s \n", sb.data);
     char* error = in3_configure(c, sb.data);
     if (error)
       die(error);
@@ -920,8 +941,6 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
-    else if (strcmp(argv[i], "-x") == 0)
-      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
     else if (strcmp(argv[i], "-fo") == 0)
       recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)
@@ -1028,7 +1047,7 @@ int main(int argc, char* argv[]) {
       i++;
     }
     // now handle arguments for special methods
-    else if (configure_arg(c, argv[i], &i, argc))
+    else if (configure_arg(c, argv, &i, argc))
       continue;
     else {
       if (method == NULL)

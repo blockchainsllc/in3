@@ -10,10 +10,18 @@ in3:
 
     chainId:
       type: uint | string
-      descr: the chainId or the name of a known chain (`mainnet`,`goerli`,`ewc`,`btc` or `ipfs`). It defines the nodelist to connect to.
+      descr: the chainId or the name of a known chain. It defines the nodelist to connect to.
       example: goerli
       optional: true
       default: mainnet
+      enum: 
+        mainnet: Mainnet Chain
+        goerli: Goerli Testnet
+        ewc: Energy WebFoundation
+        btc: Bitcoin
+        ipfs: ipfs
+        local: local-chain
+      cmd: c
     
     finality:
       type: uint | string
@@ -21,6 +29,7 @@ in3:
       example: 50
       optional: true
       default: 0
+      cmd: f
     
     includeCode:
       type: bool
@@ -35,6 +44,7 @@ in3:
       example: 1
       optional: true
       default: 7
+      cmd: a
     
     keepIn3:
       type: bool
@@ -56,6 +66,7 @@ in3:
       example: true
       optional: true
       default: false
+      cmd: x
 
     timeout:
       descr: specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
@@ -66,16 +77,22 @@ in3:
 
     proof:
       descr:  if true the nodes should send a proof of the response. If set to none, verification is turned off completly.
-      type: string (none,standard,full)
+      type: string
       optional: true
+      enum:
+        - none
+        - standard
+        - full
       example: none
       default: standard
+      cmd: p
 
     replaceLatestBlock:
       descr:  if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
       type: uint
       optional: true
       example: 6
+      cmd: l
 
 
   # rpc-commands
@@ -94,13 +111,12 @@ in3:
           maxAttempts: 4
           nodeLimit: 10
           nodes:
-            "0x1":
-              nodeList:
-                - address:  "0x1234567890123456789012345678901234567890"
-                  url: "https://mybootnode-A.com"
-                  props: "0xFFFF"
-                - address:  "0x1234567890123456789012345678901234567890"
-                  url: "https://mybootnode-B.com"
-                  props: "0xFFFF"
+            nodeList:
+              - address:  "0x1234567890123456789012345678901234567890"
+                url: "https://mybootnode-A.com"
+                props: "0xFFFF"
+              - address:  "0x1234567890123456789012345678901234567890"
+                url: "https://mybootnode-B.com"
+                props: "0xFFFF"
       response: true
 

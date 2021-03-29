@@ -1,5 +1,11 @@
 const yaml = require('../wasm/test/node_modules/yaml')
 const fs = require('fs')
+const doc_dir = process.argv[process.argv.length - 1]
+
+const rpc_doc = []
+const config_doc = []
+const main_help = []
+const main_aliases = []
 
 let docs = {}, config = {}, types = {}
 const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
@@ -23,7 +29,7 @@ function scan(dir) {
         else if (f.isDirectory()) scan(dir + '/' + f.name)
     }
 }
-function print_object(def, pad, useNum) {
+function print_object(def, pad, useNum, doc) {
     let i = 1
     for (const prop of Object.keys(def)) {
         let s = pad + (useNum ? ((i++) + '.') : '*') + ' **' + prop + '**'
@@ -33,82 +39,129 @@ function print_object(def, pad, useNum) {
         if (p.optional) s += ' *(optional)*'
         if (p.descr) s += ' - ' + p.descr
         if (p.default) s += ' (default: `' + JSON.stringify(p.default) + '`)'
+        if (p.enum) s += '\n' + pad + 'Possible Values are:\n\n' + Object.keys(p.enum).map(v => pad + '    - `' + v + '` : ' + p.enum[v]).join('\n') + '\n'
         if (p.alias) s += '\n' + pad + 'The data structure of ' + prop + ' is the same  as ' + link(p.alias) + '. See Details there.'
-        console.log(s)
+        doc.push(s)
         if (typeof pt === 'object') {
-            console.log('The ' + prop + ' object supports the following properties :\n' + pad)
-            print_object(pt, pad + '    ')
+            rpc_doc.push('The ' + prop + ' object supports the following properties :\n' + pad)
+            print_object(pt, pad + '    ', false, doc)
         }
-        if (p.example) console.log('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
-        console.log(pad + '\n')
+        if (p.example) rpc_doc.push('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
+        doc.push(pad + '\n')
     }
 }
 
+function handle_config(conf, pre) {
+    for (const key of Object.keys(conf)) {
+        const c = conf[key]
+        if (!pre) {
+            let s = '\n## ' + key + '\n\n' + c.descr
+            if (c.optional) s += ' *This config is optional.*'
+            if (c.default) s += ' (default: `' + JSON.stringify(c.default) + '`)'
+            if (c.type) s += '\n\n Type: `' + (typeof c.type === 'string' ? c.type : 'object') + '`'
+            if (c.enum) s += '\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n'
+            config_doc.push(s)
+            if (typeof (c.type) === 'object') {
+                config_doc.push('The ' + key + ' object supports the following properties :\n')
+                print_object(c.type, '', false, config_doc)
+            }
+            if (c.example !== undefined) {
+                config_doc.push('\n*Example:*\n')
+                asArray(c.example).forEach(ex => {
+                    config_doc.push('```sh')
+                    if (typeof (ex) == 'object')
+                        config_doc.push('> in3 ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
+                    else
+                        config_doc.push([...asArray(c.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> in3 ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
+                    config_doc.push('```\n')
+                    config_doc.push('```js\nconst in3 = new IN3(' + JSON.stringify({ [key]: ex }, null, 2) + ')\n```\n')
+                })
+
+            }
+        }
+        asArray(c.cmd).forEach(_ => main_aliases.push('    "' + _ + '","' + pre + key + (c.type == 'bool' ? '=true' : '') + '",'));
+        main_help.push(('--' + pre + key).padEnd(30) + (c.cmd ? ('-' + c.cmd) : '').padEnd(6) + short_descr(c.descr))
+        let s = ''
+        if (c.descr) s += '[' + short_descr(c.descr) + ']'
+        if (c.type != 'bool')
+            s += ':' + key + ':(' + (c.enum ? Object.keys(c.enum).join(' ') : '') + ')'
+        if (typeof (c.type) === 'object')
+            handle_config(c.type, pre + key + '.')
+        else {
+            zsh_conf.push("'--" + pre + key + (c.type != 'bool' ? '=' : '') + s + "'")
+            asArray(c.cmd).forEach(_ => zsh_conf.push("'-" + _ + s + "'"))
+        }
+    }
+}
+function short_descr(d) {
+    let zd = (d || '').trim()
+    if (zd.indexOf('.') >= 0) zd = zd.substr(0, zd.indexOf('.'))
+    if (zd.indexOf('\n') >= 0) zd = zd.substr(0, zd.indexOf('\n'))
+    if (zd.indexOf('[') >= 0) zd = zd.substr(0, zd.indexOf('['))
+    if (zd.length > 100) zd = zd.substr(0, 100) + '...'
+    return zd
+}
 scan('../c/src')
 docs.in3.in3_config.params.config.type = config
-console.log('# API RPC\n\n')
-console.log('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
+rpc_doc.push('# API RPC\n\n')
+rpc_doc.push('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
+config_doc.push('# Configuration\n\n')
+config_doc.push('When creating a new Incubed Instance you can configure it. The Configuration depends on the registered plugins. This page describes the available configuration parameters.\n\n')
 const zsh_complete = fs.readFileSync('_in3.template', 'utf8')
-let zsh_cmds = []
+let zsh_cmds = [], zsh_conf = []
 for (const s of Object.keys(docs).sort()) {
     const rpcs = docs[s]
-    console.log("## " + s + "\n\n")
-    if (rpcs.descr) console.log(rpcs.descr + '\n')
+    rpc_doc.push("## " + s + "\n\n")
+    if (rpcs.descr) rpc_doc.push(rpcs.descr + '\n')
     delete rpcs.descr
     for (const rpc of Object.keys(rpcs).sort()) {
         const def = rpcs[rpc]
-        let z = "    '" + rpc + ': '
-        let zd = (def.descr || (def.alias && rpcs[def.alias].descr) || '').trim()
-        if (zd.indexOf('.') >= 0) zd = zd.substr(0, zd.indexOf('.'))
-        if (zd.indexOf('\n') >= 0) zd = zd.substr(0, zd.indexOf('\n'))
-        if (zd.indexOf('[') >= 0) zd = zd.substr(0, zd.indexOf('['))
-        if (zd.length > 100) zd = zd.substr(0, 100) + '...'
-        z += zd
+        let z = "    '" + rpc + ': ' + short_descr((def.descr || (def.alias && rpcs[def.alias].descr) || ''))
 
-        console.log('### ' + rpc + '\n\n')
-        asArray(def.alias).forEach(_ => console.log(rpc + ' is just an alias for ' + link(_) + '.See Details there.\n\n'))
+        rpc_doc.push('### ' + rpc + '\n\n')
+        asArray(def.alias).forEach(_ => rpc_doc.push(rpc + ' is just an alias for ' + link(_) + '.See Details there.\n\n'))
         if (def.descr)
-            console.log(def.descr + '\n')
+            rpc_doc.push(def.descr + '\n')
         if (def.params) {
-            console.log("*Parameters:*\n")
-            print_object(def.params, '', true)
-            console.log()
+            rpc_doc.push("*Parameters:*\n")
+            print_object(def.params, '', true, rpc_doc)
+            rpc_doc.push()
             z += ' ' + Object.keys(def.params).map(_ => '<' + _ + '>').join(' ')
         }
         else if (!def.alias)
-            console.log("*Parameters:* - \n")
+            rpc_doc.push("*Parameters:* - \n")
         if (def.in3Params) {
-            console.log('The following in3-configuration will have an impact on the result:\n\n');
-            print_object(getType(def.in3Params), '')
-            console.log()
+            rpc_doc.push('The following in3-configuration will have an impact on the result:\n\n');
+            print_object(getType(def.in3Params), '', false, rpc_doc)
+            rpc_doc.push()
         }
-        if (def.validation) console.log('\n' + def.validation + '\n')
+        if (def.validation) rpc_doc.push('\n' + def.validation + '\n')
 
         if (def.returns) {
             if (def.returns.type) {
-                console.log('*Returns:* ' + (typeof def.returns.type === 'string' ? ('`' + def.returns.type + '`') : '`object`') + '\n\n' + def.returns.descr + '\n')
+                rpc_doc.push('*Returns:* ' + (typeof def.returns.type === 'string' ? ('`' + def.returns.type + '`') : '`object`') + '\n\n' + def.returns.descr + '\n')
                 const pt = getType(def.returns.type)
                 if (typeof pt === 'object') {
-                    console.log('\nThe return value contains the following properties :\n')
-                    print_object(pt, '')
+                    rpc_doc.push('\nThe return value contains the following properties :\n')
+                    print_object(pt, '', false, rpc_doc)
                 }
             }
             else if (def.returns.alias)
-                console.log('*Returns:*\n\nThe Result of `' + rpc + '` is the same as ' + link(def.returns.alias) + '. See Details there.\n')
+                rpc_doc.push('*Returns:*\n\nThe Result of `' + rpc + '` is the same as ' + link(def.returns.alias) + '. See Details there.\n')
             else
-                console.log('*Returns:*\n\n' + (def.returns.descr || '') + '\n')
+                rpc_doc.push('*Returns:*\n\n' + (def.returns.descr || '') + '\n')
         }
 
         if (def.proof) {
-            console.log('*Proof:*\n\n' + (def.proof.descr || '') + '\n')
+            rpc_doc.push('*Proof:*\n\n' + (def.proof.descr || '') + '\n')
             const pt = getType(def.proof.type)
             if (def.proof.alias)
-                console.log('The proof will be calculated as described in ' + link(def.proof.alias) + '. See Details there.\n\n')
+                rpc_doc.push('The proof will be calculated as described in ' + link(def.proof.alias) + '. See Details there.\n\n')
 
             if (pt) {
-                console.log("This proof section contains the following properties:\n\n")
-                print_object(pt, '')
-                console.log("\n\n")
+                rpc_doc.push("This proof section contains the following properties:\n\n")
+                print_object(pt, '', false, rpc_doc)
+                rpc_doc.push("\n\n")
             }
         }
 
@@ -119,21 +172,21 @@ for (const s of Object.keys(docs).sort()) {
             const is_json = (typeof data.result == 'object' || Array.isArray(data.result))
             if (ex.in3) data.in3 = ex.in3
 
-            console.log('*Example:*\n')
-            if (ex.descr) console.log('\n' + ex.descr + '\n')
+            rpc_doc.push('*Example:*\n')
+            if (ex.descr) rpc_doc.push('\n' + ex.descr + '\n')
 
             /*
-                        console.log('```yaml\n# ---- Request -----\n\n' + yaml.stringify(req))
-                        console.log('\n# ---- Response -----\n\n' + yaml.stringify(data))
-                        console.log('```\n')
+                        rpc_doc.push('```yaml\n# ---- Request -----\n\n' + yaml.stringify(req))
+                        rpc_doc.push('\n# ---- Response -----\n\n' + yaml.stringify(data))
+                        rpc_doc.push('```\n')
             */
-            console.log('```sh\n> in3 ' + (ex.cmdParams ? (ex.cmdParams + ' ') : '') + req.method + ' ' + (req.params.map(toCmdParam).join(' ').trim()) + (is_json ? ' | jq' : ''))
-            console.log(is_json ? JSON.stringify(data.result, null, 2) : '' + data.result)
-            console.log('```\n')
+            rpc_doc.push('```sh\n> in3 ' + (ex.cmdParams ? (ex.cmdParams + ' ') : '') + req.method + ' ' + (req.params.map(toCmdParam).join(' ').trim()) + (is_json ? ' | jq' : ''))
+            rpc_doc.push(is_json ? JSON.stringify(data.result, null, 2) : '' + data.result)
+            rpc_doc.push('```\n')
 
-            console.log('```js\n//---- Request -----\n\n' + JSON.stringify(req, null, 2))
-            console.log('\n//---- Response -----\n\n' + JSON.stringify(data, null, 2))
-            console.log('```\n')
+            rpc_doc.push('```js\n//---- Request -----\n\n' + JSON.stringify(req, null, 2))
+            rpc_doc.push('\n//---- Response -----\n\n' + JSON.stringify(data, null, 2))
+            rpc_doc.push('```\n')
 
         })
         z += "'"
@@ -141,6 +194,11 @@ for (const s of Object.keys(docs).sort()) {
     }
 }
 
-fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')), { encoding: 'utf8' })
+handle_config(config, '')
+
+fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
+fs.writeFileSync(doc_dir + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
+fs.writeFileSync(doc_dir + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
+fs.writeFileSync('../c/src/cmd/in3/args.h', 'const char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\n const char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
 
 

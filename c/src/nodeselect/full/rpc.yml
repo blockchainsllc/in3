@@ -6,7 +6,7 @@ in3:
       type: bool
       optional: true
       descr: if true the nodelist will be automaticly updated if the lastBlock is newer.
-      example: true
+      example: false
       default: true
 
     signatureCount:
@@ -15,6 +15,7 @@ in3:
       optional: true
       example: 2
       default: 1
+      cmd: s
 
     bootWeights:
       descr: if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
@@ -34,6 +35,7 @@ in3:
       descr: min stake of the server. Only nodes owning at least this amount will be chosen.
       type: uint
       optional: true
+      example: 10000000
 
     nodeProps:
       descr: used to identify the capabilities of the node.
@@ -47,18 +49,24 @@ in3:
       optional: true
       example: 3
       default: 2
+      cmd: 
+        - rc
 
     rpc:
       descr: url of one or more direct rpc-endpoints to use. (list can be comma seperated). If this is used, proof will automaticly be turned off.
       type: string
       optional: true
+      example: http://loalhost:8545
 
     nodes:
       descr: defining the nodelist. collection of JSON objects with chain Id (hex string) as key.
       optional: true
       example:
-        "0x1":
-          nodeList: []
+        contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f'
+        nodeList: 
+          - address: "0x45d45e6ff99e6c34a235d263965910298985fcfe"
+            url: "https://in3-v2.slock.it/mainnet/nd-1"
+            props: "0xFFFF" 
       type: 
         contract:
           descr: address of the registry contract. (This is the data-contract!)
@@ -102,6 +110,7 @@ in3:
         nodeList:
           descr: manual nodeList. As Value a array of Node-Definitions is expected.
           optional: true
+          array: true
           type:
             url:
               descr: URL of the node.
