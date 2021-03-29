@@ -501,9 +501,9 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
     }
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* cctx = pctx;
-      if (cctx->token->key == key("maxDAP"))
+      if (cctx->token->key == CONFIG_KEY("maxDAP"))
         conf->max_daps = d_int(cctx->token);
-      else if (cctx->token->key == key("maxDiff"))
+      else if (cctx->token->key == CONFIG_KEY("maxDiff"))
         conf->max_diff = d_int(cctx->token);
       else
         return IN3_EIGNORE;

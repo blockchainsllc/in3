@@ -168,7 +168,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
   switch (action) {
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* ctx = action_ctx;
-      if (ctx->token->key == key("key")) {
+      if (ctx->token->key == CONFIG_KEY("key")) {
         if (d_type(ctx->token) != T_BYTES || d_len(ctx->token) != 32) {
           ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
           return IN3_EINVAL;
@@ -176,7 +176,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
         eth_set_request_signer(ctx->client, ctx->token->data);
         return IN3_OK;
       }
-      if (ctx->token->key == key("pk")) {
+      if (ctx->token->key == CONFIG_KEY("pk")) {
         if (d_type(ctx->token) == T_BYTES) {
           if (d_len(ctx->token) != 32) {
             ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);

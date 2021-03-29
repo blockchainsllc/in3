@@ -245,18 +245,18 @@ char* in3_configure(in3_t* c, const char* config) {
   for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter)) {
     d_token_t* token = iter.token;
 
-    if (token->key == key("autoUpdateList")) {
+    if (token->key == CONFIG_KEY("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
     }
-    else if (token->key == key("chainType"))
+    else if (token->key == CONFIG_KEY("chainType"))
       ; // Ignore - handled within `chainId` case
-    else if (token->key == key("chainId")) {
+    else if (token->key == CONFIG_KEY("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
 
       // check if chainType is set
       int        ct_      = -1;
-      d_token_t* ct_token = d_get(json->result, key("chainType"));
+      d_token_t* ct_token = d_get(json->result, CONFIG_KEY("chainType"));
       if (ct_token) {
         ct_ = chain_type(ct_token);
         EXPECT_TOK(ct_token, ct_ != -1, "expected (btc|eth|ipfs|<u8-value>)");
@@ -270,11 +270,11 @@ char* in3_configure(in3_t* c, const char* config) {
       in3_client_register_chain(c, c->chain.chain_id, c->chain.type, 2);
       if (changed) in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
-    else if (token->key == key("signatureCount")) {
+    else if (token->key == CONFIG_KEY("signatureCount")) {
       EXPECT_TOK_U8(token);
       c->signature_count = (uint8_t) d_int(token);
     }
-    else if (token->key == key("finality")) {
+    else if (token->key == CONFIG_KEY("finality")) {
       EXPECT_TOK_U16(token);
 #ifdef POA
       if (c->chain.chain_id == CHAIN_ID_GOERLI)
@@ -282,24 +282,24 @@ char* in3_configure(in3_t* c, const char* config) {
 #endif
       c->finality = (uint16_t) d_int(token);
     }
-    else if (token->key == key("includeCode")) {
+    else if (token->key == CONFIG_KEY("includeCode")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_INCLUDE_CODE, (d_int(token) ? true : false));
     }
-    else if (token->key == key("bootWeights")) {
+    else if (token->key == CONFIG_KEY("bootWeights")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_BOOT_WEIGHTS, (d_int(token) ? true : false));
     }
-    else if (token->key == key("maxAttempts")) {
+    else if (token->key == CONFIG_KEY("maxAttempts")) {
       EXPECT_TOK_U16(token);
       EXPECT_CFG(d_int(token), "maxAttempts must be at least 1");
       c->max_attempts = d_int(token);
     }
-    else if (token->key == key("keepIn3")) {
+    else if (token->key == CONFIG_KEY("keepIn3")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_KEEP_IN3, (d_int(token) ? true : false));
     }
-    else if (token->key == key("debug")) {
+    else if (token->key == CONFIG_KEY("debug")) {
       if (d_int(token)) {
         in3_log_set_level(LOG_TRACE);
         in3_log_set_quiet(false);
@@ -307,23 +307,23 @@ char* in3_configure(in3_t* c, const char* config) {
       else
         in3_log_set_quiet(true);
     }
-    else if (token->key == key("stats")) {
+    else if (token->key == CONFIG_KEY("stats")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_STATS, (d_int(token) ? true : false));
     }
-    else if (token->key == key("useBinary")) {
+    else if (token->key == CONFIG_KEY("useBinary")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_BINARY, (d_int(token) ? true : false));
     }
-    else if (token->key == key("experimental")) {
+    else if (token->key == CONFIG_KEY("experimental")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_ALLOW_EXPERIMENTAL, (d_int(token) ? true : false));
     }
-    else if (token->key == key("useHttp")) {
+    else if (token->key == CONFIG_KEY("useHttp")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_HTTP, (d_int(token) ? true : false));
     }
-    else if (token->key == key("maxVerifiedHashes")) {
+    else if (token->key == CONFIG_KEY("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
       if (c->max_verified_hashes < d_long(token)) {
         c->chain.verified_hashes = _realloc(c->chain.verified_hashes,
@@ -335,18 +335,18 @@ char* in3_configure(in3_t* c, const char* config) {
       c->max_verified_hashes   = d_long(token);
       c->alloc_verified_hashes = c->max_verified_hashes;
     }
-    else if (token->key == key("timeout")) {
+    else if (token->key == CONFIG_KEY("timeout")) {
       EXPECT_TOK_U32(token);
       c->timeout = d_long(token);
     }
-    else if (token->key == key("proof")) {
+    else if (token->key == CONFIG_KEY("proof")) {
       EXPECT_TOK_STR(token);
       EXPECT_TOK(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");
       c->proof = strcmp(d_string(token), "full") == 0
                      ? PROOF_FULL
                      : (strcmp(d_string(token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
     }
-    else if (token->key == key("verifiedHashes")) {
+    else if (token->key == CONFIG_KEY("verifiedHashes")) {
       EXPECT_TOK_ARR(token);
       EXPECT_TOK(token, (unsigned) d_len(token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
       if (!c->chain.verified_hashes)
