@@ -152,7 +152,7 @@ static bool configure_arg(in3_t* c, char** args, int* index, int argc) {
   if (arg[1] && arg[1] != '-') {
     for (int i = 0; aliases[i]; i += 2) {
       if (strcmp(aliases[i], arg + 1) == 0) {
-        name    = alloca(strlen(aliases[i + 1] + 3));
+        name    = alloca(strlen(aliases[i + 1]) + 3);
         name[0] = (name[1] = '-');
         strcpy(name + 2, aliases[i + 1]);
         value = strchr(name, '=');
@@ -205,6 +205,9 @@ static bool configure_arg(in3_t* c, char** args, int* index, int argc) {
       continue;
     }
     for (; b; b--) sb_add_char(&sb, '}');
+
+    //    printf("_configure\n");
+    //    in3_log_info("configure %s\n", sb.data);
     char* error = in3_configure(c, sb.data);
     if (error)
       die(error);
@@ -834,6 +837,8 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
+    //    else if (strcmp(argv[i], "-x") == 0)
+    //      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
     else if (strcmp(argv[i], "-fo") == 0)
       recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)

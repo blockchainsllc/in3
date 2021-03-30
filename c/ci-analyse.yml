@@ -18,7 +18,7 @@ coverage:
   script:
     - mkdir cov_build; cd cov_build
     - cmake -DIN3API=true -DIN3_LIB=false -DUSE_CURL=false -DTEST=true -DZKSYNC=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
-    - make -j8 &&  make ptest
+    - make -j8 &&  make CTEST_OUTPUT_ON_FAILURE=1 test
     - ../scripts/lcov_report.sh | xargs llvm-cov report
     - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
     - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
