@@ -834,6 +834,8 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
+    else if (strcmp(argv[i], "-x") == 0)
+      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
     else if (strcmp(argv[i], "-fo") == 0)
       recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)
