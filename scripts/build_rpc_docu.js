@@ -82,7 +82,7 @@ function handle_config(conf, pre, title, descr) {
 
             }
         }
-        asArray(c.cmd).forEach(_ => main_aliases.push('    "' + _ + '", "' + pre + key + (c.type == 'bool' ? '=true' : '') + '",'));
+        asArray(c.cmd).forEach(_ => main_aliases.push('    "' + _ + '", "' + (c.alias || (pre + key + (c.type == 'bool' ? '=true' : ''))) + '",'));
         main_help.push(('--' + pre + key).padEnd(30) + (c.cmd ? ('-' + c.cmd) : '').padEnd(7) + short_descr(c.descr))
         let s = ''
         if (c.descr) s += '[' + short_descr(c.descr) + ']'

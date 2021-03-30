@@ -52,7 +52,16 @@ in3:
       example: true
       optional: true
       default: false
+      cmd: kin3
     
+    stats:
+      type: bool
+      descr: if true, requests sent will be used for stats.
+      example: false
+      optional: true
+      default: true
+    
+
     useBinary:
       type: bool
       descr: if true the client will use binary format. This will reduce the payload of the responses by about 60% but should only be used for embedded systems or when using the API, since this format does not include the propertynames anymore.

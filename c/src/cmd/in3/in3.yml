@@ -4,6 +4,11 @@ config:
     cmd: ns
     type: bool
     example: true
+  clearCache : 
+    descr: clears the cache before performing any operation.
+    cmd: ccache
+    type: bool
+    example: true
   eth :  
     cmd: e
     type: bool
@@ -49,13 +54,23 @@ config:
     type: uint
     descr: 'the gas limit to use when sending transactions. (default: 100000)'
     example: 100000
+  nonce :  
+    cmd: nonce
+    type: uint
+    descr: 'the nonce. (default: will be fetched useing eth_getTransactionCount)'
+    example: 2
+  test :  
+    cmd: test
+    type: string
+    descr: creates a new json-test written to stdout with the name as specified.
+    example: test_blockNumber
   path :  
     cmd: path
     type: string
     descr: 'the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000'
     example: '0x2c3c000000'
   sigtype:  
-    cmd: ns
+    cmd: st
     type: string
     enum:
       raw: hash the raw data
@@ -89,11 +104,6 @@ config:
     type: bool
     descr: if given the result will be returned as hex.
     example: true
-  keepin3  :  
-    cmd: kin3
-    type: bool
-    descr: if specified, the response including in3-section is returned
-    example: true
   debug :  
     cmd: debug
     type: bool
@@ -124,27 +134,27 @@ config:
     type: address
     descr: adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) 
     example: '0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6'
-  signatures :  
+  ms.signatures :  
     cmd: sigs
     type: bytes
     descr: add additional signatures, which will be useds when sending through a multisig! 
     example: 0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6ab00f111c32258f3a53bd1dead143dd5d7eae3737c7b0f21843afcdd27a1b8f0
-  response-in:  
+  response.in:  
     cmd: ri
-    type: string
+    type: bool
     descr: read response from stdin 
-    example: response.json
-  response-out:  
+    example: true
+  response.out:  
     cmd: ro
-    type: string
+    type: bool
     descr: write raw response to stdout 
-    example: response.json
-  file-in:  
+    example: true
+  file.in:  
     cmd: fi
     type: string
     descr: reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging) 
     example: record.txt
-  file-out:  
+  file.out:  
     cmd: fo
     type: string
     descr: records a request and writes the reproducable data in a file (including all cache-data, timestamps ...) 
@@ -164,12 +174,24 @@ config:
     type: bool
     descr: only sign, don't send the raw Transaction 
     example: true
+  noproof:
+    alias: proof=none
+    cmd: np
+    type: bool
+    descr: alias for --proof=none
+    example: true
+  nostats:
+    alias: stats=false
+    cmd: ns
+    type: bool
+    descr: alias for --stats=false, which will mark all requests as not counting in the stats
+    example: true
   version:  
     cmd: v
     type: bool
     descr: displays the version 
     example: true
-  help:  
+  help:
     cmd: h
     type: bool
     descr: displays this help message 

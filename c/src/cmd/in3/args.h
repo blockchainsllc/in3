@@ -3,7 +3,7 @@ const char* help_args = "\
 --finality                    -f     the number in percent needed in order reach finality (% of signature of the validators)\n\
 --includeCode                        if true, the request should include the codes of all accounts\n\
 --maxAttempts                 -a     max number of attempts in case a response is rejected\n\
---keepIn3                            if true, requests sent to the input sream of the comandline util will be send theor responses in the...\n\
+--keepIn3                     -kin3  if true, requests sent to the input sream of the comandline util will be send theor responses in the...\n\
 --useBinary                          if true the client will use binary format\n\
 --experimental                -x     iif true the client allows to use use experimental features, otherwise a exception is thrown if thos...\n\
 --timeout                            specifies the number of milliseconds before the request times out\n\
@@ -49,6 +49,7 @@ const char* help_args = "\
 --btc.maxDAP                         max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets\n\
 --btc.maxDiff                        max increase (in percent) of the difference between targets when accepting new targets\n\
 --nostats                     -ns    no stats if set requests will not be part of the official metrics and considered a service request\n\
+--clearCache                  -ccacheclears the cache before performing any operation\n\
 --eth                         -e     converts the result (as wei) to ether\n\
 --port                        -port  if specified it will run as http-server listening to the given port\n\
 --allowed-methods             -am    only works if port is specified and declares a comma-seperated list of rpc-methods which are allowed\n\
@@ -58,6 +59,8 @@ const char* help_args = "\
 --data                        -d     the data for a transaction\n\
 --gas_price                   -gp    the gas price to use when sending transactions\n\
 --gas                         -gas   the gas limit to use when sending transactions\n\
+--nonce                       -nonce the nonce\n\
+--test                        -test  creates a new json-test written to stdout with the name as specified\n\
 --path                        -path  the HD wallet derivation path \n\
 --sigtype                     -ns    the type of the signature data\n\
 --password                    -pwd   password to unlock the key\n\
@@ -65,21 +68,21 @@ const char* help_args = "\
 --wait                        -w     if given, instead returning the transaction, it will wait until the transaction is mined and return ...\n\
 --json                        -json  if given the result will be returned as json, which is especially important for eth_call results wit...\n\
 --hex                         -hex   if given the result will be returned as hex\n\
---keepin3                     -kin3  if specified, the response including in3-section is returned\n\
 --debug                       -debug if given incubed will output debug information when executing\n\
 --quiet                       -q     quiet\n\
 --human                       -h     human readable, which removes the json -structure and oly displays the values\n\
 --test-request                -tr    runs test request when showing in3_weights\n\
 --test-health-request         -thr   runs test request including health-check when showing in3_weights\n\
 --multisig                    -ms    adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig...\n\
---signatures                  -sigs  add additional signatures, which will be useds when sending through a multisig!\n\
---response-in                 -ri    read response from stdin\n\
---response-out                -ro    write raw response to stdout\n\
---file-in                     -fi    reads a prerecorded request from the filepath and executes it with the recorded data\n\
---file-out                    -fo    records a request and writes the reproducable data in a file (including all cache-data, timestamps \n\
+--ms.signatures               -sigs  add additional signatures, which will be useds when sending through a multisig!\n\
+--response.in                 -ri    read response from stdin\n\
+--response.out                -ro    write raw response to stdout\n\
+--file.in                     -fi    reads a prerecorded request from the filepath and executes it with the recorded data\n\
+--file.out                    -fo    records a request and writes the reproducable data in a file (including all cache-data, timestamps \n\
 --nodelist                    -nl    a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
 --bootnodes                   -bn    a coma seperated list of urls (or address:url) to be used as boot nodes\n\
 --onlysign                    -os    only sign, don't send the raw Transaction\n\
+--noproof                     -np    alias for --proof=none\n\
 --version                     -v     displays the version\n\
 --help                        -h     displays this help message\n\
 \n\
@@ -121,6 +124,7 @@ const char* aliases[] = {
     "c", "chainId",
     "f", "finality",
     "a", "maxAttempts",
+    "kin3", "keepIn3=true",
     "x", "experimental=true",
     "p", "proof",
     "l", "replaceLatestBlock",
@@ -137,6 +141,7 @@ const char* aliases[] = {
     "k", "key",
     "pk", "pk",
     "ns", "nostats=true",
+    "ccache", "clearCache=true",
     "e", "eth=true",
     "port", "port",
     "am", "allowed-methods",
@@ -146,6 +151,8 @@ const char* aliases[] = {
     "d", "data",
     "gp", "gas_price",
     "gas", "gas",
+    "nonce", "nonce",
+    "test", "test",
     "path", "path",
     "ns", "sigtype",
     "pwd", "password",
@@ -153,21 +160,21 @@ const char* aliases[] = {
     "w", "wait=true",
     "json", "json=true",
     "hex", "hex=true",
-    "kin3", "keepin3=true",
     "debug", "debug=true",
     "q", "quiet=true",
     "h", "human=true",
     "tr", "test-request=true",
     "thr", "test-health-request=true",
     "ms", "multisig",
-    "sigs", "signatures",
-    "ri", "response-in",
-    "ro", "response-out",
-    "fi", "file-in",
-    "fo", "file-out",
+    "sigs", "ms.signatures",
+    "ri", "response.in=true",
+    "ro", "response.out=true",
+    "fi", "file.in",
+    "fo", "file.out",
     "nl", "nodelist",
     "bn", "bootnodes",
     "os", "onlysign=true",
+    "np", "proof=none",
     "v", "version=true",
     "h", "help=true",
     NULL};
