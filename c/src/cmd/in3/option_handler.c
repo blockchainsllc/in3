@@ -1,0 +1,252 @@
+#include "args.h"
+#include "handlers.h"
+#include "helper.h"
+#include "req_exec.h"
+#include "transport.h"
+#include "tx.h"
+#include "weights.h"
+#define CHECK_OPTION(name, fn) \
+  if (strcmp(key, name) == 0) return fn;
+#ifndef IN3_VERSION
+#define IN3_VERSION "local"
+#endif
+
+static bool set_chainId(char* value, sb_t* conf) {
+  if (strstr(id, "://") == NULL) return false;
+  sb_add_chars(conf, "{\"rpc\":\"");
+  sb_add_escaped_chars(conf, value);
+  sb_add_chars(conf, "\"}");
+  return false;
+}
+
+bool show_help() {
+  recorder_print(0, "Usage: in3 <options> method <params> ... \n\n%s", name, help_args);
+  recorder_exit(0);
+  return true;
+}
+bool show_version() {
+  recorder_print(0, "in3 " IN3_VERSION "\nbuild " __DATE__ " with");
+#ifdef TEST
+  recorder_print(0, " -DTEST=true");
+#endif
+#ifdef EVM_GAS
+  recorder_print(0, " -DEVM_GAS=true");
+#endif
+#ifdef CMD
+  recorder_print(0, " -DCMD=true");
+#endif
+#ifdef IN3_MATH_FAST
+  recorder_print(0, " -DFAST_MATH=true");
+#endif
+#ifdef IN3_SERVER
+  recorder_print(0, " -DIN3_SERVER=true");
+#endif
+#ifdef USE_CURL
+  recorder_print(0, " -DUSE_CURL=true");
+#else
+  recorder_print(0, " -DUSE_CURL=false");
+#endif
+  recorder_print(0, "\n(c) " IN3_COPYRIGHT "\n");
+  recorder_exit(0);
+  return true;
+}
+
+#ifdef NODESELECT_DEF
+static void set_nodelist(in3_t* c, char* nodes, sb_t* sb, bool update) {
+  if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS | (c->flags & FLAGS_ALLOW_EXPERIMENTAL);
+  char*                 cpy = alloca(strlen(nodes) + 1);
+  in3_nodeselect_def_t* nl  = in3_nodeselect_def_data(c);
+  if (!update && nl->nodelist_upd8_params) {
+    _free(nl->nodelist_upd8_params);
+    nl->nodelist_upd8_params = NULL;
+  }
+  memcpy(cpy, nodes, strlen(nodes) + 1);
+  char* s = NULL;
+  sb_add_chars(sb, "{\"nodeRegistry\":{\"needsUpdate\":false,\"nodeList\":[");
+  for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
+    if (next != cpy) sb_add_char(sb, ',');
+    str_range_t address, url;
+
+    if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
+      address = (str_range_t){.data = next, .len = s - next};
+      url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
+    }
+    else {
+      address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
+      url     = (str_range_t){.data = next, .len = strlen(next)};
+    }
+    sb_add_chars(sb, "{\"address\":\"");
+    sb_add_range(sb, address.data, 0, address.len);
+    sb_add_chars(sb, "\",\"url\":\"");
+    sb_add_range(sb, url.data, 0, url.len);
+    sb_add_chars(sb, "\",\"props\":\"0xffff\"}");
+  }
+  sb_add_chars(sb, "]}}}");
+  return false;
+}
+#endif
+
+static bool set_data(char* value) {
+  if (strcmp(value, "-") == 0)
+    get_txdata()->data = get_std_in();
+  else if (*value == '0' && value[1] == 'x')
+    get_txdata()->data = hex_to_new_bytes(value + 2, strlen(value) - 2);
+  else {
+    FILE*   f          = fopen(value, "r");
+    bytes_t content    = readFile(f);
+    get_txdata()->data = hex_to_new_bytes((char*) content.data + 2, content.len - 2);
+    fclose(f);
+  }
+  return true;
+}
+static bool set_string(char** dst, char* value) {
+  *dst = value;
+  return true;
+}
+static bool set_uint64(uint64_t* dst, char* value) {
+  // TODO support gwei or hex
+  *dst = (uint64_t) atoll(value);
+  return true;
+}
+static bool set_uint32(uint32_t* dst, char* value) {
+  // TODO support gwei or hex
+  *dst = (uint32_t) atoi(value);
+  return true;
+}
+static bool set_create2(char* value, sb_t* sb) {
+  if (strlen(value) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
+  char tmp[177], t2[500];
+  memcpy(tmp, c2val, 177);
+  tmp[42] = tmp[109] = 0;
+  sprintf(t2, "{\"zksync\":{\"signer_type\":\"create2\",\"create2\":{\"creator\":\"%s\",\"codehash\":\"%s\",\"saltarg\":\"%s\"}}}", tmp, tmp + 43, tmp + 110);
+  sb_add_chars(sb, t2);
+  return false;
+}
+static bool set_recorder(in3_t* c, char* value, sb_t* conf, int argc, char** argv, bool write) {
+  if (write)
+    recorder_write_start(c, value, argc, argv);
+  else
+    recorder_read_start(c, value);
+  return true;
+}
+static bool set_pk(in3_t* c, char* value, sb_t* conf, int argc, char** argv) {
+  if (value[0] != '0' || value[1] != 'x') {
+    read_pk(value, get_argument(argc, argv, "-pwd", "--password", true), c, NULL);
+    return true;
+  }
+  else
+    return false;
+}
+static bool set_flag(uint32_t* dst, uint32_t val, char* value) {
+  if (strcmp(value, "true") == 0)
+    *dst |= val;
+  else
+    *dst ^= val;
+  return true;
+}
+static bool set_quiet() {
+  in3_log_set_level(LOG_FATAL);
+  return true;
+}
+static bool set_debug() {
+  in3_log_set_quiet(false);
+  in3_log_set_level(LOG_TRACE);
+  *get_output_conf() |= out_debug;
+  return true;
+}
+
+#ifdef LEDGER_NANO
+static bool set_path(in3_t* c, char* value) {
+  if (value[0] == '0' && value[1] == 'x') {
+    bytes32_t path;
+    hex_to_bytes(value, -1, path, 5);
+    eth_ledger_set_signer_txn(c, path);
+    return true;
+  }
+  else
+    die("Invalid path for nano ledger");
+}
+#endif
+#ifdef MULTISIG
+static bool set_ms(in3_t* c, char* value) {
+  address_t adr;
+  if (hex_to_bytes(value, -1, adr, 20) != 20) die("-ms must be exactly 20 bytes");
+  add_gnosis_safe(c, adr);
+  return true;
+}
+#endif
+bool handle_option(in3_t* c, char* key, char* value, sb_t* conf, int argc, char** argv) {
+  CHECK_OPTION("test", set_test_transport(c, value))
+  CHECK_OPTION("clearCache", true)
+  CHECK_OPTION("password", true)
+  CHECK_OPTION("help", show_help())
+  CHECK_OPTION("version", show_version())
+  CHECK_OPTION("chainId", set_chainId(value, conf))
+  CHECK_OPTION("from", set_string(&get_txdata()->from, value))
+  CHECK_OPTION("to", set_string(&get_txdata()->to, value))
+  CHECK_OPTION("gas", set_uint64(&get_txdata()->gas, value))
+  CHECK_OPTION("gas_price", set_uint64(&get_txdata()->gas_price, value))
+  CHECK_OPTION("nonce", set_uint64(&get_txdata()->nonce, value))
+  CHECK_OPTION("wait", set_uint32(&get_txdata()->wait, "1"))
+  CHECK_OPTION("block", set_string(&get_txdata()->block, value))
+  CHECK_OPTION("value", set_string(&get_txdata()->value, get_wei(value)))
+  CHECK_OPTION("zksync.create2", set_create2(value, conf))
+  CHECK_OPTION("test-request", set_flag(get_weightsdata(), weight_test_request, value))
+  CHECK_OPTION("test-health-request", set_flag(get_weightsdata(), weight_health, value))
+  CHECK_OPTION("response.in", set_recorder(c, value, conf, argc, argv, false))
+  CHECK_OPTION("response.out", set_recorder(c, value, conf, argc, argv, true))
+  CHECK_OPTION("file.in", set_recorder(c, value, conf, argc, argv, false))
+  CHECK_OPTION("file.out", set_recorder(c, value, conf, argc, argv, true))
+  CHECK_OPTION("ms.signatures", true)
+  CHECK_OPTION("multisig", set_ms(c, value))
+  CHECK_OPTION("human", set_flag(get_output_conf(), out_human, value))
+  CHECK_OPTION("eth", set_flag(get_output_conf(), out_eth, value))
+  CHECK_OPTION("hex", set_flag(get_output_conf(), out_hex, value))
+  CHECK_OPTION("json", set_flag(get_output_conf(), out_json, value))
+  CHECK_OPTION("quiet", set_quiet())
+  CHECK_OPTION("port", set_uint32(&get_req_exec()->port, value))
+  CHECK_OPTION("allowed-methods", set_string(&get_req_exec()->allowed_methods, value))
+  CHECK_OPTION("onlysign", set_onlyshow_rawtx())
+  CHECK_OPTION("sigtype", set_string((&get_txdata()->signtype,value))
+  CHECK_OPTION("debug", set_debug())
+#ifdef NODESELECT_DEF
+  CHECK_OPTION("nodelist", set_nodelist(value, conf, false))
+  CHECK_OPTION("bootnodes", set_nodelist(value, conf, true))
+  CHECK_OPTION("pk", set_pk(c, value, conf, argc, argv))
+#endif
+#ifdef LEDGER_NANO
+  CHECK_OPTION("path", set_path(c, valuev))
+#endif
+  return false;
+}
+
+void init_recorder(int* argc, char*** argv) {
+  char* file = get_argument(*argc, *argv, "-fi", "--file.in", true);
+  if (file)
+    recorder_update_cmd(file, argc, argv);
+}
+
+void init_env(in3_t* c, int argc, char* argv[]) {
+  // handle clear cache opt before initializing cache
+  if (get_argument(argc, argv, "-ccache", "--clearCache", false))
+    storage_clear(NULL);
+  // use the storagehandler to cache data in .in3
+  in3_register_file_storage(c);
+
+  // PK
+  if (getenv("IN3_PK") && !get_argument(argc, argv, "-pk", "--pk", true)) {
+    char*     pks = _strdupn(getenv("IN3_PK"), -1);
+    bytes32_t pk;
+    for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) {
+      hex_to_bytes(cc, -1, pk, 32);
+      eth_set_pk_signer(c, pk);
+    }
+  }
+
+  // handle chainId
+  if (getenv("IN3_CHAIN")) configure(c, "chainId", getenv("IN3_CHAIN"));
+
+#ifdef ZKSYNC
+  if (getenv("IN3_ZKS")) configure(c, "zksync.provider_url", getenv("IN3_ZKS"));
+#endif
+}
