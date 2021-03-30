@@ -90,10 +90,7 @@
 
 // helpstring
 void show_help(char* name) {
-  recorder_print(0, "Usage: %s <options> method <params> ... \n\
-\n\
-%s",
-                 name, help_args);
+  recorder_print(0, "Usage: %s <options> method <params> ... \n\n%s",  name, help_args);
 }
 _Noreturn static void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
