@@ -112,7 +112,7 @@ bool configure_arg(in3_t* c, char** args, int* index, int argc) {
   if (arg[1] && arg[1] != '-') {
     for (int i = 0; aliases[i]; i += 2) {
       if (strcmp(aliases[i], arg + 1) == 0) {
-        name    = alloca(strlen(aliases[i + 1] + 3));
+        name    = alloca(strlen(aliases[i + 1]) + 3);
         name[0] = (name[1] = '-');
         strcpy(name + 2, aliases[i + 1]);
         value = strchr(name, '=');
