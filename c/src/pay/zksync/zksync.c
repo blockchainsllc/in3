@@ -288,10 +288,16 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
       }
       _free(conf->musig_urls);
     }
-    conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
-    for (int i = 0; i < d_len(urls); i++) {
-      char* s = d_get_string_at(urls, i);
-      if (s) conf->musig_urls[i] = _strdupn(s, -1);
+    if (d_type(urls) == T_STRING) {
+      conf->musig_urls    = _calloc(2, sizeof(char*));
+      conf->musig_urls[1] = _strdupn(d_string(urls), -1);
+    }
+    else if (d_type(urls) == T_ARRAY) {
+      conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
+      for (int i = 0; i < d_len(urls); i++) {
+        char* s = d_get_string_at(urls, i);
+        if (s) conf->musig_urls[i] = _strdupn(s, -1);
+      }
     }
   }
   d_token_t* create2 = d_get(ctx->token, CONFIG_KEY("create2"));
