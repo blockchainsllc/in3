@@ -722,6 +722,15 @@ static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports
     }
   }
 
+  // looks like we were not able to send out the first request, so waiting for the second won't help.
+  node_match_t* w = ctx->nodes;
+  for (int j = 0; w; j++, w = w->next) {
+    if (ctx->raw_response[j].state == IN3_WAITING && !ctx->raw_response[j].data.data) {
+      in3_ctx_add_response(ctx, j, IN3_ERPC, "The request could not be send!", -1, 1);
+      return;
+    }
+  }
+
   req_set_error(ctx, "waiting to fetch more responses, but no cptr was registered", IN3_ENOTSUP);
 }
 
@@ -741,45 +750,44 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
     in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[i], i == 0 ? request->payload : "");
 
   // handle it (only if there is a transport)
-  if (in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_SEND, request) == IN3_OK) {
+  in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_SEND, request);
 
-    // debug output
-    node_match_t* node = request->req->nodes;
-    for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
-      if (request->req->raw_response[i].state != IN3_WAITING) {
-        char* data = request->req->raw_response[i].data.data;
+  // debug output
+  node_match_t* node = request->req->nodes;
+  for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
+    if (request->req->raw_response[i].state != IN3_WAITING) {
+      char* data = request->req->raw_response[i].data.data;
 #ifdef DEBUG
-        data = format_json(data);
+      data = format_json(data);
 #endif
-        in3_log_trace(request->req->raw_response[i].state
-                          ? "... response(%s): \n... " COLOR_RED_STR "\n"
-                          : "... response(%s): \n... " COLOR_GREEN_STR "\n",
-                      node ? node->url : "intern", data);
+      in3_log_trace(request->req->raw_response[i].state
+                        ? "... response(%s): \n... " COLOR_RED_STR "\n"
+                        : "... response(%s): \n... " COLOR_GREEN_STR "\n",
+                    node ? node->url : "intern", data);
 #ifdef DEBUG
-        _free(data);
+      _free(data);
 #endif
+    }
+  }
+
+  // in case we have a cptr, we need to save it in the transports
+  if (request && request->cptr) {
+    // find a free spot
+    int index = -1;
+    for (int i = 0; i < transports->len; i++) {
+      if (!transports->req[i].req) {
+        index = i;
+        break;
       }
     }
-
-    // in case we have a cptr, we need to save it in the transports
-    if (request && request->cptr) {
-      // find a free spot
-      int index = -1;
-      for (int i = 0; i < transports->len; i++) {
-        if (!transports->req[i].req) {
-          index = i;
-          break;
-        }
-      }
-      if (index == -1) {
-        transports->req = transports->len ? _realloc(transports->req, sizeof(ctx_req_t) * (transports->len + 1), sizeof(ctx_req_t) * transports->len) : _malloc(sizeof(ctx_req_t));
-        index           = transports->len++;
-      }
-
-      // store the pointers
-      transports->req[index].req = request->req;
-      transports->req[index].ptr = request->cptr;
+    if (index == -1) {
+      transports->req = transports->len ? _realloc(transports->req, sizeof(ctx_req_t) * (transports->len + 1), sizeof(ctx_req_t) * transports->len) : _malloc(sizeof(ctx_req_t));
+      index           = transports->len++;
     }
+
+    // store the pointers
+    transports->req[index].req = request->req;
+    transports->req[index].ptr = request->cptr;
   }
 
   // we will cleanup even though the reponses may still be pending
