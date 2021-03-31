@@ -47,7 +47,7 @@ endif()
 
 add_executable(in3 
   helper.c 
-  main2.c 
+  main.c 
   option_handler.c 
   rpc_handler.c 
   req_exec.c 

@@ -548,7 +548,6 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t   seed = bytes(NULL, 0);
   bytes32_t hash;
   FILE*     r = NULL;
   if (d_len(ctx->params) == 1) {
