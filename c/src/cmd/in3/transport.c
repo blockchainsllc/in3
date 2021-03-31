@@ -1,3 +1,4 @@
+#include "../../core/client/request_internal.h"
 #include "helper.h"
 #ifdef USE_CURL
 #include "../../transport/curl/in3_curl.h"
