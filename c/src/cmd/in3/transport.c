@@ -69,7 +69,7 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
 #elif TRANSPORTS
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #else
-  in3_ret_t r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
+  in3_ret_t r = action && plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
