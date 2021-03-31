@@ -62,7 +62,7 @@ static bool set_nodelist(in3_t* c, char* nodes, sb_t* sb, bool update) {
   if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS | (c->flags & FLAGS_ALLOW_EXPERIMENTAL);
   char*                 cpy = alloca(strlen(nodes) + 1);
   in3_nodeselect_def_t* nl  = in3_nodeselect_def_data(c);
-  if (!update && nl->nodelist_upd8_params) {
+  if (!update && nl && nl->nodelist_upd8_params) {
     _free(nl->nodelist_upd8_params);
     nl->nodelist_upd8_params = NULL;
   }
