@@ -1,9 +1,4 @@
 config:
-  nostats : 
-    descr: no stats if set requests will not be part of the official metrics and considered a service request
-    cmd: ns
-    type: bool
-    example: true
   clearCache : 
     descr: clears the cache before performing any operation.
     cmd: ccache
