@@ -43,6 +43,7 @@ subcmds=(
     'eth_sendTransactionAndWait: signs and sends a Transaction, but then waits until the transaction receipt can be verified <tx>'
     'eth_sign: The sign method calculates an Ethereum specific signature with:  <account> <message>'
     'eth_signTransaction: Signs a transaction that can be submitted to the network at a later time using with eth_sendRawTrans... <tx>'
+    'in3_createKey: Generates 32 random bytes <seed>'
     'keccak: Returns Keccak-256 (not the standardized SHA3-256) of the given data'
     'net_version: the Network Version (currently 1)'
     'sha256: Returns sha-256 of the given data <data>'

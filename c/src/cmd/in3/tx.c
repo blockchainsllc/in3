@@ -1,13 +1,13 @@
 #include "tx.h"
 #include "helper.h"
+static tx_t _tx = {0};
 
 tx_t* get_txdata() {
-  static tx_t _tx = {0};
   return &_tx;
 }
 
 // prepare a eth_call or eth_sendTransaction
-abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, uint64_t gas_price, char* value, bytes_t* data, char* from) {
+static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, uint64_t gas_price, char* value, bytes_t* data, char* from) {
   char*      error = NULL;
   bytes_t    rdata = {0};
   abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
@@ -76,4 +76,8 @@ abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, ui
   sb_add_chars(args, params->data);
   sb_free(params);
   return req;
+}
+
+void encode_abi(in3_t* c, sb_t* args) {
+  _tx.abi_sig = prepare_tx(_tx.sig, resolve(c, _tx.to), args, _tx.block, _tx.gas, _tx.gas_price, _tx.value, _tx.data, _tx.from);
 }

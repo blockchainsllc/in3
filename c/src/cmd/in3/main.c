@@ -58,6 +58,7 @@
 #endif
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
 #include "../../nodeselect/full/cache.h"
@@ -609,7 +610,7 @@ static in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, voi
 #elif TRANSPORTS
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #else
-  in3_ret_t r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
+  in3_ret_t r = req_set_error(req->req, "No transport supported in the client", IN3_ECONFIG);
 #endif
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     last_response = b_new((uint8_t*) req->req->raw_response[0].data.data, req->req->raw_response[0].data.len);
@@ -1352,9 +1353,6 @@ int main(int argc, char* argv[]) {
   }
 
   in3_log_debug("..sending request %s %s\n", method, args->data);
-#ifdef NODESELECT_DEF
-  in3_chain_t* chain = &c->chain;
-#endif
 
   if (wait && strcmp(method, "eth_sendTransaction") == 0) method = "eth_sendTransactionAndWait";
 
@@ -1374,7 +1372,8 @@ int main(int argc, char* argv[]) {
   in3_client_rpc_raw(c, sb->data, &result, &error);
 
 #ifdef NODESELECT_DEF
-  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  in3_chain_t*          chain = &c->chain;
+  in3_nodeselect_def_t* nl    = in3_nodeselect_def_data(c);
   // Update nodelist if a newer latest block was reported
   if (chain && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;

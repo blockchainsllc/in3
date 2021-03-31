@@ -17,7 +17,7 @@ in3_ret_t       debug_transport(void* plugin_data, in3_plugin_act_t action, void
   in3_http_request_t* req = plugin_ctx;
   if (action == PLGN_ACT_TRANSPORT_SEND) {
 #ifndef DEBUG
-    if (debug_mode)
+    if (*get_output_conf() & out_debug)
       fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
     if (in_response.len) {
@@ -42,12 +42,12 @@ in3_ret_t       debug_transport(void* plugin_data, in3_plugin_act_t action, void
 #elif TRANSPORTS
   in3_ret_t r = send_http(NULL, action, plugin_ctx);
 #else
-  in3_ret_t r = plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
+  in3_ret_t r = req_set_error(req->req, "No transport supported in the client", IN3_ECONFIG);
 #endif
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
     last_response = b_new((uint8_t*) req->req->raw_response[0].data.data, req->req->raw_response[0].data.len);
 #ifndef DEBUG
-    if (debug_mode) {
+    if (*get_output_conf() & out_debug) {
       if (req->req->raw_response[0].state == IN3_OK)
         fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->req->raw_response[0].data.data);
       else
@@ -91,6 +91,7 @@ void init_transport(in3_t* c) {
 bool set_test_transport(in3_t* c, char* name) {
   test_name = name;
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, test_transport, NULL, true);
+  return true;
 }
 
 bool set_onlyshow_rawtx() {
@@ -98,11 +99,16 @@ bool set_onlyshow_rawtx() {
   return true;
 }
 
-bool set_response_file(bool is_ine) {
+bool is_onlyshow_rawtx() {
+  return only_show_raw_tx;
+}
+
+bool set_response_file(bool is_in) {
   if (is_in)
     in_response = readFile(stdin);
   else
     out_response = true;
+  return true;
 }
 
 void check_last_output() {

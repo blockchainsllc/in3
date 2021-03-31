@@ -1,3 +1,11 @@
+
+#ifndef MAIN_HELPER_H
+#define MAIN_HELPER_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/version.h"
@@ -7,6 +15,7 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../tools/recorder/recorder.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
@@ -37,8 +46,8 @@ void print_val(d_token_t* t);
 
 char* get_argument(int argc, char* argv[], char* alias, char* arg, bool has_value);
 
-uint32_t* get_output_conf();
-
+uint32_t*   get_output_conf();
+const char* get_help_args();
 typedef enum output {
   out_human = 1,
   out_hex   = 2,
@@ -46,3 +55,10 @@ typedef enum output {
   out_eth   = 8,
   out_debug = 16
 } output_t;
+
+void display_result(char* method, char* result);
+#ifdef __cplusplus
+}
+#endif
+
+#endif

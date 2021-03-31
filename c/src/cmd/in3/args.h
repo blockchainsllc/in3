@@ -1,3 +1,9 @@
+// This is a generated file, please don't edit it manually!
+
+#include <stdlib.h>
+
+const char* bool_props[]={ "includeCode", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help",  NULL};
+
 const char* help_args = "\
 --chainId                     -c     the chainId or the name of a known chain\n\
 --finality                    -f     the number in percent needed in order reach finality (% of signature of the validators)\n\
@@ -114,6 +120,8 @@ pk2public <privatekey>\n\
    \n\
 ecrecover <msg> <signature>\n\
    extracts the address and public key from a signature\n\
+   \n\
+createKey generates a new private key. See in3_createKey.\n\
    \n\
 key <keyfile>\n\
    reads the private key from JSON-Keystore file and returns the private key.\n\

@@ -1,7 +1,7 @@
 #include "req_exec.h"
+#include "../../tools/recorder/recorder.h"
 #include "../http-server/http_server.h"
 #include "helper.h"
-
 req_exec_t* get_req_exec() {
   static req_exec_t val = {0};
   return &val;
@@ -78,10 +78,15 @@ void check_server(in3_t* c) {
   if (get_req_exec()->port) {
 #ifdef IN3_SERVER
     // start server
-    http_run_server(port, c, allowed_methods);
+    http_run_server(get_req_exec()->port, c, get_req_exec()->allowed_methods);
     recorder_exit(0);
 #else
     die("You need to compile in3 with -DIN3_SERVER=true to start the server.");
 #endif
+  }
+  else {
+    in3_log_info("in3 " IN3_VERSION " - reading json-rpc from stdin. (exit with ctrl C)\n________________________________________________\n");
+    execute(c, stdin);
+    recorder_exit(0);
   }
 }

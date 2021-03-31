@@ -228,6 +228,9 @@ rpc:
     <msg> <signature>
     extracts the address and public key from a signature
 
+  createKey: |
+    generates a new private key. See in3_createKey.
+
   key: |
     <keyfile>
     reads the private key from JSON-Keystore file and returns the private key.

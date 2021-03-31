@@ -1,8 +1,38 @@
+#include "../../init/in3_init.h"
+#include "../../nodeselect/full/nodelist.h"
+#include "../../nodeselect/full/nodeselect_def.h"
 #include "handlers.h"
 #include "helper.h"
 #include "req_exec.h"
 #include "transport.h"
 #include "tx.h"
+
+static void send_request(in3_t* c, int argc, char** argv, char* method, sb_t* args, char** result, char** error) {
+  sb_t* sb = sb_new("{\"method\":\"");
+  sb_add_chars(sb, method);
+  sb_add_chars(sb, "\",\"params\":");
+  sb_add_chars(sb, args->data);
+  char* ms_sigs = get_argument(argc, argv, "-sigs", "--ms.signatures", true);
+  if (ms_sigs) {
+    sb_add_chars(sb, ",\"in3\":{\"msSigs\":\"");
+    sb_add_chars(sb, ms_sigs);
+    sb_add_chars(sb, "\"}}");
+  }
+  else
+    sb_add_chars(sb, "}");
+  in3_client_rpc_raw(c, sb->data, result, error);
+  check_last_output();
+#ifdef NODESELECT_DEF
+  in3_chain_t*          chain = &c->chain;
+  in3_nodeselect_def_t* nl    = in3_nodeselect_def_data(c);
+  // Update nodelist if a newer latest block was reported
+  if (chain && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
+    char *r = NULL, *e = NULL;
+    if (chain->type == CHAIN_ETH)
+      in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
+  }
+#endif
+}
 
 int main(int argc, char* argv[]) {
   // we want to verify all
@@ -19,7 +49,9 @@ int main(int argc, char* argv[]) {
 
   // parse arguments
   for (int i = 1; i < argc; i++) {
+    // is it a argument?
     if (configure_arg(c, argv, &i, argc)) continue;
+
     // now handle arguments for special methods
     if (method == NULL)
       method = argv[i];
@@ -42,10 +74,22 @@ int main(int argc, char* argv[]) {
   }
   sb_add_char(args, ']');
 
+  // start the server?
   if (!method) check_server(c);
 
-  // execute
-  char *result = NULL, *error = NULL;
+  // handle special cmd-methods
+  if (handle_rpc(c, &method, args, argc, argv)) recorder_exit(0);
 
-  check_last_output();
+  // execute
+  in3_log_debug("..sending request %s %s\n", method, args->data);
+  char *result = NULL, *error = NULL;
+  send_request(c, argc, argv, method, args, &result, &error);
+
+  if (error)
+    die(error);
+  else if (!result)
+    die("No result");
+  else
+    display_result(method, result);
+  recorder_exit(0);
 }

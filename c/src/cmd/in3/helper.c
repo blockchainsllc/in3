@@ -36,13 +36,20 @@
  * simple commandline-util sending in3-requests.
  * */
 #include "helper.h"
+#include "../../api/eth1/abi.h"
+#include "../../api/eth1/eth_api.h"
+#include "../../signer/pk-signer/signer.h"
+#include "../../tools/recorder/recorder.h"
+#include "args.h"
 #include "handlers.h"
+#include "transport.h"
+#include "tx.h"
 
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
 #endif
 
-_Noreturn void die(char* msg) {
+void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
   recorder_exit(EXIT_FAILURE);
 }
@@ -50,6 +57,10 @@ void print_hex(uint8_t* data, int len) {
   recorder_print(0, "0x");
   for (int i = 0; i < len; i++) recorder_print(0, "%02x", data[i]);
   recorder_print(0, "\n");
+}
+
+const char* get_help_args() {
+  return help_args;
 }
 
 // helper to read the password from tty
@@ -68,19 +79,26 @@ void read_pass(char* pw, int pwsize) {
   recorder_print(1, COLORT_RESETHIDDEN); //reveal typing
 }
 
+static bool is_number(char* val) {
+  for (; *val; val++) {
+    if (*val > '9' || *val < '0') return false;
+  }
+  return true;
+}
+
 void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
   sb_t sb = {0};
 
   // handle options
   if (handle_option(c, name, value, &sb, argc, argv)) return;
-  if (sb.data) {
+  if (!sb.data) {
     char* p = strtok(name, ".");
     sb_add_char(&sb, '{');
     int b = 1;
     while (p) {
       char* next = strtok(NULL, ".");
       if (!next) {
-        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
+        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0 || is_number(value))
           sb_print(&sb, "\"%s\":%s", p, value);
         else
           sb_print(&sb, "\"%s\":\"%s\"", p, value);
@@ -104,47 +122,62 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
 void configure(in3_t* c, char* name, char* value) {
   configure_opt(c, name, value, 0, NULL);
 }
+static bool is_bool_opt(char* name) {
+  for (int i = 0; bool_props[i]; i++) {
+    if (strcmp(bool_props[i], name) == 0) return true;
+  }
+  return false;
+}
 bool configure_arg(in3_t* c, char** args, int* index, int argc) {
-  if (arg[0] != '-') return false;
   const char* arg   = args[*index];
   char*       value = strchr(arg, '=');
   char*       name  = NULL;
+  if (arg[0] != '-') return false;
   if (arg[1] && arg[1] != '-') {
     for (int i = 0; aliases[i]; i += 2) {
       if (strcmp(aliases[i], arg + 1) == 0) {
-        name    = alloca(strlen(aliases[i + 1]) + 3);
-        name[0] = (name[1] = '-');
-        strcpy(name + 2, aliases[i + 1]);
-        value = strchr(name, '=');
-        if (!value) {
-          if (argc - 1 <= *index) die("missing value for option");
-          *index += 1;
-          value = args[*index];
+        name = alloca(strlen(aliases[i + 1]) + 1);
+        strcpy(name, aliases[i + 1]);
+        value = strchr(aliases[i + 1], '=');
+        if (value) {
+          *strchr(name, '=') = 0;
+          value++;
         }
-        else
-          *value = 0;
         break;
       }
     }
-    if (!name) die("unknown option!");
-  }
-
-  if (!value) {
-    value = "true";
-    name  = alloca(strlen(arg) + 1);
-    strcpy(name, arg);
-  }
-  else {
-    value++;
     if (!name) {
-      name = alloca(value - arg);
-      strncpy(name, arg, value - arg - 1);
+      char* err = alloca(strlen(arg) + 200);
+      sprintf(err, "Unknown option '%s'!", arg);
+      die(err);
+    }
+  }
+  else if (arg[1] != '-')
+    return false;
+
+  if (!name) {
+    if (value) {
+      value++;
+      name = alloca(value - arg - 2);
+      strncpy(name, arg + 2, value - arg - 3);
       name[value - arg - 1] = 0;
+    }
+    else {
+      name = alloca(strlen(arg) - 1);
+      strcpy(name, arg + 2);
     }
   }
 
-  if (name[0] == '-' && name[1] == '-') name += 2;
-  if (!value) return false;
+  if (!value) {
+    if (is_bool_opt(name))
+      value = "true";
+    else {
+      if (argc - 1 <= *index) die("missing value for option");
+      *index += 1;
+      value = args[*index];
+    }
+  }
+
   configure_opt(c, name, value, argc, args);
   return true;
 }
@@ -289,7 +322,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
     uint8_t* pk_seed = malloc(32);
     if (decrypt_key(key_json->result, pwd, pk_seed)) die("Invalid key");
 
-    if (!method || strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0) {
+    if (!c && method && (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)) {
       char tmp[64];
       bytes_to_hex(pk_seed, 32, tmp);
       recorder_print(0, "0x%s\n", tmp);
@@ -305,7 +338,7 @@ char* get_argument(int argc, char* argv[], char* alias, char* arg, bool has_valu
   for (int i = 1; i < argc; i++) {
     if (alias && strcmp(alias, argv[i]) == 0)
       return has_value ? (i + 1 < argc ? argv[i + 1] : NULL) : argv[i];
-    if (strncmp(arg, argv[i], l)) {
+    if (strncmp(arg, argv[i], l) == 0) {
       if (argv[i][l] == 0)
         return has_value ? (i + 1 < argc ? argv[i + 1] : NULL) : argv[i];
       else if (argv[i][l] == '=')
@@ -315,7 +348,52 @@ char* get_argument(int argc, char* argv[], char* alias, char* arg, bool has_valu
   return NULL;
 }
 
-uint32_t* get_output_conf() {
-  static uint32_t conf = 0;
+static uint32_t conf = 0;
+uint32_t*       get_output_conf() {
   return &conf;
+}
+
+void display_result(char* method, char* result) {
+  // if the result is a string, we remove the quotes
+  if ((conf & out_human) == 0 && result[0] == '"' && result[strlen(result) - 1] == '"') {
+    memmove(result, result + 1, strlen(result));
+    result[strlen(result) - 1] = 0;
+  }
+
+  abi_sig_t* req = get_txdata()->abi_sig;
+
+  // if the request was a eth_call, we decode the result
+  if (req) {
+    int l = strlen(result) / 2 - 1;
+    if (l) {
+      char*       error = NULL;
+      uint8_t*    tmp   = alloca(l + 1);
+      json_ctx_t* res   = abi_decode(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)), &error);
+      if (error) die(error);
+      if (conf & out_json)
+        recorder_print(0, "%s\n", d_create_json(res, res->result));
+      else
+        print_val(res->result);
+    }
+    // if not we simply print the result
+  }
+  else if (conf & out_human) {
+    json_ctx_t* jctx = parse_json(result);
+    if (jctx)
+      print_val(jctx->result);
+    else
+      recorder_print(0, "%s\n", result);
+  }
+  else if (is_onlyshow_rawtx() && strcmp(method, "in3_prepareTx") == 0 && get_txdata()->from)
+    recorder_print(0, "%s %s\n", result, get_txdata()->from);
+  else {
+    if (conf & out_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
+      double val = char_to_long(result, strlen(result));
+      recorder_print(0, "%.3f\n", val / 1000000000000000000L);
+    }
+    else if ((conf & out_hex) == 0 && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
+      recorder_print(0, "%" PRIu64 "\n", char_to_long(result, strlen(result)));
+    else
+      recorder_print(0, "%s\n", result);
+  }
 }
