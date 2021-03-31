@@ -26,7 +26,7 @@ static void send_request(in3_t* c, int argc, char** argv, char* method, sb_t* ar
   in3_chain_t*          chain = &c->chain;
   in3_nodeselect_def_t* nl    = in3_nodeselect_def_data(c);
   // Update nodelist if a newer latest block was reported
-  if (chain && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
+  if (chain && nl && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
     if (chain->type == CHAIN_ETH)
       in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
