@@ -297,7 +297,7 @@ static bool is_user_error(d_token_t* error, char** err_msg) {
   *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_string(error, K_MESSAGE);
   // here we need to find a better way to detect user errors
   // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
-  return *err_msg && strncmp(*err_msg, "Error:", 6) != 0 && strncmp(*err_msg, "TypeError:", 10) != 0;
+  return *err_msg && strncmp(*err_msg, "Error:", 6) != 0 && strncmp(*err_msg, "TypeError:", 10) != 0 && strncmp(*err_msg, "Error connect", 13) != 0;
 }
 
 NONULL static void clear_response(in3_response_t* response) {
