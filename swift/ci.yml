@@ -25,7 +25,6 @@ swift:
     - cd swift/In3
     - swift build -Xlinker -L../../mac_build/lib
     - swift test -Xlinker -L../../mac_build/lib
-  needs: []
   artifacts:
     paths:
       - swift/In3/.build
