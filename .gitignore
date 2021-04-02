@@ -31,6 +31,7 @@ bin/
 .classpath
 .project
 *.class
+python/**/*.pyc
 target/
 .cproject
 .overcommit.yml
@@ -49,3 +50,8 @@ c/src/third-party/hidapi/compile
 c/src/third-party/hidapi/aclocal.m4
 c/examples/CMakeLists.txt
 c/.clang-format
+swift/**/.DS_Store
+swift/**/.build
+swift/**/Packages
+swift/**/*.xcodeproj
+swift/**/xcuserdata/
