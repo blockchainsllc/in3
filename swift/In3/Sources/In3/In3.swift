@@ -1,4 +1,4 @@
-import In3Sys
+import CIn3
 
 public class In3 {
   var in3: UnsafeMutablePointer<in3_t>? = nil

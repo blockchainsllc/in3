@@ -1,4 +1,4 @@
-module In3Sys [system] {
+module CIn3 [system] {
   header "../../c/include/in3.rs.h"
   link "in3"
   export *

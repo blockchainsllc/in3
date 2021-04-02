@@ -4,15 +4,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "In3Sys",
+    name: "CIn3",
     products: [
-        .library(name: "In3Sys", targets: ["In3Sys"]),
+        .library(name: "CIn3", targets: ["CIn3"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
     ],
     targets: [
-        .systemLibrary(name: "In3Sys"),
+        .systemLibrary(name: "CIn3"),
     ]
 )

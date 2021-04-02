@@ -17,6 +17,7 @@
 
 swift:
   stage: bindings
+  needs: []
   tags:
     - mac-os
   script:
