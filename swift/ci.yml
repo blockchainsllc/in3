@@ -17,14 +17,15 @@
 
 swift:
   stage: bindings
-  needs:
-    - mac_os
   tags:
     - mac-os
   script:
-    - cd swift/In3
-    - swift build -Xlinker -L../../mac_build/lib
-    - swift test -Xlinker -L../../mac_build/lib
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=release -DCMD=false .. && make
+    - cd ../swift/In3
+    - swift build -Xlinker -L../../build/lib
+    - swift test -Xlinker -L../../build/lib
   artifacts:
     paths:
       - swift/In3/.build
