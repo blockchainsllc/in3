@@ -6,6 +6,10 @@ version = "0.1.0"
 authors = ["Matter Labs Team <hello@matter-labs.io>"]
 edition = "2018"
 
+[net]
+retry = 2                   # network retries
+git-fetch-with-cli = true   # use the `git` executable for git operations
+
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
