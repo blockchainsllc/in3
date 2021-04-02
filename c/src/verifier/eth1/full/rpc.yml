@@ -1,0 +1,218 @@
+eth:
+
+  eth_estimateGas:
+    descr: calculates the gas needed to execute a transaction. for spec see [eth_estimateGas](https://eth.wiki/json-rpc/API#eth_estimateGas) 
+    params:
+      tx:
+        descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
+        type: transaction
+      block:
+        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        type: uint | string
+          
+    returns:
+      descr: the amount of gass needed.
+    proof:
+      alias: eth_call
+
+
+  eth_call:
+    descr: calls a function of a contract (or simply executes the evm opcodes) and returns the result. for spec see [eth_call](https://eth.wiki/json-rpc/API#eth_call) 
+    params:
+      tx:
+        descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
+        type:
+          to:
+            descr: address of the contract
+            type: address
+          from:
+            descr: sender of the address 
+            type: address
+            optional: true
+          value:
+            descr: value in wei to send
+            type: uint
+            optional: true
+          gas:
+            descr: the gas to be send along
+            type: uint
+            optional: true
+            default: 21000
+          gasPrice:
+            descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+            type: uint
+            optional: true
+          nonce:
+            descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+            type: uint
+            optional: true
+          data:
+            descr: the data-section of the transaction, which includes the functionhash and the abi-encoded arguments
+            type: bytes
+            optional: true
+      block:
+        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        type: uint | string
+          
+    returns:
+      descr: the abi-encoded result of the function.
+    
+    example:
+      request:
+        - to: "0x2736D225f85740f42D17987100dc8d58e9e16252"
+          data: "0x5cf0f3570000000000000000000000000000000000000000000000000000000000000001"
+        - latest
+      response: 0x0000000000000000000000000...
+      in3:
+        proof:
+          type: callProof
+          block: 0xf90215a0c...
+          signatures:
+          - "..."
+          accounts:
+            '0x2736D225f85740f42D17987100dc8d58e9e16252':
+              accountProof:
+              - 0xf90211a095...
+              - 0xf90211a010...
+              - 0xf90211a062...
+              - 0xf90211a091...
+              - 0xf90211a03a...
+              - 0xf901f1a0d1...
+              - 0xf8b18080808...
+              address: '0x2736d225f85740f42d17987100dc8d58e9e16252'
+              balance: '0x4fffb'
+              codeHash: '0x2b8bdc59ce78fd8c248da7b5f82709e04f2149c39e899c4cdf4587063da8dc69'
+              nonce: '0x1'
+              storageHash: '0xbf904e79d4ebf851b2380d81aab081334d79e231295ae1b87f2dd600558f126e'
+              storageProof:
+              - key: '0x0'
+                proof:
+                - 0xf901f1a0db74...
+                - 0xf87180808080...
+                - 0xe2a0200decd9....05
+                value: '0x5'
+              - key: '0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e569'
+                proof:
+                - 0xf901f1a0db74...
+                - 0xf891a0795a99...
+                - 0xe2a020ab8540...43
+                value: '0x43'
+              - key: '0xaaab8540682e3a537d17674663ea013e92c83fdd69958f314b4521edb3b76f1a'
+                proof:
+                - 0xf901f1a0db747...
+                - 0xf891808080808...
+                - 0xf843a0207bd5ee...
+                value: '0x68747470733a2f2f696e332e736c6f636b2e69742f6d61696e6e65742f6e642d'
+    proof:
+      type:
+        type:
+          descr: proof type, which is `callProof`
+          type: string
+        block:
+          descr: serialized blockheader
+          type: bytes
+        accounts:
+          descr:  Object with the addresses of all accounts required to run the call as keys. This includes also all storage values (SLOAD) including proof used. The DataStructure of the Proof for each account is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof).
+          type:
+            address:
+              descr: address of the account
+              type: address
+            balance:
+              descr: the balance
+              type: uint
+            nonce:
+              descr: nonce of the account
+              type: uint
+            codeHash:
+              descr: codehash of the account
+              type: bytes32
+            storageHash:
+              descr: MerkleRoot of the Storage Trie
+              type: bytes32
+            accountProof:
+              descr: MerkleProof of this account-node
+              type: bytes[]
+            storageProof:
+              descr: Array of Proofs for all required storage values
+              type:
+                key:
+                  descr: the storage key (or hash)
+                  type: uint
+                value:
+                  descr: the storage value
+                  type: bytes32
+                proof:
+                  descr: the merkleProof of the value down to the storageHash as MerkleRoot
+                  type: bytes[]
+
+        signatures:
+          descr: the array of signatures for all used blocks in the result.
+          type: signature[]
+        finalityBlocks:
+          descr: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
+          type: bytes[]
+
+      descr: |
+        Verifying the result of an `eth_call` is a little bit more complex because the response is a result of executing opcodes in the vm. The only way to do so is to reproduce it and execute the same code. That's why a call proof needs to provide all data used within the call. This means:
+
+        - All referred accounts including the code (if it is a contract), storageHash, nonce and balance.
+        - All storage keys that are used (this can be found by tracing the transaction and collecting data based on the `SLOAD`-opcode).
+        - All blockdata, which are referred at (besides the current one, also the `BLOCKHASH`-opcodes are referring to former blocks). 
+
+        For verifying, you need to follow these steps:
+
+        1. Serialize all used blockheaders and compare the blockhash with the signed hashes. (See [BlockProof](#blockproof))
+
+        2. Verify all used accounts and their storage as showed in [Account Proof](#account-proof).
+
+        3. Create a new [VM](https://github.com/ethereumjs/ethereumjs-vm) with a MerkleTree as state and fill in all used value in the state:
+
+
+        ```js 
+          // create new state for a vm
+          const state = new Trie()
+          const vm = new VM({ state })
+
+          // fill in values
+          for (const adr of Object.keys(accounts)) {
+            const ac = accounts[adr]
+
+            // create an account-object
+            const account = new Account([ac.nonce, ac.balance, ac.stateRoot, ac.codeHash])
+
+            // if we have a code, we will set the code
+            if (ac.code) account.setCode( state, bytes( ac.code ))
+
+            // set all storage-values
+            for (const s of ac.storageProof)
+              account.setStorage( state, bytes32( s.key ), rlp.encode( bytes32( s.value )))
+
+            // set the account data
+            state.put( address( adr ), account.serialize())
+          }
+
+          // add listener on each step to make sure it uses only values found in the proof
+          vm.on('step', ev => {
+            if (ev.opcode.name === 'SLOAD') {
+                const contract = toHex( ev.address ) // address of the current code
+                const storageKey = bytes32( ev.stack[ev.stack.length - 1] ) // last element on the stack is the key
+                if (!getStorageValue(contract, storageKey))
+                  throw new Error(`incomplete data: missing key ${storageKey}`)
+            }
+            /// ... check other opcodes as well
+          })
+
+          // create a transaction
+          const tx = new Transaction(txData)
+
+          // run it
+          const result = await vm.runTx({ tx, block: new Block([block, [], []]) })
+
+          // use the return value
+          return result.vm.return
+        ```
+
+        In the future, we will be using the same approach to verify calls with ewasm.
+
+        If the request requires proof (`verification`: `proof`) the node will provide an Call Proof as part of the in3-section of the response. Details on how create the proof can be found in the [CallProof-Chapter](#call-proof).
+

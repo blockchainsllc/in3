@@ -75,6 +75,7 @@
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
 #include "../../verifier/eth1/nano/chainspec.h"
+#include "args.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
@@ -89,118 +90,7 @@
 
 // helpstring
 void show_help(char* name) {
-  recorder_print(0, "Usage: %s <options> method <params> ... \n\
-\n\
--c, -chain     the chain to use. (mainnet, goerli, ewc, btc, ipfs, local or any RPCURL)\n\
--a             max number of attempts before giving up (default 5)\n\
--rc            number of request per try (default 1)\n\
--ns            no stats if set requests will not be part of the official metrics and considered a service request\n\
--p, -proof     specifies the Verification level: (none, standard(default), full)\n\
--md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
--np            short for -p none\n\
--eth           converts the result (as wei) to ether.\n\
--l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
--s, -signs     number of signatures to use when verifying.\n\
--f             finality : number of blocks on top of the current one.\n\
--port          if specified it will run as http-server listening to the given port.\n\
--am            only works if port is specified and declares a comma-seperated list of rpc-methods which are allowed. All other will be rejected.\n\
--b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
--to            the target address of the call\n\
--from          the sender of a call or tx (only needed if no signer is registered)\n\
--d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
--gp,-gas_price the gas price to use when sending transactions. (default: use eth_gasPrice) \n\
--gas           the gas limit to use when sending transactions. (default: 100000) \n\
--pk            the private key as raw as keystorefile \n\
--path          the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000 \n\
--st, -sigtype  the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw \n\
--pwd           password to unlock the key \n\
--value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
--w, -wait      if given, instead returning the transaction, it will wait until the transaction is mined and return the transactionreceipt.\n\
--json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
--hex           if given the result will be returned as hex.\n\
--kin3          if kin3 is specified, the response including in3-section is returned\n\
--bw            initialize with weights from boot nodes.\n\
--debug         if given incubed will output debug information when executing. \n\
--k             32bytes raw private key to sign requests.\n\
--q             quit. no additional output. \n\
--h             human readable, which removes the json -structure and oly displays the values.\n\
--tr            runs test request when showing in3_weights \n\
--thr           runs test request including health-check when showing in3_weights \n\
--ms            adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) \n\
--sigs          add additional signatures, which will be useds when sending through a multisig! \n\
--ri            read response from stdin \n\
--ro            write raw response to stdout \n\
--fi            reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging) \n\
--fo            records a request and writes the reproducable data in a file (including all cache-data, timestamps ...) \n\
--nl            a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
--bn            a coma seperated list of urls (or address:url) to be used as boot nodes\n\
--zks           zksync server to use\n\
--zkss          zksync signatures to pass along when signing\n\
--zka           zksync account to use\n\
--zkat          zksync account type could be one of 'pk'(default), 'contract' or 'create2'\n\
--zsk           zksync signer seed (if not set this key will be derrived from account unless create2)\n\
--zc2           zksync create2 arguments in the form <creator>:<codehash>:<saltarg>. if set the account type is also changed to create2\n\
--zms           public keys of a musig schnorr signatures to sign with\n\
--zmu           url for signing service matching the first remote public key\n\
--zvpm          method for calling to verify the proof\n\
--zcpm          method for calling to create the proof\n\
--os            only sign, don't send the raw Transaction \n\
--x             support experimental features \n\
--version       displays the version \n\
--help          displays this help message \n\
-\n\
-As method, the following can be used:\n\
-\n\
-<JSON-RPC>-method\n\
-  all official supported JSON-RPC-Method may be used.\n\
-\n\
-send <signature> ...args\n\
-  based on the -to, -value and -pk a transaction is build, signed and send. \n\
-  if there is another argument after send, this would be taken as a function-signature of the smart contract followed by optional argument of the function.\n\
-\n\
-call <signature> ...args\n\
-  uses eth_call to call a function. Following the call argument the function-signature and its arguments must follow. \n\
-\n\
-in3_nodeList\n\
-  returns the nodeList of the Incubed NodeRegistry as json.\n\
-\n\
-in3_sign <blocknumber>\n\
-  requests a node to sign. in order to specify the signer, you need to pass the url with -c\n\
-\n\
-ipfs_get <ipfs_hash>\n\
-  requests and verifies the content for a given ipfs-hash and write the content to stdout\n\
-\n\
-ipfs_put\n\
-  reads a content from stdin and pushes to the ipfs-network. it write the ipfs-hash to stdout.\n\
-\n\
-in3_stats\n\
-  returns the stats of a node. unless you specify the node with -c <rpcurl> it will pick a random node.\n\
-\n\
-abi_encode <signature> ...args\n\
-  encodes the arguments as described in the method signature using ABI-Encoding\n\
-\n\
-abi_decode <signature> data\n\
-  decodes the data based on the signature.\n\
-\n\
-pk2address <privatekey>\n\
-  extracts the public address from a private key\n\
-\n\
-pk2public <privatekey>\n\
-  extracts the public key from a private key\n\
-\n\
-ecrecover <msg> <signature>\n\
-  extracts the address and public key from a signature\n\
-\n\
-key <keyfile>\n\
-  reads the private key from JSON-Keystore file and returns the private key.\n\
-\n\
-in3_weights\n\
-  list all current weights and stats\n\
-\n\
-in3_ens <domain> <field>\n\
-  resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
-\n",
-                 name);
+  recorder_print(0, "Usage: %s <options> method <params> ... \n\n%s", name, help_args);
 }
 _Noreturn static void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
@@ -250,6 +140,80 @@ void read_pass(char* pw, int pwsize) {
     i++;
   }
   recorder_print(1, COLORT_RESETHIDDEN); //reveal typing
+}
+
+static bool configure_arg(in3_t* c, char** args, int* index, int argc) {
+  UNUSED_VAR(index);
+  UNUSED_VAR(argc);
+  const char* arg   = args[*index];
+  char*       value = strchr(arg, '=');
+  char*       name  = NULL;
+  if (arg[0] != '-') return false;
+  if (arg[1] && arg[1] != '-') {
+    for (int i = 0; aliases[i]; i += 2) {
+      if (strcmp(aliases[i], arg + 1) == 0) {
+        name    = alloca(strlen(aliases[i + 1]) + 3);
+        name[0] = (name[1] = '-');
+        strcpy(name + 2, aliases[i + 1]);
+        value = strchr(name, '=');
+        if (!value) {
+          if (argc - 1 <= *index) die("missing value for option");
+          *index += 1;
+          value = args[*index];
+        }
+        else
+          *value = 0;
+        break;
+      }
+    }
+    if (!name) die("unknown option!");
+  }
+
+  if (!value) {
+    //    die("invalid syntax for --key=value");
+    value = "true";
+    name  = alloca(strlen(arg) + 1);
+    strcpy(name, arg);
+  }
+  else {
+    value++;
+    if (!name) {
+      name = alloca(value - arg);
+      strncpy(name, arg, value - arg - 1);
+      name[value - arg - 1] = 0;
+    }
+  }
+
+  if (name[0] == '-' && name[1] == '-') {
+    name += 2;
+    char* p  = strtok(name, ".");
+    sb_t  sb = {0};
+    sb_add_char(&sb, '{');
+    int b = 1;
+    while (p) {
+      char* next = strtok(NULL, ".");
+      if (!next) {
+        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
+          sb_print(&sb, "\"%s\":%s", p, value);
+        else
+          sb_print(&sb, "\"%s\":\"%s\"", p, value);
+        break;
+      }
+      b++;
+      sb_print(&sb, "\"%s\":{", p);
+      p = next;
+      continue;
+    }
+    for (; b; b--) sb_add_char(&sb, '}');
+
+    //    printf("_configure\n");
+    //    in3_log_info("configure %s\n", sb.data);
+    char* error = in3_configure(c, sb.data);
+    if (error)
+      die(error);
+    return true;
+  }
+  return false;
 }
 
 // accepts a value as
@@ -873,8 +837,8 @@ int main(int argc, char* argv[]) {
       run_test_request = 1;
     else if (strcmp(argv[i], "-thr") == 0)
       run_test_request = 2;
-    else if (strcmp(argv[i], "-x") == 0)
-      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
+    //    else if (strcmp(argv[i], "-x") == 0)
+    //      c->flags |= FLAGS_ALLOW_EXPERIMENTAL;
     else if (strcmp(argv[i], "-fo") == 0)
       recorder_write_start(c, argv[++i], argc, argv);
     else if (strcmp(argv[i], "-fi") == 0)
@@ -981,15 +945,15 @@ int main(int argc, char* argv[]) {
       i++;
     }
     // now handle arguments for special methods
+    else if (configure_arg(c, argv, &i, argc))
+      continue;
     else {
       if (method == NULL)
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
-      else if (strcmp(method, "sign") == 0 && !data) {
-
+      else if (strcmp(method, "sign") == 0 && !data)
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      }
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {

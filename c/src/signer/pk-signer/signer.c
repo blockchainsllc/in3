@@ -36,6 +36,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/ecdsa.h"
@@ -132,13 +133,42 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM, eth_sign_pk, k, false);
 }
 
+static in3_ret_t add_raw_key(in3_rpc_handle_ctx_t* ctx) {
+  if (d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_BYTES || d_len(ctx->params + 1) != 32)
+    return req_set_error(ctx->req, "one argument with 32 bytes is required!", IN3_EINVAL);
+  address_t adr;
+  get_address(d_bytes(ctx->params + 1)->data, adr);
+  add_key(ctx->req->client, d_bytes(ctx->params + 1)->data);
+  return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
+}
+
+static in3_ret_t eth_accounts(in3_rpc_handle_ctx_t* ctx) {
+  sb_t*                  sb    = in3_rpc_handle_start(ctx);
+  bool                   first = true;
+  in3_sign_account_ctx_t sc    = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0};
+  for (in3_plugin_t* p = ctx->req->client->plugins; p; p = p->next) {
+    if (p->acts & PLGN_ACT_SIGN_ACCOUNT && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc) == IN3_OK) {
+      for (int i = 0; i < sc.accounts_len; i++) {
+        sb_add_rawbytes(sb, first ? "[\"0x" : "\",\"0x", bytes(sc.accounts + i * 20, 20), 20);
+        first = false;
+      }
+      if (sc.accounts) {
+        _free(sc.accounts);
+        sc.accounts_len = 0;
+      }
+    }
+  }
+  sb_add_chars(sb, first ? "[]" : "\"]");
+  return in3_rpc_handle_finish(ctx);
+}
+
 // RPC-Handler
 static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
   UNUSED_VAR(data);
   switch (action) {
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* ctx = action_ctx;
-      if (ctx->token->key == key("key")) {
+      if (ctx->token->key == CONFIG_KEY("key")) {
         if (d_type(ctx->token) != T_BYTES || d_len(ctx->token) != 32) {
           ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
           return IN3_EINVAL;
@@ -146,7 +176,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
         eth_set_request_signer(ctx->client, ctx->token->data);
         return IN3_OK;
       }
-      if (ctx->token->key == key("pk")) {
+      if (ctx->token->key == CONFIG_KEY("pk")) {
         if (d_type(ctx->token) == T_BYTES) {
           if (d_len(ctx->token) != 32) {
             ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
@@ -175,33 +205,8 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
 
     case PLGN_ACT_RPC_HANDLE: {
       in3_rpc_handle_ctx_t* ctx = action_ctx;
-      if (strcmp(ctx->method, "in3_addRawKey") == 0) {
-        if (d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_BYTES || d_len(ctx->params + 1) != 32)
-          return req_set_error(ctx->req, "one argument with 32 bytes is required!", IN3_EINVAL);
-        address_t adr;
-        get_address(d_bytes(ctx->params + 1)->data, adr);
-        add_key(ctx->req->client, d_bytes(ctx->params + 1)->data);
-        return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
-      }
-      if (strcmp(ctx->method, "eth_accounts") == 0) {
-        sb_t*                  sb    = in3_rpc_handle_start(ctx);
-        bool                   first = true;
-        in3_sign_account_ctx_t sc    = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0};
-        for (in3_plugin_t* p = ctx->req->client->plugins; p; p = p->next) {
-          if (p->acts & PLGN_ACT_SIGN_ACCOUNT && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc) == IN3_OK) {
-            for (int i = 0; i < sc.accounts_len; i++) {
-              sb_add_rawbytes(sb, first ? "[\"0x" : "\",\"0x", bytes(sc.accounts + i * 20, 20), 20);
-              first = false;
-            }
-            if (sc.accounts) {
-              _free(sc.accounts);
-              sc.accounts_len = 0;
-            }
-          }
-        }
-        sb_add_chars(sb, first ? "[]" : "\"]");
-        return in3_rpc_handle_finish(ctx);
-      }
+      TRY_RPC("in3_addRawKey", add_raw_key(ctx))
+      TRY_RPC("eth_accounts", eth_accounts(ctx))
       return IN3_EIGNORE;
     }
 

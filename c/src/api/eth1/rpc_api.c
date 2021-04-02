@@ -35,6 +35,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/client/version.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
@@ -156,6 +157,13 @@ static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
   sha256_Final(&c, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
+static in3_ret_t web3_clientVersion(in3_rpc_handle_ctx_t* ctx) {
+  // for local chains, we return the client version of rpc endpoint.
+  return ctx->req->client->chain.chain_id == CHAIN_ID_LOCAL
+             ? IN3_EIGNORE
+             : in3_rpc_handle_with_string(ctx, "\"Incubed/" IN3_VERSION "\"");
+}
+
 static const char* UNITS[] = {
     "wei", "",
     "kwei", "\x03",
@@ -424,10 +432,11 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t        data     = d_to_bytes(d_get_at(ctx->params, 0));
-  const bytes_t* pk       = d_get_bytes_at(ctx->params, 1);
-  char*          sig_type = d_get_string_at(ctx->params, 2);
-  if (!sig_type) sig_type = "raw";
+  const bool     is_eth_sign = strcmp(ctx->method, "eth_sign") == 0;
+  bytes_t        data        = d_to_bytes(d_get_at(ctx->params, is_eth_sign ? 1 : 0));
+  const bytes_t* pk          = d_get_bytes_at(ctx->params, is_eth_sign ? 0 : 1);
+  char*          sig_type    = d_get_string_at(ctx->params, 2);
+  if (!sig_type) sig_type = is_eth_sign ? "eth_sign" : "raw";
 
   //  if (!pk) return req_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
   if (!data.data) return req_set_error(ctx->req, "Missing message", IN3_EINVAL);
@@ -469,28 +478,35 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
     sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
-  sb_add_char(sb, '{');
-  sb_add_bytes(sb, "\"message\":", &data, 1, false);
-  sb_add_char(sb, ',');
-  if (strcmp(sig_type, "raw") == 0) {
-    bytes32_t hash_val;
-    bytes_t   hash_bytes = bytes(hash_val, 32);
-    keccak(data, hash_val);
-    sb_add_bytes(sb, "\"messageHash\":", &hash_bytes, 1, false);
+  if (is_eth_sign) {
+    sb_add_rawbytes(sb, "\"0x", sig_bytes, 0);
+    sb_add_char(sb, '"');
   }
-  else
-    sb_add_bytes(sb, "\"messageHash\":", &data, 1, false);
-  sb_add_char(sb, ',');
-  sb_add_bytes(sb, "\"signature\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature.data, 32);
-  sb_add_char(sb, ',');
-  sb_add_bytes(sb, "\"r\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sc.signature.data + 32, 32);
-  sb_add_char(sb, ',');
-  sb_add_bytes(sb, "\"s\":", &sig_bytes, 1, false);
-  char v[15];
-  sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature.data[64]);
-  sb_add_chars(sb, v);
+  else {
+    sb_add_char(sb, '{');
+    sb_add_bytes(sb, "\"message\":", &data, 1, false);
+    sb_add_char(sb, ',');
+    if (strcmp(sig_type, "raw") == 0) {
+      bytes32_t hash_val;
+      bytes_t   hash_bytes = bytes(hash_val, 32);
+      keccak(data, hash_val);
+      sb_add_bytes(sb, "\"messageHash\":", &hash_bytes, 1, false);
+    }
+    else
+      sb_add_bytes(sb, "\"messageHash\":", &data, 1, false);
+    sb_add_char(sb, ',');
+    sb_add_bytes(sb, "\"signature\":", &sig_bytes, 1, false);
+    sig_bytes = bytes(sc.signature.data, 32);
+    sb_add_char(sb, ',');
+    sb_add_bytes(sb, "\"r\":", &sig_bytes, 1, false);
+    sig_bytes = bytes(sc.signature.data + 32, 32);
+    sb_add_char(sb, ',');
+    sb_add_bytes(sb, "\"s\":", &sig_bytes, 1, false);
+    char v[15];
+    sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature.data[64]);
+    sb_add_chars(sb, v);
+  }
+
   _free(sc.signature.data);
   return in3_rpc_handle_finish(ctx);
 }
@@ -531,15 +547,33 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t*  data   = d_get_bytes_at(ctx->params, 0);
-  bytes_t*  from_b = d_get_bytes_at(ctx->params, 1);
+  CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
+  d_token_t* tx_data = ctx->params + 1;
+  bytes_t    tx_raw  = bytes(NULL, 0);
+  bytes_t*   from_b  = NULL;
+  bytes_t*   data    = NULL;
+  if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
+#if defined(ETH_BASIC)
+    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw))
+    from_b = d_get_bytes(tx_data, K_FROM);
+    data   = &tx_raw;
+#else
+    return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+#endif
+  }
+  else {
+    data   = d_get_bytes_at(ctx->params, 0);
+    from_b = d_get_bytes_at(ctx->params, 1);
+  }
+
   address_t from;
   memset(from, 0, 20);
   if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
   bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_sign_raw_tx(*data, ctx->req, from, &dst))
+  TRY_FINAL(eth_sign_raw_tx(*data, ctx->req, from, &dst), _free(tx_raw.data))
 #else
+  _free(tx_raw.data);
   if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
@@ -552,14 +586,19 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(action);
 
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
+  TRY_RPC("web3_sha3", in3_sha3(ctx))
+  TRY_RPC("keccak", in3_sha3(ctx))
+  TRY_RPC("sha256", in3_sha256(ctx))
+  TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
+  TRY_RPC("eth_sign", in3_sign_data(ctx))
+  TRY_RPC("eth_signTransaction", in3_signTx(ctx))
+
+  if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
   TRY_RPC("in3_abiEncode", in3_abiEncode(ctx))
   TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
   TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))
   TRY_RPC("in3_ens", in3_ens(ctx))
-  TRY_RPC("web3_sha3", in3_sha3(ctx))
-  TRY_RPC("keccak", in3_sha3(ctx))
-  TRY_RPC("sha256", in3_sha256(ctx))
   TRY_RPC("in3_toWei", in3_toWei(ctx))
   TRY_RPC("in3_fromWei", in3_fromWei(ctx))
   TRY_RPC("in3_config", in3_config(ctx))

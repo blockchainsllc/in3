@@ -464,7 +464,8 @@ in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
   return filter_remove(eth_basic_get_filters(in3), id);
 }
-
+// same as "eth_getFilterChanges"
+// or "eth_getFilterLogs"
 in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
   in3_filter_handler_t* filters = eth_basic_get_filters(in3);
   if (filters == NULL) return IN3_EFIND;
