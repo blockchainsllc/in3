@@ -1,14 +1,10 @@
 import CIn3
 import Foundation
 
-enum IncubedError: Error {
-    case config(message: String)
-    case rpc(message: String)
-}
-
 
 public class In3 {
   var in3: UnsafeMutablePointer<in3_t>? = nil
+  var transport: (_ url: String, _ method:String, _ payload:Data, _ headers: [String], _ cb:(_ data:TransportResult)->Void) -> Void
 
   internal func makeCString(from str: String) -> UnsafeMutablePointer<Int8> {
     let count = str.utf8.count + 1
@@ -20,6 +16,7 @@ public class In3 {
   }
 
   public init(_ config: String) throws {
+    transport = httpTransfer
     in3 = in3_for_chain_auto_init(1)
     try configure(config)
   }
