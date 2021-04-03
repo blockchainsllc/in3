@@ -18,6 +18,7 @@ cmake-build-debug/
 .idea/
 .settings/
 # Vim
+swift/.swiftpm/
 python/htmlcov
 wasm/test/.nyc_output
 wasm/test/coverage

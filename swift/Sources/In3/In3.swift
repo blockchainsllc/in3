@@ -10,11 +10,10 @@ enum IncubedError: Error {
 public class In3 {
   var in3: UnsafeMutablePointer<in3_t>? = nil
 
-  func makeCString(from str: String) -> UnsafeMutablePointer<Int8> {
+  internal func makeCString(from str: String) -> UnsafeMutablePointer<Int8> {
     let count = str.utf8.count + 1
     let result = UnsafeMutablePointer<Int8>.allocate(capacity: count)
     str.withCString { (baseAddress) in
-        // func initialize(from: UnsafePointer<Pointee>, count: Int) 
         result.initialize(from: baseAddress, count: count)
     }
     return result
