@@ -1,5 +1,11 @@
 import CIn3
 
+enum IncubedError: Error {
+    case config(message: String)
+    case rpc(message: String)
+}
+
+
 public class In3 {
   var in3: UnsafeMutablePointer<in3_t>? = nil
 
@@ -13,9 +19,12 @@ public class In3 {
     return result
   }
 
-  public init(_ config: String) {
+  public init(_ config: String) throws {
     in3 = in3_for_chain_auto_init(1)
-    in3_configure(in3, config)
+    let error = in3_configure(in3, config)
+    if let msg = error {
+      throw IncubedError.config(message: String(cString: msg))
+    }
   }
 
   deinit {
