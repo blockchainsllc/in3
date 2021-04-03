@@ -3,8 +3,8 @@ import XCTest
 
 final class In3Tests: XCTestCase {
     func testExample() {
-        let in3 = In3(config: "{\"chainId\":\"mainnet\"}")
-        let res = in3.execute(rpc: "{\"method\":\"keccak\",\"params\":[\"simon\"]}")
+        let in3 = In3( "{\"chainId\":\"mainnet\"}")
+        let res = in3.execute("{\"method\":\"keccak\",\"params\":[\"simon\"]}")
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.

@@ -13,7 +13,7 @@ public class In3 {
     return result
   }
 
-  public init(config: String) {
+  public init(_ config: String) {
     in3 = in3_for_chain_auto_init(1)
     in3_configure(in3, config)
   }
@@ -22,7 +22,7 @@ public class In3 {
     in3_free(in3)
   }
 
-  public func execute(rpc: String) -> String {
+  public func execute(_ rpc: String) -> String {
     return String(cString: in3_client_exec_req(in3, makeCString(from: rpc)))
   }
 }
