@@ -11,15 +11,14 @@ let package = Package(
             name: "In3",
             targets: ["In3"]),
     ],
-    dependencies: [
-        .package(path: "../CIn3"),
-    ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
+        .systemLibrary(
+            name: "CIn3"),
         .target(
             name: "In3",
-            dependencies: []),
+            dependencies: ["CIn3"]),
         .testTarget(
             name: "In3Tests",
             dependencies: ["In3"]),

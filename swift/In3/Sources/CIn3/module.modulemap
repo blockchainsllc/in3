@@ -1,0 +1,5 @@
+module CIn3 [system] {
+  umbrella header "../../../../c/include/in3.rs.h"
+  link "in3"
+  export *
+}
