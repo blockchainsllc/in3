@@ -282,7 +282,7 @@ void recorder_read_start(in3_t* c, char* file) {
 void recorder_update_cmd(char* file, int* argc, char** argv[]) {
   rec.f = fopen(file, "r");
   if (!rec.f) {
-    fprintf(stderr, "Cannot open %s : %s\n", file, strerror((int) errno));
+    fprintf(stderr, "Cannot open recordfile %s : %s\n", file, strerror((int) errno));
     exit(EXIT_FAILURE);
   }
   recorder_entry_t* entry = next_entry("cmd", NULL);

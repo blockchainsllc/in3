@@ -297,7 +297,7 @@ static bool is_user_error(d_token_t* error, char** err_msg) {
   *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_string(error, K_MESSAGE);
   // here we need to find a better way to detect user errors
   // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
-  return *err_msg && strncmp(*err_msg, "Error:", 6) != 0 && strncmp(*err_msg, "TypeError:", 10) != 0;
+  return *err_msg && strncmp(*err_msg, "Error:", 6) != 0 && strncmp(*err_msg, "TypeError:", 10) != 0 && strncmp(*err_msg, "Error connect", 13) != 0;
 }
 
 NONULL static void clear_response(in3_response_t* response) {
@@ -722,6 +722,15 @@ static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports
     }
   }
 
+  // looks like we were not able to send out the first request, so waiting for the second won't help.
+  node_match_t* w = ctx->nodes;
+  for (int j = 0; w; j++, w = w->next) {
+    if (ctx->raw_response[j].state == IN3_WAITING && !ctx->raw_response[j].data.data) {
+      in3_ctx_add_response(ctx, j, IN3_ERPC, "The request could not be send!", -1, 1);
+      return;
+    }
+  }
+
   req_set_error(ctx, "waiting to fetch more responses, but no cptr was registered", IN3_ENOTSUP);
 }
 
@@ -740,7 +749,7 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   for (unsigned int i = 0; i < request->urls_len; i++)
     in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[i], i == 0 ? request->payload : "");
 
-  // handle it
+  // handle it (only if there is a transport)
   in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_SEND, request);
 
   // debug output

@@ -7,6 +7,7 @@ const rpc_doc = []
 const config_doc = []
 const main_help = []
 const main_aliases = []
+const bool_props = []
 
 let docs = {}, config = {}, types = {}
 const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
@@ -83,6 +84,7 @@ function handle_config(conf, pre, title, descr) {
             }
         }
         asArray(c.cmd).forEach(_ => main_aliases.push('    "' + _ + '", "' + (c.alias || (pre + key + (c.type == 'bool' ? '=true' : ''))) + '",'));
+        if (c.type == 'bool') bool_props.push(pre + key);
         main_help.push(('--' + pre + key).padEnd(30) + (c.cmd ? ('-' + c.cmd) : '').padEnd(7) + short_descr(c.descr))
         let s = ''
         if (c.descr) s += '[' + short_descr(c.descr) + ']'
@@ -210,6 +212,6 @@ Object.keys(main_conf.rpc).forEach(k => {
 fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
-fs.writeFileSync('../c/src/cmd/in3/args.h', 'const char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
+fs.writeFileSync('../c/src/cmd/in3/args.h', '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[]={ ' + bool_props.map(_ => '"' + _ + '", ').join('') + ' NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
 
 

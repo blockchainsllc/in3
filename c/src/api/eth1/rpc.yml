@@ -390,7 +390,21 @@ eth:
     returns:
        descr: the Version number
   
-  
+  in3_createKey:
+    descr: |
+      Generates 32 random bytes.
+      If /dev/urandom is available it will be used and should generate a secure random number.
+      If not the number should not be considered sceure or used in production.
+    params:
+      seed:
+        optional: true
+        descr: the seed. If given the result will be deterministic.
+        type: bytes
+    returns:
+      descr: the 32byte random data
+    example:
+      request: []
+      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
 
   eth_sign:
     descr: |

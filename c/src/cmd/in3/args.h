@@ -1,9 +1,16 @@
+// This is a generated file, please don't edit it manually!
+
+#include <stdlib.h>
+
+const char* bool_props[] = {"includeCode", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
+
 const char* help_args = "\
 --chainId                     -c     the chainId or the name of a known chain\n\
 --finality                    -f     the number in percent needed in order reach finality (% of signature of the validators)\n\
 --includeCode                        if true, the request should include the codes of all accounts\n\
 --maxAttempts                 -a     max number of attempts in case a response is rejected\n\
 --keepIn3                     -kin3  if true, requests sent to the input sream of the comandline util will be send theor responses in the...\n\
+--stats                              if true, requests sent will be used for stats\n\
 --useBinary                          if true the client will use binary format\n\
 --experimental                -x     iif true the client allows to use use experimental features, otherwise a exception is thrown if thos...\n\
 --timeout                            specifies the number of milliseconds before the request times out\n\
@@ -48,7 +55,6 @@ const char* help_args = "\
 --btc                                configure the Bitcoin verification\n\
 --btc.maxDAP                         max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets\n\
 --btc.maxDiff                        max increase (in percent) of the difference between targets when accepting new targets\n\
---nostats                     -ns    no stats if set requests will not be part of the official metrics and considered a service request\n\
 --clearCache                  -ccacheclears the cache before performing any operation\n\
 --eth                         -e     converts the result (as wei) to ether\n\
 --port                        -port  if specified it will run as http-server listening to the given port\n\
@@ -62,7 +68,7 @@ const char* help_args = "\
 --nonce                       -nonce the nonce\n\
 --test                        -test  creates a new json-test written to stdout with the name as specified\n\
 --path                        -path  the HD wallet derivation path \n\
---sigtype                     -ns    the type of the signature data\n\
+--sigtype                     -st    the type of the signature data\n\
 --password                    -pwd   password to unlock the key\n\
 --value                       -value the value to send when sending a transaction\n\
 --wait                        -w     if given, instead returning the transaction, it will wait until the transaction is mined and return ...\n\
@@ -83,6 +89,7 @@ const char* help_args = "\
 --bootnodes                   -bn    a coma seperated list of urls (or address:url) to be used as boot nodes\n\
 --onlysign                    -os    only sign, don't send the raw Transaction\n\
 --noproof                     -np    alias for --proof=none\n\
+--nostats                     -ns    alias for --stats=false, which will mark all requests as not counting in the stats\n\
 --version                     -v     displays the version\n\
 --help                        -h     displays this help message\n\
 \n\
@@ -114,6 +121,8 @@ pk2public <privatekey>\n\
 ecrecover <msg> <signature>\n\
    extracts the address and public key from a signature\n\
    \n\
+createKey generates a new private key. See in3_createKey.\n\
+   \n\
 key <keyfile>\n\
    reads the private key from JSON-Keystore file and returns the private key.\n\
    \n\
@@ -140,7 +149,6 @@ const char* aliases[] = {
     "zc2", "zksync.create2",
     "k", "key",
     "pk", "pk",
-    "ns", "nostats=true",
     "ccache", "clearCache=true",
     "e", "eth=true",
     "port", "port",
@@ -154,7 +162,7 @@ const char* aliases[] = {
     "nonce", "nonce",
     "test", "test",
     "path", "path",
-    "ns", "sigtype",
+    "st", "sigtype",
     "pwd", "password",
     "value", "value",
     "w", "wait=true",
@@ -175,6 +183,7 @@ const char* aliases[] = {
     "bn", "bootnodes",
     "os", "onlysign=true",
     "np", "proof=none",
+    "ns", "stats=false",
     "v", "version=true",
     "h", "help=true",
     NULL};

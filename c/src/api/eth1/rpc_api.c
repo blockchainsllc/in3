@@ -51,6 +51,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef ETH_FULL
 #include "../../third-party/tommath/tommath.h"
@@ -546,6 +547,39 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   return IN3_OK;
 }
 
+static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
+  bytes32_t hash;
+  FILE*     r = NULL;
+  if (d_len(ctx->params) == 1) {
+    CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
+    keccak(d_to_bytes(ctx->params + 1), hash);
+    srand(bytes_to_int(hash, 4));
+  }
+  else {
+#ifndef WASM
+    r = fopen("/dev/urandom", "r");
+    if (r) {
+      for (int i = 0; i < 32; i++) hash[i] = (uint8_t) fgetc(r);
+      fclose(r);
+    }
+    else
+#endif
+      srand(current_ms() % 0xFFFFFFFF);
+  }
+
+  if (!r) {
+#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
+    unsigned int number;
+    for (int i = 0; i < 32; i++) {
+      hash[i] = (rand_s(&number) ? rand() : (int) number) % 256;
+    }
+#else
+    for (int i = 0; i < 32; i++) hash[i] = rand() % 256;
+#endif
+  }
+  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+}
+
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
   d_token_t* tx_data = ctx->params + 1;
@@ -611,6 +645,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_decryptKey", in3_decryptKey(ctx))
   TRY_RPC("in3_prepareTx", in3_prepareTx(ctx))
   TRY_RPC("in3_signTx", in3_signTx(ctx))
+  TRY_RPC("in3_createKey", in3_createKey(ctx))
 
   return IN3_EIGNORE;
 }
