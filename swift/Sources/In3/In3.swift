@@ -35,8 +35,8 @@ public class In3 {
     }
   }
 
-  public func execLocal(_ method: String, _ params: RPCObject) throws -> RPCObject {
-    let jsonReqData = try JSONEncoder().encode(JSONRequest(id: 1, method: method, params: JSONObject(params)))
+  public func execLocal(_ method: String, _ params: RPCObject...) throws -> RPCObject {
+    let jsonReqData = try JSONEncoder().encode(JSONRequest(id: 1, method: method, params: JSONObject(RPCObject(params))))
     let rawResult = execute(String(decoding: jsonReqData, as: UTF8.self))
     let response = try JSONDecoder().decode(JSONResponse.self, from: rawResult.data(using: .utf8)!)
     if let error = response.error {

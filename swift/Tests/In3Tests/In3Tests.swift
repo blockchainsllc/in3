@@ -4,7 +4,7 @@ import XCTest
 final class In3Tests: XCTestCase {
     func testExample() throws {
         let in3 = try In3( "{\"chainId\":\"mainnet\"}")
-        let hash = try in3.execLocal("keccak",RPCObject(["simon"]))
+        let hash = try in3.execLocal("keccak",RPCObject("simon"))
         switch hash {
             case let .string(value):
               XCTAssertEqual(value , "0x12c66c32d34a85291ac705641fb4d8cdf784dd6f84ecec01170f8d0735d54a4a")
