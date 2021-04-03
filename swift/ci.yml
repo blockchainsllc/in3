@@ -23,10 +23,10 @@ swift:
   script:
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=release -DCMD=false .. && make
-    - cd ../swift/In3
-    - swift build -Xlinker -L../../build/lib
-    - swift test -Xlinker -L../../build/lib
+    - MACOSX_DEPLOYMENT_TARGET=10.15 cmake -DCMAKE_BUILD_TYPE=release -DTRANSPORTS=false -DUSE_CURL=false  -DCMD=false .. && make && rm -f lib/libin3.dylib
+    - cd ../swift
+    - swift build -Xlinker -L../build/lib
+    - swift test -Xlinker -L../build/lib
   artifacts:
     paths:
-      - swift/In3/.build
+      - swift/.build
