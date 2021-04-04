@@ -22,8 +22,8 @@ final class In3Tests: XCTestCase {
     func testExec() throws {
         let expect = XCTestExpectation(description: "Should get a hash-value")
         let in3 = try In3( "{\"chainId\":\"mainnet\"}")
-        try in3.exec("keccak", RPCObject("simon"), cb: { result in
-            switch result {
+        try in3.exec("keccak", RPCObject("simon"), cb: {
+            switch $0 {
             case let .error(msg):
                 XCTFail(msg)
             case let .success(hash):
@@ -36,7 +36,6 @@ final class In3Tests: XCTestCase {
                 }
 
             }
-            
         })
         wait(for: [expect], timeout: 10)
     }
