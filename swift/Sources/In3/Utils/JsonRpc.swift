@@ -291,6 +291,10 @@ public enum RPCObject: Equatable {
         self = .dictionary(value.mapValues { RPCObject($0) })
     }
 
+    public init(_ value: [String: RPCObject]) {
+        self = .dictionary(value)
+    }
+
     public init(_ value: [RPCObject]) {
         self = .list(value)
     }
