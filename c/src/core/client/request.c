@@ -109,6 +109,13 @@ char* req_get_error_data(in3_req_t* ctx) {
   return ctx ? ctx->error : "No request context";
 }
 
+char* req_get_result_json(in3_req_t* ctx, int index) {
+  assert_in3_req(ctx);
+  if (!ctx->responses) return NULL;
+  d_token_t* res = d_get(ctx->responses[index], K_RESULT);
+  return res ? d_create_json(ctx->response_context, res) : NULL;
+}
+
 char* req_get_response_data(in3_req_t* ctx) {
   assert_in3_req(ctx);
 

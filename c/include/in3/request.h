@@ -313,6 +313,11 @@ char* req_get_response_data(
 );
 
 /**
+ * returns the result or NULL in case of an error for that context. The result must be freed!
+ */
+char* req_get_result_json(in3_req_t* ctx, int index);
+
+/**
  * returns the type of the request
  */
 NONULL req_type_t req_get_type(

@@ -3,17 +3,9 @@ import Foundation
 
 
 public class In3 {
-  var in3: UnsafeMutablePointer<in3_t>? = nil
-  var transport: (_ url: String, _ method:String, _ payload:Data, _ headers: [String], _ cb:(_ data:TransportResult)->Void) -> Void
+  internal var in3: UnsafeMutablePointer<in3_t>? = nil
+  public var transport: (_ url: String, _ method:String, _ payload:Data, _ headers: [String], _ cb:(_ data:TransportResult)->Void) -> Void
 
-  internal func makeCString(from str: String) -> UnsafeMutablePointer<Int8> {
-    let count = str.utf8.count + 1
-    let result = UnsafeMutablePointer<Int8>.allocate(capacity: count)
-    str.withCString { (baseAddress) in
-        result.initialize(from: baseAddress, count: count)
-    }
-    return result
-  }
 
   public init(_ config: String) throws {
     transport = httpTransfer
@@ -32,6 +24,8 @@ public class In3 {
     }
   }
 
+  /// Execute a request directly and local.
+  /// This works only for requests which do not need to be send to a server.
   public func execLocal(_ method: String, _ params: RPCObject...) throws -> RPCObject {
     let jsonReqData = try JSONEncoder().encode(JSONRequest(id: 1, method: method, params: JSONObject(RPCObject(params))))
     let rawResult = execute(String(decoding: jsonReqData, as: UTF8.self))
@@ -47,6 +41,10 @@ public class In3 {
     }
   }
 
+  public func exec(_ method: String, _ params: RPCObject..., cb: @escaping  (_ result:RequestResult)->Void) throws {
+    try In3Request(method,params,self,cb).exec()
+  }
+    
   public func execute(_ rpc: String) -> String {
     return String(cString: in3_client_exec_req(in3, makeCString(from: rpc)))
   }
