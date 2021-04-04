@@ -49,10 +49,11 @@ public class In3 {
     return rpc.withCString { (baseAddress)->String in
         let count = rpc.utf8.count + 1
         let cstr = UnsafeMutablePointer<Int8>.allocate(capacity: count)
+        defer {
+            cstr.deallocate()
+        }
         cstr.initialize(from: baseAddress, count: count)
-        let result = String(cString: in3_client_exec_req(in3, cstr))
-        cstr.deallocate()
-        return result
+        return String(cString: in3_client_exec_req(in3, cstr))
     }
   }
 }
