@@ -30,6 +30,7 @@ final class In3Tests: XCTestCase {
                 switch hash {
                     case let .string(value):
                       XCTAssertEqual(value , "0x12c66c32d34a85291ac705641fb4d8cdf784dd6f84ecec01170f8d0735d54a4a")
+                        expect.fulfill()
                     default:
                       XCTFail("Invalid return type")
                 }
