@@ -21,7 +21,10 @@ let package = Package(
             name: "CIn3"),
         .target(
             name: "In3",
-            dependencies: ["CIn3"]),
+            dependencies: ["CIn3"],
+            linkerSettings: [
+                        .unsafeFlags(["-L../build/lib"])
+                    ]),
         .testTarget(
             name: "In3Tests",
             dependencies: ["In3"]),
