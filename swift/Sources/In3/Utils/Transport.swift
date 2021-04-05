@@ -1,8 +1,62 @@
 import Foundation
 import CIn3
 
-internal func httpTransfer(_ url: String, _ method:String, _ payload:Data, _ headers: [String], cb:(_ data:TransportResult)->Void) {
-    cb(TransportResult.error("Not implemented",-7))
+internal func httpTransfer(_ surl: String, _ method:String, _ payload:Data?, _ headers: [String], cb:@escaping (_ data:TransportResult)->Void) {
+    
+    guard let url = URL(string:surl) else {
+        DispatchQueue.main.async {
+           cb(TransportResult.error("no valid url",-7))
+        }
+        return
+    }
+    
+    let reqStart = Date()
+    var request = URLRequest(url: url)
+    request.httpMethod = method
+    request.httpBody = payload
+    if method == "POST" {
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+    }
+    for h in headers {
+        let tokens:[String] = h.split(separator: ":", maxSplits: 2).map { String($0).trimmingCharacters(in: NSCharacterSet.whitespacesAndNewlines) }
+        if tokens.count == 2 {
+            request.addValue(tokens[1], forHTTPHeaderField: tokens[0])
+        }
+    }
+    URLSession.shared.dataTask(with: request,completionHandler: { data, response, error in
+
+        if let err = error {
+            DispatchQueue.main.async {
+                 cb(TransportResult.error("Could not send request : \(err)", 500))
+            }
+            return
+        }
+        guard let resp = response as? HTTPURLResponse else {
+            DispatchQueue.main.async {
+                 cb(TransportResult.error("Invalid response", 500))
+            }
+            return
+        }
+        guard let d = data else {
+            DispatchQueue.main.async {
+                 cb(TransportResult.error("No data", 500))
+            }
+            return
+        }
+        if resp.statusCode < 400 && resp.statusCode >= 200 {
+            DispatchQueue.main.async {
+                cb(TransportResult.success(d, Int(Date().timeIntervalSince(reqStart)*1000)))
+            }
+        } else {
+            DispatchQueue.main.async {
+                cb(TransportResult.error("Invalid Status :\(resp.statusCode)", resp.statusCode))
+            }
+        }
+    }).resume()
+
+    
+    
 }
 
 
@@ -13,7 +67,7 @@ internal class In3Request {
     var freed: Bool
     
     init(_ method: String, _ params: [RPCObject],_ _in3:In3, _ _cb: @escaping  (_ result:RequestResult)->Void) throws {
-        let r = req_new(_in3.in3, String(decoding:  try JSONEncoder().encode(JSONRequest(id: 1, method: method, params: JSONObject(RPCObject(params)))), as: UTF8.self))
+       let r = req_new_clone(_in3.in3, String(decoding:  try JSONEncoder().encode(JSONRequest(id: 1, method: method, params: JSONObject(RPCObject(params)))), as: UTF8.self))
         if let r = r {
             req = r
         }
@@ -106,14 +160,12 @@ internal class In3Request {
                     // set the response...
                     switch res {
                     case let .success(data, time):
-                        let ptr = data.withUnsafeBytes { ptr in return ptr.baseAddress?.assumingMemoryBound(to: Int8.self) }
-                        if let p = ptr {
-                            in3_ctx_add_response(req,Int32(i),0,p,Int32(data.count), UInt32(time))
+                        data.withUnsafeBytes {
+                            in3_ctx_add_response(req,Int32(i),0,$0.baseAddress?.assumingMemoryBound(to: Int8.self),Int32(data.count), UInt32(time))
                         }
                     case let .error(msg,httpStatus):
-                        let ptr = msg.data(using: .utf8)!.withUnsafeBytes { ptr in return ptr.baseAddress?.assumingMemoryBound(to: Int8.self) }
-                        if let p = ptr {
-                            in3_ctx_add_response(req,Int32(i),Int32(-httpStatus),p,Int32(-1), UInt32(0))
+                        msg.data(using: .utf8)!.withUnsafeBytes {
+                            in3_ctx_add_response(req,Int32(i),Int32(-httpStatus),$0.baseAddress?.assumingMemoryBound(to: Int8.self),Int32(-1), UInt32(0))
                         }
                     }
                     // now try to verify the response
@@ -141,7 +193,7 @@ internal class In3Request {
     }
     
     func sendHttp(http:UnsafeMutablePointer<in3_http_request_t>, index:Int, cb:@escaping (_ data:TransportResult)->Void) {
-        let payload = Data(buffer:UnsafeMutableBufferPointer(start: http.pointee.payload, count: Int(http.pointee.payload_len)))
+        let payload:Data? = http.pointee.payload_len == 0 ? nil : Data(buffer:UnsafeMutableBufferPointer(start: http.pointee.payload, count: Int(http.pointee.payload_len)))
         var headers:[String] = []
         var p = http.pointee.headers
         let url = http.pointee.urls + index

@@ -4,7 +4,7 @@ import Foundation
 
 public class In3 {
   internal var in3: UnsafeMutablePointer<in3_t>? = nil
-  public var transport: (_ url: String, _ method:String, _ payload:Data, _ headers: [String], _ cb:(_ data:TransportResult)->Void) -> Void
+  public var transport: (_ url: String, _ method:String, _ payload:Data?, _ headers: [String], _ cb: @escaping (_ data:TransportResult)->Void) -> Void
 
 
   public init(_ config: String) throws {

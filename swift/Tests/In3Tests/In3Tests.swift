@@ -1,4 +1,5 @@
 import XCTest
+import Foundation
 @testable import In3
 
 final class In3Tests: XCTestCase {
@@ -39,6 +40,7 @@ final class In3Tests: XCTestCase {
         })
         wait(for: [expect], timeout: 10)
     }
+
 
 
     static var allTests = [

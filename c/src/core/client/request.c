@@ -55,6 +55,16 @@ static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
   return IN3_OK;
 }
 
+in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
+  char*      data = _strdupn(req_data, -1);
+  in3_req_t* r    = req_new(client, data);
+  if (r)
+    in3_cache_add_ptr(&r->cache, data);
+  else
+    _free(data);
+  return r;
+}
+
 in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
