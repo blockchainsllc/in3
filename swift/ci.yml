@@ -25,8 +25,12 @@ swift:
     - cd build
     - MACOSX_DEPLOYMENT_TARGET=10.15 cmake -DCMAKE_BUILD_TYPE=release -DTRANSPORTS=false -DUSE_CURL=false  -DCMD=false .. && make && rm -f lib/libin3.dylib
     - cd ../swift
-    - swift build -Xlinker -L../build/lib
-    - swift test -Xlinker -L../build/lib
+    - swift build
+    - swift test 2> output
+    - cat output
+    - ../scripts/create_swift_junit.js < output >swift.xml
   artifacts:
+    reports:
+      junit: swift/swift.xml
     paths:
       - swift/.build
