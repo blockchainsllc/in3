@@ -16,6 +16,10 @@ const config_bindings = {
         ]
     }
 }
+const api_bindings = {
+    swift: {
+    }
+}
 
 let docs = {}, config = {}, types = {}
 const camelCaseUp = s => {
@@ -77,6 +81,7 @@ function handle_config(conf, pre, title, descr) {
         const c = conf[key]
         // handle bindings
 
+        // generate swift
         const swift = config_bindings.swift['Config' + camelCaseUp(pre || '')]
         if (swift && key.indexOf('-') == -1 && key.indexOf('.') == -1) {
             //console.error("NO Onbject for " + pre + ':Config' + camelCaseUp(pre || ''))
@@ -96,7 +101,7 @@ function handle_config(conf, pre, title, descr) {
                 c.descr
                 + (c.default ? ('\n(default: `' + JSON.stringify(c.default) + '`)') : '')
                 + (c.enum ? ('\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n') : '')
-                + (c.example ? ('\n\nExample: ' + (Array.isArray(c.example) ? '\n```\n' : '`') + asArray(c.example).map(ex => yaml.stringify(ex)).join('\n') + (Array.isArray(c.example) ? '\n```' : '`')) : '')
+                + (c.example ? ('\n\nExample: ' + (Array.isArray(c.example) ? '\n```\n' : '`') + asArray(c.example).map(ex => yaml.stringify(ex).trim()).join('\n') + (Array.isArray(c.example) ? '\n```' : '`')) : '')
             ).replace(/\n/gm, '\n    /// '))
             swift.push('    public var ' + key + ' : ' + swiftType + (c.optional || !pre ? '?' : ''))
         }

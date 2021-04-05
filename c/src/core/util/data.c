@@ -418,7 +418,8 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
-  bool   ishex = false;
+  bool   ishex  = false;
+  int    escape = 0;
 
   while (true) {
     switch (*(jp->c++)) {
@@ -470,13 +471,25 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
             // here we do change or fix the input string because this would be an invalid string otherwise.
             *(jp->c - 1) = (*(start - 1) = '"');
           }
+          l -= escape;
           item->len  = l | T_STRING << 28;
           item->data = _malloc(l + 1);
-          memcpy(item->data, start, l);
+          if (escape) {
+            char* x = start;
+            for (size_t n = 0; n < l; n++, x++) {
+              if (*x == '\\') x++;
+              item->data[n] = *x;
+            }
+          }
+          else
+            memcpy(item->data, start, l);
           item->data[l] = 0;
         }
         return 0;
-      case '\\': jp->c++; break;
+      case '\\':
+        jp->c++;
+        escape++;
+        break;
     }
   }
 }

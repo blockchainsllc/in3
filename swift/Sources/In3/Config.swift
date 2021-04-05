@@ -18,33 +18,28 @@ public struct Config : Codable {
     /// - `local` : local-chain
     /// 
     /// 
-    /// Example: `goerli
-    /// `
+    /// Example: `goerli`
     public var chainId : String?
 
     /// the number in percent needed in order reach finality (% of signature of the validators).
     /// 
-    /// Example: `50
-    /// `
+    /// Example: `50`
     public var finality : UInt64?
 
     /// if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
     /// 
-    /// Example: `true
-    /// `
+    /// Example: `true`
     public var includeCode : Bool?
 
     /// max number of attempts in case a response is rejected.
     /// (default: `7`)
     /// 
-    /// Example: `1
-    /// `
+    /// Example: `1`
     public var maxAttempts : UInt64?
 
     /// if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
     /// 
-    /// Example: `true
-    /// `
+    /// Example: `true`
     public var keepIn3 : Bool?
 
     /// if true, requests sent will be used for stats.
@@ -53,21 +48,18 @@ public struct Config : Codable {
 
     /// if true the client will use binary format. This will reduce the payload of the responses by about 60% but should only be used for embedded systems or when using the API, since this format does not include the propertynames anymore.
     /// 
-    /// Example: `true
-    /// `
+    /// Example: `true`
     public var useBinary : Bool?
 
     /// iif true the client allows to use use experimental features, otherwise a exception is thrown if those would be used.
     /// 
-    /// Example: `true
-    /// `
+    /// Example: `true`
     public var experimental : Bool?
 
     /// specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
     /// (default: `20000`)
     /// 
-    /// Example: `100000
-    /// `
+    /// Example: `100000`
     public var timeout : UInt64?
 
     /// if true the nodes should send a proof of the response. If set to none, verification is turned off completly.
@@ -80,14 +72,12 @@ public struct Config : Codable {
     /// - `full` : In addition to standard, also some rarly needed properties are verfied, like uncles. But this causes a bigger payload.
     /// 
     /// 
-    /// Example: `none
-    /// `
+    /// Example: `none`
     public var proof : String?
 
     /// if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
     /// 
-    /// Example: `6
-    /// `
+    /// Example: `6`
     public var replaceLatestBlock : UInt64?
 
     /// if true the nodelist will be automaticly updated if the lastBlock is newer.
@@ -97,46 +87,39 @@ public struct Config : Codable {
     /// number of signatures requested in order to verify the blockhash.
     /// (default: `1`)
     /// 
-    /// Example: `2
-    /// `
+    /// Example: `2`
     public var signatureCount : UInt64?
 
     /// if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
     /// (default: `true`)
     /// 
-    /// Example: `true
-    /// `
+    /// Example: `true`
     public var bootWeights : Bool?
 
     /// if true the client will try to use http instead of https.
     /// 
-    /// Example: `true
-    /// `
+    /// Example: `true`
     public var useHttp : Bool?
 
     /// min stake of the server. Only nodes owning at least this amount will be chosen.
     /// 
-    /// Example: `10000000
-    /// `
+    /// Example: `10000000`
     public var minDeposit : UInt64?
 
     /// used to identify the capabilities of the node.
     /// 
-    /// Example: `65535
-    /// `
+    /// Example: `65535`
     public var nodeProps : UInt64?
 
     /// the number of request send in parallel when getting an answer. More request will make it more expensive, but increase the chances to get a faster answer, since the client will continue once the first verifiable response was received.
     /// (default: `2`)
     /// 
-    /// Example: `3
-    /// `
+    /// Example: `3`
     public var requestCount : UInt64?
 
     /// url of one or more direct rpc-endpoints to use. (list can be comma seperated). If this is used, proof will automaticly be turned off.
     /// 
-    /// Example: `http://loalhost:8545
-    /// `
+    /// Example: `http://loalhost:8545`
     public var rpc : String?
 
     /// defining the nodelist. collection of JSON objects with chain Id (hex string) as key.
@@ -145,8 +128,7 @@ public struct Config : Codable {
     /// nodeList:
     ///   - address: "0x45d45e6ff99e6c34a235d263965910298985fcfe"
     ///     url: https://in3-v2.slock.it/mainnet/nd-1
-    ///     props: "0xFFFF"
-    /// `
+    ///     props: "0xFFFF"`
     public var nodes : ConfigNodes?
 
     /// configuration for zksync-api  ( only available if build with `-DZKSYNC=true`, which is on per default).
@@ -156,7 +138,6 @@ public struct Config : Codable {
     /// account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
     /// sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
     /// signer_type: contract
-    /// 
     /// account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
     /// sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
     /// signer_type: create2
@@ -164,7 +145,6 @@ public struct Config : Codable {
     ///   creator: "0x6487c3ae644703c1f07527c18fe5569592654bcb"
     ///   saltarg: "0xb90306e2391fefe48aa89a8e91acbca502a94b2d734acc3335bb2ff5c266eb12"
     ///   codehash: "0xd6af3ee91c96e29ddab0d4cb9b5dd3025caf84baad13bef7f2b87038d38251e5"
-    /// 
     /// account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
     /// signer_type: pk
     /// musig_pub_keys: 0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d8160x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816
@@ -172,14 +152,12 @@ public struct Config : Codable {
     /// musig_urls:
     ///   - null
     ///   - https://approver.service.com
-    /// 
     /// ```
     public var zksync : ConfigZksync?
 
     /// the client key to sign requests. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
     /// 
-    /// Example: `"0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"
-    /// `
+    /// Example: `"0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"`
     public var key : String?
 
     /// registers raw private keys as signers for transactions. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
@@ -187,15 +165,13 @@ public struct Config : Codable {
     /// Example: 
     /// ```
     /// "0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"
-    /// 
     /// ```
     public var pk : String?
 
     /// configure the Bitcoin verification
     /// 
     /// Example: `maxDAP: 30
-    /// maxDiff: 5
-    /// `
+    /// maxDiff: 5`
     public var btc : ConfigBtc?
 }
 
@@ -306,15 +282,13 @@ public struct ConfigBtc : Codable {
     /// max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets.
     /// (default: `20`)
     /// 
-    /// Example: `10
-    /// `
+    /// Example: `10`
     public var maxDAP : UInt64?
 
     /// max increase (in percent) of the difference between targets when accepting new targets.
     /// (default: `10`)
     /// 
-    /// Example: `5
-    /// `
+    /// Example: `5`
     public var maxDiff : UInt64?
 }
 

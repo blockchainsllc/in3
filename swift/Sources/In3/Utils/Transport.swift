@@ -5,10 +5,14 @@ internal func httpTransfer(_ surl: String, _ method:String, _ payload:Data?, _ h
     
     guard let url = URL(string:surl) else {
         DispatchQueue.main.async {
-           cb(TransportResult.error("no valid url",-7))
+           cb(TransportResult.error("no valid url :"+surl,-7))
         }
         return
     }
+    
+//    if let pl = payload {
+//      print("Request to " , url," payload :"+String(decoding: pl, as: UTF8.self))
+//    }
     
     let reqStart = Date()
     var request = URLRequest(url: url)
