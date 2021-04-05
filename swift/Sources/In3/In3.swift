@@ -1,13 +1,13 @@
 import CIn3
 import Foundation
 
-
+/// The I ncubed client
 public class In3 {
   internal var in3: UnsafeMutablePointer<in3_t>? = nil
+  /// the transport function
   public var transport: (_ url: String, _ method:String, _ payload:Data?, _ headers: [String], _ cb: @escaping (_ data:TransportResult)->Void) -> Void
 
-
-  public init(_ config: String) throws {
+  public init(_ config: Config) throws {
     transport = httpTransfer
     in3 = in3_for_chain_auto_init(1)
     try configure(config)
@@ -17,8 +17,9 @@ public class In3 {
     in3_free(in3)
   }
 
-  public func configure(_ config: String) throws {
-    let error = in3_configure(in3, config)
+  public func configure(_ config: Config) throws {
+    let jsonConfig = try JSONEncoder().encode(config)
+    let error = in3_configure(in3, String(decoding: jsonConfig, as: UTF8.self))
     if let msg = error {
       throw IncubedError.config(message: String(cString: msg))
     }

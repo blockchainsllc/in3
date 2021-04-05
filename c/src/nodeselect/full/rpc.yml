@@ -100,6 +100,7 @@ in3:
         verifiedHashes:
           descr: if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
           optional: true
+          array : true
           type:
             block:
               descr: block number

@@ -8,8 +8,25 @@ const config_doc = []
 const main_help = []
 const main_aliases = []
 const bool_props = []
+const config_bindings = {
+    swift: {
+        Config: [
+            '/// The main Incubed Configuration',
+            'public struct Config : Codable {'
+        ]
+    }
+}
 
 let docs = {}, config = {}, types = {}
+const camelCaseUp = s => {
+    if (!s) return ''
+    if (s[s.length - 1] == '.') s = s.substr(0, s.length - 1)
+    s = s.substr(s.lastIndexOf('.') + 1)
+    return s.substr(0, 1).toUpperCase() + s.substr(1)
+}
+
+const camelCaseLow = s => s ? s.substr(0, 1).toLowerCase() + s.substr(1) : ''
+
 const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
 const link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
 const getType = val => typeof val === 'object' ? val : (types['' + val] || val)
@@ -53,10 +70,37 @@ function print_object(def, pad, useNum, doc) {
     }
 }
 
+
 function handle_config(conf, pre, title, descr) {
     if (title) config_doc.push('\n## ' + title + '\n')
     for (const key of Object.keys(conf)) {
         const c = conf[key]
+        // handle bindings
+
+        const swift = config_bindings.swift['Config' + camelCaseUp(pre || '')]
+        if (swift && key.indexOf('-') == -1 && key.indexOf('.') == -1) {
+            //console.error("NO Onbject for " + pre + ':Config' + camelCaseUp(pre || ''))
+            let swiftType = camelCaseUp(('' + c.type).split('|')[0].trim())
+            if (typeof c.type === 'object') {
+                swiftType = 'Config' + camelCaseUp(key)
+                config_bindings.swift[swiftType] = [
+                    '/// ' + c.descr.replace(/\n/gm, '\n/// '),
+                    'public struct ' + swiftType + ' : Codable {'
+                ]
+            }
+            else if (swiftType == 'Uint') swiftType = 'UInt64'
+            else if (swiftType.startsWith('Byte') || swiftType.startsWith('Address')) swiftType = 'String'
+            if (swiftType.endsWith('[]')) swiftType = '[' + swiftType.substr(0, swiftType.length - 2) + ']'
+            if (c.array) swiftType = '[' + swiftType + ']'
+            swift.push('\n    /// ' + (
+                c.descr
+                + (c.default ? ('\n(default: `' + JSON.stringify(c.default) + '`)') : '')
+                + (c.enum ? ('\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n') : '')
+                + (c.example ? ('\n\nExample: ' + (Array.isArray(c.example) ? '\n```\n' : '`') + asArray(c.example).map(ex => yaml.stringify(ex)).join('\n') + (Array.isArray(c.example) ? '\n```' : '`')) : '')
+            ).replace(/\n/gm, '\n    /// '))
+            swift.push('    public var ' + key + ' : ' + swiftType + (c.optional || !pre ? '?' : ''))
+        }
+        // handle doc
         if (!pre) {
             let s = '\n' + (title ? '#' : '') + '## ' + key + '\n\n' + c.descr
             if (c.optional) s += ' *This config is optional.*'
@@ -200,6 +244,11 @@ for (const s of Object.keys(docs).sort()) {
 }
 
 handle_config(config, '')
+fs.writeFileSync('../swift/Sources/In3/Config.swift', '// This is a generated file, please don\'t edit it manually!\n\nimport Foundation\n\n' + (
+    Object.keys(config_bindings.swift).map(type => config_bindings.swift[type].join('\n') + '\n}\n\n').join('')
+), { encoding: 'utf8' })
+
+
 handle_config(main_conf.config, '', 'cmdline options\n\nThose special options are used in the comandline client to pass additional options.\n')
 main_help.push('')
 main_help.push('In addition to the documented rpc-methods, those methods are also supported:')
@@ -213,5 +262,4 @@ fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')).r
 fs.writeFileSync(doc_dir + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
 fs.writeFileSync('../c/src/cmd/in3/args.h', '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[]={ ' + bool_props.map(_ => '"' + _ + '", ').join('') + ' NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
-
 

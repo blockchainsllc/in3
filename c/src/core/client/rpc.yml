@@ -9,7 +9,7 @@ in3:
   config:
 
     chainId:
-      type: uint | string
+      type: string | uint
       descr: the chainId or the name of a known chain. It defines the nodelist to connect to.
       example: goerli
       optional: true
@@ -89,9 +89,9 @@ in3:
       type: string
       optional: true
       enum:
-        - none
-        - standard
-        - full
+        none: no proof will be generated or verfiied. This also works with standard rpc-endpoints.
+        standard: Stanbdard Proof means all important properties are verfiied
+        full: In addition to standard, also some rarly needed properties are verfied, like uncles. But this causes a bigger payload.
       example: none
       default: standard
       cmd: p
