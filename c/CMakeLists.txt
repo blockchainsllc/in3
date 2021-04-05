@@ -46,7 +46,7 @@ if (GCC_ANALYZER)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
 endif()
 
-IF (TRANSPORTS)
+IF (TRANSPORTS AND NOT SWIFT)
     ADD_DEFINITIONS(-DTRANSPORTS)
     if (USE_CURL)
         ADD_DEFINITIONS(-DUSE_CURL)
@@ -61,7 +61,7 @@ IF (TRANSPORTS)
         set(IN3_TRANSPORT ${IN3_TRANSPORT} transport_http)
     endif (USE_CURL)
     add_subdirectory(src/transport)
-ENDIF (TRANSPORTS)
+ENDIF (TRANSPORTS AND NOT SWIFT)
 
 add_subdirectory(src/core)
 add_subdirectory(src/init)
@@ -80,35 +80,45 @@ link_directories(${CMAKE_BINARY_DIR}/lib/)
 if (IN3_LIB)
    get_property(IN3_LIBS GLOBAL PROPERTY IN3_OBJECTS)
 
-    # create the libraries
+    # create static libraries
     add_library(in3_bundle STATIC ${IN3_LIBS} )
-    add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
-    set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-    target_link_libraries(in3_lib ${IN3_TRANSPORT})  
-    if( LEDGER_NANO)
-        target_link_libraries(in3_lib  ledger_signer) 
-    endif()
-    if(SENTRY)
-        target_link_libraries(in3_lib sentry) 
-    endif()
-
     if (ZKSYNC AND ZKCRYPTO_LIB )
         target_link_libraries(in3_bundle zk_crypto_rs )
-        target_link_libraries(in3_lib zk_crypto_rs )
     endif()
-
-
-    # install
     INSTALL(TARGETS in3_bundle
-      DESTINATION "lib"
+        DESTINATION "lib"
     )
-    INSTALL(TARGETS in3_lib
-        DESTINATION lib
-        PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE)
+
+    IF (NOT SWIFT)
+
+        # create shared libraries
+        add_library(in3_lib    SHARED ${IN3_LIBS} )
+        set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
+        target_link_libraries(in3_lib ${IN3_TRANSPORT})  
+
+        if( LEDGER_NANO)
+            target_link_libraries(in3_lib  ledger_signer) 
+        endif()
+        if(SENTRY)
+            target_link_libraries(in3_lib sentry) 
+        endif()
+
+        if (ZKSYNC AND ZKCRYPTO_LIB )
+            target_link_libraries(in3_lib zk_crypto_rs )
+        endif()
+
+
+        # install
+        INSTALL(TARGETS in3_lib
+            DESTINATION lib
+            PERMISSIONS
+            OWNER_READ OWNER_WRITE OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE)
+    ENDIF(NOT SWIFT)
+
+
     INSTALL (
         DIRECTORY ${CMAKE_SOURCE_DIR}/c/include/in3
         DESTINATION include

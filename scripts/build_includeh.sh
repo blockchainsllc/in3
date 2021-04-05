@@ -47,4 +47,5 @@ cat <<EOF >../c/include/in3.rs.h
 #include "in3/in3_curl.h"
 #include "in3/in3_init.h"
 #include "in3/log.h"
+#include "../src/tools/swift/swift.h"
 EOF

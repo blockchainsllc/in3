@@ -1,6 +1,6 @@
 ###############################################################################
 # This file is part of the Incubed project.
-# Sources: https://github.com/blockchainsllc/in3
+# Sources: https://github.com/slockit/in3-c
 # 
 # Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
 # 
@@ -32,18 +32,13 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if(SENTRY)
-  add_subdirectory(sentry)
-endif()
+add_static_library(
+        NAME
+        in3_swift
 
-if(RECORDER)
-  add_subdirectory(recorder)
-endif()
+        SOURCES
+        swift.c
 
-if(SWIFT)
-  add_subdirectory(swift)
-endif()
-
-if(PLGN_CLIENT_DATA)
-  add_subdirectory(clientdata)
-endif()
+        DEPENDS
+        core
+)

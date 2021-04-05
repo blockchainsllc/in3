@@ -6,11 +6,21 @@ public class In3 {
   internal var in3: UnsafeMutablePointer<in3_t>? = nil
   /// the transport function
   public var transport: (_ url: String, _ method:String, _ payload:Data?, _ headers: [String], _ cb: @escaping (_ data:TransportResult)->Void) -> Void
+    
+    var cache: In3Cache? {
+        get {
+            return defaultCache
+        }
+        set(value) {
+            defaultCache = value
+        }
+    }
 
   public init(_ config: Config) throws {
     transport = httpTransfer
     in3 = in3_for_chain_auto_init(1)
     try configure(config)
+    registerCache(self)
   }
 
   deinit {

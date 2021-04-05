@@ -23,7 +23,7 @@ swift:
   script:
     - mkdir build
     - cd build
-    - MACOSX_DEPLOYMENT_TARGET=10.15 cmake -DCMAKE_BUILD_TYPE=release -DTRANSPORTS=false -DUSE_CURL=false  -DCMD=false .. && make && rm -f lib/libin3.dylib
+    - MACOSX_DEPLOYMENT_TARGET=10.15 cmake -DCMAKE_BUILD_TYPE=release -DSWIFT .. && make 
     - cd ../swift
     - swift build
     - swift test 2> output

@@ -60,9 +60,6 @@ internal func httpTransfer(_ surl: String, _ method:String, _ payload:Data?, _ h
             }
         }
     }).resume()
-
-    
-    
 }
 
 
