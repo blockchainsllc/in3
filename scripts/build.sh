@@ -114,7 +114,7 @@ elif [ "$CONTAINER" = "android" ]; then
   docker run  --rm -v $RD:$RD  $CONTAINER /bin/bash -c "$CMD"
 elif [ "$CONTAINER" = "wasm_local" ]; then
   cd build
-  source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
+#  source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
   emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true -DIPFS=false -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
   make -j8 in3_wasm
 elif [ "$CONTAINER" = "wasm" ]; then
