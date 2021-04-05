@@ -3,6 +3,7 @@ import Foundation
 public enum IncubedError: Error {
     case config(message: String)
     case rpc(message: String)
+    case convert(message: String)
 }
 
 public enum TransportResult {

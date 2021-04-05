@@ -10,9 +10,9 @@ internal func httpTransfer(_ surl: String, _ method:String, _ payload:Data?, _ h
         return
     }
     
-//    if let pl = payload {
-//      print("Request to " , url," payload :"+String(decoding: pl, as: UTF8.self))
-//    }
+    if let pl = payload {
+      print("Request to " , url," payload :"+String(decoding: pl, as: UTF8.self))
+    }
     
     let reqStart = Date()
     var request = URLRequest(url: url)
@@ -48,6 +48,8 @@ internal func httpTransfer(_ surl: String, _ method:String, _ payload:Data?, _ h
             }
             return
         }
+        print("Response : " , String(decoding: d, as: UTF8.self))
+
         if resp.statusCode < 400 && resp.statusCode >= 200 {
             DispatchQueue.main.async {
                 cb(TransportResult.success(d, Int(Date().timeIntervalSince(reqStart)*1000)))

@@ -41,6 +41,25 @@ final class In3Tests: XCTestCase {
         wait(for: [expect], timeout: 10)
     }
 
+    func testAPI() throws {
+        let expect = XCTestExpectation(description: "Should get a hash-value")
+        let in3 = try In3(Config(rpc: "https://rpc.slock.it/mainnet"))
+        Eth(in3).getTransactionReceipt(hash: "0xe3f6f3a73bccd73b77a7b9e9096fe07b9341e7d1d8f1ad8b8e5207f2fe349fa0") .observe(using: {
+            switch $0 {
+            case let .failure(err):
+                print(err.localizedDescription)
+            case let .success( val ):
+                if let tx = val {
+                    print("txhash : ",tx.hash)
+                } else {
+                    print("on tx found ")
+                }
+                expect.fulfill()
+            }
+        })
+        wait(for: [expect], timeout: 100)
+
+    }
 
 
     static var allTests = [

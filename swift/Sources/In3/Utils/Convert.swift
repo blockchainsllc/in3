@@ -3,33 +3,135 @@ import Foundation
 
 
 
-internal func toUInt64Promise(_ data:RPCObject, _ promise:Promise<UInt64>) {
-    switch data {
-    case let .integer(val):
-       promise.resolve(with: UInt64(val))
-    case let .string(val):
-        if let intVal = UInt64(val) {
-            promise.resolve(with: intVal)
-        } else if val.hasPrefix("0x"), let intVal = UInt64(val.suffix(from: val.index(  val.startIndex, offsetBy: 2)), radix: 16) {
-            promise.resolve(with: intVal)
-        } else {
-            promise.reject(with: IncubedError.rpc(message: "Invalid integer value " + val))
+internal func toUInt64(_ data:RPCObject?, _ optional:Bool = true) throws -> UInt64?{
+    if let data = data {
+        switch data {
+        case let .integer(val):
+           return UInt64(val)
+        case let .string(val):
+            if let intVal = UInt64(val) {
+                return intVal
+            } else if val.hasPrefix("0x"), let intVal = UInt64(val.suffix(from: val.index(  val.startIndex, offsetBy: 2)), radix: 16) {
+               return intVal
+            } else {
+                throw IncubedError.config(message: "Can not convert '\(val)' to int")
+            }
+        case .none:
+            if !optional {
+                throw IncubedError.config(message: "missing value")
+            }
+             return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for Int")
         }
-    default:
-       promise.reject(with: IncubedError.rpc(message: "Invalid returntype"))
+    } else if !optional {
+        throw IncubedError.config(message: "missing value")
     }
+    return nil
+}
+
+internal func toBool(_ data:RPCObject?, _ optional:Bool = true) throws -> Bool?{
+    if let data = data {
+        switch data {
+        case let .integer(val):
+            return val != 0;
+        case let .string(val):
+            if val == "true" || val=="0x1"  {
+                return true
+            } else if val == "false" || val == "0x0" {
+               return false
+            } else {
+                throw IncubedError.config(message: "Invalid string to convert '\(val)' to Bool")
+            }
+        case let .bool(val):
+            return val
+        case .none:
+            if !optional {
+                throw IncubedError.config(message: "missing value")
+            }
+            return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for bool")
+        }
+    } else if !optional {
+        throw IncubedError.config(message: "missing value")
+    }
+    return nil
 }
 
 
-internal func execUInt64(_ in3:In3, _ method: String, _ params: RPCObject...) -> Future<UInt64> {
-    let promise = Promise<UInt64>()
+internal func toString(_ data:RPCObject?, _ optional:Bool = true) throws -> String?{
+    if let data = data {
+        switch data {
+        case let .integer(val):
+            return String(val)
+        case let .string(val):
+            return val
+        case let .bool(val):
+            return val ? "true":"false"
+        case .none:
+            if !optional {
+                throw IncubedError.config(message: "missing value")
+            }
+            return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for String")
+        }
+    } else if !optional {
+        throw IncubedError.config(message: "missing value")
+    }
+    return nil
+}
+
+
+internal func toObject(_ data:RPCObject?,_  optional:Bool = true) throws -> [String: RPCObject]?{
+    if let data = data {
+        switch data {
+        case let .dictionary(val):
+            return val
+        case .none:
+            return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for Object")
+        }
+    }
+    return nil
+}
+
+
+
+internal func toArray(_ data:RPCObject?, _ optional:Bool = true) throws -> [RPCObject]?{
+    if let data = data {
+        switch data {
+        case let .list(val):
+            return val
+        case .none:
+            return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for Array")
+        }
+    }
+    return nil
+}
+
+
+internal func execAndConvert<Type>(in3:In3, method: String,  params: RPCObject..., convertWith: @escaping (_ data:RPCObject?, _ optional:Bool) throws -> Type?)  -> Future<Type> {
+    let promise = Promise<Type>()
     do {
         try In3Request(method,params,in3,{
             switch $0 {
             case let .error(msg):
                 promise.reject(with: IncubedError.rpc(message: msg))
             case let .success(data):
-                toUInt64Promise(data,promise)
+                do {
+                   if let v = try convertWith(data,false) {
+                        promise.resolve(with: v)
+                   } else {
+                        promise.reject(with:  IncubedError.rpc(message: "Null Value is not allowed here"))
+                   }
+                } catch {
+                   promise.reject(with: error)
+                }
             }
         }).exec()
     } catch {
@@ -38,6 +140,27 @@ internal func execUInt64(_ in3:In3, _ method: String, _ params: RPCObject...) ->
     return promise
 }
 
+internal func execAndConvertOptional<Type>(in3:In3, method: String,  params: RPCObject..., convertWith: @escaping (_ data:RPCObject?, _ optional:Bool) throws -> Type?)  -> Future<Type?> {
+    let promise = Promise<Type?>()
+    do {
+        try In3Request(method,params,in3,{
+            switch $0 {
+            case let .error(msg):
+                promise.reject(with: IncubedError.rpc(message: msg))
+            case let .success(data):
+                do {
+                   let val = try convertWith(data, true)
+                   promise.resolve(with: val)
+                } catch {
+                   promise.reject(with: error)
+                }
+            }
+        }).exec()
+    } catch {
+        promise.reject(with: error)
+    }
+    return promise
+}
 
 
 
