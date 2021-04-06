@@ -39,47 +39,32 @@ public class FileCache : In3Cache {
     
     /// write the data to the cache using the given key..
     public func setEntry(key: String, value: Data) {
-        do {
-         try value.write(to: URL(fileURLWithPath: key, relativeTo: dir))
-        } catch {
-        }
+         try? value.write(to: URL(fileURLWithPath: key, relativeTo: dir))
     }
     
     /// find the data for the given cache-key or `nil`if not found.
     public func getEntry(key: String) -> Data? {
-        do {
-            return try Data(contentsOf: URL(fileURLWithPath: key, relativeTo: dir))
-        } catch {
-            return nil
-        }
+          return try? Data(contentsOf: URL(fileURLWithPath: key, relativeTo: dir))
     }
     
     /// clears all cache entries
     public func clear() {
-        do {
-           try FileManager.default.removeItem(at: dir)
-           try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: nil)
-        } catch {
-        }
+           try? FileManager.default.removeItem(at: dir)
+           try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: nil)
     }
 }
 
 internal var defaultCache:In3Cache?
 
-internal func  registerCache(_ in3:In3) {
+internal func  registerCache(_ in3:In3) throws {
     if defaultCache == nil {
-        do {
-            defaultCache = try FileCache()
-        } catch {
-            print("Could not init the cache : \(error)")
-        }
+       defaultCache = try FileCache()
     }
     var cbs = swift_cb_t(
         cache_get:  { ctx -> in3_ret_t in
-            if let cache = defaultCache {
-                let key = String(cString: ctx.pointee.key)
-                let value = cache.getEntry(key: key)
-                if let data = value {
+            let key = String(cString: ctx.pointee.key)
+            if let cache = defaultCache,
+               let data = cache.getEntry(key: key) {
                     data.withUnsafeBytes { (ptr: UnsafeRawBufferPointer )  in
                         ctx.pointee.content = b_new(ptr.baseAddress?.assumingMemoryBound(to: UInt8.self), UInt32(data.count))
                     }
@@ -87,12 +72,10 @@ internal func  registerCache(_ in3:In3) {
                 } else {
                     return IN3_EIGNORE
                 }
-            }
-            return IN3_OK
         },
         cache_set:  {  ctx -> in3_ret_t in
+            let key = String(cString: ctx.pointee.key)
             if let cache = defaultCache {
-                let key = String(cString: ctx.pointee.key)
                 cache.setEntry(key: key, value: Data(bytes: ctx.pointee.content.pointee.data, count: Int(ctx.pointee.content.pointee.len)))
                 return IN3_OK
             }

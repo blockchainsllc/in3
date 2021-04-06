@@ -3,7 +3,7 @@ import Foundation
 /// Ethereum API
 /// a collection of ethereum-specific functions.
 public class Eth {
-    internal var  in3: In3;
+    internal var  in3: In3
 
     /// initializer with Incubed client
     init(_ in3:In3) {

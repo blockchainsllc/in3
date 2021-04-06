@@ -20,7 +20,7 @@ public class In3 {
     transport = httpTransfer
     in3 = in3_for_chain_auto_init(1)
     try configure(config)
-    registerCache(self)
+    try registerCache(self)
   }
 
   deinit {
