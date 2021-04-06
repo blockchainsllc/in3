@@ -1,28 +1,43 @@
 import Foundation
 import CIn3
 
+/// Protocol for Cache-Implementation.
+/// The cache is used to store data like nodelists and their reputations, contract codes and more.
+/// those calls a synchronous calls and should be fast.
+/// in order to set the cache, use the `In3.cache`-property.
 public protocol In3Cache {
+    
+    /// find the data for the given cache-key or `nil`if not found.
     func getEntry(key:String)->Data?
+
+    /// write the data to the cache using the given key..
     func setEntry(key:String,value:Data)->Void
+
+    /// clears all cache entries
     func clear()->Void
 }
 
-
+/// File-Implementation for the cache.
 public class FileCache : In3Cache {
     var dir:URL
     
+    /// creates the cache-directory in the USers home-directory with hte name `.in3`
     convenience init() throws {
         try self.init(URL(fileURLWithPath: ".in3", relativeTo: FileManager.default.homeDirectoryForCurrentUser))
     }
+
+    /// caches data in the given directory
     convenience init(_ dir:String) throws {
         try self.init(URL(fileURLWithPath: dir, isDirectory: true))
     }
 
+    /// caches data in the given directory
     init(_ dir:URL) throws {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: nil)
         self.dir = dir
     }
     
+    /// write the data to the cache using the given key..
     public func setEntry(key: String, value: Data) {
         do {
          try value.write(to: URL(fileURLWithPath: key, relativeTo: dir))
@@ -30,6 +45,7 @@ public class FileCache : In3Cache {
         }
     }
     
+    /// find the data for the given cache-key or `nil`if not found.
     public func getEntry(key: String) -> Data? {
         do {
             return try Data(contentsOf: URL(fileURLWithPath: key, relativeTo: dir))
@@ -38,6 +54,7 @@ public class FileCache : In3Cache {
         }
     }
     
+    /// clears all cache entries
     public func clear() {
         do {
            try FileManager.default.removeItem(at: dir)
@@ -93,28 +110,5 @@ internal func  registerCache(_ in3:In3) {
         in3_register_swift(in3ptr, &cbs)
     }
     
-    
-    /*
-    let callbacks = callbacks(
-        cl
-        
-        printGreeting: { (modifier) in
-            printGreeting(modifier: modifier)
-        }
-    )
-    */
 }
 
-/*
-
-private func printGreeting(modifier: UnsafePointer<CChar>) {
-    print("Hello \(String(cString: modifier))World!")
-}
-
-var callbacks = SomeCLibCallbacks(
-    printGreeting: { (modifier) in
-        printGreeting(modifier: modifier)
-    }
-)
-SomeCLibSetup(&callbacks)
-*/

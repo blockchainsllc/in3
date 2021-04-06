@@ -16,7 +16,7 @@ public class In3 {
         }
     }
 
-  public init(_ config: Config) throws {
+  public init(_ config: In3Config) throws {
     transport = httpTransfer
     in3 = in3_for_chain_auto_init(1)
     try configure(config)
@@ -27,7 +27,7 @@ public class In3 {
     in3_free(in3)
   }
 
-  public func configure(_ config: Config) throws {
+  public func configure(_ config: In3Config) throws {
     let jsonConfig = try JSONEncoder().encode(config)
     let error = in3_configure(in3, String(decoding: jsonConfig, as: UTF8.self))
     if let msg = error {

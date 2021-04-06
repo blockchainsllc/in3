@@ -4,7 +4,7 @@ import Foundation
 
 final class In3Tests: XCTestCase {
     func testLocal() throws {
-        let in3 = try In3(Config(chainId: "mainnet"))
+        let in3 = try In3(In3Config(chainId: "mainnet"))
         let hash = try in3.execLocal("keccak",RPCObject("simon"))
         switch hash {
             case let .string(value):
@@ -15,14 +15,14 @@ final class In3Tests: XCTestCase {
     }
 
     func testJSON() throws {
-        let in3 = try In3(Config(chainId: "mainnet"))
+        let in3 = try In3(In3Config(chainId: "mainnet"))
         let res = in3.executeJSON("{\"method\":\"keccak\",\"params\":[\"simon\"]}")
         XCTAssertEqual(res , "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x12c66c32d34a85291ac705641fb4d8cdf784dd6f84ecec01170f8d0735d54a4a\"}")
     }
 
     func testExec() throws {
         let expect = XCTestExpectation(description: "Should get a hash-value")
-        let in3 = try In3(Config(chainId: "mainnet"))
+        let in3 = try In3(In3Config(chainId: "mainnet"))
         try in3.exec("keccak", RPCObject("simon"), cb: {
             switch $0 {
             case let .error(msg):
@@ -44,7 +44,7 @@ final class In3Tests: XCTestCase {
     func testAPI() throws {
         let expect = XCTestExpectation(description: "Should get a hash-value")
 //        let in3 = try In3(Config(rpc: "https://rpc.slock.it/mainnet"))
-        let in3 = try In3(Config(chainId: "mainnet"))
+        let in3 = try In3(In3Config(chainId: "mainnet"))
         Eth(in3).getTransactionReceipt(hash: "0xe3f6f3a73bccd73b77a7b9e9096fe07b9341e7d1d8f1ad8b8e5207f2fe349fa0") .observe(using: {
             switch $0 {
             case let .failure(err):

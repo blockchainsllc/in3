@@ -2,7 +2,7 @@
 import Foundation
 
 
-
+/// converts a RPC-Object to UInt64 or throws
 internal func toUInt64(_ data:RPCObject?, _ optional:Bool = true) throws -> UInt64?{
     if let data = data {
         switch data {
@@ -30,6 +30,7 @@ internal func toUInt64(_ data:RPCObject?, _ optional:Bool = true) throws -> UInt
     return nil
 }
 
+/// converts a RPC-Object to Bool or throws
 internal func toBool(_ data:RPCObject?, _ optional:Bool = true) throws -> Bool?{
     if let data = data {
         switch data {
@@ -59,7 +60,7 @@ internal func toBool(_ data:RPCObject?, _ optional:Bool = true) throws -> Bool?{
     return nil
 }
 
-
+/// converts a RPC-Object to String or throws
 internal func toString(_ data:RPCObject?, _ optional:Bool = true) throws -> String?{
     if let data = data {
         switch data {
@@ -83,7 +84,7 @@ internal func toString(_ data:RPCObject?, _ optional:Bool = true) throws -> Stri
     return nil
 }
 
-
+/// converts a RPC-Object to a Dictory or throws
 internal func toObject(_ data:RPCObject?,_  optional:Bool = true) throws -> [String: RPCObject]?{
     if let data = data {
         switch data {
@@ -99,7 +100,7 @@ internal func toObject(_ data:RPCObject?,_  optional:Bool = true) throws -> [Str
 }
 
 
-
+/// converts a RPC-Object to a List or throws
 internal func toArray(_ data:RPCObject?, _ optional:Bool = true) throws -> [RPCObject]?{
     if let data = data {
         switch data {
@@ -114,7 +115,7 @@ internal func toArray(_ data:RPCObject?, _ optional:Bool = true) throws -> [RPCO
     return nil
 }
 
-
+/// executes a rpc-request and converts the result as non optional. (will return a rejected promise if it is `nil`)
 internal func execAndConvert<Type>(in3:In3, method: String,  params: RPCObject..., convertWith: @escaping (_ data:RPCObject?, _ optional:Bool) throws -> Type?)  -> Future<Type> {
     let promise = Promise<Type>()
     do {
@@ -140,6 +141,7 @@ internal func execAndConvert<Type>(in3:In3, method: String,  params: RPCObject..
     return promise
 }
 
+/// executes a rpc-request and converts the result as  optional allowing `nil`as valid result.
 internal func execAndConvertOptional<Type>(in3:In3, method: String,  params: RPCObject..., convertWith: @escaping (_ data:RPCObject?, _ optional:Bool) throws -> Type?)  -> Future<Type?> {
     let promise = Promise<Type?>()
     do {

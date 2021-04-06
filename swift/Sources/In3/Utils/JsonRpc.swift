@@ -250,51 +250,75 @@ internal extension JSONObject {
     }
 }
 
+/// Wrapper enum for a rpc-object, which could be different kinds
 public enum RPCObject: Equatable {
+    /// a JSON `null` value.
     case none
+
+    /// a String value
     case string(String)
+
+    /// a Integer
     case integer(Int)
+
+    /// a Doucle-Value
     case double(Double)
+
+    /// a Boolean
     case bool(Bool)
+
+    /// a Array or List of RPC-Objects
     case list([RPCObject])
+
+    /// a JSON-Object represented as Dictionary with properties as keys and their values as RPCObjects
     case dictionary([String: RPCObject])
 
+    /// Wrap a String as Value
     public init(_ value: String) {
         self = .string(value)
     }
 
+    /// Wrap a Integer as Value
     public init(_ value: Int) {
         self = .integer(value)
     }
 
+    /// Wrap a Double as Value
     public init(_ value: Double) {
         self = .double(value)
     }
 
+    /// Wrap a Bool as Value
     public init(_ value: Bool) {
         self = .bool(value)
     }
 
+    /// Wrap a String -Array as Value
     public init(_ value: [String]) {
         self = .list(value.map { RPCObject($0) })
     }
 
+    /// Wrap a Integer -Array as Value
     public init(_ value: [Int]) {
         self = .list(value.map { RPCObject($0) })
     }
 
+    /// Wrap a Object with String values as Value
     public init(_ value: [String: String]) {
         self = .dictionary(value.mapValues { RPCObject($0) })
     }
 
+    /// Wrap a Object with Integer values as Value
     public init(_ value: [String: Int]) {
         self = .dictionary(value.mapValues { RPCObject($0) })
     }
 
+    /// Wrap a Object with RPCObject values as Value
     public init(_ value: [String: RPCObject]) {
         self = .dictionary(value)
     }
 
+    /// Wrap a Array or List of RPCObjects as Value
     public init(_ value: [RPCObject]) {
         self = .list(value)
     }
@@ -319,19 +343,29 @@ public enum RPCObject: Equatable {
     }
 }
 
+/// Error of a RPC-Request
 public struct RPCError {
+    /// initializer
     public init(_ kind: Kind, description: String? = nil) {
         self.kind = kind
         self.description = description
     }
 
+    /// the error-type
     public let kind: Kind
+
+    /// the error description
     public let description: String?
 
+    /// the error type
     public enum Kind {
+        /// invalid Method
         case invalidMethod
+        /// invalid Params
         case invalidParams(String)
+        /// invalid Request
         case invalidRequest(String)
+        /// application Error
         case applicationError(String)
     }
 }

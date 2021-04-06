@@ -10,9 +10,15 @@ const main_aliases = []
 const bool_props = []
 const config_bindings = {
     swift: {
-        Config: [
+        In3Config: [
             '/// The main Incubed Configuration',
-            'public struct Config : Codable {'
+            'public struct In3Config : Codable {',
+            '',
+            '    /// create a new Incubed Client based on the Configuration',
+            '    public func createClient() throws -> In3 {',
+            '       return try In3(self)',
+            '    }',
+            ''
         ]
     }
 }
@@ -35,6 +41,26 @@ const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val]
 const link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
 const getType = val => typeof val === 'object' ? val : (types['' + val] || val)
 const toCmdParam = val => (typeof val == 'object' || Array.isArray(val) || ('' + val).indexOf(' ') >= 0) ? "'" + JSON.stringify(val) + "'" : ('' + val)
+function createSwiftInitForStruct(s, pad) {
+    let comments = '\n' + pad + '    /// initialize it memberwise'
+    let code = ''
+    let init = ''
+    let lastDescr = ''
+    for (let l of s) {
+        l = l.trim()
+        if (lastDescr && !l) lastDescr = ''
+        if (!lastDescr && l.startsWith('/// ')) lastDescr = l.substr(4).split('\n')[0].trim()
+        if (l.startsWith('public var ')) {
+            l = l.substr('public var '.length)
+            const pname = l.substr(0, l.indexOf(':')).trim()
+            comments += '\n' + pad + '    /// - Parameter ' + pname + ' : ' + lastDescr
+            code += '\n' + pad + '        self.' + pname + ' = ' + pname
+            init += (init ? ', ' : '') + l + (l.endsWith('?') ? ' = nil' : '')
+            lastDescr = ''
+        }
+    }
+    s.push(comments + '\n' + pad + '    public init(' + init + ') {' + code + '\n' + pad + '    }')
+}
 function scan(dir) {
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         if (f.name == 'rpc.yml') {
@@ -82,28 +108,29 @@ function handle_config(conf, pre, title, descr) {
         // handle bindings
 
         // generate swift
-        const swift = config_bindings.swift['Config' + camelCaseUp(pre || '')]
+        const swift = config_bindings.swift[camelCaseUp(pre || 'In3Config')]
+        const pad = pre ? '    ' : ''
         if (swift && key.indexOf('-') == -1 && key.indexOf('.') == -1) {
             //console.error("NO Onbject for " + pre + ':Config' + camelCaseUp(pre || ''))
             let swiftType = camelCaseUp(('' + c.type).split('|')[0].trim())
             if (typeof c.type === 'object') {
-                swiftType = 'Config' + camelCaseUp(key)
+                swiftType = camelCaseUp(key)
                 config_bindings.swift[swiftType] = [
-                    '/// ' + c.descr.replace(/\n/gm, '\n/// '),
-                    'public struct ' + swiftType + ' : Codable {'
+                    '    /// ' + c.descr.replace(/\n/gm, '\n/// '),
+                    '    public struct ' + swiftType + ' : Codable {'
                 ]
             }
             else if (swiftType == 'Uint') swiftType = 'UInt64'
             else if (swiftType.startsWith('Byte') || swiftType.startsWith('Address')) swiftType = 'String'
             if (swiftType.endsWith('[]')) swiftType = '[' + swiftType.substr(0, swiftType.length - 2) + ']'
             if (c.array) swiftType = '[' + swiftType + ']'
-            swift.push('\n    /// ' + (
+            swift.push('\n' + pad + '    /// ' + (
                 c.descr
                 + (c.default ? ('\n(default: `' + JSON.stringify(c.default) + '`)') : '')
                 + (c.enum ? ('\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n') : '')
                 + (c.example ? ('\n\nExample: ' + (Array.isArray(c.example) ? '\n```\n' : '`') + asArray(c.example).map(ex => yaml.stringify(ex).trim()).join('\n') + (Array.isArray(c.example) ? '\n```' : '`')) : '')
-            ).replace(/\n/gm, '\n    /// '))
-            swift.push('    public var ' + key + ' : ' + swiftType + (c.optional || !pre ? '?' : ''))
+            ).replace(/\n/gm, '\n' + pad + '    /// '))
+            swift.push(pad + '    public var ' + key + ' : ' + swiftType + (c.optional || !pre ? '?' : ''))
         }
         // handle doc
         if (!pre) {
@@ -249,8 +276,11 @@ for (const s of Object.keys(docs).sort()) {
 }
 
 handle_config(config, '')
+Object.keys(config_bindings.swift).forEach(_ => createSwiftInitForStruct(config_bindings.swift[_], _ == 'In3Config' ? '' : '    '))
 fs.writeFileSync('../swift/Sources/In3/Config.swift', '// This is a generated file, please don\'t edit it manually!\n\nimport Foundation\n\n' + (
-    Object.keys(config_bindings.swift).map(type => config_bindings.swift[type].join('\n') + '\n}\n\n').join('')
+    config_bindings.swift.In3Config.join('\n') + '\n\n' +
+    Object.keys(config_bindings.swift).filter(_ => _ != 'In3Config').map(type => config_bindings.swift[type].join('\n') + '\n    }\n\n').join('')
+    + '\n}\n'
 ), { encoding: 'utf8' })
 
 
