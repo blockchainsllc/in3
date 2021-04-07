@@ -194,6 +194,20 @@ eth:
         descr: if true the full transactions are contained in the result.
         type: bool
     result:
+      optional: true
+      options:
+        - params:
+            fullTx: false
+          name: getBlockByNumber
+          descr: returns the given Block by number with transactionHashes
+          result:
+            type: blockdataWithTxHashes
+        - params:
+            fullTx: false
+          name: getBlockByNumberWithTx
+          descr: returns the given Block by number with full transaction data
+          result:
+            type: blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
       type: blockdata
 
@@ -311,6 +325,20 @@ eth:
         descr: if true the full transactions are contained in the result.
         type: bool
     result:
+      optional: true
+      options:
+        - params:
+            fullTx: false
+          name: getBlockByHash
+          descr: returns the given Block by hash with transactionHashes
+          result:
+            type: blockdataWithTxHashes
+        - params:
+            fullTx: false
+          name: getBlockByHashWithTx
+          descr: returns the given Block by hash with full transaction data
+          result:
+            type: blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
       type: blockdata
 

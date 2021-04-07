@@ -19,6 +19,22 @@ public class IpfsAPI {
     /// - Parameter ipfshash : the ipfs multi hash
     /// - Parameter encoding : the encoding used for the response. ( `hex` , `base64` or `utf8`)
     /// - Returns: the content matching the requested hash encoded in the defined encoding.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// IpfsAPI(in3).get(ipfshash: "QmSepGsypERjq71BSm4Cjq7j8tyAUnCw6ZDTeNdE8RUssD", encoding: "utf8") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = I love Incubed
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func get(ipfshash: String, encoding: String) -> Future<String> {
         return execAndConvert(in3: in3, method: "ipfs_get",params: RPCObject(ipfshash), RPCObject(encoding), convertWith: toString )
     }
@@ -30,6 +46,22 @@ public class IpfsAPI {
     /// - Parameter data : the content encoded with the specified encoding.
     /// - Parameter encoding : the encoding used for the request. ( `hex` , `base64` or `utf8`)
     /// - Returns: the ipfs multi hash
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// IpfsAPI(in3).put(data: "I love Incubed", encoding: "utf8") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = QmSepGsypERjq71BSm4Cjq7j8tyAUnCw6ZDTeNdE8RUssD
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func put(data: String, encoding: String) -> Future<String> {
         return execAndConvert(in3: in3, method: "ipfs_put",params: RPCObject(data), RPCObject(encoding), convertWith: toString )
     }

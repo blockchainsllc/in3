@@ -308,6 +308,7 @@ btc:
             verbosity: 0
           name: getblockheaderAsHex
           descr: returns a hex representation of the blockheader
+          example: '3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d'
           result:
             optional: true
             type: bytes
@@ -417,6 +418,7 @@ btc:
         - params:
             verbosity: 0
           name: getBlockAsHex
+          example: '3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d'
           descr: returns a hex representation of the block
           result:
             optional: true
@@ -509,6 +511,7 @@ btc:
         - params:
             verbosity: 0
           name: getRawTransactionAsHex
+          example: '3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d'
           descr: returns a hex representation of the tx
           result:
             optional: true

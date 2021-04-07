@@ -51,6 +51,14 @@ public class EthAPI {
     /// 
     /// - Parameter data : data to hash
     /// - Returns: the 32byte hash of the data
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try EthAPI(in3).keccak(data: "0x1234567890")
+    /// // result = "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
+    /// ```
+    /// 
     public func keccak(data: String) throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "keccak",params: RPCObject(data), convertWith: toString )
     }
@@ -63,6 +71,14 @@ public class EthAPI {
     /// 
     /// - Parameter data : data to hash
     /// - Returns: the 32byte hash of the data
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try EthAPI(in3).sha3(data: "0x1234567890")
+    /// // result = "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
+    /// ```
+    /// 
     public func sha3(data: String) throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "web3_sha3",params: RPCObject(data), convertWith: toString )
     }
@@ -73,6 +89,14 @@ public class EthAPI {
     /// 
     /// - Parameter data : data to hash
     /// - Returns: the 32byte hash of the data
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try EthAPI(in3).sha256(data: "0x1234567890")
+    /// // result = "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
+    /// ```
+    /// 
     public func sha256(data: String) throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "sha256",params: RPCObject(data), convertWith: toString )
     }
@@ -89,6 +113,14 @@ public class EthAPI {
     /// 
     /// - Parameter seed : the seed. If given the result will be deterministic.
     /// - Returns: the 32byte random data
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try EthAPI(in3).createKey()
+    /// // result = "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
+    /// ```
+    /// 
     public func createKey(seed: String? = nil) throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "in3_createKey",params:seed == nil ? RPCObject.none : RPCObject(seed!), convertWith: toString )
     }
@@ -106,6 +138,23 @@ public class EthAPI {
     /// - Parameter account : the account to sign with
     /// - Parameter message : the message to sign
     /// - Returns: the signature (65 bytes) for the given message.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).sign(account: "0x9b2055d370f73ec7d8a03e965129118dc8f5bf83", message: "0xdeadbeaf") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17b\
+    /// //          fdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func sign(account: String, message: String) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_sign",params: RPCObject(account), RPCObject(message), convertWith: toString )
     }
@@ -113,6 +162,23 @@ public class EthAPI {
     /// Signs a transaction that can be submitted to the network at a later time using with eth_sendRawTransaction.
     /// - Parameter tx : transaction to sign
     /// - Returns: the raw signed transaction
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).signTransaction(tx: {"data":"0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675","from":"0xb60e8dd61c5d32be8058bb8eb970870f07233155","gas":"0x76c0","gasPrice":"0x9184e72a000","to":"0xd46e8dd67c5d32be8058bb8eb970870f07244567","value":"0x9184e72a"}) .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17b\
+    /// //          fdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func signTransaction(tx: EthTransaction) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_signTransaction",params: RPCObject(tx.toRPCDict()), convertWith: toString )
     }
@@ -125,30 +191,228 @@ public class EthAPI {
     /// With the `blockTime` from the chainspec, including a tolerance, the current blocknumber may be checked if in the proposed range.
     /// 
     /// - Returns: the highest known blocknumber
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).blockNumber() .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0xb8a2a5"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func blockNumber() -> Future<UInt64> {
         return execAndConvert(in3: in3, method: "eth_blockNumber", convertWith: toUInt64 )
     }
 
-    /// returns information about a block by block number.
-    /// 
-    /// See [eth_getBlockByNumber](https://eth.wiki/json-rpc/API#eth_getBlockByNumber) for spec.
-    /// 
+    /// returns the given Block by number with transactionHashes
     /// - Parameter blockNumber : the blockNumber or one of `latest`, `earliest`or `pending`
-    /// - Parameter fullTx : if true the full transactions are contained in the result.
     /// - Returns: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-    public func getBlockByNumber(blockNumber: UInt64, fullTx: Bool) -> Future<EthBlockdata> {
-        return execAndConvert(in3: in3, method: "eth_getBlockByNumber",params: RPCObject(blockNumber), RPCObject(fullTx), convertWith: { try EthBlockdata($0,$1) } )
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getBlockByNumber(blockNumber: "latest") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          author: "0x0000000000000000000000000000000000000000"
+    /// //          difficulty: "0x2"
+    /// //          extraData: 0x696e667572612d696f0000000000000...31570f1e500
+    /// //          gasLimit: "0x7a1200"
+    /// //          gasUsed: "0x20e145"
+    /// //          hash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585"
+    /// //          logsBloom: 0x000008000000000000...00400100000000080
+    /// //          miner: "0x0000000000000000000000000000000000000000"
+    /// //          number: "0x449956"
+    /// //          parentHash: "0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694"
+    /// //          receiptsRoot: "0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff"
+    /// //          sealFields:
+    /// //            - "0xa00000000000000000000000000000000000000000000000000000000000000000"
+    /// //            - "0x880000000000000000"
+    /// //          sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+    /// //          size: "0x74b"
+    /// //          stateRoot: "0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910"
+    /// //          timestamp: "0x605aec86"
+    /// //          totalDifficulty: "0x6564de"
+    /// //          transactions:
+    /// //            - "0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58"
+    /// //            - "0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641"
+    /// //            - "0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75"
+    /// //            - "0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d"
+    /// //            - "0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5"
+    /// //            - "0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8"
+    /// //          transactionsRoot: "0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc"
+    /// //          uncles: []
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
+    public func getBlockByNumber(blockNumber: UInt64) -> Future<EthBlockdataWithTxHashes?> {
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params: RPCObject(blockNumber), RPCObject(false),  convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
     }
 
-    /// Returns information about a block by hash.
-    /// 
-    /// See [eth_getBlockByHash](https://eth.wiki/json-rpc/API#eth_getBlockByHash) for spec.
-    /// 
-    /// - Parameter blockHash : the blockHash of the block
-    /// - Parameter fullTx : if true the full transactions are contained in the result.
+    /// returns the given Block by number with full transaction data
+    /// - Parameter blockNumber : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-    public func getBlockByHash(blockHash: String, fullTx: Bool) -> Future<EthBlockdata> {
-        return execAndConvert(in3: in3, method: "eth_getBlockByHash",params: RPCObject(blockHash), RPCObject(fullTx), convertWith: { try EthBlockdata($0,$1) } )
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getBlockByNumberWithTx(blockNumber: "latest") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          author: "0x0000000000000000000000000000000000000000"
+    /// //          difficulty: "0x2"
+    /// //          extraData: 0x696e667572612d696f0000000000000...31570f1e500
+    /// //          gasLimit: "0x7a1200"
+    /// //          gasUsed: "0x20e145"
+    /// //          hash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585"
+    /// //          logsBloom: 0x000008000000000000...00400100000000080
+    /// //          miner: "0x0000000000000000000000000000000000000000"
+    /// //          number: "0x449956"
+    /// //          parentHash: "0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694"
+    /// //          receiptsRoot: "0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff"
+    /// //          sealFields:
+    /// //            - "0xa00000000000000000000000000000000000000000000000000000000000000000"
+    /// //            - "0x880000000000000000"
+    /// //          sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+    /// //          size: "0x74b"
+    /// //          stateRoot: "0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910"
+    /// //          timestamp: "0x605aec86"
+    /// //          totalDifficulty: "0x6564de"
+    /// //          transactions:
+    /// //            - "0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58"
+    /// //            - "0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641"
+    /// //            - "0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75"
+    /// //            - "0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d"
+    /// //            - "0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5"
+    /// //            - "0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8"
+    /// //          transactionsRoot: "0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc"
+    /// //          uncles: []
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
+    public func getBlockByNumberWithTx(blockNumber: UInt64) -> Future<EthBlockdata?> {
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params: RPCObject(blockNumber), RPCObject(false),  convertWith: { try EthBlockdata($0,$1) } )
+    }
+
+    /// returns the given Block by hash with transactionHashes
+    /// - Parameter blockHash : the blockHash of the block
+    /// - Returns: the blockdata, or in case the block with that number does not exist, `null` will be returned.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getBlockByHash(blockHash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          author: "0x0000000000000000000000000000000000000000"
+    /// //          difficulty: "0x2"
+    /// //          extraData: 0x696e667572612d696f0000000000000...31570f1e500
+    /// //          gasLimit: "0x7a1200"
+    /// //          gasUsed: "0x20e145"
+    /// //          hash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585"
+    /// //          logsBloom: 0x000008000000000000...00400100000000080
+    /// //          miner: "0x0000000000000000000000000000000000000000"
+    /// //          number: "0x449956"
+    /// //          parentHash: "0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694"
+    /// //          receiptsRoot: "0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff"
+    /// //          sealFields:
+    /// //            - "0xa00000000000000000000000000000000000000000000000000000000000000000"
+    /// //            - "0x880000000000000000"
+    /// //          sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+    /// //          size: "0x74b"
+    /// //          stateRoot: "0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910"
+    /// //          timestamp: "0x605aec86"
+    /// //          totalDifficulty: "0x6564de"
+    /// //          transactions:
+    /// //            - "0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58"
+    /// //            - "0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641"
+    /// //            - "0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75"
+    /// //            - "0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d"
+    /// //            - "0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5"
+    /// //            - "0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8"
+    /// //          transactionsRoot: "0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc"
+    /// //          uncles: []
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
+    public func getBlockByHash(blockHash: String) -> Future<EthBlockdataWithTxHashes?> {
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByHash",params: RPCObject(blockHash), RPCObject(false),  convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
+    }
+
+    /// returns the given Block by hash with full transaction data
+    /// - Parameter blockHash : the blockHash of the block
+    /// - Returns: the blockdata, or in case the block with that number does not exist, `null` will be returned.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getBlockByHashWithTx(blockHash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          author: "0x0000000000000000000000000000000000000000"
+    /// //          difficulty: "0x2"
+    /// //          extraData: 0x696e667572612d696f0000000000000...31570f1e500
+    /// //          gasLimit: "0x7a1200"
+    /// //          gasUsed: "0x20e145"
+    /// //          hash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585"
+    /// //          logsBloom: 0x000008000000000000...00400100000000080
+    /// //          miner: "0x0000000000000000000000000000000000000000"
+    /// //          number: "0x449956"
+    /// //          parentHash: "0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694"
+    /// //          receiptsRoot: "0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff"
+    /// //          sealFields:
+    /// //            - "0xa00000000000000000000000000000000000000000000000000000000000000000"
+    /// //            - "0x880000000000000000"
+    /// //          sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+    /// //          size: "0x74b"
+    /// //          stateRoot: "0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910"
+    /// //          timestamp: "0x605aec86"
+    /// //          totalDifficulty: "0x6564de"
+    /// //          transactions:
+    /// //            - "0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58"
+    /// //            - "0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641"
+    /// //            - "0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75"
+    /// //            - "0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d"
+    /// //            - "0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5"
+    /// //            - "0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8"
+    /// //          transactionsRoot: "0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc"
+    /// //          uncles: []
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
+    public func getBlockByHashWithTx(blockHash: String) -> Future<EthBlockdata?> {
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByHash",params: RPCObject(blockHash), RPCObject(false),  convertWith: { try EthBlockdata($0,$1) } )
     }
 
     /// returns the number of transactions. For Spec, see [eth_getBlockTransactionCountByHash](https://eth.wiki/json-rpc/API#eth_getBlockTransactionCountByHash).
@@ -186,6 +450,37 @@ public class EthAPI {
     /// - Parameter blockHash : the blockhash containing the transaction.
     /// - Parameter index : the transactionIndex
     /// - Returns: the transactiondata or `null` if it does not exist
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getTransactionByBlockHashAndIndex(blockHash: "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee", index: "0xd5") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          blockHash: "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee"
+    /// //          blockNumber: "0xb8a4a9"
+    /// //          from: "0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98"
+    /// //          gas: "0xac6b"
+    /// //          gasPrice: "0x1bf08eb000"
+    /// //          hash: "0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea"
+    /// //          input: 0x095ea7b300000000000000000000000...a7640000
+    /// //          nonce: "0xa"
+    /// //          to: "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+    /// //          transactionIndex: "0xd5"
+    /// //          value: "0x0"
+    /// //          type: "0x0"
+    /// //          v: "0x25"
+    /// //          r: "0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4"
+    /// //          s: "0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getTransactionByBlockHashAndIndex(blockHash: String, index: UInt64) -> Future<EthTransactiondata> {
         return execAndConvert(in3: in3, method: "eth_getTransactionByBlockHashAndIndex",params: RPCObject(blockHash), RPCObject(index), convertWith: { try EthTransactiondata($0,$1) } )
     }
@@ -197,6 +492,37 @@ public class EthAPI {
     /// - Parameter blockNumber : the block number containing the transaction.
     /// - Parameter index : the transactionIndex
     /// - Returns: the transactiondata or `null` if it does not exist
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getTransactionByBlockNumberAndIndex(blockNumber: "0xb8a4a9", index: "0xd5") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          blockHash: "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee"
+    /// //          blockNumber: "0xb8a4a9"
+    /// //          from: "0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98"
+    /// //          gas: "0xac6b"
+    /// //          gasPrice: "0x1bf08eb000"
+    /// //          hash: "0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea"
+    /// //          input: 0x095ea7b300000000000000000000000...a7640000
+    /// //          nonce: "0xa"
+    /// //          to: "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+    /// //          transactionIndex: "0xd5"
+    /// //          value: "0x0"
+    /// //          type: "0x0"
+    /// //          v: "0x25"
+    /// //          r: "0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4"
+    /// //          s: "0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getTransactionByBlockNumberAndIndex(blockNumber: UInt64, index: UInt64) -> Future<EthTransactiondata> {
         return execAndConvert(in3: in3, method: "eth_getTransactionByBlockNumberAndIndex",params: RPCObject(blockNumber), RPCObject(index), convertWith: { try EthTransactiondata($0,$1) } )
     }
@@ -207,6 +533,37 @@ public class EthAPI {
     /// 
     /// - Parameter txHash : the transactionHash of the transaction.
     /// - Returns: the transactiondata or `null` if it does not exist
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getTransactionByHash(txHash: "0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          blockHash: "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee"
+    /// //          blockNumber: "0xb8a4a9"
+    /// //          from: "0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98"
+    /// //          gas: "0xac6b"
+    /// //          gasPrice: "0x1bf08eb000"
+    /// //          hash: "0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea"
+    /// //          input: 0x095ea7b300000000000000000000000...a7640000
+    /// //          nonce: "0xa"
+    /// //          to: "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+    /// //          transactionIndex: "0xd5"
+    /// //          value: "0x0"
+    /// //          type: "0x0"
+    /// //          v: "0x25"
+    /// //          r: "0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4"
+    /// //          s: "0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getTransactionByHash(txHash: String) -> Future<EthTransactiondata> {
         return execAndConvert(in3: in3, method: "eth_getTransactionByHash",params: RPCObject(txHash), convertWith: { try EthTransactiondata($0,$1) } )
     }
@@ -221,6 +578,22 @@ public class EthAPI {
     /// - Parameter account : address of the account
     /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the balance
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getBalance(account: "0x2e333ec090f1028df0a3c39a918063443be82b2b", block: "latest") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0x20599832af6ec00"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getBalance(account: String, block: UInt64) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_getBalance",params: RPCObject(account), RPCObject(block), convertWith: toString )
     }
@@ -229,6 +602,22 @@ public class EthAPI {
     /// - Parameter account : address of the account
     /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the nonce
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getTransactionCount(account: "0x2e333ec090f1028df0a3c39a918063443be82b2b", block: "latest") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0x5"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getTransactionCount(account: String, block: UInt64) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_getTransactionCount",params: RPCObject(account), RPCObject(block), convertWith: toString )
     }
@@ -237,6 +626,22 @@ public class EthAPI {
     /// - Parameter account : address of the account
     /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the code as hex
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getCode(account: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", block: "latest") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 0x6080604052348...6c634300050a0040
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getCode(account: String, block: UInt64) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_getCode",params: RPCObject(account), RPCObject(block), convertWith: toString )
     }
@@ -246,6 +651,22 @@ public class EthAPI {
     /// - Parameter key : key to look for
     /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the value of the storage slot.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getStorageAt(account: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", key: "0x0", block: "latest") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0x19"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getStorageAt(account: String, key: String, block: UInt64) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_getStorageAt",params: RPCObject(account), RPCObject(key), RPCObject(block), convertWith: toString )
     }
@@ -283,6 +704,22 @@ public class EthAPI {
     /// - Parameter tx : the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
     /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the abi-encoded result of the function.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).call(tx: {"to":"0x2736D225f85740f42D17987100dc8d58e9e16252","data":"0x5cf0f3570000000000000000000000000000000000000000000000000000000000000001"}, block: "latest") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 0x0000000000000000000000000...
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func call(tx: EthTx, block: UInt64) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_call",params: RPCObject(tx.toRPCDict()), RPCObject(block), convertWith: toString )
     }
@@ -290,6 +727,47 @@ public class EthAPI {
     /// The Receipt of a Transaction. For Details, see [eth_getTransactionReceipt](https://eth.wiki/json-rpc/API#eth_gettransactionreceipt).
     /// - Parameter txHash : the transactionHash
     /// - Returns: the TransactionReceipt or `null`  if it does not exist.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// EthAPI(in3).getTransactionReceipt(txHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+    /// //          blockNumber: "0x8c1e39"
+    /// //          contractAddress: null
+    /// //          cumulativeGasUsed: "0x2466d"
+    /// //          gasUsed: "0x2466d"
+    /// //          logs:
+    /// //            - address: "0x85ec283a3ed4b66df4da23656d4bf8a507383bca"
+    /// //              blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+    /// //              blockNumber: "0x8c1e39"
+    /// //              data: 0x00000000000...
+    /// //              logIndex: "0x0"
+    /// //              removed: false
+    /// //              topics:
+    /// //                - "0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8"
+    /// //                - "0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6"
+    /// //                - "0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000"
+    /// //              transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+    /// //              transactionIndex: "0x0"
+    /// //              transactionLogIndex: "0x0"
+    /// //              type: mined
+    /// //          logsBloom: 0x00000000000000000000200000...
+    /// //          root: null
+    /// //          status: "0x1"
+    /// //          transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+    /// //          transactionIndex: "0x0"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getTransactionReceipt(txHash: String) -> Future<EthTransactionReceipt?> {
         return execAndConvertOptional(in3: in3, method: "eth_getTransactionReceipt",params: RPCObject(txHash), convertWith: { try EthTransactionReceipt($0,$1) } )
     }
@@ -339,6 +817,111 @@ public struct EthTransaction {
         obj["gasPrice"] = gasPrice == nil ? RPCObject.none : RPCObject(gasPrice!)
         obj["nonce"] = nonce == nil ? RPCObject.none : RPCObject(nonce!)
         obj["data"] = data == nil ? RPCObject.none : RPCObject(data!)
+        return obj
+    }
+}
+
+/// the blockdata, or in case the block with that number does not exist, `null` will be returned.
+public struct EthBlockdataWithTxHashes {
+    /// the block number. `null` when its pending block.
+    public var number: UInt64
+
+    /// hash of the block. `null` when its pending block.
+    public var hash: String
+
+    /// hash of the parent block.
+    public var parentHash: String
+
+    /// hash of the generated proof-of-work. `null` when its pending block.
+    public var nonce: UInt64
+
+    /// SHA3 of the uncles Merkle root in the block.
+    public var sha3Uncles: String
+
+    /// the bloom filter for the logs of the block. `null` when its pending block.
+    public var logsBloom: String
+
+    /// the root of the transaction trie of the block.
+    public var transactionsRoot: String
+
+    /// the root of the final state trie of the block.
+    public var stateRoot: String
+
+    /// the root of the receipts trie of the block.
+    public var receiptsRoot: String
+
+    /// the address of the beneficiary to whom the mining rewards were given.
+    public var miner: String
+
+    /// integer of the difficulty for this block.
+    public var difficulty: UInt64
+
+    /// integer of the total difficulty of the chain until this block.
+    public var totalDifficulty: UInt64
+
+    /// the "extra data" field of this block.
+    public var extraData: String
+
+    /// integer the size of this block in bytes.
+    public var size: UInt64
+
+    /// the maximum gas allowed in this block.
+    public var gasLimit: UInt64
+
+    /// the total used gas by all transactions in this block.
+    public var gasUsed: UInt64
+
+    /// the unix timestamp for when the block was collated.
+    public var timestamp: UInt64
+
+    /// Array of transaction hashes
+    public var transactions: [String]
+
+    /// Array of uncle hashes.
+    public var uncles: [String]
+
+    internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
+        guard let obj = try toObject(rpc, optional) else { return nil }
+        number = try toUInt64(obj["number"],false)!
+        hash = try toString(obj["hash"],false)!
+        parentHash = try toString(obj["parentHash"],false)!
+        nonce = try toUInt64(obj["nonce"],false)!
+        sha3Uncles = try toString(obj["sha3Uncles"],false)!
+        logsBloom = try toString(obj["logsBloom"],false)!
+        transactionsRoot = try toString(obj["transactionsRoot"],false)!
+        stateRoot = try toString(obj["stateRoot"],false)!
+        receiptsRoot = try toString(obj["receiptsRoot"],false)!
+        miner = try toString(obj["miner"],false)!
+        difficulty = try toUInt64(obj["difficulty"],false)!
+        totalDifficulty = try toUInt64(obj["totalDifficulty"],false)!
+        extraData = try toString(obj["extraData"],false)!
+        size = try toUInt64(obj["size"],false)!
+        gasLimit = try toUInt64(obj["gasLimit"],false)!
+        gasUsed = try toUInt64(obj["gasUsed"],false)!
+        timestamp = try toUInt64(obj["timestamp"],false)!
+        transactions = try toArray(obj["transactions"])!.map({ try toString($0,false)! })
+        uncles = try toArray(obj["uncles"])!.map({ try toString($0,false)! })
+    }
+
+    internal func toRPCDict() -> [String:RPCObject] {
+        var obj:[String:RPCObject] = [:]
+        obj["number"] = RPCObject(number)
+        obj["hash"] = RPCObject(hash)
+        obj["parentHash"] = RPCObject(parentHash)
+        obj["nonce"] = RPCObject(nonce)
+        obj["sha3Uncles"] = RPCObject(sha3Uncles)
+        obj["logsBloom"] = RPCObject(logsBloom)
+        obj["transactionsRoot"] = RPCObject(transactionsRoot)
+        obj["stateRoot"] = RPCObject(stateRoot)
+        obj["receiptsRoot"] = RPCObject(receiptsRoot)
+        obj["miner"] = RPCObject(miner)
+        obj["difficulty"] = RPCObject(difficulty)
+        obj["totalDifficulty"] = RPCObject(totalDifficulty)
+        obj["extraData"] = RPCObject(extraData)
+        obj["size"] = RPCObject(size)
+        obj["gasLimit"] = RPCObject(gasLimit)
+        obj["gasUsed"] = RPCObject(gasUsed)
+        obj["timestamp"] = RPCObject(timestamp)
         return obj
     }
 }

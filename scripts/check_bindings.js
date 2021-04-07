@@ -39,6 +39,7 @@ const bindings = {
     python: strings('../python/in3', '"'),
     rust: strings('../rust/in3-rs/src', '"'),
     dotnet: strings('../dotnet/In3', '"', '*.cs'),
+    swift: strings('../swift/Sources', '"'),
     c_api: strings('../c/src/api', '"',),
     autocmpl: grep("\"'.*?:\"", '_in3.sh').map(_ => ((/'([a-zA-Z0-9_]+):/gm).exec(_) || ["", ""])[1]),
 }
@@ -68,6 +69,7 @@ bindings.wasm = grep('\"^[ ]*[a-zA-Z0-9_]+[\\?]*:.*\"', '../wasm/src').map(_ => 
 bindings.autocmpl = []
 bindings.c_api = []
 bindings.python = grep("\"self\\.[a-zA-Z0-9_]+\"", '../python/in3/model.py').map(_ => ((/self.([a-zA-Z0-9_]+)/gm).exec(_) || ["", ""])[1])
+bindings.swift = grep("\"var [a-zA-Z0-9_]+\"", '../swift/Sources/In3/Config.swift').map(_ => ((/var ([a-zA-Z0-9_]+)/gm).exec(_) || ["", ""])[1])
 
 
 for (const conf of configs) {

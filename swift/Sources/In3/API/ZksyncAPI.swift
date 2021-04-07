@@ -21,12 +21,66 @@ public class ZksyncAPI {
 
     /// returns the contract address
     /// - Returns: fetches the contract addresses from the zksync server. This request also caches them and will return the results from cahe if available.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).contractAddress() .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          govContract: "0x34460C0EB5074C29A9F6FE13b8e7E23A0D08aF01"
+    /// //          mainContract: "0xaBEA9132b05A70803a4E85094fD0e1800777fBEF"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func contractAddress() -> Future<ZksyncContractAddress> {
         return execAndConvert(in3: in3, method: "zksync_contract_address", convertWith: { try ZksyncContractAddress($0,$1) } )
     }
 
     /// returns the list of all available tokens
     /// - Returns: a array of tokens-definitions. This request also caches them and will return the results from cahe if available.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).tokens() .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          BAT:
+    /// //            address: "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
+    /// //            decimals: 18
+    /// //            id: 8
+    /// //            symbol: BAT
+    /// //          BUSD:
+    /// //            address: "0x4fabb145d64652a948d72533023f6e7a623c7c53"
+    /// //            decimals: 18
+    /// //            id: 6
+    /// //            symbol: BUSD
+    /// //          DAI:
+    /// //            address: "0x6b175474e89094c44da98b954eedeac495271d0f"
+    /// //            decimals: 18
+    /// //            id: 1
+    /// //            symbol: DAI
+    /// //          ETH:
+    /// //            address: "0x0000000000000000000000000000000000000000"
+    /// //            decimals: 18
+    /// //            id: 0
+    /// //            symbol: ETH
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func tokens() -> Future<[String:ZksyncTokens]> {
         return execAndConvert(in3: in3, method: "zksync_tokens", convertWith: { try toObject($0,$1)!.mapValues({ try ZksyncTokens($0,false)! }) } )
     }
@@ -34,6 +88,34 @@ public class ZksyncAPI {
     /// returns account_info from the server
     /// - Parameter address : the account-address. if not specified, the client will try to use its own address based on the signer config.
     /// - Returns: the current state of the requested account.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).accountInfo() .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          address: "0x3b2a1bd631d9d7b17e87429a8e78dbbd9b4de292"
+    /// //          committed:
+    /// //            balances: {}
+    /// //            nonce: 0
+    /// //            pubKeyHash: sync:0000000000000000000000000000000000000000
+    /// //          depositing:
+    /// //            balances: {}
+    /// //          id: null
+    /// //          verified:
+    /// //            balances: {}
+    /// //            nonce: 0
+    /// //            pubKeyHash: sync:0000000000000000000000000000000000000000
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func accountInfo(address: String? = nil) -> Future<ZksyncAccountInfo> {
         return execAndConvert(in3: in3, method: "zksync_account_info",params:address == nil ? RPCObject.none : RPCObject(address!), convertWith: { try ZksyncAccountInfo($0,$1) } )
     }
@@ -41,6 +123,26 @@ public class ZksyncAPI {
     /// returns the state or receipt of the the zksync-tx
     /// - Parameter tx : the txHash of the send tx
     /// - Returns: the current state of the requested tx.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).txInfo(tx: "sync-tx:e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          block: null
+    /// //          executed: false
+    /// //          failReason: null
+    /// //          success: null
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func txInfo(tx: String) -> Future<ZksyncTxInfo> {
         return execAndConvert(in3: in3, method: "zksync_tx_info",params: RPCObject(tx), convertWith: { try ZksyncTxInfo($0,$1) } )
     }
@@ -63,6 +165,22 @@ public class ZksyncAPI {
     /// 
     /// - Parameter token : the token to pay the gas (either the symbol or the address)
     /// - Returns: the pubKeyHash, if it was executed successfully
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).setKey(token: "eth") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = sync:e41d2489571d322189246dafa5ebde1f4699f498
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func setKey(token: String) -> Future<String> {
         return execAndConvert(in3: in3, method: "zksync_set_key",params: RPCObject(token), convertWith: toString )
     }
@@ -70,6 +188,14 @@ public class ZksyncAPI {
     /// returns the current PubKeyHash based on the configuration set.
     /// - Parameter pubKey : the packed public key to hash ( if given the hash is build based on the given hash, otherwise the hash is based on the config)
     /// - Returns: the pubKeyHash
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try ZksyncAPI(in3).pubkeyhash()
+    /// // result = sync:4dcd9bb4463121470c7232efb9ff23ec21398e58
+    /// ```
+    /// 
     public func pubkeyhash(pubKey: String? = nil) throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "zksync_pubkeyhash",params:pubKey == nil ? RPCObject.none : RPCObject(pubKey!), convertWith: toString )
     }
@@ -79,12 +205,28 @@ public class ZksyncAPI {
     /// If the config contains public keys for musig-signatures, the keys will be aggregated, otherwise the pubkey will be derrived from the signing key set.
     /// 
     /// - Returns: the pubKey
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try ZksyncAPI(in3).pubkey()
+    /// // result = "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc04"
+    /// ```
+    /// 
     public func pubkey() throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "zksync_pubkey", convertWith: toString )
     }
 
     /// returns the address of the account used.
     /// - Returns: the account used.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try ZksyncAPI(in3).accountAddress()
+    /// // result = "0x3b2a1bd631d9d7b17e87429a8e78dbbd9b4de292"
+    /// ```
+    /// 
     public func accountAddress() throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "zksync_account_address", convertWith: toString )
     }
@@ -95,7 +237,29 @@ public class ZksyncAPI {
     /// when exchanging the data with other keys, all known data will be send using `zk_sign` as method, but instead of the raw message a object with those data will be passed.
     /// 
     /// - Parameter message : the message to sign
-    /// - Returns: The return value are 96 bytes of signature:    /// - `[0...32]` packed public key    /// - `[32..64]` r-value    /// - `[64..96]` s-value    /// 
+    /// - Returns: The return value are 96 bytes of signature:
+    /// - `[0...32]` packed public key
+    /// - `[32..64]` r-value
+    /// - `[64..96]` s-value
+    /// 
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).sign(message: "0xaabbccddeeff") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c398\
+    /// //          0e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31\
+    /// //          b69cd0910a432156a0977c3a5baa404547e01"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func sign(message: String) -> Future<String> {
         return execAndConvert(in3: in3, method: "zksync_sign",params: RPCObject(message), convertWith: toString )
     }
@@ -107,6 +271,14 @@ public class ZksyncAPI {
     /// - Parameter message : the message which was supposed to be signed
     /// - Parameter signature : the signature (96 bytes)
     /// - Returns: 1 if the signature(which contains the pubkey as the first 32bytes) matches the message.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try ZksyncAPI(in3).verify(message: "0xaabbccddeeff", signature: "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c3980e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31b69cd0910a432156a0977c3a5baa404547e01")
+    /// // result = 1
+    /// ```
+    /// 
     public func verify(message: String, signature: String) throws ->  UInt64 {
         return try execLocalAndConvert(in3: in3, method: "zksync_verify",params: RPCObject(message), RPCObject(signature), convertWith: toUInt64 )
     }
@@ -120,6 +292,22 @@ public class ZksyncAPI {
     /// returns current token-price
     /// - Parameter token : Symbol or address of the token
     /// - Returns: the token price
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).getTokenPrice(token: "WBTC") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 11320.002167
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getTokenPrice(token: String) -> Future<Double> {
         return execAndConvert(in3: in3, method: "zksync_get_token_price",params: RPCObject(token), convertWith: toDouble )
     }
@@ -129,12 +317,50 @@ public class ZksyncAPI {
     /// - Parameter address : the address of the receipient
     /// - Parameter token : the symbol or address of the token to pay
     /// - Returns: the fees split up into single values
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).getTxFee(txType: "Transfer", address: "0xabea9132b05a70803a4e85094fd0e1800777fbef", token: "BAT") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          feeType: TransferToNew
+    /// //          gasFee: "47684047990828528"
+    /// //          gasPriceWei: "116000000000"
+    /// //          gasTxAmount: "350"
+    /// //          totalFee: "66000000000000000"
+    /// //          zkpFee: "18378682992117666"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func getTxFee(txType: String, address: String, token: String) -> Future<ZksyncTxFee> {
         return execAndConvert(in3: in3, method: "zksync_get_tx_fee",params: RPCObject(txType), RPCObject(address), RPCObject(token), convertWith: { try ZksyncTxFee($0,$1) } )
     }
 
     /// returns private key used for signing zksync-transactions
     /// - Returns: the raw private key configured based on the signers seed
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).syncKey() .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0x019125314fda133d5bf62cb454ee8c60927d55b68eae8b8b8bd13db814389cd6"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func syncKey() -> Future<String> {
         return execAndConvert(in3: in3, method: "zksync_sync_key", convertWith: toString )
     }
@@ -145,6 +371,22 @@ public class ZksyncAPI {
     /// - Parameter approveDepositAmountForERC20 : if true and in case of an erc20-token, the client will send a approve transaction first, otherwise it is expected to be already approved.
     /// - Parameter account : address of the account to send the tx from. if not specified, the first available signer will be used.
     /// - Returns: the opId. You can use `zksync_ethop_info` to follow the state-changes.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).deposit(amount: 1000, token: "WBTC") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 74
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func deposit(amount: UInt64, token: String, approveDepositAmountForERC20: Bool? = nil, account: String? = nil) -> Future<UInt64> {
         return execAndConvert(in3: in3, method: "zksync_deposit",params: RPCObject(amount), RPCObject(token),approveDepositAmountForERC20 == nil ? RPCObject.none : RPCObject(approveDepositAmountForERC20!),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toUInt64 )
     }
@@ -155,6 +397,22 @@ public class ZksyncAPI {
     /// - Parameter token : the token as symbol or address
     /// - Parameter account : address of the account to send the tx from. if not specified, the first available signer will be used.
     /// - Returns: the transactionHash. use `zksync_tx_info` to check the progress.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).transfer(to: 9.814684447173249e+47, amount: 100, token: "WBTC") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0x58ba1537596739d990a33e4fba3a6fb4e0d612c5de30843a2c415dd1e5edcef1"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func transfer(to: String, amount: UInt64, token: String, account: String? = nil) -> Future<String> {
         return execAndConvert(in3: in3, method: "zksync_transfer",params: RPCObject(to), RPCObject(amount), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
     }
@@ -165,6 +423,22 @@ public class ZksyncAPI {
     /// - Parameter token : the token as symbol or address
     /// - Parameter account : address of the account to send the tx from. if not specified, the first available signer will be used.
     /// - Returns: the transactionHash. use `zksync_tx_info` to check the progress.
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).withdraw(ethAddress: 9.814684447173249e+47, amount: 100, token: "WBTC") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0x58ba1537596739d990a33e4fba3a6fb4e0d612c5de30843a2c415dd1e5edcef1"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func withdraw(ethAddress: String, amount: UInt64, token: String, account: String? = nil) -> Future<String> {
         return execAndConvert(in3: in3, method: "zksync_withdraw",params: RPCObject(ethAddress), RPCObject(amount), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
     }
@@ -172,6 +446,47 @@ public class ZksyncAPI {
     /// withdraws all tokens for the specified token as a onchain-transaction. This is useful in case the zksync-server is offline or tries to be malicious.
     /// - Parameter token : the token as symbol or address
     /// - Returns: the transactionReceipt
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// ZksyncAPI(in3).emergencyWithdraw(token: "WBTC") .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = 
+    /// //          blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+    /// //          blockNumber: "0x8c1e39"
+    /// //          contractAddress: null
+    /// //          cumulativeGasUsed: "0x2466d"
+    /// //          gasUsed: "0x2466d"
+    /// //          logs:
+    /// //            - address: "0x85ec283a3ed4b66df4da23656d4bf8a507383bca"
+    /// //              blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+    /// //              blockNumber: "0x8c1e39"
+    /// //              data: 0x00000000000...
+    /// //              logIndex: "0x0"
+    /// //              removed: false
+    /// //              topics:
+    /// //                - "0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8"
+    /// //                - "0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6"
+    /// //                - "0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000"
+    /// //              transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+    /// //              transactionIndex: "0x0"
+    /// //              transactionLogIndex: "0x0"
+    /// //              type: mined
+    /// //          logsBloom: 0x00000000000000000000200000...
+    /// //          root: null
+    /// //          status: "0x1"
+    /// //          transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+    /// //          transactionIndex: "0x0"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
     public func emergencyWithdraw(token: String) -> Future<ZksyncTransactionReceipt> {
         return execAndConvert(in3: in3, method: "zksync_emergency_withdraw",params: RPCObject(token), convertWith: { try ZksyncTransactionReceipt($0,$1) } )
     }
@@ -179,6 +494,14 @@ public class ZksyncAPI {
     /// calculate the public key based on multiple public keys signing together using schnorr musig signatures.
     /// - Parameter pubkeys : concatinated packed publickeys of the signers. the length of the bytes must be `num_keys * 32`
     /// - Returns: the compact public Key
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// let result = try ZksyncAPI(in3).aggregatePubkey(pubkeys: "0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409")
+    /// // result = "0x9ce5b6f8db3fbbe66a3bdbd3b4731f19ec27f80ee03ead3c0708798dd949882b"
+    /// ```
+    /// 
     public func aggregatePubkey(pubkeys: String) throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "zksync_aggregate_pubkey",params: RPCObject(pubkeys), convertWith: toString )
     }

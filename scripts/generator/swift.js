@@ -186,6 +186,9 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
     if (r.options) {
         for (option of r.options) {
             let rr = { ...rpc, result: { ...r, ...option.result } }
+            if (option.example && rr.example) rr.example = { ...rr.example, response: option.example }
+            if (option.params && rr.example && rr.example.request)
+                rr.example = { ...rr.example, request: rr.example.request.slice(0, Object.keys(rpc.params).length - Object.keys(option.params).length) }
             rr.params = {}
             for (let pp of Object.keys(rpc.params)) {
                 rr.params[pp] = { ...rpc.params[pp] }
@@ -239,7 +242,30 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
         s += ' convertWith: ' + converterName(returnType, true) + ' )'
         s += '\n    }\n'
     }
-    if (r.descr) content.push('    /// - Returns: ' + rpc.result.descr.split('\n').join('    /// '))
+    if (r.descr) content.push('    /// - Returns: ' + rpc.result.descr.split('\n').join('\n    /// '))
+
+    asArray(rpc.example).forEach(ex => {
+        const paramNames = Object.keys(rpc.params || {})
+        let x = '\n**Example**\n\n```swift\n'
+        let call = camelCaseUp(api_name) + 'API(in3).' + fnName + '(' + (ex.request || []).map((_, i) => paramNames[i] + ': ' + JSON.stringify(_)).join(', ') + ')'
+        if (rpc.sync) {
+            x += 'let result = try ' + call + '\n'
+            x += '// result = ' + (typeof ex.response === 'object' ? '\n//          ' : '') + yaml.stringify(ex.response).trim().split('\n').join('\n//          ')
+        }
+        else {
+            x += call + ' .observe(using: {\n'
+            x += '    switch $0 {\n'
+            x += '       case let .failure(err):\n'
+            x += '         print("Failed because : \\(err.localizedDescription)")\n'
+            x += '       case let .success(val):\n'
+            x += '         print("result : \\(val)")\n'
+            x += '//              result = ' + (typeof ex.response === 'object' ? '\n//          ' : '') + yaml.stringify(ex.response).trim().split('\n').join('\n//          ')
+            x += '\n     }\n'
+            x += '}\n'
+        }
+        x += '\n```\n'
+        content.push('    /// ' + x.split('\n').join('\n    /// '))
+    })
     content.push(s)
 }
 
