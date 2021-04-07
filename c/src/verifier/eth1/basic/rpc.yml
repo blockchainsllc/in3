@@ -190,22 +190,25 @@ eth:
       blockNumber:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint
+        internalDefault : latest
+        optional: true
       fullTx:
         descr: if true the full transactions are contained in the result.
+        default: false
         type: bool
     result:
       optional: true
       options:
         - params:
             fullTx: false
-          name: getBlockByNumber
-          descr: returns the given Block by number with transactionHashes
+          name: getBlock
+          descr: returns the given Block by number with transactionHashes. if no blocknumber is specified the latest block will be returned.
           result:
             type: blockdataWithTxHashes
         - params:
             fullTx: false
-          name: getBlockByNumberWithTx
-          descr: returns the given Block by number with full transaction data
+          name: getBlockWithTx
+          descr: returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
           result:
             type: blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
@@ -764,7 +767,9 @@ eth:
         descr: address of the account
         type: address
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or `latest`
         type: uint
     result:
       descr: the balance
@@ -807,7 +812,9 @@ eth:
         descr: address of the account
         type: address
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or  `latest` 
         type: uint
     result:
       descr: the nonce
@@ -851,7 +858,9 @@ eth:
         descr: address of the account
         type: address
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or `latest`
         type: uint
     result:
       descr: the code as hex
@@ -897,7 +906,9 @@ eth:
         descr: key to look for
         type: bytes32
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or`latest`
         type: uint
     result:
       descr: the value of the storage slot.

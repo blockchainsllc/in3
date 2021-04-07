@@ -8,7 +8,7 @@ const {
     link,
     toCmdParam
 } = require('./util')
-
+const isStruct = (c, typeConfigs) => typeof c.type == 'string' ? typeConfigs[c.type] : typeof c.type === 'object'
 configs = {
     In3Config: [
         '/// The main Incubed Configuration',
@@ -219,8 +219,8 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
             params += (params ? '' : 'params:') + (
                 p.fixed === undefined
                     ? (p.optional
-                        ? name + ' == nil ? RPCObject.none : RPCObject(' + name + '!),'
-                        : ' RPCObject(' + (converterName(type, false).startsWith('to') ? name : (name + '.toRPCDict()')) + '),')
+                        ? name + ' == nil ? RPCObject' + (p.internalDefault ? ('(' + JSON.stringify(p.internalDefault) + ')') : '.none') + ' : RPCObject(' + (p.type === 'uint' ? ('String(format:"0x%1x",' + name + '!)') : name + '!') + '),'
+                        : ' RPCObject(' + (converterName(type, false).startsWith('to') ? ((p.type === 'uint' ? ('String(format:"0x%1x",' + name + ')') : name)) : (name + '.toRPCDict()')) + '),')
                     : (' RPCObject(' + JSON.stringify(p.fixed) + '), ')
             )
 
@@ -245,9 +245,21 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
     if (r.descr) content.push('    /// - Returns: ' + rpc.result.descr.split('\n').join('\n    /// '))
 
     asArray(rpc.example).forEach(ex => {
+        function toSwiftValue(val, pIndex) {
+            const name = paramNames[pIndex]
+            const def = rpc.params[name]
+            if (!def) return JSON.stringify(val)
+            if (isStruct(def, types) && typeof val === 'object') {
+                let swiftType = getAPIType(def, types, structs, name, camelCaseUp(api_name))
+                return swiftType + '(' + Object.keys(val).map(_ => _ + ': ' + JSON.stringify(val[_])).join(', ') + ')'
+            }
+            return JSON.stringify(val)
+        }
         const paramNames = Object.keys(rpc.params || {})
         let x = '\n**Example**\n\n```swift\n'
-        let call = camelCaseUp(api_name) + 'API(in3).' + fnName + '(' + (ex.request || []).map((_, i) => paramNames[i] + ': ' + JSON.stringify(_)).join(', ') + ')'
+        let call = camelCaseUp(api_name) + 'API(in3).' + fnName + '(' + (ex.request || [])
+            .filter((_, i) => _ != rpc.params[paramNames[i]].internalDefault)
+            .map((_, i) => paramNames[i] + ': ' + toSwiftValue(_, i)).join(', ') + ')'
         if (rpc.sync) {
             x += 'let result = try ' + call + '\n'
             x += '// result = ' + (typeof ex.response === 'object' ? '\n//          ' : '') + yaml.stringify(ex.response).trim().split('\n').join('\n//          ')

@@ -123,7 +123,7 @@ public class In3API {
     /// ```
     /// 
     public func fromWei(value: String, unit: String, digits: UInt64? = nil) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_fromWei",params: RPCObject(value), RPCObject(unit),digits == nil ? RPCObject.none : RPCObject(digits!), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_fromWei",params: RPCObject(value), RPCObject(unit),digits == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",digits!)), convertWith: toString )
     }
 
     /// extracts the address from a private key.
@@ -184,7 +184,7 @@ public class In3API {
     /// **Example**
     /// 
     /// ```swift
-    /// In3API(in3).prepareTx(tx: {"to":"0x63f666a23cbd135a91187499b5cc51d589c302a0","value":"0x100000000","from":"0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"}) .observe(using: {
+    /// In3API(in3).prepareTx(tx: In3Transaction(to: "0x63f666a23cbd135a91187499b5cc51d589c302a0", value: "0x100000000", from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f")) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -334,7 +334,7 @@ public class In3API {
     /// ```
     /// 
     public func nodeList(limit: UInt64? = nil, seed: String? = nil, addresses: [String]? = nil) -> Future<In3NodeList> {
-        return execAndConvert(in3: in3, method: "in3_nodeList",params:limit == nil ? RPCObject.none : RPCObject(limit!),seed == nil ? RPCObject.none : RPCObject(seed!),addresses == nil ? RPCObject.none : RPCObject(addresses!), convertWith: { try In3NodeList($0,$1) } )
+        return execAndConvert(in3: in3, method: "in3_nodeList",params:limit == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",limit!)),seed == nil ? RPCObject.none : RPCObject(seed!),addresses == nil ? RPCObject.none : RPCObject(addresses!), convertWith: { try In3NodeList($0,$1) } )
     }
 
     /// requests a signed blockhash from the node. 
@@ -350,7 +350,7 @@ public class In3API {
     /// **Example**
     /// 
     /// ```swift
-    /// In3API(in3).sign(blocks: {"blockNumber":8770580}) .observe(using: {
+    /// In3API(in3).sign(blocks: In3Blocks(blockNumber: 8770580)) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")

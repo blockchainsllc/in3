@@ -356,7 +356,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getdifficulty(blocknumber: UInt64) -> Future<UInt64> {
-        return execAndConvert(in3: in3, method: "getdifficulty",params: RPCObject(blocknumber), convertWith: toUInt64 )
+        return execAndConvert(in3: in3, method: "getdifficulty",params: RPCObject(String(format:"0x%1x",blocknumber)), convertWith: toUInt64 )
     }
 
     /// Whenever the client is not able to trust the changes of the target (which is the case if a block can't be found in the verified target cache *and* the value of the target changed more than the client's limit `max_diff`) he will call this method. It will return additional proof data to verify the changes of the target on the side of the client. This is not a standard Bitcoin rpc-method like the other ones, but more like an internal method.
@@ -408,7 +408,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func proofTarget(target_dap: UInt64, verified_dap: UInt64, max_diff: UInt64? = 5, max_dap: UInt64? = 5, limit: UInt64? = 0) -> Future<[BtcProofTarget]> {
-        return execAndConvert(in3: in3, method: "btc_proofTarget",params: RPCObject(target_dap), RPCObject(verified_dap),max_diff == nil ? RPCObject.none : RPCObject(max_diff!),max_dap == nil ? RPCObject.none : RPCObject(max_dap!),limit == nil ? RPCObject.none : RPCObject(limit!), convertWith: { try toArray($0,$1)!.map({ try BtcProofTarget($0,false)! }) } )
+        return execAndConvert(in3: in3, method: "btc_proofTarget",params: RPCObject(String(format:"0x%1x",target_dap)), RPCObject(String(format:"0x%1x",verified_dap)),max_diff == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",max_diff!)),max_dap == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",max_dap!)),limit == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",limit!)), convertWith: { try toArray($0,$1)!.map({ try BtcProofTarget($0,false)! }) } )
     }
 
     /// Returns the hash of the best (tip) block in the longest blockchain.

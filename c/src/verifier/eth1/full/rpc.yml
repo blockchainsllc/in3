@@ -7,7 +7,9 @@ eth:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
         type: transaction
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or  `latest`
         type: uint | string
           
     result:
@@ -51,7 +53,9 @@ eth:
             type: bytes
             optional: true
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or  `latest`
         type: uint | string
           
     result:

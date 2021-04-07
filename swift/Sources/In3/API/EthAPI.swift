@@ -166,7 +166,7 @@ public class EthAPI {
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).signTransaction(tx: {"data":"0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675","from":"0xb60e8dd61c5d32be8058bb8eb970870f07233155","gas":"0x76c0","gasPrice":"0x9184e72a000","to":"0xd46e8dd67c5d32be8058bb8eb970870f07244567","value":"0x9184e72a"}) .observe(using: {
+    /// EthAPI(in3).signTransaction(tx: EthTransaction(data: "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", from: "0xb60e8dd61c5d32be8058bb8eb970870f07233155", gas: "0x76c0", gasPrice: "0x9184e72a000", to: "0xd46e8dd67c5d32be8058bb8eb970870f07244567", value: "0x9184e72a")) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -211,14 +211,14 @@ public class EthAPI {
         return execAndConvert(in3: in3, method: "eth_blockNumber", convertWith: toUInt64 )
     }
 
-    /// returns the given Block by number with transactionHashes
+    /// returns the given Block by number with transactionHashes. if no blocknumber is specified the latest block will be returned.
     /// - Parameter blockNumber : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the blockdata, or in case the block with that number does not exist, `null` will be returned.
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).getBlockByNumber(blockNumber: "latest") .observe(using: {
+    /// EthAPI(in3).getBlock() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -258,18 +258,18 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getBlockByNumber(blockNumber: UInt64) -> Future<EthBlockdataWithTxHashes?> {
-        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params: RPCObject(blockNumber), RPCObject(false),  convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
+    public func getBlock(blockNumber: UInt64? = nil) -> Future<EthBlockdataWithTxHashes?> {
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params:blockNumber == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",blockNumber!)), RPCObject(false),  convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
     }
 
-    /// returns the given Block by number with full transaction data
+    /// returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
     /// - Parameter blockNumber : the blockNumber or one of `latest`, `earliest`or `pending`
     /// - Returns: the blockdata, or in case the block with that number does not exist, `null` will be returned.
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).getBlockByNumberWithTx(blockNumber: "latest") .observe(using: {
+    /// EthAPI(in3).getBlockWithTx() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -309,8 +309,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getBlockByNumberWithTx(blockNumber: UInt64) -> Future<EthBlockdata?> {
-        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params: RPCObject(blockNumber), RPCObject(false),  convertWith: { try EthBlockdata($0,$1) } )
+    public func getBlockWithTx(blockNumber: UInt64? = nil) -> Future<EthBlockdata?> {
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params:blockNumber == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",blockNumber!)), RPCObject(false),  convertWith: { try EthBlockdata($0,$1) } )
     }
 
     /// returns the given Block by hash with transactionHashes
@@ -426,7 +426,7 @@ public class EthAPI {
     /// - Parameter blockNumber : the blockNumber of the block
     /// - Returns: the number of transactions in the block
     public func getBlockTransactionCountByNumber(blockNumber: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getBlockTransactionCountByNumber",params: RPCObject(blockNumber), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getBlockTransactionCountByNumber",params: RPCObject(String(format:"0x%1x",blockNumber)), convertWith: toString )
     }
 
     /// returns the number of uncles. For Spec, see [eth_getUncleCountByBlockHash](https://eth.wiki/json-rpc/API#eth_getUncleCountByBlockHash).
@@ -440,7 +440,7 @@ public class EthAPI {
     /// - Parameter blockNumber : the blockNumber of the block
     /// - Returns: the number of uncles
     public func getUncleCountByBlockNumber(blockNumber: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getUncleCountByBlockNumber",params: RPCObject(blockNumber), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getUncleCountByBlockNumber",params: RPCObject(String(format:"0x%1x",blockNumber)), convertWith: toString )
     }
 
     /// returns the transaction data.
@@ -482,7 +482,7 @@ public class EthAPI {
     /// ```
     /// 
     public func getTransactionByBlockHashAndIndex(blockHash: String, index: UInt64) -> Future<EthTransactiondata> {
-        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockHashAndIndex",params: RPCObject(blockHash), RPCObject(index), convertWith: { try EthTransactiondata($0,$1) } )
+        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockHashAndIndex",params: RPCObject(blockHash), RPCObject(String(format:"0x%1x",index)), convertWith: { try EthTransactiondata($0,$1) } )
     }
 
     /// returns the transaction data.
@@ -524,7 +524,7 @@ public class EthAPI {
     /// ```
     /// 
     public func getTransactionByBlockNumberAndIndex(blockNumber: UInt64, index: UInt64) -> Future<EthTransactiondata> {
-        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockNumberAndIndex",params: RPCObject(blockNumber), RPCObject(index), convertWith: { try EthTransactiondata($0,$1) } )
+        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockNumberAndIndex",params: RPCObject(String(format:"0x%1x",blockNumber)), RPCObject(String(format:"0x%1x",index)), convertWith: { try EthTransactiondata($0,$1) } )
     }
 
     /// returns the transaction data.
@@ -576,13 +576,13 @@ public class EthAPI {
 
     /// gets the balance of an account for a given block
     /// - Parameter account : address of the account
-    /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
+    /// - Parameter block : the blockNumber or `latest`
     /// - Returns: the balance
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).getBalance(account: "0x2e333ec090f1028df0a3c39a918063443be82b2b", block: "latest") .observe(using: {
+    /// EthAPI(in3).getBalance(account: "0x2e333ec090f1028df0a3c39a918063443be82b2b") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -594,19 +594,19 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getBalance(account: String, block: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getBalance",params: RPCObject(account), RPCObject(block), convertWith: toString )
+    public func getBalance(account: String, block: UInt64? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_getBalance",params: RPCObject(account),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
     }
 
     /// gets the nonce or number of transaction sent from this account at a given block
     /// - Parameter account : address of the account
-    /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
+    /// - Parameter block : the blockNumber or  `latest`
     /// - Returns: the nonce
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).getTransactionCount(account: "0x2e333ec090f1028df0a3c39a918063443be82b2b", block: "latest") .observe(using: {
+    /// EthAPI(in3).getTransactionCount(account: "0x2e333ec090f1028df0a3c39a918063443be82b2b") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -618,19 +618,19 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getTransactionCount(account: String, block: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getTransactionCount",params: RPCObject(account), RPCObject(block), convertWith: toString )
+    public func getTransactionCount(account: String, block: UInt64? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_getTransactionCount",params: RPCObject(account),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
     }
 
     /// gets the code of a given contract
     /// - Parameter account : address of the account
-    /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
+    /// - Parameter block : the blockNumber or `latest`
     /// - Returns: the code as hex
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).getCode(account: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", block: "latest") .observe(using: {
+    /// EthAPI(in3).getCode(account: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -642,20 +642,20 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getCode(account: String, block: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getCode",params: RPCObject(account), RPCObject(block), convertWith: toString )
+    public func getCode(account: String, block: UInt64? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_getCode",params: RPCObject(account),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
     }
 
     /// gets the storage value of a given key
     /// - Parameter account : address of the account
     /// - Parameter key : key to look for
-    /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
+    /// - Parameter block : the blockNumber or`latest`
     /// - Returns: the value of the storage slot.
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).getStorageAt(account: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", key: "0x0", block: "latest") .observe(using: {
+    /// EthAPI(in3).getStorageAt(account: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", key: "0x0") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -667,8 +667,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getStorageAt(account: String, key: String, block: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getStorageAt",params: RPCObject(account), RPCObject(key), RPCObject(block), convertWith: toString )
+    public func getStorageAt(account: String, key: String, block: UInt64? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_getStorageAt",params: RPCObject(account), RPCObject(key),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
     }
 
     /// signs and sends a Transaction
@@ -694,21 +694,21 @@ public class EthAPI {
 
     /// calculates the gas needed to execute a transaction. for spec see [eth_estimateGas](https://eth.wiki/json-rpc/API#eth_estimateGas)
     /// - Parameter tx : the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
-    /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
+    /// - Parameter block : the blockNumber or  `latest`
     /// - Returns: the amount of gass needed.
-    public func estimateGas(tx: EthTransaction, block: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_estimateGas",params: RPCObject(tx.toRPCDict()), RPCObject(block), convertWith: toString )
+    public func estimateGas(tx: EthTransaction, block: UInt64? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_estimateGas",params: RPCObject(tx.toRPCDict()),block == nil ? RPCObject("latest") : RPCObject(block!), convertWith: toString )
     }
 
     /// calls a function of a contract (or simply executes the evm opcodes) and returns the result. for spec see [eth_call](https://eth.wiki/json-rpc/API#eth_call)
     /// - Parameter tx : the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
-    /// - Parameter block : the blockNumber or one of `latest`, `earliest`or `pending`
+    /// - Parameter block : the blockNumber or  `latest`
     /// - Returns: the abi-encoded result of the function.
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// EthAPI(in3).call(tx: {"to":"0x2736D225f85740f42D17987100dc8d58e9e16252","data":"0x5cf0f3570000000000000000000000000000000000000000000000000000000000000001"}, block: "latest") .observe(using: {
+    /// EthAPI(in3).call(tx: EthTx(to: "0x2736D225f85740f42D17987100dc8d58e9e16252", data: "0x5cf0f3570000000000000000000000000000000000000000000000000000000000000001")) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -720,8 +720,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func call(tx: EthTx, block: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_call",params: RPCObject(tx.toRPCDict()), RPCObject(block), convertWith: toString )
+    public func call(tx: EthTx, block: UInt64? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_call",params: RPCObject(tx.toRPCDict()),block == nil ? RPCObject("latest") : RPCObject(block!), convertWith: toString )
     }
 
     /// The Receipt of a Transaction. For Details, see [eth_getTransactionReceipt](https://eth.wiki/json-rpc/API#eth_gettransactionreceipt).

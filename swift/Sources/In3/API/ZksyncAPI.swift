@@ -286,7 +286,7 @@ public class ZksyncAPI {
     /// returns the state or receipt of the the PriorityOperation
     /// - Parameter opId : the opId of a layer-operstion (like depositing)
     public func ethopInfo(opId: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_ethop_info",params: RPCObject(opId), convertWith: toString )
+        return execAndConvert(in3: in3, method: "zksync_ethop_info",params: RPCObject(String(format:"0x%1x",opId)), convertWith: toString )
     }
 
     /// returns current token-price
@@ -388,7 +388,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func deposit(amount: UInt64, token: String, approveDepositAmountForERC20: Bool? = nil, account: String? = nil) -> Future<UInt64> {
-        return execAndConvert(in3: in3, method: "zksync_deposit",params: RPCObject(amount), RPCObject(token),approveDepositAmountForERC20 == nil ? RPCObject.none : RPCObject(approveDepositAmountForERC20!),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toUInt64 )
+        return execAndConvert(in3: in3, method: "zksync_deposit",params: RPCObject(String(format:"0x%1x",amount)), RPCObject(token),approveDepositAmountForERC20 == nil ? RPCObject.none : RPCObject(approveDepositAmountForERC20!),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toUInt64 )
     }
 
     /// sends a zksync-transaction and returns data including the transactionHash.
@@ -414,7 +414,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func transfer(to: String, amount: UInt64, token: String, account: String? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_transfer",params: RPCObject(to), RPCObject(amount), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
+        return execAndConvert(in3: in3, method: "zksync_transfer",params: RPCObject(to), RPCObject(String(format:"0x%1x",amount)), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
     }
 
     /// withdraws the amount to the given `ethAddress` for the given token.
@@ -440,7 +440,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func withdraw(ethAddress: String, amount: UInt64, token: String, account: String? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_withdraw",params: RPCObject(ethAddress), RPCObject(amount), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
+        return execAndConvert(in3: in3, method: "zksync_withdraw",params: RPCObject(ethAddress), RPCObject(String(format:"0x%1x",amount)), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
     }
 
     /// withdraws all tokens for the specified token as a onchain-transaction. This is useful in case the zksync-server is offline or tries to be malicious.
