@@ -24,7 +24,7 @@ in3:
       pk:
         descr: the 32byte long private key as hex string.
         type: bytes32
-    returns:
+    result:
       descr: the address of given key.
       type: address
     example:
@@ -34,7 +34,7 @@ in3:
 
   eth_accounts:
     descr: returns a array of account-addresss the incubed client is able to sign with. In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the addresses of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
-    returns:
+    result:
       descr: the array of addresses of all registered signers.
     example:
       response: 

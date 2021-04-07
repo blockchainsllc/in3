@@ -138,10 +138,11 @@ in3:
         optional: true
       addresses:
         descr: a optional array of addresses of signers the nodeList must include.
-        type: address[]
+        array: true
+        type: address
         optional: true
 
-    returns:
+    result:
       descr: the current nodelist
       type:
         nodes:
@@ -358,7 +359,7 @@ in3:
             type: bytes32
             optional: true
     
-    returns:
+    result:
       descr: the Array with signatures of all the requires blocks.
       type: 
         blockHash:
@@ -369,7 +370,7 @@ in3:
           type: uint
         r:
           descr: r-value of the signature
-          type: bytres32
+          type: bytes32
         s:
           descr: s-value of the signature
           type: bytes32
@@ -396,7 +397,7 @@ in3:
       address:
         descr: address of whitelist contract
         type: address
-    returns:
+    result:
       descr: the whitelisted addresses
       type:
         nodes:

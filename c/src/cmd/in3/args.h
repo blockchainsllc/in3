@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-const char* bool_props[] = {"includeCode", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
+const char* bool_props[]={ "includeCode", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help",  NULL};
 
 const char* help_args = "\
 --chainId                     -c     the chainId or the name of a known chain\n\

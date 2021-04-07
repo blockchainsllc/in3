@@ -10,7 +10,7 @@ eth:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint | string
           
-    returns:
+    result:
       descr: the amount of gass needed.
     proof:
       alias: eth_call
@@ -54,7 +54,7 @@ eth:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint | string
           
-    returns:
+    result:
       descr: the abi-encoded result of the function.
     
     example:

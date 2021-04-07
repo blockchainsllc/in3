@@ -99,7 +99,7 @@ zksync:
   # rpc
   zksync_contract_address:
     descr: returns the contract address
-    returns:
+    result:
       descr: fetches the contract addresses from the zksync server. This request also caches them and will return the results from cahe if available.
       type:
         govContract:
@@ -117,7 +117,7 @@ zksync:
 
   zksync_tokens:
     descr: returns the list of all available tokens
-    returns:
+    result:
       descr: a array of tokens-definitions. This request also caches them and will return the results from cahe if available.
       type:
         address:
@@ -163,7 +163,7 @@ zksync:
         descr: the account-address. if not specified, the client will try to use its own address based on the signer config.
         type: address
         optional: true
-    returns:
+    result:
       descr: the current state of the requested account.
       type:
         address:
@@ -173,11 +173,9 @@ zksync:
           descr: the state of the zksync operator after executing transactions successfully, but not not verified on L1 yet.
           type:
             balances:
-              descr: the token-balances.
-              type:
-                <token>: 
-                  descr: the balance of the token
-                  type: uint
+              descr: the token-balance
+              key: the token
+              type: uint
             nonce:
               descr: the nonce or transaction count.
               type: uint
@@ -189,10 +187,8 @@ zksync:
           type:
             balances:
               descr: the token-values.
-              type:
-                <token>: 
-                  descr: the value of the token
-                  type: uint
+              key: the token
+              type: uint
         id:
           descr: the assigned id of the account, which will be used when encoding it into the rollup.
           type: uint
@@ -201,10 +197,8 @@ zksync:
           type:
             balances:
               descr: the token-balances.
-              type:
-                <token>: 
-                  descr: the balance of the token
-                  type: uint
+              key: the token
+              type: uint
             nonce:
               descr: the nonce or transaction count.
               type: uint
@@ -234,7 +228,7 @@ zksync:
       tx:
         descr: the txHash of the send tx
         type: bytes32
-    returns:
+    result:
       descr: the current state of the requested tx.
       type:
         block:
@@ -281,7 +275,7 @@ zksync:
       token:
         descr: the token to pay the gas (either the symbol or the address)
         type: string
-    returns:
+    result:
       descr: the pubKeyHash, if it was executed successfully
       type: address
     example:
@@ -297,7 +291,7 @@ zksync:
         descr: the packed public key to hash ( if given the hash is build based on the given hash, otherwise the hash is based on the config)
         type: bytes32
         optional: true
-    returns:
+    result:
       descr: the pubKeyHash
       type: address
     example:
@@ -310,7 +304,7 @@ zksync:
       returns the current packed PubKey based on the config set.
 
       If the config contains public keys for musig-signatures, the keys will be aggregated, otherwise the pubkey will be derrived from the signing key set.
-    returns:
+    result:
       descr: the pubKey
       type: bytes32
     example:
@@ -321,7 +315,7 @@ zksync:
 
   zksync_account_address:
     descr: returns the address of the account used.
-    returns:
+    result:
       descr: the account used.
       type: address
     example:
@@ -342,7 +336,7 @@ zksync:
       message:
         descr: the message to sign
         type: bytes
-    returns:
+    result:
       descr: |
         The return value are 96 bytes of signature:
         - `[0...32]` packed public key
@@ -368,7 +362,7 @@ zksync:
       signature:
         descr: the signature (96 bytes)
         type: bytes96
-    returns:
+    result:
       descr: 1 if the signature(which contains the pubkey as the first 32bytes) matches the message.
       type: uint
     example:
@@ -391,7 +385,7 @@ zksync:
       token:
         descr: Symbol or address of the token
         type: string
-    returns:
+    result:
       descr: the token price
       type: float
     example:
@@ -412,7 +406,7 @@ zksync:
       token:
         descr: the symbol or address of the token to pay
         type: string
-    returns:
+    result:
       descr: the fees split up into single values
       type:
         feeType:
@@ -449,7 +443,7 @@ zksync:
                 
   zksync_sync_key:
     descr: returns private key used for signing zksync-transactions
-    returns:
+    result:
       descr: the raw private key configured based on the signers seed
     example: 
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
@@ -472,7 +466,7 @@ zksync:
         descr: address of the account to send the tx from. if not specified, the first available signer will be used.
         type: address
         optional: true
-    returns:
+    result:
       descr: the opId. You can use `zksync_ethop_info` to follow the state-changes.
       type: uint
     example:
@@ -498,7 +492,7 @@ zksync:
         descr: address of the account to send the tx from. if not specified, the first available signer will be used.
         type: address
         optional: true
-    returns:
+    result:
       descr: the transactionHash. use `zksync_tx_info` to check the progress.
       type: bytes32
     example:
@@ -525,7 +519,7 @@ zksync:
         descr: address of the account to send the tx from. if not specified, the first available signer will be used.
         type: address
         optional: true
-    returns:
+    result:
       descr: the transactionHash. use `zksync_tx_info` to check the progress.
       type: bytes32
     example:
@@ -542,7 +536,7 @@ zksync:
       token:
         descr: the token as symbol or address
         type: string
-    returns:
+    result:
       descr: the transactionReceipt
       type: transactionReceipt
     example:
@@ -582,7 +576,7 @@ zksync:
       pubkeys:
         descr: concatinated packed publickeys of the signers. the length of the bytes must be `num_keys * 32` 
         type: bytes
-    returns:
+    result:
       descr: the compact public Key
       type: bytes32
     example:

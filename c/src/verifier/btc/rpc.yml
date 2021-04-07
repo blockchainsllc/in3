@@ -1,4 +1,51 @@
 types:
+  btcblockheader:
+    hash:
+      descr: the block hash (same as provided)
+      type: bytes32
+    confirmations:
+      descr: The number of confirmations, or -1 if the block is not on the main chain
+      type: int
+    height:
+      descr: The block height or index
+      type: uint
+    version:
+      descr: The block version
+      type: uint
+    versionHex:
+      descr: The block version formatted in hexadecimal
+      type: hex
+    merkleroot:
+      descr:  The merkle root ( 32 bytes )
+      type: bytes32
+    time:
+      descr: The block time in seconds since epoch (Jan 1 1970 GMT)
+      type: uint
+    mediantime:
+      descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
+      type: uint
+    nonce:
+      descr: The nonce
+      type: uint
+    bits:
+      descr: The bits ( 4 bytes as hex) representing the target
+      type: bytes4
+    difficulty:
+      descr: The difficulty
+      type: uint
+    chainwork:
+      descr: Expected number of hashes required to produce the current chain (in hex)
+      type: uint
+    nTx:
+      descr: The number of transactions in the block.
+      type: uint
+    previousblockhash:
+      descr: The hash of the previous block
+      type: bytes32
+    nextblockhash:
+      descr: The hash of the next block
+      type: bytes32
+
   btctransaction:
     txid:
       descr: txid
@@ -29,6 +76,7 @@ types:
       type: uint
     vin:
       descr: array of json objects of incoming txs to be used
+      array: true
       type: 
         txid: 
           descr: the transaction id
@@ -49,10 +97,12 @@ types:
           descr:  The script sequence number
           type: uint
         txinwitness:
+          array: true
           descr: hex-encoded witness data (if any)
-          type: string[]
+          type: string
     vout:
       descr: array of json objects describing the tx outputs
+      array: true
       type:
         value:
           descr: The Value in BTC
@@ -77,19 +127,122 @@ types:
               type: string
             addresses:
               descr: Array of address(each representing a bitcoin adress)
-              type: string[]
+              array: true
+              type: string
     blockhash:
       descr: the block hash
       type: bytes32
     confirmations:
       descr: The confirmations
-      type: uint
+      type: int
     blocktime:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
       type: uint
     time:
       descr:  Same as "blocktime"
       type: uint
+
+  btcblockWithTx:
+    hash:
+      descr: the block hash (same as provided)
+      type: bytes32
+    confirmations:
+      descr: The number of confirmations, or -1 if the block is not on the main chain
+      type: int
+    height:
+      descr: The block height or index
+      type: uint
+    version:
+      descr: The block version
+      type: uint
+    versionHex:
+      descr: The block version formatted in hexadecimal
+      type: hex
+    merkleroot:
+      descr:  The merkle root ( 32 bytes )
+      type: bytes32
+    time:
+      descr: The block time in seconds since epoch (Jan 1 1970 GMT)
+      type: uint
+    mediantime:
+      descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
+      type: uint
+    nonce:
+      descr: The nonce
+      type: uint
+    bits:
+      descr: The bits ( 4 bytes as hex) representing the target
+      type: bytes4
+    difficulty:
+      descr: The difficulty
+      type: uint
+    chainwork:
+      descr: Expected number of hashes required to produce the current chain (in hex)
+      type: uint
+    nTx:
+      descr: The number of transactions in the block.
+      type: uint
+    tx:
+      descr: the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
+      array: true
+      type: btctransaction
+    previousblockhash:
+      descr: The hash of the previous block
+      type: bytes32
+    nextblockhash:
+      descr: The hash of the next block
+      type: bytes32
+
+  btcblock:
+    hash:
+      descr: the block hash (same as provided)
+      type: bytes32
+    confirmations:
+      descr: The number of confirmations, or -1 if the block is not on the main chain
+      type: int
+    height:
+      descr: The block height or index
+      type: uint
+    version:
+      descr: The block version
+      type: uint
+    versionHex:
+      descr: The block version formatted in hexadecimal
+      type: hex
+    merkleroot:
+      descr:  The merkle root ( 32 bytes )
+      type: bytes32
+    time:
+      descr: The block time in seconds since epoch (Jan 1 1970 GMT)
+      type: uint
+    mediantime:
+      descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
+      type: uint
+    nonce:
+      descr: The nonce
+      type: uint
+    bits:
+      descr: The bits ( 4 bytes as hex) representing the target
+      type: bytes4
+    difficulty:
+      descr: The difficulty
+      type: uint
+    chainwork:
+      descr: Expected number of hashes required to produce the current chain (in hex)
+      type: uint
+    nTx:
+      descr: The number of transactions in the block.
+      type: uint
+    tx:
+      descr: the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
+      array: true
+      type: bytes32
+    previousblockhash:
+      descr: The hash of the previous block
+      type: bytes32
+    nextblockhash:
+      descr: The hash of the next block
+      type: bytes32
 
 btc:
   descr: |
@@ -140,7 +293,8 @@ btc:
         type: bytes32
       verbosity:
         descr: 0 or false for the hex-encoded data, 1 or true for a json object
-        type: uint
+        type: int
+        default: 0
     in3Params:
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
@@ -148,57 +302,27 @@ btc:
       preBIP34:
         descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
         type: bool
-    returns:
+    result:
+      options:
+        - params:
+            verbosity: 0
+          name: getblockheaderAsHex
+          descr: returns a hex representation of the blockheader
+          result:
+            optional: true
+            type: bytes
+        - params:
+            verbosity: 1
+          name: getblockheader
+          descr: returns the blockheader
+          result:
+            optional: true
+            type: btcblockheader
       descr: |
         the blockheader. 
         - verbose `0` or `false`: a hex string with 80 bytes representing the blockheader
         - verbose `1` or `true`: an object representing the blockheader.
-      type:
-        hash:
-          descr: the block hash (same as provided)
-          type: bytes32
-        confirmations:
-          descr: The number of confirmations, or -1 if the block is not on the main chain
-          type: int
-        height:
-          descr: The block height or index
-          type: uint
-        version:
-          descr: The block version
-          type: uint
-        versionHex:
-          descr: The block version formatted in hexadecimal
-          type: hex
-        merkleroot:
-          descr:  The merkle root ( 32 bytes )
-          type: bytes32
-        time:
-          descr: The block time in seconds since epoch (Jan 1 1970 GMT)
-          type: uint
-        mediantime:
-          descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
-          type: uint
-        nonce:
-          descr: The nonce
-          type: uint
-        bits:
-          descr: The bits ( 4 bytes as hex) representing the target
-          type: bytes4
-        difficulty:
-          descr: The difficulty
-          type: uint
-        chainwork:
-          descr: Expected number of hashes required to produce the current chain (in hex)
-          type: uint
-        nTx:
-          descr: The number of transactions in the block.
-          type: uint
-        previousblockhash:
-          descr: The hash of the previous block
-          type: bytes32
-        nextblockhash:
-          descr: The hash of the next block
-          type: bytes32
+      type: btcblockheader
 
     proof:
       descr: |
@@ -276,7 +400,8 @@ btc:
         type: bytes32
       verbosity:
         descr: 0 or false for hex-encoded data, 1 or true for a json object, and 2 for json object **with** transaction data
-        type: uint
+        type: int
+        default: 0
     in3Params:
       finality:
         descr: defines the amount of finality headers
@@ -287,60 +412,35 @@ btc:
       preBIP34:
         descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
         type: bool
-    returns:
+    result:
+      options:
+        - params:
+            verbosity: 0
+          name: getBlockAsHex
+          descr: returns a hex representation of the block
+          result:
+            optional: true
+            type: bytes
+        - params:
+            verbosity: 1
+          name: getBlock
+          descr: returns the block with transactionhashes
+          result:
+            optional: true
+            type: btcblock
+        - params:
+            verbosity: 2
+          name: getBlockWithTx
+          descr: returns the block with full transactions
+          result:
+            optional: true
+            type: btcblockWithTx
       descr: |
         the block. 
         - verbose `0` or `false`: a hex string with 80 bytes representing the blockheader
         - verbose `1` or `true`: an object representing the blockheader.
-      type:
-        hash:
-          descr: the block hash (same as provided)
-          type: bytes32
-        confirmations:
-          descr: The number of confirmations, or -1 if the block is not on the main chain
-          type: int
-        height:
-          descr: The block height or index
-          type: uint
-        version:
-          descr: The block version
-          type: uint
-        versionHex:
-          descr: The block version formatted in hexadecimal
-          type: hex
-        merkleroot:
-          descr:  The merkle root ( 32 bytes )
-          type: bytes32
-        time:
-          descr: The block time in seconds since epoch (Jan 1 1970 GMT)
-          type: uint
-        mediantime:
-          descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
-          type: uint
-        nonce:
-          descr: The nonce
-          type: uint
-        bits:
-          descr: The bits ( 4 bytes as hex) representing the target
-          type: bytes4
-        difficulty:
-          descr: The difficulty
-          type: uint
-        chainwork:
-          descr: Expected number of hashes required to produce the current chain (in hex)
-          type: uint
-        nTx:
-          descr: The number of transactions in the block.
-          type: uint
-        tx:
-          descr: the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
-          type: btctransaction
-        previousblockhash:
-          descr: The hash of the previous block
-          type: bytes32
-        nextblockhash:
-          descr: The hash of the next block
-          type: bytes32
+      type: btcblockWithTx
+
 
     proof:
       alias: getblockheader
@@ -387,7 +487,7 @@ btc:
         type: bytes32
       verbosity:
         descr: 0 or false for the hex-encoded data for `txid`, 1 or true for a json object with information about `txid`
-        type: uint
+        type: int
         optional: true
         default: 1
       blockhash:
@@ -404,7 +504,22 @@ btc:
       preBIP34:
         descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
         type: bool
-    returns:
+    result:
+      options:
+        - params:
+            verbosity: 0
+          name: getRawTransactionAsHex
+          descr: returns a hex representation of the tx
+          result:
+            optional: true
+            type: bytes
+        - params:
+            verbosity: 1
+          name: getRawTransaction
+          descr: returns the raw transaction
+          result:
+            optional: true
+            type: btctransaction
       descr: |
         - verbose `0` or `false`: a string that is serialized, hex-encoded data for `txid`
         - verbose `1` or `false`: an object representing the transaction.        
@@ -517,7 +632,7 @@ btc:
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
         type: string
-    returns:
+    result:
       descr: the current blockheight
       type: uint
     proof:
@@ -555,6 +670,7 @@ btc:
     descr: Returns the proof-of-work difficulty as a multiple of the minimum difficulty.
     params:
       blocknumber:
+        type: uint
         descr: 'Can be the number of a certain block to get its difficulty. To get the difficulty of the latest block use `latest`, `earliest`, `pending` or leave `params` empty (Hint: Latest block always means `actual latest block` minus `in3.finality`)'
     in3Params:
       finality:
@@ -567,7 +683,8 @@ btc:
         descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
         type: bool
 
-    returns:
+    result:
+      type: uint
       descr: |
         - `blocknumber` is a certain number: the difficulty of this block
         - `blocknumber` is `latest`, `earliest`, `pending` or empty: the difficulty of the latest block (`actual latest block` minus `in3.finality`)
@@ -635,12 +752,17 @@ btc:
       max_diff:
         descr: the maximum target difference between 2 verified daps
         type: uint
+        default: 5
+        optional: true
       max_dap:
         descr: the maximum amount of daps between 2 verified daps
         type: uint
+        default: 5
+        optional: true
       limit:
         descr: the maximum amount of daps to return (`0` = no limit) - this is important for embedded devices since returning all daps might be too much for limited memory
         type: uint
+        default: 0
         optional: true
     in3Params:
       finality:
@@ -668,7 +790,25 @@ btc:
 
       ![](proofTarget.png)
  
-    returns:
+    result:
+      array: true
+      type:
+        dap: 
+          descr: the difficulty adjustement period
+          type: uint
+        block:
+          descr: the first blockheader
+          type: bytes
+        final:
+          descr: the finality header
+          type: bytes
+        cbtx: 
+          descr: the coinbase transaction as hex
+          type: bytes
+        cbtxMerkleProof:
+          descr: the coinbasetx merkle proof
+          type: bytes
+
       descr: A path of daps from the `verified_dap` to the `target_dap` which fulfils the conditions of `max_diff`, `max_dap` and `limit`. Each dap of the path is a `dap`-object with corresponding proof data. 
     proof:
       descr: |
@@ -744,7 +884,7 @@ btc:
       preBIP34:
         descr: defines if the client wants to verify blocks before BIP34 (height < 227836)
         type: bool
-    returns:
+    result:
       descr: the hash of the best block
       type: bytes32
     proof:

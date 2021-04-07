@@ -518,16 +518,27 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
-  d_token_t* keyfile        = d_get_at(ctx->params, 0);
-  bytes_t    password_bytes = d_to_bytes(d_get_at(ctx->params, 1));
-  bytes32_t  dst;
+  d_token_t*  keyfile        = d_get_at(ctx->params, 0);
+  bytes_t     password_bytes = d_to_bytes(d_get_at(ctx->params, 1));
+  bytes32_t   dst;
+  json_ctx_t* sctx = NULL;
 
   if (!password_bytes.data) return req_set_error(ctx->req, "you need to specify a passphrase", IN3_EINVAL);
-  if (!keyfile || d_type(keyfile) != T_OBJECT) return req_set_error(ctx->req, "no valid key given", IN3_EINVAL);
+  if (d_type(keyfile) == T_STRING) {
+    sctx = parse_json(d_string(keyfile));
+    if (!sctx) return req_set_error(ctx->req, "invalid keystore-json", IN3_EINVAL);
+    keyfile = sctx->result;
+  }
+
+  if (!keyfile || d_type(keyfile) != T_OBJECT) {
+    if (sctx) json_free(sctx);
+    return req_set_error(ctx->req, "no valid key given", IN3_EINVAL);
+  }
   char* passphrase = alloca(password_bytes.len + 1);
   memcpy(passphrase, password_bytes.data, password_bytes.len);
   passphrase[password_bytes.len] = 0;
   in3_ret_t res                  = decrypt_key(keyfile, passphrase, dst);
+  if (sctx) json_free(sctx);
   if (res) return req_set_error(ctx->req, "Invalid key", res);
   return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
 }

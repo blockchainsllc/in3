@@ -98,7 +98,8 @@ eth:
       txHash:
         descr: the transactionHash
         type: bytes32
-    returns:
+    result:
+      optional: true
       descr: the TransactionReceipt or `null`  if it does not exist.
       type: transactionReceipt
     

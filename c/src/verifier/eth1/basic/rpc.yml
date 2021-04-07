@@ -1,5 +1,5 @@
 types:
-  blockdata:
+  blockdataWithTxHashes:
     number:
       descr: the block number. `null` when its pending block.
       type: uint
@@ -11,7 +11,7 @@ types:
       type: bytes32
     nonce:
       descr: hash of the generated proof-of-work. `null` when its pending block.
-      type: uint64
+      type: uint
     sha3Uncles:
       descr: SHA3 of the uncles Merkle root in the block.
       type: bytes32
@@ -52,11 +52,74 @@ types:
       descr: the unix timestamp for when the block was collated.
       type: uint
     transactions:
-      descr: Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter.
-      type: transaction[]
+      descr: Array of transaction hashes
+      array: true
+      type: bytes32
     uncles:
       descr: Array of uncle hashes.
-      type: bytes32[]
+      array: true
+      type: bytes32
+
+  blockdata:
+    number:
+      descr: the block number. `null` when its pending block.
+      type: uint
+    hash:
+      descr: hash of the block. `null` when its pending block.
+      type: bytes32
+    parentHash:
+      descr: hash of the parent block.
+      type: bytes32
+    nonce:
+      descr: hash of the generated proof-of-work. `null` when its pending block.
+      type: uint
+    sha3Uncles:
+      descr: SHA3 of the uncles Merkle root in the block.
+      type: bytes32
+    logsBloom:
+      descr: the bloom filter for the logs of the block. `null` when its pending block.
+      type: bytes256
+    transactionsRoot:
+      descr: the root of the transaction trie of the block.
+      type: bytes32
+    stateRoot:
+      descr: the root of the final state trie of the block.
+      type: bytes32
+    receiptsRoot:
+      descr: the root of the receipts trie of the block.
+      type: bytes32
+    miner:
+      descr: the address of the beneficiary to whom the mining rewards were given.
+      type: address
+    difficulty:
+      descr: integer of the difficulty for this block.
+      type: uint
+    totalDifficulty:
+      descr: integer of the total difficulty of the chain until this block.
+      type: uint
+    extraData:
+      descr: the "extra data" field of this block.
+      type: bytes
+    size:
+      descr: integer the size of this block in bytes.
+      type: uint
+    gasLimit:
+      descr: the maximum gas allowed in this block.
+      type: uint
+    gasUsed:
+      descr: the total used gas by all transactions in this block.
+      type: uint
+    timestamp:
+      descr: the unix timestamp for when the block was collated.
+      type: uint
+    transactions:
+      descr: Array of transaction objects
+      array: true
+      type: transactiondata
+    uncles:
+      descr: Array of uncle hashes.
+      array: true
+      type: bytes32
 
   transactiondata:
     to:
@@ -112,8 +175,9 @@ eth:
 
       No proof returned, since there is none, but the client should verify the result by comparing it to the current blocks returned from others. 
       With the `blockTime` from the chainspec, including a tolerance, the current blocknumber may be checked if in the proposed range.
-    returns:
+    result:
       descr: the highest known blocknumber
+      type: uint
     example:
       response: "0xb8a2a5"
 
@@ -246,7 +310,7 @@ eth:
       fullTx:
         descr: if true the full transactions are contained in the result.
         type: bool
-    returns:
+    result:
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
       type: blockdata
 
@@ -306,7 +370,7 @@ eth:
         type: bytes32
     proof:
       alias: eth_getUncleCountByBlockNumber
-    returns:
+    result:
       descr: the number of transactions in the block
 
   eth_getBlockTransactionCountByNumber:
@@ -317,7 +381,7 @@ eth:
         type: uint
     proof:
       alias: eth_getUncleCountByBlockNumber
-    returns:
+    result:
       descr: the number of transactions in the block
 
   eth_getUncleCountByBlockHash:
@@ -328,7 +392,7 @@ eth:
         type: bytes32
     proof:
       alias: eth_getUncleCountByBlockNumber
-    returns:
+    result:
       descr: the number of uncles
 
   eth_getUncleCountByBlockNumber:
@@ -347,7 +411,7 @@ eth:
         - `transactions`: a array of raw transactions of the block. This is only needed if the number of transactions are requested.
         - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
         - `uncles`: a array of blockheaders of the uncles of the block. This is only needed if the number of uncles are requested.
-    returns:
+    result:
       descr: the number of uncles
 
   eth_getTransactionByBlockHashAndIndex:
@@ -362,7 +426,7 @@ eth:
       index:
         descr: the transactionIndex
         type: uint
-    returns:
+    result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -414,7 +478,7 @@ eth:
       index:
         descr: the transactionIndex
         type: uint
-    returns:
+    result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -463,7 +527,7 @@ eth:
       txHash:
         descr: the transactionHash of the transaction.
         type: bytes32
-    returns:
+    result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
  
@@ -656,7 +720,8 @@ eth:
             optional: true
           topics:
             descr: Array of 32 Bytes DATA topics. Topics are order-dependent. Each topic can also be an array of DATA with “or” options.
-            type: bytes32[]
+            type: bytes32
+            array: true
             optional: true
           blockhash:
             descr: With the addition of EIP-234, blockHash will be a new filter option which restricts the logs returned to the single block with the 32-byte hash blockHash. Using blockHash is equivalent to fromBlock = toBlock = the block number with hash blockHash. If blockHash is present in in the filter criteria, then neither fromBlock nor toBlock are allowed.
@@ -673,7 +738,7 @@ eth:
       block:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint
-    returns:
+    result:
       descr: the balance
     proof:
       alias: eth_getStorageAt
@@ -716,7 +781,7 @@ eth:
       block:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint
-    returns:
+    result:
       descr: the nonce
     proof:
       alias: eth_getStorageAt
@@ -760,7 +825,7 @@ eth:
       block:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint
-    returns:
+    result:
       descr: the code as hex
     proof:
       alias: eth_getStorageAt
@@ -806,7 +871,7 @@ eth:
       block:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint
-    returns:
+    result:
       descr: the value of the storage slot.
     proof:
       type:
@@ -999,7 +1064,7 @@ eth:
       tx:
         descr: the transactiondata to send
         type: transaction
-    returns:
+    result:
       descr: the transactionHash
     proof:
       descr: No proof from the nodes are required, because the client can generate the TransactionHash itself. This means to ensure the success of a transaction the receipt needs to be verified.
@@ -1010,7 +1075,7 @@ eth:
       tx:
         descr: the transactiondata to send
         type: transaction
-    returns:
+    result:
       descr: the transactionReceipt
       type: transactionReceipt
 
@@ -1021,7 +1086,7 @@ eth:
       tx:
         descr: the raw signed transactiondata to send
         type: bytes
-    returns:
+    result:
       descr: the transactionhash
       type: bytes32
 

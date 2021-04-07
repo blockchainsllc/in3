@@ -107,12 +107,13 @@ in3:
   # rpc-commands
 
   in3_config:
+    skipApi: true
     descr: changes the configuration of a client. The configuration is passed as the first param and may contain only the values to change.
     params:
       config:
         descr:  a Object with config-params.
    
-    returns:
+    result:
       descr: an boolean confirming that the config has changed.
     example:
       request:
