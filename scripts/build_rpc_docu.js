@@ -137,6 +137,8 @@ for (const s of Object.keys(docs).sort()) {
 
     for (const rpc of Object.keys(rpcs).sort()) {
         const def = rpcs[rpc]
+        def.returns = def.returns || def.result
+        def.result = def.returns || def.result
         let z = "    '" + rpc + ': ' + short_descr((def.descr || (def.alias && rpcs[def.alias].descr) || ''))
 
         rpc_doc.push('### ' + rpc + '\n\n')
@@ -232,5 +234,5 @@ Object.keys(main_conf.rpc).forEach(k => {
 fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
-fs.writeFileSync('../c/src/cmd/in3/args.h', '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[]={ ' + bool_props.map(_ => '"' + _ + '", ').join('') + ' NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
+fs.writeFileSync('../c/src/cmd/in3/args.h', '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[] = {' + bool_props.map(_ => '"' + _ + '", ').join('') + 'NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
 
