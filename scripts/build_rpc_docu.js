@@ -133,8 +133,6 @@ for (const s of Object.keys(docs).sort()) {
     if (rdescr) rpc_doc.push(rdescr + '\n')
     delete rpcs.descr
 
-    swift.generateAPI(s, rpcs, rdescr, types)
-
     for (const rpc of Object.keys(rpcs).sort()) {
         const def = rpcs[rpc]
         def.returns = def.returns || def.result
@@ -215,6 +213,9 @@ for (const s of Object.keys(docs).sort()) {
         z += "'"
         zsh_cmds.push(z)
     }
+
+    swift.generateAPI(s, rpcs, rdescr, types)
+
 }
 
 handle_config(config, '')

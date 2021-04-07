@@ -22,7 +22,7 @@ configs = {
     ]
 }
 function converterName(swiftType, asFn) {
-    const type = swiftType.split(/[\[\]_\?\!]+/).join('')
+    const type = swiftType.replace("String:", "").split(/[\[\]_\?\!]+/).join('')
     if (type == 'UInt64' || type == 'Double' || type == 'Bool' || type == 'String' || type == 'Int' || type == 'AnyObject') return 'to' + type
     if (swiftType.startsWith('[') && asFn) {
         if (swiftType.endsWith('?'))
@@ -59,6 +59,17 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
             else
                 init += '\n        ' + name + ' = try toArray(obj["' + name + '"])!.map({ try ' + converterName(t, false) + '($0,' + (p.optional ? 'true' : 'false') + ')! })'
         }
+        else if (p.key) {
+            if (p.optional) {
+                init += '\n        if let ' + name + ' = try toObject(obj["' + name + '"],' + (p.optional ? 'true' : 'false') + ') {'
+                init += '\n          self.' + name + ' = try ' + name + '.mapValues({ try ' + converterName(t, false) + '($0,' + (p.optional ? 'true' : 'false') + ')! })'
+                init += '\n        } else {'
+                init += '\n          self.' + name + ' = nil'
+                init += '\n        }'
+            }
+            else
+                init += '\n        ' + name + ' = try toObject(obj["' + name + '"])!.mapValues({ try ' + converterName(t, false) + '($0,false)! })'
+        }
         else {
             init += '\n        ' + name + ' = try ' + converterName(t, false) + '(obj["' + name + '"],' + (p.optional ? 'true' : 'false') + ')!'
             if (converterName(t, false).startsWith('to'))
@@ -67,7 +78,7 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
 
     }
 
-    typesGenerated[swiftType] = content.join('\n') + '\n' + init + '\n    }\n' + toRPC + '\n        return obj\n    }\n}'
+    typesGenerated[swiftType] = content.join('\n') + '\n' + init + '\n    }\n' + (toRPC.indexOf('obj["') == -1 ? '' : (toRPC + '\n        return obj\n    }')) + '\n}'
 }
 
 function getAPIType(c, typeConfigs, typesGenerated, prefix, api) {
@@ -95,6 +106,7 @@ function getAPIType(c, typeConfigs, typesGenerated, prefix, api) {
 
 
     if (c.array) swiftType = '[' + swiftType + ']'
+    if (c.key) swiftType = '[String:' + swiftType + ']'
     if (c.optional) swiftType += '?'
     return swiftType
 }

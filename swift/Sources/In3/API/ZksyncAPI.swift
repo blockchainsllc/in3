@@ -276,7 +276,7 @@ public struct ZksyncAccountInfo {
 /// the state of the zksync operator after executing transactions successfully, but not not verified on L1 yet.
 public struct ZksyncCommited {
     /// the token-balance
-    public var balances: UInt64
+    public var balances: [String:UInt64]
 
     /// the nonce or transaction count.
     public var nonce: UInt64
@@ -286,14 +286,13 @@ public struct ZksyncCommited {
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
-        balances = try toUInt64(obj["balances"],false)!
+        balances = try toObject(obj["balances"])!.mapValues({ try toUInt64($0,false)! })
         nonce = try toUInt64(obj["nonce"],false)!
         pubKeyHash = try toString(obj["pubKeyHash"],false)!
     }
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["balances"] = RPCObject(balances)
         obj["nonce"] = RPCObject(nonce)
         obj["pubKeyHash"] = RPCObject(pubKeyHash)
         return obj
@@ -303,24 +302,19 @@ public struct ZksyncCommited {
 /// the state of all depositing-tx.
 public struct ZksyncDepositing {
     /// the token-values.
-    public var balances: UInt64
+    public var balances: [String:UInt64]
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
-        balances = try toUInt64(obj["balances"],false)!
+        balances = try toObject(obj["balances"])!.mapValues({ try toUInt64($0,false)! })
     }
 
-    internal func toRPCDict() -> [String:RPCObject] {
-        var obj:[String:RPCObject] = [:]
-        obj["balances"] = RPCObject(balances)
-        return obj
-    }
 }
 
 /// the state after the rollup was verified in L1.
 public struct ZksyncVerified {
     /// the token-balances.
-    public var balances: UInt64
+    public var balances: [String:UInt64]
 
     /// the nonce or transaction count.
     public var nonce: UInt64
@@ -330,14 +324,13 @@ public struct ZksyncVerified {
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
-        balances = try toUInt64(obj["balances"],false)!
+        balances = try toObject(obj["balances"])!.mapValues({ try toUInt64($0,false)! })
         nonce = try toUInt64(obj["nonce"],false)!
         pubKeyHash = try toString(obj["pubKeyHash"],false)!
     }
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["balances"] = RPCObject(balances)
         obj["nonce"] = RPCObject(nonce)
         obj["pubKeyHash"] = RPCObject(pubKeyHash)
         return obj
