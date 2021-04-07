@@ -14,3 +14,4 @@
 #include "in3/in3_init.h"
 #include "in3/log.h"
 #include "../src/tools/swift/swift.h"
+#include "../src/third-party/tommath/tommath.h"

@@ -3,6 +3,24 @@ import Foundation
 @testable import In3
 
 final class In3Tests: XCTestCase {
+    
+    func testUInt256() throws {
+        let val: UInt256  = UInt256(65535)
+        XCTAssertEqual(val.description,"65535")
+        XCTAssertEqual(val.uint64Value,UInt64(65535))
+        XCTAssertEqual(val.toString(radix: 16),"ffff")
+        let r = val + UInt256(1)
+        XCTAssertEqual(r.description,"65536")
+        if let v = UInt256("0xffff") {
+            XCTAssertEqual(v.description,"65535")
+        }
+        else {
+            XCTFail("Could not parse UINt256")
+        }
+        
+
+    }
+    
     func testLocal() throws {
         let in3 = try In3(In3Config(chainId: "mainnet"))
         let hash = try in3.execLocal("keccak",RPCObject("simon"))
@@ -45,14 +63,14 @@ final class In3Tests: XCTestCase {
         let expect = XCTestExpectation(description: "Should get a hash-value")
 //        let in3 = try In3(Config(rpc: "https://rpc.slock.it/mainnet"))
         let in3 = try In3(In3Config(chainId: "mainnet"))
-        
-        EthAPI(in3).getTransactionReceipt(txHash: "0xe3f6f3a73bccd73b77a7b9e9096fe07b9341e7d1d8f1ad8b8e5207f2fe349fa0") .observe(using: {
+        let eth = EthAPI(in3)
+        eth.getBlock().observe(using: {
             switch $0 {
             case let .failure(err):
                 print(err.localizedDescription)
             case let .success( val ):
-                if let tx = val {
-                    print("txIndex : ",tx.transactionIndex)
+                if let b = val {
+                    print("block : ",b.miner)
                 } else {
                     print("on tx found ")
                 }
@@ -65,6 +83,7 @@ final class In3Tests: XCTestCase {
 
 
     static var allTests = [
+        ("UInt256", testUInt256),
         ("execlocal", testLocal),
         ("execJSON", testJSON),
         ("exec", testExec),

@@ -30,6 +30,34 @@ internal func toUInt64(_ data:RPCObject?, _ optional:Bool = true) throws -> UInt
     return nil
 }
 
+
+/// converts a RPC-Object to UInt256  or throws
+internal func toUInt256(_ data:RPCObject?, _ optional:Bool = true) throws -> UInt256?{
+    if let data = data {
+        switch data {
+        case let .integer(val):
+           return UInt256(val)
+        case let .string(val):
+            if let intVal = UInt256(val) {
+                return intVal
+            } else {
+                throw IncubedError.config(message: "Can not convert '\(val)' to uint256")
+            }
+        case .none:
+            if !optional {
+                throw IncubedError.config(message: "missing value")
+            }
+             return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for Int")
+        }
+    } else if !optional {
+        throw IncubedError.config(message: "missing value")
+    }
+    return nil
+}
+
+
 /// converts a RPC-Object to UInt64 or throws
 internal func toInt(_ data:RPCObject?, _ optional:Bool = true) throws -> Int?{
     if let data = data {
