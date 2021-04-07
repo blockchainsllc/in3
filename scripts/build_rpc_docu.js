@@ -1,5 +1,16 @@
 const yaml = require('../wasm/test/node_modules/yaml')
 const fs = require('fs')
+const swift = require('./generator/swift')
+const {
+    getType,
+    asArray,
+    camelCaseLow,
+    camelCaseUp,
+    link,
+    toCmdParam,
+    short_descr
+} = require('./generator/util')
+
 const doc_dir = process.argv[process.argv.length - 1]
 const main_conf = yaml.parse(fs.readFileSync('../c/src/cmd/in3/in3.yml', 'utf-8'))
 
@@ -8,59 +19,10 @@ const config_doc = []
 const main_help = []
 const main_aliases = []
 const bool_props = []
-const config_bindings = {
-    swift: {
-        In3Config: [
-            '/// The main Incubed Configuration',
-            'public struct In3Config : Codable {',
-            '',
-            '    /// create a new Incubed Client based on the Configuration',
-            '    public func createClient() throws -> In3 {',
-            '       return try In3(self)',
-            '    }',
-            ''
-        ]
-    }
-}
-const api_bindings = {
-    swift: {
-    }
-}
 
 let docs = {}, config = {}, types = {}
-const camelCaseUp = s => {
-    if (!s) return ''
-    if (s[s.length - 1] == '.') s = s.substr(0, s.length - 1)
-    s = s.substr(s.lastIndexOf('.') + 1)
-    return s.substr(0, 1).toUpperCase() + s.substr(1)
-}
 
-const camelCaseLow = s => s ? s.substr(0, 1).toLowerCase() + s.substr(1) : ''
 
-const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
-const link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
-const getType = val => typeof val === 'object' ? val : (types['' + val] || val)
-const toCmdParam = val => (typeof val == 'object' || Array.isArray(val) || ('' + val).indexOf(' ') >= 0) ? "'" + JSON.stringify(val) + "'" : ('' + val)
-function createSwiftInitForStruct(s, pad) {
-    let comments = '\n' + pad + '    /// initialize it memberwise'
-    let code = ''
-    let init = ''
-    let lastDescr = ''
-    for (let l of s) {
-        l = l.trim()
-        if (lastDescr && !l) lastDescr = ''
-        if (!lastDescr && l.startsWith('/// ')) lastDescr = l.substr(4).split('\n')[0].trim()
-        if (l.startsWith('public var ')) {
-            l = l.substr('public var '.length)
-            const pname = l.substr(0, l.indexOf(':')).trim()
-            comments += '\n' + pad + '    /// - Parameter ' + pname + ' : ' + lastDescr
-            code += '\n' + pad + '        self.' + pname + ' = ' + pname
-            init += (init ? ', ' : '') + l + (l.endsWith('?') ? ' = nil' : '')
-            lastDescr = ''
-        }
-    }
-    s.push(comments + '\n' + pad + '    public init(' + init + ') {' + code + '\n' + pad + '    }')
-}
 function scan(dir) {
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         if (f.name == 'rpc.yml') {
@@ -78,12 +40,15 @@ function scan(dir) {
         else if (f.isDirectory()) scan(dir + '/' + f.name)
     }
 }
+
+
+
 function print_object(def, pad, useNum, doc) {
     let i = 1
     for (const prop of Object.keys(def)) {
         let s = pad + (useNum ? ((i++) + '.') : '*') + ' **' + prop + '**'
         const p = def[prop]
-        const pt = getType(p.type)
+        const pt = getType(p.type, types)
         if (p.type) s += ' : `' + (typeof p.type === 'string' ? p.type : 'object') + '`'
         if (p.optional) s += ' *(optional)*'
         if (p.descr) s += ' - ' + p.descr
@@ -107,31 +72,8 @@ function handle_config(conf, pre, title, descr) {
         const c = conf[key]
         // handle bindings
 
-        // generate swift
-        const swift = config_bindings.swift[camelCaseUp(pre || 'In3Config')]
-        const pad = pre ? '    ' : ''
-        if (swift && key.indexOf('-') == -1 && key.indexOf('.') == -1) {
-            //console.error("NO Onbject for " + pre + ':Config' + camelCaseUp(pre || ''))
-            let swiftType = camelCaseUp(('' + c.type).split('|')[0].trim())
-            if (typeof c.type === 'object') {
-                swiftType = camelCaseUp(key)
-                config_bindings.swift[swiftType] = [
-                    '    /// ' + c.descr.replace(/\n/gm, '\n/// '),
-                    '    public struct ' + swiftType + ' : Codable {'
-                ]
-            }
-            else if (swiftType == 'Uint') swiftType = 'UInt64'
-            else if (swiftType.startsWith('Byte') || swiftType.startsWith('Address')) swiftType = 'String'
-            if (swiftType.endsWith('[]')) swiftType = '[' + swiftType.substr(0, swiftType.length - 2) + ']'
-            if (c.array) swiftType = '[' + swiftType + ']'
-            swift.push('\n' + pad + '    /// ' + (
-                c.descr
-                + (c.default ? ('\n(default: `' + JSON.stringify(c.default) + '`)') : '')
-                + (c.enum ? ('\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n') : '')
-                + (c.example ? ('\n\nExample: ' + (Array.isArray(c.example) ? '\n```\n' : '`') + asArray(c.example).map(ex => yaml.stringify(ex).trim()).join('\n') + (Array.isArray(c.example) ? '\n```' : '`')) : '')
-            ).replace(/\n/gm, '\n' + pad + '    /// '))
-            swift.push(pad + '    public var ' + key + ' : ' + swiftType + (c.optional || !pre ? '?' : ''))
-        }
+        swift.updateConfig(pre, c, key)
+
         // handle doc
         if (!pre) {
             let s = '\n' + (title ? '#' : '') + '## ' + key + '\n\n' + c.descr
@@ -174,14 +116,7 @@ function handle_config(conf, pre, title, descr) {
         }
     }
 }
-function short_descr(d) {
-    let zd = (d || '').trim()
-    if (zd.indexOf('.') >= 0) zd = zd.substr(0, zd.indexOf('.'))
-    if (zd.indexOf('\n') >= 0) zd = zd.substr(0, zd.indexOf('\n'))
-    if (zd.indexOf('[') >= 0) zd = zd.substr(0, zd.indexOf('['))
-    if (zd.length > 100) zd = zd.substr(0, 100) + '...'
-    return zd
-}
+
 scan('../c/src')
 docs.in3.in3_config.params.config.type = config
 rpc_doc.push('# API RPC\n\n')
@@ -192,9 +127,14 @@ const zsh_complete = fs.readFileSync('_in3.template', 'utf8')
 let zsh_cmds = [], zsh_conf = []
 for (const s of Object.keys(docs).sort()) {
     const rpcs = docs[s]
+    const rdescr = rpcs.descr
+
     rpc_doc.push("## " + s + "\n\n")
-    if (rpcs.descr) rpc_doc.push(rpcs.descr + '\n')
+    if (rdescr) rpc_doc.push(rdescr + '\n')
     delete rpcs.descr
+
+    swift.generateAPI(s, rpcs, rdescr, types)
+
     for (const rpc of Object.keys(rpcs).sort()) {
         const def = rpcs[rpc]
         let z = "    '" + rpc + ': ' + short_descr((def.descr || (def.alias && rpcs[def.alias].descr) || ''))
@@ -213,7 +153,7 @@ for (const s of Object.keys(docs).sort()) {
             rpc_doc.push("*Parameters:* - \n")
         if (def.in3Params) {
             rpc_doc.push('The following in3-configuration will have an impact on the result:\n\n');
-            print_object(getType(def.in3Params), '', false, rpc_doc)
+            print_object(getType(def.in3Params, types), '', false, rpc_doc)
             rpc_doc.push()
         }
         if (def.validation) rpc_doc.push('\n' + def.validation + '\n')
@@ -221,7 +161,7 @@ for (const s of Object.keys(docs).sort()) {
         if (def.returns) {
             if (def.returns.type) {
                 rpc_doc.push('*Returns:* ' + (typeof def.returns.type === 'string' ? ('`' + def.returns.type + '`') : '`object`') + '\n\n' + def.returns.descr + '\n')
-                const pt = getType(def.returns.type)
+                const pt = getType(def.returns.type, types)
                 if (typeof pt === 'object') {
                     rpc_doc.push('\nThe return value contains the following properties :\n')
                     print_object(pt, '', false, rpc_doc)
@@ -235,7 +175,7 @@ for (const s of Object.keys(docs).sort()) {
 
         if (def.proof) {
             rpc_doc.push('*Proof:*\n\n' + (def.proof.descr || '') + '\n')
-            const pt = getType(def.proof.type)
+            const pt = getType(def.proof.type, types)
             if (def.proof.alias)
                 rpc_doc.push('The proof will be calculated as described in ' + link(def.proof.alias) + '. See Details there.\n\n')
 
@@ -276,12 +216,8 @@ for (const s of Object.keys(docs).sort()) {
 }
 
 handle_config(config, '')
-Object.keys(config_bindings.swift).forEach(_ => createSwiftInitForStruct(config_bindings.swift[_], _ == 'In3Config' ? '' : '    '))
-fs.writeFileSync('../swift/Sources/In3/Config.swift', '// This is a generated file, please don\'t edit it manually!\n\nimport Foundation\n\n' + (
-    config_bindings.swift.In3Config.join('\n') + '\n\n' +
-    Object.keys(config_bindings.swift).filter(_ => _ != 'In3Config').map(type => config_bindings.swift[type].join('\n') + '\n    }\n\n').join('')
-    + '\n}\n'
-), { encoding: 'utf8' })
+
+swift.generate_config()
 
 
 handle_config(main_conf.config, '', 'cmdline options\n\nThose special options are used in the comandline client to pass additional options.\n')
