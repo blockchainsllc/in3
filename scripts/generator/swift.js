@@ -25,10 +25,18 @@ function converterName(swiftType, asFn) {
     const type = swiftType.replace("String:", "").split(/[\[\]_\?\!]+/).join('')
     if (type == 'UInt64' || type == 'Double' || type == 'Bool' || type == 'String' || type == 'Int' || type == 'AnyObject') return 'to' + type
     if (swiftType.startsWith('[') && asFn) {
-        if (swiftType.endsWith('?'))
-            return '{ if let array = try toArray($0,$1) { try array.map({ try ' + type + '($0,true)! }) } }'
-        else
-            return '{ try toArray($0,$1)!.map({ try ' + type + '($0,false)! }) }'
+        if (swiftType.indexOf(':') >= 0) {
+            if (swiftType.endsWith('?'))
+                return '{ if let dict = try toObject($0,$1) { try dict.mapValues({ try ' + type + '($0,true)! }) } }'
+            else
+                return '{ try toObject($0,$1)!.mapValues({ try ' + type + '($0,false)! }) }'
+        }
+        else {
+            if (swiftType.endsWith('?'))
+                return '{ if let array = try toArray($0,$1) { try array.map({ try ' + type + '($0,true)! }) } }'
+            else
+                return '{ try toArray($0,$1)!.map({ try ' + type + '($0,false)! }) }'
+        }
     }
     return asFn ? '{ try ' + type + '($0,$1) }' : type
 }

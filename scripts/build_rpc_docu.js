@@ -13,7 +13,7 @@ const {
 
 const doc_dir = process.argv[process.argv.length - 1]
 const main_conf = yaml.parse(fs.readFileSync('../c/src/cmd/in3/in3.yml', 'utf-8'))
-
+const typeName = (def, code) => (code ? '`' : '') + ((def.key ? '{key:$t}' : (def.array ? '$t[]' : "$t")) + (def.optional ? '?' : '')).replace('$t', typeof (def.type) === 'string' ? def.type : 'object') + (code ? '`' : '')
 const rpc_doc = []
 const config_doc = []
 const main_help = []
@@ -49,9 +49,10 @@ function print_object(def, pad, useNum, doc) {
         let s = pad + (useNum ? ((i++) + '.') : '*') + ' **' + prop + '**'
         const p = def[prop]
         const pt = getType(p.type, types)
-        if (p.type) s += ' : `' + (typeof p.type === 'string' ? p.type : 'object') + '`'
+        if (p.type) s += ' : ' + typeName(p, true)
         if (p.optional) s += ' *(optional)*'
         if (p.descr) s += ' - ' + p.descr
+        if (p.key) s += ' with ' + p.key + ' as keys in the object'
         if (p.default) s += ' (default: `' + JSON.stringify(p.default) + '`)'
         if (p.enum) s += '\n' + pad + 'Possible Values are:\n\n' + Object.keys(p.enum).map(v => pad + '    - `' + v + '` : ' + p.enum[v]).join('\n') + '\n'
         if (p.alias) s += '\n' + pad + 'The data structure of ' + prop + ' is the same  as ' + link(p.alias) + '. See Details there.'
@@ -79,7 +80,7 @@ function handle_config(conf, pre, title, descr) {
             let s = '\n' + (title ? '#' : '') + '## ' + key + '\n\n' + c.descr
             if (c.optional) s += ' *This config is optional.*'
             if (c.default) s += ' (default: `' + JSON.stringify(c.default) + '`)'
-            if (c.type) s += '\n\n Type: `' + (typeof c.type === 'string' ? c.type : 'object') + '`'
+            if (c.type) s += '\n\n Type: ' + typeName(c, true)
             if (c.enum) s += '\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n'
             config_doc.push(s)
             if (typeof (c.type) === 'object') {
@@ -116,6 +117,7 @@ function handle_config(conf, pre, title, descr) {
         }
     }
 }
+
 
 scan('../c/src')
 docs.in3.in3_config.params.config.type = config
@@ -160,7 +162,7 @@ for (const s of Object.keys(docs).sort()) {
 
         if (def.returns) {
             if (def.returns.type) {
-                rpc_doc.push('*Returns:* ' + (typeof def.returns.type === 'string' ? ('`' + def.returns.type + '`') : '`object`') + '\n\n' + def.returns.descr + '\n')
+                rpc_doc.push('*Returns:* ' + typeName(def.returns, true) + '\n\n' + def.returns.descr + '\n')
                 const pt = getType(def.returns.type, types)
                 if (typeof pt === 'object') {
                     rpc_doc.push('\nThe return value contains the following properties :\n')

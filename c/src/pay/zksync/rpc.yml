@@ -118,6 +118,7 @@ zksync:
   zksync_tokens:
     descr: returns the list of all available tokens
     result:
+      key: token symbol
       descr: a array of tokens-definitions. This request also caches them and will return the results from cahe if available.
       type:
         address:
@@ -285,6 +286,7 @@ zksync:
       response: "sync:e41d2489571d322189246dafa5ebde1f4699f498"
 
   zksync_pubkeyhash:
+    sync: true
     descr: returns the current PubKeyHash based on the configuration set.
     params: 
       pubKey:
@@ -300,6 +302,7 @@ zksync:
 
 
   zksync_pubkey:
+    sync: true
     descr: | 
       returns the current packed PubKey based on the config set.
 
@@ -314,6 +317,7 @@ zksync:
 
 
   zksync_account_address:
+    sync: true
     descr: returns the address of the account used.
     result:
       descr: the account used.
@@ -350,6 +354,7 @@ zksync:
       response: "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c3980e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31b69cd0910a432156a0977c3a5baa404547e01"
   
   zksync_verify:
+    sync: true
     descr: |
       returns 0 or 1 depending on the successfull verification of the signature.
 
@@ -571,6 +576,7 @@ zksync:
         transactionIndex: '0x0'
 
   zksync_aggregate_pubkey:
+    sync: true
     descr: calculate the public key based on multiple public keys signing together using schnorr musig signatures.
     params:
       pubkeys:

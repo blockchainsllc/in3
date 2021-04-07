@@ -27,8 +27,8 @@ public class ZksyncAPI {
 
     /// returns the list of all available tokens
     /// - Returns: a array of tokens-definitions. This request also caches them and will return the results from cahe if available.
-    public func tokens() -> Future<ZksyncTokens> {
-        return execAndConvert(in3: in3, method: "zksync_tokens", convertWith: { try ZksyncTokens($0,$1) } )
+    public func tokens() -> Future<[String:ZksyncTokens]> {
+        return execAndConvert(in3: in3, method: "zksync_tokens", convertWith: { try toObject($0,$1)!.mapValues({ try ZksyncTokens($0,false)! }) } )
     }
 
     /// returns account_info from the server
@@ -70,8 +70,8 @@ public class ZksyncAPI {
     /// returns the current PubKeyHash based on the configuration set.
     /// - Parameter pubKey : the packed public key to hash ( if given the hash is build based on the given hash, otherwise the hash is based on the config)
     /// - Returns: the pubKeyHash
-    public func pubkeyhash(pubKey: String? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_pubkeyhash",params:pubKey == nil ? RPCObject.none : RPCObject(pubKey!), convertWith: toString )
+    public func pubkeyhash(pubKey: String? = nil) throws ->  String {
+        return try execLocalAndConvert(in3: in3, method: "zksync_pubkeyhash",params:pubKey == nil ? RPCObject.none : RPCObject(pubKey!), convertWith: toString )
     }
 
     /// returns the current packed PubKey based on the config set.
@@ -79,14 +79,14 @@ public class ZksyncAPI {
     /// If the config contains public keys for musig-signatures, the keys will be aggregated, otherwise the pubkey will be derrived from the signing key set.
     /// 
     /// - Returns: the pubKey
-    public func pubkey() -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_pubkey", convertWith: toString )
+    public func pubkey() throws ->  String {
+        return try execLocalAndConvert(in3: in3, method: "zksync_pubkey", convertWith: toString )
     }
 
     /// returns the address of the account used.
     /// - Returns: the account used.
-    public func accountAddress() -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_account_address", convertWith: toString )
+    public func accountAddress() throws ->  String {
+        return try execLocalAndConvert(in3: in3, method: "zksync_account_address", convertWith: toString )
     }
 
     /// returns the schnorr musig signature based on the current config. 
@@ -107,8 +107,8 @@ public class ZksyncAPI {
     /// - Parameter message : the message which was supposed to be signed
     /// - Parameter signature : the signature (96 bytes)
     /// - Returns: 1 if the signature(which contains the pubkey as the first 32bytes) matches the message.
-    public func verify(message: String, signature: String) -> Future<UInt64> {
-        return execAndConvert(in3: in3, method: "zksync_verify",params: RPCObject(message), RPCObject(signature), convertWith: toUInt64 )
+    public func verify(message: String, signature: String) throws ->  UInt64 {
+        return try execLocalAndConvert(in3: in3, method: "zksync_verify",params: RPCObject(message), RPCObject(signature), convertWith: toUInt64 )
     }
 
     /// returns the state or receipt of the the PriorityOperation
@@ -179,8 +179,8 @@ public class ZksyncAPI {
     /// calculate the public key based on multiple public keys signing together using schnorr musig signatures.
     /// - Parameter pubkeys : concatinated packed publickeys of the signers. the length of the bytes must be `num_keys * 32`
     /// - Returns: the compact public Key
-    public func aggregatePubkey(pubkeys: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_aggregate_pubkey",params: RPCObject(pubkeys), convertWith: toString )
+    public func aggregatePubkey(pubkeys: String) throws ->  String {
+        return try execLocalAndConvert(in3: in3, method: "zksync_aggregate_pubkey",params: RPCObject(pubkeys), convertWith: toString )
     }
 
 
