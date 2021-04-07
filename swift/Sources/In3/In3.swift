@@ -35,9 +35,15 @@ public class In3 {
     }
   }
 
+    /// Execute a request directly and local.
+    /// This works only for requests which do not need to be send to a server.
+    public func execLocal(_ method: String, _ params: RPCObject...) throws -> RPCObject {
+        return try execLocal(method, params)
+    }
+
   /// Execute a request directly and local.
   /// This works only for requests which do not need to be send to a server.
-  public func execLocal(_ method: String, _ params: RPCObject...) throws -> RPCObject {
+  public func execLocal(_ method: String, _ params: [RPCObject]) throws -> RPCObject {
     let jsonReqData = try JSONEncoder().encode(JSONRequest(id: 1, method: method, params: JSONObject(RPCObject(params))))
     let rawResult = executeJSON(String(decoding: jsonReqData, as: UTF8.self))
     let response = try JSONDecoder().decode(JSONResponse.self, from: rawResult.data(using: .utf8)!)

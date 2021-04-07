@@ -45,13 +45,14 @@ final class In3Tests: XCTestCase {
         let expect = XCTestExpectation(description: "Should get a hash-value")
 //        let in3 = try In3(Config(rpc: "https://rpc.slock.it/mainnet"))
         let in3 = try In3(In3Config(chainId: "mainnet"))
-        Eth(in3).getTransactionReceipt(hash: "0xe3f6f3a73bccd73b77a7b9e9096fe07b9341e7d1d8f1ad8b8e5207f2fe349fa0") .observe(using: {
+        
+        EthAPI(in3).getTransactionReceipt(txHash: "0xe3f6f3a73bccd73b77a7b9e9096fe07b9341e7d1d8f1ad8b8e5207f2fe349fa0") .observe(using: {
             switch $0 {
             case let .failure(err):
                 print(err.localizedDescription)
             case let .success( val ):
                 if let tx = val {
-                    print("txhash : ",tx.hash)
+                    print("txIndex : ",tx.transactionIndex)
                 } else {
                     print("on tx found ")
                 }

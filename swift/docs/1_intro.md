@@ -31,8 +31,3 @@ Eth(in3).getTransactionReceipt(hash: "0xe3f6f3a73bccd73b77a7b9e9096fe07b9341e7d1
             }
         })
 ```
-
-## Classes
-
-
-

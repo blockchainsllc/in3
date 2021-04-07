@@ -274,6 +274,37 @@ public enum RPCObject: Equatable {
     case dictionary([String: RPCObject])
 
     /// Wrap a String as Value
+    public init(_ value: AnyObject) {
+        switch value {
+        case let val as UInt64:
+            self = .integer(Int(val))
+        case let val as Int:
+            self = .integer(val)
+        case let val as Double:
+            self = .double(val)
+        case let val as String:
+            self = .string(val)
+        case let val as Bool:
+            self = .bool(val)
+        case nil:
+            self = .none
+        case let val as [AnyObject]:
+            self = .list(val.map { RPCObject($0) })
+        case let val as [String]:
+            self = .list(val.map { RPCObject($0) })
+        case let val as [String:AnyObject]:
+            self = .dictionary(val.mapValues({ RPCObject($0) }))
+        default:
+            self = .none
+        }
+    }
+
+    /// Wrap a String as Value
+    public init(_ array: [AnyObject]) {
+        self = .list(array.map({ RPCObject($0)}))
+    }
+
+    /// Wrap a String as Value
     public init(_ value: String) {
         self = .string(value)
     }
@@ -281,6 +312,11 @@ public enum RPCObject: Equatable {
     /// Wrap a Integer as Value
     public init(_ value: Int) {
         self = .integer(value)
+    }
+
+    /// Wrap a Integer as Value
+    public init(_ value: UInt64) {
+        self = .integer(Int(value))
     }
 
     /// Wrap a Double as Value

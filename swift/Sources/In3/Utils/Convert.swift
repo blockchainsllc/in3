@@ -30,6 +30,62 @@ internal func toUInt64(_ data:RPCObject?, _ optional:Bool = true) throws -> UInt
     return nil
 }
 
+/// converts a RPC-Object to UInt64 or throws
+internal func toInt(_ data:RPCObject?, _ optional:Bool = true) throws -> Int?{
+    if let data = data {
+        switch data {
+        case let .integer(val):
+           return val
+        case let .string(val):
+            if let intVal = Int(val) {
+                return intVal
+            } else if val.hasPrefix("0x"), let intVal = Int(val.suffix(from: val.index(  val.startIndex, offsetBy: 2)), radix: 16) {
+               return intVal
+            } else {
+                throw IncubedError.config(message: "Can not convert '\(val)' to int")
+            }
+        case .none:
+            if !optional {
+                throw IncubedError.config(message: "missing value")
+            }
+             return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for Int")
+        }
+    } else if !optional {
+        throw IncubedError.config(message: "missing value")
+    }
+    return nil
+}
+
+/// converts a RPC-Object to Double or throws
+internal func toDouble(_ data:RPCObject?, _ optional:Bool = true) throws -> Double?{
+    if let data = data {
+        switch data {
+        case let .integer(val):
+           return Double(val)
+        case let .double(val):
+           return val
+        case let .string(val):
+            if let intVal = Double(val) {
+                return intVal
+            } else {
+                throw IncubedError.config(message: "Can not convert '\(val)' to int")
+            }
+        case .none:
+            if !optional {
+                throw IncubedError.config(message: "missing value")
+            }
+             return nil
+        default:
+            throw IncubedError.config(message: "Invalid type for Double")
+        }
+    } else if !optional {
+        throw IncubedError.config(message: "missing value")
+    }
+    return nil
+}
+
 /// converts a RPC-Object to Bool or throws
 internal func toBool(_ data:RPCObject?, _ optional:Bool = true) throws -> Bool?{
     if let data = data {
@@ -166,3 +222,9 @@ internal func execAndConvertOptional<Type>(in3:In3, method: String,  params: RPC
 
 
 
+
+/// executes a rpc-request and converts the result as non optional. (will return a rejected promise if it is `nil`)
+internal func execLocalAndConvert<Type>(in3:In3, method: String,  params: RPCObject..., convertWith: @escaping (_ data:RPCObject?, _ optional:Bool) throws -> Type?) throws -> Type {
+    let res = try in3.execLocal(method, params)
+    return try convertWith(res,false)!
+}
