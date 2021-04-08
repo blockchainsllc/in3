@@ -17,6 +17,22 @@ final class In3Tests: XCTestCase {
         else {
             XCTFail("Could not parse UINt256")
         }
+        if let v = UInt256("0x1") {
+            XCTAssertEqual(v.description,"1")
+            XCTAssertEqual(v.hexValue,"0x1")
+        } else {
+            XCTFail("Could not parse UINt256")
+        }
+        if let v = UInt256("0x0") {
+            XCTAssertEqual(v.description,"0")
+            XCTAssertEqual(v.hexValue,"0x0")
+        } else {
+            XCTFail("Could not parse UINt256")
+        }
+        
+        let a = UInt256(20)
+        let b = a + 10
+        XCTAssertEqual(b.uintValue,30)
         
 
     }

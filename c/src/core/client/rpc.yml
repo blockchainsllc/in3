@@ -24,7 +24,7 @@ in3:
       cmd: c
     
     finality:
-      type: uint | string
+      type: int
       descr: the number in percent needed in order reach finality (% of signature of the validators).
       example: 50
       optional: true
@@ -39,7 +39,7 @@ in3:
       default: false
 
     maxAttempts:
-      type: uint
+      type: int
       descr: max number of attempts in case a response is rejected.
       example: 1
       optional: true
@@ -79,7 +79,7 @@ in3:
 
     timeout:
       descr: specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
-      type: uint
+      type: uint64
       optional: true
       example: 100000
       default: 20000
@@ -98,7 +98,7 @@ in3:
 
     replaceLatestBlock:
       descr:  if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
-      type: uint
+      type: int
       optional: true
       example: 6
       cmd: l

@@ -29,7 +29,7 @@ public class In3API {
     /// ```
     /// 
     public func abiEncode(signature: String, params: [AnyObject]) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_abiEncode",params: RPCObject(signature), RPCObject(params), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_abiEncode", params:RPCObject( signature), RPCObject( params), convertWith: toString )
     }
 
     /// based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function decodes the bytes given and returns it as array of values.
@@ -47,7 +47,7 @@ public class In3API {
     /// ```
     /// 
     public func abiDecode(signature: String, data: String) throws ->  [RPCObject] {
-        return try execLocalAndConvert(in3: in3, method: "in3_abiDecode",params: RPCObject(signature), RPCObject(data), convertWith: { try toArray($0,$1)! } )
+        return try execLocalAndConvert(in3: in3, method: "in3_abiDecode", params:RPCObject( signature), RPCObject( data), convertWith: { try toArray($0,$1)! } )
     }
 
     /// Will convert an upper or lowercase Ethereum address to a checksum address.  (See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md) )
@@ -63,7 +63,7 @@ public class In3API {
     /// ```
     /// 
     public func checksumAddress(address: String, useChainId: Bool? = nil) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_checksumAddress",params: RPCObject(address),useChainId == nil ? RPCObject.none : RPCObject(useChainId!), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_checksumAddress", params:RPCObject( address), useChainId == nil ? RPCObject.none : RPCObject( useChainId! ), convertWith: toString )
     }
 
     /// resolves a ens-name. 
@@ -90,7 +90,7 @@ public class In3API {
     /// ```
     /// 
     public func ens(name: String, field: String? = "addr") -> Future<String> {
-        return execAndConvert(in3: in3, method: "in3_ens",params: RPCObject(name),field == nil ? RPCObject.none : RPCObject(field!), convertWith: toString )
+        return execAndConvert(in3: in3, method: "in3_ens", params:RPCObject( name), field == nil ? RPCObject.none : RPCObject( field! ), convertWith: toString )
     }
 
     /// converts the given value into wei.
@@ -106,7 +106,7 @@ public class In3API {
     /// ```
     /// 
     public func toWei(value: String, unit: String? = "eth") throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_toWei",params: RPCObject(value),unit == nil ? RPCObject.none : RPCObject(unit!), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_toWei", params:RPCObject( value), unit == nil ? RPCObject.none : RPCObject( unit! ), convertWith: toString )
     }
 
     /// converts a given uint (also as hex) with a wei-value into a specified unit.
@@ -122,8 +122,8 @@ public class In3API {
     /// // result = "0.158"
     /// ```
     /// 
-    public func fromWei(value: String, unit: String, digits: UInt64? = nil) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_fromWei",params: RPCObject(value), RPCObject(unit),digits == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",digits!)), convertWith: toString )
+    public func fromWei(value: UInt256, unit: String, digits: Int? = nil) throws ->  String {
+        return try execLocalAndConvert(in3: in3, method: "in3_fromWei", params:RPCObject( value), RPCObject( unit), digits == nil ? RPCObject.none : RPCObject( String(format: "0x%1x", digits!) ), convertWith: toString )
     }
 
     /// extracts the address from a private key.
@@ -138,7 +138,7 @@ public class In3API {
     /// ```
     /// 
     public func pk2address(pk: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_pk2address",params: RPCObject(pk), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_pk2address", params:RPCObject( pk), convertWith: toString )
     }
 
     /// extracts the public key from a private key.
@@ -154,7 +154,7 @@ public class In3API {
     /// ```
     /// 
     public func pk2public(pk: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_pk2public",params: RPCObject(pk), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_pk2public", params:RPCObject( pk), convertWith: toString )
     }
 
     /// extracts the public key and address from signature.
@@ -174,7 +174,7 @@ public class In3API {
     /// ```
     /// 
     public func ecrecover(msg: String, sig: String, sigtype: String? = "raw") throws ->  In3Ecrecover {
-        return try execLocalAndConvert(in3: in3, method: "in3_ecrecover",params: RPCObject(msg), RPCObject(sig),sigtype == nil ? RPCObject.none : RPCObject(sigtype!), convertWith: { try In3Ecrecover($0,$1) } )
+        return try execLocalAndConvert(in3: in3, method: "in3_ecrecover", params:RPCObject( msg), RPCObject( sig), sigtype == nil ? RPCObject.none : RPCObject( sigtype! ), convertWith: { try In3Ecrecover($0,$1) } )
     }
 
     /// prepares a Transaction by filling the unspecified values and returens the unsigned raw Transaction.
@@ -198,7 +198,7 @@ public class In3API {
     /// ```
     /// 
     public func prepareTx(tx: In3Transaction) -> Future<String> {
-        return execAndConvert(in3: in3, method: "in3_prepareTx",params: RPCObject(tx.toRPCDict()), convertWith: toString )
+        return execAndConvert(in3: in3, method: "in3_prepareTx", params:RPCObject( tx.toRPCDict()), convertWith: toString )
     }
 
     /// signs the given raw Tx (as prepared by in3_prepareTx ). The resulting data can be used in `eth_sendRawTransaction` to publish and broadcast the transaction.
@@ -224,7 +224,7 @@ public class In3API {
     /// ```
     /// 
     public func signTx(tx: String, from: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "in3_signTx",params: RPCObject(tx), RPCObject(from), convertWith: toString )
+        return execAndConvert(in3: in3, method: "in3_signTx", params:RPCObject( tx), RPCObject( from), convertWith: toString )
     }
 
     /// signs the given data.
@@ -256,7 +256,7 @@ public class In3API {
     /// ```
     /// 
     public func signData(msg: String, account: String, msgType: String? = "raw") -> Future<In3SignData> {
-        return execAndConvert(in3: in3, method: "in3_signData",params: RPCObject(msg), RPCObject(account),msgType == nil ? RPCObject.none : RPCObject(msgType!), convertWith: { try In3SignData($0,$1) } )
+        return execAndConvert(in3: in3, method: "in3_signData", params:RPCObject( msg), RPCObject( account), msgType == nil ? RPCObject.none : RPCObject( msgType! ), convertWith: { try In3SignData($0,$1) } )
     }
 
     /// decrypts a JSON Keystore file as defined in the [Web3 Secret Storage Definition](https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition). The result is the raw private key.
@@ -272,7 +272,7 @@ public class In3API {
     /// ```
     /// 
     public func decryptKey(key: String, passphrase: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_decryptKey",params: RPCObject(key), RPCObject(passphrase), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_decryptKey", params:RPCObject( key), RPCObject( passphrase), convertWith: toString )
     }
 
     /// clears the incubed cache (usually found in the .in3-folder)
@@ -333,8 +333,8 @@ public class In3API {
     /// 
     /// ```
     /// 
-    public func nodeList(limit: UInt64? = nil, seed: String? = nil, addresses: [String]? = nil) -> Future<In3NodeList> {
-        return execAndConvert(in3: in3, method: "in3_nodeList",params:limit == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",limit!)),seed == nil ? RPCObject.none : RPCObject(seed!),addresses == nil ? RPCObject.none : RPCObject(addresses!), convertWith: { try In3NodeList($0,$1) } )
+    public func nodeList(limit: Int? = nil, seed: String? = nil, addresses: [String]? = nil) -> Future<In3NodeList> {
+        return execAndConvert(in3: in3, method: "in3_nodeList", params:limit == nil ? RPCObject.none : RPCObject( String(format: "0x%1x", limit!) ), seed == nil ? RPCObject.none : RPCObject( seed! ), addresses == nil ? RPCObject.none : RPCObject( addresses! ), convertWith: { try In3NodeList($0,$1) } )
     }
 
     /// requests a signed blockhash from the node. 
@@ -369,7 +369,7 @@ public class In3API {
     /// ```
     /// 
     public func sign(blocks: In3Blocks) -> Future<In3Sign> {
-        return execAndConvert(in3: in3, method: "in3_sign",params: RPCObject(blocks.toRPCDict()), convertWith: { try In3Sign($0,$1) } )
+        return execAndConvert(in3: in3, method: "in3_sign", params:RPCObject( blocks.toRPCDict()), convertWith: { try In3Sign($0,$1) } )
     }
 
     /// Returns whitelisted in3-nodes addresses. The whitelist addressed are accquired from whitelist contract that user can specify in request params.
@@ -398,7 +398,7 @@ public class In3API {
     /// ```
     /// 
     public func whitelist(address: String) -> Future<In3Whitelist> {
-        return execAndConvert(in3: in3, method: "in3_whitelist",params: RPCObject(address), convertWith: { try In3Whitelist($0,$1) } )
+        return execAndConvert(in3: in3, method: "in3_whitelist", params:RPCObject( address), convertWith: { try In3Whitelist($0,$1) } )
     }
 
     /// adds a raw private key as signer, which allows signing transactions.
@@ -421,7 +421,7 @@ public class In3API {
     /// ```
     /// 
     public func addRawKey(pk: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "in3_addRawKey",params: RPCObject(pk), convertWith: toString )
+        return execAndConvert(in3: in3, method: "in3_addRawKey", params:RPCObject( pk), convertWith: toString )
     }
 
     /// returns a array of account-addresss the incubed client is able to sign with. In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the addresses of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
@@ -481,7 +481,7 @@ public struct In3Transaction {
     public var from: String
 
     /// value in wei to send
-    public var value: UInt64?
+    public var value: UInt256?
 
     /// the gas to be send along
     public var gas: UInt64?
@@ -499,7 +499,7 @@ public struct In3Transaction {
         guard let obj = try toObject(rpc, optional) else { return nil }
         to = try toString(obj["to"],false)!
         from = try toString(obj["from"],false)!
-        value = try toUInt64(obj["value"],true)!
+        value = try toUInt256(obj["value"],true)!
         gas = try toUInt64(obj["gas"],true)!
         gasPrice = try toUInt64(obj["gasPrice"],true)!
         nonce = try toUInt64(obj["nonce"],true)!
@@ -609,10 +609,10 @@ public struct In3Nodes {
     public var index: UInt64
 
     /// the stored deposit
-    public var deposit: UInt64
+    public var deposit: UInt256
 
     /// the bitset of capabilities as described in the [Node Structure](spec.html#node-structure)
-    public var props: UInt64
+    public var props: String
 
     /// the time in seconds describing how long the deposit would be locked when trying to unregister a node.
     public var timeout: UInt64
@@ -635,8 +635,8 @@ public struct In3Nodes {
         url = try toString(obj["url"],false)!
         address = try toString(obj["address"],false)!
         index = try toUInt64(obj["index"],false)!
-        deposit = try toUInt64(obj["deposit"],false)!
-        props = try toUInt64(obj["props"],false)!
+        deposit = try toUInt256(obj["deposit"],false)!
+        props = try toString(obj["props"],false)!
         timeout = try toUInt64(obj["timeout"],false)!
         registerTime = try toUInt64(obj["registerTime"],false)!
         weight = try toUInt64(obj["weight"],false)!

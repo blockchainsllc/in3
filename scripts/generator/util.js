@@ -11,7 +11,18 @@ exports.camelCaseLow = s => s ? s.substr(0, 1).toLowerCase() + camelCase(s).subs
 
 exports.asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
 exports.link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
-exports.getType = (val, types) => typeof val === 'object' ? val : (types['' + val] || val)
+exports.getType = (val, types) => {
+    if (typeof val === 'object') {
+        if (val._extends) {
+            const base = exports.getType(val._extends, types)
+            delete val._extends
+            Object.assign(val, { ...base, ...val })
+        }
+        return val
+    }
+    if (!val) return undefined
+    return exports.getType(types['' + val], types) || val
+}
 exports.toCmdParam = val => (typeof val == 'object' || Array.isArray(val) || ('' + val).indexOf(' ') >= 0) ? "'" + JSON.stringify(val) + "'" : ('' + val)
 exports.short_descr = function (d) {
     let zd = (d || '').trim()

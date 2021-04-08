@@ -26,6 +26,7 @@ let docs = {}, config = {}, types = {}
 function scan(dir) {
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         if (f.name == 'rpc.yml') {
+            console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             if (ob.types) {
                 types = { ...types, ...ob.types }

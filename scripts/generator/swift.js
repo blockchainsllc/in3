@@ -5,11 +5,10 @@ const {
     asArray,
     camelCaseLow,
     camelCaseUp,
-    link,
-    toCmdParam
 } = require('./util')
+
 const isStruct = (c, typeConfigs) => typeof c.type == 'string' ? typeConfigs[c.type] : typeof c.type === 'object'
-configs = {
+const configs = {
     In3Config: [
         '/// The main Incubed Configuration',
         'public struct In3Config : Codable {',
@@ -23,7 +22,7 @@ configs = {
 }
 function converterName(swiftType, asFn) {
     const type = swiftType.replace("String:", "").split(/[\[\]_\?\!]+/).join('')
-    if (type == 'UInt64' || type == 'Double' || type == 'Bool' || type == 'String' || type == 'Int' || type == 'AnyObject') return 'to' + type
+    if (type.startsWith("Int") || type.startsWith("UInt") || type == 'Double' || type == 'Bool' || type == 'String' || type == 'AnyObject') return 'to' + type
     if (swiftType.startsWith('[') && asFn) {
         if (swiftType.indexOf(':') >= 0) {
             if (swiftType.endsWith('?'))
@@ -40,6 +39,8 @@ function converterName(swiftType, asFn) {
     }
     return asFn ? '{ try ' + type + '($0,$1) }' : type
 }
+
+
 function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api) {
     typesGenerated[swiftType] = 'placeholder'
     let content = ['/// ' + (descr || swiftType).split('\n').join('\n/// '),
@@ -48,7 +49,7 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
 
     let toRPC = '\n    internal func toRPCDict() -> [String:RPCObject] {\n        var obj:[String:RPCObject] = [:]'
     let init = '    internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {'
-    init += '\n        guard let obj = try toObject(rpc, optional) else { return nil }'
+        + '\n        guard let obj = try toObject(rpc, optional) else { return nil }'
 
 
     for (let name of Object.keys(conf)) {
@@ -80,7 +81,7 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
         }
         else {
             init += '\n        ' + name + ' = try ' + converterName(t, false) + '(obj["' + name + '"],' + (p.optional ? 'true' : 'false') + ')!'
-            if (converterName(t, false).startsWith('to'))
+            if (!isStruct(p, typeConfigs))
                 toRPC += '\n        obj["' + name + '"] = ' + (p.optional ? (name + ' == nil ? RPCObject.none : RPCObject(' + name + '!)') : 'RPCObject(' + name + ')')
         }
 
@@ -93,14 +94,15 @@ function getAPIType(c, typeConfigs, typesGenerated, prefix, api) {
     let swiftType = camelCaseUp(('' + c.type).split('|')[0].trim())
     let typedef = null
     if (typeof c.type === 'object') {
-        typedef = c.type
+        typedef = getType(c.type, typeConfigs)
         swiftType = camelCaseUp(api + camelCaseUp(c.typeName || prefix.startsWith('get') ? prefix.substr(3) : prefix))
     }
     else if (typeConfigs[c.type]) {
-        typedef = typeConfigs[c.type]
+        typedef = getType(c.type, typeConfigs)
         swiftType = camelCaseUp((c.type.toLowerCase().startsWith(api.toLowerCase()) ? '' : api) + camelCaseUp(c.type))
     }
     else if (swiftType == 'Uint') swiftType = 'UInt64'
+    else if (swiftType.startsWith('Uint')) swiftType = swiftType.replace('Uint', 'UInt')
     else if (swiftType == 'Float') swiftType = 'Double'
     else if (swiftType == 'Any') swiftType = 'AnyObject'
     else if (swiftType.startsWith('Byte') || swiftType == 'Address' || swiftType == 'Hex') swiftType = 'String'
@@ -108,14 +110,12 @@ function getAPIType(c, typeConfigs, typesGenerated, prefix, api) {
         swiftType = swiftType.substr(0, swiftType.length - 2)
         c = { ...c, array: true }
     }
-    if (typedef && !typesGenerated[swiftType]) {
+    if (typedef && typesGenerated && !typesGenerated[swiftType])
         generateStruct(swiftType, typedef, c.descr, typeConfigs, typesGenerated, api);
-    }
-
 
     if (c.array) swiftType = '[' + swiftType + ']'
     if (c.key) swiftType = '[String:' + swiftType + ']'
-    if (c.optional) swiftType += '?'
+    if (c.optional || c.optionalAPI) swiftType += '?'
     return swiftType
 }
 
@@ -124,18 +124,12 @@ exports.updateConfig = function (pre, c, key) {
     const swift = configs[camelCaseUp(pre || 'In3Config')]
     const pad = pre ? '    ' : ''
     if (swift && key.indexOf('-') == -1 && key.indexOf('.') == -1) {
-        //console.error("NO Onbject for " + pre + ':Config' + camelCaseUp(pre || ''))
-        let swiftType = camelCaseUp(('' + c.type).split('|')[0].trim())
-        if (typeof c.type === 'object') {
-            swiftType = camelCaseUp(key)
+        let swiftType = getAPIType({ ...c, optional: false, array: false }, {}, {}, key, '')
+        if (typeof c.type === 'object')
             configs[swiftType] = [
                 '    /// ' + c.descr.replace(/\n/gm, '\n/// '),
                 '    public struct ' + swiftType + ' : Codable {'
             ]
-        }
-        else if (swiftType == 'Uint') swiftType = 'UInt64'
-        else if (swiftType.startsWith('Byte') || swiftType.startsWith('Address')) swiftType = 'String'
-        if (swiftType.endsWith('[]')) swiftType = '[' + swiftType.substr(0, swiftType.length - 2) + ']'
         if (c.array) swiftType = '[' + swiftType + ']'
         swift.push('\n' + pad + '    /// ' + (
             c.descr
@@ -143,7 +137,7 @@ exports.updateConfig = function (pre, c, key) {
             + (c.enum ? ('\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n') : '')
             + (c.example ? ('\n\nExample: ' + (Array.isArray(c.example) ? '\n```\n' : '`') + asArray(c.example).map(ex => yaml.stringify(ex).trim()).join('\n') + (Array.isArray(c.example) ? '\n```' : '`')) : '')
         ).replace(/\n/gm, '\n' + pad + '    /// '))
-        swift.push(pad + '    public var ' + key + ' : ' + swiftType + (c.optional || !pre ? '?' : ''))
+        swift.push(pad + '    public var ' + key + ' : ' + swiftType + ((c.optional || c.optionalAPI || !pre) ? '?' : ''))
     }
 }
 
@@ -178,15 +172,45 @@ exports.generate_config = function () {
     ), { encoding: 'utf8' })
 }
 
+function toParam(name, p, types) {
+    if (p.fixed !== undefined)
+        return ' RPCObject(' + JSON.stringify(p.fixed) + ')'
+
+    const optional = (p.optional || p.optionalAPI) ? '!' : ''
+    let expr = ''
+    if (isStruct(p, types))
+        expr = name + optional + '.toRPCDict()'
+    else if (p.type == 'uint256')
+        expr = name + optional
+    else if (p.type.startsWith('uint') || p.type.startsWith('int'))
+        expr = 'String(format: "0x%1x", ' + name + optional + ')'
+    else
+        expr = name + optional
+
+    if (p.optional || p.optionalAPI) {
+        return name + ' == nil'
+            + ' ? RPCObject' + (p.internalDefault ? ('(' + JSON.stringify(p.internalDefault) + ')') : '.none')
+            + ' : RPCObject( ' + expr + ' )'
+    }
+    else
+        return 'RPCObject( ' + expr + ')'
+}
+
 function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpcs) {
-    if (!rpc || rpc.skipApi) return
-    if (rpc.alias)
+    if (!rpc || rpc.skipApi) // ignore this rpc-function
+        return
+    if (rpc.alias) // create function from link but replace the name
         return createApiFunction(rpc_name, rpcs[rpc.alias], content, api_name, structs, types, rpcs)
+
+    // we create a resulting typ with string as default.
     const r = { ...rpc.result, type: (rpc.result || {}).type || 'string' }
+
+    // options means, we have different result types based on the input params
     if (r.options) {
         for (option of r.options) {
             let rr = { ...rpc, result: { ...r, ...option.result } }
-            if (option.example && rr.example) rr.example = { ...rr.example, response: option.example }
+            if (option.example && rr.example)
+                rr.example = { ...rr.example, response: option.example }
             if (option.params && rr.example && rr.example.request)
                 rr.example = { ...rr.example, request: rr.example.request.slice(0, Object.keys(rpc.params).length - Object.keys(option.params).length) }
             rr.params = {}
@@ -202,30 +226,29 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
         return
     }
 
-    if (rpc.descr) content.push('    /// ' + rpc.descr.split('\n').join('\n    /// '))
-    else content.push('    /// ' + rpc_name)
+    // add description
+    content.push('    /// ' + (rpc.descr || rpc_name).split('\n').join('\n    /// '))
+
+    // generate the function name
     const fnName = rpc.apiName || camelCaseLow(rpc_name.substr(rpc_name.indexOf('_') + 1))
+
     let s = '    public func ' + fnName + '('
     let params = ''
-    if (rpc.params) {
-        for (let name of Object.keys(rpc.params)) {
-            let p = rpc.params[name]
-            let type = getAPIType(p, types, structs, name, camelCaseUp(api_name))
-            if (p.fixed === undefined) {
-                if (!s.endsWith('(')) s += ', '
-                content.push('    /// - Parameter ' + name + ' : ' + (p.descr || name).split('\n').join('    /// '))
-                s += name + ': ' + type + (p.optional || p.default !== undefined ? ' = ' + (p.default !== undefined ? JSON.stringify(p.default) : 'nil') : '')
-            }
-            params += (params ? '' : 'params:') + (
-                p.fixed === undefined
-                    ? (p.optional
-                        ? name + ' == nil ? RPCObject' + (p.internalDefault ? ('(' + JSON.stringify(p.internalDefault) + ')') : '.none') + ' : RPCObject(' + (p.type === 'uint' ? ('String(format:"0x%1x",' + name + '!)') : name + '!') + '),'
-                        : ' RPCObject(' + (converterName(type, false).startsWith('to') ? ((p.type === 'uint' ? ('String(format:"0x%1x",' + name + ')') : name)) : (name + '.toRPCDict()')) + '),')
-                    : (' RPCObject(' + JSON.stringify(p.fixed) + '), ')
-            )
+    for (let name of Object.keys(rpc.params || {})) {
+        let p = rpc.params[name]
+        let type = getAPIType(p, types, structs, name, camelCaseUp(api_name))
 
+        // add param as argument, (if not fixed)
+        if (p.fixed === undefined) {
+            if (!s.endsWith('(')) s += ', '
+            content.push('    /// - Parameter ' + name + ' : ' + (p.descr || name).split('\n').join('    /// '))
+            s += name + ': ' + type + (p.optional || p.default !== undefined ? ' = ' + (p.default !== undefined ? JSON.stringify(p.default) : 'nil') : '')
         }
+        // add the param to the rpc call
+        params += (params ? ' ' : ' params:') + toParam(name, p, types) + ','
     }
+
+    // handle return type
     const returnType = getAPIType(r, types, structs, fnName, camelCaseUp(api_name))
     if (rpc.sync) {
         s += ') throws ->  ' + returnType.replace("AnyObject", "RPCObject") + ' {'
@@ -244,6 +267,7 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
     }
     if (r.descr) content.push('    /// - Returns: ' + rpc.result.descr.split('\n').join('\n    /// '))
 
+    // add examples as comments
     asArray(rpc.example).forEach(ex => {
         function toSwiftValue(val, pIndex) {
             const name = paramNames[pIndex]
@@ -300,19 +324,13 @@ exports.generateAPI = function (api_name, rpcs, descr, types) {
         '    }',
         ''
     ]
+
+    // generate functions
     Object.keys(rpcs).forEach(rpc_name => createApiFunction(rpc_name, rpcs[rpc_name], content, api_name, structs, types, rpcs))
 
+    // write the API to the filesystem
     fs.writeFileSync('../swift/Sources/In3/API/' + apiName + '.swift', (
         content.join('\n') + '\n\n}\n' +
         Object.values(structs).join('\n\n')
     ), 'utf8')
-}
-
-
-
-function generate_swift_api(all) {
-    Object.keys(all).forEach(api_key => {
-        const api = all[api_key]
-
-    })
 }

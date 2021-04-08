@@ -2,7 +2,7 @@ types:
   transactionReceipt:
     blockNumber:
       descr: the blockNumber
-      type: uint
+      type: uint64
     blockHash:
       descr: blockhash if ther containing block
       type: bytes32
@@ -11,10 +11,10 @@ types:
       type:  address
     cumulativeGasUsed:
       descr: gas used for all transaction up to this one in the block
-      type: uint
+      type: uint64
     gasUsed:
       descr: gas used by this transaction.
-      type: uint
+      type: uint64
     logs:
       descr: array of events created during execution of the tx
       type: 
@@ -23,7 +23,7 @@ types:
           type: address
         blockNumber:
           descr: the blockNumber
-          type: uint
+          type: uint64
         blockHash:
           descr: blockhash if ther containing block
           type: bytes32
@@ -32,22 +32,23 @@ types:
           type: bytes
         logIndex:
           descr: the index of the even within the block.
-          type: uint
+          type: int
         removed:
           descr: the reorg-status of the event.
           type: bool
         topics:
+          array: true
           descr: array of 32byte-topics of the indexed fields.
-          type: bytes32[]
+          type: bytes32
         transactionHash:
           descr: requested transactionHash
           type: bytes32
         transactionIndex:
           descr: transactionIndex within the containing block.
-          type: uint
+          type: int
         transactionLogIndex:
           descr: index of the event within the transaction. 
-          type: uint
+          type: int
         type:
           descr: mining-status
           type: string
@@ -56,13 +57,13 @@ types:
       type: bytes128
     status:
       descr: error-status of the tx.  0x1 = success 0x0 = failure
-      type: uint
+      type: int
     transactionHash:
       descr: requested transactionHash
       type: bytes32
     transactionIndex:
       descr: transactionIndex within the containing block.
-      type: uint
+      type: int
 
 eth:
   descr: |

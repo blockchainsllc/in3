@@ -8,10 +8,10 @@ types:
       type: int
     height:
       descr: The block height or index
-      type: uint
+      type: uint64
     version:
       descr: The block version
-      type: uint
+      type: int
     versionHex:
       descr: The block version formatted in hexadecimal
       type: hex
@@ -20,25 +20,25 @@ types:
       type: bytes32
     time:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
-      type: uint
+      type: uint64
     mediantime:
       descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
-      type: uint
+      type: uint64
     nonce:
       descr: The nonce
-      type: uint
+      type: uint64
     bits:
       descr: The bits ( 4 bytes as hex) representing the target
       type: bytes4
     difficulty:
       descr: The difficulty
-      type: uint
+      type: uint256
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: uint
+      type: hex
     nTx:
       descr: The number of transactions in the block.
-      type: uint
+      type: int
     previousblockhash:
       descr: The hash of the previous block
       type: bytes32
@@ -61,19 +61,19 @@ types:
       type: bytes32
     size:
       descr: The serialized transaction size
-      type: uint
+      type: uint64
     vsize:
       descr:  The virtual transaction size (differs from size for witness transactions)
-      type: uint
+      type: uint64
     weight:
       descr: The transaction's weight (between `vsize`\*4-3 and `vsize`\*4)
-      type: uint
+      type: uint64
     version:
       descr: The version
-      type: uint
+      type: int
     locktime:
       descr: The lock time
-      type: uint
+      type: uint64
     vin:
       descr: array of json objects of incoming txs to be used
       array: true
@@ -83,7 +83,7 @@ types:
           type: bytes32
         vout:
           descr: the index of the transaction out to be used
-          type: uint
+          type: uint64
         scriptSig:
           descr: the script
           type:
@@ -95,7 +95,7 @@ types:
               type: string
         sequence:
           descr:  The script sequence number
-          type: uint
+          type: uint64
         txinwitness:
           array: true
           descr: hex-encoded witness data (if any)
@@ -106,10 +106,10 @@ types:
       type:
         value:
           descr: The Value in BTC
-          type: uint
+          type: float
         n:
           descr: the index
-          type: uint
+          type: int
         scriptPubKey:
           descr: the script pubkey 
           type:
@@ -121,7 +121,7 @@ types:
               type: string
             reqSigs:
               descr: the required signatures
-              type: uint
+              type: int
             type:
               descr: The type, eg 'pubkeyhash' 
               type: string
@@ -137,10 +137,10 @@ types:
       type: int
     blocktime:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
-      type: uint
+      type: uint64
     time:
       descr:  Same as "blocktime"
-      type: uint
+      type: uint64
 
   btcblockWithTx:
     hash:
@@ -151,10 +151,10 @@ types:
       type: int
     height:
       descr: The block height or index
-      type: uint
+      type: uint64
     version:
       descr: The block version
-      type: uint
+      type: int
     versionHex:
       descr: The block version formatted in hexadecimal
       type: hex
@@ -163,25 +163,25 @@ types:
       type: bytes32
     time:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
-      type: uint
+      type: uint64
     mediantime:
       descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
-      type: uint
+      type: uint64
     nonce:
       descr: The nonce
-      type: uint
+      type: uint64
     bits:
       descr: The bits ( 4 bytes as hex) representing the target
       type: bytes4
     difficulty:
       descr: The difficulty
-      type: uint
+      type: uint256
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: uint
+      type: hex
     nTx:
       descr: The number of transactions in the block.
-      type: uint
+      type: int
     tx:
       descr: the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
       array: true
@@ -202,10 +202,10 @@ types:
       type: int
     height:
       descr: The block height or index
-      type: uint
+      type: uint256
     version:
       descr: The block version
-      type: uint
+      type: int
     versionHex:
       descr: The block version formatted in hexadecimal
       type: hex
@@ -214,25 +214,25 @@ types:
       type: bytes32
     time:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
-      type: uint
+      type: uint64
     mediantime:
       descr: The median block time in seconds since epoch (Jan 1 1970 GMT)
-      type: uint
+      type: uint64
     nonce:
       descr: The nonce
-      type: uint
+      type: uint64
     bits:
       descr: The bits ( 4 bytes as hex) representing the target
       type: bytes4
     difficulty:
       descr: The difficulty
-      type: uint
+      type: uint256
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: uint
+      type: hex
     nTx:
       descr: The number of transactions in the block.
-      type: uint
+      type: int
     tx:
       descr: the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
       array: true
@@ -272,14 +272,14 @@ btc:
       type: 
         maxDAP:
           descr: max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets.
-          type: uint
+          type: int
           example: 10
           default: 20
           optional: true
 
         maxDiff:
           descr: max increase (in percent) of the difference between targets when accepting new targets.
-          type: uint
+          type: int
           example: 5
           default: 10
           optional: true
@@ -357,7 +357,7 @@ btc:
           type: bytes
         height:
           descr: the height of the block (block number)
-          type: uint
+          type: uint64
 
 
     example:
@@ -406,7 +406,7 @@ btc:
     in3Params:
       finality:
         descr: defines the amount of finality headers
-        type: uint
+        type: int
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
         type: string
@@ -499,7 +499,7 @@ btc:
     in3Params:
       finality:
         descr: defines the amount of finality headers
-        type: uint
+        type: int
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
         type: string
@@ -631,13 +631,13 @@ btc:
     in3Params:
       finality:
         descr: defines the amount of finality headers
-        type: uint
+        type: int
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
         type: string
     result:
       descr: the current blockheight
-      type: uint
+      type: uint64
     proof:
       descr: |
         Since we can't prove the finality of the latest block we consider the `current block count` - `amount of finality` (set in `in3.finality`-field) as the latest block. The number of this block will be returned. Setting `in3.finality`=`0` will return the actual current block count.
@@ -673,12 +673,12 @@ btc:
     descr: Returns the proof-of-work difficulty as a multiple of the minimum difficulty.
     params:
       blocknumber:
-        type: uint
+        type: uint64
         descr: 'Can be the number of a certain block to get its difficulty. To get the difficulty of the latest block use `latest`, `earliest`, `pending` or leave `params` empty (Hint: Latest block always means `actual latest block` minus `in3.finality`)'
     in3Params:
       finality:
         descr: defines the amount of finality headers
-        type: uint
+        type: int
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
         type: string
@@ -687,7 +687,7 @@ btc:
         type: bool
 
     result:
-      type: uint
+      type: uint256
       descr: |
         - `blocknumber` is a certain number: the difficulty of this block
         - `blocknumber` is `latest`, `earliest`, `pending` or empty: the difficulty of the latest block (`actual latest block` minus `in3.finality`)
@@ -728,7 +728,7 @@ btc:
           type: bytes
         height:
           descr: the height of the block (block number)
-          type: uint
+          type: uint64
     example:
       in3Params:
         finality: 8
@@ -748,29 +748,29 @@ btc:
     params: 
       target_dap:
         descr: the number of the difficulty adjustment period (dap) we are looking for
-        type: uint
+        type: uint64
       verified_dap:
         descr: the number of the closest already verified dap
-        type: uint
+        type: uint64
       max_diff:
         descr: the maximum target difference between 2 verified daps
-        type: uint
+        type: int
         default: 5
         optional: true
       max_dap:
         descr: the maximum amount of daps between 2 verified daps
-        type: uint
+        type: int
         default: 5
         optional: true
       limit:
         descr: the maximum amount of daps to return (`0` = no limit) - this is important for embedded devices since returning all daps might be too much for limited memory
-        type: uint
+        type: int
         default: 0
         optional: true
     in3Params:
       finality:
         descr: defines the amount of finality headers
-        type: uint
+        type: int
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
         type: string
@@ -798,7 +798,7 @@ btc:
       type:
         dap: 
           descr: the difficulty adjustement period
-          type: uint
+          type: uint64
         block:
           descr: the first blockheader
           type: bytes
@@ -880,7 +880,7 @@ btc:
     in3Params:
       finality:
         descr: defines the amount of finality headers
-        type: uint
+        type: int
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
         type: string

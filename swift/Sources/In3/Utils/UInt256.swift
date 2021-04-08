@@ -8,35 +8,41 @@ extension mp_int {
     }
 }
 /// a bigint implementation based on tommath to represent big numbers
-public class UInt256: CustomStringConvertible, Hashable, Comparable {
+/// It is used to represent uint256 values
+final public class UInt256: CustomStringConvertible, Hashable, Comparable, Decodable, Encodable {
     var value = mp_int()
 
+    /// creates a empt (0)-value
     public init() {
         mp_init_set(&self.value, 0)
     }
-    
+
+    /// i nitializes its value from a uint64 type
     public init(_ v:UInt64) {
         mp_init_set(&self.value, v)
     }
-    
-    public required convenience init(integerLiteral value: IntegerLiteralType) {
-        self.init(UInt64(value))
-    }
 
+    /// inits its value from a Int
+    public required convenience init(_ val: IntegerLiteralType) {
+        self.init(UInt64(val))
+    }
+    
+
+    /// copies the value from another UInt256
     public init(_ value: UInt256) {
         mp_init_copy(&self.value, &value.value)
     }
     
-    public func hash(into hasher: inout Hasher) {
-        toString(radix: 16).hash(into: &hasher)
-    }
-    
+    /// initialze the value from a string.
+    /// if the string starts with '0x' it will interpreted as radix 16
+    /// otherwise the default for the radix is 10
+    /// - Parameter radix : the radix or the base to use when parsing the String (10 - decimal, 16 - hex, 2 - binary ... )
     public init?(_ val: String, radix: Int = 10) {
         var r = radix
         var v = val
         assert(r >= 2 && r <= 36, "Only radix from 2 to 36 are supported")
         
-        if (v.starts(with: "0x")) {
+        if v.starts(with: "0x") {
             v = String(v.suffix(from: v.index(v.startIndex, offsetBy: 2)))
             r = 16
         }
@@ -46,22 +52,57 @@ public class UInt256: CustomStringConvertible, Hashable, Comparable {
         }
     }
 
+    /// initializes from a decoder
+    public init(from decoder: Decoder) throws {
+        let v = try decoder.singleValueContainer().decode(String.self)
+        if v.starts(with: "0x") {
+            if mp_read_radix(&self.value, String(v.suffix(from: v.index(v.startIndex, offsetBy: 2))), Int32(16)) != 0 {
+                throw IncubedError.convert(message: "Invalid UInt256 values")
+            }
+        } else {
+            throw IncubedError.convert(message: "UInt256 value must start with '0x'")
+        }
+    }
+    
+    /// encodes the value to a decoder
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(self.hexValue)
+    }
+
+
+    /// hash of the value
+    public func hash(into hasher: inout Hasher) {
+        toString(radix: 16).hash(into: &hasher)
+    }
+    
+    /// cleanup freeing the value
     deinit {
         mp_clear(&self.value);
     }
-    
+
+    /// returns the value as Double (as close as possible)
     public var doubleValue: Double {
         return mp_get_double(&self.value)
     }
-    
+
+    /// the hex representation staring with '0x'
+    public var hexValue: String {
+        return "0x" + self.toString(radix: 16)
+    }
+
+    /// a unsigned Int representation (if possible)
     public var uintValue: UInt {
         return mp_get_int(&self.value)
     }
  
+    /// a unsigned UInt64 representation (if possible)
     public var uint64Value: UInt64 {
         return mp_get_long_long(&self.value)
     }
     
+    /// a string representation based on the given radix.
+    /// - Parameter radix : the radix or the base to use when parsing the String (10 - decimal, 16 - hex, 2 - binary ... )
     public func toString(radix: Int  = 10) -> String {
        assert(radix >= 2 && radix <= 36, "invalid radix")
        
@@ -87,7 +128,32 @@ public class UInt256: CustomStringConvertible, Hashable, Comparable {
         return res
     }
 
-    
+    public func sub(_ val:UInt256) -> UInt256 {
+        let res:UInt256 = UInt256()
+        mp_sub(&self.value, &val.value, &res.value)
+        return res
+    }
+
+    public func mul(_ val:UInt256) -> UInt256 {
+        let res:UInt256 = UInt256()
+        mp_mul(&self.value, &val.value, &res.value)
+        return res
+    }
+
+    public func div(_ val:UInt256) -> UInt256 {
+        let res:UInt256 = UInt256()
+        let mod:UInt256 = UInt256()
+        mp_div(&self.value, &val.value, &res.value, &mod.value)
+        return res
+    }
+
+    public func mod(_ val:UInt256) -> UInt256 {
+        let res:UInt256 = UInt256()
+        mp_mod(&self.value, &val.value, &res.value)
+        return res
+    }
+
+
 }
 
 public func == (a: UInt256, b: UInt256) -> Bool {
@@ -113,3 +179,43 @@ public func <= (a: UInt256, b: UInt256) -> Bool {
 public func + (a: UInt256, b: UInt256) -> UInt256 {
     return a.add(b)
 }
+
+public func + (a: UInt256, b: Int) -> UInt256 {
+    return b < 0 ? a.sub(UInt256(-b)) : a.add(UInt256(b))
+}
+
+public func + (a: UInt256, b: UInt64) -> UInt256 {
+    return a.add(UInt256(b))
+}
+
+public func - (a: UInt256, b: UInt256) -> UInt256 {
+    return a.sub(b)
+}
+
+public func - (a: UInt256, b: Int) -> UInt256 {
+    return b >= 0 ? a.sub(UInt256(b)) : a.add(UInt256(-b))
+}
+
+public func - (a: UInt256, b: UInt64) -> UInt256 {
+    return a.sub(UInt256(b))
+}
+
+public func / (a: UInt256, b: UInt256) -> UInt256 {
+    return a.div(b)
+}
+
+public func * (a: UInt256, b: UInt256) -> UInt256 {
+    return a.mul(b)
+}
+
+public func % (a: UInt256, b: UInt256) -> UInt256 {
+    return a.mod(b)
+}
+
+
+extension UInt64 {
+    init(_ val:UInt256) {
+        self = val.uint64Value
+    }
+}
+

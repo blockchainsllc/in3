@@ -1,8 +1,9 @@
 types:
-  blockdataWithTxHashes:
+
+  blockheader:
     number:
       descr: the block number. `null` when its pending block.
-      type: uint
+      type: uint64
     hash:
       descr: hash of the block. `null` when its pending block.
       type: bytes32
@@ -11,7 +12,7 @@ types:
       type: bytes32
     nonce:
       descr: hash of the generated proof-of-work. `null` when its pending block.
-      type: uint
+      type: uint256
     sha3Uncles:
       descr: SHA3 of the uncles Merkle root in the block.
       type: bytes32
@@ -32,94 +33,43 @@ types:
       type: address
     difficulty:
       descr: integer of the difficulty for this block.
-      type: uint
+      type: uint256
     totalDifficulty:
       descr: integer of the total difficulty of the chain until this block.
-      type: uint
+      type: uint256
     extraData:
       descr: the "extra data" field of this block.
       type: bytes
     size:
       descr: integer the size of this block in bytes.
-      type: uint
+      type: uint64
     gasLimit:
       descr: the maximum gas allowed in this block.
-      type: uint
+      type: uint64
     gasUsed:
       descr: the total used gas by all transactions in this block.
-      type: uint
+      type: uint64
     timestamp:
       descr: the unix timestamp for when the block was collated.
-      type: uint
-    transactions:
-      descr: Array of transaction hashes
-      array: true
-      type: bytes32
+      type: uint64
     uncles:
       descr: Array of uncle hashes.
       array: true
       type: bytes32
 
+  blockdataWithTxHashes:
+    _extends: blockheader
+    transactions:
+      descr: Array of transaction hashes
+      array: true
+      type: bytes32
+
   blockdata:
-    number:
-      descr: the block number. `null` when its pending block.
-      type: uint
-    hash:
-      descr: hash of the block. `null` when its pending block.
-      type: bytes32
-    parentHash:
-      descr: hash of the parent block.
-      type: bytes32
-    nonce:
-      descr: hash of the generated proof-of-work. `null` when its pending block.
-      type: uint
-    sha3Uncles:
-      descr: SHA3 of the uncles Merkle root in the block.
-      type: bytes32
-    logsBloom:
-      descr: the bloom filter for the logs of the block. `null` when its pending block.
-      type: bytes256
-    transactionsRoot:
-      descr: the root of the transaction trie of the block.
-      type: bytes32
-    stateRoot:
-      descr: the root of the final state trie of the block.
-      type: bytes32
-    receiptsRoot:
-      descr: the root of the receipts trie of the block.
-      type: bytes32
-    miner:
-      descr: the address of the beneficiary to whom the mining rewards were given.
-      type: address
-    difficulty:
-      descr: integer of the difficulty for this block.
-      type: uint
-    totalDifficulty:
-      descr: integer of the total difficulty of the chain until this block.
-      type: uint
-    extraData:
-      descr: the "extra data" field of this block.
-      type: bytes
-    size:
-      descr: integer the size of this block in bytes.
-      type: uint
-    gasLimit:
-      descr: the maximum gas allowed in this block.
-      type: uint
-    gasUsed:
-      descr: the total used gas by all transactions in this block.
-      type: uint
-    timestamp:
-      descr: the unix timestamp for when the block was collated.
-      type: uint
+    _extends: blockheader
     transactions:
       descr: Array of transaction objects
       array: true
       type: transactiondata
-    uncles:
-      descr: Array of uncle hashes.
-      array: true
-      type: bytes32
 
   transactiondata:
     to:
@@ -130,22 +80,22 @@ types:
       type: address
     value:
       descr: value in wei to send
-      type: uint
+      type: uint256
     gas:
       descr: the gas to be send along
-      type: uint
+      type: uint64
     gasPrice:
       descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-      type: uint
+      type: uint64
     nonce:
       descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-      type: uint
+      type: uint64
     blockHash:
       descr: blockHash of the block holding this transaction or `null` if still pending.
       type: bytes32
     blockNumber:
       descr: blockNumber of the block holding this transaction or `null` if still pending.
-      type: uint
+      type: uint64
     hash:
       descr: transactionHash
       type: bytes32
@@ -154,7 +104,7 @@ types:
       type: bytes
     transactionIndex:
       descr: index of the transaaction in the block
-      type: uint
+      type: uint64
     v:
       descr: recovery-byte of the signature
       type: byte
@@ -177,7 +127,7 @@ eth:
       With the `blockTime` from the chainspec, including a tolerance, the current blocknumber may be checked if in the proposed range.
     result:
       descr: the highest known blocknumber
-      type: uint
+      type: uint64
     example:
       response: "0xb8a2a5"
 
@@ -189,7 +139,7 @@ eth:
     params:
       blockNumber:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
-        type: uint
+        type: uint64
         internalDefault : latest
         optional: true
       fullTx:
@@ -409,7 +359,7 @@ eth:
     params:
       blockNumber:
         descr: the blockNumber of the block
-        type: uint
+        type: uint64
     proof:
       alias: eth_getUncleCountByBlockNumber
     result:
@@ -431,7 +381,7 @@ eth:
     params:
       blockNumber:
         descr: the blockNumber of the block
-        type: uint
+        type: uint64
     proof:
       descr: |
         Requests requiring proof for blocks will return a proof of type `blockProof`.  Depending on the request, the proof will contain the following properties:
@@ -456,7 +406,7 @@ eth:
         type: bytes32
       index:
         descr: the transactionIndex
-        type: uint
+        type: int
     result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
@@ -505,10 +455,10 @@ eth:
     params:
       blockNumber:
         descr: the block number containing the transaction.
-        type: uint
+        type: uint64
       index:
         descr: the transactionIndex
-        type: uint
+        type: int
     result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
@@ -718,7 +668,7 @@ eth:
               type:
                 txIndex:
                   descr: transactionIndex within the block
-                  type: uint
+                  type: int
                 txProof:
                   descr: the merkle Proof-Array for the transaction
                   type: bytes[]
@@ -737,12 +687,12 @@ eth:
         type:
           fromBlock:
             descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-            type: uint | string
+            type: uint64
             optional: true
             default: latest
           toBlock:
             descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-            type: uint | string
+            type: uint64
             optional: true
             default: latest
           address:
@@ -768,9 +718,9 @@ eth:
         type: address
       block:
         internalDefault : latest
-        optional: true
+        optionalAPI: true
         descr: the blockNumber or `latest`
-        type: uint
+        type: uint64
     result:
       descr: the balance
     proof:
@@ -813,9 +763,9 @@ eth:
         type: address
       block:
         internalDefault : latest
-        optional: true
+        optionalAPI: true
         descr: the blockNumber or  `latest` 
-        type: uint
+        type: uint64
     result:
       descr: the nonce
     proof:
@@ -861,7 +811,7 @@ eth:
         internalDefault : latest
         optional: true
         descr: the blockNumber or `latest`
-        type: uint
+        type: uint64
     result:
       descr: the code as hex
     proof:
@@ -909,7 +859,7 @@ eth:
         internalDefault : latest
         optional: true
         descr: the blockNumber or`latest`
-        type: uint
+        type: uint64
     result:
       descr: the value of the storage slot.
     proof:
@@ -928,10 +878,10 @@ eth:
               type: address
             balance:
               descr: the balance
-              type: uint
+              type: uint256
             nonce:
               descr: nonce of the account
-              type: uint
+              type: uint256
             codeHash:
               descr: codehash of the account
               type: bytes32
@@ -946,20 +896,23 @@ eth:
               type:
                 key:
                   descr: the storage key (or hash)
-                  type: uint
+                  type: bytes32
                 value:
                   descr: the storage value
                   type: bytes32
                 proof:
+                  array: true
                   descr: the merkleProof of the value down to the storageHash as MerkleRoot
-                  type: bytes[]
+                  type: bytes
 
         signatures:
           descr: the array of signatures for all used blocks in the result.
-          type: signature[]
+          array: true
+          type: signature
         finalityBlocks:
+          array: true
           descr: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
-          type: bytes[]
+          type: bytes
         
       descr: |
         Each of these account values are stored in the account-object:

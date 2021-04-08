@@ -319,6 +319,11 @@ public enum RPCObject: Equatable {
         self = .integer(Int(value))
     }
 
+    /// Wrap a UInt256 as Value
+    public init(_ value: UInt256) {
+        self = .string("0x" + value.toString(radix: 16))
+    }
+
     /// Wrap a Double as Value
     public init(_ value: Double) {
         self = .double(value)

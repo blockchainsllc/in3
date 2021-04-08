@@ -36,7 +36,7 @@ public class IpfsAPI {
     /// ```
     /// 
     public func get(ipfshash: String, encoding: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "ipfs_get",params: RPCObject(ipfshash), RPCObject(encoding), convertWith: toString )
+        return execAndConvert(in3: in3, method: "ipfs_get", params:RPCObject( ipfshash), RPCObject( encoding), convertWith: toString )
     }
 
     /// Stores ipfs-content to the ipfs network.
@@ -63,7 +63,7 @@ public class IpfsAPI {
     /// ```
     /// 
     public func put(data: String, encoding: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "ipfs_put",params: RPCObject(data), RPCObject(encoding), convertWith: toString )
+        return execAndConvert(in3: in3, method: "ipfs_put", params:RPCObject( data), RPCObject( encoding), convertWith: toString )
     }
 
 

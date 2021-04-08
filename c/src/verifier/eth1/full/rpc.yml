@@ -8,9 +8,9 @@ eth:
         type: transaction
       block:
         internalDefault : latest
-        optional: true
+        optionalAPI: true
         descr: the blockNumber or  `latest`
-        type: uint | string
+        type: uint64
           
     result:
       descr: the amount of gass needed.
@@ -33,20 +33,20 @@ eth:
             optional: true
           value:
             descr: value in wei to send
-            type: uint
+            type: uint256
             optional: true
           gas:
             descr: the gas to be send along
-            type: uint
+            type: uint64
             optional: true
             default: 21000
           gasPrice:
             descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-            type: uint
+            type: uint64
             optional: true
           nonce:
             descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-            type: uint
+            type: uint64
             optional: true
           data:
             descr: the data-section of the transaction, which includes the functionhash and the abi-encoded arguments
@@ -54,10 +54,9 @@ eth:
             optional: true
       block:
         internalDefault : latest
-        optional: true
+        optionalAPI: true
         descr: the blockNumber or  `latest`
-        type: uint | string
-          
+        type: uint64          
     result:
       descr: the abi-encoded result of the function.
     
@@ -123,10 +122,10 @@ eth:
               type: address
             balance:
               descr: the balance
-              type: uint
+              type: uint256
             nonce:
               descr: nonce of the account
-              type: uint
+              type: uint64
             codeHash:
               descr: codehash of the account
               type: bytes32
@@ -134,27 +133,32 @@ eth:
               descr: MerkleRoot of the Storage Trie
               type: bytes32
             accountProof:
+              array: true
               descr: MerkleProof of this account-node
-              type: bytes[]
+              type: bytes
             storageProof:
               descr: Array of Proofs for all required storage values
+              array: true
               type:
                 key:
                   descr: the storage key (or hash)
-                  type: uint
+                  type: bytes32
                 value:
                   descr: the storage value
                   type: bytes32
                 proof:
+                  array: true
                   descr: the merkleProof of the value down to the storageHash as MerkleRoot
-                  type: bytes[]
+                  type: bytes
 
         signatures:
+          array: true
           descr: the array of signatures for all used blocks in the result.
-          type: signature[]
+          type: signature
         finalityBlocks:
           descr: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
-          type: bytes[]
+          array: true
+          type: bytes
 
       descr: |
         Verifying the result of an `eth_call` is a little bit more complex because the response is a result of executing opcodes in the vm. The only way to do so is to reproduce it and execute the same code. That's why a call proof needs to provide all data used within the call. This means:

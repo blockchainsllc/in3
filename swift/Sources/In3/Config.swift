@@ -30,7 +30,7 @@ public struct In3Config : Codable {
     /// the number in percent needed in order reach finality (% of signature of the validators).
     /// 
     /// Example: `50`
-    public var finality : UInt64?
+    public var finality : Int?
 
     /// if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
     /// 
@@ -41,7 +41,7 @@ public struct In3Config : Codable {
     /// (default: `7`)
     /// 
     /// Example: `1`
-    public var maxAttempts : UInt64?
+    public var maxAttempts : Int?
 
     /// if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
     /// 
@@ -84,7 +84,7 @@ public struct In3Config : Codable {
     /// if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
     /// 
     /// Example: `6`
-    public var replaceLatestBlock : UInt64?
+    public var replaceLatestBlock : Int?
 
     /// if true the nodelist will be automaticly updated if the lastBlock is newer.
     /// (default: `true`)
@@ -94,7 +94,7 @@ public struct In3Config : Codable {
     /// (default: `1`)
     /// 
     /// Example: `2`
-    public var signatureCount : UInt64?
+    public var signatureCount : Int?
 
     /// if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
     /// (default: `true`)
@@ -110,18 +110,18 @@ public struct In3Config : Codable {
     /// min stake of the server. Only nodes owning at least this amount will be chosen.
     /// 
     /// Example: `10000000`
-    public var minDeposit : UInt64?
+    public var minDeposit : UInt256?
 
     /// used to identify the capabilities of the node.
     /// 
-    /// Example: `65535`
-    public var nodeProps : UInt64?
+    /// Example: `"0xffff"`
+    public var nodeProps : String?
 
     /// the number of request send in parallel when getting an answer. More request will make it more expensive, but increase the chances to get a faster answer, since the client will continue once the first verifiable response was received.
     /// (default: `2`)
     /// 
     /// Example: `3`
-    public var requestCount : UInt64?
+    public var requestCount : Int?
 
     /// url of one or more direct rpc-endpoints to use. (list can be comma seperated). If this is used, proof will automaticly be turned off.
     /// 
@@ -205,7 +205,7 @@ public struct In3Config : Codable {
     /// - Parameter key : the client key to sign requests. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
     /// - Parameter pk : registers raw private keys as signers for transactions. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
     /// - Parameter btc : configure the Bitcoin verification
-    public init(chainId : String? = nil, finality : UInt64? = nil, includeCode : Bool? = nil, maxAttempts : UInt64? = nil, keepIn3 : Bool? = nil, stats : Bool? = nil, useBinary : Bool? = nil, experimental : Bool? = nil, timeout : UInt64? = nil, proof : String? = nil, replaceLatestBlock : UInt64? = nil, autoUpdateList : Bool? = nil, signatureCount : UInt64? = nil, bootWeights : Bool? = nil, useHttp : Bool? = nil, minDeposit : UInt64? = nil, nodeProps : UInt64? = nil, requestCount : UInt64? = nil, rpc : String? = nil, nodes : Nodes? = nil, zksync : Zksync? = nil, key : String? = nil, pk : String? = nil, btc : Btc? = nil) {
+    public init(chainId : String? = nil, finality : Int? = nil, includeCode : Bool? = nil, maxAttempts : Int? = nil, keepIn3 : Bool? = nil, stats : Bool? = nil, useBinary : Bool? = nil, experimental : Bool? = nil, timeout : UInt64? = nil, proof : String? = nil, replaceLatestBlock : Int? = nil, autoUpdateList : Bool? = nil, signatureCount : Int? = nil, bootWeights : Bool? = nil, useHttp : Bool? = nil, minDeposit : UInt256? = nil, nodeProps : String? = nil, requestCount : Int? = nil, rpc : String? = nil, nodes : Nodes? = nil, zksync : Zksync? = nil, key : String? = nil, pk : String? = nil, btc : Btc? = nil) {
         self.chainId = chainId
         self.finality = finality
         self.includeCode = includeCode
@@ -242,7 +242,7 @@ public struct In3Config : Codable {
         public var whiteListContract : String?
 
         /// manual whitelist.
-        public var whiteList : String?
+        public var whiteList : [String]?
 
         /// identifier of the registry.
         public var registryId : String
@@ -251,7 +251,7 @@ public struct In3Config : Codable {
         public var needsUpdate : Bool?
 
         /// average block time (seconds) for this chain.
-        public var avgBlockTime : UInt64?
+        public var avgBlockTime : Int?
 
         /// if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
         public var verifiedHashes : [VerifiedHashes]?
@@ -268,7 +268,7 @@ public struct In3Config : Codable {
         /// - Parameter avgBlockTime : average block time (seconds) for this chain.
         /// - Parameter verifiedHashes : if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
         /// - Parameter nodeList : manual nodeList. As Value a array of Node-Definitions is expected.
-        public init(contract : String, whiteListContract : String? = nil, whiteList : String? = nil, registryId : String, needsUpdate : Bool? = nil, avgBlockTime : UInt64? = nil, verifiedHashes : [VerifiedHashes]? = nil, nodeList : [NodeList]? = nil) {
+        public init(contract : String, whiteListContract : String? = nil, whiteList : [String]? = nil, registryId : String, needsUpdate : Bool? = nil, avgBlockTime : Int? = nil, verifiedHashes : [VerifiedHashes]? = nil, nodeList : [NodeList]? = nil) {
             self.contract = contract
             self.whiteListContract = whiteListContract
             self.whiteList = whiteList
@@ -308,13 +308,13 @@ public struct In3Config : Codable {
         public var address : String
 
         /// used to identify the capabilities of the node (defaults to 0xFFFF).
-        public var props : UInt64
+        public var props : String
 
         /// initialize it memberwise
         /// - Parameter url : manual nodeList. As Value a array of Node-Definitions is expected.
         /// - Parameter address : address of the node
         /// - Parameter props : used to identify the capabilities of the node (defaults to 0xFFFF).
-        public init(url : String, address : String, props : UInt64) {
+        public init(url : String, address : String, props : String) {
             self.url = url
             self.address = address
             self.props = props
@@ -408,18 +408,18 @@ public struct In3Config : Codable {
         /// (default: `20`)
         /// 
         /// Example: `10`
-        public var maxDAP : UInt64?
+        public var maxDAP : Int?
 
         /// max increase (in percent) of the difference between targets when accepting new targets.
         /// (default: `10`)
         /// 
         /// Example: `5`
-        public var maxDiff : UInt64?
+        public var maxDiff : Int?
 
         /// initialize it memberwise
         /// - Parameter maxDAP : configure the Bitcoin verification
         /// - Parameter maxDiff : max increase (in percent) of the difference between targets when accepting new targets.
-        public init(maxDAP : UInt64? = nil, maxDiff : UInt64? = nil) {
+        public init(maxDAP : Int? = nil, maxDiff : Int? = nil) {
             self.maxDAP = maxDAP
             self.maxDiff = maxDiff
         }

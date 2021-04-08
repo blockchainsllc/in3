@@ -117,7 +117,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func accountInfo(address: String? = nil) -> Future<ZksyncAccountInfo> {
-        return execAndConvert(in3: in3, method: "zksync_account_info",params:address == nil ? RPCObject.none : RPCObject(address!), convertWith: { try ZksyncAccountInfo($0,$1) } )
+        return execAndConvert(in3: in3, method: "zksync_account_info", params:address == nil ? RPCObject.none : RPCObject( address! ), convertWith: { try ZksyncAccountInfo($0,$1) } )
     }
 
     /// returns the state or receipt of the the zksync-tx
@@ -144,7 +144,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func txInfo(tx: String) -> Future<ZksyncTxInfo> {
-        return execAndConvert(in3: in3, method: "zksync_tx_info",params: RPCObject(tx), convertWith: { try ZksyncTxInfo($0,$1) } )
+        return execAndConvert(in3: in3, method: "zksync_tx_info", params:RPCObject( tx), convertWith: { try ZksyncTxInfo($0,$1) } )
     }
 
     /// sets the signerkey based on the current pk or as configured in the config.
@@ -182,7 +182,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func setKey(token: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_set_key",params: RPCObject(token), convertWith: toString )
+        return execAndConvert(in3: in3, method: "zksync_set_key", params:RPCObject( token), convertWith: toString )
     }
 
     /// returns the current PubKeyHash based on the configuration set.
@@ -197,7 +197,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func pubkeyhash(pubKey: String? = nil) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "zksync_pubkeyhash",params:pubKey == nil ? RPCObject.none : RPCObject(pubKey!), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "zksync_pubkeyhash", params:pubKey == nil ? RPCObject.none : RPCObject( pubKey! ), convertWith: toString )
     }
 
     /// returns the current packed PubKey based on the config set.
@@ -261,7 +261,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func sign(message: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_sign",params: RPCObject(message), convertWith: toString )
+        return execAndConvert(in3: in3, method: "zksync_sign", params:RPCObject( message), convertWith: toString )
     }
 
     /// returns 0 or 1 depending on the successfull verification of the signature.
@@ -279,14 +279,14 @@ public class ZksyncAPI {
     /// // result = 1
     /// ```
     /// 
-    public func verify(message: String, signature: String) throws ->  UInt64 {
-        return try execLocalAndConvert(in3: in3, method: "zksync_verify",params: RPCObject(message), RPCObject(signature), convertWith: toUInt64 )
+    public func verify(message: String, signature: String) throws ->  Int {
+        return try execLocalAndConvert(in3: in3, method: "zksync_verify", params:RPCObject( message), RPCObject( signature), convertWith: toInt )
     }
 
     /// returns the state or receipt of the the PriorityOperation
     /// - Parameter opId : the opId of a layer-operstion (like depositing)
     public func ethopInfo(opId: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_ethop_info",params: RPCObject(String(format:"0x%1x",opId)), convertWith: toString )
+        return execAndConvert(in3: in3, method: "zksync_ethop_info", params:RPCObject( String(format: "0x%1x", opId)), convertWith: toString )
     }
 
     /// returns current token-price
@@ -309,7 +309,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func getTokenPrice(token: String) -> Future<Double> {
-        return execAndConvert(in3: in3, method: "zksync_get_token_price",params: RPCObject(token), convertWith: toDouble )
+        return execAndConvert(in3: in3, method: "zksync_get_token_price", params:RPCObject( token), convertWith: toDouble )
     }
 
     /// calculates the fees for a transaction.
@@ -340,7 +340,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func getTxFee(txType: String, address: String, token: String) -> Future<ZksyncTxFee> {
-        return execAndConvert(in3: in3, method: "zksync_get_tx_fee",params: RPCObject(txType), RPCObject(address), RPCObject(token), convertWith: { try ZksyncTxFee($0,$1) } )
+        return execAndConvert(in3: in3, method: "zksync_get_tx_fee", params:RPCObject( txType), RPCObject( address), RPCObject( token), convertWith: { try ZksyncTxFee($0,$1) } )
     }
 
     /// returns private key used for signing zksync-transactions
@@ -387,8 +387,8 @@ public class ZksyncAPI {
     /// 
     /// ```
     /// 
-    public func deposit(amount: UInt64, token: String, approveDepositAmountForERC20: Bool? = nil, account: String? = nil) -> Future<UInt64> {
-        return execAndConvert(in3: in3, method: "zksync_deposit",params: RPCObject(String(format:"0x%1x",amount)), RPCObject(token),approveDepositAmountForERC20 == nil ? RPCObject.none : RPCObject(approveDepositAmountForERC20!),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toUInt64 )
+    public func deposit(amount: UInt256, token: String, approveDepositAmountForERC20: Bool? = nil, account: String? = nil) -> Future<UInt64> {
+        return execAndConvert(in3: in3, method: "zksync_deposit", params:RPCObject( amount), RPCObject( token), approveDepositAmountForERC20 == nil ? RPCObject.none : RPCObject( approveDepositAmountForERC20! ), account == nil ? RPCObject.none : RPCObject( account! ), convertWith: toUInt64 )
     }
 
     /// sends a zksync-transaction and returns data including the transactionHash.
@@ -413,8 +413,8 @@ public class ZksyncAPI {
     /// 
     /// ```
     /// 
-    public func transfer(to: String, amount: UInt64, token: String, account: String? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_transfer",params: RPCObject(to), RPCObject(String(format:"0x%1x",amount)), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
+    public func transfer(to: String, amount: UInt256, token: String, account: String? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "zksync_transfer", params:RPCObject( to), RPCObject( amount), RPCObject( token), account == nil ? RPCObject.none : RPCObject( account! ), convertWith: toString )
     }
 
     /// withdraws the amount to the given `ethAddress` for the given token.
@@ -439,8 +439,8 @@ public class ZksyncAPI {
     /// 
     /// ```
     /// 
-    public func withdraw(ethAddress: String, amount: UInt64, token: String, account: String? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "zksync_withdraw",params: RPCObject(ethAddress), RPCObject(String(format:"0x%1x",amount)), RPCObject(token),account == nil ? RPCObject.none : RPCObject(account!), convertWith: toString )
+    public func withdraw(ethAddress: String, amount: UInt256, token: String, account: String? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "zksync_withdraw", params:RPCObject( ethAddress), RPCObject( amount), RPCObject( token), account == nil ? RPCObject.none : RPCObject( account! ), convertWith: toString )
     }
 
     /// withdraws all tokens for the specified token as a onchain-transaction. This is useful in case the zksync-server is offline or tries to be malicious.
@@ -488,7 +488,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func emergencyWithdraw(token: String) -> Future<ZksyncTransactionReceipt> {
-        return execAndConvert(in3: in3, method: "zksync_emergency_withdraw",params: RPCObject(token), convertWith: { try ZksyncTransactionReceipt($0,$1) } )
+        return execAndConvert(in3: in3, method: "zksync_emergency_withdraw", params:RPCObject( token), convertWith: { try ZksyncTransactionReceipt($0,$1) } )
     }
 
     /// calculate the public key based on multiple public keys signing together using schnorr musig signatures.
@@ -503,7 +503,7 @@ public class ZksyncAPI {
     /// ```
     /// 
     public func aggregatePubkey(pubkeys: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "zksync_aggregate_pubkey",params: RPCObject(pubkeys), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "zksync_aggregate_pubkey", params:RPCObject( pubkeys), convertWith: toString )
     }
 
 
@@ -536,7 +536,7 @@ public struct ZksyncTokens {
     public var address: String
 
     /// decimals to be used when formating it for human readable representation.
-    public var decimals: UInt64
+    public var decimals: Int
 
     /// id which will be used when encoding the token.
     public var id: UInt64
@@ -547,7 +547,7 @@ public struct ZksyncTokens {
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
         address = try toString(obj["address"],false)!
-        decimals = try toUInt64(obj["decimals"],false)!
+        decimals = try toInt(obj["decimals"],false)!
         id = try toUInt64(obj["id"],false)!
         symbol = try toString(obj["symbol"],false)!
     }
@@ -599,7 +599,7 @@ public struct ZksyncAccountInfo {
 /// the state of the zksync operator after executing transactions successfully, but not not verified on L1 yet.
 public struct ZksyncCommited {
     /// the token-balance
-    public var balances: [String:UInt64]
+    public var balances: [String:UInt256]
 
     /// the nonce or transaction count.
     public var nonce: UInt64
@@ -609,7 +609,7 @@ public struct ZksyncCommited {
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
-        balances = try toObject(obj["balances"])!.mapValues({ try toUInt64($0,false)! })
+        balances = try toObject(obj["balances"])!.mapValues({ try toUInt256($0,false)! })
         nonce = try toUInt64(obj["nonce"],false)!
         pubKeyHash = try toString(obj["pubKeyHash"],false)!
     }
@@ -625,11 +625,11 @@ public struct ZksyncCommited {
 /// the state of all depositing-tx.
 public struct ZksyncDepositing {
     /// the token-values.
-    public var balances: [String:UInt64]
+    public var balances: [String:UInt256]
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
-        balances = try toObject(obj["balances"])!.mapValues({ try toUInt64($0,false)! })
+        balances = try toObject(obj["balances"])!.mapValues({ try toUInt256($0,false)! })
     }
 
 }
@@ -637,7 +637,7 @@ public struct ZksyncDepositing {
 /// the state after the rollup was verified in L1.
 public struct ZksyncVerified {
     /// the token-balances.
-    public var balances: [String:UInt64]
+    public var balances: [String:UInt256]
 
     /// the nonce or transaction count.
     public var nonce: UInt64
@@ -647,7 +647,7 @@ public struct ZksyncVerified {
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
-        balances = try toObject(obj["balances"])!.mapValues({ try toUInt64($0,false)! })
+        balances = try toObject(obj["balances"])!.mapValues({ try toUInt256($0,false)! })
         nonce = try toUInt64(obj["nonce"],false)!
         pubKeyHash = try toString(obj["pubKeyHash"],false)!
     }
@@ -758,13 +758,13 @@ public struct ZksyncTransactionReceipt {
     public var logsBloom: String
 
     /// error-status of the tx.  0x1 = success 0x0 = failure
-    public var status: UInt64
+    public var status: Int
 
     /// requested transactionHash
     public var transactionHash: String
 
     /// transactionIndex within the containing block.
-    public var transactionIndex: UInt64
+    public var transactionIndex: Int
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
@@ -775,9 +775,9 @@ public struct ZksyncTransactionReceipt {
         gasUsed = try toUInt64(obj["gasUsed"],false)!
         logs = try ZksyncLogs(obj["logs"],false)!
         logsBloom = try toString(obj["logsBloom"],false)!
-        status = try toUInt64(obj["status"],false)!
+        status = try toInt(obj["status"],false)!
         transactionHash = try toString(obj["transactionHash"],false)!
-        transactionIndex = try toUInt64(obj["transactionIndex"],false)!
+        transactionIndex = try toInt(obj["transactionIndex"],false)!
     }
 
     internal func toRPCDict() -> [String:RPCObject] {
@@ -810,22 +810,22 @@ public struct ZksyncLogs {
     public var data: String
 
     /// the index of the even within the block.
-    public var logIndex: UInt64
+    public var logIndex: Int
 
     /// the reorg-status of the event.
     public var removed: Bool
 
     /// array of 32byte-topics of the indexed fields.
-    public var topics: String
+    public var topics: [String]
 
     /// requested transactionHash
     public var transactionHash: String
 
     /// transactionIndex within the containing block.
-    public var transactionIndex: UInt64
+    public var transactionIndex: Int
 
     /// index of the event within the transaction.
-    public var transactionLogIndex: UInt64
+    public var transactionLogIndex: Int
 
     /// mining-status
     public var type: String
@@ -836,12 +836,12 @@ public struct ZksyncLogs {
         blockNumber = try toUInt64(obj["blockNumber"],false)!
         blockHash = try toString(obj["blockHash"],false)!
         data = try toString(obj["data"],false)!
-        logIndex = try toUInt64(obj["logIndex"],false)!
+        logIndex = try toInt(obj["logIndex"],false)!
         removed = try toBool(obj["removed"],false)!
-        topics = try toString(obj["topics"],false)!
+        topics = try toArray(obj["topics"])!.map({ try toString($0,false)! })
         transactionHash = try toString(obj["transactionHash"],false)!
-        transactionIndex = try toUInt64(obj["transactionIndex"],false)!
-        transactionLogIndex = try toUInt64(obj["transactionLogIndex"],false)!
+        transactionIndex = try toInt(obj["transactionIndex"],false)!
+        transactionLogIndex = try toInt(obj["transactionLogIndex"],false)!
         type = try toString(obj["type"],false)!
     }
 
@@ -853,7 +853,6 @@ public struct ZksyncLogs {
         obj["data"] = RPCObject(data)
         obj["logIndex"] = RPCObject(logIndex)
         obj["removed"] = RPCObject(removed)
-        obj["topics"] = RPCObject(topics)
         obj["transactionHash"] = RPCObject(transactionHash)
         obj["transactionIndex"] = RPCObject(transactionIndex)
         obj["transactionLogIndex"] = RPCObject(transactionLogIndex)

@@ -126,10 +126,10 @@ zksync:
           type: address
         decimals:
           descr: decimals to be used when formating it for human readable representation.
-          type: uint
+          type: int
         id:
           descr: id which will be used when encoding the token.
-          type: uint
+          type: uint64
         symbol:
           descr: symbol for the token
           type: string
@@ -176,10 +176,10 @@ zksync:
             balances:
               descr: the token-balance
               key: the token
-              type: uint
+              type: uint256
             nonce:
               descr: the nonce or transaction count.
-              type: uint
+              type: uint64
             pubKeyHash:
               descr: the pubKeyHash set for the requested account or `0x0000...` if not set yet.
               type: address
@@ -189,20 +189,20 @@ zksync:
             balances:
               descr: the token-values.
               key: the token
-              type: uint
+              type: uint256
         id:
           descr: the assigned id of the account, which will be used when encoding it into the rollup.
-          type: uint
+          type: uint64
         verified:
           descr: the state after the rollup was verified in L1.
           type:
             balances:
               descr: the token-balances.
               key: the token
-              type: uint
+              type: uint256
             nonce:
               descr: the nonce or transaction count.
-              type: uint
+              type: uint64
             pubKeyHash:
               descr: the pubKeyHash set for the requested account or `0x0000...` if not set yet.
               type: address
@@ -234,7 +234,7 @@ zksync:
       type:
         block:
           descr: the blockNumber containing the tx or `null` if still pending
-          type: uint
+          type: uint64
         executed:
           descr: true, if the tx has been executed by the operator. If false it is still in the txpool of the operator.
           type: bool
@@ -369,7 +369,7 @@ zksync:
         type: bytes96
     result:
       descr: 1 if the signature(which contains the pubkey as the first 32bytes) matches the message.
-      type: uint
+      type: int
     example:
       cmdParams: -x       
       request:
@@ -382,7 +382,7 @@ zksync:
     params: 
       opId:
         descr: the opId of a layer-operstion (like depositing)
-        type: uint
+        type: uint64
 
   zksync_get_token_price:
     descr: returns current token-price
@@ -419,19 +419,19 @@ zksync:
           type: string
         gasFee:
           descr: the gas for the core-transaction
-          type: uint
+          type: uint64
         gasPriceWei:
           descr: current gasPrice
-          type: uint
+          type: uint64
         gasTxAmount:
           descr: gasTxAmount
-          type: uint
+          type: uint64
         totalFee:
           descr: total of all fees needed to pay in order to execute the transaction
-          type: uint
+          type: uint64
         zkpFee:
           descr: zkpFee
-          type: uint
+          type: uint64
     example:
       cmdParams: -x       
       request:
@@ -459,7 +459,7 @@ zksync:
     params:
       amount:
         descr: the value to deposit in wei (or smallest token unit)
-        type: uint
+        type: uint256
       token:
         descr: the token as symbol or address
         type: string
@@ -473,7 +473,7 @@ zksync:
         optional: true
     result:
       descr: the opId. You can use `zksync_ethop_info` to follow the state-changes.
-      type: uint
+      type: uint64
     example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
       request:
@@ -489,7 +489,7 @@ zksync:
         type: address
       amount:
         descr: the value to transfer in wei (or smallest token unit)
-        type: uint
+        type: uint256
       token:
         descr: the token as symbol or address
         type: string
@@ -516,7 +516,7 @@ zksync:
         type: address
       amount:
         descr: the value to transfer in wei (or smallest token unit)
-        type: uint
+        type: uint256
       token:
         descr: the token as symbol or address
         type: string

@@ -60,7 +60,7 @@ public class EthAPI {
     /// ```
     /// 
     public func keccak(data: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "keccak",params: RPCObject(data), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "keccak", params:RPCObject( data), convertWith: toString )
     }
 
     /// Returns Keccak-256 (not the standardized SHA3-256) of the given data.
@@ -80,7 +80,7 @@ public class EthAPI {
     /// ```
     /// 
     public func sha3(data: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "web3_sha3",params: RPCObject(data), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "web3_sha3", params:RPCObject( data), convertWith: toString )
     }
 
     /// Returns sha-256 of the given data.
@@ -98,7 +98,7 @@ public class EthAPI {
     /// ```
     /// 
     public func sha256(data: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "sha256",params: RPCObject(data), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "sha256", params:RPCObject( data), convertWith: toString )
     }
 
     /// the Network Version (currently 1)
@@ -122,7 +122,7 @@ public class EthAPI {
     /// ```
     /// 
     public func createKey(seed: String? = nil) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_createKey",params:seed == nil ? RPCObject.none : RPCObject(seed!), convertWith: toString )
+        return try execLocalAndConvert(in3: in3, method: "in3_createKey", params:seed == nil ? RPCObject.none : RPCObject( seed! ), convertWith: toString )
     }
 
     /// The sign method calculates an Ethereum specific signature with: 
@@ -156,7 +156,7 @@ public class EthAPI {
     /// ```
     /// 
     public func sign(account: String, message: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_sign",params: RPCObject(account), RPCObject(message), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_sign", params:RPCObject( account), RPCObject( message), convertWith: toString )
     }
 
     /// Signs a transaction that can be submitted to the network at a later time using with eth_sendRawTransaction.
@@ -180,7 +180,7 @@ public class EthAPI {
     /// ```
     /// 
     public func signTransaction(tx: EthTransaction) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_signTransaction",params: RPCObject(tx.toRPCDict()), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_signTransaction", params:RPCObject( tx.toRPCDict()), convertWith: toString )
     }
 
     /// returns the number of the most recent block.
@@ -259,7 +259,7 @@ public class EthAPI {
     /// ```
     /// 
     public func getBlock(blockNumber: UInt64? = nil) -> Future<EthBlockdataWithTxHashes?> {
-        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params:blockNumber == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",blockNumber!)), RPCObject(false),  convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber", params:blockNumber == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", blockNumber!) ),  RPCObject(false), convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
     }
 
     /// returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
@@ -310,7 +310,7 @@ public class EthAPI {
     /// ```
     /// 
     public func getBlockWithTx(blockNumber: UInt64? = nil) -> Future<EthBlockdata?> {
-        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber",params:blockNumber == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",blockNumber!)), RPCObject(false),  convertWith: { try EthBlockdata($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByNumber", params:blockNumber == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", blockNumber!) ),  RPCObject(false), convertWith: { try EthBlockdata($0,$1) } )
     }
 
     /// returns the given Block by hash with transactionHashes
@@ -361,7 +361,7 @@ public class EthAPI {
     /// ```
     /// 
     public func getBlockByHash(blockHash: String) -> Future<EthBlockdataWithTxHashes?> {
-        return execAndConvertOptional(in3: in3, method: "eth_getBlockByHash",params: RPCObject(blockHash), RPCObject(false),  convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByHash", params:RPCObject( blockHash),  RPCObject(false), convertWith: { try EthBlockdataWithTxHashes($0,$1) } )
     }
 
     /// returns the given Block by hash with full transaction data
@@ -412,35 +412,35 @@ public class EthAPI {
     /// ```
     /// 
     public func getBlockByHashWithTx(blockHash: String) -> Future<EthBlockdata?> {
-        return execAndConvertOptional(in3: in3, method: "eth_getBlockByHash",params: RPCObject(blockHash), RPCObject(false),  convertWith: { try EthBlockdata($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "eth_getBlockByHash", params:RPCObject( blockHash),  RPCObject(false), convertWith: { try EthBlockdata($0,$1) } )
     }
 
     /// returns the number of transactions. For Spec, see [eth_getBlockTransactionCountByHash](https://eth.wiki/json-rpc/API#eth_getBlockTransactionCountByHash).
     /// - Parameter blockHash : the blockHash of the block
     /// - Returns: the number of transactions in the block
     public func getBlockTransactionCountByHash(blockHash: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getBlockTransactionCountByHash",params: RPCObject(blockHash), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getBlockTransactionCountByHash", params:RPCObject( blockHash), convertWith: toString )
     }
 
     /// returns the number of transactions. For Spec, see [eth_getBlockTransactionCountByNumber](https://eth.wiki/json-rpc/API#eth_getBlockTransactionCountByNumber).
     /// - Parameter blockNumber : the blockNumber of the block
     /// - Returns: the number of transactions in the block
     public func getBlockTransactionCountByNumber(blockNumber: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getBlockTransactionCountByNumber",params: RPCObject(String(format:"0x%1x",blockNumber)), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getBlockTransactionCountByNumber", params:RPCObject( String(format: "0x%1x", blockNumber)), convertWith: toString )
     }
 
     /// returns the number of uncles. For Spec, see [eth_getUncleCountByBlockHash](https://eth.wiki/json-rpc/API#eth_getUncleCountByBlockHash).
     /// - Parameter blockHash : the blockHash of the block
     /// - Returns: the number of uncles
     public func getUncleCountByBlockHash(blockHash: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getUncleCountByBlockHash",params: RPCObject(blockHash), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getUncleCountByBlockHash", params:RPCObject( blockHash), convertWith: toString )
     }
 
     /// returns the number of uncles. For Spec, see [eth_getUncleCountByBlockNumber](https://eth.wiki/json-rpc/API#eth_getUncleCountByBlockNumber).
     /// - Parameter blockNumber : the blockNumber of the block
     /// - Returns: the number of uncles
     public func getUncleCountByBlockNumber(blockNumber: UInt64) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getUncleCountByBlockNumber",params: RPCObject(String(format:"0x%1x",blockNumber)), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getUncleCountByBlockNumber", params:RPCObject( String(format: "0x%1x", blockNumber)), convertWith: toString )
     }
 
     /// returns the transaction data.
@@ -481,8 +481,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getTransactionByBlockHashAndIndex(blockHash: String, index: UInt64) -> Future<EthTransactiondata> {
-        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockHashAndIndex",params: RPCObject(blockHash), RPCObject(String(format:"0x%1x",index)), convertWith: { try EthTransactiondata($0,$1) } )
+    public func getTransactionByBlockHashAndIndex(blockHash: String, index: Int) -> Future<EthTransactiondata> {
+        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockHashAndIndex", params:RPCObject( blockHash), RPCObject( String(format: "0x%1x", index)), convertWith: { try EthTransactiondata($0,$1) } )
     }
 
     /// returns the transaction data.
@@ -523,8 +523,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getTransactionByBlockNumberAndIndex(blockNumber: UInt64, index: UInt64) -> Future<EthTransactiondata> {
-        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockNumberAndIndex",params: RPCObject(String(format:"0x%1x",blockNumber)), RPCObject(String(format:"0x%1x",index)), convertWith: { try EthTransactiondata($0,$1) } )
+    public func getTransactionByBlockNumberAndIndex(blockNumber: UInt64, index: Int) -> Future<EthTransactiondata> {
+        return execAndConvert(in3: in3, method: "eth_getTransactionByBlockNumberAndIndex", params:RPCObject( String(format: "0x%1x", blockNumber)), RPCObject( String(format: "0x%1x", index)), convertWith: { try EthTransactiondata($0,$1) } )
     }
 
     /// returns the transaction data.
@@ -565,13 +565,13 @@ public class EthAPI {
     /// ```
     /// 
     public func getTransactionByHash(txHash: String) -> Future<EthTransactiondata> {
-        return execAndConvert(in3: in3, method: "eth_getTransactionByHash",params: RPCObject(txHash), convertWith: { try EthTransactiondata($0,$1) } )
+        return execAndConvert(in3: in3, method: "eth_getTransactionByHash", params:RPCObject( txHash), convertWith: { try EthTransactiondata($0,$1) } )
     }
 
     /// searches for events matching the given criteria. See [eth_getLogs](https://eth.wiki/json-rpc/API#eth_getLogs) for the spec.
     /// - Parameter filter : The filter criteria for the events.
     public func getLogs(filter: EthFilter) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getLogs",params: RPCObject(filter.toRPCDict()), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getLogs", params:RPCObject( filter.toRPCDict()), convertWith: toString )
     }
 
     /// gets the balance of an account for a given block
@@ -594,8 +594,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getBalance(account: String, block: UInt64? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getBalance",params: RPCObject(account),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
+    public func getBalance(account: String, block: UInt64?) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_getBalance", params:RPCObject( account), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
     /// gets the nonce or number of transaction sent from this account at a given block
@@ -618,8 +618,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func getTransactionCount(account: String, block: UInt64? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getTransactionCount",params: RPCObject(account),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
+    public func getTransactionCount(account: String, block: UInt64?) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_getTransactionCount", params:RPCObject( account), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
     /// gets the code of a given contract
@@ -643,7 +643,7 @@ public class EthAPI {
     /// ```
     /// 
     public func getCode(account: String, block: UInt64? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getCode",params: RPCObject(account),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getCode", params:RPCObject( account), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
     /// gets the storage value of a given key
@@ -668,36 +668,36 @@ public class EthAPI {
     /// ```
     /// 
     public func getStorageAt(account: String, key: String, block: UInt64? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_getStorageAt",params: RPCObject(account), RPCObject(key),block == nil ? RPCObject("latest") : RPCObject(String(format:"0x%1x",block!)), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_getStorageAt", params:RPCObject( account), RPCObject( key), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
     /// signs and sends a Transaction
     /// - Parameter tx : the transactiondata to send
     /// - Returns: the transactionHash
     public func sendTransaction(tx: EthTransaction) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_sendTransaction",params: RPCObject(tx.toRPCDict()), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_sendTransaction", params:RPCObject( tx.toRPCDict()), convertWith: toString )
     }
 
     /// signs and sends a Transaction, but then waits until the transaction receipt can be verified. Depending on the finality of the nodes, this may take a while, since only final blocks will be signed by the nodes.
     /// - Parameter tx : the transactiondata to send
     /// - Returns: the transactionReceipt
     public func sendTransactionAndWait(tx: EthTransaction) -> Future<EthTransactionReceipt> {
-        return execAndConvert(in3: in3, method: "eth_sendTransactionAndWait",params: RPCObject(tx.toRPCDict()), convertWith: { try EthTransactionReceipt($0,$1) } )
+        return execAndConvert(in3: in3, method: "eth_sendTransactionAndWait", params:RPCObject( tx.toRPCDict()), convertWith: { try EthTransactionReceipt($0,$1) } )
     }
 
     /// sends or broadcasts a prviously signed raw transaction. See [eth_sendRawTransaction](https://eth.wiki/json-rpc/API#eth_sendRawTransaction)
     /// - Parameter tx : the raw signed transactiondata to send
     /// - Returns: the transactionhash
     public func sendRawTransaction(tx: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_sendRawTransaction",params: RPCObject(tx), convertWith: toString )
+        return execAndConvert(in3: in3, method: "eth_sendRawTransaction", params:RPCObject( tx), convertWith: toString )
     }
 
     /// calculates the gas needed to execute a transaction. for spec see [eth_estimateGas](https://eth.wiki/json-rpc/API#eth_estimateGas)
     /// - Parameter tx : the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
     /// - Parameter block : the blockNumber or  `latest`
     /// - Returns: the amount of gass needed.
-    public func estimateGas(tx: EthTransaction, block: UInt64? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_estimateGas",params: RPCObject(tx.toRPCDict()),block == nil ? RPCObject("latest") : RPCObject(block!), convertWith: toString )
+    public func estimateGas(tx: EthTransaction, block: UInt64?) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_estimateGas", params:RPCObject( tx.toRPCDict()), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
     /// calls a function of a contract (or simply executes the evm opcodes) and returns the result. for spec see [eth_call](https://eth.wiki/json-rpc/API#eth_call)
@@ -720,8 +720,8 @@ public class EthAPI {
     /// 
     /// ```
     /// 
-    public func call(tx: EthTx, block: UInt64? = nil) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_call",params: RPCObject(tx.toRPCDict()),block == nil ? RPCObject("latest") : RPCObject(block!), convertWith: toString )
+    public func call(tx: EthTx, block: UInt64?) -> Future<String> {
+        return execAndConvert(in3: in3, method: "eth_call", params:RPCObject( tx.toRPCDict()), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
     /// The Receipt of a Transaction. For Details, see [eth_getTransactionReceipt](https://eth.wiki/json-rpc/API#eth_gettransactionreceipt).
@@ -769,7 +769,7 @@ public class EthAPI {
     /// ```
     /// 
     public func getTransactionReceipt(txHash: String) -> Future<EthTransactionReceipt?> {
-        return execAndConvertOptional(in3: in3, method: "eth_getTransactionReceipt",params: RPCObject(txHash), convertWith: { try EthTransactionReceipt($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "eth_getTransactionReceipt", params:RPCObject( txHash), convertWith: { try EthTransactionReceipt($0,$1) } )
     }
 
 
@@ -783,7 +783,7 @@ public struct EthTransaction {
     public var from: String
 
     /// value in wei to send
-    public var value: UInt64?
+    public var value: UInt256?
 
     /// the gas to be send along
     public var gas: UInt64?
@@ -801,7 +801,7 @@ public struct EthTransaction {
         guard let obj = try toObject(rpc, optional) else { return nil }
         to = try toString(obj["to"],false)!
         from = try toString(obj["from"],false)!
-        value = try toUInt64(obj["value"],true)!
+        value = try toUInt256(obj["value"],true)!
         gas = try toUInt64(obj["gas"],true)!
         gasPrice = try toUInt64(obj["gasPrice"],true)!
         nonce = try toUInt64(obj["nonce"],true)!
@@ -823,6 +823,9 @@ public struct EthTransaction {
 
 /// the blockdata, or in case the block with that number does not exist, `null` will be returned.
 public struct EthBlockdataWithTxHashes {
+    /// Array of transaction hashes
+    public var transactions: [String]
+
     /// the block number. `null` when its pending block.
     public var number: UInt64
 
@@ -833,7 +836,7 @@ public struct EthBlockdataWithTxHashes {
     public var parentHash: String
 
     /// hash of the generated proof-of-work. `null` when its pending block.
-    public var nonce: UInt64
+    public var nonce: UInt256
 
     /// SHA3 of the uncles Merkle root in the block.
     public var sha3Uncles: String
@@ -854,10 +857,10 @@ public struct EthBlockdataWithTxHashes {
     public var miner: String
 
     /// integer of the difficulty for this block.
-    public var difficulty: UInt64
+    public var difficulty: UInt256
 
     /// integer of the total difficulty of the chain until this block.
-    public var totalDifficulty: UInt64
+    public var totalDifficulty: UInt256
 
     /// the "extra data" field of this block.
     public var extraData: String
@@ -874,32 +877,29 @@ public struct EthBlockdataWithTxHashes {
     /// the unix timestamp for when the block was collated.
     public var timestamp: UInt64
 
-    /// Array of transaction hashes
-    public var transactions: [String]
-
     /// Array of uncle hashes.
     public var uncles: [String]
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
+        transactions = try toArray(obj["transactions"])!.map({ try toString($0,false)! })
         number = try toUInt64(obj["number"],false)!
         hash = try toString(obj["hash"],false)!
         parentHash = try toString(obj["parentHash"],false)!
-        nonce = try toUInt64(obj["nonce"],false)!
+        nonce = try toUInt256(obj["nonce"],false)!
         sha3Uncles = try toString(obj["sha3Uncles"],false)!
         logsBloom = try toString(obj["logsBloom"],false)!
         transactionsRoot = try toString(obj["transactionsRoot"],false)!
         stateRoot = try toString(obj["stateRoot"],false)!
         receiptsRoot = try toString(obj["receiptsRoot"],false)!
         miner = try toString(obj["miner"],false)!
-        difficulty = try toUInt64(obj["difficulty"],false)!
-        totalDifficulty = try toUInt64(obj["totalDifficulty"],false)!
+        difficulty = try toUInt256(obj["difficulty"],false)!
+        totalDifficulty = try toUInt256(obj["totalDifficulty"],false)!
         extraData = try toString(obj["extraData"],false)!
         size = try toUInt64(obj["size"],false)!
         gasLimit = try toUInt64(obj["gasLimit"],false)!
         gasUsed = try toUInt64(obj["gasUsed"],false)!
         timestamp = try toUInt64(obj["timestamp"],false)!
-        transactions = try toArray(obj["transactions"])!.map({ try toString($0,false)! })
         uncles = try toArray(obj["uncles"])!.map({ try toString($0,false)! })
     }
 
@@ -928,6 +928,9 @@ public struct EthBlockdataWithTxHashes {
 
 /// the blockdata, or in case the block with that number does not exist, `null` will be returned.
 public struct EthBlockdata {
+    /// Array of transaction objects
+    public var transactions: [EthTransactiondata]
+
     /// the block number. `null` when its pending block.
     public var number: UInt64
 
@@ -938,7 +941,7 @@ public struct EthBlockdata {
     public var parentHash: String
 
     /// hash of the generated proof-of-work. `null` when its pending block.
-    public var nonce: UInt64
+    public var nonce: UInt256
 
     /// SHA3 of the uncles Merkle root in the block.
     public var sha3Uncles: String
@@ -959,10 +962,10 @@ public struct EthBlockdata {
     public var miner: String
 
     /// integer of the difficulty for this block.
-    public var difficulty: UInt64
+    public var difficulty: UInt256
 
     /// integer of the total difficulty of the chain until this block.
-    public var totalDifficulty: UInt64
+    public var totalDifficulty: UInt256
 
     /// the "extra data" field of this block.
     public var extraData: String
@@ -979,32 +982,29 @@ public struct EthBlockdata {
     /// the unix timestamp for when the block was collated.
     public var timestamp: UInt64
 
-    /// Array of transaction objects
-    public var transactions: [EthTransactiondata]
-
     /// Array of uncle hashes.
     public var uncles: [String]
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
+        transactions = try toArray(obj["transactions"])!.map({ try EthTransactiondata($0,false)! })
         number = try toUInt64(obj["number"],false)!
         hash = try toString(obj["hash"],false)!
         parentHash = try toString(obj["parentHash"],false)!
-        nonce = try toUInt64(obj["nonce"],false)!
+        nonce = try toUInt256(obj["nonce"],false)!
         sha3Uncles = try toString(obj["sha3Uncles"],false)!
         logsBloom = try toString(obj["logsBloom"],false)!
         transactionsRoot = try toString(obj["transactionsRoot"],false)!
         stateRoot = try toString(obj["stateRoot"],false)!
         receiptsRoot = try toString(obj["receiptsRoot"],false)!
         miner = try toString(obj["miner"],false)!
-        difficulty = try toUInt64(obj["difficulty"],false)!
-        totalDifficulty = try toUInt64(obj["totalDifficulty"],false)!
+        difficulty = try toUInt256(obj["difficulty"],false)!
+        totalDifficulty = try toUInt256(obj["totalDifficulty"],false)!
         extraData = try toString(obj["extraData"],false)!
         size = try toUInt64(obj["size"],false)!
         gasLimit = try toUInt64(obj["gasLimit"],false)!
         gasUsed = try toUInt64(obj["gasUsed"],false)!
         timestamp = try toUInt64(obj["timestamp"],false)!
-        transactions = try toArray(obj["transactions"])!.map({ try EthTransactiondata($0,false)! })
         uncles = try toArray(obj["uncles"])!.map({ try toString($0,false)! })
     }
 
@@ -1040,7 +1040,7 @@ public struct EthTransactiondata {
     public var from: String
 
     /// value in wei to send
-    public var value: UInt64
+    public var value: UInt256
 
     /// the gas to be send along
     public var gas: UInt64
@@ -1079,7 +1079,7 @@ public struct EthTransactiondata {
         guard let obj = try toObject(rpc, optional) else { return nil }
         to = try toString(obj["to"],false)!
         from = try toString(obj["from"],false)!
-        value = try toUInt64(obj["value"],false)!
+        value = try toUInt256(obj["value"],false)!
         gas = try toUInt64(obj["gas"],false)!
         gasPrice = try toUInt64(obj["gasPrice"],false)!
         nonce = try toUInt64(obj["nonce"],false)!
@@ -1177,13 +1177,13 @@ public struct EthTransactionReceipt {
     public var logsBloom: String
 
     /// error-status of the tx.  0x1 = success 0x0 = failure
-    public var status: UInt64
+    public var status: Int
 
     /// requested transactionHash
     public var transactionHash: String
 
     /// transactionIndex within the containing block.
-    public var transactionIndex: UInt64
+    public var transactionIndex: Int
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
@@ -1194,9 +1194,9 @@ public struct EthTransactionReceipt {
         gasUsed = try toUInt64(obj["gasUsed"],false)!
         logs = try EthLogs(obj["logs"],false)!
         logsBloom = try toString(obj["logsBloom"],false)!
-        status = try toUInt64(obj["status"],false)!
+        status = try toInt(obj["status"],false)!
         transactionHash = try toString(obj["transactionHash"],false)!
-        transactionIndex = try toUInt64(obj["transactionIndex"],false)!
+        transactionIndex = try toInt(obj["transactionIndex"],false)!
     }
 
     internal func toRPCDict() -> [String:RPCObject] {
@@ -1229,22 +1229,22 @@ public struct EthLogs {
     public var data: String
 
     /// the index of the even within the block.
-    public var logIndex: UInt64
+    public var logIndex: Int
 
     /// the reorg-status of the event.
     public var removed: Bool
 
     /// array of 32byte-topics of the indexed fields.
-    public var topics: String
+    public var topics: [String]
 
     /// requested transactionHash
     public var transactionHash: String
 
     /// transactionIndex within the containing block.
-    public var transactionIndex: UInt64
+    public var transactionIndex: Int
 
     /// index of the event within the transaction.
-    public var transactionLogIndex: UInt64
+    public var transactionLogIndex: Int
 
     /// mining-status
     public var type: String
@@ -1255,12 +1255,12 @@ public struct EthLogs {
         blockNumber = try toUInt64(obj["blockNumber"],false)!
         blockHash = try toString(obj["blockHash"],false)!
         data = try toString(obj["data"],false)!
-        logIndex = try toUInt64(obj["logIndex"],false)!
+        logIndex = try toInt(obj["logIndex"],false)!
         removed = try toBool(obj["removed"],false)!
-        topics = try toString(obj["topics"],false)!
+        topics = try toArray(obj["topics"])!.map({ try toString($0,false)! })
         transactionHash = try toString(obj["transactionHash"],false)!
-        transactionIndex = try toUInt64(obj["transactionIndex"],false)!
-        transactionLogIndex = try toUInt64(obj["transactionLogIndex"],false)!
+        transactionIndex = try toInt(obj["transactionIndex"],false)!
+        transactionLogIndex = try toInt(obj["transactionLogIndex"],false)!
         type = try toString(obj["type"],false)!
     }
 
@@ -1272,7 +1272,6 @@ public struct EthLogs {
         obj["data"] = RPCObject(data)
         obj["logIndex"] = RPCObject(logIndex)
         obj["removed"] = RPCObject(removed)
-        obj["topics"] = RPCObject(topics)
         obj["transactionHash"] = RPCObject(transactionHash)
         obj["transactionIndex"] = RPCObject(transactionIndex)
         obj["transactionLogIndex"] = RPCObject(transactionLogIndex)
@@ -1290,7 +1289,7 @@ public struct EthTx {
     public var from: String?
 
     /// value in wei to send
-    public var value: UInt64?
+    public var value: UInt256?
 
     /// the gas to be send along
     public var gas: UInt64?
@@ -1308,7 +1307,7 @@ public struct EthTx {
         guard let obj = try toObject(rpc, optional) else { return nil }
         to = try toString(obj["to"],false)!
         from = try toString(obj["from"],true)!
-        value = try toUInt64(obj["value"],true)!
+        value = try toUInt256(obj["value"],true)!
         gas = try toUInt64(obj["gas"],true)!
         gasPrice = try toUInt64(obj["gasPrice"],true)!
         nonce = try toUInt64(obj["nonce"],true)!

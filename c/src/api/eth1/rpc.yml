@@ -8,20 +8,20 @@ types:
       type: address
     value:
       descr: value in wei to send
-      type: uint
+      type: uint256
       optional: true
     gas:
       descr: the gas to be send along
-      type: uint
+      type: uint64
       optional: true
       default: 21000
     gasPrice:
       descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-      type: uint
+      type: uint64
       optional: true
     nonce:
       descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-      type: uint
+      type: uint64
       optional: true
     data:
       descr: the data-section of the transaction
@@ -147,14 +147,14 @@ in3:
     params:
       value:
         descr: the value in wei
-        type: bytes | uint
+        type: uint256
         example: "0x234324abdef"
       unit:
         descr: the unit of the target value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
         type: string
       digits:
         descr: fix number of digits after the comma. If left out, only as many as needed will be included. 
-        type: uint
+        type: int
         optional: true
     result:
       descr: the value as string.

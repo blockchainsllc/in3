@@ -48,7 +48,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getblockheaderAsHex(hash: String) -> Future<String?> {
-        return execAndConvertOptional(in3: in3, method: "getblockheader",params: RPCObject(hash), RPCObject(0),  convertWith: toString )
+        return execAndConvertOptional(in3: in3, method: "getblockheader", params:RPCObject( hash),  RPCObject(0), convertWith: toString )
     }
 
     /// returns the blockheader
@@ -89,7 +89,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getblockheader(hash: String) -> Future<Btcblockheader?> {
-        return execAndConvertOptional(in3: in3, method: "getblockheader",params: RPCObject(hash), RPCObject(1),  convertWith: { try Btcblockheader($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "getblockheader", params:RPCObject( hash),  RPCObject(1), convertWith: { try Btcblockheader($0,$1) } )
     }
 
     /// returns a hex representation of the block
@@ -115,7 +115,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getBlockAsHex(hash: String) -> Future<String?> {
-        return execAndConvertOptional(in3: in3, method: "getblock",params: RPCObject(hash), RPCObject(0),  convertWith: toString )
+        return execAndConvertOptional(in3: in3, method: "getblock", params:RPCObject( hash),  RPCObject(0), convertWith: toString )
     }
 
     /// returns the block with transactionhashes
@@ -160,7 +160,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getBlock(hash: String) -> Future<Btcblock?> {
-        return execAndConvertOptional(in3: in3, method: "getblock",params: RPCObject(hash), RPCObject(1),  convertWith: { try Btcblock($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "getblock", params:RPCObject( hash),  RPCObject(1), convertWith: { try Btcblock($0,$1) } )
     }
 
     /// returns the block with full transactions
@@ -205,7 +205,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getBlockWithTx(hash: String) -> Future<BtcblockWithTx?> {
-        return execAndConvertOptional(in3: in3, method: "getblock",params: RPCObject(hash), RPCObject(2),  convertWith: { try BtcblockWithTx($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "getblock", params:RPCObject( hash),  RPCObject(2), convertWith: { try BtcblockWithTx($0,$1) } )
     }
 
     /// returns a hex representation of the tx
@@ -231,7 +231,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getRawTransactionAsHex(txid: String, blockhash: String? = nil) -> Future<String?> {
-        return execAndConvertOptional(in3: in3, method: "getrawtransaction",params: RPCObject(txid), RPCObject(0), blockhash == nil ? RPCObject.none : RPCObject(blockhash!), convertWith: toString )
+        return execAndConvertOptional(in3: in3, method: "getrawtransaction", params:RPCObject( txid),  RPCObject(0), blockhash == nil ? RPCObject.none : RPCObject( blockhash! ), convertWith: toString )
     }
 
     /// returns the raw transaction
@@ -309,7 +309,7 @@ public class BtcAPI {
     /// ```
     /// 
     public func getRawTransaction(txid: String, blockhash: String? = nil) -> Future<Btctransaction?> {
-        return execAndConvertOptional(in3: in3, method: "getrawtransaction",params: RPCObject(txid), RPCObject(1), blockhash == nil ? RPCObject.none : RPCObject(blockhash!), convertWith: { try Btctransaction($0,$1) } )
+        return execAndConvertOptional(in3: in3, method: "getrawtransaction", params:RPCObject( txid),  RPCObject(1), blockhash == nil ? RPCObject.none : RPCObject( blockhash! ), convertWith: { try Btctransaction($0,$1) } )
     }
 
     /// Returns the number of blocks in the longest blockchain.
@@ -355,8 +355,8 @@ public class BtcAPI {
     /// 
     /// ```
     /// 
-    public func getdifficulty(blocknumber: UInt64) -> Future<UInt64> {
-        return execAndConvert(in3: in3, method: "getdifficulty",params: RPCObject(String(format:"0x%1x",blocknumber)), convertWith: toUInt64 )
+    public func getdifficulty(blocknumber: UInt64) -> Future<UInt256> {
+        return execAndConvert(in3: in3, method: "getdifficulty", params:RPCObject( String(format: "0x%1x", blocknumber)), convertWith: toUInt256 )
     }
 
     /// Whenever the client is not able to trust the changes of the target (which is the case if a block can't be found in the verified target cache *and* the value of the target changed more than the client's limit `max_diff`) he will call this method. It will return additional proof data to verify the changes of the target on the side of the client. This is not a standard Bitcoin rpc-method like the other ones, but more like an internal method.
@@ -407,8 +407,8 @@ public class BtcAPI {
     /// 
     /// ```
     /// 
-    public func proofTarget(target_dap: UInt64, verified_dap: UInt64, max_diff: UInt64? = 5, max_dap: UInt64? = 5, limit: UInt64? = 0) -> Future<[BtcProofTarget]> {
-        return execAndConvert(in3: in3, method: "btc_proofTarget",params: RPCObject(String(format:"0x%1x",target_dap)), RPCObject(String(format:"0x%1x",verified_dap)),max_diff == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",max_diff!)),max_dap == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",max_dap!)),limit == nil ? RPCObject.none : RPCObject(String(format:"0x%1x",limit!)), convertWith: { try toArray($0,$1)!.map({ try BtcProofTarget($0,false)! }) } )
+    public func proofTarget(target_dap: UInt64, verified_dap: UInt64, max_diff: Int? = 5, max_dap: Int? = 5, limit: Int? = 0) -> Future<[BtcProofTarget]> {
+        return execAndConvert(in3: in3, method: "btc_proofTarget", params:RPCObject( String(format: "0x%1x", target_dap)), RPCObject( String(format: "0x%1x", verified_dap)), max_diff == nil ? RPCObject.none : RPCObject( String(format: "0x%1x", max_diff!) ), max_dap == nil ? RPCObject.none : RPCObject( String(format: "0x%1x", max_dap!) ), limit == nil ? RPCObject.none : RPCObject( String(format: "0x%1x", limit!) ), convertWith: { try toArray($0,$1)!.map({ try BtcProofTarget($0,false)! }) } )
     }
 
     /// Returns the hash of the best (tip) block in the longest blockchain.
@@ -450,7 +450,7 @@ public struct Btcblockheader {
     public var height: UInt64
 
     /// The block version
-    public var version: UInt64
+    public var version: Int
 
     /// The block version formatted in hexadecimal
     public var versionHex: String
@@ -471,13 +471,13 @@ public struct Btcblockheader {
     public var bits: String
 
     /// The difficulty
-    public var difficulty: UInt64
+    public var difficulty: UInt256
 
     /// Expected number of hashes required to produce the current chain (in hex)
-    public var chainwork: UInt64
+    public var chainwork: String
 
     /// The number of transactions in the block.
-    public var nTx: UInt64
+    public var nTx: Int
 
     /// The hash of the previous block
     public var previousblockhash: String
@@ -490,16 +490,16 @@ public struct Btcblockheader {
         hash = try toString(obj["hash"],false)!
         confirmations = try toInt(obj["confirmations"],false)!
         height = try toUInt64(obj["height"],false)!
-        version = try toUInt64(obj["version"],false)!
+        version = try toInt(obj["version"],false)!
         versionHex = try toString(obj["versionHex"],false)!
         merkleroot = try toString(obj["merkleroot"],false)!
         time = try toUInt64(obj["time"],false)!
         mediantime = try toUInt64(obj["mediantime"],false)!
         nonce = try toUInt64(obj["nonce"],false)!
         bits = try toString(obj["bits"],false)!
-        difficulty = try toUInt64(obj["difficulty"],false)!
-        chainwork = try toUInt64(obj["chainwork"],false)!
-        nTx = try toUInt64(obj["nTx"],false)!
+        difficulty = try toUInt256(obj["difficulty"],false)!
+        chainwork = try toString(obj["chainwork"],false)!
+        nTx = try toInt(obj["nTx"],false)!
         previousblockhash = try toString(obj["previousblockhash"],false)!
         nextblockhash = try toString(obj["nextblockhash"],false)!
     }
@@ -537,10 +537,10 @@ public struct Btcblock {
     public var confirmations: Int
 
     /// The block height or index
-    public var height: UInt64
+    public var height: UInt256
 
     /// The block version
-    public var version: UInt64
+    public var version: Int
 
     /// The block version formatted in hexadecimal
     public var versionHex: String
@@ -561,13 +561,13 @@ public struct Btcblock {
     public var bits: String
 
     /// The difficulty
-    public var difficulty: UInt64
+    public var difficulty: UInt256
 
     /// Expected number of hashes required to produce the current chain (in hex)
-    public var chainwork: UInt64
+    public var chainwork: String
 
     /// The number of transactions in the block.
-    public var nTx: UInt64
+    public var nTx: Int
 
     /// the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
     public var tx: [String]
@@ -582,17 +582,17 @@ public struct Btcblock {
         guard let obj = try toObject(rpc, optional) else { return nil }
         hash = try toString(obj["hash"],false)!
         confirmations = try toInt(obj["confirmations"],false)!
-        height = try toUInt64(obj["height"],false)!
-        version = try toUInt64(obj["version"],false)!
+        height = try toUInt256(obj["height"],false)!
+        version = try toInt(obj["version"],false)!
         versionHex = try toString(obj["versionHex"],false)!
         merkleroot = try toString(obj["merkleroot"],false)!
         time = try toUInt64(obj["time"],false)!
         mediantime = try toUInt64(obj["mediantime"],false)!
         nonce = try toUInt64(obj["nonce"],false)!
         bits = try toString(obj["bits"],false)!
-        difficulty = try toUInt64(obj["difficulty"],false)!
-        chainwork = try toUInt64(obj["chainwork"],false)!
-        nTx = try toUInt64(obj["nTx"],false)!
+        difficulty = try toUInt256(obj["difficulty"],false)!
+        chainwork = try toString(obj["chainwork"],false)!
+        nTx = try toInt(obj["nTx"],false)!
         tx = try toArray(obj["tx"])!.map({ try toString($0,false)! })
         previousblockhash = try toString(obj["previousblockhash"],false)!
         nextblockhash = try toString(obj["nextblockhash"],false)!
@@ -634,7 +634,7 @@ public struct BtcblockWithTx {
     public var height: UInt64
 
     /// The block version
-    public var version: UInt64
+    public var version: Int
 
     /// The block version formatted in hexadecimal
     public var versionHex: String
@@ -655,13 +655,13 @@ public struct BtcblockWithTx {
     public var bits: String
 
     /// The difficulty
-    public var difficulty: UInt64
+    public var difficulty: UInt256
 
     /// Expected number of hashes required to produce the current chain (in hex)
-    public var chainwork: UInt64
+    public var chainwork: String
 
     /// The number of transactions in the block.
-    public var nTx: UInt64
+    public var nTx: Int
 
     /// the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
     public var tx: [Btctransaction]
@@ -677,16 +677,16 @@ public struct BtcblockWithTx {
         hash = try toString(obj["hash"],false)!
         confirmations = try toInt(obj["confirmations"],false)!
         height = try toUInt64(obj["height"],false)!
-        version = try toUInt64(obj["version"],false)!
+        version = try toInt(obj["version"],false)!
         versionHex = try toString(obj["versionHex"],false)!
         merkleroot = try toString(obj["merkleroot"],false)!
         time = try toUInt64(obj["time"],false)!
         mediantime = try toUInt64(obj["mediantime"],false)!
         nonce = try toUInt64(obj["nonce"],false)!
         bits = try toString(obj["bits"],false)!
-        difficulty = try toUInt64(obj["difficulty"],false)!
-        chainwork = try toUInt64(obj["chainwork"],false)!
-        nTx = try toUInt64(obj["nTx"],false)!
+        difficulty = try toUInt256(obj["difficulty"],false)!
+        chainwork = try toString(obj["chainwork"],false)!
+        nTx = try toInt(obj["nTx"],false)!
         tx = try toArray(obj["tx"])!.map({ try Btctransaction($0,false)! })
         previousblockhash = try toString(obj["previousblockhash"],false)!
         nextblockhash = try toString(obj["nextblockhash"],false)!
@@ -737,7 +737,7 @@ public struct Btctransaction {
     public var weight: UInt64
 
     /// The version
-    public var version: UInt64
+    public var version: Int
 
     /// The lock time
     public var locktime: UInt64
@@ -769,7 +769,7 @@ public struct Btctransaction {
         size = try toUInt64(obj["size"],false)!
         vsize = try toUInt64(obj["vsize"],false)!
         weight = try toUInt64(obj["weight"],false)!
-        version = try toUInt64(obj["version"],false)!
+        version = try toInt(obj["version"],false)!
         locktime = try toUInt64(obj["locktime"],false)!
         vin = try toArray(obj["vin"])!.map({ try BtcVin($0,false)! })
         vout = try toArray(obj["vout"])!.map({ try BtcVout($0,false)! })
@@ -858,18 +858,18 @@ public struct BtcScriptSig {
 /// array of json objects describing the tx outputs
 public struct BtcVout {
     /// The Value in BTC
-    public var value: UInt64
+    public var value: Double
 
     /// the index
-    public var n: UInt64
+    public var n: Int
 
     /// the script pubkey
     public var scriptPubKey: BtcScriptPubKey
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
-        value = try toUInt64(obj["value"],false)!
-        n = try toUInt64(obj["n"],false)!
+        value = try toDouble(obj["value"],false)!
+        n = try toInt(obj["n"],false)!
         scriptPubKey = try BtcScriptPubKey(obj["scriptPubKey"],false)!
     }
 
@@ -890,7 +890,7 @@ public struct BtcScriptPubKey {
     public var hex: String
 
     /// the required signatures
-    public var reqSigs: UInt64
+    public var reqSigs: Int
 
     /// The type, eg 'pubkeyhash'
     public var type: String
@@ -902,7 +902,7 @@ public struct BtcScriptPubKey {
         guard let obj = try toObject(rpc, optional) else { return nil }
         asm = try toString(obj["asm"],false)!
         hex = try toString(obj["hex"],false)!
-        reqSigs = try toUInt64(obj["reqSigs"],false)!
+        reqSigs = try toInt(obj["reqSigs"],false)!
         type = try toString(obj["type"],false)!
         addresses = try toArray(obj["addresses"])!.map({ try toString($0,false)! })
     }
