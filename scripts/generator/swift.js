@@ -50,6 +50,9 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
     let toRPC = '\n    internal func toRPCDict() -> [String:RPCObject] {\n        var obj:[String:RPCObject] = [:]'
     let init = '    internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {'
         + '\n        guard let obj = try toObject(rpc, optional) else { return nil }'
+    let pubInitHead = '    public init('
+    let pubInitBody = ''
+    let pubInitDescr = '\n    /// initialize the ' + swiftType + '\n    ///'
 
 
     for (let name of Object.keys(conf)) {
@@ -57,6 +60,9 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
         const t = getAPIType(p, typeConfigs, typesGenerated, name, api)
         content.push('    /// ' + (p.descr || ('the ' + camelCaseUp(name))).split('\n').join('\n    /// '))
         content.push('    public var ' + name + ': ' + t + '\n')
+        pubInitHead += (pubInitHead.endsWith('(') ? '' : ', ') + name + ': ' + t + (t.endsWith('?') ? ' = nil' : '')
+        pubInitDescr += '\n    /// - Parameter ' + name + ' : ' + (p.descr || ('the ' + camelCaseUp(name))).split('\n').join('\n    /// ')
+        pubInitBody += '\n        self.' + name + ' = ' + name
         if (p.array) {
             if (p.optional) {
                 init += '\n        if let ' + name + ' = try toArray(obj["' + name + '"],' + (p.optional ? 'true' : 'false') + ') {'
@@ -87,7 +93,10 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
 
     }
 
-    typesGenerated[swiftType] = content.join('\n') + '\n' + init + '\n    }\n' + (toRPC.indexOf('obj["') == -1 ? '' : (toRPC + '\n        return obj\n    }')) + '\n}'
+    typesGenerated[swiftType] = content.join('\n') + '\n' + init + '\n    }\n' + (toRPC.indexOf('obj["') == -1 ? '' : (toRPC + '\n        return obj\n    }'))
+        + pubInitDescr + '\n'
+        + pubInitHead + ') {'
+        + pubInitBody + '\n    }\n}'
 }
 
 function getAPIType(c, typeConfigs, typesGenerated, prefix, api) {
@@ -242,7 +251,7 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
         if (p.fixed === undefined) {
             if (!s.endsWith('(')) s += ', '
             content.push('    /// - Parameter ' + name + ' : ' + (p.descr || name).split('\n').join('    /// '))
-            s += name + ': ' + type + (p.optional || p.default !== undefined ? ' = ' + (p.default !== undefined ? JSON.stringify(p.default) : 'nil') : '')
+            s += name + ': ' + type + (p.optional || p.optionalAPI || p.default !== undefined ? ' = ' + (p.default !== undefined ? JSON.stringify(p.default) : 'nil') : '')
         }
         // add the param to the rpc call
         params += (params ? ' ' : ' params:') + toParam(name, p, types) + ','

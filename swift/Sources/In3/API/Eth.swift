@@ -448,7 +448,7 @@ public class Eth {
     /// 
     /// ```
     /// 
-    public func getBalance(account: String, block: UInt64?) -> Future<String> {
+    public func getBalance(account: String, block: UInt64? = nil) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_getBalance", params:RPCObject( account), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
@@ -472,7 +472,7 @@ public class Eth {
     /// 
     /// ```
     /// 
-    public func getTransactionCount(account: String, block: UInt64?) -> Future<String> {
+    public func getTransactionCount(account: String, block: UInt64? = nil) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_getTransactionCount", params:RPCObject( account), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
@@ -550,7 +550,7 @@ public class Eth {
     /// - Parameter tx : the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
     /// - Parameter block : the blockNumber or  `latest`
     /// - Returns: the amount of gass needed.
-    public func estimateGas(tx: EthTransaction, block: UInt64?) -> Future<String> {
+    public func estimateGas(tx: EthTransaction, block: UInt64? = nil) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_estimateGas", params:RPCObject( tx.toRPCDict()), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
@@ -574,7 +574,7 @@ public class Eth {
     /// 
     /// ```
     /// 
-    public func call(tx: EthTx, block: UInt64?) -> Future<String> {
+    public func call(tx: EthTx, block: UInt64? = nil) -> Future<String> {
         return execAndConvert(in3: in3, method: "eth_call", params:RPCObject( tx.toRPCDict()), block == nil ? RPCObject("latest") : RPCObject( String(format: "0x%1x", block!) ), convertWith: toString )
     }
 
@@ -731,6 +731,48 @@ public struct EthBlockdataWithTxHashes {
         obj["timestamp"] = RPCObject(timestamp)
         return obj
     }
+    /// initialize the EthBlockdataWithTxHashes
+    ///
+    /// - Parameter transactions : Array of transaction hashes
+    /// - Parameter number : the block number. `null` when its pending block.
+    /// - Parameter hash : hash of the block. `null` when its pending block.
+    /// - Parameter parentHash : hash of the parent block.
+    /// - Parameter nonce : hash of the generated proof-of-work. `null` when its pending block.
+    /// - Parameter sha3Uncles : SHA3 of the uncles Merkle root in the block.
+    /// - Parameter logsBloom : the bloom filter for the logs of the block. `null` when its pending block.
+    /// - Parameter transactionsRoot : the root of the transaction trie of the block.
+    /// - Parameter stateRoot : the root of the final state trie of the block.
+    /// - Parameter receiptsRoot : the root of the receipts trie of the block.
+    /// - Parameter miner : the address of the beneficiary to whom the mining rewards were given.
+    /// - Parameter difficulty : integer of the difficulty for this block.
+    /// - Parameter totalDifficulty : integer of the total difficulty of the chain until this block.
+    /// - Parameter extraData : the "extra data" field of this block.
+    /// - Parameter size : integer the size of this block in bytes.
+    /// - Parameter gasLimit : the maximum gas allowed in this block.
+    /// - Parameter gasUsed : the total used gas by all transactions in this block.
+    /// - Parameter timestamp : the unix timestamp for when the block was collated.
+    /// - Parameter uncles : Array of uncle hashes.
+    public init(transactions: [String], number: UInt64, hash: String, parentHash: String, nonce: UInt256, sha3Uncles: String, logsBloom: String, transactionsRoot: String, stateRoot: String, receiptsRoot: String, miner: String, difficulty: UInt256, totalDifficulty: UInt256, extraData: String, size: UInt64, gasLimit: UInt64, gasUsed: UInt64, timestamp: UInt64, uncles: [String]) {
+        self.transactions = transactions
+        self.number = number
+        self.hash = hash
+        self.parentHash = parentHash
+        self.nonce = nonce
+        self.sha3Uncles = sha3Uncles
+        self.logsBloom = logsBloom
+        self.transactionsRoot = transactionsRoot
+        self.stateRoot = stateRoot
+        self.receiptsRoot = receiptsRoot
+        self.miner = miner
+        self.difficulty = difficulty
+        self.totalDifficulty = totalDifficulty
+        self.extraData = extraData
+        self.size = size
+        self.gasLimit = gasLimit
+        self.gasUsed = gasUsed
+        self.timestamp = timestamp
+        self.uncles = uncles
+    }
 }
 
 /// the blockdata, or in case the block with that number does not exist, `null` will be returned.
@@ -836,6 +878,48 @@ public struct EthBlockdata {
         obj["timestamp"] = RPCObject(timestamp)
         return obj
     }
+    /// initialize the EthBlockdata
+    ///
+    /// - Parameter transactions : Array of transaction objects
+    /// - Parameter number : the block number. `null` when its pending block.
+    /// - Parameter hash : hash of the block. `null` when its pending block.
+    /// - Parameter parentHash : hash of the parent block.
+    /// - Parameter nonce : hash of the generated proof-of-work. `null` when its pending block.
+    /// - Parameter sha3Uncles : SHA3 of the uncles Merkle root in the block.
+    /// - Parameter logsBloom : the bloom filter for the logs of the block. `null` when its pending block.
+    /// - Parameter transactionsRoot : the root of the transaction trie of the block.
+    /// - Parameter stateRoot : the root of the final state trie of the block.
+    /// - Parameter receiptsRoot : the root of the receipts trie of the block.
+    /// - Parameter miner : the address of the beneficiary to whom the mining rewards were given.
+    /// - Parameter difficulty : integer of the difficulty for this block.
+    /// - Parameter totalDifficulty : integer of the total difficulty of the chain until this block.
+    /// - Parameter extraData : the "extra data" field of this block.
+    /// - Parameter size : integer the size of this block in bytes.
+    /// - Parameter gasLimit : the maximum gas allowed in this block.
+    /// - Parameter gasUsed : the total used gas by all transactions in this block.
+    /// - Parameter timestamp : the unix timestamp for when the block was collated.
+    /// - Parameter uncles : Array of uncle hashes.
+    public init(transactions: [EthTransactiondata], number: UInt64, hash: String, parentHash: String, nonce: UInt256, sha3Uncles: String, logsBloom: String, transactionsRoot: String, stateRoot: String, receiptsRoot: String, miner: String, difficulty: UInt256, totalDifficulty: UInt256, extraData: String, size: UInt64, gasLimit: UInt64, gasUsed: UInt64, timestamp: UInt64, uncles: [String]) {
+        self.transactions = transactions
+        self.number = number
+        self.hash = hash
+        self.parentHash = parentHash
+        self.nonce = nonce
+        self.sha3Uncles = sha3Uncles
+        self.logsBloom = logsBloom
+        self.transactionsRoot = transactionsRoot
+        self.stateRoot = stateRoot
+        self.receiptsRoot = receiptsRoot
+        self.miner = miner
+        self.difficulty = difficulty
+        self.totalDifficulty = totalDifficulty
+        self.extraData = extraData
+        self.size = size
+        self.gasLimit = gasLimit
+        self.gasUsed = gasUsed
+        self.timestamp = timestamp
+        self.uncles = uncles
+    }
 }
 
 /// Array of transaction objects
@@ -918,6 +1002,38 @@ public struct EthTransactiondata {
         obj["s"] = RPCObject(s)
         return obj
     }
+    /// initialize the EthTransactiondata
+    ///
+    /// - Parameter to : receipient of the transaction.
+    /// - Parameter from : sender or signer of the transaction
+    /// - Parameter value : value in wei to send
+    /// - Parameter gas : the gas to be send along
+    /// - Parameter gasPrice : the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+    /// - Parameter nonce : the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+    /// - Parameter blockHash : blockHash of the block holding this transaction or `null` if still pending.
+    /// - Parameter blockNumber : blockNumber of the block holding this transaction or `null` if still pending.
+    /// - Parameter hash : transactionHash
+    /// - Parameter input : data of the transaaction
+    /// - Parameter transactionIndex : index of the transaaction in the block
+    /// - Parameter v : recovery-byte of the signature
+    /// - Parameter r : x-value of the EC-Point of the signature
+    /// - Parameter s : y-value of the EC-Point of the signature
+    public init(to: String, from: String, value: UInt256, gas: UInt64, gasPrice: UInt64, nonce: UInt64, blockHash: String, blockNumber: UInt64, hash: String, input: String, transactionIndex: UInt64, v: String, r: String, s: String) {
+        self.to = to
+        self.from = from
+        self.value = value
+        self.gas = gas
+        self.gasPrice = gasPrice
+        self.nonce = nonce
+        self.blockHash = blockHash
+        self.blockNumber = blockNumber
+        self.hash = hash
+        self.input = input
+        self.transactionIndex = transactionIndex
+        self.v = v
+        self.r = r
+        self.s = s
+    }
 }
 
 /// The filter criteria for the events.
@@ -957,6 +1073,20 @@ public struct EthFilter {
         obj["address"] = address == nil ? RPCObject.none : RPCObject(address!)
         obj["blockhash"] = blockhash == nil ? RPCObject.none : RPCObject(blockhash!)
         return obj
+    }
+    /// initialize the EthFilter
+    ///
+    /// - Parameter fromBlock : Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
+    /// - Parameter toBlock : Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
+    /// - Parameter address : Contract address or a list of addresses from which logs should originate.
+    /// - Parameter topics : Array of 32 Bytes DATA topics. Topics are order-dependent. Each topic can also be an array of DATA with “or” options.
+    /// - Parameter blockhash : With the addition of EIP-234, blockHash will be a new filter option which restricts the logs returned to the single block with the 32-byte hash blockHash. Using blockHash is equivalent to fromBlock = toBlock = the block number with hash blockHash. If blockHash is present in in the filter criteria, then neither fromBlock nor toBlock are allowed.
+    public init(fromBlock: UInt64? = nil, toBlock: UInt64? = nil, address: String? = nil, topics: [String]? = nil, blockhash: String? = nil) {
+        self.fromBlock = fromBlock
+        self.toBlock = toBlock
+        self.address = address
+        self.topics = topics
+        self.blockhash = blockhash
     }
 }
 
@@ -1004,6 +1134,24 @@ public struct EthTransaction {
         obj["nonce"] = nonce == nil ? RPCObject.none : RPCObject(nonce!)
         obj["data"] = data == nil ? RPCObject.none : RPCObject(data!)
         return obj
+    }
+    /// initialize the EthTransaction
+    ///
+    /// - Parameter to : receipient of the transaction.
+    /// - Parameter from : sender of the address (if not sepcified, the first signer will be the sender)
+    /// - Parameter value : value in wei to send
+    /// - Parameter gas : the gas to be send along
+    /// - Parameter gasPrice : the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+    /// - Parameter nonce : the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+    /// - Parameter data : the data-section of the transaction
+    public init(to: String, from: String, value: UInt256? = nil, gas: UInt64? = nil, gasPrice: UInt64? = nil, nonce: UInt64? = nil, data: String? = nil) {
+        self.to = to
+        self.from = from
+        self.value = value
+        self.gas = gas
+        self.gasPrice = gasPrice
+        self.nonce = nonce
+        self.data = data
     }
 }
 
@@ -1065,6 +1213,30 @@ public struct EthTransactionReceipt {
         obj["transactionHash"] = RPCObject(transactionHash)
         obj["transactionIndex"] = RPCObject(transactionIndex)
         return obj
+    }
+    /// initialize the EthTransactionReceipt
+    ///
+    /// - Parameter blockNumber : the blockNumber
+    /// - Parameter blockHash : blockhash if ther containing block
+    /// - Parameter contractAddress : the deployed contract in case the tx did deploy a new contract
+    /// - Parameter cumulativeGasUsed : gas used for all transaction up to this one in the block
+    /// - Parameter gasUsed : gas used by this transaction.
+    /// - Parameter logs : array of events created during execution of the tx
+    /// - Parameter logsBloom : bloomfilter used to detect events for `eth_getLogs`
+    /// - Parameter status : error-status of the tx.  0x1 = success 0x0 = failure
+    /// - Parameter transactionHash : requested transactionHash
+    /// - Parameter transactionIndex : transactionIndex within the containing block.
+    public init(blockNumber: UInt64, blockHash: String, contractAddress: String, cumulativeGasUsed: UInt64, gasUsed: UInt64, logs: EthLogs, logsBloom: String, status: Int, transactionHash: String, transactionIndex: Int) {
+        self.blockNumber = blockNumber
+        self.blockHash = blockHash
+        self.contractAddress = contractAddress
+        self.cumulativeGasUsed = cumulativeGasUsed
+        self.gasUsed = gasUsed
+        self.logs = logs
+        self.logsBloom = logsBloom
+        self.status = status
+        self.transactionHash = transactionHash
+        self.transactionIndex = transactionIndex
     }
 }
 
@@ -1132,6 +1304,32 @@ public struct EthLogs {
         obj["type"] = RPCObject(type)
         return obj
     }
+    /// initialize the EthLogs
+    ///
+    /// - Parameter address : the address triggering the event.
+    /// - Parameter blockNumber : the blockNumber
+    /// - Parameter blockHash : blockhash if ther containing block
+    /// - Parameter data : abi-encoded data of the event (all non indexed fields)
+    /// - Parameter logIndex : the index of the even within the block.
+    /// - Parameter removed : the reorg-status of the event.
+    /// - Parameter topics : array of 32byte-topics of the indexed fields.
+    /// - Parameter transactionHash : requested transactionHash
+    /// - Parameter transactionIndex : transactionIndex within the containing block.
+    /// - Parameter transactionLogIndex : index of the event within the transaction.
+    /// - Parameter type : mining-status
+    public init(address: String, blockNumber: UInt64, blockHash: String, data: String, logIndex: Int, removed: Bool, topics: [String], transactionHash: String, transactionIndex: Int, transactionLogIndex: Int, type: String) {
+        self.address = address
+        self.blockNumber = blockNumber
+        self.blockHash = blockHash
+        self.data = data
+        self.logIndex = logIndex
+        self.removed = removed
+        self.topics = topics
+        self.transactionHash = transactionHash
+        self.transactionIndex = transactionIndex
+        self.transactionLogIndex = transactionLogIndex
+        self.type = type
+    }
 }
 
 /// the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
@@ -1178,5 +1376,23 @@ public struct EthTx {
         obj["nonce"] = nonce == nil ? RPCObject.none : RPCObject(nonce!)
         obj["data"] = data == nil ? RPCObject.none : RPCObject(data!)
         return obj
+    }
+    /// initialize the EthTx
+    ///
+    /// - Parameter to : address of the contract
+    /// - Parameter from : sender of the address
+    /// - Parameter value : value in wei to send
+    /// - Parameter gas : the gas to be send along
+    /// - Parameter gasPrice : the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+    /// - Parameter nonce : the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+    /// - Parameter data : the data-section of the transaction, which includes the functionhash and the abi-encoded arguments
+    public init(to: String, from: String? = nil, value: UInt256? = nil, gas: UInt64? = nil, gasPrice: UInt64? = nil, nonce: UInt64? = nil, data: String? = nil) {
+        self.to = to
+        self.from = from
+        self.value = value
+        self.gas = gas
+        self.gasPrice = gasPrice
+        self.nonce = nonce
+        self.data = data
     }
 }

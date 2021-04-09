@@ -382,6 +382,25 @@ public enum RPCObject: Equatable {
             self = .dictionary(value.mapValues { RPCObject($0) })
         }
     }
+    
+    public func asObject<T>() -> T  {
+        switch self {
+        case .none:
+           return 0 as! T
+        case .integer( let val):
+            return val as! T
+        case .string( let val):
+            return val as! T
+        case .double(let val):
+            return val as! T
+        case .bool( let val):
+            return val as! T
+        case .list( let val):
+            return val.map({(src:RPCObject) -> T in src.asObject() }) as! T
+        case .dictionary(let val):
+            return val.mapValues({(src:RPCObject) -> T in src.asObject() }) as! T
+        }
+    }
 }
 
 /// Error of a RPC-Request

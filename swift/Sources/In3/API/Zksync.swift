@@ -528,6 +528,14 @@ public struct ZksyncContractAddress {
         obj["mainContract"] = RPCObject(mainContract)
         return obj
     }
+    /// initialize the ZksyncContractAddress
+    ///
+    /// - Parameter govContract : the address of the govement contract
+    /// - Parameter mainContract : the address of the main contract
+    public init(govContract: String, mainContract: String) {
+        self.govContract = govContract
+        self.mainContract = mainContract
+    }
 }
 
 /// a array of tokens-definitions. This request also caches them and will return the results from cahe if available.
@@ -559,6 +567,18 @@ public struct ZksyncTokens {
         obj["id"] = RPCObject(id)
         obj["symbol"] = RPCObject(symbol)
         return obj
+    }
+    /// initialize the ZksyncTokens
+    ///
+    /// - Parameter address : the address of the ERC2-Contract or 0x00000..000 in case of the native token (eth)
+    /// - Parameter decimals : decimals to be used when formating it for human readable representation.
+    /// - Parameter id : id which will be used when encoding the token.
+    /// - Parameter symbol : symbol for the token
+    public init(address: String, decimals: Int, id: UInt64, symbol: String) {
+        self.address = address
+        self.decimals = decimals
+        self.id = id
+        self.symbol = symbol
     }
 }
 
@@ -594,6 +614,20 @@ public struct ZksyncAccountInfo {
         obj["id"] = RPCObject(id)
         return obj
     }
+    /// initialize the ZksyncAccountInfo
+    ///
+    /// - Parameter address : the address of the account
+    /// - Parameter commited : the state of the zksync operator after executing transactions successfully, but not not verified on L1 yet.
+    /// - Parameter depositing : the state of all depositing-tx.
+    /// - Parameter id : the assigned id of the account, which will be used when encoding it into the rollup.
+    /// - Parameter verified : the state after the rollup was verified in L1.
+    public init(address: String, commited: ZksyncCommited, depositing: ZksyncDepositing, id: UInt64, verified: ZksyncVerified) {
+        self.address = address
+        self.commited = commited
+        self.depositing = depositing
+        self.id = id
+        self.verified = verified
+    }
 }
 
 /// the state of the zksync operator after executing transactions successfully, but not not verified on L1 yet.
@@ -620,6 +654,16 @@ public struct ZksyncCommited {
         obj["pubKeyHash"] = RPCObject(pubKeyHash)
         return obj
     }
+    /// initialize the ZksyncCommited
+    ///
+    /// - Parameter balances : the token-balance
+    /// - Parameter nonce : the nonce or transaction count.
+    /// - Parameter pubKeyHash : the pubKeyHash set for the requested account or `0x0000...` if not set yet.
+    public init(balances: [String:UInt256], nonce: UInt64, pubKeyHash: String) {
+        self.balances = balances
+        self.nonce = nonce
+        self.pubKeyHash = pubKeyHash
+    }
 }
 
 /// the state of all depositing-tx.
@@ -632,6 +676,12 @@ public struct ZksyncDepositing {
         balances = try toObject(obj["balances"])!.mapValues({ try toUInt256($0,false)! })
     }
 
+    /// initialize the ZksyncDepositing
+    ///
+    /// - Parameter balances : the token-values.
+    public init(balances: [String:UInt256]) {
+        self.balances = balances
+    }
 }
 
 /// the state after the rollup was verified in L1.
@@ -657,6 +707,16 @@ public struct ZksyncVerified {
         obj["nonce"] = RPCObject(nonce)
         obj["pubKeyHash"] = RPCObject(pubKeyHash)
         return obj
+    }
+    /// initialize the ZksyncVerified
+    ///
+    /// - Parameter balances : the token-balances.
+    /// - Parameter nonce : the nonce or transaction count.
+    /// - Parameter pubKeyHash : the pubKeyHash set for the requested account or `0x0000...` if not set yet.
+    public init(balances: [String:UInt256], nonce: UInt64, pubKeyHash: String) {
+        self.balances = balances
+        self.nonce = nonce
+        self.pubKeyHash = pubKeyHash
     }
 }
 
@@ -689,6 +749,18 @@ public struct ZksyncTxInfo {
         obj["success"] = RPCObject(success)
         obj["failReason"] = RPCObject(failReason)
         return obj
+    }
+    /// initialize the ZksyncTxInfo
+    ///
+    /// - Parameter block : the blockNumber containing the tx or `null` if still pending
+    /// - Parameter executed : true, if the tx has been executed by the operator. If false it is still in the txpool of the operator.
+    /// - Parameter success : if executed, this property marks the success of the tx.
+    /// - Parameter failReason : if executed and failed this will include an error message
+    public init(block: UInt64, executed: Bool, success: Bool, failReason: String) {
+        self.block = block
+        self.executed = executed
+        self.success = success
+        self.failReason = failReason
     }
 }
 
@@ -731,6 +803,22 @@ public struct ZksyncTxFee {
         obj["totalFee"] = RPCObject(totalFee)
         obj["zkpFee"] = RPCObject(zkpFee)
         return obj
+    }
+    /// initialize the ZksyncTxFee
+    ///
+    /// - Parameter feeType : Type of the transaaction
+    /// - Parameter gasFee : the gas for the core-transaction
+    /// - Parameter gasPriceWei : current gasPrice
+    /// - Parameter gasTxAmount : gasTxAmount
+    /// - Parameter totalFee : total of all fees needed to pay in order to execute the transaction
+    /// - Parameter zkpFee : zkpFee
+    public init(feeType: String, gasFee: UInt64, gasPriceWei: UInt64, gasTxAmount: UInt64, totalFee: UInt64, zkpFee: UInt64) {
+        self.feeType = feeType
+        self.gasFee = gasFee
+        self.gasPriceWei = gasPriceWei
+        self.gasTxAmount = gasTxAmount
+        self.totalFee = totalFee
+        self.zkpFee = zkpFee
     }
 }
 
@@ -792,6 +880,30 @@ public struct ZksyncTransactionReceipt {
         obj["transactionHash"] = RPCObject(transactionHash)
         obj["transactionIndex"] = RPCObject(transactionIndex)
         return obj
+    }
+    /// initialize the ZksyncTransactionReceipt
+    ///
+    /// - Parameter blockNumber : the blockNumber
+    /// - Parameter blockHash : blockhash if ther containing block
+    /// - Parameter contractAddress : the deployed contract in case the tx did deploy a new contract
+    /// - Parameter cumulativeGasUsed : gas used for all transaction up to this one in the block
+    /// - Parameter gasUsed : gas used by this transaction.
+    /// - Parameter logs : array of events created during execution of the tx
+    /// - Parameter logsBloom : bloomfilter used to detect events for `eth_getLogs`
+    /// - Parameter status : error-status of the tx.  0x1 = success 0x0 = failure
+    /// - Parameter transactionHash : requested transactionHash
+    /// - Parameter transactionIndex : transactionIndex within the containing block.
+    public init(blockNumber: UInt64, blockHash: String, contractAddress: String, cumulativeGasUsed: UInt64, gasUsed: UInt64, logs: ZksyncLogs, logsBloom: String, status: Int, transactionHash: String, transactionIndex: Int) {
+        self.blockNumber = blockNumber
+        self.blockHash = blockHash
+        self.contractAddress = contractAddress
+        self.cumulativeGasUsed = cumulativeGasUsed
+        self.gasUsed = gasUsed
+        self.logs = logs
+        self.logsBloom = logsBloom
+        self.status = status
+        self.transactionHash = transactionHash
+        self.transactionIndex = transactionIndex
     }
 }
 
@@ -858,5 +970,31 @@ public struct ZksyncLogs {
         obj["transactionLogIndex"] = RPCObject(transactionLogIndex)
         obj["type"] = RPCObject(type)
         return obj
+    }
+    /// initialize the ZksyncLogs
+    ///
+    /// - Parameter address : the address triggering the event.
+    /// - Parameter blockNumber : the blockNumber
+    /// - Parameter blockHash : blockhash if ther containing block
+    /// - Parameter data : abi-encoded data of the event (all non indexed fields)
+    /// - Parameter logIndex : the index of the even within the block.
+    /// - Parameter removed : the reorg-status of the event.
+    /// - Parameter topics : array of 32byte-topics of the indexed fields.
+    /// - Parameter transactionHash : requested transactionHash
+    /// - Parameter transactionIndex : transactionIndex within the containing block.
+    /// - Parameter transactionLogIndex : index of the event within the transaction.
+    /// - Parameter type : mining-status
+    public init(address: String, blockNumber: UInt64, blockHash: String, data: String, logIndex: Int, removed: Bool, topics: [String], transactionHash: String, transactionIndex: Int, transactionLogIndex: Int, type: String) {
+        self.address = address
+        self.blockNumber = blockNumber
+        self.blockHash = blockHash
+        self.data = data
+        self.logIndex = logIndex
+        self.removed = removed
+        self.topics = topics
+        self.transactionHash = transactionHash
+        self.transactionIndex = transactionIndex
+        self.transactionLogIndex = transactionLogIndex
+        self.type = type
     }
 }

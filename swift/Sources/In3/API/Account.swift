@@ -296,6 +296,14 @@ public struct AccountEcrecover {
         obj["address"] = RPCObject(address)
         return obj
     }
+    /// initialize the AccountEcrecover
+    ///
+    /// - Parameter publicKey : the public Key of the signer (64 bytes)
+    /// - Parameter address : the address
+    public init(publicKey: String, address: String) {
+        self.publicKey = publicKey
+        self.address = address
+    }
 }
 
 /// the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
@@ -343,6 +351,24 @@ public struct AccountTransaction {
         obj["data"] = data == nil ? RPCObject.none : RPCObject(data!)
         return obj
     }
+    /// initialize the AccountTransaction
+    ///
+    /// - Parameter to : receipient of the transaction.
+    /// - Parameter from : sender of the address (if not sepcified, the first signer will be the sender)
+    /// - Parameter value : value in wei to send
+    /// - Parameter gas : the gas to be send along
+    /// - Parameter gasPrice : the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+    /// - Parameter nonce : the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+    /// - Parameter data : the data-section of the transaction
+    public init(to: String, from: String, value: UInt256? = nil, gas: UInt64? = nil, gasPrice: UInt64? = nil, nonce: UInt64? = nil, data: String? = nil) {
+        self.to = to
+        self.from = from
+        self.value = value
+        self.gas = gas
+        self.gasPrice = gasPrice
+        self.nonce = nonce
+        self.data = data
+    }
 }
 
 /// the signature
@@ -384,5 +410,21 @@ public struct AccountSignData {
         obj["s"] = RPCObject(s)
         obj["v"] = RPCObject(v)
         return obj
+    }
+    /// initialize the AccountSignData
+    ///
+    /// - Parameter message : original message used
+    /// - Parameter messageHash : the hash the signature is based on
+    /// - Parameter signature : the signature (65 bytes)
+    /// - Parameter r : the x-value of the EC-Point
+    /// - Parameter s : the y-value of the EC-Point
+    /// - Parameter v : the recovery value (0|1) + 27
+    public init(message: String, messageHash: String, signature: String, r: String, s: String, v: String) {
+        self.message = message
+        self.messageHash = messageHash
+        self.signature = signature
+        self.r = r
+        self.s = s
+        self.v = v
     }
 }

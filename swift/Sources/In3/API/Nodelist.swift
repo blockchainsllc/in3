@@ -160,6 +160,20 @@ public struct NodeListDefinition {
         obj["totalServer"] = RPCObject(totalServer)
         return obj
     }
+    /// initialize the NodeListDefinition
+    ///
+    /// - Parameter nodes : a array of node definitions.
+    /// - Parameter contract : the address of the Incubed-storage-contract. The client may use this information to verify that we are talking about the same contract or throw an exception otherwise.
+    /// - Parameter registryId : the registryId (32 bytes)  of the contract, which is there to verify the correct contract.
+    /// - Parameter lastBlockNumber : the blockNumber of the last change of the list (usually the last event).
+    /// - Parameter totalServer : the total numbers of nodes.
+    public init(nodes: [Node], contract: String, registryId: String, lastBlockNumber: UInt64, totalServer: UInt64) {
+        self.nodes = nodes
+        self.contract = contract
+        self.registryId = registryId
+        self.lastBlockNumber = lastBlockNumber
+        self.totalServer = totalServer
+    }
 }
 
 /// a array of node definitions.
@@ -221,6 +235,32 @@ public struct Node {
         obj["proofHash"] = RPCObject(proofHash)
         return obj
     }
+    /// initialize the Node
+    ///
+    /// - Parameter url : the url of the node. Currently only http/https is supported, but in the future this may even support onion-routing or any other protocols.
+    /// - Parameter address : the address of the signer
+    /// - Parameter index : the index within the nodeList of the contract
+    /// - Parameter deposit : the stored deposit
+    /// - Parameter props : the bitset of capabilities as described in the [Node Structure](spec.html#node-structure)
+    /// - Parameter timeout : the time in seconds describing how long the deposit would be locked when trying to unregister a node.
+    /// - Parameter registerTime : unix timestamp in seconds when the node has registered.
+    /// - Parameter weight : the weight of a node ( not used yet ) describing the amount of request-points it can handle per second.
+    /// - Parameter proofHash : a hash value containing the above values. 
+    /// This hash is explicitly stored in the contract, which enables the client to have only one merkle proof 
+    /// per node instead of verifying each property as its own storage value. 
+    /// The proof hash is build `keccak256( abi.encodePacked( deposit, timeout, registerTime, props, signer, url ))` 
+    /// 
+    public init(url: String, address: String, index: UInt64, deposit: UInt256, props: String, timeout: UInt64, registerTime: UInt64, weight: UInt64, proofHash: String) {
+        self.url = url
+        self.address = address
+        self.index = index
+        self.deposit = deposit
+        self.props = props
+        self.timeout = timeout
+        self.registerTime = registerTime
+        self.weight = weight
+        self.proofHash = proofHash
+    }
 }
 
 /// array of requested blocks.
@@ -242,6 +282,14 @@ public struct NodelistBlocks {
         obj["blockNumber"] = RPCObject(blockNumber)
         obj["hash"] = hash == nil ? RPCObject.none : RPCObject(hash!)
         return obj
+    }
+    /// initialize the NodelistBlocks
+    ///
+    /// - Parameter blockNumber : the blockNumber to sign
+    /// - Parameter hash : the expected hash. This is optional and can be used to check if the expected hash is correct, but as a client you should not rely on it, but only on the hash in the signature.
+    public init(blockNumber: UInt64, hash: String? = nil) {
+        self.blockNumber = blockNumber
+        self.hash = hash
     }
 }
 
@@ -285,6 +333,22 @@ public struct NodelistSignBlockHash {
         obj["msgHash"] = RPCObject(msgHash)
         return obj
     }
+    /// initialize the NodelistSignBlockHash
+    ///
+    /// - Parameter blockHash : the blockhash which was signed.
+    /// - Parameter block : the blocknumber
+    /// - Parameter r : r-value of the signature
+    /// - Parameter s : s-value of the signature
+    /// - Parameter v : v-value of the signature
+    /// - Parameter msgHash : the msgHash signed. This Hash is created with `keccak256( abi.encodePacked( _blockhash,  _blockNumber, registryId ))`
+    public init(blockHash: String, block: UInt64, r: String, s: String, v: String, msgHash: String) {
+        self.blockHash = blockHash
+        self.block = block
+        self.r = r
+        self.s = s
+        self.v = v
+        self.msgHash = msgHash
+    }
 }
 
 /// the whitelisted addresses
@@ -321,5 +385,19 @@ public struct NodelistWhitelist {
         obj["lastBlockNumber"] = RPCObject(lastBlockNumber)
         obj["totalServer"] = RPCObject(totalServer)
         return obj
+    }
+    /// initialize the NodelistWhitelist
+    ///
+    /// - Parameter nodes : array of whitelisted nodes addresses.
+    /// - Parameter lastWhiteList : the blockNumber of the last change of the in3 white list event.
+    /// - Parameter contract : whitelist contract address.
+    /// - Parameter lastBlockNumber : the blockNumber of the last change of the list (usually the last event).
+    /// - Parameter totalServer : the total numbers of whitelist nodes.
+    public init(nodes: String, lastWhiteList: UInt64, contract: String, lastBlockNumber: UInt64, totalServer: UInt64) {
+        self.nodes = nodes
+        self.lastWhiteList = lastWhiteList
+        self.contract = contract
+        self.lastBlockNumber = lastBlockNumber
+        self.totalServer = totalServer
     }
 }

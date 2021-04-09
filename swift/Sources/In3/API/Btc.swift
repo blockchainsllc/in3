@@ -523,6 +523,40 @@ public struct Btcblockheader {
         obj["nextblockhash"] = RPCObject(nextblockhash)
         return obj
     }
+    /// initialize the Btcblockheader
+    ///
+    /// - Parameter hash : the block hash (same as provided)
+    /// - Parameter confirmations : The number of confirmations, or -1 if the block is not on the main chain
+    /// - Parameter height : The block height or index
+    /// - Parameter version : The block version
+    /// - Parameter versionHex : The block version formatted in hexadecimal
+    /// - Parameter merkleroot : The merkle root ( 32 bytes )
+    /// - Parameter time : The block time in seconds since epoch (Jan 1 1970 GMT)
+    /// - Parameter mediantime : The median block time in seconds since epoch (Jan 1 1970 GMT)
+    /// - Parameter nonce : The nonce
+    /// - Parameter bits : The bits ( 4 bytes as hex) representing the target
+    /// - Parameter difficulty : The difficulty
+    /// - Parameter chainwork : Expected number of hashes required to produce the current chain (in hex)
+    /// - Parameter nTx : The number of transactions in the block.
+    /// - Parameter previousblockhash : The hash of the previous block
+    /// - Parameter nextblockhash : The hash of the next block
+    public init(hash: String, confirmations: Int, height: UInt64, version: Int, versionHex: String, merkleroot: String, time: UInt64, mediantime: UInt64, nonce: UInt64, bits: String, difficulty: UInt256, chainwork: String, nTx: Int, previousblockhash: String, nextblockhash: String) {
+        self.hash = hash
+        self.confirmations = confirmations
+        self.height = height
+        self.version = version
+        self.versionHex = versionHex
+        self.merkleroot = merkleroot
+        self.time = time
+        self.mediantime = mediantime
+        self.nonce = nonce
+        self.bits = bits
+        self.difficulty = difficulty
+        self.chainwork = chainwork
+        self.nTx = nTx
+        self.previousblockhash = previousblockhash
+        self.nextblockhash = nextblockhash
+    }
 }
 
 /// the block. 
@@ -616,6 +650,42 @@ public struct Btcblock {
         obj["previousblockhash"] = RPCObject(previousblockhash)
         obj["nextblockhash"] = RPCObject(nextblockhash)
         return obj
+    }
+    /// initialize the Btcblock
+    ///
+    /// - Parameter hash : the block hash (same as provided)
+    /// - Parameter confirmations : The number of confirmations, or -1 if the block is not on the main chain
+    /// - Parameter height : The block height or index
+    /// - Parameter version : The block version
+    /// - Parameter versionHex : The block version formatted in hexadecimal
+    /// - Parameter merkleroot : The merkle root ( 32 bytes )
+    /// - Parameter time : The block time in seconds since epoch (Jan 1 1970 GMT)
+    /// - Parameter mediantime : The median block time in seconds since epoch (Jan 1 1970 GMT)
+    /// - Parameter nonce : The nonce
+    /// - Parameter bits : The bits ( 4 bytes as hex) representing the target
+    /// - Parameter difficulty : The difficulty
+    /// - Parameter chainwork : Expected number of hashes required to produce the current chain (in hex)
+    /// - Parameter nTx : The number of transactions in the block.
+    /// - Parameter tx : the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
+    /// - Parameter previousblockhash : The hash of the previous block
+    /// - Parameter nextblockhash : The hash of the next block
+    public init(hash: String, confirmations: Int, height: UInt256, version: Int, versionHex: String, merkleroot: String, time: UInt64, mediantime: UInt64, nonce: UInt64, bits: String, difficulty: UInt256, chainwork: String, nTx: Int, tx: [String], previousblockhash: String, nextblockhash: String) {
+        self.hash = hash
+        self.confirmations = confirmations
+        self.height = height
+        self.version = version
+        self.versionHex = versionHex
+        self.merkleroot = merkleroot
+        self.time = time
+        self.mediantime = mediantime
+        self.nonce = nonce
+        self.bits = bits
+        self.difficulty = difficulty
+        self.chainwork = chainwork
+        self.nTx = nTx
+        self.tx = tx
+        self.previousblockhash = previousblockhash
+        self.nextblockhash = nextblockhash
     }
 }
 
@@ -711,6 +781,42 @@ public struct BtcblockWithTx {
         obj["nextblockhash"] = RPCObject(nextblockhash)
         return obj
     }
+    /// initialize the BtcblockWithTx
+    ///
+    /// - Parameter hash : the block hash (same as provided)
+    /// - Parameter confirmations : The number of confirmations, or -1 if the block is not on the main chain
+    /// - Parameter height : The block height or index
+    /// - Parameter version : The block version
+    /// - Parameter versionHex : The block version formatted in hexadecimal
+    /// - Parameter merkleroot : The merkle root ( 32 bytes )
+    /// - Parameter time : The block time in seconds since epoch (Jan 1 1970 GMT)
+    /// - Parameter mediantime : The median block time in seconds since epoch (Jan 1 1970 GMT)
+    /// - Parameter nonce : The nonce
+    /// - Parameter bits : The bits ( 4 bytes as hex) representing the target
+    /// - Parameter difficulty : The difficulty
+    /// - Parameter chainwork : Expected number of hashes required to produce the current chain (in hex)
+    /// - Parameter nTx : The number of transactions in the block.
+    /// - Parameter tx : the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
+    /// - Parameter previousblockhash : The hash of the previous block
+    /// - Parameter nextblockhash : The hash of the next block
+    public init(hash: String, confirmations: Int, height: UInt64, version: Int, versionHex: String, merkleroot: String, time: UInt64, mediantime: UInt64, nonce: UInt64, bits: String, difficulty: UInt256, chainwork: String, nTx: Int, tx: [Btctransaction], previousblockhash: String, nextblockhash: String) {
+        self.hash = hash
+        self.confirmations = confirmations
+        self.height = height
+        self.version = version
+        self.versionHex = versionHex
+        self.merkleroot = merkleroot
+        self.time = time
+        self.mediantime = mediantime
+        self.nonce = nonce
+        self.bits = bits
+        self.difficulty = difficulty
+        self.chainwork = chainwork
+        self.nTx = nTx
+        self.tx = tx
+        self.previousblockhash = previousblockhash
+        self.nextblockhash = nextblockhash
+    }
 }
 
 /// the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
@@ -796,6 +902,40 @@ public struct Btctransaction {
         obj["time"] = RPCObject(time)
         return obj
     }
+    /// initialize the Btctransaction
+    ///
+    /// - Parameter txid : txid
+    /// - Parameter in_active_chain : Whether specified block is in the active chain or not (only present with explicit "blockhash" argument)
+    /// - Parameter hex : The serialized, hex-encoded data for `txid`
+    /// - Parameter hash : The transaction hash (differs from txid for witness transactions)
+    /// - Parameter size : The serialized transaction size
+    /// - Parameter vsize : The virtual transaction size (differs from size for witness transactions)
+    /// - Parameter weight : The transaction's weight (between `vsize`\*4-3 and `vsize`\*4)
+    /// - Parameter version : The version
+    /// - Parameter locktime : The lock time
+    /// - Parameter vin : array of json objects of incoming txs to be used
+    /// - Parameter vout : array of json objects describing the tx outputs
+    /// - Parameter blockhash : the block hash
+    /// - Parameter confirmations : The confirmations
+    /// - Parameter blocktime : The block time in seconds since epoch (Jan 1 1970 GMT)
+    /// - Parameter time : Same as "blocktime"
+    public init(txid: String, in_active_chain: Bool, hex: String, hash: String, size: UInt64, vsize: UInt64, weight: UInt64, version: Int, locktime: UInt64, vin: [BtcVin], vout: [BtcVout], blockhash: String, confirmations: Int, blocktime: UInt64, time: UInt64) {
+        self.txid = txid
+        self.in_active_chain = in_active_chain
+        self.hex = hex
+        self.hash = hash
+        self.size = size
+        self.vsize = vsize
+        self.weight = weight
+        self.version = version
+        self.locktime = locktime
+        self.vin = vin
+        self.vout = vout
+        self.blockhash = blockhash
+        self.confirmations = confirmations
+        self.blocktime = blocktime
+        self.time = time
+    }
 }
 
 /// array of json objects of incoming txs to be used
@@ -831,6 +971,20 @@ public struct BtcVin {
         obj["sequence"] = RPCObject(sequence)
         return obj
     }
+    /// initialize the BtcVin
+    ///
+    /// - Parameter txid : the transaction id
+    /// - Parameter vout : the index of the transaction out to be used
+    /// - Parameter scriptSig : the script
+    /// - Parameter sequence : The script sequence number
+    /// - Parameter txinwitness : hex-encoded witness data (if any)
+    public init(txid: String, vout: UInt64, scriptSig: BtcScriptSig, sequence: UInt64, txinwitness: [String]) {
+        self.txid = txid
+        self.vout = vout
+        self.scriptSig = scriptSig
+        self.sequence = sequence
+        self.txinwitness = txinwitness
+    }
 }
 
 /// the script
@@ -852,6 +1006,14 @@ public struct BtcScriptSig {
         obj["asm"] = RPCObject(asm)
         obj["hex"] = RPCObject(hex)
         return obj
+    }
+    /// initialize the BtcScriptSig
+    ///
+    /// - Parameter asm : the asm-codes
+    /// - Parameter hex : hex representation
+    public init(asm: String, hex: String) {
+        self.asm = asm
+        self.hex = hex
     }
 }
 
@@ -878,6 +1040,16 @@ public struct BtcVout {
         obj["value"] = RPCObject(value)
         obj["n"] = RPCObject(n)
         return obj
+    }
+    /// initialize the BtcVout
+    ///
+    /// - Parameter value : The Value in BTC
+    /// - Parameter n : the index
+    /// - Parameter scriptPubKey : the script pubkey
+    public init(value: Double, n: Int, scriptPubKey: BtcScriptPubKey) {
+        self.value = value
+        self.n = n
+        self.scriptPubKey = scriptPubKey
     }
 }
 
@@ -915,6 +1087,20 @@ public struct BtcScriptPubKey {
         obj["type"] = RPCObject(type)
         return obj
     }
+    /// initialize the BtcScriptPubKey
+    ///
+    /// - Parameter asm : asm
+    /// - Parameter hex : hex representation of the script
+    /// - Parameter reqSigs : the required signatures
+    /// - Parameter type : The type, eg 'pubkeyhash'
+    /// - Parameter addresses : Array of address(each representing a bitcoin adress)
+    public init(asm: String, hex: String, reqSigs: Int, type: String, addresses: [String]) {
+        self.asm = asm
+        self.hex = hex
+        self.reqSigs = reqSigs
+        self.type = type
+        self.addresses = addresses
+    }
 }
 
 /// A path of daps from the `verified_dap` to the `target_dap` which fulfils the conditions of `max_diff`, `max_dap` and `limit`. Each dap of the path is a `dap`-object with corresponding proof data.
@@ -951,5 +1137,19 @@ public struct BtcProofTarget {
         obj["cbtx"] = RPCObject(cbtx)
         obj["cbtxMerkleProof"] = RPCObject(cbtxMerkleProof)
         return obj
+    }
+    /// initialize the BtcProofTarget
+    ///
+    /// - Parameter dap : the difficulty adjustement period
+    /// - Parameter block : the first blockheader
+    /// - Parameter final : the finality header
+    /// - Parameter cbtx : the coinbase transaction as hex
+    /// - Parameter cbtxMerkleProof : the coinbasetx merkle proof
+    public init(dap: UInt64, block: String, final: String, cbtx: String, cbtxMerkleProof: String) {
+        self.dap = dap
+        self.block = block
+        self.final = final
+        self.cbtx = cbtx
+        self.cbtxMerkleProof = cbtxMerkleProof
     }
 }
