@@ -30,7 +30,11 @@ types:
 
 
 
-in3:
+utils:
+
+  descr: |
+    a Collection of utility-function.
+  
 
   in3_abiEncode:
     sync: true
@@ -93,31 +97,6 @@ in3:
         - false
       response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
 
-  
-  in3_ens:
-    descr: | 
-      resolves a ens-name. 
-      the domain names consist of a series of dot-separated labels. Each label must be a valid normalised label as described in [UTS46](https://unicode.org/reports/tr46/) with the options `transitional=false` and `useSTD3AsciiRules=true`. 
-      For Javascript implementations, a [library](https://www.npmjs.com/package/idna-uts46) is available that normalises and checks names.
-    params:
-      name:
-        descr: the domain name UTS46 compliant string.
-        type: string
-      field:
-        descr: the required data, which could be one of ( `addr` - the address, `resolver` - the address of the resolver, `hash` - the namehash, `owner` - the owner of the domain)
-        type: string
-        optional: true
-        default: addr
-    result:
-      descr: the value of the specified field
-    example:
-      request:
-        - cryptokitties.eth
-        - addr
-      response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
-
-  
-
 
   in3_toWei:
     sync : true
@@ -164,6 +143,73 @@ in3:
         - eth
         - 3
       response: "0.158"
+
+  in3_cacheClear:
+    sync: true
+    descr: clears the incubed cache (usually found in the .in3-folder)
+    result:
+      descr: true indicating the success
+    example: 
+      request: []
+      response: true
+
+  web3_clientVersion:
+    descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
+    result:
+      descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
+
+  keccak:
+    sync: true
+    alias: web3_sha3
+
+  web3_sha3:
+    sync: true
+    descr: |
+      Returns Keccak-256 (not the standardized SHA3-256) of the given data.
+
+      See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    result:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
+
+  sha256:
+    sync: true
+    descr: |
+      Returns sha-256 of the given data.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    result:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
+
+  net_version:
+    sync: true
+    descr: the Network Version (currently 1)
+    result:
+       descr: the Version number
+
+account:
+  descr: |
+    Account Handling includes handling signers and preparing and signing transacrtion and data.
+
+    Signers are Plugins able to create signatures. Those functions will use the registered plugins.
+    
 
   in3_pk2address:
     sync: true
@@ -344,68 +390,7 @@ in3:
         - test
       response: "0x1ff25594a5e12c1e31ebd8112bdf107d217c1393da8dc7fc9d57696263457546"
 
-  in3_cacheClear:
-    sync: true
-    descr: clears the incubed cache (usually found in the .in3-folder)
-    result:
-      descr: true indicating the success
-    example: 
-      request: []
-      response: true
 
-eth:
-
-  web3_clientVersion:
-    descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
-    result:
-      descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
-
-  keccak:
-    sync: true
-    alias: web3_sha3
-
-  web3_sha3:
-    sync: true
-    descr: |
-      Returns Keccak-256 (not the standardized SHA3-256) of the given data.
-
-      See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
-
-      No proof needed, since the client will execute this locally. 
-    params:
-      data:
-        descr: data to hash
-        type: bytes
-    result:
-      descr: the 32byte hash of the data
-    example:
-      request:
-        - "0x1234567890"
-      response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
-
-  sha256:
-    sync: true
-    descr: |
-      Returns sha-256 of the given data.
-
-      No proof needed, since the client will execute this locally. 
-    params:
-      data:
-        descr: data to hash
-        type: bytes
-    result:
-      descr: the 32byte hash of the data
-    example:
-      request:
-        - "0x1234567890"
-      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
-
-  net_version:
-    sync: true
-    descr: the Network Version (currently 1)
-    result:
-       descr: the Version number
-  
   in3_createKey:
     sync: true
     descr: |

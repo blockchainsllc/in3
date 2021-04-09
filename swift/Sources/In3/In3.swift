@@ -1,13 +1,16 @@
 import CIn3
 import Foundation
 
-/// The I ncubed client
+/// The Incubed client
 public class In3 {
   internal var in3: UnsafeMutablePointer<in3_t>? = nil
   /// the transport function
   public var transport: (_ url: String, _ method:String, _ payload:Data?, _ headers: [String], _ cb: @escaping (_ data:TransportResult)->Void) -> Void
-    
-    var cache: In3Cache? {
+  
+  /// set the cache impementation.
+  ///
+  /// the default is usually the FileCache storing data in the users home-directory, but by implementing the IN3Cache Protocol any custom storage is supported.
+  var cache: In3Cache? {
         get {
             return defaultCache
         }
@@ -16,6 +19,7 @@ public class In3 {
         }
     }
 
+  /// initialize with a Configurations
   public init(_ config: In3Config) throws {
     transport = httpTransfer
     in3 = in3_for_chain_auto_init(1)
@@ -27,6 +31,8 @@ public class In3 {
     in3_free(in3)
   }
 
+  /// change the configuration.
+  /// - Paramater config : the partial or full Configuration to change.
   public func configure(_ config: In3Config) throws {
     let jsonConfig = try JSONEncoder().encode(config)
     let error = in3_configure(in3, String(decoding: jsonConfig, as: UTF8.self))
@@ -58,10 +64,18 @@ public class In3 {
     }
   }
 
+    
+  /// executes a asnychronous request
+  ///
+  /// This requires a transport to be set
+  /// - Parameter method : the rpc-method to call
+  /// - Parameter params : the paramas as ROCPobjects
+  /// - Parameter cb : the callback which will be called with a Result (either success or error ) when done.
   public func exec(_ method: String, _ params: RPCObject..., cb: @escaping  (_ result:RequestResult)->Void) throws {
     try In3Request(method,params,self,cb).exec()
   }
-    
+
+  /// executes a json-rpc encoded request synchonously and returns the result as json-string
   public func executeJSON(_ rpc: String) -> String {
     return rpc.withCString { (baseAddress)->String in
         let count = rpc.utf8.count + 1

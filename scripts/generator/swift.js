@@ -91,15 +91,15 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
 }
 
 function getAPIType(c, typeConfigs, typesGenerated, prefix, api) {
-    let swiftType = camelCaseUp(('' + c.type).split('|')[0].trim())
+    let swiftType = camelCaseUp(('' + (c.typeName || c.type)).split('|')[0].trim())
     let typedef = null
     if (typeof c.type === 'object') {
         typedef = getType(c.type, typeConfigs)
-        swiftType = camelCaseUp(api + camelCaseUp(c.typeName || prefix.startsWith('get') ? prefix.substr(3) : prefix))
+        swiftType = c.typeName || camelCaseUp(api + camelCaseUp(c.typeName || prefix.startsWith('get') ? prefix.substr(3) : prefix))
     }
     else if (typeConfigs[c.type]) {
         typedef = getType(c.type, typeConfigs)
-        swiftType = camelCaseUp((c.type.toLowerCase().startsWith(api.toLowerCase()) ? '' : api) + camelCaseUp(c.type))
+        swiftType = c.typeName || camelCaseUp((c.type.toLowerCase().startsWith(api.toLowerCase()) ? '' : api) + camelCaseUp(c.type))
     }
     else if (swiftType == 'Uint') swiftType = 'UInt64'
     else if (swiftType.startsWith('Uint')) swiftType = swiftType.replace('Uint', 'UInt')
@@ -255,6 +255,9 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
         s += '\n        return try execLocalAndConvert(in3: in3, method: "' + rpc_name + '",' + params
         if (returnType == '[AnyObject]')
             s += ' convertWith: { try toArray($0,$1)! } )'
+        else if (r.array) {
+            s += ' convertWith: { try toArray($0,$1)!.map({ try ' + converterName(returnType, true) + '($0, ' + (!!r.optional) + ')! }) } )'
+        }
         else
             s += ' convertWith: ' + converterName(returnType, true) + ' )'
         s += '\n    }\n'
@@ -307,7 +310,7 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
 
 exports.generateAPI = function (api_name, rpcs, descr, types) {
     const structs = {}
-    const apiName = camelCaseUp(api_name) + 'API'
+    const apiName = camelCaseUp(api_name)
     const content = [
         '/// this is generated file don\'t edit it manually!',
         '',

@@ -10,7 +10,7 @@ import Foundation
 /// 
 /// All zksync-methods can be used with `zksync_` or `zk_` prefix. 
 /// 
-public class ZksyncAPI {
+public class Zksync {
     internal var in3: In3
 
     /// initialiazes the Zksync API

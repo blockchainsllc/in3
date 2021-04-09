@@ -16,7 +16,7 @@ import Foundation
 /// *  **cbtx**
 /// *  **cbtxMerkleProof**
 /// 
-public class BtcAPI {
+public class Btc {
     internal var in3: In3
 
     /// initialiazes the Btc API

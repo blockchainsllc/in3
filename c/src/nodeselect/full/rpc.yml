@@ -1,4 +1,6 @@
-in3:
+nodelist:
+
+  descr: special Incubed nodelist-handling functions. Most of those are only used internally.
 
   # config
   config:
@@ -127,6 +129,7 @@ in3:
           
   # Verified RPCs
   in3_nodeList:
+    apiName: nodes
     descr: fetches and verifies the nodeList from a node
     params:
       limit:
@@ -144,9 +147,12 @@ in3:
         optional: true
 
     result:
+      typeName: NodeListDefinition
       descr: the current nodelist
       type:
         nodes:
+          typeName: Node
+          array: true
           descr: a array of node definitions.
           type:
             url:
@@ -339,6 +345,7 @@ in3:
                   value: "0x423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
 
   in3_sign:
+    apiName: signBlockHash
     descr: |
       requests a signed blockhash from the node. 
       In most cases these requests will come from other nodes, because the client simply adds the addresses of the requested signers 

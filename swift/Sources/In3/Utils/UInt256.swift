@@ -114,32 +114,41 @@ final public class UInt256: CustomStringConvertible, Hashable, Comparable, Decod
        return String(cString: buf).lowercased()
    }
    
+    /// String representation as decimals
     public var description: String {
         return toString(radix: 10)
     }
 
+    /// compare 2 UInt256 values
+    /// the result is zero if they are equal
+    /// negative if the current value is smaller than the given
+    /// positive if the current value is higher than the given
     public func compare(other: UInt256) -> Int32 {
         return mp_cmp(&self.value, &other.value)
     }
-    
+
+    /// adds the given number and returns the sum of both
     public func add(_ val:UInt256) -> UInt256 {
         let res:UInt256 = UInt256()
         mp_add(&self.value, &val.value, &res.value)
         return res
     }
 
+    /// substracts the given number and returns the difference of both
     public func sub(_ val:UInt256) -> UInt256 {
         let res:UInt256 = UInt256()
         mp_sub(&self.value, &val.value, &res.value)
         return res
     }
 
+    /// multiplies the current with the given number and returns the product of both
     public func mul(_ val:UInt256) -> UInt256 {
         let res:UInt256 = UInt256()
         mp_mul(&self.value, &val.value, &res.value)
         return res
     }
 
+    /// divides the current number by the given and return the result
     public func div(_ val:UInt256) -> UInt256 {
         let res:UInt256 = UInt256()
         let mod:UInt256 = UInt256()
@@ -147,13 +156,12 @@ final public class UInt256: CustomStringConvertible, Hashable, Comparable, Decod
         return res
     }
 
+    /// divides the current number by the given and return the rest or module operator
     public func mod(_ val:UInt256) -> UInt256 {
         let res:UInt256 = UInt256()
         mp_mod(&self.value, &val.value, &res.value)
         return res
     }
-
-
 }
 
 public func == (a: UInt256, b: UInt256) -> Bool {

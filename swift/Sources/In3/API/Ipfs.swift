@@ -6,7 +6,7 @@ import Foundation
 /// 
 /// Fetching ipfs-content can be easily verified by creating the ipfs-hash based on the received data and comparing it to the requested ipfs-hash. Since there is no chance of manipulating the data, there is also no need to put a deposit or convict a node. That's why the registry-contract allows a zero-deposit fot ipfs-nodes.
 /// 
-public class IpfsAPI {
+public class Ipfs {
     internal var in3: In3
 
     /// initialiazes the Ipfs API

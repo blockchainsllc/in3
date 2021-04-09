@@ -79,7 +79,7 @@ final class In3Tests: XCTestCase {
         let expect = XCTestExpectation(description: "Should get a hash-value")
 //        let in3 = try In3(Config(rpc: "https://rpc.slock.it/mainnet"))
         let in3 = try In3(In3Config(chainId: "mainnet"))
-        let eth = EthAPI(in3)
+        let eth = Eth(in3)
         eth.getBlock().observe(using: {
             switch $0 {
             case let .failure(err):

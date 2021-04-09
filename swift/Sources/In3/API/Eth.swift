@@ -28,159 +28,13 @@ import Foundation
 /// *  **txIndex** `integer` - The transactionIndex within the block (for transaactions and receipts).   
 /// *  **signatures** `Signature[]` - Requested signatures.   
 /// 
-public class EthAPI {
+public class Eth {
     internal var in3: In3
 
     /// initialiazes the Eth API
     /// - Parameter in3 : the incubed Client
     init(_ in3: In3) {
        self.in3 = in3
-    }
-
-    /// Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
-    /// - Returns: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
-    public func clientVersion() -> Future<String> {
-        return execAndConvert(in3: in3, method: "web3_clientVersion", convertWith: toString )
-    }
-
-    /// Returns Keccak-256 (not the standardized SHA3-256) of the given data.
-    /// 
-    /// See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
-    /// 
-    /// No proof needed, since the client will execute this locally. 
-    /// 
-    /// - Parameter data : data to hash
-    /// - Returns: the 32byte hash of the data
-    /// 
-    /// **Example**
-    /// 
-    /// ```swift
-    /// let result = try EthAPI(in3).keccak(data: "0x1234567890")
-    /// // result = "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
-    /// ```
-    /// 
-    public func keccak(data: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "keccak", params:RPCObject( data), convertWith: toString )
-    }
-
-    /// Returns Keccak-256 (not the standardized SHA3-256) of the given data.
-    /// 
-    /// See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
-    /// 
-    /// No proof needed, since the client will execute this locally. 
-    /// 
-    /// - Parameter data : data to hash
-    /// - Returns: the 32byte hash of the data
-    /// 
-    /// **Example**
-    /// 
-    /// ```swift
-    /// let result = try EthAPI(in3).sha3(data: "0x1234567890")
-    /// // result = "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
-    /// ```
-    /// 
-    public func sha3(data: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "web3_sha3", params:RPCObject( data), convertWith: toString )
-    }
-
-    /// Returns sha-256 of the given data.
-    /// 
-    /// No proof needed, since the client will execute this locally. 
-    /// 
-    /// - Parameter data : data to hash
-    /// - Returns: the 32byte hash of the data
-    /// 
-    /// **Example**
-    /// 
-    /// ```swift
-    /// let result = try EthAPI(in3).sha256(data: "0x1234567890")
-    /// // result = "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
-    /// ```
-    /// 
-    public func sha256(data: String) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "sha256", params:RPCObject( data), convertWith: toString )
-    }
-
-    /// the Network Version (currently 1)
-    /// - Returns: the Version number
-    public func version() throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "net_version", convertWith: toString )
-    }
-
-    /// Generates 32 random bytes.
-    /// If /dev/urandom is available it will be used and should generate a secure random number.
-    /// If not the number should not be considered sceure or used in production.
-    /// 
-    /// - Parameter seed : the seed. If given the result will be deterministic.
-    /// - Returns: the 32byte random data
-    /// 
-    /// **Example**
-    /// 
-    /// ```swift
-    /// let result = try EthAPI(in3).createKey()
-    /// // result = "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
-    /// ```
-    /// 
-    public func createKey(seed: String? = nil) throws ->  String {
-        return try execLocalAndConvert(in3: in3, method: "in3_createKey", params:seed == nil ? RPCObject.none : RPCObject( seed! ), convertWith: toString )
-    }
-
-    /// The sign method calculates an Ethereum specific signature with: 
-    /// 
-    /// ```js
-    /// sign(keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))).
-    /// ```
-    /// 
-    /// By adding a prefix to the message makes the calculated signature recognisable as an Ethereum specific signature. This prevents misuse where a malicious DApp can sign arbitrary data (e.g. transaction) and use the signature to impersonate the victim.
-    /// 
-    /// For the address to sign a signer must be registered.
-    /// 
-    /// - Parameter account : the account to sign with
-    /// - Parameter message : the message to sign
-    /// - Returns: the signature (65 bytes) for the given message.
-    /// 
-    /// **Example**
-    /// 
-    /// ```swift
-    /// EthAPI(in3).sign(account: "0x9b2055d370f73ec7d8a03e965129118dc8f5bf83", message: "0xdeadbeaf") .observe(using: {
-    ///     switch $0 {
-    ///        case let .failure(err):
-    ///          print("Failed because : \(err.localizedDescription)")
-    ///        case let .success(val):
-    ///          print("result : \(val)")
-    /// //              result = "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17b\
-    /// //          fdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
-    ///      }
-    /// }
-    /// 
-    /// ```
-    /// 
-    public func sign(account: String, message: String) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_sign", params:RPCObject( account), RPCObject( message), convertWith: toString )
-    }
-
-    /// Signs a transaction that can be submitted to the network at a later time using with eth_sendRawTransaction.
-    /// - Parameter tx : transaction to sign
-    /// - Returns: the raw signed transaction
-    /// 
-    /// **Example**
-    /// 
-    /// ```swift
-    /// EthAPI(in3).signTransaction(tx: EthTransaction(data: "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", from: "0xb60e8dd61c5d32be8058bb8eb970870f07233155", gas: "0x76c0", gasPrice: "0x9184e72a000", to: "0xd46e8dd67c5d32be8058bb8eb970870f07244567", value: "0x9184e72a")) .observe(using: {
-    ///     switch $0 {
-    ///        case let .failure(err):
-    ///          print("Failed because : \(err.localizedDescription)")
-    ///        case let .success(val):
-    ///          print("result : \(val)")
-    /// //              result = "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17b\
-    /// //          fdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
-    ///      }
-    /// }
-    /// 
-    /// ```
-    /// 
-    public func signTransaction(tx: EthTransaction) -> Future<String> {
-        return execAndConvert(in3: in3, method: "eth_signTransaction", params:RPCObject( tx.toRPCDict()), convertWith: toString )
     }
 
     /// returns the number of the most recent block.
@@ -774,53 +628,6 @@ public class EthAPI {
 
 
 }
-/// transaction to sign
-public struct EthTransaction {
-    /// receipient of the transaction.
-    public var to: String
-
-    /// sender of the address (if not sepcified, the first signer will be the sender)
-    public var from: String
-
-    /// value in wei to send
-    public var value: UInt256?
-
-    /// the gas to be send along
-    public var gas: UInt64?
-
-    /// the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-    public var gasPrice: UInt64?
-
-    /// the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-    public var nonce: UInt64?
-
-    /// the data-section of the transaction
-    public var data: String?
-
-    internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
-        guard let obj = try toObject(rpc, optional) else { return nil }
-        to = try toString(obj["to"],false)!
-        from = try toString(obj["from"],false)!
-        value = try toUInt256(obj["value"],true)!
-        gas = try toUInt64(obj["gas"],true)!
-        gasPrice = try toUInt64(obj["gasPrice"],true)!
-        nonce = try toUInt64(obj["nonce"],true)!
-        data = try toString(obj["data"],true)!
-    }
-
-    internal func toRPCDict() -> [String:RPCObject] {
-        var obj:[String:RPCObject] = [:]
-        obj["to"] = RPCObject(to)
-        obj["from"] = RPCObject(from)
-        obj["value"] = value == nil ? RPCObject.none : RPCObject(value!)
-        obj["gas"] = gas == nil ? RPCObject.none : RPCObject(gas!)
-        obj["gasPrice"] = gasPrice == nil ? RPCObject.none : RPCObject(gasPrice!)
-        obj["nonce"] = nonce == nil ? RPCObject.none : RPCObject(nonce!)
-        obj["data"] = data == nil ? RPCObject.none : RPCObject(data!)
-        return obj
-    }
-}
-
 /// the blockdata, or in case the block with that number does not exist, `null` will be returned.
 public struct EthBlockdataWithTxHashes {
     /// Array of transaction hashes
@@ -1149,6 +956,53 @@ public struct EthFilter {
         obj["toBlock"] = toBlock == nil ? RPCObject.none : RPCObject(toBlock!)
         obj["address"] = address == nil ? RPCObject.none : RPCObject(address!)
         obj["blockhash"] = blockhash == nil ? RPCObject.none : RPCObject(blockhash!)
+        return obj
+    }
+}
+
+/// the transactiondata to send
+public struct EthTransaction {
+    /// receipient of the transaction.
+    public var to: String
+
+    /// sender of the address (if not sepcified, the first signer will be the sender)
+    public var from: String
+
+    /// value in wei to send
+    public var value: UInt256?
+
+    /// the gas to be send along
+    public var gas: UInt64?
+
+    /// the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+    public var gasPrice: UInt64?
+
+    /// the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+    public var nonce: UInt64?
+
+    /// the data-section of the transaction
+    public var data: String?
+
+    internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
+        guard let obj = try toObject(rpc, optional) else { return nil }
+        to = try toString(obj["to"],false)!
+        from = try toString(obj["from"],false)!
+        value = try toUInt256(obj["value"],true)!
+        gas = try toUInt64(obj["gas"],true)!
+        gasPrice = try toUInt64(obj["gasPrice"],true)!
+        nonce = try toUInt64(obj["nonce"],true)!
+        data = try toString(obj["data"],true)!
+    }
+
+    internal func toRPCDict() -> [String:RPCObject] {
+        var obj:[String:RPCObject] = [:]
+        obj["to"] = RPCObject(to)
+        obj["from"] = RPCObject(from)
+        obj["value"] = value == nil ? RPCObject.none : RPCObject(value!)
+        obj["gas"] = gas == nil ? RPCObject.none : RPCObject(gas!)
+        obj["gasPrice"] = gasPrice == nil ? RPCObject.none : RPCObject(gasPrice!)
+        obj["nonce"] = nonce == nil ? RPCObject.none : RPCObject(nonce!)
+        obj["data"] = data == nil ? RPCObject.none : RPCObject(data!)
         return obj
     }
 }

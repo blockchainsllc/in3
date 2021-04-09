@@ -121,7 +121,7 @@ function handle_config(conf, pre, title, descr) {
 
 
 scan('../c/src')
-docs.in3.in3_config.params.config.type = config
+docs.config.in3_config.params.config.type = config
 rpc_doc.push('# API RPC\n\n')
 rpc_doc.push('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
 config_doc.push('# Configuration\n\n')
@@ -216,8 +216,10 @@ for (const s of Object.keys(docs).sort()) {
         z += "'"
         zsh_cmds.push(z)
     }
+    console.log('generate ' + s + '\n   ' + Object.keys(rpcs).join('\n   '))
 
-    swift.generateAPI(s, rpcs, rdescr, types)
+    if (Object.values(rpcs).filter(_ => !_.skipApi).length)
+        swift.generateAPI(s, rpcs, rdescr, types)
 
 }
 

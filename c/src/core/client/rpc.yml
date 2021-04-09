@@ -1,4 +1,4 @@
-in3:
+config:
   descr: |
     There are also some Incubed specific rpc-methods, which will help the clients to bootstrap and update the nodeLists.
 
