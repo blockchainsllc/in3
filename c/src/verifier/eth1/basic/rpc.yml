@@ -1,5 +1,37 @@
 types:
 
+  transaction:
+    to:
+      descr: receipient of the transaction.
+      type: address
+      optional: true
+    from:
+      descr: sender of the address (if not sepcified, the first signer will be the sender)
+      type: address
+      optional: true
+    value:
+      descr: value in wei to send
+      type: uint256
+      optional: true
+    gas:
+      descr: the gas to be send along
+      type: uint64
+      optional: true
+      default: 21000
+    gasPrice:
+      descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+      type: uint64
+      optional: true
+    nonce:
+      descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+      type: uint64
+      optional: true
+    data:
+      descr: the data-section of the transaction
+      type: bytes
+      optional: true
+
+
   blockheader:
     number:
       descr: the block number. `null` when its pending block.
@@ -702,12 +734,18 @@ eth:
           topics:
             descr: Array of 32 Bytes DATA topics. Topics are order-dependent. Each topic can also be an array of DATA with “or” options.
             type: bytes32
+            nullable: true
             array: true
             optional: true
           blockhash:
             descr: With the addition of EIP-234, blockHash will be a new filter option which restricts the logs returned to the single block with the 32-byte hash blockHash. Using blockHash is equivalent to fromBlock = toBlock = the block number with hash blockHash. If blockHash is present in in the filter criteria, then neither fromBlock nor toBlock are allowed.
             type: bytes32
             optional: true
+    result:
+      array: true
+      type: ethlog
+      descr: array with all found event matching the specified filter
+
           
 
   eth_getBalance:
@@ -723,6 +761,7 @@ eth:
         type: uint64
     result:
       descr: the balance
+      type: uint256
     proof:
       alias: eth_getStorageAt
     example:
