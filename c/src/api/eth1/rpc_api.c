@@ -82,14 +82,15 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_STRING)
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 1, T_BYTES)
   CHECK_PARAM(ctx->req, ctx->params, 1, val->len % 32 == 0)
-  char*       error = NULL;
-  json_ctx_t* res   = NULL;
-  char*       sig   = d_get_string_at(ctx->params, 0);
-  bytes_t     data  = d_to_bytes(d_get_at(ctx->params, 1));
-  if (d_len(ctx->params) > 2) return req_set_error(ctx->req, "too many arguments (only 2 alllowed)", IN3_EINVAL);
+  char*       error  = NULL;
+  json_ctx_t* res    = NULL;
+  char*       sig    = d_get_string_at(ctx->params, 0);
+  bytes_t     data   = d_to_bytes(d_get_at(ctx->params, 1));
+  bytes_t     topics = d_to_bytes(d_get_at(ctx->params, 2));
+  if (d_len(ctx->params) > 3) return req_set_error(ctx->req, "too many arguments (only 3 alllowed)", IN3_EINVAL);
 
   abi_sig_t* req = abi_sig_create(sig, &error);
-  if (!error) res = abi_decode(req, data, &error);
+  if (!error) res = topics.data ? abi_decode_event(req, topics, data, &error) : abi_decode(req, data, &error);
   if (req) abi_sig_free(req);
   if (error) return req_set_error(ctx->req, error, IN3_EINVAL);
   char* result = d_create_json(res, res->result);
@@ -391,6 +392,34 @@ static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
     return in3_rpc_handle_with_bytes(ctx, bytes(public_key + 1, 64));
 }
 
+static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t sender = d_to_bytes(d_get_at(ctx->params, 0));
+  bytes_t nonce  = d_to_bytes(d_get_at(ctx->params, 1));
+  if (sender.len != 20) return req_set_error(ctx->req, "Invalid sender address, must be 20 bytes", IN3_EINVAL);
+  if (!nonce.data) {
+    sb_t sb = sb_stack(alloca(100));
+    sb_add_rawbytes(&sb, "\"0x", sender, 0);
+    sb_add_chars(&sb, "\",\"latest\"");
+    d_token_t* result;
+    TRY(req_send_sub_request(ctx->req, "eth_getTransactionCount", sb.data, NULL, &result, NULL))
+    nonce = d_to_bytes(result);
+  }
+
+  // handle nonce as number, which means no leading zeros and if 0 it should be an empty bytes-array
+  b_optimize_len(&nonce);
+  if (nonce.len == 1 && nonce.data[0] == 0) nonce.len = 0;
+
+  bytes_builder_t* bb = bb_new();
+  rlp_encode_item(bb, &sender);
+  rlp_encode_item(bb, &nonce);
+  rlp_encode_to_list(bb);
+  bytes32_t hash;
+  keccak(bb->b, hash);
+  bb_free(bb);
+
+  return in3_rpc_handle_with_bytes(ctx, bytes(hash + 12, 20));
+}
+
 static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   bytes_t  msg      = d_to_bytes(d_get_at(ctx->params, 0));
   bytes_t* sig      = d_get_bytes_at(ctx->params, 1);
@@ -657,6 +686,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_prepareTx", in3_prepareTx(ctx))
   TRY_RPC("in3_signTx", in3_signTx(ctx))
   TRY_RPC("in3_createKey", in3_createKey(ctx))
+  TRY_RPC("in3_calcDeployAddress", in3_calcDeployAddress(ctx))
 
   return IN3_EIGNORE;
 }
