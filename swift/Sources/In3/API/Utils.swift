@@ -21,7 +21,7 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).abiEncode(signature: "getBalance(address)", params: ["0x1234567890123456789012345678901234567890"])
+    /// let result = try Utils(in3).abiEncode(signature: "getBalance(address)", params: ["0x1234567890123456789012345678901234567890"])
     /// // result = "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
     /// ```
     /// 
@@ -32,19 +32,20 @@ public class Utils {
     /// based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function decodes the bytes given and returns it as array of values.
     /// - Parameter signature : the signature of the function. e.g. `uint256`, `(address,string,uint256)` or `getBalance(address):uint256`. If the complete functionhash is given, only the return-part will be used.
     /// - Parameter data : the data to decode (usually the result of a eth_call)
+    /// - Parameter topics : in case of an even the topics (concatinated to max 4x32bytes). This is used if indexed.arguments are used.
     /// - Returns: a array with the values after decodeing.
     /// 
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).abiDecode(signature: "(address,uint256)", data: "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005")
+    /// let result = try Utils(in3).abiDecode(signature: "(address,uint256)", data: "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005")
     /// // result = 
     /// //          - "0x1234567890123456789012345678901234567890"
     /// //          - "0x05"
     /// ```
     /// 
-    public func abiDecode(signature: String, data: String) throws ->  [RPCObject] {
-        return try execLocalAndConvert(in3: in3, method: "in3_abiDecode", params:RPCObject( signature), RPCObject( data), convertWith: { try toArray($0,$1)! } )
+    public func abiDecode(signature: String, data: String, topics: String? = nil) throws ->  [RPCObject] {
+        return try execLocalAndConvert(in3: in3, method: "in3_abiDecode", params:RPCObject( signature), RPCObject( data), topics == nil ? RPCObject.none : RPCObject( topics! ), convertWith: { try toArray($0,$1)! } )
     }
 
     /// Will convert an upper or lowercase Ethereum address to a checksum address.  (See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md) )
@@ -55,7 +56,7 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).checksumAddress(address: "0x1fe2e9bf29aa1938859af64c413361227d04059a", useChainId: false)
+    /// let result = try Utils(in3).checksumAddress(address: "0x1fe2e9bf29aa1938859af64c413361227d04059a", useChainId: false)
     /// // result = "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
     /// ```
     /// 
@@ -71,7 +72,7 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).toWei(value: "20.0009123", unit: "eth")
+    /// let result = try Utils(in3).toWei(value: "20.0009123", unit: "eth")
     /// // result = "0x01159183c4793db800"
     /// ```
     /// 
@@ -88,7 +89,7 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).fromWei(value: "0x234324abadefdef", unit: "eth", digits: 3)
+    /// let result = try Utils(in3).fromWei(value: "0x234324abadefdef", unit: "eth", digits: 3)
     /// // result = "0.158"
     /// ```
     /// 
@@ -102,7 +103,7 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).cacheClear()
+    /// let result = try Utils(in3).cacheClear()
     /// // result = true
     /// ```
     /// 
@@ -128,7 +129,7 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).keccak(data: "0x1234567890")
+    /// let result = try Utils(in3).keccak(data: "0x1234567890")
     /// // result = "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
     /// ```
     /// 
@@ -148,7 +149,7 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).sha3(data: "0x1234567890")
+    /// let result = try Utils(in3).sha3(data: "0x1234567890")
     /// // result = "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
     /// ```
     /// 
@@ -166,12 +167,36 @@ public class Utils {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try UtilsAPI(in3).sha256(data: "0x1234567890")
+    /// let result = try Utils(in3).sha256(data: "0x1234567890")
     /// // result = "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
     /// ```
     /// 
     public func sha256(data: String) throws ->  String {
         return try execLocalAndConvert(in3: in3, method: "sha256", params:RPCObject( data), convertWith: toString )
+    }
+
+    /// calculates the address of a contract about to deploy. The address depends on the senders nonce.
+    /// - Parameter sender : the sender of the transaction
+    /// - Parameter nonce : the nonce of the sender during deployment
+    /// - Returns: the address of the deployed contract
+    /// 
+    /// **Example**
+    /// 
+    /// ```swift
+    /// Utils(in3).calcDeployAddress(sender: "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c", nonce: 6054986) .observe(using: {
+    ///     switch $0 {
+    ///        case let .failure(err):
+    ///          print("Failed because : \(err.localizedDescription)")
+    ///        case let .success(val):
+    ///          print("result : \(val)")
+    /// //              result = "0xba866e7bd2573be3eaf5077b557751bb6d58076e"
+    ///      }
+    /// }
+    /// 
+    /// ```
+    /// 
+    public func calcDeployAddress(sender: String, nonce: UInt64? = nil) -> Future<String> {
+        return execAndConvert(in3: in3, method: "in3_calcDeployAddress", params:RPCObject( sender), nonce == nil ? RPCObject.none : RPCObject( String(format: "0x%1x", nonce!) ), convertWith: toString )
     }
 
     /// the Network Version (currently 1)

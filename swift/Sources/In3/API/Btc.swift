@@ -35,7 +35,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getblockheaderAsHex(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
+    /// Btc(in3).getblockheaderAsHex(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -61,7 +61,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getblockheader(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
+    /// Btc(in3).getblockheader(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -102,7 +102,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getBlockAsHex(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
+    /// Btc(in3).getBlockAsHex(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -128,7 +128,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getBlock(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
+    /// Btc(in3).getBlock(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -173,7 +173,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getBlockWithTx(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
+    /// Btc(in3).getBlockWithTx(hash: "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -218,7 +218,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getRawTransactionAsHex(txid: "f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf", verbosity: true) .observe(using: {
+    /// Btc(in3).getRawTransactionAsHex(txid: "f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf", verbosity: true) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -244,7 +244,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getRawTransaction(txid: "f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf", verbosity: true) .observe(using: {
+    /// Btc(in3).getRawTransaction(txid: "f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf", verbosity: true) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -318,7 +318,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getblockcount() .observe(using: {
+    /// Btc(in3).getblockcount() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -343,7 +343,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getdifficulty(blocknumber: 631910) .observe(using: {
+    /// Btc(in3).getdifficulty(blocknumber: 631910) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -370,7 +370,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).proofTarget(target_dap: 230, verified_dap: 200, max_diff: 5, max_dap: 5, limit: 15) .observe(using: {
+    /// Btc(in3).proofTarget(target_dap: 230, verified_dap: 200, max_diff: 5, max_dap: 5, limit: 15) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -417,7 +417,7 @@ public class Btc {
     /// **Example**
     /// 
     /// ```swift
-    /// BtcAPI(in3).getbestblockhash() .observe(using: {
+    /// Btc(in3).getbestblockhash() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -506,23 +506,24 @@ public struct Btcblockheader {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["hash"] = RPCObject(hash)
-        obj["confirmations"] = RPCObject(confirmations)
-        obj["height"] = RPCObject(height)
-        obj["version"] = RPCObject(version)
-        obj["versionHex"] = RPCObject(versionHex)
-        obj["merkleroot"] = RPCObject(merkleroot)
-        obj["time"] = RPCObject(time)
-        obj["mediantime"] = RPCObject(mediantime)
-        obj["nonce"] = RPCObject(nonce)
-        obj["bits"] = RPCObject(bits)
-        obj["difficulty"] = RPCObject(difficulty)
-        obj["chainwork"] = RPCObject(chainwork)
-        obj["nTx"] = RPCObject(nTx)
-        obj["previousblockhash"] = RPCObject(previousblockhash)
-        obj["nextblockhash"] = RPCObject(nextblockhash)
+        obj["hash"] = RPCObject( hash )
+        obj["confirmations"] = RPCObject( String(format: "0x%1x", arguments: [confirmations]) )
+        obj["height"] = RPCObject( String(format: "0x%1x", arguments: [height]) )
+        obj["version"] = RPCObject( String(format: "0x%1x", arguments: [version]) )
+        obj["versionHex"] = RPCObject( versionHex )
+        obj["merkleroot"] = RPCObject( merkleroot )
+        obj["time"] = RPCObject( String(format: "0x%1x", arguments: [time]) )
+        obj["mediantime"] = RPCObject( String(format: "0x%1x", arguments: [mediantime]) )
+        obj["nonce"] = RPCObject( String(format: "0x%1x", arguments: [nonce]) )
+        obj["bits"] = RPCObject( bits )
+        obj["difficulty"] = RPCObject( difficulty.hexValue )
+        obj["chainwork"] = RPCObject( chainwork )
+        obj["nTx"] = RPCObject( String(format: "0x%1x", arguments: [nTx]) )
+        obj["previousblockhash"] = RPCObject( previousblockhash )
+        obj["nextblockhash"] = RPCObject( nextblockhash )
         return obj
     }
+
     /// initialize the Btcblockheader
     ///
     /// - Parameter hash : the block hash (same as provided)
@@ -634,23 +635,25 @@ public struct Btcblock {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["hash"] = RPCObject(hash)
-        obj["confirmations"] = RPCObject(confirmations)
-        obj["height"] = RPCObject(height)
-        obj["version"] = RPCObject(version)
-        obj["versionHex"] = RPCObject(versionHex)
-        obj["merkleroot"] = RPCObject(merkleroot)
-        obj["time"] = RPCObject(time)
-        obj["mediantime"] = RPCObject(mediantime)
-        obj["nonce"] = RPCObject(nonce)
-        obj["bits"] = RPCObject(bits)
-        obj["difficulty"] = RPCObject(difficulty)
-        obj["chainwork"] = RPCObject(chainwork)
-        obj["nTx"] = RPCObject(nTx)
-        obj["previousblockhash"] = RPCObject(previousblockhash)
-        obj["nextblockhash"] = RPCObject(nextblockhash)
+        obj["hash"] = RPCObject( hash )
+        obj["confirmations"] = RPCObject( String(format: "0x%1x", arguments: [confirmations]) )
+        obj["height"] = RPCObject( height.hexValue )
+        obj["version"] = RPCObject( String(format: "0x%1x", arguments: [version]) )
+        obj["versionHex"] = RPCObject( versionHex )
+        obj["merkleroot"] = RPCObject( merkleroot )
+        obj["time"] = RPCObject( String(format: "0x%1x", arguments: [time]) )
+        obj["mediantime"] = RPCObject( String(format: "0x%1x", arguments: [mediantime]) )
+        obj["nonce"] = RPCObject( String(format: "0x%1x", arguments: [nonce]) )
+        obj["bits"] = RPCObject( bits )
+        obj["difficulty"] = RPCObject( difficulty.hexValue )
+        obj["chainwork"] = RPCObject( chainwork )
+        obj["nTx"] = RPCObject( String(format: "0x%1x", arguments: [nTx]) )
+        obj["tx"] = RPCObject( tx )
+        obj["previousblockhash"] = RPCObject( previousblockhash )
+        obj["nextblockhash"] = RPCObject( nextblockhash )
         return obj
     }
+
     /// initialize the Btcblock
     ///
     /// - Parameter hash : the block hash (same as provided)
@@ -764,23 +767,24 @@ public struct BtcblockWithTx {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["hash"] = RPCObject(hash)
-        obj["confirmations"] = RPCObject(confirmations)
-        obj["height"] = RPCObject(height)
-        obj["version"] = RPCObject(version)
-        obj["versionHex"] = RPCObject(versionHex)
-        obj["merkleroot"] = RPCObject(merkleroot)
-        obj["time"] = RPCObject(time)
-        obj["mediantime"] = RPCObject(mediantime)
-        obj["nonce"] = RPCObject(nonce)
-        obj["bits"] = RPCObject(bits)
-        obj["difficulty"] = RPCObject(difficulty)
-        obj["chainwork"] = RPCObject(chainwork)
-        obj["nTx"] = RPCObject(nTx)
-        obj["previousblockhash"] = RPCObject(previousblockhash)
-        obj["nextblockhash"] = RPCObject(nextblockhash)
+        obj["hash"] = RPCObject( hash )
+        obj["confirmations"] = RPCObject( String(format: "0x%1x", arguments: [confirmations]) )
+        obj["height"] = RPCObject( String(format: "0x%1x", arguments: [height]) )
+        obj["version"] = RPCObject( String(format: "0x%1x", arguments: [version]) )
+        obj["versionHex"] = RPCObject( versionHex )
+        obj["merkleroot"] = RPCObject( merkleroot )
+        obj["time"] = RPCObject( String(format: "0x%1x", arguments: [time]) )
+        obj["mediantime"] = RPCObject( String(format: "0x%1x", arguments: [mediantime]) )
+        obj["nonce"] = RPCObject( String(format: "0x%1x", arguments: [nonce]) )
+        obj["bits"] = RPCObject( bits )
+        obj["difficulty"] = RPCObject( difficulty.hexValue )
+        obj["chainwork"] = RPCObject( chainwork )
+        obj["nTx"] = RPCObject( String(format: "0x%1x", arguments: [nTx]) )
+        obj["previousblockhash"] = RPCObject( previousblockhash )
+        obj["nextblockhash"] = RPCObject( nextblockhash )
         return obj
     }
+
     /// initialize the BtcblockWithTx
     ///
     /// - Parameter hash : the block hash (same as provided)
@@ -887,21 +891,22 @@ public struct Btctransaction {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["txid"] = RPCObject(txid)
-        obj["in_active_chain"] = RPCObject(in_active_chain)
-        obj["hex"] = RPCObject(hex)
-        obj["hash"] = RPCObject(hash)
-        obj["size"] = RPCObject(size)
-        obj["vsize"] = RPCObject(vsize)
-        obj["weight"] = RPCObject(weight)
-        obj["version"] = RPCObject(version)
-        obj["locktime"] = RPCObject(locktime)
-        obj["blockhash"] = RPCObject(blockhash)
-        obj["confirmations"] = RPCObject(confirmations)
-        obj["blocktime"] = RPCObject(blocktime)
-        obj["time"] = RPCObject(time)
+        obj["txid"] = RPCObject( txid )
+        obj["in_active_chain"] = RPCObject( in_active_chain )
+        obj["hex"] = RPCObject( hex )
+        obj["hash"] = RPCObject( hash )
+        obj["size"] = RPCObject( String(format: "0x%1x", arguments: [size]) )
+        obj["vsize"] = RPCObject( String(format: "0x%1x", arguments: [vsize]) )
+        obj["weight"] = RPCObject( String(format: "0x%1x", arguments: [weight]) )
+        obj["version"] = RPCObject( String(format: "0x%1x", arguments: [version]) )
+        obj["locktime"] = RPCObject( String(format: "0x%1x", arguments: [locktime]) )
+        obj["blockhash"] = RPCObject( blockhash )
+        obj["confirmations"] = RPCObject( String(format: "0x%1x", arguments: [confirmations]) )
+        obj["blocktime"] = RPCObject( String(format: "0x%1x", arguments: [blocktime]) )
+        obj["time"] = RPCObject( String(format: "0x%1x", arguments: [time]) )
         return obj
     }
+
     /// initialize the Btctransaction
     ///
     /// - Parameter txid : txid
@@ -966,11 +971,13 @@ public struct BtcVin {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["txid"] = RPCObject(txid)
-        obj["vout"] = RPCObject(vout)
-        obj["sequence"] = RPCObject(sequence)
+        obj["txid"] = RPCObject( txid )
+        obj["vout"] = RPCObject( String(format: "0x%1x", arguments: [vout]) )
+        obj["sequence"] = RPCObject( String(format: "0x%1x", arguments: [sequence]) )
+        obj["txinwitness"] = RPCObject( txinwitness )
         return obj
     }
+
     /// initialize the BtcVin
     ///
     /// - Parameter txid : the transaction id
@@ -1003,10 +1010,11 @@ public struct BtcScriptSig {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["asm"] = RPCObject(asm)
-        obj["hex"] = RPCObject(hex)
+        obj["asm"] = RPCObject( asm )
+        obj["hex"] = RPCObject( hex )
         return obj
     }
+
     /// initialize the BtcScriptSig
     ///
     /// - Parameter asm : the asm-codes
@@ -1037,10 +1045,11 @@ public struct BtcVout {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["value"] = RPCObject(value)
-        obj["n"] = RPCObject(n)
+        obj["value"] = RPCObject( value )
+        obj["n"] = RPCObject( String(format: "0x%1x", arguments: [n]) )
         return obj
     }
+
     /// initialize the BtcVout
     ///
     /// - Parameter value : The Value in BTC
@@ -1081,12 +1090,14 @@ public struct BtcScriptPubKey {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["asm"] = RPCObject(asm)
-        obj["hex"] = RPCObject(hex)
-        obj["reqSigs"] = RPCObject(reqSigs)
-        obj["type"] = RPCObject(type)
+        obj["asm"] = RPCObject( asm )
+        obj["hex"] = RPCObject( hex )
+        obj["reqSigs"] = RPCObject( String(format: "0x%1x", arguments: [reqSigs]) )
+        obj["type"] = RPCObject( type )
+        obj["addresses"] = RPCObject( addresses )
         return obj
     }
+
     /// initialize the BtcScriptPubKey
     ///
     /// - Parameter asm : asm
@@ -1131,13 +1142,14 @@ public struct BtcProofTarget {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["dap"] = RPCObject(dap)
-        obj["block"] = RPCObject(block)
-        obj["final"] = RPCObject(final)
-        obj["cbtx"] = RPCObject(cbtx)
-        obj["cbtxMerkleProof"] = RPCObject(cbtxMerkleProof)
+        obj["dap"] = RPCObject( String(format: "0x%1x", arguments: [dap]) )
+        obj["block"] = RPCObject( block )
+        obj["final"] = RPCObject( final )
+        obj["cbtx"] = RPCObject( cbtx )
+        obj["cbtxMerkleProof"] = RPCObject( cbtxMerkleProof )
         return obj
     }
+
     /// initialize the BtcProofTarget
     ///
     /// - Parameter dap : the difficulty adjustement period

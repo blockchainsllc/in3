@@ -1,4 +1,43 @@
 types:
+
+  ethlog:
+    address:
+      descr: the address triggering the event.
+      type: address
+    blockNumber:
+      descr: the blockNumber
+      type: uint64
+    blockHash:
+      descr: blockhash if ther containing block
+      type: bytes32
+    data:
+      descr: abi-encoded data of the event (all non indexed fields)
+      type: bytes
+    logIndex:
+      descr: the index of the even within the block.
+      type: int
+    removed:
+      descr: the reorg-status of the event.
+      type: bool
+    topics:
+      array: true
+      descr: array of 32byte-topics of the indexed fields.
+      type: bytes32
+    transactionHash:
+      descr: requested transactionHash
+      type: bytes32
+    transactionIndex:
+      descr: transactionIndex within the containing block.
+      type: int
+    transactionLogIndex:
+      descr: index of the event within the transaction. 
+      type: int
+      optional: true
+    type:
+      descr: mining-status
+      type: string
+      optional: true
+
   transactionReceipt:
     blockNumber:
       descr: the blockNumber
@@ -9,6 +48,7 @@ types:
     contractAddress:
       descr: the deployed contract in case the tx did deploy a new contract
       type:  address
+      optional: true
     cumulativeGasUsed:
       descr: gas used for all transaction up to this one in the block
       type: uint64
@@ -17,41 +57,8 @@ types:
       type: uint64
     logs:
       descr: array of events created during execution of the tx
-      type: 
-        address:
-          descr: the address triggering the event.
-          type: address
-        blockNumber:
-          descr: the blockNumber
-          type: uint64
-        blockHash:
-          descr: blockhash if ther containing block
-          type: bytes32
-        data:
-          descr: abi-encoded data of the event (all non indexed fields)
-          type: bytes
-        logIndex:
-          descr: the index of the even within the block.
-          type: int
-        removed:
-          descr: the reorg-status of the event.
-          type: bool
-        topics:
-          array: true
-          descr: array of 32byte-topics of the indexed fields.
-          type: bytes32
-        transactionHash:
-          descr: requested transactionHash
-          type: bytes32
-        transactionIndex:
-          descr: transactionIndex within the containing block.
-          type: int
-        transactionLogIndex:
-          descr: index of the event within the transaction. 
-          type: int
-        type:
-          descr: mining-status
-          type: string
+      array: true
+      type: ethlog
     logsBloom:
       descr: bloomfilter used to detect events for `eth_getLogs`
       type: bytes128

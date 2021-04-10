@@ -23,7 +23,7 @@ public class Ipfs {
     /// **Example**
     /// 
     /// ```swift
-    /// IpfsAPI(in3).get(ipfshash: "QmSepGsypERjq71BSm4Cjq7j8tyAUnCw6ZDTeNdE8RUssD", encoding: "utf8") .observe(using: {
+    /// Ipfs(in3).get(ipfshash: "QmSepGsypERjq71BSm4Cjq7j8tyAUnCw6ZDTeNdE8RUssD", encoding: "utf8") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -50,7 +50,7 @@ public class Ipfs {
     /// **Example**
     /// 
     /// ```swift
-    /// IpfsAPI(in3).put(data: "I love Incubed", encoding: "utf8") .observe(using: {
+    /// Ipfs(in3).put(data: "I love Incubed", encoding: "utf8") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")

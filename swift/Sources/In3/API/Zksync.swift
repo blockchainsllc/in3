@@ -25,7 +25,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).contractAddress() .observe(using: {
+    /// Zksync(in3).contractAddress() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -49,7 +49,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).tokens() .observe(using: {
+    /// Zksync(in3).tokens() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -92,7 +92,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).accountInfo() .observe(using: {
+    /// Zksync(in3).accountInfo() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -127,7 +127,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).txInfo(tx: "sync-tx:e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000") .observe(using: {
+    /// Zksync(in3).txInfo(tx: "sync-tx:e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -169,7 +169,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).setKey(token: "eth") .observe(using: {
+    /// Zksync(in3).setKey(token: "eth") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -192,7 +192,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try ZksyncAPI(in3).pubkeyhash()
+    /// let result = try Zksync(in3).pubkeyhash()
     /// // result = sync:4dcd9bb4463121470c7232efb9ff23ec21398e58
     /// ```
     /// 
@@ -209,7 +209,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try ZksyncAPI(in3).pubkey()
+    /// let result = try Zksync(in3).pubkey()
     /// // result = "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc04"
     /// ```
     /// 
@@ -223,7 +223,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try ZksyncAPI(in3).accountAddress()
+    /// let result = try Zksync(in3).accountAddress()
     /// // result = "0x3b2a1bd631d9d7b17e87429a8e78dbbd9b4de292"
     /// ```
     /// 
@@ -246,7 +246,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).sign(message: "0xaabbccddeeff") .observe(using: {
+    /// Zksync(in3).sign(message: "0xaabbccddeeff") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -275,7 +275,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try ZksyncAPI(in3).verify(message: "0xaabbccddeeff", signature: "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c3980e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31b69cd0910a432156a0977c3a5baa404547e01")
+    /// let result = try Zksync(in3).verify(message: "0xaabbccddeeff", signature: "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c3980e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31b69cd0910a432156a0977c3a5baa404547e01")
     /// // result = 1
     /// ```
     /// 
@@ -296,7 +296,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).getTokenPrice(token: "WBTC") .observe(using: {
+    /// Zksync(in3).getTokenPrice(token: "WBTC") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -321,7 +321,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).getTxFee(txType: "Transfer", address: "0xabea9132b05a70803a4e85094fd0e1800777fbef", token: "BAT") .observe(using: {
+    /// Zksync(in3).getTxFee(txType: "Transfer", address: "0xabea9132b05a70803a4e85094fd0e1800777fbef", token: "BAT") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -349,7 +349,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).syncKey() .observe(using: {
+    /// Zksync(in3).syncKey() .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -375,7 +375,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).deposit(amount: 1000, token: "WBTC") .observe(using: {
+    /// Zksync(in3).deposit(amount: 1000, token: "WBTC") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -401,7 +401,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).transfer(to: 9.814684447173249e+47, amount: 100, token: "WBTC") .observe(using: {
+    /// Zksync(in3).transfer(to: 9.814684447173249e+47, amount: 100, token: "WBTC") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -427,7 +427,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).withdraw(ethAddress: 9.814684447173249e+47, amount: 100, token: "WBTC") .observe(using: {
+    /// Zksync(in3).withdraw(ethAddress: 9.814684447173249e+47, amount: 100, token: "WBTC") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -450,7 +450,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// ZksyncAPI(in3).emergencyWithdraw(token: "WBTC") .observe(using: {
+    /// Zksync(in3).emergencyWithdraw(token: "WBTC") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -498,7 +498,7 @@ public class Zksync {
     /// **Example**
     /// 
     /// ```swift
-    /// let result = try ZksyncAPI(in3).aggregatePubkey(pubkeys: "0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409")
+    /// let result = try Zksync(in3).aggregatePubkey(pubkeys: "0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409")
     /// // result = "0x9ce5b6f8db3fbbe66a3bdbd3b4731f19ec27f80ee03ead3c0708798dd949882b"
     /// ```
     /// 
@@ -524,10 +524,11 @@ public struct ZksyncContractAddress {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["govContract"] = RPCObject(govContract)
-        obj["mainContract"] = RPCObject(mainContract)
+        obj["govContract"] = RPCObject( govContract )
+        obj["mainContract"] = RPCObject( mainContract )
         return obj
     }
+
     /// initialize the ZksyncContractAddress
     ///
     /// - Parameter govContract : the address of the govement contract
@@ -562,12 +563,13 @@ public struct ZksyncTokens {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["address"] = RPCObject(address)
-        obj["decimals"] = RPCObject(decimals)
-        obj["id"] = RPCObject(id)
-        obj["symbol"] = RPCObject(symbol)
+        obj["address"] = RPCObject( address )
+        obj["decimals"] = RPCObject( String(format: "0x%1x", arguments: [decimals]) )
+        obj["id"] = RPCObject( String(format: "0x%1x", arguments: [id]) )
+        obj["symbol"] = RPCObject( symbol )
         return obj
     }
+
     /// initialize the ZksyncTokens
     ///
     /// - Parameter address : the address of the ERC2-Contract or 0x00000..000 in case of the native token (eth)
@@ -610,10 +612,11 @@ public struct ZksyncAccountInfo {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["address"] = RPCObject(address)
-        obj["id"] = RPCObject(id)
+        obj["address"] = RPCObject( address )
+        obj["id"] = RPCObject( String(format: "0x%1x", arguments: [id]) )
         return obj
     }
+
     /// initialize the ZksyncAccountInfo
     ///
     /// - Parameter address : the address of the account
@@ -650,10 +653,11 @@ public struct ZksyncCommited {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["nonce"] = RPCObject(nonce)
-        obj["pubKeyHash"] = RPCObject(pubKeyHash)
+        obj["nonce"] = RPCObject( String(format: "0x%1x", arguments: [nonce]) )
+        obj["pubKeyHash"] = RPCObject( pubKeyHash )
         return obj
     }
+
     /// initialize the ZksyncCommited
     ///
     /// - Parameter balances : the token-balance
@@ -675,6 +679,7 @@ public struct ZksyncDepositing {
         guard let obj = try toObject(rpc, optional) else { return nil }
         balances = try toObject(obj["balances"])!.mapValues({ try toUInt256($0,false)! })
     }
+
 
     /// initialize the ZksyncDepositing
     ///
@@ -704,10 +709,11 @@ public struct ZksyncVerified {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["nonce"] = RPCObject(nonce)
-        obj["pubKeyHash"] = RPCObject(pubKeyHash)
+        obj["nonce"] = RPCObject( String(format: "0x%1x", arguments: [nonce]) )
+        obj["pubKeyHash"] = RPCObject( pubKeyHash )
         return obj
     }
+
     /// initialize the ZksyncVerified
     ///
     /// - Parameter balances : the token-balances.
@@ -744,12 +750,13 @@ public struct ZksyncTxInfo {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["block"] = RPCObject(block)
-        obj["executed"] = RPCObject(executed)
-        obj["success"] = RPCObject(success)
-        obj["failReason"] = RPCObject(failReason)
+        obj["block"] = RPCObject( String(format: "0x%1x", arguments: [block]) )
+        obj["executed"] = RPCObject( executed )
+        obj["success"] = RPCObject( success )
+        obj["failReason"] = RPCObject( failReason )
         return obj
     }
+
     /// initialize the ZksyncTxInfo
     ///
     /// - Parameter block : the blockNumber containing the tx or `null` if still pending
@@ -796,14 +803,15 @@ public struct ZksyncTxFee {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["feeType"] = RPCObject(feeType)
-        obj["gasFee"] = RPCObject(gasFee)
-        obj["gasPriceWei"] = RPCObject(gasPriceWei)
-        obj["gasTxAmount"] = RPCObject(gasTxAmount)
-        obj["totalFee"] = RPCObject(totalFee)
-        obj["zkpFee"] = RPCObject(zkpFee)
+        obj["feeType"] = RPCObject( feeType )
+        obj["gasFee"] = RPCObject( String(format: "0x%1x", arguments: [gasFee]) )
+        obj["gasPriceWei"] = RPCObject( String(format: "0x%1x", arguments: [gasPriceWei]) )
+        obj["gasTxAmount"] = RPCObject( String(format: "0x%1x", arguments: [gasTxAmount]) )
+        obj["totalFee"] = RPCObject( String(format: "0x%1x", arguments: [totalFee]) )
+        obj["zkpFee"] = RPCObject( String(format: "0x%1x", arguments: [zkpFee]) )
         return obj
     }
+
     /// initialize the ZksyncTxFee
     ///
     /// - Parameter feeType : Type of the transaaction
@@ -831,7 +839,7 @@ public struct ZksyncTransactionReceipt {
     public var blockHash: String
 
     /// the deployed contract in case the tx did deploy a new contract
-    public var contractAddress: String
+    public var contractAddress: String?
 
     /// gas used for all transaction up to this one in the block
     public var cumulativeGasUsed: UInt64
@@ -840,7 +848,7 @@ public struct ZksyncTransactionReceipt {
     public var gasUsed: UInt64
 
     /// array of events created during execution of the tx
-    public var logs: ZksyncLogs
+    public var logs: [ZksyncEthlog]
 
     /// bloomfilter used to detect events for `eth_getLogs`
     public var logsBloom: String
@@ -858,10 +866,10 @@ public struct ZksyncTransactionReceipt {
         guard let obj = try toObject(rpc, optional) else { return nil }
         blockNumber = try toUInt64(obj["blockNumber"],false)!
         blockHash = try toString(obj["blockHash"],false)!
-        contractAddress = try toString(obj["contractAddress"],false)!
+        contractAddress = try toString(obj["contractAddress"],true)!
         cumulativeGasUsed = try toUInt64(obj["cumulativeGasUsed"],false)!
         gasUsed = try toUInt64(obj["gasUsed"],false)!
-        logs = try ZksyncLogs(obj["logs"],false)!
+        logs = try toArray(obj["logs"])!.map({ try ZksyncEthlog($0,false)! })
         logsBloom = try toString(obj["logsBloom"],false)!
         status = try toInt(obj["status"],false)!
         transactionHash = try toString(obj["transactionHash"],false)!
@@ -870,17 +878,18 @@ public struct ZksyncTransactionReceipt {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["blockNumber"] = RPCObject(blockNumber)
-        obj["blockHash"] = RPCObject(blockHash)
-        obj["contractAddress"] = RPCObject(contractAddress)
-        obj["cumulativeGasUsed"] = RPCObject(cumulativeGasUsed)
-        obj["gasUsed"] = RPCObject(gasUsed)
-        obj["logsBloom"] = RPCObject(logsBloom)
-        obj["status"] = RPCObject(status)
-        obj["transactionHash"] = RPCObject(transactionHash)
-        obj["transactionIndex"] = RPCObject(transactionIndex)
+        obj["blockNumber"] = RPCObject( String(format: "0x%1x", arguments: [blockNumber]) )
+        obj["blockHash"] = RPCObject( blockHash )
+        if let x = contractAddress { obj["contractAddress"] = RPCObject( x ) }
+        obj["cumulativeGasUsed"] = RPCObject( String(format: "0x%1x", arguments: [cumulativeGasUsed]) )
+        obj["gasUsed"] = RPCObject( String(format: "0x%1x", arguments: [gasUsed]) )
+        obj["logsBloom"] = RPCObject( logsBloom )
+        obj["status"] = RPCObject( String(format: "0x%1x", arguments: [status]) )
+        obj["transactionHash"] = RPCObject( transactionHash )
+        obj["transactionIndex"] = RPCObject( String(format: "0x%1x", arguments: [transactionIndex]) )
         return obj
     }
+
     /// initialize the ZksyncTransactionReceipt
     ///
     /// - Parameter blockNumber : the blockNumber
@@ -893,7 +902,7 @@ public struct ZksyncTransactionReceipt {
     /// - Parameter status : error-status of the tx.  0x1 = success 0x0 = failure
     /// - Parameter transactionHash : requested transactionHash
     /// - Parameter transactionIndex : transactionIndex within the containing block.
-    public init(blockNumber: UInt64, blockHash: String, contractAddress: String, cumulativeGasUsed: UInt64, gasUsed: UInt64, logs: ZksyncLogs, logsBloom: String, status: Int, transactionHash: String, transactionIndex: Int) {
+    public init(blockNumber: UInt64, blockHash: String, contractAddress: String? = nil, cumulativeGasUsed: UInt64, gasUsed: UInt64, logs: [ZksyncEthlog], logsBloom: String, status: Int, transactionHash: String, transactionIndex: Int) {
         self.blockNumber = blockNumber
         self.blockHash = blockHash
         self.contractAddress = contractAddress
@@ -908,7 +917,7 @@ public struct ZksyncTransactionReceipt {
 }
 
 /// array of events created during execution of the tx
-public struct ZksyncLogs {
+public struct ZksyncEthlog {
     /// the address triggering the event.
     public var address: String
 
@@ -937,10 +946,10 @@ public struct ZksyncLogs {
     public var transactionIndex: Int
 
     /// index of the event within the transaction.
-    public var transactionLogIndex: Int
+    public var transactionLogIndex: Int?
 
     /// mining-status
-    public var type: String
+    public var type: String?
 
     internal init?(_ rpc:RPCObject?, _ optional: Bool = true) throws {
         guard let obj = try toObject(rpc, optional) else { return nil }
@@ -953,25 +962,27 @@ public struct ZksyncLogs {
         topics = try toArray(obj["topics"])!.map({ try toString($0,false)! })
         transactionHash = try toString(obj["transactionHash"],false)!
         transactionIndex = try toInt(obj["transactionIndex"],false)!
-        transactionLogIndex = try toInt(obj["transactionLogIndex"],false)!
-        type = try toString(obj["type"],false)!
+        transactionLogIndex = try toInt(obj["transactionLogIndex"],true)!
+        type = try toString(obj["type"],true)!
     }
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["address"] = RPCObject(address)
-        obj["blockNumber"] = RPCObject(blockNumber)
-        obj["blockHash"] = RPCObject(blockHash)
-        obj["data"] = RPCObject(data)
-        obj["logIndex"] = RPCObject(logIndex)
-        obj["removed"] = RPCObject(removed)
-        obj["transactionHash"] = RPCObject(transactionHash)
-        obj["transactionIndex"] = RPCObject(transactionIndex)
-        obj["transactionLogIndex"] = RPCObject(transactionLogIndex)
-        obj["type"] = RPCObject(type)
+        obj["address"] = RPCObject( address )
+        obj["blockNumber"] = RPCObject( String(format: "0x%1x", arguments: [blockNumber]) )
+        obj["blockHash"] = RPCObject( blockHash )
+        obj["data"] = RPCObject( data )
+        obj["logIndex"] = RPCObject( String(format: "0x%1x", arguments: [logIndex]) )
+        obj["removed"] = RPCObject( removed )
+        obj["topics"] = RPCObject( topics )
+        obj["transactionHash"] = RPCObject( transactionHash )
+        obj["transactionIndex"] = RPCObject( String(format: "0x%1x", arguments: [transactionIndex]) )
+        if let x = transactionLogIndex { obj["transactionLogIndex"] = RPCObject( String(format: "0x%1x", arguments: [x]) ) }
+        if let x = type { obj["type"] = RPCObject( x ) }
         return obj
     }
-    /// initialize the ZksyncLogs
+
+    /// initialize the ZksyncEthlog
     ///
     /// - Parameter address : the address triggering the event.
     /// - Parameter blockNumber : the blockNumber
@@ -984,7 +995,7 @@ public struct ZksyncLogs {
     /// - Parameter transactionIndex : transactionIndex within the containing block.
     /// - Parameter transactionLogIndex : index of the event within the transaction.
     /// - Parameter type : mining-status
-    public init(address: String, blockNumber: UInt64, blockHash: String, data: String, logIndex: Int, removed: Bool, topics: [String], transactionHash: String, transactionIndex: Int, transactionLogIndex: Int, type: String) {
+    public init(address: String, blockNumber: UInt64, blockHash: String, data: String, logIndex: Int, removed: Bool, topics: [String], transactionHash: String, transactionIndex: Int, transactionLogIndex: Int? = nil, type: String? = nil) {
         self.address = address
         self.blockNumber = blockNumber
         self.blockHash = blockHash

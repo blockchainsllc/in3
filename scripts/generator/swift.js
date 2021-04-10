@@ -40,6 +40,13 @@ function converterName(swiftType, asFn) {
     return asFn ? '{ try ' + type + '($0,$1) }' : type
 }
 
+function asHex(t, varName) {
+    if (t.startsWith('UInt256'))
+        return varName + '.hexValue'
+    return (t.startsWith('UInt') || t.startsWith('Int'))
+        ? 'String(format: "0x%1x", arguments: [' + varName + '])'
+        : varName
+}
 
 function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api) {
     typesGenerated[swiftType] = 'placeholder'
@@ -52,7 +59,7 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
         + '\n        guard let obj = try toObject(rpc, optional) else { return nil }'
     let pubInitHead = '    public init('
     let pubInitBody = ''
-    let pubInitDescr = '\n    /// initialize the ' + swiftType + '\n    ///'
+    let pubInitDescr = '\n\n    /// initialize the ' + swiftType + '\n    ///'
 
 
     for (let name of Object.keys(conf)) {
@@ -66,13 +73,18 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
         if (p.array) {
             if (p.optional) {
                 init += '\n        if let ' + name + ' = try toArray(obj["' + name + '"],' + (p.optional ? 'true' : 'false') + ') {'
-                init += '\n          self.' + name + ' = try ' + name + '.map({ try ' + converterName(t, false) + '($0,' + (p.optional ? 'true' : 'false') + ')! })'
+                init += '\n          self.' + name + ' = try ' + name + '.map({ try ' + converterName(t, false) + '($0,' + (p.nullable ? 'true' : 'false') + ')' + (p.nullable ? '' : '!') + ' })'
                 init += '\n        } else {'
                 init += '\n          self.' + name + ' = nil'
                 init += '\n        }'
+                if (!isStruct(p, typeConfigs))
+                    toRPC += '\n        if let x = ' + name + ' { obj["' + name + '"] = RPCObject( x ) }'
             }
-            else
+            else {
                 init += '\n        ' + name + ' = try toArray(obj["' + name + '"])!.map({ try ' + converterName(t, false) + '($0,' + (p.optional ? 'true' : 'false') + ')! })'
+                if (!isStruct(p, typeConfigs))
+                    toRPC += '\n        obj["' + name + '"] = RPCObject( ' + name + ' )'
+            }
         }
         else if (p.key) {
             if (p.optional) {
@@ -87,8 +99,13 @@ function generateStruct(swiftType, conf, descr, typeConfigs, typesGenerated, api
         }
         else {
             init += '\n        ' + name + ' = try ' + converterName(t, false) + '(obj["' + name + '"],' + (p.optional ? 'true' : 'false') + ')!'
-            if (!isStruct(p, typeConfigs))
-                toRPC += '\n        obj["' + name + '"] = ' + (p.optional ? (name + ' == nil ? RPCObject.none : RPCObject(' + name + '!)') : 'RPCObject(' + name + ')')
+            if (!isStruct(p, typeConfigs)) {
+                if (p.optional || p.optionalAPI)
+                    toRPC += '\n        if let x = ' + name + ' { obj["' + name + '"] = RPCObject( ' + asHex(t, 'x') + ' ) }'
+                else
+                    toRPC += '\n        obj["' + name + '"] = RPCObject( ' + asHex(t, name) + ' )'
+
+            }
         }
 
     }
@@ -122,7 +139,7 @@ function getAPIType(c, typeConfigs, typesGenerated, prefix, api) {
     if (typedef && typesGenerated && !typesGenerated[swiftType])
         generateStruct(swiftType, typedef, c.descr, typeConfigs, typesGenerated, api);
 
-    if (c.array) swiftType = '[' + swiftType + ']'
+    if (c.array) swiftType = '[' + swiftType + (c.nullable ? '?' : '') + ']'
     if (c.key) swiftType = '[String:' + swiftType + ']'
     if (c.optional || c.optionalAPI) swiftType += '?'
     return swiftType
@@ -293,7 +310,7 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
         }
         const paramNames = Object.keys(rpc.params || {})
         let x = '\n**Example**\n\n```swift\n'
-        let call = camelCaseUp(api_name) + 'API(in3).' + fnName + '(' + (ex.request || [])
+        let call = camelCaseUp(api_name) + '(in3).' + fnName + '(' + (ex.request || [])
             .filter((_, i) => _ != rpc.params[paramNames[i]].internalDefault)
             .map((_, i) => paramNames[i] + ': ' + toSwiftValue(_, i)).join(', ') + ')'
         if (rpc.sync) {

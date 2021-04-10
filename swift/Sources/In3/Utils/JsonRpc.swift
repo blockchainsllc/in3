@@ -309,6 +309,7 @@ public enum RPCObject: Equatable {
         self = .string(value)
     }
 
+
     /// Wrap a Integer as Value
     public init(_ value: Int) {
         self = .integer(value)
@@ -337,6 +338,11 @@ public enum RPCObject: Equatable {
     /// Wrap a String -Array as Value
     public init(_ value: [String]) {
         self = .list(value.map { RPCObject($0) })
+    }
+
+    /// Wrap a String -Array as Value
+    public init(_ value: [String?]) {
+        self = .list(value.map { $0 == nil ? RPCObject.none : RPCObject($0!) })
     }
 
     /// Wrap a Integer -Array as Value

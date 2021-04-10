@@ -21,7 +21,7 @@ public class Nodelist {
     /// **Example**
     /// 
     /// ```swift
-    /// NodelistAPI(in3).nodes(limit: 2, seed: "0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b", addresses: []) .observe(using: {
+    /// Nodelist(in3).nodes(limit: 2, seed: "0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b", addresses: []) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -73,7 +73,7 @@ public class Nodelist {
     /// **Example**
     /// 
     /// ```swift
-    /// NodelistAPI(in3).signBlockHash(blocks: NodelistBlocks(blockNumber: 8770580)) .observe(using: {
+    /// Nodelist(in3).signBlockHash(blocks: NodelistBlocks(blockNumber: 8770580)) .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -102,7 +102,7 @@ public class Nodelist {
     /// **Example**
     /// 
     /// ```swift
-    /// NodelistAPI(in3).whitelist(address: "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b") .observe(using: {
+    /// Nodelist(in3).whitelist(address: "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b") .observe(using: {
     ///     switch $0 {
     ///        case let .failure(err):
     ///          print("Failed because : \(err.localizedDescription)")
@@ -154,12 +154,13 @@ public struct NodeListDefinition {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["contract"] = RPCObject(contract)
-        obj["registryId"] = RPCObject(registryId)
-        obj["lastBlockNumber"] = RPCObject(lastBlockNumber)
-        obj["totalServer"] = RPCObject(totalServer)
+        obj["contract"] = RPCObject( contract )
+        obj["registryId"] = RPCObject( registryId )
+        obj["lastBlockNumber"] = RPCObject( String(format: "0x%1x", arguments: [lastBlockNumber]) )
+        obj["totalServer"] = RPCObject( String(format: "0x%1x", arguments: [totalServer]) )
         return obj
     }
+
     /// initialize the NodeListDefinition
     ///
     /// - Parameter nodes : a array of node definitions.
@@ -224,17 +225,18 @@ public struct Node {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["url"] = RPCObject(url)
-        obj["address"] = RPCObject(address)
-        obj["index"] = RPCObject(index)
-        obj["deposit"] = RPCObject(deposit)
-        obj["props"] = RPCObject(props)
-        obj["timeout"] = RPCObject(timeout)
-        obj["registerTime"] = RPCObject(registerTime)
-        obj["weight"] = RPCObject(weight)
-        obj["proofHash"] = RPCObject(proofHash)
+        obj["url"] = RPCObject( url )
+        obj["address"] = RPCObject( address )
+        obj["index"] = RPCObject( String(format: "0x%1x", arguments: [index]) )
+        obj["deposit"] = RPCObject( deposit.hexValue )
+        obj["props"] = RPCObject( props )
+        obj["timeout"] = RPCObject( String(format: "0x%1x", arguments: [timeout]) )
+        obj["registerTime"] = RPCObject( String(format: "0x%1x", arguments: [registerTime]) )
+        obj["weight"] = RPCObject( String(format: "0x%1x", arguments: [weight]) )
+        obj["proofHash"] = RPCObject( proofHash )
         return obj
     }
+
     /// initialize the Node
     ///
     /// - Parameter url : the url of the node. Currently only http/https is supported, but in the future this may even support onion-routing or any other protocols.
@@ -279,10 +281,11 @@ public struct NodelistBlocks {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["blockNumber"] = RPCObject(blockNumber)
-        obj["hash"] = hash == nil ? RPCObject.none : RPCObject(hash!)
+        obj["blockNumber"] = RPCObject( String(format: "0x%1x", arguments: [blockNumber]) )
+        if let x = hash { obj["hash"] = RPCObject( x ) }
         return obj
     }
+
     /// initialize the NodelistBlocks
     ///
     /// - Parameter blockNumber : the blockNumber to sign
@@ -325,14 +328,15 @@ public struct NodelistSignBlockHash {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["blockHash"] = RPCObject(blockHash)
-        obj["block"] = RPCObject(block)
-        obj["r"] = RPCObject(r)
-        obj["s"] = RPCObject(s)
-        obj["v"] = RPCObject(v)
-        obj["msgHash"] = RPCObject(msgHash)
+        obj["blockHash"] = RPCObject( blockHash )
+        obj["block"] = RPCObject( String(format: "0x%1x", arguments: [block]) )
+        obj["r"] = RPCObject( r )
+        obj["s"] = RPCObject( s )
+        obj["v"] = RPCObject( v )
+        obj["msgHash"] = RPCObject( msgHash )
         return obj
     }
+
     /// initialize the NodelistSignBlockHash
     ///
     /// - Parameter blockHash : the blockhash which was signed.
@@ -379,13 +383,14 @@ public struct NodelistWhitelist {
 
     internal func toRPCDict() -> [String:RPCObject] {
         var obj:[String:RPCObject] = [:]
-        obj["nodes"] = RPCObject(nodes)
-        obj["lastWhiteList"] = RPCObject(lastWhiteList)
-        obj["contract"] = RPCObject(contract)
-        obj["lastBlockNumber"] = RPCObject(lastBlockNumber)
-        obj["totalServer"] = RPCObject(totalServer)
+        obj["nodes"] = RPCObject( nodes )
+        obj["lastWhiteList"] = RPCObject( String(format: "0x%1x", arguments: [lastWhiteList]) )
+        obj["contract"] = RPCObject( contract )
+        obj["lastBlockNumber"] = RPCObject( String(format: "0x%1x", arguments: [lastBlockNumber]) )
+        obj["totalServer"] = RPCObject( String(format: "0x%1x", arguments: [totalServer]) )
         return obj
     }
+
     /// initialize the NodelistWhitelist
     ///
     /// - Parameter nodes : array of whitelisted nodes addresses.
