@@ -31,13 +31,22 @@ internal func toHex(val:AnyObject, len:Int=0) -> String {
     return "0x" + s
 }
 
+/// represents a contract with a defined ABI
+/// for the ABI-spec see https://docs.soliditylang.org/en/v0.7.4/abi-spec.html?highlight=JSON#json
 public class Contract {
     
     var in3:In3
     var address:String?
     var abi:[ABI]
     var hashes:[String:ABI]
-    
+
+    /// creates a new Contract-Instance
+    /// you need to specify either the abi or the abiJson-Property.
+    /// - Parameter in3 : the Incubed instance
+    /// - Parameter abi : the parsed structuured ABI-Definitions
+    /// - Parameter abiJSON : the ABI as JSON-String
+    /// - Parameter at : address of the deployed contract
+    ///
     public init(in3:In3, abi:[ABI]? = nil, abiJSON:String? = nil, at: String?=nil) throws {
         self.in3=in3
         self.address = at
@@ -57,7 +66,15 @@ public class Contract {
         }
     }
     
-    public func deploy(data: String,  args: [AnyObject],  account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) -> Future<String> {
+    /// deploys the contract and returns the transactionhash
+    /// - Parameter data : the bytes as hex of the code to deploy
+    /// - Parameter args : the optional arguments of the constructor
+    /// - Parameter account : the account to send the transaction from
+    /// - Parameter gas : the amount of gas to be used
+    /// - Parameter gasPrice : the gasPrice. If not given the current gasPrice will be used.
+    ///
+    /// - Returns : The TransactionHash
+    public func deploy(data: String,  args: [AnyObject]?=nil,  account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) -> Future<String> {
         do {
             return Eth(in3).sendTransaction(tx: try createDeployTx(data: data, args: args, account: account, gas: gas, gasPrice: gasPrice))
         } catch {
@@ -67,7 +84,15 @@ public class Contract {
         }
     }
 
-    public func deployAndWait(data: String,  args: [AnyObject],  account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) -> Future<EthTransactionReceipt> {
+    /// deploys the contract and wait until the receipt is available.
+    /// - Parameter data : the bytes as hex of the code to deploy
+    /// - Parameter args : the optional arguments of the constructor
+    /// - Parameter account : the account to send the transaction from
+    /// - Parameter gas : the amount of gas to be used
+    /// - Parameter gasPrice : the gasPrice. If not given the current gasPrice will be used.
+    ///
+    /// - Returns : The TransactionReceipt
+    public func deployAndWait(data: String,  args: [AnyObject]?=nil,  account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) -> Future<EthTransactionReceipt> {
         do {
             return Eth(in3).sendTransactionAndWait(tx: try createDeployTx(data: data, args: args, account: account, gas: gas, gasPrice: gasPrice)).chained(using: {
                 self.address = $0.contractAddress
@@ -80,6 +105,14 @@ public class Contract {
         }
     }
 
+    /// create a TransactionDefinition which cqan be used to deploy the contract
+    /// - Parameter data : the bytes as hex of the code to deploy
+    /// - Parameter args : the optional arguments of the constructor
+    /// - Parameter account : the account to send the transaction from
+    /// - Parameter gas : the amount of gas to be used
+    /// - Parameter gasPrice : the gasPrice. If not given the current gasPrice will be used.
+    ///
+    /// - Returns : The Transaction Definition
     public func createDeployTx(data: String, args: [AnyObject]?=nil, account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) throws -> EthTransaction  {
         if let x = args, x.count>0 {
             var tx = try createTx(name: "", args: x, account: account, gas: gas, gasPrice: gasPrice)
@@ -90,6 +123,13 @@ public class Contract {
         }
     }
     
+    /// calls a function of the contract by running the code in a local evm.
+    /// - Parameter name : the name of the function
+    /// - Parameter args : the arguments.
+    /// - Parameter account : the account to be used as sender
+    /// - Parameter gas : the amount of gas to be used as limit
+    ///
+    /// - Returns : a array witht the return values of the function
     public func call(name: String, args: [AnyObject], block: UInt64? = nil, account:String?=nil,  gas: UInt64?=nil) -> Future<[Any]> {
         do {
             let tx = try createTx(name: name, args: args, account: account, gas: gas)
@@ -104,6 +144,12 @@ public class Contract {
         }
     }
     
+    /// estimates the gas used to send a transaction to the specified function of the contract.
+    /// - Parameter name : the name of the function
+    /// - Parameter args : the arguments.
+    /// - Parameter account : the account to be used as sender
+    ///
+    /// - Returns :the gas needed to run a tx
     public func estimateGas(name: String, args: [AnyObject], account:String?=nil) -> Future<UInt64> {
         do {
             let tx = try createTx(name: name, args: args, account: account)
@@ -115,6 +161,14 @@ public class Contract {
         }
     }
     
+    /// sends a transaction to a function of the contract and returns the transactionHash
+    /// - Parameter name : the name of the function
+    /// - Parameter args : the arguments.
+    /// - Parameter account : the account to be used as sender
+    /// - Parameter gas : the amount of gas to be used as limit
+    /// - Parameter gasPrice : the gasPrice. if not set, the current average gasPrice will be used.
+    ///
+    /// - Returns : the TransactionHash
     public func sendTx(name: String,  args: [AnyObject],  account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) -> Future<String> {
         do {
             return Eth(in3).sendTransaction(tx: try createTx(name: name, args: args, account: account, gas: gas, gasPrice: gasPrice))
@@ -125,6 +179,14 @@ public class Contract {
         }
     }
 
+    /// sends a transaction to a function of the contract and waits for the receipt.
+    /// - Parameter name : the name of the function
+    /// - Parameter args : the arguments.
+    /// - Parameter account : the account to be used as sender
+    /// - Parameter gas : the amount of gas to be used as limit
+    /// - Parameter gasPrice : the gasPrice. if not set, the current average gasPrice will be used.
+    ///
+    /// - Returns : the TransactionReceipt
     public func sendTxAndWait(name: String,  args: [AnyObject],  account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) -> Future<EthTransactionReceipt> {
         do {
             return Eth(in3).sendTransactionAndWait(tx: try createTx(name: name, args: args, account: account, gas: gas, gasPrice: gasPrice))
@@ -136,6 +198,10 @@ public class Contract {
     }
 
     /// returns the abi encoded arguments as hex string
+    /// - Parameter name : the name of the function
+    /// - Parameter args : the arguments.
+    ///
+    /// - Returns : the abi encoded arguments as hex string
     public func encodeCall(name: String, args: [AnyObject]) throws -> String{
         if let abi = self[name] {
             return try Utils(in3).abiEncode(signature: abi.signature, params: args)
@@ -145,6 +211,14 @@ public class Contract {
     }
     
     
+    /// creates the transaction parameter for a tx to the given function.
+    /// - Parameter name : the name of the function
+    /// - Parameter args : the arguments.
+    /// - Parameter account : the account to be used as sender
+    /// - Parameter gas : the amount of gas to be used as limit
+    /// - Parameter gasPrice : the gasPrice. if not set, the current average gasPrice will be used.
+    ///
+    /// - Returns : the EthTransaction with the set parameters
     public func createTx(name: String, args: [AnyObject], account:String?=nil, gas: UInt64?=nil, gasPrice: UInt64?=nil) throws -> EthTransaction {
         if let adr = address {
             let data = try encodeCall(name: name, args: args)
@@ -156,6 +230,11 @@ public class Contract {
     
     /// reads events for the given contract
     /// if the eventName is omitted all events will be returned. ( in this case  filter must be nil ! )
+    /// - Parameter eventName : the name of the event  or null if all events should be fetched
+    /// - Parameter filter : the dictionary with values to search for. Only valid if the eventName is set and the all values must be indexed arguments!
+    /// - Parameter fromBlock : the BlockNumber to start searching for events. If nil the latest block is used.
+    /// - Parameter toBlock : the BlockNumber to end searching for events. If nil the latest block is used.
+    /// - Parameter topics : the topics of the block as search criteria.
     public func getEvents(eventName:String? = nil, filter: [String:AnyObject]? = nil, fromBlock: UInt64? = nil, toBlock: UInt64? = nil, topics: [String?]?) -> Future<[EthEvent]> {
         do {
             var t = [String?].init(repeating: nil, count: 4)
@@ -206,7 +285,8 @@ public class Contract {
     }
     
     
-    
+    /// accesses the ABI for the given function or event
+    /// - Parameter name : the name to search for
     subscript(name: String) -> ABI? {
         get {
             return self.abi.first(where:{ $0.name == name })
