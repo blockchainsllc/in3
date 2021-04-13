@@ -39,7 +39,7 @@
 #ifndef in3_eth_basic_h__
 #define in3_eth_basic_h__
 
-#include "../../../core/client/plugin.h"
+#include "plugin.h"
 
 /**
  * Filter type used internally when managing filters.
