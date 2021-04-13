@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME  nodeselect_def
+  REGISTER in3_register_nodeselect_def
 
   SOURCES
     nodeselect_def.c

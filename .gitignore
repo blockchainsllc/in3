@@ -2,6 +2,7 @@ coverage_report
 test/bindings/wasm/node_modules/
 **/node_modules/
 **/package-lock.json
+c/src/init/autoregister.h
 Testing*
 wasm/test/in3
 .in3

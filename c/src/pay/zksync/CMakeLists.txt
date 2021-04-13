@@ -35,7 +35,8 @@
 
 add_static_library(
   NAME     zksync 
-  
+  REGISTER in3_register_zksync
+
   SOURCES 
     zksync.c
     zk_message.c

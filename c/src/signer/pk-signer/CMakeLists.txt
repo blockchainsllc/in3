@@ -35,7 +35,8 @@
 
 add_static_library(
   NAME     pk_signer 
-  
+  REGISTER eth_register_pk_signer
+
   SOURCES 
     signer.c
 

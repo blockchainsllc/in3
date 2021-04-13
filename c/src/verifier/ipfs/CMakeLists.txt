@@ -35,7 +35,8 @@
 
 add_static_library(
   NAME     ipfs 
-  
+  REGISTER in3_register_ipfs
+
   SOURCES 
     ipfs.c
     ipfs.pb.c

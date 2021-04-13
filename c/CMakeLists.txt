@@ -74,6 +74,15 @@ add_subdirectory(src/tools)
 add_subdirectory(src/nodeselect)
 add_subdirectory(docs)
 
+# generate the init-module
+get_property(modules GLOBAL PROPERTY IN3_REGISTERS)
+foreach(m IN LISTS modules)
+  set(REGISTER_DEF "${REGISTER_DEF}in3_ret_t ${m} (in3_t*);\n")
+  set(REGISTER_CALL "${REGISTER_CALL}  in3_register_default(${m});\n")
+endforeach()
+file(WRITE src/init/autoregister.h "${REGISTER_DEF}\n\nstatic void auto_init() {\n${REGISTER_CALL}}\n")
+
+# define lib dir
 link_directories(${CMAKE_BINARY_DIR}/lib/)
 
 # create the library

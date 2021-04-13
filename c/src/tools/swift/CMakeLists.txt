@@ -33,12 +33,12 @@
 ###############################################################################
 
 add_static_library(
-        NAME
-        in3_swift
+        NAME  in3_swift
+        REGISTER in3_register_swift
 
         SOURCES
-        swift.c
+          swift.c
 
         DEPENDS
-        core
+          core
 )
