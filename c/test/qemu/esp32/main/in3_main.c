@@ -43,13 +43,14 @@
 #include "sdkconfig.h"
 #include <esp_event.h>
 #include <esp_log.h>
-#include <in3/client.h>        // the core client
-#include <in3/eth_api.h>       // functions for direct api-access
-#include <in3/in3_init.h>      // if included the verifier will automaticly be initialized.
-#include <in3/log.h>           // logging functions
-#include <in3/plugin.h>        // the context
-#include <in3/signer.h>        // default signer implementation
-#include <in3/stringbuilder.h> // stringbuilder tool for dynamic memory string handling
+#include <in3/client.h>         // the core client
+#include <in3/eth_api.h>        // functions for direct api-access
+#include <in3/eth_full.h>       // functions for nodeselection
+#include <in3/log.h>            // logging functions
+#include <in3/nodeselect_def.h> // functions for direct api-access
+#include <in3/plugin.h>         // the context
+#include <in3/signer.h>         // default signer implementation
+#include <in3/stringbuilder.h>  // stringbuilder tool for dynamic memory string handling
 #include <in3/utils.h>
 #include <sys/param.h>
 
@@ -88,6 +89,9 @@ in3_ret_t transport_mock(void* plugin_data, in3_plugin_act_t action, void* plugi
 /* Setup and init in3 */
 void init_in3(void) {
   c = in3_for_chain(CHAIN_ID_GOERLI);
+  in3_register_eth_full(in3);
+  in3_register_nodeselect_def(in3);
+
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);

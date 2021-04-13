@@ -71,9 +71,9 @@ in3_ret_t transport_mock(void* plugin_data, in3_plugin_act_t action, void* plugi
 in3_t* init_in3_goerli(in3_plugin_act_fn custom_transport) {
   in3_t* in3 = NULL;
   //int    err;
-  in3_register_default(in3_register_eth_basic);
-  in3_register_default(in3_register_nodeselect_def);
   in3 = in3_for_chain(0x5);
+  in3_register_eth_basic(in3);
+  in3_register_nodeselect_def(in3);
   if (custom_transport)
     in3_plugin_register(in3, PLGN_ACT_TRANSPORT, custom_transport, NULL, true);
   in3->flags = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY;
