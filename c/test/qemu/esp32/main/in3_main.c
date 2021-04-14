@@ -89,8 +89,8 @@ in3_ret_t transport_mock(void* plugin_data, in3_plugin_act_t action, void* plugi
 /* Setup and init in3 */
 void init_in3(void) {
   c = in3_for_chain(CHAIN_ID_GOERLI);
-  in3_register_eth_full(in3);
-  in3_register_nodeselect_def(in3);
+  in3_register_eth_full(c);
+  in3_register_nodeselect_def(c);
 
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
