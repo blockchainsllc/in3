@@ -6,7 +6,7 @@ const {
     camelCaseLow,
     camelCaseUp,
 } = require('./util')
-
+const swiftDir = '../../in3-swift'
 const isStruct = (c, typeConfigs) => typeof c.type == 'string' ? typeConfigs[c.type] : typeof c.type === 'object'
 const configs = {
     In3Config: [
@@ -191,7 +191,7 @@ function createSwiftInitForStruct(s, pad) {
 
 exports.generate_config = function () {
     Object.keys(configs).forEach(_ => createSwiftInitForStruct(configs[_], _ == 'In3Config' ? '' : '    '))
-    fs.writeFileSync('../swift/Sources/In3/Config.swift', '// This is a generated file, please don\'t edit it manually!\n\nimport Foundation\n\n' + (
+    fs.writeFileSync(swiftDir + '/Sources/In3/Config.swift', '// This is a generated file, please don\'t edit it manually!\n\nimport Foundation\n\n' + (
         configs.In3Config.join('\n') + '\n\n' +
         Object.keys(configs).filter(_ => _ != 'In3Config').map(type => configs[type].join('\n') + '\n    }\n\n').join('')
         + '\n}\n'
@@ -310,7 +310,7 @@ function createApiFunction(rpc_name, rpc, content, api_name, structs, types, rpc
         }
         const paramNames = Object.keys(rpc.params || {})
         let x = '\n**Example**\n\n```swift\n'
-        let call = camelCaseUp(api_name) + '(in3).' + fnName + '(' + (ex.request || [])
+        let call = 'in3.' + camelCaseUp(api_name).toLowerCase() + '.' + fnName + '(' + (ex.request || [])
             .filter((_, i) => _ != rpc.params[paramNames[i]].internalDefault)
             .map((_, i) => paramNames[i] + ': ' + toSwiftValue(_, i)).join(', ') + ')'
         if (rpc.sync) {
@@ -358,7 +358,7 @@ exports.generateAPI = function (api_name, rpcs, descr, types) {
     Object.keys(rpcs).forEach(rpc_name => createApiFunction(rpc_name, rpcs[rpc_name], content, api_name, structs, types, rpcs))
 
     // write the API to the filesystem
-    fs.writeFileSync('../swift/Sources/In3/API/' + apiName + '.swift', (
+    fs.writeFileSync(swiftDir + '/Sources/In3/API/' + apiName + '.swift', (
         content.join('\n') + '\n\n}\n' +
         Object.values(structs).join('\n\n')
     ), 'utf8')
