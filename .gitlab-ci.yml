@@ -47,4 +47,3 @@ include:
   - local: "/python/ci.yml"
   - local: "/dotnet/ci.yml"
   - local: "/rust/ci.yml"
-  - local: "/swift/ci.yml"

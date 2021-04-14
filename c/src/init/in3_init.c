@@ -1,6 +1,9 @@
 #include "in3_init.h"
 #include "../core/client/plugin.h"
-#include "autoregister.h"
+#ifndef IN3_AUTOINIT_PATH
+#define IN3_AUTOINIT_PATH "autoregister.h"
+#endif
+#include IN3_AUTOINIT_PATH
 
 void zkcrypto_initialize();
 
