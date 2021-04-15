@@ -211,7 +211,7 @@ static void test_abi_tuples() {
            "0000000000000000000000000000000000000000000000001234567890abcdef0000000000000000000000000000000000000000000000000000000000000000")
 }
 static void test_json() {
-  char* json_data = read_json_response_buffer("../c/test/testdata/api/abi.json");
+  char* json_data = read_json_response_buffer(TESTDATA_DIR "/api/abi.json");
   TEST_ASSERT_NOT_NULL_MESSAGE(json_data, "You must start this test from build-directory");
   json_ctx_t* jctx = parse_json(json_data);
   TEST_ASSERT_NOT_NULL_MESSAGE(jctx, "Invalid json");

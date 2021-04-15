@@ -41,6 +41,12 @@ else()
 endif()
 
 include_directories(. ../src)
+get_filename_component(testdata_dir  "${CMAKE_CURRENT_LIST_DIR}/testdata" ABSOLUTE)
+
+#file(RELATIVE_PATH testdata_dir "${CMAKE_BINARY_DIR}" "testdata")
+add_definitions("-DTESTDATA_DIR=\"${testdata_dir}\"")
+get_filename_component(buildDirRelFilePath "${myFile}"
+                       REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
 
 # handle codecoverage
 if (CODE_COVERAGE)
