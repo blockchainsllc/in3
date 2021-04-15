@@ -38,7 +38,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_mo
 # project name
 project(in3)
 
-include(c/options.cmake)
+include("c/options.cmake")
 
 IF (WASM)
   add_subdirectory(wasm/src)
