@@ -21,7 +21,6 @@ OPTION(ESP_IDF "Esp-idf framework" ON)
 ADD_DEFINITIONS(-DIN3_MATH_LITE)
 set(IN3_SRC ../../../..)
 add_subdirectory(${IN3_SRC}/src/core build_core)
-add_subdirectory(${IN3_SRC}/src/init build_init)
 add_subdirectory(${IN3_SRC}/src/third-party/tommath build_tommath)
 add_subdirectory(${IN3_SRC}/src/third-party/crypto build_crypto)
 
@@ -37,7 +36,6 @@ add_subdirectory(${IN3_SRC}/src/api/utils build_utils)
 set(IN3_LIBS 
         $<TARGET_OBJECTS:core_o>
         $<TARGET_OBJECTS:pk_signer_o>
-        $<TARGET_OBJECTS:init_o>
         $<TARGET_OBJECTS:crypto_o> 
         $<TARGET_OBJECTS:tommath_o> 
         $<TARGET_OBJECTS:eth_api_o> 

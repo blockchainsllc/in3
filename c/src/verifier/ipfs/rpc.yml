@@ -9,11 +9,11 @@ ipfs:
     params:
       ipfshash:
         descr:  the ipfs multi hash
-        type: ipfshash
+        type: string
       encoding:
         descr: the encoding used for the response. ( `hex` , `base64` or `utf8`)
         type: string
-    returns:
+    result:
       descr: the content matching the requested hash encoded in the defined encoding.
     proof:
       descr: No proof or verification needed on the server side. All the verification are done in the client by creating the ipfs multihash and comparing to the requested hash.
@@ -35,7 +35,7 @@ ipfs:
       encoding:
         descr: the encoding used for the request. ( `hex` , `base64` or `utf8`)
         type: string
-    returns:
+    result:
       descr:  the ipfs multi hash
     example:
       request:

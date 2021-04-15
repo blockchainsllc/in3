@@ -35,7 +35,8 @@
 # add lib
 add_static_library(
   NAME     transport_http 
-  
+  REGISTER in3_register_http
+
   SOURCES 
     in3_http.c
 

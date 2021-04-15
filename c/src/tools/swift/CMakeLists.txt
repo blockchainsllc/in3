@@ -1,8 +1,8 @@
 ###############################################################################
 # This file is part of the Incubed project.
-# Sources: https://github.com/blockchainsllc/in3
+# Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -32,35 +32,12 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
-
-if (USE_SCRYPT)
-  set(LIBS ${LIBS} scrypt)
-  ADD_DEFINITIONS(-DSCRYPT)
-endif()
-
-if (ETH_FULL)
-  set(LIBS ${LIBS} tommath)
-endif()
-
 add_static_library(
-  NAME     eth_api 
-  REGISTER in3_register_eth_api
-  
-  SOURCES 
-    eth_api.c 
-    abi_parse.c
-    abi_encode.c
-    abi_decode.c
-    key.c 
-    rpc_api.c 
-    ens.c
+        NAME  in3_swift
 
-  DEPENDS 
-    eth_nano
-    api_utils
-    ${LIBS}
+        SOURCES
+          swift.c
+
+        DEPENDS
+          core
 )
-
-
-target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)

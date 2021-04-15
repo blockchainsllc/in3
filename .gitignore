@@ -2,6 +2,7 @@ coverage_report
 test/bindings/wasm/node_modules/
 **/node_modules/
 **/package-lock.json
+c/src/init/autoregister.h
 Testing*
 wasm/test/in3
 .in3
@@ -18,6 +19,7 @@ cmake-build-debug/
 .idea/
 .settings/
 # Vim
+swift/.swiftpm/
 python/htmlcov
 wasm/test/.nyc_output
 wasm/test/coverage
@@ -31,6 +33,7 @@ bin/
 .classpath
 .project
 *.class
+python/**/*.pyc
 target/
 .cproject
 .overcommit.yml
@@ -49,3 +52,8 @@ c/src/third-party/hidapi/compile
 c/src/third-party/hidapi/aclocal.m4
 c/examples/CMakeLists.txt
 c/.clang-format
+swift/**/.DS_Store
+swift/**/.build
+swift/**/Packages
+swift/**/*.xcodeproj
+swift/**/xcuserdata/

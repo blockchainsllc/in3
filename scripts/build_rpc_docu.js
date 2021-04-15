@@ -1,8 +1,19 @@
 const yaml = require('../wasm/test/node_modules/yaml')
 const fs = require('fs')
+const swift = require('./generator/swift')
+const {
+    getType,
+    asArray,
+    camelCaseLow,
+    camelCaseUp,
+    link,
+    toCmdParam,
+    short_descr
+} = require('./generator/util')
+
 const doc_dir = process.argv[process.argv.length - 1]
 const main_conf = yaml.parse(fs.readFileSync('../c/src/cmd/in3/in3.yml', 'utf-8'))
-
+const typeName = (def, code) => (code ? '`' : '') + ((def.key ? '{key:$t}' : (def.array ? '$t[]' : "$t")) + (def.optional ? '?' : '')).replace('$t', typeof (def.type) === 'string' ? def.type : 'object') + (code ? '`' : '')
 const rpc_doc = []
 const config_doc = []
 const main_help = []
@@ -10,13 +21,12 @@ const main_aliases = []
 const bool_props = []
 
 let docs = {}, config = {}, types = {}
-const asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
-const link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
-const getType = val => typeof val === 'object' ? val : (types['' + val] || val)
-const toCmdParam = val => (typeof val == 'object' || Array.isArray(val) || ('' + val).indexOf(' ') >= 0) ? "'" + JSON.stringify(val) + "'" : ('' + val)
+
+
 function scan(dir) {
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         if (f.name == 'rpc.yml') {
+            console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             if (ob.types) {
                 types = { ...types, ...ob.types }
@@ -31,15 +41,19 @@ function scan(dir) {
         else if (f.isDirectory()) scan(dir + '/' + f.name)
     }
 }
+
+
+
 function print_object(def, pad, useNum, doc) {
     let i = 1
     for (const prop of Object.keys(def)) {
         let s = pad + (useNum ? ((i++) + '.') : '*') + ' **' + prop + '**'
         const p = def[prop]
-        const pt = getType(p.type)
-        if (p.type) s += ' : `' + (typeof p.type === 'string' ? p.type : 'object') + '`'
+        const pt = getType(p.type, types)
+        if (p.type) s += ' : ' + typeName(p, true)
         if (p.optional) s += ' *(optional)*'
         if (p.descr) s += ' - ' + p.descr
+        if (p.key) s += ' with ' + p.key + ' as keys in the object'
         if (p.default) s += ' (default: `' + JSON.stringify(p.default) + '`)'
         if (p.enum) s += '\n' + pad + 'Possible Values are:\n\n' + Object.keys(p.enum).map(v => pad + '    - `' + v + '` : ' + p.enum[v]).join('\n') + '\n'
         if (p.alias) s += '\n' + pad + 'The data structure of ' + prop + ' is the same  as ' + link(p.alias) + '. See Details there.'
@@ -53,15 +67,21 @@ function print_object(def, pad, useNum, doc) {
     }
 }
 
+
 function handle_config(conf, pre, title, descr) {
     if (title) config_doc.push('\n## ' + title + '\n')
     for (const key of Object.keys(conf)) {
         const c = conf[key]
+        // handle bindings
+
+        swift.updateConfig(pre, c, key)
+
+        // handle doc
         if (!pre) {
             let s = '\n' + (title ? '#' : '') + '## ' + key + '\n\n' + c.descr
             if (c.optional) s += ' *This config is optional.*'
             if (c.default) s += ' (default: `' + JSON.stringify(c.default) + '`)'
-            if (c.type) s += '\n\n Type: `' + (typeof c.type === 'string' ? c.type : 'object') + '`'
+            if (c.type) s += '\n\n Type: ' + typeName(c, true)
             if (c.enum) s += '\n\nPossible Values are:\n\n' + Object.keys(c.enum).map(v => '- `' + v + '` : ' + c.enum[v]).join('\n') + '\n'
             config_doc.push(s)
             if (typeof (c.type) === 'object') {
@@ -98,16 +118,10 @@ function handle_config(conf, pre, title, descr) {
         }
     }
 }
-function short_descr(d) {
-    let zd = (d || '').trim()
-    if (zd.indexOf('.') >= 0) zd = zd.substr(0, zd.indexOf('.'))
-    if (zd.indexOf('\n') >= 0) zd = zd.substr(0, zd.indexOf('\n'))
-    if (zd.indexOf('[') >= 0) zd = zd.substr(0, zd.indexOf('['))
-    if (zd.length > 100) zd = zd.substr(0, 100) + '...'
-    return zd
-}
+
+
 scan('../c/src')
-docs.in3.in3_config.params.config.type = config
+docs.config.in3_config.params.config.type = config
 rpc_doc.push('# API RPC\n\n')
 rpc_doc.push('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
 config_doc.push('# Configuration\n\n')
@@ -116,11 +130,16 @@ const zsh_complete = fs.readFileSync('_in3.template', 'utf8')
 let zsh_cmds = [], zsh_conf = []
 for (const s of Object.keys(docs).sort()) {
     const rpcs = docs[s]
+    const rdescr = rpcs.descr
+
     rpc_doc.push("## " + s + "\n\n")
-    if (rpcs.descr) rpc_doc.push(rpcs.descr + '\n')
+    if (rdescr) rpc_doc.push(rdescr + '\n')
     delete rpcs.descr
+
     for (const rpc of Object.keys(rpcs).sort()) {
         const def = rpcs[rpc]
+        def.returns = def.returns || def.result
+        def.result = def.returns || def.result
         let z = "    '" + rpc + ': ' + short_descr((def.descr || (def.alias && rpcs[def.alias].descr) || ''))
 
         rpc_doc.push('### ' + rpc + '\n\n')
@@ -137,15 +156,15 @@ for (const s of Object.keys(docs).sort()) {
             rpc_doc.push("*Parameters:* - \n")
         if (def.in3Params) {
             rpc_doc.push('The following in3-configuration will have an impact on the result:\n\n');
-            print_object(getType(def.in3Params), '', false, rpc_doc)
+            print_object(getType(def.in3Params, types), '', false, rpc_doc)
             rpc_doc.push()
         }
         if (def.validation) rpc_doc.push('\n' + def.validation + '\n')
 
         if (def.returns) {
             if (def.returns.type) {
-                rpc_doc.push('*Returns:* ' + (typeof def.returns.type === 'string' ? ('`' + def.returns.type + '`') : '`object`') + '\n\n' + def.returns.descr + '\n')
-                const pt = getType(def.returns.type)
+                rpc_doc.push('*Returns:* ' + typeName(def.returns, true) + '\n\n' + def.returns.descr + '\n')
+                const pt = getType(def.returns.type, types)
                 if (typeof pt === 'object') {
                     rpc_doc.push('\nThe return value contains the following properties :\n')
                     print_object(pt, '', false, rpc_doc)
@@ -159,7 +178,7 @@ for (const s of Object.keys(docs).sort()) {
 
         if (def.proof) {
             rpc_doc.push('*Proof:*\n\n' + (def.proof.descr || '') + '\n')
-            const pt = getType(def.proof.type)
+            const pt = getType(def.proof.type, types)
             if (def.proof.alias)
                 rpc_doc.push('The proof will be calculated as described in ' + link(def.proof.alias) + '. See Details there.\n\n')
 
@@ -197,9 +216,18 @@ for (const s of Object.keys(docs).sort()) {
         z += "'"
         zsh_cmds.push(z)
     }
+    console.log('generate ' + s + '\n   ' + Object.keys(rpcs).join('\n   '))
+
+    if (Object.values(rpcs).filter(_ => !_.skipApi).length)
+        swift.generateAPI(s, rpcs, rdescr, types)
+
 }
 
 handle_config(config, '')
+
+swift.generate_config()
+
+
 handle_config(main_conf.config, '', 'cmdline options\n\nThose special options are used in the comandline client to pass additional options.\n')
 main_help.push('')
 main_help.push('In addition to the documented rpc-methods, those methods are also supported:')
@@ -212,6 +240,5 @@ Object.keys(main_conf.rpc).forEach(k => {
 fs.writeFileSync('_in3.sh', zsh_complete.replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
 fs.writeFileSync(doc_dir + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
-fs.writeFileSync('../c/src/cmd/in3/args.h', '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[]={ ' + bool_props.map(_ => '"' + _ + '", ').join('') + ' NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
-
+fs.writeFileSync('../c/src/cmd/in3/args.h', '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[] = {' + bool_props.map(_ => '"' + _ + '", ').join('') + 'NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
 

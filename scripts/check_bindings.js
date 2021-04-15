@@ -39,7 +39,13 @@ const bindings = {
     python: strings('../python/in3', '"'),
     rust: strings('../rust/in3-rs/src', '"'),
     dotnet: strings('../dotnet/In3', '"', '*.cs'),
+    swift: strings('../swift/Sources', '"'),
     c_api: strings('../c/src/api', '"',),
+    //    test: [...strings('../c/test/testdata/requests', '"'), ...strings('../c/test/testdata/api', '"'), ...strings('../c/test/testdata/cmd', ' ')],
+    test: [
+        ...strings('../c/test/testdata/requests', '"'),
+        ...strings('../c/test/testdata/api', '"'),
+        ...grep('\"^.*_.*\"', '../c/test/testdata/cmd').map(_ => ((/.* ([0-9a-zA-Z]+_[0-9a-zA-Z_]+).*/g).exec(_) || ['', ''])[1]).filter(_ => _)],
     autocmpl: grep("\"'.*?:\"", '_in3.sh').map(_ => ((/'([a-zA-Z0-9_]+):/gm).exec(_) || ["", ""])[1]),
 }
 const res = Object.keys(bindings).reduce((p, c) => ({ ...p, [c]: 0 }), {})
@@ -67,7 +73,9 @@ bindings.doc = grep('\"\\*\\*[a-zA-Z0-9_]+\\*\\*\"', '../../../doc/docs/rpc.md')
 bindings.wasm = grep('\"^[ ]*[a-zA-Z0-9_]+[\\?]*:.*\"', '../wasm/src').map(_ => lastToken(_.substring(0, _.lastIndexOf(':')).replace('?', '').trim()))
 bindings.autocmpl = []
 bindings.c_api = []
+bindings.test = []
 bindings.python = grep("\"self\\.[a-zA-Z0-9_]+\"", '../python/in3/model.py').map(_ => ((/self.([a-zA-Z0-9_]+)/gm).exec(_) || ["", ""])[1])
+bindings.swift = grep("\"var [a-zA-Z0-9_]+\"", '../swift/Sources/In3/Config.swift').map(_ => ((/var ([a-zA-Z0-9_]+)/gm).exec(_) || ["", ""])[1])
 
 
 for (const conf of configs) {

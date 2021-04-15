@@ -174,9 +174,5 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
   }
 
 /** used for exeuting a function based on the name. This macro will return if the name matches. */
-#define TRY_RPC(name, fn) \
-  if (strcmp(ctx->method, name) == 0) return fn;
-/** used in if-conditions and returns true if the vc->method mathes the name. It is also used as marker.*/
-#define VERIFY_RPC(name) (strcmp(vc->method, name) == 0)
-#define CONFIG_KEY(name) key(name)
+
 #endif /* DEBUG_H */

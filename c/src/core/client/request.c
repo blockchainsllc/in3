@@ -55,6 +55,16 @@ static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
   return IN3_OK;
 }
 
+in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
+  char*      data = _strdupn(req_data, -1);
+  in3_req_t* r    = req_new(client, data);
+  if (r)
+    in3_cache_add_ptr(&r->cache, data);
+  else
+    _free(data);
+  return r;
+}
+
 in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
@@ -107,6 +117,13 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
 
 char* req_get_error_data(in3_req_t* ctx) {
   return ctx ? ctx->error : "No request context";
+}
+
+char* req_get_result_json(in3_req_t* ctx, int index) {
+  assert_in3_req(ctx);
+  if (!ctx->responses) return NULL;
+  d_token_t* res = d_get(ctx->responses[index], K_RESULT);
+  return res ? d_create_json(ctx->response_context, res) : NULL;
 }
 
 char* req_get_response_data(in3_req_t* ctx) {

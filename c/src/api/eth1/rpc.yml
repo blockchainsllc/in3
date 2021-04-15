@@ -1,47 +1,21 @@
-types:
-  transaction:
-    to:
-      descr: receipient of the transaction.
-      type: address
-    from:
-      descr: sender of the address (if not sepcified, the first signer will be the sender)
-      type: address
-    value:
-      descr: value in wei to send
-      type: uint
-      optional: true
-    gas:
-      descr: the gas to be send along
-      type: uint
-      optional: true
-      default: 21000
-    gasPrice:
-      descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-      type: uint
-      optional: true
-    nonce:
-      descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-      type: uint
-      optional: true
-    data:
-      descr: the data-section of the transaction
-      type: bytes
-      optional: true
+utils:
 
-
-
-in3:
+  descr: |
+    a Collection of utility-function.
+  
 
   in3_abiEncode:
+    sync: true
     descr: based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function encodes the value given and returns it as hexstring.
     params:
       signature:
         type: string
         descr: the signature of the function. e.g. `getBalance(uint256)`. The format is the same as used by solidity to create the functionhash. optional you can also add the return type, which in this case is ignored.
       params:
-        type: array
+        type: any
+        array: true
         descr: a array of arguments. the number of arguments must match the arguments in the signature.
-    returns:
+    result:
       type: hex
       descr: the ABI-encoded data as hex including the 4 byte function-signature. These data can be used for `eth_call` or to send a transaction.
     example:
@@ -51,17 +25,23 @@ in3:
       response: "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
 
   in3_abiDecode:
+    sync: true
     descr: based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function decodes the bytes given and returns it as array of values.
     params:
       signature:
         type: string
         descr: the signature of the function. e.g. `uint256`, `(address,string,uint256)` or `getBalance(address):uint256`. If the complete functionhash is given, only the return-part will be used.
       data:
-        type: hex
+        type: bytes
         descr: the data to decode (usually the result of a eth_call)
-    returns:
-      type: array
-      descr: a array (if more then one arguments in the result-type) or the the value after decodeing.
+      topics:
+        optional: true
+        type: bytes
+        descr: in case of an even the topics (concatinated to max 4x32bytes). This is used if indexed.arguments are used.
+    result:
+      type: any
+      array: true
+      descr: a array with the values after decodeing.
     example:
       request:
         - (address,uint256)
@@ -71,6 +51,7 @@ in3:
         - "0x05"
 
   in3_checksumAddress:
+    sync: true
     descr: Will convert an upper or lowercase Ethereum address to a checksum address.  (See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md) )
     params:
       address:
@@ -80,7 +61,7 @@ in3:
         descr: if true, the chainId is integrated as well (See [EIP1191](https://github.com/ethereum/EIPs/issues/1121) )
         type: bool
         optional: true
-    returns:
+    result:
       descr: the address-string using the upper/lowercase hex characters.
     example:
       request:
@@ -88,45 +69,21 @@ in3:
         - false
       response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
 
-  
-  in3_ens:
-    descr: | 
-      resolves a ens-name. 
-      the domain names consist of a series of dot-separated labels. Each label must be a valid normalised label as described in [UTS46](https://unicode.org/reports/tr46/) with the options `transitional=false` and `useSTD3AsciiRules=true`. 
-      For Javascript implementations, a [library](https://www.npmjs.com/package/idna-uts46) is available that normalises and checks names.
-    params:
-      name:
-        descr: the domain name UTS46 compliant string.
-        type: string
-      field:
-        descr: the required data, which could be one of ( `addr` - the address, `resolver` - the address of the resolver, `hash` - the namehash, `owner` - the owner of the domain)
-        type: string
-        optional: true
-        default: addr
-    returns:
-      descr: the value of the specified field
-    example:
-      request:
-        - cryptokitties.eth
-        - addr
-      response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
-
-  
-
 
   in3_toWei:
+    sync : true
     descr: converts the given value into wei.
     params:
       value:
         descr: the value, which may be floating number as string
-        type: string or uint
+        type: string | uint
         example: "0.9"
       unit:
         descr: the unit of the value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
         type: string
         optional: true
         default: eth
-    returns:
+    result:
       descr: the value in wei as hex.
     example:
       request:
@@ -136,20 +93,21 @@ in3:
 
   
   in3_fromWei:
+    sync: true
     descr: converts a given uint (also as hex) with a wei-value into a specified unit.
     params:
       value:
         descr: the value in wei
-        type: uint or bytes
+        type: uint256
         example: "0x234324abdef"
       unit:
         descr: the unit of the target value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
         type: string
       digits:
         descr: fix number of digits after the comma. If left out, only as many as needed will be included. 
-        type: uint
+        type: int
         optional: true
-    returns:
+    result:
       descr: the value as string.
     example:
       request:
@@ -158,13 +116,101 @@ in3:
         - 3
       response: "0.158"
 
+  in3_cacheClear:
+    sync: true
+    descr: clears the incubed cache (usually found in the .in3-folder)
+    result:
+      descr: true indicating the success
+    example: 
+      request: []
+      response: true
+
+  web3_clientVersion:
+    descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
+    result:
+      descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
+
+  keccak:
+    sync: true
+    alias: web3_sha3
+
+  web3_sha3:
+    sync: true
+    descr: |
+      Returns Keccak-256 (not the standardized SHA3-256) of the given data.
+
+      See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    result:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
+
+  sha256:
+    sync: true
+    descr: |
+      Returns sha-256 of the given data.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    result:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
+
+  in3_calcDeployAddress:
+    descr: calculates the address of a contract about to deploy. The address depends on the senders nonce.
+    params:
+      sender:
+        descr: the sender of the transaction
+        type: address
+      nonce:
+        descr: the nonce of the sender during deployment
+        type: uint64
+        optional: true
+    result:
+      type: address
+      descr: the address of the deployed contract
+    example:
+      request:
+        - '0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c'
+        - 6054986
+      response: '0xba866e7bd2573be3eaf5077b557751bb6d58076e'
+
+
+  net_version:
+    sync: true
+    descr: the Network Version (currently 1)
+    result:
+       descr: the Version number
+
+account:
+  descr: |
+    Account Handling includes handling signers and preparing and signing transacrtion and data.
+
+    Signers are Plugins able to create signatures. Those functions will use the registered plugins.
+    
+
   in3_pk2address:
+    sync: true
     descr: extracts the address from a private key.
     params:
       pk:
         descr: the 32 bytes private key as hex.
         type: bytes32
-    returns:
+    result:
       descr: the address
     example:
       request:
@@ -172,12 +218,13 @@ in3:
       response: "0xdc5c4280d8a286f0f9c8f7f55a5a0c67125efcfd"
 
   in3_pk2public:
+    sync: true
     descr: extracts the public key from a private key.
     params:
       pk:
         descr: the 32 bytes private key as hex.
         type: bytes32
-    returns:
+    result:
       descr: the public key as 64 bytes
     example:
       request:
@@ -185,6 +232,7 @@ in3:
       response: "0x0903329708d9380aca47b02f3955800179e18bffbb29be3a644593c5f87e4c7fa960983f78186577eccc909cec71cb5763acd92ef4c74e5fa3c43f3a172c6de1"
 
   in3_ecrecover:
+    sync: true
     descr: extracts the public key and address from signature.
     params:
       msg:
@@ -198,7 +246,7 @@ in3:
         type: string
         default: raw
         optional: true
-    returns:
+    result:
       descr: the extracted public key and address
       type:
         publicKey:
@@ -224,7 +272,7 @@ in3:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
         type: transaction
           
-    returns:
+    result:
       descr: the unsigned raw transaction as hex.
     example:
       request:
@@ -243,7 +291,7 @@ in3:
         descr: the account to sign
         type: address
           
-    returns:
+    result:
       descr: the raw transaction with signature.
     example:
       request:
@@ -266,7 +314,7 @@ in3:
         default: raw
         optional: true
         
-    returns:
+    result:
       descr: the signature
       type:
         message:
@@ -302,16 +350,17 @@ in3:
         v: 27
 
   in3_decryptKey:
+    sync: true
     descr: decrypts a JSON Keystore file as defined in the [Web3 Secret Storage Definition](https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition). The result is the raw private key.
     params:
       key:
         descr: Keydata as object as defined in the keystorefile
-        type: object
+        type: string
       passphrase:
         descr: the password to decrypt it.
         type: string
 
-    returns:
+    result:
       descr: a raw private key (32 bytes)
     example:
       request:
@@ -333,64 +382,9 @@ in3:
         - test
       response: "0x1ff25594a5e12c1e31ebd8112bdf107d217c1393da8dc7fc9d57696263457546"
 
-  in3_cacheClear:
-    descr: clears the incubed cache (usually found in the .in3-folder)
-    returns:
-      descr: true indicating the success
-    example: 
-      request: []
-      response: true
 
-eth:
-
-  web3_clientVersion:
-    descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
-    returns:
-      descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
-
-  keccak:
-    alias: web3_sha3
-
-  web3_sha3:
-    descr: |
-      Returns Keccak-256 (not the standardized SHA3-256) of the given data.
-
-      See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
-
-      No proof needed, since the client will execute this locally. 
-    params:
-      data:
-        descr: data to hash
-        type: bytes
-    returns:
-      descr: the 32byte hash of the data
-    example:
-      request:
-        - "0x1234567890"
-      response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
-
-  sha256:
-    descr: |
-      Returns sha-256 of the given data.
-
-      No proof needed, since the client will execute this locally. 
-    params:
-      data:
-        descr: data to hash
-        type: bytes
-    returns:
-      descr: the 32byte hash of the data
-    example:
-      request:
-        - "0x1234567890"
-      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
-
-  net_version:
-    descr: the Network Version (currently 1)
-    returns:
-       descr: the Version number
-  
   in3_createKey:
+    sync: true
     descr: |
       Generates 32 random bytes.
       If /dev/urandom is available it will be used and should generate a secure random number.
@@ -400,7 +394,7 @@ eth:
         optional: true
         descr: the seed. If given the result will be deterministic.
         type: bytes
-    returns:
+    result:
       descr: the 32byte random data
     example:
       request: []
@@ -424,7 +418,7 @@ eth:
       message:
         descr: the message to sign
         type: bytes
-    returns:
+    result:
       descr: the signature (65 bytes) for the given message.
     example:
       request:
@@ -440,7 +434,7 @@ eth:
       tx:
         descr: transaction to sign
         type: transaction
-    returns:
+    result:
       descr: the raw signed transaction 
     example:
       request:

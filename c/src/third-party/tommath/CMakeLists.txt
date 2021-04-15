@@ -262,6 +262,11 @@ if (IN3API)
   set(SRC ${SRC} bn_mp_read_radix.c bn_mp_add_d.c bn_mp_sub_d.c bn_mp_radix_smap.c )
 endif()
 
+if (SWIFT) 
+  ADD_DEFINITIONS(-DBN_MP_TORADIX_C -DBN_MP_RADIX_SIZE_C -DBN_MP_GET_DOUBLE_C -DBN_MP_GET_INT_C -DBN_MP_GET_LONG_LONG_C -DBN_MP_INIT_SET_C)
+  set(SRC ${SRC} bn_mp_toradix.c bn_mp_radix_size.c bn_mp_div_d.c bn_mp_get_double.c bn_mp_get_int.c bn_mp_get_long_long.c bn_mp_get_long.c bn_mp_init_set.c)
+endif(SWIFT)
+
 add_static_library(
   NAME     tommath 
   

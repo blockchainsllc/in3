@@ -1,8 +1,41 @@
 types:
-  blockdata:
+
+  transaction:
+    to:
+      descr: receipient of the transaction.
+      type: address
+      optional: true
+    from:
+      descr: sender of the address (if not sepcified, the first signer will be the sender)
+      type: address
+      optional: true
+    value:
+      descr: value in wei to send
+      type: uint256
+      optional: true
+    gas:
+      descr: the gas to be send along
+      type: uint64
+      optional: true
+      default: 21000
+    gasPrice:
+      descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+      type: uint64
+      optional: true
+    nonce:
+      descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+      type: uint64
+      optional: true
+    data:
+      descr: the data-section of the transaction
+      type: bytes
+      optional: true
+
+
+  blockheader:
     number:
       descr: the block number. `null` when its pending block.
-      type: uint
+      type: uint64
     hash:
       descr: hash of the block. `null` when its pending block.
       type: bytes32
@@ -11,7 +44,7 @@ types:
       type: bytes32
     nonce:
       descr: hash of the generated proof-of-work. `null` when its pending block.
-      type: uint64
+      type: uint256
     sha3Uncles:
       descr: SHA3 of the uncles Merkle root in the block.
       type: bytes32
@@ -32,31 +65,43 @@ types:
       type: address
     difficulty:
       descr: integer of the difficulty for this block.
-      type: uint
+      type: uint256
     totalDifficulty:
       descr: integer of the total difficulty of the chain until this block.
-      type: uint
+      type: uint256
     extraData:
       descr: the "extra data" field of this block.
       type: bytes
     size:
       descr: integer the size of this block in bytes.
-      type: uint
+      type: uint64
     gasLimit:
       descr: the maximum gas allowed in this block.
-      type: uint
+      type: uint64
     gasUsed:
       descr: the total used gas by all transactions in this block.
-      type: uint
+      type: uint64
     timestamp:
       descr: the unix timestamp for when the block was collated.
-      type: uint
-    transactions:
-      descr: Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter.
-      type: transaction[]
+      type: uint64
     uncles:
       descr: Array of uncle hashes.
-      type: bytes32[]
+      array: true
+      type: bytes32
+
+  blockdataWithTxHashes:
+    _extends: blockheader
+    transactions:
+      descr: Array of transaction hashes
+      array: true
+      type: bytes32
+
+  blockdata:
+    _extends: blockheader
+    transactions:
+      descr: Array of transaction objects
+      array: true
+      type: transactiondata
 
   transactiondata:
     to:
@@ -67,22 +112,22 @@ types:
       type: address
     value:
       descr: value in wei to send
-      type: uint
+      type: uint256
     gas:
       descr: the gas to be send along
-      type: uint
+      type: uint64
     gasPrice:
       descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
-      type: uint
+      type: uint64
     nonce:
       descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
-      type: uint
+      type: uint64
     blockHash:
       descr: blockHash of the block holding this transaction or `null` if still pending.
       type: bytes32
     blockNumber:
       descr: blockNumber of the block holding this transaction or `null` if still pending.
-      type: uint
+      type: uint64
     hash:
       descr: transactionHash
       type: bytes32
@@ -91,7 +136,7 @@ types:
       type: bytes
     transactionIndex:
       descr: index of the transaaction in the block
-      type: uint
+      type: uint64
     v:
       descr: recovery-byte of the signature
       type: byte
@@ -112,8 +157,9 @@ eth:
 
       No proof returned, since there is none, but the client should verify the result by comparing it to the current blocks returned from others. 
       With the `blockTime` from the chainspec, including a tolerance, the current blocknumber may be checked if in the proposed range.
-    returns:
+    result:
       descr: the highest known blocknumber
+      type: uint64
     example:
       response: "0xb8a2a5"
 
@@ -125,11 +171,28 @@ eth:
     params:
       blockNumber:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
-        type: uint
+        type: uint64
+        internalDefault : latest
+        optional: true
       fullTx:
         descr: if true the full transactions are contained in the result.
+        default: false
         type: bool
     result:
+      optional: true
+      options:
+        - params:
+            fullTx: false
+          name: getBlock
+          descr: returns the given Block by number with transactionHashes. if no blocknumber is specified the latest block will be returned.
+          result:
+            type: blockdataWithTxHashes
+        - params:
+            fullTx: false
+          name: getBlockWithTx
+          descr: returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
+          result:
+            type: blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
       type: blockdata
 
@@ -246,7 +309,21 @@ eth:
       fullTx:
         descr: if true the full transactions are contained in the result.
         type: bool
-    returns:
+    result:
+      optional: true
+      options:
+        - params:
+            fullTx: false
+          name: getBlockByHash
+          descr: returns the given Block by hash with transactionHashes
+          result:
+            type: blockdataWithTxHashes
+        - params:
+            fullTx: false
+          name: getBlockByHashWithTx
+          descr: returns the given Block by hash with full transaction data
+          result:
+            type: blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
       type: blockdata
 
@@ -306,7 +383,7 @@ eth:
         type: bytes32
     proof:
       alias: eth_getUncleCountByBlockNumber
-    returns:
+    result:
       descr: the number of transactions in the block
 
   eth_getBlockTransactionCountByNumber:
@@ -314,10 +391,10 @@ eth:
     params:
       blockNumber:
         descr: the blockNumber of the block
-        type: uint
+        type: uint64
     proof:
       alias: eth_getUncleCountByBlockNumber
-    returns:
+    result:
       descr: the number of transactions in the block
 
   eth_getUncleCountByBlockHash:
@@ -328,7 +405,7 @@ eth:
         type: bytes32
     proof:
       alias: eth_getUncleCountByBlockNumber
-    returns:
+    result:
       descr: the number of uncles
 
   eth_getUncleCountByBlockNumber:
@@ -336,7 +413,7 @@ eth:
     params:
       blockNumber:
         descr: the blockNumber of the block
-        type: uint
+        type: uint64
     proof:
       descr: |
         Requests requiring proof for blocks will return a proof of type `blockProof`.  Depending on the request, the proof will contain the following properties:
@@ -347,7 +424,7 @@ eth:
         - `transactions`: a array of raw transactions of the block. This is only needed if the number of transactions are requested.
         - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
         - `uncles`: a array of blockheaders of the uncles of the block. This is only needed if the number of uncles are requested.
-    returns:
+    result:
       descr: the number of uncles
 
   eth_getTransactionByBlockHashAndIndex:
@@ -361,8 +438,8 @@ eth:
         type: bytes32
       index:
         descr: the transactionIndex
-        type: uint
-    returns:
+        type: int
+    result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -410,11 +487,11 @@ eth:
     params:
       blockNumber:
         descr: the block number containing the transaction.
-        type: uint
+        type: uint64
       index:
         descr: the transactionIndex
-        type: uint
-    returns:
+        type: int
+    result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -463,7 +540,7 @@ eth:
       txHash:
         descr: the transactionHash of the transaction.
         type: bytes32
-    returns:
+    result:
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
  
@@ -623,7 +700,7 @@ eth:
               type:
                 txIndex:
                   descr: transactionIndex within the block
-                  type: uint
+                  type: int
                 txProof:
                   descr: the merkle Proof-Array for the transaction
                   type: bytes[]
@@ -642,12 +719,12 @@ eth:
         type:
           fromBlock:
             descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-            type: uint | string
+            type: uint64
             optional: true
             default: latest
           toBlock:
             descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-            type: uint | string
+            type: uint64
             optional: true
             default: latest
           address:
@@ -656,12 +733,19 @@ eth:
             optional: true
           topics:
             descr: Array of 32 Bytes DATA topics. Topics are order-dependent. Each topic can also be an array of DATA with “or” options.
-            type: bytes32[]
+            type: bytes32
+            nullable: true
+            array: true
             optional: true
           blockhash:
             descr: With the addition of EIP-234, blockHash will be a new filter option which restricts the logs returned to the single block with the 32-byte hash blockHash. Using blockHash is equivalent to fromBlock = toBlock = the block number with hash blockHash. If blockHash is present in in the filter criteria, then neither fromBlock nor toBlock are allowed.
             type: bytes32
             optional: true
+    result:
+      array: true
+      type: ethlog
+      descr: array with all found event matching the specified filter
+
           
 
   eth_getBalance:
@@ -671,10 +755,13 @@ eth:
         descr: address of the account
         type: address
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
-        type: uint
-    returns:
+        internalDefault : latest
+        optionalAPI: true
+        descr: the blockNumber or `latest`
+        type: uint64
+    result:
       descr: the balance
+      type: uint256
     proof:
       alias: eth_getStorageAt
     example:
@@ -714,9 +801,11 @@ eth:
         descr: address of the account
         type: address
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
-        type: uint
-    returns:
+        internalDefault : latest
+        optionalAPI: true
+        descr: the blockNumber or  `latest` 
+        type: uint64
+    result:
       descr: the nonce
     proof:
       alias: eth_getStorageAt
@@ -758,9 +847,11 @@ eth:
         descr: address of the account
         type: address
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
-        type: uint
-    returns:
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or `latest`
+        type: uint64
+    result:
       descr: the code as hex
     proof:
       alias: eth_getStorageAt
@@ -804,9 +895,11 @@ eth:
         descr: key to look for
         type: bytes32
       block:
-        descr: the blockNumber or one of `latest`, `earliest`or `pending`
-        type: uint
-    returns:
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or`latest`
+        type: uint64
+    result:
       descr: the value of the storage slot.
     proof:
       type:
@@ -824,10 +917,10 @@ eth:
               type: address
             balance:
               descr: the balance
-              type: uint
+              type: uint256
             nonce:
               descr: nonce of the account
-              type: uint
+              type: uint256
             codeHash:
               descr: codehash of the account
               type: bytes32
@@ -842,20 +935,23 @@ eth:
               type:
                 key:
                   descr: the storage key (or hash)
-                  type: uint
+                  type: bytes32
                 value:
                   descr: the storage value
                   type: bytes32
                 proof:
+                  array: true
                   descr: the merkleProof of the value down to the storageHash as MerkleRoot
-                  type: bytes[]
+                  type: bytes
 
         signatures:
           descr: the array of signatures for all used blocks in the result.
-          type: signature[]
+          array: true
+          type: signature
         finalityBlocks:
+          array: true
           descr: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
-          type: bytes[]
+          type: bytes
         
       descr: |
         Each of these account values are stored in the account-object:
@@ -999,7 +1095,7 @@ eth:
       tx:
         descr: the transactiondata to send
         type: transaction
-    returns:
+    result:
       descr: the transactionHash
     proof:
       descr: No proof from the nodes are required, because the client can generate the TransactionHash itself. This means to ensure the success of a transaction the receipt needs to be verified.
@@ -1010,7 +1106,7 @@ eth:
       tx:
         descr: the transactiondata to send
         type: transaction
-    returns:
+    result:
       descr: the transactionReceipt
       type: transactionReceipt
 
@@ -1021,7 +1117,7 @@ eth:
       tx:
         descr: the raw signed transactiondata to send
         type: bytes
-    returns:
+    result:
       descr: the transactionhash
       type: bytes32
 

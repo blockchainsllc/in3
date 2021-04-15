@@ -1,4 +1,4 @@
-in3:
+account:
 
   # config
   config:
@@ -19,12 +19,13 @@ in3:
 
   # RPC
   in3_addRawKey:
+    sync: true
     descr: adds a raw private key as signer, which allows signing transactions.
     params:
       pk:
         descr: the 32byte long private key as hex string.
         type: bytes32
-    returns:
+    result:
       descr: the address of given key.
       type: address
     example:
@@ -33,9 +34,15 @@ in3:
       response: "0x2e988a386a799f506693793c6a5af6b54dfaabfb"
 
   eth_accounts:
-    descr: returns a array of account-addresss the incubed client is able to sign with. In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the addresses of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
-    returns:
+    sync: true
+    descr: |
+      returns a array of account-addresss the incubed client is able to sign with. 
+      
+      In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the addresses of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
+    result:
       descr: the array of addresses of all registered signers.
+      array: true
+      type: address
     example:
       response: 
         - "0x2e988a386a799f506693793c6a5af6b54dfaabfb"

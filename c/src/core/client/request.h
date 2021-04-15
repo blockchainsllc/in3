@@ -133,6 +133,17 @@ NONULL in3_req_t* req_new(
     in3_t*      client,  /**< [in] the client-config. */
     const char* req_data /**< [in] the rpc-request as json string. */
 );
+/** 
+ * creates a new request but clones the request-data.
+ * 
+ * the request data will be parsed and represented in the context.
+ * calling this function will only parse the request data, but not send anything yet.
+ * 
+ */
+NONULL in3_req_t* req_new_clone(
+    in3_t*      client,  /**< [in] the client-config. */
+    const char* req_data /**< [in] the rpc-request as json string. */
+);
 /**
  * sends a previously created request to nodes and verifies it.
  * 
@@ -311,6 +322,11 @@ char* req_get_error_data(
 char* req_get_response_data(
     in3_req_t* req /**< [in] the request context. */
 );
+
+/**
+ * returns the result or NULL in case of an error for that context. The result must be freed!
+ */
+char* req_get_result_json(in3_req_t* ctx, int index);
 
 /**
  * returns the type of the request

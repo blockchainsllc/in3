@@ -40,7 +40,7 @@ endif()
 
 add_static_library(
    NAME     ledger_signer 
-   
+
    SOURCES 
       ledger_signer.c
       device_apdu_commands.c

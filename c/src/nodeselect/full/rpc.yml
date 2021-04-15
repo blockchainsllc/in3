@@ -1,4 +1,6 @@
-in3:
+nodelist:
+
+  descr: special Incubed nodelist-handling functions. Most of those are only used internally.
 
   # config
   config:
@@ -11,7 +13,7 @@ in3:
 
     signatureCount:
       descr:  number of signatures requested in order to verify the blockhash.
-      type: uint
+      type: int
       optional: true
       example: 2
       default: 1
@@ -34,19 +36,19 @@ in3:
 
     minDeposit:
       descr: min stake of the server. Only nodes owning at least this amount will be chosen.
-      type: uint
+      type: uint256
       optional: true
       example: 10000000
 
     nodeProps:
       descr: used to identify the capabilities of the node.
-      type: uint
+      type: hex
       optional: true
-      example: 0xffff
+      example: '0xffff'
 
     requestCount:
       descr: the number of request send in parallel when getting an answer. More request will make it more expensive, but increase the chances to get a faster answer, since the client will continue once the first verifiable response was received.
-      type: uint
+      type: int
       optional: true
       example: 3
       default: 2
@@ -80,7 +82,8 @@ in3:
 
         whiteList:
           descr:  manual whitelist.
-          type: address[]
+          type: address
+          array: true
           optional: true
         
         registryId:
@@ -94,16 +97,17 @@ in3:
           
         avgBlockTime:
           descr: average block time (seconds) for this chain.
-          type: uint
+          type: int
           optional: true
           
         verifiedHashes:
           descr: if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
           optional: true
+          array : true
           type:
             block:
               descr: block number
-              type: uint
+              type: uint64
             hash:
               descr: verified hash corresponding to block number.
               type: bytes32
@@ -121,15 +125,16 @@ in3:
               type: string
             props:
               descr: used to identify the capabilities of the node (defaults to 0xFFFF).
-              type: uint
+              type: hex
           
   # Verified RPCs
   in3_nodeList:
+    apiName: nodes
     descr: fetches and verifies the nodeList from a node
     params:
       limit:
         descr: if the number is defined and >0 this method will return a partial nodeList limited to the given number.
-        type: uint
+        type: int
         optional: true
       seed:
         descr: this 32byte hex integer is used to calculate the indexes of the partial nodeList. It is expected to be a random value choosen by the client in order to make the result deterministic.
@@ -137,13 +142,17 @@ in3:
         optional: true
       addresses:
         descr: a optional array of addresses of signers the nodeList must include.
-        type: address[]
+        array: true
+        type: address
         optional: true
 
-    returns:
+    result:
+      typeName: NodeListDefinition
       descr: the current nodelist
       type:
         nodes:
+          typeName: Node
+          array: true
           descr: a array of node definitions.
           type:
             url:
@@ -154,22 +163,22 @@ in3:
               type: address
             index:
               descr: the index within the nodeList of the contract
-              type: uint
+              type: uint64
             deposit:
               descr: the stored deposit
-              type: uint
+              type: uint256
             props:
               descr: the bitset of capabilities as described in the [Node Structure](spec.html#node-structure)
-              type: uint
+              type: hex
             timeout:
               descr: the time in seconds describing how long the deposit would be locked when trying to unregister a node.
-              type: uint
+              type: uint64
             registerTime:
               descr: unix timestamp in seconds when the node has registered.
-              type: uint
+              type: uint64
             weight:
               descr: the weight of a node ( not used yet ) describing the amount of request-points it can handle per second.
-              type: uint
+              type: uint64
             proofHash:
               descr: | 
                 a hash value containing the above values. 
@@ -185,10 +194,10 @@ in3:
           type: bytes32
         lastBlockNumber:
           descr: the blockNumber of the last change of the list (usually the last event). 
-          type: uint
+          type: uint64
         totalServer:
           descr: the total numbers of nodes.
-          type: uint
+          type: uint64
     
     proof:
       descr: |
@@ -234,43 +243,44 @@ in3:
           type: bytes
         signatures:
           descr:  a array of signatures from the signers (if requested) of the above block.
-          type: bytes[]
+          array: true
+          type: bytes
         accounts:
           descr: a Object with the addresses of the db-contract as key and Proof as value. The Data Structure of the Proof is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof), but it must contain the above described keys.
-          type: 
-            "<accountAdr>":
-              descr: The Account of the data-contract.
+          key: accountAdr
+          type:
+            address:
+              descr: the address of the account
+              type: address
+            balance: 
+              descr: current Balance
+              type: uint256
+            codeHash:
+              descr: hash of the contract code
+              type: bytes32
+            nonce:
+              descr: nonce of the account
+              type: uint256
+            storageHash:
+              descr: MerkleRoot of the Storage Trie
+              type: bytes32
+            accountProof:
+              descr: MerkleProof of this account-node
+              array: true
+              type: bytes
+            storageProof:
+              descr: Array of Proofs for all required storage values
               type:
-                address:
-                  descr: the address of the account
-                  type: address
-                balance: 
-                  descr: current Balance
-                  type: uint
-                codeHash:
-                  descr: hash of the contract code
+                key:
+                  descr: the storage key (or hash)
                   type: bytes32
-                nonce:
-                  descr: nonce of the account
-                  type: uint
-                storageHash:
-                  descr: MerkleRoot of the Storage Trie
+                value:
+                  descr: the storage value
                   type: bytes32
-                accountProof:
-                  descr: MerkleProof of this account-node
-                  type: bytes[]
-                storageProof:
-                  descr: Array of Proofs for all required storage values
-                  type:
-                    key:
-                      descr: the storage key (or hash)
-                      type: uint
-                    value:
-                      descr: the storage value
-                      type: bytes32
-                    proof:
-                      descr: the merkleProof of the value down to the storageHash as MerkleRoot
-                      type: bytes[]
+                proof:
+                  descr: the merkleProof of the value down to the storageHash as MerkleRoot
+                  array: true
+                  type: bytes
     example:
       request:
         - 2
@@ -334,10 +344,8 @@ in3:
                     - "0xf843a0200e2d5276120...423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
                   value: "0x423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
 
-
-        
-
   in3_sign:
+    apiName: signBlockHash
     descr: |
       requests a signed blockhash from the node. 
       In most cases these requests will come from other nodes, because the client simply adds the addresses of the requested signers 
@@ -351,13 +359,13 @@ in3:
         type:
           blockNumber:
             descr: the blockNumber to sign
-            type: uint
+            type: uint64
           hash:
             descr: the expected hash. This is optional and can be used to check if the expected hash is correct, but as a client you should not rely on it, but only on the hash in the signature.
             type: bytes32
             optional: true
     
-    returns:
+    result:
       descr: the Array with signatures of all the requires blocks.
       type: 
         blockHash:
@@ -365,10 +373,10 @@ in3:
           type: bytes32
         block:
           descr: the blocknumber
-          type: uint
+          type: uint64
         r:
           descr: r-value of the signature
-          type: bytres32
+          type: bytes32
         s:
           descr: s-value of the signature
           type: bytes32
@@ -395,7 +403,7 @@ in3:
       address:
         descr: address of whitelist contract
         type: address
-    returns:
+    result:
       descr: the whitelisted addresses
       type:
         nodes:
@@ -403,16 +411,16 @@ in3:
           type: address
         lastWhiteList: 
           descr: the blockNumber of the last change of the in3 white list event.
-          type: uint
+          type: uint64
         contract:
           descr: whitelist contract address.
           type: address
         lastBlockNumber:
           descr: the blockNumber of the last change of the list (usually the last event). 
-          type: uint
+          type: uint64
         totalServer:
           descr: the total numbers of whitelist nodes.
-          type: uint
+          type: uint64
          
     proof:
       descr: |
@@ -432,40 +440,40 @@ in3:
           type: bytes[]
         accounts:
           descr: a Object with the addresses of the db-contract as key and Proof as value. The Data Structure of the Proof is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof), but it must contain the above described keys.
+          key: the account Adress
           type: 
-            "<accountAdr>":
-              descr: The Account of the data-contract.
+            address:
+              descr: the address of the account
+              type: address
+            balance: 
+              descr: current Balance
+              type: uint256
+            codeHash:
+              descr: hash of the contract code
+              type: bytes32
+            nonce:
+              descr: nonce of the account
+              type: uint256
+            storageHash:
+              descr: MerkleRoot of the Storage Trie
+              type: bytes32
+            accountProof:
+              descr: MerkleProof of this account-node
+              array: true
+              type: bytes
+            storageProof:
+              descr: Array of Proofs for all required storage values
               type:
-                address:
-                  descr: the address of the account
-                  type: address
-                balance: 
-                  descr: current Balance
-                  type: uint
-                codeHash:
-                  descr: hash of the contract code
+                key:
+                  descr: the storage key (or hash)
                   type: bytes32
-                nonce:
-                  descr: nonce of the account
-                  type: uint
-                storageHash:
-                  descr: MerkleRoot of the Storage Trie
+                value:
+                  descr: the storage value
                   type: bytes32
-                accountProof:
-                  descr: MerkleProof of this account-node
-                  type: bytes[]
-                storageProof:
-                  descr: Array of Proofs for all required storage values
-                  type:
-                    key:
-                      descr: the storage key (or hash)
-                      type: uint
-                    value:
-                      descr: the storage value
-                      type: bytes32
-                    proof:
-                      descr: the merkleProof of the value down to the storageHash as MerkleRoot
-                      type: bytes[]
+                proof:
+                  array: true
+                  descr: the merkleProof of the value down to the storageHash as MerkleRoot
+                  type: bytes
       
     example:
       request:

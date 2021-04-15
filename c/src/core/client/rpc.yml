@@ -1,4 +1,4 @@
-in3:
+config:
   descr: |
     There are also some Incubed specific rpc-methods, which will help the clients to bootstrap and update the nodeLists.
 
@@ -9,7 +9,7 @@ in3:
   config:
 
     chainId:
-      type: uint | string
+      type: string | uint
       descr: the chainId or the name of a known chain. It defines the nodelist to connect to.
       example: goerli
       optional: true
@@ -24,7 +24,7 @@ in3:
       cmd: c
     
     finality:
-      type: uint | string
+      type: int
       descr: the number in percent needed in order reach finality (% of signature of the validators).
       example: 50
       optional: true
@@ -39,7 +39,7 @@ in3:
       default: false
 
     maxAttempts:
-      type: uint
+      type: int
       descr: max number of attempts in case a response is rejected.
       example: 1
       optional: true
@@ -79,7 +79,7 @@ in3:
 
     timeout:
       descr: specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
-      type: uint
+      type: uint64
       optional: true
       example: 100000
       default: 20000
@@ -89,16 +89,16 @@ in3:
       type: string
       optional: true
       enum:
-        - none
-        - standard
-        - full
+        none: no proof will be generated or verfiied. This also works with standard rpc-endpoints.
+        standard: Stanbdard Proof means all important properties are verfiied
+        full: In addition to standard, also some rarly needed properties are verfied, like uncles. But this causes a bigger payload.
       example: none
       default: standard
       cmd: p
 
     replaceLatestBlock:
       descr:  if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
-      type: uint
+      type: int
       optional: true
       example: 6
       cmd: l
@@ -107,12 +107,13 @@ in3:
   # rpc-commands
 
   in3_config:
+    skipApi: true
     descr: changes the configuration of a client. The configuration is passed as the first param and may contain only the values to change.
     params:
       config:
         descr:  a Object with config-params.
    
-    returns:
+    result:
       descr: an boolean confirming that the config has changed.
     example:
       request:
