@@ -40,7 +40,11 @@
 #include "../../api/eth1/eth_api.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
+#ifdef CMD_ARGS_FILE
+#include CMD_ARGS_FILE
+#else
 #include "args.h"
+#endif
 #include "handlers.h"
 #include "transport.h"
 #include "tx.h"
