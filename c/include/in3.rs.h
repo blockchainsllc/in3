@@ -13,5 +13,7 @@
 #include "in3/in3_curl.h"
 #include "in3/in3_init.h"
 #include "in3/log.h"
+#ifdef SWIFT
 #include "../src/tools/swift/swift.h"
+#endif
 #include "../src/third-party/tommath/tommath.h"
