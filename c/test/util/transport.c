@@ -6,7 +6,7 @@
 #include "nodeselect/full/nodelist.h"
 #include <stdio.h>
 #include <unistd.h>
-#define MOCK_PATH "../c/test/testdata/mock/%s.json"
+#define MOCK_PATH TESTDATA_DIR "/mock/%s.json"
 
 static void clean_json_str(char* s) {
   const char* d = s;
