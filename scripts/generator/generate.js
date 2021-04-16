@@ -24,7 +24,7 @@ process.argv.slice(2).forEach(a => {
     else if (a.startsWith('--doc=')) doc_dir.push(a.substr(6))
     else if (a.startsWith('--arg=')) args_file.push(a.substr(6))
     else if (a.startsWith('--zsh=')) zsh_file.push(a.substr(6))
-    else if (a.startsWith('--gen=')) generators.push(a.substr(6))
+    else if (a.startsWith('--gen=')) generators.push(require(a.substr(6)))
     else throw new Error('Invalid argument : ' + a)
 })
 if (!src_dirs.length) src_dirs.push('../c/src')
