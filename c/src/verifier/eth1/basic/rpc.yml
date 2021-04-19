@@ -188,7 +188,7 @@ eth:
           result:
             type: blockdataWithTxHashes
         - params:
-            fullTx: false
+            fullTx: true
           name: getBlockWithTx
           descr: returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
           result:
