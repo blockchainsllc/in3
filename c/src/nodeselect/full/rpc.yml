@@ -73,6 +73,7 @@ nodelist:
       type: 
         contract:
           descr: address of the registry contract. (This is the data-contract!)
+          optional: true
           type: address
 
         whiteListContract:
@@ -89,6 +90,7 @@ nodelist:
         registryId:
           descr: identifier of the registry.
           type: bytes32
+          optional: true
 
         needsUpdate:
           descr: if set, the nodeList will be updated before next request.
