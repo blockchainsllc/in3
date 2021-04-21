@@ -137,7 +137,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // check the prefix (zksync_ or zk_ is supported)
   if (strncmp(ctx->method, "zksync_", 7) == 0)
     ctx->method += 7;
-  else if (strncmp(ctx->method, "zk_", 3) == 0)
+  else if (strncmp(ctx->method, "zk_", 3) == 0 && strncmp(ctx->method, "zk_wallet_", 10))
     ctx->method += 3;
   else
     return IN3_EIGNORE;
