@@ -11,6 +11,10 @@
 #include "tx.h"
 #include "weights.h"
 
+#ifndef CMD_NAME
+#define CMD_NAME "in3"
+#endif
+
 #define CHECK_OPTION(name, fn) \
   if (strcmp(key, name) == 0) return fn;
 #ifndef IN3_VERSION
@@ -26,7 +30,7 @@ static bool set_chainId(char* value, sb_t* conf) {
 }
 
 bool show_help() {
-  recorder_print(0, "Usage: in3 <options> method <params> ... \n\n%s", get_help_args());
+  recorder_print(0, "Usage: " CMD_NAME " <options> method <params> ... \n\n%s", get_help_args());
   recorder_exit(0);
   return true;
 }
@@ -195,7 +199,7 @@ bool handle_option(in3_t* c, char* key, char* value, sb_t* conf, int argc, char*
   CHECK_OPTION("nonce", set_uint64(&get_txdata()->nonce, value))
   CHECK_OPTION("wait", set_uint32(&get_txdata()->wait, "1"))
   CHECK_OPTION("block", set_string(&get_txdata()->block, value))
-  CHECK_OPTION("block", set_data(value))
+  CHECK_OPTION("data", set_data(value))
   CHECK_OPTION("value", set_string(&get_txdata()->value, get_wei(value)))
   CHECK_OPTION("zksync.create2", set_create2(value, conf))
   CHECK_OPTION("test-request", set_flag(get_weightsdata(), weight_test_request, value))

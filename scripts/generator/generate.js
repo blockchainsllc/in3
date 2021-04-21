@@ -19,11 +19,15 @@ const doc_dir = []
 const args_file = []
 const zsh_file = []
 const generators = []
+let cmdName = 'in3'
+let sdkName = 'IN3'
 process.argv.slice(2).forEach(a => {
     if (a.startsWith('--src=')) src_dirs.push(a.substr(6))
     else if (a.startsWith('--doc=')) doc_dir.push(a.substr(6))
     else if (a.startsWith('--arg=')) args_file.push(a.substr(6))
     else if (a.startsWith('--zsh=')) zsh_file.push(a.substr(6))
+    else if (a.startsWith('--cmd=')) cmdName = a.substr(6)
+    else if (a.startsWith('--sdk=')) sdkName = a.substr(6)
     else if (a.startsWith('--gen=')) generators.push(require(a.substr(6)))
     else throw new Error('Invalid argument : ' + a)
 })
@@ -110,12 +114,12 @@ function handle_config(conf, pre, title, descr) {
                 asArray(c.example).forEach(ex => {
                     config_doc.push('```sh')
                     if (typeof (ex) == 'object')
-                        config_doc.push('> in3 ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
+                        config_doc.push('> ' + cmdName + ' ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
                     else
                         config_doc.push([...asArray(c.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> in3 ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
                     config_doc.push('```\n')
                     if (!title)
-                        config_doc.push('```js\nconst in3 = new IN3(' + JSON.stringify({ [key]: ex }, null, 2) + ')\n```\n')
+                        config_doc.push('```js\nconst ' + cmdName + ' = new ' + sdkName + '(' + JSON.stringify({ [key]: ex }, null, 2) + ')\n```\n')
                 })
 
             }
@@ -219,7 +223,7 @@ for (const s of Object.keys(docs).sort()) {
                         rpc_doc.push('\n# ---- Response -----\n\n' + yaml.stringify(data))
                         rpc_doc.push('```\n')
             */
-            rpc_doc.push('```sh\n> in3 ' + (ex.cmdParams ? (ex.cmdParams + ' ') : '') + req.method + ' ' + (req.params.map(toCmdParam).join(' ').trim()) + (is_json ? ' | jq' : ''))
+            rpc_doc.push('```sh\n> ' + cmdName + ' ' + (ex.cmdParams ? (ex.cmdParams + ' ') : '') + req.method + ' ' + (req.params.map(toCmdParam).join(' ').trim()) + (is_json ? ' | jq' : ''))
             rpc_doc.push(is_json ? JSON.stringify(data.result, null, 2) : '' + data.result)
             rpc_doc.push('```\n')
 

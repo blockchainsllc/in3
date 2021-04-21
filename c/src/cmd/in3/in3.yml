@@ -167,7 +167,7 @@ config:
   onlysign:  
     cmd: os
     type: bool
-    descr: only sign, don't send the raw Transaction 
+    descr: only sign, do not send the raw Transaction 
     example: true
   noproof:
     alias: proof=none

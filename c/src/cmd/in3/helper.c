@@ -92,11 +92,12 @@ static bool is_number(char* val) {
 
 void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
   sb_t sb = {0};
-
   // handle options
   if (handle_option(c, name, value, &sb, argc, argv)) return;
   if (!sb.data) {
-    char* p = strtok(name, ".");
+    char* _name = alloca(strlen(name + 1));
+    strcpy(_name, name);
+    char* p = strtok(_name, ".");
     sb_add_char(&sb, '{');
     int b = 1;
     while (p) {
