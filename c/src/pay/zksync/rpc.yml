@@ -95,6 +95,16 @@ zksync:
             codehash:
               descr: the hash of the actual deploy-tx including the constructor-arguments. 
               type: bytes32
+        
+        verify_proof_method:
+          descr: rpc-method, which will be used to verify the incomming proof before cosigning.
+          type: string
+          cmd: zvpm
+
+        create_proof_method:
+          descr: rpc-method, which will be used to create the proof needed for cosigning.
+          type: string
+          cmd: zcpm
 
   # rpc
   zksync_contract_address:
