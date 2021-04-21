@@ -71,7 +71,7 @@ config:
     
     experimental:
       type: bool
-      descr: iif true the client allows to use use experimental features, otherwise a exception is thrown if those would be used.
+      descr: if true the client allows to use use experimental features, otherwise a exception is thrown if those would be used.
       example: true
       optional: true
       default: false
