@@ -266,6 +266,12 @@ public class JSON {
     sb.append("\"").append(key).append("\":").append(toJson(value)).append(",");
   }
 
+  public void addProperty(StringBuilder sb, String key) {
+    Object o = get(key);
+    if (o)
+      sb.append(sb.length() == 1 ? "" : ",").append("\"").append(key).append("\":").append(toJson(value));
+  }
+
   @Override
   public int hashCode() {
     final int prime  = 31;
