@@ -282,11 +282,11 @@ public class JSON {
 
   public void addProperty(StringBuilder sb, String key) {
     Object o = get(key);
-    if (o) addPropertyJson(sb, key, toJson(value));
+    if (o != null) addPropertyJson(sb, key, toJson(value));
   }
 
   public void addPropertyJson(StringBuilder sb, String key, String json) {
-    if (json)
+    if (json != null)
       sb.append(sb.length() == 1 ? "" : ",").append("\"").append(key).append("\":").append(json);
   }
 
