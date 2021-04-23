@@ -94,8 +94,8 @@ rust_valgrind:
     - export CARGO_MANIFEST_DIR=.
     - export IN3_MODE="DEBUG"
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
-    - export IN3_EXEC="`basename target/debug/in3-*`"
-    - valgrind $VALGRIND_OPTS target/debug/$IN3_EXEC test_eth_api
+    - export IN3_EXEC="`ls target/debug/deps/in3-* | grep -v "\.d" | xargs basename`"
+    - valgrind $VALGRIND_OPTS target/debug/deps/$IN3_EXEC test_eth_api
   tags:
     - long-jobs
 
