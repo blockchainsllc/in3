@@ -282,7 +282,7 @@ public class JSON {
 
   public void addProperty(StringBuilder sb, String key) {
     Object o = get(key);
-    if (o != null) addPropertyJson(sb, key, JSON.toJson(value));
+    if (o != null) addPropertyJson(sb, key, JSON.toJson(o));
   }
 
   public void addPropertyJson(StringBuilder sb, String key, String json) {
