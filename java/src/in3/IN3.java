@@ -71,6 +71,15 @@ public class IN3 {
   }
 
   /**
+   * creates a client with the default config.
+   */
+  public IN3() {
+    ptr         = init(1);
+    this.config = new ClientConfiguration(this.getDefaultConfig());
+    this.config.markAsSynced();
+  }
+
+  /**
    * create a Incubed client using the chain-config. if chainId is
    * Chain.MULTICHAIN, the client can later be switched between different chains,
    * for all other chains, it will be initialized only with the chainspec for this

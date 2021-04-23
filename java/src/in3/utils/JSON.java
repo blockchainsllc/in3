@@ -51,7 +51,7 @@ public class JSON {
 
   private HashMap<Integer, Object> map = new HashMap<Integer, Object>();
 
-  private static native int key(String name);
+  protected static native int key(String name);
 
   JSON() {}
 
@@ -211,6 +211,20 @@ public class JSON {
     return 0;
   }
 
+  public static double asDouble(Object o) {
+    if (o == null)
+      return 0;
+    if (o instanceof Float) return ((Float) o).doubleValue();
+    if (o instanceof Double) return ((Double) o).doubleValue();
+    if (o instanceof String)
+      return (((String) o).length() > 2 && o.toString().charAt(1) == 'x')
+          ? JSON.asBigInteger(o).doubleValue()
+          : Double.parseDouble(o.toString());
+    if (o instanceof Number)
+      return ((Number) o).doubleValue();
+    return 0;
+  }
+
   public static boolean asBoolean(Object o) {
     if (o == null)
       return false;
@@ -268,8 +282,12 @@ public class JSON {
 
   public void addProperty(StringBuilder sb, String key) {
     Object o = get(key);
-    if (o)
-      sb.append(sb.length() == 1 ? "" : ",").append("\"").append(key).append("\":").append(toJson(value));
+    if (o) addPropertyJson(sb, key, toJson(value));
+  }
+
+  public void addPropertyJson(StringBuilder sb, String key, String json) {
+    if (json)
+      sb.append(sb.length() == 1 ? "" : ",").append("\"").append(key).append("\":").append(json);
   }
 
   @Override
@@ -296,5 +314,28 @@ public class JSON {
     else if (!map.equals(other.map))
       return false;
     return true;
+  }
+
+  public <T> Map<String, T> asMap(java.util.function.Function<Object, T> converter) {
+
+    HashMap<Integer, T> data = new HashMap<Integer, T>();
+    for (Integer k : map.keySet())
+      data.put(k, converter.apply(map.get(k)));
+    return new HashMap<String, T>() {
+      @Override
+      public T get(Object key) {
+        return data.get(JSON.key((String) key));
+      }
+
+      @Override
+      public boolean containsKey(Object key) {
+        return data.containsKey(JSON.key((String) key));
+      }
+
+      @Override
+      public T put(String key, T value) {
+        return data.put(JSON.key((String) key), value);
+      }
+    };
   }
 }
