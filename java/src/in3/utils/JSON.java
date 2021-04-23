@@ -318,7 +318,7 @@ public class JSON {
 
   public <T> Map<String, T> asMap(java.util.function.Function<Object, T> converter) {
 
-    HashMap<Integer, T> data = new HashMap<Integer, T>();
+    final HashMap<Integer, T> data = new HashMap<Integer, T>();
     for (Integer k : map.keySet())
       data.put(k, converter.apply(map.get(k)));
     return new HashMap<String, T>() {
