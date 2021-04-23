@@ -316,7 +316,7 @@ public class JSON {
     return true;
   }
 
-  public <T> Map<String, T> asMap(java.util.function.Function<Object, T> converter) {
+  public <T> Map<String, T> asMap(Converter<Object, T> converter) {
 
     final HashMap<Integer, T> data = new HashMap<Integer, T>();
     for (Integer k : map.keySet())
