@@ -114,13 +114,17 @@ foreach (file ${files})
 
 endforeach ()
 
+if ( NOT CMD_NAME )
+  set(CMD_NAME in3)
+endif ()
+
 # add cmd--tests
 file(GLOB files "testdata/cmd/*.txt")
 foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "cmd_${testname}"
-            COMMAND ${CMAKE_BINARY_DIR}/bin/in3 -fi ${file} 
+            COMMAND ${CMAKE_BINARY_DIR}/bin/${CMD_NAME} -fi ${file} 
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
     )
     set_tests_properties("cmd_${testname}" PROPERTIES 
