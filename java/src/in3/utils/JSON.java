@@ -53,7 +53,7 @@ public class JSON {
 
   protected static native int key(String name);
 
-  JSON() {}
+  public JSON() {}
 
   /**
      * gets the property
@@ -107,6 +107,16 @@ public class JSON {
   public long getLong(String key /** the propertyName */
   ) {
     return asLong(get(key));
+  }
+
+  /**
+     * returns the property as double
+     * 
+     * @return the long value
+     */
+  public double getDouble(String key /** the propertyName */
+  ) {
+    return asDouble(get(key));
   }
 
   /**

@@ -77,7 +77,8 @@ zksync:
 
         musig_urls:
           descr:  a array of strings with urls based on the `musig_pub_keys`. It is used so generate the combined signature by exchaing signature data (commitment and signatureshares) if the local client does not hold this key.
-          type: string[]
+          type: string
+          array: true
           optional: true
           cmd: zmu
 
