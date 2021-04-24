@@ -113,6 +113,7 @@ python_macos:
   before_script:
     - *cache_scipt_before
   script:
+    - rm -rf ~/.in3 || echo "could not delete cache" 
     - cd python_multilib
     - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
