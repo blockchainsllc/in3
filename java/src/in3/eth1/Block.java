@@ -151,8 +151,6 @@ public class Block {
 
   /**
    * the transactions of the block.
-   *
-   * @throws if the Transactions are not available
    */
   public Transaction[] getTransactions() throws Exception {
     Object[] tx = (Object[]) data.get("transactions");
