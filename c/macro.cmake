@@ -1,9 +1,13 @@
 
 macro(add_static_library )
-    cmake_parse_arguments(_LIB "" "NAME;REGISTER" "SOURCES;DEPENDS" ${ARGN} )
-    string(TOUPPER "MOD_${_LIB_NAME}" tmp)
-    option(${tmp} "module ${_LIB_NAME}" ON)
-    if (${${tmp}})
+    cmake_parse_arguments(_LIB "" "NAME;REGISTER;OPTION;DESCR" "SOURCES;DEPENDS" ${ARGN} )
+    if (_LIB_OPTION)
+       option(${_LIB_OPTION} ${_LIB_DESCR} ON)
+    else()
+      string(TOUPPER "MOD_${_LIB_NAME}" _LIB_OPTION)
+      set(${_LIB_OPTION} ON)
+    endif()
+    if (${${_LIB_OPTION}})
         # create objects
         add_library(${_LIB_NAME}_o OBJECT ${_LIB_SOURCES})
 
