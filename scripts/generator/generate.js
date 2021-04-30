@@ -116,7 +116,7 @@ function handle_config(conf, pre, title, descr) {
                     if (typeof (ex) == 'object')
                         config_doc.push('> ' + cmdName + ' ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
                     else
-                        config_doc.push([...asArray(c.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> in3 ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
+                        config_doc.push([...asArray(c.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> ' + cmdName + ' ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
                     config_doc.push('```\n')
                     if (!title)
                         config_doc.push('```js\nconst ' + cmdName + ' = new ' + sdkName + '(' + JSON.stringify({ [key]: ex }, null, 2) + ')\n```\n')
