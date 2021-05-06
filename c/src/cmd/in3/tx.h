@@ -17,4 +17,4 @@ typedef struct tx {
 } tx_t;
 
 tx_t* get_txdata();
-void  encode_abi(in3_t* c, sb_t* args);
+void  encode_abi(in3_t* c, sb_t* args, bool with_block);

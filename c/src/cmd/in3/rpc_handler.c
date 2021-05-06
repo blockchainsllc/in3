@@ -16,12 +16,12 @@ static bool decode_keystore(char* args, int argc, char** argv) {
   return true;
 }
 static bool _call(in3_t* c, char** method, sb_t* params) {
-  encode_abi(c, params);
+  encode_abi(c, params, true);
   *method = "eth_call";
   return false;
 }
 static bool _send(in3_t* c, char** method, sb_t* params) {
-  encode_abi(c, params);
+  encode_abi(c, params, false);
   if (is_onlyshow_rawtx() && (c->plugin_acts & (PLGN_ACT_SIGN | PLGN_ACT_SIGN_ACCOUNT)) == 0)
     *method = "in3_prepareTx";
   else

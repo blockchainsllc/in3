@@ -78,6 +78,6 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
   return req;
 }
 
-void encode_abi(in3_t* c, sb_t* args) {
-  _tx.abi_sig = prepare_tx(_tx.sig, resolve(c, _tx.to), args, _tx.block, _tx.gas, _tx.gas_price, _tx.value, _tx.data, _tx.from);
+void encode_abi(in3_t* c, sb_t* args, bool with_block) {
+  _tx.abi_sig = prepare_tx(_tx.sig, resolve(c, _tx.to), args, _tx.block == NULL && with_block ? "latest" : _tx.block, _tx.gas, _tx.gas_price, _tx.value, _tx.data, _tx.from);
 }
