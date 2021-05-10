@@ -63,6 +63,8 @@ IF (TRANSPORTS AND NOT SWIFT)
     add_subdirectory(src/transport)
 ENDIF (TRANSPORTS AND NOT SWIFT)
 
+ADD_DEFINITIONS("-DIN3_AUTOINIT_PATH=\"${CMAKE_BINARY_DIR}/autoregister.h\"")
+
 add_subdirectory(src/core)
 add_subdirectory(src/init)
 add_subdirectory(src/verifier)
@@ -80,7 +82,7 @@ foreach(m IN LISTS modules)
   set(REGISTER_DEF "${REGISTER_DEF}in3_ret_t ${m} (in3_t*);\n")
   set(REGISTER_CALL "${REGISTER_CALL}  in3_register_default(${m});\n")
 endforeach()
-file(WRITE src/init/autoregister.h "${REGISTER_DEF}\n\nstatic void auto_init() {\n${REGISTER_CALL}}\n")
+file(WRITE ${CMAKE_BINARY_DIR}/autoregister.h "${REGISTER_DEF}\n\nstatic void auto_init() {\n${REGISTER_CALL}}\n")
 
 # define lib dir
 link_directories(${CMAKE_BINARY_DIR}/lib/)
