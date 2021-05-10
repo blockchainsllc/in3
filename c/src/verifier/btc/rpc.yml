@@ -32,7 +32,7 @@ types:
       type: bytes4
     difficulty:
       descr: The difficulty
-      type: uint256
+      type: double
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
       type: hex
