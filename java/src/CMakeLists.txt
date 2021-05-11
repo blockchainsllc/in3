@@ -38,6 +38,10 @@ target_link_libraries(in3_jni init)
 
 IF (NOT DEFINED ANDROID_ABI)
 
+  set(JAVA_AWT_LIBRARY NotNeeded)
+  set(JAVA_JVM_LIBRARY NotNeeded)
+  set(JAVA_AWT_INCLUDE_PATH NotNeeded)
+
   find_package(Java REQUIRED)
   find_package(JNI REQUIRED)
   include(UseJava)

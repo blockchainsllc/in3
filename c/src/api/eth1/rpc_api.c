@@ -143,29 +143,6 @@ static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_bytes(ctx, bytes(result, res_len));
 }
 
-static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
-  bytes32_t hash;
-  keccak(d_to_bytes(ctx->params + 1), hash);
-  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
-}
-static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
-  bytes32_t  hash;
-  bytes_t    data = d_to_bytes(ctx->params + 1);
-  SHA256_CTX c;
-  sha256_Init(&c);
-  sha256_Update(&c, data.data, data.len);
-  sha256_Final(&c, hash);
-  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
-}
-static in3_ret_t web3_clientVersion(in3_rpc_handle_ctx_t* ctx) {
-  // for local chains, we return the client version of rpc endpoint.
-  return ctx->req->client->chain.chain_id == CHAIN_ID_LOCAL
-             ? IN3_EIGNORE
-             : in3_rpc_handle_with_string(ctx, "\"Incubed/" IN3_VERSION "\"");
-}
-
 static const char* UNITS[] = {
     "wei", "",
     "kwei", "\x03",
@@ -350,33 +327,6 @@ static in3_ret_t in3_fromWei(in3_rpc_handle_ctx_t* ctx) {
   return r;
 }
 
-static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_OBJECT) return req_set_error(ctx->req, "no valid config-object as argument", IN3_EINVAL);
-
-  ctx->req->client->pending--; // we need to to temporarly decrees it in order to allow configuring
-  str_range_t r   = d_to_json(ctx->params + 1);
-  char        old = r.data[r.len];
-  r.data[r.len]   = 0;
-  char* ret       = in3_configure(ctx->req->client, r.data);
-  r.data[r.len]   = old;
-  ctx->req->client->pending++;
-
-  if (ret) {
-    req_set_error(ctx->req, ret, IN3_ECONFIG);
-    free(ret);
-    return IN3_ECONFIG;
-  }
-
-  return in3_rpc_handle_with_string(ctx, "true");
-}
-
-static in3_ret_t in3_getConfig(in3_rpc_handle_ctx_t* ctx) {
-  char* ret = in3_get_config(ctx->req->client);
-  in3_rpc_handle_with_string(ctx, ret);
-  _free(ret);
-  return IN3_OK;
-}
-
 static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
   bytes_t* pk = d_get_bytes_at(ctx->params, 0);
   if (!pk || pk->len != 32 || d_len(ctx->params) != 1) return req_set_error(ctx->req, "Invalid private key! must be 32 bytes long", IN3_EINVAL);
@@ -541,11 +491,6 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_finish(ctx);
 }
 
-static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
-  TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_CACHE_CLEAR, NULL));
-  return in3_rpc_handle_with_string(ctx, "true");
-}
-
 static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
   d_token_t*  keyfile        = d_get_at(ctx->params, 0);
   bytes_t     password_bytes = d_to_bytes(d_get_at(ctx->params, 1));
@@ -585,39 +530,6 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
   return IN3_OK;
-}
-
-static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
-  bytes32_t hash;
-  FILE*     r = NULL;
-  if (d_len(ctx->params) == 1) {
-    CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
-    keccak(d_to_bytes(ctx->params + 1), hash);
-    srand(bytes_to_int(hash, 4));
-  }
-  else {
-#ifndef WASM
-    r = fopen("/dev/urandom", "r");
-    if (r) {
-      for (int i = 0; i < 32; i++) hash[i] = (uint8_t) fgetc(r);
-      fclose(r);
-    }
-    else
-#endif
-      srand(current_ms() % 0xFFFFFFFF);
-  }
-
-  if (!r) {
-#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
-    unsigned int number;
-    for (int i = 0; i < 32; i++) {
-      hash[i] = (rand_s(&number) ? rand() : (int) number) % 256;
-    }
-#else
-    for (int i = 0; i < 32; i++) hash[i] = rand() % 256;
-#endif
-  }
-  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
@@ -660,10 +572,6 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(action);
 
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
-  TRY_RPC("web3_sha3", in3_sha3(ctx))
-  TRY_RPC("keccak", in3_sha3(ctx))
-  TRY_RPC("sha256", in3_sha256(ctx))
-  TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
   TRY_RPC("eth_sign", in3_sign_data(ctx))
   TRY_RPC("eth_signTransaction", in3_signTx(ctx))
 
@@ -675,17 +583,13 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_ens", in3_ens(ctx))
   TRY_RPC("in3_toWei", in3_toWei(ctx))
   TRY_RPC("in3_fromWei", in3_fromWei(ctx))
-  TRY_RPC("in3_config", in3_config(ctx))
-  TRY_RPC("in3_getConfig", in3_getConfig(ctx))
   TRY_RPC("in3_pk2address", in3_pk2address(ctx))
   TRY_RPC("in3_pk2public", in3_pk2address(ctx))
   TRY_RPC("in3_ecrecover", in3_ecrecover(ctx))
   TRY_RPC("in3_signData", in3_sign_data(ctx))
-  TRY_RPC("in3_cacheClear", in3_cacheClear(ctx))
   TRY_RPC("in3_decryptKey", in3_decryptKey(ctx))
   TRY_RPC("in3_prepareTx", in3_prepareTx(ctx))
   TRY_RPC("in3_signTx", in3_signTx(ctx))
-  TRY_RPC("in3_createKey", in3_createKey(ctx))
   TRY_RPC("in3_calcDeployAddress", in3_calcDeployAddress(ctx))
 
   return IN3_EIGNORE;

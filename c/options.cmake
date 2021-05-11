@@ -49,6 +49,7 @@ OPTION(NODESELECT_DEF_WL "Enable default nodeselect whitelist implementation" ON
 OPTION(PLGN_CLIENT_DATA "Enable client-data plugin" OFF)
 OPTION(THREADSAFE "uses mutex to protect shared nodelist access" ON)
 OPTION(SWIFT "swift API for swift bindings" OFF)
+OPTION(CORE_API "include basic core-utils" ON)
 
 
 IF (DEFINED ANDROID_ABI)
@@ -81,6 +82,10 @@ IF (PK_SIGNER)
   ADD_DEFINITIONS(-DPK_SIGNER)
   set(IN3_API ${IN3_API} pk_signer)
 ENDIF (PK_SIGNER)
+
+IF (CORE_API)
+  set(IN3_API ${IN3_API} core_api)
+ENDIF (CORE_API)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)

@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 #include "../../src/api/eth1/abi.h"
+#include "../../src/api/core/core_api.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/client/request_internal.h"
@@ -318,6 +319,7 @@ static void test_in3_verified_hashes() {
 int main() {
   in3_register_default(in3_register_eth_full);
   in3_register_default(in3_register_eth_api);
+  in3_register_default(in3_register_core_api);
   in3_register_default(in3_register_nodeselect_def);
   in3_log_set_quiet(true);
 
