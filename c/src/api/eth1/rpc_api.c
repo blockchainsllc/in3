@@ -491,7 +491,6 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_finish(ctx);
 }
 
-
 static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
   d_token_t*  keyfile        = d_get_at(ctx->params, 0);
   bytes_t     password_bytes = d_to_bytes(d_get_at(ctx->params, 1));

@@ -47,7 +47,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
   bytes32_t hash;
@@ -135,7 +134,6 @@ static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
   }
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
-
 
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(pdata);
