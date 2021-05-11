@@ -1,0 +1,74 @@
+utils:
+  in3_cacheClear:
+    sync: true
+    descr: clears the incubed cache (usually found in the .in3-folder)
+    result:
+      descr: true indicating the success
+    example: 
+      request: []
+      response: true
+
+  web3_clientVersion:
+    descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
+    result:
+      descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
+
+  keccak:
+    sync: true
+    alias: web3_sha3
+
+  web3_sha3:
+    sync: true
+    descr: |
+      Returns Keccak-256 (not the standardized SHA3-256) of the given data.
+
+      See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    result:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
+
+  sha256:
+    sync: true
+    descr: |
+      Returns sha-256 of the given data.
+
+      No proof needed, since the client will execute this locally. 
+    params:
+      data:
+        descr: data to hash
+        type: bytes
+    result:
+      descr: the 32byte hash of the data
+    example:
+      request:
+        - "0x1234567890"
+      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
+
+
+account:
+
+  in3_createKey:
+    sync: true
+    descr: |
+      Generates 32 random bytes.
+      If /dev/urandom is available it will be used and should generate a secure random number.
+      If not the number should not be considered sceure or used in production.
+    params:
+      seed:
+        optional: true
+        descr: the seed. If given the result will be deterministic.
+        type: bytes
+    result:
+      descr: the 32byte random data
+    example:
+      request: []
+      response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"

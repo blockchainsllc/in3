@@ -32,24 +32,14 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory(utils)
-add_subdirectory(core)
 
-IF (IN3API)
-  add_subdirectory(eth1)
+add_static_library(
+  NAME     core_api 
+  REGISTER in3_register_core_api
+  OPTION   "registers a chain independend rpc-methods util-functions"
+  SOURCES 
+    core_api.c 
 
-    if (NOT WASM)
-      add_subdirectory(usn)
-    endif()
-
-    
-    IF (IPFS)
-        add_subdirectory(ipfs)
-    ENDIF (IPFS)
-
-    IF (BTC)
-        add_subdirectory(btc)
-    ENDIF (BTC)
-
-ENDIF (IN3API)
-
+  DEPENDS 
+    api_utils
+)
