@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/api/core/core_api.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/client/request_internal.h"
@@ -922,6 +923,7 @@ int main() {
   //  in3_log_set_level(LOG_TRACE);
   in3_register_default(in3_register_eth_basic);
   in3_register_default(in3_register_eth_api);
+  in3_register_default(in3_register_core_api);
   in3_register_default(in3_register_nodeselect_def);
 
   TESTS_BEGIN();
