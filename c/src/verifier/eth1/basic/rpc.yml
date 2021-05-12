@@ -319,7 +319,7 @@ eth:
           result:
             type: blockdataWithTxHashes
         - params:
-            fullTx: false
+            fullTx: true
           name: getBlockByHashWithTx
           descr: returns the given Block by hash with full transaction data
           result:
