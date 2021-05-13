@@ -385,6 +385,7 @@ eth:
       alias: eth_getUncleCountByBlockNumber
     result:
       descr: the number of transactions in the block
+      type: int
 
   eth_getBlockTransactionCountByNumber:
     descr: returns the number of transactions. For Spec, see [eth_getBlockTransactionCountByNumber](https://eth.wiki/json-rpc/API#eth_getBlockTransactionCountByNumber).
@@ -396,6 +397,7 @@ eth:
       alias: eth_getUncleCountByBlockNumber
     result:
       descr: the number of transactions in the block
+      type: int
 
   eth_getUncleCountByBlockHash:
     descr: returns the number of uncles. For Spec, see [eth_getUncleCountByBlockHash](https://eth.wiki/json-rpc/API#eth_getUncleCountByBlockHash).
@@ -407,6 +409,7 @@ eth:
       alias: eth_getUncleCountByBlockNumber
     result:
       descr: the number of uncles
+      type: int
 
   eth_getUncleCountByBlockNumber:
     descr: returns the number of uncles. For Spec, see [eth_getUncleCountByBlockNumber](https://eth.wiki/json-rpc/API#eth_getUncleCountByBlockNumber).
@@ -426,6 +429,7 @@ eth:
         - `uncles`: a array of blockheaders of the uncles of the block. This is only needed if the number of uncles are requested.
     result:
       descr: the number of uncles
+      type: int
 
   eth_getTransactionByBlockHashAndIndex:
     descr: |
@@ -807,6 +811,7 @@ eth:
         type: uint64
     result:
       descr: the nonce
+      type: uint64
     proof:
       alias: eth_getStorageAt
     example:
