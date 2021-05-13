@@ -38,6 +38,13 @@ config:
       optional: true
       default: false
 
+    debug:
+      type: bool
+      descr: if true, debug messages will be written to stderr.
+      example: true
+      optional: true
+      default: false
+
     maxAttempts:
       type: int
       descr: max number of attempts in case a response is rejected.
