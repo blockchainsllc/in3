@@ -265,7 +265,7 @@ char* in3_configure(in3_t* c, const char* config) {
       bool changed      = (c->chain.chain_id != chain_id(token));
       c->chain.chain_id = chain_id(token);
       c->chain.type     = ct_ == -1 ? chain_type_from_id(c->chain.chain_id) : ((in3_chain_type_t) ct_);
-      if (c->chain.chain_id == CHAIN_ID_BTC && !c->finality && !d_get(json->result,key("finality"))) c->finality = 7; 
+      if (c->chain.chain_id == CHAIN_ID_BTC && !c->finality && !d_get(json->result, key("finality"))) c->finality = 7;
       in3_client_register_chain(c, c->chain.chain_id, c->chain.type, 2);
       if (changed) in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
