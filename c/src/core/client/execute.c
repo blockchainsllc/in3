@@ -683,7 +683,7 @@ typedef struct {
 
 static void transport_cleanup(in3_req_t* ctx, ctx_req_transports_t* transports, bool free_all) {
   for (int i = 0; i < transports->len; i++) {
-    if (free_all || transports->req[i].req == ctx) {
+    if ((free_all && transports->req[i].req) || transports->req[i].req == ctx) {
       in3_http_request_t req = {.req = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first_or_none(ctx, PLGN_ACT_TRANSPORT_CLEAN, &req);
       if (!free_all) {
