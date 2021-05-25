@@ -293,8 +293,8 @@ btc:
         type: bytes32
       verbosity:
         descr: 0 or false for the hex-encoded data, 1 or true for a json object
-        type: int
-        default: 0
+        type: bool
+        default: false
     in3Params:
       verification:
         descr: defines the kind of proof the client is asking for (must be `never` or `proof`)
@@ -305,7 +305,7 @@ btc:
     result:
       options:
         - params:
-            verbosity: 0
+            verbosity: false
           name: getblockheaderAsHex
           descr: returns a hex representation of the blockheader
           example: '3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d'
@@ -313,7 +313,7 @@ btc:
             optional: true
             type: bytes
         - params:
-            verbosity: 1
+            verbosity: true
           name: getblockheader
           descr: returns the blockheader
           result:
