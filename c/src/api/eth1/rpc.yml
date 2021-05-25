@@ -109,6 +109,7 @@ utils:
         optional: true
     result:
       descr: the value as string.
+      type: string
     example:
       request:
         - "0x234324abadefdef"
@@ -137,10 +138,11 @@ utils:
 
 
   net_version:
-    sync: true
-    descr: the Network Version (currently 1)
+    descr: Returns the current network id.
+    apiName: getNetworkId
     result:
-       descr: the Version number
+       descr: the network id
+       type: uint64
 
 account:
   descr: |
