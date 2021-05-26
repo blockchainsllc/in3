@@ -1,3 +1,34 @@
+types:
+  zk_receipt:
+    type:
+      descr: the Transaction-Type (`Withdraw`  or `Transfer`)
+      type: string
+    accountId:
+      descr: the id of the sender account
+      type: uint64
+    from:
+      descr: the address of the sender
+      type: address
+    to:
+      descr: the address of the receipient
+      type: address
+    token:
+      descr: the id of the token used
+      type: uint64
+    amount:
+      descr: the amount sent
+      type: uint256
+    fee:
+      descr: the fees paid
+      type: uint256
+    nonce:
+      descr: the fees paid
+      type: uint64
+    txHash:
+      descr: the transactionHash, which can be used to track the tx
+      type: string
+
+
 zksync:
   descr: |
     *Important: This feature is still experimental and not considered stable yet. In order to use it, you need to set the experimental-flag (-x on the comandline or `"experimental":true`!*
@@ -246,6 +277,7 @@ zksync:
         block:
           descr: the blockNumber containing the tx or `null` if still pending
           type: uint64
+          optional: true
         executed:
           descr: true, if the tx has been executed by the operator. If false it is still in the txpool of the operator.
           type: bool
@@ -255,6 +287,7 @@ zksync:
         failReason:
           descr: if executed and failed this will include an error message
           type: string
+          optional: true
     example:
       cmdParams: -x       
       request:
@@ -483,14 +516,48 @@ zksync:
         type: address
         optional: true
     result:
-      descr: the opId. You can use `zksync_ethop_info` to follow the state-changes.
-      type: uint64
+      descr: the receipt and the receipopId. You can use `zksync_ethop_info` to follow the state-changes.
+      type: 
+        receipt:
+          descr: the transactionreceipt
+          type: transactionReceipt
+        priorityOpId:
+          descr: the operationId to rack to progress
+          type: uint64
+        
     example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
       request:
         - 1000
         - WBTC
-      response: 74
+      response: 
+        receipt:
+          blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
+          blockNumber: '0x8c1e39'
+          contractAddress:
+          cumulativeGasUsed: '0x2466d'
+          gasUsed: '0x2466d'
+          logs:
+          - address: '0x85ec283a3ed4b66df4da23656d4bf8a507383bca'
+            blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
+            blockNumber: '0x8c1e39'
+            data: 0x00000000000...
+            logIndex: '0x0'
+            removed: false
+            topics:
+            - '0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8'
+            - '0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6'
+            - '0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000'
+            transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
+            transactionIndex: '0x0'
+            transactionLogIndex: '0x0'
+            type: mined
+          logsBloom: 0x00000000000000000000200000...
+          root:
+          status: '0x1'
+          transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
+          transactionIndex: '0x0'
+        priorityOpId: 74
 
   zksync_transfer:
     descr: sends a zksync-transaction and returns data including the transactionHash.
@@ -509,15 +576,25 @@ zksync:
         type: address
         optional: true
     result:
-      descr: the transactionHash. use `zksync_tx_info` to check the progress.
-      type: bytes32
+      descr: the transactionReceipt. use `zksync_tx_info` to check the progress.
+      type: zk_receipt
     example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
       request:
         - 0xabea9132b05a70803a4e85094fd0e1800777fbef
         - 100
         - WBTC
-      response: '0x58ba1537596739d990a33e4fba3a6fb4e0d612c5de30843a2c415dd1e5edcef1'
+      response:
+        type: Transfer
+        accountId: 1
+        from: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
+        to: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
+        token: 0
+        amount: 10
+        fee: 3780000000000000
+        nonce: 4
+        txHash: 'sync-tx:40008d91ab92f7c539e45b06e708e186a4b906ad10c4b7a29f855fe02e7e7668'
+    
 
   zksync_withdraw:
     descr: withdraws the amount to the given `ethAddress` for the given token.
@@ -536,15 +613,25 @@ zksync:
         type: address
         optional: true
     result:
-      descr: the transactionHash. use `zksync_tx_info` to check the progress.
-      type: bytes32
+      descr: the transactionReceipt. use `zksync_tx_info` to check the progress.
+      type: zk_receipt
     example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
       request:
         - 0xabea9132b05a70803a4e85094fd0e1800777fbef
         - 100
         - WBTC
-      response: '0x58ba1537596739d990a33e4fba3a6fb4e0d612c5de30843a2c415dd1e5edcef1'
+      response:
+        type: Transfer
+        accountId: 1
+        from: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
+        to: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
+        token: 0
+        amount: 10
+        fee: 3780000000000000
+        nonce: 4
+        txHash: 'sync-tx:40008d91ab92f7c539e45b06e708e186a4b906ad10c4b7a29f855fe02e7e7668'
+
 
   zksync_emergency_withdraw:
     descr: withdraws all tokens for the specified token as a onchain-transaction. This is useful in case the zksync-server is offline or tries to be malicious.
