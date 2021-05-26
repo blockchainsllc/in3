@@ -45,6 +45,7 @@ types:
     nonce:
       descr: hash of the generated proof-of-work. `null` when its pending block.
       type: uint256
+      optional: true
     sha3Uncles:
       descr: SHA3 of the uncles Merkle root in the block.
       type: bytes32
