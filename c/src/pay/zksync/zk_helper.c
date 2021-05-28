@@ -86,7 +86,7 @@ void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t s
   uint8_t tmp[85];
   memset(tmp, 0, 85);
   memcpy(tmp, saltarg, 32);
-  memcpy(tmp + 32 , pub_key_hash, 20);
+  memcpy(tmp + 32, pub_key_hash, 20);
   keccak(bytes(tmp, 52), tmp + 21);
   *tmp = 0xff;
   memcpy(tmp + 1, creator, 20);
