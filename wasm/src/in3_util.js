@@ -221,11 +221,7 @@ function abiDecode(sig, data) {
 
 function convertType(val, t) {
     const isArray = t.indexOf('[')
-    if (isArray >= 0) {
-        t = t.substr(0, isArray)
-        if (t !== 'string' && t != 'bytes')
-            return val ? val.map(_ => convertType(_, t)) : []
-    }
+    if (isArray >= 0) return val ? val.map(_ => convertType(_, t.substr(0, isArray))) : []
 
     if (t.startsWith('(')) return convertTypes(splitTypes(t), val)
     switch (t) {
