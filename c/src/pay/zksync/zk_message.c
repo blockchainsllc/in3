@@ -149,7 +149,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
   raw[45] = (tid >> 8) & 0xff;             // 45: token_id (2)
   raw[46] = tid & 0xff;                    //
   if (data->type == ZK_WITHDRAW) {
-    total = 69;
+    total = 85;
 #ifdef ZKSYNC_256
     memcpy(raw + 47, data->amount + 16, 16);
 #else
@@ -161,7 +161,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
     int_to_bytes(data->nonce, raw + 65); // 65: nonce(4)
   }
   else {
-    total = 58;
+    total = 74;
     to_dec(dec, data->amount);           //    create a decimal represntation and pack it
     TRY(pack(dec, 35, 5, raw + 47, ctx)) // 47: amount packed (5)
     to_dec(dec, data->fee);              //    create a decimal represntation and pack it
@@ -169,28 +169,29 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
     int_to_bytes(data->nonce, raw + 54); // 54: nonce(4)
   }
 
+  long_to_bytes(data->valid.from,raw+total-16);
+  long_to_bytes(data->valid.to,raw+total-8);
+
   // sign data
   return zksync_sign(conf, bytes(raw, total), ctx, sig);
 }
 
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf) {
-  char    msg_data[200];
+  if (!data->valid.to) data->valid.to=0xffffffffl;
+  char    msg_data[216];
   bytes_t signature;
   sb_t    msg = sb_stack(msg_data);
   create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
   create_signed_bytes(&msg);
-  if (data->conf->sign_type == ZK_SIGN_CREATE2) {
-    signature = bytes(alloca(65), 65);
-    memset(signature.data, 0, 65);
-  }
-  else
+  if (data->conf->sign_type != ZK_SIGN_CREATE2) {
     TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
-  in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
+    in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
-  if (signature.len == 65 && signature.data[64] < 27)
-    signature.data[64] += 27; //because EIP155 chainID = 0
+    if (signature.len == 65 && signature.data[64] < 27)
+      signature.data[64] += 27; //because EIP155 chainID = 0
+  }
   // now create the packed sync transfer
-  uint8_t raw[69], sig[96];
+  uint8_t raw[85], sig[96];
   TRY(sign_sync_transfer(data, ctx, conf, raw, sig));
 
   if (in3_log_level_is(LOG_DEBUG) || in3_log_level_is(LOG_TRACE)) {
@@ -220,6 +221,10 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
   sb_add_chars(sb, ",\"fee\":");
   sb_add_int(sb, data->fee);
 #endif
+  sb_add_chars(sb, ",\"validFrom\":");
+  sb_add_int(sb, (int64_t) data->valid.from);
+  sb_add_chars(sb, ",\"validUntil\":");
+  sb_add_int(sb, (int64_t) data->valid.to);
   sb_add_chars(sb, ",\"nonce\":");
   sb_add_int(sb, data->nonce);
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
@@ -235,6 +240,8 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
 }
 
 in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_t* sig) {
+  in3_log_debug("signing zksync data: \n");
+  b_print(&msg);
   if (memiszero(conf->sync_key, 32)) return req_set_error(ctx, "no signing key set", IN3_ECONFIG);
   if (!conf->musig_pub_keys.data) return zkcrypto_sign_musig(conf->sync_key, msg, sig);
   char* p = alloca(msg.len * 2 + 5);
@@ -251,11 +258,11 @@ in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_
   return IN3_OK;
 }
 
-in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token) {
+in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token, zksync_valid_t valid) {
 
   // create sign_msg for the rollup
   char    dec[80];
-  uint8_t sign_msg_bytes[53], sig[96];
+  uint8_t sign_msg_bytes[69], sig[96];
   sign_msg_bytes[0] = 7;                              // tx type 7 (1 byte)
   int_to_bytes(conf->account_id, sign_msg_bytes + 1); // acount_id (4 bytes)
   memcpy(sign_msg_bytes + 5, conf->account, 20);      // account address
@@ -265,9 +272,11 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   to_dec(dec, fee);                                   // create a decimal represntation and pack it
   TRY(pack(dec, 11, 5, sign_msg_bytes + 47, ctx))     // 47: fee packed (2)
   int_to_bytes(nonce, sign_msg_bytes + 49);           // nonce
+  long_to_bytes(valid.from, sign_msg_bytes + 53);     // valid_from
+  long_to_bytes(valid.to, sign_msg_bytes + 61);       // valid_to
 
   // now sign it with the new pk
-  TRY(zksync_sign(conf, bytes(sign_msg_bytes, 53), ctx, sig))
+  TRY(zksync_sign(conf, bytes(sign_msg_bytes, 69), ctx, sig))
   // create human readable message
   char    msg_data[300];
   uint8_t tmp[8];
@@ -282,35 +291,41 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   sb_add_chars(&msg, "\n\nOnly sign this message for a trusted client!");
   create_signed_bytes(&msg);
 
-  if (conf->sign_type != ZK_SIGN_CONTRACT)
+  if (conf->sign_type != ZK_SIGN_CREATE2) {
     TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(conf->account, 20)))
-
-  if (signature.len == 65 && signature.data[64] < 27)
-    signature.data[64] += 27; //because EIP155 chainID = 0
+    if (signature.len == 65 && signature.data[64] < 27)
+      signature.data[64] += 27; //because EIP155 chainID = 0
+  }
 
   sb_add_chars(sb, "{\"type\":\"ChangePubKey\",\"accountId\":");
   sb_add_int(sb, conf->account_id);
   sb_add_rawbytes(sb, ",\"account\":\"0x", bytes(conf->account, 20), 0);
   sb_add_rawbytes(sb, "\",\"newPkHash\":\"sync:", bytes(sync_pub_key, 20), 0);
-  sb_add_chars(sb, "\",\"feeToken\":");
+  sb_add_chars(sb, "\",\"feeTokenId\":");
   sb_add_int(sb, token->id);
-  sb_add_chars(sb, ",\"fee\":");
+  sb_add_chars(sb, ",\"feeToken\":");
+  sb_add_int(sb, token->id);
+  sb_add_chars(sb, ",\"validFrom\":");
+  sb_add_int(sb, (int64_t) valid.from);
+  sb_add_chars(sb, ",\"validUntil\":");
+  sb_add_int(sb, (int64_t) valid.to);
+  sb_add_chars(sb, ",\"fee\":\"");
 #ifdef ZKSYNC_256
   to_dec(dec, fee);
   sb_add_chars(sb, dec);
 #else
   sb_add_int(sb, fee);
 #endif
-  sb_add_chars(sb, ",\"nonce\":");
+  sb_add_chars(sb, "\",\"nonce\":");
   sb_add_int(sb, nonce);
   if (conf->version > 0) {
-    sb_add_chars(sb, ",\"changePubkeyType\":{");
+    sb_add_chars(sb, ",\"ethAuthData\":{");
     if (conf->sign_type == ZK_SIGN_PK)
       sb_add_rawbytes(sb, "\"type\":\"EthereumSignature\",\"ethSignature\":\"0x", signature, 0);
     else if (conf->sign_type == ZK_SIGN_CONTRACT)
       sb_add_rawbytes(sb, "\"type\":\"OnchainTransaction", signature, 0);
     else if (conf->sign_type == ZK_SIGN_CREATE2 && conf->create2) {
-      sb_add_rawbytes(sb, "\"type\":\"Create2Contract\",\"creatorAddress\":\"0x", bytes(conf->create2->creator, 20), 0);
+      sb_add_rawbytes(sb, "\"type\":\"CREATE2\",\"creatorAddress\":\"0x", bytes(conf->create2->creator, 20), 0);
       sb_add_rawbytes(sb, "\",\"saltArg\":\"0x", bytes(conf->create2->salt_arg, 32), 0);
       sb_add_rawbytes(sb, "\",\"codeHash\":\"0x", bytes(conf->create2->codehash, 32), 0);
     }
@@ -323,7 +338,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
     sb_add_chars(sb, "\"},null,false");
   }
   else {
-    sb_add_chars(sb, "\"},\"ethSignature\":null},null,false");
+    sb_add_chars(sb, "\"}},null,false");
   }
 
   return IN3_OK;

@@ -128,6 +128,11 @@ typedef struct zksync_config {
   char*                proof_create_method; /**< the rpc-method used to create the proof before creating a signature */
 } zksync_config_t;
 
+typedef struct valid {
+  uint64_t from;
+  uint64_t to;
+} zksync_valid_t;
+
 typedef struct pay_criteria {
   uint_fast32_t   payed_nodes;                /**< max number of nodes payed at the same time*/
   uint64_t        max_price_per_hundred_igas; /**< the max price per 100 gas units to accept a payment offer */
@@ -146,6 +151,7 @@ typedef struct {
   zk_msg_type_t    type;       /**< message type */
   zk_fee_t         amount;     /**< amount to send */
   zk_fee_t         fee;        /**< ransaction fees */
+  zksync_valid_t   valid;      /**< validity */
 } zksync_tx_data_t;
 
 /** registers the zksync-plugin in the client */
@@ -167,7 +173,7 @@ NONULL in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle
 NONULL in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* req, zksync_config_t* conf);
 
 /** creates message data and signs a change_pub_key-message */
-NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* req, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token);
+NONULL in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* req, uint8_t* sync_pub_key, uint32_t nonce, zksync_config_t* conf, zk_fee_t fee, zksync_token_t* token, zksync_valid_t valid);
 
 in3_ret_t           zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 zk_musig_session_t* zk_musig_session_free(zk_musig_session_t* s);
