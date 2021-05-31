@@ -66,7 +66,7 @@ function scan(dir) {
 
 
 
-function print_object(def, pad, useNum, doc) {
+function print_object(def, pad, useNum, doc, pre) {
     let i = 1
     for (const prop of Object.keys(def)) {
         let s = pad + (useNum ? ((i++) + '.') : '*') + ' **' + prop + '**'
@@ -79,12 +79,26 @@ function print_object(def, pad, useNum, doc) {
         if (p.default) s += ' (default: `' + JSON.stringify(p.default) + '`)'
         if (p.enum) s += '\n' + pad + 'Possible Values are:\n\n' + Object.keys(p.enum).map(v => pad + '    - `' + v + '` : ' + p.enum[v]).join('\n') + '\n'
         if (p.alias) s += '\n' + pad + 'The data structure of ' + prop + ' is the same  as ' + link(p.alias) + '. See Details there.'
+        if (p.cmd) asArray(p.cmd).forEach(_ => s += '\n' + pad + 'This option can also be used in its short-form in the comandline client `-' + _ + '` .')
         doc.push(s)
         if (typeof pt === 'object') {
-            rpc_doc.push('The ' + prop + ' object supports the following properties :\n' + pad)
+            doc.push('The ' + prop + ' object supports the following properties :\n' + pad)
             print_object(pt, pad + '    ', false, doc)
         }
-        if (p.example) rpc_doc.push('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
+        if (rpc_doc === doc) {
+          if (p.example) doc.push('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
+        }
+        else if (config_doc === doc)
+            asArray(p.example).forEach(ex => {
+                key = prop
+                doc.push(pad+'```sh')
+                if (typeof (ex) == 'object')
+                    doc.push(pad+'> ' + cmdName + ' ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
+                else
+                    doc.push(pad+[...asArray(p.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> ' + cmdName + ' ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
+                doc.push(pad+'```\n')
+            })
+
         doc.push(pad + '\n')
     }
 }
@@ -107,7 +121,7 @@ function handle_config(conf, pre, title, descr) {
             config_doc.push(s)
             if (typeof (c.type) === 'object') {
                 config_doc.push('The ' + key + ' object supports the following properties :\n')
-                print_object(c.type, '', false, config_doc)
+                print_object(c.type, '', false, config_doc, key+".")
             }
             if (c.example !== undefined) {
                 config_doc.push('\n*Example:*\n')
