@@ -97,6 +97,19 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       switch (ctx->type) {
         case SIGN_EC_RAW:
           return ec_sign_pk_raw(ctx->message.data, k->pk, ctx->signature.data);
+
+        case SIGN_EC_PREFIX: {
+          bytes32_t       hash;
+          struct SHA3_CTX kctx;
+          sha3_256_Init(&kctx);
+          const char* PREFIX = "\x19"
+                               "Ethereum Signed Message:\n";
+          sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
+          sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", (int) ctx->message.len));
+          if (ctx->message.len) sha3_Update(&kctx, ctx->message.data, ctx->message.len);
+          keccak_Final(&kctx, hash);
+          return ec_sign_pk_raw(hash, k->pk, ctx->signature.data);
+        }
         case SIGN_EC_HASH:
           return ec_sign_pk_hash(ctx->message.data, ctx->message.len, k->pk, hasher_sha3k, ctx->signature.data);
         default:

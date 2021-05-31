@@ -426,7 +426,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
   }
 
   // get the signature from required
-  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : "sign_ec_raw";
+  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : (type == SIGN_EC_PREFIX ? "sign_ec_prefix" : "sign_ec_raw");
   in3_req_t*  c      = req_find_required(ctx, method, NULL);
   if (c)
     switch (in3_req_state(c)) {

@@ -111,9 +111,7 @@ static void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data, char
   add_amount(sb, data->token, data->amount);
   sb_add_chars(sb, " ");
   sb_add_chars(sb, data->token->symbol);
-  sb_add_rawbytes(sb, "\nTo: 0x", bytes(data->to, 20), 0);
-  sb_add_chars(sb, "\nNonce: ");
-  sb_add_int(sb, data->nonce);
+  sb_add_rawbytes(sb, " to: 0x", bytes(data->to, 20), 0);
   sb_add_chars(sb, "\nFee: ");
   add_amount(sb, data->token, data->fee);
   sb_add_chars(sb, " ");
@@ -121,21 +119,10 @@ static void create_human_readable_tx_info(sb_t* sb, zksync_tx_data_t* data, char
   if (data->token->symbol)
 #endif
     sb_add_chars(sb, data->token->symbol);
-  sb_add_chars(sb, "\nAccount Id: ");
-  sb_add_int(sb, data->account_id);
-}
+  sb_add_chars(sb, "\nNonce: ");
+  sb_add_int(sb, data->nonce);
 
-static void create_signed_bytes(sb_t* sb) {
-  char* PREFIX = "\x19"
-                 "Ethereum Signed Message:\n";
-  char len_num[7];
-  int  l   = strlen(PREFIX) + sprintf(len_num, "%d", (int) sb->len);
-  int  len = sb->len;
-  sb_add_chars(sb, PREFIX);
-  sb_add_chars(sb, len_num);
-  memmove(sb->data + l, sb->data, len);
-  memcpy(sb->data, PREFIX, strlen(PREFIX));
-  memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
+  in3_log_debug("Human readable message : \n%s\n", sb->data);
 }
 
 static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig, uint32_t* total) {
@@ -176,19 +163,22 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
 }
 
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf) {
+  // fix valid.to first
   if (!data->valid.to) data->valid.to = 0xffffffffl;
-  char    msg_data[216];
-  bytes_t signature;
-  sb_t    msg = sb_stack(msg_data);
-  create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
-  create_signed_bytes(&msg);
+
+  bytes_t signature = bytes(NULL, 0);
+
   if (data->conf->sign_type != ZK_SIGN_CREATE2) {
-    TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+    char msg_data[216];
+    sb_t msg = sb_stack(msg_data);
+    create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
+    TRY(req_require_signature(ctx, SIGN_EC_PREFIX, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
     in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
     if (signature.len == 65 && signature.data[64] < 27)
       signature.data[64] += 27; //because EIP155 chainID = 0
   }
+
   // now create the packed sync transfer
   uint8_t  raw[85], sig[96];
   uint32_t total = 0;
@@ -236,10 +226,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
     sb_add_chars(sb, "null");
   else {
     sb_add_chars(sb, "{\"type\":\"");
-    if (data->conf->sign_type == ZK_SIGN_CONTRACT)
-      sb_add_chars(sb, "EIP1271Signature");
-    else
-      sb_add_chars(sb, "EthereumSignature");
+    sb_add_chars(sb, data->conf->sign_type == ZK_SIGN_CONTRACT ? "EIP1271Signature" : "EthereumSignature");
     sb_add_rawbytes(sb, "\",\"signature\":\"0x", signature, 0);
     sb_add_chars(sb, "\"}");
   }
@@ -284,22 +271,17 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
 
   // now sign it with the new pk
   TRY(zksync_sign(conf, bytes(sign_msg_bytes, 69), ctx, sig))
-  // create human readable message
-  char    msg_data[300];
-  uint8_t tmp[8];
-  bytes_t signature = bytes(NULL, 0);
-  sb_t    msg       = sb_stack(msg_data);
 
-  int_to_bytes(nonce, tmp);
-  int_to_bytes(conf->account_id, tmp + 4);
-  sb_add_rawbytes(&msg, "Register zkSync pubkey:\n\n", bytes(sync_pub_key, 20), 20);
-  sb_add_rawbytes(&msg, "\nnonce: 0x", bytes(tmp, 4), 4);
-  sb_add_rawbytes(&msg, "\naccount id: 0x", bytes(tmp + 4, 4), 4);
-  sb_add_chars(&msg, "\n\nOnly sign this message for a trusted client!");
-  create_signed_bytes(&msg);
+  // create 2fa-message to be signed with the eth-signer
+  uint8_t ethmsg[60];
+  bytes_t signature = bytes(NULL, 0);
+  memcpy(ethmsg, sync_pub_key, 20);            // pubkeyhash (20)
+  int_to_bytes(nonce, ethmsg + 20);            // nonce (4)
+  int_to_bytes(conf->account_id, ethmsg + 24); // acount_id (4 bytes)
+  memset(ethmsg + 28, 0, 32);                  //  msgBatch hash  - currently not supported, so 32x0
 
   if (conf->sign_type != ZK_SIGN_CREATE2) {
-    TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(conf->account, 20)))
+    TRY(req_require_signature(ctx, SIGN_EC_PREFIX, &signature, bytes((uint8_t*) ethmsg, 60), bytes(conf->account, 20)))
     if (signature.len == 65 && signature.data[64] < 27)
       signature.data[64] += 27; //because EIP155 chainID = 0
   }
@@ -328,9 +310,9 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   if (conf->version > 0) {
     sb_add_chars(sb, ",\"ethAuthData\":{");
     if (conf->sign_type == ZK_SIGN_PK)
-      sb_add_rawbytes(sb, "\"type\":\"EthereumSignature\",\"ethSignature\":\"0x", signature, 0);
+      sb_add_rawbytes(sb, "\"type\":\"ECDSA\",\"ethSignature\":\"0x", signature, 0);
     else if (conf->sign_type == ZK_SIGN_CONTRACT)
-      sb_add_rawbytes(sb, "\"type\":\"OnchainTransaction", signature, 0);
+      sb_add_rawbytes(sb, "\"type\":\"Onchain", signature, 0);
     else if (conf->sign_type == ZK_SIGN_CREATE2 && conf->create2) {
       sb_add_rawbytes(sb, "\"type\":\"CREATE2\",\"creatorAddress\":\"0x", bytes(conf->create2->creator, 20), 0);
       sb_add_rawbytes(sb, "\",\"saltArg\":\"0x", bytes(conf->create2->salt_arg, 32), 0);
@@ -340,13 +322,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   }
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
   sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
-  if (signature.data) {
-    sb_add_rawbytes(sb, "\"},\"ethSignature\":\"0x", signature, 0);
-    sb_add_chars(sb, "\"},null,false");
-  }
-  else {
-    sb_add_chars(sb, "\"}},null,false");
-  }
+  sb_add_chars(sb, "\"}},null,false");
 
   return IN3_OK;
 }

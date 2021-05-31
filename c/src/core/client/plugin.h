@@ -279,8 +279,9 @@ typedef struct sign_prepare_ctx {
 
 /** type of the requested signature */
 typedef enum {
-  SIGN_EC_RAW  = 0, /**< sign the data directly */
-  SIGN_EC_HASH = 1, /**< hash and sign the data */
+  SIGN_EC_RAW    = 0, /**< sign the data directly */
+  SIGN_EC_HASH   = 1, /**< hash and sign the data */
+  SIGN_EC_PREFIX = 2, /**< add Ethereum Signed Message-Proefix, hash and sign the data */
 } d_signature_type_t;
 
 /**

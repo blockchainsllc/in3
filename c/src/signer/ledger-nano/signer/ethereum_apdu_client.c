@@ -51,6 +51,7 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
         memcpy(hash, sc->message.data, sc->message.len);
         is_hashed = true;
       case SIGN_EC_HASH:
+      case SIGN_EC_PREFIX:
         if (memcmp(prefix, sc->message.data, strlen(prefix)) == 0) {
           is_msg = true;
         }

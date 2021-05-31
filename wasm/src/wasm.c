@@ -525,6 +525,18 @@ uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uin
   uint8_t* dst   = malloc(65);
   int      error = -1;
   switch (type) {
+    case SIGN_EC_PREFIX: {
+      bytes32_t hash;
+      struct SHA3_CTX kctx;
+      sha3_256_Init(&kctx);
+      const char* PREFIX = "\x19" "Ethereum Signed Message:\n";
+      sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
+      sha3_Update(&kctx, hash, sprintf((char*)hash,"%d", (int)ctx->message.len)  );
+      if (ctx->message.len) sha3_Update(&kctx, ctx->message.data, ctx->message.len);
+      keccak_Final(&kctx, hash);
+      error = ecdsa_sign_digest(&secp256k1, pk, hash, dst, dst + 64, NULL);
+      break;
+    }
     case SIGN_EC_RAW:
       error = ecdsa_sign_digest(&secp256k1, pk, data, dst, dst + 64, NULL);
       break;
