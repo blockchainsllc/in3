@@ -138,8 +138,7 @@ static void create_signed_bytes(sb_t* sb) {
   memcpy(sb->data + l - strlen(len_num), len_num, strlen(len_num));
 }
 
-static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig) {
-  uint32_t total;
+static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf, uint8_t* raw, uint8_t* sig, uint32_t* total) {
   char     dec[80];
   uint16_t tid = data->token ? data->token->id : 0;
   raw[0]       = data->type;               // 0: type(1)
@@ -149,7 +148,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
   raw[45] = (tid >> 8) & 0xff;             // 45: token_id (2)
   raw[46] = tid & 0xff;                    //
   if (data->type == ZK_WITHDRAW) {
-    total = 85;
+    *total = 85;
 #ifdef ZKSYNC_256
     memcpy(raw + 47, data->amount + 16, 16);
 #else
@@ -161,7 +160,7 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
     int_to_bytes(data->nonce, raw + 65); // 65: nonce(4)
   }
   else {
-    total = 74;
+    *total = 74;
     to_dec(dec, data->amount);           //    create a decimal represntation and pack it
     TRY(pack(dec, 35, 5, raw + 47, ctx)) // 47: amount packed (5)
     to_dec(dec, data->fee);              //    create a decimal represntation and pack it
@@ -169,15 +168,15 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
     int_to_bytes(data->nonce, raw + 54); // 54: nonce(4)
   }
 
-  long_to_bytes(data->valid.from,raw+total-16);
-  long_to_bytes(data->valid.to,raw+total-8);
+  long_to_bytes(data->valid.from, raw + (*total) - 16);
+  long_to_bytes(data->valid.to, raw + (*total) - 8);
 
   // sign data
-  return zksync_sign(conf, bytes(raw, total), ctx, sig);
+  return zksync_sign(conf, bytes(raw, (*total)), ctx, sig);
 }
 
 in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx, zksync_config_t* conf) {
-  if (!data->valid.to) data->valid.to=0xffffffffl;
+  if (!data->valid.to) data->valid.to = 0xffffffffl;
   char    msg_data[216];
   bytes_t signature;
   sb_t    msg = sb_stack(msg_data);
@@ -191,12 +190,13 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
       signature.data[64] += 27; //because EIP155 chainID = 0
   }
   // now create the packed sync transfer
-  uint8_t raw[85], sig[96];
-  TRY(sign_sync_transfer(data, ctx, conf, raw, sig));
+  uint8_t  raw[85], sig[96];
+  uint32_t total = 0;
+  TRY(sign_sync_transfer(data, ctx, conf, raw, sig, &total));
 
   if (in3_log_level_is(LOG_DEBUG) || in3_log_level_is(LOG_TRACE)) {
     char* hex = alloca(142);
-    bytes_to_hex(raw, data->type == ZK_WITHDRAW ? 69 : 58, hex);
+    bytes_to_hex(raw, total, hex);
     in3_log_debug("zksync_sign_transfer  bin :\n%s\n", hex);
   }
 
@@ -207,6 +207,8 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
   sb_add_rawbytes(sb, ",\"from\":\"0x", bytes(data->from, 20), 0);
   sb_add_rawbytes(sb, "\",\"to\":\"0x", bytes(data->to, 20), 0);
   sb_add_chars(sb, "\",\"token\":");
+  sb_add_int(sb, data->token->id);
+  sb_add_chars(sb, ",\"tokenId\":");
   sb_add_int(sb, data->token->id);
   sb_add_chars(sb, ",\"amount\":");
 #ifdef ZKSYNC_256
@@ -229,13 +231,18 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
   sb_add_int(sb, data->nonce);
   sb_add_rawbytes(sb, ",\"signature\":{\"pubKey\":\"", bytes(sig, 32), 0);
   sb_add_rawbytes(sb, "\",\"signature\":\"", bytes(sig + 32, 64), 0);
-  sb_add_chars(sb, "\"}},{\"type\":\"");
-  if (data->conf->sign_type == ZK_SIGN_CONTRACT)
-    sb_add_chars(sb, "EIP1271Signature");
-  else
-    sb_add_chars(sb, "EthereumSignature");
-  sb_add_rawbytes(sb, "\",\"signature\":\"0x", signature, 0);
-  sb_add_chars(sb, "\"}");
+  sb_add_chars(sb, "\"}},");
+  if (data->conf->sign_type == ZK_SIGN_CREATE2)
+    sb_add_chars(sb, "null");
+  else {
+    sb_add_chars(sb, "{\"type\":\"");
+    if (data->conf->sign_type == ZK_SIGN_CONTRACT)
+      sb_add_chars(sb, "EIP1271Signature");
+    else
+      sb_add_chars(sb, "EthereumSignature");
+    sb_add_rawbytes(sb, "\",\"signature\":\"0x", signature, 0);
+    sb_add_chars(sb, "\"}");
+  }
   return IN3_OK;
 }
 
