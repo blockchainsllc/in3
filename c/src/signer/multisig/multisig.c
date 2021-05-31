@@ -174,7 +174,7 @@ in3_ret_t get_tx_hash(in3_req_t* ctx, multisig_t* ms, tx_data_t* tx_data, bytes3
   long_to_bytes(nonce, raw + 4 + 9 * 32 + 24);
 
   TRY(call(ctx, ms->address, bytes(raw, size), &rpc_result))
-  if (rpc_result->len != 32) return req_set_error(ctx, "invalid getTransactionHash result!", IN3_EINVAL);
+  if (!rpc_result || rpc_result->len != 32) return req_set_error(ctx, "invalid getTransactionHash result!", IN3_EINVAL);
   memcpy(result, rpc_result->data, 32);
   return IN3_OK;
 }
