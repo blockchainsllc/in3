@@ -2,17 +2,18 @@
 
 #include <stdlib.h>
 
-const char* bool_props[] = {"includeCode", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
+const char* bool_props[] = {"includeCode", "debug", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
 
 const char* help_args = "\
 --chainId                     -c     the chainId or the name of a known chain\n\
 --finality                    -f     the number in percent needed in order reach finality (% of signature of the validators)\n\
 --includeCode                        if true, the request should include the codes of all accounts\n\
+--debug                              if true, debug messages will be written to stderr\n\
 --maxAttempts                 -a     max number of attempts in case a response is rejected\n\
 --keepIn3                     -kin3  if true, requests sent to the input sream of the comandline util will be send theor responses in the...\n\
 --stats                              if true, requests sent will be used for stats\n\
 --useBinary                          if true the client will use binary format\n\
---experimental                -x     iif true the client allows to use use experimental features, otherwise a exception is thrown if thos...\n\
+--experimental                -x     if true the client allows to use use experimental features, otherwise a exception is thrown if those...\n\
 --timeout                            specifies the number of milliseconds before the request times out\n\
 --proof                       -p     if true the nodes should send a proof of the response\n\
 --replaceLatestBlock          -l     if specified, the blocknumber *latest* will be replaced by blockNumber- specified value\n\
@@ -40,6 +41,7 @@ const char* help_args = "\
 --nodes.nodeList.props               used to identify the capabilities of the node (defaults to 0xFFFF)\n\
 --zksync                             configuration for zksync-api  ( only available if build with `-DZKSYNC=true`, which is on per defaul...\n\
 --zksync.provider_url         -zks   url of the zksync-server (if not defined it will be choosen depending on the chain)\n\
+--zksync.rest_api             -zkr   url of the zksync rest api (if not defined it will be choosen depending on the chain)\n\
 --zksync.account              -zka   the account to be used\n\
 --zksync.sync_key             -zsk   the seed used to generate the sync_key\n\
 --zksync.main_contract               address of the main contract- If not specified it will be taken from the server\n\
@@ -50,6 +52,8 @@ const char* help_args = "\
 --zksync.create2.creator             The address of contract or EOA deploying the contract ( for example the GnosisSafeFactory )\n\
 --zksync.create2.saltarg             a salt-argument, which will be added to the pubkeyhash and create the create2-salt\n\
 --zksync.create2.codehash            the hash of the actual deploy-tx including the constructor-arguments\n\
+--zksync.verify_proof_method  -zvpm  rpc-method, which will be used to verify the incomming proof before cosigning\n\
+--zksync.create_proof_method  -zcpm  rpc-method, which will be used to create the proof needed for cosigning\n\
 --key                         -k     the client key to sign requests\n\
 --pk                          -pk    registers raw private keys as signers for transactions\n\
 --btc                                configure the Bitcoin verification\n\
@@ -87,7 +91,7 @@ const char* help_args = "\
 --file.out                    -fo    records a request and writes the reproducable data in a file (including all cache-data, timestamps \n\
 --nodelist                    -nl    a coma seperated list of urls (or address:url) to be used as fixed nodelist\n\
 --bootnodes                   -bn    a coma seperated list of urls (or address:url) to be used as boot nodes\n\
---onlysign                    -os    only sign, don't send the raw Transaction\n\
+--onlysign                    -os    only sign, do not send the raw Transaction\n\
 --noproof                     -np    alias for --proof=none\n\
 --nostats                     -ns    alias for --stats=false, which will mark all requests as not counting in the stats\n\
 --version                     -v     displays the version\n\
@@ -148,6 +152,8 @@ const char* aliases[] = {
     "zms", "zksync.musig_pub_keys",
     "zmu", "zksync.musig_urls",
     "zc2", "zksync.create2",
+    "zvpm", "zksync.verify_proof_method",
+    "zcpm", "zksync.create_proof_method",
     "k", "key",
     "pk", "pk",
     "ccache", "clearCache=true",
