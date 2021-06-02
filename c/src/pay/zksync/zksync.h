@@ -106,6 +106,7 @@ struct pay_criteria;
 /** internal configuration-object */
 typedef struct zksync_config {
   char*                provider_url;        /**< url of the zksync-server */
+  char*                rest_api;            /**< url of the zksync-rest-api */
   uint8_t*             account;             /**< address of the account */
   uint8_t*             main_contract;       /**< address of the main zksync contract*/
   uint8_t*             gov_contract;        /**< address of the government contract */
@@ -182,6 +183,8 @@ in3_ret_t           zksync_check_payment(zksync_config_t* conf, in3_pay_followup
 in3_ret_t           zksync_add_payload(in3_pay_payload_ctx_t* ctx);
 in3_ret_t           update_nodelist_from_cache(in3_req_t* req, unsigned int nodelen);
 in3_ret_t           handle_zksync(void* conf, in3_plugin_act_t action, void* arg);
+in3_ret_t zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+in3_ret_t zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 #ifdef __cplusplus
 }
 #endif

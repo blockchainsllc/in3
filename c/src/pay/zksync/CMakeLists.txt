@@ -46,6 +46,7 @@ add_static_library(
     zk_deposit.c
     zk_musig.c
     zk_incentive.c
+    zk_rest.c
 
   DEPENDS 
     eth_basic

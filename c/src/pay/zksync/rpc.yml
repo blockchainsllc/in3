@@ -28,6 +28,174 @@ types:
       descr: the transactionHash, which can be used to track the tx
       type: string
 
+  zk_tx:
+    accountId:
+      descr: the id of the sender account
+      type: uint64
+    from:
+      descr: the address of the sender
+      type: address
+    to:
+      descr: the address of the receipient
+      type: address
+    token:
+      descr: the id of the token used
+      type: uint64
+    amount:
+      descr: the amount sent
+      type: uint256
+    fee:
+      descr: the fees paid
+      type: uint256
+    nonce:
+      descr: the fees paid
+      type: uint64
+    validFrom:
+      descr: timestamp set by the sender when the valid range starts
+      type: uint64
+    validUntil:
+      descr: timestamp set by the sender when the valid range ends
+      type: uint64
+    signature:
+      descr: the sync signature
+      type:
+        pubKey:
+          descr: the public key of the signer
+          type: bytes32
+        signature:
+          descr: the signature
+          type: bytes
+
+  zk_history:
+    tx_id:
+      descr: the transaction id based on the block-number and the index
+      type: string
+    hash:
+      descr: the transaction hash
+      type: string
+    eth_block:
+      descr: the blockNumber of a priority-operation like `Deposit` otherwise this is null
+      optional: true
+      type: uint64
+    pq_id:
+      descr: the priority-operation id (for tx like `Deposit`) otherwise this is null
+      optional: true
+      type: uint64
+    sucess:
+      descr: the result of the operation
+      type: bool
+    fail_reason:
+      descr: the error message if failed, otherwise null
+      type: string
+      optional: true
+    commited:
+      descr: true if the tx was received and verified by the zksync-server
+      type: bool
+    verified:
+      descr: true if the tx was received and verified by the zksync-server
+      type: bool
+    created_at:
+      descr: UTC-Time when the transaction was created
+      type: string
+    tx:
+      descr: the transaction data
+      type:
+        type:
+          descr: Type of the transaction. `Transfer`, `ChangePubKey` or `Withdraw`
+          type: string
+        from:
+          descr: The sender of the address
+          optional: true
+          type: address
+        to:
+          descr: The recipient of the address
+          optional: true
+          type: address
+        token:
+          descr: The token id
+          type: string
+          optional: true
+        amount:
+          descr: the amount sent
+          type: uint256
+          optional: true
+        account:
+          descr: the account sent from
+          type: address
+          optional: true
+        accountId:
+          descr: the account id used
+          type: uint64
+          optional: true
+        newPkHash:
+          descr: the new public Key Hash (only used if the type is CHangePubKey)
+          type: string
+          optional: true
+        validFrom:
+          descr: timestamp set by the sender when the valid range starts
+          type: uint64
+          optional: true
+        validUntil:
+          descr: timestamp set by the sender when the valid range ends
+          type: uint64
+          optional: true
+        signature:
+          optional: true
+          descr: the sync signature
+          type:
+            pubKey:
+              descr: the public key of the signer
+              type: bytes32
+            signature:
+              descr: the signature
+              type: bytes
+        fee:
+          optional: true
+          descr: the fee payed
+          type: uint256
+        feeToken:
+          optional: true
+          descr: the token the fee was payed
+          type: uint64
+        nonce:
+          optional: true
+          descr: the nonce of the account
+          type: uint64
+        priority_op:
+          descr: the description of a priority operation like `Deposit`
+          optional: true
+          type:
+            from:
+              descr: The sender of the address
+              type: address
+            to:
+              descr: The recipient of the address
+              type: address
+            token:
+              descr: The token id
+              type: string
+            amount:
+              descr: the amount sent
+              type: uint256
+        ethAuthData:
+          descr: the 2fa euth authorition
+          optional: true
+          type:
+            type:
+              descr: the type which should be CREATE2, ECDSA
+              type: string
+            saltArg:
+              descr: the hash component (only if type=CREATE2)
+              type: bytes32
+              optional: true
+            codeHash:
+              descr: the hash of the deployment-data (only if type=CREATE2)
+              type: bytes32
+              optional: true
+            creatorAddress:
+              descr: the address of the the deploying contract (only if type=CREATE2)
+              type: address
+              optional: true
 
 zksync:
   descr: |
@@ -70,6 +238,13 @@ zksync:
           optional: true
           default: https://api.zksync.io/jsrpc
           cmd: zks
+
+        rest_api:
+          descr: url of the zksync rest api (if not defined it will be choosen depending on the chain)
+          type: string
+          optional: true
+          example: https://rinkeby-api.zksync.io/api/v0.1/
+          cmd: zkr
 
         account:
           descr: the account to be used. if not specified, the first signer will be used.
@@ -297,6 +472,202 @@ zksync:
         executed: false
         failReason: null
         success: null
+
+
+  zksync_tx_data:
+    descr: returns the full input data of a transaction. In order to use this, the `rest_api` needs to be set in the config.
+    params:
+      tx:
+        descr: the txHash of the send tx
+        type: bytes32
+    result:
+      descr: the data and state of the requested tx.
+      type:
+        block_number:
+          descr: the blockNumber containing the tx or `null` if still pending
+          type: uint64
+          optional: true
+        failReason:
+          descr: if executed and failed this will include an error message
+          type: string
+          optional: true
+        tx_type:
+          descr: Type of the transaction. `Transfer`, `ChangePubKey` or `Withdraw`
+          type: string
+        from:
+          descr: The sender of the address
+          type: address
+        to:
+          descr: The recipient of the address
+          type: address
+        token:
+          descr: The token id
+          type: uint64
+        amount:
+          descr: the amount sent
+          type: uint256
+        fee:
+          descr: the fee payed
+          type: uint256
+        nonce:
+          descr: the nonce of the account
+          type: uint64
+        created_at:
+          descr: the timestamp as UTC
+          type: string
+        tx:
+          descr: the tx input data
+          type: zk_tx
+
+    example:
+      cmdParams: -x -zkr https://rinkeby-api.zksync.io/api/v0.1
+      request:
+        - "0xc06ddc1c0914e8f9ca4d5bc98f609f7d758f6de2733fdcb8e3ec"
+      response: 
+        tx_type: Transfer
+        from: '0x627d8e8c1a663cfea17432ec6dbbd3cc2c8a1f9a'
+        to: '0x03e2c10b74a260f46ab5cf881938c5888a6142df'
+        token: 1
+        amount: '5000000'
+        fee: '2190'
+        block_number: 29588
+        nonce: 20
+        created_at: '2021-06-01T10:32:16.248564'
+        fail_reason:
+        tx:
+          to: '0x03e2c10b74a260f46ab5cf881938c5888a6142df'
+          fee: '2190'
+          from: '0x627d8e8c1a663cfea17432ec6dbbd3cc2c8a1f9a'
+          type: Transfer
+          nonce: 20
+          token: 1
+          amount: '5000000'
+          accountId: 161578
+          signature:
+            pubKey: 91b533af2c430d7ad48db3ccc4ccb54befaff48307180c9a19a369099331d0a6
+            signature: d17637db375a7a587474c8fee519fd7520f6ef98e1370e7a13d5de8176a6d0a22309e24a19dae50dad94ac9634ab3398427cf67abe8408e6c965c6b350b80c02
+          validFrom: 0
+          validUntil: 4294967295
+
+
+
+  zksync_account_history:
+    descr: returns the history of transaction for a given account.
+    params:
+      tx:
+        descr: the address of the account
+        type: address
+      ref:
+        descr: the reference or start. this could be a tx_id prefixed with `<` or `>`for newer or older than the specified  tx or `pending` returning all pending tx.
+        type: string
+        optional: true
+      limit:
+        descr: the max number of entries to return
+        type: int
+        optional: true
+    result:
+      array: true
+      descr: the data and state of the requested tx.
+      type: zk_history
+
+    example:
+      cmdParams: -x -zkr https://rinkeby-api.zksync.io/api/v0.1
+      request:
+        - "0x9df215737e137acddd0ad99e32f9a6b980ea526d"
+      response: 
+        - tx_id: '29411,1'
+          hash: sync-tx:e83b1b982b4d8a08a21f87717e85a268e3b3a5305bdf5efc465e7fd8f0ad5335
+          eth_block:
+          pq_id:
+          tx:
+            to: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
+            fee: '11060000000000'
+            from: '0x9df215737e137acddd0ad99e32f9a6b980ea526d'
+            type: Transfer
+            nonce: 1
+            token: ETH
+            amount: '1000000000000000'
+            accountId: 161418
+            signature:
+              pubKey: 74835ee6dd9009b67fd4e4aef4a6f63ee2a597ced5e59f33b019905d1df70d91
+              signature: 407314ebce8ce0217b41a6cf992c7359645215c35afbdf7e18e76c957a14ed20135b7e8e5ca24fb132640141c0b3168b3939571e2363e41639e18b1637f26d02
+            validFrom: 0
+            validUntil: 4294967295
+          success: true
+          fail_reason:
+          commited: true
+          verified: true
+          created_at: '2021-05-31T11:54:56.248569Z'
+        - tx_id: '29376,10'
+          hash: sync-tx:5f92999f7bbc5d84fe0d34ebe8b7a0c38f977caece844686d3007bc48e5944e0
+          eth_block:
+          pq_id:
+          tx:
+            to: '0xc98fc74a085cd7ecd91d9e8d860a18ef6769d873'
+            fee: '10450000000000'
+            from: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
+            type: Transfer
+            nonce: 1
+            token: ETH
+            amount: '10000000000000000'
+            accountId: 161391
+            signature:
+              pubKey: 06cce677912252a9eb87090b795e5bd84a079cb398dfec7f6a6645ee456dc721
+              signature: ef83b1519a737107798aa5740998a515c406510b61f176fbbac6f703231968a563551f74f37bf96c2220fd18a68aca128a155b5083333a13cfbbd348c0a75003
+            validFrom: 0
+            validUntil: 4294967295
+          success: true
+          fail_reason:
+          commited: true
+          verified: true
+          created_at: '2021-05-31T08:11:17.250144Z'
+        - tx_id: '29376,5'
+          hash: sync-tx:78550bbcaefdfd4cc4275bd1a0168dd73efb1953bb17a9689381fea6729c924e
+          eth_block:
+          pq_id:
+          tx:
+            fee: '37500000000000'
+            type: ChangePubKey
+            nonce: 0
+            account: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
+            feeToken: 0
+            accountId: 161391
+            newPkHash: sync:1ae5a093f285ddd23b54bea2780ef4e9a4e348ea
+            signature:
+              pubKey: 06cce677912252a9eb87090b795e5bd84a079cb398dfec7f6a6645ee456dc721
+              signature: 27f42a850de4dcc6527fea0a9baa5991dabf3c2ce30dae5a6112f03cf614da03bdc2ef7ac107337d17f9e4047e5b18b3e4c46acb6af41f8cfbb2fce43247d500
+            validFrom: 0
+            validUntil: 4294967295
+            ethAuthData:
+              type: CREATE2
+              saltArg: '0xd32a7ec6157d2433c9ae7f4fdc35dfac9bba6f92831d1ca20b09d04d039d8dd7'
+              codeHash: '0x96657bf6bdcbffce06518530907d2d729e4659ad3bc7b5cc1f5c5567d964272c'
+              creatorAddress: '0xaa8c54c65c14f132804f0809bdbef19970673709'
+            ethSignature:
+          success: true
+          fail_reason:
+          commited: true
+          verified: true
+          created_at: '2021-05-31T08:09:11.249472Z'
+        - tx_id: '29376,0'
+          hash: '0xc63566212c1569a0e64b255a07320483ed8476cd36b54aa37d3bd6f93b70f7f8'
+          eth_block: 8680840
+          pq_id: 57181
+          tx:
+            type: Deposit
+            account_id: 161391
+            priority_op:
+              to: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
+              from: '0x9d646b325787c6d7d612eb37915ca3023eea4dac'
+              token: ETH
+              amount: '500000000000000000'
+          success: true
+          fail_reason:
+          commited: true
+          verified: true
+          created_at: '2021-05-31T08:07:31.237817Z'
+
+
 
   zksync_set_key:
     descr: |

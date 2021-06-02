@@ -162,6 +162,9 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY_RPC("verify", in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
                                                      ? zkcrypto_verify_signatures(d_to_bytes(ctx->params + 1), conf->musig_pub_keys, d_to_bytes(ctx->params + 2))
                                                      : zkcrypto_verify_musig(d_to_bytes(ctx->params + 1), d_to_bytes(ctx->params + 2))))
+  TRY_RPC("tx_data", zksync_tx_data(conf, ctx))
+  TRY_RPC("account_history", zksync_account_history(conf, ctx))
+
 
   // prepare fallback to send to zksync-server
   str_range_t p            = d_to_json(ctx->params);
@@ -201,6 +204,7 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
     }
     _free(conf->musig_urls);
   }
+  if (conf->rest_api) _free(conf->rest_api);
   if (conf->provider_url) _free(conf->provider_url);
   if (conf->main_contract) _free(conf->main_contract);
   if (conf->account) _free(conf->account);
@@ -246,6 +250,11 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (provider) {
     if (conf->provider_url) _free(conf->provider_url);
     conf->provider_url = _strdupn(provider, -1);
+  }
+  const char* rest_api = d_get_string(ctx->token, CONFIG_KEY("rest_api"));
+  if (rest_api) {
+    if (conf->rest_api) _free(conf->rest_api);
+    conf->rest_api = _strdupn(rest_api, -1);
   }
   const char* pvm = d_get_string(ctx->token, CONFIG_KEY("verify_proof_method"));
   if (pvm) {

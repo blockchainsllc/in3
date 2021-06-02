@@ -141,6 +141,7 @@ const char* aliases[] = {
     "bw", "bootWeights=true",
     "rc", "requestCount",
     "zks", "zksync.provider_url",
+    "zkr", "zksync.rest_api",
     "zka", "zksync.account",
     "zsk", "zksync.sync_key",
     "zkat", "zksync.signer_type",
