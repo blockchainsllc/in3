@@ -332,8 +332,8 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY_SIG(zkcrypto_compute_aggregated_pubkey(s->pub_keys, res))
     TRY_SIG(zkcrypto_signer_receive_signature_shares(s->signer, s->signature_shares, res + 32))
     cleanup_session(s, conf);
-    if (!zkcrypto_verify_signatures(message, conf->musig_pub_keys, bytes(res, 96)))
-      return req_set_error(ctx->req, "invalid signature", IN3_EINVAL);
+//    if (!zkcrypto_verify_signatures(message, conf->musig_pub_keys, bytes(res, 96)))
+//      return req_set_error(ctx->req, "invalid signature", IN3_EINVAL);
     return in3_rpc_handle_with_bytes(ctx, bytes(res, 96));
   }
 

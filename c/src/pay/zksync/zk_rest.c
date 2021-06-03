@@ -52,6 +52,7 @@ in3_ret_t zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ct
     if (ref_tx && d_type(ref_tx)!=T_STRING) return req_set_error(ctx->req,"The 2nd argument in account History (base tx) must be a string starting with < or > and the transactionId",IN3_ECONFIG);
     if (limit && d_type(limit)!=T_INTEGER) return req_set_error(ctx->req,"The 3rd argument in account History (limit) must be a integer!",IN3_ECONFIG);
 
+    if (limit && !d_int(limit)) limit = NULL;
     d_token_t* res = NULL;
     in3_req_t* req = NULL;
     sb_t sb = {0};

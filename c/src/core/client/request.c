@@ -79,6 +79,7 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   if (req_data != NULL) {
     ctx->request_context = parse_json(req_data);
     if (!ctx->request_context) {
+      in3_log_error("Invalid json-request: %s\n",req_data);
       req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
       return ctx;
     }
@@ -412,6 +413,8 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
     return IN3_OK;
   }
 
+  in3_log_debug("requesting signature type=%d from account %x\n",type,from.len>2? bytes_to_int(from.data,4):0);
+
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
     in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
@@ -424,6 +427,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
     else if (r != IN3_EIGNORE && r != IN3_OK)
       return r;
   }
+  in3_log_debug("nobody picked up the signature, sending req now \n");
 
   // get the signature from required
   const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : (type == SIGN_EC_PREFIX ? "sign_ec_prefix" : "sign_ec_raw");
