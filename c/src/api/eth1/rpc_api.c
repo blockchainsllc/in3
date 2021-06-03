@@ -539,7 +539,7 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   bytes_t*   from_b  = NULL;
   bytes_t*   data    = NULL;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
-#if defined(ETH_BASIC)
+#if defined(ETH_BASIC) || defined(ETH_FULL)
     TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw))
     from_b = d_get_bytes(tx_data, K_FROM);
     data   = &tx_raw;
