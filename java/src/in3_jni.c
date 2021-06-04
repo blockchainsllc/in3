@@ -676,12 +676,13 @@ JNIEXPORT void JNICALL Java_in3_Loader_libInit(JNIEnv* env, jclass c) {
  * Signature: (Ljava/lang/String;)Lin3/JSON;
  */
 JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv* env, jclass cl, jstring jdata) {
+  UNUSED_VAR(cl);
   jobject ob = NULL;
   const char* data    = (*env)->GetStringUTFChars(env, jdata, 0);
-  const json_ctx_t* ctx = parse_json(data);
+  json_ctx_t* ctx = parse_json(data);
   (*env)->ReleaseStringUTFChars(env, jdata, data);
   if (ctx==NULL) {
-    char* error = _malloc(strlen(jdata)+50);
+    char* error = _malloc(strlen(data)+50);
     sprintf(error,"Error parsing the json-data : '%s'",data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), error);
     _free(error);
