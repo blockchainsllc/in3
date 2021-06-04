@@ -165,7 +165,6 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY_RPC("tx_data", zksync_tx_data(conf, ctx))
   TRY_RPC("account_history", zksync_account_history(conf, ctx))
 
-
   // prepare fallback to send to zksync-server
   str_range_t p            = d_to_json(ctx->params);
   char*       param_string = alloca(p.len - 1);

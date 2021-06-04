@@ -100,12 +100,8 @@ typedef struct queue {
   req_t*        r;
 } queue_t;
 
-queue_t *   q_head = NULL, *q_tail = NULL;
-static void error_response(char* message, int error_code) {
-  char* payload = alloca(strlen(message) + 100);
-  sprintf(payload, "{\"id\":1,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"%s\",\"code\":%i}}", message, error_code);
-  printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %lu\r\n\r\n%s\r\n", strlen(payload), payload);
-}
+queue_t *q_head = NULL, *q_tail = NULL;
+
 static void queue_add(req_t* r) {
   pthread_mutex_lock(&queue_mutex);
   queue_t* q = _malloc(sizeof(queue_t));
@@ -147,6 +143,12 @@ static void* thread_run(void* p) {
 #define MAX_CON 100
 static int clients[MAX_CON];
 #endif
+
+static void error_response(char* message, int error_code) {
+  char* payload = alloca(strlen(message) + 100);
+  sprintf(payload, "{\"id\":1,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"%s\",\"code\":%i}}", message, error_code);
+  printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %lu\r\n\r\n%s\r\n", strlen(payload), payload);
+}
 
 //client connection
 void* respond(void* arg) {
