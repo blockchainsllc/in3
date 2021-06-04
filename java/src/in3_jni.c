@@ -67,7 +67,7 @@ static void* get_java_obj_ptr(in3_t* c) {
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
     if (p->acts & PLGN_ACT_CACHE_GET) {
       in3_storage_handler_t* st = p->data;
-      return st->cptr;
+      return st ? st->cptr : NULL;
     }
   }
   return NULL;
@@ -553,6 +553,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
   in3_req_t* ctx    = (in3_req_t*) sc->req;
   void*      jp     = get_java_obj_ptr(ctx->client);
+  if (jp==NULL) return IN3_EIGNORE;
   jclass     cls    = (*jni)->GetObjectClass(jni, jp);
   jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
   jobject    signer = (*jni)->CallObjectMethod(jni, jp, mid);
