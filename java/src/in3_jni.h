@@ -172,6 +172,14 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv*, jc
 JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv*, jclass, jstring, jstring);
 
 /*
+ * Class:     in3_utils_JSON
+ * Method:    parse
+ * Signature: (Ljava/lang/String;)Lin3/JSON;
+ */
+JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv*, jclass, jstring);
+
+
+/*
  * Class:     in3_eth1_SimpleWallet
  * Method:    getAddressFromKey
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
