@@ -349,7 +349,6 @@ public class JSON {
     };
   }
 
-
   /** parses a String to a json-object. If the json represents 
    * - a object : JSON is returned
    * - a Array : a Array is returned

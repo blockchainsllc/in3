@@ -74,9 +74,12 @@ static bool add_key(in3_t* c, bytes32_t pk) {
   address_t address;
   get_address(pk, address);
   in3_sign_account_ctx_t ctx = {0};
+  in3_req_t              r   = {0};
+  ctx.req                    = &r;
+  r.client                   = c;
 
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
-    if (p->acts & (PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &ctx) == IN3_OK && ctx.accounts_len) {
+    if ((p->acts & PLGN_ACT_SIGN_ACCOUNT) && (p->acts & PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &ctx) == IN3_OK && ctx.accounts_len) {
       bool is_same_address = memcmp(ctx.accounts, address, 20) == 0;
       _free(ctx.accounts);
       if (is_same_address) return false;

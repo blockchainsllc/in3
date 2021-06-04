@@ -64,12 +64,12 @@ typedef struct in3_storage_handler {
 } in3_storage_handler_t;
 
 static void* get_java_obj_ptr(in3_t* c) {
-  in3_log_debug(":: get_java_obj_ptr %p \n",c);
+  in3_log_debug(":: get_java_obj_ptr %p \n", c);
   if (!c) return NULL;
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
     if (p->acts & PLGN_ACT_CACHE_GET) {
       in3_storage_handler_t* st = p->data;
-      in3_log_debug(":: found CACHE %p \n",st);
+      in3_log_debug(":: found CACHE %p \n", st);
       return st ? st->cptr : NULL;
     }
   }
@@ -163,9 +163,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_initcache(JNIEnv* env, jobject ob) {
   in3_t* c = get_in3(env, ob);
   in3_cache_init(c, in3_nodeselect_def_data(c));
 }
-
-
-
 
 /*
  * Class:     in3_IN3
@@ -554,13 +551,14 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 
 //in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
-  in3_req_t* ctx    = (in3_req_t*) sc->req;
-  void*      jp     = get_java_obj_ptr(ctx->client);
-  in3_log_debug(":: jsign for  %p === %p\n",ctx->client,jp);
-  if (jp==NULL) return IN3_EIGNORE;
-  jclass     cls    = (*jni)->GetObjectClass(jni, jp);
-  jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
-  jobject    signer = (*jni)->CallObjectMethod(jni, jp, mid);
+  in3_req_t* ctx = (in3_req_t*) sc->req;
+  if (ctx == NULL) return IN3_EIGNORE;
+  void* jp = get_java_obj_ptr(ctx->client);
+  in3_log_debug(":: jsign for  %p === %p\n", ctx->client, jp);
+  if (jp == NULL) return IN3_EIGNORE;
+  jclass    cls    = (*jni)->GetObjectClass(jni, jp);
+  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
+  jobject   signer = (*jni)->CallObjectMethod(jni, jp, mid);
 
   if (!signer) return -1;
 
@@ -647,9 +645,9 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_init();
   in3_t* in3 = in3_for_chain(jchain);
   void*  p   = (*env)->NewGlobalRef(env, ob);
-//  in3_log_set_level(LOG_TRACE);
-//  in3_log_set_quiet(false);
-  in3_log_debug("New Global ref for %p === %p\n",ob,p);
+  //  in3_log_set_level(LOG_TRACE);
+  //  in3_log_set_quiet(false);
+  in3_log_debug("New Global ref for %p === %p\n", ob, p);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, p);
   in3_plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
   in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
@@ -675,7 +673,6 @@ JNIEXPORT void JNICALL Java_in3_Loader_libInit(JNIEnv* env, jclass c) {
   in3_init();
 }
 
-
 /*
  * Class:     in3_utils_JSON
  * Method:    parse
@@ -683,19 +680,19 @@ JNIEXPORT void JNICALL Java_in3_Loader_libInit(JNIEnv* env, jclass c) {
  */
 JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv* env, jclass cl, jstring jdata) {
   UNUSED_VAR(cl);
-  jobject ob = NULL;
-  const char* data    = (*env)->GetStringUTFChars(env, jdata, 0);
-  json_ctx_t* ctx = parse_json(data);
+  jobject     ob   = NULL;
+  const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
+  json_ctx_t* ctx  = parse_json(data);
   (*env)->ReleaseStringUTFChars(env, jdata, data);
-  if (ctx==NULL) {
-    char* error = _malloc(strlen(data)+50);
-    sprintf(error,"Error parsing the json-data : '%s'",data);
+  if (ctx == NULL) {
+    char* error = _malloc(strlen(data) + 50);
+    sprintf(error, "Error parsing the json-data : '%s'", data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), error);
     _free(error);
   }
   else {
-     ob = toObject( env, ctx->result);
-     json_free(ctx);
+    ob = toObject(env, ctx->result);
+    json_free(ctx);
   }
 
   return ob;
