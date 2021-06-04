@@ -560,7 +560,7 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
   jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
   jobject   signer = (*jni)->CallObjectMethod(jni, jp, mid);
 
-  if (!signer) return -1;
+  if (!signer) return IN3_EIGNORE;
 
   char *data = alloca(sc->message.len * 2 + 3), address[43];
   data[0] = address[0] = '0';
@@ -574,7 +574,7 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
   mid                = (*jni)->GetMethodID(jni, cls, "sign", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
   jstring jsignature = (*jni)->CallObjectMethod(jni, signer, mid, jdata, jaddress);
 
-  if (!jsignature) return -2;
+  if (!jsignature) return IN3_EIGNORE;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
   int         l         = (strlen(signature) + 1) / 2;
   if (l && signature[0] == '0' && signature[1] == 'x') l--;
