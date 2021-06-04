@@ -175,7 +175,7 @@ function private2address(pk) {
 function private2public(pk) {
     if (!pk) return pk
     pk = toUint8Array(pk)
-    return toChecksumAddress(call_buffer('private_to_public', 20, pk, pk.byteLength)) // alias for 'in3_pk2public'
+    return call_buffer('private_to_public', 64, pk, pk.byteLength) // alias for 'in3_pk2public'
 }
 
 function checkAddressChecksum(ad, chain = 0) {

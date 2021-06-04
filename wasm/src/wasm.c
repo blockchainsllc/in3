@@ -266,7 +266,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
         sb_add_chars(sb, ",\"wait\":");
         sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
-        sb_add_chars(sb, request->payload);
+        sb_add_chars(sb, (request->payload && strlen(request->payload))?request->payload:"null");
         sb_add_chars(sb, ",\"method\":\"");
         sb_add_chars(sb, request->method);
         sb_add_chars(sb, "\",\"urls\":[");

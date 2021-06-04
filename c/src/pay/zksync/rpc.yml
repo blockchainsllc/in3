@@ -387,7 +387,7 @@ zksync:
         address:
           descr: the address of the account
           type: address
-        commited:
+        committed:
           descr: the state of the zksync operator after executing transactions successfully, but not not verified on L1 yet.
           type:
             balances:
@@ -554,7 +554,7 @@ zksync:
   zksync_account_history:
     descr: returns the history of transaction for a given account.
     params:
-      tx:
+      account:
         descr: the address of the account
         type: address
       ref:
