@@ -687,7 +687,7 @@ JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv* env, jclass cl, jstr
   if (ctx == NULL) {
     char* error = _malloc(strlen(data) + 50);
     sprintf(error, "Error parsing the json-data : '%s'", data);
-    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), error);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/RuntimeException"), error);
     _free(error);
   }
   else {
