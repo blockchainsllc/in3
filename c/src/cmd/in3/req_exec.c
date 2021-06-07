@@ -67,6 +67,7 @@ static void execute(in3_t* c, FILE* f) {
         else
           recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
+      fflush(stdout);
       req_free(ctx);
       first   = 0;
       sb->len = 0;
