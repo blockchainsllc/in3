@@ -84,6 +84,7 @@ types:
     success:
       descr: the result of the operation
       type: bool
+      optional: true
     fail_reason:
       descr: the error message if failed, otherwise null
       type: string
@@ -460,6 +461,7 @@ zksync:
         success:
           descr: if executed, this property marks the success of the tx.
           type: bool
+          optional: true
         failReason:
           descr: if executed and failed this will include an error message
           type: string
