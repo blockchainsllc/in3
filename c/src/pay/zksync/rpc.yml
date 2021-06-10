@@ -821,6 +821,16 @@ zksync:
         executed:
           descr: if the operation was executed
           type: bool
+    example:
+      cmdParams: -x
+      request:
+        - 1
+      response:
+        block:
+          committed: true
+          blockNumber: 4
+          verified: true
+        executed: true
 
   zksync_get_token_price:
     descr: returns current token-price
