@@ -172,7 +172,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   param_string[p.len - 2] = 0;
 
   if (strcmp(ctx->method, "account_info") == 0) {
-    if (*param_string == 0) {
+    if (*param_string == 0 || strcmp(param_string, "null") == 0) {
       TRY(zksync_get_account(conf, ctx->req, NULL))
       param_string = alloca(45);
       set_quoted_address(param_string, conf->account);
