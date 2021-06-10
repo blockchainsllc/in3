@@ -308,11 +308,13 @@ zksync:
           descr: rpc-method, which will be used to verify the incomming proof before cosigning.
           type: string
           cmd: zvpm
+          optional: true
 
         create_proof_method:
           descr: rpc-method, which will be used to create the proof needed for cosigning.
           type: string
           cmd: zcpm
+          optional: true
 
   # rpc
   zksync_contract_address:
