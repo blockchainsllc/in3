@@ -81,7 +81,7 @@ types:
       descr: the priority-operation id (for tx like `Deposit`) otherwise this is null
       optional: true
       type: uint64
-    sucess:
+    success:
       descr: the result of the operation
       type: bool
     fail_reason:
@@ -410,6 +410,7 @@ zksync:
         id:
           descr: the assigned id of the account, which will be used when encoding it into the rollup.
           type: uint64
+          optional: true
         verified:
           descr: the state after the rollup was verified in L1.
           type:
