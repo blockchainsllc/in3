@@ -801,6 +801,26 @@ zksync:
       opId:
         descr: the opId of a layer-operstion (like depositing)
         type: uint64
+    result:
+      descr: state of the PriorityOperation
+      type:
+        block:
+          descr: the block
+          type:
+            committed:
+              descr: state of the operation
+              type: bool
+            verified:
+              descr: if the opteration id has been included in the rollup block
+              type: bool
+            blockNumber:
+              descr: the blocknumber of the block that included the operation
+              type: uint64
+              optional: true
+          optional: true
+        executed:
+          descr: if the operation was executed
+          type: bool
 
   zksync_get_token_price:
     descr: returns current token-price
