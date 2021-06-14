@@ -304,7 +304,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
       conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
       for (int i = 0; i < d_len(urls); i++) {
         char* s = d_get_string_at(urls, i);
-        if (s) conf->musig_urls[i] = _strdupn(s, -1);
+        if (s && strlen(s)) conf->musig_urls[i] = _strdupn(s, -1);
       }
     }
   }
