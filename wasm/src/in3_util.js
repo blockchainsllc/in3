@@ -347,10 +347,9 @@ function toNumber(val) {
         case 'string':
             return parseInt(val)
         case 'undefined':
-        case 'null':
-            return 0
+            return undefined
         default:
-            if (!val) return 0
+            if (!val) return val
             if (val.readBigInt64BE) //nodejs Buffer
                 return val.length == 0 ? 0 : parseInt(toMinHex(val))
             else if (val.redIMul)
