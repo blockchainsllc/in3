@@ -30,6 +30,7 @@ stages:
   - python
   - dotnet
   - java
+  - swift
   - test
   - analysis
   - deploy
@@ -37,7 +38,7 @@ stages:
 
 # all the CI files to include and run, they are imported before the CI is started
 include:
-  - local: "code-quality.gitlab-ci.yml"
+  - local: "/.gitlab/code-quality.gitlab-ci.yml"
   - local: "/c/ci.yml"
   - local: "/c/ci-analyse.yml"
   - local: "/c/ci-deploy.yml"

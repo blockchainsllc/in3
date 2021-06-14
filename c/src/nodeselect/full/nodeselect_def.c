@@ -59,7 +59,7 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
   // do we have a result? if not it is a valid error-response
   if (!vc->result) return IN3_OK;
 
-  if (strcmp(vc->method, "in3_nodeList") == 0) {
+  if (VERIFY_RPC("in3_nodeList")) {
     d_token_t* params = d_get(vc->request, K_PARAMS);
     return eth_verify_in3_nodelist(data, vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
   }
@@ -166,7 +166,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
 
-  if (token->key == key("preselect_nodes")) {
+  if (token->key == CONFIG_KEY("preselect_nodes")) {
     if (data->pre_address_filter) b_free(data->pre_address_filter);
     if (d_type(token) == T_BYTES && d_len(token) % 20 == 0)
       data->pre_address_filter = b_dup(d_bytes(token));
@@ -176,31 +176,36 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
       EXPECT_CFG(d_type(token) == T_NULL, "invalid preselect_nodes ");
     }
   }
-  else if (token->key == key("replaceLatestBlock")) {
+  else if (token->key == CONFIG_KEY("replaceLatestBlock")) {
     EXPECT_TOK_U8(token);
     ctx->client->replace_latest_block = (uint8_t) d_int(token);
     const uint64_t dp_                = ctx->client->replace_latest_block;
     w->node_props                     = (w->node_props & 0xFFFFFFFF) | (dp_ << 32U);
   }
-  else if (token->key == key("requestCount")) {
+  else if (token->key == CONFIG_KEY("requestCount")) {
     EXPECT_TOK_U8(token);
     EXPECT_CFG(d_int(token), "requestCount must be at least 1");
     w->request_count = (uint8_t) d_int(token);
   }
-  else if (token->key == key("minDeposit")) {
+  else if (token->key == CONFIG_KEY("minDeposit")) {
     EXPECT_TOK_U64(token);
     w->min_deposit = d_long(token);
   }
-  else if (token->key == key("nodeProps")) {
+  else if (token->key == CONFIG_KEY("nodeProps")) {
     EXPECT_TOK_U64(token);
     w->node_props = d_long(token);
   }
-  else if (token->key == key("nodeLimit")) {
+  else if (token->key == CONFIG_KEY("nodeLimit")) {
     EXPECT_TOK_U16(token);
     w->node_limit = (uint16_t) d_int(token);
   }
-  else if (token->key == key("nodeRegistry")) {
+  else if (token->key == CONFIG_KEY("nodeRegistry") || token->key == CONFIG_KEY("servers") || token->key == CONFIG_KEY("nodes")) {
     EXPECT_TOK_OBJ(token);
+
+    // this is legacy-support, if the object has a key with the chain_id, we simply use the value.
+    char node_id[10];
+    sprintf(node_id, "0x%x", ctx->client->chain.chain_id);
+    if (d_get(token, key(node_id))) token = d_get(token, key(node_id));
 
     // this is changing the nodelist config, so we need to make sure we have our own nodelist
     TRY(nodelist_seperate_from_registry(&data, w))
@@ -219,7 +224,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
         memcpy(data->registry_id, reg_id.data, 32);
       }
 #ifdef NODESELECT_DEF_WL
-      else if (cp.token->key == key("whiteListContract")) {
+      else if (cp.token->key == CONFIG_KEY("whiteListContract")) {
         EXPECT_TOK_ADDR(cp.token);
         EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
         has_wlc = true;
@@ -228,7 +233,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
         data->whitelist->needs_update = true;
         memcpy(data->whitelist->contract, cp.token->data, 20);
       }
-      else if (cp.token->key == key("whiteList")) {
+      else if (cp.token->key == CONFIG_KEY("whiteList")) {
         EXPECT_TOK_ARR(cp.token);
         EXPECT_CFG(!has_wlc, "cannot specify manual whiteList and whiteListContract together!");
         has_man_wl = true;
@@ -250,7 +255,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
         }
       }
 #endif
-      else if (cp.token->key == key("needsUpdate")) {
+      else if (cp.token->key == CONFIG_KEY("needsUpdate")) {
         EXPECT_TOK_BOOL(cp.token);
         if (!d_int(cp.token)) {
           if (data->nodelist_upd8_params) {
@@ -261,20 +266,20 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
         else if (!data->nodelist_upd8_params)
           data->nodelist_upd8_params = _calloc(1, sizeof(*(data->nodelist_upd8_params)));
       }
-      else if (cp.token->key == key("avgBlockTime")) {
+      else if (cp.token->key == CONFIG_KEY("avgBlockTime")) {
         EXPECT_TOK_U16(cp.token);
         data->avg_block_time = (uint16_t) d_int(cp.token);
       }
-      else if (cp.token->key == key("nodeList")) {
+      else if (cp.token->key == CONFIG_KEY("nodeList")) {
         EXPECT_TOK_ARR(cp.token);
         if (clear_nodes(data) < 0) goto cleanup;
         for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
-          EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
-          EXPECT_TOK_STR(d_get(n.token, key("url")));
-          EXPECT_TOK_ADDR(d_get(n.token, key("address")));
-          EXPECT_CFG(add_node(data, d_get_string(n.token, key("url")),
-                              d_get_longd(n.token, key("props"), 65535),
-                              d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
+          EXPECT_CFG(d_get(n.token, CONFIG_KEY("url")) && d_get(n.token, CONFIG_KEY("address")), "expected URL & address");
+          EXPECT_TOK_STR(d_get(n.token, CONFIG_KEY("url")));
+          EXPECT_TOK_ADDR(d_get(n.token, CONFIG_KEY("address")));
+          EXPECT_CFG(add_node(data, d_get_string(n.token, CONFIG_KEY("url")),
+                              d_get_longd(n.token, CONFIG_KEY("props"), 65535),
+                              d_get_byteskl(n.token, CONFIG_KEY("address"), 20)->data) == IN3_OK,
                      "add node failed");
           assert(data->nodelist_length > 0);
           BIT_SET(data->nodelist[data->nodelist_length - 1].attrs, ATTR_BOOT_NODE);
@@ -288,21 +293,23 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     if (!nodeselect_def_cfg_data(ctx->client->chain.chain_id).data)
       EXPECT_CFG(!memiszero(data->registry_id, 32) && !memiszero(data->contract, 20), "missing registryId/contract!");
   }
-  else if (token->key == key("rpc")) {
+  else if (token->key == CONFIG_KEY("rpc")) {
     EXPECT_TOK_STR(token);
     TRY(nodelist_seperate_from_registry(&data, w))
-    in3_t* c          = ctx->client;
-    c->proof          = PROOF_NONE;
-    c->chain.chain_id = CHAIN_ID_LOCAL;
-    w->request_count  = 1;
+    in3_t* c           = ctx->client;
+    c->proof           = PROOF_NONE;
+    c->signature_count = 0;
+    c->chain.chain_id  = CHAIN_ID_LOCAL;
+    w->request_count   = 1;
 
     clear_nodes(data);
-    data->nodelist = _calloc(1, sizeof(in3_node_t));
-    data->nodelist_length++;
-    in3_node_t* n = &data->nodelist[0];
-    if (n->url) _free(n->url);
-    n->url = _strdupn(d_string(token), -1);
     _free(data->nodelist_upd8_params);
+    data->nodelist_length++;
+    data->nodelist             = _calloc(1, sizeof(in3_node_t));
+    data->weights              = _calloc(1, sizeof(in3_node_weight_t));
+    data->nodelist[0].props    = NODE_PROP_DATA;
+    in3_node_t* n              = &data->nodelist[0];
+    n->url                     = _strdupn(d_string(token), -1);
     data->nodelist_upd8_params = NULL;
   }
   else {

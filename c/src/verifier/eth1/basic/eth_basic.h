@@ -31,7 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
+// @PUBLIC_HEADER
 /** @file
  * Ethereum Nanon verification.
  * */
@@ -134,6 +134,11 @@ in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction t
 in3_ret_t handle_eth_sendTransaction(in3_req_t* req,     /**< the current context */
                                      d_token_t* req_data /**< the request */
 );
+
+/**
+ * returns a pointer to 32 bytes marking a empty hash (keccakc(0x))
+ */
+const uint8_t* empty_hash();
 
 /**
  * minimum signer for the wallet, returns the signed message which needs to be freed

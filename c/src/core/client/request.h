@@ -133,6 +133,17 @@ NONULL in3_req_t* req_new(
     in3_t*      client,  /**< [in] the client-config. */
     const char* req_data /**< [in] the rpc-request as json string. */
 );
+/** 
+ * creates a new request but clones the request-data.
+ * 
+ * the request data will be parsed and represented in the context.
+ * calling this function will only parse the request data, but not send anything yet.
+ * 
+ */
+NONULL in3_req_t* req_new_clone(
+    in3_t*      client,  /**< [in] the client-config. */
+    const char* req_data /**< [in] the rpc-request as json string. */
+);
 /**
  * sends a previously created request to nodes and verifies it.
  * 
@@ -313,6 +324,11 @@ char* req_get_response_data(
 );
 
 /**
+ * returns the result or NULL in case of an error for that context. The result must be freed!
+ */
+char* req_get_result_json(in3_req_t* ctx, int index);
+
+/**
  * returns the type of the request
  */
 NONULL req_type_t req_get_type(
@@ -339,7 +355,7 @@ NONULL void req_free(
  * ```c
 in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
-  in3_req_t* req = req_find_required(parent, method);
+  in3_req_t* req = req_find_required(parent, method, NULL);
   if (ctx) {
     // found one - so we check if it is useable.
     switch (in3_req_state(ctx)) {
@@ -386,9 +402,11 @@ NONULL in3_ret_t req_add_required(
  * 
  * This method is used internaly to find a previously added context.
  */
-NONULL in3_req_t* req_find_required(
-    const in3_req_t* parent, /**< [in] the current request context. */
-    const char*      method  /**< [in] the method of the rpc-request. */
+NONULL_FOR((1, 2))
+in3_req_t* req_find_required(
+    const in3_req_t* parent,     /**< [in] the current request context. */
+    const char*      method,     /**< [in] the method of the rpc-request. */
+    const char*      param_query /**< [in] a optional string within thew params. */
 );
 /**
  * removes a required context after usage.

@@ -32,6 +32,12 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+if ( NOT CMD_NAME )
+  set(CMD_NAME in3)
+endif ()
+
+ADD_DEFINITIONS("-DCMD_NAME=\"${CMD_NAME}\"")
+
 IF (IN3_SERVER)
     ADD_DEFINITIONS(-DIN3_SERVER)
     set(LIBS ${LIBS} http_server)
@@ -45,12 +51,24 @@ if (MULTISIG)
     set(LIBS ${LIBS} multisig)
 endif()
 
-add_executable(in3 main.c in3_storage.c ../../tools/recorder/recorder.c)
-target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
 
-target_link_libraries(in3 init pk_signer ${LIBS} -lm)
+add_executable(${CMD_NAME} 
+  helper.c 
+  main.c 
+  option_handler.c 
+  rpc_handler.c 
+  req_exec.c 
+  transport.c 
+  tx.c 
+  weights.c 
+  in3_storage.c 
+  ../../tools/recorder/recorder.c
+)
+target_compile_definitions(${CMD_NAME} PRIVATE _XOPEN_SOURCE=600)
 
-install(TARGETS in3
+target_link_libraries(${CMD_NAME} init pk_signer ${LIBS} -lm)
+
+install(TARGETS ${CMD_NAME}
         DESTINATION /usr/local/bin/
         PERMISSIONS
         OWNER_READ OWNER_WRITE OWNER_EXECUTE

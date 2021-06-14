@@ -60,34 +60,32 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return IN3_OK;
   else if (d_type(vc->result) == T_NULL) {
     // check if there's a proof for non-existence
-    if (!strcmp(vc->method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(vc->method, "eth_getTransactionByBlockNumberAndIndex")) {
+    if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
       return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
-    }
     return IN3_OK;
   }
 
-  if (strcmp(vc->method, "eth_getTransactionByHash") == 0)
+  if (VERIFY_RPC("eth_getTransactionByHash"))
     return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
-  else if (!strcmp(vc->method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(vc->method, "eth_getTransactionByBlockNumberAndIndex")) {
+  else if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
     return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
-  }
-  else if (strcmp(vc->method, "eth_getBlockByNumber") == 0)
+  else if (VERIFY_RPC("eth_getBlockByNumber"))
     return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (strcmp(vc->method, "eth_getBlockTransactionCountByHash") == 0)
+  else if (VERIFY_RPC("eth_getBlockTransactionCountByHash"))
     return eth_verify_eth_getBlockTransactionCount(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (strcmp(vc->method, "eth_getBlockTransactionCountByNumber") == 0)
+  else if (VERIFY_RPC("eth_getBlockTransactionCountByNumber"))
     return eth_verify_eth_getBlockTransactionCount(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (strcmp(vc->method, "eth_getBlockByHash") == 0)
+  else if (VERIFY_RPC("eth_getBlockByHash"))
     return eth_verify_eth_getBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (strcmp(vc->method, "eth_getBalance") == 0 || strcmp(vc->method, "eth_getCode") == 0 || strcmp(vc->method, "eth_getStorageAt") == 0 || strcmp(vc->method, "eth_getTransactionCount") == 0)
+  else if (VERIFY_RPC("eth_getBalance") || VERIFY_RPC("eth_getCode") || VERIFY_RPC("eth_getStorageAt") || VERIFY_RPC("eth_getTransactionCount"))
     return eth_verify_account_proof(vc);
-  else if (strcmp(vc->method, "eth_gasPrice") == 0)
+  else if (VERIFY_RPC("eth_gasPrice"))
     return IN3_OK;
-  else if (!strcmp(vc->method, "eth_newFilter") || !strcmp(vc->method, "eth_newBlockFilter") || !strcmp(vc->method, "eth_newPendingFilter") || !strcmp(vc->method, "eth_uninstallFilter") || !strcmp(vc->method, "eth_getFilterChanges"))
+  else if (VERIFY_RPC("eth_newFilter") || VERIFY_RPC("eth_newBlockFilter") || VERIFY_RPC("eth_newPendingFilter") || VERIFY_RPC("eth_uninstallFilter") || VERIFY_RPC("eth_getFilterChanges"))
     return IN3_OK;
-  else if (strcmp(vc->method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
+  else if (VERIFY_RPC("eth_getLogs")) // for txReceipt, we need the txhash
     return eth_verify_eth_getLog(vc, d_len(vc->result));
-  else if (strcmp(vc->method, "eth_sendRawTransaction") == 0) {
+  else if (VERIFY_RPC("eth_sendRawTransaction")) {
     bytes32_t hash;
     keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
@@ -101,8 +99,10 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   str_range_t r       = d_to_json(ctx->params + 1);
   char*       tx_data = alloca(r.len + 1);
   memcpy(tx_data, r.data, r.len);
-  tx_data[r.len] = 0;
-  TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash))
+  tx_data[r.len]      = 0;
+  in3_req_t* send_req = NULL;
+  in3_req_t* last_r   = NULL;
+  TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash, &send_req))
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];
   bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
@@ -112,28 +112,27 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   tx_hash_hex[68]                  = 0;
 
   // get the tx_receipt
-  TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt))
+  TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt, &last_r))
 
   if (d_type(tx_receipt) == T_NULL || d_get_long(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
     // we remove it and try again
-    in3_req_t* last_r = req_find_required(ctx->req, "eth_getTransactionReceipt");
-    uint32_t   wait   = d_get_int(d_get(last_r->requests[0], K_IN3), K_WAIT);
-    wait              = wait ? wait * 2 : 1000;
+    uint32_t wait = d_get_int(d_get(last_r->requests[0], K_IN3), K_WAIT);
+    wait          = wait ? wait * 2 : 1000;
     req_remove_required(ctx->req, last_r, false);
     if (wait > 120000) // more than 2 minutes is too long, so we stop here
       return req_set_error(ctx->req, "Waited too long for the transaction to be minded", IN3_ELIMIT);
     char in3[20];
     sprintf(in3, "{\"wait\":%d}", wait);
 
-    return req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt);
+    return req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt, &last_r);
   }
   else {
     // we have a result and we keep it
     str_range_t r = d_to_json(tx_receipt);
     sb_add_range(in3_rpc_handle_start(ctx), r.data, 0, r.len);
-    req_remove_required(ctx->req, req_find_required(ctx->req, "eth_getTransactionReceipt"), false);
-    req_remove_required(ctx->req, req_find_required(ctx->req, "eth_sendRawTransaction"), false);
+    req_remove_required(ctx->req, last_r, false);
+    req_remove_required(ctx->req, send_req, false);
     return in3_rpc_handle_finish(ctx);
   }
 }

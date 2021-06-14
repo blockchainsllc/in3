@@ -398,3 +398,22 @@ int64_t parse_float_val(const char* data, int32_t expo) {
   for (; expo > 0; expo--) val *= 10;
   return val;
 }
+
+void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b) {
+  optimize_len(b, len_b);
+  uint8_t *     pa = a + 31, *pb = b + len_b - 1;
+  uint_fast16_t carry = 0;
+  do {
+    carry += *pa + *pb;
+    *pa = carry & 0xFF;
+    carry >>= 8;
+    pb--, pa--;
+  } while (b == pb);
+
+  while (carry && pa >= a) {
+    carry += *pa;
+    *pa = carry & 0xFF;
+    carry >>= 8;
+    pa--;
+  }
+}

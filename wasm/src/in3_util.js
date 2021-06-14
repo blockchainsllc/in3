@@ -149,21 +149,33 @@ function toBigInt(val) {
     return BigInt(toHex(val))
 }
 
-function keccak(val) {
+function keccak(val) { // shortcut for the 'keccak'  rpc-call
     if (!val) return val
     val = toUint8Array(val)
-    return toBuffer(call_buffer('hash_keccak', 32, val, val.byteLength))
+    return toBuffer(call_buffer('hash_keccak', 32, val, val.byteLength)) // keccak is also a alias for 'web3_sha3' 
+}
+
+function sha256(val) {
+    if (!val) return val
+    val = toUint8Array(val)
+    return toBuffer(call_buffer('hash_sha256', 32, val, val.byteLength)) // shortcut for 'sha256'
 }
 
 function toChecksumAddress(val, chainId = 0) {
     if (!val) return val
-    return call_string('to_checksum_address', toUint8Array(val, 20), chainId);
+    return call_string('to_checksum_address', toUint8Array(val, 20), chainId); // shortcut for 'in3_checksumAddress'
 }
 
 function private2address(pk) {
     if (!pk) return pk
     pk = toUint8Array(pk)
-    return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength))
+    return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength)) // alias for 'in3_pk2address'
+}
+
+function private2public(pk) {
+    if (!pk) return pk
+    pk = toUint8Array(pk)
+    return call_buffer('private_to_public', 64, pk, pk.byteLength) // alias for 'in3_pk2public'
 }
 
 function checkAddressChecksum(ad, chain = 0) {
@@ -177,7 +189,7 @@ function abiEncode(sig, ...params) {
             ? convert(Object.values(a))
             : toHex(a)
     try {
-        return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params)))
+        return call_string('wasm_abi_encode', sig, JSON.stringify(convert(params))) // shortcut for 'in3_abiDecode'-method
     }
     catch (x) {
         throw new Error("Error trying to abi encode '" + sig + '": ' + x.message + ' with ' + JSON.stringify(params))
@@ -200,7 +212,7 @@ function abiDecode(sig, data) {
         else return []
     }
     try {
-        let res = JSON.parse(call_string('wasm_abi_decode', sig, data, data.byteLength))
+        let res = JSON.parse(call_string('wasm_abi_decode', sig, data, data.byteLength)) // shortcut for 'in3_abiEncode'-method
         return allowOne ? convertType(res, types[0]) : convertTypes(types, res)
     } catch (x) {
         throw new Error('Error decoding ' + sig + ' with ' + toHex(data) + ' : ' + x.message)
@@ -209,11 +221,7 @@ function abiDecode(sig, data) {
 
 function convertType(val, t) {
     const isArray = t.indexOf('[')
-    if (isArray >= 0) {
-        t = t.substr(0, isArray)
-        if (t !== 'string' && t != 'bytes')
-            return val ? val.map(_ => convertType(_, t)) : []
-    }
+    if (isArray >= 0) return val ? val.map(_ => convertType(_, t.substr(0, isArray))) : []
 
     if (t.startsWith('(')) return convertTypes(splitTypes(t), val)
     switch (t) {
@@ -339,10 +347,9 @@ function toNumber(val) {
         case 'string':
             return parseInt(val)
         case 'undefined':
-        case 'null':
-            return 0
+            return undefined
         default:
-            if (!val) return 0
+            if (!val) return val
             if (val.readBigInt64BE) //nodejs Buffer
                 return val.length == 0 ? 0 : parseInt(toMinHex(val))
             else if (val.redIMul)
@@ -573,12 +580,14 @@ const util = {
     padStart,
     padEnd,
     keccak,
+    sha256,
     toChecksumAddress,
     abiEncode,
     abiDecode,
     ecSign,
     splitSignature,
     private2address,
+    private2public,
     soliditySha3,
     randomBytes,
     createSignatureHash,

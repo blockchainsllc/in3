@@ -1,0 +1,379 @@
+utils:
+
+  descr: |
+    a Collection of utility-function.
+  
+
+  in3_abiEncode:
+    sync: true
+    descr: based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function encodes the value given and returns it as hexstring.
+    params:
+      signature:
+        type: string
+        descr: the signature of the function. e.g. `getBalance(uint256)`. The format is the same as used by solidity to create the functionhash. optional you can also add the return type, which in this case is ignored.
+      params:
+        type: any
+        array: true
+        descr: a array of arguments. the number of arguments must match the arguments in the signature.
+    result:
+      type: hex
+      descr: the ABI-encoded data as hex including the 4 byte function-signature. These data can be used for `eth_call` or to send a transaction.
+    example:
+      request:
+        - "getBalance(address)"
+        - ["0x1234567890123456789012345678901234567890"]
+      response: "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
+
+  in3_abiDecode:
+    sync: true
+    descr: based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function decodes the bytes given and returns it as array of values.
+    params:
+      signature:
+        type: string
+        descr: the signature of the function. e.g. `uint256`, `(address,string,uint256)` or `getBalance(address):uint256`. If the complete functionhash is given, only the return-part will be used.
+      data:
+        type: bytes
+        descr: the data to decode (usually the result of a eth_call)
+      topics:
+        optional: true
+        type: bytes
+        descr: in case of an even the topics (concatinated to max 4x32bytes). This is used if indexed.arguments are used.
+    result:
+      type: any
+      array: true
+      descr: a array with the values after decodeing.
+    example:
+      request:
+        - (address,uint256)
+        - "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005"
+      response: 
+        - "0x1234567890123456789012345678901234567890"
+        - "0x05"
+
+  in3_checksumAddress:
+    sync: true
+    descr: Will convert an upper or lowercase Ethereum address to a checksum address.  (See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md) )
+    params:
+      address:
+        descr: the address to convert.
+        type: address
+      useChainId:
+        descr: if true, the chainId is integrated as well (See [EIP1191](https://github.com/ethereum/EIPs/issues/1121) )
+        type: bool
+        optional: true
+    result:
+      descr: the address-string using the upper/lowercase hex characters.
+    example:
+      request:
+        - "0x1fe2e9bf29aa1938859af64c413361227d04059a"
+        - false
+      response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
+
+
+  in3_toWei:
+    sync : true
+    descr: converts the given value into wei.
+    params:
+      value:
+        descr: the value, which may be floating number as string
+        type: string | uint
+        example: "0.9"
+      unit:
+        descr: the unit of the value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
+        type: string
+        optional: true
+        default: eth
+    result:
+      descr: the value in wei as hex.
+    example:
+      request:
+        - "20.0009123"
+        - eth
+      response: "0x01159183c4793db800"
+
+  
+  in3_fromWei:
+    sync: true
+    descr: converts a given uint (also as hex) with a wei-value into a specified unit.
+    params:
+      value:
+        descr: the value in wei
+        type: uint256
+        example: "0x234324abdef"
+      unit:
+        descr: the unit of the target value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
+        type: string
+      digits:
+        descr: fix number of digits after the comma. If left out, only as many as needed will be included. 
+        type: int
+        optional: true
+    result:
+      descr: the value as string.
+      type: string
+    example:
+      request:
+        - "0x234324abadefdef"
+        - eth
+        - 3
+      response: "0.158"
+
+  in3_calcDeployAddress:
+    descr: calculates the address of a contract about to deploy. The address depends on the senders nonce.
+    params:
+      sender:
+        descr: the sender of the transaction
+        type: address
+      nonce:
+        descr: the nonce of the sender during deployment
+        type: uint64
+        optional: true
+    result:
+      type: address
+      descr: the address of the deployed contract
+    example:
+      request:
+        - '0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c'
+        - 6054986
+      response: '0xba866e7bd2573be3eaf5077b557751bb6d58076e'
+
+
+  net_version:
+    descr: Returns the current network id.
+    apiName: getNetworkId
+    result:
+       descr: the network id
+       type: uint64
+
+account:
+  descr: |
+    Account Handling includes handling signers and preparing and signing transacrtion and data.
+
+    Signers are Plugins able to create signatures. Those functions will use the registered plugins.
+    
+
+  in3_pk2address:
+    sync: true
+    descr: extracts the address from a private key.
+    params:
+      pk:
+        descr: the 32 bytes private key as hex.
+        type: bytes32
+    result:
+      descr: the address
+    example:
+      request:
+        - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+      response: "0xdc5c4280d8a286f0f9c8f7f55a5a0c67125efcfd"
+
+  in3_pk2public:
+    sync: true
+    descr: extracts the public key from a private key.
+    params:
+      pk:
+        descr: the 32 bytes private key as hex.
+        type: bytes32
+    result:
+      descr: the public key as 64 bytes
+    example:
+      request:
+        - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+      response: "0x0903329708d9380aca47b02f3955800179e18bffbb29be3a644593c5f87e4c7fa960983f78186577eccc909cec71cb5763acd92ef4c74e5fa3c43f3a172c6de1"
+
+  in3_ecrecover:
+    sync: true
+    descr: extracts the public key and address from signature.
+    params:
+      msg:
+        descr: the message the signature is based on.
+        type: hex
+      sig:
+        descr:  the 65 bytes signature as hex.
+        type: bytes
+      sigtype:
+        descr: "the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data). Default: `raw`"
+        type: string
+        default: raw
+        optional: true
+    result:
+      descr: the extracted public key and address
+      type:
+        publicKey:
+          descr: the public Key of the signer (64 bytes)
+          type: bytes
+        address:
+          descr: the address
+          type: address
+    example:
+      request:
+        - "0x487b2cbb7997e45b4e9771d14c336b47c87dc2424b11590e32b3a8b9ab327999"
+        - "0x0f804ff891e97e8a1c35a2ebafc5e7f129a630a70787fb86ad5aec0758d98c7b454dee5564310d497ddfe814839c8babd3a727692be40330b5b41e7693a445b71c"
+        - hash
+      response:
+        publicKey: "0x94b26bafa6406d7b636fbb4de4edd62a2654eeecda9505e9a478a66c4f42e504c4481bad171e5ba6f15a5f11c26acfc620f802c6768b603dbcbe5151355bbffb"
+        address: "0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"
+      
+
+  in3_prepareTx:
+    descr: prepares a Transaction by filling the unspecified values and returens the unsigned raw Transaction.
+    params:
+      tx:
+        descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
+        type: transaction
+          
+    result:
+      descr: the unsigned raw transaction as hex.
+    example:
+      request:
+        -  to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
+           value: "0x100000000"
+           from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f" 
+      response: "0xe980851a13b865b38252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
+
+  in3_signTx:
+    descr: signs the given raw Tx (as prepared by in3_prepareTx ). The resulting data can be used in `eth_sendRawTransaction` to publish and broadcast the transaction.
+    params:
+      tx:
+        descr: the raw unsigned transactiondata
+        type: hex
+      from:
+        descr: the account to sign
+        type: address
+          
+    result:
+      descr: the raw transaction with signature.
+    example:
+      request:
+        - "0xe980851a13b865b38252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
+        - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+      response: "0xf86980851a13b865b38252089463f666a23cbd135a91187499b5cc51d589c302a08501000000008026a03c5b094078383f3da3f65773ab1314e89ee76bc41f827f2ef211b2d3449e4435a077755f8d9b32966e1ad8f6c0e8c9376a4387ed237bdbf2db6e6b94016407e276"
+
+  in3_signData:
+    descr: signs the given data.
+    params:
+      msg:
+        descr: the message to sign.
+        type: hex
+      account:
+        descr: the account to sign if the account is a bytes32 it will be used as private key
+        type: address | bytes32
+      msgType:
+        descr: "the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data)"
+        type: string
+        default: raw
+        optional: true
+        
+    result:
+      descr: the signature
+      type:
+        message:
+          descr: original message used
+          type: bytes
+        messageHash:
+          descr: the hash the signature is based on
+          type: bytes32
+        signature:
+          descr: the signature (65 bytes)
+          type: bytes
+        r:
+          descr: the x-value of the EC-Point
+          type: bytes32
+        s:
+          descr: the y-value of the EC-Point
+          type: bytes32
+        v:
+          descr: the recovery value (0|1) + 27
+          type: byte
+
+    example:
+      request:
+        - "0x0102030405060708090a0b0c0d0e0f"
+        - "0xa8b8759ec8b59d7c13ef3630e8530f47ddb47eba12f00f9024d3d48247b62852"
+        - raw
+      response: 
+        message: "0x0102030405060708090a0b0c0d0e0f"
+        messageHash: "0x1d4f6fccf1e27711667605e29b6f15adfda262e5aedfc5db904feea2baa75e67"
+        signature: "0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e95792264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e1521b"
+        r: "0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e9579"
+        s: "0x2264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e152"
+        v: 27
+
+  in3_decryptKey:
+    sync: true
+    descr: decrypts a JSON Keystore file as defined in the [Web3 Secret Storage Definition](https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition). The result is the raw private key.
+    params:
+      key:
+        descr: Keydata as object as defined in the keystorefile
+        type: string
+      passphrase:
+        descr: the password to decrypt it.
+        type: string
+
+    result:
+      descr: a raw private key (32 bytes)
+    example:
+      request:
+        - version: 3,
+          id: "f6b5c0b1-ba7a-4b67-9086-a01ea54ec638"
+          address: "08aa30739030f362a8dd597fd3fcde283e36f4a1"
+          crypto: 
+            ciphertext: "d5c5aafdee81d25bb5ac4048c8c6954dd50c595ee918f120f5a2066951ef992d"
+            cipherparams: 
+              iv: "415440d2b1d6811d5c8a3f4c92c73f49"
+            cipher: "aes-128-ctr"
+            kdf: pbkdf2
+            kdfparams: 
+              dklen: 32
+              salt: "691e9ad0da2b44404f65e0a60cf6aabe3e92d2c23b7410fd187eeeb2c1de4a0d"
+              c: 16384
+              prf: hmac-sha256
+            mac: "de651c04fc67fd552002b4235fa23ab2178d3a500caa7070b554168e73359610"
+        - test
+      response: "0x1ff25594a5e12c1e31ebd8112bdf107d217c1393da8dc7fc9d57696263457546"
+
+  eth_sign:
+    descr: |
+      The sign method calculates an Ethereum specific signature with: 
+      
+      ```js
+      sign(keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))).
+      ```
+
+      By adding a prefix to the message makes the calculated signature recognisable as an Ethereum specific signature. This prevents misuse where a malicious DApp can sign arbitrary data (e.g. transaction) and use the signature to impersonate the victim.
+
+      For the address to sign a signer must be registered.
+    params:
+      account:
+        descr: the account to sign with
+        type: address
+      message:
+        descr: the message to sign
+        type: bytes
+    result:
+      descr: the signature (65 bytes) for the given message.
+    example:
+      request:
+        - '0x9b2055d370f73ec7d8a03e965129118dc8f5bf83'
+        - '0xdeadbeaf'
+      response: '0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b'
+
+
+
+  eth_signTransaction:
+    descr: Signs a transaction that can be submitted to the network at a later time using with eth_sendRawTransaction.
+    params:
+      tx:
+        descr: transaction to sign
+        type: transaction
+    result:
+      descr: the raw signed transaction 
+    example:
+      request:
+        - data: "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"
+          from: "0xb60e8dd61c5d32be8058bb8eb970870f07233155"
+          gas: "0x76c0"
+          gasPrice: "0x9184e72a000"
+          to: "0xd46e8dd67c5d32be8058bb8eb970870f07244567"
+          value: "0x9184e72a"
+      response: '0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b'
+
+

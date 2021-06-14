@@ -135,7 +135,7 @@ bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb);
 /**
  * converts the data in the builder to a rlp-encoded item.
  * 
- * This function is optimized to not increase the memory more than needed and is fastet than 
+ * This function is optimized to not increase the memory more than needed and is faster than 
  * creating a second builder to encode the data. 
  * 
  * \param bb the builder containing the data.

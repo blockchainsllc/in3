@@ -51,9 +51,9 @@ public class JSON {
 
   private HashMap<Integer, Object> map = new HashMap<Integer, Object>();
 
-  private static native int key(String name);
+  protected static native int key(String name);
 
-  JSON() {}
+  public JSON() {}
 
   /**
      * gets the property
@@ -107,6 +107,16 @@ public class JSON {
   public long getLong(String key /** the propertyName */
   ) {
     return asLong(get(key));
+  }
+
+  /**
+     * returns the property as double
+     * 
+     * @return the long value
+     */
+  public double getDouble(String key /** the propertyName */
+  ) {
+    return asDouble(get(key));
   }
 
   /**
@@ -211,6 +221,20 @@ public class JSON {
     return 0;
   }
 
+  public static double asDouble(Object o) {
+    if (o == null)
+      return 0;
+    if (o instanceof Float) return ((Float) o).doubleValue();
+    if (o instanceof Double) return ((Double) o).doubleValue();
+    if (o instanceof String)
+      return (((String) o).length() > 2 && o.toString().charAt(1) == 'x')
+          ? JSON.asBigInteger(o).doubleValue()
+          : Double.parseDouble(o.toString());
+    if (o instanceof Number)
+      return ((Number) o).doubleValue();
+    return 0;
+  }
+
   public static boolean asBoolean(Object o) {
     if (o == null)
       return false;
@@ -266,6 +290,16 @@ public class JSON {
     sb.append("\"").append(key).append("\":").append(toJson(value)).append(",");
   }
 
+  public void addProperty(StringBuilder sb, String key) {
+    Object o = get(key);
+    if (o != null) addPropertyJson(sb, key, JSON.toJson(o));
+  }
+
+  public void addPropertyJson(StringBuilder sb, String key, String json) {
+    if (json != null)
+      sb.append(sb.length() == 1 ? "" : ",").append("\"").append(key).append("\":").append(json);
+  }
+
   @Override
   public int hashCode() {
     final int prime  = 31;
@@ -291,4 +325,34 @@ public class JSON {
       return false;
     return true;
   }
+
+  public <T> Map<String, T> asMap(Converter<Object, T> converter) {
+
+    final HashMap<Integer, T> data = new HashMap<Integer, T>();
+    for (Integer k : map.keySet())
+      data.put(k, converter.apply(map.get(k)));
+    return new HashMap<String, T>() {
+      @Override
+      public T get(Object key) {
+        return data.get(JSON.key((String) key));
+      }
+
+      @Override
+      public boolean containsKey(Object key) {
+        return data.containsKey(JSON.key((String) key));
+      }
+
+      @Override
+      public T put(String key, T value) {
+        return data.put(JSON.key((String) key), value);
+      }
+    };
+  }
+
+  /** parses a String to a json-object. If the json represents 
+   * - a object : JSON is returned
+   * - a Array : a Array is returned
+   * - other types the wrapped primative typed (Boolean, Integer, Long or String) will be returned.
+   */
+  public static native Object parse(String json) throws Exception;
 }

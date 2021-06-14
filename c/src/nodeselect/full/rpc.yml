@@ -1,0 +1,523 @@
+nodelist:
+
+  descr: special Incubed nodelist-handling functions. Most of those are only used internally.
+
+  # config
+  config:
+    autoUpdateList:
+      type: bool
+      optional: true
+      descr: if true the nodelist will be automaticly updated if the lastBlock is newer.
+      example: false
+      default: true
+
+    signatureCount:
+      descr:  number of signatures requested in order to verify the blockhash.
+      type: int
+      optional: true
+      example: 2
+      default: 1
+      cmd: s
+
+    bootWeights:
+      descr: if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+      type: bool
+      optional: true
+      example: true
+      default: true
+      cmd: bw
+
+    useHttp:
+      descr: if true the client will try to use http instead of https.
+      type: bool
+      optional: true
+      example: true
+      default: false
+
+    minDeposit:
+      descr: min stake of the server. Only nodes owning at least this amount will be chosen.
+      type: uint256
+      optional: true
+      example: 10000000
+
+    nodeProps:
+      descr: used to identify the capabilities of the node.
+      type: hex
+      optional: true
+      example: '0xffff'
+
+    requestCount:
+      descr: the number of request send in parallel when getting an answer. More request will make it more expensive, but increase the chances to get a faster answer, since the client will continue once the first verifiable response was received.
+      type: int
+      optional: true
+      example: 3
+      default: 2
+      cmd: 
+        - rc
+
+    rpc:
+      descr: url of one or more direct rpc-endpoints to use. (list can be comma seperated). If this is used, proof will automaticly be turned off.
+      type: string
+      optional: true
+      example: http://loalhost:8545
+
+    nodes:
+      descr: defining the nodelist. collection of JSON objects with chain Id (hex string) as key.
+      optional: true
+      example:
+        contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f'
+        nodeList: 
+          - address: "0x45d45e6ff99e6c34a235d263965910298985fcfe"
+            url: "https://in3-v2.slock.it/mainnet/nd-1"
+            props: "0xFFFF" 
+      type: 
+        contract:
+          descr: address of the registry contract. (This is the data-contract!)
+          optional: true
+          type: address
+
+        whiteListContract:
+          descr: address of the whiteList contract. This cannot be combined with whiteList!
+          type: address
+          optional: true
+
+        whiteList:
+          descr:  manual whitelist.
+          type: address
+          array: true
+          optional: true
+        
+        registryId:
+          descr: identifier of the registry.
+          type: bytes32
+          optional: true
+
+        needsUpdate:
+          descr: if set, the nodeList will be updated before next request.
+          type: bool
+          optional: true
+          
+        avgBlockTime:
+          descr: average block time (seconds) for this chain.
+          type: int
+          optional: true
+          
+        verifiedHashes:
+          descr: if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
+          optional: true
+          array : true
+          type:
+            block:
+              descr: block number
+              type: uint64
+            hash:
+              descr: verified hash corresponding to block number.
+              type: bytes32
+            
+        nodeList:
+          descr: manual nodeList. As Value a array of Node-Definitions is expected.
+          optional: true
+          array: true
+          type:
+            url:
+              descr: URL of the node.
+              type: string
+            address:
+              descr: address of the node
+              type: string
+            props:
+              descr: used to identify the capabilities of the node (defaults to 0xFFFF).
+              type: hex
+          
+  # Verified RPCs
+  in3_nodeList:
+    apiName: nodes
+    descr: fetches and verifies the nodeList from a node
+    params:
+      limit:
+        descr: if the number is defined and >0 this method will return a partial nodeList limited to the given number.
+        type: int
+        optional: true
+      seed:
+        descr: this 32byte hex integer is used to calculate the indexes of the partial nodeList. It is expected to be a random value choosen by the client in order to make the result deterministic.
+        type: bytes32
+        optional: true
+      addresses:
+        descr: a optional array of addresses of signers the nodeList must include.
+        array: true
+        type: address
+        optional: true
+
+    result:
+      typeName: NodeListDefinition
+      descr: the current nodelist
+      type:
+        nodes:
+          typeName: Node
+          array: true
+          descr: a array of node definitions.
+          type:
+            url:
+              descr: the url of the node. Currently only http/https is supported, but in the future this may even support onion-routing or any other protocols.
+              type: string
+            address:
+              descr: the address of the signer
+              type: address
+            index:
+              descr: the index within the nodeList of the contract
+              type: uint64
+            deposit:
+              descr: the stored deposit
+              type: uint256
+            props:
+              descr: the bitset of capabilities as described in the [Node Structure](spec.html#node-structure)
+              type: hex
+            timeout:
+              descr: the time in seconds describing how long the deposit would be locked when trying to unregister a node.
+              type: uint64
+            registerTime:
+              descr: unix timestamp in seconds when the node has registered.
+              type: uint64
+            weight:
+              descr: the weight of a node ( not used yet ) describing the amount of request-points it can handle per second.
+              type: uint64
+            proofHash:
+              descr: | 
+                a hash value containing the above values. 
+                This hash is explicitly stored in the contract, which enables the client to have only one merkle proof 
+                per node instead of verifying each property as its own storage value. 
+                The proof hash is build `keccak256( abi.encodePacked( deposit, timeout, registerTime, props, signer, url ))` 
+              type: bytes32
+        contract:
+          descr: the address of the Incubed-storage-contract. The client may use this information to verify that we are talking about the same contract or throw an exception otherwise.
+          type: address
+        registryId:
+          descr: the registryId (32 bytes)  of the contract, which is there to verify the correct contract.
+          type: bytes32
+        lastBlockNumber:
+          descr: the blockNumber of the last change of the list (usually the last event). 
+          type: uint64
+        totalServer:
+          descr: the total numbers of nodes.
+          type: uint64
+    
+    proof:
+      descr: |
+        if proof is requested, the proof will have the type `accountProof`. In the proof-section only the storage-keys of the `proofHash` will be included.
+        The required storage keys are calcualted :
+
+        - `0x00` - the length of the nodeList or total numbers of nodes.
+        - `0x01` - the registryId
+        - per node : ` 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563 + index * 5 + 4`
+
+        The blockNumber of the proof must be the latest final block (`latest`- minBlockHeight) and always greater or equal to the `lastBlockNumber` 
+
+        #### Partial NodeLists
+
+        if the client requests a partial nodeList and the given limit is smaller then the total amount of nodes, the server needs to pick nodes in a deterministic way. This is done by using the given seed.
+
+        1. add all required addresses (if any) to the list.
+        2. iterate over the indexes until the limit is reached:
+
+            ```ts
+            function createIndexes(total: number, limit: number, seed: Buffer): number[] {
+              const result: number[] = []              // the result as a list of indexes
+              let step = seed.readUIntBE(0, 6)         // first 6 bytes define the step size
+              let pos  = seed.readUIntBE(6, 6) % total // next 6 bytes define the offset
+              while (result.length < limit) {
+                if (result.indexOf(pos) >= 0) {        // if the index is already part of the result
+                  seed = keccak256(seed)               // we create a new seed by hashing the seed.
+                  step = seed.readUIntBE(0, 6)         // and change the step-size
+                } 
+                else
+                  result.push(pos)
+                pos = (pos + step) % total             // use the modulo operator to calculate the next position.
+              }
+              return result
+            }
+            ````
+      type:
+        type:
+          descr: the proofType
+          type: "accountProof"
+        block: 
+          descr: the serialized blockheader of the latest final block
+          type: bytes
+        signatures:
+          descr:  a array of signatures from the signers (if requested) of the above block.
+          array: true
+          type: bytes
+        accounts:
+          descr: a Object with the addresses of the db-contract as key and Proof as value. The Data Structure of the Proof is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof), but it must contain the above described keys.
+          key: accountAdr
+          type:
+            address:
+              descr: the address of the account
+              type: address
+            balance: 
+              descr: current Balance
+              type: uint256
+            codeHash:
+              descr: hash of the contract code
+              type: bytes32
+            nonce:
+              descr: nonce of the account
+              type: uint256
+            storageHash:
+              descr: MerkleRoot of the Storage Trie
+              type: bytes32
+            accountProof:
+              descr: MerkleProof of this account-node
+              array: true
+              type: bytes
+            storageProof:
+              descr: Array of Proofs for all required storage values
+              type:
+                key:
+                  descr: the storage key (or hash)
+                  type: bytes32
+                value:
+                  descr: the storage value
+                  type: bytes32
+                proof:
+                  descr: the merkleProof of the value down to the storageHash as MerkleRoot
+                  array: true
+                  type: bytes
+    example:
+      request:
+        - 2
+        - "0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b"
+        - []
+      response:
+        totalServers: 5
+        contract: "0x64abe24afbba64cae47e3dc3ced0fcab95e4edd5"
+        registryId: "0x423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
+        lastBlockNumber: 8669495
+        nodes: 
+          - url: "https://in3-v2.slock.it/mainnet/nd-3"
+            address: "0x945F75c0408C0026a3CD204d36f5e47745182fd4"
+            index: 2
+            deposit: "10000000000000000"
+            props: 29
+            timeout: 3600
+            registerTime: 1570109570
+            weight: 2000
+            proofHash: "0x27ffb9b7dc2c5f800c13731e7c1e43fb438928dd5d69aaa8159c21fb13180a4c"
+          - url: "https://in3-v2.slock.it/mainnet/nd-5"
+            address: "0xbcdF4E3e90cc7288b578329efd7bcC90655148d2"
+            index: 4
+            deposit: "10000000000000000"
+            props: 29
+            timeout: 3600
+            registerTime: 1570109690
+            weight: 2000
+            proofHash: "0xd0dbb6f1e28a8b90761b973e678cf8ecd6b5b3a9d61fb9797d187be011ee9ec7"
+      in3:
+        proof:
+          type: accountProof
+          block: "0xf9021ca01...."
+          accounts:
+            "0x64abe24afbba64cae47e3dc3ced0fcab95e4edd5":
+              address: "0x64abe24afbba64cae47e3dc3ced0fcab95e4edd5"
+              balance: "0xb1a2bc2ec50000"
+              codeHash: "0x18e64869905158477a607a68e9c0074d78f56a9dd5665a5254f456f89d5be398"
+              nonce: "0x1"
+              storageHash: "0x4386ec93bd665ea07d7ed488e8b495b362a31dc4100cf762b22f4346ee925d1f"
+              accountProof: 
+                - "0xf90211a0e822..."
+                - "0xf90211a0f6d0..."
+                - "0xf90211a04d7b..."
+                - "0xf90211a0e749..."
+                - "0xf90211a059cb..."
+                - "0xf90211a0568f..."
+                - "0xf8d1a0ac2433..."
+                - "0xf86d9d33b981..."
+              storageProof:
+                - key: "0x0"
+                  proof: 
+                    - "0xf90211a0ccb6d2d5786..."
+                    - "0xf871808080808080800..."
+                    - "0xe2a0200decd9548b62a...05"
+                  value: "0x5"
+                - key: "0x1"
+                  proof: 
+                    - "0xf90211a0ccb6d2d5786..."
+                    - "0xf871808080808080800..."
+                    - "0xf843a0200e2d5276120...423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
+                  value: "0x423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
+
+  in3_sign:
+    apiName: signBlockHash
+    descr: |
+      requests a signed blockhash from the node. 
+      In most cases these requests will come from other nodes, because the client simply adds the addresses of the requested signers 
+      and the processising nodes will then aquire the signatures with this method from the other nodes.
+
+      Since each node has a risk of signing a wrong blockhash and getting convicted and losing its deposit, 
+      per default nodes will and should not sign blockHash of the last `minBlockHeight` (default: 6) blocks!
+    params:
+      blocks:
+        descr: array of requested blocks.
+        type:
+          blockNumber:
+            descr: the blockNumber to sign
+            type: uint64
+          hash:
+            descr: the expected hash. This is optional and can be used to check if the expected hash is correct, but as a client you should not rely on it, but only on the hash in the signature.
+            type: bytes32
+            optional: true
+    
+    result:
+      descr: the Array with signatures of all the requires blocks.
+      type: 
+        blockHash:
+          descr: the blockhash which was signed.
+          type: bytes32
+        block:
+          descr: the blocknumber
+          type: uint64
+        r:
+          descr: r-value of the signature
+          type: bytes32
+        s:
+          descr: s-value of the signature
+          type: bytes32
+        v:
+          descr: v-value of the signature
+          type: byte
+        msgHash:
+          descr: the msgHash signed. This Hash is created with `keccak256( abi.encodePacked( _blockhash,  _blockNumber, registryId ))`
+          type: bytes32
+    example:
+      request: 
+        - blockNumber: 8770580
+      response:
+        - blockHash: "0xd8189793f64567992eaadefc51834f3d787b03e9a6850b8b9b8003d8d84a76c8"
+          block: 8770580
+          r: "0x954ed45416e97387a55b2231bff5dd72e822e4a5d60fa43bc9f9e49402019337"
+          s: "0x277163f586585092d146d0d6885095c35c02b360e4125730c52332cf6b99e596"
+          v: 28
+          msgHash: "0x40c23a32947f40a2560fcb633ab7fa4f3a96e33653096b17ec613fbf41f946ef"
+
+  in3_whitelist:
+    descr: Returns whitelisted in3-nodes addresses. The whitelist addressed are accquired from whitelist contract that user can specify in request params.
+    params: 
+      address:
+        descr: address of whitelist contract
+        type: address
+    result:
+      descr: the whitelisted addresses
+      type:
+        nodes:
+          descr: array of whitelisted nodes addresses.
+          type: address
+        lastWhiteList: 
+          descr: the blockNumber of the last change of the in3 white list event.
+          type: uint64
+        contract:
+          descr: whitelist contract address.
+          type: address
+        lastBlockNumber:
+          descr: the blockNumber of the last change of the list (usually the last event). 
+          type: uint64
+        totalServer:
+          descr: the total numbers of whitelist nodes.
+          type: uint64
+         
+    proof:
+      descr: |
+        if proof is requested, the proof will have the type `accountProof`. In the proof-section only the storage-keys of the addresses and the length (`0x0`)  will be included.
+
+        The blockNumber of the proof must be the latest final block (`latest`- minBlockHeight) and always greater or equal to the `lastBlockNumber` 
+
+      type:
+        type:
+          descr: the proofType
+          type: "accountProof"
+        block: 
+          descr: the serialized blockheader of the latest final block
+          type: bytes
+        signatures:
+          descr:  a array of signatures from the signers (if requested) of the above block.
+          type: bytes[]
+        accounts:
+          descr: a Object with the addresses of the db-contract as key and Proof as value. The Data Structure of the Proof is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof), but it must contain the above described keys.
+          key: the account Adress
+          type: 
+            address:
+              descr: the address of the account
+              type: address
+            balance: 
+              descr: current Balance
+              type: uint256
+            codeHash:
+              descr: hash of the contract code
+              type: bytes32
+            nonce:
+              descr: nonce of the account
+              type: uint256
+            storageHash:
+              descr: MerkleRoot of the Storage Trie
+              type: bytes32
+            accountProof:
+              descr: MerkleProof of this account-node
+              array: true
+              type: bytes
+            storageProof:
+              descr: Array of Proofs for all required storage values
+              type:
+                key:
+                  descr: the storage key (or hash)
+                  type: bytes32
+                value:
+                  descr: the storage value
+                  type: bytes32
+                proof:
+                  array: true
+                  descr: the merkleProof of the value down to the storageHash as MerkleRoot
+                  type: bytes
+      
+    example:
+      request:
+        - "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b"
+      response:
+        totalServers: 2
+        contract: "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b"
+        lastBlockNumber: 1546354
+        nodes: 
+          - "0x1fe2e9bf29aa1938859af64c413361227d04059a"
+          - "0x45d45e6ff99e6c34a235d263965910298985fcfe"
+      in3:
+        proof:
+          type: accountProof
+          block: "0xf9021ca01...."
+          accounts:
+            "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b":
+              address: "0x08e97ef0a92EB502a1D7574913E2a6636BeC557b"
+              balance: "0xb1a2bc2ec50000"
+              codeHash: "0x18e64869905158477a607a68e9c0074d78f56a9dd5665a5254f456f89d5be398"
+              nonce: "0x1"
+              storageHash: "0x4386ec93bd665ea07d7ed488e8b495b362a31dc4100cf762b22f4346ee925d1f"
+              accountProof: 
+                - "0xf90211a0e822..."
+                - "0xf90211a0f6d0..."
+                - "0xf90211a04d7b..."
+                - "0xf90211a0e749..."
+                - "0xf90211a059cb..."
+                - "0xf90211a0568f..."
+                - "0xf8d1a0ac2433..."
+                - "0xf86d9d33b981..."
+              storageProof:
+                - key: "0x0"
+                  proof: 
+                    - "0xf90211a0ccb6d2d5786..."
+                    - "0xf871808080808080800..."
+                    - "0xe2a0200decd9548b62a...05"
+                  value: "0x5"
+                - key: "0x1"
+                  proof: 
+                    - "0xf90211a0ccb6d2d5786..."
+                    - "0xf871808080808080800..."
+                    - "0xf843a0200e2d5276120...423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3"
+                  value: "0x6aa7bbfbb1778efa33da1ba032cc3a79b9ef57b428441b4de4f1c38c3f258874"
+

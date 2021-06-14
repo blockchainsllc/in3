@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME     in3_sentry   
+  REGISTER in3_register_sentry
   SOURCES 
     sentry.c
   DEPENDS 

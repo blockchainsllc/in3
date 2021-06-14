@@ -599,7 +599,9 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
 
   if (use_salt == 0) {
     //  calculate the generated address
-    uint8_t*         nonce = evm_get_account(evm, evm->address, true)->nonce;
+    account_t* ac = NULL;
+    TRY(evm_get_account(evm, evm->address, true, &ac))
+    uint8_t*         nonce = ac->nonce;
     bytes_builder_t* bb    = bb_new();
     tmp                    = bytes(evm->address, 20);
     rlp_encode_item(bb, &tmp);
@@ -629,8 +631,9 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
   }
 
   // get nonce before the call
-  account_t* ac         = evm_get_account(evm, evm->address, 0);
-  uint8_t    prev_nonce = ac->nonce[31];
+  account_t* ac = NULL;
+  TRY(evm_get_account(evm, evm->address, 0, &ac))
+  uint8_t prev_nonce = ac->nonce[31];
 
   // now execute the call
   int res = evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
@@ -645,7 +648,8 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
 int op_selfdestruct(evm_t* evm) {
   uint8_t adr[20], l, *p;
   if (evm_stack_pop(evm, adr, 20) < 0) return EVM_ERROR_EMPTY_STACK;
-  account_t* self_account = evm_get_account(evm, evm->address, 1);
+  account_t *self_account = NULL, *tmp;
+  TRY(evm_get_account(evm, evm->address, 1, &self_account))
   // TODO check if this account was selfsdesstructed before
   evm->refund += R_SELFDESTRUCT;
 
@@ -653,11 +657,13 @@ int op_selfdestruct(evm_t* evm) {
   p = self_account->balance;
   optimize_len(p, l);
   if (l && (l > 1 || *p != 0)) {
-    if (evm_get_account(evm, adr, 0) == NULL) {
+    TRY(evm_get_account(evm, adr, 0, &tmp))
+
+    if (tmp == NULL) {
       if ((evm->properties & EVM_PROP_NO_FINALIZE) == 0) subgas(G_NEWACCOUNT);
-      evm_get_account(evm, adr, 1);
+      TRY(evm_get_account(evm, adr, 1, &tmp))
     }
-    if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
+    TRY(transfer_value(evm, evm->address, adr, self_account->balance, 32, 0, false))
   }
   memset(self_account->balance, 0, 32);
   memset(self_account->nonce, 0, 32);
@@ -680,19 +686,19 @@ int op_log(evm_t* evm, uint8_t len) {
 
   if (memlen) TRY(mem_check(evm, memoffset + memlen, true));
 
-  logs_t* log = _malloc(sizeof(logs_t));
-
-  log->next      = evm->logs;
-  evm->logs      = log;
-  log->data.data = _malloc(memlen);
-  log->data.len  = memlen;
-
-  evm_mem_readi(evm, memoffset, log->data.data, memlen);
-  log->topics.data = _malloc(len * 32);
-  log->topics.len  = len * 32;
-
   uint8_t* t = NULL;
   int      l;
+  logs_t*  log    = _malloc(sizeof(logs_t));
+  evm_t*   parent = evm;
+  while (parent->parent) parent = parent->parent;
+  log->next        = parent->logs;
+  evm->logs        = log;
+  log->data.data   = _malloc(memlen);
+  log->data.len    = memlen;
+  log->topics.data = _malloc(len * 32);
+  log->topics.len  = len * 32;
+  memcpy(log->address, evm->address, 20);
+  evm_mem_readi(evm, memoffset, log->data.data, memlen);
 
   for (int i = 0; i < len; i++) {
     if ((l = evm_stack_pop_ref(evm, &t)) < 0) return l;
@@ -707,11 +713,12 @@ int op_sstore(evm_t* evm) {
   if ((l_key = evm_stack_pop_ref(evm, &key)) < 0) return l_key;
   if ((l_val = evm_stack_pop_ref(evm, &value)) < 0) return l_val;
 
-  storage_t* s       = evm_get_storage(evm, evm->account, key, l_key, 0);
-  uint8_t    created = s == NULL, el = l_val;
-  uint8_t    l_current = 0;
+  storage_t* s = NULL;
+  TRY(evm_get_storage(evm, evm->account, key, l_key, 0, &s))
+  uint8_t created = s == NULL, el = l_val;
+  uint8_t l_current = 0;
   if (created)
-    s = evm_get_storage(evm, evm->account, key, l_key, 1);
+    TRY(evm_get_storage(evm, evm->account, key, l_key, 1, &s))
   else {
     created = true;
     for (int i = 0; i < 32; i++) {

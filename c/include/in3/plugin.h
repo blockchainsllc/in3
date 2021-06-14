@@ -281,6 +281,7 @@ typedef struct sign_prepare_ctx {
 typedef enum {
   SIGN_EC_RAW  = 0, /**< sign the data directly */
   SIGN_EC_HASH = 1, /**< hash and sign the data */
+  SIGN_EC_PREFIX = 2, /**< add Ethereum Signed Message-Proefix, hash and sign the data */
 } d_signature_type_t;
 
 /**
@@ -374,9 +375,9 @@ typedef void (*in3_storage_clear)(
  * context used during get config
  */
 typedef struct in3_cache_ctx {
-  in3_req_t* req;     /**< the request context  */
-  char*      key;     /**< the key to fetch */
-  bytes_t*   content; /**< the content to set */
+  in3_req_t*  req;     /**< the request context  */
+  const char* key;     /**< the key to fetch */
+  bytes_t*    content; /**< the content to set */
 } in3_cache_ctx_t;
 
 /**

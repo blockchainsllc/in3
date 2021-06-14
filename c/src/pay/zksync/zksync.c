@@ -137,7 +137,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // check the prefix (zksync_ or zk_ is supported)
   if (strncmp(ctx->method, "zksync_", 7) == 0)
     ctx->method += 7;
-  else if (strncmp(ctx->method, "zk_", 3) == 0)
+  else if (strncmp(ctx->method, "zk_", 3) == 0 && strncmp(ctx->method, "zk_wallet_", 10))
     ctx->method += 3;
   else
     return IN3_EIGNORE;
@@ -162,6 +162,8 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY_RPC("verify", in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
                                                      ? zkcrypto_verify_signatures(d_to_bytes(ctx->params + 1), conf->musig_pub_keys, d_to_bytes(ctx->params + 2))
                                                      : zkcrypto_verify_musig(d_to_bytes(ctx->params + 1), d_to_bytes(ctx->params + 2))))
+  TRY_RPC("tx_data", zksync_tx_data(conf, ctx))
+  TRY_RPC("account_history", zksync_account_history(conf, ctx))
 
   // prepare fallback to send to zksync-server
   str_range_t p            = d_to_json(ctx->params);
@@ -170,7 +172,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   param_string[p.len - 2] = 0;
 
   if (strcmp(ctx->method, "account_info") == 0) {
-    if (*param_string == 0) {
+    if (*param_string == 0 || strcmp(param_string, "null") == 0) {
       TRY(zksync_get_account(conf, ctx->req, NULL))
       param_string = alloca(45);
       set_quoted_address(param_string, conf->account);
@@ -201,6 +203,7 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
     }
     _free(conf->musig_urls);
   }
+  if (conf->rest_api) _free(conf->rest_api);
   if (conf->provider_url) _free(conf->provider_url);
   if (conf->main_contract) _free(conf->main_contract);
   if (conf->account) _free(conf->account);
@@ -242,45 +245,50 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (ctx->token->key != key("zksync")) return IN3_EIGNORE;
   // TODO error-reporting for invalid config
 
-  const char* provider = d_get_string(ctx->token, key("provider_url"));
+  const char* provider = d_get_string(ctx->token, CONFIG_KEY("provider_url"));
   if (provider) {
     if (conf->provider_url) _free(conf->provider_url);
     conf->provider_url = _strdupn(provider, -1);
   }
-  const char* pvm = d_get_string(ctx->token, key("verify_proof_method"));
+  const char* rest_api = d_get_string(ctx->token, CONFIG_KEY("rest_api"));
+  if (rest_api) {
+    if (conf->rest_api) _free(conf->rest_api);
+    conf->rest_api = _strdupn(rest_api, -1);
+  }
+  const char* pvm = d_get_string(ctx->token, CONFIG_KEY("verify_proof_method"));
   if (pvm) {
     if (conf->proof_verify_method) _free(conf->proof_verify_method);
     conf->proof_verify_method = _strdupn(pvm, -1);
   }
-  const char* pcm = d_get_string(ctx->token, key("create_proof_method"));
+  const char* pcm = d_get_string(ctx->token, CONFIG_KEY("create_proof_method"));
   if (pcm) {
     if (conf->proof_create_method) _free(conf->proof_create_method);
     conf->proof_create_method = _strdupn(pcm, -1);
   }
-  bytes_t* account = d_get_bytes(ctx->token, key("account"));
+  bytes_t* account = d_get_bytes(ctx->token, CONFIG_KEY("account"));
   if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
-  bytes_t sync_key = d_to_bytes(d_get(ctx->token, key("sync_key")));
+  bytes_t sync_key = d_to_bytes(d_get(ctx->token, CONFIG_KEY("sync_key")));
   if (sync_key.len) {
     zkcrypto_pk_from_seed(sync_key, conf->sync_key);
     zkcrypto_pk_to_pubkey(conf->sync_key, conf->pub_key);
     zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key_hash_pk);
   }
 
-  bytes_t* main_contract = d_get_bytes(ctx->token, key("main_contract"));
+  bytes_t* main_contract = d_get_bytes(ctx->token, CONFIG_KEY("main_contract"));
   if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
-  d_token_t* st = d_get(ctx->token, key("signer_type"));
+  d_token_t* st = d_get(ctx->token, CONFIG_KEY("signer_type"));
   if (st)
     conf->sign_type = get_sign_type(st);
   else if (conf->sign_type == 0)
     conf->sign_type = ZK_SIGN_PK;
-  conf->version    = (uint32_t) d_intd(d_get(ctx->token, key("version")), conf->version);
-  d_token_t* musig = d_get(ctx->token, key("musig_pub_keys"));
+  conf->version    = (uint32_t) d_intd(d_get(ctx->token, CONFIG_KEY("version")), conf->version);
+  d_token_t* musig = d_get(ctx->token, CONFIG_KEY("musig_pub_keys"));
   if (musig && d_type(musig) == T_BYTES && d_len(musig) % 32 == 0) {
     if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
     conf->musig_pub_keys = bytes(_malloc(d_len(musig)), musig->len);
     memcpy(conf->musig_pub_keys.data, musig->data, musig->len);
   }
-  d_token_t* urls = d_get(ctx->token, key("musig_urls"));
+  d_token_t* urls = d_get(ctx->token, CONFIG_KEY("musig_urls"));
   if (urls) {
     if (conf->musig_urls) {
       for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
@@ -288,29 +296,35 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
       }
       _free(conf->musig_urls);
     }
-    conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
-    for (int i = 0; i < d_len(urls); i++) {
-      char* s = d_get_string_at(urls, i);
-      if (s) conf->musig_urls[i] = _strdupn(s, -1);
+    if (d_type(urls) == T_STRING) {
+      conf->musig_urls    = _calloc(2, sizeof(char*));
+      conf->musig_urls[1] = _strdupn(d_string(urls), -1);
+    }
+    else if (d_type(urls) == T_ARRAY) {
+      conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
+      for (int i = 0; i < d_len(urls); i++) {
+        char* s = d_get_string_at(urls, i);
+        if (s && strlen(s)) conf->musig_urls[i] = _strdupn(s, -1);
+      }
     }
   }
-  d_token_t* create2 = d_get(ctx->token, key("create2"));
+  d_token_t* create2 = d_get(ctx->token, CONFIG_KEY("create2"));
   if (create2) {
     conf->sign_type = ZK_SIGN_CREATE2;
     if (!conf->create2) conf->create2 = _calloc(1, sizeof(zk_create2_t));
-    bytes_t* t = d_get_bytes(create2, key("creator"));
+    bytes_t* t = d_get_bytes(create2, CONFIG_KEY("creator"));
     if (t && t->len == 20) memcpy(conf->create2->creator, t->data, 20);
-    t = d_get_bytes(create2, key("saltarg"));
+    t = d_get_bytes(create2, CONFIG_KEY("saltarg"));
     if (t && t->len == 32) memcpy(conf->create2->salt_arg, t->data, 32);
-    t = d_get_bytes(create2, key("codehash"));
+    t = d_get_bytes(create2, CONFIG_KEY("codehash"));
     if (t && t->len == 32) memcpy(conf->create2->codehash, t->data, 32);
   }
 
-  d_token_t* incentive = d_get(ctx->token, key("incentive"));
+  d_token_t* incentive = d_get(ctx->token, CONFIG_KEY("incentive"));
   if (incentive) {
     if (!conf->incentive) conf->incentive = _calloc(1, sizeof(pay_criteria_t));
     for (d_iterator_t iter = d_iter(incentive); iter.left; d_iter_next(&iter)) {
-      if (iter.token->key == key("nodes")) {
+      if (iter.token->key == CONFIG_KEY("nodes")) {
         conf->incentive->payed_nodes = d_int(iter.token);
         in3_req_t c                  = {0};
         c.client                     = ctx->client;
@@ -320,9 +334,9 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
           return ret;
         }
       }
-      else if (iter.token->key == key("max_price"))
+      else if (iter.token->key == CONFIG_KEY("max_price"))
         conf->incentive->max_price_per_hundred_igas = d_long(iter.token);
-      else if (iter.token->key == key("token")) {
+      else if (iter.token->key == CONFIG_KEY("token")) {
         _free(conf->incentive->token);
         conf->incentive->token = _strdupn(d_string(iter.token), -1);
       }

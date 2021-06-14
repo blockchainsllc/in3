@@ -182,7 +182,7 @@ in3_ret_t filter_add(in3_filter_handler_t* filters, in3_req_t* ctx, in3_filter_t
 
   in3_ret_t  res           = IN3_OK;
   uint64_t   current_block = 0;
-  in3_req_t* block_ctx     = req_find_required(ctx, "eth_blockNumber");
+  in3_req_t* block_ctx     = req_find_required(ctx, "eth_blockNumber", NULL);
   if (!block_ctx)
     return req_add_required(ctx, req_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
   else {
@@ -258,7 +258,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
     return req_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
 
   // fetch the current block number
-  in3_req_t* block_ctx = req_find_required(ctx, "eth_blockNumber");
+  in3_req_t* block_ctx = req_find_required(ctx, "eth_blockNumber", NULL);
   if (!block_ctx)
     return req_add_required(ctx, req_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
   else {
@@ -288,7 +288,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
         return IN3_OK;
       }
 
-      in3_req_t* logs_ctx = req_find_required(ctx, "eth_getLogs");
+      in3_req_t* logs_ctx = req_find_required(ctx, "eth_getLogs", NULL);
       if (!logs_ctx) {
         // create request
         char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);

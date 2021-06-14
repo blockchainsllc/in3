@@ -214,7 +214,7 @@ NONULL static in3_ret_t in3_client_fill_chain_whitelist(in3_nodeselect_def_t* da
 
 NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in3_req_t* parent_ctx) {
   // is there a useable required ctx?
-  in3_req_t* ctx = req_find_required(parent_ctx, "in3_nodeList");
+  in3_req_t* ctx = req_find_required(parent_ctx, "in3_nodeList", NULL);
 
   if (ctx) {
     if (in3_req_state(ctx) == REQ_ERROR || (in3_req_state(ctx) == REQ_SUCCESS && !d_get(ctx->responses[0], K_RESULT))) {
@@ -289,7 +289,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
 #ifdef NODESELECT_DEF_WL
 NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, in3_req_t* parent_ctx) {
   // is there a useable required ctx?
-  in3_req_t* ctx = req_find_required(parent_ctx, "in3_whiteList");
+  in3_req_t* ctx = req_find_required(parent_ctx, "in3_whiteList", NULL);
 
   if (ctx)
     switch (in3_req_state(ctx)) {
@@ -473,7 +473,7 @@ in3_ret_t in3_node_list_get(in3_req_t* ctx, in3_nodeselect_def_t* data, bool upd
   in3_ret_t res;
 
   // do we need to update the nodelist?
-  if (data->nodelist_upd8_params || update || req_find_required(ctx, "in3_nodeList")) {
+  if (data->nodelist_upd8_params || update || req_find_required(ctx, "in3_nodeList", NULL)) {
     // skip update if update has been postponed or there's already one in progress
     if (postpone_update(data) || update_in_progress(ctx))
       goto SKIP_UPDATE;
@@ -487,9 +487,9 @@ SKIP_UPDATE:
 
 #ifdef NODESELECT_DEF_WL
   // do we need to update the whitelist?
-  if (data->whitelist                                                                         // only if we have a whitelist
-      && (data->whitelist->needs_update || update || req_find_required(ctx, "in3_whiteList")) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result
-      && !memiszero(data->whitelist->contract, 20)) {                                         // and we need to have a contract set, zero-contract = manual whitelist, which will not be updated.
+  if (data->whitelist                                                                               // only if we have a whitelist
+      && (data->whitelist->needs_update || update || req_find_required(ctx, "in3_whiteList", NULL)) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result
+      && !memiszero(data->whitelist->contract, 20)) {                                               // and we need to have a contract set, zero-contract = manual whitelist, which will not be updated.
     data->whitelist->needs_update = false;
     // now update the whiteList
     res = update_whitelist(ctx->client, data, ctx);

@@ -36,8 +36,34 @@ class AccountAPI {
     constructor(client) { this.client = client }
 
     add(pk) {
-        return this.client.sendRPC("in3_addRawKey", [toHex(pk)]).then(toChecksumAddress)
+        return toChecksumAddress(this.client.execLocal("in3_addRawKey", [toHex(pk)]))
     }
+
+
+    decryptKeystore(keystore, passphrase) {
+        return toBuffer(this.client.execLocal('in3_decryptKey', [keystore, passphrase]))
+    }
+
+    addKeyStore(keystore, passphrase) {
+        return this.add(this.client.sendRPC('in3_decryptKey', [keystore, passphrase]))
+    }
+
+    ecrecover(msg, sig, sigtype) {
+        return this.client.execLocal('in3_ecrecover', [toHex(msg), toHex(sig), sigtype || 'raw'])
+    }
+
+    signData(msg, account, msgtype) {
+        return this.client.sendRPC('in3_signData', [toHex(msg), toHex(account), msgtype || 'raw'])
+    }
+
+    signRawTx(rawTx, account) {
+        return this.client.sendRPC('in3_signTx', [toHex(rawTx), toHex(account)]).then(toBuffer)
+    }
+
+    prepareTx(tx) {
+        return this.client.sendRPC('in3_prepareTx', [tx]).then(toBuffer)
+    }
+
 }
 class EthAPI {
 
@@ -67,10 +93,17 @@ class EthAPI {
     }
 
     /**
-     * Returns the number of most recent block. ()
+     * converts the tokens into wei
      */
     toWei(val, unit = 'eth') {
         return this.client.execLocal('in3_toWei', [val, unit])
+    }
+
+    /**
+     * converts the Wei in a formatted token string.
+     */
+    fromWei(val, unit = 'eth', digits = -1) {
+        return this.client.execLocal('in3_fromWei', digits == -1 ? [toHex(val), unit] : [toHex(val), unit, digits])
     }
 
     /**
@@ -309,6 +342,14 @@ class EthAPI {
     }
 
     /**
+     * adds a filter for pending transaction (only available for local rpc)
+     * @returns 
+     */
+    newPendingFilter() {
+        return this.send('eth_newPendingFilter')
+    }
+
+    /**
      * Creates a filter in the node, to notify when new pending transactions arrive.
      *
      * To check if the state h, call eth_getFilterChanges.
@@ -342,8 +383,6 @@ class EthAPI {
     getAccounts() {
         return this.send('eth_accounts')
     }
-
-
 
     /**
      * Creates new message call transaction or a contract creation for signed transactions.
@@ -388,7 +427,7 @@ class EthAPI {
         const txHash = await this.send('eth_sendTransaction', tx)
 
 
-        if (args.confirmations === undefined) args.confirmations = 1
+        if (args.confirmations === undefined) args.confirmations = 1 // same as 'eth_sendTransactionAndWait'
 
         // send it
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations, args.timeout || 60) : txHash

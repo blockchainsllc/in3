@@ -34,7 +34,8 @@
 
 add_static_library(
   NAME     eth_nano 
-  
+  REGISTER in3_register_eth_nano
+
   SOURCES 
     eth_nano.c
     rlp.c

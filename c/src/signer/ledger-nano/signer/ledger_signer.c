@@ -86,6 +86,7 @@ in3_ret_t eth_ledger_sign(void* p_data, in3_plugin_act_t action, void* p_ctx) {
         memcpy(hash, sc->message.data, sc->message.len);
         is_hashed = true;
       case SIGN_EC_HASH:
+      case SIGN_EC_PREFIX:
         if (!is_hashed)
           hasher_Raw(HASHER_SHA3K, sc->message.data, sc->message.len, hash);
 

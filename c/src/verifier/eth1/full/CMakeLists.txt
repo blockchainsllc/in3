@@ -35,7 +35,8 @@
 
 add_static_library(
   NAME     eth_full 
-  
+  REGISTER in3_register_eth_full
+
   SOURCES 
   eth_full.c
 

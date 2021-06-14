@@ -38,6 +38,10 @@ target_link_libraries(in3_jni init)
 
 IF (NOT DEFINED ANDROID_ABI)
 
+  set(JAVA_AWT_LIBRARY NotNeeded)
+  set(JAVA_JVM_LIBRARY NotNeeded)
+  set(JAVA_AWT_INCLUDE_PATH NotNeeded)
+
   find_package(Java REQUIRED)
   find_package(JNI REQUIRED)
   include(UseJava)
@@ -83,6 +87,7 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/utils/Account.java
     in3/utils/Crypto.java
     in3/utils/JSON.java
+    in3/utils/Converter.java
     in3/utils/Signature.java
     in3/utils/SignatureType.java
     in3/utils/Signer.java

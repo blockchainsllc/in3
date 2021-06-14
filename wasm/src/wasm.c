@@ -41,6 +41,7 @@
 #include "../../c/src/nodeselect/full/nodelist.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/third-party/crypto/sha2.h"
 #ifdef ETH_FULL
 #include "../../c/src/third-party/tommath/tommath.h"
 #endif
@@ -265,7 +266,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
         sb_add_chars(sb, ",\"wait\":");
         sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
-        sb_add_chars(sb, request->payload);
+        sb_add_chars(sb, (request->payload && strlen(request->payload))?request->payload:"null");
         sb_add_chars(sb, ",\"method\":\"");
         sb_add_chars(sb, request->method);
         sb_add_chars(sb, "\",\"urls\":[");
@@ -394,6 +395,20 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
   return result;
 }
 
+uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
+  uint8_t* result = malloc(32);
+  if (result) {
+    SHA256_CTX c;
+    sha256_Init(&c);
+    sha256_Update(&c, data, len);
+    sha256_Final(&c, result);
+  }
+  else
+    in3_set_error("malloc failed");
+
+  return result;
+}
+
 char* EMSCRIPTEN_KEEPALIVE to_checksum_address(address_t adr, int chain_id) {
   char* result = malloc(43);
   if (!result) return err_string("malloc failed");
@@ -496,11 +511,32 @@ uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   return dst;
 }
 
+/** private key to address */
+uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
+  uint8_t* dst = malloc(64);
+  uint8_t  public_key[65], sdata[32];
+  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
+  memcpy(dst, public_key + 1, 64);
+  return dst;
+}
+
 /** signs the given data */
 uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
   uint8_t* dst   = malloc(65);
   int      error = -1;
   switch (type) {
+    case SIGN_EC_PREFIX: {
+      bytes32_t hash;
+      struct SHA3_CTX kctx;
+      sha3_256_Init(&kctx);
+      const char* PREFIX = "\x19" "Ethereum Signed Message:\n";
+      sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
+      sha3_Update(&kctx, hash, sprintf((char*)hash,"%d", len)  );
+      if (len) sha3_Update(&kctx, data, len);
+      keccak_Final(&kctx, hash);
+      error = ecdsa_sign_digest(&secp256k1, pk, hash, dst, dst + 64, NULL);
+      break;
+    }
     case SIGN_EC_RAW:
       error = ecdsa_sign_digest(&secp256k1, pk, data, dst, dst + 64, NULL);
       break;

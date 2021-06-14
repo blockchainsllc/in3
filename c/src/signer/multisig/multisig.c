@@ -174,7 +174,7 @@ in3_ret_t get_tx_hash(in3_req_t* ctx, multisig_t* ms, tx_data_t* tx_data, bytes3
   long_to_bytes(nonce, raw + 4 + 9 * 32 + 24);
 
   TRY(call(ctx, ms->address, bytes(raw, size), &rpc_result))
-  if (rpc_result->len != 32) return req_set_error(ctx, "invalid getTransactionHash result!", IN3_EINVAL);
+  if (!rpc_result || rpc_result->len != 32) return req_set_error(ctx, "invalid getTransactionHash result!", IN3_EINVAL);
   memcpy(result, rpc_result->data, 32);
   return IN3_OK;
 }
@@ -445,6 +445,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       else
         memcpy(hash, ctx->message.data, 32);
       break;
+    case SIGN_EC_PREFIX:
     case SIGN_EC_HASH: {
       //do we know the domain_seperator?
       if (memiszero(ms->domain_sep, 32)) {
@@ -459,7 +460,18 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       // calculate the message hash according to the GnosisSafe getMessageHash - function.
       uint8_t tmp[66];
       memcpy(tmp, "\x60\xb3\xcb\xf8\xb4\xa2\x23\xd6\x8d\x64\x1b\x3b\x6d\xdf\x9a\x29\x8e\x7f\x33\x71\x0c\xf3\xd3\xa9\xd1\x14\x6b\x5a\x61\x50\xfb\xca", 32); // SAFE_MSG_TYPEHASH
-      keccak(ctx->message, hash);
+
+      struct SHA3_CTX kctx;
+      sha3_256_Init(&kctx);
+      if (ctx->type == SIGN_EC_PREFIX) {
+        const char* PREFIX = "\x19"
+                             "Ethereum Signed Message:\n";
+        sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
+        sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", (int) ctx->message.len));
+      }
+      if (ctx->message.len) sha3_Update(&kctx, ctx->message.data, ctx->message.len);
+      keccak_Final(&kctx, hash);
+
       if (ms->type == MS_IAMO_SAFE)
         keccak(bytes(hash, 32), tmp + 32);
       else

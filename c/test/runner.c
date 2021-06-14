@@ -35,6 +35,7 @@
 #ifndef TEST
 #define TEST
 #endif
+#include "../src/api/core/core_api.h"
 #include "../src/api/eth1/eth_api.h"
 #include "../src/core/client/client.h"
 #include "../src/core/client/plugin.h"
@@ -458,6 +459,7 @@ int main(int argc, char* argv[]) {
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_ipfs);
   in3_register_default(in3_register_btc);
+  in3_register_default(in3_register_core_api);
   in3_register_default(in3_register_nodeselect_def);
 
   int    i = 0, size = 1;

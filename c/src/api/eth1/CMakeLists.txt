@@ -45,6 +45,7 @@ endif()
 
 add_static_library(
   NAME     eth_api 
+  REGISTER in3_register_eth_api
   
   SOURCES 
     eth_api.c 

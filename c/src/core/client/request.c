@@ -55,6 +55,16 @@ static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
   return IN3_OK;
 }
 
+in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
+  char*      data = _strdupn(req_data, -1);
+  in3_req_t* r    = req_new(client, data);
+  if (r)
+    in3_cache_add_ptr(&r->cache, data);
+  else
+    _free(data);
+  return r;
+}
+
 in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
@@ -69,6 +79,7 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   if (req_data != NULL) {
     ctx->request_context = parse_json(req_data);
     if (!ctx->request_context) {
+      in3_log_error("Invalid json-request: %s\n", req_data);
       req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
       return ctx;
     }
@@ -107,6 +118,13 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
 
 char* req_get_error_data(in3_req_t* ctx) {
   return ctx ? ctx->error : "No request context";
+}
+
+char* req_get_result_json(in3_req_t* ctx, int index) {
+  assert_in3_req(ctx);
+  if (!ctx->responses) return NULL;
+  d_token_t* res = d_get(ctx->responses[index], K_RESULT);
+  return res ? d_create_json(ctx->response_context, res) : NULL;
 }
 
 char* req_get_response_data(in3_req_t* ctx) {
@@ -312,7 +330,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   return in3_rpc_handle_with_string(hctx, s);
 }
 
-in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result) {
+in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
   bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
   if (params == NULL) params = "";
   char* req = NULL;
@@ -343,6 +361,8 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
     if (strncmp(params, p.data + 1, p.len - 2) == 0) break;
   }
 
+  if (ctx && child) *child = ctx;
+
   if (ctx)
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
@@ -369,6 +389,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   }
   ctx = req_new(parent->client, req);
   if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
+  if (child) *child = ctx;
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   in3_ret_t ret = req_add_required(parent, ctx);
@@ -392,6 +413,8 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
     return IN3_OK;
   }
 
+  in3_log_debug("requesting signature type=%d from account %x\n", type, from.len > 2 ? bytes_to_int(from.data, 4) : 0);
+
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
     in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
@@ -404,10 +427,11 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
     else if (r != IN3_EIGNORE && r != IN3_OK)
       return r;
   }
+  in3_log_debug("nobody picked up the signature, sending req now \n");
 
   // get the signature from required
-  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : "sign_ec_raw";
-  in3_req_t*  c      = req_find_required(ctx, method);
+  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : (type == SIGN_EC_PREFIX ? "sign_ec_prefix" : "sign_ec_raw");
+  in3_req_t*  c      = req_find_required(ctx, method, NULL);
   if (c)
     switch (in3_req_state(c)) {
       case REQ_ERROR:

@@ -183,6 +183,7 @@ char*             eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);          
 void              eth_log_free(eth_log_t* log);                                                            /**< Frees a eth_log_t object */
 void              eth_tx_receipt_free(eth_tx_receipt_t* txr);                                              /**< Frees a eth_tx_receipt_t object */
 int               string_val_to_bytes(char* val, char* unit, bytes32_t target);                            /**< reades the string as hex or decimal and converts it into bytes. the value may also contains a suffix as unit like '1.5eth` which will convert it into wei. the target-pointer must be at least as big as the strlen. The length of the bytes will be returned or a negative value in case of an error.*/
+char*             bytes_to_string_val(bytes_t wei, int exp, int digits);                                   /**< converts the bytes value to a decimal string */
 in3_ret_t         in3_register_eth_api(in3_t* c);                                                          /**< this function should only be called once and will register the eth-API verifier.*/
 #ifdef __cplusplus
 }

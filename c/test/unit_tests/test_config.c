@@ -40,6 +40,7 @@
 #endif
 
 #include "../../src/api/eth1/eth_api.h"
+#include "../../src/api/core/core_api.h"
 #include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/debug.h"
@@ -54,6 +55,7 @@
 
 void test_get_config() {
   in3_register_default(in3_register_eth_nano);
+  in3_register_default(in3_register_core_api);
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_nodeselect_def);
   in3_t* c = in3_for_chain(0);

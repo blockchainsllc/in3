@@ -100,7 +100,8 @@ endif ()
 # add lib
 add_static_library(
   NAME     transport_curl 
-  
+  REGISTER in3_register_curl
+
   SOURCES 
     in3_curl.c
 

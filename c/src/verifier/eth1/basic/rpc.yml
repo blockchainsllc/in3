@@ -1,0 +1,1138 @@
+types:
+
+  transaction:
+    to:
+      descr: receipient of the transaction.
+      type: address
+      optional: true
+    from:
+      descr: sender of the address (if not sepcified, the first signer will be the sender)
+      type: address
+      optional: true
+    value:
+      descr: value in wei to send
+      type: uint256
+      optional: true
+    gas:
+      descr: the gas to be send along
+      type: uint64
+      optional: true
+      default: 21000
+    gasPrice:
+      descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+      type: uint64
+      optional: true
+    nonce:
+      descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+      type: uint64
+      optional: true
+    data:
+      descr: the data-section of the transaction
+      type: bytes
+      optional: true
+
+
+  blockheader:
+    number:
+      descr: the block number. `null` when its pending block.
+      type: uint64
+    hash:
+      descr: hash of the block. `null` when its pending block.
+      type: bytes32
+    parentHash:
+      descr: hash of the parent block.
+      type: bytes32
+    nonce:
+      descr: hash of the generated proof-of-work. `null` when its pending block.
+      type: uint256
+      optional: true
+    sha3Uncles:
+      descr: SHA3 of the uncles Merkle root in the block.
+      type: bytes32
+    logsBloom:
+      descr: the bloom filter for the logs of the block. `null` when its pending block.
+      type: bytes256
+    transactionsRoot:
+      descr: the root of the transaction trie of the block.
+      type: bytes32
+    stateRoot:
+      descr: the root of the final state trie of the block.
+      type: bytes32
+    receiptsRoot:
+      descr: the root of the receipts trie of the block.
+      type: bytes32
+    miner:
+      descr: the address of the beneficiary to whom the mining rewards were given.
+      type: address
+    difficulty:
+      descr: integer of the difficulty for this block.
+      type: uint256
+    totalDifficulty:
+      descr: integer of the total difficulty of the chain until this block.
+      type: uint256
+    extraData:
+      descr: the "extra data" field of this block.
+      type: bytes
+    size:
+      descr: integer the size of this block in bytes.
+      type: uint64
+    gasLimit:
+      descr: the maximum gas allowed in this block.
+      type: uint64
+    gasUsed:
+      descr: the total used gas by all transactions in this block.
+      type: uint64
+    timestamp:
+      descr: the unix timestamp for when the block was collated.
+      type: uint64
+    uncles:
+      descr: Array of uncle hashes.
+      array: true
+      type: bytes32
+
+  blockdataWithTxHashes:
+    _extends: blockheader
+    transactions:
+      descr: Array of transaction hashes
+      array: true
+      type: bytes32
+
+  blockdata:
+    _extends: blockheader
+    transactions:
+      descr: Array of transaction objects
+      array: true
+      type: transactiondata
+
+  transactiondata:
+    to:
+      descr: receipient of the transaction.
+      type: address
+    from:
+      descr: sender or signer of the transaction
+      type: address
+    value:
+      descr: value in wei to send
+      type: uint256
+    gas:
+      descr: the gas to be send along
+      type: uint64
+    gasPrice:
+      descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
+      type: uint64
+    nonce:
+      descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
+      type: uint64
+    blockHash:
+      descr: blockHash of the block holding this transaction or `null` if still pending.
+      type: bytes32
+    blockNumber:
+      descr: blockNumber of the block holding this transaction or `null` if still pending.
+      type: uint64
+    hash:
+      descr: transactionHash
+      type: bytes32
+    input:
+      descr: data of the transaaction
+      type: bytes
+    transactionIndex:
+      descr: index of the transaaction in the block
+      type: uint64
+    v:
+      descr: recovery-byte of the signature
+      type: byte
+    r:
+      descr: x-value of the EC-Point of the signature
+      type: bytes32
+    s:
+      descr: y-value of the EC-Point of the signature
+      type: bytes32
+
+eth:
+
+  eth_blockNumber:
+    descr: |
+      returns the number of the most recent block.
+
+      See [eth_blockNumber](https://eth.wiki/json-rpc/API#eth_blockNumber) for spec.
+
+      No proof returned, since there is none, but the client should verify the result by comparing it to the current blocks returned from others. 
+      With the `blockTime` from the chainspec, including a tolerance, the current blocknumber may be checked if in the proposed range.
+    result:
+      descr: the highest known blocknumber
+      type: uint64
+    example:
+      response: "0xb8a2a5"
+
+  eth_getBlockByNumber:
+    descr: |
+      returns information about a block by block number.
+
+      See [eth_getBlockByNumber](https://eth.wiki/json-rpc/API#eth_getBlockByNumber) for spec.
+    params:
+      blockNumber:
+        descr: the blockNumber or one of `latest`, `earliest`or `pending`
+        type: uint64
+        internalDefault : latest
+        optional: true
+      fullTx:
+        descr: if true the full transactions are contained in the result.
+        default: false
+        type: bool
+    result:
+      optional: true
+      options:
+        - params:
+            fullTx: false
+          name: getBlock
+          descr: returns the given Block by number with transactionHashes. if no blocknumber is specified the latest block will be returned.
+          result:
+            type: blockdataWithTxHashes
+        - params:
+            fullTx: true
+          name: getBlockWithTx
+          descr: returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
+          result:
+            type: blockdata
+      descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
+      type: blockdata
+
+
+    example:
+      request:
+        - latest
+        - false
+      response:
+        author: '0x0000000000000000000000000000000000000000'
+        difficulty: '0x2'
+        extraData: '0x696e667572612d696f0000000000000...31570f1e500'
+        gasLimit: '0x7a1200'
+        gasUsed: '0x20e145'
+        hash: '0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585'
+        logsBloom: '0x000008000000000000...00400100000000080'
+        miner: '0x0000000000000000000000000000000000000000'
+        number: '0x449956'
+        parentHash: '0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694'
+        receiptsRoot: '0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff'
+        sealFields:
+        - '0xa00000000000000000000000000000000000000000000000000000000000000000'
+        - '0x880000000000000000'
+        sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347'
+        size: '0x74b'
+        stateRoot: '0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910'
+        timestamp: '0x605aec86'
+        totalDifficulty: '0x6564de'
+        transactions:
+        - '0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58'
+        - '0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641'
+        - '0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75'
+        - '0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d'
+        - '0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5'
+        - '0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8'
+        transactionsRoot: '0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc'
+        uncles: []
+      in3:
+        proof:
+          type: blockProof
+          signatures: []
+          transactions:
+          - '0xf8ac830331f78449504f80830186a094f74a...8a83ce8dc'
+          - '0xf8ac830331f88449504f80830186a094f74a...a81c2f1fee77'
+          - '0xf8a91e843b9aca008315a92594f0277caffea...c30d64dd139'
+          - '0xf8c601843b9aca008305573094309906d7b701...62f5e7a2319a'
+          - '0xf8c680843b9aca008305573094309906d7b701...78289116eac194e'
+          - '0xf9014b82020a843b9aca0083010f6894786f8d72...b649'
+    proof:
+      descr: |
+        The `eth_getBlockBy...` methods return the Block-Data. 
+        In this case, all we need is somebody verifying the blockhash, which is done by requiring somebody who stored a deposit and would otherwise lose it, to sign this blockhash.
+
+        The verification is then done by simply creating the blockhash and comparing this to the signed one.
+
+        The blockhash is calculated by blockdata with [rlp](https://github.com/ethereum/wiki/wiki/RLP) and hashing it:
+
+
+        ```js
+        blockHeader = rlp.encode([
+          bytes32( parentHash ),
+          bytes32( sha3Uncles ),
+          address( miner || coinbase ),
+          bytes32( stateRoot ),
+          bytes32( transactionsRoot ),
+          bytes32( receiptsRoot || receiptRoot ),
+          bytes256( logsBloom ),
+          uint( difficulty ),
+          uint( number ),
+          uint( gasLimit ),
+          uint( gasUsed ),
+          uint( timestamp ),
+          bytes( extraData ),
+
+          ... sealFields
+            ? sealFields.map( rlp.decode )
+            : [
+              bytes32( b.mixHash ),
+              bytes8( b.nonce )
+            ]
+        ])
+        ```
+
+        For POA-chains, the blockheader will use the `sealFields` (instead of mixHash and nonce) which are already RLP-encoded and should be added as raw data when using rlp.encode.
+
+        ```js
+        if (keccak256(blockHeader) !== singedBlockHash) 
+          throw new Error('Invalid Block')
+        ```
+
+        In case of the `eth_getBlockTransactionCountBy...`, the proof contains the full blockHeader already serilalized plus all transactionHashes. 
+        This is needed in order to verify them in a merkle tree and compare them with the `transactionRoot`.
+
+
+        Requests requiring proof for blocks will return a proof of type `blockProof`. Depending on the request, the proof will contain the following properties:
+
+        - `type` : constant : `blockProof`
+        - `signatures` : a array of signatures from the signers (if requested) of the requested block.
+        - `transactions`: a array of raw transactions of the block. This is only needed the last parameter of the request (includeTransactions) is `false`,  In this case the result only contains the transactionHashes, but in order to verify we need to be able to build the complete merkle-trie, where the raw transactions are needed. If the complete transactions are included the raw transactions can be build from those values.
+        - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
+        - `uncles`: only if `fullProof` is requested we add  all blockheaders of the uncles to the proof in order to verify the uncleRoot.
+
+
+  eth_getBlockByHash:
+    descr: |
+      Returns information about a block by hash.
+
+      See [eth_getBlockByHash](https://eth.wiki/json-rpc/API#eth_getBlockByHash) for spec.
+
+    params:
+      blockHash:
+        descr: the blockHash of the block
+        type: bytes32
+      fullTx:
+        descr: if true the full transactions are contained in the result.
+        type: bool
+    result:
+      optional: true
+      options:
+        - params:
+            fullTx: false
+          name: getBlockByHash
+          descr: returns the given Block by hash with transactionHashes
+          result:
+            type: blockdataWithTxHashes
+        - params:
+            fullTx: true
+          name: getBlockByHashWithTx
+          descr: returns the given Block by hash with full transaction data
+          result:
+            type: blockdata
+      descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
+      type: blockdata
+
+    proof:
+      alias: eth_getBlockByNumber
+    example:
+      request:
+        - '0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585'
+        - false
+      response:
+        author: '0x0000000000000000000000000000000000000000'
+        difficulty: '0x2'
+        extraData: '0x696e667572612d696f0000000000000...31570f1e500'
+        gasLimit: '0x7a1200'
+        gasUsed: '0x20e145'
+        hash: '0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585'
+        logsBloom: '0x000008000000000000...00400100000000080'
+        miner: '0x0000000000000000000000000000000000000000'
+        number: '0x449956'
+        parentHash: '0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694'
+        receiptsRoot: '0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff'
+        sealFields:
+        - '0xa00000000000000000000000000000000000000000000000000000000000000000'
+        - '0x880000000000000000'
+        sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347'
+        size: '0x74b'
+        stateRoot: '0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910'
+        timestamp: '0x605aec86'
+        totalDifficulty: '0x6564de'
+        transactions:
+        - '0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58'
+        - '0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641'
+        - '0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75'
+        - '0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d'
+        - '0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5'
+        - '0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8'
+        transactionsRoot: '0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc'
+        uncles: []
+      in3:
+        proof:
+          type: blockProof
+          signatures: []
+          transactions:
+          - '0xf8ac830331f78449504f80830186a094f74a...8a83ce8dc'
+          - '0xf8ac830331f88449504f80830186a094f74a...a81c2f1fee77'
+          - '0xf8a91e843b9aca008315a92594f0277caffea...c30d64dd139'
+          - '0xf8c601843b9aca008305573094309906d7b701...62f5e7a2319a'
+          - '0xf8c680843b9aca008305573094309906d7b701...78289116eac194e'
+          - '0xf9014b82020a843b9aca0083010f6894786f8d72...b649'      
+      
+
+  eth_getBlockTransactionCountByHash:
+    descr: returns the number of transactions. For Spec, see [eth_getBlockTransactionCountByHash](https://eth.wiki/json-rpc/API#eth_getBlockTransactionCountByHash).
+    params:
+      blockHash:
+        descr: the blockHash of the block
+        type: bytes32
+    proof:
+      alias: eth_getUncleCountByBlockNumber
+    result:
+      optional: true
+      descr: the number of transactions in the block
+      type: int
+
+  eth_getBlockTransactionCountByNumber:
+    descr: returns the number of transactions. For Spec, see [eth_getBlockTransactionCountByNumber](https://eth.wiki/json-rpc/API#eth_getBlockTransactionCountByNumber).
+    params:
+      blockNumber:
+        descr: the blockNumber of the block
+        type: uint64
+    proof:
+      alias: eth_getUncleCountByBlockNumber
+    result:
+      optional: true
+      descr: the number of transactions in the block
+      type: int
+
+  eth_getUncleCountByBlockHash:
+    descr: returns the number of uncles. For Spec, see [eth_getUncleCountByBlockHash](https://eth.wiki/json-rpc/API#eth_getUncleCountByBlockHash).
+    params:
+      blockHash:
+        descr: the blockHash of the block
+        type: bytes32
+    proof:
+      alias: eth_getUncleCountByBlockNumber
+    result:
+      optional: true
+      descr: the number of uncles
+      type: int
+
+  eth_getUncleCountByBlockNumber:
+    descr: returns the number of uncles. For Spec, see [eth_getUncleCountByBlockNumber](https://eth.wiki/json-rpc/API#eth_getUncleCountByBlockNumber).
+    params:
+      blockNumber:
+        descr: the blockNumber of the block
+        type: uint64
+    proof:
+      descr: |
+        Requests requiring proof for blocks will return a proof of type `blockProof`.  Depending on the request, the proof will contain the following properties:
+
+        - `type` : constant : `blockProof`
+        - `signatures` : a array of signatures from the signers (if requested) of the requested block.
+        - `block` : the serialized blockheader
+        - `transactions`: a array of raw transactions of the block. This is only needed if the number of transactions are requested.
+        - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
+        - `uncles`: a array of blockheaders of the uncles of the block. This is only needed if the number of uncles are requested.
+    result:
+      optional: true
+      descr: the number of uncles
+      type: int
+
+  eth_getTransactionByBlockHashAndIndex:
+    descr: |
+      returns the transaction data.
+
+      See JSON-RPC-Spec for [eth_getTransactionByBlockHashAndIndex](https://eth.wiki/json-rpc/API#eth_getTransactionByBlockHashAndIndex) for more details.
+    params:
+      blockHash:
+        descr: the blockhash containing the transaction.
+        type: bytes32
+      index:
+        descr: the transactionIndex
+        type: int
+    result:
+      optional: true
+      descr: the transactiondata or `null` if it does not exist
+      type: transactiondata
+    proof:
+      alias: eth_getTransactionByHash
+
+    example:
+      request:
+        - '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
+        - '0xd5'
+      response:
+        blockHash: '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
+        blockNumber: '0xb8a4a9'
+        from: '0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98'
+        gas: '0xac6b'
+        gasPrice: '0x1bf08eb000'
+        hash: '0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea'
+        input: '0x095ea7b300000000000000000000000...a7640000'
+        nonce: '0xa'
+        to: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce'
+        transactionIndex: '0xd5'
+        value: '0x0'
+        type: '0x0'
+        v: '0x25'
+        r: '0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4'
+        s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
+      in3:
+        proof:
+          type: transactionProof
+          block: '0xf90212a033a7afd1b9...fa16cf2'
+          merkleProof:
+          - '0xf90131a0...91604f2f58080808080808080'
+          - '0xf851a06f...0808080808080808080'
+          - '0xf8d18080...8a2ac871c5808080'
+          - '0xf90111a05...0808080808080808080'
+          - '0xf8ae20b8...000a8ff46d2a2dd78'
+          txIndex: 213
+          signatures: []
+ 
+
+  eth_getTransactionByBlockNumberAndIndex:
+    descr: |
+      returns the transaction data.
+
+      See JSON-RPC-Spec for [eth_getTransactionByBlockNumberAndIndex](https://eth.wiki/json-rpc/API#eth_getTransactionByBlockNumberAndIndex) for more details.
+    params:
+      blockNumber:
+        descr: the block number containing the transaction.
+        type: uint64
+      index:
+        descr: the transactionIndex
+        type: int
+    result:
+      optional: true
+      descr: the transactiondata or `null` if it does not exist
+      type: transactiondata
+    proof:
+      alias: eth_getTransactionByHash
+
+    example:
+      request:
+        - '0xb8a4a9'
+        - '0xd5'
+      response:
+        blockHash: '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
+        blockNumber: '0xb8a4a9'
+        from: '0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98'
+        gas: '0xac6b'
+        gasPrice: '0x1bf08eb000'
+        hash: '0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea'
+        input: '0x095ea7b300000000000000000000000...a7640000'
+        nonce: '0xa'
+        to: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce'
+        transactionIndex: '0xd5'
+        value: '0x0'
+        type: '0x0'
+        v: '0x25'
+        r: '0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4'
+        s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
+      in3:
+        proof:
+          type: transactionProof
+          block: '0xf90212a033a7afd1b9...fa16cf2'
+          merkleProof:
+          - '0xf90131a0...91604f2f58080808080808080'
+          - '0xf851a06f...0808080808080808080'
+          - '0xf8d18080...8a2ac871c5808080'
+          - '0xf90111a05...0808080808080808080'
+          - '0xf8ae20b8...000a8ff46d2a2dd78'
+          txIndex: 213
+          signatures: []
+ 
+
+  eth_getTransactionByHash:
+    descr: |
+      returns the transaction data.
+
+      See JSON-RPC-Spec for [eth_getTransactionByHash](https://eth.wiki/json-rpc/API#eth_getTransactionByHash) for more details.
+    params:
+      txHash:
+        descr: the transactionHash of the transaction.
+        type: bytes32
+    result:
+      optional: true   
+      descr: the transactiondata or `null` if it does not exist
+      type: transactiondata
+ 
+
+    example:
+      request:
+        - '0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b'
+      response:
+        blockHash: '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
+        blockNumber: '0xb8a4a9'
+        from: '0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98'
+        gas: '0xac6b'
+        gasPrice: '0x1bf08eb000'
+        hash: '0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea'
+        input: '0x095ea7b300000000000000000000000...a7640000'
+        nonce: '0xa'
+        to: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce'
+        transactionIndex: '0xd5'
+        value: '0x0'
+        type: '0x0'
+        v: '0x25'
+        r: '0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4'
+        s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
+      in3:
+        proof:
+          type: transactionProof
+          block: '0xf90212a033a7afd1b9...fa16cf2'
+          merkleProof:
+          - '0xf90131a0...91604f2f58080808080808080'
+          - '0xf851a06f...0808080808080808080'
+          - '0xf8d18080...8a2ac871c5808080'
+          - '0xf90111a05...0808080808080808080'
+          - '0xf8ae20b8...000a8ff46d2a2dd78'
+          txIndex: 213
+          signatures: []
+      
+
+    proof:
+      descr: |
+        ```eval_rst
+        .. graphviz::
+
+            digraph minimal_nonplanar_graphs {
+            
+            fontname="Helvetica"
+              subgraph all {
+
+                node [ fontsize = "12", style="", color=black fontname="Helvetica", shape=record ]
+
+                subgraph block_header {
+                    label="blockheader" style="" color=black
+
+                    bheader[ label="parentHash|...|<tr>transactionRoot|receiptRoot|stateRoot"]
+                    troot:a -> bheader:tr 
+                }
+
+                subgraph cluster_client_registry {
+                    label="Transaction Trie"  color=lightblue  style=filled
+
+                    troot[label="|<a>0x123456|||||"]  
+                    ta[label="|0x123456||<a>0xabcdef|||"]  
+                    tb[label="|0x98765||<a>0xfcab34|||"]  
+                    tval[label="transaction data"]  
+
+                    ta:a -> troot:a
+                    tb:a -> troot:a 
+                    tval:a -> ta:a
+                }
+
+
+              }
+            }
+
+        ```
+
+        In order to prove the transaction data, each transaction of the containing block must be serialized
+
+        ```js
+        transaction = rlp.encode([
+          uint( tx.nonce ),
+          uint( tx.gasPrice ),
+          uint( tx.gas || tx.gasLimit ),
+          address( tx.to ),
+          uint( tx.value ),
+          bytes( tx.input || tx.data ),
+          uint( tx.v ),
+          uint( tx.r ),
+          uint( tx.s )
+        ])
+        ``` 
+
+        and stored in a merkle tree with `rlp.encode(transactionIndex)` as key or path, since the blockheader only contains the `transactionRoot`, which is the root-hash of the resulting merkle tree. A merkle-proof with the transactionIndex of the target transaction will then be created from this tree.
+
+        If the request requires proof (`verification`: `proof`) the node will provide an Transaction Proof as part of the in3-section of the response. 
+        This proof section contains the following properties:
+
+        - `type` : constant : `transactionProof`
+        - `block` : the serialized blockheader of the requested transaction.
+        - `signatures` : a array of signatures from the signers (if requested) of the above block.
+        - `txIndex` : The TransactionIndex as used in the MerkleProof ( not needed if the methode was `eth_getTransactionByBlock...`, since already given)
+        - `merkleProof`: the serialized nodes of the Transaction trie starting with the root node.
+        - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
+
+        While there is no proof for a non existing transaction, if the request was a  `eth_getTransactionByBlock...` the node must deliver a partial merkle-proof to verify that this node does not exist.
+
+
+
+  eth_getLogs:
+    descr: searches for events matching the given criteria. See [eth_getLogs](https://eth.wiki/json-rpc/API#eth_getLogs) for the spec.
+    proof:
+      descr: |
+        Since logs or events are based on the TransactionReceipts, the only way to prove them is by proving the TransactionReceipt each event belongs to.
+
+        That's why this proof needs to provide:
+        - all blockheaders where these events occured
+        - all TransactionReceipts plus their MerkleProof of the logs
+        - all MerkleProofs for the transactions in order to prove the transactionIndex
+
+        The proof data structure will look like this:
+
+        ```ts
+          Proof {
+            type: 'logProof',
+            logProof: {
+              [blockNr: string]: {  // the blockNumber in hex as key
+                block : string  // serialized blockheader
+                receipts: {
+                  [txHash: string]: {  // the transactionHash as key
+                    txIndex: number // transactionIndex within the block
+                    txProof: string[] // the merkle Proof-Array for the transaction
+                    proof: string[] // the merkle Proof-Array for the receipts
+                  }
+                }
+              }
+            }
+          }
+        ```
+
+
+        In order to create the proof, we group all events into their blocks and transactions, so we only need to provide the blockheader once per block. 
+        The merkle-proofs for receipts are created as described in the [Receipt Proof](#eth-gettransactionreceipt).
+
+
+        If the request requires proof (`verification`: `proof`) the node will provide an Transaction Proof as part of the in3-section of the response. 
+      type:
+        type:
+          descr: proofType, which is `logProof`
+          type: string
+        logProof:
+          descr: The proof for all the receipts. This structure contains an object with the blockNumbers as keys. Each block contains the blockheader and the receipt proofs.
+          type:
+            block:
+              descr: serialized blockheader
+              type: bytes
+            receipts:
+              descr: array of proofs for the transayctionreceipts within the block
+              type:
+                txIndex:
+                  descr: transactionIndex within the block
+                  type: int
+                txProof:
+                  descr: the merkle Proof-Array for the transaction
+                  type: bytes[]
+                proof:
+                  descr: the merkle Proof-Array for the receipt
+                  type: bytes[]
+        signatures:
+          descr: the array of signatures for all used blocks in the result.
+          type: signature[]
+        finalityBlocks:
+          descr: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
+          type: bytes[]
+    params:
+      filter:
+        descr: The filter criteria for the events.
+        type:
+          fromBlock:
+            descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
+            type: uint64
+            optional: true
+            default: latest
+          toBlock:
+            descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
+            type: uint64
+            optional: true
+            default: latest
+          address:
+            descr: Contract address or a list of addresses from which logs should originate.
+            type: address
+            optional: true
+          topics:
+            descr: Array of 32 Bytes DATA topics. Topics are order-dependent. Each topic can also be an array of DATA with “or” options.
+            type: bytes32
+            nullable: true
+            array: true
+            optional: true
+          blockhash:
+            descr: With the addition of EIP-234, blockHash will be a new filter option which restricts the logs returned to the single block with the 32-byte hash blockHash. Using blockHash is equivalent to fromBlock = toBlock = the block number with hash blockHash. If blockHash is present in in the filter criteria, then neither fromBlock nor toBlock are allowed.
+            type: bytes32
+            optional: true
+    result:
+      array: true
+      type: ethlog
+      descr: array with all found event matching the specified filter
+
+          
+
+  eth_getBalance:
+    descr: gets the balance of an account for a given block
+    params: 
+      account:
+        descr: address of the account
+        type: address
+      block:
+        internalDefault : latest
+        optionalAPI: true
+        descr: the blockNumber or `latest`
+        type: uint64
+    result:
+      descr: the balance
+      type: uint256
+    proof:
+      alias: eth_getStorageAt
+    example:
+      request:
+        - "0x2e333ec090f1028df0a3c39a918063443be82b2b"
+        - latest
+      response: '0x20599832af6ec00'
+      in3:
+        proof:
+          type: accountProof
+          block: '0xf90212a0af...5643f426d'
+          signatures: []
+          accounts:
+            '0x2e333EC090f1028df0a3c39a918063443Be82B2b':
+              address: '0x2e333ec090f1028df0a3c39a918063443be82b2b'
+              accountProof:
+              - '0xf90211a099a5e...6d9f924480'
+              - '0xf90211a052b61...b19ff23445180'
+              - '0xf90211a0cc125...7e7afd9170280'
+              - '0xf90211a088c91...555f0b76fc6ec80'
+              - '0xf90211a0641a3...477d355d557a180'
+              - '0xf90211a0619e5...5977318c9487280'
+              - '0xf90111a0e25a1...641683d34adae808080'
+              - '0xf86e9d3f681a18...2273b7bfad8045d85a470'
+              balance: '0x20599832af6ec00'
+              codeHash: '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
+              nonce: '0x5'
+              storageHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421'
+              storageProof: []
+
+
+
+  eth_getTransactionCount:
+    descr: gets the nonce or number of transaction sent from this account at a given block
+    params: 
+      account:
+        descr: address of the account
+        type: address
+      block:
+        internalDefault : latest
+        optionalAPI: true
+        descr: the blockNumber or  `latest` 
+        type: uint64
+    result:
+      descr: the nonce
+      type: uint64
+    proof:
+      alias: eth_getStorageAt
+    example:
+      request:
+        - "0x2e333ec090f1028df0a3c39a918063443be82b2b"
+        - latest
+      response: '0x5'
+      in3:
+        proof:
+          type: accountProof
+          block: '0xf90212a0af...5643f426d'
+          signatures: []
+          accounts:
+            '0x2e333EC090f1028df0a3c39a918063443Be82B2b':
+              address: '0x2e333ec090f1028df0a3c39a918063443be82b2b'
+              accountProof:
+              - '0xf90211a099a5e...6d9f924480'
+              - '0xf90211a052b61...b19ff23445180'
+              - '0xf90211a0cc125...7e7afd9170280'
+              - '0xf90211a088c91...555f0b76fc6ec80'
+              - '0xf90211a0641a3...477d355d557a180'
+              - '0xf90211a0619e5...5977318c9487280'
+              - '0xf90111a0e25a1...641683d34adae808080'
+              - '0xf86e9d3f681a18...2273b7bfad8045d85a470'
+              balance: '0x20599832af6ec00'
+              codeHash: '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
+              nonce: '0x5'
+              storageHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421'
+              storageProof: []
+
+
+
+
+  eth_getCode:
+    descr: gets the code of a given contract
+    params: 
+      account:
+        descr: address of the account
+        type: address
+      block:
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or `latest`
+        type: uint64
+    result:
+      descr: the code as hex
+    proof:
+      alias: eth_getStorageAt
+    example:
+      request:
+        - "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+        - latest
+      response: '0x6080604052348...6c634300050a0040'
+      in3:
+        proof:
+          type: accountProof
+          block: '0xf9020da02776...8ba1d5458be3b98'
+          signatures: []
+          accounts:
+            '0xaC1b824795E1EB1F6e609FE0dA9b9af8bEaAb60F':
+              address: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f'
+              accountProof:
+              - '0xf90211a03...c41e862bd80'
+              - '0xf90211a02...c5766ac3ec9180'
+              - '0xf90211a0f...cdad27ecdfbc1c4c66e680'
+              - '0xf90211a08...84621739c3777ea1d5080'
+              - '0xf90211a00...02388c08615b82ef0320614380'
+              - '0xf90211a03...1b16a8c050f61d80'
+              - '0xf8f18080a...cafe05823be8080'
+              - '0xf8669d3ad8...903305697a1'
+              balance: '0x0'
+              codeHash: '0x29140efcd5358d1dd75badfaa179e3df0dd53f17a883a30152d82903305697a1'
+              nonce: '0x1'
+              storageHash: '0x4d6c5972bcc0c8229c8b041df4aa70879e37e9f7eb47530e4232b317438524ed'
+              storageProof: []
+
+
+
+  eth_getStorageAt:
+    descr: gets the storage value of a given key 
+    params: 
+      account:
+        descr: address of the account
+        type: address
+      key:
+        descr: key to look for
+        type: bytes32
+      block:
+        internalDefault : latest
+        optional: true
+        descr: the blockNumber or`latest`
+        type: uint64
+    result:
+      descr: the value of the storage slot.
+    proof:
+      type:
+        type:
+          descr: proof type, which is `accountProof`
+          type: string
+        block:
+          descr: serialized blockheader
+          type: bytes
+        accounts:
+          descr: object with all required accounts (using the address as keys)
+          type:
+            address:
+              descr: address of the account
+              type: address
+            balance:
+              descr: the balance
+              type: uint256
+            nonce:
+              descr: nonce of the account
+              type: uint256
+            codeHash:
+              descr: codehash of the account
+              type: bytes32
+            storageHash:
+              descr: MerkleRoot of the Storage Trie
+              type: bytes32
+            accountProof:
+              descr: MerkleProof of this account-node
+              type: bytes[]
+            storageProof:
+              descr: Array of Proofs for all required storage values
+              type:
+                key:
+                  descr: the storage key (or hash)
+                  type: bytes32
+                value:
+                  descr: the storage value
+                  type: bytes32
+                proof:
+                  array: true
+                  descr: the merkleProof of the value down to the storageHash as MerkleRoot
+                  type: bytes
+
+        signatures:
+          descr: the array of signatures for all used blocks in the result.
+          array: true
+          type: signature
+        finalityBlocks:
+          array: true
+          descr: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
+          type: bytes
+        
+      descr: |
+        Each of these account values are stored in the account-object:
+
+        ```js
+        account = rlp.encode([
+          uint( nonce),
+          uint( balance),
+          bytes32( storageHash || ethUtil.KECCAK256_RLP),
+          bytes32( codeHash || ethUtil.KECCAK256_NULL)
+        ])
+        ```
+
+        The proof of an account is created by taking the state merkle tree and creating a MerkleProof. Since all of the above RPC-methods only provide a single value, the proof must contain all four values in order to encode them and verify the value of the MerkleProof. 
+
+        For verification, the `stateRoot` of the blockHeader is used and `keccak(accountProof.address)` as the path or key within the merkle tree.
+
+        ```js
+        verifyMerkleProof(
+        block.stateRoot, // expected merkle root
+        keccak(accountProof.address), // path, which is the hashed address
+        accountProof.accountProof), // array of Buffer with the merkle-proof-data
+        isNotExistend(accountProof) ? null : serializeAccount(accountProof), // the expected serialized account
+        )
+        ```
+
+        In case the account does not exist yet (which is the case if `none` == `startNonce` and `codeHash` == `'0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'`), the proof may end with one of these nodes:
+            
+        - The last node is a branch, where the child of the next step does not exist.
+        - The last node is a leaf with a different relative key.
+
+        Both would prove that this key does not exist.
+
+        For `eth_getStorageAt`, an additional storage proof is required. This is created by using the `storageHash` of the account and creating a MerkleProof using the hash of the storage key (`keccak(key)`) as path.
+
+
+        ```js
+        verifyMerkleProof(
+          bytes32( accountProof.storageHash ),   // the storageRoot of the account
+          keccak(bytes32(s.key)),  // the path, which is the hash of the key
+          s.proof.map(bytes), // array of Buffer with the merkle-proof-data
+          s.value === '0x0' ? null : util.rlp.encode(s.value) // the expected value or none to proof non-existence
+        ))
+        ```
+
+
+        ```eval_rst
+        .. graphviz::
+
+            digraph minimal_nonplanar_graphs {
+            
+            fontname="Helvetica"
+              subgraph all {
+
+                node [ fontsize = "12", style="", color=black fontname="Helvetica", shape=record ]
+
+                subgraph cluster_block_header {
+                    label="Blockheader" color=white  style=filled
+
+                    bheader[ label="parentHash|...|<tr>stateRoot|transactionRoot|receiptRoot|..."]
+                }
+
+                subgraph cluster_state_trie {
+                    label="State Trie"  color=lightblue  style=filled
+
+                    troot[label="|<a>0x123456|||||<b>0xabcdef"]  
+                    ta[label="|0x123456||<a>0xabcdef|||"]  
+                    tb[label="|0x98765||<a>0xfcab34|||"]  
+                    tval[label="nonce|balance|<sr>storageHash|codeHash"]  
+
+                    ta:a -> troot:a
+                    tb:a -> troot:b 
+                    tval:a -> ta:a
+                }
+
+                subgraph cluster_storage_trie {
+                    label="Storage Trie"  color=lightblue  style=filled
+
+                    sroot[label="|<a>0x123456|||||<b>0xabcdef"]  
+                    sa[label="|0x123456||<a>0xabcdef|||"]  
+                    sb[label="|0x98765||<a>0xfcab34|||"]  
+                    sval[label="storage value"]  
+
+                    sa:a -> sroot:a
+                    sb:a -> sroot:b 
+                    sval:a -> sa:a
+                }
+
+                sroot:a -> tval:sr
+                troot:a -> bheader:tr 
+
+              }
+            }
+
+        ```
+
+
+
+
+        If the request requires proof (`verification`: `proof`) the node will provide an Account Proof as part of the in3-section of the response.
+
+    example:
+      request:
+        - "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+        - "0x0"
+        - latest
+      response: '0x19'
+      in3:
+        proof:
+          type: accountProof
+          block: '0xf90218a0e625bee...87a38707dbbc'
+          signatures: []
+          accounts:
+            '0xaC1b824795E1EB1F6e609FE0dA9b9af8bEaAb60F':
+              address: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f'
+              accountProof:
+              - '0xf90211a0cef18...56e5cfcf3ef70de80'
+              - '0xf90211a0b67e01...2a13db20dcf291d533480'
+              - '0xf90211a05df65...be23ffb94580'
+              - '0xf90211a0825413...75d61184621739c3777ea1d5080'
+              - '0xf90211a000a403...82ef0320614380'
+              - '0xf90211a03b0114...a6e41b16a8c050f61d80'
+              - '0xf8f18080a01a27...96fcdfe84cafe05823be8080'
+              - '0xf8669d3ad8a871b...d82903305697a1'
+              balance: '0x0'
+              codeHash: '0x29140efcd5358d1dd75badfaa179e3df0dd53f17a883a30152d82903305697a1'
+              nonce: '0x1'
+              storageHash: '0x4d6c5972bcc0c8229c8b041df4aa70879e37e9f7eb47530e4232b317438524ed'
+              storageProof:
+              - key: '0x0'
+                value: '0x19'
+                proof:
+                - '0xf90211a084b9482...1ad85a4f2f1680'
+                - '0xf901b1a0625f8d3...6e0788855d2780'
+                - '0xf851a08a14eff77...08080808080808080'
+                - '0xe19f3decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56319'
+
+  eth_sendTransaction:
+    descr: signs and sends a Transaction
+    params:
+      tx:
+        descr: the transactiondata to send
+        type: transaction
+    result:
+      descr: the transactionHash
+    proof:
+      descr: No proof from the nodes are required, because the client can generate the TransactionHash itself. This means to ensure the success of a transaction the receipt needs to be verified.
+
+  eth_sendTransactionAndWait:
+    descr: signs and sends a Transaction, but then waits until the transaction receipt can be verified. Depending on the finality of the nodes, this may take a while, since only final blocks will be signed by the nodes.
+    params:
+      tx:
+        descr: the transactiondata to send
+        type: transaction
+    result:
+      descr: the transactionReceipt
+      type: transactionReceipt
+
+        
+  eth_sendRawTransaction:
+    descr: sends or broadcasts a prviously signed raw transaction. See [eth_sendRawTransaction](https://eth.wiki/json-rpc/API#eth_sendRawTransaction)
+    params:
+      tx:
+        descr: the raw signed transactiondata to send
+        type: bytes
+    result:
+      descr: the transactionhash
+      type: bytes32
+
+        
+    

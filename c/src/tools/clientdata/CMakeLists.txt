@@ -33,8 +33,7 @@
 ###############################################################################
 
 add_static_library(
-        NAME
-        plugin_client_data
+        NAME  plugin_client_data
 
         SOURCES
         client_data.c

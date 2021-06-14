@@ -20,8 +20,6 @@ void (*Z___wbindgen_placeholder__Z___wbg_error_4bb6c2a97407129aZ_vii)(u32, u32);
 /* import: './web.js' '__wbindgen_object_drop_ref' */
 void (*Z___wbindgen_placeholder__Z___wbindgen_object_drop_refZ_vi)(u32);
 
-
-
 /* import: '__wbindgen_placeholder__' '__wbindgen_string_new' */
 u32 (*Z___wbindgen_placeholder__Z___wbindgen_string_newZ_iii)(u32, u32);
 /* import: '__wbindgen_placeholder__' '__wbindgen_throw' */
@@ -31,8 +29,6 @@ void (*Z___wbindgen_placeholder__Z___wbindgen_rethrowZ_vi)(u32);
 
 /* import: '__wbindgen_placeholder__' '__wbindgen_debug_string' */
 void (*Z___wbindgen_placeholder__Z___wbindgen_debug_stringZ_vii)(u32, u32);
-
-
 
 #define wmalloc(l)  zkcrypto_Z___wbindgen_mallocZ_ii(l)
 #define wfree(p, l) zkcrypto_Z___wbindgen_freeZ_vii(p, l)
@@ -75,23 +71,21 @@ void zke_drop(u32 a) {
 /* import: '__wbindgen_placeholder__' '__wbindgen_string_new' */
 u32 zke_string_new(u32 a, u32 b) {
   printf("# zke_string_new\n");
-  u32 sp = wmalloc(b+1);
-  memcpy(mem_ptr(sp),mem_ptr(a),b+1);
-  char* s = (void*)mem_ptr(sp);
-  s[b]=0;
+  u32 sp = wmalloc(b + 1);
+  memcpy(mem_ptr(sp), mem_ptr(a), b + 1);
+  char* s = (void*) mem_ptr(sp);
+  s[b]    = 0;
   return sp;
 }
 /* import: '__wbindgen_placeholder__' '__wbindgen_throw' */
 void zke_throw(u32 a, u32 b) {
   if (a || b)
-  printf("# zke_throw\n");
-
+    printf("# zke_throw\n");
 }
 /* import: '__wbindgen_placeholder__' '__wbindgen_rethrow' */
 void zke_rethrow(u32 x) {
   if (x)
-  printf("# zke_rethrow\n");
-
+    printf("# zke_rethrow\n");
 }
 
 void zkcrypto_initialize() {
@@ -107,16 +101,14 @@ void zkcrypto_initialize() {
   Z___wbindgen_placeholder__Z___wbindgen_object_drop_refZ_vi = zke_drop;
 
   /* import: '__wbindgen_placeholder__' '__wbindgen_string_new' */
-  Z___wbindgen_placeholder__Z___wbindgen_string_newZ_iii= zke_string_new;
+  Z___wbindgen_placeholder__Z___wbindgen_string_newZ_iii = zke_string_new;
   /* import: '__wbindgen_placeholder__' '__wbindgen_throw' */
   Z___wbindgen_placeholder__Z___wbindgen_throwZ_vii = zke_throw;
   /* import: '__wbindgen_placeholder__' '__wbindgen_rethrow' */
   Z___wbindgen_placeholder__Z___wbindgen_rethrowZ_vi = zke_rethrow;
   /* import: '__wbindgen_placeholder__' '__wbindgen_debug_string' */
   Z___wbindgen_placeholder__Z___wbindgen_debug_stringZ_vii = zke_debug_string;
-
 }
-
 
 in3_ret_t zkcrypto_pk_from_seed(bytes_t seed, bytes32_t dst) {
   u32 sp = wmalloc(seed.len);
@@ -150,7 +142,6 @@ in3_ret_t zkcrypto_pk_to_pubkey_hash(bytes32_t pk, uint8_t* dst) {
   return r1 == 20 ? IN3_OK : IN3_EINVAL;
 }
 
-
 in3_ret_t zkcrypto_sign_musig(bytes32_t pk, bytes_t msg, uint8_t* dst) {
   u32 pkp = wmalloc(32);
   u32 mp  = wmalloc(msg.len);
@@ -182,68 +173,64 @@ zkcrypto_signer_t zkcrypto_signer_new(bytes_t pub_keys, uint32_t pos) {
 }
 
 void zkcrypto_signer_free(zkcrypto_signer_t signer) {
-  return zkcrypto_Z___wbg_musigbn256wasmsigner_freeZ_vi((u32) signer);
+  return zkcrypto_Z___wbg_musigbn256wasmsigner_freeZ_vi((u32)(uint64_t) signer);
 }
 
 in3_ret_t zkcrypto_signer_compute_precommitment(zkcrypto_signer_t signer, bytes_t seed, uint8_t* dst) {
   u32 data = wmalloc(seed.len);
   memcpy(mem_ptr(data), seed.data, seed.len);
-  zkcrypto_Z_musigbn256wasmsigner_compute_precommitmentZ_viiii(8, (u32) signer, data, seed.len/4);
+  zkcrypto_Z_musigbn256wasmsigner_compute_precommitmentZ_viiii(8, (u32)(uint64_t) signer, data, seed.len / 4);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
   if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
   return r1 == 32 ? IN3_OK : IN3_EINVAL;
 }
-
 
 in3_ret_t zkcrypto_signer_receive_precommitment(zkcrypto_signer_t signer, bytes_t input, uint8_t* dst) {
   u32 data = wmalloc(input.len);
   memcpy(mem_ptr(data), input.data, input.len);
-  zkcrypto_Z_musigbn256wasmsigner_receive_precommitmentsZ_viiii(8, (u32) signer, data, input.len);
+  zkcrypto_Z_musigbn256wasmsigner_receive_precommitmentsZ_viiii(8, (u32)(uint64_t) signer, data, input.len);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
   if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
   return r1 == 32 ? IN3_OK : IN3_EINVAL;
 }
-
 
 in3_ret_t zkcrypto_signer_receive_commitment(zkcrypto_signer_t signer, bytes_t input, uint8_t* dst) {
   u32 data = wmalloc(input.len);
   memcpy(mem_ptr(data), input.data, input.len);
-  zkcrypto_Z_musigbn256wasmsigner_receive_commitmentsZ_viiii(8, (u32) signer, data, input.len);
+  zkcrypto_Z_musigbn256wasmsigner_receive_commitmentsZ_viiii(8, (u32)(uint64_t) signer, data, input.len);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
   if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
   return r1 == 32 ? IN3_OK : IN3_EINVAL;
 }
-
-
 
 in3_ret_t zkcrypto_signer_sign(zkcrypto_signer_t signer, bytes32_t pk, bytes_t input, uint8_t* dst) {
   u32 data = wmalloc(input.len);
   memcpy(mem_ptr(data), input.data, input.len);
   u32 pkey = wmalloc(32);
   memcpy(mem_ptr(pkey), pk, 32);
-  zkcrypto_Z_musigbn256wasmsigner_signZ_viiiiii(8, (u32) signer, pkey, 32,data, input.len);
+  zkcrypto_Z_musigbn256wasmsigner_signZ_viiiiii(8, (u32)(uint64_t) signer, pkey, 32, data, input.len);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
-  if (r1==32) memcpy(dst, mem_ptr(r0), r1);
+  if (r1 == 32) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
-  return r1 ==32 ? IN3_OK : IN3_EINVAL;
+  return r1 == 32 ? IN3_OK : IN3_EINVAL;
 }
 
-in3_ret_t zkcrypto_signer_receive_signature_shares(zkcrypto_signer_t signer,  bytes_t input, uint8_t* dst) {
+in3_ret_t zkcrypto_signer_receive_signature_shares(zkcrypto_signer_t signer, bytes_t input, uint8_t* dst) {
   u32 data = wmalloc(input.len);
   memcpy(mem_ptr(data), input.data, input.len);
-  zkcrypto_Z_musigbn256wasmsigner_receive_signature_sharesZ_viiii(8, (u32) signer, data, input.len);
+  zkcrypto_Z_musigbn256wasmsigner_receive_signature_sharesZ_viiii(8, (u32)(uint64_t) signer, data, input.len);
   u32 r0 = mem_u32(2);
   u32 r1 = mem_u32(3);
-  if (r1==64) memcpy(dst, mem_ptr(r0), r1);
+  if (r1 == 64) memcpy(dst, mem_ptr(r0), r1);
   wfree(r0, r1);
-  return r1==64  ? IN3_OK : IN3_EINVAL;
+  return r1 == 64 ? IN3_OK : IN3_EINVAL;
 }
 
 bool zkcrypto_verify_signatures(bytes_t message, bytes_t pubkeys, bytes_t signature) {
@@ -253,9 +240,8 @@ bool zkcrypto_verify_signatures(bytes_t message, bytes_t pubkeys, bytes_t signat
   memcpy(mem_ptr(_pubkeys), pubkeys.data, pubkeys.len);
   u32 _signature = wmalloc(signature.len);
   memcpy(mem_ptr(_signature), signature.data, signature.len);
-  return zkcrypto_Z_musigbn256wasmverifier_verifyZ_iiiiiii(_message, message.len, _pubkeys,pubkeys.len, _signature,signature.len)!=0;
+  return zkcrypto_Z_musigbn256wasmverifier_verifyZ_iiiiiii(_message, message.len, _pubkeys, pubkeys.len, _signature, signature.len) != 0;
 }
-
 
 in3_ret_t zkcrypto_pubkey_hash(bytes_t pubkey, uint8_t* dst) {
   u32 pk = wmalloc(pubkey.len);
@@ -268,13 +254,10 @@ in3_ret_t zkcrypto_pubkey_hash(bytes_t pubkey, uint8_t* dst) {
   return r1 == 20 ? IN3_OK : IN3_EINVAL;
 }
 
-
-
-bool zkcrypto_verify_musig(bytes_t message,  bytes_t signature) {
+bool zkcrypto_verify_musig(bytes_t message, bytes_t signature) {
   u32 _message = wmalloc(message.len);
   memcpy(mem_ptr(_message), message.data, message.len);
   u32 _signature = wmalloc(signature.len);
   memcpy(mem_ptr(_signature), signature.data, signature.len);
-  return zkcrypto_Z_verify_musigZ_iiiii(_message, message.len, _signature,signature.len)!=0;
+  return zkcrypto_Z_verify_musigZ_iiiii(_message, message.len, _signature, signature.len) != 0;
 }
-

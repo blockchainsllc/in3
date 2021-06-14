@@ -35,7 +35,8 @@
 # add lib
 add_static_library(
   NAME     transport_winhttp 
-  
+  REGISTER in3_register_winhttp
+
   SOURCES 
     in3_winhttp.c
 

@@ -82,10 +82,10 @@ NONULL_FOR((1, 3))
 sb_t*  sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array); /**< add bytes as 0x-prefixed hexcoded string (including an optional prefix), if len>1 is passed bytes maybe an array ( if as_array==true)  */
 NONULL sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);                               /**< add a integer value as hexcoded, 0x-prefixed string*/
 NONULL sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars);                                  /**< add chars but escapes all quotes */
-NONULL sb_t* sb_add_int(sb_t* sb, uint64_t val);                                                 /**< adds a numeric value to the stringbuilder */
+NONULL sb_t* sb_add_int(sb_t* sb, int64_t val);                                                  /**< adds a numeric value to the stringbuilder */
 NONULL char* format_json(const char* json);                                                      /**< format a json string and returns a new string, which needs to be freed */
 NONULL_FOR((1))
-sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, unsigned int fix_size);
+sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size);
 sb_t* sb_print(sb_t* sb, const char* fmt, ...);
 sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args);
 

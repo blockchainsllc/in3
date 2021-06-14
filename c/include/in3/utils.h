@@ -224,6 +224,11 @@ uint64_t current_ms();
       return _r;              \
     }                         \
   }
+#define TRY_RPC(name, fn) \
+  if (strcmp(ctx->method, name) == 0) return fn;
+/** used in if-conditions and returns true if the vc->method mathes the name. It is also used as marker.*/
+#define VERIFY_RPC(name) (strcmp(vc->method, name) == 0)
+#define CONFIG_KEY(name) key(name)
 
 /**
  * executes the expression and expects value to equal val. 
@@ -318,6 +323,11 @@ void in3_sleep(uint32_t ms);
 int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
+
+/**
+ * simple add function, which adds the bytes (b) to a
+ */
+void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b);
 
 #ifdef THREADSAFE
 #define _NAME(x, y) x##y

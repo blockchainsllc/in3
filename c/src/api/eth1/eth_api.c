@@ -336,29 +336,29 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
   bytes_t    data  = {0};
   if (!error) {
     json_ctx_t* in_data = json_create();
-    d_token_t*  args    = json_create_array(in_data);
+    int         args    = json_create_array(in_data);
     for (int i = 0; i < req->input->data.tuple.len && !error; i++) {
       abi_coder_t* p = req->input->data.tuple.components[i];
       switch (p->type) {
         case ABI_BOOL:
-          json_array_add_value(args, json_create_bool(in_data, va_arg(ap, int)));
+          json_array_add_value(in_data, args, json_create_bool(in_data, va_arg(ap, int)));
           break;
         case ABI_ADDRESS:
-          json_array_add_value(args, json_create_bytes(in_data, bytes(va_arg(ap, uint8_t*), 20)));
+          json_array_add_value(in_data, args, json_create_bytes(in_data, bytes(va_arg(ap, uint8_t*), 20)));
           break;
         case ABI_BYTES:
-          json_array_add_value(args, json_create_bytes(in_data, va_arg(ap, bytes_t)));
+          json_array_add_value(in_data, args, json_create_bytes(in_data, va_arg(ap, bytes_t)));
           break;
         case ABI_STRING:
-          json_array_add_value(args, json_create_string(in_data, va_arg(ap, char*), -1));
+          json_array_add_value(in_data, args, json_create_string(in_data, va_arg(ap, char*), -1));
           break;
         case ABI_NUMBER: {
           if (p->data.number.size <= 32)
-            json_array_add_value(args, json_create_int(in_data, va_arg(ap, uint32_t)));
+            json_array_add_value(in_data, args, json_create_int(in_data, va_arg(ap, uint32_t)));
           else if (p->data.number.size <= 64)
-            json_array_add_value(args, json_create_int(in_data, va_arg(ap, uint64_t)));
+            json_array_add_value(in_data, args, json_create_int(in_data, va_arg(ap, uint64_t)));
           else
-            json_array_add_value(args, json_create_bytes(in_data, bytes(va_arg(ap, uint256_t).data, 32)));
+            json_array_add_value(in_data, args, json_create_bytes(in_data, bytes(va_arg(ap, uint256_t).data, 32)));
           break;
         }
         default:
@@ -366,7 +366,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
       }
     }
 
-    if (!error) data = abi_encode(req, args, &error);
+    if (!error) data = abi_encode(req, in_data->result + args, &error);
     json_free(in_data);
   }
 
@@ -464,7 +464,8 @@ in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
   return filter_remove(eth_basic_get_filters(in3), id);
 }
-
+// same as "eth_getFilterChanges"
+// or "eth_getFilterLogs"
 in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
   in3_filter_handler_t* filters = eth_basic_get_filters(in3);
   if (filters == NULL) return IN3_EFIND;

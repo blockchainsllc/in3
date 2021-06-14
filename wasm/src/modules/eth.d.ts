@@ -257,7 +257,55 @@ export interface AccountAPI<BufferType> {
      * This method returns address of the pk
      * @param pk
      */
-    add(pk: string | BufferType): Promise<string>
+    add(pk: string | BufferType): string
+
+    /**
+     * decrypts a JSON Keystore file as defined in the Web3 Secret Storage Definition . The result is the raw private key.
+     * @param keystore the keystore data
+     * @param passphrase the passphrase
+     */
+    decryptKeystore(keystore: any, passphrase: string): BufferType
+
+    /**
+     * adds a key from a JSON Keystore file as defined in the Web3 Secret Storage Definition . This method returns address of the pk.
+     * @param keystore the keystore data
+     * @param passphrase the passphrase
+     */
+    addKeyStore(keystore: any, passphrase: string): String
+
+    /**
+     * recovers a ecdsa signature.
+     * @param msg the message 
+     * @param sig the signature (must be 65bytes in hex or Buffer)
+     * @param msgtype the type (raw : the message must be hashed first (default), 'hash' the message is already a 32byte hash, 'eth_sign' - the message will be hashed with EthereumSignedMessage-Prefix)
+     */
+    ecrecover(msg: string | BufferType, sig: string | BufferType, msgtype?: 'eth_sign' | 'raw' | 'hash'): {
+        address: string,
+        publicKey: string
+    }
+
+    /**
+     * creates a signature with a previously registered signer based on the data
+     * @param msg the message to sign
+     * @param account the address of the account ( if null, the first available account is used ). If the account is a 32byte hex or buffer, it it will be used as raw private key.
+     * @param msgtype the type (raw : the message must be hashed first (default), 'hash' the message is already a 32byte hash, 'eth_sign' - the message will be hashed with EthereumSignedMessage-Prefix)
+     */
+    signData(msg: string | BufferType, account: string | BufferType, msgtype?: 'eth_sign' | 'raw' | 'hash'): Promise<Signature>
+
+
+    /**
+     * creates a signature with a previously registered signer based on the data
+     * @param msg the message to sign
+     * @param account the address of the account ( if null, the first available account is used ). If the account is a 32byte hex or buffer, it it will be used as raw private key.
+     * @param msgtype the type (raw : the message must be hashed first (default), 'hash' the message is already a 32byte hash, 'eth_sign' - the message will be hashed with EthereumSignedMessage-Prefix)
+     */
+    signRawTx(msg: string | BufferType, account: string | BufferType, msgtype?: 'eth_sign' | 'raw' | 'hash'): Promise<BufferType>
+
+    /**
+     * prepares a Transaction by creating a unsigned raw transaction.
+     * @param tx the tx parameter
+     */
+    prepareTx(tx: TxRequest): Promise<BufferType>
 
 
 }
@@ -462,6 +510,12 @@ export interface EthAPI<BigIntType, BufferType> {
      * Returns the number of uncles in a block from a block matching the given block hash.
      */
     getUncleCountByBlockNumber(block: BlockType): Promise<number>;
+
+    /**
+     * adds a filter for pending transaction (only available for local rpc)
+     */
+    newPendingFilter(): Promise<string>;
+
     /**
      * Creates a filter in the node, to notify when a new block arrives. To check if the state has changed, call eth_getFilterChanges.
      */
@@ -496,10 +550,14 @@ export interface EthAPI<BigIntType, BufferType> {
     /**
      * Returns the value in wei as hexstring.
      */
-    toWei(value: string, unit: string): string;
+    toWei(value: string, unit?: string): string;
     /**
-      * Returns the state of the underlying node.
-      */
+     * Returns a formated String in the specified unit (or eth if not specified). If digits are specified, the number of digits behind the comma can be limited.
+     */
+    fromWei(value: string, unit?: string, digits?: number): string;
+    /**
+     * Returns the state of the underlying node.
+     */
     syncing(): Promise<boolean | {
         startingBlock: Hex;
         currentBlock: Hex;

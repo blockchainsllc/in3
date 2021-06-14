@@ -1,3 +1,7 @@
+/**
+ * 
+ */
+// @PUBLIC_HEADER
 #ifndef IN3_NODE_SELECT_DEF_H
 #define IN3_NODE_SELECT_DEF_H
 

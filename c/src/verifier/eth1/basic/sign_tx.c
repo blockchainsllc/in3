@@ -62,7 +62,7 @@ static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
 /**  return data from the client.*/
 static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
-  in3_req_t* ctx = req_find_required(parent, method);
+  in3_req_t* ctx = req_find_required(parent, method, NULL);
   if (ctx) {
     // found one - so we check if it is useable.
     switch (in3_req_state(ctx)) {
@@ -168,7 +168,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
-    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r, NULL))
     chain_id = d_long(r);
   }
   TRY(get_from_address(tx, ctx, from))
@@ -197,8 +197,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   }
 
   // cleanup subcontexts
-  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount"), false))
-  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice"), false))
+  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount", NULL), false))
+  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice", NULL), false))
 
   return IN3_OK;
 }
@@ -213,7 +213,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
   chain_id_t chain_id = ctx->client->chain.chain_id;
   if (chain_id == CHAIN_ID_LOCAL) {
     d_token_t* r = NULL;
-    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r))
+    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r, NULL))
     chain_id = d_long(r);
   }
 
@@ -268,7 +268,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
 
   // is there a pending signature?
   // we get the raw transaction from this request
-  in3_req_t* sig_ctx = req_find_required(ctx, "sign_ec_hash");
+  in3_req_t* sig_ctx = req_find_required(ctx, "sign_ec_hash", NULL);
   if (sig_ctx) {
     bytes_t raw = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
     unsigned_tx = bytes(_malloc(raw.len), raw.len);

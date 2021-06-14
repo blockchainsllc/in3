@@ -203,6 +203,9 @@ export declare interface BtcAPI<BufferType> {
 
     /** retrieves the serialized block (bytes) including all transactions */
     getBlockBytes(blockHash: Hash): Promise<BufferType>
+
+    /** Returns the number of blocks in the longest blockchain. */
+    getBlockCount(): Promise<Number>
 }
 
 /**

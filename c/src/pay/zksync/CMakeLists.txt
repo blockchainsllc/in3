@@ -35,7 +35,8 @@
 
 add_static_library(
   NAME     zksync 
-  
+  REGISTER in3_register_zksync
+
   SOURCES 
     zksync.c
     zk_message.c
@@ -45,6 +46,7 @@ add_static_library(
     zk_deposit.c
     zk_musig.c
     zk_incentive.c
+    zk_rest.c
 
   DEPENDS 
     eth_basic

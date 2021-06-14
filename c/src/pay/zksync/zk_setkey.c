@@ -58,10 +58,16 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
 }
 
 in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  address_t       pub_hash;
-  uint32_t        nonce;
-  d_token_t*      token      = d_len(ctx->params) == 1 ? ctx->params + 1 : NULL;
-  bytes_t*        new_key    = d_get_bytes_at(ctx->params, 1);
+  address_t      pub_hash;
+  zksync_valid_t valid;
+  uint32_t       nonce;
+  int            plen    = d_len(ctx->params);
+  d_token_t*     token   = plen == 1 ? ctx->params + 1 : NULL;
+  bytes_t*       new_key = d_get_bytes_at(ctx->params, 1);
+  valid.from             = plen > 2 ? d_get_long_at(ctx->params, 2) : 0;
+  valid.to               = plen > 3 ? d_get_long_at(ctx->params, 3) : 0;
+  if (!valid.to) valid.to = 0xffffffffl;
+
   zksync_token_t* token_data = NULL;
   if (!token) return req_set_error(ctx->req, "Missing fee token as first token", IN3_EINVAL);
   zk_fee_t fee;
@@ -93,7 +99,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   }
   if (!cached) {
     sb_t      sb  = {0};
-    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->req, pub_hash, nonce, conf, fee, token_data);
+    in3_ret_t ret = zksync_sign_change_pub_key(&sb, ctx->req, pub_hash, nonce, conf, fee, token_data, valid);
     if (ret && sb.data) _free(sb.data);
     TRY(ret)
     if (!sb.data) return IN3_EUNKNOWN;

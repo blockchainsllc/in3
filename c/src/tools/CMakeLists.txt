@@ -40,6 +40,10 @@ if(RECORDER)
   add_subdirectory(recorder)
 endif()
 
+if(SWIFT)
+  add_subdirectory(swift)
+endif()
+
 if(PLGN_CLIENT_DATA)
   add_subdirectory(clientdata)
 endif()

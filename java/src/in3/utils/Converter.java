@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -32,53 +32,17 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * USN API.
- * 
- * This header-file defines easy to use function, which are verifying USN-Messages.
- * */
-
-#ifndef PAY_ETH_H
-#define PAY_ETH_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "client.h"
-#include "plugin.h"
-
-typedef struct in3_pay_eth_node {
-  address_t                address;
-  uint32_t                 price;
-  uint64_t                 payed;
-  struct in3_pay_eth_node* next;
-} in3_pay_eth_node_t;
-
-typedef struct {
-  uint64_t            bulk_size;
-  uint64_t            max_price;
-  uint64_t            nonce;
-  uint64_t            gas_price;
-  in3_pay_eth_node_t* nodes;
-} in3_pay_eth_t;
+package in3.utils;
 
 /**
- * Eth payment implementation
+ * a Interface for converting values.
  */
-in3_ret_t in3_pay_eth(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx);
-
-/**
- * get access to internal plugin data if registered
- */
-static inline in3_pay_eth_t* in3_pay_eth_data(in3_t* c) {
-  return in3_plugin_get_data(c, in3_pay_eth);
+public interface Converter<T, R> {
+  /**
+     * Applies this function to the given argument.
+     *
+     * @param t the function argument
+     * @return the function result
+     */
+  R apply(T t);
 }
-
-/**
- * registers the Eth payment plugin
- */
-in3_ret_t in3_register_pay_eth(in3_t* c);
-#ifdef __cplusplus
-}
-#endif
-#endif
