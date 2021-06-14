@@ -385,6 +385,7 @@ eth:
     proof:
       alias: eth_getUncleCountByBlockNumber
     result:
+      optional: true
       descr: the number of transactions in the block
       type: int
 
@@ -397,6 +398,7 @@ eth:
     proof:
       alias: eth_getUncleCountByBlockNumber
     result:
+      optional: true
       descr: the number of transactions in the block
       type: int
 
@@ -409,6 +411,7 @@ eth:
     proof:
       alias: eth_getUncleCountByBlockNumber
     result:
+      optional: true
       descr: the number of uncles
       type: int
 
@@ -429,6 +432,7 @@ eth:
         - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
         - `uncles`: a array of blockheaders of the uncles of the block. This is only needed if the number of uncles are requested.
     result:
+      optional: true
       descr: the number of uncles
       type: int
 
@@ -445,6 +449,7 @@ eth:
         descr: the transactionIndex
         type: int
     result:
+      optional: true
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -497,6 +502,7 @@ eth:
         descr: the transactionIndex
         type: int
     result:
+      optional: true
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -546,6 +552,7 @@ eth:
         descr: the transactionHash of the transaction.
         type: bytes32
     result:
+      optional: true   
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
  
