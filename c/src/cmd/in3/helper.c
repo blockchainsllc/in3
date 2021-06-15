@@ -103,7 +103,7 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
     while (p) {
       char* next = strtok(NULL, ".");
       if (!next) {
-        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0 || is_number(value))
+        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0 || is_number(value) || *value=='{' || *value=='[')
           sb_print(&sb, "\"%s\":%s", p, value);
         else
           sb_print(&sb, "\"%s\":\"%s\"", p, value);
