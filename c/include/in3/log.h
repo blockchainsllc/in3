@@ -75,8 +75,8 @@ typedef enum { LOG_TRACE,
 #endif
 
 /**
- * in3_log_set_*() functions are not thread-safe. 
- * It is expected that these initialization functions will be called from the main thread before 
+ * in3_log_set_*() functions are not thread-safe.
+ * It is expected that these initialization functions will be called from the main thread before
  * spawning more threads.
  */
 void            in3_log_set_udata_(void* udata);

@@ -50,7 +50,7 @@ extern "C" {
  * a 32 byte long integer used to store ethereum-numbers.
  *
  * use the as_long() or as_double() to convert this to a useable number.
-*/
+ */
 typedef struct {
   uint8_t data[32];
 } uint256_t;
@@ -84,4 +84,4 @@ char* api_last_error();
 }
 #endif
 
-#endif //IN3_API_UTILS_H
+#endif // IN3_API_UTILS_H

@@ -51,7 +51,7 @@ typedef struct _PBLink {
 /* Helper constants for enums */
 #define _Data_DataType_MIN       Data_DataType_Raw
 #define _Data_DataType_MAX       Data_DataType_HAMTShard
-#define _Data_DataType_ARRAYSIZE ((Data_DataType)(Data_DataType_HAMTShard + 1))
+#define _Data_DataType_ARRAYSIZE ((Data_DataType) (Data_DataType_HAMTShard + 1))
 
 /* Initializer values for message structs */
 #define Data_init_default \

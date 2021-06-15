@@ -71,4 +71,4 @@ in3_t* in3_for_chain_auto_init(chain_id_t chain_id);
 }
 #endif
 
-#endif //IN3_IN3_INIT_H
+#endif // IN3_IN3_INIT_H

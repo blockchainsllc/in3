@@ -17,15 +17,15 @@ public class Account {
   }
 
   /**
-     * address from ecrecover operation.
-     */
+   * address from ecrecover operation.
+   */
   public String getAddress() {
     return data.getString("address");
   }
 
   /**
-     * public key from ecrecover operation.
-     */
+   * public key from ecrecover operation.
+   */
   public String getPublicKey() {
     return data.getString("publicKey");
   }

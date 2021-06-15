@@ -74,7 +74,7 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_m
   if (ret == IN3_OK && cached && cached->value.data) {
     uint8_t* start_sig = (void*) strstr((void*) cached->value.data, ",\"signature\":");
     sb_t*    sb        = in3_rpc_handle_start(ctx);
-    sb_add_range(sb, (void*) cached->value.data, 0, start_sig ? ((size_t)(start_sig - cached->value.data)) : (strlen((void*) cached->value.data) - 177));
+    sb_add_range(sb, (void*) cached->value.data, 0, start_sig ? ((size_t) (start_sig - cached->value.data)) : (strlen((void*) cached->value.data) - 177));
     sb_add_chars(sb, ",\"txHash\":\"");
     sb_add_chars(sb, d_string(result));
     sb_add_chars(sb, "\"}");

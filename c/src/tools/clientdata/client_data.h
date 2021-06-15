@@ -42,4 +42,4 @@ void* in3_plugin_get_client_data(in3_t* c);
 
 in3_ret_t in3_register_client_data(in3_t* c, void* data);
 
-#endif //IN3_CLIENT_DATA_H
+#endif // IN3_CLIENT_DATA_H

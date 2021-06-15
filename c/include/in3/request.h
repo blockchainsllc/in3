@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -61,8 +61,8 @@ typedef enum ctx_type {
 } req_type_t;
 
 /**
- * the weight of a certain node as linked list. 
- * 
+ * the weight of a certain node as linked list.
+ *
  * This will be used when picking the nodes to send the request to. A linked list of these structs desribe the result.
  */
 typedef struct weight {
@@ -74,8 +74,8 @@ typedef struct weight {
   struct weight* next;    /**< next in the linked-list or NULL if this is the last element*/
 } node_match_t;
 
-/** response-object. 
- * 
+/** response-object.
+ *
  * if the error has a length>0 the response will be rejected
  */
 typedef struct in3_response {
@@ -86,7 +86,7 @@ typedef struct in3_response {
 
 /**
  * The Request config.
- * 
+ *
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
 typedef struct in3_req {
@@ -111,7 +111,7 @@ typedef struct in3_req {
 
 /**
  * The current state of the context.
- * 
+ *
  * you can check this state after each execute-call.
  */
 typedef enum state {
@@ -121,24 +121,24 @@ typedef enum state {
   REQ_ERROR                = -1, /**< the request has a error */
 } in3_req_state_t;
 
-/** 
+/**
  * creates a new request.
- * 
+ *
  * the request data will be parsed and represented in the context.
  * calling this function will only parse the request data, but not send anything yet.
- * 
+ *
  *  *Important*: the req_data will not be cloned but used during the execution. The caller of the this function is also responsible for freeing this string afterwards.
  */
 NONULL in3_req_t* req_new(
     in3_t*      client,  /**< [in] the client-config. */
     const char* req_data /**< [in] the rpc-request as json string. */
 );
-/** 
+/**
  * creates a new request but clones the request-data.
- * 
+ *
  * the request data will be parsed and represented in the context.
  * calling this function will only parse the request data, but not send anything yet.
- * 
+ *
  */
 NONULL in3_req_t* req_new_clone(
     in3_t*      client,  /**< [in] the client-config. */
@@ -146,7 +146,7 @@ NONULL in3_req_t* req_new_clone(
 );
 /**
  * sends a previously created request to nodes and verifies it.
- * 
+ *
  * The execution happens within the same thread, thich mean it will be blocked until the response ha beedn received and verified.
  * In order to handle calls asynchronously, you need to call the `in3_req_execute` function and provide the data as needed.
  */
@@ -169,49 +169,49 @@ NONULL in3_req_state_t in3_req_exec_state(
 );
 /**
  * execute the context, but stops whenever data are required.
- * 
- * This function should be used in order to call data in a asyncronous way, 
- * since this function will not use the transport-function to actually send it. 
- * 
+ *
+ * This function should be used in order to call data in a asyncronous way,
+ * since this function will not use the transport-function to actually send it.
+ *
  * The caller is responsible for delivering the required responses.
  * After calling you need to check the return-value:
  * - IN3_WAITING : provide the required data and then call in3_req_execute again.
  * - IN3_OK : success, we have a result.
  * - any other status = error
- * 
+ *
  * ```rust,ignore
  * digraph G {
  node[fontname="Helvetica",   shape=Box, color=lightblue, style=filled ]
   edge[fontname="Helvetica",   style=solid,  fontsize=8 , color=grey]
   rankdir = LR;
-  
+
   RPC[label="RPC-Request"]
   CTX[label="in3_req_t"]
-  
+
   sign[label="sign data",color=lightgrey, style=""]
   request[label="fetch data",color=lightgrey, style=""]
-  
+
   exec[ label="in3_req_execute()",color=lightgrey, style="", shape=circle ]
   free[label="req_free()",color=lightgrey, style=""]
 
 
   RPC -> CTX [label="req_new()"]
   CTX -> exec
-  
-  
+
+
   exec -> error [label="IN3_..."]
   exec -> response[label="IN3_OK"]
   exec -> waiting[label="IN3_WAITING"]
-  
+
   waiting -> sign[label=RT_SIGN]
-  waiting -> request[label=RT_RPC] 
-  
+  waiting -> request[label=RT_RPC]
+
   sign -> exec [label="in3_ctx_add_response()"]
   request -> exec[label="in3_ctx_add_response()"]
-  
+
   response -> free
   error->free
-  
+
 
  { rank = same; exec, sign, request }
 
@@ -219,11 +219,11 @@ NONULL in3_req_state_t in3_req_exec_state(
 
 }
  * ```
- * 
+ *
  * Here is a example how to use this function:
- * 
+ *
  * ```c
- * 
+ *
  in3_ret_t in3_send_req(in3_req_t* req) {
   in3_ret_t ret;
   // execute the context and store the return value.
@@ -277,7 +277,7 @@ NONULL in3_req_state_t in3_req_exec_state(
             sb_init(&ctx->raw_response[0].error);
             sb_init(&ctx->raw_response[0].result);
 
-            // data for the signature 
+            // data for the signature
             uint8_t sig[65];
             // use the signer to create the signature
             ret = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
@@ -293,10 +293,10 @@ NONULL in3_req_state_t in3_req_exec_state(
   return ret;
 }
  * ```
- * 
- * 
- * 
- * 
+ *
+ *
+ *
+ *
  */
 NONULL in3_ret_t in3_req_execute(
     in3_req_t* req /**< [in] the request context. */
@@ -337,7 +337,7 @@ NONULL req_type_t req_get_type(
 
 /**
  * frees all resources allocated during the request.
- * 
+ *
  * But this will not free the request string passed when creating the context!
  */
 NONULL void req_free(
@@ -345,13 +345,13 @@ NONULL void req_free(
 );
 /**
  * adds a new context as a requirment.
- * 
+ *
  * Whenever a verifier needs more data and wants to send a request, we should create the request and add it as dependency and stop.
- * 
+ *
  * If the function is called again, we need to search and see if the required status is now useable.
- * 
+ *
  * Here is an example of how to use it:
- * 
+ *
  * ```c
 in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t* dst) {
   // check if the method is already existing
@@ -399,7 +399,7 @@ NONULL in3_ret_t req_add_required(
 );
 /**
  * searches within the required request contextes for one with the given method.
- * 
+ *
  * This method is used internaly to find a previously added context.
  */
 NONULL_FOR((1, 2))
@@ -433,11 +433,11 @@ NONULL in3_ret_t req_get_error(
     int        id   /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
 
-/** 
- * sends a request and returns a context used to access the result or errors. 
- * 
+/**
+ * sends a request and returns a context used to access the result or errors.
+ *
  * This context *MUST* be freed with req_free(ctx) after usage to release the resources.
-*/
+ */
 NONULL in3_req_t* in3_client_rpc_ctx_raw(
     in3_t*      c,      /**< [in] the client config. */
     const char* request /**< [in] rpc request. */
@@ -447,7 +447,7 @@ NONULL in3_req_t* in3_client_rpc_ctx_raw(
  * sends a request and returns a context used to access the result or errors.
  *
  * This context *MUST* be freed with req_free(ctx) after usage to release the resources.
-*/
+ */
 NONULL in3_req_t* in3_client_rpc_ctx(
     in3_t*      c,      /**< [in] the clientt config. */
     const char* method, /**< [in] rpc method. */

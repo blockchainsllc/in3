@@ -1,41 +1,41 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 // @PUBLIC_HEADER
 /** @file
  * ZKSync API.
- * 
+ *
  * This header-file registers zksync api functions.
  * */
 
@@ -106,6 +106,7 @@ struct pay_criteria;
 /** internal configuration-object */
 typedef struct zksync_config {
   char*                provider_url;        /**< url of the zksync-server */
+  char*                rest_api;            /**< url of the zksync-rest-api */
   uint8_t*             account;             /**< address of the account */
   uint8_t*             main_contract;       /**< address of the main zksync contract*/
   uint8_t*             gov_contract;        /**< address of the government contract */
@@ -182,6 +183,8 @@ in3_ret_t           zksync_check_payment(zksync_config_t* conf, in3_pay_followup
 in3_ret_t           zksync_add_payload(in3_pay_payload_ctx_t* ctx);
 in3_ret_t           update_nodelist_from_cache(in3_req_t* req, unsigned int nodelen);
 in3_ret_t           handle_zksync(void* conf, in3_plugin_act_t action, void* arg);
+in3_ret_t           zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+in3_ret_t           zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 #ifdef __cplusplus
 }
 #endif

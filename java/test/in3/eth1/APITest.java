@@ -235,7 +235,7 @@ public class APITest {
 
     IN3         in3 = builder.constructClient(mockedResponses);
     Transaction tx  = in3.getEth1API().getTransactionByBlockHashAndIndex(
-        "0xd03f4a0ce830ce568be08aa37bc0a72374e92da5b388e839b35f24a144a5085d", 1);
+         "0xd03f4a0ce830ce568be08aa37bc0a72374e92da5b388e839b35f24a144a5085d", 1);
 
     Assertions.assertEquals(tx.getValue(), new BigInteger("48958690000000000"));
   }

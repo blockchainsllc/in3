@@ -358,4 +358,4 @@ static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {
   return bincfg.data ? parse_binary(&bincfg) : NULL;
 }
 
-#endif //IN3_NODE_SELECT_DEF_CFG_H
+#endif // IN3_NODE_SELECT_DEF_CFG_H

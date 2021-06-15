@@ -26,7 +26,9 @@ public class ClientConfiguration implements Configuration {
     return data.getInteger("requestCount");
   }
 
-  /** sets the number of requests send when getting a first answer */
+  /**
+   * sets the number of requests send when getting a first answer
+   */
   public void setRequestCount(Integer requestCount) {
     setDirty(requestCount != getRequestCount());
     data.put("requestCount", requestCount);
@@ -50,7 +52,9 @@ public class ClientConfiguration implements Configuration {
     return proof != null ? Proof.valueOf(proof) : null;
   }
 
-  /** sets the type of proof used */
+  /**
+   * sets the type of proof used
+   */
   public void setProof(Proof proof) {
     setDirty(!isObjectEqual(getProof(), proof));
     data.put("proof", proof.toString());
@@ -60,7 +64,9 @@ public class ClientConfiguration implements Configuration {
     return data.getInteger("maxAttempts");
   }
 
-  /** sets the max number of attempts before giving up */
+  /**
+   * sets the max number of attempts before giving up
+   */
   public void setMaxAttempts(int maxAttempts) {
     setDirty(maxAttempts != getMaxAttempts());
     data.put("maxAttempts", maxAttempts);
@@ -70,7 +76,9 @@ public class ClientConfiguration implements Configuration {
     return data.getInteger("signatureCount");
   }
 
-  /** sets the number of signatures used to proof the blockhash. */
+  /**
+   * sets the number of signatures used to proof the blockhash.
+   */
   public void setSignatureCount(int signatureCount) {
     setDirty(signatureCount != getSignatureCount());
     data.put("signatureCount", signatureCount);
@@ -80,7 +88,9 @@ public class ClientConfiguration implements Configuration {
     return data.getInteger("finality");
   }
 
-  /** sets the number of signatures in percent required for the request */
+  /**
+   * sets the number of signatures in percent required for the request
+   */
   public void setFinality(int finality) {
     setDirty(finality != getFinality());
     data.put("finality", finality);
@@ -179,7 +189,9 @@ public class ClientConfiguration implements Configuration {
     return data.getLong("nodeLimit");
   }
 
-  /** sets the limit of nodes to store in the client. */
+  /**
+   * sets the limit of nodes to store in the client.
+   */
   public void setNodeLimit(long nodeLimit) {
     setDirty(nodeLimit != getNodeLimit());
     data.put("nodeLimit", nodeLimit);
@@ -193,7 +205,9 @@ public class ClientConfiguration implements Configuration {
     return data.getInteger("replaceLatestBlock");
   }
 
-  /** replaces the *latest* with blockNumber- specified value */
+  /**
+   * replaces the *latest* with blockNumber- specified value
+   */
   public void setReplaceLatestBlock(int replaceLatestBlock) {
     setDirty(replaceLatestBlock != getReplaceLatestBlock());
     data.put("replaceLatestBlock", replaceLatestBlock);

@@ -48,4 +48,4 @@ typedef struct in3_swift_cb {
 
 in3_ret_t in3_register_swift(in3_t* _NONULL c, swift_cb_t* _NONULL cbs);
 
-#endif //IN3_SWIFT_H
+#endif // IN3_SWIFT_H

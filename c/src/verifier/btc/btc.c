@@ -319,7 +319,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 in3_ret_t btc_verify_blockcount(btc_target_conf_t* conf, in3_vctx_t* vc) {
   UNUSED_VAR(conf);
   // verify the blockheader
-  //TODO verify the proof
+  // TODO verify the proof
   return vc->proof ? IN3_OK : vc_err(vc, "missing the proof");
 }
 

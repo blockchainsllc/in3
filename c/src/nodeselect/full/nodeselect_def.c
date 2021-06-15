@@ -594,9 +594,9 @@ static void check_autoupdate(const in3_req_t* ctx, in3_nodeselect_def_t* data, d
       memcpy(data->nodelist_upd8_params->node, n->address, 20);
       data->nodelist_upd8_params->exp_last_block = d_get_long(response_in3, K_LAST_NODE_LIST);
       data->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_long(response_in3, K_LAST_NODE_LIST),
-                                                                               d_get_long(response_in3, K_CURRENT_BLOCK),
-                                                                               ctx->client->replace_latest_block,
-                                                                               data->avg_block_time);
+                                                                                    d_get_long(response_in3, K_CURRENT_BLOCK),
+                                                                                    ctx->client->replace_latest_block,
+                                                                                    data->avg_block_time);
     }
   }
 

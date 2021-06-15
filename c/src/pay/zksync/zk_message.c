@@ -176,7 +176,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
     in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
     if (signature.len == 65 && signature.data[64] < 27)
-      signature.data[64] += 27; //because EIP155 chainID = 0
+      signature.data[64] += 27; // because EIP155 chainID = 0
   }
 
   // now create the packed sync transfer
@@ -283,7 +283,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   if (conf->sign_type != ZK_SIGN_CREATE2) {
     TRY(req_require_signature(ctx, SIGN_EC_PREFIX, &signature, bytes((uint8_t*) ethmsg, 60), bytes(conf->account, 20)))
     if (signature.len == 65 && signature.data[64] < 27)
-      signature.data[64] += 27; //because EIP155 chainID = 0
+      signature.data[64] += 27; // because EIP155 chainID = 0
   }
 
   sb_add_chars(sb, "{\"type\":\"ChangePubKey\",\"accountId\":");

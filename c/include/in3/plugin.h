@@ -1,42 +1,42 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 // @PUBLIC_HEADER
 /** @file
  * this file defines the plugin-contexts
- * 
- * 
+ *
+ *
  * */
 
 #ifndef PLUGIN_H
@@ -105,8 +105,8 @@ typedef struct {
 } in3_rpc_handle_ctx_t;
 
 /**
-* creates a response and returns a stringbuilder to add the result-data.
-*/
+ * creates a response and returns a stringbuilder to add the result-data.
+ */
 NONULL sb_t* in3_rpc_handle_start(in3_rpc_handle_ctx_t* hctx);
 
 /**
@@ -139,8 +139,8 @@ typedef struct in3_req_header {
   struct in3_req_header* next;  /**< pointer to next header */
 } in3_req_header_t;
 
-/** request-object. 
- * 
+/** request-object.
+ *
  * represents a RPC-request
  */
 typedef struct in3_http_request {
@@ -279,13 +279,13 @@ typedef struct sign_prepare_ctx {
 
 /** type of the requested signature */
 typedef enum {
-  SIGN_EC_RAW  = 0, /**< sign the data directly */
-  SIGN_EC_HASH = 1, /**< hash and sign the data */
+  SIGN_EC_RAW    = 0, /**< sign the data directly */
+  SIGN_EC_HASH   = 1, /**< hash and sign the data */
   SIGN_EC_PREFIX = 2, /**< add Ethereum Signed Message-Proefix, hash and sign the data */
 } d_signature_type_t;
 
 /**
- * signing context. This Context is passed to the signer-function. 
+ * signing context. This Context is passed to the signer-function.
  */
 typedef struct sign_ctx {
   bytes_t            signature; /**< the resulting signature  */
@@ -347,7 +347,7 @@ typedef struct in3_get_config_ctx {
 } in3_get_config_ctx_t;
 
 // -------- CACHE ---------
-/** 
+/**
  * storage handler function for reading from cache.
  * @returns the found result. if the key is found this function should return the values as bytes otherwise `NULL`.
  **/
@@ -356,7 +356,7 @@ typedef bytes_t* (*in3_storage_get_item)(
     const char* key   /**< the key to search in the cache */
 );
 
-/** 
+/**
  * storage handler function for writing to the cache.
  **/
 typedef void (*in3_storage_set_item)(
@@ -424,7 +424,7 @@ NONULL
 #endif
 
 /*
- * creates an error attaching it to the context and returns -1. 
+ * creates an error attaching it to the context and returns -1.
  */
 in3_ret_t vc_set_error(
     in3_vctx_t* vc, /**< the verification context. */
@@ -525,7 +525,29 @@ typedef struct {
   void*               data; /**< output param set by plugin code - pointer to data requested. */
   void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */
 } in3_get_data_ctx_t;
+
+/**
+ * raises a error during config by setting the error-message and returning a error-code.
+ */
+#define CNF_ERROR(msg)                  \
+  {                                     \
+    ctx->error_msg = _strdupn(msg, -1); \
+    return IN3_EINVAL;                  \
+  }
+
+/**
+ * sets the bytes as taken from the given property to the target and raises an error if the len does not fit.
+ */
+#define CNF_SET_BYTES(dst, token, property, l)                      \
+  {                                                                 \
+    const bytes_t tmp = d_to_bytes(d_get(token, key(property)));    \
+    if (tmp.data) {                                                 \
+      if (tmp.len != l) CNF_ERROR(property " must be " #l " bytes") \
+      memcpy(dst, tmp.data, l);                                     \
+    }                                                               \
+  }
+
 #ifdef __cplusplus
 }
 #endif
-#endif //PLUGIN_H
+#endif // PLUGIN_H

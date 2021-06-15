@@ -14,7 +14,7 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
   if (error) die(error);                                             // parse-error we stop here.
   if (req) {                                                         // if type is a tuple, it means we have areuments we need to parse.
     json_ctx_t* in_data = parse_json(args->data);                    // the args are passed as a "[]"- json-array string.
-    rdata               = abi_encode(req, in_data->result, &error);  //encode data
+    rdata               = abi_encode(req, in_data->result, &error);  // encode data
     if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
     json_free(in_data);                                              // of course we clean up ;-)
   }                                                                  //

@@ -85,7 +85,7 @@ public class NodeRegistryConfiguration implements Configuration {
 
   /*
    * returns a COPY of the nodes array with the applied configuration
-   * 
+   *
    * assert nodeConfiguration.getNodesConfiguration() != nodeConfiguration.getNodesConfiguration();
    * assert Arrays.equals(nodeConfiguration.getNodesConfiguration(), nodeConfiguration.getNodesConfiguration());
    */

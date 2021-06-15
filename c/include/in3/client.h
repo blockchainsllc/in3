@@ -1,42 +1,42 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 // @PUBLIC_HEADER
 /** @file
  * this file defines the incubed configuration struct and it registration.
- * 
- * 
+ *
+ *
  * */
 
 #ifndef CLIENT_H
@@ -57,21 +57,21 @@ extern "C" {
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define CHAIN_ID_MAINNET    0x01 /**< chain_id for mainnet */
-#define CHAIN_ID_GOERLI     0x5 /**< chain_id for goerlii */
-#define CHAIN_ID_EWC        0xf6 /**< chain_id for ewc */
+#define CHAIN_ID_MAINNET    0x01  /**< chain_id for mainnet */
+#define CHAIN_ID_GOERLI     0x5   /**< chain_id for goerlii */
+#define CHAIN_ID_EWC        0xf6  /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0 /**< chain_id for ipfs */
-#define CHAIN_ID_BTC        0x99 /**< chain_id for btc */
-#define CHAIN_ID_LOCAL      0x11 /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6 /**< default replace_latest_block */
+#define CHAIN_ID_BTC        0x99  /**< chain_id for btc */
+#define CHAIN_ID_LOCAL      0x11  /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6     /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
  */
 typedef uint32_t chain_id_t;
 
-/** the type of the chain. 
- * 
+/** the type of the chain.
+ *
  * for incubed a chain can be any distributed network or database with incubed support.
  * Depending on this chain-type the previously registered verifier will be chosen and used.
  */
@@ -86,9 +86,9 @@ typedef enum {
 } in3_chain_type_t;
 
 /** the type of proof.
- * 
+ *
  * Depending on the proof-type different levels of proof will be requested from the node.
-*/
+ */
 typedef enum {
   PROOF_NONE     = 0, /**< No Verification */
   PROOF_STANDARD = 1, /**< Standard Verification of the important properties */
@@ -124,7 +124,7 @@ typedef struct in3_verified_hash {
 
 /**
  * Chain definition inside incubed.
- * 
+ *
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
@@ -198,9 +198,9 @@ struct in3_plugin {
 };
 
 /** Incubed Configuration.
- * 
+ *
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
- * 
+ *
  */
 typedef struct in3_t_ {
   uint8_t                signature_count;       /**< the number of signatures used to proof the blockhash. */
@@ -221,27 +221,27 @@ typedef struct in3_t_ {
 } in3_t;
 
 /** creates a new Incubed configuration for a specified chain and returns the pointer.
- * when creating the client only the one chain will be configured. (saves memory). 
- * but if you pass `CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
- * 
+ * when creating the client only the one chain will be configured. (saves memory).
+ * but if you pass `CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain.
+ *
  * you need to free this instance with `in3_free` after use!
- * 
+ *
  * Before using the client you still need to set the transport and optional the storage handlers:
- * 
+ *
  *  * example of initialization:
  * ```c
  * // register verifiers
  * in3_register_eth_full();
- * 
+ *
  * // create new client
  * in3_t* client = in3_for_chain(CHAIN_ID_MAINNET);
- * 
+ *
  * // configure transport
  * client->transport    = send_curl;
  *
  * // configure storage
  * in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
- * 
+ *
  * // ready to use ...
  * ```
  *
@@ -268,9 +268,9 @@ NONULL in3_ret_t in3_client_rpc_raw(
     char**      result,  /**< [in] pointer to string which will be set if the request was successful. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char**      error /**< [in] pointer to a string containing the error-message. (make sure you free it after use!) */);
 
-/** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
+/** executes a request and returns result as string. in case of an error, the error-property of the result will be set.
  * This function also supports sending bulk-requests, but you can not mix internal and external calls, since bulk means all requests will be send to picked nodes.
- * The resulting string must be free by the the caller of this function! 
+ * The resulting string must be free by the the caller of this function!
  */
 NONULL char* in3_client_exec_req(
     in3_t* c,  /**< [in] the pointer to the incubed client config. */
@@ -291,7 +291,7 @@ NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config
 
 /**
  * configures the client based on a json-config.
- * 
+ *
  * For details about the structure of the config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  * Returns NULL on success, and error string on failure (to be freed by caller) - in which case the client state is undefined
  */
@@ -302,7 +302,7 @@ NONULL char* in3_configure(
 
 /**
  * gets the current config as json.
- * 
+ *
  * For details about the structure of the config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  */
 NONULL char* in3_get_config(

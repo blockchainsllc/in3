@@ -81,8 +81,8 @@ void wrap_apdu(uint8_t* i_apdu, int len, uint16_t seq, bytes_t* o_wrapped_hid_cm
 
 int len_to_bytes(uint16_t x, uint8_t* buf) {
 
-  buf[1] = (uint8_t)(x & 0xFF);
-  buf[0] = (uint8_t)((x >> 8) & 0xFF);
+  buf[1] = (uint8_t) (x & 0xFF);
+  buf[0] = (uint8_t) ((x >> 8) & 0xFF);
   return 2;
 }
 
@@ -107,13 +107,13 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
 
     bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
 
-    if (memcmp(bug_header, read_chunk, sizeof(bug_header)) == 0) { //random bug header received, signing will have to be reattempted
+    if (memcmp(bug_header, read_chunk, sizeof(bug_header)) == 0) { // random bug header received, signing will have to be reattempted
       total_bytes_available = 0;
       index_counter         = 0;
       break;
     }
     if (bytes_read > 0) {
-      if (index_counter == 0) //first chunk read
+      if (index_counter == 0) // first chunk read
       {
         total_bytes_available = read_chunk[6];
         if (total_bytes_available == 0) {
