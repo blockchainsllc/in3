@@ -37,8 +37,8 @@ clangcheck:
   script:
     - mkdir _build
     - cd _build
-    - scan-build-11 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-11 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make
+    - scan-build-13 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-13 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make
   artifacts:
     paths:
       - report
