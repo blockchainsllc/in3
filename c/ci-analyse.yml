@@ -28,7 +28,7 @@ coverage:
 
 clangcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang11
+  image: docker.slock.it/build-images/cmake:clang13
   needs: []
   extends: .only_full
   allow_failure: false
