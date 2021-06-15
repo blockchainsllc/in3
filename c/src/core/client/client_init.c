@@ -236,7 +236,7 @@ char* in3_configure(in3_t* c, const char* config) {
 
   // make sure the json-config is parseable.
   json_ctx_t* json = parse_json((char*) config);
-  if (!json || !json->result) return config_err("in3_configure", "parse error");
+  if (!json || !json->result) return config_err("in3_configure: parse error", config);
 
   // the error-message we will return in case of an error.
   char* res = NULL;

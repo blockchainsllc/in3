@@ -525,6 +525,33 @@ typedef struct {
   void*               data; /**< output param set by plugin code - pointer to data requested. */
   void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */
 } in3_get_data_ctx_t;
+
+
+
+/**
+ * raises a error during config by setting the error-message and returning a error-code.
+ */
+#define CNF_ERROR(msg)                  \
+  {                                     \
+    ctx->error_msg = _strdupn(msg, -1); \
+    return IN3_EINVAL;                  \
+  }
+
+/**
+ * sets the bytes as taken from the given property to the target and raises an error if the len does not fit.
+ */
+#define CNF_SET_BYTES(dst, token, property, l)                      \
+  {                                                                 \
+    const bytes_t tmp = d_to_bytes(d_get(token, key(property)));    \
+    if (tmp.data) {                                                 \
+      if (tmp.len != l) CNF_ERROR(property " must be " #l " bytes") \
+      memcpy(dst, tmp.data, l);                                     \
+    }                                                               \
+  }
+
+
+
+
 #ifdef __cplusplus
 }
 #endif
