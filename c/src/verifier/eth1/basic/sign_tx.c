@@ -183,7 +183,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
     in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = {0}};
     memcpy(pctx.account, from, 20);
-    in3_ret_t prep_res = in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
+    in3_ret_t prep_res = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
 
     if (prep_res) {
       if (dst->data) _free(dst->data);
