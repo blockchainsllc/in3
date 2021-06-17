@@ -270,6 +270,7 @@ typedef struct sign_account_ctx {
 typedef struct sign_prepare_ctx {
   struct in3_req* req;     /**< the context of the request in order report errors */
   address_t       account; /**< the account to use for the signature */
+  address_t       wallet;  /**< if set to a non zero-value it will specify the wallet to use */
   bytes_t         old_tx;
   bytes_t         new_tx;
 

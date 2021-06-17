@@ -113,9 +113,10 @@ static in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) 
   // if it is not specified, we rely on the from-address of the signer.
   if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return req_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
+  // find the first account which is able to sign
   in3_sign_account_ctx_t actx = {.req = ctx, .accounts = NULL, .accounts_len = 0};
   TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
-  if (!actx.accounts) return req_set_error(ctx, "no from address found", IN3_EINVAL);
+  if (!actx.accounts || !actx.accounts_len) return req_set_error(ctx, "no from address found", IN3_EINVAL);
   memcpy(res, actx.accounts, 20);
   _free(actx.accounts);
   return IN3_OK;
@@ -181,7 +182,9 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
 
   // do we need to change it?
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
-    in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = {0}};
+    in3_sign_prepare_ctx_t pctx   = {.req = ctx, .old_tx = *dst, .new_tx = {0}};
+    bytes_t                wallet = d_to_bytes(d_get(tx, key("wallet")));
+    if (wallet.len == 20) memcpy(pctx.wallet, wallet.data, 20);
     memcpy(pctx.account, from, 20);
     in3_ret_t prep_res = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
 

@@ -9,6 +9,10 @@ types:
       descr: sender of the address (if not sepcified, the first signer will be the sender)
       type: address
       optional: true
+    wallet:
+      descr: if specified, the transaction will be send through the specified wallet.
+      type: address
+      optional: true
     value:
       descr: value in wei to send
       type: uint256
