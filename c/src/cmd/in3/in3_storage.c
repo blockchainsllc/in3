@@ -51,7 +51,7 @@
 #endif
 
 static char* _HOME_DIR = NULL;
-static char* get_storage_dir() {
+char*        get_storage_dir() {
   if (_HOME_DIR == NULL) {
 #if defined(_WIN32)
     char* home = getenv("USERPROFILE");

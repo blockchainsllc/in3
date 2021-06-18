@@ -42,6 +42,6 @@ bytes_t* storage_get_item(void* cptr, const char* key);
 
 void storage_set_item(void* cptr, const char* key, bytes_t* content);
 
-void storage_clear(void* cptr);
-
+void      storage_clear(void* cptr);
+char*     get_storage_dir();
 in3_ret_t in3_register_file_storage(in3_t* c);
