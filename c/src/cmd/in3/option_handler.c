@@ -254,6 +254,24 @@ void init_env(in3_t* c, int argc, char* argv[]) {
     }
   }
 
+  // is there a config-file we can load?
+  char* home = get_storage_dir();
+  char* cnf  = alloca(strlen(home) + 20);
+  strcpy(cnf, home);
+  strcpy(cnf + strlen(cnf) - 1, "_conf.json");
+
+  FILE* cnf_file = fopen(cnf, "r");
+  if (cnf_file) {
+    char* error = in3_configure(c, (char*) readFile(cnf_file).data);
+    if (error) {
+      char* msg = _malloc(strlen(error) + 200);
+      sprintf(msg, "Error reading the in3_conf.json : %s", error);
+      die(msg);
+    }
+    else
+      fclose(cnf_file);
+  }
+
   // handle chainId
   if (getenv("IN3_CHAIN")) configure(c, "chainId", getenv("IN3_CHAIN"));
 
