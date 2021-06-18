@@ -101,7 +101,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
 }
 
 /** gets the from-fied from the tx or ask the signer */
-static in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
+in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
   d_token_t* t = d_get(tx, K_FROM);
   if (t) {
     // we only accept valid from addresses which need to be 20 bytes
