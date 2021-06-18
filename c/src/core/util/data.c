@@ -903,6 +903,12 @@ d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {
   return r;
 }
 
+d_token_t* json_create_ref_item(json_ctx_t* jp, d_type_t type, void* data, int len) {
+  d_token_t* r = next_item(jp, type, len);
+  r->data      = data;
+  return r;
+}
+
 int json_create_object(json_ctx_t* jp) {
   next_item(jp, T_OBJECT, 0);
   return jp->len - 1;

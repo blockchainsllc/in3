@@ -116,7 +116,8 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
  */
 in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing the transaction */
                                   in3_req_t* req, /**< the current context */
-                                  bytes_t*   dst  /**< the bytes to write the result to. */
+                                  bytes_t*   dst, /**< the bytes to write the result to. */
+                                  sb_t*      meta /**< a stringbuilder in order write the wallet_state and metadata depending on the tx. */
 );
 
 /**

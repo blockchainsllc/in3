@@ -34,6 +34,10 @@ types:
       descr: the data-section of the transaction
       type: bytes
       optional: true
+    signatures:  
+      descr: additional signatures which should be used when sending through a multisig
+      type: bytes
+      optional: true
 
 
   blockheader:

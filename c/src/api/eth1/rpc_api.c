@@ -520,15 +520,24 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
 static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1);
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT);
-  d_token_t* tx  = d_get_at(ctx->params, 0);
-  bytes_t    dst = {0};
+  d_token_t* tx          = d_get_at(ctx->params, 0);
+  bytes_t    dst         = {0};
+  sb_t       sb          = {0};
+  bool       write_debug = (d_len(ctx->params) == 2 && d_get_int_at(ctx->params, 1));
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_prepare_unsigned_tx(tx, ctx->req, &dst))
+  if (write_debug) sb_add_char(&sb, '{');
+  TRY_CATCH(eth_prepare_unsigned_tx(tx, ctx->req, &dst, write_debug ? &sb : NULL), _free(sb.data))
 #else
   if (ctx->params || tx || ctx) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
-  in3_rpc_handle_with_bytes(ctx, dst);
+  if (sb.data) {
+    sb_add_chars(&sb, ",\"state\":\"unsigned\"}");
+    in3_rpc_handle_with_string(ctx, sb.data);
+  }
+  else
+    in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
+  _free(sb.data);
   return IN3_OK;
 }
 
@@ -540,7 +549,7 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   bytes_t*   data    = NULL;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw))
+    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw, NULL))
     from_b = d_get_bytes(tx_data, K_FROM);
     data   = &tx_raw;
 #else

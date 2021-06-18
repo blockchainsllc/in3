@@ -77,6 +77,14 @@ bytes_t* in3_cache_get_entry(
 );
 
 /**
+ * get the entry for a given property.
+ */
+cache_entry_t* in3_cache_get_entry_by_prop(
+    cache_entry_t* cache, /**< the root entry of the linked list. */
+    cache_props_t  prop   /**< the prop, which must match exactly */
+);
+
+/**
  * adds an entry to the linked list.
  */
 cache_entry_t* in3_cache_add_entry(

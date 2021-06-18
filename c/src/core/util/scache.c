@@ -68,3 +68,10 @@ cache_entry_t* in3_cache_add_entry(cache_entry_t** cache, bytes_t key, bytes_t v
   if (cache) *cache = entry;
   return entry;
 }
+
+cache_entry_t* in3_cache_get_entry_by_prop(cache_entry_t* cache, cache_props_t prop) {
+  for (; cache; cache = cache->next) {
+    if (cache->props == prop) return cache;
+  }
+  return NULL;
+}

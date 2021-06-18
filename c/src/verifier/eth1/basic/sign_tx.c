@@ -154,7 +154,7 @@ static inline uint64_t get_v(chain_id_t chain) {
 /**
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
-in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
+in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta) {
   address_t from;
 
   // read the values
@@ -180,11 +180,22 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   *dst         = *raw;
   _free(raw);
 
+  // write state?
+  if (meta) {
+    sb_add_rawbytes(meta, "\"input\":{\"to\":\"0x", to, 0);
+    sb_add_rawbytes(meta, "\",\"sender\":\"0x", bytes(from, 20), 0);
+    sb_add_rawbytes(meta, "\",\"value\":\"0x", value, 0);
+    sb_add_rawbytes(meta, "\",\"data\":\"0x", data, 0);
+    sb_add_rawbytes(meta, "\",\"gas\":\"0x", gas_limit, 0);
+    sb_add_rawbytes(meta, "\",\"gasPrice\":\"0x", gas_price, 0);
+    sb_add_rawbytes(meta, "\",\"nonce\":\"0x", nonce, 0);
+    sb_add_rawbytes(meta, "\",\"pre_unsigned\":\"0x", *dst, 0);
+    sb_add_chars(meta, "\"}");
+  }
+
   // do we need to change it?
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
-    in3_sign_prepare_ctx_t pctx   = {.req = ctx, .old_tx = *dst, .new_tx = {0}};
-    bytes_t                wallet = d_to_bytes(d_get(tx, key("wallet")));
-    if (wallet.len == 20) memcpy(pctx.wallet, wallet.data, 20);
+    in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = {0}, .output = meta, .tx = tx};
     memcpy(pctx.account, from, 20);
     in3_ret_t prep_res = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
 
@@ -197,6 +208,11 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
       if (dst->data) _free(dst->data);
       *dst = pctx.new_tx;
     }
+  }
+
+  if (meta) {
+    sb_add_rawbytes(meta, ",\"unsigned\":\"0x", *dst, 0);
+    sb_add_chars(meta, "\"");
   }
 
   // cleanup subcontexts
@@ -278,7 +294,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
     memcpy(unsigned_tx.data, raw.data, raw.len);
   }
   else
-    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
+    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx, NULL));
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (unsigned_tx.data) _free(unsigned_tx.data);)
 
