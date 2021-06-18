@@ -62,7 +62,11 @@ int main(int argc, char* argv[]) {
     else {
       // otherwise we add it to the params
       if (args->len > 1) sb_add_char(args, ',');
-      if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain.chain_id != CHAIN_ID_BTC)
+      if (*argv[i] == '-' && *(argv[i] + 1) == 0) {
+        bytes_t b = readFile(stdin);
+        sb_add_range(args, (char*) b.data, 0, b.len);
+      }
+      else if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain.chain_id != CHAIN_ID_BTC)
         sb_print(args, "\"%s\"", get_wei(argv[i]));
       else
         sb_print(args,
