@@ -98,15 +98,14 @@ void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t s
 in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_req_t* ctx) {
   if (conf->sign_type != ZK_SIGN_CREATE2) return IN3_OK;
   if (conf->account) return IN3_OK;
-  if (!conf->create2) return req_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->creator, 20)) return req_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->codehash, 32)) return req_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->salt_arg, 32)) return req_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2.creator, 20)) return req_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2.codehash, 32)) return req_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2.salt_arg, 32)) return req_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
   if (!conf->account) {
     address_t pub_key_hash;
     TRY(zksync_get_pubkey_hash(conf, ctx, pub_key_hash))
     conf->account = _malloc(20);
-    zksync_calculate_account(conf->create2->creator, conf->create2->codehash, conf->create2->salt_arg, pub_key_hash, conf->account);
+    zksync_calculate_account(conf->create2.creator, conf->create2.codehash, conf->create2.salt_arg, pub_key_hash, conf->account);
   }
   return IN3_OK;
 }
