@@ -36,7 +36,7 @@ static bool _send(in3_t* c, char** method, sb_t* params) {
 #ifdef MOD_WALLET
   void* conf = wallet_get_config(c);
   if (conf && wallet_get_default(conf, 0))
-    *method = "l1_wallet_exec";
+    *method = "wallet_exec";
 #endif
   return false;
 }
