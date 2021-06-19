@@ -160,8 +160,9 @@ static in3_ret_t sign_sync_transfer(zksync_tx_data_t* data, in3_req_t* ctx, zksy
 
   if (!data->prepare) // sign data
     return zksync_sign(conf, bytes(raw, (*total)), ctx, sig);
+  else
 
-  data->prepare->zk_message = bytes_dup(bytes(raw, (*total)));
+    data->prepare->zk_message = bytes_dup(bytes(raw, (*total)));
   return IN3_OK;
 }
 
@@ -177,7 +178,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
     create_human_readable_tx_info(&msg, data, data->type == ZK_WITHDRAW ? "Withdraw " : "Transfer ");
 
     if (data->prepare)
-      data->prepare->human_message = _strdupn(msg_data);
+      data->prepare->human_message = _strdupn(msg_data, -1);
     else {
       TRY(req_require_signature(ctx, SIGN_EC_PREFIX, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
       in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
@@ -326,10 +327,10 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
       sb_add_rawbytes(sb, "\"type\":\"ECDSA\",\"ethSignature\":\"0x", signature, 0);
     else if (conf->sign_type == ZK_SIGN_CONTRACT)
       sb_add_rawbytes(sb, "\"type\":\"Onchain", signature, 0);
-    else if (conf->sign_type == ZK_SIGN_CREATE2 && conf->create2) {
-      sb_add_rawbytes(sb, "\"type\":\"CREATE2\",\"creatorAddress\":\"0x", bytes(conf->create2->creator, 20), 0);
-      sb_add_rawbytes(sb, "\",\"saltArg\":\"0x", bytes(conf->create2->salt_arg, 32), 0);
-      sb_add_rawbytes(sb, "\",\"codeHash\":\"0x", bytes(conf->create2->codehash, 32), 0);
+    else if (conf->sign_type == ZK_SIGN_CREATE2) {
+      sb_add_rawbytes(sb, "\"type\":\"CREATE2\",\"creatorAddress\":\"0x", bytes(conf->create2.creator, 20), 0);
+      sb_add_rawbytes(sb, "\",\"saltArg\":\"0x", bytes(conf->create2.salt_arg, 32), 0);
+      sb_add_rawbytes(sb, "\",\"codeHash\":\"0x", bytes(conf->create2.codehash, 32), 0);
     }
     sb_add_chars(sb, "\"}");
   }

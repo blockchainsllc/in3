@@ -208,7 +208,6 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->main_contract) _free(conf->main_contract);
   if (conf->account) _free(conf->account);
   if (conf->tokens) _free(conf->tokens);
-  if (conf->create2) _free(conf->create2);
   if (conf->proof_verify_method) _free(conf->proof_verify_method);
   if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
   if (conf->incentive && conf->incentive->token) _free(conf->incentive->token);
@@ -311,13 +310,12 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   d_token_t* create2 = d_get(ctx->token, CONFIG_KEY("create2"));
   if (create2) {
     conf->sign_type = ZK_SIGN_CREATE2;
-    if (!conf->create2) conf->create2 = _calloc(1, sizeof(zk_create2_t));
-    bytes_t* t = d_get_bytes(create2, CONFIG_KEY("creator"));
-    if (t && t->len == 20) memcpy(conf->create2->creator, t->data, 20);
+    bytes_t* t      = d_get_bytes(create2, CONFIG_KEY("creator"));
+    if (t && t->len == 20) memcpy(conf->create2.creator, t->data, 20);
     t = d_get_bytes(create2, CONFIG_KEY("saltarg"));
-    if (t && t->len == 32) memcpy(conf->create2->salt_arg, t->data, 32);
+    if (t && t->len == 32) memcpy(conf->create2.salt_arg, t->data, 32);
     t = d_get_bytes(create2, CONFIG_KEY("codehash"));
-    if (t && t->len == 32) memcpy(conf->create2->codehash, t->data, 32);
+    if (t && t->len == 32) memcpy(conf->create2.codehash, t->data, 32);
   }
 
   d_token_t* incentive = d_get(ctx->token, CONFIG_KEY("incentive"));
@@ -368,6 +366,13 @@ in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
     default: return IN3_ENOTSUP;
   }
   return IN3_EIGNORE;
+}
+
+zksync_config_t* zksync_get_conf(in3_req_t* req) {
+  for (in3_plugin_t* p = req->client->plugins; p; p = p->next) {
+    if (p->action_fn == handle_zksync) return p->data;
+  }
+  return NULL;
 }
 
 in3_ret_t in3_register_zksync(in3_t* c) {

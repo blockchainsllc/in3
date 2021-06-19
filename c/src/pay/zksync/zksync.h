@@ -120,7 +120,7 @@ typedef struct zksync_config {
   zksync_token_t*      tokens;              /**< the token-list */
   zk_sign_type_t       sign_type;           /**< the signature-type to use*/
   uint32_t             version;             /**< zksync version */
-  zk_create2_t*        create2;             /**< create2 args */
+  zk_create2_t         create2;             /**< create2 args */
   bytes_t              musig_pub_keys;      /**< the public keys of all participants of a schnorr musig signature */
   zk_musig_session_t*  musig_sessions;      /**< linked list of open musig sessions */
   char**               musig_urls;          /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
@@ -191,6 +191,9 @@ in3_ret_t           update_nodelist_from_cache(in3_req_t* req, unsigned int node
 in3_ret_t           handle_zksync(void* conf, in3_plugin_act_t action, void* arg);
 in3_ret_t           zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
 in3_ret_t           zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+
+NONULL zksync_config_t* zksync_get_conf(in3_req_t* req);
+
 #ifdef __cplusplus
 }
 #endif

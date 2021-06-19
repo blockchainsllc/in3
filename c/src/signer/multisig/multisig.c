@@ -45,7 +45,7 @@
 #include "../../verifier/eth1/nano/rlp.h"
 #include "../../verifier/eth1/nano/serialize.h"
 
-bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
+static bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
 
   // check messagehash
   uint8_t pubkey[65], tmp[32];
