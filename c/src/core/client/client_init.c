@@ -507,10 +507,18 @@ in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* ctx, in3_plugin_act_t acti
   assert(ctx);
   if (!in3_plugin_is_registered(ctx->client, action))
     return IN3_OK;
+  int retry = 0;
+
+_retry:
 
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->acts & action) {
       in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
+      if (ret == IN3_ERETRY) {
+        retry++;
+        if (retry > 3) return req_set_error(ctx, "Max retries when executing plugins exceeded!", IN3_EUNKNOWN);
+        goto _retry;
+      }
       if (ret != IN3_EIGNORE) return ret;
     }
   }
