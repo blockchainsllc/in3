@@ -142,17 +142,23 @@ typedef struct pay_criteria {
 } pay_criteria_t;
 
 /** a transaction */
+
 typedef struct {
-  zksync_config_t* conf;       /**< the configuration of the zksync-account */
-  uint32_t         account_id; /**< the id of the account */
-  address_t        from;       /**< the from-address */
-  address_t        to;         /**< the address of the receipient */
-  zksync_token_t*  token;      /**< the token to use */
-  uint32_t         nonce;      /**< current nonce */
-  zk_msg_type_t    type;       /**< message type */
-  zk_fee_t         amount;     /**< amount to send */
-  zk_fee_t         fee;        /**< ransaction fees */
-  zksync_valid_t   valid;      /**< validity */
+  bytes_t zk_message;
+  char*   human_message;
+} zk_prepare_ctx_t;
+typedef struct {
+  zksync_config_t*  conf;       /**< the configuration of the zksync-account */
+  uint32_t          account_id; /**< the id of the account */
+  address_t         from;       /**< the from-address */
+  address_t         to;         /**< the address of the receipient */
+  zksync_token_t*   token;      /**< the token to use */
+  uint32_t          nonce;      /**< current nonce */
+  zk_msg_type_t     type;       /**< message type */
+  zk_fee_t          amount;     /**< amount to send */
+  zk_fee_t          fee;        /**< ransaction fees */
+  zksync_valid_t    valid;      /**< validity */
+  zk_prepare_ctx_t* prepare;    /**< if a prepare ctx is set the data will not be signed, but only the messages are created and stored.*/
 } zksync_tx_data_t;
 
 /** registers the zksync-plugin in the client */
