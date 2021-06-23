@@ -180,6 +180,12 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ac
 }
 
 static in3_ret_t create_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* msg, char** proof_data) {
+  cache_entry_t* cached = in3_cache_get_entry_by_prop(ctx->cache, ZKSYNC_CACHED_PROOF);
+  if (cached) {
+    *proof_data = (void*) cached->value.data;
+    return IN3_OK;
+  }
+
   if (!conf->proof_create_method) return req_set_error(ctx, "No proof_method configured to verify the proof", IN3_ECONFIG);
 
   // prepare the arguments to create the proof

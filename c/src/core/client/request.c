@@ -390,6 +390,12 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   ctx = req_new(parent->client, req);
   if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
   if (child) *child = ctx;
+
+  // inherit cache-entries
+  for (cache_entry_t* ce = parent->cache; ce; ce = ce->next) {
+    if (ce->props & CACHE_PROP_INHERIT) in3_cache_add_entry(&ctx->cache, ce->key, ce->value)->props = ce->props & (~CACHE_PROP_MUST_FREE);
+  }
+
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   in3_ret_t ret = req_add_required(parent, ctx);

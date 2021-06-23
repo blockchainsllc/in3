@@ -56,7 +56,7 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_m
   // create payload
   cache_entry_t* cached = ctx->req->cache;
   while (cached) {
-    if (cached->props & 0x10) break;
+    if (cached->props & 0xF100) break;
     cached = cached->next;
   }
   if (!cached) {
@@ -66,7 +66,7 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_m
     TRY(ret)
     if (!sb.data) return IN3_EUNKNOWN;
     cached        = in3_cache_add_entry(&ctx->req->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)));
-    cached->props = CACHE_PROP_MUST_FREE | 0x10;
+    cached->props = CACHE_PROP_MUST_FREE | 0xF100;
   }
 
   d_token_t* result = NULL;

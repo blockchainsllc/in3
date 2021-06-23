@@ -58,6 +58,15 @@ typedef uint64_t zk_fee_t;
 typedef uint64_t zk_fee_p_t;
 #endif
 
+/**
+ * cache-key for specifying the a different config. The value.data needs to point to a zksync_config_t-struct.
+ */
+static const cache_props_t ZKSYNC_CACHED_CONFIG = 0xFE00 | CACHE_PROP_INHERIT;
+/**
+ * cache-key for specifying the the proof. The value.data needs to point to a char* containing the proof, that must be used when signing with musig.
+ */
+static const cache_props_t ZKSYNC_CACHED_PROOF = 0xFF00 | CACHE_PROP_INHERIT;
+
 /** represents a token supported in zksync. */
 typedef struct {
   uint16_t  id;        /**< the id used in messaged */

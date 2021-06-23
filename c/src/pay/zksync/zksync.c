@@ -145,6 +145,10 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // mark zksync as experimental
   REQUIRE_EXPERIMENTAL(ctx->req, "zksync")
 
+  // use custom conf if set
+  const cache_entry_t* cached = in3_cache_get_entry_by_prop(ctx->req->cache, ZKSYNC_CACHED_CONFIG);
+  if (cached) conf = (void*) cached->value.data;
+
   // handle rpc -functions
   TRY_RPC("deposit", zksync_deposit(conf, ctx))
   TRY_RPC("transfer", zksync_transfer(conf, ctx, ZK_TRANSFER))
