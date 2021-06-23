@@ -182,7 +182,7 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ac
 static in3_ret_t create_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* msg, char** proof_data) {
   cache_entry_t* cached = in3_cache_get_entry_by_prop(ctx->cache, ZKSYNC_CACHED_PROOF);
   if (cached) {
-    *proof_data = (void*) cached->value.data;
+    *proof_data = _strdupn((char*) cached->value.data, -1);
     return IN3_OK;
   }
 
@@ -260,6 +260,12 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     int pos = get_pubkey_pos(conf, pub_keys, ctx->req);
     in3_log_debug("create new session with pub_key pos %d\n", pos);
     TRY(pos)
+
+    // check if we have all musig_urls
+    for (unsigned int n = 0; n < pub_keys.len; n += 32) {
+      if (n / 32 == pos) continue;
+      if (conf->musig_urls == NULL || !conf->musig_urls[n / 32]) return req_set_error(ctx->req, "Missing musig_url!", IN3_ECONFIG);
+    }
 
     // if a method is specified we create the proof here
     if (conf->proof_create_method && proof == NULL)
