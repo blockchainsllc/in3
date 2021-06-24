@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 #include "bytes.h"
+#include "data.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -70,25 +71,25 @@ typedef struct sb {
  */
 NONULL static inline sb_t sb_stack(char* p) { return (sb_t){.allocted = 0xffffff, .len = 0, .data = p}; }
 
-sb_t*        sb_new(const char* chars); /**< creates a new stringbuilder and copies the inital characters into it.*/
-NONULL sb_t* sb_init(sb_t* sb);         /**< initializes a stringbuilder by allocating memory. */
-NONULL void  sb_free(sb_t* sb);         /**< frees all resources of the stringbuilder */
+sb_t*  sb_new(const char* chars); /**< creates a new stringbuilder and copies the inital characters into it.*/
+NONULL sb_t* sb_init(sb_t* sb);   /**< initializes a stringbuilder by allocating memory. */
+NONULL void  sb_free(sb_t* sb);   /**< frees all resources of the stringbuilder */
 
 NONULL sb_t* sb_add_char(sb_t* sb, char c);                                                                 /**< add a single character */
 NONULL sb_t* sb_add_chars(sb_t* sb, const char* chars);                                                     /**< adds a string */
 NONULL sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len);                                 /**< add a string range */
 NONULL sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int value_len, bool as_string); /**< adds a value with an optional key. if as_string is true the value will be quoted. */
 NONULL_FOR((1, 3))
-sb_t*        sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array); /**< add bytes as 0x-prefixed hexcoded string (including an optional prefix), if len>1 is passed bytes maybe an array ( if as_array==true)  */
-NONULL sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);                                     /**< add a integer value as hexcoded, 0x-prefixed string*/
-NONULL sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars);                                        /**< add chars but escapes all quotes */
-NONULL sb_t* sb_add_int(sb_t* sb, int64_t val);                                                        /**< adds a numeric value to the stringbuilder */
-NONULL char* format_json(const char* json);                                                            /**< format a json string and returns a new string, which needs to be freed */
+sb_t*  sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array); /**< add bytes as 0x-prefixed hexcoded string (including an optional prefix), if len>1 is passed bytes maybe an array ( if as_array==true)  */
+NONULL sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);                               /**< add a integer value as hexcoded, 0x-prefixed string*/
+NONULL sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars);                                  /**< add chars but escapes all quotes */
+NONULL sb_t* sb_add_int(sb_t* sb, int64_t val);                                                  /**< adds a numeric value to the stringbuilder */
+NONULL char* format_json(const char* json);                                                      /**< format a json string and returns a new string, which needs to be freed */
 NONULL_FOR((1))
 sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size);
 sb_t* sb_print(sb_t* sb, const char* fmt, ...);
 sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args);
-
+sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
 #ifdef __cplusplus
 }
 #endif

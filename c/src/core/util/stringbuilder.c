@@ -284,3 +284,29 @@ sb_t* sb_print(sb_t* sb, const char* fmt, ...) {
   va_end(args);
   return sb;
 }
+
+sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
+  if (!token) return sb;
+  if (prefix) sb_add_chars(sb, prefix);
+  switch (d_type(token)) {
+    case T_ARRAY:
+    case T_OBJECT: {
+      str_range_t r = d_to_json(token);
+      return sb_add_range(sb, r.data, 0, r.len);
+    }
+    case T_BOOLEAN:
+      return sb_add_chars(sb, d_int(token) ? "true" : "false");
+    case T_INTEGER:
+      return sb_add_int(sb, d_int(token));
+    case T_BYTES:
+      return sb_add_bytes(sb, NULL, d_bytes(token), 1, false);
+    case T_STRING: {
+      sb_add_char(sb, '\"');
+      sb_add_escaped_chars(sb, d_string(token));
+      return sb_add_char(sb, '\"');
+    }
+    case T_NULL:
+      return sb_add_chars(sb, "null");
+  }
+  return sb;
+}
