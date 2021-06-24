@@ -153,7 +153,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   TRY_RPC("deposit", zksync_deposit(conf, ctx))
   TRY_RPC("transfer", zksync_transfer(conf, ctx, ZK_TRANSFER))
   TRY_RPC("withdraw", zksync_transfer(conf, ctx, ZK_WITHDRAW))
-  TRY_RPC("set_key", zksync_set_key(conf, ctx))
+  TRY_RPC("set_key", zksync_set_key(conf, ctx, false))
   TRY_RPC("emergency_withdraw", zksync_emergency_withdraw(conf, ctx))
   TRY_RPC("sync_key", zksync_get_key(conf, ctx))
   TRY_RPC("aggregate_pubkey", zksync_aggregate_pubkey(ctx))

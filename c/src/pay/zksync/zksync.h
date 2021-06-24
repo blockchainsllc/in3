@@ -174,7 +174,7 @@ typedef struct {
 NONULL in3_ret_t in3_register_zksync(in3_t* c);
 
 /** sets a PubKeyHash for the current Account */
-NONULL in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+NONULL in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool only_update);
 
 /** sends a transfer transaction in Layer 2*/
 NONULL in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_msg_type_t type);

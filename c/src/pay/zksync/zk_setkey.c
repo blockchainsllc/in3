@@ -57,16 +57,21 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
   return IN3_OK;
 }
 
-in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool only_update) {
   address_t      pub_hash;
+  d_token_t      tmp;
   zksync_valid_t valid;
   uint32_t       nonce;
-  int            plen    = d_len(ctx->params);
+  int            plen    = only_update ? 0 : d_len(ctx->params);
   d_token_t*     token   = plen == 1 ? ctx->params + 1 : NULL;
   bytes_t*       new_key = d_get_bytes_at(ctx->params, 1);
   valid.from             = plen > 2 ? d_get_long_at(ctx->params, 2) : 0;
   valid.to               = plen > 3 ? d_get_long_at(ctx->params, 3) : 0;
   if (!valid.to) valid.to = 0xffffffffl;
+  if (!token) {
+    token = &tmp;
+    tmp   = (d_token_t){.data = (void*) "ETH", .len = T_STRING << 28 | 3, .key = 0};
+  }
 
   zksync_token_t* token_data = NULL;
   if (!token) return req_set_error(ctx->req, "Missing fee token as first token", IN3_EINVAL);
@@ -92,9 +97,10 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
                      ))
 
   // create payload for change key tx
+  cache_props_t  ckey   = CACHE_PROP_MUST_FREE | 0xC100;
   cache_entry_t* cached = ctx->req->cache;
   while (cached) {
-    if (cached->props & 0x10) break;
+    if (cached->props == ckey) break;
     cached = cached->next;
   }
   if (!cached) {
@@ -104,12 +110,20 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY(ret)
     if (!sb.data) return IN3_EUNKNOWN;
     cached        = in3_cache_add_entry(&ctx->req->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)));
-    cached->props = CACHE_PROP_MUST_FREE | 0x10;
+    cached->props = ckey;
   }
 
   d_token_t* result = NULL;
   in3_ret_t  ret    = send_provider_request(ctx->req, conf, "tx_submit", (void*) cached->value.data, &result);
   if (ret == IN3_OK) {
+    if (only_update) {
+      if (d_type(result) == T_STRING) {
+        conf->nonce++;
+        memcpy(conf->pub_key_hash_set, pub_hash, 20);
+        return IN3_OK;
+      }
+      return req_set_error(ctx->req, "Invalid response qwhen setting key", IN3_ERPC);
+    }
     // return only the pubkeyhash as result
     sb_t* sb = in3_rpc_handle_start(ctx);
     sb_add_rawbytes(sb, "\"sync:", bytes(pub_hash, 20), 20);
