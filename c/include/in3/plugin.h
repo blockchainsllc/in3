@@ -270,10 +270,10 @@ typedef struct sign_account_ctx {
 typedef struct sign_prepare_ctx {
   struct in3_req* req;     /**< the context of the request in order report errors */
   address_t       account; /**< the account to use for the signature */
-  address_t       wallet;  /**< if set to a non zero-value it will specify the wallet to use */
-  bytes_t         old_tx;
-  bytes_t         new_tx;
-
+  d_token_t*      tx;      /**< the tx-definition, which may contain additional properties */
+  bytes_t         old_tx;  /**< the source-transaction */
+  bytes_t         new_tx;  /**< the new-transaction, if the transaction should not changed, the data-ptr must be NULL otherwise a new allocated memory is expected, which will be cleaned by the caller. */
+  sb_t*           output;  /**< if this is not  NULL, the transaction will not be send, but returns only the state */
 } in3_sign_prepare_ctx_t;
 
 // -------------- SIGN -----------------------

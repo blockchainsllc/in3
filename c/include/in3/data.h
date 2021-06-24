@@ -59,7 +59,6 @@ extern "C" {
 
 #include "bytes.h"
 #include "mem.h"
-#include "stringbuilder.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -103,6 +102,8 @@ typedef struct json_parser {
   size_t     keys_last; // points to the position of the last key.
 } json_ctx_t;
 
+#include "stringbuilder.h"
+
 /**
  *
  * returns the byte-representation of token.
@@ -136,16 +137,16 @@ d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); 
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
 
-NONULL void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
-NONULL json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json(const char* js);                            /**< parses json-data, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json_indexed(const char* js);                    /**< parses json-data, which needs to be freed after usage! */
-NONULL void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
-NONULL str_range_t d_to_json(const d_token_t* item);                      /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
-char*              d_create_json(json_ctx_t* ctx, d_token_t* item);       /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
+NONULL void d_serialize_binary(bytes_builder_t* bb, d_token_t* t);  /**< write the token as binary data into the builder */
+NONULL json_ctx_t* parse_binary(const bytes_t* data);               /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_binary_str(const char* data, int len);     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json(const char* js);                      /**< parses json-data, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json_indexed(const char* js);              /**< parses json-data, which needs to be freed after usage! */
+NONULL void        json_free(json_ctx_t* parser_ctx);               /**< frees the parse-context after usage */
+NONULL str_range_t d_to_json(const d_token_t* item);                /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+char*              d_create_json(json_ctx_t* ctx, d_token_t* item); /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
-json_ctx_t*       json_create();
+json_ctx_t* json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
 NONULL d_token_t* json_create_bool(json_ctx_t* jp, bool value);
 NONULL d_token_t* json_create_int(json_ctx_t* jp, uint64_t value);
@@ -154,7 +155,9 @@ NONULL d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value);
 NONULL int        json_create_object(json_ctx_t* jp);
 NONULL int        json_create_array(json_ctx_t* jp);
 NONULL void       json_object_add_prop(json_ctx_t* jp, int ob_index, d_key_t key, d_token_t* value);
-NONULL void       json_array_add_value(json_ctx_t* jp, int parent_index, d_token_t* value);
+NONULL d_token_t* json_create_ref_item(json_ctx_t* jp, d_type_t type, void* data, int len);
+
+NONULL void json_array_add_value(json_ctx_t* jp, int parent_index, d_token_t* value);
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
 char* d_get_keystr(json_ctx_t* json, d_key_t k); /**< returns the string for a key. This only works for index keys or known keys! */
@@ -179,7 +182,6 @@ static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_byt
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                     /**< check if the parser context was created from binary data. */
 bytes_t*               d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
 d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
-
 /**
  * iterator over elements of a array opf object.
  *

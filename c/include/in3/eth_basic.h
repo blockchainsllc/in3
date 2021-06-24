@@ -116,7 +116,8 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
  */
 in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing the transaction */
                                   in3_req_t* req, /**< the current context */
-                                  bytes_t*   dst  /**< the bytes to write the result to. */
+                                  bytes_t*   dst, /**< the bytes to write the result to. */
+                                  sb_t*      meta /**< a stringbuilder in order write the wallet_state and metadata depending on the tx. */
 );
 
 /**
@@ -144,5 +145,10 @@ const uint8_t* empty_hash();
  * minimum signer for the wallet, returns the signed message which needs to be freed
  */
 RETURNS_NONULL NONULL char* eth_wallet_sign(const char* key, const char* data);
+
+/**
+ * determines the from-address in case no from-address has been specified.
+ */
+NONULL in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res);
 
 #endif // in3_eth_basic_h__
