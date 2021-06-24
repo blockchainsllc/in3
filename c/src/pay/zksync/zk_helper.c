@@ -292,13 +292,15 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_req_t* ctx, d_token_t* non
 
 in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
   if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
-#ifdef ZKSYNC_256
     bytes_t b = d_to_bytes(fee_in);
-    memcpy(fee + 32 - b.len, b.data, b.len);
+    if (b.data && b.len) {
+#ifdef ZKSYNC_256
+      memcpy(fee + 32 - b.len, b.data, b.len);
 #else
-    *fee = d_long(fee_in);
+      *fee = d_long(fee_in);
 #endif
-    return IN3_OK;
+      return IN3_OK;
+    }
   }
   d_token_t* result;
   bool       is_object_type = *type == '{';
