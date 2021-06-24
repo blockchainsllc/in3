@@ -98,7 +98,7 @@ static d_key_t add_key(json_ctx_t* ctx, const char* name, size_t len) {
   return (d_key_t) k + 1;
 }
 
-static size_t d_token_size(const d_token_t* item) {
+size_t d_token_size(const d_token_t* item) {
   if (item == NULL) return 0;
   size_t i, c = 1;
   switch (d_type(item)) {
@@ -1024,3 +1024,36 @@ d_token_t* d_getl(d_token_t* item, uint16_t k, uint32_t minl) {
 d_iterator_t d_iter(d_token_t* parent) {
   return (d_iterator_t){.left = d_len(parent), .token = parent + 1};
 } /**< creates a iterator for a object or array */
+
+d_token_t* token_from_string(char* val, d_token_t* d, bytes32_t buffer) {
+  if (!val)
+    d->len = T_NULL << 28;
+  else {
+    if (val[0] == '0' && val[1] == 'x') {
+      int l = hex_to_bytes(val + 2, strlen(val + 2), buffer, 32);
+      if (l < 5) {
+        d->data = NULL;
+        d->len  = bytes_to_int(buffer, 4) | (T_INTEGER << 28);
+      }
+      else {
+        d->data = buffer;
+        d->len  = l;
+      }
+    }
+    else {
+      d->data = (uint8_t*) val;
+      d->len  = strlen(val) | (T_STRING << 28);
+    }
+  }
+  return d;
+}
+
+d_token_t* token_from_bytes(bytes_t b, d_token_t* d) {
+  if (!b.data)
+    d->len = T_NULL << 28;
+  else {
+    d->data = b.data;
+    d->len  = b.len;
+  }
+  return d;
+}

@@ -151,6 +151,52 @@ static inline uint64_t get_v(chain_id_t chain) {
   return v;
 }
 
+/** creates a memory in heap which will automatilcy be freed when the context is freed.
+ * if called twice with the same key, the same memory is returned
+ */
+static bytes_t get_or_create_cached(in3_req_t* req, d_key_t k, int size) {
+  cache_props_t  p     = (((uint32_t) k) << 16) | CACHE_PROP_MUST_FREE;
+  cache_entry_t* cache = in3_cache_get_entry_by_prop(req->cache, p);
+  if (!cache) {
+    cache        = in3_cache_add_entry(&req->cache, bytes(NULL, 0), bytes(_calloc(1, size), size));
+    cache->props = p;
+  }
+  return cache->value;
+}
+
+static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+  char* token = d_get_string(tx, key("token"));
+  if (token && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
+    if (to->len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
+    *data = get_or_create_cached(req, key("pdata"), 68);
+    memcpy(data->data, "\xa9\x05\x9c\xbb", 4);                         // transfer (address, uint256)
+    memcpy(data->data + 4 + 32 - 20, to->data, 20);                    // recipient
+    memcpy(data->data + 4 + 64 - value->len, value->data, value->len); // value
+
+    *to = get_or_create_cached(req, key("pto"), 20);
+    hex_to_bytes(token, -1, to->data, to->len);
+
+    uint64_t gas = bytes_to_long(gas_limit->data, gas_limit->len) + 100000; // we add 100000 gas for using transfer
+    *gas_limit   = get_or_create_cached(req, key("pgas"), 8);
+    long_to_bytes(gas, gas_limit->data);
+    b_optimize_len(gas_limit);
+
+    value->len = 0; // we don't need a value anymore, since it is encoded
+  }
+  else if (token)
+    return req_set_error(req, "Invalid Token. Only token-addresses are supported!", IN3_EINVAL);
+}
+
+/** based on the tx-entries the transaction is manipulated before creating the raw transaction. */
+static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+  // do we need to convert to the ERC20.transfer function?
+  TRY(transform_erc20(req, tx, to, value, data, gas_limit))
+
+  // TODO handle abi-encoding....
+
+  return IN3_OK;
+}
+
 /**
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
@@ -175,11 +221,6 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   TRY(get_from_address(tx, ctx, from))
   TRY(get_nonce_and_gasprice(&nonce, &gas_price, ctx, from))
 
-  // create raw without signature
-  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(chain_id), bytes(NULL, 0), bytes(NULL, 0));
-  *dst         = *raw;
-  _free(raw);
-
   // write state?
   if (meta) {
     sb_add_rawbytes(meta, "\"input\":{\"to\":\"0x", to, 0);
@@ -189,7 +230,24 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
     sb_add_rawbytes(meta, "\",\"gas\":\"0x", gas_limit, 0);
     sb_add_rawbytes(meta, "\",\"gasPrice\":\"0x", gas_price, 0);
     sb_add_rawbytes(meta, "\",\"nonce\":\"0x", nonce, 0);
-    sb_add_rawbytes(meta, "\",\"pre_unsigned\":\"0x", *dst, 0);
+    sb_add_char(meta, '\"');
+    sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));
+    sb_add_json(meta, ",\"fn_args\":", d_get(tx, key("fn_args")));
+    sb_add_json(meta, ",\"token\":", d_get(tx, key("token")));
+    sb_add_json(meta, ",\"wallet\":", d_get(tx, key("wallet")));
+  }
+
+  // do we need to transform the tx before we sign it?
+  TRY(transform_tx(ctx, tx, &to, &value, &data, &gas_limit));
+
+  // create raw without signature
+  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(chain_id), bytes(NULL, 0), bytes(NULL, 0));
+  *dst         = *raw;
+  _free(raw);
+
+  // write state?
+  if (meta) {
+    sb_add_rawbytes(meta, ",\"pre_unsigned\":\"0x", *dst, 0);
     sb_add_chars(meta, "\"}");
   }
 

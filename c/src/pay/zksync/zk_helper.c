@@ -382,7 +382,13 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
   if (!token_dst) return IN3_OK;
 
   for (unsigned int i = 0; i < conf->token_len; i++) {
-    if (d_type(token_src) == T_STRING) {
+    if (d_type(token_src) == T_INTEGER) {
+      if (d_int(token_src) == (int32_t) conf->tokens[i].id) {
+        *token_dst = conf->tokens + i;
+        return IN3_OK;
+      }
+    }
+    else if (d_type(token_src) == T_STRING) {
       if (strcmp(d_string(token_src), conf->tokens[i].symbol) == 0) {
         *token_dst = conf->tokens + i;
         return IN3_OK;
