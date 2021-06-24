@@ -209,12 +209,12 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
   sb_add_int(sb, data->token->id);
   sb_add_chars(sb, ",\"tokenId\":");
   sb_add_int(sb, data->token->id);
-  sb_add_chars(sb, ",\"amount\":");
+  sb_add_chars(sb, data->prepare ? ",\"value\":" : ",\"amount\":");
 #ifdef ZKSYNC_256
   char dec[80];
   to_dec(dec, data->amount);
   sb_add_chars(sb, dec);
-  sb_add_chars(sb, ",\"fee\":");
+  sb_add_chars(sb, data->prepare ? ",\"gas\":" : ",\"fee\":");
   to_dec(dec, data->fee);
   sb_add_chars(sb, dec);
 #else
