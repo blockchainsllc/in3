@@ -261,11 +261,12 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     in3_log_debug("create new session with pub_key pos %d\n", pos);
     TRY(pos)
 
-    // check if we have all musig_urls
-    for (unsigned int n = 0; n < pub_keys.len; n += 32) {
-      if (n / 32 == pos) continue;
-      if (conf->musig_urls == NULL || !conf->musig_urls[n / 32]) return req_set_error(ctx->req, "Missing musig_url!", IN3_ECONFIG);
-    }
+    // check if we have all musig_urls (but only if we are in client mode)
+    if (d_type(ctx->params + 1) != T_OBJECT)
+      for (unsigned int n = 0; n < pub_keys.len; n += 32) {
+        if (n / 32 == pos) continue;
+        if (conf->musig_urls == NULL || !conf->musig_urls[n / 32]) return req_set_error(ctx->req, "Missing musig_url!", IN3_ECONFIG);
+      }
 
     // if a method is specified we create the proof here
     if (conf->proof_create_method && proof == NULL)
