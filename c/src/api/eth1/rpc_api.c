@@ -520,11 +520,11 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
 static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1);
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT);
-  d_token_t* tx          = d_get_at(ctx->params, 0);
-  bytes_t    dst         = {0};
-  sb_t       sb          = {0};
-  bool       write_debug = (d_len(ctx->params) == 2 && d_get_int_at(ctx->params, 1));
+  d_token_t* tx  = d_get_at(ctx->params, 0);
+  bytes_t    dst = {0};
+  sb_t       sb  = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
+  bool write_debug = (d_len(ctx->params) == 2 && d_get_int_at(ctx->params, 1));
   if (write_debug) sb_add_char(&sb, '{');
   TRY_CATCH(eth_prepare_unsigned_tx(tx, ctx->req, &dst, write_debug ? &sb : NULL), _free(sb.data))
 #else
