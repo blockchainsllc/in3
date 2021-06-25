@@ -303,7 +303,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
       sb_add_char(sb, brackets[0]);
       for (d_iterator_t iter = d_iter(token); iter.left; d_iter_next(&iter))
         sb_add_json(sb, iter.token != token + 1 ? "," : "", iter.token);
-      sb_add_char(sb, brackets[1]);
+      return sb_add_char(sb, brackets[1]);
     }
     case T_BOOLEAN:
       return sb_add_chars(sb, d_int(token) ? "true" : "false");
