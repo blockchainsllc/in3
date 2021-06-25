@@ -123,6 +123,7 @@ int32_t                d_intd(const d_token_t* item, const uint32_t def_val);   
 uint64_t               d_long(const d_token_t* item);                                                               /**< returns the value as long. only if type is integer or bytes, but short enough */
 uint64_t               d_longd(const d_token_t* item, const uint64_t def_val);                                      /**< returns the value as long or if NULL the default. only if type is integer or bytes, but short enough */
 bytes_t**              d_create_bytes_vec(const d_token_t* arr);                                                    /** creates a array of bytes from JOSN-array */
+size_t                 d_token_size(const d_token_t* item);                                                         /** returns the size (number of tokens ) of the token */
 static inline d_type_t d_type(const d_token_t* item) { return (item ? ((item->len & 0xF0000000) >> 28) : T_NULL); } /**< type of the token */
 static inline int      d_len(const d_token_t* item) {                                                               /**< number of elements in the token (only for object or array, other will return 0) */
   if (item == NULL) return 0;
@@ -137,16 +138,16 @@ d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); 
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
 
-NONULL void d_serialize_binary(bytes_builder_t* bb, d_token_t* t);  /**< write the token as binary data into the builder */
-NONULL json_ctx_t* parse_binary(const bytes_t* data);               /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_binary_str(const char* data, int len);     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json(const char* js);                      /**< parses json-data, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json_indexed(const char* js);              /**< parses json-data, which needs to be freed after usage! */
-NONULL void        json_free(json_ctx_t* parser_ctx);               /**< frees the parse-context after usage */
-NONULL str_range_t d_to_json(const d_token_t* item);                /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
-char*              d_create_json(json_ctx_t* ctx, d_token_t* item); /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
+NONULL void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
+NONULL json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json(const char* js);                            /**< parses json-data, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json_indexed(const char* js);                    /**< parses json-data, which needs to be freed after usage! */
+NONULL void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
+NONULL str_range_t d_to_json(const d_token_t* item);                      /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+char*              d_create_json(json_ctx_t* ctx, d_token_t* item);       /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
-json_ctx_t* json_create();
+json_ctx_t*       json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
 NONULL d_token_t* json_create_bool(json_ctx_t* jp, bool value);
 NONULL d_token_t* json_create_int(json_ctx_t* jp, uint64_t value);
@@ -156,8 +157,10 @@ NONULL int        json_create_object(json_ctx_t* jp);
 NONULL int        json_create_array(json_ctx_t* jp);
 NONULL void       json_object_add_prop(json_ctx_t* jp, int ob_index, d_key_t key, d_token_t* value);
 NONULL d_token_t* json_create_ref_item(json_ctx_t* jp, d_type_t type, void* data, int len);
+NONULL void       json_array_add_value(json_ctx_t* jp, int parent_index, d_token_t* value);
 
-NONULL void json_array_add_value(json_ctx_t* jp, int parent_index, d_token_t* value);
+NONULL d_token_t* token_from_string(char* val, d_token_t* d, bytes32_t buffer); /**< returns a token ptr using the val without allocating memory in the heap, which can be used to pass values as token */
+NONULL d_token_t* token_from_bytes(bytes_t b, d_token_t* d);                    /**< returns a token ptr using the val without allocating memory in the heap, which can be used to pass values as token */
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
 char* d_get_keystr(json_ctx_t* json, d_key_t k); /**< returns the string for a key. This only works for index keys or known keys! */
