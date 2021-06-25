@@ -92,7 +92,7 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
   int escapes = 0;
   if (l == 0 || chars == NULL) return sb;
   for (int i = 0; i < l; i++) {
-    if (chars[i] == '"') escapes++;
+    if (chars[i] == '"' || chars[i] == '\n') escapes++;
   }
   check_size(sb, l + escapes);
   memcpy(sb->data + sb->len, chars, l);
@@ -102,6 +102,12 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
       if (chars[i] == '"') {
         sb->data[sb->len + i + escapes] = '\\';
         memcpy(sb->data + sb->len + i + escapes + 1, chars + i, l - i);
+        escapes++;
+      }
+      if (chars[i] == '\n') {
+        memcpy(sb->data + sb->len + i + escapes + 1, chars + i, l - i);
+        sb->data[sb->len + i + escapes]     = '\\';
+        sb->data[sb->len + i + escapes + 1] = 'n';
         escapes++;
       }
     }
