@@ -248,8 +248,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
 }
 
 in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_t* sig) {
-  in3_log_debug("signing zksync data: \n");
-  b_print(&msg);
+  TRY(zksync_get_sync_key(conf, ctx, NULL))
   if (memiszero(conf->sync_key, 32)) return req_set_error(ctx, "no signing key set", IN3_ECONFIG);
   if (!conf->musig_pub_keys.data) return zkcrypto_sign_musig(conf->sync_key, msg, sig);
   char* p = alloca(msg.len * 2 + 5);
