@@ -1,48 +1,48 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 // @PUBLIC_HEADER
 /** @file
  * json-parser.
- * 
+ *
  * The parser can read from :
  * - json
  * - bin
- * 
+ *
  * When reading from json all '0x'... values will be stored as bytes_t. If the value is lower than 0xFFFFFFF, it is converted as integer.
- * 
- * 
+ *
+ *
  * */
 
 #ifndef __DATA_H__
@@ -59,7 +59,6 @@ extern "C" {
 
 #include "bytes.h"
 #include "mem.h"
-#include "stringbuilder.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,8 +75,8 @@ typedef enum {
   T_NULL    = 6  /**< a NULL-value */
 } d_type_t;
 
-/** a token holding any kind of value. 
- * 
+/** a token holding any kind of value.
+ *
  * use d_type,  d_len or the cast-function to get the value.
  */
 typedef struct item {
@@ -104,11 +103,11 @@ typedef struct json_parser {
 } json_ctx_t;
 
 /**
- * 
- * returns the byte-representation of token. 
- * 
- * In case of a number it is returned as bigendian. 
- * booleans as 0x01 or 0x00 
+ *
+ * returns the byte-representation of token.
+ *
+ * In case of a number it is returned as bigendian.
+ * booleans as 0x01 or 0x00
  * and NULL as 0x.
  * Objects or arrays will return 0x.
  */
@@ -122,6 +121,7 @@ int32_t                d_intd(const d_token_t* item, const uint32_t def_val);   
 uint64_t               d_long(const d_token_t* item);                                                               /**< returns the value as long. only if type is integer or bytes, but short enough */
 uint64_t               d_longd(const d_token_t* item, const uint64_t def_val);                                      /**< returns the value as long or if NULL the default. only if type is integer or bytes, but short enough */
 bytes_t**              d_create_bytes_vec(const d_token_t* arr);                                                    /** creates a array of bytes from JOSN-array */
+size_t                 d_token_size(const d_token_t* item);                                                         /** returns the size (number of tokens ) of the token */
 static inline d_type_t d_type(const d_token_t* item) { return (item ? ((item->len & 0xF0000000) >> 28) : T_NULL); } /**< type of the token */
 static inline int      d_len(const d_token_t* item) {                                                               /**< number of elements in the token (only for object or array, other will return 0) */
   if (item == NULL) return 0;
@@ -136,16 +136,16 @@ d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); 
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
 
-NONULL void d_serialize_binary(bytes_builder_t* bb, d_token_t* t);  /**< write the token as binary data into the builder */
-NONULL json_ctx_t* parse_binary(const bytes_t* data);               /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_binary_str(const char* data, int len);     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json(const char* js);                      /**< parses json-data, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json_indexed(const char* js);              /**< parses json-data, which needs to be freed after usage! */
-NONULL void        json_free(json_ctx_t* parser_ctx);               /**< frees the parse-context after usage */
-NONULL str_range_t d_to_json(const d_token_t* item);                /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
-char*              d_create_json(json_ctx_t* ctx, d_token_t* item); /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
+NONULL void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
+NONULL json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json(const char* js);                            /**< parses json-data, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json_indexed(const char* js);                    /**< parses json-data, which needs to be freed after usage! */
+NONULL void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
+NONULL str_range_t d_to_json(const d_token_t* item);                      /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+char*              d_create_json(json_ctx_t* ctx, d_token_t* item);       /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
-json_ctx_t* json_create();
+json_ctx_t*       json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
 NONULL d_token_t* json_create_bool(json_ctx_t* jp, bool value);
 NONULL d_token_t* json_create_int(json_ctx_t* jp, uint64_t value);
@@ -154,7 +154,11 @@ NONULL d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value);
 NONULL int        json_create_object(json_ctx_t* jp);
 NONULL int        json_create_array(json_ctx_t* jp);
 NONULL void       json_object_add_prop(json_ctx_t* jp, int ob_index, d_key_t key, d_token_t* value);
+NONULL d_token_t* json_create_ref_item(json_ctx_t* jp, d_type_t type, void* data, int len);
 NONULL void       json_array_add_value(json_ctx_t* jp, int parent_index, d_token_t* value);
+
+NONULL d_token_t* token_from_string(char* val, d_token_t* d, bytes32_t buffer); /**< returns a token ptr using the val without allocating memory in the heap, which can be used to pass values as token */
+NONULL d_token_t* token_from_bytes(bytes_t b, d_token_t* d);                    /**< returns a token ptr using the val without allocating memory in the heap, which can be used to pass values as token */
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
 char* d_get_keystr(json_ctx_t* json, d_key_t k); /**< returns the string for a key. This only works for index keys or known keys! */
@@ -179,10 +183,9 @@ static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_byt
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                     /**< check if the parser context was created from binary data. */
 bytes_t*               d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
 d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
-
 /**
  * iterator over elements of a array opf object.
- * 
+ *
  * usage:
  * ```c
  * for (d_iterator_t iter = d_iter( parent ); iter.left ; d_iter_next(&iter)) {

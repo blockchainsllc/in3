@@ -120,7 +120,7 @@ typedef struct btc_block_txids {
   bytes32_t*        tx;     /**< array of transaction ids */
 } btc_block_txids_t;
 
-/** 
+/**
  * gets the transaction as raw bytes or null if it does not exist.
  * You must free the result with b_free() after use!
  */
@@ -128,7 +128,7 @@ bytes_t* btc_get_transaction_bytes(in3_t*    in3, /**< the in3-instance*/
                                    bytes32_t txid /**< the txid */
 );
 
-/** 
+/**
  * gets the transaction as struct or null if it does not exist.
  * You must free the result with free() after use!
  */
@@ -136,7 +136,7 @@ btc_transaction_t* btc_get_transaction(in3_t*    in3, /**< the in3-instance*/
                                        bytes32_t txid /**< the txid */
 );
 
-/** 
+/**
  * gets the blockheader as struct or null if it does not exist.
  * You must free the result with free() after use!
  */
@@ -144,7 +144,7 @@ btc_blockheader_t* btc_get_blockheader(in3_t*    in3,      /**< the in3-instance
                                        bytes32_t blockhash /**< the block hash */
 );
 
-/** 
+/**
  * gets the blockheader as raw serialized data (80 bytes) or null if it does not exist.
  * You must free the result with b_free() after use!
  */
@@ -152,7 +152,7 @@ bytes_t* btc_get_blockheader_bytes(in3_t*    in3,      /**< the in3-instance*/
                                    bytes32_t blockhash /**< the block hash */
 );
 
-/** 
+/**
  * gets the block as struct including all transaction data or null if it does not exist.
  * You must free the result with free() after use!
  */
@@ -160,7 +160,7 @@ btc_block_txdata_t* btc_get_block_txdata(in3_t*    in3,      /**< the in3-instan
                                          bytes32_t blockhash /**< the block hash */
 );
 
-/** 
+/**
  * gets the block as struct including all transaction ids or null if it does not exist.
  * You must free the result with free() after use!
  */
@@ -168,7 +168,7 @@ btc_block_txids_t* btc_get_block_txids(in3_t*    in3,      /**< the in3-instance
                                        bytes32_t blockhash /**< the block hash */
 );
 
-/** 
+/**
  * gets the block as raw serialized block bytes including all transactions or null if it does not exist.
  * You must free the result with b_free() after use!
  */
@@ -188,4 +188,4 @@ btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t); /** Deserializes a `btc
 }
 #endif
 
-#endif //IN3_BTC_API_H
+#endif // IN3_BTC_API_H

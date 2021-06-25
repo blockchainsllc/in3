@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -98,7 +98,7 @@ static d_key_t add_key(json_ctx_t* ctx, const char* name, size_t len) {
   return (d_key_t) k + 1;
 }
 
-static size_t d_token_size(const d_token_t* item) {
+size_t d_token_size(const d_token_t* item) {
   if (item == NULL) return 0;
   size_t i, c = 1;
   switch (d_type(item)) {
@@ -165,7 +165,7 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max_size) {
         if (max > l) {
           memset(dst, 0, max - l);
           memcpy(dst + max - l, item->data, l);
-          d_bytesl(item, max); //TODO we should not need this!
+          d_bytesl(item, max); // TODO we should not need this!
           l = max;
         }
         else
@@ -730,7 +730,7 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
 
 str_range_t d_to_json(const d_token_t* item) {
   str_range_t s;
-  if (item) {
+  if (item && item->data) {
     s.data = (char*) item->data;
     s.len  = find_end(s.data);
   }
@@ -903,6 +903,12 @@ d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {
   return r;
 }
 
+d_token_t* json_create_ref_item(json_ctx_t* jp, d_type_t type, void* data, int len) {
+  d_token_t* r = next_item(jp, type, len);
+  r->data      = data;
+  return r;
+}
+
 int json_create_object(json_ctx_t* jp) {
   next_item(jp, T_OBJECT, 0);
   return jp->len - 1;
@@ -1018,3 +1024,36 @@ d_token_t* d_getl(d_token_t* item, uint16_t k, uint32_t minl) {
 d_iterator_t d_iter(d_token_t* parent) {
   return (d_iterator_t){.left = d_len(parent), .token = parent + 1};
 } /**< creates a iterator for a object or array */
+
+d_token_t* token_from_string(char* val, d_token_t* d, bytes32_t buffer) {
+  if (!val)
+    d->len = T_NULL << 28;
+  else {
+    if (val[0] == '0' && val[1] == 'x') {
+      int l = hex_to_bytes(val + 2, strlen(val + 2), buffer, 32);
+      if (l < 5) {
+        d->data = NULL;
+        d->len  = bytes_to_int(buffer, 4) | (T_INTEGER << 28);
+      }
+      else {
+        d->data = buffer;
+        d->len  = l;
+      }
+    }
+    else {
+      d->data = (uint8_t*) val;
+      d->len  = strlen(val) | (T_STRING << 28);
+    }
+  }
+  return d;
+}
+
+d_token_t* token_from_bytes(bytes_t b, d_token_t* d) {
+  if (!b.data)
+    d->len = T_NULL << 28;
+  else {
+    d->data = b.data;
+    d->len  = b.len;
+  }
+  return d;
+}

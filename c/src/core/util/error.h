@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -50,11 +50,11 @@ extern "C" {
 #define JSON_RPC_ERR_FINALITY (-16001) /** Block is not final so node refused to sign */
 
 /** ERROR types  used as return values.
- * 
+ *
  * All values (except IN3_OK) indicate an error.
- * IN3_WAITING may be treated like an error, since we have stop executing until the response has arrived, but it is a valid return value. 
- * 
-*/
+ * IN3_WAITING may be treated like an error, since we have stop executing until the response has arrived, but it is a valid return value.
+ *
+ */
 typedef enum {
   /* On success positive values (impl. defined) upto INT_MAX maybe returned */
   IN3_OK                = 0,   /**< Success */
@@ -79,6 +79,7 @@ typedef enum {
   IN3_ENODEVICE         = -19, /**< harware wallet device not connected */
   IN3_EAPDU             = -20, /**< error in hardware wallet communication  */
   IN3_EPLGN_NONE        = -21, /**< no plugin could handle specified action */
+  IN3_ERETRY            = -22, /**< request to retry all plugins again */
 
   IN3_HTTP_BAD_REQUEST        = -400, /**< Bad Request */
   IN3_HTTP_UNAUTHORIZED       = -401, /**< Unauthorized */
@@ -106,7 +107,7 @@ typedef enum {
  */
 #define OPTIONAL_T(t) opt_##t
 
-/** 
+/**
  * Optional types must be defined prior to usage (e.g. DEFINE_OPTIONAL_T(int))
  * Use OPTIONAL_T_UNDEFINED(t) & OPTIONAL_T_VALUE(t, v) for easy initialization (rvalues)
  */
@@ -116,12 +117,12 @@ typedef enum {
     bool defined;            \
   } OPTIONAL_T(t)
 
-/** 
+/**
  * marks a used value as undefined.
  */
 #define OPTIONAL_T_UNDEFINED(t) ((OPTIONAL_T(t)){.defined = false})
 
-/** 
+/**
  * sets the value of an optional type.
  */
 #define OPTIONAL_T_VALUE(t, v) ((OPTIONAL_T(t)){.value = v, .defined = true})
@@ -135,4 +136,4 @@ char* in3_errmsg(in3_ret_t err /**< the error code */);
 }
 #endif
 
-#endif //IN3_ERROR_H
+#endif // IN3_ERROR_H

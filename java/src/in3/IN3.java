@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -93,7 +93,9 @@ public class IN3 {
     free();
   }
 
-  /** sets config object in the client */
+  /**
+   * sets config object in the client
+   */
   private native void setConfig(String val);
 
   protected void setConfig(ClientConfiguration config) {
@@ -171,7 +173,9 @@ public class IN3 {
     initcache();
   }
 
-  /** provides the ability to cache content */
+  /**
+   * provides the ability to cache content
+   */
   public StorageProvider getStorageProvider() {
     return provider;
   }
@@ -191,10 +195,14 @@ public class IN3 {
     return IN3.transport;
   }
 
-  /** servers to filter for the given chain. The chain-id based on EIP-155. */
+  /**
+   * servers to filter for the given chain. The chain-id based on EIP-155.
+   */
   public native long getChainId();
 
-  /** sets the chain to be used. The chain-id based on EIP-155. */
+  /**
+   * sets the chain to be used. The chain-id based on EIP-155.
+   */
   public native void setChainId(long val);
 
   /**
@@ -297,7 +305,9 @@ public class IN3 {
     return sendRPCasObject(method, params, true);
   }
 
-  /** internal function to handle the internal requests */
+  /**
+   * internal function to handle the internal requests
+   */
   static byte[][] sendRequest(String method, String[] urls, byte[] payload, String[] headers) throws TransportException {
     return IN3.transport.handle(method, urls, payload, headers);
   }

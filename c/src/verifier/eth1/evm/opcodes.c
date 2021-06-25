@@ -243,7 +243,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   if (l == EVM_ERROR_EMPTY_STACK) return l;
   if (l < 0) { // the number is out of range
     if ((l = evm_stack_pop_ref(evm, &b)) < 0) return EVM_ERROR_EMPTY_STACK;
-    if (left == 2 && l == 32 && (*b & 128)) { //signed number return max NUMBER as fault
+    if (left == 2 && l == 32 && (*b & 128)) { // signed number return max NUMBER as fault
       memset(res, 0xFF, 32);
       return evm_stack_push(evm, res, 32);
     }

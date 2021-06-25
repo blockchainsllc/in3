@@ -26,8 +26,8 @@ public class Crypto {
   }
 
   /**
-     * returns a signature given a message and a key.
-     */
+   * returns a signature given a message and a key.
+   */
   public Signature signData(String msg, String key, SignatureType sigType) {
     return Signature.asSignature(in3.sendRPCasObject(SIGN_DATA, new Object[] {msg, key, JSON.asString(sigType)}));
   }
@@ -37,36 +37,36 @@ public class Crypto {
   }
 
   /**
-     * extracts the public address from a private key.
-     */
+   * extracts the public address from a private key.
+   */
   public String pk2address(String key) {
     return JSON.asString(in3.sendRPCasObject(PK2ADDRESS, new Object[] {key}));
   }
 
   /**
-     * extracts the public key from a private key.
-     */
+   * extracts the public key from a private key.
+   */
   public String pk2public(String key) {
     return JSON.asString(in3.sendRPCasObject(PK2PUBLIC, new Object[] {key}));
   }
 
   /**
-     * extracts the address and public key from a signature.
-     */
+   * extracts the address and public key from a signature.
+   */
   public Account ecrecover(String msg, String sig) {
     return ecrecover(msg, sig, null);
   }
 
   /**
-     * extracts the address and public key from a signature.
-     */
+   * extracts the address and public key from a signature.
+   */
   public Account ecrecover(String msg, String sig, SignatureType sigType) {
     return Account.asAccount(in3.sendRPCasObject(ECRECOVER, new Object[] {msg, sig, JSON.asString(sigType)}));
   }
 
   /**
-     * returns a signature given a message and a key.
-     */
+   * returns a signature given a message and a key.
+   */
   public Signature signData(String msg, String key) {
     return Signature.asSignature(signData(msg, key, null));
   }

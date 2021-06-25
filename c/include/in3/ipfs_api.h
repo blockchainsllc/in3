@@ -54,4 +54,4 @@ bytes_t* ipfs_get(in3_t* in3, const char* multihash);  /**< Returns the content 
 }
 #endif
 
-#endif //IN3_IPFS_API_H
+#endif // IN3_IPFS_API_H

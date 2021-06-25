@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -92,7 +92,7 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
   int escapes = 0;
   if (l == 0 || chars == NULL) return sb;
   for (int i = 0; i < l; i++) {
-    if (chars[i] == '"') escapes++;
+    if (chars[i] == '"' || chars[i] == '\n') escapes++;
   }
   check_size(sb, l + escapes);
   memcpy(sb->data + sb->len, chars, l);
@@ -102,6 +102,12 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
       if (chars[i] == '"') {
         sb->data[sb->len + i + escapes] = '\\';
         memcpy(sb->data + sb->len + i + escapes + 1, chars + i, l - i);
+        escapes++;
+      }
+      if (chars[i] == '\n') {
+        memcpy(sb->data + sb->len + i + escapes + 1, chars + i, l - i);
+        sb->data[sb->len + i + escapes]     = '\\';
+        sb->data[sb->len + i + escapes + 1] = 'n';
         escapes++;
       }
     }
@@ -282,5 +288,36 @@ sb_t* sb_print(sb_t* sb, const char* fmt, ...) {
   va_start(args, fmt);
   sb_vprint(sb, fmt, args);
   va_end(args);
+  return sb;
+}
+
+sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
+  if (!token) return sb;
+  if (prefix) sb_add_chars(sb, prefix);
+  switch (d_type(token)) {
+    case T_ARRAY:
+    case T_OBJECT: {
+      const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
+      str_range_t r        = d_to_json(token);
+      if (r.data) return sb_add_range(sb, r.data, 0, r.len);
+      sb_add_char(sb, brackets[0]);
+      for (d_iterator_t iter = d_iter(token); iter.left; d_iter_next(&iter))
+        sb_add_json(sb, iter.token != token + 1 ? "," : "", iter.token);
+      sb_add_char(sb, brackets[1]);
+    }
+    case T_BOOLEAN:
+      return sb_add_chars(sb, d_int(token) ? "true" : "false");
+    case T_INTEGER:
+      return sb_add_int(sb, d_int(token));
+    case T_BYTES:
+      return sb_add_bytes(sb, NULL, d_bytes(token), 1, false);
+    case T_STRING: {
+      sb_add_char(sb, '\"');
+      sb_add_escaped_chars(sb, d_string(token));
+      return sb_add_char(sb, '\"');
+    }
+    case T_NULL:
+      return sb_add_chars(sb, "null");
+  }
   return sb;
 }

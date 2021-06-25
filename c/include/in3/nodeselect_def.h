@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 // @PUBLIC_HEADER
 #ifndef IN3_NODE_SELECT_DEF_H
@@ -29,6 +29,6 @@ static inline in3_nodeselect_def_t* in3_nodeselect_def_data(in3_t* c) {
  */
 in3_ret_t in3_register_nodeselect_def(in3_t* c);
 
-#endif //NODESELECT_DEF
+#endif // NODESELECT_DEF
 
-#endif //IN3_NODE_SELECT_DEF_H
+#endif // IN3_NODE_SELECT_DEF_H

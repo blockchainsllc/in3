@@ -9,6 +9,10 @@ types:
       descr: sender of the address (if not sepcified, the first signer will be the sender)
       type: address
       optional: true
+    wallet:
+      descr: if specified, the transaction will be send through the specified wallet.
+      type: address
+      optional: true
     value:
       descr: value in wei to send
       type: uint256
@@ -28,6 +32,10 @@ types:
       optional: true
     data:
       descr: the data-section of the transaction
+      type: bytes
+      optional: true
+    signatures:  
+      descr: additional signatures which should be used when sending through a multisig
       type: bytes
       optional: true
 
@@ -385,6 +393,7 @@ eth:
     proof:
       alias: eth_getUncleCountByBlockNumber
     result:
+      optional: true
       descr: the number of transactions in the block
       type: int
 
@@ -397,6 +406,7 @@ eth:
     proof:
       alias: eth_getUncleCountByBlockNumber
     result:
+      optional: true
       descr: the number of transactions in the block
       type: int
 
@@ -409,6 +419,7 @@ eth:
     proof:
       alias: eth_getUncleCountByBlockNumber
     result:
+      optional: true
       descr: the number of uncles
       type: int
 
@@ -429,6 +440,7 @@ eth:
         - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
         - `uncles`: a array of blockheaders of the uncles of the block. This is only needed if the number of uncles are requested.
     result:
+      optional: true
       descr: the number of uncles
       type: int
 
@@ -445,6 +457,7 @@ eth:
         descr: the transactionIndex
         type: int
     result:
+      optional: true
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -497,6 +510,7 @@ eth:
         descr: the transactionIndex
         type: int
     result:
+      optional: true
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
     proof:
@@ -546,6 +560,7 @@ eth:
         descr: the transactionHash of the transaction.
         type: bytes32
     result:
+      optional: true   
       descr: the transactiondata or `null` if it does not exist
       type: transactiondata
  

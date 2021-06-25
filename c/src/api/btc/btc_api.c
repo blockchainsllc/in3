@@ -40,8 +40,8 @@
 #include "../utils/api_utils_priv.h"
 
 /**
- * executes the expression and expects the return value to be a int indicating the error. 
- * if the return value is negative it will stop and return this value otherwise continue. 
+ * executes the expression and expects the return value to be a int indicating the error.
+ * if the return value is negative it will stop and return this value otherwise continue.
  */
 #define TRY_OR_NULL(exp, msg) \
   {                           \

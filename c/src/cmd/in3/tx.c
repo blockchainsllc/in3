@@ -7,14 +7,14 @@ tx_t* get_txdata() {
 }
 
 // prepare a eth_call or eth_sendTransaction
-static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, uint64_t gas_price, char* value, bytes_t* data, char* from) {
+static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_number, uint64_t gas, uint64_t gas_price, char* value, bytes_t* data, char* from, char* token) {
   char*      error = NULL;
   bytes_t    rdata = {0};
   abi_sig_t* req   = fn_sig ? abi_sig_create(fn_sig, &error) : NULL; // only if we have a function signature, we will parse it and create a call_request.
   if (error) die(error);                                             // parse-error we stop here.
   if (req) {                                                         // if type is a tuple, it means we have areuments we need to parse.
     json_ctx_t* in_data = parse_json(args->data);                    // the args are passed as a "[]"- json-array string.
-    rdata               = abi_encode(req, in_data->result, &error);  //encode data
+    rdata               = abi_encode(req, in_data->result, &error);  // encode data
     if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
     json_free(in_data);                                              // of course we clean up ;-)
   }                                                                  //
@@ -60,16 +60,23 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
       sb_add_chars(params, from);
       sb_add_chars(params, "\"");
     }
+    if (token) {
+      sb_add_chars(params, ", \"token\":\"");
+      sb_add_chars(params, token);
+      sb_add_chars(params, "\"");
+    }
 
     if (gas_price) {
       long_to_bytes(gas_price, gasdata);
       b_optimize_len(&g_bytes);
       sb_add_bytes(params, ", \"gasPrice\":", &g_bytes, 1, false);
     }
-    long_to_bytes(gas ? gas : 100000, gasdata);
-    g_bytes = bytes(gasdata, 8);
-    b_optimize_len(&g_bytes);
-    sb_add_bytes(params, ", \"gasLimit\":", &g_bytes, 1, false);
+    if (gas) {
+      long_to_bytes(gas, gasdata);
+      g_bytes = bytes(gasdata, 8);
+      b_optimize_len(&g_bytes);
+      sb_add_bytes(params, ", \"gasLimit\":", &g_bytes, 1, false);
+    }
     sb_add_chars(params, "}]");
   }
   args->len = 0;
@@ -79,5 +86,5 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
 }
 
 void encode_abi(in3_t* c, sb_t* args, bool with_block) {
-  _tx.abi_sig = prepare_tx(_tx.sig, resolve(c, _tx.to), args, _tx.block == NULL && with_block ? "latest" : _tx.block, _tx.gas, _tx.gas_price, _tx.value, _tx.data, _tx.from);
+  _tx.abi_sig = prepare_tx(_tx.sig, resolve(c, _tx.to), args, _tx.block == NULL && with_block ? "latest" : _tx.block, _tx.gas, _tx.gas_price, _tx.value, _tx.data, _tx.from, _tx.token);
 }

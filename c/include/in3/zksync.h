@@ -1,41 +1,41 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 // @PUBLIC_HEADER
 /** @file
  * ZKSync API.
- * 
+ *
  * This header-file registers zksync api functions.
  * */
 
@@ -57,6 +57,15 @@ typedef uint8_t   zk_fee_p_t;
 typedef uint64_t zk_fee_t;
 typedef uint64_t zk_fee_p_t;
 #endif
+
+/**
+ * cache-key for specifying the a different config. The value.data needs to point to a zksync_config_t-struct.
+ */
+static const cache_props_t ZKSYNC_CACHED_CONFIG = 0xFE00 | CACHE_PROP_INHERIT;
+/**
+ * cache-key for specifying the the proof. The value.data needs to point to a char* containing the proof, that must be used when signing with musig.
+ */
+static const cache_props_t ZKSYNC_CACHED_PROOF = 0xFF00 | CACHE_PROP_INHERIT;
 
 /** represents a token supported in zksync. */
 typedef struct {
@@ -106,6 +115,7 @@ struct pay_criteria;
 /** internal configuration-object */
 typedef struct zksync_config {
   char*                provider_url;        /**< url of the zksync-server */
+  char*                rest_api;            /**< url of the zksync-rest-api */
   uint8_t*             account;             /**< address of the account */
   uint8_t*             main_contract;       /**< address of the main zksync contract*/
   uint8_t*             gov_contract;        /**< address of the government contract */
@@ -119,7 +129,7 @@ typedef struct zksync_config {
   zksync_token_t*      tokens;              /**< the token-list */
   zk_sign_type_t       sign_type;           /**< the signature-type to use*/
   uint32_t             version;             /**< zksync version */
-  zk_create2_t*        create2;             /**< create2 args */
+  zk_create2_t         create2;             /**< create2 args */
   bytes_t              musig_pub_keys;      /**< the public keys of all participants of a schnorr musig signature */
   zk_musig_session_t*  musig_sessions;      /**< linked list of open musig sessions */
   char**               musig_urls;          /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
@@ -141,24 +151,30 @@ typedef struct pay_criteria {
 } pay_criteria_t;
 
 /** a transaction */
+
 typedef struct {
-  zksync_config_t* conf;       /**< the configuration of the zksync-account */
-  uint32_t         account_id; /**< the id of the account */
-  address_t        from;       /**< the from-address */
-  address_t        to;         /**< the address of the receipient */
-  zksync_token_t*  token;      /**< the token to use */
-  uint32_t         nonce;      /**< current nonce */
-  zk_msg_type_t    type;       /**< message type */
-  zk_fee_t         amount;     /**< amount to send */
-  zk_fee_t         fee;        /**< ransaction fees */
-  zksync_valid_t   valid;      /**< validity */
+  bytes_t zk_message;
+  char*   human_message;
+} zk_prepare_ctx_t;
+typedef struct {
+  zksync_config_t*  conf;       /**< the configuration of the zksync-account */
+  uint32_t          account_id; /**< the id of the account */
+  address_t         from;       /**< the from-address */
+  address_t         to;         /**< the address of the receipient */
+  zksync_token_t*   token;      /**< the token to use */
+  uint32_t          nonce;      /**< current nonce */
+  zk_msg_type_t     type;       /**< message type */
+  zk_fee_t          amount;     /**< amount to send */
+  zk_fee_t          fee;        /**< ransaction fees */
+  zksync_valid_t    valid;      /**< validity */
+  zk_prepare_ctx_t* prepare;    /**< if a prepare ctx is set the data will not be signed, but only the messages are created and stored.*/
 } zksync_tx_data_t;
 
 /** registers the zksync-plugin in the client */
 NONULL in3_ret_t in3_register_zksync(in3_t* c);
 
 /** sets a PubKeyHash for the current Account */
-NONULL in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+NONULL in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool only_update);
 
 /** sends a transfer transaction in Layer 2*/
 NONULL in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_msg_type_t type);
@@ -182,6 +198,11 @@ in3_ret_t           zksync_check_payment(zksync_config_t* conf, in3_pay_followup
 in3_ret_t           zksync_add_payload(in3_pay_payload_ctx_t* ctx);
 in3_ret_t           update_nodelist_from_cache(in3_req_t* req, unsigned int nodelen);
 in3_ret_t           handle_zksync(void* conf, in3_plugin_act_t action, void* arg);
+in3_ret_t           zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+in3_ret_t           zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx);
+
+NONULL zksync_config_t* zksync_get_conf(in3_req_t* req);
+
 #ifdef __cplusplus
 }
 #endif

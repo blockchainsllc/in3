@@ -9,9 +9,9 @@ int                   path_len_bip;
 unsigned char         msg_hash[HASH_LEN];
 cx_ecfp_private_key_t private_key;
 
-//static const unsigned int path__[5]= {44|0x80000000, 60|0x80000000, 0|0x80000000, 0, 0};
+// static const unsigned int path__[5]= {44|0x80000000, 60|0x80000000, 0|0x80000000, 0, 0};
 
-//function to get public key at the given path
+// function to get public key at the given path
 cx_ecfp_public_key_t public_key_at_given_path(cx_curve_t curve_id, unsigned char* loc, int path_len) {
   PRINTF("public_key_at_given_path:enter");
   cx_ecfp_public_key_t  public_key;
@@ -29,7 +29,7 @@ cx_ecfp_public_key_t public_key_at_given_path(cx_curve_t curve_id, unsigned char
   return public_key;
 }
 
-//function to get private key at the given path
+// function to get private key at the given path
 cx_ecfp_private_key_t private_key_at_given_path(cx_curve_t curve_id, unsigned char* loc, int path_len) {
   cx_ecfp_public_key_t public_key;
   unsigned char        private_key_data[32];
@@ -149,13 +149,13 @@ uint32_t read_bip32_path(uint32_t bytes, const uint8_t* buf, uint32_t* bip32_pat
   PRINTF(" bytes %d  path_length %d ", bytes, path_length);
 
   for (size_t i = 0; i < path_length; i++) {
-    //PRINTF("\n buf %d  bip32_path %d path__ %d i %d",buf[i],bip32_path[i],path__[i], i);
+    // PRINTF("\n buf %d  bip32_path %d path__ %d i %d",buf[i],bip32_path[i],path__[i], i);
     if (i < 3)
       bip32_path[i] = buf[i] | (0x80000000);
     else
       bip32_path[i] = buf[i] | (0x00000000);
 
-    //PRINTF("\n buf %d  bip32_path %d path__ %d i %d \n",buf[i],bip32_path[i],path__[i], i);
+    // PRINTF("\n buf %d  bip32_path %d path__ %d i %d \n",buf[i],bip32_path[i],path__[i], i);
   }
 
   return path_length;

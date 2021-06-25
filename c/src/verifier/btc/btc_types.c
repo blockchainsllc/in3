@@ -74,7 +74,7 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   data.data      = data.len > 1000 ? _malloc(data.len) : alloca(data.len);
   memcpy(data.data, tx->all.data, 4);                                  // nVersion
   memcpy(data.data + 4, start, data.len - 8);                          // txins/txouts
-  memcpy(data.data + data.len - 4, tx->all.data + tx->all.len - 4, 4); //lockTime
+  memcpy(data.data + data.len - 4, tx->all.data + tx->all.len - 4, 4); // lockTime
 
   btc_hash(data, dst);
   if (data.len > 1000) _free(data.data);

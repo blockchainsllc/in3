@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -522,13 +522,22 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT);
   d_token_t* tx  = d_get_at(ctx->params, 0);
   bytes_t    dst = {0};
+  sb_t       sb  = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_prepare_unsigned_tx(tx, ctx->req, &dst))
+  bool write_debug = (d_len(ctx->params) == 2 && d_get_int_at(ctx->params, 1));
+  if (write_debug) sb_add_char(&sb, '{');
+  TRY_CATCH(eth_prepare_unsigned_tx(tx, ctx->req, &dst, write_debug ? &sb : NULL), _free(sb.data))
 #else
   if (ctx->params || tx || ctx) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
-  in3_rpc_handle_with_bytes(ctx, dst);
+  if (sb.data) {
+    sb_add_chars(&sb, ",\"state\":\"unsigned\"}");
+    in3_rpc_handle_with_string(ctx, sb.data);
+  }
+  else
+    in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
+  _free(sb.data);
   return IN3_OK;
 }
 
@@ -540,7 +549,7 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   bytes_t*   data    = NULL;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw))
+    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw, NULL))
     from_b = d_get_bytes(tx_data, K_FROM);
     data   = &tx_raw;
 #else

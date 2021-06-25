@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -51,7 +51,7 @@ typedef enum {
   ABI_ARRAY       = 9  /**< a dynamic or fixed size array of elements */
 } abi_coder_type_t;
 
-/** 
+/**
  * a coder configuration for a specific type.
  * Depending on the type the config is stored in the union-structs.
  */
@@ -101,9 +101,9 @@ void abi_sig_free(
 
 /**
  * parses a ABI signature string and creates the a pointer to the struct, which can be used to encode and decode date
- * 
+ *
  * The signature string may contain either just a comma separated list of valid solidity types:
- * 
+ *
  * ```c
  * "address"           // single type
  * "address,uint,bool" // tuple
@@ -112,19 +112,19 @@ void abi_sig_free(
  * "uint[4]"           // fixed array
  * "(uint,bool)[]"     // dynamic array of a tuple
  * ```
- *  
+ *
  * Optionaly a function name can be prefixed, which will be used when creating the functionhash:
  * ```c
  * "execTransaction(bytes,uint,uint)"
  * ```
- * 
+ *
  * Optionally a return type can be added which is used when decoding the value:
- * 
+ *
  * ```c
  * "isValidSAignature(bytes,bytes):(bytes4)" // return the single type as array with one value
  * "isValidSAignature(bytes,bytes):bytes4"   // return the single type as single value
  * ```
- * 
+ *
  */
 abi_sig_t* abi_sig_create(
     char*  signature, /**< the abi signature */
@@ -140,7 +140,7 @@ bool abi_is_dynamic(
 
 /**
  * encodes JSON-data to bytes.
- * The resulting bytes data-field MUST be freed if not NULL! 
+ * The resulting bytes data-field MUST be freed if not NULL!
  */
 bytes_t abi_encode(
     abi_sig_t* s,    /**< the signature to use */
@@ -149,9 +149,9 @@ bytes_t abi_encode(
 );
 
 /**
-   * decodes bytes to a JSON-structure.
-   * The resulting json_ctx MUST be freed using `json_free` if not NULL.
-   */
+ * decodes bytes to a JSON-structure.
+ * The resulting json_ctx MUST be freed using `json_free` if not NULL.
+ */
 json_ctx_t* abi_decode(
     abi_sig_t* s,    /**< the signature to use */
     bytes_t    data, /**< the data to decode */
@@ -160,9 +160,9 @@ json_ctx_t* abi_decode(
 );
 
 /**
-   * decodes bytes to a JSON-structure.
-   * The resulting json_ctx MUST be freed using `json_free` if not NULL.
-   */
+ * decodes bytes to a JSON-structure.
+ * The resulting json_ctx MUST be freed using `json_free` if not NULL.
+ */
 json_ctx_t* abi_decode_event(
     abi_sig_t* s,      /**< the signature to use */
     bytes_t    topics, /**< the topics to decode */

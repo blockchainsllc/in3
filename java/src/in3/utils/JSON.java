@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -40,7 +40,7 @@ import java.util.*;
 
 /**
  * internal helper tool to represent a JSON-Object.
- * 
+ *
  * Since the internal representation of JSON in incubed uses hashes instead of
  * name, the getter will creates these hashes.
  */
@@ -56,122 +56,148 @@ public class JSON {
   public JSON() {}
 
   /**
-     * gets the property
-     * 
-     * @return the raw object.
-     */
-  public Object get(String prop /** the name of the property. */
+   * gets the property
+   *
+   * @return the raw object.
+   */
+  public Object get(String prop /**
+                                   the name of the property.
+                                 */
   ) {
     return map.get(key(prop));
   }
 
   /**
-     * adds values. This function will be called from the JNI-Iterface.
-     * 
-     * Internal use only!
-     */
-  public void put(String key /** the key */
+   * adds values. This function will be called from the JNI-Iterface.
+   *
+   * Internal use only!
+   */
+  public void put(String key /**
+                                the key
+                              */
                   ,
-                  Object val /** the value object */
+                  Object val /**
+                                the value object
+                              */
   ) {
     map.put(key(key), val);
   }
 
   /**
-     * adds values. This function will be called from the JNI-Iterface.
-     * 
-     * Internal use only!
-     */
-  public void put(int key /** the hash of the key */
+   * adds values. This function will be called from the JNI-Iterface.
+   *
+   * Internal use only!
+   */
+  public void put(int key /**
+                             the hash of the key
+                           */
                   ,
-                  Object val /** the value object */
+                  Object val /**
+                                the value object
+                              */
   ) {
     map.put(key, val);
   }
 
   /**
-     * returns the property as boolean
-     * 
-     * @return the boolean value
-     */
-  public boolean getBoolean(String key /** the propertyName */
+   * returns the property as boolean
+   *
+   * @return the boolean value
+   */
+  public boolean getBoolean(String key /**
+                                          the propertyName
+                                        */
   ) {
     return asBoolean(get(key));
   }
 
   /**
-     * returns the property as long
-     * 
-     * @return the long value
-     */
-  public long getLong(String key /** the propertyName */
+   * returns the property as long
+   *
+   * @return the long value
+   */
+  public long getLong(String key /**
+                                    the propertyName
+                                  */
   ) {
     return asLong(get(key));
   }
 
   /**
-     * returns the property as double
-     * 
-     * @return the long value
-     */
-  public double getDouble(String key /** the propertyName */
+   * returns the property as double
+   *
+   * @return the long value
+   */
+  public double getDouble(String key /**
+                                        the propertyName
+                                      */
   ) {
     return asDouble(get(key));
   }
 
   /**
    * returns the property as BigInteger
-   * 
+   *
    * @return the BigInteger value
    */
-  public Object getObject(String key /** the propertyName */
+  public Object getObject(String key /**
+                                        the propertyName
+                                      */
   ) {
     return get(key);
   }
 
   /**
-     * returns the property as BigInteger
-     * 
-     * @return the BigInteger value
-     */
-  public Integer getInteger(String key /** the propertyName */
+   * returns the property as BigInteger
+   *
+   * @return the BigInteger value
+   */
+  public Integer getInteger(String key /**
+                                          the propertyName
+                                        */
   ) {
     return asInt(get(key));
   }
 
   /**
-     * returns the property as BigInteger
-     * 
-     * @return the BigInteger value
-     */
-  public BigInteger getBigInteger(String key /** the propertyName */
+   * returns the property as BigInteger
+   *
+   * @return the BigInteger value
+   */
+  public BigInteger getBigInteger(String key /**
+                                                the propertyName
+                                              */
   ) {
     return asBigInteger(get(key));
   }
 
   /**
-     * returns the property as StringArray
-     * 
-     * @return the array or null
-     */
-  public String[] getStringArray(String key /** the propertyName */
+   * returns the property as StringArray
+   *
+   * @return the array or null
+   */
+  public String[] getStringArray(String key /**
+                                               the propertyName
+                                             */
   ) {
     return asStringArray(get(key));
   }
 
   /**
-     * returns the property as String or in case of a number as hexstring.
-     * 
-     * @return the hexstring
-     */
-  public String getString(String key /** the propertyName */
+   * returns the property as String or in case of a number as hexstring.
+   *
+   * @return the hexstring
+   */
+  public String getString(String key /**
+                                        the propertyName
+                                      */
   ) {
     return asString(get(key));
   }
 
   /**
-     * casts the object to a String[]
-     */
+   * casts the object to a String[]
+   */
   public static String[] asStringArray(Object o) {
     if (o == null)
       return null;
@@ -349,7 +375,8 @@ public class JSON {
     };
   }
 
-  /** parses a String to a json-object. If the json represents 
+  /**
+   * parses a String to a json-object. If the json represents
    * - a object : JSON is returned
    * - a Array : a Array is returned
    * - other types the wrapped primative typed (Boolean, Integer, Long or String) will be returned.

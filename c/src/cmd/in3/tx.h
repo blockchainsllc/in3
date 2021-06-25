@@ -13,6 +13,7 @@ typedef struct tx {
   char*      signtype;
   char*      sig;
   abi_sig_t* abi_sig;
+  char*      token;
 
 } tx_t;
 
