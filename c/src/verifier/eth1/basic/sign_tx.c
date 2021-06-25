@@ -189,13 +189,44 @@ static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, byt
   return IN3_OK;
 }
 
+static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
+  char* fn = d_get_string(tx, key("fn_sig"));
+
+  if (fn) {
+    d_token_t* args = d_get(tx, key("fn_args"));
+    if (args && d_type(args) != T_ARRAY) return req_set_error(req, "Invalid argument type for tx", IN3_EINVAL);
+
+    sb_t params = {0};
+    sb_add_char(&params, '\"');
+    sb_add_chars(&params, fn);
+
+    if (args)
+      sb_add_json(&params, "\",", args);
+    else
+      sb_add_chars(&params, "\",[]");
+
+    d_token_t* res;
+    TRY_FINAL(req_send_sub_request(req, "in3_abiEncode", params.data, NULL, &res, NULL), _free(params.data))
+
+    if (d_type(res) != T_BYTES || d_len(res) < 4) return req_set_error(req, "abi encoded data", IN3_EINVAL);
+    if (data->data) {
+      // if this is a deployment transaction we concate it with the arguments without the functionhash
+      bytes_t new_data = get_or_create_cached(req, key("deploy_data"), data->len + d_len(res) - 4);
+      memcpy(new_data.data, data->data, data->len);
+      memcpy(new_data.data + data->len, d_bytes(res)->data + 4, d_len(res) - 4);
+      *data = new_data;
+    }
+    else
+      *data = d_to_bytes(res);
+  }
+
+  return IN3_OK;
+}
 /** based on the tx-entries the transaction is manipulated before creating the raw transaction. */
 static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
   // do we need to convert to the ERC20.transfer function?
   TRY(transform_erc20(req, tx, to, value, data, gas_limit))
-
-  // TODO handle abi-encoding....
-
+  TRY(transform_abi(req, tx, data))
   return IN3_OK;
 }
 
