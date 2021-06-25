@@ -185,6 +185,8 @@ static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, byt
   }
   else if (token)
     return req_set_error(req, "Invalid Token. Only token-addresses are supported!", IN3_EINVAL);
+
+  return IN3_OK;
 }
 
 /** based on the tx-entries the transaction is manipulated before creating the raw transaction. */
