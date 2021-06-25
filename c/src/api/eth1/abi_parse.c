@@ -3,6 +3,7 @@
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/stringbuilder.h"
 #include "../../core/util/utils.h"
 #include "abi.h"
 #include <stdbool.h>
