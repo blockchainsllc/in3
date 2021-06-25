@@ -102,8 +102,6 @@ typedef struct json_parser {
   size_t     keys_last; // points to the position of the last key.
 } json_ctx_t;
 
-#include "stringbuilder.h"
-
 /**
  *
  * returns the byte-representation of token.
