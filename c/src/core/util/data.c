@@ -730,7 +730,7 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
 
 str_range_t d_to_json(const d_token_t* item) {
   str_range_t s;
-  if (item) {
+  if (item && item->data) {
     s.data = (char*) item->data;
     s.len  = find_end(s.data);
   }
