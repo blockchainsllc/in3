@@ -22,7 +22,7 @@ static bool _call(in3_t* c, char** method, sb_t* params) {
 }
 
 #ifdef MOD_WALLET
-void* wallet_get_default(void* conf, uint_fast8_t type_mask);
+void* wallet_get_default(void* conf, int type_mask);
 void* wallet_get_config(in3_t* c);
 #endif
 
