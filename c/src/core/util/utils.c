@@ -188,6 +188,23 @@ int bytes_to_hex(const uint8_t* buffer, int len, char* out) {
   return len * 2;
 }
 
+char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const char* postfix) {
+  char* res = out;
+  if (prefix) {
+    int l = strlen(prefix);
+    memcpy(out, prefix, l);
+    out += l;
+  }
+  out += bytes_to_hex(b.data, b.len, out);
+  if (postfix) {
+    int l = strlen(postfix);
+    memcpy(out, postfix, l);
+    out += l;
+  }
+  *out = 0;
+  return res;
+}
+
 /** writes 32 bytes to the pointer. */
 int keccak(bytes_t data, void* dst) {
   struct SHA3_CTX ctx;

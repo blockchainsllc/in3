@@ -329,6 +329,10 @@ int64_t parse_float_val(const char* data, /**< the data string*/
  */
 void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b);
 
+/**
+ * prints a bytes into a string
+ */
+char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const char* postfix);
 #ifdef THREADSAFE
 #define _NAME(x, y) x##y
 #if defined(_MSC_VER) || defined(__MINGW32__)
