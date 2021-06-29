@@ -790,7 +790,6 @@ zksync:
       proof: 'none'
       experimental: true
       pk: "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-      debug: true
       zksync:
         rest_api: "https://rinkeby-api.zksync.io/api/v0.1"
     input:
