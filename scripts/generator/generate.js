@@ -42,7 +42,7 @@ const main_help = []
 const main_aliases = []
 const bool_props = []
 
-let docs = {}, config = {}, types = {}
+let docs = {}, config = {}, types = {}, testCases = {}
 
 
 function scan(dir) {
@@ -66,6 +66,13 @@ function scan(dir) {
                 else
                     docs[k] = { ...docs[k], ...ob[k] }
                 lastAPI = k
+            }
+        }
+        else if(f.name == 'testCases.yml'){
+            console.error('parse ' + dir + '/' + f.name)
+            const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
+            for (const k of Object.keys(ob)) {
+                testCases[k]={...testCases[k],...ob[k]}
             }
         }
         else if (f.isDirectory()) scan(dir + '/' + f.name)
@@ -260,7 +267,7 @@ for (const s of Object.keys(docs).sort()) {
     console.log('generate ' + s + '\n   ' + Object.keys(rpcs).join('\n   '))
 
     if (Object.values(rpcs).filter(_ => !_.skipApi).length)
-        generators.forEach(_ => _.generateAPI(s, rpcs, rdescr, types))
+        generators.forEach(_ => _.generateAPI(s, rpcs, rdescr, types, testCases[s]))
 
 }
 
