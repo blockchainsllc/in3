@@ -54,10 +54,18 @@ function scan(dir) {
                 types = { ...types, ...ob.types }
                 delete ob.types
             }
+            let lastAPI = null
             for (const k of Object.keys(ob)) {
                 if (ob[k].config) config = { ...config, ...ob[k].config }
                 delete ob[k].config
-                docs[k] = { ...docs[k], ...ob[k] }
+                if (!generators.length && ob[k].fields && lastAPI) {
+                    delete ob[k].fields
+                    for (const n of Object.keys(ob[k]).filter(_ => !docs[lastAPI][_])) delete ob[k][n]
+                    docs[lastAPI] = { ...docs[lastAPI], ...ob[k] }
+                }
+                else
+                    docs[k] = { ...docs[k], ...ob[k] }
+                lastAPI = k
             }
         }
         else if (f.isDirectory()) scan(dir + '/' + f.name)
@@ -169,7 +177,7 @@ for (const s of Object.keys(docs).sort()) {
     if (rdescr) rpc_doc.push(rdescr + '\n')
     delete rpcs.descr
 
-    for (const rpc of Object.keys(rpcs).sort()) {
+    for (const rpc of Object.keys(rpcs).filter(_ => _ != 'fields').sort()) {
         const def = rpcs[rpc]
         def.returns = def.returns || def.result
         def.result = def.returns || def.result
