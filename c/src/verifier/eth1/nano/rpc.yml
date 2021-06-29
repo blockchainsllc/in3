@@ -71,6 +71,13 @@ types:
     transactionIndex:
       descr: transactionIndex within the containing block.
       type: int
+    from:
+      descr: address of the sender.
+      type: address
+    to:
+      descr: address of the receiver. null when its a contract creation transaction.
+      type: address
+      optional: true
 
 eth:
   descr: |
