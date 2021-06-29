@@ -109,13 +109,13 @@ utils:
         optional: true
     result:
       descr: the value as string.
-      type: string
+      type: double
     example:
       request:
         - "0x234324abadefdef"
         - eth
         - 3
-      response: "0.158"
+      response: 0.158
 
   in3_calcDeployAddress:
     descr: calculates the address of a contract about to deploy. The address depends on the senders nonce.
