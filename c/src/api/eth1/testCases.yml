@@ -30,3 +30,117 @@ utils:
       - eth
       - 3
     expected_output: "0.158"
+
+  in3_calcDeployAddress:
+    input:
+      - "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c"
+      - 6054986
+    expected_output: "0xba866e7bd2573be3eaf5077b557751bb6d58076e"
+
+account:
+
+  in3_pk2address:
+    input:
+      - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+    expected_output: "0xdc5c4280d8a286f0f9c8f7f55a5a0c67125efcfd"
+
+  in3_pk2public:
+    input:
+      - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+    expected_output: "0x0903329708d9380aca47b02f3955800179e18bffbb29be3a644593c5f87e4c7fa960983f78186577eccc909cec71cb5763acd92ef4c74e5fa3c43f3a172c6de1"
+
+  in3_ecrecover:
+    input:
+      - "0x487b2cbb7997e45b4e9771d14c336b47c87dc2424b11590e32b3a8b9ab327999"
+      - "0x0f804ff891e97e8a1c35a2ebafc5e7f129a630a70787fb86ad5aec0758d98c7b454dee5564310d497ddfe814839c8babd3a727692be40330b5b41e7693a445b71c"
+      - "hash"
+    expected_output:
+      publicKey: "0x94b26bafa6406d7b636fbb4de4edd62a2654eeecda9505e9a478a66c4f42e504c4481bad171e5ba6f15a5f11c26acfc620f802c6768b603dbcbe5151355bbffb"
+      address: "0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"
+
+  in3_prepareTx:
+    config:
+      proof: 'none'
+    input:
+      - to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
+        value: "0x100000000"
+        from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f" 
+    expected_output: "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
+    mockedResponses:
+      - eth_getTransactionCount:
+        - res:
+          - 
+            result: "0x0"
+      - eth_gasPrice:
+        - res:
+          - 
+            result: "0x0"
+
+  in3_signTx:
+    config:
+      proof: "none"
+      pk: "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+    input:
+      - "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
+      - "0x8A91DC2D28b689474298D91899f0c1baF62cB85b"
+    expected_output: "0xf86480808252089463f666a23cbd135a91187499b5cc51d589c302a08501000000008025a04c2539db491cd2b4fa0c54a81351aacd726e2460b43718f39300b0bf812eb0eba02913c456e34e5735333d8b39193775aac0e59c9179aaa7fd539571f0f319d594"
+
+  in3_signData:
+    config:
+      proof: "none"
+      pk: "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+    input:
+      - "0x0102030405060708090a0b0c0d0e0f"
+      - "0xa8b8759ec8b59d7c13ef3630e8530f47ddb47eba12f00f9024d3d48247b62852"
+      - "raw"
+    expected_output:
+      message: "0x0102030405060708090a0b0c0d0e0f"
+      messageHash: "0x1d4f6fccf1e27711667605e29b6f15adfda262e5aedfc5db904feea2baa75e67"
+      signature: "0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e95792264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e1521b"
+      r: "0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e9579"
+      s: "0x2264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e152"
+      v: 27
+
+  in3_decryptKey:
+    input:
+      - version: 3,
+        id: "f6b5c0b1-ba7a-4b67-9086-a01ea54ec638"
+        address: "08aa30739030f362a8dd597fd3fcde283e36f4a1"
+        crypto: 
+          ciphertext: "d5c5aafdee81d25bb5ac4048c8c6954dd50c595ee918f120f5a2066951ef992d"
+          cipherparams: 
+            iv: "415440d2b1d6811d5c8a3f4c92c73f49"
+          cipher: "aes-128-ctr"
+          kdf: pbkdf2
+          kdfparams: 
+            dklen: 32
+            salt: "691e9ad0da2b44404f65e0a60cf6aabe3e92d2c23b7410fd187eeeb2c1de4a0d"
+            c: 16384
+            prf: hmac-sha256
+          mac: "de651c04fc67fd552002b4235fa23ab2178d3a500caa7070b554168e73359610"
+      - "test"
+    expected_output: "0x1ff25594a5e12c1e31ebd8112bdf107d217c1393da8dc7fc9d57696263457546"
+
+  eth_sign:
+    config:
+      proof: "none"
+      pk: "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+    input:
+      - "0x8A91DC2D28b689474298D91899f0c1baF62cB85b"
+      - "0xdeadbeaf"
+    expected_output: "0xcbb6128a29ae206532e206d9e5cb4155d34bd82a1c1db0faf7c77230febb004d0a12270bf192d501f954e01ebf67c1a29d4972543888dad1b60933a7a2cd7af91b"
+
+  eth_signTransaction:
+    config:
+      proof: 'none'
+      pk: "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      chainId: 'goerli'
+    input:
+      - 
+        from: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+        to: "0x2c055df8d095a98099dc8942510a65d51480840e"
+        data: "0x"
+        value: "15023483000000000"
+        gasPrice: 1000000000
+        nonce: 32
+    expected_output: "0xf86a20843b9aca00825208942c055df8d095a98099dc8942510a65d51480840e87355fc737810e00802da0fd2f892a7d154aa699ead599152d93674765eef4e6c384ffbc50db394ec3e3cea055ce9aee6e61256f7efaa9c714e4c342e21074d900f1d8399be720c56cc5f415"
