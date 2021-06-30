@@ -12,7 +12,7 @@ types:
     crypto:
       descr: the cryptoparams
       type: cryptoParams
-  
+
   cryptoParams:
     ciphertext:
       descr: the cipher text
@@ -42,7 +42,7 @@ types:
     dklen:
       descr: the dklen
       type: uint64
-    salt: 
+    salt:
       descr: the salt
       type: string
     c:
@@ -53,10 +53,8 @@ types:
       type: string
 
 utils:
-
   descr: |
     a Collection of utility-function.
-  
 
   in3_abiEncode:
     sync: true
@@ -100,7 +98,7 @@ utils:
       request:
         - (address,uint256)
         - "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005"
-      response: 
+      response:
         - "0x1234567890123456789012345678901234567890"
         - "0x05"
 
@@ -123,9 +121,8 @@ utils:
         - false
       response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
 
-
   in3_toWei:
-    sync : true
+    sync: true
     descr: converts the given value into wei.
     params:
       value:
@@ -145,7 +142,6 @@ utils:
         - eth
       response: "0x01159183c4793db800"
 
-  
   in3_fromWei:
     sync: true
     descr: converts a given uint (also as hex) with a wei-value into a specified unit.
@@ -158,7 +154,7 @@ utils:
         descr: the unit of the target value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
         type: string
       digits:
-        descr: fix number of digits after the comma. If left out, only as many as needed will be included. 
+        descr: fix number of digits after the comma. If left out, only as many as needed will be included.
         type: int
         optional: true
     result:
@@ -186,24 +182,22 @@ utils:
       descr: the address of the deployed contract
     example:
       request:
-        - '0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c'
+        - "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c"
         - 6054986
-      response: '0xba866e7bd2573be3eaf5077b557751bb6d58076e'
-
+      response: "0xba866e7bd2573be3eaf5077b557751bb6d58076e"
 
   net_version:
     descr: Returns the current network id.
     apiName: getNetworkId
     result:
-       descr: the network id
-       type: uint64
+      descr: the network id
+      type: uint64
 
 account:
   descr: |
     Account Handling includes handling signers and preparing and signing transacrtion and data.
 
     Signers are Plugins able to create signatures. Those functions will use the registered plugins.
-    
 
   in3_pk2address:
     sync: true
@@ -241,7 +235,7 @@ account:
         descr: the message the signature is based on.
         type: hex
       sig:
-        descr:  the 65 bytes signature as hex.
+        descr: the 65 bytes signature as hex.
         type: bytes
       sigtype:
         descr: "the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data). Default: `raw`"
@@ -265,7 +259,6 @@ account:
       response:
         publicKey: "0x94b26bafa6406d7b636fbb4de4edd62a2654eeecda9505e9a478a66c4f42e504c4481bad171e5ba6f15a5f11c26acfc620f802c6768b603dbcbe5151355bbffb"
         address: "0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"
-      
 
   in3_prepareTx:
     descr: prepares a Transaction by filling the unspecified values and returens the unsigned raw Transaction.
@@ -273,14 +266,14 @@ account:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
         type: transaction
-          
+
     result:
       descr: the unsigned raw transaction as hex.
     example:
       request:
-        -  to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
-           value: "0x100000000"
-           from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f" 
+        - to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
+          value: "0x100000000"
+          from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
       response: "0xe980851a13b865b38252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
 
   in3_signTx:
@@ -292,7 +285,7 @@ account:
       from:
         descr: the account to sign
         type: address
-          
+
     result:
       descr: the raw transaction with signature.
     example:
@@ -315,7 +308,7 @@ account:
         type: string
         default: raw
         optional: true
-        
+
     result:
       descr: the signature
       type:
@@ -343,7 +336,7 @@ account:
         - "0x0102030405060708090a0b0c0d0e0f"
         - "0xa8b8759ec8b59d7c13ef3630e8530f47ddb47eba12f00f9024d3d48247b62852"
         - raw
-      response: 
+      response:
         message: "0x0102030405060708090a0b0c0d0e0f"
         messageHash: "0x1d4f6fccf1e27711667605e29b6f15adfda262e5aedfc5db904feea2baa75e67"
         signature: "0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e95792264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e1521b"
@@ -358,7 +351,7 @@ account:
       key:
         type: keyparams
         descr: the keyparams
-      
+
       #  descr: Keydata as object as defined in the keystorefile
       #  type: string
       passphrase:
@@ -372,13 +365,13 @@ account:
         - version: 3,
           id: "f6b5c0b1-ba7a-4b67-9086-a01ea54ec638"
           address: "08aa30739030f362a8dd597fd3fcde283e36f4a1"
-          crypto: 
+          crypto:
             ciphertext: "d5c5aafdee81d25bb5ac4048c8c6954dd50c595ee918f120f5a2066951ef992d"
-            cipherparams: 
+            cipherparams:
               iv: "415440d2b1d6811d5c8a3f4c92c73f49"
             cipher: "aes-128-ctr"
             kdf: pbkdf2
-            kdfparams: 
+            kdfparams:
               dklen: 32
               salt: "691e9ad0da2b44404f65e0a60cf6aabe3e92d2c23b7410fd187eeeb2c1de4a0d"
               c: 16384
@@ -390,7 +383,7 @@ account:
   eth_sign:
     descr: |
       The sign method calculates an Ethereum specific signature with: 
-      
+
       ```js
       sign(keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))).
       ```
@@ -409,11 +402,9 @@ account:
       descr: the signature (65 bytes) for the given message.
     example:
       request:
-        - '0x9b2055d370f73ec7d8a03e965129118dc8f5bf83'
-        - '0xdeadbeaf'
-      response: '0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b'
-
-
+        - "0x9b2055d370f73ec7d8a03e965129118dc8f5bf83"
+        - "0xdeadbeaf"
+      response: "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
 
   eth_signTransaction:
     descr: Signs a transaction that can be submitted to the network at a later time using with eth_sendRawTransaction.
@@ -422,7 +413,7 @@ account:
         descr: transaction to sign
         type: transaction
     result:
-      descr: the raw signed transaction 
+      descr: the raw signed transaction
     example:
       request:
         - data: "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"
@@ -431,6 +422,4 @@ account:
           gasPrice: "0x9184e72a000"
           to: "0xd46e8dd67c5d32be8058bb8eb970870f07244567"
           value: "0x9184e72a"
-      response: '0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b'
-
-
+      response: "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
