@@ -536,10 +536,6 @@ zksync:
           descr: the blockNumber containing the tx or `null` if still pending
           type: uint64
           optional: true
-        failReason:
-          descr: if executed and failed this will include an error message
-          type: string
-          optional: true
         tx_type:
           descr: Type of the transaction. `Transfer`, `ChangePubKey` or `Withdraw`
           type: string
