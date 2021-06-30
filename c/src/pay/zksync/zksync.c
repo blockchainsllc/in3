@@ -382,6 +382,7 @@ zksync_config_t* zksync_get_conf(in3_req_t* req) {
 in3_ret_t in3_register_zksync(in3_t* c) {
   zksync_config_t* conf = _calloc(sizeof(zksync_config_t), 1);
   conf->version         = 1;
+  conf->sign_type       = ZK_SIGN_PK;
   return in3_plugin_register(c,
                              PLGN_ACT_RPC_HANDLE | PLGN_ACT_INIT | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET | PLGN_ACT_ADD_PAYLOAD | PLGN_ACT_PAY_FOLLOWUP,
                              handle_zksync, conf, false);
