@@ -244,6 +244,7 @@ account:
         optional: true
     result:
       descr: the extracted public key and address
+      typeName: ECRecoverResult
       type:
         publicKey:
           descr: the public Key of the signer (64 bytes)
@@ -265,7 +266,7 @@ account:
     params:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
-        type: transaction
+        type: eth_transaction
 
     result:
       descr: the unsigned raw transaction as hex.
@@ -311,6 +312,7 @@ account:
 
     result:
       descr: the signature
+      typeName: SignResult
       type:
         message:
           descr: original message used
@@ -411,7 +413,7 @@ account:
     params:
       tx:
         descr: transaction to sign
-        type: transaction
+        type: eth_transaction
     result:
       descr: the raw signed transaction
     example:

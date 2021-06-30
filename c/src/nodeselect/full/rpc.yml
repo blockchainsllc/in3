@@ -153,7 +153,7 @@ nodelist:
       descr: the current nodelist
       type:
         nodes:
-          typeName: Node
+          typeName: IN3Node
           array: true
           descr: a array of node definitions.
           type:
@@ -358,6 +358,7 @@ nodelist:
     params:
       blocks:
         descr: array of requested blocks.
+        typeName: In3SignBlock
         type:
           blockNumber:
             descr: the blockNumber to sign
@@ -369,6 +370,7 @@ nodelist:
     
     result:
       descr: the Array with signatures of all the requires blocks.
+      typeName: In3SignedBlockHash
       type: 
         blockHash:
           descr: the blockhash which was signed.
@@ -407,6 +409,7 @@ nodelist:
         type: address
     result:
       descr: the whitelisted addresses
+      typeName: In3WhiteList
       type:
         nodes:
           descr: array of whitelisted nodes addresses.

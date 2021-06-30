@@ -1,6 +1,6 @@
 types:
 
-  transaction:
+  eth_transaction:
     to:
       descr: receipient of the transaction.
       type: address
@@ -40,7 +40,7 @@ types:
       optional: true
 
 
-  blockheader:
+  eth_blockheader:
     number:
       descr: the block number. `null` when its pending block.
       type: uint64
@@ -98,21 +98,21 @@ types:
       array: true
       type: bytes32
 
-  blockdataWithTxHashes:
-    _extends: blockheader
+  eth_blockdataWithTxHashes:
+    _extends: eth_blockheader
     transactions:
       descr: Array of transaction hashes
       array: true
       type: bytes32
 
-  blockdata:
-    _extends: blockheader
+  eth_blockdata:
+    _extends: eth_blockheader
     transactions:
       descr: Array of transaction objects
       array: true
-      type: transactiondata
+      type: eth_transactiondata
 
-  transactiondata:
+  eth_transactiondata:
     to:
       descr: receipient of the transaction.
       type: address
@@ -195,15 +195,15 @@ eth:
           name: getBlock
           descr: returns the given Block by number with transactionHashes. if no blocknumber is specified the latest block will be returned.
           result:
-            type: blockdataWithTxHashes
+            type: eth_blockdataWithTxHashes
         - params:
             fullTx: true
           name: getBlockWithTx
           descr: returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
           result:
-            type: blockdata
+            type: eth_blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-      type: blockdata
+      type: eth_blockdata
 
 
     example:
@@ -326,15 +326,15 @@ eth:
           name: getBlockByHash
           descr: returns the given Block by hash with transactionHashes
           result:
-            type: blockdataWithTxHashes
+            type: eth_blockdataWithTxHashes
         - params:
             fullTx: true
           name: getBlockByHashWithTx
           descr: returns the given Block by hash with full transaction data
           result:
-            type: blockdata
+            type: eth_blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-      type: blockdata
+      type: eth_blockdata
 
     proof:
       alias: eth_getBlockByNumber
@@ -459,7 +459,7 @@ eth:
     result:
       optional: true
       descr: the transactiondata or `null` if it does not exist
-      type: transactiondata
+      type: eth_transactiondata
     proof:
       alias: eth_getTransactionByHash
 
@@ -485,7 +485,7 @@ eth:
         s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
       in3:
         proof:
-          type: transactionProof
+          type: eth_transactionProof
           block: '0xf90212a033a7afd1b9...fa16cf2'
           merkleProof:
           - '0xf90131a0...91604f2f58080808080808080'
@@ -512,7 +512,7 @@ eth:
     result:
       optional: true
       descr: the transactiondata or `null` if it does not exist
-      type: transactiondata
+      type: eth_transactiondata
     proof:
       alias: eth_getTransactionByHash
 
@@ -538,7 +538,7 @@ eth:
         s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
       in3:
         proof:
-          type: transactionProof
+          type: eth_transactionProof
           block: '0xf90212a033a7afd1b9...fa16cf2'
           merkleProof:
           - '0xf90131a0...91604f2f58080808080808080'
@@ -562,7 +562,7 @@ eth:
     result:
       optional: true   
       descr: the transactiondata or `null` if it does not exist
-      type: transactiondata
+      type: eth_transactiondata
  
 
     example:
@@ -586,7 +586,7 @@ eth:
         s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
       in3:
         proof:
-          type: transactionProof
+          type: eth_transactionProof
           block: '0xf90212a033a7afd1b9...fa16cf2'
           merkleProof:
           - '0xf90131a0...91604f2f58080808080808080'
@@ -736,6 +736,7 @@ eth:
     params:
       filter:
         descr: The filter criteria for the events.
+        typeName: EthLogFilter
         type:
           fromBlock:
             descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
@@ -1115,7 +1116,7 @@ eth:
     params:
       tx:
         descr: the transactiondata to send
-        type: transaction
+        type: eth_transaction
     result:
       descr: the transactionHash
     proof:
@@ -1126,10 +1127,10 @@ eth:
     params:
       tx:
         descr: the transactiondata to send
-        type: transaction
+        type: eth_transaction
     result:
       descr: the transactionReceipt
-      type: transactionReceipt
+      type: eth_transactionReceipt
 
         
   eth_sendRawTransaction:

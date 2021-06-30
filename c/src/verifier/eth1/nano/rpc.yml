@@ -38,7 +38,7 @@ types:
       type: string
       optional: true
 
-  transactionReceipt:
+  eth_transactionReceipt:
     blockNumber:
       descr: the blockNumber
       type: uint64
@@ -116,7 +116,7 @@ eth:
     result:
       optional: true
       descr: the TransactionReceipt or `null`  if it does not exist.
-      type: transactionReceipt
+      type: eth_transactionReceipt
     
     example:
       request:
