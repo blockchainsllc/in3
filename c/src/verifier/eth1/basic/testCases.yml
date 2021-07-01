@@ -187,17 +187,17 @@ eth:
       - "0xbf920c"
     expected_output:
       options:
-        blockdata: *result_blockfull
-        blockdataWithTxHashes: *result_blockfull_without_tx
+        eth_blockdata: *result_blockfull
+        eth_blockdataWithTxHashes: *result_blockfull_without_tx
     mockedResponses:
       options:
-        blockdata:
+        eth_blockdata:
           - eth_getBlockByNumber:
             - res:
               - 
                 jsonrpc: "2.0"
                 result: *blockdata
-        blockdataWithTxHashes:
+        eth_blockdataWithTxHashes:
           - eth_getBlockByNumber:
             - res:
               - 
@@ -211,22 +211,22 @@ eth:
       - "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
     expected_output:
       options:
-        blockdata: *result_blockfull
-        blockdataWithTxHashes: *result_blockfull_without_tx
+        eth_blockdata: *result_blockfull
+        eth_blockdataWithTxHashes: *result_blockfull_without_tx
     mockedResponses:
       options:
-        blockdata:
+        eth_blockdata:
           - eth_getBlockByHash:
             - res:
               - 
                 jsonrpc: "2.0"
                 result: *blockdata
-        blockdataWithTxHashes:
+        eth_blockdataWithTxHashes:
           - eth_getBlockByHash:
             - res:
               - 
                 jsonrpc: "2.0"
-                result: *blockdataWithTxHashes
+                result: *blockdataWithTxHashes        
 
   eth_getBlockTransactionCountByHash:    
     config: 

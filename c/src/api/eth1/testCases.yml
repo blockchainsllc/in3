@@ -30,7 +30,13 @@ utils:
       - eth
       - 3
     expected_output: "0.158"
-
+  
+  in3_toWei:
+    input:
+      - "20.0009123"
+      - eth
+    expected_output: "0x01159183c4793db800"
+  
   in3_calcDeployAddress:
     input:
       - "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c"
@@ -144,3 +150,5 @@ account:
         gasPrice: 1000000000
         nonce: 32
     expected_output: "0xf86a20843b9aca00825208942c055df8d095a98099dc8942510a65d51480840e87355fc737810e00802da0fd2f892a7d154aa699ead599152d93674765eef4e6c384ffbc50db394ec3e3cea055ce9aee6e61256f7efaa9c714e4c342e21074d900f1d8399be720c56cc5f415"
+
+
