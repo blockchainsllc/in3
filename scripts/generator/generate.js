@@ -60,7 +60,7 @@ function scan(dir) {
                 delete ob[k].config
                 if (!generators.length && ob[k].fields && lastAPI) {
                     delete ob[k].fields
-                    for (const n of Object.keys(ob[k]).filter(_ => !docs[lastAPI][_])) delete ob[k][n]
+                    for (const n of Object.keys(ob[k]).filter(_ => docs[lastAPI][_])) delete ob[k][n]
                     docs[lastAPI] = { ...docs[lastAPI], ...ob[k] }
                 }
                 else
@@ -68,11 +68,11 @@ function scan(dir) {
                 lastAPI = k
             }
         }
-        else if(f.name == 'testCases.yml'){
+        else if (f.name == 'testCases.yml') {
             console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             for (const k of Object.keys(ob)) {
-                testCases[k]={...testCases[k],...ob[k]}
+                testCases[k] = { ...testCases[k], ...ob[k] }
             }
         }
         else if (f.isDirectory()) scan(dir + '/' + f.name)
@@ -184,7 +184,7 @@ for (const s of Object.keys(docs).sort()) {
     if (rdescr) rpc_doc.push(rdescr + '\n')
     delete rpcs.descr
 
-    for (const rpc of Object.keys(rpcs).filter(_ => _ != 'fields').sort()) {
+    for (const rpc of Object.keys(rpcs).filter(_ => _ != 'fields' && !_.startsWith('_')).sort()) {
         const def = rpcs[rpc]
         def.returns = def.returns || def.result
         def.result = def.returns || def.result
