@@ -239,10 +239,11 @@ char* in3_configure(in3_t* c, const char* config) {
   if (!json || !json->result) return config_err("in3_configure: parse error", config);
 
   // the error-message we will return in case of an error.
-  char* res = NULL;
+  char* res        = NULL;
+  int   prop_index = 0;
 
   // we iterate over the root-props
-  for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter)) {
+  for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter), prop_index++) {
     d_token_t* token = iter.token;
 
     if (token->key == CONFIG_KEY("autoUpdateList")) {
@@ -380,7 +381,11 @@ char* in3_configure(in3_t* c, const char* config) {
         }
       }
 
-      if (!handled) EXPECT_TOK(token, false, "unsupported config option!");
+      if (!handled) {
+        char tmp[100];
+        sprintf(tmp, "The config with index %d is unknown or not supported!", prop_index);
+        EXPECT_TOK(token, false, tmp);
+      }
     }
   }
 
