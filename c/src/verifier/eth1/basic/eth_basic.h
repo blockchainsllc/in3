@@ -149,6 +149,6 @@ RETURNS_NONULL NONULL char* eth_wallet_sign(const char* key, const char* data);
 /**
  * determines the from-address in case no from-address has been specified.
  */
-NONULL in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res);
+in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res);
 
 #endif // in3_eth_basic_h__
