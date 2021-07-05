@@ -462,11 +462,18 @@ in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
 }
 
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
+#ifdef ETH_BASIC
   return filter_remove(eth_basic_get_filters(in3), id);
+#else
+  UNUSED_VAR(in3);
+  UNUSED_VAR(id);
+  return false;
+#endif
 }
 // same as "eth_getFilterChanges"
 // or "eth_getFilterLogs"
 in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
+#ifdef ETH_BASIC
   in3_filter_handler_t* filters = eth_basic_get_filters(in3);
   if (filters == NULL) return IN3_EFIND;
   if (id == 0 || id > filters->count)
@@ -509,9 +516,18 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
     default:
       return IN3_ENOTSUP;
   }
+#else
+  UNUSED_VAR(in3);
+  UNUSED_VAR(id);
+  UNUSED_VAR(block_hashes);
+  UNUSED_VAR(logs);
+
+  return IN3_ENOTSUP;
+#endif
 }
 
 in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
+#ifdef ETH_BASIC
   in3_filter_handler_t* filters = eth_basic_get_filters(in3);
   if (filters == NULL) return IN3_EFIND;
   if (id == 0 || id > filters->count)
@@ -528,6 +544,12 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
     default:
       return IN3_ENOTSUP;
   }
+#else
+  UNUSED_VAR(in3);
+  UNUSED_VAR(id);
+  UNUSED_VAR(logs);
+  return IN3_ENOTSUP;
+#endif
 }
 
 void eth_log_free(eth_log_t* log) {
