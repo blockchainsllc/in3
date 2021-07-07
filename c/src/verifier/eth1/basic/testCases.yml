@@ -175,7 +175,11 @@ eth:
     expected_output: 3220
     mockedResponses:
       - eth_blockNumber:
-        - res:
+          req:
+          - 
+            method: "eth_blockNumber"
+            params: []
+          res:
           -
             jsonrpc: "2.0"
             result: "0xc94"
@@ -193,13 +197,25 @@ eth:
       options:
         eth_blockdata:
           - eth_getBlockByNumber:
-            - res:
+              req:
+              - 
+                method: "eth_getBlockByNumber"
+                params: 
+                  - "0xbf920c"
+                  - true
+              res:
               - 
                 jsonrpc: "2.0"
                 result: *blockdata
         eth_blockdataWithTxHashes:
           - eth_getBlockByNumber:
-            - res:
+              req:
+              - 
+                method: "eth_getBlockByNumber"
+                params: 
+                  - "0xbf920c"
+                  - false
+              res:
               - 
                 jsonrpc: "2.0"
                 result: *blockdataWithTxHashes        
@@ -217,13 +233,25 @@ eth:
       options:
         eth_blockdata:
           - eth_getBlockByHash:
-            - res:
+              req:
+              -
+                method: "eth_getBlockByHash"
+                params: 
+                  - "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+                  - true
+              res:
               - 
                 jsonrpc: "2.0"
                 result: *blockdata
         eth_blockdataWithTxHashes:
           - eth_getBlockByHash:
-            - res:
+              req:
+              -
+                method: "eth_getBlockByHash"
+                params: 
+                  - "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+                  - false
+              res:
               - 
                 jsonrpc: "2.0"
                 result: *blockdataWithTxHashes        
@@ -236,7 +264,12 @@ eth:
     expected_output: 204
     mockedResponses:
       - eth_getBlockTransactionCountByHash:
-        - res:
+          req:
+          -
+            method: "eth_getBlockTransactionCountByHash"
+            params:
+              - "0x0c0728467cee3a0b1b1322e88596d0f9f2a8fa2018fc5447d5072805d3bf9d13"
+          res:
           -
             jsonrpc: "2.0"
             result: "0xcc"
@@ -249,7 +282,12 @@ eth:
     expected_output: 204
     mockedResponses:
       - eth_getBlockTransactionCountByNumber:
-        - res:
+          req:
+          -
+            method: "eth_getBlockTransactionCountByNumber"
+            params:
+              - "0x9d6a46"
+          res:
           -
             jsonrpc: "2.0"
             result: "0xcc"
@@ -262,7 +300,12 @@ eth:
     expected_output: 1
     mockedResponses:
       - eth_getUncleCountByBlockHash:
-        - res:
+          req:
+          -
+            method: "eth_getUncleCountByBlockHash"
+            params: 
+              - "0x884aaab2f9116742e693ced034a2dff840b45f21709025f7d69cde26d071068b"
+          res:
           - 
             jsonrpc: "2.0"
             result: "0x1"
@@ -275,7 +318,12 @@ eth:
     expected_output: 1
     mockedResponses:
       - eth_getUncleCountByBlockNumber:
-        - res:
+          req:
+          -
+            method: "eth_getUncleCountByBlockNumber"
+            params:
+              - "0x95ff5f"
+          res:
           - 
             jsonrpc: "2.0"
             result: "0x1"
@@ -289,7 +337,13 @@ eth:
     expected_output: *output_eth_getTransactionByBlock
     mockedResponses:
       - eth_getTransactionByBlockHashAndIndex:
-        - res:
+          req:
+          -
+            method: "eth_getTransactionByBlockHashAndIndex"
+            params:
+              - "0xca0e20a9e930af17c7422be3d991e925235b5350f8912a5ca4aaea734b4a88c5"
+              - "0x2"
+          res:
           -
             jsonrpc: "2.0"
             result: *rpc_eth_getTransactionByBlock
@@ -303,7 +357,13 @@ eth:
     expected_output: *output_eth_getTransactionByBlock
     mockedResponses:
       - eth_getTransactionByBlockNumberAndIndex:
-        - res:
+          req:
+          -
+            method: "eth_getTransactionByBlockNumberAndIndex"
+            params: 
+              - "0x9d6e99"
+              - "0x2"
+          res:
           -
             jsonrpc: "2.0"
             result: *rpc_eth_getTransactionByBlock
@@ -316,7 +376,12 @@ eth:
     expected_output: *output_eth_getTransactionByBlock
     mockedResponses:
       - eth_getTransactionByHash:
-        - res:
+          req:
+          -
+            method: "eth_getTransactionByHash"
+            params:
+              - "0x02fb01822450cf847961e34edd4d30e8225bed8742a573fb3eb27205931b9637"
+          res:
           -
             jsonrpc: "2.0"
             result: *rpc_eth_getTransactionByBlock
@@ -326,13 +391,21 @@ eth:
       proof: 'none'
     input:
       - 
-        fromBlock: "0x834B77"
-        toBlock: "0x834B77"
+        fromBlock: "0x834b77"
+        toBlock: "0x834b77"
         address: "0xdac17f958d2ee523a2206206994597c13d831ec7"
     expected_output: *test_eth_getlogs
     mockedResponses:
       - eth_getLogs:
-        - res:
+          req:
+          -
+            method: "eth_getLogs"
+            params:
+              -
+                fromBlock: "0x834b77"
+                toBlock: "0x834b77"
+                address: "0xdac17f958d2ee523a2206206994597c13d831ec7"
+          res:
           -
             jsonrpc: "2.0"
             result: *test_eth_getlogs
@@ -345,7 +418,13 @@ eth:
     expected_output: "0x329a1e26bab74000"
     mockedResponses:
       - eth_getBalance:
-        - res:
+          req:
+          - 
+            method: "eth_getBalance"
+            params: 
+              - "0x4144FFD5430a8518fa2d84ef5606Fd7e1921cE27"
+              - "latest"
+          res:
           -
             jsonrpc: "2.0"
             result: "0x329a1e26bab74000"
@@ -358,7 +437,13 @@ eth:
     expected_output: 26588838
     mockedResponses:
       - eth_getTransactionCount:
-        - res:
+          req:
+          -
+            method: "eth_getTransactionCount"
+            params:
+              - "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
+              - "latest"
+          res:
           -
             jsonrpc: "2.0"
             result: "0x195b6a6"
@@ -372,7 +457,13 @@ eth:
     expected_output: "0x60806040526001600160a01b036000541663530ca43760e11b6000351415602a578060005260206000f35b3660008037600080366000845af43d6000803e806046573d6000fd5b3d6000f3fea265627a7a723158203f36691c16ad212e606ff2acbeb8ed1efb9c7d0f4f2c44903f1d6dcb82754f6c64736f6c63430005110032"
     mockedResponses:
       - eth_getCode:
-        - res:
+          req:
+          -
+            method: "eth_getCode"
+            params:
+              - "0xf62A53c356f9DC6Ee521A74934236eD1e4D9F71a"
+              - "latest"
+          res:
           - 
             jsonrpc: "2.0"
             result: "0x60806040526001600160a01b036000541663530ca43760e11b6000351415602a578060005260206000f35b3660008037600080366000845af43d6000803e806046573d6000fd5b3d6000f3fea265627a7a723158203f36691c16ad212e606ff2acbeb8ed1efb9c7d0f4f2c44903f1d6dcb82754f6c64736f6c63430005110032"
@@ -386,7 +477,14 @@ eth:
     expected_output: "0x0"
     mockedResponses:
       - eth_getStorageAt:
-        - res:
+          req:
+          -
+            method: "eth_getStorageAt"
+            params:
+              - "0x862174623bc39e57de552538f424806b947d3d05"
+              - "0x0"
+              - "latest"
+          res:
           - 
             jsonrpc: "2.0"
             result: "0x0"
@@ -396,7 +494,6 @@ eth:
       proof: 'none'
       pk: "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
       chainId: 'goerli'
-
     input:
       - 
         to: "0x1234567890123456789012345678901234567890"
@@ -404,13 +501,18 @@ eth:
         data: "0x4faa8a2600000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72"
         nonce: 31
         gasPrice: 1000000000
-    expected_output: "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"
+    expected_output: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
     mockedResponses:
       - eth_sendRawTransaction:
-        - res:
+          req:
+          -
+            method: "eth_sendRawTransaction"
+            params:
+              - "0xf8871f843b9aca0082520894123456789012345678901234567890123456789080a44faa8a2600000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea722ea0d8642edc854eb204a4ab0e01cc7d91bbf70436df46d6b3c6103e49d13f0ecd97a05e3b81096a00b0703d18159cc4488b15d3d36b9dd7a125d2310ee152f6864375"
+          res:
           -
             jsonrpc: "2.0"
-            result: "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"
+            result: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
   
   eth_sendTransactionAndWait:
     config:
@@ -469,12 +571,22 @@ eth:
       transactionIndex: "0x22"
     mockedResponses:
       - eth_sendRawTransaction:
-        - res:
+          req:
+          -
+            method: "eth_sendRawTransaction"
+            params:
+              - "0xf8871f843b9aca0082520894123456789012345678901234567890123456789080a44faa8a2600000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea722ea0d8642edc854eb204a4ab0e01cc7d91bbf70436df46d6b3c6103e49d13f0ecd97a05e3b81096a00b0703d18159cc4488b15d3d36b9dd7a125d2310ee152f6864375"
+          res:
           -
             jsonrpc: "2.0"
-            result: "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"
+            result: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
       - eth_getTransactionReceipt:
-        - res: 
+          req:
+          -
+            method: "eth_getTransactionReceipt"
+            params:
+              - "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+          res: 
           -
             jsonrpc: "2.0"
             result:
@@ -531,7 +643,12 @@ eth:
     expected_output: "0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2"
     mockedResponses:
       - eth_sendRawTransaction:
-        - res:
-          - 
+          req:
+          -
+            method: "eth_sendRawTransaction"
+            params:
+              - "0xf86d8206aa85438558d400825208941ebd5c8cfec45650cf9c80adfeb5488ae36859c3872386f26fc10000801ba06df6fc901a78cea1dfc02baead56c8ec0d8d008c505efcfc3b4462b1a659be25a065152fd2e0dbf04b8e1baac46f31df9033f9c72b9dfad1b4fe41f89ef32c9a53"
+          res:
+          -
             jsonrpc: "2.0"
             result: "0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2"

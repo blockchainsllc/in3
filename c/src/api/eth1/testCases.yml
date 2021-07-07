@@ -74,11 +74,21 @@ account:
     expected_output: "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
     mockedResponses:
       - eth_getTransactionCount:
-        - res:
+          req:
+            -
+              method: "eth_getTransactionCount"
+              params:
+                - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+                - "latest"
+          res:
           - 
             result: "0x0"
       - eth_gasPrice:
-        - res:
+          req:
+          -
+            method: "eth_gasPrice"
+            params: [] 
+          res:
           - 
             result: "0x0"
 

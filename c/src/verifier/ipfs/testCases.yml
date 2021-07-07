@@ -9,7 +9,13 @@ ipfs:
     expected_output: "I love Incubed"
     mockedResponses:
       - ipfs_get:
-        - res:
+          req:
+          -
+            method: "ipfs_get"
+            params:
+              - Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH
+              - utf8
+          res:
           -
             result: "I love Incubed"
   
@@ -22,6 +28,12 @@ ipfs:
     expected_output: "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH"
     mockedResponses:
       - ipfs_put:
-        - res:
+          req:
+          -
+            method: "ipfs_put"
+            params:
+              - "I love incubed"
+              - "utf8"
+          res:
           - 
             result: "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH"

@@ -286,12 +286,24 @@ btc:
       options:
         bytes:
           - getblockheader:
-            - res:
+              req:
+              -
+                method: "getblockheader"
+                params: 
+                  - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
+                  - false 
+              res:
               - 
                 result: 0100000081cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0f1fc122bc7f5d74df2b9441a42a14695
         btcblockheader:
           - getblockheader:
-            - res:
+              req:
+              -
+                method: "getblockheader"
+                params: 
+                  - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
+                  - true
+              res:
               - result:
                   hash: "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
                   confirmations: 560364
@@ -323,17 +335,35 @@ btc:
       options:
         bytes:
           - getblock:
-            - res: 
+              req:
+              -
+                method: getblock
+                params: 
+                  - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
+                  - 0
+              res: 
               - 
                 result: "0100000081cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0f1fc122bc7f5d74df2b9441a42a146950401000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804f2b9441a022a01ffffffff014034152a01000000434104d879d5ef8b70cf0a33925101b64429ad7eb370da8ad0b05c9cd60922c363a1eada85bcc2843b7378e226735048786c790b30b28438d22acfade24ef047b5f865ac000000000100000001ad6279669bcc8e3003267d97c9e364a9835ea7a5b53871d057783ef96f468d73000000008c4930460221009805aa00cb6f80ca984584d4ca40f637fc948e3dbe159ea5c4eb6941bf4eb763022100e1cc0852d3f6eb87839edca1f90169088ed3502d8cde2f495840acac69eefc9801410486477e6a23cb25c9a99f0c467c6fc86197e718ebfd41d1aef7cc3cbd75197c1f1aaba985b22b366a0729ccb8aa38277809d6d218cf4077ac9f29a953b5435222ffffffff0280f0fa02000000001976a9146f31097e564b9d54ebad662d5c4b5621c18ff52388ac007ddaac000000001976a9147228033b48b380900501c39c61da4ab453ca88e888ac0000000001000000035a19f341c42071f9cec7df37c4853c95d6aecc95e3bf19e3181d30d99552b8c9000000008a473044022025bca5dc0fe42aca5f07c9b3fe1b3f72113ffbc3522f8d3ebb2457f5bdf8f9b2022030ff687c00a63e810b21e447d3a57b2749ebea553cab763eb9b99e1b9839653b014104469f7eb54b90d90106b1a5412b41a23516028e81ad35e0418a4460707ae39a4bf0101b632260fb08979aba0ceea576b5400c7cf30b539b055ec4c0b96ab00984ffffffff5b72d3f4b6b72b3511bddd9994f28a91cc03212f200f71b91df13e711d58c1da000000008c493046022100fbef2589b7c52a3be0fd8dd3624445da9c8930f0e51f6a33d76dc0ca0304473d0221009ec433ca6a9f16184db46468ff39cafaa9643021e0c66a1de1e6f9a612092790014104b27f4de096ac6431eec4b807a0d3db3e9f9be48faab692d5559624acb1faf4334dd440ebf32a81506b7c49d8cf40e4b3f5c6b6e99fcb6d3e8a298174bd2b348dffffffff292e94738851718433a3168e43cab1c6a811e9a0f35b06b6cec60fea9abe0f43010000008a4730440220582813f2c2d7cbb84521f81d6c2a1147e5296e90bee05f583b3df108fdac72010220232b43a2e596cef59f82c8bfff1a310d85e7beb3e607076ff8966d6d374dc12b014104a8514ca51137c6d8a4befa476a7521197b886fceafa9f5c2830bea6df62792a6dd46f2b26812b250f13fad473e5cab6dcceaa2d53cf2c82e8e03d95a0e70836bffffffff0240420f00000000001976a914429e6bd3c9a9ca4be00a4b2b02fd4f5895c1405988ac4083e81c000000001976a914e55756cb5395a4b39369d0f1f0a640c12fd867b288ac000000000100000002c8a8356402b9271ae73116b3a613d0a489aa3441a72d4b53a98eb7837584e17a010000008a4730440220771ae3ed7f2507f5682d6f63f59fa17187f1c4bdb33aa96373e73d42795d23b702206545376155d36db49560cf9c959d009f8e8ea668d93f47a4c8e9b27dc6b330230141048a976a8aa3f805749bf62df59168e49c163abafde1d2b596d685985807a221cbddf5fb72687678c41e35de46db82b49a48a2b9accea3648407c9ce2430724829ffffffffa4f0111c9248f7360b6e3fed4856563eb0aa82b10303c14befae96ed4818c7fe010000008c49304602210087fc57bd3ce0a03f0f7a3300a84dde8d5eba23dfdc64b8f2c17950c5213158d102210098141fbd22da33629cfc25b84d49b397144e1ec6287e0edd53dbb426aa6a72ed014104dee3ef362ae99b46422c8028f900a138c872776b2fcffed3f9cd02ee4b068a6df516a50249ae6d8f420f9ce19cdfc4663961296a71cd62b04a2c8a14ff89b1d0ffffffff01c0e1e400000000001976a914e43f7c61b3ef143b0fe4461c7d26f67377fd207588ac00000000"
         btcblock:
           - getblock:
-            - res:
+              req:
+              -
+                method: getblock
+                params: 
+                  - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
+                  - 1
+              res:
               -
                 result: *btc_full_with_tx_hash
         btcblockWithTx:
           - getblock:
-            - res:
+              req:
+              -
+                method: getblock
+                params: 
+                  - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
+                  - 2
+              res:
               -
                 result: *btc_full_with_tx
     
@@ -350,12 +380,24 @@ btc:
       options:
         bytes: 
           - getrawtransaction:
-            - res:
+              req:
+              -
+                method: "getrawtransaction"
+                params:
+                  - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+                  - 0 
+              res:
               - 
                 result: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
         btctransaction: 
           - getrawtransaction:
-            - res:
+              req:
+              -
+                method: "getrawtransaction"
+                params:
+                  - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+                  - 1
+              res:
               -
                 result: *btc_full_tx
   
@@ -365,7 +407,11 @@ btc:
     expected_output: 688582
     mockedResponses:
       - getblockcount:
-        - res:
+          req:
+          -
+            method: "getblockcount"
+            params: []
+          res:
           - 
             result: 688582
 
@@ -375,7 +421,11 @@ btc:
     expected_output: 19932791027262.74
     mockedResponses:
       - getdifficulty:
-        - res:
+          req:
+          - 
+            method: "getdifficulty"
+            params: []
+          res:
           - 
             result: 19932791027262.74
 
@@ -385,6 +435,10 @@ btc:
     expected_output: "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096"
     mockedResponses:
       - getbestblockhash:
-        - res:
+         req:
+          - method: getbestblockhash
+            params: []
+         res:
           - 
             result: "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096"
+            
