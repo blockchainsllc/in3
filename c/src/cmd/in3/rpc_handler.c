@@ -102,12 +102,12 @@ static bool _ipfs_get(in3_t* c, sb_t* args) {
   args->data[size - 2] = 0;
 #ifdef IPFS
   bytes_t* content = ipfs_get(c, args->data + 2);
-#else
-  die("ipfs is not supported. Please compile with -DIPFS=true");
-#endif
   if (!content) die("IPFS hash not found!");
   fwrite(content->data, content->len, 1, stdout);
   fflush(stdout);
+#else
+  die("ipfs is not supported. Please compile with -DIPFS=true");
+#endif
   return true;
 }
 

@@ -90,6 +90,17 @@ static bool add_key(in3_t* c, bytes32_t pk) {
   return true;
 }
 
+void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
+  struct SHA3_CTX kctx;
+  sha3_256_Init(&kctx);
+  const char* PREFIX = "\x19"
+                       "Ethereum Signed Message:\n";
+  sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
+  sha3_Update(&kctx, dst, sprintf((char*) dst, "%d", (int) msg.len));
+  if (msg.len) sha3_Update(&kctx, msg.data, msg.len);
+  keccak_Final(&kctx, dst);
+}
+
 static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
   signer_key_t* k = data;
   switch (action) {
@@ -102,15 +113,8 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
           return ec_sign_pk_raw(ctx->message.data, k->pk, ctx->signature.data);
 
         case SIGN_EC_PREFIX: {
-          bytes32_t       hash;
-          struct SHA3_CTX kctx;
-          sha3_256_Init(&kctx);
-          const char* PREFIX = "\x19"
-                               "Ethereum Signed Message:\n";
-          sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-          sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", (int) ctx->message.len));
-          if (ctx->message.len) sha3_Update(&kctx, ctx->message.data, ctx->message.len);
-          keccak_Final(&kctx, hash);
+          bytes32_t hash;
+          eth_create_prefixed_msg_hash(hash, ctx->message);
           return ec_sign_pk_raw(hash, k->pk, ctx->signature.data);
         }
         case SIGN_EC_HASH:
