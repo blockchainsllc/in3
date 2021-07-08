@@ -2416,6 +2416,7 @@ btc:
     -
       config:
         proof: 'none'
+      extra: "with Segwit"
       input:
         - "0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2"
       expected_output:
@@ -2496,6 +2497,7 @@ btc:
   -
     config:
       proof: 'none'
+    extra: "with Segwit"
     input:
       - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
     expected_output:

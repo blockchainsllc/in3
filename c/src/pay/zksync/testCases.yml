@@ -129,6 +129,7 @@ tokens: &tokens
 zksync:
 
   zksync_set_key:
+  -
     config:
       proof: 'none'
       experimental: true
@@ -176,7 +177,6 @@ zksync:
                 mintedNfts: {}
                 pubKeyHash: 'sync:0000000000000000000000000000000000000000'
               address: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-
       - tokens:
           req:
           -
@@ -234,6 +234,170 @@ zksync:
           res:
           -
             result: "sync-tx:4f8b59a5d7d4f128c3024b481eebc66de41428636c385ca68f00ea5f0d785564"
+  -
+    extra: "with multisig"
+    config:
+      proof: 'none'
+      experimental: true
+      pk: "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      rpc: "https://rinkeby-light.eth.linkpool.io"
+      zksync: 
+        provider_url: "https://rinkeby-api.zksync.io/jsrpc"
+        account: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+        sync_key: "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+        musig_pub_keys: "0x5303a0015f8d5a8fef6cb1d60a034ef28dc4ac6aefa33c936d5aa0927f7c169a4a646591170aee46931ade1148038c4c75c3972af2281a580756a0317c19872d"
+        musig_urls:
+          - ""
+          - "https://approver.incubed.net"
+        create2:
+          creator: "0xaa8c54c65c14f132804f0809bdbef19970673709"
+          saltarg: "0x3bf6b1cbce10cee9cba978f4f2466ccaf1802af73f15a0f1dd8bff9e666bf2d8"
+          codehash: "0x96657bf6bdcbffce06518530907d2d729e4659ad3bc7b5cc1f5c5567d964272c"
+        create_proof_method: "zk_wallet_create_signatures"
+      wallets:
+      -
+        type: "l2"
+        address: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+        threshold: 1
+        signer: "0x5303a0015f8d5a8fef6cb1d60a034ef28dc4ac6aefa33c936d5aa0927f7c169a"
+        owners:
+          -
+            roles: 6
+            address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+          - 
+            roles: 4
+            address: "0x082977959d0c5a1ba627720ac753ec2adb5bd7d0"
+    input: 
+      - "ETH"
+    expected_output: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+    mockedResponses:
+      - eth_chainId:
+          req:
+          -
+            method: "eth_chainId"
+            params: []
+          res:
+          -
+            result: "0x4"
+      - account_info:
+          req:
+          -
+            method: "account_info"
+            params:
+              - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+          res:
+          - 
+            jsonrpc: '2.0'
+            id: 1
+            result:
+              depositing:
+                balances: {}
+              committed:
+                nonce: 0
+                balances:
+                  ETH: '100000000000000000'
+                nfts: {}
+                mintedNfts: {}
+                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
+              id: 167081
+              verified:
+                nonce: 0
+                balances:
+                  ETH: "100000000000000000"
+                nfts: {}
+                mintedNfts: {}
+                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
+              address: '0x448d2286d9d6996241ff1f87bd2e24692975cabd'
+      - tokens:
+          req:
+          -
+            method: "tokens"
+            params: []
+          res:
+          - 
+            result: *tokens
+      - get_tx_fee:
+          req:
+          -
+            method: "get_tx_fee"
+            params:
+              -
+                ChangePubKey:
+                   onchainPubkeyAuth: true
+              - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+              - "ETH"
+          res:
+          -
+            result:
+              zkpFee: 33120446126802
+              totalFee: 43000000000000
+              gasTxAmount: 7600
+              gasPriceWei: 1000000000
+              gasFee: 9880000000000
+              feeType:
+                ChangePubKey:
+                  onchainPubkeyAuth: true
+      - tx_submit:
+          req:
+          -
+            method: "tx_submit"
+            params:
+            -
+              nonce: 0
+              fee: "64600000000000"
+              validUntil: 4294967295
+              type: "ChangePubKey"
+              ethAuthData:
+                type: "ECDSA"
+                ethSignature: "0x2b281880b7c73127570aaa4696ea6024f826977649d15fc37e422ffc996121153a909302fad27e4548c66c7e0520b6f77c5027c88104b38fe82af16b85d4c7061b"
+              accountId: 167067
+              signature: 
+                pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
+                signature: "c936c89a624dc5effbb54bd3b2a2d56f4deac9103051d4607476770c3451d321784751218821e73f2f4d514068cd2bfd511bc4137fa28bdb660682944a754001"
+              validFrom: 0
+              account: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+              feeToken: 0
+              feeTokenId: 0
+              newPkHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+            - null
+            - false
+          res:
+          -
+            result: "sync-tx:4f8b59a5d7d4f128c3024b481eebc66de41428636c385ca68f00ea5f0d785564"
+      - zk_sign:
+          req:
+          -
+            method: "zk_sign"
+            params:
+              -
+                message: "0x0700028ca9448d2286d9d6996241ff1f87bd2e24692975cabde9d10277efa866916138305467cfca1858b5b3f6000035cb00000000000000000000000000000000ffffffff"
+                proof:
+                  - "0xd693cf7edf35ae80a6117fddace9faf23c23b66f4ff925d0312f32a7da7585ea321cd6fd7ae0e7a81029422d6b1dc0c26cf1bcf626d9adb412555eedfee0c3d21c"
+                pub_keys: "0x5303a0015f8d5a8fef6cb1d60a034ef28dc4ac6aefa33c936d5aa0927f7c169a4a646591170aee46931ade1148038c4c75c3972af2281a580756a0317c19872d"
+                pre_commitment: "0x7f5588233f6d50792a05146fc73260c7b336baa27364d07ca4460a68c8118b390000000000000000000000000000000000000000000000000000000000000000"
+                account: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+          -
+            method: "zk_sign"
+            params:
+              -
+                account: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+                commitment: "0x9bf75261a1372a9694d3e8764e62a8ddb747eca5219d2f8447b0a81d48d30010a9bd94d7d2fc244fe993a1dae294d08774da17b7588481aae34facdca327e288"
+                message: "0x0700028ca9448d2286d9d6996241ff1f87bd2e24692975cabde9d10277efa866916138305467cfca1858b5b3f6000035cb00000000000000000000000000000000ffffffff"
+                proof:
+                  - "0xd693cf7edf35ae80a6117fddace9faf23c23b66f4ff925d0312f32a7da7585ea321cd6fd7ae0e7a81029422d6b1dc0c26cf1bcf626d9adb412555eedfee0c3d21c"
+                pub_keys: "0x5303a0015f8d5a8fef6cb1d60a034ef28dc4ac6aefa33c936d5aa0927f7c169a4a646591170aee46931ade1148038c4c75c3972af2281a580756a0317c19872d"
+                sig: "0x050394325427a033c78a314340be3b22f843bf110f67dfa1a48668512be66d610000000000000000000000000000000000000000000000000000000000000000"
+                pre_commitment: "0x7f5588233f6d50792a05146fc73260c7b336baa27364d07ca4460a68c8118b39b46c017ea874fad0b07e87bf227099e916ba4d355730c2de5830162623127d49"
+          res:
+          -
+            result:
+              commitment: "0x0000000000000000000000000000000000000000000000000000000000000000a9bd94d7d2fc244fe993a1dae294d08774da17b7588481aae34facdca327e288"
+              pre_commitment: "0x7f5588233f6d50792a05146fc73260c7b336baa27364d07ca4460a68c8118b39b46c017ea874fad0b07e87bf227099e916ba4d355730c2de5830162623127d49"  
+          -
+            result:
+              sig: "0x050394325427a033c78a314340be3b22f843bf110f67dfa1a48668512be66d61042517e6807360fab026dab1979ca27a2e1f80a8eacf178f8504283fa46dd025"
+              pre_commitment: "0x7f5588233f6d50792a05146fc73260c7b336baa27364d07ca4460a68c8118b39b46c017ea874fad0b07e87bf227099e916ba4d355730c2de5830162623127d49"
+              commitment: "0x9bf75261a1372a9694d3e8764e62a8ddb747eca5219d2f8447b0a81d48d30010a9bd94d7d2fc244fe993a1dae294d08774da17b7588481aae34facdca327e288"
   
   zksync_transfer:
     config:
