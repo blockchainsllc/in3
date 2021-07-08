@@ -275,10 +275,7 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
 /** calculates the address of a word in a abi-encoded data (assuming data = bytes_t res exists) */
 #define WORD_ADR(index, right) (res.data + 4 + (index) *32 + 32 - (right))
 /** sets an address at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
-#define ABI_ADDRESS(index, adr)                    \
-  {                                                \
-    if (adr) memcpy(WORD_ADR(index, 20), adr, 20); \
-  }
+#define ABI_ADDRESS(index, adr) memcpy(WORD_ADR(index, 20), adr, 20)
 /** sets an int at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
 #define ABI_UINT32(index, val) int_to_bytes(val, WORD_ADR(index, 4))
 /** sets an uint256 as bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
