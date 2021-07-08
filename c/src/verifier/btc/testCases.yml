@@ -256,6 +256,56 @@ btc_full_tx: &btc_full_tx
   time: 1591782412
   blocktime: 1591782412
 
+btc_segwit_tx: &btc_segwit_tx
+  txid: 754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45
+  hash: 8a13f29f43401ca9f9b7c6369ae33a023b2f14fbb26633d86864eddf091bb86f
+  version: 2
+  size: 223
+  vsize: 141
+  weight: 562
+  locktime: 0
+  vin:
+    - txid: 181ad955a662d8efd47cd2fb07c191043452b71b0418543e36cbab1b44a32944
+      vout: 0
+      scriptSig:
+        asm: ''
+        hex: ''
+      txinwitness:
+        - >-
+          3045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a01
+        - 02a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e634
+      sequence: 4294967293
+  vout:
+    - value: 0.00227671
+      'n': 0
+      scriptPubKey:
+        asm: 0 583f0afea3c306744856572107c5a80e6ca141b1
+        hex: 0014583f0afea3c306744856572107c5a80e6ca141b1
+        reqSigs: 1
+        type: witness_v0_keyhash
+        addresses:
+          - bc1qtqls4l4rcvr8gjzk2uss03dgpek2zsd3qujhsy
+    - value: 0.02720963
+      'n': 1
+      scriptPubKey:
+        asm: 0 64b3b903602a28bacb8f6d914bfce514e7062341
+        hex: 001464b3b903602a28bacb8f6d914bfce514e7062341
+        reqSigs: 1
+        type: witness_v0_keyhash
+        addresses:
+          - bc1qvjemjqmq9g5t4ju0dkg5hl89znnsvg6p05alx5
+  hex: >-
+    020000000001014429a3441babcb363e5418041bb752340491c107fbd27cd4efd862a655d91a180000000000fdffffff025779030000000000160014583f0afea3c306744856572107c5a80e6ca141b1c38429000000000016001464b3b903602a28bacb8f6d914bfce514e706234102483045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a012102a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e63400000000
+  blockhash: 00000000000000000013762fa6702583f502222adfdf24a738dc5bc758fee793
+  confirmations: 3
+  time: 1625736960
+  blocktime: 1625736960
+
+
+
+
+
+
 btcBlock_segwit_txHashes: &btcBlock_segwit_txHashes
   hash: 0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2
   confirmations: 37
@@ -2410,6 +2460,7 @@ btc:
                   result: *btc_full_segwit_block
 
   getrawtransaction:
+  -
     config:
       proof: 'none'
     input:
@@ -2442,7 +2493,40 @@ btc:
               res:
               -
                 result: *btc_full_tx
-  
+  -
+    config:
+      proof: 'none'
+    input:
+      - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
+    expected_output:
+      options:
+        bytes: "020000000001014429a3441babcb363e5418041bb752340491c107fbd27cd4efd862a655d91a180000000000fdffffff025779030000000000160014583f0afea3c306744856572107c5a80e6ca141b1c38429000000000016001464b3b903602a28bacb8f6d914bfce514e706234102483045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a012102a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e63400000000"
+        btctransaction: *btc_segwit_tx
+    mockedResponses:
+      options:
+        bytes: 
+          - getrawtransaction:
+              req:
+              -
+                method: "getrawtransaction"
+                params:
+                  - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
+                  - 0 
+              res:
+              - 
+                result: "020000000001014429a3441babcb363e5418041bb752340491c107fbd27cd4efd862a655d91a180000000000fdffffff025779030000000000160014583f0afea3c306744856572107c5a80e6ca141b1c38429000000000016001464b3b903602a28bacb8f6d914bfce514e706234102483045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a012102a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e63400000000"
+        btctransaction: 
+          - getrawtransaction:
+              req:
+              -
+                method: "getrawtransaction"
+                params:
+                  - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
+                  - 1
+              res:
+              -
+                result: *btc_segwit_tx
+
   getblockcount:
     config:
       proof: 'none'
