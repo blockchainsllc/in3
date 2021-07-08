@@ -131,6 +131,7 @@ types:
             reqSigs:
               descr: the required signatures
               type: int
+              optional: true
             type:
               descr: The type, eg 'pubkeyhash' 
               type: string
@@ -138,6 +139,7 @@ types:
               descr: Array of address(each representing a bitcoin adress)
               array: true
               type: string
+              optional: true
 
   btctransaction:
     txid:
