@@ -250,9 +250,10 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
   assert_in3_req(ctx);
   assert(response_data);
   assert(len);
+  const is_json = response_data[0] == '{' || response_data[0] == '[';
 
   if (is_raw_http(ctx)) {
-    ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : NULL;
+    ctx->response_context = is_json ? parse_json(response_data) : NULL;
     if (!ctx->response_context) {
       // we create a context only holding the raw data
       ctx->response_context               = _calloc(1, sizeof(json_ctx_t));
@@ -267,10 +268,14 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     return IN3_OK;
   }
 
-  ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
+  ctx->response_context = is_json ? parse_json(response_data) : parse_binary_str(response_data, len);
 
-  if (!ctx->response_context)
-    return req_set_error(ctx, "Error in JSON-response : ", req_set_error(ctx, str_remove_html(response_data), IN3_EINVALDT));
+  if (!ctx->response_context) {
+    char* error = is_json ? parse_json_error(response_data) : NULL;
+    req_set_error(ctx, "\nError in JSON-response : ", req_set_error(ctx, error ? error : str_remove_html(response_data), IN3_EINVALDT));
+    _free(error);
+    return IN3_EINVALDT;
+  }
 
   if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
