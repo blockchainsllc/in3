@@ -327,7 +327,7 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
-NONULL static char next_char(json_ctx_t* jp) {
+static NONULL char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {
       case ' ':
@@ -342,7 +342,7 @@ NONULL static char next_char(json_ctx_t* jp) {
   }
 }
 
-RETURNS_NONULL NONULL static d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
+static RETURNS_NONULL NONULL d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
@@ -356,7 +356,7 @@ RETURNS_NONULL NONULL static d_token_t* parsed_next_item(json_ctx_t* jp, d_type_
   return n;
 }
 
-NONULL int static parse_key(json_ctx_t* jp) {
+static NONULL int parse_key(json_ctx_t* jp) {
   const char* start = jp->c;
   int         r;
   while (true) {
@@ -372,7 +372,7 @@ NONULL int static parse_key(json_ctx_t* jp) {
   }
 }
 
-NONULL int static parse_number(json_ctx_t* jp, d_token_t* item) {
+static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
   uint64_t value = 0; // the resulting value (if it is a integer)
   jp->c--;            // we also need to include hte previous character!
 
@@ -428,7 +428,7 @@ NONULL int static parse_number(json_ctx_t* jp, d_token_t* item) {
   return JSON_E_NUMBER_TOO_LONG;
 }
 
-NONULL int static parse_string(json_ctx_t* jp, d_token_t* item) {
+static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
@@ -508,7 +508,7 @@ NONULL int static parse_string(json_ctx_t* jp, d_token_t* item) {
   }
 }
 
-NONULL int static parse_object(json_ctx_t* jp, int parent, uint32_t key) {
+static NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
   if (jp->depth > DATA_DEPTH_MAX)
@@ -636,6 +636,7 @@ char* parse_json_error(const char* js) {
     if (parser.result[i].data != NULL && d_type(parser.result + i) < 2)
       _free(parser.result[i].data);
   }
+  _free(parser.result);
   if (res == 0 || res < JSON_E_NUMBER_TOO_LONG) return NULL;
   const char* messages[] = {
       "premature end of json-string",
