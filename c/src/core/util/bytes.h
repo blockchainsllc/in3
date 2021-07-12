@@ -81,6 +81,8 @@ typedef struct {
   bytes_t b;     /**< the bytes struct */
 } bytes_builder_t;
 
+#define NULL_BYTES ((bytes_t){0}) /**< empty bytes as struct */
+
 RETURNS_NONULL bytes_t*        b_new(const uint8_t* data, uint32_t len);                                                 /**< allocates a new byte array with 0 filled */
 NONULL uint8_t*                b_get_data(const bytes_t* b);                                                             /**< gets the data field from an input byte array */
 NONULL uint32_t                b_get_len(const bytes_t* b);                                                              /**< gets the len field from an input byte array */

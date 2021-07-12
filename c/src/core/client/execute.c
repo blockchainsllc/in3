@@ -647,7 +647,7 @@ static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->account   = d_to_bytes(d_get_at(params, 1));
   sign_ctx->type      = SIGN_EC_HASH;
   sign_ctx->req       = ctx;
-  sign_ctx->signature = bytes(NULL, 0);
+  sign_ctx->signature = NULL_BYTES;
 }
 
 in3_sign_ctx_t* create_sign_ctx(in3_req_t* ctx) {

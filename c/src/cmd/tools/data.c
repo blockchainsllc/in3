@@ -50,7 +50,7 @@ bytes_t read_from_stdin(FILE* file) {
   if (file == NULL) {
     printf("File not found!");
     _Exit(1);
-    return bytes(NULL, 0);
+    return NULL_BYTES;
   }
 
   size_t   allocated = 1024;
@@ -223,7 +223,7 @@ static void print_debug(bytes_t* data) {
 }
 
 int main(int argc, char* argv[]) {
-  bytes_t input  = bytes(NULL, 0);
+  bytes_t input  = NULL_BYTES;
   char*   format = "auto";
   bool    debug  = false;
 

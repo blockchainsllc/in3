@@ -125,13 +125,13 @@ static void create_signed_tx(in3_pay_eth_t* data, bytes32_t key, sb_t* sb, addre
   long_to_bytes(data->gas_price, gas_price.data);
   long_to_bytes(21000, gas_limit.data);
   // create raw without signature
-  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, bytes(to, 20), value, bytes(NULL, 0), chainId, bytes(NULL, 0), bytes(NULL, 0));
+  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, bytes(to, 20), value, NULL_BYTES, chainId, NULL_BYTES, NULL_BYTES);
 
   // sign it
   if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key, raw->data, raw->len, sig, sig + 64, NULL) < 0) return;
 
   b_free(raw);
-  raw = serialize_tx_raw(nonce, gas_price, gas_limit, bytes(to, 20), value, bytes(NULL, 0), 27 + sig[64] + (chainId ? (chainId * 2 + 8) : 0), bytes(sig, 32), bytes(sig + 32, 32));
+  raw = serialize_tx_raw(nonce, gas_price, gas_limit, bytes(to, 20), value, NULL_BYTES, 27 + sig[64] + (chainId ? (chainId * 2 + 8) : 0), bytes(sig, 32), bytes(sig + 32, 32));
   sb_add_bytes(sb, NULL, raw, 1, false);
   b_free(raw);
 }

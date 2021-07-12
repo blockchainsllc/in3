@@ -109,7 +109,7 @@ NONULL static inline cache_entry_t* in3_cache_add_ptr(
     cache_entry_t** cache, /**< the root entry of the linked list. */
     void*           ptr    /**< pointer to memory which shold be freed. */
 ) {
-  return in3_cache_add_entry(cache, bytes(NULL, 0), bytes((uint8_t*) ptr, 1));
+  return in3_cache_add_entry(cache, NULL_BYTES, bytes((uint8_t*) ptr, 1));
 }
 
 #ifdef __cplusplus

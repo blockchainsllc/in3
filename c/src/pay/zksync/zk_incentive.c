@@ -179,7 +179,7 @@ static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria,
 }
 
 static in3_ret_t add_to_payed_nodelist(in3_req_t* ctx, address_t address, unsigned int nodelen) {
-  bytes_t payed_addresses = bytes(NULL, 0);
+  bytes_t payed_addresses = NULL_BYTES;
   TRY(get_payed_addresses(ctx, &payed_addresses))
   uint8_t* addresses = alloca(payed_addresses.len + 20);
   if (payed_addresses.data) {
@@ -202,7 +202,7 @@ static in3_ret_t add_to_payed_nodelist(in3_req_t* ctx, address_t address, unsign
 }
 
 in3_ret_t update_nodelist_from_cache(in3_req_t* ctx, unsigned int nodelen) {
-  bytes_t payed_addresses = bytes(NULL, 0);
+  bytes_t payed_addresses = NULL_BYTES;
   TRY(get_payed_addresses(ctx, &payed_addresses))
 
   if (payed_addresses.len)
@@ -272,7 +272,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   sb_add_chars(&sb, "]}");
 
   // add data as cache, so we can add it when we create the next payload.
-  in3_cache_add_entry(&ctx->req->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT;
+  in3_cache_add_entry(&ctx->req->cache, NULL_BYTES, bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT;
 
   // now we make sure we try again.
   TRY(in3_retry_same_node(ctx->req))

@@ -389,7 +389,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
       usn_device_t* device = conf->devices + i;
 
       // get the number of bookings and manage memory
-      if (0 > (res = exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp, 32))) return res;
+      if (0 > (res = exec_eth_call(conf, "0x3fce7fcf", device->id, NULL_BYTES, tmp, 32))) return res;
       if (device->bookings) _free(device->bookings);
 
 #ifdef __clang_analyzer__
@@ -567,7 +567,7 @@ in3_ret_t usn_price(in3_t* c, address_t contract, address_t token, char* url, ui
   if (controller) memcpy(params + 12, controller, 20);
   int_to_bytes(seconds, params + 60);
   if (token) memcpy(params + 64 + 12, token, 20);
-  return exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(NULL, 0), price, 32) < 0 ? IN3_EINVALDT : IN3_OK;
+  return exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, NULL_BYTES, price, 32) < 0 ? IN3_EINVALDT : IN3_OK;
   //     function price(bytes32 id, address user, uint32 secondsToRent, address token) public constant returns (uint128);
 }
 
