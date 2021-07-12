@@ -272,6 +272,28 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
   return true;
 }
 
+/** calculates the address of a word in a abi-encoded data (assuming data = bytes_t res exists) */
+#define WORD_ADR(index, right) (res.data + 4 + (index) *32 + 32 - (right))
+/** sets an address at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_ADDRESS(index, adr) memcpy(WORD_ADR(index, 20), adr, 20)
+/** sets an int at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_UINT32(index, val) int_to_bytes(val, WORD_ADR(index, 4))
+/** sets an uint256 as bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_UINT256(index, data, len) memcpy(WORD_ADR(index, len), data, len)
+/** writes the bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_BYTES(index, bytes)                                         \
+  {                                                                     \
+    if (bytes.data) memcpy(WORD_ADR(index, 32), bytes.data, bytes.len); \
+  }
+/** writes the functionhash in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_FNC(hash) memcpy(res.data, (void*) hash, 4)
+/**allocates memory filled with zeros with the size words*32 +4 for e3ncoding abi-data */
+#define ABI_BYTES_CALLOC(words) bytes(_calloc(4 + (words) *32, 1), 4 + (words) *32)
+/** calculates the number of words (32 bytes) needed to hold the specified bytes */
+#define ABI_WORDS(byte_len) ((byte_len + 31) / 32)
+/** writes the offset (as word) at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_OFFSET(index, word) ABI_UINT32(index, (word * 32))
+
 /**
  * Pluggable functions:
  * Mechanism to replace library functions with custom alternatives. This is particularly useful for
@@ -329,6 +351,10 @@ int64_t parse_float_val(const char* data, /**< the data string*/
  */
 void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b);
 
+/**
+ * prints a bytes into a string
+ */
+char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const char* postfix);
 #ifdef THREADSAFE
 #define _NAME(x, y) x##y
 #if defined(_MSC_VER) || defined(__MINGW32__)

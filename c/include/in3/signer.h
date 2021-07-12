@@ -88,6 +88,8 @@ in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t ha
 /** Signs message raw with the given private key*/
 in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst);
 
+/** hashes the msg by adding the Ethereum Signed Message-Prefix */
+void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg);
 #ifdef __cplusplus
 }
 #endif
