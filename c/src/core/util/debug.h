@@ -40,6 +40,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include "params.h"
 #include "stringbuilder.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -190,6 +191,15 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
     if (d_type(t) == T_NULL)                                                                      \
       target = def;                                                                               \
     else if (d_type(t) != T_BYTES || d_len(t) != 20)                                              \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
+    else                                                                                          \
+      target = t->data;                                                                           \
+  }
+
+#define TRY_PARAM_GET_REQUIRED_ADDRESS(target, ctx, index)                                        \
+  {                                                                                               \
+    const d_token_t* t = d_get_at(ctx->params, index);                                            \
+    if (d_type(t) != T_BYTES || d_len(t) != 20)                                                   \
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
       target = t->data;                                                                           \
