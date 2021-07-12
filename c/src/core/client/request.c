@@ -81,6 +81,11 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
     if (!ctx->request_context) {
       in3_log_error("Invalid json-request: %s\n", req_data);
       req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
+      char* msg = parse_json_error(req_data);
+      if (msg) {
+        req_set_error(ctx, msg, IN3_EINVAL);
+        _free(msg);
+      }
       return ctx;
     }
 
@@ -423,7 +428,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
-    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
+    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .type = type};
     in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
     if (r == IN3_OK && sc.signature.data) {
       in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);

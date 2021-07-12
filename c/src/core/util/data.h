@@ -139,6 +139,7 @@ d_token_t* d_next(d_token_t* item);                                             
 NONULL void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
 NONULL json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
 NONULL json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL char*       parse_json_error(const char* js);                      /**< parses the json, but only return an error if the json is invalid. The returning string must be freed! */
 NONULL json_ctx_t* parse_json(const char* js);                            /**< parses json-data, which needs to be freed after usage! */
 NONULL json_ctx_t* parse_json_indexed(const char* js);                    /**< parses json-data, which needs to be freed after usage! */
 NONULL void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
