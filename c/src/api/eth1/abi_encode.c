@@ -187,5 +187,5 @@ bytes_t abi_encode(abi_sig_t* s, d_token_t* src, char** error) {
   if (!memiszero(s->fn_hash, 4)) bb_write_raw_bytes(&bb, s->fn_hash, 4);
   if (encode_tuple(s->input, src, &bb, error) && bb.b.data)
     _free(bb.b.data);
-  return *error ? bytes(NULL, 0) : bb.b;
+  return *error ? NULL_BYTES : bb.b;
 }

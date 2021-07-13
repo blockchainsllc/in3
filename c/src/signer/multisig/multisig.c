@@ -237,12 +237,12 @@ static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t* signatures, uint32_t* s
       memset(sig_data + index, 0, sizeof(sig_data_t));
       memcpy(sig_data[index].sig, signatures->data + i, 65);
       sig_data[index].address = signatures->data + i + 12;
-      sig_data[index].data    = bytes(NULL, 0);
+      sig_data[index].data    = NULL_BYTES;
     }
     else if (v > 26) {
       if (!ecrecover_sig(tx_hash, signatures->data + i, sig_data[index].address)) return req_set_error(ctx, "could not recover the signature", IN3_EINVAL);
       memcpy(sig_data[index].sig, signatures->data + i, 65);
-      sig_data[index].data = bytes(NULL, 0);
+      sig_data[index].data = NULL_BYTES;
     }
     else
       return req_set_error(ctx, "invalid signature (v-value)", IN3_EINVAL);
@@ -269,7 +269,7 @@ static in3_ret_t add_approved(in3_req_t* ctx, uint32_t* sig_count, sig_data_t* s
         memset(sig_data + *sig_count, 0, sizeof(sig_data_t));
         memcpy(sig_data[*sig_count].sig + 12, ms->owners + i, 20);
         sig_data[*sig_count].address = (void*) ms->owners + i;
-        sig_data[*sig_count].data    = bytes(NULL, 0);
+        sig_data[*sig_count].data    = NULL_BYTES;
         (*sig_count)++;
       }
     }
@@ -296,11 +296,11 @@ static void exec_tx(bytes_t* target, tx_data_t* tx_data, sig_data_t* signatures,
   rlp_encode_item(&bb, &tx_data->gas_price);                                         // and current gas price
   rlp_encode_uint(&bb, bytes_to_long(tx_data->gas.data, tx_data->gas.len) + 300000); // we need to add some gas to the original because now we go through ms
   rlp_encode_bytes(&bb, bytes(ms, 20));                                              // but send it to the ms
-  rlp_encode_bytes(&bb, bytes(NULL, 0));                                             // we don't send value since this will be done from the multisig
+  rlp_encode_bytes(&bb, NULL_BYTES);                                                 // we don't send value since this will be done from the multisig
   rlp_encode_item(&bb, &data);                                                       // the functiondata
   rlp_encode_item(&bb, &tx_data->v);                                                 // v
-  rlp_encode_bytes(&bb, bytes(NULL, 0));                                             // empty because signature
-  rlp_encode_bytes(&bb, bytes(NULL, 0));                                             // is still missing
+  rlp_encode_bytes(&bb, NULL_BYTES);                                                 // empty because signature
+  rlp_encode_bytes(&bb, NULL_BYTES);                                                 // is still missing
   rlp_encode_to_list(&bb);
   *target = bb.b;
   _free(data.data);
@@ -315,11 +315,11 @@ static void approve_hash(bytes_t* target, tx_data_t* tx_data, bytes32_t hash, ad
   rlp_encode_item(&bb, &tx_data->gas_price); // and current gas price
   rlp_encode_uint(&bb, 100000);              // we need only 100k
   rlp_encode_bytes(&bb, bytes(ms, 20));      // but send it to the ms
-  rlp_encode_bytes(&bb, bytes(NULL, 0));     // we don't send value since this will be done from the multisig
+  rlp_encode_bytes(&bb, NULL_BYTES);         // we don't send value since this will be done from the multisig
   rlp_encode_bytes(&bb, bytes(data, 36));    // the functiondata
   rlp_encode_item(&bb, &tx_data->v);         // v
-  rlp_encode_bytes(&bb, bytes(NULL, 0));     // empty because signature
-  rlp_encode_bytes(&bb, bytes(NULL, 0));     // is still missing
+  rlp_encode_bytes(&bb, NULL_BYTES);         // empty because signature
+  rlp_encode_bytes(&bb, NULL_BYTES);         // is still missing
   rlp_encode_to_list(&bb);
   *target = bb.b;
 }
@@ -399,7 +399,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
     memset(sig_data->sig, 0, 65);                         // clear
     memcpy(sig_data->sig + 12, prepare_ctx->account, 20); // we use the address as constant part
     sig_data->address = prepare_ctx->account;             // keep address of the owner
-    sig_data->data    = bytes(NULL, 0);                   // no data needed for sig-type 1
+    sig_data->data    = NULL_BYTES;                       // no data needed for sig-type 1
     sig_data->sig[64] = 1;                                // mark as pre approved
     sig_count++;                                          // we have at least one signature now.
   }
@@ -503,7 +503,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       for (int i = 0; i < sctx.accounts_len && sig_count < ms->threshold; i++) {
         uint8_t* account = sctx.accounts + i * 20;
         if (is_valid(sig_data, ms, account, sig_count)) {
-          bytes_t signature = bytes(NULL, 0);
+          bytes_t signature = NULL_BYTES;
           TRY(req_require_signature(ctx->req, SIGN_EC_RAW, &signature, bytes(hash, 32), bytes(account, 20)))
           sig_data[sig_count].address = NULL;
           for (unsigned int n = 0; n < ms->owners_len; n++) {
@@ -512,7 +512,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
           if (sig_data[sig_count].address == NULL) break;                         // shouldn't happen, but better safe
           memcpy(sig_data[sig_count].sig, signature.data, 65);                    // currently we only accept EOA-Signatures, contract-signatures should be supported later also!
           if (sig_data[sig_count].sig[64] < 2) sig_data[sig_count].sig[64] += 27; // fix chain-id later
-          sig_data[sig_count].data = bytes(NULL, 0);                              // no data needed (at least for now)
+          sig_data[sig_count].data = NULL_BYTES;                                  // no data needed (at least for now)
           sig_count++;                                                            // we have at least one signature now.
         }
       }

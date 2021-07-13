@@ -158,7 +158,7 @@ static bytes_t get_or_create_cached(in3_req_t* req, d_key_t k, int size) {
   cache_props_t  p     = (((uint32_t) k) << 16) | CACHE_PROP_MUST_FREE;
   cache_entry_t* cache = in3_cache_get_entry_by_prop(req->cache, p);
   if (!cache) {
-    cache        = in3_cache_add_entry(&req->cache, bytes(NULL, 0), bytes(_calloc(1, size), size));
+    cache        = in3_cache_add_entry(&req->cache, NULL_BYTES, bytes(_calloc(1, size), size));
     cache->props = p;
   }
   return cache->value;
@@ -274,7 +274,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   TRY(transform_tx(ctx, tx, &to, &value, &data, &gas_limit));
 
   // create raw without signature
-  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(chain_id), bytes(NULL, 0), bytes(NULL, 0));
+  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(chain_id), NULL_BYTES, NULL_BYTES);
   *dst         = *raw;
   _free(raw);
 
@@ -370,7 +370,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
 in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // get the transaction-object
   d_token_t* tx_params   = d_get(req, K_PARAMS);
-  bytes_t    unsigned_tx = bytes(NULL, 0), signed_tx = bytes(NULL, 0);
+  bytes_t    unsigned_tx = NULL_BYTES, signed_tx = NULL_BYTES;
   address_t  from;
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
 

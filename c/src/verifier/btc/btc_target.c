@@ -86,7 +86,7 @@ in3_ret_t btc_check_conf(in3_t* c, btc_target_conf_t* conf) {
   // did the chain_id change?
   if (c->chain.chain_id != conf->chain_id) {
     if (conf->data.data) _free(conf->data.data);
-    conf->data     = bytes(NULL, 0);
+    conf->data     = NULL_BYTES;
     conf->chain_id = c->chain.chain_id;
   }
 

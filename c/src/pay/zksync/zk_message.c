@@ -170,7 +170,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
   // fix valid.to first
   if (!data->valid.to) data->valid.to = 0xffffffffl;
 
-  bytes_t signature = bytes(NULL, 0);
+  bytes_t signature = NULL_BYTES;
 
   if (data->conf->sign_type != ZK_SIGN_CREATE2) {
     char msg_data[256];
@@ -287,7 +287,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
 
   // create 2fa-message to be signed with the eth-signer
   uint8_t ethmsg[60];
-  bytes_t signature = bytes(NULL, 0);
+  bytes_t signature = NULL_BYTES;
   memcpy(ethmsg, sync_pub_key, 20);            // pubkeyhash (20)
   int_to_bytes(nonce, ethmsg + 20);            // nonce (4)
   int_to_bytes(conf->account_id, ethmsg + 24); // acount_id (4 bytes)

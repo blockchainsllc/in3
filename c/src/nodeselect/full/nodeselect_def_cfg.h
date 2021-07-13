@@ -350,7 +350,7 @@ static inline bytes_t nodeselect_def_cfg_data(chain_id_t chain_id) {
     return bytes((uint8_t*) BOOT_NODES_LOCAL_BIN, BOOT_NODES_LOCAL_BIN_LEN);
 #endif // NO_BOOT_NODES_LOCAL
 
-  return bytes(NULL, 0);
+  return NULL_BYTES;
 }
 
 static inline json_ctx_t* nodeselect_def_cfg(chain_id_t chain_id) {

@@ -249,7 +249,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       i++;
 
       // verify tx data first
-      r->data              = bytes(NULL, 0);
+      r->data              = NULL_BYTES;
       r->transaction_index = d_get_int(receipt.token, K_TX_INDEX);
       bytes_t** proof      = d_create_bytes_vec(d_get(receipt.token, K_TX_PROOF));
       bytes_t*  path       = create_tx_path(r->transaction_index);
@@ -272,7 +272,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
       // verify receipt data
       proof   = d_create_bytes_vec(d_get(receipt.token, K_PROOF));
-      r->data = bytes(NULL, 0);
+      r->data = NULL_BYTES;
 
       if (!proof || !trie_verify_proof(&receipt_root, path, proof, &r->data))
         res = vc_err(vc, "invalid receipt proof");

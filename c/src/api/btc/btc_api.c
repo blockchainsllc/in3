@@ -125,7 +125,7 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
     btc_transaction_in_t* r = res->vin + i;
     r->script               = vin.script;
     r->sequence             = vin.sequence;
-    r->txinwitness          = bytes(NULL, 0);
+    r->txinwitness          = NULL_BYTES;
     r->vout                 = vin.prev_tx_index;
     memcpy(r->txid, vin.prev_tx_hash, 32);
   }

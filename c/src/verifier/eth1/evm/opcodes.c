@@ -348,7 +348,7 @@ int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   if (check_size && !src_data.data) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   if (src_data.len < (uint32_t) data_len)
-    res = evm_mem_write(evm, mem_pos + src_data.len, bytes(NULL, 0), data_len - src_data.len);
+    res = evm_mem_write(evm, mem_pos + src_data.len, NULL_BYTES, data_len - src_data.len);
 
   if (src_data.len && res == 0)
     res = evm_mem_write(evm, mem_pos, src_data, src_data.len);
@@ -366,7 +366,7 @@ int op_extcodecopy(evm_t* evm) {
   int res = evm->env(evm, EVM_ENV_CODE_COPY, address, 20, &data, code_pos, data_len);
   if (res < 0)
     // we will write 0x0
-    return evm_mem_write(evm, mem_pos, bytes(NULL, 0), data_len);
+    return evm_mem_write(evm, mem_pos, NULL_BYTES, data_len);
   else
     return evm_mem_write(evm, mem_pos, bytes(data, res), data_len);
 }

@@ -170,7 +170,7 @@ static void test_signer() {
   sc.req                  = ctx;
   sc.message              = *data;
   sc.type                 = SIGN_EC_RAW;
-  sc.account              = bytes(NULL, 0);
+  sc.account              = NULL_BYTES;
   TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sc));
   TEST_ASSERT_FALSE(memiszero(sc.signature.data, 65));
   _free(sc.signature.data);

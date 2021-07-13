@@ -71,7 +71,7 @@ trie_t* trie_new() {
   t->hasher              = _sha3;
   t->codec               = &rlp_codec;
   bytes_builder_t* ll    = bb_new();
-  bytes_t          empty = bytes(NULL, 0);
+  bytes_t          empty = NULL_BYTES;
   t->codec->encode_add(ll, &empty);
   t->hasher(&ll->b, t->root);
   bb_free(ll);

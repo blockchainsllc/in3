@@ -254,7 +254,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY(zksync_get_sync_key(conf, ctx->req, NULL))
 
     char*   proof_data = NULL;
-    bytes_t pub_keys   = result ? d_to_bytes(d_get(result, key("pub_keys"))) : bytes(NULL, 0);
+    bytes_t pub_keys   = result ? d_to_bytes(d_get(result, key("pub_keys"))) : NULL_BYTES;
     if (!pub_keys.data && conf->musig_pub_keys.data) pub_keys = conf->musig_pub_keys;
     if (!pub_keys.data) return req_set_error(ctx->req, "no public keys found for musig signature", IN3_EINVAL);
     int pos = get_pubkey_pos(conf, pub_keys, ctx->req);

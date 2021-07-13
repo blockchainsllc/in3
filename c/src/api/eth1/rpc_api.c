@@ -433,7 +433,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   in3_sign_ctx_t sc = {0};
   sc.req            = ctx->req;
   sc.message        = data;
-  sc.account        = pk ? *pk : bytes(NULL, 0);
+  sc.account        = pk ? *pk : NULL_BYTES;
   sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
@@ -544,7 +544,7 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
   d_token_t* tx_data = ctx->params + 1;
-  bytes_t    tx_raw  = bytes(NULL, 0);
+  bytes_t    tx_raw  = NULL_BYTES;
   bytes_t*   from_b  = NULL;
   bytes_t*   data    = NULL;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {

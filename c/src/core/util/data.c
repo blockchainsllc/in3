@@ -52,6 +52,10 @@
 #define JSON_INIT_TOKENS        10
 #define JSON_INDEXD_PAGE        128
 #define JSON_MAX_ALLOWED_TOKENS 1000000
+#define JSON_E_MAX_DEPTH        -3
+#define JSON_E_INVALID_CHAR     -2
+#define JSON_E_NUMBER_TOO_LONG  -4
+#define JSON_E_END_OF_STRING    -1
 
 d_key_t keyn(const char* c, const size_t len) {
   d_key_t val = 0;
@@ -151,7 +155,7 @@ bytes_t d_to_bytes(d_token_t* item) {
     }
     case T_NULL:
     default:
-      return bytes(NULL, 0);
+      return NULL_BYTES;
   }
 }
 
@@ -323,7 +327,7 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
-NONULL char next_char(json_ctx_t* jp) {
+static NONULL char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {
       case ' ':
@@ -338,7 +342,7 @@ NONULL char next_char(json_ctx_t* jp) {
   }
 }
 
-RETURNS_NONULL NONULL d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
+static RETURNS_NONULL NONULL d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
@@ -352,12 +356,12 @@ RETURNS_NONULL NONULL d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type,
   return n;
 }
 
-NONULL int parse_key(json_ctx_t* jp) {
+static NONULL int parse_key(json_ctx_t* jp) {
   const char* start = jp->c;
   int         r;
   while (true) {
     switch (*(jp->c++)) {
-      case 0: return -2;
+      case 0: return JSON_E_INVALID_CHAR;
       case '"':
         r = add_key(jp, start, jp->c - start - 1);
         return next_char(jp) == ':' ? r : -2;
@@ -368,7 +372,7 @@ NONULL int parse_key(json_ctx_t* jp) {
   }
 }
 
-NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
+static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
   uint64_t value = 0; // the resulting value (if it is a integer)
   jp->c--;            // we also need to include hte previous character!
 
@@ -391,7 +395,14 @@ NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
           item->data[i] = 0;
           break;
 
-        default:
+        case ' ':
+        case '\n':
+        case '\r':
+        case '\t':
+        case '}':
+        case ']':
+        case ',':
+
           if ((value & 0xfffffffff0000000) == 0) // is it small ennough to store it in the length ?
             item->len |= (uint32_t) value;       // 32-bit number / no 64-bit number
           else {
@@ -405,16 +416,19 @@ NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
             memcpy(item->data, p, len);
           }
           break;
+        default:
+          jp->c += i;
+          return JSON_E_INVALID_CHAR;
       }
 
       jp->c += i;
       return 0;
     }
   }
-  return -2;
+  return JSON_E_NUMBER_TOO_LONG;
 }
 
-NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
+static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
@@ -424,10 +438,10 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   while (true) {
     switch (*(jp->c++)) {
       case 0:
-        return -2;
+        return JSON_E_END_OF_STRING;
       case '\'':
       case '"':
-        if (start[-1] != jp->c[-1]) continue;
+        if (start[-1] != jp->c[-1]) continue; // is the kind of quote the same as the quote we used to start the string?
         l     = jp->c - start - 1;
         ishex = l > 1 && *start == '0' && start[1] == 'x' && *(start - 1) != '\'';
         if (ishex)
@@ -494,15 +508,15 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   }
 }
 
-NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
+static NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
   if (jp->depth > DATA_DEPTH_MAX)
-    return -3;
+    return JSON_E_MAX_DEPTH;
 
   switch (next_char(jp)) {
     case 0:
-      return -2;
+      return JSON_E_END_OF_STRING;
     case '{':
       jp->depth++;
       parsed_next_item(jp, T_OBJECT, key, parent)->data = (uint8_t*) jp->c - 1;
@@ -517,7 +531,7 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             return 0;
           }
           default:
-            return -2; // invalid character or end
+            return JSON_E_INVALID_CHAR; // invalid character or end
         }
         res = parse_object(jp, p_index, res); // parse the value
         if (res < 0) return res;
@@ -528,7 +542,7 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             return 0; // this was the last property, so we return successfully.
           }
           default:
-            return -2; // unexpected character, throw.
+            return JSON_E_INVALID_CHAR; // unexpected character, throw.
         }
       }
     case '[':
@@ -550,7 +564,7 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             return 0; // this was the last element, so we return successfully.
           }
           default:
-            return -2; // unexpected character, throw.
+            return JSON_E_INVALID_CHAR; // unexpected character, throw.
         }
       }
     case '"':
@@ -563,7 +577,7 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         return 0;
       }
       else
-        return -2;
+        return JSON_E_INVALID_CHAR;
     case 'f':
       if (strncmp(jp->c, "alse", 4) == 0) {
         parsed_next_item(jp, T_BOOLEAN, key, parent);
@@ -571,7 +585,7 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         return 0;
       }
       else
-        return -2;
+        return JSON_E_INVALID_CHAR;
     case 'n':
       if (strncmp(jp->c, "ull", 3) == 0) {
         parsed_next_item(jp, T_NULL, key, parent);
@@ -579,7 +593,7 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         return 0;
       }
       else
-        return -2;
+        return JSON_E_INVALID_CHAR;
     case '0':
     case '1':
     case '2':
@@ -594,15 +608,14 @@ NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
     case '-':
       return parse_number(jp, parsed_next_item(jp, T_INTEGER, key, parent));
     default:
-      return -2;
+      return JSON_E_INVALID_CHAR;
   }
 }
 
 void json_free(json_ctx_t* jp) {
   if (!jp || jp->result == NULL) return;
   if (!d_is_binary_ctx(jp)) {
-    size_t i;
-    for (i = 0; i < jp->len; i++) {
+    for (size_t i = 0; i < jp->len; i++) {
       if (jp->result[i].data != NULL && d_type(jp->result + i) < 2)
         _free(jp->result[i].data);
     }
@@ -610,6 +623,36 @@ void json_free(json_ctx_t* jp) {
   if (jp->keys) _free(jp->keys);
   _free(jp->result);
   _free(jp);
+}
+
+char* parse_json_error(const char* js) {
+
+  json_ctx_t parser = {0};                                           // new parser
+  parser.c          = (char*) js;                                    // the pointer to the string to parse
+  parser.allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
+  parser.result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
+  const int res     = parse_object(&parser, -1, 0);                  // now parse starting without parent (-1)
+  for (size_t i = 0; i < parser.len; i++) {
+    if (parser.result[i].data != NULL && d_type(parser.result + i) < 2)
+      _free(parser.result[i].data);
+  }
+  _free(parser.result);
+  if (res == 0 || res < JSON_E_NUMBER_TOO_LONG) return NULL;
+  const char* messages[] = {
+      "premature end of json-string",
+      "Unexpected character",
+      "Reached max depth for parsing json",
+      "Number too long to parse"};
+  sb_t sb = {0};
+  sb_print(&sb, "Error parsing json : %s\n", messages[-1 - res]);
+  int l   = (int) (parser.c - js) - 1;
+  int len = strlen(js);
+  int s   = max(l - 30, 0);
+  sb_add_range(&sb, js, s, min(l - s + 30, len - s));
+  sb_add_char(&sb, '\n');
+  for (int n = 0; n < 30 && n < l; n++) sb_add_char(&sb, '-');
+  sb_add_char(&sb, '^');
+  return sb.data;
 }
 
 json_ctx_t* parse_json(const char* js) {
