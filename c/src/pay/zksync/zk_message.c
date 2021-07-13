@@ -325,7 +325,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
     if (conf->sign_type == ZK_SIGN_PK)
       sb_add_rawbytes(sb, "\"type\":\"ECDSA\",\"ethSignature\":\"0x", signature, 0);
     else if (conf->sign_type == ZK_SIGN_CONTRACT)
-      sb_add_rawbytes(sb, "\"type\":\"Onchain", signature, 0);
+      sb_add_chars(sb, "\"type\":\"Onchain");
     else if (conf->sign_type == ZK_SIGN_CREATE2) {
       sb_add_rawbytes(sb, "\"type\":\"CREATE2\",\"creatorAddress\":\"0x", bytes(conf->create2.creator, 20), 0);
       sb_add_rawbytes(sb, "\",\"saltArg\":\"0x", bytes(conf->create2.salt_arg, 32), 0);
