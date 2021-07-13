@@ -95,7 +95,8 @@ account:
   in3_signTx:
     config:
       proof: "none"
-      pk: "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+      pk: 
+        - "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
     input:
       - "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
       - "0x8A91DC2D28b689474298D91899f0c1baF62cB85b"
@@ -104,7 +105,8 @@ account:
   in3_signData:
     config:
       proof: "none"
-      pk: "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+      pk: 
+        - "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
     input:
       - "0x0102030405060708090a0b0c0d0e0f"
       - "0xa8b8759ec8b59d7c13ef3630e8530f47ddb47eba12f00f9024d3d48247b62852"
@@ -140,7 +142,8 @@ account:
   eth_sign:
     config:
       proof: "none"
-      pk: "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+      pk: 
+        - "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
     input:
       - "0x8A91DC2D28b689474298D91899f0c1baF62cB85b"
       - "0xdeadbeaf"
@@ -149,7 +152,8 @@ account:
   eth_signTransaction:
     config:
       proof: 'none'
-      pk: "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      pk: 
+        - "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
       chainId: 'goerli'
     input:
       - 
