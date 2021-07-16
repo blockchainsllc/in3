@@ -184,6 +184,16 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
     else                                                                                     \
       target = d_int(t);                                                                     \
   }
+#define TRY_PARAM_GET_BOOL(target, ctx, index, def)                                                \
+  {                                                                                                \
+    const d_token_t* t = d_get_at(ctx->params, index);                                             \
+    if (d_type(t) == T_NULL)                                                                       \
+      target = def;                                                                                \
+    else if (d_type(t) != T_BOOLEAN)                                                               \
+      return req_set_error(ctx->req, "Param at " #index " must be an true or false!", IN3_EINVAL); \
+    else                                                                                           \
+      target = d_int(t);                                                                           \
+  }
 
 #define TRY_PARAM_GET_ADDRESS(target, ctx, index, def)                                            \
   {                                                                                               \

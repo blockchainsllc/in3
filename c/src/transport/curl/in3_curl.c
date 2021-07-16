@@ -75,6 +75,9 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
       curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) payload_len);
     }
+
+    // curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
+    //    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
