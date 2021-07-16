@@ -237,7 +237,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   address_t from;
 
   // read the values
-  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x52\x08", 2)),
+  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x75\x30", 2)),
           to        = getl(tx, K_TO, 20),
           value     = get(tx, K_VALUE),
           data      = get(tx, K_DATA),
@@ -280,8 +280,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
 
   // write state?
   if (meta) {
-    sb_add_rawbytes(meta, ",\"pre_unsigned\":\"0x", *dst, 0);
-    sb_add_chars(meta, "\"}");
+    sb_add_rawbytes(meta, "},\"pre_unsigned\":\"0x", *dst, 0);
+    sb_add_chars(meta, "\"");
   }
 
   // do we need to change it?
