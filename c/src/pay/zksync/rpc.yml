@@ -502,13 +502,13 @@ zksync:
           type:
             blockNumber: 
               descr: the blockNumber containing the tx or `null` if still pending
-              type: uint64,
+              type: uint64
             committed: 
               descr: true, if the block has been commited
-              type: boolean,
+              type: bool
             verified: 
               descr: true, if the block has been verified
-              type: boolean
+              type: bool
           optional: true
         executed:
           descr: true, if the tx has been executed by the operator. If false it is still in the txpool of the operator.
