@@ -103,11 +103,11 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
-  bytes32_t hash;
-  FILE*     r = NULL;
-  if (d_len(ctx->params) == 1) {
-    CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
-    keccak(d_to_bytes(ctx->params + 1), hash);
+  bytes32_t  hash;
+  d_token_t* arg = d_get_at(ctx->params, 0);
+  FILE*      r   = NULL;
+  if (d_type(arg) == T_BYTES) {
+    keccak(d_to_bytes(arg), hash);
     srand(bytes_to_int(hash, 4));
   }
   else {
