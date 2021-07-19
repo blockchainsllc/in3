@@ -40,6 +40,13 @@ Default-Value: `-DASSERTIONS=OFF`
 Default-Value: `-DBTC=ON`
 
 
+#### BTC_PRE_BPI34
+
+  Enable BTC-Verfification for blocks before BIP34 was activated
+
+Default-Value: `-DBTC_PRE_BPI34=ON`
+
+
 #### BUILD_DOC
 
   generates the documenation with doxygen.
@@ -68,11 +75,11 @@ Default-Value: `-DCODE_COVERAGE=OFF`
 Default-Value: `-DCOLOR=ON`
 
 
-#### DEV_NO_INTRN_PTR
+#### CORE_API
 
-  (*dev option*) if true the client will NOT include a void pointer (named internal) for use by devs)
+  registers a chain independend rpc-methods util-functions
 
-Default-Value: `-DDEV_NO_INTRN_PTR=ON`
+Default-Value: `-DCORE_API=ON`
 
 
 #### ESP_IDF
@@ -184,7 +191,21 @@ Default-Value: `-DLOGGING=ON`
 
   add capapbility to sign with a multig. Currrently only gnosis safe is supported
 
-Default-Value: `-DMULTISIG=OFF`
+Default-Value: `-DMULTISIG=ON`
+
+
+#### NODESELECT_DEF
+
+  Enable default nodeselect implementation
+
+Default-Value: `-DNODESELECT_DEF=ON`
+
+
+#### NODESELECT_DEF_WL
+
+  Enable default nodeselect whitelist implementation
+
+Default-Value: `-DNODESELECT_DEF_WL=ON`
 
 
 #### PAY_ETH
@@ -198,7 +219,21 @@ Default-Value: `-DPAY_ETH=OFF`
 
   pkg-config executable
 
-Default-Value: `-DPKG_CONFIG_EXECUTABLE=/opt/local/bin/pkg-config`
+Default-Value: `-DPKG_CONFIG_EXECUTABLE=/opt/homebrew/bin/pkg-config`
+
+
+#### PK_SIGNER
+
+  Enable Signing with private keys
+
+Default-Value: `-DPK_SIGNER=ON`
+
+
+#### PLGN_CLIENT_DATA
+
+  Enable client-data plugin
+
+Default-Value: `-DPLGN_CLIENT_DATA=OFF`
 
 
 #### POA
@@ -208,11 +243,39 @@ Default-Value: `-DPKG_CONFIG_EXECUTABLE=/opt/local/bin/pkg-config`
 Default-Value: `-DPOA=OFF`
 
 
+#### RECORDER
+
+  enable recording option for reproduce executions
+
+Default-Value: `-DRECORDER=ON`
+
+
+#### RPC_ONLY
+
+  specifies a coma-seperqted list of rpc-methods which should be supported. all other rpc-methods will be removed reducing the size of executable a lot.
+
+Default-Value: `-DRPC_ONLY=OFF`
+
+
 #### SEGGER_RTT
 
   Use the segger real time transfer terminal as the logging mechanism
 
 Default-Value: `-DSEGGER_RTT=OFF`
+
+
+#### SENTRY
+
+  Enable Sentry
+
+Default-Value: `-DSENTRY=OFF`
+
+
+#### SWIFT
+
+  swift API for swift bindings
+
+Default-Value: `-DSWIFT=OFF`
 
 
 #### TAG_VERSION
@@ -227,6 +290,13 @@ Default-Value: `-DTAG_VERSION=OFF`
   builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance
 
 Default-Value: `-DTEST=OFF`
+
+
+#### THREADSAFE
+
+  uses mutex to protect shared nodelist access
+
+Default-Value: `-DTHREADSAFE=ON`
 
 
 #### TRANSPORTS
@@ -257,6 +327,13 @@ Default-Value: `-DUSE_PRECOMPUTED_EC=ON`
 Default-Value: `-DUSE_SCRYPT=ON`
 
 
+#### USE_WINHTTP
+
+  if true the winhttp transport will be built (with a dependency to winhttp)
+
+Default-Value: `-DUSE_WINHTTP=OFF`
+
+
 #### WASM
 
   Includes the WASM-Build. In order to build it you need emscripten as toolchain. Usually you also want to turn off other builds in this case.
@@ -285,10 +362,17 @@ Default-Value: `-DWASM_EMMALLOC=ON`
 Default-Value: `-DWASM_SYNC=OFF`
 
 
+#### ZKCRYPTO_LIB
+
+  Path to the static zkcrypto-lib
+
+Default-Value: `-DZKCRYPTO_LIB=OFF`
+
+
 #### ZKSYNC
 
-  add RPC-functioin to handle zksync-payments
+  add RPC-function to handle zksync-payments
 
-Default-Value: `-DZKSYNC=OFF`
+Default-Value: `-DZKSYNC=ON`
 
 
