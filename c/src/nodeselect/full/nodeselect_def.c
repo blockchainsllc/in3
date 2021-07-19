@@ -58,6 +58,7 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result) return IN3_OK;
+  UNUSED_VAR(data); // no waring in case RPC_ONLY is used
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_NODELIST)
   if (VERIFY_RPC("in3_nodeList")) {

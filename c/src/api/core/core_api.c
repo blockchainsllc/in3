@@ -136,10 +136,11 @@ static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_rpc_handle_ctx_t* ctx = plugin_ctx;
   UNUSED_VAR(pdata);
   UNUSED_VAR(action);
+  UNUSED_VAR(ctx); // in case RPC_ONLY is used
 
-  in3_rpc_handle_ctx_t* ctx = plugin_ctx;
 #if !defined(RPC_ONLY) || defined(RPC_WEB3_SHA3)
   TRY_RPC("web3_sha3", in3_sha3(ctx))
 #endif

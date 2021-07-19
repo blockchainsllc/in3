@@ -225,6 +225,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
 
     case PLGN_ACT_RPC_HANDLE: {
       in3_rpc_handle_ctx_t* ctx = action_ctx;
+      UNUSED_VAR(ctx); // in case RPC_ONLY is used
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ADDRAWKEY)
       TRY_RPC("in3_addRawKey", add_raw_key(ctx))
 #endif
