@@ -313,6 +313,14 @@ in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   return in3_rpc_handle_finish(hctx);
 }
 
+in3_ret_t in3_rpc_handle_with_uint256(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
+  b_optimize_len(&data);
+  sb_t* sb = in3_rpc_handle_start(hctx);
+  sb_add_rawbytes(sb, "\"0x", data, -1);
+  sb_add_char(sb, '"');
+  return in3_rpc_handle_finish(hctx);
+}
+
 in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
   sb_add_chars(in3_rpc_handle_start(hctx), data);
   return in3_rpc_handle_finish(hctx);

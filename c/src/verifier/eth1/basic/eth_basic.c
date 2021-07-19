@@ -56,42 +56,58 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
-  if (!vc->result)
-    return IN3_OK;
-  else if (d_type(vc->result) == T_NULL) {
+  if (!vc->result) return IN3_OK;
+
+  if (d_type(vc->result) == T_NULL) {
     // check if there's a proof for non-existence
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKHASHANDINDEX) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKNUMBERANDINDEX)
     if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
       return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
+#endif
     return IN3_OK;
   }
 
-  if (VERIFY_RPC("eth_getTransactionByHash"))
-    return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
-  else if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONBYHASH)
+  if (VERIFY_RPC("eth_getTransactionByHash")) return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKHASHANDINDEX) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKNUMBERANDINDEX)
+  if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
     return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
-  else if (VERIFY_RPC("eth_getBlockByNumber"))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYNUMBER)
+  if (VERIFY_RPC("eth_getBlockByNumber"))
     return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (VERIFY_RPC("eth_getBlockTransactionCountByHash"))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYHASH)
+  if (VERIFY_RPC("eth_getBlockTransactionCountByHash"))
     return eth_verify_eth_getBlockTransactionCount(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (VERIFY_RPC("eth_getBlockTransactionCountByNumber"))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYNUMBER)
+  if (VERIFY_RPC("eth_getBlockTransactionCountByNumber"))
     return eth_verify_eth_getBlockTransactionCount(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
-  else if (VERIFY_RPC("eth_getBlockByHash"))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYHASH)
+  if (VERIFY_RPC("eth_getBlockByHash"))
     return eth_verify_eth_getBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (VERIFY_RPC("eth_getBalance") || VERIFY_RPC("eth_getCode") || VERIFY_RPC("eth_getStorageAt") || VERIFY_RPC("eth_getTransactionCount"))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETBALANCE) || defined(RPC_ETH_GETCODE) || defined(RPC_ETH_GETSTORAGEAT) || defined(RPC_ETH_GETTRANSACTIONCOUNT)
+  if (VERIFY_RPC("eth_getBalance") || VERIFY_RPC("eth_getCode") || VERIFY_RPC("eth_getStorageAt") || VERIFY_RPC("eth_getTransactionCount"))
     return eth_verify_account_proof(vc);
-  else if (VERIFY_RPC("eth_gasPrice"))
+#endif
+  if (VERIFY_RPC("eth_gasPrice") || VERIFY_RPC("eth_newFilter") || VERIFY_RPC("eth_newBlockFilter") || VERIFY_RPC("eth_newPendingFilter") || VERIFY_RPC("eth_uninstallFilter") || VERIFY_RPC("eth_getFilterChanges"))
     return IN3_OK;
-  else if (VERIFY_RPC("eth_newFilter") || VERIFY_RPC("eth_newBlockFilter") || VERIFY_RPC("eth_newPendingFilter") || VERIFY_RPC("eth_uninstallFilter") || VERIFY_RPC("eth_getFilterChanges"))
-    return IN3_OK;
-  else if (VERIFY_RPC("eth_getLogs")) // for txReceipt, we need the txhash
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETLOGS)
+  if (VERIFY_RPC("eth_getLogs")) // for txReceipt, we need the txhash
     return eth_verify_eth_getLog(vc, d_len(vc->result));
-  else if (VERIFY_RPC("eth_sendRawTransaction")) {
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_SENDRAWTRANSACTION)
+  if (VERIFY_RPC("eth_sendRawTransaction")) {
     bytes32_t hash;
     keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   }
-  else
-    return IN3_EIGNORE;
+#endif
+  return IN3_EIGNORE;
 }
 
 static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
@@ -178,21 +194,37 @@ static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_han
 
 /** called to see if we can handle the request internally */
 static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
-
+  UNUSED_VAR(filters);
   // we only support ETH in this module
   if (ctx->req->client->chain.type != CHAIN_ETH) return IN3_EIGNORE;
 
-  // check method to handle internally
+    // check method to handle internally
+#if !defined(RPC_ONLY) || defined(RPC_ETH_SENDTRANSACTION)
   TRY_RPC("eth_sendTransaction", handle_eth_sendTransaction(ctx->req, ctx->request))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_SENDTRANSACTIONANDWAIT)
   TRY_RPC("eth_sendTransactionAndWait", eth_send_transaction_and_wait(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_NEWFILTER)
   TRY_RPC("eth_newFilter", eth_newFilter(filters, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_NEWBLOCKFILTER)
   TRY_RPC("eth_newBlockFilter", eth_newBlockFilter(filters, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_NEWPENDINGTRANSACTIONFILTER)
   TRY_RPC("eth_newPendingTransactionFilter", req_set_error(ctx->req, "pending filter not supported", IN3_ENOTSUP))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETFILTERCHANGES)
   TRY_RPC("eth_getFilterChanges", eth_getFilterChanges(filters, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETFILTERLOGS)
   TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(filters, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_UNINSTALLFILTER)
   TRY_RPC("eth_uninstallFilter", (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
                                      ? req_set_error(ctx->req, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
                                      : in3_rpc_handle_with_string(ctx, filter_remove(filters, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
+#endif
 
   if (strcmp(ctx->method, "eth_chainId") == 0 && ctx->req->client->chain.chain_id != CHAIN_ID_LOCAL)
     return in3_rpc_handle_with_int(ctx, ctx->req->client->chain.chain_id);

@@ -56,6 +56,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result) return IN3_OK;
 
+#if !defined(RPC_ONLY) || defined(RPC_ETH_CALL)
   if (VERIFY_RPC("eth_call")) {
     if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
     d_token_t* tx      = d_get_at(d_get(vc->request, K_PARAMS), 0);
@@ -131,8 +132,8 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
         return req_set_error(vc->req, "General Error during execution", (in3_ret_t) ret);
     }
   }
-  else
-    return IN3_EIGNORE;
+#endif
+  return IN3_EIGNORE;
 }
 
 in3_ret_t in3_register_eth_full(in3_t* c) {

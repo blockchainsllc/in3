@@ -62,11 +62,12 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
       return IN3_OK;
   }
 
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONRECEIPT)
   if (VERIFY_RPC("eth_getTransactionReceipt"))
     // for txReceipt, we need the txhash
     return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
-  else
-    return IN3_EIGNORE;
+#endif
+  return IN3_EIGNORE;
 }
 
 in3_ret_t in3_register_eth_nano(in3_t* c) {

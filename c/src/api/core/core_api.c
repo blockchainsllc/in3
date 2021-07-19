@@ -140,14 +140,30 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(action);
 
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
+#if !defined(RPC_ONLY) || defined(RPC_WEB3_SHA3)
   TRY_RPC("web3_sha3", in3_sha3(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_KECCAK)
   TRY_RPC("keccak", in3_sha3(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SHA256)
   TRY_RPC("sha256", in3_sha256(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_WEB3_CLIENTVERSION)
   TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CONFIG)
   TRY_RPC("in3_config", in3_config(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_GETCONFIG)
   TRY_RPC("in3_getConfig", in3_getConfig(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CACHECLEAR)
   TRY_RPC("in3_cacheClear", in3_cacheClear(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CREATEKEY)
   TRY_RPC("in3_createKey", in3_createKey(ctx))
+#endif
 
   return IN3_EIGNORE;
 }
