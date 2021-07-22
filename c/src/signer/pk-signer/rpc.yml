@@ -11,7 +11,8 @@ account:
       cmd: k
     
     pk:
-      type: bytes32|bytes32[]
+      array: true
+      type: bytes32
       descr: registers raw private keys as signers for transactions. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
       example: ["0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"]
       optional: true
