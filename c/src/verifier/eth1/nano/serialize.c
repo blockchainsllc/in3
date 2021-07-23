@@ -124,7 +124,7 @@ static void rlp_add_list(bytes_builder_t* rlp, d_token_t* t) {
     bb_clear(&bb2);
     bb_clear(&bb3);
     rlp_add(&bb2, d_get(adr.token, K_ADDRESS), ADDRESS);
-    for (d_iterator_t st = d_iter(d_get(adr.token, K_STORAGE_KEYS)); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) rlp_add(bb3, st.token, HASH);
+    for (d_iterator_t st = d_iter(d_get(adr.token, K_STORAGE_KEYS)); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) rlp_add(&bb3, st.token, HASH);
     rlp_encode_list(&bb2, &bb3.b);
     rlp_encode_list(&bb1, &bb2.b);
   }
