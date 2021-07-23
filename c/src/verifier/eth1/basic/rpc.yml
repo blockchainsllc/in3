@@ -97,6 +97,11 @@ types:
       descr: Array of uncle hashes.
       array: true
       type: bytes32
+    baseFeePerGas:
+      descr: block fees based on EIP 1559 starting with the London hard fork
+      type: uint64
+      optional: true
+    
 
   eth_blockdataWithTxHashes:
     _extends: eth_blockheader
@@ -155,6 +160,37 @@ types:
     s:
       descr: y-value of the EC-Point of the signature
       type: bytes32
+    accessList:
+      optional: true
+      descr: the list of storage keys accesses as defined in EIP-2930 transactions of type 0x1 or 0x2. Will only be included if the type>0
+      array: true
+      typeName: EthTxAccessList
+      type:
+        address:
+          descr: the address being accessed.
+          type: address
+        storageKeys:
+          array: true
+          descr: The storage location being accessed.
+          type: bytes32
+    type:
+      optional: true
+      descr: the transaction type (0 = legacy tx, 1 = EIP-2930, 2= EIP-1559)
+      type: int
+    chainId:
+      descr: the chainId the transaction is to operate on.
+      optional: true
+      type: uint64
+    maxFeePerGas:
+      optional: true
+      descr: the max Fee gas as defined in EIP-1559
+      type: uint64
+    maxPriorityFeePerGas:
+      optional: true
+      descr: the max priority Fee gas as defined in EIP-1559
+      type: uint64
+
+
 
 eth:
 
