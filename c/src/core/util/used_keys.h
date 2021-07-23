@@ -214,6 +214,7 @@ static char* USED_KEYS[] = {
     "states",
     "status",
     "storageHash",
+    "storageKeys",
     "storageProof",
     "success",
     "symbol",

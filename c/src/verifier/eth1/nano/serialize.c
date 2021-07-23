@@ -118,21 +118,20 @@ static bytes_t* convert_to_typed_list(bytes_builder_t* rlp, int32_t type) {
 #define BLOOM   256
 
 static void rlp_add_list(bytes_builder_t* rlp, d_token_t* t) {
-  bytes_builder_t* bb1 = bb_new();
-  bytes_builder_t* bb2 = bb_new();
-  bytes_builder_t* bb3 = bb_new();
-  for (d_iterator_t adr = d_iter(t); adr.left && d_len(adr.token) == 2 && d_type(adr.token) == T_ARRAY && d_type(d_get_at(adr.token, 1)) == T_ARRAY; d_iter_next(&adr)) {
-    bb_clear(bb2);
-    bb_clear(bb3);
-    rlp_add(bb2, d_get_at(adr.token, 0), ADDRESS);
-    for (d_iterator_t st = d_iter(d_get_at(adr.token, 1)); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) rlp_add(bb3, st.token, HASH);
-    rlp_encode_list(bb2, &bb3->b);
-    rlp_encode_list(bb1, &bb2->b);
+
+  bytes_builder_t bb1 = {0}, bb2 = {0}, bb3 = {0};
+  for (d_iterator_t adr = d_iter(t); adr.left && d_len(adr.token) == 2 && d_type(adr.token) == T_OBJECT; d_iter_next(&adr)) {
+    bb_clear(&bb2);
+    bb_clear(&bb3);
+    rlp_add(&bb2, d_get(adr.token, K_ADDRESS), ADDRESS);
+    for (d_iterator_t st = d_iter(d_get(adr.token, K_STORAGE_KEYS)); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) rlp_add(bb3, st.token, HASH);
+    rlp_encode_list(&bb2, &bb3.b);
+    rlp_encode_list(&bb1, &bb2.b);
   }
-  rlp_encode_list(rlp, &bb1->b);
-  bb_free(bb1);
-  bb_free(bb2);
-  bb_free(bb3);
+  rlp_encode_list(rlp, &bb1.b);
+  _free(bb1.b.data);
+  _free(bb2.b.data);
+  _free(bb3.b.data);
 }
 
 bytes_t* serialize_account(d_token_t* a) {

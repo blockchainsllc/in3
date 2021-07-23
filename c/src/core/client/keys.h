@@ -153,6 +153,7 @@
 #define K_TYPE              key("type")
 #define K_BALANCE           key("balance")
 #define K_STORAGE_HASH      key("storageHash")
+#define K_STORAGE_KEYS      key("storageKeys")
 #define K_KEY               key("key")
 #define K_STORAGE_PROOF     key("storageProof")
 
