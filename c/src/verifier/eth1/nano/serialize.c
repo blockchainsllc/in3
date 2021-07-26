@@ -161,7 +161,7 @@ bytes_t* serialize_tx(d_token_t* tx) {
       rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
       break;
 
-    case 1: //EIP 2930
+    case 1: // EIP 2930
       rlp_add(rlp, d_get(tx, K_CHAIN_ID), UINT);
       rlp_add(rlp, d_get(tx, K_NONCE), UINT);
       rlp_add(rlp, d_get(tx, K_GAS_PRICE), UINT);
@@ -175,7 +175,7 @@ bytes_t* serialize_tx(d_token_t* tx) {
       rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
       break;
 
-    case 2: //EIP 1559
+    case 2: // EIP 1559
       rlp_add(rlp, d_get(tx, K_CHAIN_ID), UINT);
       rlp_add(rlp, d_get(tx, K_NONCE), UINT);
       rlp_add(rlp, d_get(tx, K_MAX_PRIORITY_FEE_PER_GAS), UINT);
