@@ -87,7 +87,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   d_token_t* t = NULL;
   uint8_t    hash[32], pubkey[65], sdata[64];
   bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
-  int        type         = raw && raw->len && raw->data[0] < 0x7f ? raw->data[0] : 0;
+  int        type         = raw && raw->len && raw->data && raw->data[0] < 0x7f ? raw->data[0] : 0;
   bytes_t*   r            = d_get_byteskl(tx, K_R, 32);
   bytes_t*   s            = d_get_byteskl(tx, K_S, 32);
   uint32_t   v            = d_get_int(tx, K_V);
