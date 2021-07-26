@@ -221,6 +221,8 @@ eth:
       rewardPercentiles:
         descr: A monotonically increasing list of percentile values to sample from each block's effective priority fees per gas in ascending order, weighted by gas used.
         type: double
+        internalDefault : []
+        optional: true
         array: true
     result:
       descr: Fee history for the returned block range. This can be a subsection of the requested range if not all blocks are available.
