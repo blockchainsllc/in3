@@ -77,14 +77,7 @@ int main(int argc, char* argv[]) {
           continue;
         }
       }
-      if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain.chain_id != CHAIN_ID_BTC && !strstr(argv[i], "-"))
-        sb_print(args, "\"%s\"", get_wei(argv[i]));
-      else
-        sb_print(args,
-                 (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
-                     ? "%s"
-                     : "\"%s\"",
-                 strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
+      add_argument(argv[i], args, c, method);
     }
   }
   sb_add_char(args, ']');

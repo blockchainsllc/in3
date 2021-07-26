@@ -44,8 +44,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method);
 
 void print_val(d_token_t* t);
 
-char* get_argument(int argc, char* argv[], char* alias, char* arg, bool has_value);
-
+char*       get_argument(int argc, char* argv[], char* alias, char* arg, bool has_value);
+void        add_argument(char* arg, sb_t* args, in3_t* c, char* method);
 uint32_t*   get_output_conf();
 const char* get_help_args();
 typedef enum output {
