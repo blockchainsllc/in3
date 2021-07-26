@@ -116,4 +116,5 @@ int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml);
 #define BLOCKHEADER_SEALED_FIELD1    13
 #define BLOCKHEADER_SEALED_FIELD2    14
 #define BLOCKHEADER_SEALED_FIELD3    15
+#define BLOCKHEADER_BASE_GAS_FEE     15
 

@@ -445,6 +445,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   d_token_t* params = d_get(vc->request, K_PARAMS);
   bytes32_t  hash;
 
+#if !defined(RPC_ONLY) || defined(RPC_GETBLOCK)
   if (VERIFY_RPC("getblock")) {
     // mark zksync as experimental
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
@@ -454,10 +455,14 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, true);
   }
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_GETBLOCKCOUNT)
   if (VERIFY_RPC("getblockcount")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_blockcount(conf, vc);
   }
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHEADER)
   if (VERIFY_RPC("getblockheader")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     d_token_t* block_hash = d_get_at(params, 0);
@@ -465,10 +470,15 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(conf, vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, false);
   }
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_BTC_PROOFTARGET)
   if (VERIFY_RPC("btc_proofTarget")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_target_proof(conf, vc, params);
   }
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_GETRAWTRANSACTION)
+
   if (VERIFY_RPC("getrawtransaction")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     d_token_t* tx_id      = d_get_at(params, 0);
@@ -480,6 +490,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     if (block_hash) hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_tx(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
+#endif
   return IN3_EIGNORE;
 }
 

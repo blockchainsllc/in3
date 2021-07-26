@@ -155,16 +155,19 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* pctx) {
 
   if (strcmp(vc->method, "in3_nodeList") == 0)
     return true;
-  else if (VERIFY_RPC("ipfs_get"))
+#if !defined(RPC_ONLY) || defined(RPC_IPFS_GET)
+  if (VERIFY_RPC("ipfs_get"))
     return ipfs_verify_hash(d_string(vc->result),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_get_string_at(params, 0));
-  else if (VERIFY_RPC("ipfs_put"))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IPFS_PUT)
+  if (VERIFY_RPC("ipfs_put"))
     return ipfs_verify_hash(d_get_string_at(params, 0),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_string(vc->result));
-  else
-    return IN3_EIGNORE;
+#endif
+  return IN3_EIGNORE;
 }
 in3_ret_t in3_register_ipfs(in3_t* c) {
   in3_register_eth_nano(c);

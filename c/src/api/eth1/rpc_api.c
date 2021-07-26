@@ -581,25 +581,57 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(action);
 
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
+#if !defined(RPC_ONLY) || defined(RPC_ETH_SIGN)
   TRY_RPC("eth_sign", in3_sign_data(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_SIGNTRANSACTION)
   TRY_RPC("eth_signTransaction", in3_signTx(ctx))
+#endif
 
   if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ABIENCODE)
   TRY_RPC("in3_abiEncode", in3_abiEncode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ABIDECODE)
   TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CHECKSUMADDRESS)
   TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ENS)
   TRY_RPC("in3_ens", in3_ens(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_TOWEI)
   TRY_RPC("in3_toWei", in3_toWei(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_FROMWEI)
   TRY_RPC("in3_fromWei", in3_fromWei(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PK2ADDRESS)
   TRY_RPC("in3_pk2address", in3_pk2address(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PK2PUBLIC)
   TRY_RPC("in3_pk2public", in3_pk2address(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ECRECOVER)
   TRY_RPC("in3_ecrecover", in3_ecrecover(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_SIGNDATA)
   TRY_RPC("in3_signData", in3_sign_data(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_DECRYPTKEY)
   TRY_RPC("in3_decryptKey", in3_decryptKey(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PREPARETX)
   TRY_RPC("in3_prepareTx", in3_prepareTx(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_SIGNTX)
   TRY_RPC("in3_signTx", in3_signTx(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CALCDEPLOYADDRESS)
   TRY_RPC("in3_calcDeployAddress", in3_calcDeployAddress(ctx))
+#endif
 
   return IN3_EIGNORE;
 }

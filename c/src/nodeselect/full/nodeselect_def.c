@@ -58,17 +58,22 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result) return IN3_OK;
+  UNUSED_VAR(data); // no waring in case RPC_ONLY is used
 
+#if !defined(RPC_ONLY) || defined(RPC_IN3_NODELIST)
   if (VERIFY_RPC("in3_nodeList")) {
     d_token_t* params = d_get(vc->request, K_PARAMS);
     return eth_verify_in3_nodelist(data, vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
   }
+#endif
+
 #ifdef NODESELECT_DEF_WL
-  else if (strcmp(vc->method, "in3_whiteList") == 0)
+#if !defined(RPC_ONLY) || defined(RPC_IN3_WHITELIST)
+  if (strcmp(vc->method, "in3_whiteList") == 0)
     return eth_verify_in3_whitelist(data, vc);
 #endif
-  else
-    return IN3_EIGNORE;
+#endif
+  return IN3_EIGNORE;
 }
 
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {

@@ -55,6 +55,10 @@ types:
     gasUsed:
       descr: gas used by this transaction.
       type: uint64
+    effectiveGasPrice:
+      descr: the efficte gas price
+      type: uint256
+      optional: true
     logs:
       descr: array of events created during execution of the tx
       array: true
@@ -74,6 +78,10 @@ types:
     from:
       descr: address of the sender.
       type: address
+    type:
+      optional: true
+      descr: the transaction type (0 = legacy tx, 1 = EIP-2930, 2= EIP-1559)
+      type: int
     to:
       descr: address of the receiver. null when its a contract creation transaction.
       type: address

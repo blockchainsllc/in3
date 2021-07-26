@@ -97,6 +97,11 @@ types:
       descr: Array of uncle hashes.
       array: true
       type: bytes32
+    baseFeePerGas:
+      descr: block fees based on EIP 1559 starting with the London hard fork
+      type: uint64
+      optional: true
+    
 
   eth_blockdataWithTxHashes:
     _extends: eth_blockheader
@@ -155,8 +160,90 @@ types:
     s:
       descr: y-value of the EC-Point of the signature
       type: bytes32
+    accessList:
+      optional: true
+      descr: the list of storage keys accesses as defined in EIP-2930 transactions of type 0x1 or 0x2. Will only be included if the type>0
+      array: true
+      typeName: EthTxAccessList
+      type:
+        address:
+          descr: the address being accessed.
+          type: address
+        storageKeys:
+          array: true
+          descr: The storage location being accessed.
+          type: bytes32
+    type:
+      optional: true
+      descr: the transaction type (0 = legacy tx, 1 = EIP-2930, 2= EIP-1559)
+      type: int
+    chainId:
+      descr: the chainId the transaction is to operate on.
+      optional: true
+      type: uint64
+    maxFeePerGas:
+      optional: true
+      descr: the max Fee gas as defined in EIP-1559
+      type: uint64
+    maxPriorityFeePerGas:
+      optional: true
+      descr: the max priority Fee gas as defined in EIP-1559
+      type: uint64
+
+
 
 eth:
+
+  eth_gasPrice:
+    descr: returns the current gasPrice in wei per gas
+    params: []
+    result:
+      descr: the current gasPrice in wei per gas
+      type: uint64
+    example:
+      response: '0x0625900800'
+
+  eth_feeHistory:
+    descr: |
+      base fee per gas and transaction effective priority fee per gas history for the requested block range if available. 
+      The range between headBlock-4 and headBlock is guaranteed to be available while retrieving data from the pending block and older history are optional to support. 
+      For pre-EIP-1559 blocks the gas prices are returned as rewards and zeroes are returned for the base fee per gas
+    params:
+      blockCount:
+        plainInt: true
+        descr: Number of blocks in the requested range. Between 1 and 1024 blocks can be requested in a single query. Less than requested may be returned if not all blocks are available.
+        type: uint64
+      newestBlock:
+        descr: the Highest blockNumber or one of `latest`, `earliest`or `pending`
+        type: uint64
+        internalDefault : latest
+        optional: true
+      rewardPercentiles:
+        descr: A monotonically increasing list of percentile values to sample from each block's effective priority fees per gas in ascending order, weighted by gas used.
+        type: double
+        array: true
+    result:
+      descr: Fee history for the returned block range. This can be a subsection of the requested range if not all blocks are available.
+      typeName: FeeHistory
+      type: 
+        oldestBlock: 
+          descr: Lowest number block of the returned range.
+          type: uint64
+        baseFeePerGas:
+          descr: An array of block base fees per gas. This includes the next block after the newest of the returned range, because this value can be derived from the newest block. Zeroes are returned for pre-EIP-1559 blocks.
+          type: uint64
+          array: true
+        gasUsedRatio:
+          array: true
+          descr: An array of block gas used ratios. These are calculated as the ratio of gasUsed and gasLimit.
+          type: double
+        reward:
+          array: true
+          
+
+
+
+    
 
   eth_blockNumber:
     descr: |

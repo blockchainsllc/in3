@@ -73,6 +73,7 @@ void ba_print(const uint8_t* a, size_t l) {
   if (l < 9) {
     in3_log_trace(" ( %" PRId64 " ) ", bytes_to_long(a, l));
   }
+  in3_log_trace("\n");
   if (o) in3_log_enable_prefix();
 }
 

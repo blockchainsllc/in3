@@ -425,7 +425,7 @@ void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b) {
     *pa = carry & 0xFF;
     carry >>= 8;
     pb--, pa--;
-  } while (b == pb);
+  } while (pb >= b);
 
   while (carry && pa >= a) {
     carry += *pa;

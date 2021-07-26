@@ -45,7 +45,7 @@
 
 // list of methods allowed withoput proof
 #define MAX_METHODS 26
-const char* ALLOWED_METHODS[MAX_METHODS] = {"eth_chainId", "in3_stats", "eth_blockNumber", "web3_clientVersion", "web3_sha3", "net_version", "net_peerCount", "net_listening", "eth_protocolVersion", "eth_syncing", "eth_coinbase", "eth_mining", "eth_hashrate", "eth_gasPrice", "eth_accounts", "eth_sign", "eth_sendRawTransaction", "eth_estimateGas", "eth_getCompilers", "eth_compileLLL", "eth_compileSolidity", "eth_compileSerpent", "eth_getWork", "eth_submitWork", "eth_submitHashrate", "eth_getProof"};
+const char* ALLOWED_METHODS[MAX_METHODS] = {"eth_chainId", "in3_stats", "eth_blockNumber", "web3_clientVersion", "web3_sha3", "net_version", "net_peerCount", "net_listening", "eth_protocolVersion", "eth_syncing", "eth_coinbase", "eth_mining", "eth_hashrate", "eth_gasPrice", "eth_feeHistory", "eth_accounts", "eth_sign", "eth_sendRawTransaction", "eth_estimateGas", "eth_getCompilers", "eth_compileLLL", "eth_compileSolidity", "eth_compileSerpent", "eth_getWork", "eth_submitWork", "eth_submitHashrate", "eth_getProof"};
 
 in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx) {
   UNUSED_VAR(p_data);
@@ -62,11 +62,12 @@ in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx)
       return IN3_OK;
   }
 
+#if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONRECEIPT)
   if (VERIFY_RPC("eth_getTransactionReceipt"))
     // for txReceipt, we need the txhash
     return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
-  else
-    return IN3_EIGNORE;
+#endif
+  return IN3_EIGNORE;
 }
 
 in3_ret_t in3_register_eth_nano(in3_t* c) {
