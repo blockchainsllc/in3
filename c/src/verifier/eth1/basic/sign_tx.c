@@ -263,11 +263,13 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
     sb_add_rawbytes(meta, "\",\"gas\":\"0x", gas_limit, 0);
     sb_add_rawbytes(meta, "\",\"gasPrice\":\"0x", gas_price, 0);
     sb_add_rawbytes(meta, "\",\"nonce\":\"0x", nonce, 0);
-    sb_add_char(meta, '\"');
+    sb_add_chars(meta, "\",\"layer\":\"l1\"");
     sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));
     sb_add_json(meta, ",\"fn_args\":", d_get(tx, key("fn_args")));
     sb_add_json(meta, ",\"token\":", d_get(tx, key("token")));
     sb_add_json(meta, ",\"wallet\":", d_get(tx, key("wallet")));
+    sb_add_json(meta, ",\"url\":", d_get(tx, key("url")));
+    sb_add_json(meta, ",\"delegate\":", d_get(tx, key("delegate")));
   }
 
   // do we need to transform the tx before we sign it?
