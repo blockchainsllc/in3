@@ -250,9 +250,9 @@ bytes_t* serialize_block_header(d_token_t* block) {
     rlp_add(rlp, d_getl(block,K_MIX_HASH, 32)       , HASH);
     rlp_add(rlp, d_get(block,K_NONCE)               , BYTES);
     // if we have a base gas fee we need to use EIP-1559
-    if (d_get_long(block,K_BASE_GAS_FEE)) 
-       rlp_add(rlp, d_get(block,K_BASE_GAS_FEE)      , UINT);
   }
+  if (d_get_long(block,K_BASE_GAS_FEE)) 
+      rlp_add(rlp, d_get(block,K_BASE_GAS_FEE)      , UINT);
   // clang-format on
   return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
