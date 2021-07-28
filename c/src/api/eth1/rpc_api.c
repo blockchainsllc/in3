@@ -437,7 +437,7 @@ static in3_ret_t parse_tx_url(in3_rpc_handle_ctx_t* ctx) {
   sb_t fn_sig  = {0};
 
   if (*url == '/') {
-    l = q > url ? q - url : strlen(url);
+    l = q > url ? (int) (q - url) : (int) (strlen(url));
     if (l) {
       sb_add_range(&fn_sig, url, 1, l - 1);
       sb_add_char(&fn_sig, '(');
