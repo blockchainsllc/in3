@@ -412,6 +412,7 @@ static inline bool is_convertable_number(char* c) {
 }
 
 static inline bool is_json(char* c) {
+  if (!c) return false;
   char* e = parse_json_error(c);
   if (e) {
     _free(e);
