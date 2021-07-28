@@ -69,10 +69,10 @@ static const cache_props_t ZKSYNC_CACHED_PROOF = 0xFF00 | CACHE_PROP_INHERIT;
 
 /** represents a token supported in zksync. */
 typedef struct {
-  uint16_t  id;        /**< the id used in messaged */
-  char      symbol[8]; /**< short symbol */
-  uint8_t   decimals;  /**< decimals for display */
-  address_t address;   /**< erc20 address (or 0x00 for eth) */
+  uint16_t  id;         /**< the id used in messaged */
+  char      symbol[10]; /**< short symbol */
+  uint8_t   decimals;   /**< decimals for display */
+  address_t address;    /**< erc20 address (or 0x00 for eth) */
 } zksync_token_t;
 
 /** message type. */
