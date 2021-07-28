@@ -193,7 +193,7 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
         break;
       }
       else if (!UNITS[i + 2]) {
-        if (*unit == 'e' && unit[1] >= 0 && unit[1] <= 9)
+        if (unit[0] == 'e' && unit[1] >= '0' && unit[1] <= '9')
           exp = atoi(unit + 1);
         else
           return IN3_EINVAL;
