@@ -240,7 +240,9 @@ eth:
           descr: An array of block gas used ratios. These are calculated as the ratio of gasUsed and gasLimit.
           type: double
         reward:
+          descr: An array of rewards
           array: true
+          type: uint64
           
 
 
