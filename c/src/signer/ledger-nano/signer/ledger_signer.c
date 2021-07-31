@@ -95,12 +95,12 @@ in3_ret_t eth_ledger_sign(void* p_data, in3_plugin_act_t action, void* p_ctx) {
         apdu[index_counter++] = P1_FINAL;
         apdu[index_counter++] = IDM_SECP256K1;
 
-        apdu[index_counter++] = 0x01; //1st arg tag
+        apdu[index_counter++] = 0x01; // 1st arg tag
         apdu[index_counter++] = sizeof(bip_data);
         memcpy(apdu + index_counter, &bip_data, sizeof(bip_data));
         index_counter += sizeof(bip_data);
 
-        apdu[index_counter++] = 0x02; //2nd arg tag
+        apdu[index_counter++] = 0x02; // 2nd arg tag
         apdu[index_counter++] = msg_len;
         memcpy(apdu + index_counter, hash, msg_len);
         index_counter += msg_len;

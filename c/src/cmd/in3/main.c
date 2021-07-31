@@ -62,14 +62,22 @@ int main(int argc, char* argv[]) {
     else {
       // otherwise we add it to the params
       if (args->len > 1) sb_add_char(args, ',');
-      if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strcmp(method, "in3_toWei") && c->chain.chain_id != CHAIN_ID_BTC)
-        sb_print(args, "\"%s\"", get_wei(argv[i]));
-      else
-        sb_print(args,
-                 (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
-                     ? "%s"
-                     : "\"%s\"",
-                 strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
+      if (*argv[i] == '-' && *(argv[i] + 1) == 0) {
+        bytes_t b = readFile(stdin);
+        sb_add_range(args, (char*) b.data, 0, b.len);
+        continue;
+      }
+      if ((*argv[i] == '.' && *(argv[i] + 1) == '/') || *argv[i] == '/') {
+        // looks like a file
+        FILE* f = fopen(argv[i], "r");
+        if (f) {
+          bytes_t b = readFile(f);
+          fclose(f);
+          sb_add_range(args, (char*) b.data, 0, b.len);
+          continue;
+        }
+      }
+      add_argument(argv[i], args, c, method);
     }
   }
   sb_add_char(args, ']');

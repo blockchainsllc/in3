@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -101,7 +101,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
 }
 
 /** gets the from-fied from the tx or ask the signer */
-static in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
+in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
   d_token_t* t = d_get(tx, K_FROM);
   if (t) {
     // we only accept valid from addresses which need to be 20 bytes
@@ -113,9 +113,10 @@ static in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) 
   // if it is not specified, we rely on the from-address of the signer.
   if (!in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_ACCOUNT)) return req_set_error(ctx, "missing from address in tx", IN3_EINVAL);
 
+  // find the first account which is able to sign
   in3_sign_account_ctx_t actx = {.req = ctx, .accounts = NULL, .accounts_len = 0};
   TRY(in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_ACCOUNT, &actx))
-  if (!actx.accounts) return req_set_error(ctx, "no from address found", IN3_EINVAL);
+  if (!actx.accounts || !actx.accounts_len) return req_set_error(ctx, "no from address found", IN3_EINVAL);
   memcpy(res, actx.accounts, 20);
   _free(actx.accounts);
   return IN3_OK;
@@ -150,14 +151,93 @@ static inline uint64_t get_v(chain_id_t chain) {
   return v;
 }
 
-/**
- * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
+/** creates a memory in heap which will automatilcy be freed when the context is freed.
+ * if called twice with the same key, the same memory is returned
  */
-in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
+static bytes_t get_or_create_cached(in3_req_t* req, d_key_t k, int size) {
+  cache_props_t  p     = (((uint32_t) k) << 16) | CACHE_PROP_MUST_FREE;
+  cache_entry_t* cache = in3_cache_get_entry_by_prop(req->cache, p);
+  if (!cache) {
+    cache        = in3_cache_add_entry(&req->cache, NULL_BYTES, bytes(_calloc(1, size), size));
+    cache->props = p;
+  }
+  return cache->value;
+}
+
+static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+  char* token = d_get_string(tx, key("token"));
+  if (token && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
+    if (to->len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
+    *data = get_or_create_cached(req, key("pdata"), 68);
+    memcpy(data->data, "\xa9\x05\x9c\xbb", 4);                         // transfer (address, uint256)
+    memcpy(data->data + 4 + 32 - 20, to->data, 20);                    // recipient
+    memcpy(data->data + 4 + 64 - value->len, value->data, value->len); // value
+
+    *to = get_or_create_cached(req, key("pto"), 20);
+    hex_to_bytes(token, -1, to->data, to->len);
+
+    uint64_t gas = bytes_to_long(gas_limit->data, gas_limit->len) + 100000; // we add 100000 gas for using transfer
+    *gas_limit   = get_or_create_cached(req, key("pgas"), 8);
+    long_to_bytes(gas, gas_limit->data);
+    b_optimize_len(gas_limit);
+
+    value->len = 0; // we don't need a value anymore, since it is encoded
+  }
+  else if (token)
+    return req_set_error(req, "Invalid Token. Only token-addresses are supported!", IN3_EINVAL);
+
+  return IN3_OK;
+}
+
+static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
+  char* fn = d_get_string(tx, key("fn_sig"));
+
+  if (fn) {
+    d_token_t* args = d_get(tx, key("fn_args"));
+    if (args && d_type(args) != T_ARRAY) return req_set_error(req, "Invalid argument type for tx", IN3_EINVAL);
+
+    sb_t params = {0};
+    sb_add_char(&params, '\"');
+    sb_add_chars(&params, fn);
+
+    if (args)
+      sb_add_json(&params, "\",", args);
+    else
+      sb_add_chars(&params, "\",[]");
+
+    d_token_t* res;
+    TRY_FINAL(req_send_sub_request(req, "in3_abiEncode", params.data, NULL, &res, NULL), _free(params.data))
+
+    if (d_type(res) != T_BYTES || d_len(res) < 4) return req_set_error(req, "abi encoded data", IN3_EINVAL);
+    if (data->data) {
+      // if this is a deployment transaction we concate it with the arguments without the functionhash
+      bytes_t new_data = get_or_create_cached(req, key("deploy_data"), data->len + d_len(res) - 4);
+      memcpy(new_data.data, data->data, data->len);
+      memcpy(new_data.data + data->len, d_bytes(res)->data + 4, d_len(res) - 4);
+      *data = new_data;
+    }
+    else
+      *data = d_to_bytes(res);
+  }
+
+  return IN3_OK;
+}
+/** based on the tx-entries the transaction is manipulated before creating the raw transaction. */
+static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+  // do we need to convert to the ERC20.transfer function?
+  TRY(transform_erc20(req, tx, to, value, data, gas_limit))
+  TRY(transform_abi(req, tx, data))
+  return IN3_OK;
+}
+
+/**
+ * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
+ */
+in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta) {
   address_t from;
 
   // read the values
-  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x52\x08", 2)),
+  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x75\x30", 2)),
           to        = getl(tx, K_TO, 20),
           value     = get(tx, K_VALUE),
           data      = get(tx, K_DATA),
@@ -174,16 +254,43 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
   TRY(get_from_address(tx, ctx, from))
   TRY(get_nonce_and_gasprice(&nonce, &gas_price, ctx, from))
 
+  // write state?
+  if (meta) {
+    sb_add_rawbytes(meta, "\"input\":{\"to\":\"0x", to, 0);
+    sb_add_rawbytes(meta, "\",\"sender\":\"0x", bytes(from, 20), 0);
+    sb_add_rawbytes(meta, "\",\"value\":\"0x", value, 0);
+    sb_add_rawbytes(meta, "\",\"data\":\"0x", data, 0);
+    sb_add_rawbytes(meta, "\",\"gas\":\"0x", gas_limit, 0);
+    sb_add_rawbytes(meta, "\",\"gasPrice\":\"0x", gas_price, 0);
+    sb_add_rawbytes(meta, "\",\"nonce\":\"0x", nonce, 0);
+    sb_add_chars(meta, "\",\"layer\":\"l1\"");
+    sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));
+    sb_add_json(meta, ",\"fn_args\":", d_get(tx, key("fn_args")));
+    sb_add_json(meta, ",\"token\":", d_get(tx, key("token")));
+    sb_add_json(meta, ",\"wallet\":", d_get(tx, key("wallet")));
+    sb_add_json(meta, ",\"url\":", d_get(tx, key("url")));
+    sb_add_json(meta, ",\"delegate\":", d_get(tx, key("delegate")));
+  }
+
+  // do we need to transform the tx before we sign it?
+  TRY(transform_tx(ctx, tx, &to, &value, &data, &gas_limit));
+
   // create raw without signature
-  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(chain_id), bytes(NULL, 0), bytes(NULL, 0));
+  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, get_v(chain_id), NULL_BYTES, NULL_BYTES);
   *dst         = *raw;
   _free(raw);
 
+  // write state?
+  if (meta) {
+    sb_add_rawbytes(meta, "},\"pre_unsigned\":\"0x", *dst, 0);
+    sb_add_chars(meta, "\"");
+  }
+
   // do we need to change it?
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
-    in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = {0}};
+    in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = {0}, .output = meta, .tx = tx};
     memcpy(pctx.account, from, 20);
-    in3_ret_t prep_res = in3_plugin_execute_first(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
+    in3_ret_t prep_res = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
 
     if (prep_res) {
       if (dst->data) _free(dst->data);
@@ -196,6 +303,11 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
     }
   }
 
+  if (meta) {
+    sb_add_rawbytes(meta, ",\"unsigned\":\"0x", *dst, 0);
+    sb_add_chars(meta, "\"");
+  }
+
   // cleanup subcontexts
   TRY(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount", NULL), false))
   TRY(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice", NULL), false))
@@ -204,7 +316,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst) {
 }
 
 /**
- * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
+ * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
 in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_t* dst) {
   bytes_t signature;
@@ -260,7 +372,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
 in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // get the transaction-object
   d_token_t* tx_params   = d_get(req, K_PARAMS);
-  bytes_t    unsigned_tx = bytes(NULL, 0), signed_tx = bytes(NULL, 0);
+  bytes_t    unsigned_tx = NULL_BYTES, signed_tx = NULL_BYTES;
   address_t  from;
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
 
@@ -275,7 +387,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
     memcpy(unsigned_tx.data, raw.data, raw.len);
   }
   else
-    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
+    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx, NULL));
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (unsigned_tx.data) _free(unsigned_tx.data);)
 

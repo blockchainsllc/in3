@@ -1,38 +1,38 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-/** @file 
+/** @file
  * simple commandline-util sending in3-requests.
  * */
 #include "helper.h"
@@ -70,17 +70,17 @@ const char* get_help_args() {
 // helper to read the password from tty
 void read_pass(char* pw, int pwsize) {
   int i = 0, ch = 0;
-  recorder_print(1, COLORT_HIDDEN); //conceal typing and save position
+  recorder_print(1, COLORT_HIDDEN); // conceal typing and save position
   while (true) {
     ch = getchar();
-    if (ch == '\r' || ch == '\n' || ch == EOF) break; //get characters until CR or NL
-    if (i < pwsize - 1) {                             //do not save pw longer than space in pw
-      pw[i]     = ch;                                 //longer pw can be entered but excess is ignored
+    if (ch == '\r' || ch == '\n' || ch == EOF) break; // get characters until CR or NL
+    if (i < pwsize - 1) {                             // do not save pw longer than space in pw
+      pw[i]     = ch;                                 // longer pw can be entered but excess is ignored
       pw[i + 1] = 0;
     }
     i++;
   }
-  recorder_print(1, COLORT_RESETHIDDEN); //reveal typing
+  recorder_print(1, COLORT_RESETHIDDEN); // reveal typing
 }
 
 static bool is_number(char* val) {
@@ -103,7 +103,7 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
     while (p) {
       char* next = strtok(NULL, ".");
       if (!next) {
-        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0 || is_number(value))
+        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0 || is_number(value) || *value == '{' || *value == '[')
           sb_print(&sb, "\"%s\":%s", p, value);
         else
           sb_print(&sb, "\"%s\":\"%s\"", p, value);
@@ -401,4 +401,33 @@ void display_result(char* method, char* result) {
     else
       recorder_print(0, "%s\n", result);
   }
+}
+
+static inline bool is_convertable_number(char* c) {
+  if (!*c) return false;
+  for (; *c; c++) {
+    if ((*c < '0' || *c > '9') && *c != '.') return strcmp(c, "eth") == 0;
+  }
+  return true;
+}
+
+static inline bool is_json(char* c) {
+  if (!c) return false;
+  char* e = parse_json_error(c);
+  if (e) {
+    _free(e);
+    return false;
+  }
+  return true;
+}
+static inline bool needs_hex_number(char* arg, char* method) {
+  // for eth, zksync (but not for eth_feeHistory)
+  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0) && strcmp(method, "eth_feeHistory") && is_convertable_number(arg);
+}
+
+void add_argument(char* arg, sb_t* args, in3_t* c, char* method) {
+  if (needs_hex_number(arg, method))
+    sb_print(args, "\"%s\"", get_wei(arg));
+  else
+    sb_print(args, is_json(arg) ? "%s" : "\"%s\"", strcmp(method, "in3_ens") ? resolve(c, arg) : arg);
 }

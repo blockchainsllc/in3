@@ -5,8 +5,8 @@ package in3.config;
  */
 public interface Configuration {
   /**
-     * generates a json-string based on the internal data.
-     */
+   * generates a json-string based on the internal data.
+   */
   public String  toJSON();
   public void    markAsSynced();
   public boolean isSynced();

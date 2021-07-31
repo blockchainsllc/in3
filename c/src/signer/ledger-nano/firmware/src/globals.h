@@ -22,7 +22,7 @@ extern cx_sha256_t           hash;
 extern unsigned char         msg_hash[HASH_LEN];
 extern cx_ecfp_private_key_t private_key;
 
-//bip32 path stored after apdu request parsing
+// bip32 path stored after apdu request parsing
 extern unsigned int path[BIP32_PATH_LEN_MAX];
 extern int          path_len_bip;
 

@@ -30,11 +30,11 @@ typedef struct btc_target_conf {
 
 /**
  * @brief  checks if the target is within a range
- * @note   
- * @param  vc: 
- * @param  old_target: 
- * @param  new_target: 
- * @retval 
+ * @note
+ * @param  vc:
+ * @param  old_target:
+ * @param  new_target:
+ * @retval
  */
 in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target);
 

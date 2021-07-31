@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -250,9 +250,10 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
   assert_in3_req(ctx);
   assert(response_data);
   assert(len);
+  const bool is_json = response_data[0] == '{' || response_data[0] == '[';
 
   if (is_raw_http(ctx)) {
-    ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : NULL;
+    ctx->response_context = is_json ? parse_json(response_data) : NULL;
     if (!ctx->response_context) {
       // we create a context only holding the raw data
       ctx->response_context               = _calloc(1, sizeof(json_ctx_t));
@@ -267,10 +268,14 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     return IN3_OK;
   }
 
-  ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
+  ctx->response_context = is_json ? parse_json(response_data) : parse_binary_str(response_data, len);
 
-  if (!ctx->response_context)
-    return req_set_error(ctx, "Error in JSON-response : ", req_set_error(ctx, str_remove_html(response_data), IN3_EINVALDT));
+  if (!ctx->response_context) {
+    char* error = is_json ? parse_json_error(response_data) : NULL;
+    req_set_error(ctx, "\nError in JSON-response : ", req_set_error(ctx, error ? error : str_remove_html(response_data), IN3_EINVALDT));
+    _free(error);
+    return IN3_EINVALDT;
+  }
 
   if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
@@ -647,7 +652,7 @@ static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->account   = d_to_bytes(d_get_at(params, 1));
   sign_ctx->type      = SIGN_EC_HASH;
   sign_ctx->req       = ctx;
-  sign_ctx->signature = bytes(NULL, 0);
+  sign_ctx->signature = NULL_BYTES;
 }
 
 in3_sign_ctx_t* create_sign_ctx(in3_req_t* ctx) {

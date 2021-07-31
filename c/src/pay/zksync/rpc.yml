@@ -27,6 +27,16 @@ types:
     txHash:
       descr: the transactionHash, which can be used to track the tx
       type: string
+    tokenId:
+      descr: the token id
+      type: uint64
+    validFrom:
+      descr: valid from
+      type: uint64
+    validUntil: 
+      descr: valid until
+      type: uint64
+
 
   zk_tx:
     accountId:
@@ -58,6 +68,7 @@ types:
       type: uint64
     signature:
       descr: the sync signature
+      typeName: ZkTxSignature
       type:
         pubKey:
           descr: the public key of the signer
@@ -65,6 +76,10 @@ types:
         signature:
           descr: the signature
           type: bytes
+    type:
+      descr: the transaction type
+      type: string
+      optional: true
 
   zk_history:
     tx_id:
@@ -100,6 +115,7 @@ types:
       type: string
     tx:
       descr: the transaction data
+      typeName: ZkTxHistoryInput
       type:
         type:
           descr: Type of the transaction. `Transfer`, `ChangePubKey` or `Withdraw`
@@ -143,6 +159,7 @@ types:
         signature:
           optional: true
           descr: the sync signature
+          typeName: ZkTxSignature
           type:
             pubKey:
               descr: the public key of the signer
@@ -165,6 +182,7 @@ types:
         priority_op:
           descr: the description of a priority operation like `Deposit`
           optional: true
+          typeName: ZkTxHistoryPriorityOp
           type:
             from:
               descr: The sender of the address
@@ -181,6 +199,7 @@ types:
         ethAuthData:
           descr: the 2fa euth authorition
           optional: true
+          typeName: ZkTxHistoryEthAuthData
           type:
             type:
               descr: the type which should be CREATE2, ECDSA
@@ -316,11 +335,13 @@ zksync:
           cmd: zcpm
           optional: true
 
+
   # rpc
   zksync_contract_address:
     descr: returns the contract address
     result:
       descr: fetches the contract addresses from the zksync server. This request also caches them and will return the results from cahe if available.
+      typeName: ZkSyncContractDefinition
       type:
         govContract:
           descr: the address of the govement contract
@@ -340,6 +361,7 @@ zksync:
     result:
       key: token symbol
       descr: a array of tokens-definitions. This request also caches them and will return the results from cahe if available.
+      typeName: ZkSyncToken
       type:
         address:
           descr: the address of the ERC2-Contract or 0x00000..000 in case of the native token (eth)
@@ -386,12 +408,14 @@ zksync:
         optional: true
     result:
       descr: the current state of the requested account.
+      typeName: ZkSyncAccountInfo
       type:
         address:
           descr: the address of the account
           type: address
         committed:
           descr: the state of the zksync operator after executing transactions successfully, but not not verified on L1 yet.
+          typeName: ZkSyncAccountState
           type:
             balances:
               descr: the token-balance
@@ -403,8 +427,17 @@ zksync:
             pubKeyHash:
               descr: the pubKeyHash set for the requested account or `0x0000...` if not set yet.
               type: address
+            mintedNfts:
+              descr: the minted NFTs
+              key: the token
+              type: uint256
+            nfts:
+              descr: the minted NFTs
+              key: the token
+              type: uint256
         depositing:
           descr: the state of all depositing-tx.
+          typeName: ZkSyncAccountInfoDepositing
           type:
             balances:
               descr: the token-values.
@@ -416,6 +449,7 @@ zksync:
           optional: true
         verified:
           descr: the state after the rollup was verified in L1.
+          typeName: ZkSyncAccountState
           type:
             balances:
               descr: the token-balances.
@@ -427,6 +461,14 @@ zksync:
             pubKeyHash:
               descr: the pubKeyHash set for the requested account or `0x0000...` if not set yet.
               type: address
+            mintedNfts:
+              descr: the minted NFTs
+              key: the token
+              type: uint256
+            nfts:
+              descr: the minted NFTs
+              key: the token
+              type: uint256
     example:
       cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000
       response: 
@@ -452,10 +494,21 @@ zksync:
         type: bytes32
     result:
       descr: the current state of the requested tx.
+      typeName: ZkSyncTxInfo
       type:
         block:
-          descr: the blockNumber containing the tx or `null` if still pending
-          type: uint64
+          typeName: ZkSyncTransactionBlock
+          descr: the block
+          type:
+            blockNumber: 
+              descr: the blockNumber containing the tx or `null` if still pending
+              type: uint64
+            committed: 
+              descr: true, if the block has been commited
+              type: bool
+            verified: 
+              descr: true, if the block has been verified
+              type: bool
           optional: true
         executed:
           descr: true, if the tx has been executed by the operator. If false it is still in the txpool of the operator.
@@ -487,14 +540,11 @@ zksync:
         type: bytes32
     result:
       descr: the data and state of the requested tx.
+      typeName: ZkSyncTxData
       type:
         block_number:
           descr: the blockNumber containing the tx or `null` if still pending
           type: uint64
-          optional: true
-        failReason:
-          descr: if executed and failed this will include an error message
-          type: string
           optional: true
         tx_type:
           descr: Type of the transaction. `Transfer`, `ChangePubKey` or `Withdraw`
@@ -523,6 +573,10 @@ zksync:
         tx:
           descr: the tx input data
           type: zk_tx
+        fail_reason:
+          descr: the fail reason
+          type: string
+          optional: true
 
     example:
       cmdParams: -x -zkr https://rinkeby-api.zksync.io/api/v0.1
@@ -805,9 +859,11 @@ zksync:
         type: uint64
     result:
       descr: state of the PriorityOperation
+      typeName: ZkSyncEthopInfo
       type:
         block:
           descr: the block
+          typeName: ZkSyncEthopInfoBlock
           type:
             committed:
               descr: state of the operation
@@ -863,6 +919,7 @@ zksync:
         type: string
     result:
       descr: the fees split up into single values
+      typeName: ZkSyncFeeInfo
       type:
         feeType:
           descr: Type of the transaaction
@@ -923,10 +980,11 @@ zksync:
         optional: true
     result:
       descr: the receipt and the receipopId. You can use `zksync_ethop_info` to follow the state-changes.
+      typeName: ZkSyncDepositResult
       type: 
         receipt:
           descr: the transactionreceipt
-          type: transactionReceipt
+          type: eth_transactionReceipt
         priorityOpId:
           descr: the operationId to rack to progress
           type: uint64
@@ -1047,7 +1105,7 @@ zksync:
         type: string
     result:
       descr: the transactionReceipt
-      type: transactionReceipt
+      type: eth_transactionReceipt
     example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
       request: 
@@ -1095,6 +1153,6 @@ zksync:
         - '0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409'
       response: '0x9ce5b6f8db3fbbe66a3bdbd3b4731f19ec27f80ee03ead3c0708798dd949882b'
 
-      
+
 
 

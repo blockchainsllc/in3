@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -90,6 +90,17 @@ static bool add_key(in3_t* c, bytes32_t pk) {
   return true;
 }
 
+void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
+  struct SHA3_CTX kctx;
+  sha3_256_Init(&kctx);
+  const char* PREFIX = "\x19"
+                       "Ethereum Signed Message:\n";
+  sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
+  sha3_Update(&kctx, dst, sprintf((char*) dst, "%d", (int) msg.len));
+  if (msg.len) sha3_Update(&kctx, msg.data, msg.len);
+  keccak_Final(&kctx, dst);
+}
+
 static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
   signer_key_t* k = data;
   switch (action) {
@@ -102,15 +113,8 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
           return ec_sign_pk_raw(ctx->message.data, k->pk, ctx->signature.data);
 
         case SIGN_EC_PREFIX: {
-          bytes32_t       hash;
-          struct SHA3_CTX kctx;
-          sha3_256_Init(&kctx);
-          const char* PREFIX = "\x19"
-                               "Ethereum Signed Message:\n";
-          sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-          sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", (int) ctx->message.len));
-          if (ctx->message.len) sha3_Update(&kctx, ctx->message.data, ctx->message.len);
-          keccak_Final(&kctx, hash);
+          bytes32_t hash;
+          eth_create_prefixed_msg_hash(hash, ctx->message);
           return ec_sign_pk_raw(hash, k->pk, ctx->signature.data);
         }
         case SIGN_EC_HASH:
@@ -221,8 +225,13 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
 
     case PLGN_ACT_RPC_HANDLE: {
       in3_rpc_handle_ctx_t* ctx = action_ctx;
+      UNUSED_VAR(ctx); // in case RPC_ONLY is used
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ADDRAWKEY)
       TRY_RPC("in3_addRawKey", add_raw_key(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_ACCOUNTS)
       TRY_RPC("eth_accounts", eth_accounts(ctx))
+#endif
       return IN3_EIGNORE;
     }
 

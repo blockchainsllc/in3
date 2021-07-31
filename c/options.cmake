@@ -50,6 +50,7 @@ OPTION(PLGN_CLIENT_DATA "Enable client-data plugin" OFF)
 OPTION(THREADSAFE "uses mutex to protect shared nodelist access" ON)
 OPTION(SWIFT "swift API for swift bindings" OFF)
 OPTION(CORE_API "include basic core-utils" ON)
+OPTION(RPC_ONLY "specifies a coma-seperqted list of rpc-methods which should be supported. all other rpc-methods will be removed reducing the size of executable a lot." OFF)
 
 
 IF (DEFINED ANDROID_ABI)
@@ -110,11 +111,14 @@ endif()
 
 if(ETH_FULL)
     ADD_DEFINITIONS(-DETH_FULL)
+    ADD_DEFINITIONS(-DETH_BASIC)
+    ADD_DEFINITIONS(-DETH_NANO)
     set(IN3_VERIFIER eth_full)
     set(ETH_BASIC true)
     set(ETH_NANO true)
 elseif(ETH_BASIC)
     ADD_DEFINITIONS(-DETH_BASIC)
+    ADD_DEFINITIONS(-DETH_NANO)
     set(IN3_VERIFIER eth_basic)
     set(ETH_NANO true)
 elseif(ETH_NANO)
@@ -202,6 +206,18 @@ if (NODESELECT_DEF)
   endif()
   set(IN3_NODESELECT ${IN3_NODESELECT} nodeselect_def)
 endif()
+
+# handle RPC
+if (RPC_ONLY) 
+  ADD_DEFINITIONS(-DRPC_ONLY)
+  string(REPLACE "," ";" RPC_ONLY_LIST ${RPC_ONLY})
+  foreach(method ${RPC_ONLY_LIST})
+    MESSAGE("<<${LETTER}>>")
+    string(TOUPPER ${method} UPPER_METHOD)
+    ADD_DEFINITIONS(-DRPC_${UPPER_METHOD})
+  endforeach()
+endif(RPC_ONLY)
+
 
 # handle version
 if (TAG_VERSION)

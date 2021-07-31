@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -74,7 +74,7 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
       i += c - 0x80;
     }
     else if (c < 0xc0) { // very long item
-      for (l = 0, n = 0; n < (uint8_t)(c - 0xB7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xb7) - n - 1));
+      for (l = 0, n = 0; n < (uint8_t) (c - 0xB7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xb7) - n - 1));
       if ((int) p == index) return ref(dst, b, l, b->data + i + c - 0xb7 + 1, 1);
       i += l + c - 0xb7;
     }
@@ -84,7 +84,7 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
       i += l; // + 1;
     }
     else { // very long list
-      for (l = 0, n = 0; n < (uint8_t)(c - 0xF7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xf7) - n - 1));
+      for (l = 0, n = 0; n < (uint8_t) (c - 0xF7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xf7) - n - 1));
       if ((int) p == index) return ref(dst, b, l, b->data + i + c - 0xf7 + 1, 2);
       i += l + c - 0xf7;
     }

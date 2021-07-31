@@ -1,12 +1,16 @@
 types:
 
-  transaction:
+  eth_transaction:
     to:
       descr: receipient of the transaction.
       type: address
       optional: true
     from:
       descr: sender of the address (if not sepcified, the first signer will be the sender)
+      type: address
+      optional: true
+    wallet:
+      descr: if specified, the transaction will be send through the specified wallet.
       type: address
       optional: true
     value:
@@ -30,9 +34,13 @@ types:
       descr: the data-section of the transaction
       type: bytes
       optional: true
+    signatures:  
+      descr: additional signatures which should be used when sending through a multisig
+      type: bytes
+      optional: true
 
 
-  blockheader:
+  eth_blockheader:
     number:
       descr: the block number. `null` when its pending block.
       type: uint64
@@ -89,22 +97,27 @@ types:
       descr: Array of uncle hashes.
       array: true
       type: bytes32
+    baseFeePerGas:
+      descr: block fees based on EIP 1559 starting with the London hard fork
+      type: uint64
+      optional: true
+    
 
-  blockdataWithTxHashes:
-    _extends: blockheader
+  eth_blockdataWithTxHashes:
+    _extends: eth_blockheader
     transactions:
       descr: Array of transaction hashes
       array: true
       type: bytes32
 
-  blockdata:
-    _extends: blockheader
+  eth_blockdata:
+    _extends: eth_blockheader
     transactions:
       descr: Array of transaction objects
       array: true
-      type: transactiondata
+      type: eth_transactiondata
 
-  transactiondata:
+  eth_transactiondata:
     to:
       descr: receipient of the transaction.
       type: address
@@ -147,8 +160,94 @@ types:
     s:
       descr: y-value of the EC-Point of the signature
       type: bytes32
+    accessList:
+      optional: true
+      descr: the list of storage keys accesses as defined in EIP-2930 transactions of type 0x1 or 0x2. Will only be included if the type>0
+      array: true
+      typeName: EthTxAccessList
+      type:
+        address:
+          descr: the address being accessed.
+          type: address
+        storageKeys:
+          array: true
+          descr: The storage location being accessed.
+          type: bytes32
+    type:
+      optional: true
+      descr: the transaction type (0 = legacy tx, 1 = EIP-2930, 2= EIP-1559)
+      type: int
+    chainId:
+      descr: the chainId the transaction is to operate on.
+      optional: true
+      type: uint64
+    maxFeePerGas:
+      optional: true
+      descr: the max Fee gas as defined in EIP-1559
+      type: uint64
+    maxPriorityFeePerGas:
+      optional: true
+      descr: the max priority Fee gas as defined in EIP-1559
+      type: uint64
+
+
 
 eth:
+
+  eth_gasPrice:
+    descr: returns the current gasPrice in wei per gas
+    params: []
+    result:
+      descr: the current gasPrice in wei per gas
+      type: uint64
+    example:
+      response: '0x0625900800'
+
+  eth_feeHistory:
+    descr: |
+      base fee per gas and transaction effective priority fee per gas history for the requested block range if available. 
+      The range between headBlock-4 and headBlock is guaranteed to be available while retrieving data from the pending block and older history are optional to support. 
+      For pre-EIP-1559 blocks the gas prices are returned as rewards and zeroes are returned for the base fee per gas
+    params:
+      blockCount:
+        plainInt: true
+        descr: Number of blocks in the requested range. Between 1 and 1024 blocks can be requested in a single query. Less than requested may be returned if not all blocks are available.
+        type: uint64
+      newestBlock:
+        descr: the Highest blockNumber or one of `latest`, `earliest`or `pending`
+        type: uint64
+        internalDefault : latest
+        optional: true
+      rewardPercentiles:
+        descr: A monotonically increasing list of percentile values to sample from each block's effective priority fees per gas in ascending order, weighted by gas used.
+        type: double
+        internalDefault : []
+        optional: true
+        array: true
+    result:
+      descr: Fee history for the returned block range. This can be a subsection of the requested range if not all blocks are available.
+      typeName: FeeHistory
+      type: 
+        oldestBlock: 
+          descr: Lowest number block of the returned range.
+          type: uint64
+        baseFeePerGas:
+          descr: An array of block base fees per gas. This includes the next block after the newest of the returned range, because this value can be derived from the newest block. Zeroes are returned for pre-EIP-1559 blocks.
+          type: uint64
+          array: true
+        gasUsedRatio:
+          array: true
+          descr: An array of block gas used ratios. These are calculated as the ratio of gasUsed and gasLimit.
+          type: double
+        reward:
+          descr: An array of rewards
+          array: true
+          type: uint64
+          
+
+
+
+    
 
   eth_blockNumber:
     descr: |
@@ -187,15 +286,15 @@ eth:
           name: getBlock
           descr: returns the given Block by number with transactionHashes. if no blocknumber is specified the latest block will be returned.
           result:
-            type: blockdataWithTxHashes
+            type: eth_blockdataWithTxHashes
         - params:
             fullTx: true
           name: getBlockWithTx
           descr: returns the given Block by number with full transaction data. if no blocknumber is specified the latest block will be returned.
           result:
-            type: blockdata
+            type: eth_blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-      type: blockdata
+      type: eth_blockdata
 
 
     example:
@@ -318,15 +417,15 @@ eth:
           name: getBlockByHash
           descr: returns the given Block by hash with transactionHashes
           result:
-            type: blockdataWithTxHashes
+            type: eth_blockdataWithTxHashes
         - params:
             fullTx: true
           name: getBlockByHashWithTx
           descr: returns the given Block by hash with full transaction data
           result:
-            type: blockdata
+            type: eth_blockdata
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
-      type: blockdata
+      type: eth_blockdata
 
     proof:
       alias: eth_getBlockByNumber
@@ -451,7 +550,7 @@ eth:
     result:
       optional: true
       descr: the transactiondata or `null` if it does not exist
-      type: transactiondata
+      type: eth_transactiondata
     proof:
       alias: eth_getTransactionByHash
 
@@ -477,7 +576,7 @@ eth:
         s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
       in3:
         proof:
-          type: transactionProof
+          type: eth_transactionProof
           block: '0xf90212a033a7afd1b9...fa16cf2'
           merkleProof:
           - '0xf90131a0...91604f2f58080808080808080'
@@ -504,7 +603,7 @@ eth:
     result:
       optional: true
       descr: the transactiondata or `null` if it does not exist
-      type: transactiondata
+      type: eth_transactiondata
     proof:
       alias: eth_getTransactionByHash
 
@@ -530,7 +629,7 @@ eth:
         s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
       in3:
         proof:
-          type: transactionProof
+          type: eth_transactionProof
           block: '0xf90212a033a7afd1b9...fa16cf2'
           merkleProof:
           - '0xf90131a0...91604f2f58080808080808080'
@@ -554,7 +653,7 @@ eth:
     result:
       optional: true   
       descr: the transactiondata or `null` if it does not exist
-      type: transactiondata
+      type: eth_transactiondata
  
 
     example:
@@ -578,7 +677,7 @@ eth:
         s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
       in3:
         proof:
-          type: transactionProof
+          type: eth_transactionProof
           block: '0xf90212a033a7afd1b9...fa16cf2'
           merkleProof:
           - '0xf90131a0...91604f2f58080808080808080'
@@ -728,6 +827,7 @@ eth:
     params:
       filter:
         descr: The filter criteria for the events.
+        typeName: EthLogFilter
         type:
           fromBlock:
             descr: Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
@@ -1107,7 +1207,7 @@ eth:
     params:
       tx:
         descr: the transactiondata to send
-        type: transaction
+        type: eth_transaction
     result:
       descr: the transactionHash
     proof:
@@ -1118,10 +1218,10 @@ eth:
     params:
       tx:
         descr: the transactiondata to send
-        type: transaction
+        type: eth_transaction
     result:
       descr: the transactionReceipt
-      type: transactionReceipt
+      type: eth_transactionReceipt
 
         
   eth_sendRawTransaction:

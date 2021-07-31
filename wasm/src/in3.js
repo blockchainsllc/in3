@@ -425,9 +425,11 @@ function map_header(headers, entry) {
 function url_queue(req) {
     let counter = 0
     const promises = [], responses = []
+    const METHODS_WITH_PAYLOAD = ['POST', 'PATCH', 'PUT']
+    const hasBody = METHODS_WITH_PAYLOAD.includes(req.method)
     if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
     const transport = req.in3.transport || in3w.transport
-    req.urls.forEach((url, i) => transport(url, JSON.stringify(req.payload), req.timeout || 30000, req.method, req.headers.reduce(map_header, {})).then(
+    req.urls.forEach((url, i) => transport(url, hasBody ? JSON.stringify(req.payload) : undefined, req.timeout || 30000, req.method, req.headers.reduce(map_header, {})).then(
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))

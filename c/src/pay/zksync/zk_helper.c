@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -98,15 +98,14 @@ void zksync_calculate_account(address_t creator, bytes32_t codehash, bytes32_t s
 in3_ret_t zksync_check_create2(zksync_config_t* conf, in3_req_t* ctx) {
   if (conf->sign_type != ZK_SIGN_CREATE2) return IN3_OK;
   if (conf->account) return IN3_OK;
-  if (!conf->create2) return req_set_error(ctx, "missing create2 section in zksync-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->creator, 20)) return req_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->codehash, 32)) return req_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
-  if (memiszero(conf->create2->salt_arg, 32)) return req_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2.creator, 20)) return req_set_error(ctx, "no creator in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2.codehash, 32)) return req_set_error(ctx, "no codehash in create2-config", IN3_ECONFIG);
+  if (memiszero(conf->create2.salt_arg, 32)) return req_set_error(ctx, "no saltarg in create2-config", IN3_ECONFIG);
   if (!conf->account) {
     address_t pub_key_hash;
     TRY(zksync_get_pubkey_hash(conf, ctx, pub_key_hash))
     conf->account = _malloc(20);
-    zksync_calculate_account(conf->create2->creator, conf->create2->codehash, conf->create2->salt_arg, pub_key_hash, conf->account);
+    zksync_calculate_account(conf->create2.creator, conf->create2.codehash, conf->create2.salt_arg, pub_key_hash, conf->account);
   }
   return IN3_OK;
 }
@@ -293,13 +292,15 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_req_t* ctx, d_token_t* non
 
 in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
   if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
-#ifdef ZKSYNC_256
     bytes_t b = d_to_bytes(fee_in);
-    memcpy(fee + 32 - b.len, b.data, b.len);
+    if (b.data && b.len) {
+#ifdef ZKSYNC_256
+      memcpy(fee + 32 - b.len, b.data, b.len);
 #else
-    *fee = d_long(fee_in);
+      *fee = d_long(fee_in);
 #endif
-    return IN3_OK;
+      return IN3_OK;
+    }
   }
   d_token_t* result;
   bool       is_object_type = *type == '{';
@@ -361,8 +362,11 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
       conf->tokens[i].id       = d_get_int(it.token, K_ID);
       conf->tokens[i].decimals = d_get_int(it.token, key("decimals"));
       char* name               = d_get_string(it.token, key("symbol"));
-      if (!name || strlen(name) > 7) return req_set_error(ctx, "invalid token name", IN3_EINVAL);
-      strcpy(conf->tokens[i].symbol, name);
+      if (!name) return req_set_error(ctx, "missing token name", IN3_EINVAL);
+      if (strlen(name) > 9)
+        strncpy(conf->tokens[i].symbol, name, 9);
+      else
+        strcpy(conf->tokens[i].symbol, name);
       bytes_t* adr = d_get_bytes(it.token, K_ADDRESS);
       if (!adr || !adr->data || adr->len != 20) return req_set_error(ctx, "invalid token addr", IN3_EINVAL);
       memcpy(conf->tokens[i].address, adr->data, 20);
@@ -381,7 +385,13 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
   if (!token_dst) return IN3_OK;
 
   for (unsigned int i = 0; i < conf->token_len; i++) {
-    if (d_type(token_src) == T_STRING) {
+    if (d_type(token_src) == T_INTEGER) {
+      if (d_int(token_src) == (int32_t) conf->tokens[i].id) {
+        *token_dst = conf->tokens + i;
+        return IN3_OK;
+      }
+    }
+    else if (d_type(token_src) == T_STRING) {
       if (strcmp(d_string(token_src), conf->tokens[i].symbol) == 0) {
         *token_dst = conf->tokens + i;
         return IN3_OK;

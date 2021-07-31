@@ -32,3 +32,6 @@ exports.short_descr = function (d) {
     if (zd.length > 100) zd = zd.substr(0, 100) + '...'
     return zd
 }
+exports.addAll = function addAll(array, elements) {
+    exports.asArray(elements).forEach(_ => array.push(_))
+}

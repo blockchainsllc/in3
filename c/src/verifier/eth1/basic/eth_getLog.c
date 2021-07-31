@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -249,7 +249,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       i++;
 
       // verify tx data first
-      r->data              = bytes(NULL, 0);
+      r->data              = NULL_BYTES;
       r->transaction_index = d_get_int(receipt.token, K_TX_INDEX);
       bytes_t** proof      = d_create_bytes_vec(d_get(receipt.token, K_TX_PROOF));
       bytes_t*  path       = create_tx_path(r->transaction_index);
@@ -272,7 +272,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
       // verify receipt data
       proof   = d_create_bytes_vec(d_get(receipt.token, K_PROOF));
-      r->data = bytes(NULL, 0);
+      r->data = NULL_BYTES;
 
       if (!proof || !trie_verify_proof(&receipt_root, path, proof, &r->data))
         res = vc_err(vc, "invalid receipt proof");
@@ -294,7 +294,13 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     }
     if (!r) return vc_err(vc, "missing proof for log");
     d_token_t* topics = d_get(it.token, K_TOPICS);
-    rlp_decode(&r->data, 0, &tmp);
+    bytes_t    data   = r->data;
+    // EIP 2718 Envelop
+    if (data.len && data.data[0] < 0x7f) {
+      data.data++;
+      data.len--;
+    }
+    rlp_decode(&data, 0, &tmp); // decode the list to tmp
 
     // verify the log-data
     if (rlp_decode(&tmp, 3, &logddata) != 2) return vc_err(vc, "invalid log-data");

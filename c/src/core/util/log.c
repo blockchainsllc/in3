@@ -169,7 +169,7 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
     va_end(args);
     fflush(stderr);
 #endif
-    //fflush(stderr);
+    // fflush(stderr);
   }
 
   /* Log to file */

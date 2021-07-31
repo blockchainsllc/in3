@@ -2,44 +2,45 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-/** @file 
+/** @file
  * logs debug data only if the DEBUG-flag is set.
  * */
 
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include "params.h"
 #include "stringbuilder.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -60,7 +61,7 @@ void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...);
   { printk("ENTER %s::%s\n", __FILE__, __func__); }
 #define DBG_FNCTRACE_LEAVE \
   { printk("LEAVE %s::%s\n", __FILE__, __func__); }
-#endif //DBG_FNCTRACE
+#endif // DBG_FNCTRACE
 
 /** dumps the given data as hex coded bytes to stdout */
 extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
@@ -171,6 +172,47 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
   {                                                                                                       \
     const d_token_t* val = d_get_at(params, index);                                                       \
     if (!(cond)) return req_set_error(ctx, "argument at index " #index " must match " #cond, IN3_EINVAL); \
+  }
+
+#define TRY_PARAM_GET_INT(target, ctx, index, def)                                           \
+  {                                                                                          \
+    const d_token_t* t = d_get_at(ctx->params, index);                                       \
+    if (d_type(t) == T_NULL)                                                                 \
+      target = def;                                                                          \
+    else if (d_type(t) != T_INTEGER)                                                         \
+      return req_set_error(ctx->req, "Param at " #index " must be an integer!", IN3_EINVAL); \
+    else                                                                                     \
+      target = d_int(t);                                                                     \
+  }
+#define TRY_PARAM_GET_BOOL(target, ctx, index, def)                                                \
+  {                                                                                                \
+    const d_token_t* t = d_get_at(ctx->params, index);                                             \
+    if (d_type(t) == T_NULL)                                                                       \
+      target = def;                                                                                \
+    else if (d_type(t) != T_BOOLEAN)                                                               \
+      return req_set_error(ctx->req, "Param at " #index " must be an true or false!", IN3_EINVAL); \
+    else                                                                                           \
+      target = d_int(t);                                                                           \
+  }
+
+#define TRY_PARAM_GET_ADDRESS(target, ctx, index, def)                                            \
+  {                                                                                               \
+    const d_token_t* t = d_get_at(ctx->params, index);                                            \
+    if (d_type(t) == T_NULL)                                                                      \
+      target = def;                                                                               \
+    else if (d_type(t) != T_BYTES || d_len(t) != 20)                                              \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
+    else                                                                                          \
+      target = t->data;                                                                           \
+  }
+
+#define TRY_PARAM_GET_REQUIRED_ADDRESS(target, ctx, index)                                        \
+  {                                                                                               \
+    const d_token_t* t = d_get_at(ctx->params, index);                                            \
+    if (d_type(t) != T_BYTES || d_len(t) != 20)                                                   \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
+    else                                                                                          \
+      target = t->data;                                                                           \
   }
 
 /** used for exeuting a function based on the name. This macro will return if the name matches. */

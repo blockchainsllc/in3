@@ -4,7 +4,7 @@
 
 void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
 
-  //ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s
+  // ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s
   int lr     = i_raw_sig.data[3];
   int ls     = i_raw_sig.data[lr + 5];
   int offset = 0;

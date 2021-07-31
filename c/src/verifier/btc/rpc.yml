@@ -46,13 +46,10 @@ types:
       descr: The hash of the next block
       type: bytes32
 
-  btctransaction:
+  btcblocktransaction:
     txid:
       descr: txid
       type: bytes32
-    in_active_chain:
-      descr: Whether specified block is in the active chain or not (only present with explicit "blockhash" argument)
-      type: bool
     hex:
       descr: The serialized, hex-encoded data for `txid`
       type: bytes
@@ -75,16 +72,117 @@ types:
       descr: The lock time
       type: uint64
     vin:
+      typeName: BtcTxVin
       descr: array of json objects of incoming txs to be used
       array: true
-      type: 
+      type:
         txid: 
           descr: the transaction id
           type: bytes32
+          optional: true
         vout:
           descr: the index of the transaction out to be used
           type: uint64
+          optional: true
         scriptSig:
+          descr: the script
+          typeName: BtcTxScriptSig
+          type:
+            asm:
+              descr: the asm-codes
+              type: string
+            hex:
+              descr: hex representation
+              type: string
+          optional: true
+        sequence:
+          descr:  The script sequence number
+          type: uint64
+        txinwitness:
+          array: true
+          descr: hex-encoded witness data (if any)
+          type: string
+          optional: true
+        coinbase:
+          descr: the coinbase
+          type: bytes32
+          optional: true
+    vout:
+      descr: array of json objects describing the tx outputs
+      array: true
+      typeName: BtcTxVout
+      type:
+        value:
+          descr: The Value in BTC
+          type: float
+        n:
+          descr: the index
+          type: int
+        scriptPubKey:
+          descr: the script pubkey 
+          typeName: BtcTxScriptPubKey
+          type:
+            asm:
+              descr: asm
+              type: string
+            hex:
+              descr: hex representation of the script
+              type: string
+            reqSigs:
+              descr: the required signatures
+              type: int
+            type:
+              descr: The type, eg 'pubkeyhash' 
+              type: string
+            addresses:
+              descr: Array of address(each representing a bitcoin adress)
+              array: true
+              type: string
+
+  btctransaction:
+    txid:
+      descr: txid
+      type: bytes32
+    in_active_chain:
+      descr: Whether specified block is in the active chain or not (only present with explicit "blockhash" argument)
+      type: bool
+      optional: true
+    hex:
+      descr: The serialized, hex-encoded data for `txid`
+      type: bytes
+    hash:
+      descr: The transaction hash (differs from txid for witness transactions)
+      type: bytes32
+    size:
+      descr: The serialized transaction size
+      type: uint64
+    vsize:
+      descr:  The virtual transaction size (differs from size for witness transactions)
+      type: uint64
+    weight:
+      descr: The transaction's weight (between `vsize`\*4-3 and `vsize`\*4)
+      type: uint64
+    version:
+      descr: The version
+      type: int
+    locktime:
+      descr: The lock time
+      type: uint64
+    vin:
+      typeName: BtcTxVin
+      descr: array of json objects of incoming txs to be used
+      array: true
+      type:
+        txid: 
+          descr: the transaction id
+          type: bytes32
+          optional: true
+        vout:
+          descr: the index of the transaction out to be used
+          type: uint64
+          optional: true
+        scriptSig:
+          typeName: BtcTxScriptSig
           descr: the script
           type:
             asm:
@@ -93,6 +191,7 @@ types:
             hex:
               descr: hex representation
               type: string
+          optional: true
         sequence:
           descr:  The script sequence number
           type: uint64
@@ -100,7 +199,13 @@ types:
           array: true
           descr: hex-encoded witness data (if any)
           type: string
+          optional: true
+        coinbase:
+          descr: the coinbase
+          type: bytes32
+          optional: true
     vout:
+      typeName: BtcTxVout
       descr: array of json objects describing the tx outputs
       array: true
       type:
@@ -112,6 +217,7 @@ types:
           type: int
         scriptPubKey:
           descr: the script pubkey 
+          typeName: BtcTxScriptPubKey
           type:
             asm:
               descr: asm
@@ -185,13 +291,22 @@ types:
     tx:
       descr: the array of transactions either as ids (verbose=1) or full transaction (verbose=2)
       array: true
-      type: btctransaction
+      type: btcblocktransaction
     previousblockhash:
       descr: The hash of the previous block
       type: bytes32
     nextblockhash:
       descr: The hash of the next block
       type: bytes32
+    strippedsize:
+      descr: The block size excluding witness data
+      type: int
+    weight:
+      descr: The block weight as defined in BIP 141
+      type: int
+    size:
+      descr: The block size
+      type: int
 
   btcblock:
     hash:
@@ -202,7 +317,7 @@ types:
       type: int
     height:
       descr: The block height or index
-      type: uint256
+      type: uint64
     version:
       descr: The block version
       type: int
@@ -243,6 +358,15 @@ types:
     nextblockhash:
       descr: The hash of the next block
       type: bytes32
+    strippedsize:
+      descr: The block size excluding witness data
+      type: int
+    weight:
+      descr: The block weight as defined in BIP 141
+      type: int
+    size:
+      descr: The block size
+      type: int
 
 btc:
   descr: |
@@ -789,6 +913,7 @@ btc:
  
     result:
       array: true
+      typeName: BtcProofTargetResult
       type:
         dap: 
           descr: the difficulty adjustement period

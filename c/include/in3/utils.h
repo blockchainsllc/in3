@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -120,7 +120,7 @@ const char* u64_to_str(uint64_t value, char* pBuf, int szBuf);
 
 /**
  * convert a c hex string to a byte array storing it into an existing buffer.
- * 
+ *
  * @param  hexdata: the hex string
  * @param  hexlen: the len of the string to read. -1 will use strlen to determine the length.
  * @param  out: the byte buffer
@@ -153,14 +153,14 @@ int min_bytes_len(uint64_t val);
 /**
  * sets a variable value to 32byte word.
  * @param src The src data
- * @param src_len the number of bytes 
+ * @param src_len the number of bytes
  * @param dst target pointer
  */
 void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst);
 
 /**
  * replaces a string and returns a copy.
- * @retval 
+ * @retval
  */
 char* str_replace(char* orig, const char* rep, const char* with);
 
@@ -170,8 +170,8 @@ char* str_replace(char* orig, const char* rep, const char* with);
 char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
 
 /**
-  * lightweight strstr() replacements
-  */
+ * lightweight strstr() replacements
+ */
 char* str_find(char* haystack, const char* needle);
 
 /**
@@ -180,7 +180,7 @@ char* str_find(char* haystack, const char* needle);
 char* str_remove_html(char* data);
 
 /**
- * current timestamp in ms. 
+ * current timestamp in ms.
  */
 uint64_t current_ms();
 
@@ -192,8 +192,8 @@ uint64_t current_ms();
   }
 
 /**
- * executes the expression and expects the return value to be a int indicating the error. 
- * if the return value is negative it will stop and return this value otherwise continue. 
+ * executes the expression and expects the return value to be a int indicating the error.
+ * if the return value is negative it will stop and return this value otherwise continue.
  */
 #define TRY(exp)           \
   {                        \
@@ -202,8 +202,8 @@ uint64_t current_ms();
   }
 
 /**
- * executes the expression and expects the return value to be a int indicating the error. 
- * if the return value is negative it will stop and return this value otherwise continue. 
+ * executes the expression and expects the return value to be a int indicating the error.
+ * if the return value is negative it will stop and return this value otherwise continue.
  */
 #define TRY_FINAL(exp, final) \
   {                           \
@@ -213,7 +213,7 @@ uint64_t current_ms();
   }
 
 /**
- * executes the expression and expects the return value to be a int indicating the error. 
+ * executes the expression and expects the return value to be a int indicating the error.
  * if the return value is negative it will stop and return this value otherwise continue.
  */
 #define TRY_CATCH(exp, catch) \
@@ -231,16 +231,16 @@ uint64_t current_ms();
 #define CONFIG_KEY(name) key(name)
 
 /**
- * executes the expression and expects value to equal val. 
+ * executes the expression and expects value to equal val.
  * if not it will return IN3_EINVAL
  */
 #define EXPECT_EQ(exp, val) \
   if ((exp) != val) return IN3_EINVAL;
 
 /**
- * executes the expression and expects the return value to be a int indicating the error. 
+ * executes the expression and expects the return value to be a int indicating the error.
  * the return value will be set to a existing variable (var).
- * if the return value is negative it will stop and return this value otherwise continue. 
+ * if the return value is negative it will stop and return this value otherwise continue.
  */
 #define TRY_SET(var, exp)    \
   {                          \
@@ -249,7 +249,7 @@ uint64_t current_ms();
   }
 
 /**
- * executes the expression and expects the return value to be a int indicating the error. 
+ * executes the expression and expects the return value to be a int indicating the error.
  * if the return value is negative it will stop and jump (goto) to a marked position "clean".
  * it also expects a previously declared variable "in3_ret_t res".
  */
@@ -271,6 +271,28 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
   }
   return true;
 }
+
+/** calculates the address of a word in a abi-encoded data (assuming data = bytes_t res exists) */
+#define WORD_ADR(index, right) (res.data + 4 + (index) *32 + 32 - (right))
+/** sets an address at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_ADDRESS(index, adr) memcpy(WORD_ADR(index, 20), adr, 20)
+/** sets an int at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_UINT32(index, val) int_to_bytes(val, WORD_ADR(index, 4))
+/** sets an uint256 as bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_UINT256(index, data, len) memcpy(WORD_ADR(index, len), data, len)
+/** writes the bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_BYTES(index, bytes)                                         \
+  {                                                                     \
+    if (bytes.data) memcpy(WORD_ADR(index, 32), bytes.data, bytes.len); \
+  }
+/** writes the functionhash in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_FNC(hash) memcpy(res.data, (void*) hash, 4)
+/**allocates memory filled with zeros with the size words*32 +4 for e3ncoding abi-data */
+#define ABI_BYTES_CALLOC(words) bytes(_calloc(4 + (words) *32, 1), 4 + (words) *32)
+/** calculates the number of words (32 bytes) needed to hold the specified bytes */
+#define ABI_WORDS(byte_len) ((byte_len + 31) / 32)
+/** writes the offset (as word) at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
+#define ABI_OFFSET(index, word) ABI_UINT32(index, (word * 32))
 
 /**
  * Pluggable functions:
@@ -329,6 +351,10 @@ int64_t parse_float_val(const char* data, /**< the data string*/
  */
 void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b);
 
+/**
+ * prints a bytes into a string
+ */
+char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const char* postfix);
 #ifdef THREADSAFE
 #define _NAME(x, y) x##y
 #if defined(_MSC_VER) || defined(__MINGW32__)

@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -43,31 +43,49 @@ import java.math.*;
  */
 
 public class TransactionRequest {
-  /** the from address */
+  /**
+   * the from address
+   */
   private String from;
 
-  /** the recipients address */
+  /**
+   * the recipients address
+   */
   private String to;
 
-  /** the data */
+  /**
+   * the data
+   */
   private String data;
 
-  /** the value of the transaction */
+  /**
+   * the value of the transaction
+   */
   private BigInteger value;
 
-  /** the nonce (transactionCount of the sender) */
+  /**
+   * the nonce (transactionCount of the sender)
+   */
   private long nonce = -1;
 
-  /** the gas to use */
+  /**
+   * the gas to use
+   */
   private long gas;
 
-  /** the gas price to use */
+  /**
+   * the gas price to use
+   */
   private long gasPrice;
 
-  /** the signature for the function to call */
+  /**
+   * the signature for the function to call
+   */
   private String function;
 
-  /** the params to use for encoding in the data */
+  /**
+   * the params to use for encoding in the data
+   */
   private Object[] params;
 
   public String getFrom() {

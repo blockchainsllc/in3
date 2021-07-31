@@ -120,7 +120,7 @@ static void test_signer() {
   in3_sign_ctx_t sc = {0};
   sc.type           = SIGN_EC_HASH;
   sc.message        = *data;
-  sc.account        = bytes(NULL, 0);
+  sc.account        = NULL_BYTES;
   sc.wallet         = c->signer->wallet;
   sc.req            = ctx;
 

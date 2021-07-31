@@ -5,7 +5,7 @@
 #include "../../core/util/error.h"
 #include <stdint.h>
 
-/** 
+/**
  * creates the merkle root based on the given hashes
  */
 in3_ret_t btc_merkle_create_root(

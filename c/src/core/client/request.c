@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -81,6 +81,11 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
     if (!ctx->request_context) {
       in3_log_error("Invalid json-request: %s\n", req_data);
       req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
+      char* msg = parse_json_error(req_data);
+      if (msg) {
+        req_set_error(ctx, msg, IN3_EINVAL);
+        _free(msg);
+      }
       return ctx;
     }
 
@@ -308,6 +313,14 @@ in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   return in3_rpc_handle_finish(hctx);
 }
 
+in3_ret_t in3_rpc_handle_with_uint256(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
+  b_optimize_len(&data);
+  sb_t* sb = in3_rpc_handle_start(hctx);
+  sb_add_rawbytes(sb, "\"0x", data, -1);
+  sb_add_char(sb, '"');
+  return in3_rpc_handle_finish(hctx);
+}
+
 in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
   sb_add_chars(in3_rpc_handle_start(hctx), data);
   return in3_rpc_handle_finish(hctx);
@@ -390,6 +403,12 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   ctx = req_new(parent->client, req);
   if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
   if (child) *child = ctx;
+
+  // inherit cache-entries
+  for (cache_entry_t* ce = parent->cache; ce; ce = ce->next) {
+    if (ce->props & CACHE_PROP_INHERIT) in3_cache_add_entry(&ctx->cache, ce->key, ce->value)->props = ce->props & (~CACHE_PROP_MUST_FREE);
+  }
+
   if (use_cache)
     in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
   in3_ret_t ret = req_add_required(parent, ctx);
@@ -417,7 +436,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
-    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = bytes(NULL, 0), .type = type};
+    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .type = type};
     in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
     if (r == IN3_OK && sc.signature.data) {
       in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);

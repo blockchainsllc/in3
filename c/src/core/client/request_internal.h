@@ -87,7 +87,7 @@ in3_ret_t req_set_error_intern(
  * handles a failable context
  *
  * This context *MUST* be freed with req_free(ctx) after usage to release the resources.
-*/
+ */
 in3_ret_t req_handle_failable(
     in3_req_t* req /**< [in] the current request context. */
 );

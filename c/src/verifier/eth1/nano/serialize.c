@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -100,11 +100,39 @@ int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
   return rlp_add_bytes(rlp, b, ml);
 }
 
+static bytes_t* convert_to_typed_list(bytes_builder_t* rlp, int32_t type) {
+  rlp_encode_to_list(rlp);
+  if (type) {
+    bb_check_size(rlp, 1);
+    memmove(rlp->b.data + 1, rlp->b.data, rlp->b.len);
+    rlp->b.len++;
+    rlp->b.data[0] = (uint8_t) type;
+  }
+  return bb_move_to_bytes(rlp);
+}
+
 #define UINT    0
 #define BYTES   -1
 #define ADDRESS -20
 #define HASH    32
 #define BLOOM   256
+
+static void rlp_add_list(bytes_builder_t* rlp, d_token_t* t) {
+
+  bytes_builder_t bb1 = {0}, bb2 = {0}, bb3 = {0};
+  for (d_iterator_t adr = d_iter(t); adr.left && d_len(adr.token) == 2 && d_type(adr.token) == T_OBJECT; d_iter_next(&adr)) {
+    bb_clear(&bb2);
+    bb_clear(&bb3);
+    rlp_add(&bb2, d_get(adr.token, K_ADDRESS), ADDRESS);
+    for (d_iterator_t st = d_iter(d_get(adr.token, K_STORAGE_KEYS)); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) rlp_add(&bb3, st.token, HASH);
+    rlp_encode_list(&bb2, &bb3.b);
+    rlp_encode_list(&bb1, &bb2.b);
+  }
+  rlp_encode_list(rlp, &bb1.b);
+  _free(bb1.b.data);
+  _free(bb2.b.data);
+  _free(bb3.b.data);
+}
 
 bytes_t* serialize_account(d_token_t* a) {
   bytes_builder_t* rlp = bb_new();
@@ -118,19 +146,51 @@ bytes_t* serialize_account(d_token_t* a) {
 }
 
 bytes_t* serialize_tx(d_token_t* tx) {
-  bytes_builder_t* rlp = bb_new();
-  // clang-format off
-  rlp_add(rlp, d_get(tx,K_NONCE)             , UINT);
-  rlp_add(rlp, d_get(tx,K_GAS_PRICE)         , UINT);
-  rlp_add(rlp, d_get_or(tx,K_GAS,K_GAS_LIMIT), UINT);
-  rlp_add(rlp, d_getl(tx,K_TO, 20)           , ADDRESS);
-  rlp_add(rlp, d_get(tx,K_VALUE)             , UINT);
-  rlp_add(rlp, d_get_or(tx,K_INPUT,K_DATA)   , BYTES);
-  rlp_add(rlp, d_get(tx,K_V)                 , UINT);
-  rlp_add(rlp, d_getl(tx,K_R, 32)            , UINT);
-  rlp_add(rlp, d_getl(tx,K_S, 32)            , UINT);
-  // clang-format on
-  return bb_move_to_bytes(rlp_encode_to_list(rlp));
+  bytes_builder_t* rlp  = bb_new();
+  int32_t          type = d_get_int(tx, K_TYPE);
+  switch (type) {
+    case 0: // legacy tx
+      rlp_add(rlp, d_get(tx, K_NONCE), UINT);
+      rlp_add(rlp, d_get(tx, K_GAS_PRICE), UINT);
+      rlp_add(rlp, d_get_or(tx, K_GAS, K_GAS_LIMIT), UINT);
+      rlp_add(rlp, d_getl(tx, K_TO, 20), ADDRESS);
+      rlp_add(rlp, d_get(tx, K_VALUE), UINT);
+      rlp_add(rlp, d_get_or(tx, K_INPUT, K_DATA), BYTES);
+      rlp_add(rlp, d_get(tx, K_V), UINT);
+      rlp_add(rlp, d_getl(tx, K_R, 32), UINT);
+      rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
+      break;
+
+    case 1: // EIP 2930
+      rlp_add(rlp, d_get(tx, K_CHAIN_ID), UINT);
+      rlp_add(rlp, d_get(tx, K_NONCE), UINT);
+      rlp_add(rlp, d_get(tx, K_GAS_PRICE), UINT);
+      rlp_add(rlp, d_get_or(tx, K_GAS, K_GAS_LIMIT), UINT);
+      rlp_add(rlp, d_getl(tx, K_TO, 20), ADDRESS);
+      rlp_add(rlp, d_get(tx, K_VALUE), UINT);
+      rlp_add(rlp, d_get_or(tx, K_INPUT, K_DATA), BYTES);
+      rlp_add_list(rlp, d_get(tx, K_ACCESS_LIST));
+      rlp_add(rlp, d_get(tx, K_V), UINT);
+      rlp_add(rlp, d_getl(tx, K_R, 32), UINT);
+      rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
+      break;
+
+    case 2: // EIP 1559
+      rlp_add(rlp, d_get(tx, K_CHAIN_ID), UINT);
+      rlp_add(rlp, d_get(tx, K_NONCE), UINT);
+      rlp_add(rlp, d_get(tx, K_MAX_PRIORITY_FEE_PER_GAS), UINT);
+      rlp_add(rlp, d_get(tx, K_MAX_FEE_PER_GAS), UINT);
+      rlp_add(rlp, d_get_or(tx, K_GAS, K_GAS_LIMIT), UINT);
+      rlp_add(rlp, d_getl(tx, K_TO, 20), ADDRESS);
+      rlp_add(rlp, d_get(tx, K_VALUE), UINT);
+      rlp_add(rlp, d_get_or(tx, K_INPUT, K_DATA), BYTES);
+      rlp_add_list(rlp, d_get(tx, K_ACCESS_LIST));
+      rlp_add(rlp, d_get(tx, K_V), UINT);
+      rlp_add(rlp, d_getl(tx, K_R, 32), UINT);
+      rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
+      break;
+  }
+  return convert_to_typed_list(rlp, type);
 }
 
 bytes_t* serialize_tx_raw(bytes_t nonce, bytes_t gas_price, bytes_t gas_limit, bytes_t to, bytes_t value, bytes_t data, uint64_t v, bytes_t r, bytes_t s) {
@@ -187,9 +247,12 @@ bytes_t* serialize_block_header(d_token_t* block) {
   }
   else {
     // good old proof of work...
-    rlp_add(rlp, d_getl(block,K_MIX_HASH, 32)                     , HASH);
-    rlp_add(rlp, d_get(block,K_NONCE)                        , BYTES);
+    rlp_add(rlp, d_getl(block,K_MIX_HASH, 32)       , HASH);
+    rlp_add(rlp, d_get(block,K_NONCE)               , BYTES);
+    // if we have a base gas fee we need to use EIP-1559
   }
+  if (d_get_long(block,K_BASE_GAS_FEE)) 
+      rlp_add(rlp, d_get(block,K_BASE_GAS_FEE)      , UINT);
   // clang-format on
   return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
@@ -233,11 +296,9 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt) {
 
   // clang-format on
   rlp_encode_list(rlp, &rlp_loglist->b);
-  rlp_encode_to_list(rlp);
-
   bb_free(bb);
   bb_free(rlp_log);
   bb_free(rlp_topics);
   bb_free(rlp_loglist);
-  return bb_move_to_bytes(rlp);
+  return convert_to_typed_list(rlp, d_get_int(receipt, K_TYPE));
 }

@@ -34,7 +34,9 @@ public class AccountState {
     return data.getString("pubKeyHash");
   }
 
-  /** the balance of the specified token (or null) */
+  /**
+   * the balance of the specified token (or null)
+   */
   public BigInteger getBalance(String token) {
     return data.getBigInteger(token);
   }

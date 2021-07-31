@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -192,8 +192,12 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
         exp = *UNITS[i + 1];
         break;
       }
-      else if (!UNITS[i + 2])
-        return IN3_EINVAL;
+      else if (!UNITS[i + 2]) {
+        if (unit[0] == 'e' && unit[1] >= '0' && unit[1] <= '9')
+          exp = atoi(unit + 1);
+        else
+          return IN3_EINVAL;
+      }
     }
   }
   if (!exp && l < 20) {
@@ -342,6 +346,117 @@ static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
     return in3_rpc_handle_with_bytes(ctx, bytes(public_key + 1, 64));
 }
 
+static in3_ret_t parse_tx_param(in3_rpc_handle_ctx_t* ctx, char* params, sb_t* fn_args, sb_t* fn_sig, sb_t* sb) {
+  while (*params) {
+    char* eq = strchr(params, '=');
+    if (!eq || eq == params) return req_set_error(ctx->req, "invalid params, missing =", IN3_EINVAL);
+    char* n = strchr(params, '&');
+    if (n == NULL) n = params + strlen(params);
+    if (n <= eq) return req_set_error(ctx->req, "invalid params, missing value", IN3_EINVAL);
+    if ((eq - params) > 30) return req_set_error(ctx->req, "invalid params, name too long", IN3_EINVAL);
+    char* name  = params;
+    char* value = eq + 1;
+    *eq         = 0;
+    params      = *n ? n + 1 : n;
+    *n          = 0;
+    if (strcmp(name, "value") == 0) {
+      bytes32_t tmp = {0};
+      string_val_to_bytes(value, NULL, tmp);
+      bytes_t b = bytes(tmp, 32);
+      b_optimize_len(&b);
+      sb_add_bytes(sb, ",\"value\":", &b, 1, false);
+    }
+    else if (strcmp(name, "gas") == 0 || strcmp(name, "gasLimit") == 0) {
+      sb_add_chars(sb, ",\"gas\":");
+      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
+    }
+    else if (strcmp(name, "gasPrice") == 0) {
+      sb_add_chars(sb, ",\"gasPrice\":");
+      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
+    }
+    else if (strcmp(name, "data") == 0) {
+      sb_add_chars(sb, ",\"data\":");
+      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
+    }
+    else if (strcmp(name, "from") == 0) {
+      sb_add_chars(sb, ",\"from\":");
+      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
+    }
+    else if (strcmp(name, "nonce") == 0) {
+      sb_add_chars(sb, ",\"nonce\":");
+      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
+    }
+    else if (strcmp(name, "layer") == 0) {
+      sb_print(sb, ",\"layer\":\"%s\"", value);
+    }
+    else {
+      if (fn_args->len) {
+        sb_add_char(fn_args, ',');
+        sb_add_char(fn_sig, ',');
+      }
+      sb_add_chars(fn_sig, name);
+      sb_print(fn_args, *name == 's' || (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
+    }
+  }
+
+  if (fn_sig->data) {
+    sb_add_chars(sb, ",\"fn_sig\":\"");
+    sb_add_chars(sb, fn_sig->data);
+    sb_add_chars(sb, ")\",\"fn_args\":[");
+    if (fn_args->data) sb_add_chars(sb, fn_args->data);
+    sb_add_chars(sb, "]");
+  }
+  sb_add_chars(sb, "}");
+
+  return IN3_OK;
+}
+
+static in3_ret_t parse_tx_url(in3_rpc_handle_ctx_t* ctx) {
+  char*      aurl      = NULL;
+  d_token_t* url_token = d_get_at(ctx->params, 0);
+  if (d_type(url_token) != T_STRING) return req_set_error(ctx->req, "missing the url as first arg'", IN3_EINVAL);
+  char* url = d_string(url_token);
+  if (strncmp(url, "ethereum:", 9)) return req_set_error(ctx->req, "URL must start with 'ethereum:'", IN3_EINVAL);
+  url += 9;
+  sb_t  sb     = {0};
+  int   l      = strlen(url);
+  char* s1     = strchr(url, '/');
+  char* q      = strchr(url, '?');
+  int   to_len = s1 ? s1 - url : (q ? q - url : l);
+  if (to_len == 42 && url[0] == '0' && url[1] == 'x') {
+    sb_add_chars(&sb, "{\"to\":\"");
+    sb_add_range(&sb, url, 0, 42);
+    sb_add_chars(&sb, "\"");
+  }
+  else
+    return req_set_error(ctx->req, "invalid address in url. Currently ENS names are notsupported yet!", IN3_EINVAL);
+  url          = _strdupn(url + to_len, -1);
+  q            = strchr(url, '?');
+  aurl         = url;
+  sb_t fn_args = {0};
+  sb_t fn_sig  = {0};
+
+  if (*url == '/') {
+    l = q > url ? (int) (q - url) : (int) (strlen(url));
+    if (l) {
+      sb_add_range(&fn_sig, url, 1, l - 1);
+      sb_add_char(&fn_sig, '(');
+    }
+    url += l + (q ? 1 : 0);
+  }
+  in3_ret_t res = IN3_OK;
+  TRY_GOTO(parse_tx_param(ctx, url, &fn_args, &fn_sig, &sb))
+  sb_add_chars(in3_rpc_handle_start(ctx), sb.data);
+  res = in3_rpc_handle_finish(ctx);
+
+clean:
+  _free(sb.data);
+  _free(fn_args.data);
+  _free(fn_sig.data);
+  _free(aurl);
+  return res;
+}
+
 static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
   bytes_t sender = d_to_bytes(d_get_at(ctx->params, 0));
   bytes_t nonce  = d_to_bytes(d_get_at(ctx->params, 1));
@@ -433,7 +548,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   in3_sign_ctx_t sc = {0};
   sc.req            = ctx->req;
   sc.message        = data;
-  sc.account        = pk ? *pk : bytes(NULL, 0);
+  sc.account        = pk ? *pk : NULL_BYTES;
   sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
@@ -522,25 +637,34 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_OBJECT);
   d_token_t* tx  = d_get_at(ctx->params, 0);
   bytes_t    dst = {0};
+  sb_t       sb  = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY(eth_prepare_unsigned_tx(tx, ctx->req, &dst))
+  bool write_debug = (d_len(ctx->params) == 2 && d_get_int_at(ctx->params, 1));
+  if (write_debug) sb_add_char(&sb, '{');
+  TRY_CATCH(eth_prepare_unsigned_tx(tx, ctx->req, &dst, write_debug ? &sb : NULL), _free(sb.data))
 #else
   if (ctx->params || tx || ctx) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
-  in3_rpc_handle_with_bytes(ctx, dst);
+  if (sb.data) {
+    sb_add_chars(&sb, ",\"state\":\"unsigned\"}");
+    in3_rpc_handle_with_string(ctx, sb.data);
+  }
+  else
+    in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
+  _free(sb.data);
   return IN3_OK;
 }
 
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
   d_token_t* tx_data = ctx->params + 1;
-  bytes_t    tx_raw  = bytes(NULL, 0);
+  bytes_t    tx_raw  = NULL_BYTES;
   bytes_t*   from_b  = NULL;
   bytes_t*   data    = NULL;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw))
+    TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw, NULL))
     from_b = d_get_bytes(tx_data, K_FROM);
     data   = &tx_raw;
 #else
@@ -572,25 +696,60 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(action);
 
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
+#if !defined(RPC_ONLY) || defined(RPC_ETH_SIGN)
   TRY_RPC("eth_sign", in3_sign_data(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ETH_SIGNTRANSACTION)
   TRY_RPC("eth_signTransaction", in3_signTx(ctx))
+#endif
 
   if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ABIENCODE)
   TRY_RPC("in3_abiEncode", in3_abiEncode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ABIDECODE)
   TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CHECKSUMADDRESS)
   TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ENS)
   TRY_RPC("in3_ens", in3_ens(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_TOWEI)
   TRY_RPC("in3_toWei", in3_toWei(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_FROMWEI)
   TRY_RPC("in3_fromWei", in3_fromWei(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PK2ADDRESS)
   TRY_RPC("in3_pk2address", in3_pk2address(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PK2PUBLIC)
   TRY_RPC("in3_pk2public", in3_pk2address(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ECRECOVER)
   TRY_RPC("in3_ecrecover", in3_ecrecover(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_SIGNDATA)
   TRY_RPC("in3_signData", in3_sign_data(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_DECRYPTKEY)
   TRY_RPC("in3_decryptKey", in3_decryptKey(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PREPARETX)
   TRY_RPC("in3_prepareTx", in3_prepareTx(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_SIGNTX)
   TRY_RPC("in3_signTx", in3_signTx(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CALCDEPLOYADDRESS)
   TRY_RPC("in3_calcDeployAddress", in3_calcDeployAddress(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PARSE_TX_URL)
+  TRY_RPC("in3_parse_tx_url", parse_tx_url(ctx))
+#endif
 
   return IN3_EIGNORE;
 }

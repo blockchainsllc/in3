@@ -78,7 +78,7 @@ static void test_sign() {
   add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
   add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
 
-  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000  }]");
   TEST_ASSERT_EQUAL(IN3_OK, req_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && req_get_error(ctx, 0) == IN3_OK);
   req_free(ctx);
@@ -143,7 +143,7 @@ static void test_sign_hex() {
   add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
   add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
 
-  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000 }]");
   TEST_ASSERT_EQUAL(IN3_OK, req_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && req_get_error(ctx, 0) == IN3_OK);
   req_free(ctx);
@@ -152,7 +152,7 @@ static void test_sign_hex() {
 
 static void test_sign_sans_signer_and_from() {
   in3_t*     c   = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000  }]");
   TEST_ASSERT_NOT_NULL(ctx->error);
   req_free(ctx);
   in3_free(c);
@@ -170,7 +170,7 @@ static void test_signer() {
   sc.req                  = ctx;
   sc.message              = *data;
   sc.type                 = SIGN_EC_RAW;
-  sc.account              = bytes(NULL, 0);
+  sc.account              = NULL_BYTES;
   TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sc));
   TEST_ASSERT_FALSE(memiszero(sc.signature.data, 65));
   _free(sc.signature.data);

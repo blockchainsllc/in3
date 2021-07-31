@@ -5,7 +5,7 @@ eth:
     params:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
-        type: transaction
+        type: eth_transaction
       block:
         internalDefault : latest
         optionalAPI: true
@@ -24,7 +24,7 @@ eth:
     params:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
-        type: transaction
+        type: eth_transaction
       block:
         internalDefault : latest
         optionalAPI: true

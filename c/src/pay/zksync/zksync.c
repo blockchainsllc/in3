@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "zksync.h"
@@ -145,25 +145,61 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // mark zksync as experimental
   REQUIRE_EXPERIMENTAL(ctx->req, "zksync")
 
-  // handle rpc -functions
+  // use custom conf if set
+  const cache_entry_t* cached = in3_cache_get_entry_by_prop(ctx->req->cache, ZKSYNC_CACHED_CONFIG);
+  if (cached) conf = (void*) cached->value.data;
+
+    // handle rpc -functions
+#if !defined(RPC_ONLY) || defined(RPC_DEPOSIT)
   TRY_RPC("deposit", zksync_deposit(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_TRANSFER)
   TRY_RPC("transfer", zksync_transfer(conf, ctx, ZK_TRANSFER))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_WITHDRAW)
   TRY_RPC("withdraw", zksync_transfer(conf, ctx, ZK_WITHDRAW))
-  TRY_RPC("set_key", zksync_set_key(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SET_KEY)
+  TRY_RPC("set_key", zksync_set_key(conf, ctx, false))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_EMERGENCY_WITHDRAW)
   TRY_RPC("emergency_withdraw", zksync_emergency_withdraw(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SYNC_KEY)
   TRY_RPC("sync_key", zksync_get_key(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_AGGREGATE_PUBKEY)
   TRY_RPC("aggregate_pubkey", zksync_aggregate_pubkey(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_PUBKEYHASH)
   TRY_RPC("pubkeyhash", zksync_get_pubkeyhash(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_PUBKEY)
   TRY_RPC("pubkey", zksync_get_pubkey(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ACCOUNT_ADDRESS)
   TRY_RPC("account_address", zksync_account_address(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_CONTRACT_ADDRESS)
   TRY_RPC("contract_address", zksync_contract_address(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_TOKENS)
   TRY_RPC("tokens", zksync_tokens(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SIGN)
   TRY_RPC("sign", zksync_musig_sign(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_VERIFY)
   TRY_RPC("verify", in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
                                                      ? zkcrypto_verify_signatures(d_to_bytes(ctx->params + 1), conf->musig_pub_keys, d_to_bytes(ctx->params + 2))
                                                      : zkcrypto_verify_musig(d_to_bytes(ctx->params + 1), d_to_bytes(ctx->params + 2))))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_TX_DATA)
   TRY_RPC("tx_data", zksync_tx_data(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ACCOUNT_HISTORY)
   TRY_RPC("account_history", zksync_account_history(conf, ctx))
+#endif
 
   // prepare fallback to send to zksync-server
   str_range_t p            = d_to_json(ctx->params);
@@ -171,6 +207,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   memcpy(param_string, p.data + 1, p.len - 2);
   param_string[p.len - 2] = 0;
 
+#if !defined(RPC_ONLY) || defined(RPC_ZKSYNC_ACCOUNT_INFO)
   if (strcmp(ctx->method, "account_info") == 0) {
     if (*param_string == 0 || strcmp(param_string, "null") == 0) {
       TRY(zksync_get_account(conf, ctx->req, NULL))
@@ -180,6 +217,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     else
       CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
   }
+#endif
 
   // we need to show the arguments as integers
   if (strcmp(ctx->method, "ethop_info") == 0)
@@ -208,7 +246,6 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->main_contract) _free(conf->main_contract);
   if (conf->account) _free(conf->account);
   if (conf->tokens) _free(conf->tokens);
-  if (conf->create2) _free(conf->create2);
   if (conf->proof_verify_method) _free(conf->proof_verify_method);
   if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
   if (conf->incentive && conf->incentive->token) _free(conf->incentive->token);
@@ -311,13 +348,12 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   d_token_t* create2 = d_get(ctx->token, CONFIG_KEY("create2"));
   if (create2) {
     conf->sign_type = ZK_SIGN_CREATE2;
-    if (!conf->create2) conf->create2 = _calloc(1, sizeof(zk_create2_t));
-    bytes_t* t = d_get_bytes(create2, CONFIG_KEY("creator"));
-    if (t && t->len == 20) memcpy(conf->create2->creator, t->data, 20);
+    bytes_t* t      = d_get_bytes(create2, CONFIG_KEY("creator"));
+    if (t && t->len == 20) memcpy(conf->create2.creator, t->data, 20);
     t = d_get_bytes(create2, CONFIG_KEY("saltarg"));
-    if (t && t->len == 32) memcpy(conf->create2->salt_arg, t->data, 32);
+    if (t && t->len == 32) memcpy(conf->create2.salt_arg, t->data, 32);
     t = d_get_bytes(create2, CONFIG_KEY("codehash"));
-    if (t && t->len == 32) memcpy(conf->create2->codehash, t->data, 32);
+    if (t && t->len == 32) memcpy(conf->create2.codehash, t->data, 32);
   }
 
   d_token_t* incentive = d_get(ctx->token, CONFIG_KEY("incentive"));
@@ -370,9 +406,17 @@ in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
   return IN3_EIGNORE;
 }
 
+zksync_config_t* zksync_get_conf(in3_req_t* req) {
+  for (in3_plugin_t* p = req->client->plugins; p; p = p->next) {
+    if (p->action_fn == handle_zksync) return p->data;
+  }
+  return NULL;
+}
+
 in3_ret_t in3_register_zksync(in3_t* c) {
   zksync_config_t* conf = _calloc(sizeof(zksync_config_t), 1);
   conf->version         = 1;
+  conf->sign_type       = ZK_SIGN_PK;
   return in3_plugin_register(c,
                              PLGN_ACT_RPC_HANDLE | PLGN_ACT_INIT | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET | PLGN_ACT_ADD_PAYLOAD | PLGN_ACT_PAY_FOLLOWUP,
                              handle_zksync, conf, false);

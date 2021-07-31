@@ -49,6 +49,10 @@ config:
     type: uint
     descr: 'the gas limit to use when sending transactions. (default: 100000)'
     example: 100000
+  token :  
+    cmd: token
+    type: string
+    descr: 'the address of the erc20-token contract.'
   nonce :  
     cmd: nonce
     type: uint

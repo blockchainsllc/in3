@@ -91,4 +91,4 @@ void api_set_error(int err, const char* msg);
 /** returns the result from a previously executed ctx */
 d_token_t* get_result(in3_req_t* req);
 
-#endif //IN3_API_UTILS_PRIV_H
+#endif // IN3_API_UTILS_PRIV_H

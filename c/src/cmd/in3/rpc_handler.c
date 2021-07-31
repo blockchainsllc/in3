@@ -20,12 +20,24 @@ static bool _call(in3_t* c, char** method, sb_t* params) {
   *method = "eth_call";
   return false;
 }
+
+#ifdef MOD_WALLET
+void* wallet_get_default(void* conf, int type_mask);
+void* wallet_get_config(in3_t* c);
+#endif
+
 static bool _send(in3_t* c, char** method, sb_t* params) {
   encode_abi(c, params, false);
   if (is_onlyshow_rawtx() && (c->plugin_acts & (PLGN_ACT_SIGN | PLGN_ACT_SIGN_ACCOUNT)) == 0)
     *method = "in3_prepareTx";
   else
     *method = get_txdata()->wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
+
+#ifdef MOD_WALLET
+  void* conf = wallet_get_config(c);
+  if (conf && wallet_get_default(conf, 0))
+    *method = "wallet_exec";
+#endif
   return false;
 }
 
@@ -90,12 +102,12 @@ static bool _ipfs_get(in3_t* c, sb_t* args) {
   args->data[size - 2] = 0;
 #ifdef IPFS
   bytes_t* content = ipfs_get(c, args->data + 2);
-#else
-  die("ipfs is not supported. Please compile with -DIPFS=true");
-#endif
   if (!content) die("IPFS hash not found!");
   fwrite(content->data, content->len, 1, stdout);
   fflush(stdout);
+#else
+  die("ipfs is not supported. Please compile with -DIPFS=true");
+#endif
   return true;
 }
 

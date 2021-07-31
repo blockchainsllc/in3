@@ -1,0 +1,537 @@
+eth_getBlock_full: &blockdata
+  difficulty: "0x1b168dd882369a"
+  extraData: "0xe4b883e5bda9e7a59ee4bb99e9b1bc000221"
+  gasLimit: "0xe4e1b2"
+  gasUsed: "0xe092e3"
+  hash: "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+  logsBloom: "0x00200000000000800000000080000000001000000000000000010000000000000000000000000000000000000000000002080000080000000000000008200000000000080000000000000008000000200000000000000000000000000000000000000000020000008000000000008800000100000010000200000010000000000000000000000000004000000000000000000000000000080000004000000240820000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000001000000000000020000010220000000000000000000000000000000000004000000000000000000000"
+  miner: "0x829bd824b016326a401d083b33d092293333a830"
+ # mixHash: "0xb5a73cd8c00d2a6f545e46f583311256f4f7106b48b0d225db393babc77c9594"
+  nonce: "0xaf95878ec21c6cdc"
+  number: "0xbf920c"
+  parentHash: "0x948db2300a90125258b50c2033f3a2f419cb5580c36ecaeefe5eb47393286315"
+  receiptsRoot: "0x1cd93548ea4e900b4fa4537e64715805d37ef6ff8d6712a222cb4eed5a901330"
+  sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+  size: "0x280"
+  stateRoot: "0x04062f1e69f3df90851288d6be60ae937e6cf5092d2e292daf566a19308d93b9"
+  timestamp: "0x60b769a7"
+  totalDifficulty: "0x56d829bfeb2fd2b3dc1"
+  transactions:
+    -
+      blockHash: "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+      blockNumber: "0xbf920c"
+      from: "0xbbed1c61b6e68c397b021c1274080a2005042c08"
+      gas: "0xe4e1b2"
+      gasPrice: "0x0"
+      hash: "0x9b18c61b377930f49de6a950a125564581e4b36a5f52e11727a52c866c30f717"
+      input: "0x"
+      nonce: "0x3b2"
+      to: "0xf20c85c6004f5091fb522e42a0d208cb977efa49"
+      transactionIndex: "0x0"
+      value: "0x0"
+  #    type: "0x0"
+      v: "0x25"
+      r: "0xbdef0d47f4b93bd9f76fec4f0cdac17946fe740e004c24160b9ffc8fbd13f42"
+      s: "0xd8b2e4c00e767960baccacceccd6e3e1d68e9db47f13d9d906065b7b3c006dc"
+  transactionsRoot: "0x4ef7e5d9d75b2598430b2de32f62b3272a3aa42e56e72b9dcf4def35bc8b35f5"
+  uncles: []
+
+eth_getBlock: &blockdataWithTxHashes
+  difficulty: "0x1b168dd882369a"
+  extraData: "0xe4b883e5bda9e7a59ee4bb99e9b1bc000221"
+  gasLimit: "0xe4e1b2"
+  gasUsed: "0xe092e3"
+  hash: "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+  logsBloom: "0x00200000000000800000000080000000001000000000000000010000000000000000000000000000000000000000000002080000080000000000000008200000000000080000000000000008000000200000000000000000000000000000000000000000020000008000000000008800000100000010000200000010000000000000000000000000004000000000000000000000000000080000004000000240820000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000001000000000000020000010220000000000000000000000000000000000004000000000000000000000"
+  miner: "0x829bd824b016326a401d083b33d092293333a830"
+ ## mixHash: "0xb5a73cd8c00d2a6f545e46f583311256f4f7106b48b0d225db393babc77c9594"
+  nonce: "0xaf95878ec21c6cdc"
+  number: "0xbf920c"
+  parentHash: "0x948db2300a90125258b50c2033f3a2f419cb5580c36ecaeefe5eb47393286315"
+  receiptsRoot: "0x1cd93548ea4e900b4fa4537e64715805d37ef6ff8d6712a222cb4eed5a901330"
+  sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+  size: "0x280"
+  stateRoot: "0x04062f1e69f3df90851288d6be60ae937e6cf5092d2e292daf566a19308d93b9"
+  timestamp: "0x60b769a7"
+  totalDifficulty: "0x56d829bfeb2fd2b3dc1"
+  transactions:
+    - "0x9b18c61b377930f49de6a950a125564581e4b36a5f52e11727a52c866c30f717"
+  transactionsRoot: "0x4ef7e5d9d75b2598430b2de32f62b3272a3aa42e56e72b9dcf4def35bc8b35f5"
+  uncles: []
+
+result_block_with_tx: &result_blockfull
+  difficulty: "0x1b168dd882369a"
+  extraData: "0xe4b883e5bda9e7a59ee4bb99e9b1bc000221"
+  gasLimit: 14999986
+  gasUsed: 14717667
+  hash: "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+  logsBloom: "0x00200000000000800000000080000000001000000000000000010000000000000000000000000000000000000000000002080000080000000000000008200000000000080000000000000008000000200000000000000000000000000000000000000000020000008000000000008800000100000010000200000010000000000000000000000000004000000000000000000000000000080000004000000240820000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000001000000000000020000010220000000000000000000000000000000000004000000000000000000000"
+  miner: "0x829bd824b016326a401d083b33d092293333a830"
+  #       mixHash: "0xb5a73cd8c00d2a6f545e46f583311256f4f7106b48b0d225db393babc77c9594"
+  nonce: "0xaf95878ec21c6cdc"
+  number: 12554764
+  parentHash: "0x948db2300a90125258b50c2033f3a2f419cb5580c36ecaeefe5eb47393286315"
+  receiptsRoot: "0x1cd93548ea4e900b4fa4537e64715805d37ef6ff8d6712a222cb4eed5a901330"
+  sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+  size: 640
+  stateRoot: "0x04062f1e69f3df90851288d6be60ae937e6cf5092d2e292daf566a19308d93b9"
+  timestamp: 1622632871
+  totalDifficulty: "0x56d829bfeb2fd2b3dc1"
+  transactions:
+    -
+      blockHash: "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+      blockNumber: "0xbf920c"
+      from: "0xbbed1c61b6e68c397b021c1274080a2005042c08"
+      gas: "0xe4e1b2"
+      gasPrice: "0x0"
+      hash: "0x9b18c61b377930f49de6a950a125564581e4b36a5f52e11727a52c866c30f717"
+      input: "0x"
+      nonce: "0x3b2"
+      to: "0xf20c85c6004f5091fb522e42a0d208cb977efa49"
+      transactionIndex: "0x0"
+      value: "0x0"
+   #   type: "0x0"
+      v: "0x25"
+      r: "0xbdef0d47f4b93bd9f76fec4f0cdac17946fe740e004c24160b9ffc8fbd13f42"
+      s: "0xd8b2e4c00e767960baccacceccd6e3e1d68e9db47f13d9d906065b7b3c006dc"
+  transactionsRoot: "0x4ef7e5d9d75b2598430b2de32f62b3272a3aa42e56e72b9dcf4def35bc8b35f5"
+  uncles: []
+
+result_block_without_tx: &result_blockfull_without_tx
+  difficulty: "0x1b168dd882369a"
+  extraData: "0xe4b883e5bda9e7a59ee4bb99e9b1bc000221"
+  gasLimit: 14999986
+  gasUsed: 14717667
+  hash: "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+  logsBloom: "0x00200000000000800000000080000000001000000000000000010000000000000000000000000000000000000000000002080000080000000000000008200000000000080000000000000008000000200000000000000000000000000000000000000000020000008000000000008800000100000010000200000010000000000000000000000000004000000000000000000000000000080000004000000240820000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000001000000000000020000010220000000000000000000000000000000000004000000000000000000000"
+  miner: "0x829bd824b016326a401d083b33d092293333a830"
+  #   mixHash: "0xb5a73cd8c00d2a6f545e46f583311256f4f7106b48b0d225db393babc77c9594"
+  nonce: "0xaf95878ec21c6cdc"
+  number: 12554764
+  parentHash: "0x948db2300a90125258b50c2033f3a2f419cb5580c36ecaeefe5eb47393286315"
+  receiptsRoot: "0x1cd93548ea4e900b4fa4537e64715805d37ef6ff8d6712a222cb4eed5a901330"
+  sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+  size: 640
+  stateRoot: "0x04062f1e69f3df90851288d6be60ae937e6cf5092d2e292daf566a19308d93b9"
+  timestamp: 1622632871
+  totalDifficulty: "0x56d829bfeb2fd2b3dc1"
+  transactions:
+    - "0x9b18c61b377930f49de6a950a125564581e4b36a5f52e11727a52c866c30f717"
+  transactionsRoot: "0x4ef7e5d9d75b2598430b2de32f62b3272a3aa42e56e72b9dcf4def35bc8b35f5"
+  uncles: []
+
+rpc_eth_getTransactionByBlock: &rpc_eth_getTransactionByBlock
+  blockHash: "0xca0e20a9e930af17c7422be3d991e925235b5350f8912a5ca4aaea734b4a88c5"
+  blockNumber: "0x9d6e99"
+  from: "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
+  gas: "0xc350"
+  gasPrice: "0x3b9aca00"
+  hash: "0x02fb01822450cf847961e34edd4d30e8225bed8742a573fb3eb27205931b9637"
+  input: "0x"
+  nonce: "0x195b47b"
+  r: "0x8950fa5d5cb49fa031730d7457b74b80117d274592a7104eba75132e589604be"
+  s: "0x22d957a39462c2a8c14894a42045aae2e5967d8977a5f4912563401bfba7e150"
+  to: "0x3fdd30eb8a18283cf687666e5f2b1693eb72e442"
+  transactionIndex: "0x2"
+  v: "0x26"
+  value: "0xe1d75bb46cae38"
+
+output_eth_getTransactionByBlock: &output_eth_getTransactionByBlock
+  blockHash: "0xca0e20a9e930af17c7422be3d991e925235b5350f8912a5ca4aaea734b4a88c5"
+  blockNumber: "0x9d6e99"
+  from: "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
+  gas: "0xc350"
+  gasPrice: "0x3b9aca00"
+  hash: "0x02fb01822450cf847961e34edd4d30e8225bed8742a573fb3eb27205931b9637"
+  input: "0x"
+  nonce: "0x195b47b"
+  r: "0x8950fa5d5cb49fa031730d7457b74b80117d274592a7104eba75132e589604be"
+  s: "0x22d957a39462c2a8c14894a42045aae2e5967d8977a5f4912563401bfba7e150"
+  to: "0x3fdd30eb8a18283cf687666e5f2b1693eb72e442"
+  transactionIndex: "0x2"
+  v: "0x26"
+  value: "0xe1d75bb46cae38" 
+
+test_eth_getlogs: &test_eth_getlogs
+  -
+    address: "0xdac17f958d2ee523a2206206994597c13d831ec7"
+    blockHash: "0xcc66dc39266f60a86380bf2df8263e24818bd33e6ffffd7002a4b2d73b37efdc"
+    blockNumber: "0x834b77"
+    data: "0x0000000000000000000000000000000000000000000000000000000349d05c5c"
+    logIndex: "0x24"
+    removed: false
+    topics:
+      - "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+      - "0x00000000000000000000000031826a1613470fc3d2eb794e93af7477ee8fe0ad"
+      - "0x0000000000000000000000009e6adb80dd43d07df9f2f43f8434080c4528102f"
+    transactionHash: "0x20be6d27ed6a4c99c5dbeeb9081e114a9b400c52b80c4d10096c94ad7d3c1af6"
+    transactionIndex: "0x25"
+    transactionLogIndex: "0x0"
+    type: "mined"
+
+eth:
+  eth_blockNumber:
+    input: []
+    expected_output: 3220
+    mockedResponses:
+      - eth_blockNumber:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: "0xc94"
+
+  eth_getBlockByNumber:
+    config: 
+      proof: 'none'
+    input: 
+      - "0xbf920c"
+    expected_output:
+      options:
+        blockdata: *result_blockfull
+        blockdataWithTxHashes: *result_blockfull_without_tx
+    mockedResponses:
+      options:
+        blockdata:
+          - eth_getBlockByNumber:
+            - res:
+              - 
+                jsonrpc: "2.0"
+                result: *blockdata
+        blockdataWithTxHashes:
+          - eth_getBlockByNumber:
+            - res:
+              - 
+                jsonrpc: "2.0"
+                result: *blockdataWithTxHashes        
+  
+  eth_getBlockByHash:
+    config: 
+      proof: 'none'
+    input: 
+      - "0x250e327cbffe74b4de28ee3f7ebb77b0c2a8a712b93a9cd7413d6ac7ca3264c6"
+    expected_output:
+      options:
+        blockdata: *result_blockfull
+        blockdataWithTxHashes: *result_blockfull_without_tx
+    mockedResponses:
+      options:
+        blockdata:
+          - eth_getBlockByHash:
+            - res:
+              - 
+                jsonrpc: "2.0"
+                result: *blockdata
+        blockdataWithTxHashes:
+          - eth_getBlockByHash:
+            - res:
+              - 
+                jsonrpc: "2.0"
+                result: *blockdataWithTxHashes
+
+  eth_getBlockTransactionCountByHash:    
+    config: 
+      proof: 'none'
+    input:
+      - "0x0c0728467cee3a0b1b1322e88596d0f9f2a8fa2018fc5447d5072805d3bf9d13"
+    expected_output: 204
+    mockedResponses:
+      - eth_getBlockTransactionCountByHash:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: "0xcc"
+
+  eth_getBlockTransactionCountByNumber:    
+    config: 
+      proof: 'none'
+    input:
+      - "0x9d6a46"
+    expected_output: 204
+    mockedResponses:
+      - eth_getBlockTransactionCountByNumber:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: "0xcc"
+  
+  eth_getUncleCountByBlockHash:
+    config:
+      proof: 'none'
+    input: 
+      - "0x884aaab2f9116742e693ced034a2dff840b45f21709025f7d69cde26d071068b"
+    expected_output: 1
+    mockedResponses:
+      - eth_getUncleCountByBlockHash:
+        - res:
+          - 
+            jsonrpc: "2.0"
+            result: "0x1"
+
+  eth_getUncleCountByBlockNumber:
+    config:
+      proof: 'none'
+    input: 
+      - 9830239
+    expected_output: 1
+    mockedResponses:
+      - eth_getUncleCountByBlockNumber:
+        - res:
+          - 
+            jsonrpc: "2.0"
+            result: "0x1"
+  
+  eth_getTransactionByBlockHashAndIndex:
+    config:
+      proof: 'none'
+    input:
+      - "0xca0e20a9e930af17c7422be3d991e925235b5350f8912a5ca4aaea734b4a88c5"
+      - 2
+    expected_output: *output_eth_getTransactionByBlock
+    mockedResponses:
+      - eth_getTransactionByBlockHashAndIndex:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: *rpc_eth_getTransactionByBlock
+
+  eth_getTransactionByBlockNumberAndIndex:
+    config:
+      proof: 'none'
+    input:
+      - 10317465
+      - 2
+    expected_output: *output_eth_getTransactionByBlock
+    mockedResponses:
+      - eth_getTransactionByBlockNumberAndIndex:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: *rpc_eth_getTransactionByBlock
+
+  eth_getTransactionByHash:
+    config:
+      proof: 'none'
+    input:
+      - "0x02fb01822450cf847961e34edd4d30e8225bed8742a573fb3eb27205931b9637"
+    expected_output: *output_eth_getTransactionByBlock
+    mockedResponses:
+      - eth_getTransactionByHash:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: *rpc_eth_getTransactionByBlock
+  
+  eth_getLogs:
+    config:
+      proof: 'none'
+    input:
+      - 
+        fromBlock: "0x834B77"
+        toBlock: "0x834B77"
+        address: "0xdac17f958d2ee523a2206206994597c13d831ec7"
+    expected_output: *test_eth_getlogs
+    mockedResponses:
+      - eth_getLogs:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: *test_eth_getlogs
+  
+  eth_getBalance:
+    config:
+      proof: 'none'
+    input:
+      - "0x4144FFD5430a8518fa2d84ef5606Fd7e1921cE27"
+    expected_output: "0x329a1e26bab74000"
+    mockedResponses:
+      - eth_getBalance:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: "0x329a1e26bab74000"
+
+  eth_getTransactionCount:
+    config:
+      proof: 'none'
+    input:
+      - "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
+    expected_output: 26588838
+    mockedResponses:
+      - eth_getTransactionCount:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: "0x195b6a6"
+
+  eth_getCode:
+    config:
+      proof: 'none'
+      chainId: 'goerli'
+    input: 
+      - "0xf62A53c356f9DC6Ee521A74934236eD1e4D9F71a"
+    expected_output: "0x60806040526001600160a01b036000541663530ca43760e11b6000351415602a578060005260206000f35b3660008037600080366000845af43d6000803e806046573d6000fd5b3d6000f3fea265627a7a723158203f36691c16ad212e606ff2acbeb8ed1efb9c7d0f4f2c44903f1d6dcb82754f6c64736f6c63430005110032"
+    mockedResponses:
+      - eth_getCode:
+        - res:
+          - 
+            jsonrpc: "2.0"
+            result: "0x60806040526001600160a01b036000541663530ca43760e11b6000351415602a578060005260206000f35b3660008037600080366000845af43d6000803e806046573d6000fd5b3d6000f3fea265627a7a723158203f36691c16ad212e606ff2acbeb8ed1efb9c7d0f4f2c44903f1d6dcb82754f6c64736f6c63430005110032"
+
+  eth_getStorageAt:
+    config:
+      proof: 'none'
+    input: 
+      - "0x862174623bc39e57de552538f424806b947d3d05"
+      - "0x0"
+    expected_output: "0x0"
+    mockedResponses:
+      - eth_getStorageAt:
+        - res:
+          - 
+            jsonrpc: "2.0"
+            result: "0x0"
+
+  eth_sendTransaction:
+    config:
+      proof: 'none'
+      pk: "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      chainId: 'goerli'
+
+    input:
+      - 
+        to: "0x1234567890123456789012345678901234567890"
+        from: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+        data: "0x4faa8a2600000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72"
+        nonce: 31
+        gasPrice: 1000000000
+    expected_output: "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"
+    mockedResponses:
+      - eth_sendRawTransaction:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"
+  
+  eth_sendTransactionAndWait:
+    config:
+      proof: 'none'
+      pk: "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      chainId: 'goerli'
+    input:
+      - 
+        to: "0x1234567890123456789012345678901234567890"
+        from: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+        data: "0x4faa8a2600000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72"
+        nonce: 31
+        gasPrice: 1000000000
+    expected_output: 
+      blockHash: "0xa3c56c1f5bf0fccab818b7722153737977b72b44ac10a8511ccb364da39f3582"
+      blockNumber: "0x452c23"
+      contractAddress: null
+      cumulativeGasUsed: "0x402945"
+      from: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+      gasUsed: "0x12e64"
+      logs:
+        -
+          address: "0xe2b01f3978c03d6dda5ae36b2f3ac0d66c54a6d5"
+          blockHash: "0xa3c56c1f5bf0fccab818b7722153737977b72b44ac10a8511ccb364da39f3582"
+          blockNumber: "0x452c23"
+          data: "0x000000000000000000000000000000000000000000000000007be973a2f6ba00"
+          logIndex: "0x17"
+          removed: false
+          topics:
+            - "0x3e799b2d61372379e767ef8f04d65089179b7a6f63f9be3065806456c7309f1b"
+            - "0x00000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72"
+            - "0x00000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72"
+          transactionHash: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+          transactionIndex: "0x22"
+          transactionLogIndex: "0x0"
+          type: "mined"
+        - 
+          address: "0xeaa852323826c71cd7920c3b4c007184234c3945"
+          blockHash: "0xa3c56c1f5bf0fccab818b7722153737977b72b44ac10a8511ccb364da39f3582"
+          blockNumber: "0x452c23"
+          data: "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000010087a7811f4bfedea3d341ad165680ae306b01aaeacc205d227629cf157dd9f821000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000007be973a2f6ba00"
+          logIndex: "0x18"
+          removed: false
+          topics:
+            - "0x103fed9db65eac19c4d870f49ab7520fe03b99f1838e5996caf47e9e43308392"
+            - "0x0000000000000000000000000000000000000000000000000000000000002534"
+            - "0x000000000000000000000000b5505a6d998549090530911180f38ac5130101c6"
+          transactionHash: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+          transactionIndex: "0x22"
+          transactionLogIndex: "0x1"
+          type: mined
+      logsBloom: "0x00000000000000080000000080000000000000000000000000000000000000000000000000000000000400080000000000000000000000000000000000000000000000000000000050000002000000000000100000000000000000000000000000080000000000000000000000000010000000000000000000000000000000000000000010000000000000000000000004000000000000000000000000080000000000000200000000000000000000004000800000000800000000000000000000008000000000000000000000000002000000000000000000000000000000000000000000000020000000000000000000000000000000000000008000000000"
+      status: "0x1"
+      to: "0xbbd7cbfa79faee899eaf900f13c9065bf03b1a74"
+      transactionHash: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+      transactionIndex: "0x22"
+    mockedResponses:
+      - eth_sendRawTransaction:
+        - res:
+          -
+            jsonrpc: "2.0"
+            result: "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"
+      - eth_getTransactionReceipt:
+        - res: 
+          -
+            jsonrpc: "2.0"
+            result:
+              blockHash: "0xa3c56c1f5bf0fccab818b7722153737977b72b44ac10a8511ccb364da39f3582"
+              blockNumber: "0x452c23"
+              contractAddress: null
+              cumulativeGasUsed: "0x402945"
+              from: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+              gasUsed: "0x12e64"
+              logs:
+                -
+                  address: "0xe2b01f3978c03d6dda5ae36b2f3ac0d66c54a6d5"
+                  blockHash: "0xa3c56c1f5bf0fccab818b7722153737977b72b44ac10a8511ccb364da39f3582"
+                  blockNumber: "0x452c23"
+                  data: "0x000000000000000000000000000000000000000000000000007be973a2f6ba00"
+                  logIndex: "0x17"
+                  removed: false
+                  topics:
+                    - "0x3e799b2d61372379e767ef8f04d65089179b7a6f63f9be3065806456c7309f1b"
+                    - "0x00000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72"
+                    - "0x00000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72"
+                  transactionHash: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+                  transactionIndex: "0x22"
+                  transactionLogIndex: "0x0"
+                  type: "mined"
+                - 
+                  address: "0xeaa852323826c71cd7920c3b4c007184234c3945"
+                  blockHash: "0xa3c56c1f5bf0fccab818b7722153737977b72b44ac10a8511ccb364da39f3582"
+                  blockNumber: "0x452c23"
+                  data: "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000010087a7811f4bfedea3d341ad165680ae306b01aaeacc205d227629cf157dd9f821000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000007be973a2f6ba00"
+                  logIndex: "0x18"
+                  removed: false
+                  topics:
+                    - "0x103fed9db65eac19c4d870f49ab7520fe03b99f1838e5996caf47e9e43308392"
+                    - "0x0000000000000000000000000000000000000000000000000000000000002534"
+                    - "0x000000000000000000000000b5505a6d998549090530911180f38ac5130101c6"
+                  transactionHash: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+                  transactionIndex: "0x22"
+                  transactionLogIndex: "0x1"
+                  type: mined
+              logsBloom: "0x00000000000000080000000080000000000000000000000000000000000000000000000000000000000400080000000000000000000000000000000000000000000000000000000050000002000000000000100000000000000000000000000000080000000000000000000000000010000000000000000000000000000000000000000010000000000000000000000004000000000000000000000000080000000000000200000000000000000000004000800000000800000000000000000000008000000000000000000000000002000000000000000000000000000000000000000000000020000000000000000000000000000000000000008000000000"
+              status: "0x1"
+              to: "0xbbd7cbfa79faee899eaf900f13c9065bf03b1a74"
+              transactionHash: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+              transactionIndex: "0x22"
+
+  eth_sendRawTransaction:
+    config:
+      proof: 'none'
+      pk: "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      chainId: 'goerli'
+    input:
+      - "0xf86d8206aa85438558d400825208941ebd5c8cfec45650cf9c80adfeb5488ae36859c3872386f26fc10000801ba06df6fc901a78cea1dfc02baead56c8ec0d8d008c505efcfc3b4462b1a659be25a065152fd2e0dbf04b8e1baac46f31df9033f9c72b9dfad1b4fe41f89ef32c9a53"
+    expected_output: "0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2"
+    mockedResponses:
+      - eth_sendRawTransaction:
+        - res:
+          - 
+            jsonrpc: "2.0"
+            result: "0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2"

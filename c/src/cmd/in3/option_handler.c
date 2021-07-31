@@ -193,6 +193,7 @@ bool handle_option(in3_t* c, char* key, char* value, sb_t* conf, int argc, char*
   CHECK_OPTION("version", show_version())
   CHECK_OPTION("chainId", set_chainId(value, conf))
   CHECK_OPTION("from", set_string(&get_txdata()->from, value))
+  CHECK_OPTION("token", set_string(&get_txdata()->token, value))
   CHECK_OPTION("to", set_string(&get_txdata()->to, value))
   CHECK_OPTION("gas", set_uint64(&get_txdata()->gas, value))
   CHECK_OPTION("gas_price", set_uint64(&get_txdata()->gas_price, value))
@@ -252,6 +253,24 @@ void init_env(in3_t* c, int argc, char* argv[]) {
       hex_to_bytes(cc, -1, pk, 32);
       eth_set_pk_signer(c, pk);
     }
+  }
+
+  // is there a config-file we can load?
+  char* home = get_storage_dir();
+  char* cnf  = alloca(strlen(home) + 20);
+  strcpy(cnf, home);
+  strcpy(cnf + strlen(cnf) - 1, "_conf.json");
+
+  FILE* cnf_file = fopen(cnf, "r");
+  if (cnf_file) {
+    char* error = in3_configure(c, (char*) readFile(cnf_file).data);
+    if (error) {
+      char* msg = _malloc(strlen(error) + 200);
+      sprintf(msg, "Error reading the in3_conf.json : %s", error);
+      die(msg);
+    }
+    else
+      fclose(cnf_file);
   }
 
   // handle chainId

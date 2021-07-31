@@ -31,7 +31,9 @@ class NodeList {
     return new NodeList((JSON) o);
   }
 
-  /** returns an array of IN3Node */
+  /**
+   * returns an array of IN3Node
+   */
   public IN3Node[] getNodes() {
     Object obj = data.get("nodes");
     if (obj != null) {

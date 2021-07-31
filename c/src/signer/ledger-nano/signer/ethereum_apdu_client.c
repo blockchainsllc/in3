@@ -39,7 +39,7 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
   memcpy(bip_data, bip_path_bytes, sizeof(bip_data));
   set_command_params_eth();
 
-  //parse and convert bip into hardened form
+  // parse and convert bip into hardened form
   read_bip32_path(5, bip_data, bip32);
 
   int recid = 0;
@@ -177,7 +177,7 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
       return IN3_OK;
     }
 
-    //parse and convert bip into hardened form
+    // parse and convert bip into hardened form
     read_bip32_path(5, i_bip_path, bip32);
 
     apdu[index_counter++] = 0xe0;

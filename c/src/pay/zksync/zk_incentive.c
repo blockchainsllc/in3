@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "../../core/client/keys.h"
@@ -70,8 +70,8 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
   uint8_t pub[65];
   bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
   char*   message      = "\x19"
-                  "Ethereum Signed Message:\n68"
-                  "Access zkSync account.\n\nOnly sign this message for a trusted client!";
+                         "Ethereum Signed Message:\n68"
+                         "Access zkSync account.\n\nOnly sign this message for a trusted client!";
 
   in3_pay_sign_req_ctx_t sctx      = {.req = req, .request = NULL, .signature = {0}};
   bytes_t                sig_bytes = bytes(sctx.signature, 65);
@@ -179,7 +179,7 @@ static in3_ret_t find_acceptable_offer(in3_req_t* ctx, pay_criteria_t* criteria,
 }
 
 static in3_ret_t add_to_payed_nodelist(in3_req_t* ctx, address_t address, unsigned int nodelen) {
-  bytes_t payed_addresses = bytes(NULL, 0);
+  bytes_t payed_addresses = NULL_BYTES;
   TRY(get_payed_addresses(ctx, &payed_addresses))
   uint8_t* addresses = alloca(payed_addresses.len + 20);
   if (payed_addresses.data) {
@@ -202,7 +202,7 @@ static in3_ret_t add_to_payed_nodelist(in3_req_t* ctx, address_t address, unsign
 }
 
 in3_ret_t update_nodelist_from_cache(in3_req_t* ctx, unsigned int nodelen) {
-  bytes_t payed_addresses = bytes(NULL, 0);
+  bytes_t payed_addresses = NULL_BYTES;
   TRY(get_payed_addresses(ctx, &payed_addresses))
 
   if (payed_addresses.len)
@@ -272,7 +272,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   sb_add_chars(&sb, "]}");
 
   // add data as cache, so we can add it when we create the next payload.
-  in3_cache_add_entry(&ctx->req->cache, bytes(NULL, 0), bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT;
+  in3_cache_add_entry(&ctx->req->cache, NULL_BYTES, bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT;
 
   // now we make sure we try again.
   TRY(in3_retry_same_node(ctx->req))

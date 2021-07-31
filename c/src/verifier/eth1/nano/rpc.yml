@@ -38,7 +38,7 @@ types:
       type: string
       optional: true
 
-  transactionReceipt:
+  eth_transactionReceipt:
     blockNumber:
       descr: the blockNumber
       type: uint64
@@ -55,6 +55,10 @@ types:
     gasUsed:
       descr: gas used by this transaction.
       type: uint64
+    effectiveGasPrice:
+      descr: the efficte gas price
+      type: uint256
+      optional: true
     logs:
       descr: array of events created during execution of the tx
       array: true
@@ -71,6 +75,17 @@ types:
     transactionIndex:
       descr: transactionIndex within the containing block.
       type: int
+    from:
+      descr: address of the sender.
+      type: address
+    type:
+      optional: true
+      descr: the transaction type (0 = legacy tx, 1 = EIP-2930, 2= EIP-1559)
+      type: int
+    to:
+      descr: address of the receiver. null when its a contract creation transaction.
+      type: address
+      optional: true
 
 eth:
   descr: |
@@ -109,7 +124,7 @@ eth:
     result:
       optional: true
       descr: the TransactionReceipt or `null`  if it does not exist.
-      type: transactionReceipt
+      type: eth_transactionReceipt
     
     example:
       request:

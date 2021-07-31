@@ -48,4 +48,4 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
  */
 in3_ret_t in3_register_ipfs(in3_t* c);
 
-#endif //IN3_IPFS_H
+#endif // IN3_IPFS_H

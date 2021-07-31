@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -106,7 +106,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
       continue;
     }
 
-    //Create a socket
+    // Create a socket
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
       in3_ctx_add_response(req->req, n, true, "could not create the socket", -1, 0);
       continue;
@@ -120,7 +120,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port   = htons(portno);
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    //Connect to remote server
+    // Connect to remote server
     if (connect(s, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
       in3_ctx_add_response(req->req, n, true, "Connection failed", -1, 0);
       continue;
@@ -131,13 +131,13 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
       continue;
     }
 
-    //Receive a reply from the server
+    // Receive a reply from the server
     if ((received = recv(s, response, 2000, 0)) == SOCKET_ERROR) {
       in3_ctx_add_response(req->req, n, true, "Receive failed", -1, 0);
       continue;
     }
 
-    //Add a NULL terminating character to make it a proper string before printing
+    // Add a NULL terminating character to make it a proper string before printing
     response[received] = '\0';
     in3_ctx_add_response(req->req, n, false, response, -1, 0);
 
@@ -205,7 +205,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
 
 #endif
 
-    req->req->raw_response[n].time = (uint32_t)(current_ms() - start);
+    req->req->raw_response[n].time = (uint32_t) (current_ms() - start);
 
     // now evaluate the response
 

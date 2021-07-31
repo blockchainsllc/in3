@@ -42,7 +42,7 @@ const main_help = []
 const main_aliases = []
 const bool_props = []
 
-let docs = {}, config = {}, types = {}
+let docs = {}, config = {}, types = {}, testCases = {}
 
 
 function scan(dir) {
@@ -54,10 +54,25 @@ function scan(dir) {
                 types = { ...types, ...ob.types }
                 delete ob.types
             }
+            let lastAPI = null
             for (const k of Object.keys(ob)) {
                 if (ob[k].config) config = { ...config, ...ob[k].config }
                 delete ob[k].config
-                docs[k] = { ...docs[k], ...ob[k] }
+                if (!generators.length && ob[k].fields && lastAPI) {
+                    delete ob[k].fields
+                    for (const n of Object.keys(ob[k]).filter(_ => docs[lastAPI][_])) delete ob[k][n]
+                    docs[lastAPI] = { ...docs[lastAPI], ...ob[k] }
+                }
+                else
+                    docs[k] = { ...docs[k], ...ob[k] }
+                lastAPI = k
+            }
+        }
+        else if (f.name == 'testCases.yml') {
+            console.error('parse ' + dir + '/' + f.name)
+            const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
+            for (const k of Object.keys(ob)) {
+                testCases[k] = { ...testCases[k], ...ob[k] }
             }
         }
         else if (f.isDirectory()) scan(dir + '/' + f.name)
@@ -82,21 +97,21 @@ function print_object(def, pad, useNum, doc, pre) {
         if (p.cmd) asArray(p.cmd).forEach(_ => s += '\n' + pad + 'This option can also be used in its short-form in the comandline client `-' + _ + '` .')
         doc.push(s)
         if (typeof pt === 'object') {
-            doc.push('The ' + prop + ' object supports the following properties :\n' + pad)
+            doc.push(pad + '    The ' + prop + ' object supports the following properties :\n' + pad)
             print_object(pt, pad + '    ', false, doc)
         }
         if (rpc_doc === doc) {
-          if (p.example) doc.push('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
+            if (p.example) doc.push('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))
         }
         else if (config_doc === doc)
             asArray(p.example).forEach(ex => {
                 key = prop
-                doc.push(pad+'```sh')
+                doc.push(pad + '```sh')
                 if (typeof (ex) == 'object')
-                    doc.push(pad+'> ' + cmdName + ' ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
+                    doc.push(pad + '> ' + cmdName + ' ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
                 else
-                    doc.push(pad+[...asArray(p.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> ' + cmdName + ' ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
-                doc.push(pad+'```\n')
+                    doc.push(pad + [...asArray(p.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> ' + cmdName + ' ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
+                doc.push(pad + '```\n')
             })
 
         doc.push(pad + '\n')
@@ -121,7 +136,7 @@ function handle_config(conf, pre, title, descr) {
             config_doc.push(s)
             if (typeof (c.type) === 'object') {
                 config_doc.push('The ' + key + ' object supports the following properties :\n')
-                print_object(c.type, '', false, config_doc, key+".")
+                print_object(c.type, '', false, config_doc, key + ".")
             }
             if (c.example !== undefined) {
                 config_doc.push('\n*Example:*\n')
@@ -169,7 +184,7 @@ for (const s of Object.keys(docs).sort()) {
     if (rdescr) rpc_doc.push(rdescr + '\n')
     delete rpcs.descr
 
-    for (const rpc of Object.keys(rpcs).sort()) {
+    for (const rpc of Object.keys(rpcs).filter(_ => _ != 'fields' && !_.startsWith('_')).sort()) {
         const def = rpcs[rpc]
         def.returns = def.returns || def.result
         def.result = def.returns || def.result
@@ -252,7 +267,7 @@ for (const s of Object.keys(docs).sort()) {
     console.log('generate ' + s + '\n   ' + Object.keys(rpcs).join('\n   '))
 
     if (Object.values(rpcs).filter(_ => !_.skipApi).length)
-        generators.forEach(_ => _.generateAPI(s, rpcs, rdescr, types))
+        generators.forEach(_ => _.generateAPI(s, rpcs, rdescr, types, testCases[s]))
 
 }
 

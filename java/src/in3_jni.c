@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -130,9 +130,9 @@ bytes_t* storage_get_item(void* cptr, const char* key) {
   if (!handler) return NULL;
 
   jstring    js     = (*jni)->NewStringUTF(jni, key);
-  jbyteArray result = (jbyteArray)(*jni)->CallObjectMethod(jni, handler,
-                                                           (*jni)->GetMethodID(jni, (*jni)->GetObjectClass(jni, handler), "getItem", "(Ljava/lang/String;)[B"),
-                                                           js);
+  jbyteArray result = (jbyteArray) (*jni)->CallObjectMethod(jni, handler,
+                                                            (*jni)->GetMethodID(jni, (*jni)->GetObjectClass(jni, handler), "getItem", "(Ljava/lang/String;)[B"),
+                                                            js);
   if (result == NULL) return NULL;
 
   bytes_t* res = _malloc(sizeof(bytes_t));
@@ -210,8 +210,8 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv* env, jobject ob, jst
   else
     strcpy(error, ctx->error);
 
-  //need to release this string when done with it in order to
-  //avoid memory leak
+  // need to release this string when done with it in order to
+  // avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
   req_free(ctx);
 
@@ -318,8 +318,8 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
   else
     strcpy(error, ctx->error);
 
-  //need to release this string when done with it in order to
-  //avoid memory leak
+  // need to release this string when done with it in order to
+  // avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
 
   req_free(ctx);
@@ -354,9 +354,9 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
 
   in3_http_request_t* req   = plugin_ctx;
   uint64_t            start = current_ms();
-  //char** urls, int urls_len, char* payload, in3_response_t* res
+  // char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
-  //payload
+  // payload
   jbyteArray jpayload = (*jni)->NewByteArray(jni, req->payload_len);
   (*jni)->SetByteArrayRegion(jni, jpayload, 0, req->payload_len, (jbyte*) req->payload);
 
@@ -388,7 +388,7 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
     mid              = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
     jstring     jmsg = (*jni)->CallObjectMethod(jni, transport_exception, mid);
     const char* msg  = (*jni)->GetStringUTFChars(jni, jmsg, 0);
-    in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t)(end - start));
+    in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t) (end - start));
     (*jni)->ReleaseStringUTFChars(jni, jmsg, msg);
     (*jni)->ExceptionClear(jni);
   }
@@ -411,7 +411,7 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
     }
   }
 
-  for (unsigned int i = 0; i < req->urls_len; i++) req->req->raw_response[i].time = (uint32_t)(end - start);
+  for (unsigned int i = 0; i < req->urls_len; i++) req->req->raw_response[i].time = (uint32_t) (end - start);
 
   return success;
 }
@@ -549,7 +549,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
   return NULL;
 }
 
-//in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+// in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
   in3_req_t* ctx = (in3_req_t*) sc->req;
   if (ctx == NULL) return IN3_EIGNORE;
@@ -654,7 +654,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   jni = env;
   // turn to debug
 
-  return (jlong)(size_t) in3;
+  return (jlong) (size_t) in3;
 }
 
 JNIEXPORT jstring JNICALL Java_in3_IN3_getVersion(JNIEnv* env, jclass c) {

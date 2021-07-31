@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -236,13 +236,14 @@ char* in3_configure(in3_t* c, const char* config) {
 
   // make sure the json-config is parseable.
   json_ctx_t* json = parse_json((char*) config);
-  if (!json || !json->result) return config_err("in3_configure", "parse error");
+  if (!json || !json->result) return config_err("in3_configure: parse error", config);
 
   // the error-message we will return in case of an error.
-  char* res = NULL;
+  char* res        = NULL;
+  int   prop_index = 0;
 
   // we iterate over the root-props
-  for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter)) {
+  for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter), prop_index++) {
     d_token_t* token = iter.token;
 
     if (token->key == CONFIG_KEY("autoUpdateList")) {
@@ -380,7 +381,11 @@ char* in3_configure(in3_t* c, const char* config) {
         }
       }
 
-      if (!handled) EXPECT_TOK(token, false, "unsupported config option!");
+      if (!handled) {
+        char tmp[100];
+        sprintf(tmp, "The config with index %d is unknown or not supported!", prop_index);
+        EXPECT_TOK(token, false, tmp);
+      }
     }
   }
 
@@ -507,10 +512,18 @@ in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* ctx, in3_plugin_act_t acti
   assert(ctx);
   if (!in3_plugin_is_registered(ctx->client, action))
     return IN3_OK;
+  int retry = 0;
+
+_retry:
 
   for (in3_plugin_t* p = ctx->client->plugins; p; p = p->next) {
     if (p->acts & action) {
       in3_ret_t ret = p->action_fn(p->data, action, plugin_ctx);
+      if (ret == IN3_ERETRY) {
+        retry++;
+        if (retry > 3) return req_set_error(ctx, "Max retries when executing plugins exceeded!", IN3_EUNKNOWN);
+        goto _retry;
+      }
       if (ret != IN3_EIGNORE) return ret;
     }
   }

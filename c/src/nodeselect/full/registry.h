@@ -13,4 +13,4 @@ in3_ret_t eth_verify_in3_nodelist(in3_nodeselect_def_t* data, in3_vctx_t* vc, ui
 NONULL in3_ret_t eth_verify_in3_whitelist(in3_nodeselect_def_t* data, in3_vctx_t* vc);
 #endif
 
-#endif //IN3_NODE_SELECT_REGISTRY_H
+#endif // IN3_NODE_SELECT_REGISTRY_H
