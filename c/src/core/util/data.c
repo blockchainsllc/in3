@@ -402,6 +402,7 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
         case '}':
         case ']':
         case ',':
+        case 0:
 
           if ((value & 0xfffffffff0000000) == 0) // is it small ennough to store it in the length ?
             item->len |= (uint32_t) value;       // 32-bit number / no 64-bit number
