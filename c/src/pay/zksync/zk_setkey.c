@@ -88,7 +88,13 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool 
   if (conf->sign_type == ZK_SIGN_CONTRACT) TRY(auth_pub_key(conf, ctx, nonce, pub_hash))
 
   // get fees
-  TRY(zksync_get_fee(conf, ctx->req, NULL, bytes(conf->account, 20), token, conf->sign_type == ZK_SIGN_PK ? "{\"ChangePubKey\":{\"onchainPubkeyAuth\":false}}" : "{\"ChangePubKey\":{\"onchainPubkeyAuth\":true}}",
+  // 'Onchain' | 'ECDSA' | 'CREATE2' | 'ECDSALegacyMessage';
+  char* keytype = "{\"ChangePubKey\":\"ECDSA\"}";
+  if (conf->sign_type == ZK_SIGN_CREATE2)
+    keytype = "{\"ChangePubKey\":\"CREATE2\"}";
+  else if (conf->sign_type == ZK_SIGN_CONTRACT)
+    keytype = "{\"ChangePubKey\":\"Onchain\"}";
+  TRY(zksync_get_fee(conf, ctx->req, NULL, bytes(conf->account, 20), token, keytype,
 #ifdef ZKSYNC_256
                      fee
 #else
