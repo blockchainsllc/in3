@@ -329,7 +329,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
     chain_id = d_long(r);
   }
 
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required

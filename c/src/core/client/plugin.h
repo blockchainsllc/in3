@@ -289,15 +289,25 @@ typedef enum {
   SIGN_EC_PREFIX = 2, /**< add Ethereum Signed Message-Proefix, hash and sign the data */
 } d_signature_type_t;
 
+/** payload type of the requested signature. It describes how to deserialize the payload. */
+typedef enum {
+  PL_SIGN_ANY    = 0, /**< custom data to be signed*/
+  PL_SIGN_ETHTX  = 1, /**< the payload is a ethereum-tx */
+  PL_SIGN_BTCTX  = 2, /**< the payload is a BTC-Tx-Input */
+  PL_SIGN_SAFETX = 3, /**< The payload is a rlp-encoded data of a Gnosys Safe Tx */
+} d_payload_type_t;
+
 /**
  * signing context. This Context is passed to the signer-function.
  */
 typedef struct sign_ctx {
-  bytes_t            signature; /**< the resulting signature  */
-  d_signature_type_t type;      /**< the type of signature*/
-  struct in3_req*    req;       /**< the context of the request in order report errors */
-  bytes_t            message;   /**< the message to sign*/
-  bytes_t            account;   /**< the account to use for the signature */
+  bytes_t            signature;    /**< the resulting signature  */
+  d_signature_type_t type;         /**< the type of signature*/
+  d_payload_type_t   payload_type; /**< the type of payload in order to deserialize the payload */
+  struct in3_req*    req;          /**< the context of the request in order report errors */
+  bytes_t            message;      /**< the message to sign*/
+  bytes_t            account;      /**< the account to use for the signature */
+  d_token_t*         meta;         /**< optional metadata to pass a long, which could include data to present to the user before signing */
 } in3_sign_ctx_t;
 
 /**
