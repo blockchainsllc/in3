@@ -123,8 +123,12 @@ function handle_config(conf, pre, title, descr) {
     if (title) config_doc.push('\n## ' + title + '\n')
     for (const key of Object.keys(conf)) {
         const c = conf[key]
+        if (typeof (c.type) === 'string' && types[c.type]) {
+            c.typeName = c.type
+            c.type = types[c.type]
+        }
         // handle bindings
-        generators.forEach(_ => _.updateConfig(pre, c, key))
+        generators.forEach(_ => _.updateConfig(pre, c, key, types))
 
         // handle doc
         if (!pre) {
