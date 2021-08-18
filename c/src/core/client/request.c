@@ -401,7 +401,10 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
   ctx = req_new(parent->client, req);
-  if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
+  if (!ctx) {
+    if (use_cache && req) _free(req);
+    return req_set_error(parent, "Invalid request!", IN3_ERPC);
+  }
   if (child) *child = ctx;
 
   // inherit cache-entries

@@ -402,9 +402,11 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   json_free(ctx->request_context);
 
   // set the new RPC-Request.
+  char* old_req                                  = ctx->request_context->c;
   ctx->request_context                           = parse_json(sb.data);
   ctx->requests[0]                               = ctx->request_context->result;
-  in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+  in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+  in3_cache_add_ptr(&ctx->cache, old_req)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_NOT_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards, butt only for subrequests
   return IN3_OK;
 }
 
