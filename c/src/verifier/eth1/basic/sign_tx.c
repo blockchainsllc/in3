@@ -392,7 +392,8 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
             if (unsigned_tx.data) _free(unsigned_tx.data);)
 
   // build the RPC-request
-  sb_t sb = {0};
+  char* old_req = ctx->request_context->c;
+  sb_t  sb      = {0};
   sb_add_rawbytes(&sb, "{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[\"0x", signed_tx, 0);
   sb_add_chars(&sb, "\"]");
   sb_add_chars(&sb, "}");
@@ -402,7 +403,6 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   json_free(ctx->request_context);
 
   // set the new RPC-Request.
-  char* old_req                                  = ctx->request_context->c;
   ctx->request_context                           = parse_json(sb.data);
   ctx->requests[0]                               = ctx->request_context->result;
   in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
