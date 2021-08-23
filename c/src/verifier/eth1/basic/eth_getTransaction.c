@@ -47,15 +47,51 @@
 
 static const uint8_t* secp256k1n_2 = (uint8_t*) "\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x5D\x57\x6E\x73\x57\xA4\x50\x1D\xDF\xE9\x2F\x46\x68\x1B\x20\xA0";
 
+bytes_t create_unsigned_tx(bytes_t raw, uint32_t chain_id) {
+  bytes_builder_t bb        = {0};
+  int             type      = raw.len && raw.data[0] < 0x7f ? raw.data[0] : 0;
+  int             last_item = 5;
+  bytes_t         raw_list  = raw;
+  bytes_t         item;
+  if (type) {
+    raw_list.data++;
+    raw_list.len--;
+    if (type == 1) last_item = 7;
+    if (type == 2) last_item = 8;
+  }
+  rlp_decode(&raw_list, 0, &raw_list);
+  rlp_decode(&raw_list, last_item, &item);
+
+  bb_write_raw_bytes(&bb, raw_list.data, item.data + item.len - raw_list.data); // add data including last_item to bb
+  if (chain_id && type == 0) {
+    uint8_t chain_data[4];
+    item = bytes(chain_data, 4);
+    int_to_bytes(chain_id, chain_data);
+    b_optimize_len(&item);
+    rlp_encode_item(&bb, &item);
+    item.len = 0;
+    rlp_encode_item(&bb, &item);
+    rlp_encode_item(&bb, &item);
+  }
+  rlp_encode_to_list(&bb);
+  if (type) {
+    bb_check_size(&bb, 1);
+    memmove(bb.b.data + 1, bb.b.data, bb.b.len);
+    bb.b.len++;
+    bb.b.data[0] = (uint8_t) type;
+  }
+  return bb.b;
+}
+
 in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   d_token_t* t = NULL;
   uint8_t    hash[32], pubkey[65], sdata[64];
   bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
-
-  bytes_t* r        = d_get_byteskl(tx, K_R, 32);
-  bytes_t* s        = d_get_byteskl(tx, K_S, 32);
-  uint32_t v        = d_get_int(tx, K_V);
-  uint32_t chain_id = v > 35 ? (v - 35) / 2 : 0;
+  int        type         = raw && raw->len && raw->data && raw->data[0] < 0x7f ? raw->data[0] : 0;
+  bytes_t*   r            = d_get_byteskl(tx, K_R, 32);
+  bytes_t*   s            = d_get_byteskl(tx, K_S, 32);
+  uint32_t   v            = d_get_int(tx, K_V);
+  uint32_t   chain_id     = d_get(tx, K_CHAIN_ID) ? (uint32_t) d_get_int(tx, K_CHAIN_ID) : (v > 35 ? (v - 35) / 2 : 0);
 
   // check transaction hash
   if (keccak(raw ? *raw : d_to_bytes(d_get(tx, K_RAW)), hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32)->data, 32))
@@ -86,30 +122,13 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   memcpy(sdata + 32 - r->len, r->data, r->len);
   memcpy(sdata + 64 - s->len, s->data, s->len);
 
-  // calculate the  messagehash
-  bytes_builder_t* bb = bb_new();
-  bytes_t          raw_list, item;
-  rlp_decode(raw ? raw : d_get_bytes(tx, K_RAW), 0, &raw_list);
-  rlp_decode(&raw_list, 5, &item);
-  bb_write_raw_bytes(bb, raw_list.data, item.data + item.len - raw_list.data);
-  if (chain_id) {
-    uint8_t  chain_data[4];
-    uint8_t *pc = chain_data, lc = 4;
-    int_to_bytes(chain_id, chain_data);
-    optimize_len(pc, lc);
-    item.len  = lc;
-    item.data = pc;
-    rlp_encode_item(bb, &item);
-    item.len = 0;
-    rlp_encode_item(bb, &item);
-    rlp_encode_item(bb, &item);
-  }
-  rlp_encode_to_list(bb);
-  keccak(bb->b, hash);
-  bb_free(bb);
+  // calculate the unsigned hash
+  bytes_t unsigned_tx = create_unsigned_tx(raw ? *raw : d_to_bytes(d_get(tx, K_RAW)), chain_id);
+  keccak(unsigned_tx, hash);
+  _free(unsigned_tx.data);
 
   // verify signature
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, hash, (chain_id ? v - chain_id * 2 - 8 : v) - 27))
+  if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, hash, type ? v : ((chain_id ? v - chain_id * 2 - 8 : v) - 27)))
     return vc_err(vc, "could not recover signature");
 
   if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey_bytes.data, t->data, t->len) != 0)

@@ -103,11 +103,11 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
-  bytes32_t hash;
-  FILE*     r = NULL;
-  if (d_len(ctx->params) == 1) {
-    CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
-    keccak(d_to_bytes(ctx->params + 1), hash);
+  bytes32_t  hash;
+  d_token_t* arg = d_get_at(ctx->params, 0);
+  FILE*      r   = NULL;
+  if (d_type(arg) == T_BYTES) {
+    keccak(d_to_bytes(arg), hash);
     srand(bytes_to_int(hash, 4));
   }
   else {
@@ -136,18 +136,35 @@ static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
+  in3_rpc_handle_ctx_t* ctx = plugin_ctx;
   UNUSED_VAR(pdata);
   UNUSED_VAR(action);
+  UNUSED_VAR(ctx); // in case RPC_ONLY is used
 
-  in3_rpc_handle_ctx_t* ctx = plugin_ctx;
+#if !defined(RPC_ONLY) || defined(RPC_WEB3_SHA3)
   TRY_RPC("web3_sha3", in3_sha3(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_KECCAK)
   TRY_RPC("keccak", in3_sha3(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SHA256)
   TRY_RPC("sha256", in3_sha256(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_WEB3_CLIENTVERSION)
   TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CONFIG)
   TRY_RPC("in3_config", in3_config(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_GETCONFIG)
   TRY_RPC("in3_getConfig", in3_getConfig(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CACHECLEAR)
   TRY_RPC("in3_cacheClear", in3_cacheClear(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CREATEKEY)
   TRY_RPC("in3_createKey", in3_createKey(ctx))
+#endif
 
   return IN3_EIGNORE;
 }

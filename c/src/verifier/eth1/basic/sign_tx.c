@@ -237,7 +237,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   address_t from;
 
   // read the values
-  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x52\x08", 2)),
+  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x75\x30", 2)),
           to        = getl(tx, K_TO, 20),
           value     = get(tx, K_VALUE),
           data      = get(tx, K_DATA),
@@ -263,11 +263,13 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
     sb_add_rawbytes(meta, "\",\"gas\":\"0x", gas_limit, 0);
     sb_add_rawbytes(meta, "\",\"gasPrice\":\"0x", gas_price, 0);
     sb_add_rawbytes(meta, "\",\"nonce\":\"0x", nonce, 0);
-    sb_add_char(meta, '\"');
+    sb_add_chars(meta, "\",\"layer\":\"l1\"");
     sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));
     sb_add_json(meta, ",\"fn_args\":", d_get(tx, key("fn_args")));
     sb_add_json(meta, ",\"token\":", d_get(tx, key("token")));
     sb_add_json(meta, ",\"wallet\":", d_get(tx, key("wallet")));
+    sb_add_json(meta, ",\"url\":", d_get(tx, key("url")));
+    sb_add_json(meta, ",\"delegate\":", d_get(tx, key("delegate")));
   }
 
   // do we need to transform the tx before we sign it?
@@ -280,8 +282,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
 
   // write state?
   if (meta) {
-    sb_add_rawbytes(meta, ",\"pre_unsigned\":\"0x", *dst, 0);
-    sb_add_chars(meta, "\"}");
+    sb_add_rawbytes(meta, "},\"pre_unsigned\":\"0x", *dst, 0);
+    sb_add_chars(meta, "\"");
   }
 
   // do we need to change it?

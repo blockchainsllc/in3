@@ -306,6 +306,7 @@ zksync:
           type: string
           array: true
           optional: true
+          nullable: true
           cmd: zmu
 
         create2:
@@ -497,8 +498,18 @@ zksync:
       typeName: ZkSyncTxInfo
       type:
         block:
-          descr: the blockNumber containing the tx or `null` if still pending
-          type: uint64
+          typeName: ZkSyncTransactionBlock
+          descr: the block
+          type:
+            blockNumber: 
+              descr: the blockNumber containing the tx or `null` if still pending
+              type: uint64
+            committed: 
+              descr: true, if the block has been commited
+              type: bool
+            verified: 
+              descr: true, if the block has been verified
+              type: bool
           optional: true
         executed:
           descr: true, if the tx has been executed by the operator. If false it is still in the txpool of the operator.

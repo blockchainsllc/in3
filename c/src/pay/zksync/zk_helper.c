@@ -362,8 +362,11 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
       conf->tokens[i].id       = d_get_int(it.token, K_ID);
       conf->tokens[i].decimals = d_get_int(it.token, key("decimals"));
       char* name               = d_get_string(it.token, key("symbol"));
-      if (!name || strlen(name) > 7) return req_set_error(ctx, "invalid token name", IN3_EINVAL);
-      strcpy(conf->tokens[i].symbol, name);
+      if (!name) return req_set_error(ctx, "missing token name", IN3_EINVAL);
+      if (strlen(name) > 9)
+        strncpy(conf->tokens[i].symbol, name, 9);
+      else
+        strcpy(conf->tokens[i].symbol, name);
       bytes_t* adr = d_get_bytes(it.token, K_ADDRESS);
       if (!adr || !adr->data || adr->len != 20) return req_set_error(ctx, "invalid token addr", IN3_EINVAL);
       memcpy(conf->tokens[i].address, adr->data, 20);

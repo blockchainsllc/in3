@@ -294,7 +294,13 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     }
     if (!r) return vc_err(vc, "missing proof for log");
     d_token_t* topics = d_get(it.token, K_TOPICS);
-    rlp_decode(&r->data, 0, &tmp);
+    bytes_t    data   = r->data;
+    // EIP 2718 Envelop
+    if (data.len && data.data[0] < 0x7f) {
+      data.data++;
+      data.len--;
+    }
+    rlp_decode(&data, 0, &tmp); // decode the list to tmp
 
     // verify the log-data
     if (rlp_decode(&tmp, 3, &logddata) != 2) return vc_err(vc, "invalid log-data");

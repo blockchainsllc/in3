@@ -78,6 +78,10 @@
 #define K_S                 key("s")
 #define K_V                 key("v")
 
+#define K_MAX_FEE_PER_GAS   key("maxFeePerGas")
+#define K_MAX_PRIORITY_FEE_PER_GAS key("maxPriorityFeePerGas")
+#define K_ACCESS_LIST       key("accessList")
+#define K_BASE_GAS_FEE      key("baseFeePerGas")
 #define K_NONCE             key("nonce")
 #define K_GAS               key("gas")
 #define K_GAS_PRICE         key("gasPrice")
@@ -149,6 +153,7 @@
 #define K_TYPE              key("type")
 #define K_BALANCE           key("balance")
 #define K_STORAGE_HASH      key("storageHash")
+#define K_STORAGE_KEYS      key("storageKeys")
 #define K_KEY               key("key")
 #define K_STORAGE_PROOF     key("storageProof")
 

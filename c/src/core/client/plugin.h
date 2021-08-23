@@ -129,6 +129,10 @@ NONULL in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* da
  */
 NONULL in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value);
 
+/**
+ * creates a response with bytes but without a leading 0.
+ */
+NONULL in3_ret_t in3_rpc_handle_with_uint256(in3_rpc_handle_ctx_t* hctx, bytes_t data);
 // -------------- TRANSPORT -------------
 
 /**

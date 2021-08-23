@@ -402,3 +402,32 @@ void display_result(char* method, char* result) {
       recorder_print(0, "%s\n", result);
   }
 }
+
+static inline bool is_convertable_number(char* c) {
+  if (!*c) return false;
+  for (; *c; c++) {
+    if ((*c < '0' || *c > '9') && *c != '.') return strcmp(c, "eth") == 0;
+  }
+  return true;
+}
+
+static inline bool is_json(char* c) {
+  if (!c) return false;
+  char* e = parse_json_error(c);
+  if (e) {
+    _free(e);
+    return false;
+  }
+  return true;
+}
+static inline bool needs_hex_number(char* arg, char* method) {
+  // for eth, zksync (but not for eth_feeHistory)
+  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0) && strcmp(method, "eth_feeHistory") && is_convertable_number(arg);
+}
+
+void add_argument(char* arg, sb_t* args, in3_t* c, char* method) {
+  if (needs_hex_number(arg, method))
+    sb_print(args, "\"%s\"", get_wei(arg));
+  else
+    sb_print(args, is_json(arg) ? "%s" : "\"%s\"", strcmp(method, "in3_ens") ? resolve(c, arg) : arg);
+}

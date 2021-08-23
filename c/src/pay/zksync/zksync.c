@@ -149,25 +149,57 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   const cache_entry_t* cached = in3_cache_get_entry_by_prop(ctx->req->cache, ZKSYNC_CACHED_CONFIG);
   if (cached) conf = (void*) cached->value.data;
 
-  // handle rpc -functions
+    // handle rpc -functions
+#if !defined(RPC_ONLY) || defined(RPC_DEPOSIT)
   TRY_RPC("deposit", zksync_deposit(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_TRANSFER)
   TRY_RPC("transfer", zksync_transfer(conf, ctx, ZK_TRANSFER))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_WITHDRAW)
   TRY_RPC("withdraw", zksync_transfer(conf, ctx, ZK_WITHDRAW))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SET_KEY)
   TRY_RPC("set_key", zksync_set_key(conf, ctx, false))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_EMERGENCY_WITHDRAW)
   TRY_RPC("emergency_withdraw", zksync_emergency_withdraw(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SYNC_KEY)
   TRY_RPC("sync_key", zksync_get_key(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_AGGREGATE_PUBKEY)
   TRY_RPC("aggregate_pubkey", zksync_aggregate_pubkey(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_PUBKEYHASH)
   TRY_RPC("pubkeyhash", zksync_get_pubkeyhash(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_PUBKEY)
   TRY_RPC("pubkey", zksync_get_pubkey(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ACCOUNT_ADDRESS)
   TRY_RPC("account_address", zksync_account_address(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_CONTRACT_ADDRESS)
   TRY_RPC("contract_address", zksync_contract_address(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_TOKENS)
   TRY_RPC("tokens", zksync_tokens(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SIGN)
   TRY_RPC("sign", zksync_musig_sign(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_VERIFY)
   TRY_RPC("verify", in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
                                                      ? zkcrypto_verify_signatures(d_to_bytes(ctx->params + 1), conf->musig_pub_keys, d_to_bytes(ctx->params + 2))
                                                      : zkcrypto_verify_musig(d_to_bytes(ctx->params + 1), d_to_bytes(ctx->params + 2))))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_TX_DATA)
   TRY_RPC("tx_data", zksync_tx_data(conf, ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_ACCOUNT_HISTORY)
   TRY_RPC("account_history", zksync_account_history(conf, ctx))
+#endif
 
   // prepare fallback to send to zksync-server
   str_range_t p            = d_to_json(ctx->params);
@@ -175,6 +207,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   memcpy(param_string, p.data + 1, p.len - 2);
   param_string[p.len - 2] = 0;
 
+#if !defined(RPC_ONLY) || defined(RPC_ZKSYNC_ACCOUNT_INFO)
   if (strcmp(ctx->method, "account_info") == 0) {
     if (*param_string == 0 || strcmp(param_string, "null") == 0) {
       TRY(zksync_get_account(conf, ctx->req, NULL))
@@ -184,6 +217,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     else
       CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
   }
+#endif
 
   // we need to show the arguments as integers
   if (strcmp(ctx->method, "ethop_info") == 0)
