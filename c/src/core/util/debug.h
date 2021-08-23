@@ -173,6 +173,26 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
     const d_token_t* val = d_get_at(params, index);                                                       \
     if (!(cond)) return req_set_error(ctx, "argument at index " #index " must match " #cond, IN3_EINVAL); \
   }
+#define TRY_PARAM_GET_BYTES(target, ctx, index, min_len, max_len)                                                                             \
+  {                                                                                                                                           \
+    const d_token_t* t = d_get_at(ctx->params, index);                                                                                        \
+    if (d_type(t) == T_NULL)                                                                                                                  \
+      target = NULL_BYTES;                                                                                                                    \
+    else if (d_type(t) == T_OBJECT || d_type(t) == T_ARRAY)                                                                                   \
+      return req_set_error(ctx->req, "Param at " #index " must be bytes!", IN3_EINVAL);                                                       \
+    else {                                                                                                                                    \
+      target = d_to_bytes(t);                                                                                                                 \
+      if (target.len < min_len) return req_set_error(ctx->req, "Param at " #index " must have at least a length of " #min_len, IN3_EINVAL);   \
+      if (max_len && target.len > max_len) return req_set_error(ctx->req, "Param at " #index " must have max " #max_len "bytes", IN3_EINVAL); \
+    }                                                                                                                                         \
+  }
+#define TRY_PARAM_GET_REQUIRED_BYTES(target, ctx, index, min_len, max_len)                                                                  \
+  {                                                                                                                                         \
+    target = d_to_bytes(d_get_at(ctx->params, index));                                                                                      \
+    if (!target.data) return req_set_error(ctx->req, "Param at " #index " must be bytes!", IN3_EINVAL);                                     \
+    if (target.len < min_len) return req_set_error(ctx->req, "Param at " #index " must have at least a length of " #min_len, IN3_EINVAL);   \
+    if (max_len && target.len > max_len) return req_set_error(ctx->req, "Param at " #index " must have max " #max_len "bytes", IN3_EINVAL); \
+  }
 
 #define TRY_PARAM_GET_INT(target, ctx, index, def)                                           \
   {                                                                                          \
@@ -213,6 +233,58 @@ static inline void add_hex(sb_t* sb, char prefix, const char* property, bytes_t 
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
       target = t->data;                                                                           \
+  }
+
+#define TRY_PARAM_GET_STRING(target, ctx, index, def)                                            \
+  {                                                                                              \
+    const d_token_t* t = d_get_at(ctx->params, index);                                           \
+    if (d_type(t) == T_NULL)                                                                     \
+      target = def;                                                                              \
+    else if (d_type(t) != T_STRING)                                                              \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid string!", IN3_EINVAL); \
+    else                                                                                         \
+      target = d_string(t);                                                                      \
+  }
+
+#define TRY_PARAM_GET_REQUIRED_STRING(target, ctx, index)                                        \
+  {                                                                                              \
+    const d_token_t* t = d_get_at(ctx->params, index);                                           \
+    if (d_type(t) != T_STRING)                                                                   \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid string!", IN3_EINVAL); \
+    else                                                                                         \
+      target = d_string(t);                                                                      \
+  }
+
+#define TRY_PARAM_GET_OBJECT(target, ctx, index)                                                 \
+  {                                                                                              \
+    target = d_get_at(ctx->params, index);                                                       \
+    if (d_type(target) == T_NULL)                                                                \
+      target = NULL;                                                                             \
+    else if (d_type(target) != T_OBJECT)                                                         \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid object!", IN3_EINVAL); \
+  }
+
+#define TRY_PARAM_GET_REQUIRED_OBJECT(target, ctx, index)                                        \
+  {                                                                                              \
+    target = d_get_at(ctx->params, index);                                                       \
+    if (d_type(target) != T_OBJECT)                                                              \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid object!", IN3_EINVAL); \
+  }
+
+#define TRY_PARAM_GET_ARRAY(target, ctx, index)                                                 \
+  {                                                                                             \
+    target = d_get_at(ctx->params, index);                                                      \
+    if (d_type(target) == T_NULL)                                                               \
+      target = NULL;                                                                            \
+    else if (d_type(target) != T_ARRAY)                                                         \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid array!", IN3_EINVAL); \
+  }
+
+#define TRY_PARAM_GET_REQUIRED_ARRAY(target, ctx, index)                                        \
+  {                                                                                             \
+    target = d_get_at(ctx->params, index);                                                      \
+    if (d_type(target) != T_ARRAY)                                                              \
+      return req_set_error(ctx->req, "Param at " #index " must be a valid array!", IN3_EINVAL); \
   }
 
 /** used for exeuting a function based on the name. This macro will return if the name matches. */

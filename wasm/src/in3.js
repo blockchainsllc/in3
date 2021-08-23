@@ -88,9 +88,9 @@ else {
     try {
         // if axios is available, we use it
         const axios = require('' + 'axios')
-        in3w.transport = (url, payload, timeout = 30000, method = "POST", headers = {}) => axios({ method: method || 'POST', url, data: JSON.parse(payload), timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion(), ...headers } })
+        in3w.transport = (url, payload, timeout = 30000, method = "POST", headers = {}) => axios({ method: method || 'POST', url, data: payload && JSON.parse(payload), timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion(), ...headers } })
             .then(res => {
-                if (res.status != 200) throw new HttpError("Invalid satus", res.status)
+                if (res.statusCode < 200 || res.statusCode >= 400) throw new HttpError("Invalid satus", res.status)
                 return JSON.stringify(res.data)
             })
     } catch (xx) {

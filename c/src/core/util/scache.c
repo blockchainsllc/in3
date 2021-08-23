@@ -51,7 +51,7 @@ void in3_cache_free(cache_entry_t* cache, bool is_external) {
       else
         _free(cache->key.data);
     }
-    if (cache->props & CACHE_PROP_MUST_FREE && ((cache->props & CACHE_PROP_ONLY_EXTERNAL) == 0 || is_external))
+    if (cache->props & CACHE_PROP_MUST_FREE && ((cache->props & CACHE_PROP_ONLY_EXTERNAL) == 0 || is_external) && ((cache->props & CACHE_PROP_ONLY_NOT_EXTERNAL) == 0 || !is_external))
       _free(cache->value.data);
     p     = cache;
     cache = cache->next;

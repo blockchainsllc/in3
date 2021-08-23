@@ -14,6 +14,20 @@ typedef struct recorder_entry {
 
 } recorder_entry_t;
 
+typedef struct ptr {
+  void*       ptr;
+  struct ptr* next;
+} ptr_t;
+
+static ptr_t* global_ptr = NULL;
+void*         add_global(void* ptr) {
+  ptr_t* p   = _malloc(sizeof(ptr_t));
+  p->next    = global_ptr;
+  p->ptr     = ptr;
+  global_ptr = p;
+  return ptr;
+}
+
 typedef struct {
   in3_plugin_act_fn transport;
   FILE*             f;
@@ -60,12 +74,12 @@ static recorder_entry_t* read_one_entry() {
         continue;
     }
     if (!entry) {
-      entry       = _calloc(sizeof(recorder_entry_t), 1);
+      entry       = add_global(_calloc(sizeof(recorder_entry_t), 1));
       char* ptr   = strtok(buffer + 3, " ");
       entry->name = _strdupn(ptr, -1);
       while ((ptr = strtok(NULL, " "))) {
         entry->args                = entry->argl ? _realloc(entry->args, sizeof(char*) * (entry->argl + 1), sizeof(char*) * entry->argl) : _malloc(sizeof(char*));
-        entry->args[entry->argl++] = _strdupn(ptr, -1);
+        entry->args[entry->argl++] = add_global(_strdupn(ptr, -1));
       }
     }
     else

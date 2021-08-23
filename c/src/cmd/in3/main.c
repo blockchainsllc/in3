@@ -21,6 +21,7 @@ static void send_request(in3_t* c, int argc, char** argv, char* method, sb_t* ar
   else
     sb_add_chars(sb, "}");
   in3_client_rpc_raw(c, sb->data, result, error);
+  sb_free(sb);
   check_last_output();
 #ifdef NODESELECT_DEF
   in3_chain_t*          chain = &c->chain;
