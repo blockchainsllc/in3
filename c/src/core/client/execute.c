@@ -250,7 +250,7 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
   assert_in3_req(ctx);
   assert(response_data);
   assert(len);
-  const bool is_json = response_data[0] == '{' || response_data[0] == '[';
+  const bool is_json = response_data[0] == '{' || response_data[0] == '[' || response_data[0] == '"';
 
   if (is_raw_http(ctx)) {
     ctx->response_context = is_json ? parse_json(response_data) : NULL;
