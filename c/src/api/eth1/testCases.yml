@@ -65,33 +65,61 @@ account:
       address: "0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"
 
   in3_prepareTx:
-    config:
-      proof: 'none'
-    input:
-      - to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
-        value: "0x100000000"
-        from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f" 
-    expected_output: "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
-    mockedResponses:
-      - eth_getTransactionCount:
-          req:
+    -
+      config:
+        proof: 'none'
+      input:
+        - to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
+          value: "0x100000000"
+          from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f" 
+      expected_output: "0xe48080829c409463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
+      mockedResponses:
+        - eth_getTransactionCount:
+            req:
+              -
+                method: "eth_getTransactionCount"
+                params:
+                  - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+                  - "latest"
+            res:
+            - 
+              result: "0x0"
+        - eth_gasPrice:
+            req:
             -
-              method: "eth_getTransactionCount"
-              params:
-                - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
-                - "latest"
-          res:
-          - 
-            result: "0x0"
-      - eth_gasPrice:
-          req:
-          -
-            method: "eth_gasPrice"
-            params: [] 
-          res:
-          - 
-            result: "0x0"
-
+              method: "eth_gasPrice"
+              params: [] 
+            res:
+            - 
+              result: "0x0"
+    -
+      config:
+        proof: 'none'
+      input:
+        - to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
+          value: "0x100000000"
+          from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+          gas: 21000
+      expected_output: "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
+      mockedResponses:
+        - eth_getTransactionCount:
+            req:
+              -
+                method: "eth_getTransactionCount"
+                params:
+                  - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+                  - "latest"
+            res:
+            - 
+              result: "0x0"
+        - eth_gasPrice:
+            req:
+            -
+              method: "eth_gasPrice"
+              params: [] 
+            res:
+            - 
+              result: "0x0"
   in3_signTx:
     config:
       proof: "none"
@@ -163,6 +191,6 @@ account:
         value: "15023483000000000"
         gasPrice: 1000000000
         nonce: 32
-    expected_output: "0xf86a20843b9aca00825208942c055df8d095a98099dc8942510a65d51480840e87355fc737810e00802da0fd2f892a7d154aa699ead599152d93674765eef4e6c384ffbc50db394ec3e3cea055ce9aee6e61256f7efaa9c714e4c342e21074d900f1d8399be720c56cc5f415"
+    expected_output: "0xf86a20843b9aca00829c40942c055df8d095a98099dc8942510a65d51480840e87355fc737810e00802ea038448f7f8591b29e97694ae8c317de840fb2e7b178714fd3d102ed082682c639a04ab7da09a2e7acb717c53c7a610c63ea9e703d483603abd066f9ada4adf88c98"
 
 
