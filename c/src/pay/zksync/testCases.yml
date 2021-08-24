@@ -192,8 +192,7 @@ zksync:
             method: "get_tx_fee"
             params:
               -
-                ChangePubKey:
-                   onchainPubkeyAuth: false
+                ChangePubKey: "ECDSA"
               - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
               - "ETH"
           res:
@@ -205,8 +204,7 @@ zksync:
               gasPriceWei: 1000000000
               gasFee: 34060000000000
               feeType:
-                ChangePubKey:
-                  onchainPubkeyAuth: false
+                ChangePubKey: "ECDSA"
       - tx_submit:
           req:
           -
