@@ -154,6 +154,7 @@ utils:
         default: eth
     result:
       descr: the value in wei as hex.
+      type: uint256
     example:
       request:
         - "20.0009123"
