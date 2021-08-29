@@ -455,6 +455,10 @@ int runRequests(char** names, int test_index) {
 int main(int argc, char* argv[]) {
   use_color = 1;
   in3_log_set_level(LOG_INFO);
+
+  in3_ret_t in3_register_vade (in3_t*);
+  in3_register_default(in3_register_vade);
+
   in3_register_default(in3_register_eth_full);
   in3_register_default(in3_register_eth_api);
   in3_register_default(in3_register_ipfs);
