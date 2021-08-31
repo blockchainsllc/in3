@@ -57,10 +57,16 @@ set(CRYPTO_SRC
 if (NOT ESP_IDF)
     set(CRYPTO_SRC ${CRYPTO_SRC} hmac.c)
 endif()
-
+if (WASM)
+  set (CMAKE_C_FLAGS "$CMAKE_C_FLAGS -Wno-null-pointer-subtraction")
+  set (CMAKE_CXX_FLAGS "$CMAKE_CXX_FLAGS -Wno-null-pointer-subtraction")
+endif()
 add_static_library(
   NAME     crypto 
   
   SOURCES 
     ${CRYPTO_SRC}
 )
+
+
+
