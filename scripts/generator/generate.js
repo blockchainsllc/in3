@@ -86,6 +86,8 @@ function print_object(def, pad, useNum, doc, pre) {
     for (const prop of Object.keys(def)) {
         let s = pad + (useNum ? ((i++) + '.') : '*') + ' **' + prop + '**'
         const p = def[prop]
+        while (typeof p.type == 'string' && typeof (types[p.type]) === 'string') p.type = types[p.type]
+
         const pt = getType(p.type, types)
         if (p.type) s += ' : ' + typeName(p, true)
         if (p.optional) s += ' *(optional)*'
