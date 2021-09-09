@@ -200,8 +200,8 @@ function ecSign(pk, data, signType) {
     data = toUint8Array(data)
     pk = toUint8Array(pk)
     let st = 0;
-    if (signType == 'ec_prefix') st = 2;
-    if (signType == 'ec_hash') st = 1;
+    if (signType && signType.endsWith('prefix')) st = 2;
+    if (signType && signType.endsWith('hash')) st = 1;
 
     return toBuffer(call_buffer('ec_sign', 65, pk, st, data, data.byteLength, false))
 }
@@ -632,7 +632,7 @@ class SimpleSigner {
     async sign(data, account, sign_type, payloadType, meta) {
         const pk = this.accounts[toChecksumAddress(account)]
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
-        return ecSign(pk, data, sign_type)
+        return ecSign(pk, data, sign_type || 'hash')
 
     }
 
