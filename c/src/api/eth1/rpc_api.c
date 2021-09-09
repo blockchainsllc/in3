@@ -39,12 +39,12 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../signer/pk-signer/signer.h"
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/rand.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
-#include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
 #include "ens.h"
@@ -551,9 +551,9 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   sc.message        = data;
   sc.account        = pk ? *pk : NULL_BYTES;
   sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
-  if (strcmp(sig_type,"sign_ec_hash")==0) sc.type=SIGN_EC_HASH;
-  if (strcmp(sig_type,"sign_ec_raw")==0) sc.type=SIGN_EC_RAW;
-  if (strcmp(sig_type,"sign_ec_prefix")==0) sc.type=SIGN_EC_PREFIX;
+  if (strcmp(sig_type, "sign_ec_hash") == 0) sc.type = SIGN_EC_HASH;
+  if (strcmp(sig_type, "sign_ec_raw") == 0) sc.type = SIGN_EC_RAW;
+  if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.type = SIGN_EC_PREFIX;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));
@@ -562,12 +562,12 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
     sc.signature = bytes(_malloc(65), 65);
     if (sc.type == SIGN_EC_RAW)
       ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature.data, sc.signature.data + 64, NULL);
-    else if (strcmp(sig_type, "raw") == 0 || sc.type==SIGN_EC_HASH)
+    else if (strcmp(sig_type, "raw") == 0 || sc.type == SIGN_EC_HASH)
       ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature.data, sc.signature.data + 64, NULL);
     else if (sc.type == SIGN_EC_PREFIX) {
-        bytes32_t hash;
-        eth_create_prefixed_msg_hash(hash, data);
-        ecdsa_sign_digest(&secp256k1, pk->data, hash, sc.signature.data, sc.signature.data + 64, NULL);
+      bytes32_t hash;
+      eth_create_prefixed_msg_hash(hash, data);
+      ecdsa_sign_digest(&secp256k1, pk->data, hash, sc.signature.data, sc.signature.data + 64, NULL);
     }
     else {
       _free(sc.signature.data);
@@ -578,9 +578,9 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
     return req_set_error(ctx->req, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
   bytes_t sig_bytes = sc.signature;
-    
+
   // we only correct the v value, if the sig_type is a simple type. if it is a sign_ec- type, we don't
-  if (strncmp(sig_type, "sign_ec_",8) && sc.signature.len == 65 && sc.signature.data[64] < 2)
+  if (strncmp(sig_type, "sign_ec_", 8) && sc.signature.len == 65 && sc.signature.data[64] < 2)
     sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
