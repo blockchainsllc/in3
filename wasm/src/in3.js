@@ -322,10 +322,10 @@ class IN3 {
                         switch (req.type) {
                             case 'sign':
                                 try {
-                                    const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                    const [method, message, account, pl_type, meta] = Array.isArray(req.payload) ? [req.payload[0].method, ...req.payload[0].params] : [req.payload.method, ...req.payload.params];
                                     if (!this.signer) throw new Error('no signer set to handle signing')
                                     if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
-                                    setResponse(req.ctx, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                                    setResponse(req.ctx, toHex(await this.signer.sign(message, account, method, pl_type, meta)), 0, false)
                                 } catch (ex) {
                                     setResponse(req.ctx, ex.message || ex, 0, ex.status || true)
                                 }

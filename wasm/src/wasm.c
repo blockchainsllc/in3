@@ -71,7 +71,7 @@ static char*    last_error = NULL;
 static uint32_t now() {
   static uint64_t time_offset = 0;
   if (!time_offset) time_offset = current_ms();
-  return (uint32_t)(current_ms() - time_offset);
+  return (uint32_t) (current_ms() - time_offset);
 }
 void EMSCRIPTEN_KEEPALIVE in3_set_error(char* data) {
   if (last_error) free(last_error);
@@ -266,7 +266,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
         sb_add_chars(sb, ",\"wait\":");
         sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
-        sb_add_chars(sb, (request->payload && strlen(request->payload))?request->payload:"null");
+        sb_add_chars(sb, (request->payload && strlen(request->payload)) ? request->payload : "null");
         sb_add_chars(sb, ",\"method\":\"");
         sb_add_chars(sb, request->method);
         sb_add_chars(sb, "\",\"urls\":[");
@@ -526,12 +526,13 @@ uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uin
   int      error = -1;
   switch (type) {
     case SIGN_EC_PREFIX: {
-      bytes32_t hash;
+      bytes32_t       hash;
       struct SHA3_CTX kctx;
       sha3_256_Init(&kctx);
-      const char* PREFIX = "\x19" "Ethereum Signed Message:\n";
+      const char* PREFIX = "\x19"
+                           "Ethereum Signed Message:\n";
       sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-      sha3_Update(&kctx, hash, sprintf((char*)hash,"%d", len)  );
+      sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", len));
       if (len) sha3_Update(&kctx, data, len);
       keccak_Final(&kctx, hash);
       error = ecdsa_sign_digest(&secp256k1, pk, hash, dst, dst + 64, NULL);
