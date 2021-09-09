@@ -117,5 +117,6 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 NONULL void in3_req_free_nodes(node_match_t* c);
 int         req_nodes_len(node_match_t* root);
 NONULL bool req_is_method(const in3_req_t* req, const char* method);
+in3_ret_t   req_send_sign_request(in3_req_t* ctx, d_signature_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key);
 
 #endif // REQ_INTERNAL_H
