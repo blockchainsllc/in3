@@ -68,29 +68,25 @@ in3_ret_t in3_register_swift(in3_t* c, swift_cb_t* cbs) {
 }
 
 char* sign_get_method(in3_req_t* r) {
-    return d_get_string(r->requests[0],K_METHOD);
+  return d_get_string(r->requests[0], K_METHOD);
 }
-                      
+
 bytes_t sign_get_message(in3_req_t* r) {
-    d_token_t* params =d_get(r->requests[0],K_PARAMS);
-    return d_to_bytes(d_get_at(params,0));
+  d_token_t* params = d_get(r->requests[0], K_PARAMS);
+  return d_to_bytes(d_get_at(params, 0));
 }
 uint8_t* sign_get_from(in3_req_t* r) {
-    d_token_t* params =d_get(r->requests[0],K_PARAMS);
-   return d_to_bytes(d_get_at(params,1)).data;
+  d_token_t* params = d_get(r->requests[0], K_PARAMS);
+  return d_to_bytes(d_get_at(params, 1)).data;
 }
 
-                      
 int sign_get_payload_type(in3_req_t* r) {
-    d_token_t* params =d_get(r->requests[0],K_PARAMS);
- return d_get_int_at(params,2);
+  d_token_t* params = d_get(r->requests[0], K_PARAMS);
+  return d_get_int_at(params, 2);
 }
 
-                                
 char* sign_get_metadata(in3_req_t* r) {
-    d_token_t* params =d_get(r->requests[0],K_PARAMS);
-  d_token_t* meta = d_get_at(params,3);
+  d_token_t* params = d_get(r->requests[0], K_PARAMS);
+  d_token_t* meta   = d_get_at(params, 3);
   return meta ? d_create_json(r->request_context, meta) : NULL;
 }
-
-
