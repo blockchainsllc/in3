@@ -34,12 +34,40 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
           hex_to_bytes(accounts, l, ctx->accounts, l / 2);
         }
         _free(accounts);
+        return l > 2 ? IN3_OK : IN3_EIGNORE;
       }
-      return IN3_OK;
+      return IN3_EIGNORE;
     }
     case PLGN_ACT_SIGN: {
       in3_sign_ctx_t* _Nonnull ctx = plugin_ctx;
-      bytes_t   signature          = NULL_BYTES;
+
+      in3_sign_account_ctx_t sctx = {0};
+      sctx.req                    = ctx->req;
+      char* accounts              = conf->sign_accounts(&sctx);
+      if (!accounts) return IN3_EIGNORE;
+      int l = strlen(accounts);
+      if (l < 3) {
+        _free(accounts);
+        return IN3_EIGNORE;
+      }
+
+      if (ctx->account.len == 20) {
+        char adr[41];
+        bytes_to_hex_string(adr, "", ctx->account, "");
+        bool found = false;
+        for (int i = 2; i < l; i += 40) {
+          if (strncmp(adr, accounts + i, 40) == 0) {
+            found = true;
+            break;
+          }
+        }
+        _free(accounts);
+        if (!found) return IN3_EIGNORE;
+      }
+      else
+        _free(accounts);
+
+      bytes_t   signature = NULL_BYTES;
       bytes32_t msghash;
 
       struct SHA3_CTX kctx;
