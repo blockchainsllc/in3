@@ -384,6 +384,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
         *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
         if (!*result) {
           char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+          UNUSED_VAR(s); // this makes sure we don't get a warning when building with _DLOGGING=false
           return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
         }
         return IN3_OK;
@@ -419,6 +420,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
     *result = d_get(ctx->responses[0], K_RESULT);
     if (!*result) {
       char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+      UNUSED_VAR(s); // this makes sure we don't get a warning when building with _DLOGGING=false
       return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
     }
   }

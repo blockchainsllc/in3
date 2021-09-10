@@ -776,6 +776,7 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->req->raw_response[i].state != IN3_WAITING) {
       char* data = request->req->raw_response[i].data.data;
+      UNUSED_VAR(data); // this makes sure we don't get a warning when building with _DLOGGING=false
 #ifdef DEBUG
       data = format_json(data);
 #endif

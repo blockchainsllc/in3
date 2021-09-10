@@ -89,7 +89,7 @@ IF (PK_SIGNER)
   set(IN3_API ${IN3_API} pk_signer)
 ENDIF (PK_SIGNER)
 
-IF (CORE_API)
+IF (CORE_API AND IN3API)
   set(IN3_API ${IN3_API} core_api)
 ENDIF (CORE_API)
 
