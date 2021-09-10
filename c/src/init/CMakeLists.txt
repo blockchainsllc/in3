@@ -42,6 +42,7 @@ add_static_library(
     in3_init.c
 
   DEPENDS 
+    core
     ${IN3_VERIFIER} 
     ${IN3_API} 
     ${IN3_TRANSPORT}

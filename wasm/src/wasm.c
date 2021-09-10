@@ -37,8 +37,10 @@
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
+#ifdef NODESELECT_DEF
 #include "../../c/src/nodeselect/full/cache.h"
 #include "../../c/src/nodeselect/full/nodelist.h"
+#endif
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/third-party/crypto/sha2.h"
@@ -397,6 +399,7 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
 
 uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
   uint8_t* result = malloc(32);
+#ifdef CRYPTO_LIB
   if (result) {
     SHA256_CTX c;
     sha256_Init(&c);
@@ -405,6 +408,9 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
   }
   else
     in3_set_error("malloc failed");
+#else
+  in3_set_error("no cryptolib installer");
+#endif
 
   return result;
 }
@@ -504,26 +510,31 @@ char* EMSCRIPTEN_KEEPALIVE wasm_to_hex(char* val) {
 /** private key to address */
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   uint8_t* dst = malloc(20);
-  uint8_t  public_key[65], sdata[32];
+#ifdef CRYPTO_LIB
+  uint8_t public_key[65], sdata[32];
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
   keccak(bytes(public_key + 1, 64), sdata);
   memcpy(dst, sdata + 12, 20);
+#endif
   return dst;
 }
 
 /** private key to address */
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
   uint8_t* dst = malloc(64);
-  uint8_t  public_key[65], sdata[32];
+#ifdef CRYPTO_LIB
+  uint8_t public_key[65], sdata[32];
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
   memcpy(dst, public_key + 1, 64);
+#endif
   return dst;
 }
 
 /** signs the given data */
 uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
-  uint8_t* dst   = malloc(65);
-  int      error = -1;
+  uint8_t* dst = malloc(65);
+#ifdef CRYPTO_LIB
+  int error = -1;
   switch (type) {
     case SIGN_EC_PREFIX: {
       bytes32_t       hash;
@@ -553,5 +564,8 @@ uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uin
     return NULL;
   }
   if (adjust_v) dst[64] += 27;
+#else
+  in3_set_error("no cryptolib installer");
+#endif
   return dst;
 }

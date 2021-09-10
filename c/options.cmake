@@ -50,6 +50,7 @@ OPTION(PLGN_CLIENT_DATA "Enable client-data plugin" OFF)
 OPTION(THREADSAFE "uses mutex to protect shared nodelist access" ON)
 OPTION(SWIFT "swift API for swift bindings" OFF)
 OPTION(CORE_API "include basic core-utils" ON)
+OPTION(CRYPTO_LIB "include crypto-lib" ON)
 OPTION(RPC_ONLY "specifies a coma-seperqted list of rpc-methods which should be supported. all other rpc-methods will be removed reducing the size of executable a lot." OFF)
 
 
@@ -74,6 +75,10 @@ ENDIF()
 IF (BTC_PRE_BPI34)
   ADD_DEFINITIONS(-DBTC_PRE_BPI34)
 ENDIF (BTC_PRE_BPI34)
+
+IF (CRYPTO_LIB)
+  ADD_DEFINITIONS(-DCRYPTO_LIB)
+ENDIF (CRYPTO_LIB)
 
 IF (POA)
   ADD_DEFINITIONS(-DPOA)

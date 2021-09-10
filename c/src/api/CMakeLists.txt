@@ -32,10 +32,12 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory(utils)
-add_subdirectory(core)
 
 IF (IN3API)
+  add_subdirectory(utils)
+  add_subdirectory(core)
+
+
   add_subdirectory(eth1)
 
     if (NOT WASM)
