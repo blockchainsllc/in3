@@ -165,7 +165,7 @@ bool configure_arg(in3_t* c, char** args, int* index, int argc) {
       value++;
       name = alloca(value - arg - 2);
       strncpy(name, arg + 2, value - arg - 3);
-      name[value - arg - 1] = 0;
+      name[value - arg - 3] = 0;
     }
     else {
       name = alloca(strlen(arg) - 1);
