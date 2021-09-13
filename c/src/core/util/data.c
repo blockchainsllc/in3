@@ -752,13 +752,13 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
       return dst;
     case T_NULL:
       return _strdupn("null", 4);
-    case T_STRING:
-      dst        = _malloc(l + 3);
-      dst[0]     = '"';
-      dst[l + 1] = '"';
-      dst[l + 2] = 0;
-      memcpy(dst + 1, item->data, l);
-      return dst;
+    case T_STRING: {
+      sb_t sb = {.allocted = l + 1, .len = 0, .data = _malloc(l + 3)};
+      sb_add_char(&sb, '"');
+      sb_add_escaped_chars(&sb, (char*) item->data);
+      sb_add_char(&sb, '"');
+      return sb.data;
+    }
     case T_BYTES:
       dst    = _malloc(l * 2 + 5);
       dst[0] = '"';
