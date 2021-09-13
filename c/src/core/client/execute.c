@@ -263,7 +263,6 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
 NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, int len) {
   assert_in3_req(ctx);
   assert(response_data);
-  assert(len);
   const bool is_json = response_data[0] == '{' || response_data[0] == '[' || response_data[0] == '"';
 
   if (is_raw_http(ctx)) {
@@ -280,6 +279,9 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     ctx->responses    = _malloc(sizeof(d_token_t*));
     ctx->responses[0] = ctx->response_context->result;
     return IN3_OK;
+  }
+  else {
+    assert(len);
   }
 
   ctx->response_context = is_json ? parse_json(response_data) : parse_binary_str(response_data, len);
@@ -386,7 +388,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
 
   in3_ret_t res = IN3_OK;
 
-  if (response->state || !response->data.len) // reponse has an error
+  if (response->state || (!is_raw_http(ctx) && !response->data.len)) // reponse has an error
     return handle_error_response(ctx, node, response);
 
   // we need to clean up the previos responses if set
