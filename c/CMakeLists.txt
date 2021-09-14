@@ -119,6 +119,10 @@ if (IN3_LIB)
             target_link_libraries(in3_lib zk_crypto_rs )
         endif()
 
+        if (VADE)
+            target_link_libraries(in3_lib vade_evan )
+        endif()
+
 
         # install
         INSTALL(TARGETS in3_lib
