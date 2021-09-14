@@ -562,6 +562,20 @@ typedef struct {
     }                                                               \
   }
 
+/**
+ * sets the string as taken from the given property to the target and raises an error if the len does not fit.
+ */
+#define CNF_SET_STRING(dst, token, property)                                                        \
+  {                                                                                                 \
+    const d_token_t* t = d_get(token, key(property));                                               \
+    if (d_type(t) != T_NULL && d_type(t) != T_STRING) CNF_ERROR("Invalid config for " property "!") \
+    const char* tmp = d_string(t);                                                                  \
+    if (tmp) {                                                                                      \
+      if (dst) _free(dst);                                                                          \
+      dst = _strdupn(tmp, -1);                                                                      \
+    }                                                                                               \
+  }
+
 #ifdef __cplusplus
 }
 #endif

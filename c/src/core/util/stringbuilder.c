@@ -321,3 +321,41 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
   }
   return sb;
 }
+
+sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  for (const char* c = fmt; *c; c++) {
+    if (*c == '%') {
+      c++;
+      switch (*c) {
+        case 's':
+          sb_add_chars(sb, va_arg(args, char*));
+          break;
+        case 'S':
+          sb_add_escaped_chars(sb, va_arg(args, char*));
+          break;
+        case 'i':
+        case 'd':
+        case 'u':
+          sb_add_int(sb, va_arg(args, int64_t));
+          break;
+        case 'b':
+          sb_add_rawbytes(sb, "", va_arg(args, bytes_t), 0);
+          break;
+        case 'j':
+          sb_add_json(sb, "", va_arg(args, d_token_t*));
+          break;
+        case 0:
+          va_end(args);
+          return sb;
+        default:
+          break;
+      }
+      continue;
+    }
+    sb_add_char(sb, *c);
+  }
+  va_end(args);
+  return sb;
+}
