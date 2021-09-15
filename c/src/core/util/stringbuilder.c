@@ -60,7 +60,7 @@ sb_t* sb_init(sb_t* sb) {
   return sb;
 }
 NONULL static void check_size(sb_t* sb, size_t len) {
-  if (len == 0 || sb->len + len < sb->allocted) return;
+  if ((len == 0 || sb->len + len < sb->allocted) && sb->data) return;
   if (sb->allocted == 0) {
     sb->allocted = len + 1,
     sb->data     = _malloc(sb->allocted);
