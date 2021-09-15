@@ -92,7 +92,7 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
   int escapes = 0;
   if (l == 0 || chars == NULL) return sb;
   for (int i = 0; i < l; i++) {
-    if (chars[i] == '"' || chars[i] == '\n') escapes++;
+    if (chars[i] == '"' || chars[i] == '\n' || chars[i] == '\\') escapes++;
   }
   check_size(sb, l + escapes);
   memcpy(sb->data + sb->len, chars, l);
@@ -323,6 +323,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
 }
 
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
+  check_size(sb, strlen(fmt));
   va_list args;
   va_start(args, fmt);
   for (const char* c = fmt; *c; c++) {
@@ -343,6 +344,9 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
         case 'b':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), 0);
           break;
+        case 'v':
+          sb_add_rawbytes(sb, "", va_arg(args, bytes_t), -1);
+          break;
         case 'j':
           sb_add_json(sb, "", va_arg(args, d_token_t*));
           break;
@@ -354,8 +358,10 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
       }
       continue;
     }
-    sb_add_char(sb, *c);
+    if (sb->len + 1 >= sb->allocted) check_size(sb, 1);
+    sb->data[sb->len++] = *c;
   }
   va_end(args);
+  sb->data[sb->len] = 0;
   return sb;
 }
