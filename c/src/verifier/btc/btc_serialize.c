@@ -68,6 +68,64 @@ uint64_t le_to_long(uint8_t* data) {
          (((uint64_t) data[3]) << 24) | (((uint64_t) data[2]) << 16) | (((uint64_t) data[1]) << 8) | data[0];
 }
 
+void uint_to_le(bytes_t* buf, uint32_t index, uint32_t value) {
+  buf->data[index]     = value & 0xff;
+  buf->data[index + 1] = (value >> 8) & 0xff;
+  buf->data[index + 2] = (value >> 16) & 0xff;
+  buf->data[index + 3] = (value >> 24) & 0xff;
+}
+
+void uint_to_long(bytes_t* buf, uint32_t index, uint64_t value) {
+  buf->data[index]     = value & 0xff;
+  buf->data[index + 1] = (value >> 8) & 0xff;
+  buf->data[index + 2] = (value >> 16) & 0xff;
+  buf->data[index + 3] = (value >> 24) & 0xff;
+  buf->data[index + 4] = (value >> 32) & 0xff;
+  buf->data[index + 5] = (value >> 40) & 0xff;
+  buf->data[index + 6] = (value >> 48) & 0xff;
+  buf->data[index + 7] = (value >> 56) & 0xff;
+}
+
+size_t get_compact_uint_size(uint64_t cmpt_uint) {
+  if (cmpt_uint > 0xffffffff) {
+    return 9;
+  }
+  if (cmpt_uint > 0xffff) {
+    return 5;
+  }
+  if (cmpt_uint > 0xfc) {
+    return 3;
+  }
+  return 1;
+}
+
+void long_to_compact_uint(bytes_t* buf, uint32_t index, uint64_t value) {
+  int len;
+  if (value > 0xffffffff) {
+    len              = 9;
+    buf->data[index] = 0xff;
+  }
+  else if (value > 0xffff) {
+    len              = 5;
+    buf->data[index] = 0xfe;
+  }
+  else if (value > 0xfc) {
+    len              = 3;
+    buf->data[index] = 0xfd;
+  }
+  else {
+    len              = 1;
+    buf->data[index] = (uint8_t) (value & 0xff);
+  }
+
+  // fill buffer with value
+  if (len > 1) {
+    for (int i = 0; i < (len - 1); i++) {
+      buf->data[i + index] = (uint8_t) ((value >> (i << 1)) && 0xff);
+    }
+  }
+}
+
 void btc_target_from_block(bytes_t block, bytes32_t target) {
   uint8_t *bits = btc_block_get(block, BTC_B_BITS).data, tmp[32];
   memset(tmp, 0, 32);
