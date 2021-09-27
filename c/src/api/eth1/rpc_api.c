@@ -101,6 +101,32 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   return IN3_OK;
 }
 
+static in3_ret_t rlp_decode_data(sb_t* sb, bytes_t data, int index) {
+  bytes_t dst  = {0};
+  int     type = rlp_decode(&data, index, &dst);
+  if (type == 1) {
+    if (index) sb_add_char(sb, ',');
+    sb_add_bytes(sb, "", &dst, 1, false);
+    return IN3_OK;
+  }
+  else if (type == 2) {
+    if (index) sb_add_char(sb, ',');
+    sb_add_char(sb, '[');
+    data = dst;
+    for (int i = 0; rlp_decode_data(sb, data, i) == IN3_OK; i++) {}
+    sb_add_char(sb, ']');
+    return IN3_OK;
+  }
+  return IN3_ELIMIT;
+}
+
+static in3_ret_t in3_rlpDecode(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t data = {0};
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 1, 0)
+  rlp_decode_data(in3_rpc_handle_start(ctx), data, 0);
+  return in3_rpc_handle_finish(ctx);
+}
+
 static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
   if (d_len(ctx->params) > 2) return req_set_error(ctx->req, "must be max 2 arguments", IN3_EINVAL);
@@ -721,6 +747,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ABIDECODE)
   TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_RLPDECODE)
+  TRY_RPC("in3_rlpDecode", in3_rlpDecode(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CHECKSUMADDRESS)
   TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))
