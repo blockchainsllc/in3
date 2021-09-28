@@ -68,6 +68,7 @@ uint64_t le_to_long(uint8_t* data) {
          (((uint64_t) data[3]) << 24) | (((uint64_t) data[2]) << 16) | (((uint64_t) data[1]) << 8) | data[0];
 }
 
+// TODO: Receive 'buf' as type 'uint8_t*' instead of 'bytes_t*'
 void uint_to_le(bytes_t* buf, uint32_t index, uint32_t value) {
   buf->data[index]     = value & 0xff;
   buf->data[index + 1] = (value >> 8) & 0xff;
@@ -75,7 +76,8 @@ void uint_to_le(bytes_t* buf, uint32_t index, uint32_t value) {
   buf->data[index + 3] = (value >> 24) & 0xff;
 }
 
-void uint_to_long(bytes_t* buf, uint32_t index, uint64_t value) {
+// TODO: Receive 'buf' as type 'uint8_t*' instead of 'bytes_t*'
+void long_to_le(bytes_t* buf, uint32_t index, uint64_t value) {
   buf->data[index]     = value & 0xff;
   buf->data[index + 1] = (value >> 8) & 0xff;
   buf->data[index + 2] = (value >> 16) & 0xff;
@@ -99,6 +101,7 @@ size_t get_compact_uint_size(uint64_t cmpt_uint) {
   return 1;
 }
 
+// TODO: Receive 'buf' as type 'uint8_t*' instead of 'bytes_t*'
 void long_to_compact_uint(bytes_t* buf, uint32_t index, uint64_t value) {
   int len;
   if (value > 0xffffffff) {

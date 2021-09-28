@@ -34,7 +34,7 @@ bytes_t  btc_get_transaction_end(uint8_t* data);
 bytes_t  btc_get_txinput(uint8_t* data);
 bytes_t  btc_get_txoutput(uint8_t* data);
 void     uint_to_le(bytes_t* buf, uint32_t index, uint32_t value);
-void     uint_to_long(bytes_t* buf, uint32_t index, uint64_t value);
+void     long_to_le(bytes_t* buf, uint32_t index, uint64_t value);
 size_t   get_compact_uint_size(uint64_t cmpt_uint);
 void     long_to_compact_uint(bytes_t* buf, uint32_t index, uint64_t value);
 

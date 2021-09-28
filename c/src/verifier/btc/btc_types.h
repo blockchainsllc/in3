@@ -31,12 +31,17 @@ typedef struct btc_tx_out {
 } btc_tx_out_t;
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
+in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst);
 in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst);
-uint8_t*  btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit);
-uint8_t*  btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst);
-in3_ret_t btc_serialize_transaction(btc_tx_t* tx, bytes_t* dst);
-uint32_t  btc_vsize(btc_tx_t* tx);
-uint32_t  btc_weight(btc_tx_t* tx);
+
+uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit);
+void     btc_serialize_tx_in(btc_tx_in_t* tx_in, bytes_t* dst);
+
+uint8_t* btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst);
+void     btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst);
+
+uint32_t btc_vsize(btc_tx_t* tx);
+uint32_t btc_weight(btc_tx_t* tx);
 
 static inline bool btc_is_witness(bytes_t tx) {
   return tx.data[4] == 0 && tx.data[5] == 1;

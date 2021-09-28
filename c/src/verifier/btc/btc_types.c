@@ -2,8 +2,16 @@
 #include "../../core/util/mem.h"
 #include "btc_serialize.h"
 
+// Transaction fixed size values
 #define BTC_TX_VERSION_SIZE_BYTES  4
 #define BTC_TX_LOCKTIME_SIZE_BYTES 4
+
+// Input fixed size values
+#define BTC_TX_IN_PREV_OUPUT_SIZE_BYTES 36 // Outpoint = prev txid (32 bytes) + output index (4 bytes)
+#define BTC_TX_IN_SEQUENCE_SIZE_BYTES   4
+
+// Output fixed size values
+#define BTC_TX_OUT_VALUE_SIZE_BYTES 8
 
 uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
@@ -16,12 +24,80 @@ uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   return dst->script.data + dst->script.len + 4;
 }
 
+// WARNING: You need to free 'dst' pointer after calling this function
+// TODO: Implement support for "Coinbase" inputs
+// TODO: Handle null arguments
+// TODO: Handle max script len = 10000 bytes
+void btc_serialize_tx_in(btc_tx_in_t* tx_in, bytes_t* dst) {
+  if (!tx_in || !dst) return;
+  // calculate serialized tx input size in bytes
+  uint32_t tx_in_size = (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES +
+                         get_compact_uint_size((uint64_t) tx_in->script.len) +
+                         tx_in->script.len +
+                         BTC_TX_IN_SEQUENCE_SIZE_BYTES);
+
+  // alloc memory in dst
+  dst->data = malloc(tx_in_size * sizeof(*dst->data));
+  dst->len  = tx_in_size;
+
+  // serialize tx_in
+  // -- Previous outpoint
+  if (!tx_in->prev_tx_hash) return;
+  uint32_t index = 0;
+  for (uint32_t i = 0; i < 32; i++) {
+    dst->data[index++] = tx_in->prev_tx_hash[i];
+  }
+  uint_to_le(dst, index, tx_in->prev_tx_index);
+  index += 4;
+
+  // -- script
+  long_to_compact_uint(dst, index, tx_in->script.len);
+  index += get_compact_uint_size(tx_in->script.len);
+
+  for (uint32_t i = 0; i < tx_in->script.len; i++) {
+    dst->data[index++] = tx_in->script.data[i];
+  }
+
+  // -- sequence
+  uint_to_le(dst, index, tx_in->sequence);
+}
+
 uint8_t* btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst) {
   uint64_t len;
   dst->value       = le_to_long(data);
   dst->script.data = data + 8 + decode_var_int(data + 8, &len);
   dst->script.len  = (uint32_t) len;
   return dst->script.data + dst->script.len;
+}
+
+// WARNING: You need to free 'dst' pointer after calling this function
+// TODO: Handle null arguments
+// TODO: Handle max script len = 10000 bytes
+void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
+  // calculate serialized tx output size in bytes
+  uint32_t tx_out_size = (BTC_TX_OUT_VALUE_SIZE_BYTES +
+                          get_compact_uint_size((uint64_t) tx_out->script.len) +
+                          tx_out->script.len);
+
+  // alloc memory in dst
+  dst->data = malloc(tx_out_size * sizeof(*dst->data));
+  dst->len  = tx_out_size;
+
+  // serialize tx_out
+  uint32_t index = 0;
+
+  // -- value
+  long_to_le(dst, index, tx_out->value);
+  index += 8;
+
+  // -- pk_script size
+  long_to_compact_uint(dst, index, tx_out->script.len);
+  index += get_compact_uint_size((uint64_t) tx_out->script.len);
+
+  // -- pk_script
+  for (uint32_t i = 0; i < tx_out->script.len; i++) {
+    dst->data[index++] = tx_out->script.data[i];
+  }
 }
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
@@ -59,12 +135,9 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
 }
 
 // Converts a btc transaction into a serialized transaction
-// TODO: Implement serialization for when tx_in and tx_out are not NULL
 // WARNING: You need to free dst pointer after using this function!
-in3_ret_t btc_serialize_transaction(btc_tx_t* tx, btc_tx_in_t* tx_in, btc_tx_out_t* tx_out, bytes_t* dst) {
-  UNUSED_VAR(tx_in);
-  UNUSED_VAR(tx_out);
-
+// TODO: Error handling for null tx and dst pointers
+in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
   // Clean exit buffer
   dst->len = 0;
 
