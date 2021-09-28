@@ -585,20 +585,8 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));
   }
   else if (sc.account.len == 32) {
-    sc.signature = bytes(_malloc(65), 65);
-    if (sc.type == SIGN_EC_RAW)
-      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature.data, sc.signature.data + 64, NULL);
-    else if (strcmp(sig_type, "raw") == 0 || sc.type == SIGN_EC_HASH)
-      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature.data, sc.signature.data + 64, NULL);
-    else if (sc.type == SIGN_EC_PREFIX) {
-      bytes32_t hash;
-      eth_create_prefixed_msg_hash(hash, data);
-      ecdsa_sign_digest(&secp256k1, pk->data, hash, sc.signature.data, sc.signature.data + 64, NULL);
-    }
-    else {
-      _free(sc.signature.data);
-      return req_set_error(ctx->req, "unsupported sigType", IN3_EINVAL);
-    }
+    sc.signature = sign_with_pk(pk->data, data, sc.type);
+    if (!sc.signature.data) return req_set_error(ctx->req, "unsupported sigType", IN3_EINVAL);
   }
   else
     return req_set_error(ctx->req, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);

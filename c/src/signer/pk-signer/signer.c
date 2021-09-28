@@ -101,28 +101,37 @@ void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
   keccak_Final(&kctx, dst);
 }
 
+bytes_t sign_with_pk(bytes32_t pk, bytes_t data, d_signature_type_t type) {
+  bytes_t res = bytes(_malloc(65), 65);
+  switch (type) {
+    case SIGN_EC_RAW:
+      ec_sign_pk_raw(data.data, pk, res.data);
+      break;
+
+    case SIGN_EC_PREFIX: {
+      bytes32_t hash;
+      eth_create_prefixed_msg_hash(hash, data);
+      ec_sign_pk_raw(hash, pk, res.data);
+      break;
+    }
+    case SIGN_EC_HASH:
+      ec_sign_pk_hash(data.data, data.len, pk, hasher_sha3k, res.data);
+      break;
+    default:
+      _free(res.data);
+      res = NULL_BYTES;
+  }
+  return res;
+}
+
 static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
   signer_key_t* k = data;
   switch (action) {
     case PLGN_ACT_SIGN: {
       in3_sign_ctx_t* ctx = action_ctx;
       if (ctx->account.len == 20 && memcmp(k->account, ctx->account.data, 20)) return IN3_EIGNORE;
-      ctx->signature = bytes(_malloc(65), 65);
-      switch (ctx->type) {
-        case SIGN_EC_RAW:
-          return ec_sign_pk_raw(ctx->message.data, k->pk, ctx->signature.data);
-
-        case SIGN_EC_PREFIX: {
-          bytes32_t hash;
-          eth_create_prefixed_msg_hash(hash, ctx->message);
-          return ec_sign_pk_raw(hash, k->pk, ctx->signature.data);
-        }
-        case SIGN_EC_HASH:
-          return ec_sign_pk_hash(ctx->message.data, ctx->message.len, k->pk, hasher_sha3k, ctx->signature.data);
-        default:
-          _free(ctx->signature.data);
-          return IN3_ENOTSUP;
-      }
+      ctx->signature = sign_with_pk(k->pk, ctx->message, ctx->type);
+      return ctx->signature.data ? IN3_OK : IN3_ENOTSUP;
     }
 
     case PLGN_ACT_SIGN_ACCOUNT: {
