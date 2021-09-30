@@ -93,7 +93,7 @@ in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst);
 void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg);
 
 /** signs with a pk bases on the type */
-bytes_t sign_with_pk(bytes32_t pk, bytes_t data, d_signature_type_t type);
+bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_signature_type_t type);
 #ifdef __cplusplus
 }
 #endif

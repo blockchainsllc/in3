@@ -101,7 +101,7 @@ void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
   keccak_Final(&kctx, dst);
 }
 
-bytes_t sign_with_pk(bytes32_t pk, bytes_t data, d_signature_type_t type) {
+bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_signature_type_t type) {
   bytes_t res = bytes(_malloc(65), 65);
   switch (type) {
     case SIGN_EC_RAW:
