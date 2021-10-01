@@ -105,17 +105,26 @@ bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_signature_t
   bytes_t res = bytes(_malloc(65), 65);
   switch (type) {
     case SIGN_EC_RAW:
-      ec_sign_pk_raw(data.data, pk, res.data);
+      if (ecdsa_sign_digest(&secp256k1, pk, data.data, res.data, res.data + 64, NULL) < 0) {
+        _free(res.data);
+        res = NULL_BYTES;
+      }
       break;
 
     case SIGN_EC_PREFIX: {
       bytes32_t hash;
       eth_create_prefixed_msg_hash(hash, data);
-      ec_sign_pk_raw(hash, pk, res.data);
+      if (ecdsa_sign_digest(&secp256k1, pk, hash, res.data, res.data + 64, NULL) < 0) {
+        _free(res.data);
+        res = NULL_BYTES;
+      }
       break;
     }
     case SIGN_EC_HASH:
-      ec_sign_pk_hash(data.data, data.len, pk, hasher_sha3k, res.data);
+      if (ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, data.data, data.len, res.data, res.data + 64, NULL) < 0) {
+        _free(res.data);
+        res = NULL_BYTES;
+      }
       break;
     default:
       _free(res.data);
