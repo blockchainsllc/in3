@@ -41,6 +41,7 @@
 #include "../../c/src/nodeselect/full/cache.h"
 #include "../../c/src/nodeselect/full/nodelist.h"
 #endif
+#include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/third-party/crypto/sha2.h"
@@ -534,38 +535,14 @@ uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
 uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
   uint8_t* dst = malloc(65);
 #ifdef CRYPTO_LIB
-  int error = -1;
-  switch (type) {
-    case SIGN_EC_PREFIX: {
-      bytes32_t       hash;
-      struct SHA3_CTX kctx;
-      sha3_256_Init(&kctx);
-      const char* PREFIX = "\x19"
-                           "Ethereum Signed Message:\n";
-      sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-      sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", len));
-      if (len) sha3_Update(&kctx, data, len);
-      keccak_Final(&kctx, hash);
-      error = ecdsa_sign_digest(&secp256k1, pk, hash, dst, dst + 64, NULL);
-      break;
-    }
-    case SIGN_EC_RAW:
-      error = ecdsa_sign_digest(&secp256k1, pk, data, dst, dst + 64, NULL);
-      break;
-    case SIGN_EC_HASH:
-      error = ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, data, len, dst, dst + 64, NULL);
-      break;
-
-    default:
-      error = -2;
-  }
-  if (error < 0) {
-    free(dst);
-    return NULL;
-  }
-  if (adjust_v) dst[64] += 27;
+  bytes_t sig = sign_with_pk(pk, bytes(data, len), type);
+  if (!sig.data)
+    in3_set_error("could not create signature");
+  else if (adjust_v && sig.len == 65 && sig.data[64] < 26)
+    sig.data[64] += 27;
+  return sig.data;
 #else
-  in3_set_error("no cryptolib installer");
+  in3_set_error("no cryptolib installed");
 #endif
   return dst;
 }
