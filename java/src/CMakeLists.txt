@@ -88,6 +88,7 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/utils/Crypto.java
     in3/utils/JSON.java
     in3/utils/Converter.java
+    in3/utils/PayloadType.java
     in3/utils/Signature.java
     in3/utils/SignatureType.java
     in3/utils/Signer.java

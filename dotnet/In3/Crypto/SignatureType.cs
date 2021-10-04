@@ -23,5 +23,10 @@ namespace In3.Crypto
         /// For data that was hashed and then signed.
         /// </summary>
         public static SignatureType Hash { get { return new SignatureType("hash"); } }
+
+        /// <summary>
+        /// For data hashed twice with sha256 and signed.
+        /// </summary>
+        public static SignatureType Btc { get { return new SignatureType("btc"); } }
     }
 }
