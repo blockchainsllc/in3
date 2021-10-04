@@ -341,6 +341,9 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
         case 'u':
           sb_add_int(sb, va_arg(args, int64_t));
           break;
+        case 'x':
+          sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
+          break;
         case 'b':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), 0);
           break;
