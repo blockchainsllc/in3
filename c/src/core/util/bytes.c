@@ -202,6 +202,7 @@ int bb_check_size(bytes_builder_t* bb, size_t len) {
   if (bb->b.data == NULL) {
     bb->b.data = _malloc(len);
     bb->bsize  = len;
+    return 0;
   }
 #ifdef __ZEPHYR__
   size_t l = bb->bsize;
