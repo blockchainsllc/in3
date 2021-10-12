@@ -253,11 +253,11 @@ class IN3 {
         let action = 0
         if (plgn.term) action |= 0x2
         if (plgn.getAccounts) action |= 0x20
-        if (plgn.handleRPC) action |= 0x100
-        if (plgn.verifyRPC) action |= 0x200
-        if (plgn.cacheGet) action |= 0x800
-        if (plgn.cacheSet) action |= 0x400
-        if (plgn.cacheClear) action |= 0x1000
+        if (plgn.handleRPC) action |= 0x200
+        if (plgn.verifyRPC) action |= 0x400
+        if (plgn.cacheGet) action |= 0x1000
+        if (plgn.cacheSet) action |= 0x800
+        if (plgn.cacheClear) action |= 0x2000
         let index = this.plugins.indexOf(plgn)
         if (index == -1) {
             index = this.plugins.length
