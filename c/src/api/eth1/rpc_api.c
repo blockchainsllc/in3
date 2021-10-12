@@ -580,6 +580,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(sig_type, "sign_ec_hash") == 0) sc.type = SIGN_EC_HASH;
   if (strcmp(sig_type, "sign_ec_raw") == 0) sc.type = SIGN_EC_RAW;
   if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.type = SIGN_EC_PREFIX;
+  if (strcmp(sig_type, "sign_ec_btc") == 0) sc.type = SIGN_EC_BTC;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));

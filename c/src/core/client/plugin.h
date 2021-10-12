@@ -257,7 +257,7 @@ typedef enum {
   SIGNER_EIP1271 = 2
 } in3_signer_type_t;
 /**
- * action context when retrieving the account of a signer.
+ * action context when retrieving the addresses or accounts of a signer.
  */
 typedef struct sign_account_ctx {
   struct in3_req*   req;          /**< the context of the request in order report errors */
@@ -265,6 +265,14 @@ typedef struct sign_account_ctx {
   int               accounts_len; /**< number of accounts */
   in3_signer_type_t signer_type;  /**< the type of the signer used for this account.*/
 } in3_sign_account_ctx_t;
+/**
+ * action context when retrieving the public key of the signer.
+ */
+typedef struct sign_public_key_ctx {
+  struct in3_req* req;            /**< the context of the request in order report errors */
+  uint8_t*        account;        /**< the account to use for the signature */
+  uint8_t         public_key[64]; /**< the public key in case the plugin returns IN3_OK */
+} in3_sign_public_key_ctx_t;
 
 // ----------- SIGN_PREPARE ---------------
 
@@ -287,6 +295,7 @@ typedef enum {
   SIGN_EC_RAW    = 0, /**< sign the data directly */
   SIGN_EC_HASH   = 1, /**< hash and sign the data */
   SIGN_EC_PREFIX = 2, /**< add Ethereum Signed Message-Proefix, hash and sign the data */
+  SIGN_EC_BTC    = 3, /**< hashes the data twice with sha256 and signs it */
 } d_signature_type_t;
 
 /** payload type of the requested signature. It describes how to deserialize the payload. */

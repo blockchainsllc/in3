@@ -126,6 +126,12 @@ bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_signature_t
         res = NULL_BYTES;
       }
       break;
+    case SIGN_EC_BTC:
+      if (ecdsa_sign(&secp256k1, HASHER_SHA2D, pk, data.data, data.len, res.data, res.data + 64, NULL) < 0) {
+        _free(res.data);
+        res = NULL_BYTES;
+      }
+      break;
     default:
       _free(res.data);
       res = NULL_BYTES;
@@ -153,6 +159,16 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       return IN3_OK;
     }
 
+    case PLGN_ACT_SIGN_PUBLICKEY: {
+      // generate the address from the key
+      in3_sign_public_key_ctx_t* ctx = action_ctx;
+      if (ctx->account && memcmp(ctx->account, k->account, 20)) return IN3_EIGNORE;
+      uint8_t p[65];
+      ecdsa_get_public_key65(&secp256k1, k->pk, p);
+      memcpy(ctx->public_key, p + 1, 64);
+      return IN3_OK;
+    }
+
     case PLGN_ACT_TERM: {
       _free(k);
       return IN3_OK;
@@ -168,7 +184,7 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   get_address(pk, k->account);
   memcpy(k->pk, pk, 32);
-  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM, eth_sign_pk, k, false);
+  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM | PLGN_ACT_SIGN_PUBLICKEY, eth_sign_pk, k, false);
 }
 
 static in3_ret_t add_raw_key(in3_rpc_handle_ctx_t* ctx) {

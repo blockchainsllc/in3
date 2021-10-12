@@ -142,34 +142,35 @@ typedef struct in3_chain {
 
 /** plugin action list */
 typedef enum {
-  PLGN_ACT_INIT              = 0x1,       /**< initialize plugin - use for allocating/setting-up internal resources . Plugins will be initialized before first used. The plgn_ctx will be the first request ctx in3_req_t */
-  PLGN_ACT_TERM              = 0x2,       /**< terminate plugin - use for releasing internal resources and cleanup. */
-  PLGN_ACT_TRANSPORT_SEND    = 0x4,       /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more responses. */
-  PLGN_ACT_TRANSPORT_RECEIVE = 0x8,       /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
-  PLGN_ACT_TRANSPORT_CLEAN   = 0x10,      /**< free-up transport resources - the transport plugin will receive a request_t as plgn_ctx if the cptr was set.*/
-  PLGN_ACT_SIGN_ACCOUNT      = 0x20,      /**< returns the default account of the signer */
-  PLGN_ACT_SIGN_PREPARE      = 0x40,      /**< allows a wallet to manipulate the payload before signing - the plgn_ctx will be in3_sign_ctx_t. This way a tx can be send through a multisig */
-  PLGN_ACT_SIGN              = 0x80,      /**< signs the payload - the plgn_ctx will be in3_sign_ctx_t.  */
-  PLGN_ACT_RPC_HANDLE        = 0x100,     /**< a plugin may respond to a rpc-request directly (without sending it to the node). */
-  PLGN_ACT_RPC_VERIFY        = 0x200,     /**< verifies the response. the plgn_ctx will be a in3_vctx_t holding all data */
-  PLGN_ACT_CACHE_SET         = 0x400,     /**< stores data to be reused later - the plgn_ctx will be a in3_cache_ctx_t containing the data */
-  PLGN_ACT_CACHE_GET         = 0x800,     /**< reads data to be previously stored - the plgn_ctx will be a in3_cache_ctx_t containing the key. if the data was found the data-property needs to be set. */
-  PLGN_ACT_CACHE_CLEAR       = 0x1000,    /**< clears all stored data - plgn_ctx will be NULL  */
-  PLGN_ACT_CONFIG_SET        = 0x2000,    /**< gets a config-token and reads data from it */
-  PLGN_ACT_CONFIG_GET        = 0x4000,    /**< gets a string-builder and adds all config to it. */
-  PLGN_ACT_PAY_PREPARE       = 0x8000,    /**< prepares a payment */
-  PLGN_ACT_PAY_FOLLOWUP      = 0x10000,   /**< called after a request to update stats. */
-  PLGN_ACT_PAY_HANDLE        = 0x20000,   /**< handles the payment */
-  PLGN_ACT_PAY_SIGN_REQ      = 0x40000,   /**< signs a request */
-  PLGN_ACT_LOG_ERROR         = 0x80000,   /**< report an error */
-  PLGN_ACT_NL_PICK           = 0x100000,  /**< picks the data nodes, plgn_ctx will be a pointer to in3_req_t */
-  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x200000,  /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_req_t */
-  PLGN_ACT_NL_BLACKLIST      = 0x400000,  /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to the node's address. */
-  PLGN_ACT_NL_FAILABLE       = 0x800000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_req_t */
-  PLGN_ACT_NL_OFFLINE        = 0x1000000, /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to in3_nl_offline_ctx_t. */
-  PLGN_ACT_CHAIN_CHANGE      = 0x2000000, /**< chain id change event, called after setting new chain id */
-  PLGN_ACT_GET_DATA          = 0x4000000, /**< get access to plugin data as a void ptr */
-  PLGN_ACT_ADD_PAYLOAD       = 0x8000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
+  PLGN_ACT_INIT              = 0x1,        /**< initialize plugin - use for allocating/setting-up internal resources . Plugins will be initialized before first used. The plgn_ctx will be the first request ctx in3_req_t */
+  PLGN_ACT_TERM              = 0x2,        /**< terminate plugin - use for releasing internal resources and cleanup. ( ctx: in3_t )*/
+  PLGN_ACT_TRANSPORT_SEND    = 0x4,        /**< sends out a request - the transport plugin will receive a request_t as plgn_ctx, it may set a cptr which will be passed back when fetching more responses. */
+  PLGN_ACT_TRANSPORT_RECEIVE = 0x8,        /**< fetch next response - the transport plugin will receive a request_t as plgn_ctx, which contains a cptr  if set previously*/
+  PLGN_ACT_TRANSPORT_CLEAN   = 0x10,       /**< free-up transport resources - the transport plugin will receive a request_t as plgn_ctx if the cptr was set.*/
+  PLGN_ACT_SIGN_ACCOUNT      = 0x20,       /**< returns the accounts or addresses of the signer */
+  PLGN_ACT_SIGN_PUBLICKEY    = 0x40,       /**< returns the public key for a given address ( ctx: in3_sign_public_key_ctx_t )*/
+  PLGN_ACT_SIGN_PREPARE      = 0x80,       /**< allows a wallet to manipulate the payload before signing - the plgn_ctx will be in3_sign_ctx_t. This way a tx can be send through a multisig */
+  PLGN_ACT_SIGN              = 0x100,      /**< signs the payload - the plgn_ctx will be in3_sign_ctx_t.  */
+  PLGN_ACT_RPC_HANDLE        = 0x200,      /**< a plugin may respond to a rpc-request directly (without sending it to the node). */
+  PLGN_ACT_RPC_VERIFY        = 0x400,      /**< verifies the response. the plgn_ctx will be a in3_vctx_t holding all data */
+  PLGN_ACT_CACHE_SET         = 0x800,      /**< stores data to be reused later - the plgn_ctx will be a in3_cache_ctx_t containing the data */
+  PLGN_ACT_CACHE_GET         = 0x1000,     /**< reads data to be previously stored - the plgn_ctx will be a in3_cache_ctx_t containing the key. if the data was found the data-property needs to be set. */
+  PLGN_ACT_CACHE_CLEAR       = 0x2000,     /**< clears all stored data - plgn_ctx will be NULL  */
+  PLGN_ACT_CONFIG_SET        = 0x4000,     /**< gets a config-token and reads data from it */
+  PLGN_ACT_CONFIG_GET        = 0x8000,     /**< gets a string-builder and adds all config to it. */
+  PLGN_ACT_PAY_PREPARE       = 0x10000,    /**< prepares a payment */
+  PLGN_ACT_PAY_FOLLOWUP      = 0x20000,    /**< called after a request to update stats. */
+  PLGN_ACT_PAY_HANDLE        = 0x40000,    /**< handles the payment */
+  PLGN_ACT_PAY_SIGN_REQ      = 0x80000,    /**< signs a request */
+  PLGN_ACT_LOG_ERROR         = 0x100000,   /**< report an error */
+  PLGN_ACT_NL_PICK           = 0x200000,   /**< picks the data nodes, plgn_ctx will be a pointer to in3_req_t */
+  PLGN_ACT_NL_PICK_FOLLOWUP  = 0x400000,   /**< called after receiving a response in order to decide whether a update is needed, plgn_ctx will be a pointer to in3_req_t */
+  PLGN_ACT_NL_BLACKLIST      = 0x800000,   /**< blacklist a particular node in the nodelist, plgn_ctx will be a pointer to the node's address. */
+  PLGN_ACT_NL_FAILABLE       = 0x1000000,  /**< handle fail-able request, plgn_ctx will be a pointer to in3_req_t */
+  PLGN_ACT_NL_OFFLINE        = 0x2000000,  /**< mark a particular node in the nodelist as offline, plgn_ctx will be a pointer to in3_nl_offline_ctx_t. */
+  PLGN_ACT_CHAIN_CHANGE      = 0x4000000,  /**< chain id change event, called after setting new chain id */
+  PLGN_ACT_GET_DATA          = 0x8000000,  /**< get access to plugin data as a void ptr */
+  PLGN_ACT_ADD_PAYLOAD       = 0x10000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
 } in3_plugin_act_t;
 
 /**

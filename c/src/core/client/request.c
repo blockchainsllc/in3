@@ -427,6 +427,16 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   return ret;
 }
 
+static inline const char* method_for_sigtype(d_signature_type_t type) {
+  switch (type) {
+    case SIGN_EC_RAW: return "sign_ec_raw";
+    case SIGN_EC_HASH: return "sign_ec_hash";
+    case SIGN_EC_PREFIX: return "sign_ec_prefix";
+    case SIGN_EC_BTC: return "sign_ec_btc";
+    default: return "sign_ec_hash";
+  }
+}
+
 in3_ret_t req_send_sign_request(in3_req_t* ctx, d_signature_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
 
   bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
@@ -436,7 +446,7 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_signature_type_t type, d_paylo
   }
 
   // get the signature from required
-  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : (type == SIGN_EC_PREFIX ? "sign_ec_prefix" : "sign_ec_raw");
+  const char* method = method_for_sigtype(type);
   sb_t        params = {0};
   sb_add_bytes(&params, "[", &raw_data, 1, false);
   sb_add_chars(&params, ",");
