@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 #include "client.h"
+#include "plugin.h"
 
 typedef enum {
   hasher_sha2,
@@ -90,6 +91,9 @@ in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst);
 
 /** hashes the msg by adding the Ethereum Signed Message-Prefix */
 void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg);
+
+/** signs with a pk bases on the type */
+bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_signature_type_t type);
 #ifdef __cplusplus
 }
 #endif
