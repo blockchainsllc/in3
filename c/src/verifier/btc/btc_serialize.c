@@ -35,6 +35,7 @@ bytes_t btc_block_get(bytes_t block, btc_block_field field) {
     default: return NULL_BYTES;
   }
 }
+
 void btc_hash(bytes_t data, bytes32_t dst) {
   bytes32_t  tmp;
   SHA256_CTX ctx;
@@ -51,6 +52,7 @@ void btc_hash(bytes_t data, bytes32_t dst) {
 void rev_copy(uint8_t* dst, uint8_t* src) {
   for (int i = 0; i < 32; i++) dst[31 - i] = src[i];
 }
+
 void rev_copyl(uint8_t* dst, bytes_t src, int l) {
   if (src.len < (uint32_t) l) {
     memset(dst + src.len, 0, l - src.len);

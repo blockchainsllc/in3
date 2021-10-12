@@ -222,3 +222,68 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   if (data.len > 1000) _free(data.data);
   return IN3_OK;
 }
+
+// creates a raw unsigned transaction
+// TODO: implement better error handling
+// TODO: Support witnesses
+void create_raw_tx(btc_tx_in_t* tx_in, uint32_t tx_in_len, btc_tx_out_t* tx_out, uint32_t tx_out_len, uint32_t lock_time, bytes_t* dst_raw_tx) {
+  if (!tx_in || !tx_out || !dst_raw_tx || tx_in_len == 0 || tx_out_len == 0) {
+    // TODO: Implement better error handling
+    printf("ERROR: arguments for creating a btc transaction can not be null\n");
+    return;
+  }
+  btc_tx_t tx;
+  tx.version      = 1;
+  tx.flag         = 0;
+  tx.input_count  = tx_in_len;
+  tx.output_count = tx_out_len;
+  tx.lock_time    = lock_time;
+
+  // Get inputs
+  // -- serialize inputs
+  bytes_t* serialized_inputs = malloc(tx_in_len * sizeof(bytes_t));
+  uint32_t raw_input_size    = 0;
+  for (uint32_t i = 0; i < tx_in_len; i++) {
+    btc_serialize_tx_in(&tx_in[i], &serialized_inputs[i]);
+    raw_input_size += serialized_inputs[i].len;
+  }
+  // -- Copy raw inputs into tx
+  tx.input.data           = malloc(raw_input_size);
+  tx.input.len            = raw_input_size;
+  uint32_t prev_input_len = 0;
+  for (uint32_t i = 0; i < tx_in_len; i++) {
+    for (uint32_t j = 0; j < serialized_inputs[i].len; j++) {
+      tx.input.data[j + prev_input_len] = serialized_inputs[i].data[j];
+    }
+    prev_input_len = serialized_inputs[i].len;
+  }
+
+  // Get Outputs
+  // -- serialize outputs
+  bytes_t* serialized_outputs = malloc(tx_out_len * sizeof(bytes_t));
+  uint32_t raw_output_size    = 0;
+  for (uint32_t i = 0; i < tx_out_len; i++) {
+    btc_serialize_tx_out(&tx_out[i], &serialized_outputs[i]);
+    raw_output_size += serialized_outputs[i].len;
+  }
+  // -- Copy raw outputs into tx
+  tx.output.data           = malloc(raw_output_size);
+  tx.output.len            = raw_output_size;
+  uint32_t prev_output_len = 0;
+  for (uint32_t i = 0; i < tx_out_len; i++) {
+    for (uint32_t j = 0; j < serialized_outputs[i].len; j++) {
+      tx.output.data[j + prev_output_len] = serialized_outputs[i].data[j];
+    }
+    prev_output_len = serialized_outputs[i].len;
+  }
+
+  // free buffers
+  for (uint32_t i = 0; i < tx_in_len; i++) {
+    _free(serialized_inputs[i].data);
+  }
+  _free(serialized_inputs);
+  for (uint32_t i = 0; i < tx_out_len; i++) {
+    _free(serialized_outputs[i].data);
+  }
+  _free(serialized_outputs);
+}
