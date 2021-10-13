@@ -16,7 +16,24 @@ void btc_dsha256(uint8_t* data, uint32_t len, bytes32_t output) {
   btc_sha256(tmp_hash, 32, output);
 }
 
-// WARNING: You need to free tx_in pointer after calling this function!
+static void add_input_to_tx(btc_tx_t* tx, btc_tx_in_t* tx_in) {
+  tx->input_count++;
+
+  // check size of serialized tx input
+  bytes_t raw_tx_in;
+  btc_serialize_tx_in(tx_in, &raw_tx_in);
+
+  uint32_t old_len = tx->input.len;
+  tx->input.len += raw_tx_in.len;
+  tx->input.data = realloc(tx->input.data, tx->input.len * sizeof(*tx->input.data)); // TODO: This is inneficient when we have lots of inputs to deal with. Implement a more efficient solution.
+
+  // Add raw tx_in to tx data
+  for (uint32_t i = 0; i < raw_tx_in.len; i++) {
+    tx->input.data[old_len + i] = raw_tx_in.data[i];
+  }
+}
+
+// WARNING: You need to free tx_in->script.data after calling this function!
 void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t* priv_key, btc_tx_in_t* tx_in, uint8_t sighash) {
   if (!tx_in || !priv_key) {
     printf("ERROR: in btc_sign_tx_in: function arguments can not be NULL.");
@@ -98,14 +115,14 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   _free(hash_input.data);
 }
 
-void btc_sign_tx(bytes_t* raw_tx, const btc_tx_out_t* utxo_list, bytes_t* priv_key, bytes_t* dst_sig) {
-  UNUSED_VAR(raw_tx);
-  UNUSED_VAR(priv_key);
-  UNUSED_VAR(dst_sig);
-  UNUSED_VAR(utxo_list);
+void btc_sign_tx(btc_tx_t* tx, const btc_tx_out_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* priv_key) {
   // for each input in a tx:
-  // -- for each pub_key (assume we only have one pub key for now):
-  // -- -- sig = btc_sign_tx_in()
-  // -- -- add_sig_to_tx_in()
+  for (uint32_t i = 0; i < utxo_list_len; i++) {
+    // -- for each pub_key (assume we only have one pub key for now):
+    btc_tx_in_t tx_in;
+    btc_sign_tx_in(tx, &selected_utxo_list[i], priv_key, &tx_in, BTC_SIGHASH_ALL);
+    add_input_to_tx(tx, &tx_in);
+    _free(tx_in.script.data);
+  }
   return;
 }
