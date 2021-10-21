@@ -559,6 +559,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
     request->urls               = _malloc(sizeof(char*));
     request->urls[0]            = _strdupn(d_get_string_at(params, 1), -1);
     request->method             = method ? method : (*request->payload ? "POST" : "GET");
+    request->wait               = d_get_int(d_get(ctx->requests[0], K_IN3), K_WAIT);
     ctx->raw_response           = _calloc(sizeof(in3_response_t), 1);
     ctx->raw_response[0].state  = IN3_WAITING;
 
