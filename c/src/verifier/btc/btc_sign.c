@@ -3,40 +3,27 @@
 #include "btc_serialize.h"
 #include "btc_types.h"
 
-static void btc_sha256(uint8_t* data, uint32_t len, bytes32_t output) {
-  SHA256_CTX c;
-  sha256_Init(&c);
-  sha256_Update(&c, data, len);
-  sha256_Final(&c, output);
-}
-
-void btc_dsha256(uint8_t* data, uint32_t len, bytes32_t output) {
-  bytes32_t tmp_hash;
-  btc_sha256(data, len, tmp_hash);
-  btc_sha256(tmp_hash, 32, output);
-}
-
-static void add_input_to_tx(btc_tx_t* tx, btc_tx_in_t* tx_in) {
-  tx->input_count++;
-
-  // check size of serialized tx input
-  bytes_t raw_tx_in;
-  btc_serialize_tx_in(tx_in, &raw_tx_in);
-
-  uint32_t old_len = tx->input.len;
-  tx->input.len += raw_tx_in.len;
-  tx->input.data = realloc(tx->input.data, tx->input.len * sizeof(*tx->input.data)); // TODO: This is inneficient when we have lots of inputs to deal with. Implement a more efficient solution.
-
-  // Add raw tx_in to tx data
-  for (uint32_t i = 0; i < raw_tx_in.len; i++) {
-    tx->input.data[old_len + i] = raw_tx_in.data[i];
+// Fill tx_in fields, preparing the input for signing
+// WARNING: You need to free tx_in->prev_tx_hash after calling this function
+static void init_tx_in(const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
+  if (!utxo || !tx_in) {
+    // TODO: Implement better error treatment
+    printf("ERROR: in init_tx_in: function arguments can not be null!\n");
+    return;
   }
+  tx_in->prev_tx_index = utxo->tx_index;
+  tx_in->prev_tx_hash  = malloc(32 * sizeof(uint8_t));
+  memcpy(tx_in->prev_tx_hash, utxo->tx_hash, 32);
+  tx_in->script.len  = 0;
+  tx_in->script.data = NULL;
+  tx_in->sequence    = 0xffffffff;
 }
 
 // WARNING: You need to free tx_in->script.data after calling this function!
 void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t* priv_key, btc_tx_in_t* tx_in, uint8_t sighash) {
   if (!tx_in || !priv_key) {
-    printf("ERROR: in btc_sign_tx_in: function arguments can not be NULL.");
+    // TODO: Implement better error handling
+    printf("ERROR: in btc_sign_tx_in: function arguments cannot be NULL.");
     return;
   }
   // TODO: Implement support for other sighashes
@@ -46,13 +33,17 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   }
 
   btc_tx_t tmp_tx;
-  tmp_tx.version      = tx->version;
-  tmp_tx.flag         = 0; // TODO: Implement segwit support
-  tmp_tx.input_count  = 1;
-  tmp_tx.output_count = tx->output_count;
-  tmp_tx.output       = tx->output;
-  tmp_tx.lock_time    = tx->lock_time;
+  tmp_tx.version       = tx->version;
+  tmp_tx.flag          = 0; // TODO: Implement segwit support
+  tmp_tx.input_count   = 1; // TODO: support more than one input
+  tmp_tx.output_count  = tx->output_count;
+  tmp_tx.output.len    = tx->output.len;
+  tmp_tx.output.data   = alloca(sizeof(uint8_t) * tmp_tx.output.len);
+  tmp_tx.witnesses.len = 0;
+  for (uint32_t i = 0; i < tmp_tx.output.len; i++) tmp_tx.output.data[i] = tx->output.data[i];
+  tmp_tx.lock_time = tx->lock_time;
 
+  // TODO: This should probably be set before calling the signer function. If this is done outside this function, then the utxo is probably not needed.
   tx_in->script = utxo->script; // This should temporarily be the scriptPubKey of the output we want to redeem
   btc_serialize_tx_in(tx_in, &tmp_tx.input);
 
@@ -62,9 +53,8 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   hash_input.len  = tmp_tx.all.len + 4;
   hash_input.data = malloc(hash_input.len * sizeof(uint8_t));
 
-  // TODO: Implement this in a more fficient way. There is no need to copy
+  // TODO: Implement this in a more efficient way. There is no need to copy
   // the whole tx just to add 4 bytes at the end of the stream
-
   // Copy serialized transaction
   for (uint32_t i = 0; i < tmp_tx.all.len; i++) {
     hash_input.data[i] = tmp_tx.all.data[i];
@@ -74,10 +64,10 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
 
   // Finally, sign transaction input
   // -- Obtain DER signature
-  uint8_t sig[64];
+  uint8_t sig[65];
   bytes_t der_sig;
   der_sig.data = alloca(sizeof(uint8_t) * 75);
-  ecdsa_sign(&secp256k1, HASHER_SHA2D, (const uint8_t*) priv_key->data, hash_input.data, hash_input.len, sig, NULL, NULL); // TODO: check if it is really DER encoded or if aditional logic is necessary
+  ecdsa_sign(&secp256k1, HASHER_SHA2D, priv_key->data, hash_input.data, hash_input.len, sig, sig + 64, NULL);
   der_sig.len = ecdsa_sig_to_der(sig, der_sig.data);
 
   // -- Extract public key out of the provided private key. This will be used to build the tx_in scriptSig
@@ -95,7 +85,7 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   index += get_compact_uint_size(tx_in->script.len);
   long_to_compact_uint(b, index, der_sig.len); // write der_sig len field
   index += 1;                                  // it is safe to assume the previous field only has 1 byte in a correct execution. TODO: Return an error in case der_sig_len is not 1 byte long
-  // write der signature
+  // write DER signature
   uint32_t i = 0;
   while (i < der_sig.len) {
     b->data[index++] = der_sig.data[i++];
@@ -107,22 +97,23 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   while (i < 65) {
     b->data[index++] = pub_key[i++];
   }
-  // signature is complete
 
+  // signature is complete
   _free(tmp_tx.all.data);
   _free(tmp_tx.input.data);
-  _free(tmp_tx.output.data);
   _free(hash_input.data);
 }
 
-void btc_sign_tx(btc_tx_t* tx, const btc_tx_out_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* priv_key) {
+void btc_sign_tx(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* priv_key) {
   // for each input in a tx:
   for (uint32_t i = 0; i < utxo_list_len; i++) {
     // -- for each pub_key (assume we only have one pub key for now):
     btc_tx_in_t tx_in;
-    btc_sign_tx_in(tx, &selected_utxo_list[i], priv_key, &tx_in, BTC_SIGHASH_ALL);
+    init_tx_in(&selected_utxo_list[i], &tx_in);
+    btc_sign_tx_in(tx, &selected_utxo_list[i].tx_out, priv_key, &tx_in, BTC_SIGHASH_ALL);
     add_input_to_tx(tx, &tx_in);
     _free(tx_in.script.data);
+    _free(tx_in.prev_tx_hash);
   }
   return;
 }

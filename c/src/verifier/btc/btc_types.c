@@ -13,6 +13,11 @@
 // Output fixed size values
 #define BTC_TX_OUT_VALUE_SIZE_BYTES 8
 
+typedef enum btc_tx_field {
+  INPUT,
+  OUTPUT
+} btc_tx_field_t;
+
 uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
   dst->prev_tx_hash  = data;
@@ -24,7 +29,7 @@ uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   return dst->script.data + dst->script.len + 4;
 }
 
-// WARNING: You need to free 'dst' pointer after calling this function
+// WARNING: You need to free dst.data after calling this function
 // TODO: Implement support for "Coinbase" inputs
 // TODO: Handle null arguments
 // TODO: Handle max script len = 10000 bytes
@@ -45,7 +50,7 @@ void btc_serialize_tx_in(btc_tx_in_t* tx_in, bytes_t* dst) {
   if (!tx_in->prev_tx_hash) return;
   uint32_t index = 0;
   for (uint32_t i = 0; i < 32; i++) {
-    dst->data[index++] = tx_in->prev_tx_hash[i];
+    dst->data[index++] = tx_in->prev_tx_hash[31 - i];
   }
   uint_to_le(dst, index, tx_in->prev_tx_index);
   index += 4;
@@ -149,7 +154,7 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
              tx->input.len +
              get_compact_uint_size((uint64_t) tx->output_count) +
              tx->output.len +
-             tx->witnesses.len +
+             (tx->flag ? tx->witnesses.len : 0) +
              BTC_TX_LOCKTIME_SIZE_BYTES);
 
   dst->data = malloc(tx_size * sizeof(*dst->data));
@@ -188,7 +193,6 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
     }
   }
   // locktime
-  //uint_to_le(dst, index, tx->lock_time);
   dst->data[index + 3] = ((tx->lock_time >> 24) & 0xff);
   dst->data[index + 2] = ((tx->lock_time >> 16) & 0xff);
   dst->data[index + 1] = ((tx->lock_time >> 8) & 0xff);
@@ -286,4 +290,50 @@ void create_raw_tx(btc_tx_in_t* tx_in, uint32_t tx_in_len, btc_tx_out_t* tx_out,
     _free(serialized_outputs[i].data);
   }
   _free(serialized_outputs);
+}
+
+void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
+  if (!tx || !src) {
+    printf("ERROR: in add_to_tx: Function arguments cannot be null!\n");
+    return;
+  }
+
+  bytes_t  raw_src, *dst;
+  uint32_t old_len;
+
+  switch (field_type) {
+    case INPUT:
+      btc_serialize_tx_in((btc_tx_in_t*) src, &raw_src);
+      old_len = tx->input.len;
+      dst     = &tx->input;
+      tx->input_count++;
+      break;
+    case OUTPUT:
+      btc_serialize_tx_out((btc_tx_out_t*) src, &raw_src);
+      old_len = tx->output.len;
+      dst     = &tx->output;
+      tx->output_count++;
+      break;
+    default:
+      // TODO: Implement better error handling
+      printf("Unrecognized transaction field code. No action was performed.");
+  }
+
+  dst->len += raw_src.len;
+  size_t mem_size = dst->len * sizeof(*dst->data);
+  dst->data       = (!dst->data) ? malloc(mem_size) : realloc(dst->data, mem_size);
+
+  // Add bytes to tx field
+  for (uint32_t i = 0; i < raw_src.len; i++) {
+    dst->data[old_len + i] = raw_src.data[i];
+  }
+  return;
+}
+
+void add_input_to_tx(btc_tx_t* tx, btc_tx_in_t* tx_in) {
+  add_to_tx(tx, tx_in, INPUT);
+}
+
+void add_output_to_tx(btc_tx_t* tx, btc_tx_out_t* tx_out) {
+  add_to_tx(tx, tx_out, OUTPUT);
 }
