@@ -53,8 +53,9 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   hash_input.len  = tmp_tx.all.len + 4;
   hash_input.data = malloc(hash_input.len * sizeof(uint8_t));
 
-  // TODO: Implement this in a more efficient way. There is no need to copy
+  // TODO: Implement this in a more efficient way. Right now we copy
   // the whole tx just to add 4 bytes at the end of the stream
+
   // Copy serialized transaction
   for (uint32_t i = 0; i < tmp_tx.all.len; i++) {
     hash_input.data[i] = tmp_tx.all.data[i];
@@ -66,32 +67,32 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   // -- Obtain DER signature
   uint8_t sig[65];
   bytes_t der_sig;
+
   der_sig.data = alloca(sizeof(uint8_t) * 75);
   ecdsa_sign(&secp256k1, HASHER_SHA2D, priv_key->data, hash_input.data, hash_input.len, sig, sig + 64, NULL);
-  der_sig.len = ecdsa_sig_to_der(sig, der_sig.data);
+  der_sig.len                 = ecdsa_sig_to_der(sig, der_sig.data);
+  der_sig.data[der_sig.len++] = sig[64]; // append verification byte to end of DER signature
 
   // -- Extract public key out of the provided private key. This will be used to build the tx_in scriptSig
   uint8_t pub_key[65];
   ecdsa_get_public_key65(&secp256k1, (const uint8_t*) priv_key->data, pub_key);
 
-  // -- build scriptSig: SCRIPT_SIG_LEN|DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
-  tx_in->script.len = 1 + der_sig.len + 1 + 1 + 65;              // 1 byte DER_SIG_LEN + DER_SIG + 1 byte SIGHASH + 1 byte PUBKEY_LEN + PUBKEY
-  tx_in->script.len += get_compact_uint_size(tx_in->script.len); // Also account for the compact uint at the beginning of the byte stream
-  tx_in->script.data = malloc(sizeof(uint8_t) * tx_in->script.len);
+  // -- build scriptSig: DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
+  uint32_t scriptsig_len = der_sig.len + 1 + 65; // DER_SIG + 1 byte PUBKEY_LEN + PUBKEY
+  tx_in->script.len      = 1 + scriptsig_len;    // Also account for 1 byte DER_SIG_LEN
+  tx_in->script.data     = malloc(sizeof(uint8_t) * tx_in->script.len);
 
   bytes_t* b     = &tx_in->script;
   uint32_t index = 0;
-  long_to_compact_uint(b, index, tx_in->script.len); // write scriptSig len field
-  index += get_compact_uint_size(tx_in->script.len);
+
   long_to_compact_uint(b, index, der_sig.len); // write der_sig len field
-  index += 1;                                  // it is safe to assume the previous field only has 1 byte in a correct execution. TODO: Return an error in case der_sig_len is not 1 byte long
-  // write DER signature
+  index += 1;                                  // it is safe to assume the previous field only has 1 byte in a correct execution.
+  // write der signature
   uint32_t i = 0;
   while (i < der_sig.len) {
     b->data[index++] = der_sig.data[i++];
   }
-  b->data[index++] = sighash; // write sighash
-  b->data[index++] = 65;      // write pubkey len
+  b->data[index++] = 65; // write pubkey len
   // write pubkey
   i = 0;
   while (i < 65) {
@@ -108,6 +109,7 @@ void btc_sign_tx(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t ut
   // for each input in a tx:
   for (uint32_t i = 0; i < utxo_list_len; i++) {
     // -- for each pub_key (assume we only have one pub key for now):
+    // TODO: Allow setting a specific pub_key for each input
     btc_tx_in_t tx_in;
     init_tx_in(&selected_utxo_list[i], &tx_in);
     btc_sign_tx_in(tx, &selected_utxo_list[i].tx_out, priv_key, &tx_in, BTC_SIGHASH_ALL);
