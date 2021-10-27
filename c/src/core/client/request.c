@@ -55,6 +55,15 @@ static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
   return IN3_OK;
 }
 
+bool in_property_name(char* c) {
+  for (c++; *c && *c != '"'; c++) {
+    if (*c == '\\') c++;
+  }
+  if (*c) c++;
+  while (*c && (*c == ' ' || *c < 14)) c++;
+  return *c == ':';
+}
+
 in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
   char*      data = _strdupn(req_data, -1);
   in3_req_t* r    = req_new(client, data);
@@ -324,6 +333,26 @@ in3_ret_t in3_rpc_handle_with_uint256(in3_rpc_handle_ctx_t* hctx, bytes_t data) 
 in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
   sb_add_chars(in3_rpc_handle_start(hctx), data);
   return in3_rpc_handle_finish(hctx);
+}
+
+in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {
+  if (!result) return req_set_error(ctx->req, "No result", IN3_ERPC);
+  sb_t* sb = in3_rpc_handle_start(ctx);
+
+  // As the API might return an empty string as a response,
+  // we at least convert it into an empty object
+  if ((d_type(result) == T_STRING || d_type(result) == T_BYTES) && d_len(result) == 0) {
+    sb_add_chars(sb, "{}");
+  }
+  else {
+    sb_add_json(sb, "", result);
+  }
+
+  // now convert all kebab-case to pascal case
+  for (char* c = sb->data; *c; c++) {
+    if (*c == '-' && in_property_name(c)) *c = '_';
+  }
+  return in3_rpc_handle_finish(ctx);
 }
 
 in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
