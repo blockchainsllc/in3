@@ -32,7 +32,7 @@ task copyJarToBindings(type: Copy) {
 sourceSets {
     main {
         java {
-            srcDirs = [jarOutputFolder]
+            srcDirs = [jarOutputFolder] // srcDirs = ['src'] Needed to run the project as a standalone gradle project
         }
         resources {
             srcDirs = [jarOutputFolder]

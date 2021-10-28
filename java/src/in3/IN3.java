@@ -35,8 +35,11 @@
 package in3;
 
 import in3.config.ClientConfiguration;
+import in3.eth1.SimpleWallet;
 import in3.utils.Crypto;
 import in3.utils.JSON;
+import in3.utils.PayloadType;
+import in3.utils.SignatureType;
 import in3.utils.Signer;
 import in3.utils.StorageProvider;
 import in3.utils.TransportException;
@@ -380,16 +383,13 @@ public class IN3 {
 
   // Test it
   public static void main(String[] args) {
-    Object[] params = new Object[args.length - 1];
-    for (int i = 1; i < args.length; i++)
-      params[i - 1] = args[i];
+    IN3          in3     = new IN3(Chain.GOERLI);
+    SimpleWallet wallet  = new SimpleWallet();
+    String       pk      = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
+    String       address = wallet.addRawKey(pk);
+    byte[] res           = wallet.sign("1e194c68360307cfb715bf17878791ad1ced8da7d2e5f42b691074c577f41eac",
+                                       address, SignatureType.eth_sign, PayloadType.PL_SIGN_ETHTX, null);
 
-    // create client
-    IN3 in3 = IN3.forChain(Chain.MAINNET);
-    // set cache in tempfolder
-    in3.setStorageProvider(new in3.utils.TempStorageProvider());
-
-    // execute the command
-    System.out.println(in3.sendRPC(args[0], params));
+    System.out.println(res);
   }
 }

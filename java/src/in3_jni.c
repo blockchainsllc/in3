@@ -38,8 +38,10 @@
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/plugin.h"
+#include "../../c/src/core/client/request_internal.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/bitset.h"
+#include "../../c/src/core/util/bytes.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
@@ -491,11 +493,11 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
 }
 
 /*
- * Class:     in3_eth1_SimpleWallet
+ * Class:     in3_utils_Signer
  * Method:    getAddressFromKey
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* env, jclass clz, jstring jkey) {
+JNIEXPORT jstring JNICALL Java_in3_utils_Signer_getAddressFromKey(JNIEnv* env, jclass clz, jstring jkey) {
   UNUSED_VAR(clz);
   const char* key = (*env)->GetStringUTFChars(env, jkey, 0);
 
@@ -513,35 +515,47 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
 }
 
 /*
- * Class:     in3_eth1_SimpleWallet
+ * Class:     in3_utils_Signer
  * Method:    signData
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclass clz, jstring jkey, jstring jdata) {
+JNIEXPORT jbyteArray JNICALL Java_in3_utils_Signer_signData(JNIEnv* env, jclass clz, jstring jkey, jstring jdata, jobject signatureTypeObj) {
+  jbyteArray res = (*env)->NewByteArray(env, 65);
+
   UNUSED_VAR(clz);
-  const char* key  = (*env)->GetStringUTFChars(env, jkey, 0);
-  const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
-  jstring     res  = NULL;
+  const char* key    = (*env)->GetStringUTFChars(env, jkey, 0);
+  const char* data   = (*env)->GetStringUTFChars(env, jdata, 0);
+  int         data_l = strlen(data) / 2 - 1;
 
-  char* tmp = eth_wallet_sign(key, data);
+  jmethodID sisgnatureTypeGetValueMethod = (*env)->GetMethodID(env, (*env)->FindClass(env, "in3/utils/SignatureType"), "getValue", "()I");
+  jint      jSignType                    = (*env)->CallIntMethod(env, signatureTypeObj, sisgnatureTypeGetValueMethod);
 
-  if (tmp != NULL) {
-    res = (*env)->NewStringUTF(env, tmp);
+  uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1);
+  if (data[0] == '0' && data[1] == 'x') {
+    data_l = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
   }
+  else {
+    data_l = hex_to_bytes((char*) data, -1, data_bytes, data_l + 1);
+  }
+  hex_to_bytes((char*) key, -1, key_bytes, 32);
 
-  _free(tmp);
+  bytes_t signature = sign_with_pk(key_bytes, bytes(data_bytes, data_l), jSignType);
+  if (signature.len == 65)
+    (*env)->SetByteArrayRegion(env, res, 0, signature.len, (jbyte*) signature.data);
+  if (signature.data) _free(signature.data);
 
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   (*env)->ReleaseStringUTFChars(env, jdata, data);
+
   return res;
 }
 
 /*
- * Class:     in3_eth1_SimpleWallet
+ * Class:     in3_utils_Signer
  * Method:    decodeKeystore
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env, jclass clz, jstring json, jstring passphrase) {
+JNIEXPORT jstring JNICALL Java_in3_utils_Signer_decodeKeystore(JNIEnv* env, jclass clz, jstring json, jstring passphrase) {
   UNUSED_VAR(clz);
   UNUSED_VAR(env);
   UNUSED_VAR(json);
@@ -549,18 +563,28 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
   return NULL;
 }
 
+jobject get_signer(in3_req_t* ctx) {
+  void* jp = get_java_obj_ptr(ctx->client);
+  if (jp == NULL) return NULL;
+  jclass    cls = (*jni)->GetObjectClass(jni, jp);
+  jmethodID mid = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
+  return (*jni)->CallObjectMethod(jni, jp, mid);
+}
+
+// This assumes a getEnum method which is not natural to every Enum, this will only work with custom ones.
+jobject get_enum(const char* qualified_class_name, const char* getter_name, int value) {
+  jclass    cls = (*jni)->FindClass(jni, qualified_class_name);
+  jmethodID mid = (*jni)->GetStaticMethodID(jni, cls, "getEnum", getter_name);
+  return (jobject) (*jni)->CallStaticObjectMethod(jni, cls, mid, value);
+}
+
 // in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 in3_ret_t jsign(in3_sign_ctx_t* sc) {
   in3_req_t* ctx = (in3_req_t*) sc->req;
   if (ctx == NULL) return IN3_EIGNORE;
-  void* jp = get_java_obj_ptr(ctx->client);
-  in3_log_debug(":: jsign for  %p === %p\n", ctx->client, jp);
-  if (jp == NULL) return IN3_EIGNORE;
-  jclass    cls    = (*jni)->GetObjectClass(jni, jp);
-  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
-  jobject   signer = (*jni)->CallObjectMethod(jni, jp, mid);
+  jobject signer = get_signer(ctx);
 
-  if (!signer) return IN3_EIGNORE;
+  if (!signer || !sc->account.data) return IN3_EIGNORE;
 
   char *data = alloca(sc->message.len * 2 + 3), address[43];
   data[0] = address[0] = '0';
@@ -568,19 +592,63 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
   bytes_to_hex(sc->message.data, sc->message.len, data + 2);
   bytes_to_hex(sc->account.data, sc->account.len, address + 2);
 
-  jstring jdata      = (*jni)->NewStringUTF(jni, data);
-  jstring jaddress   = (*jni)->NewStringUTF(jni, address);
-  cls                = (*jni)->GetObjectClass(jni, signer);
-  mid                = (*jni)->GetMethodID(jni, cls, "sign", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-  jstring jsignature = (*jni)->CallObjectMethod(jni, signer, mid, jdata, jaddress);
+  jobject jSignatureType = get_enum("in3/utils/SignatureType", "(I)Lin3/utils/SignatureType;", sc->type);
+  jobject jPayloadType   = get_enum("in3/utils/PayloadType", "(I)Lin3/utils/PayloadType;", sc->payload_type);
+  jstring jdata          = (*jni)->NewStringUTF(jni, data);
+  jstring jaddress       = (*jni)->NewStringUTF(jni, address);
+  jclass  cls            = (*jni)->GetObjectClass(jni, signer);
+
+  jmethodID mid = (*jni)->GetMethodID(jni, cls, "sign", "(Ljava/lang/String;Ljava/lang/String;Lin3/utils/SignatureType;Lin3/utils/PayloadType;Lin3/utils/JSON;)[B");
+
+  (*jni)->ExceptionClear(jni);
+  jbyteArray jsignature        = (*jni)->CallObjectMethod(jni, signer, mid, jdata, jaddress, jSignatureType, jPayloadType, toObject(jni, sc->meta));
+  jthrowable signing_exception = (*jni)->ExceptionOccurred(jni);
+
+  if (signing_exception) {
+    jclass cls   = (*jni)->GetObjectClass(jni, signing_exception);
+    mid          = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
+    jstring jmsg = (*jni)->CallObjectMethod(jni, signing_exception, mid);
+    char*   msg  = (char*) (*jni)->GetStringUTFChars(jni, jmsg, 0);
+
+    (*jni)->ExceptionClear(jni);
+    return req_set_error(sc->req, msg, IN3_ERPC);
+  }
 
   if (!jsignature) return IN3_EIGNORE;
-  const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  int         l         = (strlen(signature) + 1) / 2;
-  if (l && signature[0] == '0' && signature[1] == 'x') l--;
+
+  int l         = (*jni)->GetArrayLength(jni, jsignature);
   sc->signature = bytes(_malloc(l), l);
-  hex_to_bytes((char*) signature, -1, sc->signature.data, l);
-  (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
+  (*jni)->GetByteArrayRegion(jni, jsignature, 0, l, (jbyte*) sc->signature.data);
+
+  return IN3_OK;
+}
+
+// in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t jsign_accounts(in3_sign_account_ctx_t* sc) {
+  in3_req_t* ctx = (in3_req_t*) sc->req;
+  if (ctx == NULL) return IN3_EIGNORE;
+
+  jobject signer = get_signer(ctx);
+  if (signer == NULL) return IN3_EIGNORE;
+
+  jclass       cls            = (*jni)->GetObjectClass(jni, signer);
+  jmethodID    mid            = (*jni)->GetMethodID(jni, cls, "getAccounts", "()[Ljava/lang/String;");
+  jobjectArray jaccounts      = (*jni)->CallObjectMethod(jni, signer, mid);
+  int          accounts_total = (*jni)->GetArrayLength(jni, jaccounts);
+
+  if (!jaccounts || accounts_total == 0) return IN3_EIGNORE;
+
+  // This assumption is incorrect as anyone could just implement the signer.
+  sc->accounts_len = accounts_total * 20;
+  sc->accounts     = _malloc(accounts_total * 20);
+
+  for (int i = 0; i < accounts_total; ++i) {
+    jstring jaccount = (*jni)->GetObjectArrayElement(jni, jaccounts, i);
+    char*   account  = (char*) (*jni)->GetStringUTFChars(jni, jaccount, 0);
+    hex_to_bytes(account, -1, sc->accounts + i * 20, 20);
+    (*jni)->ReleaseStringUTFChars(jni, jaccount, account);
+  }
+
   return IN3_OK;
 }
 
@@ -632,8 +700,11 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 
 static in3_ret_t jsign_fn(void* data, in3_plugin_act_t action, void* ctx) {
   UNUSED_VAR(data);
-  UNUSED_VAR(action);
-  return jsign(ctx);
+  switch (action) {
+    case PLGN_ACT_SIGN: return jsign(ctx);
+    case PLGN_ACT_SIGN_ACCOUNT: return jsign_accounts(ctx);
+    default: return IN3_ENOTSUP;
+  }
 }
 
 /*
@@ -645,12 +716,12 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_init();
   in3_t* in3 = in3_for_chain(jchain);
   void*  p   = (*env)->NewGlobalRef(env, ob);
-  //  in3_log_set_level(LOG_TRACE);
-  //  in3_log_set_quiet(false);
+  // in3_log_set_level(LOG_TRACE);
+  // in3_log_set_quiet(false);
   in3_log_debug("New Global ref for %p === %p\n", ob, p);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, p);
   in3_plugin_register(in3, PLGN_ACT_TRANSPORT, Java_in3_IN3_transport, NULL, true);
-  in3_plugin_register(in3, PLGN_ACT_SIGN, jsign_fn, p, false);
+  in3_plugin_register(in3, PLGN_ACT_SIGN | PLGN_ACT_SIGN_ACCOUNT, jsign_fn, p, false);
   jni = env;
   // turn to debug
 

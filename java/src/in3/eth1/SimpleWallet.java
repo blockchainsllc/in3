@@ -36,14 +36,14 @@ package in3.eth1;
 
 import in3.IN3;
 import in3.Loader;
-import in3.utils.Signer;
+import in3.utils.*;
 import java.util.*;
 
 /**
  * a simple Implementation for holding private keys to sing data or
  * transactions.
  */
-public class SimpleWallet implements Signer {
+public class SimpleWallet extends Signer {
 
   static {
     Loader.loadLibrary();
@@ -51,6 +51,14 @@ public class SimpleWallet implements Signer {
 
   // ke for holding the map
   Map<String, String> privateKeys = new HashMap<String, String>();
+
+  /**
+   * returns the accounts supported by the wallet.
+   */
+  @Override
+  public String[] getAccounts() {
+    return privateKeys.keySet().toArray(new String[0]);
+  }
 
   /**
    * adds a key to the wallet and returns its public address.
@@ -84,23 +92,10 @@ public class SimpleWallet implements Signer {
   }
 
   /**
-   * returns true if the account is supported (or unlocked)
-   */
-  public boolean canSign(String address) {
-    return privateKeys.containsKey(address.toLowerCase());
-  }
-
-  /**
    * signing of the raw data.
    */
-  public String sign(String data, String address) {
+  public byte[] sign(String data, String address, SignatureType signatureType, PayloadType j, JSON payload) {
     String key = privateKeys.get(address.toLowerCase());
-    return signData(key, data);
+    return signData(key, data, signatureType);
   }
-
-  private static native String getAddressFromKey(String key);
-
-  private static native String signData(String key, String data);
-
-  private static native String decodeKeystore(String keystore, String passwd);
 }
