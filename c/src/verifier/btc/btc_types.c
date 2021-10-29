@@ -1,5 +1,6 @@
 #include "btc_types.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "btc_serialize.h"
 
 // Transaction fixed size values
@@ -14,24 +15,13 @@
 #define BTC_TX_OUT_VALUE_SIZE_BYTES 8
 
 typedef enum btc_tx_field {
-  INPUT,
-  OUTPUT
+  BTC_INPUT,
+  BTC_OUTPUT
 } btc_tx_field_t;
 
 void btc_init_tx(btc_tx_t* tx) {
-  tx->all.len        = 0;
-  tx->all.data       = NULL;
-  tx->version        = 1;
-  tx->flag           = 0;
-  tx->input_count    = 0;
-  tx->output_count   = 0;
-  tx->input.len      = 0;
-  tx->input.data     = NULL;
-  tx->output.len     = 0;
-  tx->output.data    = NULL;
-  tx->witnesses.len  = 0;
-  tx->witnesses.data = NULL;
-  tx->lock_time      = 0;
+  memset(tx, 0, sizeof(btc_tx_t));
+  tx->version = 1;
 }
 
 void btc_init_tx_in(btc_tx_in_t* tx_in) {
@@ -257,70 +247,70 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   return IN3_OK;
 }
 
-// creates a raw unsigned transaction
-// TODO: implement better error handling
-// TODO: Support witnesses
-void create_raw_tx(btc_tx_in_t* tx_in, uint32_t tx_in_len, btc_tx_out_t* tx_out, uint32_t tx_out_len, uint32_t lock_time, bytes_t* dst_raw_tx) {
-  if (!tx_in || !tx_out || !dst_raw_tx || tx_in_len == 0 || tx_out_len == 0) {
-    // TODO: Implement better error handling
-    printf("ERROR: arguments for creating a btc transaction can not be null\n");
-    return;
-  }
-  btc_tx_t tx;
-  tx.version      = 1;
-  tx.flag         = 0;
-  tx.input_count  = tx_in_len;
-  tx.output_count = tx_out_len;
-  tx.lock_time    = lock_time;
+// // creates a raw unsigned transaction
+// // TODO: implement better error handling
+// // TODO: Support witnesses
+// void create_raw_tx(btc_tx_in_t* tx_in, uint32_t tx_in_len, btc_tx_out_t* tx_out, uint32_t tx_out_len, uint32_t lock_time, bytes_t* dst_raw_tx) {
+//   if (!tx_in || !tx_out || !dst_raw_tx || tx_in_len == 0 || tx_out_len == 0) {
+//     // TODO: Implement better error handling
+//     printf("ERROR: arguments for creating a btc transaction can not be null\n");
+//     return;
+//   }
+//   btc_tx_t tx;
+//   tx.version      = 1;
+//   tx.flag         = 0;
+//   tx.input_count  = tx_in_len;
+//   tx.output_count = tx_out_len;
+//   tx.lock_time    = lock_time;
 
-  // Get inputs
-  // -- serialize inputs
-  bytes_t* serialized_inputs = malloc(tx_in_len * sizeof(bytes_t));
-  uint32_t raw_input_size    = 0;
-  for (uint32_t i = 0; i < tx_in_len; i++) {
-    btc_serialize_tx_in(&tx_in[i], &serialized_inputs[i]);
-    raw_input_size += serialized_inputs[i].len;
-  }
-  // -- Copy raw inputs into tx
-  tx.input.data           = malloc(raw_input_size);
-  tx.input.len            = raw_input_size;
-  uint32_t prev_input_len = 0;
-  for (uint32_t i = 0; i < tx_in_len; i++) {
-    for (uint32_t j = 0; j < serialized_inputs[i].len; j++) {
-      tx.input.data[j + prev_input_len] = serialized_inputs[i].data[j];
-    }
-    prev_input_len = serialized_inputs[i].len;
-  }
+//   // Get inputs
+//   // -- serialize inputs
+//   bytes_t* serialized_inputs = malloc(tx_in_len * sizeof(bytes_t));
+//   uint32_t raw_input_size    = 0;
+//   for (uint32_t i = 0; i < tx_in_len; i++) {
+//     btc_serialize_tx_in(&tx_in[i], &serialized_inputs[i]);
+//     raw_input_size += serialized_inputs[i].len;
+//   }
+//   // -- Copy raw inputs into tx
+//   tx.input.data           = malloc(raw_input_size);
+//   tx.input.len            = raw_input_size;
+//   uint32_t prev_input_len = 0;
+//   for (uint32_t i = 0; i < tx_in_len; i++) {
+//     for (uint32_t j = 0; j < serialized_inputs[i].len; j++) {
+//       tx.input.data[j + prev_input_len] = serialized_inputs[i].data[j];
+//     }
+//     prev_input_len = serialized_inputs[i].len;
+//   }
 
-  // Get Outputs
-  // -- serialize outputs
-  bytes_t* serialized_outputs = malloc(tx_out_len * sizeof(bytes_t));
-  uint32_t raw_output_size    = 0;
-  for (uint32_t i = 0; i < tx_out_len; i++) {
-    btc_serialize_tx_out(&tx_out[i], &serialized_outputs[i]);
-    raw_output_size += serialized_outputs[i].len;
-  }
-  // -- Copy raw outputs into tx
-  tx.output.data           = malloc(raw_output_size);
-  tx.output.len            = raw_output_size;
-  uint32_t prev_output_len = 0;
-  for (uint32_t i = 0; i < tx_out_len; i++) {
-    for (uint32_t j = 0; j < serialized_outputs[i].len; j++) {
-      tx.output.data[j + prev_output_len] = serialized_outputs[i].data[j];
-    }
-    prev_output_len = serialized_outputs[i].len;
-  }
+//   // Get Outputs
+//   // -- serialize outputs
+//   bytes_t* serialized_outputs = malloc(tx_out_len * sizeof(bytes_t));
+//   uint32_t raw_output_size    = 0;
+//   for (uint32_t i = 0; i < tx_out_len; i++) {
+//     btc_serialize_tx_out(&tx_out[i], &serialized_outputs[i]);
+//     raw_output_size += serialized_outputs[i].len;
+//   }
+//   // -- Copy raw outputs into tx
+//   tx.output.data           = malloc(raw_output_size);
+//   tx.output.len            = raw_output_size;
+//   uint32_t prev_output_len = 0;
+//   for (uint32_t i = 0; i < tx_out_len; i++) {
+//     for (uint32_t j = 0; j < serialized_outputs[i].len; j++) {
+//       tx.output.data[j + prev_output_len] = serialized_outputs[i].data[j];
+//     }
+//     prev_output_len = serialized_outputs[i].len;
+//   }
 
-  // free buffers
-  for (uint32_t i = 0; i < tx_in_len; i++) {
-    _free(serialized_inputs[i].data);
-  }
-  _free(serialized_inputs);
-  for (uint32_t i = 0; i < tx_out_len; i++) {
-    _free(serialized_outputs[i].data);
-  }
-  _free(serialized_outputs);
-}
+//   // free buffers
+//   for (uint32_t i = 0; i < tx_in_len; i++) {
+//     _free(serialized_inputs[i].data);
+//   }
+//   _free(serialized_inputs);
+//   for (uint32_t i = 0; i < tx_out_len; i++) {
+//     _free(serialized_outputs[i].data);
+//   }
+//   _free(serialized_outputs);
+// }
 
 void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
   if (!tx || !src) {
@@ -332,13 +322,13 @@ void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
   uint32_t old_len;
 
   switch (field_type) {
-    case INPUT:
+    case BTC_INPUT:
       btc_serialize_tx_in((btc_tx_in_t*) src, &raw_src);
       old_len = tx->input.len;
       dst     = &tx->input;
       tx->input_count++;
       break;
-    case OUTPUT:
+    case BTC_OUTPUT:
       btc_serialize_tx_out((btc_tx_out_t*) src, &raw_src);
       old_len = tx->output.len;
       dst     = &tx->output;
@@ -361,9 +351,61 @@ void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
 }
 
 void add_input_to_tx(btc_tx_t* tx, btc_tx_in_t* tx_in) {
-  add_to_tx(tx, tx_in, INPUT);
+  add_to_tx(tx, tx_in, BTC_INPUT);
 }
 
 void add_output_to_tx(btc_tx_t* tx, btc_tx_out_t* tx_out) {
-  add_to_tx(tx, tx_out, OUTPUT);
+  add_to_tx(tx, tx_out, BTC_OUTPUT);
+}
+
+void add_outputs_to_tx(d_token_t* outputs, btc_tx_t* tx) {
+  uint32_t len = d_len(outputs);
+  for (uint32_t i = 0; i < len; i++) {
+    d_token_t* output = d_get_at(outputs, i);
+
+    const char* script_string = d_string(d_get(output, key("script")));
+    uint64_t    value         = d_get_long(d_get(output, key("value")), 0L);
+
+    btc_tx_out_t tx_out;
+    uint32_t     script_len = strlen(script_string) / 2;
+    bytes_t      script     = bytes(_malloc(script_len), script_len);
+    hex_to_bytes(script_string, strlen(script_string), script.data, script.len);
+
+    tx_out.script = script;
+    tx_out.value  = value;
+
+    add_output_to_tx(tx, &tx_out);
+  }
+}
+
+// utxos must be freed
+uint32_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos) {
+  uint32_t len = d_len(utxo_inputs);
+  *utxos       = _malloc(len * sizeof(btc_utxo_t));
+
+  for (uint32_t i = 0; i < len; i++) {
+    btc_utxo_t  utxo;
+    d_token_t*  utxo_input       = d_get_at(utxo_inputs, i);
+    uint32_t    tx_index         = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
+    uint64_t    value            = d_get_long(d_get(utxo_input, key("value")), 0L);
+    const char* tx_hash_string   = d_string(d_get(utxo_input, key("tx_hash")));
+    const char* tx_script_string = d_string(d_get(utxo_input, key("script")));
+
+    uint32_t tx_hash_len = strlen(tx_hash_string) / 2;
+    bytes_t  tx_hash     = bytes(_malloc(tx_hash_len), tx_hash_len);
+    hex_to_bytes(tx_hash_string, strlen(tx_hash_string), tx_hash.data, tx_hash.len);
+
+    uint32_t tx_script_len = strlen(tx_script_string) / 2;
+    bytes_t  tx_script     = bytes(_malloc(tx_script_len), tx_script_len);
+    hex_to_bytes(tx_script_string, strlen(tx_script_string), tx_script.data, tx_script.len);
+
+    utxo.tx_hash       = tx_hash.data;
+    utxo.tx_index      = tx_index;
+    utxo.tx_out.value  = value;
+    utxo.tx_out.script = tx_script;
+
+    *utxos[i] = utxo;
+  }
+
+  return len;
 }

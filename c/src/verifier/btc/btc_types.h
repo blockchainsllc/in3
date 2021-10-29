@@ -60,4 +60,9 @@ static inline bool btc_is_witness(bytes_t tx) {
   return tx.data[4] == 0 && tx.data[5] == 1;
 }
 
+void     add_outputs_to_tx(d_token_t* outputs, btc_tx_t* tx);
+uint32_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos);
+
+// void create_raw_tx(btc_tx_in_t* tx_in, uint32_t tx_in_len, btc_tx_out_t* tx_out, uint32_t tx_out_len, uint32_t lock_time, bytes_t* dst_raw_tx);
+
 #endif
