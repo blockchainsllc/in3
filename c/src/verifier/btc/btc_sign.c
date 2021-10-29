@@ -11,12 +11,17 @@ static void prepare_tx_in(const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
     printf("ERROR: in prepare_tx_in: function arguments can not be null!\n");
     return;
   }
+
   tx_in->prev_tx_index = utxo->tx_index;
   tx_in->prev_tx_hash  = malloc(32 * sizeof(uint8_t));
   memcpy(tx_in->prev_tx_hash, utxo->tx_hash, 32);
-  tx_in->script.len  = 0;
-  tx_in->script.data = NULL;
-  tx_in->sequence    = 0xffffffff;
+
+  // Before signing, input script field should temporarilly be equal to the utxo we want to redeem
+  tx_in->script.len  = utxo->tx_out.script.len;
+  tx_in->script.data = malloc(tx_in->script.len * sizeof(uint8_t));
+  memcpy(tx_in->script.data, utxo->tx_out.script.data, tx_in->script.len);
+
+  tx_in->sequence = 0xffffffff; // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
 }
 
 // WARNING: You need to free tx_in->script.data after calling this function!
@@ -49,25 +54,18 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint3
   // Include inputs into unsigned tx
   btc_tx_in_t tmp_tx_in;
   for (uint32_t i = 0; i < tx->input_count; i++) {
-    tmp_tx_in.prev_tx_hash  = utxo_list[i].tx_hash;
-    tmp_tx_in.prev_tx_index = utxo_list[i].tx_index;
-    tmp_tx_in.sequence      = 0xffffffff; // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
     if (i == utxo_index) {
-      // We found our target input for signing. Write data to the "permanent" tx_in structure
-      tx_in->prev_tx_hash  = utxo_list[i].tx_hash;
-      tx_in->prev_tx_index = utxo_list[i].tx_index;
-      tx_in->sequence      = 0xffffffff;                          // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
-      tx_in->script        = utxo_list[utxo_index].tx_out.script; // This should temporarily be the scriptPubKey of the output we want to redeem.
-      tmp_tx_in.script     = utxo_list[utxo_index].tx_out.script; // We also need to include the "unsigned" script in our transaction
+      tmp_tx_in = *tx_in;
     }
     else {
-      tmp_tx_in.script.data = NULL;
-      tmp_tx_in.script.len  = 0;
+      tmp_tx_in.prev_tx_hash  = utxo_list[i].tx_hash;
+      tmp_tx_in.prev_tx_index = utxo_list[i].tx_index;
+      tmp_tx_in.sequence      = 0xffffffff; // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
+      tmp_tx_in.script.data   = NULL;
+      tmp_tx_in.script.len    = 0;
     }
     add_input_to_tx(&tmp_tx, &tmp_tx_in);
   }
-  // tx_in->script = utxo_list[utxo_index]->script; // This should temporarily be the scriptPubKey of the output we want to redeem
-  // btc_serialize_tx_in(tx_in, &tmp_tx.input);
 
   // prepare array for hashing
   btc_serialize_tx(&tmp_tx, &(tmp_tx.all));
