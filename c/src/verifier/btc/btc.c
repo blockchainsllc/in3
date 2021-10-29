@@ -532,7 +532,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     // ---- select utxos here
     // create output for receiving the transaction "change", discounting miner fee
     btc_tx_out_t tx_out_change;
-    init_tx_out(&tx_out_change);
+    btc_init_tx_out(&tx_out_change);
     tx_out_change.value = utxo_total - miner_fee - outputs_total;
     // create raw unsigned transaction using selected set of utxos (inputs) and outputs (both received in Command Line and created "change")
     // Obtain private key

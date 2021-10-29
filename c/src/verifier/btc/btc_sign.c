@@ -20,7 +20,7 @@ static void prepare_tx_in(const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
 }
 
 // WARNING: You need to free tx_in->script.data after calling this function!
-void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t* priv_key, btc_tx_in_t* tx_in, uint8_t sighash) {
+void btc_sign_tx_in(const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_index, const bytes_t* priv_key, btc_tx_in_t* tx_in, uint8_t sighash) {
   if (!tx_in || !priv_key) {
     // TODO: Implement better error handling
     printf("ERROR: in btc_sign_tx_in: function arguments cannot be NULL.");
@@ -32,10 +32,12 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
     return;
   }
 
+  // Generate an unsigned transaction. This will be used to henerate the hash provided to
+  // the ecdsa signing algorithm
   btc_tx_t tmp_tx;
   tmp_tx.version       = tx->version;
   tmp_tx.flag          = 0; // TODO: Implement segwit support
-  tmp_tx.input_count   = 1; // TODO: support more than one input
+  tmp_tx.input_count   = 0;
   tmp_tx.output_count  = tx->output_count;
   tmp_tx.output.len    = tx->output.len;
   tmp_tx.output.data   = alloca(sizeof(uint8_t) * tmp_tx.output.len);
@@ -44,8 +46,28 @@ void btc_sign_tx_in(const btc_tx_t* tx, const btc_tx_out_t* utxo, const bytes_t*
   tmp_tx.lock_time = tx->lock_time;
 
   // TODO: This should probably be set before calling the signer function. If this is done outside this function, then the utxo is probably not needed.
-  tx_in->script = utxo->script; // This should temporarily be the scriptPubKey of the output we want to redeem
-  btc_serialize_tx_in(tx_in, &tmp_tx.input);
+  // Include inputs into unsigned tx
+  btc_tx_in_t tmp_tx_in;
+  for (uint32_t i = 0; i < tx->input_count; i++) {
+    tmp_tx_in.prev_tx_hash  = utxo_list[i].tx_hash;
+    tmp_tx_in.prev_tx_index = utxo_list[i].tx_index;
+    tmp_tx_in.sequence      = 0xffffffff; // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
+    if (i == utxo_index) {
+      // We found our target input for signing. Write data to the "permanent" tx_in structure
+      tx_in->prev_tx_hash  = utxo_list[i].tx_hash;
+      tx_in->prev_tx_index = utxo_list[i].tx_index;
+      tx_in->sequence      = 0xffffffff;                          // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
+      tx_in->script        = utxo_list[utxo_index].tx_out.script; // This should temporarily be the scriptPubKey of the output we want to redeem.
+      tmp_tx_in.script     = utxo_list[utxo_index].tx_out.script; // We also need to include the "unsigned" script in our transaction
+    }
+    else {
+      tmp_tx_in.script.data = NULL;
+      tmp_tx_in.script.len  = 0;
+    }
+    add_input_to_tx(&tmp_tx, &tmp_tx_in);
+  }
+  // tx_in->script = utxo_list[utxo_index]->script; // This should temporarily be the scriptPubKey of the output we want to redeem
+  // btc_serialize_tx_in(tx_in, &tmp_tx.input);
 
   // prepare array for hashing
   btc_serialize_tx(&tmp_tx, &(tmp_tx.all));
@@ -112,7 +134,7 @@ void btc_sign_tx(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t ut
     // TODO: Allow setting a specific pub_key for each input
     btc_tx_in_t tx_in;
     prepare_tx_in(&selected_utxo_list[i], &tx_in);
-    btc_sign_tx_in(tx, &selected_utxo_list[i].tx_out, priv_key, &tx_in, BTC_SIGHASH_ALL);
+    btc_sign_tx_in(tx, selected_utxo_list, i, priv_key, &tx_in, BTC_SIGHASH_ALL);
     add_input_to_tx(tx, &tx_in);
     _free(tx_in.script.data);
     _free(tx_in.prev_tx_hash);
