@@ -491,6 +491,90 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     return btc_verify_tx(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
 #endif
+
+  // #if !defined(RPC_ONLY) || defined(RPC_GETUTXOS)
+
+  //   // fetch whole list of utxos
+  //   if (VERIFY_RPC("getutxos")) {
+  //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
+  //     // Get raw unsigned transaction
+  //     // As we will have custody of the user priv keys, this should be obtained from our server somehow
+  //     // sign transaction
+  //     // return raw signed transaction
+  //   }
+  // #endif
+
+  // #if !defined(RPC_ONLY) || defined(RPC_SELECTUTXOS)
+
+  //   // TODO: Define if it is really necessary to have an RPC for this or if we should
+  //   // only do this in the background when sending a transaction.
+  //   if (VERIFY_RPC("selectutxos")) {
+  //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
+  //     // Get list of outputs we want to send in out transaction
+  //     // Get list of unspended transaction outputs (utxos)
+  //     // Select "best" group of utxos to meet the requirements of our
+  //     // return a list with the selected utxos
+  //   }
+  // #endif
+
+#if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
+
+  // SERVER: sendtransaction(raw_signed_tx)
+  if (VERIFY_RPC("sendtransaction")) {
+    REQUIRE_EXPERIMENTAL(vc->req, "btc")
+    // This is the RPC that abstracts most of what is done in the background before sending a transaction:
+    // Get outputs we want to send
+    d_token_t* outputs   = d_get_at(params, 0);
+    d_token_t* utxo_list = d_get_at(params, 1);
+    // select "best" set of UTXOs
+    // btc_utxo_t* utxo_list = NULL;
+    uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
+    // ---- select utxos here
+    // create output for receiving the transaction "change", discounting miner fee
+    btc_tx_out_t tx_out_change;
+    init_tx_out(&tx_out_change);
+    tx_out_change.value = utxo_total - miner_fee - outputs_total;
+    // create raw unsigned transaction using selected set of utxos (inputs) and outputs (both received in Command Line and created "change")
+    // Obtain private key
+    // Sign previously obtained unsigned transaction using private key
+    // Send transaction to in3 server
+    // return succes (transaction hash, so the user can look for it online) or error code
+  }
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_BUILDUNSIGNEDTRANSACTION)
+
+  if (VERIFY_RPC("buildunsignedtransaction")) {
+    REQUIRE_EXPERIMENTAL(vc->req, "btc")
+    // Get inputs list
+    // Get outputs list
+    // Get other important parameters (witnesses, tx_type (ex: p2pk), fees, sighash_type, etc.)
+    // Build the unsigned transaction
+    // return raw unsigned transaction
+  }
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_SIGNTRANSACTION)
+
+  if (VERIFY_RPC("signtransaction")) {
+    REQUIRE_EXPERIMENTAL(vc->req, "btc")
+    // Get raw unsigned transaction
+    // As we will have custody of the user priv keys, this should be obtained from our server somehow
+    // sign transaction
+    // return raw signed transaction
+  }
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_SENDRAWTRANSACTION)
+
+  if (VERIFY_RPC("sendrawtransaction")) {
+    REQUIRE_EXPERIMENTAL(vc->req, "btc")
+    // Get raw signed transaction
+    // verify if transaction is well-formed and signed before sending
+    // send transaction to in3 server
+    // return success or error code
+  }
+#endif
   return IN3_EIGNORE;
 }
 

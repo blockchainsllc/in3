@@ -18,6 +18,36 @@ typedef enum btc_tx_field {
   OUTPUT
 } btc_tx_field_t;
 
+void btc_init_tx(btc_tx_t* tx) {
+  tx->all.len        = 0;
+  tx->all.data       = NULL;
+  tx->version        = 1;
+  tx->flag           = 0;
+  tx->input_count    = 0;
+  tx->output_count   = 0;
+  tx->input.len      = 0;
+  tx->input.data     = NULL;
+  tx->output.len     = 0;
+  tx->output.data    = NULL;
+  tx->witnesses.len  = 0;
+  tx->witnesses.data = NULL;
+  tx->lock_time      = 0;
+}
+
+void btc_init_tx_in(btc_tx_in_t* tx_in) {
+  tx_in->prev_tx_hash  = NULL;
+  tx_in->prev_tx_index = 0;
+  tx_in->script.len    = 0;
+  tx_in->script.data   = NULL;
+  tx_in->sequence      = 0xffffffff;
+}
+
+void btc_init_tx_out(btc_tx_out_t* tx_out) {
+  tx_out->script.len  = 0;
+  tx_out->script.data = NULL;
+  tx_out->value       = 0;
+}
+
 uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
   dst->prev_tx_hash  = data;

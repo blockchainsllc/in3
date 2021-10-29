@@ -5,10 +5,10 @@
 
 // Fill tx_in fields, preparing the input for signing
 // WARNING: You need to free tx_in->prev_tx_hash after calling this function
-static void init_tx_in(const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
+static void prepare_tx_in(const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
   if (!utxo || !tx_in) {
     // TODO: Implement better error treatment
-    printf("ERROR: in init_tx_in: function arguments can not be null!\n");
+    printf("ERROR: in prepare_tx_in: function arguments can not be null!\n");
     return;
   }
   tx_in->prev_tx_index = utxo->tx_index;
@@ -111,7 +111,7 @@ void btc_sign_tx(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t ut
     // -- for each pub_key (assume we only have one pub key for now):
     // TODO: Allow setting a specific pub_key for each input
     btc_tx_in_t tx_in;
-    init_tx_in(&selected_utxo_list[i], &tx_in);
+    prepare_tx_in(&selected_utxo_list[i], &tx_in);
     btc_sign_tx_in(tx, &selected_utxo_list[i].tx_out, priv_key, &tx_in, BTC_SIGHASH_ALL);
     add_input_to_tx(tx, &tx_in);
     _free(tx_in.script.data);

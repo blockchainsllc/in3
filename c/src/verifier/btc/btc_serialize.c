@@ -126,7 +126,7 @@ void long_to_compact_uint(bytes_t* buf, uint32_t index, uint64_t value) {
   // fill buffer with value
   if (len > 1) {
     for (int i = 0; i < (len - 1); i++) {
-      buf->data[i + index] = (uint8_t) ((value >> (i << 1)) && 0xff);
+      buf->data[i + index] = (uint8_t) ((value >> (i << 1)) & 0xff);
     }
   }
 }
