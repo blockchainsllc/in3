@@ -8,6 +8,7 @@
 #include "../../verifier/eth1/nano/eth_nano.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
+#include "btc_sign.h"
 #include "btc_target.h"
 #include "btc_types.h"
 #include <stdlib.h>
@@ -517,43 +518,6 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   //   }
   // #endif
 
-#if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
-
-  // SERVER: sendtransaction(raw_signed_tx)
-  if (VERIFY_RPC("sendtransaction")) {
-    REQUIRE_EXPERIMENTAL(vc->req, "btc")
-    // This is the RPC that abstracts most of what is done in the background before sending a transaction:
-    // Get outputs we want to send
-    d_token_t* outputs   = d_get_at(params, 0);
-    d_token_t* utxo_list = d_get_at(params, 1);
-    // select "best" set of UTXOs
-    // btc_utxo_t* utxo_list = NULL;
-    uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
-    // ---- select utxos here
-    // create output for receiving the transaction "change", discounting miner fee
-    btc_tx_out_t tx_out_change;
-    btc_init_tx_out(&tx_out_change);
-    tx_out_change.value = utxo_total - miner_fee - outputs_total;
-    // create raw unsigned transaction using selected set of utxos (inputs) and outputs (both received in Command Line and created "change")
-    // Obtain private key
-    // Sign previously obtained unsigned transaction using private key
-    // Send transaction to in3 server
-    // return succes (transaction hash, so the user can look for it online) or error code
-  }
-#endif
-
-#if !defined(RPC_ONLY) || defined(RPC_BUILDUNSIGNEDTRANSACTION)
-
-  if (VERIFY_RPC("buildunsignedtransaction")) {
-    REQUIRE_EXPERIMENTAL(vc->req, "btc")
-    // Get inputs list
-    // Get outputs list
-    // Get other important parameters (witnesses, tx_type (ex: p2pk), fees, sighash_type, etc.)
-    // Build the unsigned transaction
-    // return raw unsigned transaction
-  }
-#endif
-
 #if !defined(RPC_ONLY) || defined(RPC_SIGNTRANSACTION)
 
   if (VERIFY_RPC("signtransaction")) {
@@ -574,6 +538,71 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     // send transaction to in3 server
     // return success or error code
   }
+#endif
+  return IN3_EIGNORE;
+}
+
+in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
+
+  in3_req_t* req = ctx->req;
+  // This is the RPC that abstracts most of what is done in the background before sending a transaction:
+  // Get outputs we want to send
+  d_token_t* params = ctx->params;
+  bytes_t    pub_key;
+  pub_key.len = 20;
+  TRY_PARAM_GET_REQUIRED_ADDRESS(pub_key.data, ctx, 0)
+  d_token_t* outputs   = d_get_at(params, 1);
+  d_token_t* utxo_list = d_get_at(params, 2);
+
+  // select "best" set of UTXOs
+  // btc_utxo_t* utxo_list = NULL;
+  uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
+  // ---- select utxos here
+  // create output for receiving the transaction "change", discounting miner fee
+  btc_tx_out_t tx_out_change;
+  btc_init_tx_out(&tx_out_change);
+  tx_out_change.value = utxo_total - miner_fee - outputs_total;
+  // create raw unsigned transaction using selected set of utxos (inputs) and outputs (both received in Command Line and created "change")
+
+  // {"method":"sendrawtransaction", "params":["0100000001f90c6776e0aff73fdc67d57beadc283cea8c63cc7b8d48249bd79ce6a7823fc0000000008a47304402201955addf93c52fe20ce468603e97d3ea495c3072d3ebe92120ad0a200abbb51902204a9fe8e85fcee5621fc902796bbdf7ce490dc06cbfe7acb37eeb2f8c9406710e0141046d6caac248af96f6afa7f904f550253a0f3ef3f5aa2fe6838a95b216691468e2487e6222a6664e079c8edf7518defd562dbeda1e7593dfd7f0be285880a24dabffffffff01e803000000000000015100000000"]}
+
+  bytes_t  signed_tx = NULL_BYTES;
+  btc_tx_t tx;
+  btc_init_tx(&tx);
+  add_outputs_to_tx(outputs, &tx);
+
+  btc_utxo_t* selected_utxo_list = NULL;
+  uint32_t    utxo_list_len      = btc_prepare_utxo(utxo_list, &selected_utxo_list);
+  // TODO: prepare tx
+  TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len, &pub_key));
+
+  btc_serialize_tx(&tx, &signed_tx);
+  sb_t sb = {0};
+  sb_add_rawbytes(&sb, "\"", signed_tx, 0);
+  sb_add_chars(&sb, "\"");
+
+  // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
+  _free(signed_tx.data);
+
+  d_token_t* result = NULL;
+  TRY_FINAL(req_send_sub_request(req, "sendrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+  sb_add_json(in3_rpc_handle_start(ctx), "", result);
+  return in3_rpc_handle_finish(ctx);
+}
+
+static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  in3_req_t* req = ctx->req;
+  // we only handle BTC
+  if (req->client->chain.type != CHAIN_BTC) return IN3_EIGNORE;
+
+  // make sure the conf is filled with data from the cache
+  btc_check_conf(req->client, conf);
+
+#if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
+
+  // SERVER: sendtransaction(raw_signed_tx)
+  TRY_RPC("sendtransaction", send_transaction(conf, ctx))
 #endif
   return IN3_EIGNORE;
 }
@@ -604,6 +633,8 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
         return IN3_EIGNORE;
       return IN3_OK;
     }
+    case PLGN_ACT_RPC_HANDLE:
+      return btc_handle_intern(conf, pctx);
     case PLGN_ACT_RPC_VERIFY:
       return in3_verify_btc(conf, pctx);
     default:
@@ -618,7 +649,7 @@ in3_ret_t in3_register_btc(in3_t* c) {
   tc->max_daps          = 20;
   tc->max_diff          = 10;
   tc->dap_limit         = 20;
-  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET, handle_btc, tc, false);
+  return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET | PLGN_ACT_RPC_HANDLE, handle_btc, tc, false);
 }
 /*
 static void print_hex(char* prefix, uint8_t* data, int len) {
