@@ -26,7 +26,7 @@ types:
       type: uint
     value:
       descr: the block hash (same as provided)
-      type: long
+      type: uint64
     tx_hash:
       descr: the block hash (same as provided)
       type: string
