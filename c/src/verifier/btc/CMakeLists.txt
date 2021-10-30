@@ -41,6 +41,7 @@ add_static_library(
     btc_types.c
     btc_serialize.c
     btc_target.c
+    btc_sign.c
     btc.c 
 
   DEPENDS 

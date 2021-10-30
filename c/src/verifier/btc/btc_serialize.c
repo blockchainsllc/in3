@@ -35,6 +35,7 @@ bytes_t btc_block_get(bytes_t block, btc_block_field field) {
     default: return NULL_BYTES;
   }
 }
+
 void btc_hash(bytes_t data, bytes32_t dst) {
   bytes32_t  tmp;
   SHA256_CTX ctx;
@@ -51,6 +52,7 @@ void btc_hash(bytes_t data, bytes32_t dst) {
 void rev_copy(uint8_t* dst, uint8_t* src) {
   for (int i = 0; i < 32; i++) dst[31 - i] = src[i];
 }
+
 void rev_copyl(uint8_t* dst, bytes_t src, int l) {
   if (src.len < (uint32_t) l) {
     memset(dst + src.len, 0, l - src.len);
@@ -66,6 +68,67 @@ uint32_t le_to_int(uint8_t* data) {
 uint64_t le_to_long(uint8_t* data) {
   return (((uint64_t) data[7]) << 24) | (((uint64_t) data[6]) << 24) | (((uint64_t) data[5]) << 24) | (((uint64_t) data[4]) << 24) |
          (((uint64_t) data[3]) << 24) | (((uint64_t) data[2]) << 16) | (((uint64_t) data[1]) << 8) | data[0];
+}
+
+// TODO: Receive 'buf' as type 'uint8_t*' instead of 'bytes_t*'
+void uint_to_le(bytes_t* buf, uint32_t index, uint32_t value) {
+  buf->data[index]     = value & 0xff;
+  buf->data[index + 1] = (value >> 8) & 0xff;
+  buf->data[index + 2] = (value >> 16) & 0xff;
+  buf->data[index + 3] = (value >> 24) & 0xff;
+}
+
+// TODO: Receive 'buf' as type 'uint8_t*' instead of 'bytes_t*'
+void long_to_le(bytes_t* buf, uint32_t index, uint64_t value) {
+  buf->data[index]     = value & 0xff;
+  buf->data[index + 1] = (value >> 8) & 0xff;
+  buf->data[index + 2] = (value >> 16) & 0xff;
+  buf->data[index + 3] = (value >> 24) & 0xff;
+  buf->data[index + 4] = (value >> 32) & 0xff;
+  buf->data[index + 5] = (value >> 40) & 0xff;
+  buf->data[index + 6] = (value >> 48) & 0xff;
+  buf->data[index + 7] = (value >> 56) & 0xff;
+}
+
+size_t get_compact_uint_size(uint64_t cmpt_uint) {
+  if (cmpt_uint > 0xffffffff) {
+    return 9;
+  }
+  if (cmpt_uint > 0xffff) {
+    return 5;
+  }
+  if (cmpt_uint > 0xfc) {
+    return 3;
+  }
+  return 1;
+}
+
+// TODO: Receive 'buf' as type 'uint8_t*' instead of 'bytes_t*'
+void long_to_compact_uint(bytes_t* buf, uint32_t index, uint64_t value) {
+  int len;
+  if (value > 0xffffffff) {
+    len              = 9;
+    buf->data[index] = 0xff;
+  }
+  else if (value > 0xffff) {
+    len              = 5;
+    buf->data[index] = 0xfe;
+  }
+  else if (value > 0xfc) {
+    len              = 3;
+    buf->data[index] = 0xfd;
+  }
+  else {
+    len              = 1;
+    buf->data[index] = (uint8_t) (value & 0xff);
+  }
+
+  // fill buffer with value
+  if (len > 1) {
+    for (int i = 0; i < (len - 1); i++) {
+      buf->data[i + index] = (uint8_t) ((value >> (i << 1)) & 0xff);
+    }
+  }
 }
 
 void btc_target_from_block(bytes_t block, bytes32_t target) {
