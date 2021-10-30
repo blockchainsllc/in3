@@ -1075,7 +1075,7 @@ btc:
     params:
       from:
         descr: the public key derived from the private key used to sign
-        type: string
+        type: address
       outputs:
         descr: the desired outputs of the transaction
         type: output
