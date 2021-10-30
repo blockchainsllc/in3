@@ -35,25 +35,31 @@
 package in3.utils;
 
 import in3.IN3;
+import in3.Loader;
 import in3.eth1.TransactionRequest;
+import java.util.*;
 
 /**
  * a Interface responsible for signing data or transactions.
  */
-public interface Signer {
-  /**
-   * optiional method which allows to change the transaction-data before sending
-   * it. This can be used for redirecting it through a multisig.
-   */
-  TransactionRequest prepareTransaction(IN3 in3, TransactionRequest tx);
+public abstract class Signer {
+  static {
+    Loader.loadLibrary();
+  }
 
   /**
-   * returns true if the account is supported (or unlocked)
+   * returns the accounts supported by the wallet
    */
-  boolean canSign(String address);
+  public abstract String[] getAccounts();
 
   /**
    * signing of the raw data.
    */
-  String sign(String data, String address);
+  public abstract byte[] sign(String data, String address, SignatureType signtype, PayloadType payloadType, JSON meta) throws Exception;
+
+  public static native String getAddressFromKey(String key);
+
+  public static native byte[] signData(String key, String data, SignatureType signatureType);
+
+  public static native String decodeKeystore(String keystore, String passwd);
 }

@@ -179,25 +179,25 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv*, jc
 JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv*, jclass, jstring);
 
 /*
- * Class:     in3_eth1_SimpleWallet
+ * Class:     in3_utils_Signer
  * Method:    getAddressFromKey
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv*, jclass, jstring);
+JNIEXPORT jstring JNICALL Java_in3_utils_Signer_getAddressFromKey(JNIEnv*, jclass, jstring);
 
 /*
- * Class:     in3_eth1_SimpleWallet
+ * Class:     in3_utils_Signer
  * Method:    signData
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv*, jclass, jstring, jstring);
+JNIEXPORT jstring JNICALL Java_in3_utils_Signer_signData(JNIEnv* env, jclass clz, jstring jkey, jstring jdata, jobject signatureTypeObj);
 
 /*
- * Class:     in3_eth1_SimpleWallet
+ * Class:     in3_utils_Signer
  * Method:    decodeKeystore
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv*, jclass, jstring, jstring);
+JNIEXPORT jstring JNICALL Java_in3_utils_Signer_decodeKeystore(JNIEnv*, jclass, jstring, jstring);
 
 /*
  * Class:     in3_Loader
