@@ -1,7 +1,7 @@
 #ifndef _BTC_SIGN_H
 #define _BTC_SIGN_H
 
-#include "../../core/client/plugin.h"
+#include "../../core/client/request.h"
 #include "btc_types.h"
 
 #define BTC_SIGHASH_ALL          0x1
