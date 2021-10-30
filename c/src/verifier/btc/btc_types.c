@@ -1,4 +1,6 @@
 #include "btc_types.h"
+#include "../../core/client/request.h"
+#include "../../core/client/request_internal.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "btc_serialize.h"
@@ -53,8 +55,8 @@ uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
 // TODO: Implement support for "Coinbase" inputs
 // TODO: Handle null arguments
 // TODO: Handle max script len = 10000 bytes
-void btc_serialize_tx_in(btc_tx_in_t* tx_in, bytes_t* dst) {
-  if (!tx_in || !dst) return;
+in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) {
+  if (!tx_in || !dst) return IN3_EINVAL;
   // calculate serialized tx input size in bytes
   uint32_t tx_in_size = (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES +
                          get_compact_uint_size((uint64_t) tx_in->script.len) +
@@ -62,12 +64,12 @@ void btc_serialize_tx_in(btc_tx_in_t* tx_in, bytes_t* dst) {
                          BTC_TX_IN_SEQUENCE_SIZE_BYTES);
 
   // alloc memory in dst
-  dst->data = malloc(tx_in_size * sizeof(*dst->data));
+  dst->data = malloc(sizeof(*dst->data));
   dst->len  = tx_in_size;
 
   // serialize tx_in
   // -- Previous outpoint
-  if (!tx_in->prev_tx_hash) return;
+  if (!tx_in->prev_tx_hash) return req_set_error(req, "missing prevtash_hash", IN3_ERPC);
   uint32_t index = 0;
   for (uint32_t i = 0; i < 32; i++) {
     dst->data[index++] = tx_in->prev_tx_hash[31 - i];
@@ -85,6 +87,7 @@ void btc_serialize_tx_in(btc_tx_in_t* tx_in, bytes_t* dst) {
 
   // -- sequence
   uint_to_le(dst, index, tx_in->sequence);
+  return IN3_OK;
 }
 
 uint8_t* btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst) {
@@ -120,9 +123,7 @@ void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
   index += get_compact_uint_size((uint64_t) tx_out->script.len);
 
   // -- pk_script
-  for (uint32_t i = 0; i < tx_out->script.len; i++) {
-    dst->data[index++] = tx_out->script.data[i];
-  }
+  memcpy(dst->data + index, tx_out->script.data, tx_out->script.len);
 }
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
@@ -177,7 +178,7 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
              (tx->flag ? tx->witnesses.len : 0) +
              BTC_TX_LOCKTIME_SIZE_BYTES);
 
-  dst->data = malloc(tx_size * sizeof(*dst->data));
+  dst->data = malloc(sizeof(*dst->data));
   dst->len  = tx_size;
 
   // Serialize transaction data
@@ -312,10 +313,9 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
 //   _free(serialized_outputs);
 // }
 
-void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
+in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
   if (!tx || !src) {
-    printf("ERROR: in add_to_tx: Function arguments cannot be null!\n");
-    return;
+    return req_set_error(req, "ERROR: in add_to_tx: Function arguments cannot be null!", IN3_EINVAL);
   }
 
   bytes_t  raw_src, *dst;
@@ -323,7 +323,7 @@ void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
 
   switch (field_type) {
     case BTC_INPUT:
-      btc_serialize_tx_in((btc_tx_in_t*) src, &raw_src);
+      btc_serialize_tx_in(req, (btc_tx_in_t*) src, &raw_src);
       old_len = tx->input.len;
       dst     = &tx->input;
       tx->input_count++;
@@ -336,7 +336,7 @@ void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
       break;
     default:
       // TODO: Implement better error handling
-      printf("Unrecognized transaction field code. No action was performed.");
+      return req_set_error(req, "Unrecognized transaction field code. No action was performed", IN3_EINVAL);
   }
 
   dst->len += raw_src.len;
@@ -347,18 +347,18 @@ void add_to_tx(btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
   for (uint32_t i = 0; i < raw_src.len; i++) {
     dst->data[old_len + i] = raw_src.data[i];
   }
-  return;
+  return IN3_OK;
 }
 
-void add_input_to_tx(btc_tx_t* tx, btc_tx_in_t* tx_in) {
-  add_to_tx(tx, tx_in, BTC_INPUT);
+in3_ret_t add_input_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_in_t* tx_in) {
+  return add_to_tx(req, tx, tx_in, BTC_INPUT);
 }
 
-void add_output_to_tx(btc_tx_t* tx, btc_tx_out_t* tx_out) {
-  add_to_tx(tx, tx_out, BTC_OUTPUT);
+in3_ret_t add_output_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_out_t* tx_out) {
+  return add_to_tx(req, tx, tx_out, BTC_OUTPUT);
 }
 
-void add_outputs_to_tx(d_token_t* outputs, btc_tx_t* tx) {
+in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
   uint32_t len = d_len(outputs);
   for (uint32_t i = 0; i < len; i++) {
     d_token_t* output = d_get_at(outputs, i);
@@ -374,16 +374,17 @@ void add_outputs_to_tx(d_token_t* outputs, btc_tx_t* tx) {
     tx_out.script = script;
     tx_out.value  = value;
 
-    add_output_to_tx(tx, &tx_out);
+    TRY_CATCH(add_output_to_tx(req, tx, &tx_out), _free(script.data);)
   }
+  return IN3_OK;
 }
 
 // utxos must be freed
-uint32_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos) {
-  uint32_t len = d_len(utxo_inputs);
-  *utxos       = _malloc(len * sizeof(btc_utxo_t));
+in3_ret_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos, uint32_t* len) {
+  *len   = d_len(utxo_inputs);
+  *utxos = _malloc(*len * sizeof(btc_utxo_t));
 
-  for (uint32_t i = 0; i < len; i++) {
+  for (uint32_t i = 0; i < *len; i++) {
     btc_utxo_t  utxo;
     d_token_t*  utxo_input       = d_get_at(utxo_inputs, i);
     uint32_t    tx_index         = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
@@ -407,5 +408,5 @@ uint32_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos) {
     *utxos[i] = utxo;
   }
 
-  return len;
+  return IN3_OK;
 }

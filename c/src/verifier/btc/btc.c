@@ -570,10 +570,11 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   bytes_t  signed_tx = NULL_BYTES;
   btc_tx_t tx;
   btc_init_tx(&tx);
-  add_outputs_to_tx(outputs, &tx);
+  add_outputs_to_tx(req, outputs, &tx);
 
   btc_utxo_t* selected_utxo_list = NULL;
-  uint32_t    utxo_list_len      = btc_prepare_utxo(utxo_list, &selected_utxo_list);
+  uint32_t    utxo_list_len      = 0;
+  btc_prepare_utxo(utxo_list, &selected_utxo_list, &utxo_list_len);
   // TODO: prepare tx
   TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len, &pub_key));
 

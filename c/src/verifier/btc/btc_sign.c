@@ -62,7 +62,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, const btc_tx_t* tx, const btc_utxo_t* u
       tmp_tx_in.script.data   = NULL;
       tmp_tx_in.script.len    = 0;
     }
-    add_input_to_tx(&tmp_tx, &tmp_tx_in);
+    add_input_to_tx(req, &tmp_tx, &tmp_tx_in);
   }
 
   // prepare array for hashing
@@ -131,12 +131,12 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_u
   for (uint32_t i = 0; i < utxo_list_len; i++) {
     // -- for each pub_key (assume we only have one pub key for now):
     // TODO: Allow setting a specific pub_key for each input
-    btc_tx_in_t tx_in;
+    btc_tx_in_t tx_in = {0};
     prepare_tx_in(&selected_utxo_list[i], &tx_in);
     TRY_CATCH(btc_sign_tx_in(req, tx, selected_utxo_list, i, pub_key, &tx_in, BTC_SIGHASH_ALL),
               _free(tx_in.script.data);
               _free(tx_in.prev_tx_hash);)
-    add_input_to_tx(tx, &tx_in);
+    add_input_to_tx(req, tx, &tx_in);
     _free(tx_in.script.data);
     _free(tx_in.prev_tx_hash);
   }
