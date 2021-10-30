@@ -5,14 +5,14 @@ types:
       type: string
     value:
       descr: the value
-      type: long
+      type: uint64
   utxo:
     tx_index:
       descr: the transaction index that this utxo refers to
       type: uint
     value:
       descr: the value
-      type: long
+      type: uint64
     tx_hash:
       descr: the transaction hash (same as provided)
       type: string
