@@ -95,6 +95,7 @@ class ClientConfig(DataTransferObject):
                  node_signatures: int = None,
                  node_signature_consensus: int = None,
                  node_min_deposit: int = None,
+                 debug: bool = None,
                  node_list_auto_update: bool = None,
                  node_limit: int = None,
                  request_timeout: int = None,
@@ -121,6 +122,7 @@ class ClientConfig(DataTransferObject):
         self.bootWeights: bool = boot_weights
         self.includeCode: bool = response_includes_code
         self.keepIn3: bool = response_keep_proof
+        self.debug: bool = debug
         self.useBinary: bool = transport_binary_format
         self.useHttp: bool = transport_ignore_tls
         self.experimental: bool = experimental
