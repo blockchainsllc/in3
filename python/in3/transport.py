@@ -26,7 +26,7 @@ def https_transport(in3_request: In3Request, in3_response: In3Response):
             # also the in3_request contains the http-header, which need to get added
             request_params = {
                 'url': str(in3_request.url_at(i), 'utf8'),
-                'method': in3_request.method(),
+                'method': str(in3_request.method(), 'utf8'),
                 'data': in3_request.payload(),
                 'headers': {'Content-type': 'application/json', 'Accept': 'application/json'},
             }
