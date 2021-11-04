@@ -119,11 +119,11 @@ void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
   long_to_le(dst, index, tx_out->value);
   index += 8;
 
-  // -- pk_script size
+  // -- lock-script size
   long_to_compact_uint(dst, index, tx_out->script.len);
   index += get_compact_uint_size((uint64_t) tx_out->script.len);
 
-  // -- pk_script
+  // -- lock-script
   memcpy(dst->data + index, tx_out->script.data, tx_out->script.len);
 }
 
