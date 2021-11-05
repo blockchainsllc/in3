@@ -56,6 +56,7 @@ uint32_t btc_weight(btc_tx_t* tx);
 
 in3_ret_t add_input_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_in_t* tx_in);
 in3_ret_t add_output_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_out_t* tx_out);
+in3_ret_t add_witness_to_tx(in3_req_t* req, btc_tx_t* tx, bytes_t* witness);
 
 static inline bool btc_is_witness(bytes_t tx) {
   return tx.data[4] == 0 && tx.data[5] == 1;
