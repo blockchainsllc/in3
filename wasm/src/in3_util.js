@@ -639,3 +639,142 @@ class SimpleSigner {
 }
 
 IN3.SimpleSigner = SimpleSigner
+
+class BrowserSigner {
+
+    constructor(getPassword) {
+        var self = this
+        if (typeof getPassword !== 'function')
+            throw new Error("Error: Password provider must be a function")
+        self.getPassword = getPassword
+        self.accounts = {}
+        self.db = {}
+        //create database connection
+        var request = indexedDB.open("in3_browser_signer");
+        //create database if non existent
+        request.onupgradeneeded = function () {
+            self.db = request.result;
+            var store = self.db.createObjectStore("keys", { keyPath: "pubKey" });
+        }
+        //load database if existent
+        request.onsuccess = function () {
+            self.db = request.result;
+        }
+    }
+    //source: https://javascript.hotexamples.com/examples/crypto-js/-/PBKDF2/javascript-pbkdf2-function-examples.html
+    encrypt(data, pw, iterations = 4500) {
+        const keySize = 256;
+        const salt = CryptoJS.lib.WordArray.random(128 / 8);
+        const key = CryptoJS.PBKDF2(pw, salt, {
+            iterations,
+            keySize: keySize / 4
+        });
+        const iv = CryptoJS.lib.WordArray.random(128 / 8);
+        const encrypted = CryptoJS.AES.encrypt(data, key, {
+            iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        return salt.toString() + iv.toString() + encrypted.toString();
+    }
+    //source: https://javascript.hotexamples.com/examples/crypto-js/-/PBKDF2/javascript-pbkdf2-function-examples.html
+    decrypt(data, pw, iterations = 4500) {
+        const keySize = 256;
+        const salt = CryptoJS.enc.Hex.parse(data.substr(0, 32));
+        const iv = CryptoJS.enc.Hex.parse(data.substr(32, 32));
+        const encrypted = data.substring(64);
+        const key = CryptoJS.PBKDF2(pw, salt, {
+            iterations,
+            keySize: keySize / 4
+        });
+        const decrypted = CryptoJS.AES.decrypt(encrypted, key, {
+            iv,
+            padding: CryptoJS.pad.Pkcs7,
+            mode: CryptoJS.mode.CBC
+        });
+        return decrypted;
+    }
+
+    //generates a private key (if non is passed) and encrypt it with user password. stores pubKey and encryptedPk
+    generateAndStorePrivateKey(pk = undefined) {
+        if (pk == undefined)
+            pk = IN3.util.randomBytes(32)
+        var pubKey = private2address(toHex(pk))
+        var pw = this.getPassword()
+        if (pw === undefined) throw new Error("Error: Wrong password during key generation")
+        var encryptedPk = this.encrypt(toHex(pk), pw)
+        var tx = this.db.transaction("keys", "readwrite");
+        var store = tx.objectStore("keys");
+        store.put({
+            pubKey: pubKey,
+            encryptedPk: encryptedPk
+        })
+        return pubKey
+    }
+
+    //returns all public keys in database
+    async getAccounts() {
+        var tx = this.db.transaction("keys", "readonly")
+        var store = tx.objectStore("keys");
+        return new Promise((resolve) => {
+            //its only this complicated because of IE and some Firefox versions
+            //source: https://googlechrome.github.io/samples/idb-getall/
+            if ('getAllKeys' in store) {
+                // IDBObjectStore.getAll() will return the full set of items in our store.
+                store.getAllKeys().onsuccess = function (event) {
+                    resolve(event.target.result);
+                };
+            } else {
+                // Fallback to the traditional cursor approach if getAll isn't supported.
+                var accounts = [];
+                store.openCursor().onsuccess = function (event) {
+                    var cursor = event.target.result;
+                    if (cursor) {
+                        accounts.push(cursor.value);
+                        cursor.continue();
+                    } else {
+                        resolve(accounts);
+                    }
+                };
+            }
+        })
+
+    }
+
+    async canSign(address) {
+        var tx = this.db.transaction("keys", "readonly");
+        var store = tx.objectStore("keys");
+        var storeRequest = store.get(address);
+        return new Promise((resolve) => {
+            storeRequest.onsuccess = function () {
+                resolve(storeRequest.result !== undefined)
+            }
+            storeRequest.onerror = function () {
+                throw new Error("could not find key in database")
+            }
+        })
+    }
+
+    async sign(data, account, sign_type, payloadType, meta) {
+        var self = this
+        var tx = this.db.transaction("keys", "readonly");
+        var store = tx.objectStore("keys");
+        var storeRequest = store.get(toChecksumAddress(account));
+        var pw = this.getPassword()
+        if (pw === undefined) throw new Error("Error: Wrong password during signing process")
+        return new Promise((resolve) => {
+            storeRequest.onsuccess = function () {
+                if (storeRequest.result !== undefined) {
+                    let pk = self.decrypt(storeRequest.result.encryptedPk, pw).toString(CryptoJS.enc.Utf8)
+                    if (pk.length != 66) throw new Error('Error decrypting: Private Key not valid for ' + account)
+                    resolve(ecSign(pk, data, sign_type || 'hash'))
+                }
+                else
+                    throw new Error('Account not found for signing ' + account)
+            }
+        })
+    }
+
+}
+
+IN3.BrowserSigner = BrowserSigner
