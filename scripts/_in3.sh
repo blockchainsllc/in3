@@ -32,6 +32,8 @@ subcmds=(
     'getblockheader: Returns data of block header for given block hash <hash> <verbosity>'
     'getdifficulty: Returns the proof-of-work difficulty as a multiple of the minimum difficulty'
     'getrawtransaction: Returns the raw transaction data <txid> <verbosity> <blockhash>'
+    'sendrawtransaction: sends a transaction to a btc node <transaction>'
+    'sendtransaction: sends a transaction to a btc node <from> <outputs> <utxo>'
     'in3_config: changes the configuration of a client <config>'
     'eth_blockNumber: returns the number of the most recent block'
     'eth_call: calls a function of a contract (or simply executes the evm opcodes) and returns the result <tx> <block>'
