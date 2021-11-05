@@ -720,6 +720,30 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
     sign: (data: Hex, account: Address, sign_type: SignType, payloadType: SignPayload, meta?: any) => Promise<BufferType>
 }
 
+
+/**
+ * Signer, which stores the key encrypted in the indexDB in the browser.
+ */
+export declare class BrowserSigner<BigIntType, BufferType> implements Signer<BigIntType, BufferType> {
+
+    /** creates a BrowserSigner, which will use the given callback-function in order to retrieve the password, which is used to encrypt the stored keys.*/
+    constructor(passwordCB: () => String);
+
+    /** returns all addresses managed by the signer. */
+    getAccounts(): Address[]
+    /** adds a private key to the signer and returns the address associated with it. */
+    generateAndStorePrivateKey(pk?: BufferType): Promise<string>;
+
+    /** returns true if the account is supported (or unlocked) */
+    canSign(address: Address): Promise<boolean>
+
+    /**
+     * signing of any data.
+     * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
+     */
+    sign: (data: Hex, account: Address, sign_type: SignType, payloadType: SignPayload, meta?: any) => Promise<BufferType>
+}
+
 /**
  * Collection of different util-functions.
  */
