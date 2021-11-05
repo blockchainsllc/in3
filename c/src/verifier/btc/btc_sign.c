@@ -12,7 +12,7 @@ static void rev_memcpy(uint8_t* src, uint8_t* dst, uint32_t len) {
   // TODO: Accuse error in case the following statement is false
   if (src && dst) {
     for (uint32_t i = 0; i < len; i++) {
-      dst[len - i] = src[i];
+      dst[(len - 1) - i] = src[i];
     }
   }
 }
