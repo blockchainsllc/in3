@@ -2,10 +2,7 @@
 <html>
 
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"
-        integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="/Users/jonasbentke/Documents/sdk-js/in3/sdk-wasm.js"></script>
+    <script src="node_modules/in3/index.js"></script>
 </head>
 
 <body>
@@ -16,7 +13,9 @@
     </div>
     <script>
         var in3 = new IN3({ chainId: 0x1, replaceLatestBlock: 6, requestCount: 3 });
-
+        in3.eth.getBlockByNumber('latest', false)
+            .then(block => document.getElementById('result').innerHTML = JSON.stringify(block, null, 2))
+            .catch(alert)
     </script>
 </body>
 

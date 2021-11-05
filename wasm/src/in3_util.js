@@ -648,18 +648,26 @@ class BrowserSigner {
             throw new Error("Error: Password provider must be a function")
         self.getPassword = getPassword
         self.accounts = {}
-        self.db = {}
-        //create database connection
-        var request = indexedDB.open("in3_browser_signer");
-        //create database if non existent
-        request.onupgradeneeded = function () {
-            self.db = request.result;
-            var store = self.db.createObjectStore("keys", { keyPath: "pubKey" });
-        }
-        //load database if existent
-        request.onsuccess = function () {
-            self.db = request.result;
-        }
+        self.db = new Promise((resolve, reject) => {
+            //create database connection
+            var request = indexedDB.open("in3_browser_signer");
+            //create database if non existent
+            request.onupgradeneeded = function () {
+                let db = request.result;
+                db.createObjectStore("keys", { keyPath: "pubKey" });
+                resolve(db)
+            }
+
+            //load database if existent
+            request.onsuccess = function () {
+                let db = request.result;
+                resolve(db)
+            }
+
+            request.onerror = function (ev) {
+                reject(new Error("Could not access the indexdb"))
+            }
+        })
     }
 
     generateKey(pw) {
@@ -724,15 +732,15 @@ class BrowserSigner {
 
     //generates a private key (if non is passed) and encrypt it with user password. stores pubKey and encryptedPk
     async generateAndStorePrivateKey(pk = undefined) {
-        if (pk == undefined)
-            pk = IN3.util.randomBytes(32)
+        let db = await this.db
+        if (pk == undefined) pk = crypto.getRandomValues(new Uint8Array(32))
         var pubKey = private2address(toHex(pk))
         var pw = this.getPassword()
         if (pw === undefined) throw new Error("Error: Wrong password during key generation")
 
         var encryptedPk = await this.encrypt(toHex(pk), pw)
         console.log(encryptedPk)
-        var tx = this.db.transaction("keys", "readwrite");
+        var tx = db.transaction("keys", "readwrite");
         var store = tx.objectStore("keys");
         store.put({
             pubKey: pubKey,
@@ -743,7 +751,8 @@ class BrowserSigner {
 
     //returns all public keys in database
     async getAccounts() {
-        var tx = this.db.transaction("keys", "readonly")
+        let db = await this.db
+        var tx = db.transaction("keys", "readonly")
         var store = tx.objectStore("keys");
         return new Promise((resolve) => {
             //its only this complicated because of IE and some Firefox versions
@@ -771,7 +780,8 @@ class BrowserSigner {
     }
 
     async canSign(address) {
-        var tx = this.db.transaction("keys", "readonly");
+        let db = await this.db
+        var tx = db.transaction("keys", "readonly");
         var store = tx.objectStore("keys");
         var storeRequest = store.get(address);
         return new Promise((resolve) => {
@@ -786,7 +796,8 @@ class BrowserSigner {
 
     async sign(data, account, sign_type, payloadType, meta) {
         var self = this
-        var tx = this.db.transaction("keys", "readonly");
+        let db = await self.db
+        var tx = db.transaction("keys", "readonly");
         var store = tx.objectStore("keys");
         var storeRequest = store.get(toChecksumAddress(account));
         var pw = this.getPassword()
