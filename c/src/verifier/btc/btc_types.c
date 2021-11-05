@@ -125,7 +125,7 @@ void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
   index += get_compact_uint_size((uint64_t) tx_out->script.len);
 
   // -- lock-script
-  memcpy(dst->data + index, tx_out->script.data, tx_out->script.len);
+  memcpy(dst->data + index, tx_out->script.data, tx_out->script.len); 
 }
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
@@ -275,6 +275,8 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
     case BTC_WITNESS:
       old_len = tx->witnesses.len;
       dst     = &tx->witnesses;
+      raw_src.len = ((bytes_t*) src)->len;
+      raw_src.data = ((bytes_t*) src)->data;
       break;
     default:
       // TODO: Implement better error handling
@@ -284,11 +286,10 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
   size_t mem_size = raw_src.len;
   dst->data       = (!dst->data) ? _malloc(mem_size) : _realloc(dst->data, mem_size, dst->len);
   dst->len += raw_src.len;
-
   // Add bytes to tx field
-  for (uint32_t i = 0; i < raw_src.len; i++) {
-    dst->data[old_len + i] = raw_src.data[i];
-  }
+  // for (uint32_t i = 0; i < raw_src.len; i++) {
+  //   dst->data[old_len + i] = raw_src.data[i];
+  // }
   return IN3_OK;
 }
 
@@ -310,7 +311,7 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
     d_token_t* output = d_get_at(outputs, i);
 
     const char* script_string = d_string(d_get(output, key("script")));
-    uint64_t    value         = d_get_long(d_get(output, key("value")), 0L);
+    uint64_t    value         = d_get_long(output, key("value"));
 
     btc_tx_out_t tx_out;
     uint32_t     script_len = strlen(script_string) / 2;

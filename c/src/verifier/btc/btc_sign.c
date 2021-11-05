@@ -39,8 +39,8 @@ static void prepare_tx_in(const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
 }
 
 // WARNING: You need to free tx_in->script.data after calling this function!
-in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const bool is_segwit, const bytes_t* pub_key, btc_tx_in_t* tx_in, uint8_t sighash) {
-  if (!tx_in || !pub_key) {
+in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const bool is_segwit, const bytes_t* account, const bytes_t* pub_key, btc_tx_in_t* tx_in, uint8_t sighash) {
+  if (!tx_in || !account) {
     return req_set_error(req, "ERROR: in btc_sign_tx_in: function arguments cannot be NULL.", IN3_ERPC);
   }
 
@@ -49,7 +49,14 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
     return req_set_error(req, "ERROR: in btc_sign_tx_in: Sighash not yet supported.", IN3_ERPC);
   }
 
-  // Generate an unsigned transaction. This will be used to henerate the hash provided to
+  if (pub_key->len != 33 && pub_key->len != 65) {
+    return req_set_error(req, "ERROR: in btc_sign_tx_in: Public key not supported. BTC public keys should be either compressed (33 bytes) or uncompressed (65 bytes).", IN3_ERPC);
+  }
+  else if ((pub_key->len == 65 && pub_key->data[0] != 0x4) || (pub_key->len == 33 && pub_key->data[0] != 0x2 && pub_key->data[0] != 0x3)) {
+    return req_set_error(req, "ERROR: in btc_sign_tx_in: Invalid public key format", IN3_ERPC);
+  }
+
+  // Generate an unsigned transaction. This will be used to generate the hash provided to
   // the ecdsa signing algorithm
   btc_tx_t tmp_tx;
   btc_init_tx(&tmp_tx);
@@ -176,7 +183,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
 
   der_sig.data = alloca(sizeof(uint8_t) * 75);
 
-  TRY(req_require_signature(req, SIGN_EC_BTC, PL_SIGN_BTCTX, &sig, hash_message, *pub_key, req->requests[0]))
+  TRY(req_require_signature(req, SIGN_EC_BTC, PL_SIGN_BTCTX, &sig, hash_message, *account, req->requests[0]))
 
   der_sig.len                 = ecdsa_sig_to_der(sig.data, der_sig.data);
   der_sig.data[der_sig.len++] = sig.data[64]; // append verification byte to end of DER signature
@@ -190,23 +197,22 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
       // scriptSig(written to tx_in) should be empty. Data will be written in witness field
       // witness(we write this to transaction) = NUM_ELEMENTS | ZERO_BYTE | DER_SIG_LEN | DER_SIG | PUB_KEY_LEN | PUB_KEY
 
-      // As we don't still support multisig, NUM_ELEMENTS is fixed in 3 (a zero byte, the signature (len+signature) and the public key)
+      // As we don't still support multisig, NUM_ELEMENTS is fixed in 2 (the signature and the public key)
       // TODO: IMplement multisig support
 
       tx_in->script.len  = 0;
       tx_in->script.data = NULL;
 
       bytes_t witness;
-      witness.len    = 1 + 1 + 1 + der_sig.len + 65; // NUM_ELEMENTS + ZERO_BYTE + DER_SIG_LEN + DER_SIG + PUB_KEY_LEN + PUB_KEY
+      witness.len    = 1 + 1 + der_sig.len + 1 + pub_key->len; // NUM_ELEMENTS + DER_SIG_LEN + DER_SIG + PUB_KEY_LEN + PUB_KEY
       witness.data   = alloca(sizeof(uint8_t) * witness.len);
       uint32_t index = 0;
 
-      witness.data[index++] = 3;                            // write NUM_ELEMENTS. When multisig is implemented, this value should change according to the number of signatures
-      witness.data[index++] = 0;                            // write zero byte
+      witness.data[index++] = 2;                            // write NUM_ELEMENTS. When multisig is implemented, this value should change according to the number of signatures
       long_to_compact_uint(&witness, index++, der_sig.len); // it is safe to assume this field only has 1 byte in a correct execution
       memcpy(witness.data + index, der_sig.data, der_sig.len);
       index += der_sig.len;
-      witness.data[index++] = 65; // write PUB_KEY_LEN
+      witness.data[index++] = pub_key->len; // write PUB_KEY_LEN
       memcpy(witness.data + index, pub_key->data, pub_key->len);
 
       add_witness_to_tx(req, tx, &witness);
@@ -225,7 +231,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
   else {
     // Pay-To-Public-Key-Hash (P2PKH). scriptSig = DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
     // TODO: Abstract this block of code into a separate function
-    tx_in->script.len = 1 + der_sig.len + 1 + 65; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
+    tx_in->script.len = 1 + der_sig.len + 1 + 64; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
     if (tx->flag) tx_in->script.len++;            // We need to include a zero byte it it is a witness transaction
     tx_in->script.data = malloc(sizeof(uint8_t) * tx_in->script.len);
 
@@ -240,10 +246,10 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
     while (i < der_sig.len) {
       b->data[index++] = der_sig.data[i++];
     }
-    b->data[index++] = 65; // write pubkey len
+    b->data[index++] = 64; // write pubkey len
     // write pubkey
     i = 0;
-    while (i < 65) {
+    while (i < 64) {
       b->data[index++] = pub_key->data[i++];
     }
   }
@@ -255,15 +261,22 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
   return IN3_OK;
 }
 
-in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* pub_key) {
+in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* account, bytes_t* pub_key) {
   // for each input in a tx:
   for (uint32_t i = 0; i < utxo_list_len; i++) {
-    // -- for each pub_key (assume we only have one pub key for now):
-    // TODO: Allow setting a specific pub_key for each input
+    bool is_segwit = (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1);
+    if (is_segwit) {
+      tx->flag = 1;
+      break;
+    }
+  }
+  for (uint32_t i = 0; i < utxo_list_len; i++) {
+    // -- for each account (assume we only have one pub key for now):
+    // TODO: Allow setting a specific account for each input
     btc_tx_in_t tx_in = {0};
     prepare_tx_in(&selected_utxo_list[i], &tx_in);
     bool is_segwit = (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1);
-    TRY_CATCH(btc_sign_tx_in(req, tx, selected_utxo_list, utxo_list_len, i, is_segwit, pub_key, &tx_in, BTC_SIGHASH_ALL),
+    TRY_CATCH(btc_sign_tx_in(req, tx, selected_utxo_list, utxo_list_len, i, is_segwit, account, pub_key, &tx_in, BTC_SIGHASH_ALL),
               _free(tx_in.script.data);
               _free(tx_in.prev_tx_hash);)
     add_input_to_tx(req, tx, &tx_in);
