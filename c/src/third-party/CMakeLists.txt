@@ -32,7 +32,9 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory( crypto )
+if(CRYPTO_LIB)
+  add_subdirectory( crypto )
+endif()
 if(USE_SCRYPT)
   add_subdirectory( libscrypt )
 endif()

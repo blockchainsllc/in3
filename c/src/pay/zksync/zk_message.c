@@ -180,7 +180,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
     if (data->prepare)
       data->prepare->human_message = _strdupn(msg_data, -1);
     else {
-      TRY(req_require_signature(ctx, SIGN_EC_PREFIX, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20)))
+      TRY(req_require_signature(ctx, SIGN_EC_PREFIX, PL_SIGN_ANY, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20), ctx->requests[0]))
       in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
       if (signature.len == 65 && signature.data[64] < 27)
@@ -294,7 +294,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   memset(ethmsg + 28, 0, 32);                  //  msgBatch hash  - currently not supported, so 32x0
 
   if (conf->sign_type != ZK_SIGN_CREATE2) {
-    TRY(req_require_signature(ctx, SIGN_EC_PREFIX, &signature, bytes((uint8_t*) ethmsg, 60), bytes(conf->account, 20)))
+    TRY(req_require_signature(ctx, SIGN_EC_PREFIX, PL_SIGN_ANY, &signature, bytes((uint8_t*) ethmsg, 60), bytes(conf->account, 20), ctx->requests[0]))
     if (signature.len == 65 && signature.data[64] < 27)
       signature.data[64] += 27; // because EIP155 chainID = 0
   }
@@ -325,7 +325,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
     if (conf->sign_type == ZK_SIGN_PK)
       sb_add_rawbytes(sb, "\"type\":\"ECDSA\",\"ethSignature\":\"0x", signature, 0);
     else if (conf->sign_type == ZK_SIGN_CONTRACT)
-      sb_add_rawbytes(sb, "\"type\":\"Onchain", signature, 0);
+      sb_add_chars(sb, "\"type\":\"Onchain");
     else if (conf->sign_type == ZK_SIGN_CREATE2) {
       sb_add_rawbytes(sb, "\"type\":\"CREATE2\",\"creatorAddress\":\"0x", bytes(conf->create2.creator, 20), 0);
       sb_add_rawbytes(sb, "\",\"saltArg\":\"0x", bytes(conf->create2.salt_arg, 32), 0);

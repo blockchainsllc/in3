@@ -406,9 +406,9 @@ class EthAPI {
             }
 
         if (account && account.length == 66) // use direct pk
-            s.signature = toHex(ecSign(account, s.messageHash, false))
+            s.signature = toHex(ecSign(account, s.messageHash, 'raw'))
         else if (this.client.signer && await this.client.signer.canSign(account)) // use signer
-            s.signature = toHex(await this.client.signer.sign(s.messageHash, account, false, true))
+            s.signature = toHex(await this.client.signer.sign(s.messageHash, account, 'raw'))
         else throw new Error('no signer found to sign for this account')
         return { ...splitSignature(s.signature, message, false), ...s, messageHash: toHex(s.messageHash) }
     }

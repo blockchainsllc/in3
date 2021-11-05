@@ -45,7 +45,7 @@ snowballstemmer==2.0.0
 tornado==6.0.4
 tqdm==4.46.0
 twine==3.1.1
-typed-ast==1.4.1
+typed-ast==1.4.3
 urllib3==1.25.8
 wcwidth==0.1.9
 webencodings==0.5.1

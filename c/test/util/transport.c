@@ -1,9 +1,9 @@
 #include "transport.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/util/data.h"
+#include "../../src/nodeselect/full/cache.h"
+#include "../../src/nodeselect/full/nodelist.h"
 #include "../test_utils.h"
-#include "nodeselect/full/cache.h"
-#include "nodeselect/full/nodelist.h"
 #include <stdio.h>
 #include <unistd.h>
 #define MOCK_PATH TESTDATA_DIR "/mock/%s.json"

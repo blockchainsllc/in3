@@ -88,9 +88,9 @@ else {
     try {
         // if axios is available, we use it
         const axios = require('' + 'axios')
-        in3w.transport = (url, payload, timeout = 30000, method = "POST", headers = {}) => axios({ method: method || 'POST', url, data: JSON.parse(payload), timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion(), ...headers } })
+        in3w.transport = (url, payload, timeout = 30000, method = "POST", headers = {}) => axios({ method: method || 'POST', url, data: payload && JSON.parse(payload), timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion(), ...headers } })
             .then(res => {
-                if (res.status != 200) throw new HttpError("Invalid satus", res.status)
+                if (res.status < 200 || res.status >= 400) throw new HttpError("Invalid satus", res.status)
                 return JSON.stringify(res.data)
             })
     } catch (xx) {
@@ -253,11 +253,11 @@ class IN3 {
         let action = 0
         if (plgn.term) action |= 0x2
         if (plgn.getAccounts) action |= 0x20
-        if (plgn.handleRPC) action |= 0x100
-        if (plgn.verifyRPC) action |= 0x200
-        if (plgn.cacheGet) action |= 0x800
-        if (plgn.cacheSet) action |= 0x400
-        if (plgn.cacheClear) action |= 0x1000
+        if (plgn.handleRPC) action |= 0x200
+        if (plgn.verifyRPC) action |= 0x400
+        if (plgn.cacheGet) action |= 0x1000
+        if (plgn.cacheSet) action |= 0x800
+        if (plgn.cacheClear) action |= 0x2000
         let index = this.plugins.indexOf(plgn)
         if (index == -1) {
             index = this.plugins.length
@@ -322,10 +322,10 @@ class IN3 {
                         switch (req.type) {
                             case 'sign':
                                 try {
-                                    const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                    const [method, message, account, pl_type, meta] = Array.isArray(req.payload) ? [req.payload[0].method, ...req.payload[0].params] : [req.payload.method, ...req.payload.params];
                                     if (!this.signer) throw new Error('no signer set to handle signing')
                                     if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
-                                    setResponse(req.ctx, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                                    setResponse(req.ctx, toHex(await this.signer.sign(message, account, method, pl_type, meta)), 0, false)
                                 } catch (ex) {
                                     setResponse(req.ctx, ex.message || ex, 0, ex.status || true)
                                 }

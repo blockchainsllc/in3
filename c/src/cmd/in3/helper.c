@@ -165,7 +165,7 @@ bool configure_arg(in3_t* c, char** args, int* index, int argc) {
       value++;
       name = alloca(value - arg - 2);
       strncpy(name, arg + 2, value - arg - 3);
-      name[value - arg - 1] = 0;
+      name[value - arg - 3] = 0;
     }
     else {
       name = alloca(strlen(arg) - 1);
@@ -196,7 +196,9 @@ char* get_wei(char* val) {
   bytes32_t tmp;
   int       s = string_val_to_bytes(val, NULL, tmp);
   if (s < 0) die("Invalid numeric value");
-  char* res = _malloc(s * 2 + 3);
+  static char* res = NULL;
+  if (res) _free(res);
+  res = _malloc(s * 2 + 3);
   bytes_to_hex(tmp, s, res + 2);
   if (res[2] == '0') res++;
   res[0] = '0';

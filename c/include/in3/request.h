@@ -462,6 +462,37 @@ NONULL in3_proof_t in3_req_get_proof(
     int        i    /**< [in] the index within the request. */
 );
 
+#define TRY_SUB_REQUEST(req, name, res, fmt, ...)                            \
+  {                                                                          \
+    sb_t sb = {0};                                                           \
+    sb_printx(&sb, fmt, __VA_ARGS__);                                        \
+    in3_ret_t r = req_send_sub_request(req, name, sb.data, NULL, res, NULL); \
+    _free(sb.data);                                                          \
+    if (r) return r;                                                         \
+  }
+
+#define TRY_CATCH_SUB_REQUEST(req, name, res, _catch, fmt, ...)              \
+  {                                                                          \
+    sb_t sb = {0};                                                           \
+    sb_printx(&sb, fmt, __VA_ARGS__);                                        \
+    in3_ret_t r = req_send_sub_request(req, name, sb.data, NULL, res, NULL); \
+    _free(sb.data);                                                          \
+    if (r) {                                                                 \
+      _catch;                                                                \
+      return r;                                                              \
+    }                                                                        \
+  }
+#define TRY_FINAL_SUB_REQUEST(req, name, res, _catch, fmt, ...)              \
+  {                                                                          \
+    sb_t sb = {0};                                                           \
+    sb_printx(&sb, fmt, __VA_ARGS__);                                        \
+    in3_ret_t r = req_send_sub_request(req, name, sb.data, NULL, res, NULL); \
+    _free(sb.data);                                                          \
+    _catch;                                                                  \
+    if (r)                                                                   \
+      return r;                                                              \
+  }
+
 #ifdef __cplusplus
 }
 #endif

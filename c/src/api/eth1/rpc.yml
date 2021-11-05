@@ -102,6 +102,31 @@ utils:
         - "0x1234567890123456789012345678901234567890"
         - "0x05"
 
+  in3_rlpDecode:
+    sync: true
+    descr: rlp decode the data
+    params:
+      data:
+        type: bytes
+        descr: input data
+    result:
+      type: any
+      array: true
+      descr: a array with the values after decodeing. The result is either a hex-string or an array.
+    example:
+      request:
+        - '0xf83b808508e1409836829c40a86161616135663833353262373034623139653362616338373262343866326537663639356662653681ff82bbbb018080'
+      response:
+        -  "0x"
+        -  "0x08e1409836"
+        -  "0x9c40"
+        -  "0x61616161356638333532623730346231396533626163383732623438663265376636393566626536"
+        -  "0xff"
+        -  "0xbbbb"
+        -  "0x01"
+        -  "0x"
+        -  "0x"
+
   in3_checksumAddress:
     sync: true
     descr: Will convert an upper or lowercase Ethereum address to a checksum address.  (See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md) )
@@ -154,6 +179,7 @@ utils:
         default: eth
     result:
       descr: the value in wei as hex.
+      type: uint256
     example:
       request:
         - "20.0009123"

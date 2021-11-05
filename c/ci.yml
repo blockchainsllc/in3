@@ -251,6 +251,7 @@ examples_arm:
 
 examples_macos:
   stage: test
+  allow_failure: true
   needs:
     - wasm
     - mac_os

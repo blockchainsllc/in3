@@ -39,6 +39,7 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../signer/pk-signer/signer.h"
 #include "../../third-party/crypto/bignum.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/rand.h"
@@ -98,6 +99,32 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   _free(result);
   if (res) json_free(res);
   return IN3_OK;
+}
+
+static in3_ret_t rlp_decode_data(sb_t* sb, bytes_t data, int index) {
+  bytes_t dst  = {0};
+  int     type = rlp_decode(&data, index, &dst);
+  if (type == 1) {
+    if (index) sb_add_char(sb, ',');
+    sb_add_bytes(sb, "", &dst, 1, false);
+    return IN3_OK;
+  }
+  else if (type == 2) {
+    if (index) sb_add_char(sb, ',');
+    sb_add_char(sb, '[');
+    data = dst;
+    for (int i = 0; rlp_decode_data(sb, data, i) == IN3_OK; i++) {}
+    sb_add_char(sb, ']');
+    return IN3_OK;
+  }
+  return IN3_ELIMIT;
+}
+
+static in3_ret_t in3_rlpDecode(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t data = {0};
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 1, 0)
+  rlp_decode_data(in3_rpc_handle_start(ctx), data, 0);
+  return in3_rpc_handle_finish(ctx);
 }
 
 static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
@@ -550,26 +577,25 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   sc.message        = data;
   sc.account        = pk ? *pk : NULL_BYTES;
   sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+  if (strcmp(sig_type, "sign_ec_hash") == 0) sc.type = SIGN_EC_HASH;
+  if (strcmp(sig_type, "sign_ec_raw") == 0) sc.type = SIGN_EC_RAW;
+  if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.type = SIGN_EC_PREFIX;
+  if (strcmp(sig_type, "sign_ec_btc") == 0) sc.type = SIGN_EC_BTC;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));
   }
   else if (sc.account.len == 32) {
-    sc.signature = bytes(_malloc(65), 65);
-    if (sc.type == SIGN_EC_RAW)
-      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature.data, sc.signature.data + 64, NULL);
-    else if (strcmp(sig_type, "raw") == 0)
-      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature.data, sc.signature.data + 64, NULL);
-    else {
-      _free(sc.signature.data);
-      return req_set_error(ctx->req, "unsupported sigType", IN3_EINVAL);
-    }
+    sc.signature = sign_with_pk(pk->data, data, sc.type);
+    if (!sc.signature.data) return req_set_error(ctx->req, "unsupported sigType", IN3_EINVAL);
   }
   else
     return req_set_error(ctx->req, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
 
   bytes_t sig_bytes = sc.signature;
-  if (sc.signature.len == 65 && sc.signature.data[64] < 2)
+
+  // we only correct the v value, if the sig_type is a simple type. if it is a sign_ec- type, we don't
+  if (strncmp(sig_type, "sign_ec_", 8) && sc.signature.len == 65 && sc.signature.data[64] < 2)
     sc.signature.data[64] += 27;
 
   sb_t* sb = in3_rpc_handle_start(ctx);
@@ -710,6 +736,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ABIDECODE)
   TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_RLPDECODE)
+  TRY_RPC("in3_rlpDecode", in3_rlpDecode(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CHECKSUMADDRESS)
   TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))

@@ -117,7 +117,7 @@ typedef enum evm_state {
 
 #if defined(DEBUG)
 #define EVM_DEBUG_BLOCK(_code_block_) \
-  if (in3_log_level_is(LOG_TRACE)) (_code_block_)
+  if (in3_log_level_is(LOG_TRACE)) { _code_block_ }
 #else
 #define EVM_DEBUG_BLOCK(...)
 #endif

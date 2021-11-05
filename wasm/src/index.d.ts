@@ -613,6 +613,28 @@ export type Address = Hex
 export type Data = Hex
 
 /**
+ * the type of signature to create.
+ * - ec_hash : the data needs to be hashed first ( using keccak) before signing
+ * - ec_raw : the data is the ryw value (32bytes) to sign
+ * - ec_prefix : the data is a message which needs to be prefixed with the EthereumSignedMessage and length to before hashing and signing
+ */
+export type SignType = 'ec_hash' | 'ec_prefix' | 'ec_raw'
+
+/**
+ * The type of the payload to sign
+ */
+export enum SignPayload {
+    /**< custom data to be signed*/
+    PL_SIGN_ANY = 0,
+    /**< the payload is a ethereum-tx */
+    PL_SIGN_ETHTX = 1,
+    /**< the payload is a BTC-Tx-Input */
+    PL_SIGN_BTCTX = 2,
+    /**< The payload is a rlp-encoded data of a Gnosys Safe Tx */
+    PL_SIGN_SAFETX = 3,
+}
+
+/**
  * Signature
  */
 export type Signature = {
@@ -663,8 +685,6 @@ export type Transaction = {
 
 
 export declare interface Signer<BigIntType, BufferType> {
-    /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     canSign(address: Address): Promise<boolean>
@@ -676,7 +696,7 @@ export declare interface Signer<BigIntType, BufferType> {
      * signing of any data.
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
+    sign: (data: Hex, account: Address, sign_type: SignType, payloadType: SignPayload, meta?: any) => Promise<BufferType>
 }
 
 export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigIntType, BufferType> {
@@ -689,8 +709,6 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
     getAccounts(): Address[]
     /** adds a private key to the signer and returns the address associated with it. */
     addAccount(pk: Hash): string;
-    /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     canSign(address: Address): Promise<boolean>
@@ -699,7 +717,31 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
      * signing of any data.
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
+    sign: (data: Hex, account: Address, sign_type: SignType, payloadType: SignPayload, meta?: any) => Promise<BufferType>
+}
+
+
+/**
+ * Signer, which stores the key encrypted in the indexDB in the browser.
+ */
+export declare class BrowserSigner<BigIntType, BufferType> implements Signer<BigIntType, BufferType> {
+
+    /** creates a BrowserSigner, which will use the given callback-function in order to retrieve the password, which is used to encrypt the stored keys.*/
+    constructor(passwordCB: () => String);
+
+    /** returns all addresses managed by the signer. */
+    getAccounts(): Address[]
+    /** adds a private key to the signer and returns the address associated with it. */
+    generateAndStorePrivateKey(pk?: BufferType): Promise<string>;
+
+    /** returns true if the account is supported (or unlocked) */
+    canSign(address: Address): Promise<boolean>
+
+    /**
+     * signing of any data.
+     * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
+     */
+    sign: (data: Hex, account: Address, sign_type: SignType, payloadType: SignPayload, meta?: any) => Promise<BufferType>
 }
 
 /**
@@ -808,10 +850,9 @@ export declare interface Utils<BufferType> {
      * create a signature (65 bytes) for the given message and kexy
      * @param pk the private key
      * @param msg the message
-     * @param hashFirst if true the message will be hashed first (default:true), if not the message is the hash.
-     * @param adjustV if true (default) the v value will be adjusted by adding 27
+     * @param signType the type of signature to create
      */
-    ecSign(pk: Hex | BufferType, msg: Hex | BufferType, hashFirst?: boolean, adjustV?: boolean): BufferType
+    ecSign(pk: Hex | BufferType, msg: Hex | BufferType, signType: SignType): BufferType
 
     /**
      * takes raw signature (65 bytes) and splits it into a signature object.

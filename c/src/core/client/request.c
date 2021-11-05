@@ -55,6 +55,15 @@ static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
   return IN3_OK;
 }
 
+bool in_property_name(char* c) {
+  for (c++; *c && *c != '"'; c++) {
+    if (*c == '\\') c++;
+  }
+  if (*c) c++;
+  while (*c && (*c == ' ' || *c < 14)) c++;
+  return *c == ':';
+}
+
 in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
   char*      data = _strdupn(req_data, -1);
   in3_req_t* r    = req_new(client, data);
@@ -326,6 +335,26 @@ in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
   return in3_rpc_handle_finish(hctx);
 }
 
+in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {
+  if (!result) return req_set_error(ctx->req, "No result", IN3_ERPC);
+  sb_t* sb = in3_rpc_handle_start(ctx);
+
+  // As the API might return an empty string as a response,
+  // we at least convert it into an empty object
+  if ((d_type(result) == T_STRING || d_type(result) == T_BYTES) && d_len(result) == 0) {
+    sb_add_chars(sb, "{}");
+  }
+  else {
+    sb_add_json(sb, "", result);
+  }
+
+  // now convert all kebab-case to pascal case
+  for (char* c = sb->data; *c; c++) {
+    if (*c == '-' && in_property_name(c)) *c = '_';
+  }
+  return in3_rpc_handle_finish(ctx);
+}
+
 in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   uint8_t val[8];
   long_to_bytes(value, val);
@@ -384,6 +413,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
         *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
         if (!*result) {
           char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+          UNUSED_VAR(s); // this makes sure we don't get a warning when building with _DLOGGING=false
           return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
         }
         return IN3_OK;
@@ -401,7 +431,10 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
       sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
   ctx = req_new(parent->client, req);
-  if (!ctx) return req_set_error(parent, "Invalid request!", IN3_ERPC);
+  if (!ctx) {
+    if (use_cache && req) _free(req);
+    return req_set_error(parent, "Invalid request!", IN3_ERPC);
+  }
   if (child) *child = ctx;
 
   // inherit cache-entries
@@ -416,42 +449,45 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
     *result = d_get(ctx->responses[0], K_RESULT);
     if (!*result) {
       char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+      UNUSED_VAR(s); // this makes sure we don't get a warning when building with _DLOGGING=false
       return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
     }
   }
   return ret;
 }
 
-in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t* signature, bytes_t raw_data, bytes_t from) {
-  bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
-  memcpy(cache_key.data, raw_data.data, raw_data.len);
-  if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
+static inline const char* method_for_sigtype(d_signature_type_t type) {
+  switch (type) {
+    case SIGN_EC_RAW: return "sign_ec_raw";
+    case SIGN_EC_HASH: return "sign_ec_hash";
+    case SIGN_EC_PREFIX: return "sign_ec_prefix";
+    case SIGN_EC_BTC: return "sign_ec_btc";
+    default: return "sign_ec_hash";
+  }
+}
+
+in3_ret_t req_send_sign_request(in3_req_t* ctx, d_signature_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
+
   bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
   if (cached_sig) {
     *signature = *cached_sig;
     return IN3_OK;
   }
 
-  in3_log_debug("requesting signature type=%d from account %x\n", type, from.len > 2 ? bytes_to_int(from.data, 4) : 0);
-
-  // first try internal plugins for signing, before we create an context.
-  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
-    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .type = type};
-    in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
-    if (r == IN3_OK && sc.signature.data) {
-      in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);
-      *signature = sc.signature;
-      return IN3_OK;
-    }
-    else if (r != IN3_EIGNORE && r != IN3_OK)
-      return r;
-  }
-  in3_log_debug("nobody picked up the signature, sending req now \n");
-
   // get the signature from required
-  const char* method = type == SIGN_EC_HASH ? "sign_ec_hash" : (type == SIGN_EC_PREFIX ? "sign_ec_prefix" : "sign_ec_raw");
-  in3_req_t*  c      = req_find_required(ctx, method, NULL);
-  if (c)
+  const char* method = method_for_sigtype(type);
+  sb_t        params = {0};
+  sb_add_bytes(&params, "[", &raw_data, 1, false);
+  sb_add_chars(&params, ",");
+  sb_add_bytes(&params, NULL, &from, 1, false);
+  sb_add_chars(&params, ",");
+  sb_add_int(&params, (int64_t) pl_type);
+  sb_add_json(&params, ",", meta);
+  sb_add_chars(&params, "]");
+
+  in3_req_t* c = req_find_required(ctx, method, params.data);
+  if (c) {
+    _free(params.data);
     switch (in3_req_state(c)) {
       case REQ_ERROR:
         return req_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
@@ -459,7 +495,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
       case REQ_SUCCESS: {
-        if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len == 65) {
+        if (c->raw_response && c->raw_response->state == IN3_OK && c->raw_response->data.len > 64) {
           *signature = cloned_bytes(bytes((uint8_t*) c->raw_response->data.data, c->raw_response->data.len));
           in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), *signature);
           req_remove_required(ctx, c, false);
@@ -473,19 +509,48 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, bytes_t
           return req_set_error(ctx, "invalid state", IN3_EINVAL);
       }
     }
+  }
   else {
     sb_t req = {0};
     sb_add_chars(&req, "{\"method\":\"");
     sb_add_chars(&req, method);
-    sb_add_bytes(&req, "\",\"params\":[", &raw_data, 1, false);
-    sb_add_chars(&req, ",");
-    sb_add_bytes(&req, NULL, &from, 1, false);
-    sb_add_chars(&req, "]}");
+    sb_add_chars(&req, "\",\"params\":");
+    sb_add_chars(&req, params.data);
+    sb_add_chars(&req, "}");
+    _free(params.data);
     c = req_new(ctx->client, req.data);
     if (!c) return IN3_ECONFIG;
     c->type = RT_SIGN;
     return req_add_required(ctx, c);
   }
+}
+
+in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta) {
+  bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
+  memcpy(cache_key.data, raw_data.data, raw_data.len);
+  if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
+  bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
+  if (cached_sig) {
+    *signature = *cached_sig;
+    return IN3_OK;
+  }
+
+  in3_log_debug("requesting signature type=%d from account %x\n", type, from.len > 2 ? bytes_to_int(from.data, 4) : 0);
+
+  // first try internal plugins for signing, before we create an context.
+  if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
+    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .type = type, .payload_type = pl_type, .meta = meta};
+    in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
+    if (r == IN3_OK && sc.signature.data) {
+      in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);
+      *signature = sc.signature;
+      return IN3_OK;
+    }
+    else if (r != IN3_EIGNORE && r != IN3_OK)
+      return r;
+  }
+  in3_log_debug("nobody picked up the signature, sending req now \n");
+  return req_send_sign_request(ctx, type, pl_type, signature, raw_data, from, meta, cache_key);
 }
 
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {

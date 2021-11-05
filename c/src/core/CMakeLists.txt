@@ -57,7 +57,8 @@ add_static_library(
     util/mem.c
     util/stringbuilder.c
     util/bitset.c
-
-  DEPENDS 
-    crypto
 )
+
+if(CRYPTO_LIB)
+  target_link_libraries(core crypto)
+endif()

@@ -90,6 +90,7 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size);
 sb_t* sb_print(sb_t* sb, const char* fmt, ...);
 sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args);
 sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
+sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
 
 #ifdef __cplusplus
 }

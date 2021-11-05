@@ -1,6 +1,6 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
- * Sources: https://github.com/blockchainsllc/in3
+ * Sources: https://github.com/slockit/in3-c
  *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  *
@@ -31,47 +31,28 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+// @PUBLIC_HEADER
+#ifndef IN3_SWIFT_H
+#define IN3_SWIFT_H
+#ifdef __clang__
+#define _NONULL _Nonnull
+#else
+#define _NONULL
+#endif
+#include "plugin.h"
 
-#include "scache.h"
-#include "data.h"
-#include "mem.h"
+typedef struct in3_swift_cb {
+  in3_ret_t (*_NONULL cache_get)(in3_cache_ctx_t* _Nonnull ctx);
+  in3_ret_t (*_NONULL cache_set)(in3_cache_ctx_t* _Nonnull ctx);
+  in3_ret_t (*_NONULL cache_clear)();
+  char* (*_NONULL sign_accounts)(in3_sign_account_ctx_t* _Nonnull ctx);
+} swift_cb_t;
 
-bytes_t* in3_cache_get_entry(cache_entry_t* cache, bytes_t* key) {
-  for (; cache; cache = cache->next) {
-    if (cache->key.data && b_cmp(key, &cache->key)) return &cache->value;
-  }
-  return NULL;
-}
-void in3_cache_free(cache_entry_t* cache, bool is_external) {
-  cache_entry_t* p = NULL;
-  while (cache) {
-    if (cache->key.data) {
-      if (cache->props & CACHE_PROP_JSON)
-        json_free((void*) cache->value.data);
-      else
-        _free(cache->key.data);
-    }
-    if (cache->props & CACHE_PROP_MUST_FREE && ((cache->props & CACHE_PROP_ONLY_EXTERNAL) == 0 || is_external) && ((cache->props & CACHE_PROP_ONLY_NOT_EXTERNAL) == 0 || !is_external))
-      _free(cache->value.data);
-    p     = cache;
-    cache = cache->next;
-    _free(p);
-  }
-}
+in3_ret_t in3_register_swift(in3_t* _NONULL c, swift_cb_t* _NONULL cbs);
 
-cache_entry_t* in3_cache_add_entry(cache_entry_t** cache, bytes_t key, bytes_t value) {
-  cache_entry_t* entry = _malloc(sizeof(cache_entry_t));
-  entry->key           = key;
-  entry->value         = value;
-  entry->props         = CACHE_PROP_MUST_FREE;
-  entry->next          = cache ? *cache : NULL;
-  if (cache) *cache = entry;
-  return entry;
-}
-
-cache_entry_t* in3_cache_get_entry_by_prop(cache_entry_t* cache, cache_props_t prop) {
-  for (; cache; cache = cache->next) {
-    if (cache->props == prop) return cache;
-  }
-  return NULL;
-}
+char*    sign_get_method(in3_req_t* r);
+bytes_t  sign_get_message(in3_req_t* r);
+uint8_t* sign_get_from(in3_req_t* r);
+int      sign_get_payload_type(in3_req_t* r);
+char*    sign_get_metadata(in3_req_t* r);
+#endif // IN3_SWIFT_H

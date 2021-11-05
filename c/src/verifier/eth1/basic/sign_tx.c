@@ -237,8 +237,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   address_t from;
 
   // read the values
-  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x75\x30", 2)),
-          to        = getl(tx, K_TO, 20),
+  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x9c\x40", 2)), // default: 40000 gas
+      to            = getl(tx, K_TO, 20),
           value     = get(tx, K_VALUE),
           data      = get(tx, K_DATA),
           nonce     = get(tx, K_NONCE),
@@ -329,7 +329,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
     chain_id = d_long(r);
   }
 
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, &signature, raw_tx, bytes(from, 20)));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required
@@ -392,7 +392,8 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
             if (unsigned_tx.data) _free(unsigned_tx.data);)
 
   // build the RPC-request
-  sb_t sb = {0};
+  char* old_req = ctx->request_context->c;
+  sb_t  sb      = {0};
   sb_add_rawbytes(&sb, "{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[\"0x", signed_tx, 0);
   sb_add_chars(&sb, "\"]");
   sb_add_chars(&sb, "}");
@@ -404,7 +405,8 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // set the new RPC-Request.
   ctx->request_context                           = parse_json(sb.data);
   ctx->requests[0]                               = ctx->request_context->result;
-  in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+  in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+  in3_cache_add_ptr(&ctx->cache, old_req)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_NOT_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards, butt only for subrequests
   return IN3_OK;
 }
 

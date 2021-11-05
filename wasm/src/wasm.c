@@ -37,8 +37,11 @@
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
+#ifdef NODESELECT_DEF
 #include "../../c/src/nodeselect/full/cache.h"
 #include "../../c/src/nodeselect/full/nodelist.h"
+#endif
+#include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/third-party/crypto/sha2.h"
@@ -71,7 +74,7 @@ static char*    last_error = NULL;
 static uint32_t now() {
   static uint64_t time_offset = 0;
   if (!time_offset) time_offset = current_ms();
-  return (uint32_t)(current_ms() - time_offset);
+  return (uint32_t) (current_ms() - time_offset);
 }
 void EMSCRIPTEN_KEEPALIVE in3_set_error(char* data) {
   if (last_error) free(last_error);
@@ -266,7 +269,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
         sb_add_chars(sb, ",\"wait\":");
         sb_add_int(sb, (uint64_t) request->wait);
         sb_add_chars(sb, ",\"payload\":");
-        sb_add_chars(sb, (request->payload && strlen(request->payload))?request->payload:"null");
+        sb_add_chars(sb, (request->payload && strlen(request->payload)) ? request->payload : "null");
         sb_add_chars(sb, ",\"method\":\"");
         sb_add_chars(sb, request->method);
         sb_add_chars(sb, "\",\"urls\":[");
@@ -397,6 +400,7 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
 
 uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
   uint8_t* result = malloc(32);
+#ifdef CRYPTO_LIB
   if (result) {
     SHA256_CTX c;
     sha256_Init(&c);
@@ -405,6 +409,9 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
   }
   else
     in3_set_error("malloc failed");
+#else
+  in3_set_error("no cryptolib installer");
+#endif
 
   return result;
 }
@@ -504,53 +511,38 @@ char* EMSCRIPTEN_KEEPALIVE wasm_to_hex(char* val) {
 /** private key to address */
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   uint8_t* dst = malloc(20);
-  uint8_t  public_key[65], sdata[32];
+#ifdef CRYPTO_LIB
+  uint8_t public_key[65], sdata[32];
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
   keccak(bytes(public_key + 1, 64), sdata);
   memcpy(dst, sdata + 12, 20);
+#endif
   return dst;
 }
 
 /** private key to address */
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
   uint8_t* dst = malloc(64);
-  uint8_t  public_key[65], sdata[32];
+#ifdef CRYPTO_LIB
+  uint8_t public_key[65], sdata[32];
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
   memcpy(dst, public_key + 1, 64);
+#endif
   return dst;
 }
 
 /** signs the given data */
 uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
-  uint8_t* dst   = malloc(65);
-  int      error = -1;
-  switch (type) {
-    case SIGN_EC_PREFIX: {
-      bytes32_t hash;
-      struct SHA3_CTX kctx;
-      sha3_256_Init(&kctx);
-      const char* PREFIX = "\x19" "Ethereum Signed Message:\n";
-      sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-      sha3_Update(&kctx, hash, sprintf((char*)hash,"%d", len)  );
-      if (len) sha3_Update(&kctx, data, len);
-      keccak_Final(&kctx, hash);
-      error = ecdsa_sign_digest(&secp256k1, pk, hash, dst, dst + 64, NULL);
-      break;
-    }
-    case SIGN_EC_RAW:
-      error = ecdsa_sign_digest(&secp256k1, pk, data, dst, dst + 64, NULL);
-      break;
-    case SIGN_EC_HASH:
-      error = ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, data, len, dst, dst + 64, NULL);
-      break;
-
-    default:
-      error = -2;
-  }
-  if (error < 0) {
-    free(dst);
-    return NULL;
-  }
-  if (adjust_v) dst[64] += 27;
+  uint8_t* dst = malloc(65);
+#ifdef CRYPTO_LIB
+  bytes_t sig = sign_with_pk(pk, bytes(data, len), type);
+  if (!sig.data)
+    in3_set_error("could not create signature");
+  else if (adjust_v && sig.len == 65 && sig.data[64] < 26)
+    sig.data[64] += 27;
+  return sig.data;
+#else
+  in3_set_error("no cryptolib installed");
+#endif
   return dst;
 }

@@ -257,7 +257,7 @@ typedef enum {
   SIGNER_EIP1271 = 2
 } in3_signer_type_t;
 /**
- * action context when retrieving the account of a signer.
+ * action context when retrieving the addresses or accounts of a signer.
  */
 typedef struct sign_account_ctx {
   struct in3_req*   req;          /**< the context of the request in order report errors */
@@ -265,6 +265,14 @@ typedef struct sign_account_ctx {
   int               accounts_len; /**< number of accounts */
   in3_signer_type_t signer_type;  /**< the type of the signer used for this account.*/
 } in3_sign_account_ctx_t;
+/**
+ * action context when retrieving the public key of the signer.
+ */
+typedef struct sign_public_key_ctx {
+  struct in3_req* req;            /**< the context of the request in order report errors */
+  uint8_t*        account;        /**< the account to use for the signature */
+  uint8_t         public_key[64]; /**< the public key in case the plugin returns IN3_OK */
+} in3_sign_public_key_ctx_t;
 
 // ----------- SIGN_PREPARE ---------------
 
@@ -287,17 +295,28 @@ typedef enum {
   SIGN_EC_RAW    = 0, /**< sign the data directly */
   SIGN_EC_HASH   = 1, /**< hash and sign the data */
   SIGN_EC_PREFIX = 2, /**< add Ethereum Signed Message-Proefix, hash and sign the data */
+  SIGN_EC_BTC    = 3, /**< hashes the data twice with sha256 and signs it */
 } d_signature_type_t;
+
+/** payload type of the requested signature. It describes how to deserialize the payload. */
+typedef enum {
+  PL_SIGN_ANY    = 0, /**< custom data to be signed*/
+  PL_SIGN_ETHTX  = 1, /**< the payload is a ethereum-tx */
+  PL_SIGN_BTCTX  = 2, /**< the payload is a BTC-Tx-Input */
+  PL_SIGN_SAFETX = 3, /**< The payload is a rlp-encoded data of a Gnosys Safe Tx */
+} d_payload_type_t;
 
 /**
  * signing context. This Context is passed to the signer-function.
  */
 typedef struct sign_ctx {
-  bytes_t            signature; /**< the resulting signature  */
-  d_signature_type_t type;      /**< the type of signature*/
-  struct in3_req*    req;       /**< the context of the request in order report errors */
-  bytes_t            message;   /**< the message to sign*/
-  bytes_t            account;   /**< the account to use for the signature */
+  bytes_t            signature;    /**< the resulting signature  */
+  d_signature_type_t type;         /**< the type of signature*/
+  d_payload_type_t   payload_type; /**< the type of payload in order to deserialize the payload */
+  struct in3_req*    req;          /**< the context of the request in order report errors */
+  bytes_t            message;      /**< the message to sign*/
+  bytes_t            account;      /**< the account to use for the signature */
+  d_token_t*         meta;         /**< optional metadata to pass a long, which could include data to present to the user before signing */
 } in3_sign_ctx_t;
 
 /**
@@ -550,6 +569,20 @@ typedef struct {
       if (tmp.len != l) CNF_ERROR(property " must be " #l " bytes") \
       memcpy(dst, tmp.data, l);                                     \
     }                                                               \
+  }
+
+/**
+ * sets the string as taken from the given property to the target and raises an error if the len does not fit.
+ */
+#define CNF_SET_STRING(dst, token, property)                                                        \
+  {                                                                                                 \
+    const d_token_t* t = d_get(token, key(property));                                               \
+    if (d_type(t) != T_NULL && d_type(t) != T_STRING) CNF_ERROR("Invalid config for " property "!") \
+    const char* tmp = d_string(t);                                                                  \
+    if (tmp) {                                                                                      \
+      if (dst) _free(dst);                                                                          \
+      dst = _strdupn(tmp, -1);                                                                      \
+    }                                                                                               \
   }
 
 #ifdef __cplusplus

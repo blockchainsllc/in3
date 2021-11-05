@@ -504,6 +504,7 @@ in3_ret_t in3_plugin_execute_first(in3_req_t* ctx, in3_plugin_act_t action, void
   sprintf(msg, "no plugin found that handled the %s action", name);
 #else
   char* msg = "E";
+  UNUSED_VAR(msg); // this makes sure we don't get a warning when building with _DLOGGING=false
 #endif
   return req_set_error(ctx, msg, IN3_EPLGN_NONE);
 }

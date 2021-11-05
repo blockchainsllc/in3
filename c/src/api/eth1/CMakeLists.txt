@@ -59,6 +59,7 @@ add_static_library(
   DEPENDS 
     eth_nano
     api_utils
+    pk_signer
     ${LIBS}
 )
 

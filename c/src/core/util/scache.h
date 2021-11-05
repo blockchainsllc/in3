@@ -50,12 +50,13 @@ extern "C" {
 #include <stdlib.h>
 
 typedef enum cache_props {
-  CACHE_PROP_MUST_FREE     = 0x1,  /**< indicates the content must be freed*/
-  CACHE_PROP_SRC_REQ       = 0x2,  /**< the value holds the src-request */
-  CACHE_PROP_ONLY_EXTERNAL = 0x4,  /**< should only be freed if the context is external */
-  CACHE_PROP_JSON          = 0x8,  /**< indicates the content is a json_ctxt and must be freed as such*/
-  CACHE_PROP_INHERIT       = 0x10, /**< indicates the content will be inherited when creating sub_request*/
-  CACHE_PROP_PAYMENT       = 0x80  /**< This cache-entry is a payment.data */
+  CACHE_PROP_MUST_FREE         = 0x1,  /**< indicates the content must be freed*/
+  CACHE_PROP_SRC_REQ           = 0x2,  /**< the value holds the src-request */
+  CACHE_PROP_ONLY_EXTERNAL     = 0x4,  /**< should only be freed if the context is external */
+  CACHE_PROP_ONLY_NOT_EXTERNAL = 0x20, /**< should only be freed if the context is not external */
+  CACHE_PROP_JSON              = 0x8,  /**< indicates the content is a json_ctxt and must be freed as such*/
+  CACHE_PROP_INHERIT           = 0x10, /**< indicates the content will be inherited when creating sub_request*/
+  CACHE_PROP_PAYMENT           = 0x80  /**< This cache-entry is a payment.data */
 } cache_props_t;
 /**
  * represents a single cache entry in a linked list.

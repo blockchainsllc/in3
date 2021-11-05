@@ -306,6 +306,7 @@ zksync:
           type: string
           array: true
           optional: true
+          nullable: true
           cmd: zmu
 
         create2:

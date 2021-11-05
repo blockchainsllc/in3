@@ -116,11 +116,17 @@ static void free_urls(char** urls, int len) {
 
 static int add_bytes_to_hash(struct SHA3_CTX* msg_hash, void* data, int len) {
   assert(data);
+#ifdef CRYPTO_LIB
   if (msg_hash) sha3_Update(msg_hash, data, len);
+#else
+  UNUSED_VAR(msg_hash);
+  UNUSED_VAR(data);
+#endif
   return len;
 }
 
 NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
+#ifdef CRYPTO_LIB
   switch (d_type(t)) {
     case T_ARRAY:
     case T_OBJECT:
@@ -135,6 +141,10 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
       sha3_Update(msg_hash, b.data, b.len);
     }
   }
+#else
+  UNUSED_VAR(msg_hash);
+  UNUSED_VAR(t);
+#endif
 }
 
 NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) {
@@ -150,7 +160,9 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
   for (uint16_t i = 0; i < c->len; i++) {
     d_token_t * request_token = c->requests[i], *t;
     in3_proof_t proof         = no_in3 ? PROOF_NONE : in3_req_get_proof(c, i);
+#ifdef CRYPTO_LIB
     if (msg_hash) sha3_256_Init(msg_hash);
+#endif
 
     if (i > 0) sb_add_char(sb, ',');
     sb_add_char(sb, '{');
@@ -187,11 +199,13 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
       TRY(in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, &pctx))
 
       if (msg_hash) {
+#ifdef CRYPTO_LIB
         in3_pay_sign_req_ctx_t sctx      = {.req = c, .request = request_token, .signature = {0}};
         bytes_t                sig_bytes = bytes(sctx.signature, 65);
         keccak_Final(msg_hash, sctx.request_hash);
         TRY(in3_plugin_execute_first(c, PLGN_ACT_PAY_SIGN_REQ, &sctx))
         sb_add_bytes(sb, ",\"sig\":", &sig_bytes, 1, false);
+#endif
       }
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
@@ -249,8 +263,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
 NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, int len) {
   assert_in3_req(ctx);
   assert(response_data);
-  assert(len);
-  const bool is_json = response_data[0] == '{' || response_data[0] == '[';
+  const bool is_json = response_data[0] == '{' || response_data[0] == '[' || response_data[0] == '"';
 
   if (is_raw_http(ctx)) {
     ctx->response_context = is_json ? parse_json(response_data) : NULL;
@@ -266,6 +279,9 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     ctx->responses    = _malloc(sizeof(d_token_t*));
     ctx->responses[0] = ctx->response_context->result;
     return IN3_OK;
+  }
+  else {
+    assert(len);
   }
 
   ctx->response_context = is_json ? parse_json(response_data) : parse_binary_str(response_data, len);
@@ -372,7 +388,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
 
   in3_ret_t res = IN3_OK;
 
-  if (response->state || !response->data.len) // reponse has an error
+  if (response->state || (!is_raw_http(ctx) && !response->data.len)) // reponse has an error
     return handle_error_response(ctx, node, response);
 
   // we need to clean up the previos responses if set
@@ -543,6 +559,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
     request->urls               = _malloc(sizeof(char*));
     request->urls[0]            = _strdupn(d_get_string_at(params, 1), -1);
     request->method             = method ? method : (*request->payload ? "POST" : "GET");
+    request->wait               = d_get_int(d_get(ctx->requests[0], K_IN3), K_WAIT);
     ctx->raw_response           = _calloc(sizeof(in3_response_t), 1);
     ctx->raw_response[0].state  = IN3_WAITING;
 
@@ -762,6 +779,7 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->req->raw_response[i].state != IN3_WAITING) {
       char* data = request->req->raw_response[i].data.data;
+      UNUSED_VAR(data); // this makes sure we don't get a warning when building with _DLOGGING=false
 #ifdef DEBUG
       data = format_json(data);
 #endif

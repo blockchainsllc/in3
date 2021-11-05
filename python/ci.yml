@@ -33,7 +33,7 @@
   - source venv/bin/activate
 
 python:
-  image: python
+  image: "python:3.9"
   stage: bindings
   needs:
     - mac_os
@@ -63,7 +63,7 @@ python:
 
 python_arm:
   allow_failure: true
-  image: python
+  image: "python:3.9"
   extends: .cache_setup_with_only_python
   needs:
     - python
@@ -136,7 +136,7 @@ python_linux:
   coverage: '/TOTAL\s+\d+\s+\d+\s+([0-9.]+%)/'
   needs:
     - python
-  image: python
+  image: "python:3.9"
   stage: python
   before_script:
     - *cache_scipt_before

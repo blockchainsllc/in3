@@ -196,10 +196,14 @@ function abiEncode(sig, ...params) {
     }
 }
 
-function ecSign(pk, data, hashMessage = true, adjustV = true) {
+function ecSign(pk, data, signType) {
     data = toUint8Array(data)
     pk = toUint8Array(pk)
-    return toBuffer(call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0))
+    let st = 0;
+    if (signType && signType.endsWith('prefix')) st = 2;
+    if (signType && signType.endsWith('hash')) st = 1;
+
+    return toBuffer(call_buffer('ec_sign', 65, pk, st, data, data.byteLength, false))
 }
 
 function abiDecode(sig, data) {
@@ -625,13 +629,191 @@ class SimpleSigner {
         return !!this.accounts[toChecksumAddress(address)]
     }
 
-    async sign(data, account, type, ethV = true) {
+    async sign(data, account, sign_type, payloadType, meta) {
         const pk = this.accounts[toChecksumAddress(account)]
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
-        return ecSign(pk, data, type, ethV)
+        return ecSign(pk, data, sign_type || 'hash')
 
     }
 
 }
 
 IN3.SimpleSigner = SimpleSigner
+
+class BrowserSigner {
+
+    constructor(getPassword) {
+        var self = this
+        if (typeof getPassword !== 'function')
+            throw new Error("Error: Password provider must be a function")
+        self.getPassword = getPassword
+        self.accounts = {}
+        self.db = new Promise((resolve, reject) => {
+            //create database connection
+            var request = indexedDB.open("in3_browser_signer");
+            //create database if non existent
+            request.onupgradeneeded = function () {
+                let db = request.result;
+                db.createObjectStore("keys", { keyPath: "pubKey" });
+                resolve(db)
+            }
+
+            //load database if existent
+            request.onsuccess = function () {
+                let db = request.result;
+                resolve(db)
+            }
+
+            request.onerror = function (ev) {
+                reject(new Error("Could not access the indexdb"))
+            }
+        })
+    }
+
+    generateKey(pw) {
+        let encoder = new TextEncoder();
+        return crypto.subtle.importKey(
+            "raw",
+            encoder.encode(pw),
+            { name: "PBKDF2" },
+            false,
+            ["deriveBits", "deriveKey"]
+        );
+    }
+
+
+    generateKeyFromPassword(encodedPassword, salt, iterations = 4500) {
+        return crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: iterations,
+                hash: "SHA-256"
+            },
+            encodedPassword,
+            { name: "AES-GCM", length: 256 },
+            true,
+            ["encrypt", "decrypt"]
+        );
+    }
+
+    async encrypt(data, pw) {
+        let encoder = new TextEncoder();
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(16));
+        let pp = await this.generateKey(pw)
+        let key = await this.generateKeyFromPassword(pp, salt);
+
+        let encrypted = await crypto.subtle.encrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            encoder.encode(data)
+        )
+
+        return { salt: salt, iv: iv, encrypted: encrypted };
+    }
+
+    async decrypt(data, pw) {
+        let decoder = new TextDecoder();
+        const salt = data.salt;
+        const iv = data.iv;
+        const encrypted = data.encrypted;
+        let pp = await this.generateKey(pw);
+        let key = await this.generateKeyFromPassword(pp, salt);
+
+        const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            encrypted
+        );
+
+        return decoder.decode(decrypted);
+    }
+
+    //generates a private key (if non is passed) and encrypt it with user password. stores pubKey and encryptedPk
+    async generateAndStorePrivateKey(pk = undefined) {
+        let db = await this.db
+        if (pk == undefined) pk = crypto.getRandomValues(new Uint8Array(32))
+        var pubKey = private2address(toHex(pk))
+        var pw = this.getPassword()
+        if (pw === undefined) throw new Error("Error: Wrong password during key generation")
+
+        var encryptedPk = await this.encrypt(toHex(pk), pw)
+        console.log(encryptedPk)
+        var tx = db.transaction("keys", "readwrite");
+        var store = tx.objectStore("keys");
+        store.put({
+            pubKey: pubKey,
+            encryptedPk: encryptedPk
+        })
+        return pubKey
+    }
+
+    //returns all public keys in database
+    async getAccounts() {
+        let db = await this.db
+        var tx = db.transaction("keys", "readonly")
+        var store = tx.objectStore("keys");
+        return new Promise((resolve) => {
+            //its only this complicated because of IE and some Firefox versions
+            //source: https://googlechrome.github.io/samples/idb-getall/
+            if ('getAllKeys' in store) {
+                // IDBObjectStore.getAll() will return the full set of items in our store.
+                store.getAllKeys().onsuccess = function (event) {
+                    resolve(event.target.result);
+                };
+            } else {
+                // Fallback to the traditional cursor approach if getAll isn't supported.
+                var accounts = [];
+                store.openCursor().onsuccess = function (event) {
+                    var cursor = event.target.result;
+                    if (cursor) {
+                        accounts.push(cursor.value);
+                        cursor.continue();
+                    } else {
+                        resolve(accounts);
+                    }
+                };
+            }
+        })
+
+    }
+
+    async canSign(address) {
+        let db = await this.db
+        var tx = db.transaction("keys", "readonly");
+        var store = tx.objectStore("keys");
+        var storeRequest = store.get(address);
+        return new Promise((resolve) => {
+            storeRequest.onsuccess = function () {
+                resolve(storeRequest.result !== undefined)
+            }
+            storeRequest.onerror = function () {
+                throw new Error("could not find key in database")
+            }
+        })
+    }
+
+    async sign(data, account, sign_type, payloadType, meta) {
+        var self = this
+        let db = await self.db
+        var tx = db.transaction("keys", "readonly");
+        var store = tx.objectStore("keys");
+        var storeRequest = store.get(toChecksumAddress(account));
+        var pw = this.getPassword()
+        if (pw === undefined) throw new Error("Error: Wrong password during signing process")
+        return new Promise((resolve) => {
+            storeRequest.onsuccess = async function () {
+                if (storeRequest.result !== undefined) {
+                    let pk = await self.decrypt(storeRequest.result.encryptedPk, pw)
+                    if (pk.length != 66) throw new Error('Error decrypting: Private Key not valid for ' + account)
+                    resolve(ecSign(pk, data, sign_type || 'hash'))
+                }
+                else
+                    throw new Error('Account not found for signing ' + account)
+            }
+        })
+    }
+}
+
+IN3.BrowserSigner = BrowserSigner

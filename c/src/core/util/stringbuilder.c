@@ -60,7 +60,7 @@ sb_t* sb_init(sb_t* sb) {
   return sb;
 }
 NONULL static void check_size(sb_t* sb, size_t len) {
-  if (len == 0 || sb->len + len < sb->allocted) return;
+  if ((len == 0 || sb->len + len < sb->allocted) && sb->data) return;
   if (sb->allocted == 0) {
     sb->allocted = len + 1,
     sb->data     = _malloc(sb->allocted);
@@ -92,7 +92,7 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
   int escapes = 0;
   if (l == 0 || chars == NULL) return sb;
   for (int i = 0; i < l; i++) {
-    if (chars[i] == '"' || chars[i] == '\n') escapes++;
+    if (chars[i] == '"' || chars[i] == '\n' || chars[i] == '\\') escapes++;
   }
   check_size(sb, l + escapes);
   memcpy(sb->data + sb->len, chars, l);
@@ -319,5 +319,52 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
     case T_NULL:
       return sb_add_chars(sb, "null");
   }
+  return sb;
+}
+
+sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
+  check_size(sb, strlen(fmt));
+  va_list args;
+  va_start(args, fmt);
+  for (const char* c = fmt; *c; c++) {
+    if (*c == '%') {
+      c++;
+      switch (*c) {
+        case 's':
+          sb_add_chars(sb, va_arg(args, char*));
+          break;
+        case 'S':
+          sb_add_escaped_chars(sb, va_arg(args, char*));
+          break;
+        case 'i':
+        case 'd':
+        case 'u':
+          sb_add_int(sb, va_arg(args, int64_t));
+          break;
+        case 'x':
+          sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
+          break;
+        case 'b':
+          sb_add_rawbytes(sb, "", va_arg(args, bytes_t), 0);
+          break;
+        case 'v':
+          sb_add_rawbytes(sb, "", va_arg(args, bytes_t), -1);
+          break;
+        case 'j':
+          sb_add_json(sb, "", va_arg(args, d_token_t*));
+          break;
+        case 0:
+          va_end(args);
+          return sb;
+        default:
+          break;
+      }
+      continue;
+    }
+    if (sb->len + 1 >= sb->allocted) check_size(sb, 1);
+    sb->data[sb->len++] = *c;
+  }
+  va_end(args);
+  sb->data[sb->len] = 0;
   return sb;
 }

@@ -21,6 +21,8 @@ public class Signature {
   protected static Signature asSignature(Object o) {
     if (o == null)
       return null;
+    if (o instanceof Signature)
+      return (Signature) o;
     return new Signature((JSON) o);
   }
 

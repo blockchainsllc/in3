@@ -402,6 +402,7 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
         case '}':
         case ']':
         case ',':
+        case 0:
 
           if ((value & 0xfffffffff0000000) == 0) // is it small ennough to store it in the length ?
             item->len |= (uint32_t) value;       // 32-bit number / no 64-bit number
@@ -751,13 +752,13 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
       return dst;
     case T_NULL:
       return _strdupn("null", 4);
-    case T_STRING:
-      dst        = _malloc(l + 3);
-      dst[0]     = '"';
-      dst[l + 1] = '"';
-      dst[l + 2] = 0;
-      memcpy(dst + 1, item->data, l);
-      return dst;
+    case T_STRING: {
+      sb_t sb = {.allocted = l + 1, .len = 0, .data = _malloc(l + 3)};
+      sb_add_char(&sb, '"');
+      sb_add_escaped_chars(&sb, (char*) item->data);
+      sb_add_char(&sb, '"');
+      return sb.data;
+    }
     case T_BYTES:
       dst    = _malloc(l * 2 + 5);
       dst[0] = '"';
