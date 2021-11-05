@@ -661,48 +661,77 @@ class BrowserSigner {
             self.db = request.result;
         }
     }
-    //source: https://javascript.hotexamples.com/examples/crypto-js/-/PBKDF2/javascript-pbkdf2-function-examples.html
-    encrypt(data, pw, iterations = 4500) {
-        const keySize = 256;
-        const salt = CryptoJS.lib.WordArray.random(128 / 8);
-        const key = CryptoJS.PBKDF2(pw, salt, {
-            iterations,
-            keySize: keySize / 4
-        });
-        const iv = CryptoJS.lib.WordArray.random(128 / 8);
-        const encrypted = CryptoJS.AES.encrypt(data, key, {
-            iv,
-            mode: CryptoJS.mode.CBC,
-            padding: CryptoJS.pad.Pkcs7
-        });
-        return salt.toString() + iv.toString() + encrypted.toString();
+
+    generateKey(pw) {
+        let encoder = new TextEncoder();
+        return crypto.subtle.importKey(
+            "raw",
+            encoder.encode(pw),
+            { name: "PBKDF2" },
+            false,
+            ["deriveBits", "deriveKey"]
+        );
     }
-    //source: https://javascript.hotexamples.com/examples/crypto-js/-/PBKDF2/javascript-pbkdf2-function-examples.html
-    decrypt(data, pw, iterations = 4500) {
-        const keySize = 256;
-        const salt = CryptoJS.enc.Hex.parse(data.substr(0, 32));
-        const iv = CryptoJS.enc.Hex.parse(data.substr(32, 32));
-        const encrypted = data.substring(64);
-        const key = CryptoJS.PBKDF2(pw, salt, {
-            iterations,
-            keySize: keySize / 4
-        });
-        const decrypted = CryptoJS.AES.decrypt(encrypted, key, {
-            iv,
-            padding: CryptoJS.pad.Pkcs7,
-            mode: CryptoJS.mode.CBC
-        });
-        return decrypted;
+
+
+    generateKeyFromPassword(encodedPassword, salt, iterations = 4500) {
+        return crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: iterations,
+                hash: "SHA-256"
+            },
+            encodedPassword,
+            { name: "AES-GCM", length: 256 },
+            true,
+            ["encrypt", "decrypt"]
+        );
+    }
+
+    async encrypt(data, pw) {
+        let encoder = new TextEncoder();
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(16));
+        let pp = await this.generateKey(pw)
+        let key = await this.generateKeyFromPassword(pp, salt);
+
+        let encrypted = await crypto.subtle.encrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            encoder.encode(data)
+        )
+
+        return { salt: salt, iv: iv, encrypted: encrypted };
+    }
+
+    async decrypt(data, pw) {
+        let decoder = new TextDecoder();
+        const salt = data.salt;
+        const iv = data.iv;
+        const encrypted = data.encrypted;
+        let pp = await this.generateKey(pw);
+        let key = await this.generateKeyFromPassword(pp, salt);
+
+        const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            encrypted
+        );
+
+        return decoder.decode(decrypted);
     }
 
     //generates a private key (if non is passed) and encrypt it with user password. stores pubKey and encryptedPk
-    generateAndStorePrivateKey(pk = undefined) {
+    async generateAndStorePrivateKey(pk = undefined) {
         if (pk == undefined)
             pk = IN3.util.randomBytes(32)
         var pubKey = private2address(toHex(pk))
         var pw = this.getPassword()
         if (pw === undefined) throw new Error("Error: Wrong password during key generation")
-        var encryptedPk = this.encrypt(toHex(pk), pw)
+
+        var encryptedPk = await this.encrypt(toHex(pk), pw)
+        console.log(encryptedPk)
         var tx = this.db.transaction("keys", "readwrite");
         var store = tx.objectStore("keys");
         store.put({
@@ -763,9 +792,9 @@ class BrowserSigner {
         var pw = this.getPassword()
         if (pw === undefined) throw new Error("Error: Wrong password during signing process")
         return new Promise((resolve) => {
-            storeRequest.onsuccess = function () {
+            storeRequest.onsuccess = async function () {
                 if (storeRequest.result !== undefined) {
-                    let pk = self.decrypt(storeRequest.result.encryptedPk, pw).toString(CryptoJS.enc.Utf8)
+                    let pk = await self.decrypt(storeRequest.result.encryptedPk, pw)
                     if (pk.length != 66) throw new Error('Error decrypting: Private Key not valid for ' + account)
                     resolve(ecSign(pk, data, sign_type || 'hash'))
                 }
@@ -774,7 +803,6 @@ class BrowserSigner {
             }
         })
     }
-
 }
 
 IN3.BrowserSigner = BrowserSigner
