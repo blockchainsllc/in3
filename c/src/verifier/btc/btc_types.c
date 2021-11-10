@@ -62,14 +62,16 @@ in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) 
                          get_compact_uint_size((uint64_t) tx_in->script.len) +
                          tx_in->script.len +
                          BTC_TX_IN_SEQUENCE_SIZE_BYTES);
-
-  // alloc memory in dst
-  dst->data = malloc(sizeof(*dst->data));
-  dst->len  = tx_in_size;
-
+ 
   // serialize tx_in
   // -- Previous outpoint
   if (!tx_in->prev_tx_hash) return req_set_error(req, "missing prevtash_hash", IN3_ERPC);
+
+ // alloc memory in dst
+  dst->data =_malloc(tx_in_size);
+  dst->len  = tx_in_size;
+
+
   uint32_t index = 0;
   for (uint32_t i = 0; i < 32; i++) {
     dst->data[index++] = tx_in->prev_tx_hash[31 - i];
@@ -108,7 +110,7 @@ void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
                           tx_out->script.len);
 
   // alloc memory in dst
-  dst->data = malloc(tx_out_size * sizeof(*dst->data));
+  dst->data = _malloc(tx_out_size);
   dst->len  = tx_out_size;
 
   // serialize tx_out
@@ -178,7 +180,7 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
              (tx->flag ? tx->witnesses.len : 0) +
              BTC_TX_LOCKTIME_SIZE_BYTES);
 
-  dst->data = malloc(sizeof(*dst->data));
+  dst->data =_malloc(tx_size);
   dst->len  = tx_size;
 
   // Serialize transaction data
@@ -266,14 +268,14 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
 
 //   // Get inputs
 //   // -- serialize inputs
-//   bytes_t* serialized_inputs = malloc(tx_in_len * sizeof(bytes_t));
+//   bytes_t* serialized_inputs =_malloc(tx_in_len * sizeof(bytes_t));
 //   uint32_t raw_input_size    = 0;
 //   for (uint32_t i = 0; i < tx_in_len; i++) {
 //     btc_serialize_tx_in(&tx_in[i], &serialized_inputs[i]);
 //     raw_input_size += serialized_inputs[i].len;
 //   }
 //   // -- Copy raw inputs into tx
-//   tx.input.data           = malloc(raw_input_size);
+//   tx.input.data           =_malloc(raw_input_size);
 //   tx.input.len            = raw_input_size;
 //   uint32_t prev_input_len = 0;
 //   for (uint32_t i = 0; i < tx_in_len; i++) {
@@ -285,14 +287,14 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
 
 //   // Get Outputs
 //   // -- serialize outputs
-//   bytes_t* serialized_outputs = malloc(tx_out_len * sizeof(bytes_t));
+//   bytes_t* serialized_outputs =_malloc(tx_out_len * sizeof(bytes_t));
 //   uint32_t raw_output_size    = 0;
 //   for (uint32_t i = 0; i < tx_out_len; i++) {
 //     btc_serialize_tx_out(&tx_out[i], &serialized_outputs[i]);
 //     raw_output_size += serialized_outputs[i].len;
 //   }
 //   // -- Copy raw outputs into tx
-//   tx.output.data           = malloc(raw_output_size);
+//   tx.output.data           =_malloc(raw_output_size);
 //   tx.output.len            = raw_output_size;
 //   uint32_t prev_output_len = 0;
 //   for (uint32_t i = 0; i < tx_out_len; i++) {
@@ -341,7 +343,7 @@ in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t fiel
 
   dst->len += raw_src.len;
   size_t mem_size = dst->len * sizeof(*dst->data);
-  dst->data       = (!dst->data) ? malloc(mem_size) : realloc(dst->data, mem_size);
+  dst->data       = (!dst->data) ?_malloc(mem_size) : realloc(dst->data, mem_size);
 
   // Add bytes to tx field
   for (uint32_t i = 0; i < raw_src.len; i++) {
