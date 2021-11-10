@@ -341,9 +341,9 @@ in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t fiel
       return req_set_error(req, "Unrecognized transaction field code. No action was performed", IN3_EINVAL);
   }
 
-  dst->len += raw_src.len;
-  size_t mem_size = dst->len * sizeof(*dst->data);
-  dst->data       = (!dst->data) ?_malloc(mem_size) : realloc(dst->data, mem_size);
+  size_t mem_size = raw_src.len;
+  dst->data       = (!dst->data) ?_malloc(mem_size) : _realloc(dst->data, mem_size, dst->len);
+  dst->len       += raw_src.len;
 
   // Add bytes to tx field
   for (uint32_t i = 0; i < raw_src.len; i++) {
