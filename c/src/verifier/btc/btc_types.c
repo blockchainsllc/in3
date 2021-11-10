@@ -62,15 +62,14 @@ in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) 
                          get_compact_uint_size((uint64_t) tx_in->script.len) +
                          tx_in->script.len +
                          BTC_TX_IN_SEQUENCE_SIZE_BYTES);
- 
+
   // serialize tx_in
   // -- Previous outpoint
   if (!tx_in->prev_tx_hash) return req_set_error(req, "missing prevtash_hash", IN3_ERPC);
 
- // alloc memory in dst
-  dst->data =_malloc(tx_in_size);
+  // alloc memory in dst
+  dst->data = _malloc(tx_in_size);
   dst->len  = tx_in_size;
-
 
   uint32_t index = 0;
   for (uint32_t i = 0; i < 32; i++) {
@@ -180,7 +179,7 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
              (tx->flag ? tx->witnesses.len : 0) +
              BTC_TX_LOCKTIME_SIZE_BYTES);
 
-  dst->data =_malloc(tx_size);
+  dst->data = _malloc(tx_size);
   dst->len  = tx_size;
 
   // Serialize transaction data
@@ -342,8 +341,8 @@ in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t fiel
   }
 
   size_t mem_size = raw_src.len;
-  dst->data       = (!dst->data) ?_malloc(mem_size) : _realloc(dst->data, mem_size, dst->len);
-  dst->len       += raw_src.len;
+  dst->data       = (!dst->data) ? _malloc(mem_size) : _realloc(dst->data, mem_size, dst->len);
+  dst->len += raw_src.len;
 
   // Add bytes to tx field
   for (uint32_t i = 0; i < raw_src.len; i++) {
