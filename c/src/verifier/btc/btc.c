@@ -544,10 +544,9 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
 
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
+  // This is the RPC that abstracts most of what is done in the background before sending a transaction:
 
   in3_req_t* req = ctx->req;
-  // This is the RPC that abstracts most of what is done in the background before sending a transaction:
-  // Get outputs we want to send
   d_token_t* params = ctx->params;
   char*      pub_key_str;
   bytes_t    account;
@@ -563,24 +562,22 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
 
-  // select "best" set of UTXOs
-  // btc_utxo_t* utxo_list = NULL;  
-  // ---- PLACEHOLDER: select utxos here
-
   // create output for receiving the transaction "change", discounting miner fee
   btc_tx_out_t tx_out_change;
   btc_init_tx_out(&tx_out_change);
   tx_out_change.value = utxo_total - miner_fee - outputs_total;
   
-  // create raw unsigned transaction using selected set of utxos (inputs) and outputs (both received in Command Line and created "change")
+  // create unsigned transaction
   bytes_t  signed_tx = NULL_BYTES;
   btc_tx_t tx;
   btc_init_tx(&tx);
   add_outputs_to_tx(req, outputs, &tx);
 
+  // select "best" set of UTXOs
   btc_utxo_t* selected_utxo_list = NULL;
   uint32_t    utxo_list_len      = 0;
-  btc_prepare_utxo(utxo_list, &selected_utxo_list, &utxo_list_len);
+  btc_prepare_utxos(&tx, utxo_list, &selected_utxo_list, &utxo_list_len);
+  btc_set_segwit(&tx, selected_utxo_list, utxo_list_len);
 
   TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len, &account, &pub_key));
 

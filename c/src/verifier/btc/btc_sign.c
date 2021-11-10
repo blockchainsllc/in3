@@ -264,15 +264,8 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
 in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* account, bytes_t* pub_key) {
   // for each input in a tx:
   for (uint32_t i = 0; i < utxo_list_len; i++) {
-    bool is_segwit = (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1);
-    if (is_segwit) {
-      tx->flag = 1;
-      break;
-    }
-  }
-  for (uint32_t i = 0; i < utxo_list_len; i++) {
-    // -- for each account (assume we only have one pub key for now):
-    // TODO: Allow setting a specific account for each input
+    // -- for each public key (assume we only have one pub key for now):
+    // TODO: Allow setting a specific public key for each input
     btc_tx_in_t tx_in = {0};
     prepare_tx_in(&selected_utxo_list[i], &tx_in);
     bool is_segwit = (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1);

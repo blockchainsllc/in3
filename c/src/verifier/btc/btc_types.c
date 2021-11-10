@@ -4,6 +4,7 @@
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "btc_serialize.h"
+#include "btc_script.h"
 
 // Transaction fixed size values
 #define BTC_TX_VERSION_SIZE_BYTES  4
@@ -326,11 +327,15 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
   return IN3_OK;
 }
 
-// utxos must be freed
-in3_ret_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos, uint32_t* len) {
-  *len   = d_len(utxo_inputs);
-  *utxos = _malloc(*len * sizeof(btc_utxo_t));
+// WARNING: You must free selected_utxos pointer after calling this function
+// TODO: Currently we are adding all utxo_inputs to the list of selected_utxos. Implement an algorithm to select only the necessary utxos for the transaction, given the outputs.
+in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo_t** selected_utxos, uint32_t* len) {
+  UNUSED_VAR(tx);
 
+  *len   = d_len(utxo_inputs);
+  *selected_utxos = _malloc(*len * sizeof(btc_utxo_t));
+
+  // TODO: Only add the necessary utxos to selected_utxos
   for (uint32_t i = 0; i < *len; i++) {
     btc_utxo_t  utxo;
     d_token_t*  utxo_input       = d_get_at(utxo_inputs, i);
@@ -352,8 +357,19 @@ in3_ret_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos, uint32_t*
     utxo.tx_out.value  = value;
     utxo.tx_out.script = tx_script;
 
-    *utxos[i] = utxo;
+    *selected_utxos[i] = utxo;
   }
 
+  return IN3_OK;
+}
+
+in3_ret_t btc_set_segwit(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, const uint32_t utxo_list_len) {
+  tx->flag = 0;
+  for (uint32_t i = 0; i < utxo_list_len; i++) {
+    if (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1) {
+      tx->flag = 1;
+      break;
+    }
+  }
   return IN3_OK;
 }
