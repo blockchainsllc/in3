@@ -596,9 +596,8 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   btc_serialize_tx(&tx, &signed_tx);
   sb_t sb = {0};
-  sb_add_chars(&sb, "{\"method\":\"sendrawtransaction\",\"params\":[");
   sb_add_rawbytes(&sb, "\"", signed_tx, 0);
-  sb_add_chars(&sb, "\"]}");
+  sb_add_chars(&sb, "\"");
 
   // Now that we wrote the request, we can free all allocated memory
   if (signed_tx.data) _free(signed_tx.data);
