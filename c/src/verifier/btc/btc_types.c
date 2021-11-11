@@ -181,7 +181,7 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
              (tx->flag ? tx->witnesses.len : 0) +
              BTC_TX_LOCKTIME_SIZE_BYTES);
 
-  dst->data = _malloc(tx_size);
+  dst->data = _calloc(tx_size, 1);
   dst->len  = tx_size;
 
   // Serialize transaction data
@@ -259,6 +259,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
 
   bytes_t  raw_src, *dst;
   uint32_t old_len;
+  bool must_free = false;
 
   switch (field_type) {
     case BTC_INPUT:
@@ -266,12 +267,14 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
       old_len = tx->input.len;
       dst     = &tx->input;
       tx->input_count++;
+      must_free = true;
       break;
     case BTC_OUTPUT:
       btc_serialize_tx_out((btc_tx_out_t*) src, &raw_src);
       old_len = tx->output.len;
       dst     = &tx->output;
       tx->output_count++;
+      must_free = true;
       break;
     case BTC_WITNESS:
       old_len = tx->witnesses.len;
@@ -285,12 +288,13 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
   }
 
   size_t mem_size = raw_src.len;
-  dst->data       = (!dst->data) ? _malloc(mem_size) : _realloc(dst->data, mem_size, dst->len);
   dst->len += raw_src.len;
-  // Add bytes to tx field
-  // for (uint32_t i = 0; i < raw_src.len; i++) {
-  //   dst->data[old_len + i] = raw_src.data[i];
-  // }
+  dst->data       = (dst->data) ? _realloc(dst->data, mem_size, dst->len) : _malloc(mem_size);
+  memcpy(dst->data + old_len, raw_src.data, raw_src.len);
+
+  if (must_free) {
+    _free(raw_src.data);
+  }
   return IN3_OK;
 }
 
@@ -310,8 +314,9 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
   uint32_t len = d_len(outputs);
   for (uint32_t i = 0; i < len; i++) {
     d_token_t* output = d_get_at(outputs, i);
-
+    if (!output) return req_set_error(req, "ERROR: Transaction output data is missing", IN3_EINVAL);
     const char* script_string = d_string(d_get(output, key("script")));
+    if (!script_string) return req_set_error(req, "ERROR: Transaction output script is missing", IN3_EINVAL);
     uint64_t    value         = d_get_long(output, key("value"));
 
     btc_tx_out_t tx_out;
@@ -322,12 +327,12 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
     tx_out.script = script;
     tx_out.value  = value;
 
-    TRY_CATCH(add_output_to_tx(req, tx, &tx_out), _free(script.data);)
+    TRY_FINAL(add_output_to_tx(req, tx, &tx_out), _free(script.data);)
   }
   return IN3_OK;
 }
 
-// WARNING: You must free selected_utxos pointer after calling this function
+// WARNING: You must free selected_utxos pointer after calling this function, as well as the pointed utxos tx_hash and tx_out.data fields
 // TODO: Currently we are adding all utxo_inputs to the list of selected_utxos. Implement an algorithm to select only the necessary utxos for the transaction, given the outputs.
 in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo_t** selected_utxos, uint32_t* len) {
   UNUSED_VAR(tx);

@@ -546,6 +546,19 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
   // This is the RPC that abstracts most of what is done in the background before sending a transaction:
 
+  in3_req_t* sub = req_find_required(ctx->req, "sendrawtransaction", NULL);
+  if (sub) { // do we have a result?
+    switch (in3_req_state(sub)) {
+      case REQ_ERROR:
+        return req_set_error(ctx->req, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
+      case REQ_SUCCESS:
+        return IN3_OK;
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+    }
+  }
+
   in3_req_t* req = ctx->req;
   d_token_t* params = ctx->params;
   char*      pub_key_str;
@@ -583,16 +596,32 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   btc_serialize_tx(&tx, &signed_tx);
   sb_t sb = {0};
+  sb_add_chars(&sb, "{\"method\":\"sendrawtransaction\",\"params\":[");
   sb_add_rawbytes(&sb, "\"", signed_tx, 0);
-  sb_add_chars(&sb, "\"");
+  sb_add_chars(&sb, "\"]}");
 
-  // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
-  // _free(signed_tx.data);
+  // Now that we wrote the request, we can free all allocated memory
+  if (signed_tx.data) _free(signed_tx.data);
 
-  d_token_t* result = NULL;
-  TRY_FINAL(req_send_sub_request(req, "sendrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
-  sb_add_json(in3_rpc_handle_start(ctx), "", result);
-  return in3_rpc_handle_finish(ctx);
+  if (selected_utxo_list) {
+    for (uint32_t i = 0; i < utxo_list_len; i++) {
+      _free(selected_utxo_list[i].tx_hash);
+      _free(selected_utxo_list[i].tx_out.script.data);
+    }
+    _free(selected_utxo_list);
+  }
+
+  if (tx.input.data) _free(tx.input.data);
+  if (tx.output.data) _free(tx.output.data);
+  if (tx.witnesses.data) _free(tx.witnesses.data);
+
+  // finally, send transaction
+   d_token_t* result = NULL;
+   TRY_FINAL(req_send_sub_request(req, "sendrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+
+   sb_add_json(in3_rpc_handle_start(ctx), "", result);
+   return in3_rpc_handle_finish(ctx);
+  //return req_add_required(ctx->req, req_new(ctx->req->client, sb.data));
 }
 
 static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
@@ -655,25 +684,3 @@ in3_ret_t in3_register_btc(in3_t* c) {
   tc->dap_limit         = 20;
   return in3_plugin_register(c, PLGN_ACT_RPC_VERIFY | PLGN_ACT_TERM | PLGN_ACT_CONFIG_GET | PLGN_ACT_CONFIG_SET | PLGN_ACT_RPC_HANDLE, handle_btc, tc, false);
 }
-/*
-static void print_hex(char* prefix, uint8_t* data, int len) {
-  printf("%s0x", prefix);
-  for (int i = 0; i < len; i++) printf("%02x", data[i]);
-  printf("\n");
-}
-static void print(char* prefix, bytes_t data, char* type) {
-  uint8_t tmp[32];
-  if (strcmp(type, "hash") == 0) {
-    rev_copy(tmp, data.data);
-    data.data = tmp;
-  }
-
-  if (strcmp(type, "int") == 0) {
-    printf("%s%i\n", prefix, le_to_int(data.data));
-    return;
-  }
-
-  print_hex(prefix, data.data, data.len);
-}
-
-*/

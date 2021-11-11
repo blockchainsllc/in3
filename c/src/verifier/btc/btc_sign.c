@@ -19,23 +19,23 @@ static void rev_memcpy(uint8_t* src, uint8_t* dst, uint32_t len) {
 
 // Fill tx_in fields, preparing the input for signing
 // WARNING: You need to free tx_in->prev_tx_hash after calling this function
-static void prepare_tx_in(const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
+static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
   if (!utxo || !tx_in) {
     // TODO: Implement better error treatment
-    printf("ERROR: in prepare_tx_in: function arguments can not be null!\n");
-    return;
+    return req_set_error(req, "ERROR: in prepare_tx_in: function arguments can not be null!", IN3_EINVAL);
   }
 
   tx_in->prev_tx_index = utxo->tx_index;
-  tx_in->prev_tx_hash  = malloc(32 * sizeof(uint8_t));
+  tx_in->prev_tx_hash  = _malloc(32);
   memcpy(tx_in->prev_tx_hash, utxo->tx_hash, 32);
 
   // Before signing, input script field should temporarilly be equal to the utxo we want to redeem
   tx_in->script.len  = utxo->tx_out.script.len;
-  tx_in->script.data = malloc(tx_in->script.len * sizeof(uint8_t));
+  tx_in->script.data = _malloc(tx_in->script.len);
   memcpy(tx_in->script.data, utxo->tx_out.script.data, tx_in->script.len);
 
   tx_in->sequence = 0xffffffff; // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
+  return IN3_OK;
 }
 
 // WARNING: You need to free tx_in->script.data after calling this function!
@@ -175,16 +175,16 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
 
   // Finally, sign transaction input
   // -- Obtain DER signature
-  bytes_t sig;
-  sig.data = NULL;
-  sig.len  = 65;
+  bytes_t sig = NULL_BYTES;
+  // sig.data = NULL;
+  // sig.len  = 65;
 
   bytes_t der_sig;
 
   der_sig.data = alloca(sizeof(uint8_t) * 75);
 
   TRY(req_require_signature(req, SIGN_EC_BTC, PL_SIGN_BTCTX, &sig, hash_message, *account, req->requests[0]))
-
+  
   der_sig.len                 = ecdsa_sig_to_der(sig.data, der_sig.data);
   der_sig.data[der_sig.len++] = sig.data[64]; // append verification byte to end of DER signature
 
@@ -267,14 +267,14 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_u
     // -- for each public key (assume we only have one pub key for now):
     // TODO: Allow setting a specific public key for each input
     btc_tx_in_t tx_in = {0};
-    prepare_tx_in(&selected_utxo_list[i], &tx_in);
+    TRY(prepare_tx_in(req, &selected_utxo_list[i], &tx_in))
     bool is_segwit = (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1);
     TRY_CATCH(btc_sign_tx_in(req, tx, selected_utxo_list, utxo_list_len, i, is_segwit, account, pub_key, &tx_in, BTC_SIGHASH_ALL),
               _free(tx_in.script.data);
               _free(tx_in.prev_tx_hash);)
-    add_input_to_tx(req, tx, &tx_in);
-    _free(tx_in.script.data);
-    _free(tx_in.prev_tx_hash);
+    TRY_FINAL(add_input_to_tx(req, tx, &tx_in), 
+              _free(tx_in.script.data);
+              _free(tx_in.prev_tx_hash);)
   }
   return IN3_OK;
 }
