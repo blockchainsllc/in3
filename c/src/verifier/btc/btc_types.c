@@ -199,22 +199,19 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
   index += get_compact_uint_size(tx->input_count);
   // inputs
   // TODO: serialize struct if tx_in is not null
-  for (uint32_t i = 0; i < tx->input.len; i++) {
-    dst->data[index++] = tx->input.data[i];
-  }
+  memcpy(dst->data+index, tx->input.data, tx->input.len);
+  index += tx->input.len;
   // output_count
   long_to_compact_uint(dst, index, tx->output_count);
   index += get_compact_uint_size(tx->output_count);
   // outputs
   // TODO: serialize struct if tx_out is not null
-  for (uint32_t i = 0; i < tx->output.len; i++) {
-    dst->data[index++] = tx->output.data[i];
-  }
-  // Include witness
+  memcpy(dst->data+index, tx->output.data, tx->output.len);
+  index += tx->output.len;
+  // witnesses
   if (tx->flag) {
-    for (uint32_t i = 0; i < tx->witnesses.len; i++) {
-      dst->data[index++] = tx->witnesses.data[i];
-    }
+    memcpy(dst->data+index, tx->witnesses.data, tx->witnesses.len);
+    index += tx->output.len;
   }
   // locktime
   dst->data[index + 3] = ((tx->lock_time >> 24) & 0xff);
@@ -287,9 +284,8 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
       return req_set_error(req, "Unrecognized transaction field code. No action was performed", IN3_EINVAL);
   }
 
-  size_t mem_size = raw_src.len;
   dst->len += raw_src.len;
-  dst->data       = (dst->data) ? _realloc(dst->data, mem_size, dst->len) : _malloc(mem_size);
+  dst->data = (dst->data) ? _realloc(dst->data, dst->len, old_len) : _malloc(dst->len);  
   memcpy(dst->data + old_len, raw_src.data, raw_src.len);
 
   if (must_free) {
