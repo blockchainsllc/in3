@@ -3,8 +3,8 @@
 #include "../../core/client/request_internal.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "btc_serialize.h"
 #include "btc_script.h"
+#include "btc_serialize.h"
 
 // Transaction fixed size values
 #define BTC_TX_VERSION_SIZE_BYTES  4
@@ -126,7 +126,7 @@ void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
   index += get_compact_uint_size((uint64_t) tx_out->script.len);
 
   // -- lock-script
-  memcpy(dst->data + index, tx_out->script.data, tx_out->script.len); 
+  memcpy(dst->data + index, tx_out->script.data, tx_out->script.len);
 }
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
@@ -199,18 +199,18 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
   index += get_compact_uint_size(tx->input_count);
   // inputs
   // TODO: serialize struct if tx_in is not null
-  memcpy(dst->data+index, tx->input.data, tx->input.len);
+  memcpy(dst->data + index, tx->input.data, tx->input.len);
   index += tx->input.len;
   // output_count
   long_to_compact_uint(dst, index, tx->output_count);
   index += get_compact_uint_size(tx->output_count);
   // outputs
   // TODO: serialize struct if tx_out is not null
-  memcpy(dst->data+index, tx->output.data, tx->output.len);
+  memcpy(dst->data + index, tx->output.data, tx->output.len);
   index += tx->output.len;
   // witnesses
   if (tx->flag) {
-    memcpy(dst->data+index, tx->witnesses.data, tx->witnesses.len);
+    memcpy(dst->data + index, tx->witnesses.data, tx->witnesses.len);
     index += tx->output.len;
   }
   // locktime
@@ -248,7 +248,6 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   return IN3_OK;
 }
 
-
 static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
   if (!tx || !src) {
     return req_set_error(req, "ERROR: in add_to_tx: Function arguments cannot be null!", IN3_EINVAL);
@@ -256,7 +255,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
 
   bytes_t  raw_src = NULL_BYTES, *dst;
   uint32_t old_len;
-  bool must_free = false;
+  bool     must_free = false;
 
   switch (field_type) {
     case BTC_INPUT:
@@ -274,9 +273,9 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
       must_free = true;
       break;
     case BTC_WITNESS:
-      old_len = tx->witnesses.len;
-      dst     = &tx->witnesses;
-      raw_src.len = ((bytes_t*) src)->len;
+      old_len      = tx->witnesses.len;
+      dst          = &tx->witnesses;
+      raw_src.len  = ((bytes_t*) src)->len;
       raw_src.data = ((bytes_t*) src)->data;
       break;
     default:
@@ -285,8 +284,13 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
   }
 
   dst->len += raw_src.len;
-  dst->data = (dst->data) ? _realloc(dst->data, dst->len, old_len) : _malloc(dst->len);  
-  memcpy(dst->data + old_len, raw_src.data, raw_src.len);
+  if (raw_src.data) {
+    dst->data = (dst->data) ? _realloc(dst->data, dst->len, old_len) : _malloc(dst->len);
+    memcpy(dst->data + old_len, raw_src.data, raw_src.len);
+  }
+  else {
+    dst->data = NULL;
+  }
 
   if (must_free) {
     _free(raw_src.data);
@@ -313,7 +317,7 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
     if (!output) return req_set_error(req, "ERROR: Transaction output data is missing", IN3_EINVAL);
     const char* script_string = d_string(d_get(output, key("script")));
     if (!script_string) return req_set_error(req, "ERROR: Transaction output script is missing", IN3_EINVAL);
-    uint64_t    value         = d_get_long(output, key("value"));
+    uint64_t value = d_get_long(output, key("value"));
 
     btc_tx_out_t tx_out;
     uint32_t     script_len = strlen(script_string) / 2;
@@ -333,7 +337,7 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
 in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo_t** selected_utxos, uint32_t* len) {
   UNUSED_VAR(tx);
 
-  *len   = d_len(utxo_inputs);
+  *len            = d_len(utxo_inputs);
   *selected_utxos = _malloc(*len * sizeof(btc_utxo_t));
 
   // TODO: Only add the necessary utxos to selected_utxos

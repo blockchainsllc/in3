@@ -184,7 +184,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
   der_sig.data = alloca(sizeof(uint8_t) * 75);
 
   TRY(req_require_signature(req, SIGN_EC_BTC, PL_SIGN_BTCTX, &sig, hash_message, *account, req->requests[0]))
-  
+
   der_sig.len                 = ecdsa_sig_to_der(sig.data, der_sig.data);
   der_sig.data[der_sig.len++] = sig.data[64]; // append verification byte to end of DER signature
 
@@ -272,7 +272,7 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_u
     TRY_CATCH(btc_sign_tx_in(req, tx, selected_utxo_list, utxo_list_len, i, is_segwit, account, pub_key, &tx_in, BTC_SIGHASH_ALL),
               _free(tx_in.script.data);
               _free(tx_in.prev_tx_hash);)
-    TRY_FINAL(add_input_to_tx(req, tx, &tx_in), 
+    TRY_FINAL(add_input_to_tx(req, tx, &tx_in),
               _free(tx_in.script.data);
               _free(tx_in.prev_tx_hash);)
   }

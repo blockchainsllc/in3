@@ -559,14 +559,14 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
     }
   }
 
-  in3_req_t* req = ctx->req;
+  in3_req_t* req    = ctx->req;
   d_token_t* params = ctx->params;
   char*      pub_key_str;
   bytes_t    account;
   bytes_t    pub_key;
-  pub_key.len = 65; // TODO: Implement support to compressed public keys as well (33-bytes)
+  pub_key.len  = 65; // TODO: Implement support to compressed public keys as well (33-bytes)
   pub_key.data = alloca(pub_key.len * sizeof(uint8_t));
-  account.len = 20;
+  account.len  = 20;
   TRY_PARAM_GET_REQUIRED_ADDRESS(account.data, ctx, 0)
   TRY_PARAM_GET_REQUIRED_STRING(pub_key_str, ctx, 1)
   hex_to_bytes(pub_key_str, -1, pub_key.data, pub_key.len);
@@ -579,7 +579,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   btc_tx_out_t tx_out_change;
   btc_init_tx_out(&tx_out_change);
   tx_out_change.value = utxo_total - miner_fee - outputs_total;
-  
+
   // create unsigned transaction
   bytes_t  signed_tx = NULL_BYTES;
   btc_tx_t tx;
@@ -615,12 +615,12 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (tx.witnesses.data) _free(tx.witnesses.data);
 
   // finally, send transaction
-   d_token_t* result = NULL;
-   TRY_FINAL(req_send_sub_request(req, "sendrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+  d_token_t* result = NULL;
+  TRY_FINAL(req_send_sub_request(req, "sendrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
 
-   sb_add_json(in3_rpc_handle_start(ctx), "", result);
-   return in3_rpc_handle_finish(ctx);
-  //return req_add_required(ctx->req, req_new(ctx->req->client, sb.data));
+  sb_add_json(in3_rpc_handle_start(ctx), "", result);
+  return in3_rpc_handle_finish(ctx);
+  // return req_add_required(ctx->req, req_new(ctx->req->client, sb.data));
 }
 
 static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
