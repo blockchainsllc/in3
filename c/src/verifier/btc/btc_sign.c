@@ -8,7 +8,7 @@
 #include "btc_types.h"
 
 // copy a byte array in reverse order
-static void rev_memcpy(uint8_t* src, uint8_t* dst, uint32_t len) {
+static void rev_memcpy(uint8_t* dst, uint8_t* src, uint32_t len) {
   // TODO: Accuse error in case the following statement is false
   if (src && dst) {
     for (uint32_t i = 0; i < len; i++) {

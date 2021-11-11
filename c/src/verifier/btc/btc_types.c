@@ -254,7 +254,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
     return req_set_error(req, "ERROR: in add_to_tx: Function arguments cannot be null!", IN3_EINVAL);
   }
 
-  bytes_t  raw_src, *dst;
+  bytes_t  raw_src = NULL_BYTES, *dst;
   uint32_t old_len;
   bool must_free = false;
 
