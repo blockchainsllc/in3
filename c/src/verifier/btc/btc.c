@@ -518,27 +518,27 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   //   }
   // #endif
 
-#if !defined(RPC_ONLY) || defined(RPC_SIGNTRANSACTION)
+  // #if !defined(RPC_ONLY) || defined(RPC_SIGNTRANSACTION)
 
-  if (VERIFY_RPC("signtransaction")) {
-    REQUIRE_EXPERIMENTAL(vc->req, "btc")
-    // Get raw unsigned transaction
-    // As we will have custody of the user priv keys, this should be obtained from our server somehow
-    // sign transaction
-    // return raw signed transaction
-  }
-#endif
+  //   if (VERIFY_RPC("signtransaction")) {
+  //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
+  //     // Get raw unsigned transaction
+  //     // As we will have custody of the user priv keys, this should be obtained from our server somehow
+  //     // sign transaction
+  //     // return raw signed transaction
+  //   }
+  // #endif
 
-#if !defined(RPC_ONLY) || defined(RPC_SENDRAWTRANSACTION)
+  // #if !defined(RPC_ONLY) || defined(RPC_SENDRAWTRANSACTION)
 
-  if (VERIFY_RPC("sendrawtransaction")) {
-    REQUIRE_EXPERIMENTAL(vc->req, "btc")
-    // Get raw signed transaction
-    // verify if transaction is well-formed and signed before sending
-    // send transaction to in3 server
-    // return success or error code
-  }
-#endif
+  //   if (VERIFY_RPC("sendrawtransaction")) {
+  //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
+  //     // Get raw signed transaction
+  //     // verify if transaction is well-formed and signed before sending
+  //     // send transaction to in3 server
+  //     // return success or error code
+  //   }
+  // #endif
   return IN3_EIGNORE;
 }
 
@@ -551,8 +551,17 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
     switch (in3_req_state(sub)) {
       case REQ_ERROR:
         return req_set_error(ctx->req, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
-      case REQ_SUCCESS:
-        return IN3_OK;
+      case REQ_SUCCESS: {
+        d_token_t* result = d_get(sub->responses[0], K_RESULT);
+        if (result) {
+          sb_add_json(in3_rpc_handle_start(ctx), "", result);
+        }
+        else {
+          char* error_msg = d_get_string(d_get(sub->responses[0], K_ERROR), K_MESSAGE);
+          return req_set_error(ctx->req, error_msg ? error_msg : "Unable to send transaction", IN3_ERPC);
+        }
+        return in3_rpc_handle_finish(ctx);
+      }
       case REQ_WAITING_TO_SEND:
       case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
@@ -617,10 +626,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // finally, send transaction
   d_token_t* result = NULL;
   TRY_FINAL(req_send_sub_request(req, "sendrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
-
-  sb_add_json(in3_rpc_handle_start(ctx), "", result);
   return in3_rpc_handle_finish(ctx);
-  // return req_add_required(ctx->req, req_new(ctx->req->client, sb.data));
 }
 
 static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {

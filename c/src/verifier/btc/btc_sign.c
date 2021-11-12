@@ -175,11 +175,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
 
   // Finally, sign transaction input
   // -- Obtain DER signature
-  bytes_t sig = NULL_BYTES;
-  // sig.data = NULL;
-  // sig.len  = 65;
-
-  bytes_t der_sig;
+  bytes_t sig = NULL_BYTES, der_sig = NULL_BYTES;
 
   der_sig.data = alloca(sizeof(uint8_t) * 75);
 
