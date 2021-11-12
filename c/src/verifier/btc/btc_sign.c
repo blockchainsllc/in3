@@ -191,9 +191,9 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
   // -- build scriptSig
   if (is_segwit) {
     // witness-enabled input
-    if (tmp_tx_in.script.len == 21) {
+    if (tx_in->script.len == 22 && tx_in->script.data[1] == 20) {
       // Pay-To-Witness-Public-Key-Hash (P2WPKH).
-      // scriptPubKey(received from utxo) = VERSION_BYTE | HASH160(PUB_KEY) --> total: 21 bytes
+      // scriptPubKey(received from utxo) = VERSION_BYTE | SCRIPT_LEN | HASH160(PUB_KEY) --> total: 22 bytes
       // scriptSig(written to tx_in) should be empty. Data will be written in witness field
       // witness(we write this to transaction) = NUM_ELEMENTS | ZERO_BYTE | DER_SIG_LEN | DER_SIG | PUB_KEY_LEN | PUB_KEY
 
@@ -217,7 +217,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
 
       add_witness_to_tx(req, tx, &witness);
     }
-    else if (tmp_tx_in.script.len == 33) {
+    else if (tx_in->script.len == 34 && tx_in->script.data[1] == 32) {
       // Pay-To-Witness-Script-Hash (P2WSH)
       // TODO: Implement multisig support
       // TODO: Implement BIP16 support (Where P2SH was defined)
