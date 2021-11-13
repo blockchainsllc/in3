@@ -461,7 +461,7 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL(c->proof, PROOF_NONE);
   TEST_ASSERT_EQUAL(c->chain.id, CHAIN_ID_LOCAL);
   TEST_ASSERT_EQUAL(w->request_count, 1);
-  TEST_ASSERT_EQUAL_STRING(w->data->nodelist[0].url, "rpc.local");
+  TEST_ASSERT_EQUAL_STRING(w->chains[0]->nodelist[0].url, "rpc.local");
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":false}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":\"0x123412341234\"}", "expected object");

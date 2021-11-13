@@ -340,7 +340,7 @@ static in3_ret_t handle_error_response(in3_req_t* ctx, node_match_t* node, in3_r
   req_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC);
 
   // we block this node
-  in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+  in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true, .req = ctx};
   if (node && IN3_OK != in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx))
     clear_response(response); // free up memory
 
@@ -398,7 +398,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
     // in case of an error we get a error-code and error is set in the ctx?
     // so we need to block the node.
     if (node) {
-      in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+      in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true, .req = ctx};
       in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
     }
     clear_response(response); // we want to save memory and free the invalid response
@@ -439,7 +439,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
       }
       else {
         in3_log_debug("we have a system-error from node, so we block it ..\n");
-        in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+        in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true, .req = ctx};
         in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
         return req_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
       }
@@ -463,7 +463,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
         response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
       }
       if (!vc.dont_blacklist) {
-        in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true};
+        in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true, .req = ctx};
         in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
       }
       return res;

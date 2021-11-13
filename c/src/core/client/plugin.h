@@ -525,7 +525,8 @@ typedef struct {
     uint8_t*    address; /**< address of node that is to be blacklisted */
     const char* url;     /**< URL of node that is to be blacklisted */
   };
-  bool is_addr; /**< Specifies whether the identifier is an address or a url */
+  in3_req_t* req;     /**< Request context. */
+  bool       is_addr; /**< Specifies whether the identifier is an address or a url */
 } in3_nl_blacklist_ctx_t;
 
 // -------- NL_OFFLINE ---------
@@ -550,6 +551,7 @@ typedef enum {
  *     if (dctx.cleanup) dctx.cleanup(dctx.data);
  */
 typedef struct {
+  in3_req_t*          req;  /**< the request context */
   in3_get_data_type_t type; /**< type of data that the caller wants. */
   void*               data; /**< output param set by plugin code - pointer to data requested. */
   void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */

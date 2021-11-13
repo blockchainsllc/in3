@@ -120,6 +120,11 @@ NONULL in3_ret_t in3_rpc_handle_finish(in3_rpc_handle_ctx_t* hctx);
 NONULL in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data);
 
 /**
+ * creates a response with a json token.
+ */
+NONULL in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result);
+
+/**
  * creates a response with string.
  */
 NONULL in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data);
@@ -520,7 +525,8 @@ typedef struct {
     uint8_t*    address; /**< address of node that is to be blacklisted */
     const char* url;     /**< URL of node that is to be blacklisted */
   };
-  bool is_addr; /**< Specifies whether the identifier is an address or a url */
+  in3_req_t* req;     /**< Request context. */
+  bool       is_addr; /**< Specifies whether the identifier is an address or a url */
 } in3_nl_blacklist_ctx_t;
 
 // -------- NL_OFFLINE ---------
@@ -545,6 +551,7 @@ typedef enum {
  *     if (dctx.cleanup) dctx.cleanup(dctx.data);
  */
 typedef struct {
+  in3_req_t*          req;  /**< the request context */
   in3_get_data_type_t type; /**< type of data that the caller wants. */
   void*               data; /**< output param set by plugin code - pointer to data requested. */
   void (*cleanup)(void*);   /**< output param set by plugin code - if not NULL use it to cleanup the data. */

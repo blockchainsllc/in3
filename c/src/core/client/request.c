@@ -74,7 +74,19 @@ in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
   return r;
 }
 
+static void in3_set_chain_id(in3_req_t* req, chain_id_t id) {
+  if (!id || in3_chain_id(req) == id) return;
+
+  cache_entry_t* entry = in3_cache_add_entry(&req->cache, NULL_BYTES, NULL_BYTES);
+  entry->props         = CACHE_PROP_CHAIN_ID | CACHE_PROP_INHERIT;
+  int_to_bytes((uint32_t) id, entry->buffer);
+}
+
 chain_id_t in3_chain_id(const in3_req_t* req) {
+  for (cache_entry_t* entry = req->cache; entry; entry = entry->next) {
+    if (entry->props & CACHE_PROP_CHAIN_ID)
+      return (chain_id_t) bytes_to_int(entry->buffer, 4);
+  }
   return req->client->chain.id;
 }
 
@@ -153,6 +165,8 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
     }
     else if (d_type(t) == T_INTEGER)
       ctx->id = d_int(t);
+
+    in3_set_chain_id(ctx, (chain_id_t) d_get_long(d_get(ctx->requests[0], K_IN3), K_CHAIN_ID));
   }
   // if this is the first request, we initialize the plugins now
   in3_plugin_init(ctx);
@@ -468,7 +482,11 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
 
   // inherit cache-entries
   for (cache_entry_t* ce = parent->cache; ce; ce = ce->next) {
-    if (ce->props & CACHE_PROP_INHERIT) in3_cache_add_entry(&ctx->cache, ce->key, ce->value)->props = ce->props & (~CACHE_PROP_MUST_FREE);
+    if (ce->props & CACHE_PROP_INHERIT) {
+      cache_entry_t* entry = in3_cache_add_entry(&ctx->cache, ce->key, ce->value);
+      entry->props         = ce->props & (~CACHE_PROP_MUST_FREE);
+      memcpy(entry->buffer, ce->buffer, 4);
+    }
   }
 
   if (use_cache)
