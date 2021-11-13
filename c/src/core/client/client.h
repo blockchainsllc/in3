@@ -129,9 +129,10 @@ typedef struct in3_verified_hash {
  */
 typedef struct in3_chain {
   uint8_t              version;         /**< version of the chain */
-  chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
+  chain_id_t           id;              /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t     type;            /**< chain-type */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
+  struct in3_chain*    next;            /**< next chain in case multiple chains are specified */
 } in3_chain_t;
 
 #define PLGN_ACT_LIFECYCLE (PLGN_ACT_INIT | PLGN_ACT_TERM)
@@ -316,7 +317,7 @@ typedef in3_ret_t (*plgn_register)(in3_t* c);
 
 #define assert_in3(c)                                  \
   assert(c);                                           \
-  assert((c)->chain.chain_id);                         \
+  assert((c)->chain.id);                               \
   assert((c)->plugins);                                \
   assert((c)->max_attempts > 0);                       \
   assert((c)->proof >= 0 && (c)->proof <= PROOF_FULL); \

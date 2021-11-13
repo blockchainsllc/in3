@@ -30,19 +30,19 @@ static void   _lock_registry() {
   }
   MUTEX_LOCK(lock_registry);
 }
-#define LOCK_REGISTRY(code)         \
-  {                                 \
-    _lock_registry();               \
-    code                            \
-        MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)     \
+  {                             \
+    _lock_registry();           \
+    code                        \
+    MUTEX_UNLOCK(lock_registry) \
   }
 #else
 static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
-#define LOCK_REGISTRY(code)         \
-  {                                 \
-    MUTEX_LOCK(lock_registry);      \
-    code                            \
-        MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)     \
+  {                             \
+    MUTEX_LOCK(lock_registry);  \
+    code                        \
+    MUTEX_UNLOCK(lock_registry) \
   }
 #endif
 #else
@@ -209,7 +209,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
 
     // this is legacy-support, if the object has a key with the chain_id, we simply use the value.
     char node_id[10];
-    sprintf(node_id, "0x%x", ctx->client->chain.chain_id);
+    sprintf(node_id, "0x%x", ctx->client->chain.id);
     if (d_get(token, key(node_id))) token = d_get(token, key(node_id));
 
     // this is changing the nodelist config, so we need to make sure we have our own nodelist
@@ -295,7 +295,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     in3_client_run_chain_whitelisting(data);
 #endif
     // for supported chains we will get the registryId & contract from def cfg lazily
-    if (!nodeselect_def_cfg_data(ctx->client->chain.chain_id).data)
+    if (!nodeselect_def_cfg_data(ctx->client->chain.id).data)
       EXPECT_CFG(!memiszero(data->registry_id, 32) && !memiszero(data->contract, 20), "missing registryId/contract!");
   }
   else if (token->key == CONFIG_KEY("rpc")) {
@@ -304,7 +304,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     in3_t* c           = ctx->client;
     c->proof           = PROOF_NONE;
     c->signature_count = 0;
-    c->chain.chain_id  = CHAIN_ID_LOCAL;
+    c->chain.id        = CHAIN_ID_LOCAL;
     w->request_count   = 1;
 
     clear_nodes(data);
@@ -331,7 +331,7 @@ static in3_ret_t config_get(in3_nodeselect_config_t* w, in3_get_config_ctx_t* ct
   sb_t*                 sb   = ctx->sb;
   in3_t*                c    = ctx->client;
 
-  if (c->chain.chain_id == CHAIN_ID_LOCAL)
+  if (c->chain.id == CHAIN_ID_LOCAL)
     add_string(sb, ',', "rpc", data->nodelist->url);
   add_uint(sb, ',', "requestCount", w->request_count);
   add_uint(sb, ',', "minDeposit", w->min_deposit);
@@ -367,8 +367,8 @@ static in3_ret_t config_get(in3_nodeselect_config_t* w, in3_get_config_ctx_t* ct
   return IN3_OK;
 }
 
-static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c) {
-  json_ctx_t* json = nodeselect_def_cfg(c->chain.chain_id);
+static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c, chain_id_t chain_id) {
+  json_ctx_t* json = nodeselect_def_cfg(chain_id);
   if (json == NULL)
     return IN3_ECONFIG;
 
@@ -416,7 +416,7 @@ static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_req_t* ctx) {
   in3_nodeselect_def_t* data = w->data;
 
   // init cache lazily this also means we can be sure that all other related plugins are registered by now
-  if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client))
+  if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client, in3_chain_id(ctx)))
     return IN3_ECONFIG;
 
   in3_node_filter_t filter = NODE_FILTER_INIT;
@@ -437,7 +437,7 @@ static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_req_t* ctx) {
 }
 
 NONULL static bool auto_ask_sig(const in3_req_t* ctx) {
-  return (req_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain.chain_id != CHAIN_ID_BTC);
+  return (req_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && in3_chain_id(ctx) != CHAIN_ID_BTC);
 }
 
 static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_req_t* ctx) {
@@ -642,8 +642,8 @@ static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t
 }
 
 static in3_ret_t chain_change(in3_nodeselect_def_t* data, in3_t* c) {
-  data->avg_block_time = avg_block_time_for_chain_id(c->chain.chain_id);
-  return init_boot_nodes(data, c);
+  data->avg_block_time = avg_block_time_for_chain_id(c->chain.id);
+  return init_boot_nodes(data, c, c->chain.id);
 }
 
 static void free_(void* p) {
@@ -759,7 +759,7 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
       nodelist_return_or_free(data); // this will always unlock the mutex of the nodelist and update the ref_counter!
       in3_nodeselect_config_t* w = plugin_data;
       in3_t*                   c = plugin_ctx;
-      w->data                    = nodelist_get_or_create(c->chain.chain_id);
+      w->data                    = nodelist_get_or_create(c->chain.id);
       data                       = w->data; // update data-pointer to the new nodelist
 #ifdef THREADSAFE
       MUTEX_LOCK(data->mutex) // and lock it because we are about to initialize the chain
@@ -826,7 +826,7 @@ in3_ret_t in3_register_nodeselect_def(in3_t* c) {
   data->min_deposit             = 0;
   data->node_limit              = 0;
   data->node_props              = 0;
-  data->data                    = nodelist_get_or_create(c->chain.chain_id);
+  data->data                    = nodelist_get_or_create(c->chain.id);
   return in3_plugin_register(c, PLGN_ACT_LIFECYCLE | PLGN_ACT_RPC_VERIFY | PLGN_ACT_NODELIST | PLGN_ACT_CONFIG | PLGN_ACT_CHAIN_CHANGE | PLGN_ACT_GET_DATA | PLGN_ACT_ADD_PAYLOAD, in3_nodeselect_handle_action, data, false);
 }
 

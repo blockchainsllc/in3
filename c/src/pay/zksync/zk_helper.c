@@ -61,7 +61,7 @@ void set_quoted_address(char* c, uint8_t* address) {
 
 static in3_ret_t ensure_provider(zksync_config_t* conf, in3_req_t* ctx) {
   if (conf->provider_url) return IN3_OK;
-  switch (ctx->client->chain.chain_id) {
+  switch (in3_chain_id(ctx)) {
     case CHAIN_ID_MAINNET:
       conf->provider_url = _strdupn("https://api.zksync.io/jsrpc", -1);
       break;
@@ -188,7 +188,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_req_t* ctx, uint8_t* sy
   uint8_t* account = NULL;
   bytes_t  signature;
   char*    message = "Access zkSync account.\n\nOnly sign this message for a trusted client!";
-  if (ctx->client->chain.chain_id != CHAIN_ID_MAINNET) {
+  if (in3_chain_id(ctx) != CHAIN_ID_MAINNET) {
     d_token_t* res = NULL;
     TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &res, NULL))
     char* tmp = alloca(strlen(message) + 30);

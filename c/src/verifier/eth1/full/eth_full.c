@@ -85,7 +85,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
       }
     }
 
-    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result, receipt);
+    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->id, &result, receipt);
 #if defined(DEBUG) && defined(LOGGING)
     in3_log_set_level(old);
     in3_log_enable_prefix();

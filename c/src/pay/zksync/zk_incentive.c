@@ -106,7 +106,7 @@ static in3_ret_t set_amount(zk_fee_t* dst, in3_req_t* ctx, d_token_t* t) {
 
 static in3_ret_t get_payed_addresses(in3_req_t* ctx, bytes_t* dst) {
   char key[20];
-  sprintf(key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
+  sprintf(key, "payed_%d", (uint32_t) in3_chain_id(ctx));
   in3_cache_ctx_t c = {.content = NULL, .req = ctx, .key = key};
   TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &c))
   if (c.content) {
@@ -119,7 +119,7 @@ static in3_ret_t get_payed_addresses(in3_req_t* ctx, bytes_t* dst) {
 static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, bytes_t payed, bool update_cache) {
   if (update_cache) {
     char key[20];
-    sprintf(key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
+    sprintf(key, "payed_%d", (uint32_t) in3_chain_id(ctx));
     in3_cache_ctx_t c = {.content = &payed, .req = ctx, .key = key};
     TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &c))
   }

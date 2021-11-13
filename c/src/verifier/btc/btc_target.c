@@ -82,19 +82,19 @@ static void set_cachekey(chain_id_t id, char* buffer) {
                     "0131ff321217" \
                     "0136bc201317"
 
-in3_ret_t btc_check_conf(in3_t* c, btc_target_conf_t* conf) {
+in3_ret_t btc_check_conf(in3_req_t* req, btc_target_conf_t* conf) {
   // did the chain_id change?
-  if (c->chain.chain_id != conf->chain_id) {
+  if (in3_chain_id(req) != conf->chain_id) {
     if (conf->data.data) _free(conf->data.data);
     conf->data     = NULL_BYTES;
-    conf->chain_id = c->chain.chain_id;
+    conf->chain_id = in3_chain_id(req);
   }
 
   if (!conf->data.data) {
     char cache_key[50];
     set_cachekey(conf->chain_id, cache_key);
     in3_cache_ctx_t cctx = {.req = NULL, .content = NULL, .key = cache_key};
-    in3_plugin_execute_all(c, PLGN_ACT_CACHE_GET, &cctx);
+    in3_plugin_execute_all(req->client, PLGN_ACT_CACHE_GET, &cctx);
 
     if (cctx.content) {
       conf->data = *cctx.content;
@@ -123,7 +123,7 @@ void btc_set_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t dap, uint8_t
 
   // add to cache
   char cache_key[50];
-  set_cachekey(vc->chain->chain_id, cache_key);
+  set_cachekey(in3_chain_id(vc->req), cache_key);
   in3_cache_ctx_t cctx = {.req = NULL, .content = &tc->data, .key = cache_key};
   in3_plugin_execute_first_or_none(vc->req, PLGN_ACT_CACHE_SET, &cctx);
 }

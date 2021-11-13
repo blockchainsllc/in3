@@ -192,7 +192,6 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
     if (proof || msg_hash) {
       // add in3
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
-      sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain.chain_id));
 
       // allow plugins to add their metadata
       in3_pay_payload_ctx_t pctx = {.req = c, .request = request_token, .sb = sb};
@@ -481,7 +480,7 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
 
   int             nodes_count   = ctx->nodes == NULL ? 1 : req_nodes_len(ctx->nodes);
   in3_response_t* response      = ctx->raw_response;
-  in3_chain_t*    chain         = &ctx->client->chain;
+  in3_chain_t*    chain         = in3_get_chain(ctx->client, in3_chain_id(ctx));
   node_match_t*   node          = ctx->nodes;
   bool            still_pending = false;
   in3_ret_t       state         = IN3_ERPC;

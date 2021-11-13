@@ -74,6 +74,35 @@ in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
   return r;
 }
 
+chain_id_t in3_chain_id(const in3_req_t* req) {
+  return req->client->chain.id;
+}
+
+in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id) {
+  in3_chain_t* chain = &c->chain;
+  while (chain) {
+    if (chain->id == id) return chain;
+    if (chain->next)
+      chain = chain->next;
+    else
+      break;
+  }
+  chain->next = _calloc(1, sizeof(in3_chain_t));
+  chain       = chain->next;
+  chain->id   = id;
+  switch (id) {
+    case CHAIN_ID_BTC:
+      chain->type = CHAIN_BTC;
+      break;
+    case CHAIN_ID_IPFS:
+      chain->type = CHAIN_IPFS;
+      break;
+    default:
+      chain->type = CHAIN_ETH;
+  }
+  return chain;
+}
+
 in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);

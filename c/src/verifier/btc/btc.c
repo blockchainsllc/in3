@@ -442,7 +442,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
 
   // make sure the conf is filled with data from the cache
-  btc_check_conf(vc->client, conf);
+  btc_check_conf(vc->req, conf);
   d_token_t* params = d_get(vc->request, K_PARAMS);
   bytes32_t  hash;
 
@@ -598,7 +598,7 @@ static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t
   if (req->client->chain.type != CHAIN_BTC) return IN3_EIGNORE;
 
   // make sure the conf is filled with data from the cache
-  btc_check_conf(req->client, conf);
+  btc_check_conf(req, conf);
 
 #if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
 
