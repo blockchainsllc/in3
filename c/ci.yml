@@ -187,7 +187,7 @@ test_c:
     - cd testbuild
     - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DZKSYNC=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
     - make
-    - ctest -V | tee ../mac_test_c.log | test/junit > ../mac_test_c.xml
+    - ctest -V | tee ../mac_test_c.log | test/junit > ../mac_test_c.xml || cat ../mac_test_c.log
   artifacts:
     reports:
       junit: mac_test_c.xml
