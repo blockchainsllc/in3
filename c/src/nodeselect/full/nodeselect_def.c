@@ -538,6 +538,7 @@ static void offline_free(in3_nodeselect_def_t* data) {
 }
 
 NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t* ctx) {
+  if (!ctx->vctx->req) return IN3_EUNKNOWN;
   const uint8_t blen = sizeof(ctx->missing) * CHAR_BIT;
   for (unsigned int pos = 0; pos != blen; pos++) {
     if (!BIT_CHECK(ctx->missing, pos))
@@ -619,7 +620,7 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
   response->time = 0; // make sure we count the time only once
 }
 
-static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t* fctx) {
+NONULL static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t* fctx) {
   in3_req_t*    ctx         = fctx->req;
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;
@@ -764,10 +765,11 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
       UNLOCK_AND_RETURN(config_get(w, (in3_get_config_ctx_t*) plugin_ctx))
     case PLGN_ACT_NL_PICK: {
       in3_nl_pick_ctx_t* pctx = plugin_ctx;
+      if (!pctx || !pctx->req) return IN3_EUNKNOWN;
       UNLOCK_AND_RETURN(pctx->type == NL_DATA ? pick_data(w, data, pctx->req) : pick_signer(w, data, pctx->req))
     }
     case PLGN_ACT_NL_PICK_FOLLOWUP:
-      UNLOCK_AND_RETURN(pick_followup(data, plugin_ctx))
+      UNLOCK_AND_RETURN(plugin_ctx ? pick_followup(data, plugin_ctx) : IN3_EUNKNOWN)
     case PLGN_ACT_NL_BLACKLIST: {
       in3_nl_blacklist_ctx_t* bctx = plugin_ctx;
       UNLOCK_AND_RETURN(bctx->is_addr ? blacklist_node_addr(data, bctx->address, BLACKLISTTIME)

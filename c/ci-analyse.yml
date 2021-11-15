@@ -121,15 +121,17 @@ format:
     - git diff --patch --exit-code
 
 cpd:
+  allow_failure: true
   stage: analysis
   needs: []
   image: rawdee/pmd
   tags:
     - short-jobs
   script:
-    - cpd -minimum-tokens 180 -language cpp -exclude c/src/third-party   -exclude c/src/signer/zk_wallet/iamo_deploy.h  -dir c/src
-    - cpd -minimum-tokens 150 -language java -dir java/src
-    - cpd -minimum-tokens 150 -language python -dir python
+    - cpd -help || cpd --help
+    - cpd -minimum-tokens 180 --language cpp --exclude c/src/third-party --exclude c/src/signer/zk_wallet/iamo_deploy.h  --files c/src 
+    - cpd -minimum-tokens 150 --language java --files java/src
+    - cpd -minimum-tokens 150 --language python --files python
 
 vulnerabilities:
   rules:
