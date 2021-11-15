@@ -867,7 +867,7 @@ in3_nodeselect_def_t* in3_get_nodelist_data(in3_nodeselect_config_t* conf, chain
   }
 
   // we need to create a new nodelist
-  conf->chains                   = _realloc(conf->chains, conf->chains_len * sizeof(in3_nodeselect_def_t*), (conf->chains_len + 1) * sizeof(in3_nodeselect_def_t*));
+  conf->chains                   = _realloc(conf->chains, (conf->chains_len + 1) * sizeof(in3_nodeselect_def_t*), conf->chains_len * sizeof(in3_nodeselect_def_t*));
   conf->chains[conf->chains_len] = nodelist_get_or_create(chain_id);
   conf->chains_len++;
   return conf->chains[conf->chains_len - 1];
