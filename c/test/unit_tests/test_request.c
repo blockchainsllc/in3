@@ -245,7 +245,6 @@ static void test_configure() {
   TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
   TEST_ASSERT_EQUAL(CHAIN_ID_LOCAL, c->chain.id);
   TEST_ASSERT_EQUAL(1, in3_get_nodelist(c)->request_count);
-  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_nodeselect_def_data(c)->nodelist->url);
   free(tmp);
 
   // missing registryId and contract
