@@ -53,6 +53,7 @@ static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
 static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
 
   // do we support this request?
+  if (!vc->req) return IN3_EUNKNOWN;
   if (vc->chain->type != CHAIN_ETH && strcmp(vc->method, "in3_nodeList")) return IN3_EIGNORE;
   if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
@@ -412,7 +413,7 @@ static void free_signers(node_match_t* signers) {
   }
 }
 
-static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, in3_req_t* ctx) {
+NONULL static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, in3_req_t* ctx) {
   // init cache lazily this also means we can be sure that all other related plugins are registered by now
   if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client, in3_chain_id(ctx)))
     return IN3_ECONFIG;
@@ -438,7 +439,7 @@ NONULL static bool auto_ask_sig(const in3_req_t* ctx) {
   return (req_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && in3_chain_id(ctx) != CHAIN_ID_BTC);
 }
 
-static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, in3_req_t* ctx) {
+NONULL static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, in3_req_t* ctx) {
   const in3_t* c = ctx->client;
 
   if (in3_req_get_proof(ctx, 0) == PROOF_NONE && !auto_ask_sig(ctx))
@@ -773,9 +774,9 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
                                       : blacklist_node_url(data, bctx->url, BLACKLISTTIME))
     }
     case PLGN_ACT_NL_FAILABLE:
-      UNLOCK_AND_RETURN(handle_failable(data, plugin_ctx))
+      UNLOCK_AND_RETURN(plugin_ctx ? handle_failable(data, plugin_ctx) : IN3_EUNKNOWN)
     case PLGN_ACT_NL_OFFLINE:
-      UNLOCK_AND_RETURN(handle_offline(data, plugin_ctx))
+      UNLOCK_AND_RETURN(plugin_ctx ? handle_offline(data, plugin_ctx) : IN3_EUNKNOWN)
     case PLGN_ACT_CHAIN_CHANGE: {
       nodelist_return_or_free(data); // this will always unlock the mutex of the nodelist and update the ref_counter!
       in3_nodeselect_config_t* w = plugin_data;
