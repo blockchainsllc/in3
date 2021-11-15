@@ -621,6 +621,7 @@ static void handle_times(in3_nodeselect_def_t* data, node_match_t* node, in3_res
 }
 
 NONULL static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followup_ctx_t* fctx) {
+  if (!fctx->req) return IN3_EUNKNOWN;
   in3_req_t*    ctx         = fctx->req;
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->nodes;
