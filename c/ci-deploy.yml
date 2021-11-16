@@ -52,7 +52,7 @@ readthedocs:
     - ./update_examples.sh
     - cd ..
     - export PRE_DOC=`cat wasm/docs/*.md`
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/c/in3-doc.git  doc
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cp python_multilib/docs/documentation.md doc/docs/api-python.md
     - cp dotnet/docs/api-dotnet.md doc/docs/
