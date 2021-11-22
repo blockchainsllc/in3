@@ -166,6 +166,9 @@ NONULL chain_id_t in3_chain_id(const in3_req_t* req);
 /** returns the chain-definition for the given id (or creates it if it does not exists) */
 NONULL in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id);
 
+/** sets the chain_id for this request*/
+NONULL void in3_set_chain_id(in3_req_t* req, chain_id_t id);
+
 /**
  * executes the request and returns its state.
  */

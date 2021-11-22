@@ -74,7 +74,7 @@ in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
   return r;
 }
 
-static void in3_set_chain_id(in3_req_t* req, chain_id_t id) {
+void in3_set_chain_id(in3_req_t* req, chain_id_t id) {
   if (!id || in3_chain_id(req) == id) return;
 
   cache_entry_t* entry = in3_cache_add_entry(&req->cache, NULL_BYTES, NULL_BYTES);
