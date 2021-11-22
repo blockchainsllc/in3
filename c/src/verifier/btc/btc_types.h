@@ -35,6 +35,9 @@ typedef struct btc_utxo {
   uint8_t*     tx_hash;
   uint32_t     tx_index;
   btc_tx_out_t tx_out;
+  bytes_t *pub_keys; // Set of keys used to lock the utxo
+  uint32_t num_keys; // Total number of keys in locking script (for multisig)
+  uint32_t num_sigs; // Number of signatures we need to provide in order to unlock the utxo
 } btc_utxo_t;
 
 void btc_init_tx(btc_tx_t* tx);

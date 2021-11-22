@@ -39,7 +39,9 @@ static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in
 }
 
 // WARNING: You need to free tx_in->script.data after calling this function!
-in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const bool is_segwit, const bytes_t* account, const bytes_t* pub_key, btc_tx_in_t* tx_in, uint8_t sighash) {
+in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const bool is_segwit, const bool is_multisig, const bytes_t* account, const bytes_t* pub_key, btc_tx_in_t* tx_in, uint8_t sighash) {
+  UNUSED_VAR(is_multisig);
+  
   if (!tx_in || !account) {
     return req_set_error(req, "ERROR: in btc_sign_tx_in: function arguments cannot be NULL.", IN3_ERPC);
   }
@@ -54,6 +56,18 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
   }
   else if ((pub_key->len == 65 && pub_key->data[0] != 0x4) || (pub_key->len == 33 && pub_key->data[0] != 0x2 && pub_key->data[0] != 0x3)) {
     return req_set_error(req, "ERROR: in btc_sign_tx_in: Invalid public key format", IN3_ERPC);
+  }
+
+  // Check for key compression
+  bytes_t *uncomp_pub_key = alloca(sizeof(bytes_t));
+  uncomp_pub_key->len = 65;
+  uncomp_pub_key->data = alloca(65);
+
+  if (pub_key->len == 33) {
+    ecdsa_uncompress_pubkey(&secp256k1, pub_key->data, uncomp_pub_key->data);
+  }
+  else {
+    memcpy(uncomp_pub_key->data, pub_key->data, uncomp_pub_key->len);
   }
 
   // Generate an unsigned transaction. This will be used to generate the hash provided to
@@ -260,17 +274,22 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* utxo_li
 in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* account, bytes_t* pub_key) {
   // for each input in a tx:
   for (uint32_t i = 0; i < utxo_list_len; i++) {
-    // -- for each public key (assume we only have one pub key for now):
-    // TODO: Allow setting a specific public key for each input
     btc_tx_in_t tx_in = {0};
     TRY(prepare_tx_in(req, &selected_utxo_list[i], &tx_in))
     bool is_segwit = (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1);
-    TRY_CATCH(btc_sign_tx_in(req, tx, selected_utxo_list, utxo_list_len, i, is_segwit, account, pub_key, &tx_in, BTC_SIGHASH_ALL),
-              _free(tx_in.script.data);
-              _free(tx_in.prev_tx_hash);)
+    bool is_multisig = (selected_utxo_list[i].num_sigs > 1);
+
+    //TODO: if utxo ends with OP code "CHECKMULTISIG", add 0 byte to the begining of the script to avoid bug in CHECKMULTISIG implementation
+    // -- for each signature:
+    for (uint32_t j = 0; j < selected_utxo_list[i].num_sigs; j++) {
+      //bytes_t signature = NULL_BYTES;
+      TRY_CATCH(btc_sign_tx_in(req, tx, selected_utxo_list, utxo_list_len, i, is_segwit, is_multisig, account, pub_key, &tx_in, BTC_SIGHASH_ALL),
+                _free(tx_in.script.data);
+                _free(tx_in.prev_tx_hash);)
+    }
     TRY_FINAL(add_input_to_tx(req, tx, &tx_in),
-              _free(tx_in.script.data);
-              _free(tx_in.prev_tx_hash);)
+                _free(tx_in.script.data);
+                _free(tx_in.prev_tx_hash);)
   }
   return IN3_OK;
 }
