@@ -574,7 +574,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   bytes_t    account;
   bytes_t    pub_key;
   pub_key.len  = 65; // TODO: Implement support to compressed public keys as well (33-bytes)
-  pub_key.data = alloca(pub_key.len * sizeof(uint8_t));
+  pub_key.data = alloca(pub_key.len);
   account.len  = 20;
   TRY_PARAM_GET_REQUIRED_ADDRESS(account.data, ctx, 0)
   TRY_PARAM_GET_REQUIRED_STRING(pub_key_str, ctx, 1)

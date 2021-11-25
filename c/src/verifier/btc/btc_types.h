@@ -36,8 +36,11 @@ typedef struct btc_utxo {
   uint32_t     tx_index;
   btc_tx_out_t tx_out;
   bytes_t *pub_keys; // Set of keys used to lock the utxo
-  uint32_t num_keys; // Total number of keys in locking script (for multisig)
-  uint32_t num_sigs; // Number of signatures we need to provide in order to unlock the utxo
+  uint32_t pub_key_count; // Total number of keys in locking script (for multisig)
+  bytes_t *signing_accounts;
+  uint32_t signing_accounts_count;
+  bytes_t **sigs;
+  uint32_t sig_count; // Number of signatures we need to provide in order to unlock the utxo
 } btc_utxo_t;
 
 void btc_init_tx(btc_tx_t* tx);
@@ -45,7 +48,8 @@ void btc_init_tx_in(btc_tx_in_t* tx_in);
 void btc_init_tx_out(btc_tx_out_t* tx_out);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
-in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst);
+uint32_t btc_get_raw_tx_size(const btc_tx_t* tx);
+in3_ret_t btc_serialize_tx(const btc_tx_t* tx, bytes_t* dst);
 in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst);
 
 uint8_t*  btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit);
@@ -69,7 +73,5 @@ static inline bool btc_is_witness(bytes_t tx) {
 }
 
 in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx);
-
-// void create_raw_tx(btc_tx_in_t* tx_in, uint32_t tx_in_len, btc_tx_out_t* tx_out, uint32_t tx_out_len, uint32_t lock_time, bytes_t* dst_raw_tx);
 
 #endif
