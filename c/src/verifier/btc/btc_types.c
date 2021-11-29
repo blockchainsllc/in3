@@ -165,13 +165,13 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
 
 uint32_t btc_get_raw_tx_size(const btc_tx_t* tx) {
   return (BTC_TX_VERSION_SIZE_BYTES +
-         (2 * tx->flag) +
-         get_compact_uint_size((uint64_t) tx->input_count) +
-         tx->input.len +
-         get_compact_uint_size((uint64_t) tx->output_count) +
-         tx->output.len +
-         (tx->flag ? tx->witnesses.len : 0) +
-         BTC_TX_LOCKTIME_SIZE_BYTES);
+          (2 * tx->flag) +
+          get_compact_uint_size((uint64_t) tx->input_count) +
+          tx->input.len +
+          get_compact_uint_size((uint64_t) tx->output_count) +
+          tx->output.len +
+          (tx->flag ? tx->witnesses.len : 0) +
+          BTC_TX_LOCKTIME_SIZE_BYTES);
 }
 
 // Converts a btc transaction into a serialized transaction
@@ -186,7 +186,7 @@ in3_ret_t btc_serialize_tx(const btc_tx_t* tx, bytes_t* dst) {
     dst->data = _calloc(tx_size, 1);
     dst->len  = tx_size;
   }
-  else if (dst->len < tx_size){
+  else if (dst->len < tx_size) {
     dst->data = _realloc(dst->data, tx_size, dst->len);
     dst->len  = tx_size;
   }
@@ -368,11 +368,11 @@ in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo
     utxo.tx_index      = tx_index;
     utxo.tx_out.value  = value;
     utxo.tx_out.script = tx_script;
-    
+
     // TODO: Change this for multisig
     utxo.sig_count = 1;
-    utxo.sigs = _malloc(utxo.sig_count * sizeof(bytes_t));
-    *utxo.sigs = NULL;
+    utxo.sigs      = _malloc(utxo.sig_count * sizeof(bytes_t));
+    *utxo.sigs     = NULL;
     // TODO: fill in pub_keys and accounts
 
     *selected_utxos[i] = utxo;
