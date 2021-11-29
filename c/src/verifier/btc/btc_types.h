@@ -46,7 +46,7 @@ in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst);
 in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst);
 
 uint8_t*  btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit);
-in3_ret_t btc_prepare_utxo(d_token_t* utxo_inputs, btc_utxo_t** utxos, uint32_t* len);
+in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst);
 
 uint8_t* btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst);
 void     btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst);
@@ -56,6 +56,10 @@ uint32_t btc_weight(btc_tx_t* tx);
 
 in3_ret_t add_input_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_in_t* tx_in);
 in3_ret_t add_output_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_out_t* tx_out);
+in3_ret_t add_witness_to_tx(in3_req_t* req, btc_tx_t* tx, bytes_t* witness);
+
+in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo_t** selected_utxos, uint32_t* len);
+in3_ret_t btc_set_segwit(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, const uint32_t utxo_list_len);
 
 static inline bool btc_is_witness(bytes_t tx) {
   return tx.data[4] == 0 && tx.data[5] == 1;

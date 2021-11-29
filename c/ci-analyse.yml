@@ -123,7 +123,7 @@ format:
 cpd:
   stage: analysis
   needs: []
-  image: rawdee/pmd
+  image: rawdee/pmd:6.40.0
   tags:
     - short-jobs
   script:
