@@ -175,12 +175,17 @@ typedef struct in3_nodeselect_def {
 
 /** config for each client pointing to the global data*/
 typedef struct in3_nodeselect_config {
-  in3_nodeselect_def_t* data;          /**< points to the global nodelist data*/
-  in3_node_props_t      node_props;    /**< used to identify the capabilities of the node. */
-  uint64_t              min_deposit;   /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
-  uint16_t              node_limit;    /**< the limit of nodes to store in the client. */
-  uint8_t               request_count; /**< the number of request send when getting a first answer */
+  //  in3_nodeselect_def_t* data;          /**< points to the global nodelist data*/
+  in3_nodeselect_def_t** chains;        /**< array of pointers to the global nodelist data*/
+  uint32_t               chains_len;    /**< pnumber of chains*/
+  in3_node_props_t       node_props;    /**< used to identify the capabilities of the node. */
+  uint64_t               min_deposit;   /**< min stake of the server. Only nodes owning at least this amount will be chosen. */
+  uint16_t               node_limit;    /**< the limit of nodes to store in the client. */
+  uint8_t                request_count; /**< the number of request send when getting a first answer */
 } in3_nodeselect_config_t;
+
+/** returns the nodelistwrapper.*/
+NONULL in3_nodeselect_def_t* in3_get_nodelist_data(in3_nodeselect_config_t* conf, chain_id_t chain_id);
 
 /** returns the nodelistwrapper.*/
 NONULL in3_nodeselect_config_t* in3_get_nodelist(in3_t* c);
@@ -206,7 +211,7 @@ NONULL in3_ret_t in3_node_list_get(in3_req_t* req, in3_nodeselect_def_t* data, b
  * filters and fills the weights on a returned linked list.
  */
 NONULL_FOR((1, 2, 3, 4, 7, 8))
-node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in3_node_t* all_nodes, in3_node_weight_t* weights, unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found, const in3_node_filter_t* filter, bytes_t* pre_filter);
+node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights, unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found, const in3_node_filter_t* filter, bytes_t* pre_filter);
 
 /**
  * calculates the weight for a node.
@@ -216,7 +221,7 @@ NONULL uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, u
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
 NONULL_FOR((1, 2, 3))
-in3_ret_t in3_node_list_pick_nodes(in3_req_t* req, in3_nodeselect_config_t* w, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter);
+in3_ret_t in3_node_list_pick_nodes(in3_req_t* req, in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, node_match_t** nodes, unsigned int request_count, const in3_node_filter_t* filter);
 
 /**
  * forces the client to update the nodelist

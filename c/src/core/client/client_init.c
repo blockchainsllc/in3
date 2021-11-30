@@ -114,8 +114,23 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, uint8_t version) {
   assert(c);
 
+  for (in3_chain_t* chain = &c->chain; chain; chain = chain->next) {
+    if (chain->id == chain_id) {
+      if (chain->verified_hashes) _free(chain->verified_hashes);
+      chain->verified_hashes = NULL;
+      chain->type            = type;
+      chain->version         = version;
+      return IN3_OK;
+    }
+  }
+
   in3_chain_t* chain = &c->chain;
-  chain->chain_id    = chain_id;
+  if (chain->id) {
+    while (chain->next) chain = chain->next;
+    chain->next = _calloc(sizeof(in3_chain_t), 1);
+    chain       = chain->next;
+  }
+  chain->id = chain_id;
   if (chain->verified_hashes) _free(chain->verified_hashes);
   chain->verified_hashes = NULL;
   chain->type            = type;
@@ -134,6 +149,13 @@ void in3_free(in3_t* a) {
     in3_plugin_t* n = p->next;
     _free(p);
     p = n;
+  }
+
+  while (a->chain.next) {
+    in3_chain_t* chain = a->chain.next;
+    a->chain.next      = chain->next;
+    if (chain->verified_hashes) _free(chain->verified_hashes);
+    _free(chain);
   }
 
   if (a->chain.verified_hashes) _free(a->chain.verified_hashes);
@@ -204,7 +226,7 @@ static in3_chain_type_t chain_type_from_id(chain_id_t id) {
 char* in3_get_config(in3_t* c) {
   sb_t* sb = sb_new("");
   add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
-  add_uint(sb, ',', "chainId", c->chain.chain_id);
+  add_uint(sb, ',', "chainId", c->chain.id);
   add_uint(sb, ',', "signatureCount", c->signature_count);
   add_uint(sb, ',', "finality", c->finality);
   add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
@@ -263,11 +285,11 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK(ct_token, ct_ != -1, "expected (btc|eth|ipfs|<u8-value>)");
       }
 
-      bool changed      = (c->chain.chain_id != chain_id(token));
-      c->chain.chain_id = chain_id(token);
-      c->chain.type     = ct_ == -1 ? chain_type_from_id(c->chain.chain_id) : ((in3_chain_type_t) ct_);
-      if (c->chain.chain_id == CHAIN_ID_BTC && !c->finality && !d_get(json->result, key("finality"))) c->finality = 7;
-      in3_client_register_chain(c, c->chain.chain_id, c->chain.type, 2);
+      bool changed  = (c->chain.id != chain_id(token));
+      c->chain.id   = chain_id(token);
+      c->chain.type = ct_ == -1 ? chain_type_from_id(c->chain.id) : ((in3_chain_type_t) ct_);
+      if (c->chain.id == CHAIN_ID_BTC && !c->finality && !d_get(json->result, key("finality"))) c->finality = 7;
+      in3_client_register_chain(c, c->chain.id, c->chain.type, 2);
       if (changed) in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
     else if (token->key == CONFIG_KEY("signatureCount")) {
@@ -389,12 +411,12 @@ char* in3_configure(in3_t* c, const char* config) {
     }
   }
 
-  if (c->signature_count && c->chain.chain_id != CHAIN_ID_LOCAL && !c->replace_latest_block) {
+  if (c->signature_count && c->chain.id != CHAIN_ID_LOCAL && !c->replace_latest_block) {
     in3_log_warn("signatureCount > 0 without replaceLatestBlock is bound to fail; using default (" STR(DEF_REPL_LATEST_BLK) ")\n");
     c->replace_latest_block = DEF_REPL_LATEST_BLK;
   }
 
-  EXPECT_CFG(c->chain.chain_id, "chain corresponding to chain id not initialized!");
+  EXPECT_CFG(c->chain.id, "chain corresponding to chain id not initialized!");
   assert_in3(c);
 
 cleanup:

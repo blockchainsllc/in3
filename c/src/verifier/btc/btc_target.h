@@ -45,7 +45,7 @@ void btc_set_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t dap, uint8_t
 
 uint32_t btc_get_closest_target(btc_target_conf_t* tc, uint32_t dap, uint8_t* difficulty);
 
-in3_ret_t btc_check_conf(in3_t* c, btc_target_conf_t* conf);
+in3_ret_t btc_check_conf(in3_req_t* req, btc_target_conf_t* conf);
 
 in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final, bytes_t header);
 

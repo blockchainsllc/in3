@@ -21,7 +21,7 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
  */
 static inline in3_nodeselect_def_t* in3_nodeselect_def_data(in3_t* c) {
   in3_nodeselect_config_t* w = in3_plugin_get_data(c, in3_nodeselect_handle_action);
-  return w ? w->data : NULL;
+  return w ? in3_get_nodelist_data(w, c->chain.id) : NULL;
 }
 
 /**

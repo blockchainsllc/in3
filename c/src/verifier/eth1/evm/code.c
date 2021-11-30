@@ -76,7 +76,7 @@ NONULL static in3_req_t* find_pending_code_request(in3_vctx_t* vc, address_t add
   return NULL;
 }
 
-NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, address_t address, bool* must_free, bytes_t** target) {
+NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, address_t address, cache_props_t* must_free, bytes_t** target) {
   bytes_t* code_hash = NULL;
 
   in3_ret_t res = find_code_in_accounts(vc, address, target, &code_hash);
@@ -107,7 +107,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           (*target)->data  = code.data;
           (*target)->len   = code.len;
           rpc_result->data = NULL;
-          *must_free       = 1;
+          *must_free       = CACHE_PROP_MUST_FREE;
 
           // we always try to cache the code
           in3_cache_ctx_t cctx = {.req = vc->req, .key = cache_key, .content = *target};
@@ -147,9 +147,9 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   key_str[0] = 'C';
   bytes_to_hex(address, 20, key_str + 1);
 
-  bytes_t*  code      = NULL;
-  bool      must_free = false;
-  in3_ret_t res;
+  bytes_t*      code      = NULL;
+  cache_props_t must_free = 0;
+  in3_ret_t     res;
 
   // not cached yet
   in3_cache_ctx_t cctx = {.req = vc->req, .key = key_str, .content = NULL};
@@ -158,7 +158,7 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   in3_log_debug("try to get the code for %s from cache: %p\n", key_str, code);
 
   if (code)
-    must_free = 1;
+    must_free = CACHE_PROP_MUST_FREE;
   else {
     res = in3_get_code_from_client(vc, key_str, address, &must_free, &code);
     if (res < 0) return res;

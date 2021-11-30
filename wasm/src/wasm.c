@@ -212,7 +212,7 @@ void EMSCRIPTEN_KEEPALIVE wasm_set_request_ctx(in3_req_t* ctx, char* req) {
   json_free(ctx->request_context);                                         // throw away the old pares context
   char* r                                  = _strdupn(req, -1);            // need to copy, because req is on the stack and the pointers of the tokens need to point to valid memory
   ctx->request_context                     = parse_json(r);                // parse the new
-  ctx->requests[0]                         = ctx->request_context->result; //since we don't support bulks in custom rpc, requests must be allocated with len=1
+  ctx->requests[0]                         = ctx->request_context->result; // since we don't support bulks in custom rpc, requests must be allocated with len=1
   ctx->request_context->c                  = src;                          // set the old pointer, so the memory management will clean it correctly
   in3_cache_add_ptr(&ctx->cache, r)->props = CACHE_PROP_MUST_FREE;         // but add the copy to be cleaned when freeing ctx to avoid memory leaks.
 }
@@ -311,7 +311,7 @@ void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
-  in3_nl_blacklist_ctx_t bctx = {.url = url, .is_addr = false};
+  in3_nl_blacklist_ctx_t bctx = {.url = url, .is_addr = false, .req = NULL};
   in3_plugin_execute_all(in3, PLGN_ACT_NL_BLACKLIST, &bctx);
 }
 

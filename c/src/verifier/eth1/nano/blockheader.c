@@ -374,7 +374,7 @@ static void mark_offline(in3_vctx_t* vc, unsigned int missing) {
 
 static bytes_t compute_msg_hash(uint8_t* msg_data, in3_vctx_t* vc, bytes32_t block_hash, uint64_t header_number) {
   // get registry_id
-  in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID};
+  in3_get_data_ctx_t dctx = {.type = GET_DATA_REGISTRY_ID, .req = vc->req};
   in3_plugin_execute_first(vc->req, PLGN_ACT_GET_DATA, &dctx);
 
   bytes_t msg;
@@ -464,19 +464,19 @@ static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int bs, u
   // handle errors based on context
   if (d_get_int(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
     uint8_t*           signer_addr = vc->req->signers + (20 * (idx_from_bs(bs) - 1));
-    in3_get_data_ctx_t dctx        = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = signer_addr};
+    in3_get_data_ctx_t dctx        = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = signer_addr, .req = vc->req};
     ba_print(signer_addr, 20);
     in3_plugin_execute_first(vc->req, PLGN_ACT_GET_DATA, &dctx);
     uint32_t* min_blk_height = dctx.data;
 
     if (DIFF_ATMOST(d_get_long(d_get(d_get(err, K_DATA), K_SIGNED_ERR), K_CURRENT_BLOCK), header_number, *min_blk_height)) {
       vc_err(vc, "blacklisting signer (reported wrong min block-height)");
-      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
+      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true, .req = vc->req};
       in3_plugin_execute_first(vc->req, PLGN_ACT_NL_BLACKLIST, &bctx);
     }
     else if (!DIFF_ATMOST(d_get_long(err, K_CURRENT_BLOCK), vc->currentBlock, 1)) {
       vc_err(vc, "blacklisting signer (out-of-sync)");
-      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true};
+      in3_nl_blacklist_ctx_t bctx = {.address = signer_addr, .is_addr = true, .req = vc->req};
       in3_plugin_execute_first(vc->req, PLGN_ACT_NL_BLACKLIST, &bctx);
     }
     if (dctx.cleanup) dctx.cleanup(dctx.data);

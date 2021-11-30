@@ -226,8 +226,8 @@ static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle
                                      : in3_rpc_handle_with_string(ctx, filter_remove(filters, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
 #endif
 
-  if (strcmp(ctx->method, "eth_chainId") == 0 && ctx->req->client->chain.chain_id != CHAIN_ID_LOCAL)
-    return in3_rpc_handle_with_int(ctx, ctx->req->client->chain.chain_id);
+  if (strcmp(ctx->method, "eth_chainId") == 0 && in3_chain_id(ctx->req) != CHAIN_ID_LOCAL)
+    return in3_rpc_handle_with_int(ctx, in3_chain_id(ctx->req));
 
   return IN3_EIGNORE;
 }

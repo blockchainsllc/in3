@@ -224,7 +224,7 @@ pub struct Client {
 #[async_trait(? Send)]
 impl ClientTrait for Client {
     fn id(&self) -> u32 {
-        unsafe { (*self.ptr).chain.chain_id }
+        unsafe { (*self.ptr).chain.id }
     }
 
     /// Configures the IN3 client using a JSON str.

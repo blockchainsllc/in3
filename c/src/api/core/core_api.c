@@ -65,7 +65,7 @@ static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
 }
 static in3_ret_t web3_clientVersion(in3_rpc_handle_ctx_t* ctx) {
   // for local chains, we return the client version of rpc endpoint.
-  return ctx->req->client->chain.chain_id == CHAIN_ID_LOCAL
+  return in3_chain_id(ctx->req) == CHAIN_ID_LOCAL
              ? IN3_EIGNORE
              : in3_rpc_handle_with_string(ctx, "\"Incubed/" IN3_VERSION "\"");
 }

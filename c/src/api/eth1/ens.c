@@ -84,7 +84,7 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
   // check cache
   if (in3_plugin_is_registered(parent->client, PLGN_ACT_CACHE)) {
     cachekey = alloca(strlen(name) + 5);
-    sprintf(cachekey, "ens:%s:%i:%d", name, type, (int) parent->client->chain.chain_id);
+    sprintf(cachekey, "ens:%s:%i:%d", name, type, (int) in3_chain_id(parent));
     in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = NULL};
     TRY(in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_GET, &cctx))
     if (cctx.content) {
@@ -129,7 +129,7 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
     registry_address[1] = 'x';
   }
   else
-    switch (parent->client->chain.chain_id) {
+    switch (in3_chain_id(parent)) {
       case CHAIN_ID_MAINNET:
       case CHAIN_ID_GOERLI:
         registry_address = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
