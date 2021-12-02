@@ -210,7 +210,7 @@ NONULL in3_ret_t in3_node_list_get(in3_req_t* req, in3_nodeselect_def_t* data, b
 /**
  * filters and fills the weights on a returned linked list.
  */
-NONULL_FOR((1, 2, 3, 4, 7, 8))
+NONULL_FOR((1, 2, 3, 4, 5, 8, 9))
 node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, in3_node_t* all_nodes, in3_node_weight_t* weights, unsigned int len, uint64_t now, uint32_t* total_weight, unsigned int* total_found, const in3_node_filter_t* filter, bytes_t* pre_filter);
 
 /**
