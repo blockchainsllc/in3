@@ -7,6 +7,16 @@
 #include "../../core/util/error.h"
 #include <stdint.h>
 
+typedef enum alg { UNSUPPORTED,
+                   NON_STANDARD,
+                   P2PK,
+                   P2PKH,
+                   P2SH,
+                   V0_P2WPKH,
+                   P2WSH,
+                   BARE_MULTISIG,
+                   NON_STANDARD_BARE_MULTISIG } alg_t;
+
 typedef struct btc_tx {
   bytes_t  all;
   uint32_t version;
@@ -35,17 +45,22 @@ typedef struct btc_utxo {
   uint8_t*     tx_hash;
   uint32_t     tx_index;
   btc_tx_out_t tx_out;
-  bytes_t*     pub_keys;      // Set of keys used to lock the utxo
-  uint32_t     pub_key_count; // Total number of keys in locking script (for multisig)
+  alg_t        script_type;
+  bytes_t      unlocking_script; // Script used to redeem P2SH or P2WSH utxos
+  bytes_t*     pub_keys;         // Set of keys used to lock the utxo
+  uint32_t     pub_key_count;    // Total number of keys in locking script (for multisig)
   bytes_t*     signing_accounts;
   uint32_t     signing_accounts_count;
-  bytes_t**    sigs;
-  uint32_t     sig_count; // Number of signatures we need to provide in order to unlock the utxo
+  bytes_t**    signatures;
+  uint32_t     sig_count;
+  uint32_t     req_sigs; // Number of signatures we need to provide in order to unlock the utxo
 } btc_utxo_t;
 
 void btc_init_tx(btc_tx_t* tx);
 void btc_init_tx_in(btc_tx_in_t* tx_in);
 void btc_init_tx_out(btc_tx_out_t* tx_out);
+
+alg_t btc_get_script_type(const bytes_t* script);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
 uint32_t  btc_get_raw_tx_size(const btc_tx_t* tx);

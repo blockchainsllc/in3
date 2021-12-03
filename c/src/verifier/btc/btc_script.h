@@ -1,9 +1,10 @@
 #ifndef _BTC_SCRIPT_H
 #define _BTC_SCRIPT_H
 
-#define MAX_SCRIPT_SIZE_BYTES 10000
-#define MAX_STACK_SIZE_BYTES  1000
-#define MAX_OPS_PER_SCRIPT    201
+#define MAX_SCRIPT_SIZE_BYTES      10000
+#define MAX_P2SH_SCRIPT_SIZE_BYTES 520
+#define MAX_STACK_SIZE_BYTES       1000
+#define MAX_OPS_PER_SCRIPT         201
 
 typedef enum btc_opcode {
   // push value

@@ -255,6 +255,42 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   return IN3_OK;
 }
 
+alg_t btc_get_script_type(const bytes_t* script) {
+  if ((!script->data) || (script->len < 21) || (script->len > MAX_SCRIPT_SIZE_BYTES)) {
+    return UNSUPPORTED;
+  }
+
+  alg_t    script_type = NON_STANDARD;
+  uint32_t len         = script->len;
+  uint8_t* p           = script->data;
+
+  if ((len == (uint32_t) p[0] + 2) && (p[0] == 33 || p[0] == 65) && (p[len - 1] == OP_CHECKSIG)) {
+    // locking script has format: PUB_KEY_LEN(1) PUB_KEY(33 or 65 bytes) OP_CHECKSIG(1)
+    script_type = P2PK;
+  }
+  else if ((len == 25) && (p[0] == OP_DUP) && (p[1] == OP_HASH160) && (p[2] == 0x14) && (p[len - 2] == OP_EQUALVERIFY) && (p[len - 1] == OP_CHECKSIG)) {
+    // locking script has format: OP_DUP(1) OP_HASH160(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20) OP_EQUALVERIFY(1) OP_CHECKSIG(1)
+    script_type = P2PKH;
+  }
+  else if ((len == 23) && (p[0] == OP_HASH160) && (p[1] == 0x14) && (p[len - 1] == OP_EQUAL)) {
+    // locking script has format: OP_HASH160(1) SCRIPT_HASH_LEN(1) SCRIPT_HASH(20) OP_EQUAL(1)
+    script_type = P2SH;
+  }
+  else if ((len == 22) && (p[0] == 0) && (p[1] == 0x14)) {
+    // locking script has format: OP_0(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20)
+    script_type = V0_P2WPKH;
+  }
+  else if ((len == 34) && (p[0] < OP_PUSHDATA1) && (p[1] == 0x20)) {
+    // locking script has format: OP_0(1) WITNESS_SCRIPT_HASH_LEN(1) WITNESS_SCRIPT_HASH(32)
+    script_type = P2WSH;
+  }
+  else if ((p[len - 1] == OP_CHECKMULTISIG) && (p[0] <= p[len - 2])) {
+    // locking script has format: M(1) LEN_PK_1(1) PK_1(33 or 65 bytes) ... LEN_PK_N(1) PK_N(33 or 65 bytes) N(1) OP_CHECKMULTISIG
+    script_type = (p[len - 2] <= 3) ? BARE_MULTISIG : ((p[len - 2] <= 20) ? NON_STANDARD_BARE_MULTISIG : UNSUPPORTED);
+  }
+  return script_type;
+}
+
 static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
   if (!tx || !src) {
     return req_set_error(req, "ERROR: in add_to_tx: Function arguments cannot be null!", IN3_EINVAL);
@@ -370,10 +406,11 @@ in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo
     utxo.tx_out.script = tx_script;
 
     // TODO: Change this for multisig
-    utxo.sig_count = 1;
-    utxo.sigs      = _malloc(utxo.sig_count * sizeof(bytes_t));
-    *utxo.sigs     = NULL;
+    utxo.sig_count   = 1;
+    utxo.signatures  = _malloc(utxo.sig_count * sizeof(bytes_t));
+    *utxo.signatures = NULL;
     // TODO: fill in pub_keys and accounts
+    utxo.script_type = btc_get_script_type(&utxo.tx_out.script);
 
     *selected_utxos[i] = utxo;
   }

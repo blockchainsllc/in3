@@ -7,16 +7,6 @@
 #include "btc_serialize.h"
 #include "btc_types.h"
 
-typedef enum alg { UNSUPPORTED,
-                   NON_STANDARD,
-                   P2PK,
-                   P2PKH,
-                   P2SH,
-                   V0_P2WPKH,
-                   P2WSH,
-                   BARE_MULTISIG,
-                   NON_STANDARD_BARE_MULTISIG } alg_t;
-
 // copy a byte array in reverse order
 static void rev_memcpy(uint8_t* dst, uint8_t* src, uint32_t len) {
   // TODO: Accuse error in case the following statement is false
@@ -35,49 +25,14 @@ static void append_bytes(bytes_t* dst, const bytes_t* src) {
   }
 }
 
-static alg_t get_script_type(const bytes_t* locking_script) {
-  if ((!locking_script->data) || (locking_script->len < 21) || (locking_script->len > MAX_SCRIPT_SIZE_BYTES)) {
-    return UNSUPPORTED;
-  }
-
-  alg_t    script_type = NON_STANDARD;
-  uint32_t len         = locking_script->len;
-  uint8_t* p           = locking_script->data;
-
-  if ((len == (uint32_t) p[0] + 2) && (p[0] == 33 || p[0] == 65) && (p[len - 1] == OP_CHECKSIG)) {
-    // locking script has format: PUB_KEY_LEN(1) PUB_KEY(33 or 65 bytes) OP_CHECKSIG(1)
-    script_type = P2PK;
-  }
-  else if ((len == 25) && (p[0] == OP_DUP) && (p[1] == OP_HASH160) && (p[2] == 0x14) && (p[len - 2] == OP_EQUALVERIFY) && (p[len - 1] == OP_CHECKSIG)) {
-    // locking script has format: OP_DUP(1) OP_HASH160(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20) OP_EQUALVERIFY(1) OP_CHECKSIG(1)
-    script_type = P2PKH;
-  }
-  else if ((len == 23) && (p[0] == OP_HASH160) && (p[1] == 0x14) && (p[len - 1] == OP_EQUAL)) {
-    // locking script has format: OP_HASH160(1) SCRIPT_HASH_LEN(1) SCRIPT_HASH(20)
-    script_type = P2SH;
-  }
-  else if ((len == 22) && (p[0] == 0) && (p[1] == 0x14)) {
-    // locking script has format: OP_0(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20)
-    script_type = V0_P2WPKH;
-  }
-  else if ((len == 34) && (p[0] < OP_PUSHDATA1) && (p[1] == 0x20)) {
-    // locking script has format: OP_0(1) WITNESS_SCRIPT_HASH_LEN(1) WITNESS_SCRIPT_HASH(32)
-    script_type = P2WSH;
-  }
-  else if (len < (p[len - 1] == OP_CHECKMULTISIG) && (p[0] <= p[len - 2])) {
-    // locking script has format: M(1) LEN_PK_1(1) PK_1(33 or 65 bytes) ... LEN_PK_N(1) PK_N(33 or 65 bytes) N(1) OP_CHECKMULTISIG
-    script_type = (p[len - 2] <= 3) ? BARE_MULTISIG : ((p[len - 2] <= 20) ? NON_STANDARD_BARE_MULTISIG : UNSUPPORTED);
-  }
-  return script_type;
-}
-
 // WARNING: You need to free hash_message.data after calling this function!
 static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const uint8_t sighash, const alg_t script_type) {
   switch (script_type) {
     case NON_STANDARD_BARE_MULTISIG:
-      // TODO: Throw a "non-standard" warning and continue to treat the input as a normal "BARE_MULTISIG"
     case BARE_MULTISIG:
       // Bare multisig hash message will be built same way as P2PK or P2PKH
+    case P2SH:
+      // Pay-To-Script-Hash hash message will be built same way as P2PK or P2PKH
     case P2PK:
     case P2PKH: {
       hash_message->len  = btc_get_raw_tx_size(tx) + 4;
@@ -87,6 +42,8 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       // write sighash (4 bytes) at the end of the input
       uint_to_le(hash_message, hash_message->len - 4, sighash);
     } break;
+    case P2WSH:
+      // Pay-To-Witness-Script-Hash hash message will be built same way as V0_P2WPKH
     case V0_P2WPKH: {
       bytes_t prev_outputs, sequence;
       uint8_t hash_prev_outputs[32], hash_sequence[32], hash_outputs[32];
@@ -153,9 +110,6 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       index += 4;
       uint_to_le(hash_message, index, sighash);
     } break;
-    case P2SH:
-    case P2WSH:
-      return req_set_error(req, "ERROR: P2SH and P2WSH scripts are still not supported.", IN3_EINVAL);
     default:
       return req_set_error(req, "ERROR: utxo script type is non-standard or unsupported", IN3_EINVAL);
   }
@@ -163,8 +117,11 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
 }
 
 // WARNING: You need to free tx_in.script.data after calling this function! Also, you may need to free witness.script.data depending on script_type value
-static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* witness, bytes_t** const signatures, const uint32_t signature_count, const bytes_t* pub_key, alg_t script_type) {
-  if (!signatures || signature_count == 0) {
+static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* witness, const btc_utxo_t* utxo, const bytes_t* pub_key) {
+  if (!utxo) {
+    return req_set_error(req, "ERROR: in build_unlocking_script: utxo cannot be null.", IN3_EINVAL);
+  }
+  if (!utxo->signatures || !(*utxo->signatures) || utxo->sig_count == 0) {
     return req_set_error(req, "ERROR: in build_unlocking_script: must provide at least one signature.", IN3_EINVAL);
   }
 
@@ -172,15 +129,32 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     return req_set_error(req, "ERROR: in build_unlocking_script: tx_in missing.", IN3_EINVAL);
   }
 
-  if (!pub_key && (script_type == P2PKH || script_type == V0_P2WPKH || script_type == P2WSH)) {
+  if (utxo->script_type == P2SH || utxo->script_type == P2WSH) {
+    if (utxo->unlocking_script.len == 0) {
+      return req_set_error(req, "ERROR: in build_unlocking_script: trying to redeem a P2SH or P2WSH utxo without providing a valid script.", IN3_EINVAL);
+    }
+    if (utxo->script_type == P2SH && utxo->unlocking_script.len > MAX_P2SH_SCRIPT_SIZE_BYTES) {
+      char message[100];
+      sprintf(message, "ERROR: in build_unlocking_script: provided redeem script is bigger than the %d bytes limit.", MAX_P2SH_SCRIPT_SIZE_BYTES);
+      return req_set_error(req, message, IN3_EINVAL);
+    }
+    if (utxo->unlocking_script.len == MAX_SCRIPT_SIZE_BYTES) {
+      char message[100];
+      sprintf(message, "ERROR: in build_unlocking_script: provided redeem script is bigger than the %d bytes limit.", MAX_SCRIPT_SIZE_BYTES);
+      return req_set_error(req, message, IN3_EINVAL);
+    }
+  }
+
+  if (!pub_key && (utxo->script_type == P2PKH || utxo->script_type == V0_P2WPKH || utxo->script_type == P2WSH)) {
     return req_set_error(req, "ERROR: in build_unlocking_script: public key missing.", IN3_EINVAL);
   }
 
-  if (!witness && (script_type == V0_P2WPKH || script_type == P2WSH)) {
+  if (!witness && (utxo->script_type == V0_P2WPKH || utxo->script_type == P2WSH)) {
     return req_set_error(req, "ERROR: in build_unlocking_script: witness missing.", IN3_EINVAL);
   }
 
-  switch (script_type) {
+  bytes_t **signatures = utxo->signatures, *unlocking_script = NULL, num_elements = NULL_BYTES;
+  switch (utxo->script_type) {
     case P2PK: {
       // Unlocking script format is: DER_SIG_LEN|DER_SIG
       tx_in->script.data    = tx_in->script.data ? _realloc(tx_in->script.data, signatures[0]->len + 1, tx_in->script.len) : _malloc(signatures[0]->len + 1);
@@ -191,8 +165,8 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     case P2PKH: {
       // Unlocking script format is: DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
       uint32_t script_len = 1 + signatures[0]->len + 1 + 64; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
-      tx_in->script.data = tx_in->script.data ? _realloc(tx_in->script.data, script_len, tx_in->script.len) : _malloc(script_len);
-      tx_in->script.len = script_len;
+      tx_in->script.data  = tx_in->script.data ? _realloc(tx_in->script.data, script_len, tx_in->script.len) : _malloc(script_len);
+      tx_in->script.len   = script_len;
 
       bytes_t* b     = &tx_in->script;
       uint32_t index = 0;
@@ -210,9 +184,10 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       // clean tx_in script
       tx_in->script.len = 0;
 
-      witness->len   = 1 + 1 + signatures[0]->len + 1 + pub_key->len; // NUM_ELEMENTS + DER_SIG_LEN + DER_SIG + PUB_KEY_LEN + PUB_KEY
-      witness->data  = _malloc(witness->len);
-      uint32_t index = 0;
+      uint32_t script_len = 1 + 1 + signatures[0]->len + 1 + pub_key->len; // NUM_ELEMENTS + DER_SIG_LEN + DER_SIG + PUB_KEY_LEN + PUB_KEY
+      witness->data       = witness->data ? _realloc(witness->data, script_len, witness->len) : _malloc(script_len);
+      witness->len        = script_len;
+      uint32_t index      = 0;
 
       witness->data[index++] = 2;                                             // write NUM_ELEMENTS
       witness->data[index++] = (uint8_t) signatures[0]->len;                  // write DER_SIG_LEN
@@ -227,20 +202,46 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       // Zero byte is present to remedy a bug in OP_CHECKMULTISIG which makes it read one more input
       // than it should.
       uint32_t req_sigs = tx_in->script.data[0]; // get how many signatures are required from the locking script
-      tx_in->script.len = 0; // cleanup tx_in script to receive unlocking script
+      tx_in->script.len = 0;                     // cleanup tx_in script to receive unlocking script
       bytes_t zero_byte = {alloca(1), 1};
       zero_byte.data[0] = 0x0;
       append_bytes(&tx_in->script, &zero_byte);
       for (uint32_t i = 0; i < req_sigs; i++) {
         bytes_t sig_field = {alloca(signatures[i]->len + 1), signatures[i]->len + 1};
         sig_field.data[0] = signatures[i]->len;
-        memcpy(sig_field.data+1, signatures[i]->data, signatures[i]->len);
+        memcpy(sig_field.data + 1, signatures[i]->data, signatures[i]->len);
         append_bytes(&tx_in->script, &sig_field);
       }
     } break;
-    case P2SH:
     case P2WSH:
-      return req_set_error(req, "ERROR: P2SH and P2WSH scripts are still not supported.", IN3_EINVAL);
+    case P2SH:
+      tx_in->script.len = 0;
+      if (utxo->script_type == P2WSH) {
+        // witness:         NUM_ELEMENTS | ZERO_BYTE | SIG_1_LEN | SIG_1 | ... | SIG_N_LEN | SIG_N | VALID_BTC_SCRIPT
+        // tx_in_script:    (empty)
+        num_elements.len     = 1;
+        num_elements.data    = alloca(1);
+        num_elements.data[0] = utxo->req_sigs + 2;
+        unlocking_script     = witness;
+        append_bytes(unlocking_script, &num_elements);
+      }
+      else {
+        // Unlocking script has format: SIG_1_LEN | SIG_1 | ... | SIG_N_LEN | SIG_N | VALID_BTC_SCRIPT
+        unlocking_script = &tx_in->script;
+      }
+      if (utxo->req_sigs > 1) {
+        bytes_t zero_byte = {alloca(1), 1};
+        zero_byte.data[0] = 0x0;
+        append_bytes(unlocking_script, &zero_byte);
+      }
+      for (uint32_t i = 0; i < utxo->req_sigs; i++) {
+        bytes_t sig_field = {alloca(signatures[i]->len + 1), signatures[i]->len + 1};
+        sig_field.data[0] = signatures[i]->len;
+        memcpy(sig_field.data + 1, signatures[i]->data, signatures[i]->len);
+        append_bytes(unlocking_script, &sig_field);
+      }
+      append_bytes(unlocking_script, &utxo->unlocking_script);
+      break;
     default:
       return req_set_error(req, "ERROR: utxo script type is non-standard or unsupported", IN3_EINVAL);
   }
@@ -328,7 +329,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_t* tx, c
 
   // prepare array for hashing
   bytes_t hash_message;
-  build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_list, utxo_list_len, utxo_index, sighash, get_script_type(&utxo_list[utxo_index].tx_out.script));
+  build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_list, utxo_list_len, utxo_index, sighash, utxo_list[utxo_index].script_type);
 
   // Finally, sign transaction input
   // -- Obtain DER signature
@@ -353,11 +354,10 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_u
     btc_tx_in_t tx_in   = {0};
     bytes_t     witness = NULL_BYTES;
     TRY(prepare_tx_in(req, &selected_utxo_list[i], &tx_in))
-    alg_t utxo_script_type = get_script_type(&selected_utxo_list[i].tx_out.script);
-    bool  is_segwit        = utxo_script_type == V0_P2WPKH || utxo_script_type == P2WSH;
+    bool is_segwit = selected_utxo_list[i].script_type == V0_P2WPKH || selected_utxo_list[i].script_type == P2WSH;
 
-    if (utxo_script_type == UNSUPPORTED || utxo_script_type == NON_STANDARD) {
-      return req_set_error(req, "ERROR: in btc_sign_tx: utxo script is non-standard or faulty.", IN3_EINVAL);
+    if (selected_utxo_list[i].script_type == UNSUPPORTED || selected_utxo_list[i].script_type == NON_STANDARD) {
+      return req_set_error(req, "ERROR: in btc_sign_tx: utxo script is non-standard or unsupported.", IN3_EINVAL);
     }
     // -- for each signature:
     for (uint32_t j = 0; j < selected_utxo_list[i].sig_count; j++) {
@@ -367,10 +367,10 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_u
                 _free(tx_in.script.data);
                 _free(tx_in.prev_tx_hash);)
 
-      selected_utxo_list[i].sigs[j] = &sig;
+      selected_utxo_list[i].signatures[j] = &sig;
     }
     // We have the signatures, now write the unlocking script to input
-    TRY_CATCH(build_unlocking_script(req, &tx_in, &witness, selected_utxo_list[i].sigs, selected_utxo_list[i].sig_count, pub_key, utxo_script_type),
+    TRY_CATCH(build_unlocking_script(req, &tx_in, &witness, &selected_utxo_list[i], pub_key),
               _free(tx_in.script.data);
               _free(tx_in.prev_tx_hash);)
 
