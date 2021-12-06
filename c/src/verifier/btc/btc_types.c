@@ -451,7 +451,7 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_
       if (type == BARE_MULTISIG || type == P2SH || type == P2WSH) {
         // is the argument defining a new "account<->pub_key" pair?
         d_token_t*  acc         = d_get(arg, key("account"));
-        const char* pub_key_str = d_string(d_get(acc, key("pub_key")));
+        const char* pub_key_str = d_string(d_get(arg, key("pub_key")));
         if (acc && pub_key_str) {
           btc_account_pub_key_t acc_pk;
           acc_pk.account.len  = acc->len;
@@ -476,7 +476,7 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_
 
     // how many signatures do we need to unlock th utxo?
     if (subtype == BARE_MULTISIG) {
-      utxo->req_sigs = (utxo->unlocking_script.len > 0) ? utxo->unlocking_script.data[0] : utxo->tx_out.script.data[0];
+      utxo->req_sigs = (utxo->unlocking_script.len > 0) ? utxo->unlocking_script.data[1] : utxo->tx_out.script.data[1];
     }
     else {
       utxo->req_sigs = 1;
