@@ -1073,17 +1073,22 @@ btc:
   sendtransaction:
     descr: sends a transaction to a btc node
     params:
-      from:
-        descr: the public key derived from the private key used to sign
+      default_account:
+        descr: eth account used to sign btc transactions
         type: address
+      default_pub_key:
+        descr: btc public key linked to previously provided etc account
+        type: bytes
       outputs:
         descr: the desired outputs of the transaction
         type: output
         array: true
-      utxo:
-        descr: the utxo used to proove liquidity for the transaction
+      utxos:
+        descr: the utxos used to proove liquidity for the transaction
         type: utxo
         array: true
+      args:
+        descr: aditional arguments used by specific transaction types
     result:
       descr: the transactionhash
       type: bytes32

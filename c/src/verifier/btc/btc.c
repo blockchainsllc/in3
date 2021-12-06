@@ -570,17 +570,28 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   in3_req_t* req    = ctx->req;
   d_token_t* params = ctx->params;
-  char*      pub_key_str;
-  bytes_t    account;
-  bytes_t    pub_key;
-  pub_key.len  = 65; // TODO: Implement support to compressed public keys as well (33-bytes)
-  pub_key.data = alloca(pub_key.len);
-  account.len  = 20;
-  TRY_PARAM_GET_REQUIRED_ADDRESS(account.data, ctx, 0)
-  TRY_PARAM_GET_REQUIRED_STRING(pub_key_str, ctx, 1)
-  hex_to_bytes(pub_key_str, -1, pub_key.data, pub_key.len);
+  char*      default_pub_key_str;
+  bytes_t    default_account;
+  bytes_t    default_pub_key;
+  default_account.len = 20;
+
+  TRY_PARAM_GET_REQUIRED_ADDRESS(default_account.data, ctx, 0)
+  TRY_PARAM_GET_REQUIRED_STRING(default_pub_key_str, ctx, 1)
   d_token_t* outputs   = d_get_at(params, 2);
   d_token_t* utxo_list = d_get_at(params, 3);
+  d_token_t* args      = d_get_at(params, 4);
+
+  default_pub_key.len = (strlen(default_pub_key_str) >> 1); // Should be either 33 or 65 bytes long
+  if (default_pub_key.len != 33 && default_pub_key.len != 65) {
+    return req_set_error(ctx->req, "Invalid BTC public key received", IN3_EINVAL);
+  }
+
+  default_pub_key.data = alloca(default_pub_key.len);
+  hex_to_bytes(default_pub_key_str, -1, default_pub_key.data, default_pub_key.len);
+
+  btc_account_pub_key_t default_acc_pk;
+  default_acc_pk.account = default_account;
+  default_acc_pk.pub_key = default_pub_key;
 
   uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
 
@@ -598,10 +609,10 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // select "best" set of UTXOs
   btc_utxo_t* selected_utxo_list = NULL;
   uint32_t    utxo_list_len      = 0;
-  btc_prepare_utxos(&tx, utxo_list, &selected_utxo_list, &utxo_list_len);
+  btc_prepare_utxos(req, &tx, &default_acc_pk, utxo_list, args, &selected_utxo_list, &utxo_list_len);
   btc_set_segwit(&tx, selected_utxo_list, utxo_list_len);
 
-  TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len, &account, &pub_key));
+  TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len));
 
   btc_serialize_tx(&tx, &signed_tx);
   sb_t sb = {0};

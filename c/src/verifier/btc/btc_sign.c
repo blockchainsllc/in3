@@ -28,7 +28,6 @@ static void append_bytes(bytes_t* dst, const bytes_t* src) {
 // WARNING: You need to free hash_message.data after calling this function!
 static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const uint8_t sighash, const alg_t script_type) {
   switch (script_type) {
-    case NON_STANDARD_BARE_MULTISIG:
     case BARE_MULTISIG:
       // Bare multisig hash message will be built same way as P2PK or P2PKH
     case P2SH:
@@ -117,11 +116,11 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
 }
 
 // WARNING: You need to free tx_in.script.data after calling this function! Also, you may need to free witness.script.data depending on script_type value
-static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* witness, const btc_utxo_t* utxo, const bytes_t* pub_key) {
+static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* witness, const btc_utxo_t* utxo) {
   if (!utxo) {
     return req_set_error(req, "ERROR: in build_unlocking_script: utxo cannot be null.", IN3_EINVAL);
   }
-  if (!utxo->signatures || !(*utxo->signatures) || utxo->sig_count == 0) {
+  if (!utxo->signatures || !(utxo->signatures) || utxo->sig_count == 0) {
     return req_set_error(req, "ERROR: in build_unlocking_script: must provide at least one signature.", IN3_EINVAL);
   }
 
@@ -145,15 +144,11 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     }
   }
 
-  if (!pub_key && (utxo->script_type == P2PKH || utxo->script_type == V0_P2WPKH || utxo->script_type == P2WSH)) {
-    return req_set_error(req, "ERROR: in build_unlocking_script: public key missing.", IN3_EINVAL);
-  }
-
   if (!witness && (utxo->script_type == V0_P2WPKH || utxo->script_type == P2WSH)) {
     return req_set_error(req, "ERROR: in build_unlocking_script: witness missing.", IN3_EINVAL);
   }
 
-  bytes_t **signatures = utxo->signatures, *unlocking_script = NULL, num_elements = NULL_BYTES;
+  bytes_t **signatures = (bytes_t * *const) &(utxo->signatures), *pub_key = &(utxo->accounts[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
   switch (utxo->script_type) {
     case P2PK: {
       // Unlocking script format is: DER_SIG_LEN|DER_SIG
@@ -196,7 +191,6 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       witness->data[index++] = pub_key->len;                      // write PUB_KEY_LEN
       memcpy(witness->data + index, pub_key->data, pub_key->len); // write PUB_KEY
     } break;
-    case NON_STANDARD_BARE_MULTISIG:
     case BARE_MULTISIG: {
       // Unlocking script format is: ZERO_BYTE | SIG_1_LEN | SIG_1 | SIG_2_LEN | SIG_2 | .....
       // Zero byte is present to remedy a bug in OP_CHECKMULTISIG which makes it read one more input
@@ -348,7 +342,15 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_t* tx, c
   return IN3_OK;
 }
 
-in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, uint32_t utxo_list_len, bytes_t* account, bytes_t* pub_key) {
+static void add_sig_to_utxo(btc_utxo_t* utxo, const bytes_t* sig) {
+  size_t current_size               = utxo->sig_count * sizeof(bytes_t);
+  size_t new_size                   = current_size + sizeof(bytes_t);
+  utxo->signatures                  = utxo->signatures ? _realloc(utxo->signatures, new_size, current_size) : _malloc(new_size);
+  utxo->signatures[utxo->sig_count] = *sig;
+  utxo->sig_count++;
+}
+
+in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, btc_utxo_t* selected_utxo_list, uint32_t utxo_list_len) {
   // for each input in a tx:
   for (uint32_t i = 0; i < utxo_list_len; i++) {
     btc_tx_in_t tx_in   = {0};
@@ -360,17 +362,17 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_u
       return req_set_error(req, "ERROR: in btc_sign_tx: utxo script is non-standard or unsupported.", IN3_EINVAL);
     }
     // -- for each signature:
-    for (uint32_t j = 0; j < selected_utxo_list[i].sig_count; j++) {
+    for (uint32_t j = 0; j < selected_utxo_list[i].accounts_count; j++) {
       bytes_t sig = NULL_BYTES;
       // TODO: select random unused key to sign if multisig
-      TRY_CATCH(btc_sign_tx_in(req, &sig, tx, selected_utxo_list, utxo_list_len, i, account, pub_key, &tx_in, BTC_SIGHASH_ALL),
+      TRY_CATCH(btc_sign_tx_in(req, &sig, tx, selected_utxo_list, utxo_list_len, i, &selected_utxo_list[i].accounts[j].account, &selected_utxo_list[i].accounts[j].pub_key, &tx_in, BTC_SIGHASH_ALL),
                 _free(tx_in.script.data);
                 _free(tx_in.prev_tx_hash);)
 
-      selected_utxo_list[i].signatures[j] = &sig;
+      add_sig_to_utxo(&selected_utxo_list[i], &sig);
     }
     // We have the signatures, now write the unlocking script to input
-    TRY_CATCH(build_unlocking_script(req, &tx_in, &witness, &selected_utxo_list[i], pub_key),
+    TRY_CATCH(build_unlocking_script(req, &tx_in, &witness, &selected_utxo_list[i]),
               _free(tx_in.script.data);
               _free(tx_in.prev_tx_hash);)
 
@@ -388,3 +390,9 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, const btc_utxo_t* selected_u
   }
   return IN3_OK;
 }
+
+// A Fazer:
+//   - Receber aquela estrutura de account_tx_pub_key na linha de comando [utxo_index, account, pub_key] e interpretar isso no handler btc
+//   - escrever os dados na estrutura da utxo durante a preparacao
+//   - Ajustar argumentos de funcoes conforme necessário
+//   - Só isso... Tem que funcionar.

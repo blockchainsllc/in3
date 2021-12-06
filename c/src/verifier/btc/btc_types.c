@@ -286,7 +286,7 @@ alg_t btc_get_script_type(const bytes_t* script) {
   }
   else if ((p[len - 1] == OP_CHECKMULTISIG) && (p[0] <= p[len - 2])) {
     // locking script has format: M(1) LEN_PK_1(1) PK_1(33 or 65 bytes) ... LEN_PK_N(1) PK_N(33 or 65 bytes) N(1) OP_CHECKMULTISIG
-    script_type = (p[len - 2] <= 3) ? BARE_MULTISIG : ((p[len - 2] <= 20) ? NON_STANDARD_BARE_MULTISIG : UNSUPPORTED);
+    script_type = (p[len - 2] <= 20) ? BARE_MULTISIG : UNSUPPORTED;
   }
   return script_type;
 }
@@ -375,14 +375,24 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
   return IN3_OK;
 }
 
+static void add_account_pub_key_to_utxo(btc_utxo_t* utxo, btc_account_pub_key_t* acc_pk) {
+  size_t current_size                  = utxo->accounts_count * sizeof(btc_account_pub_key_t);
+  size_t new_size                      = current_size + sizeof(btc_account_pub_key_t);
+  utxo->accounts                       = utxo->accounts ? _realloc(utxo->accounts, new_size, current_size) : _malloc(new_size);
+  utxo->accounts[utxo->accounts_count] = *acc_pk;
+  utxo->accounts_count++;
+}
+
 // WARNING: You must free selected_utxos pointer after calling this function, as well as the pointed utxos tx_hash and tx_out.data fields
 // TODO: Currently we are adding all utxo_inputs to the list of selected_utxos. Implement an algorithm to select only the necessary utxos for the transaction, given the outputs.
-in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo_t** selected_utxos, uint32_t* len) {
+in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args, btc_utxo_t** selected_utxos, uint32_t* len) {
   UNUSED_VAR(tx);
+  UNUSED_VAR(req);
 
   *len            = d_len(utxo_inputs);
   *selected_utxos = _malloc(*len * sizeof(btc_utxo_t));
 
+  // Read and initialize each utxo we need for the transaction
   // TODO: Only add the necessary utxos to selected_utxos
   for (uint32_t i = 0; i < *len; i++) {
     btc_utxo_t  utxo;
@@ -400,19 +410,82 @@ in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo
     bytes_t  tx_script     = bytes(_malloc(tx_script_len), tx_script_len);
     hex_to_bytes(tx_script_string, strlen(tx_script_string), tx_script.data, tx_script.len);
 
+    // Write the values we already have
     utxo.tx_hash       = tx_hash.data;
     utxo.tx_index      = tx_index;
     utxo.tx_out.value  = value;
     utxo.tx_out.script = tx_script;
+    utxo.script_type   = btc_get_script_type(&utxo.tx_out.script);
 
-    // TODO: Change this for multisig
-    utxo.sig_count   = 1;
-    utxo.signatures  = _malloc(utxo.sig_count * sizeof(bytes_t));
-    *utxo.signatures = NULL;
-    // TODO: fill in pub_keys and accounts
-    utxo.script_type = btc_get_script_type(&utxo.tx_out.script);
+    // write default values for the other fields. These are not final
+    utxo.unlocking_script = NULL_BYTES;
+    utxo.accounts_count   = 0;
+    utxo.accounts         = NULL;
+    utxo.signatures       = NULL;
+    utxo.sig_count        = 0;
 
+    // Finally, add initialized utxo to our list
     *selected_utxos[i] = utxo;
+  }
+
+  // Handle optional arguments
+  if (args) {
+    uint32_t args_len = d_len(args);
+    for (uint32_t i = 0; i < args_len; i++) {
+      d_token_t* arg        = d_get_at(args, i);
+      uint32_t   utxo_index = d_get_long(arg, key("utxo_index"));
+
+      btc_utxo_t* utxo = selected_utxos[utxo_index];
+      alg_t       type = utxo->script_type;
+
+      if (type == P2SH || type == P2WSH) {
+        // is the argument defining an unlocking script?
+        const char* script_str = d_string(d_get(arg, key("script")));
+        if (script_str) {
+          utxo->unlocking_script.len  = (strlen(script_str) >> 1);
+          utxo->unlocking_script.data = _malloc(utxo->unlocking_script.len);
+          hex_to_bytes(script_str, -1, utxo->unlocking_script.data, utxo->unlocking_script.len);
+        }
+      }
+
+      if (type == BARE_MULTISIG || type == P2SH || type == P2WSH) {
+        // is the argument defining a new "account<->pub_key" pair?
+        d_token_t*  acc         = d_get(arg, key("account"));
+        const char* pub_key_str = d_string(d_get(acc, key("pub_key")));
+        if (acc && pub_key_str) {
+          btc_account_pub_key_t acc_pk;
+          acc_pk.account.len  = acc->len;
+          acc_pk.account.data = _malloc(acc->len);
+          memcpy(acc_pk.account.data, acc->data, acc->len);
+
+          acc_pk.pub_key.len  = (strlen(pub_key_str) >> 1);
+          acc_pk.pub_key.data = _malloc(acc_pk.pub_key.len);
+          hex_to_bytes(pub_key_str, -1, acc_pk.pub_key.data, acc_pk.pub_key.len);
+
+          add_account_pub_key_to_utxo(utxo, &acc_pk);
+        }
+      }
+    }
+  }
+
+  // Now that all optional arguments were parsed, we fill the last remaining
+  // fields into our utxo data
+  for (uint32_t i = 0; i < *len; i++) {
+    btc_utxo_t* utxo    = selected_utxos[i];
+    alg_t       subtype = (utxo->script_type == P2SH || utxo->script_type == P2WSH) ? btc_get_script_type(&utxo->unlocking_script) : utxo->script_type;
+
+    // how many signatures do we need to unlock th utxo?
+    if (subtype == BARE_MULTISIG) {
+      utxo->req_sigs = (utxo->unlocking_script.len > 0) ? utxo->unlocking_script.data[0] : utxo->tx_out.script.data[0];
+    }
+    else {
+      utxo->req_sigs = 1;
+    }
+
+    // Guarantee every utxo has at least one account<->pub_key pair assigned to it
+    if (!utxo->accounts) {
+      add_account_pub_key_to_utxo(utxo, default_acc_pk);
+    }
   }
 
   return IN3_OK;
