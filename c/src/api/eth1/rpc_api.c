@@ -61,11 +61,11 @@
                         "Ethereum Signed Message:\n%u"
 
 static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx) {
-  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_STRING)
+  char* sig;
+  TRY_PARAM_GET_REQUIRED_STRING(sig, ctx, 0)
   in3_ret_t  ret   = IN3_OK;
   bytes_t    data  = {0};
   char*      error = NULL;
-  char*      sig   = d_get_string_at(ctx->params, 0);
   d_token_t* para  = d_get_at(ctx->params, 1);
   if (!sig) return req_set_error(ctx->req, "missing signature", IN3_EINVAL);
   if (!para) return req_set_error(ctx->req, "missing values", IN3_EINVAL);
@@ -80,17 +80,16 @@ static in3_ret_t in3_abiEncode(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
-  CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_STRING)
-  CHECK_PARAM_TYPE(ctx->req, ctx->params, 1, T_BYTES)
-  CHECK_PARAM(ctx->req, ctx->params, 1, val->len % 32 == 0)
-  char*       error  = NULL;
-  json_ctx_t* res    = NULL;
-  char*       sig    = d_get_string_at(ctx->params, 0);
-  bytes_t     data   = d_to_bytes(d_get_at(ctx->params, 1));
-  bytes_t     topics = d_to_bytes(d_get_at(ctx->params, 2));
-  if (d_len(ctx->params) > 3) return req_set_error(ctx->req, "too many arguments (only 3 alllowed)", IN3_EINVAL);
+  char*   sig;
+  bytes_t data, topics;
 
-  abi_sig_t* req = abi_sig_create(sig, &error);
+  TRY_PARAM_GET_REQUIRED_STRING(sig, ctx, 0)
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 1, 0, 0)
+  TRY_PARAM_GET_BYTES(topics, ctx, 2, 0, 0)
+  CHECK_PARAM(ctx->req, ctx->params, 1, val->len % 32 == 0)
+  char*       error = NULL;
+  json_ctx_t* res   = NULL;
+  abi_sig_t*  req   = abi_sig_create(sig, &error);
   if (!error) res = topics.data ? abi_decode_event(req, topics, data, &error) : abi_decode(req, data, &error);
   if (req) abi_sig_free(req);
   if (error) return req_set_error(ctx->req, error, IN3_EINVAL);
@@ -128,12 +127,12 @@ static in3_ret_t in3_rlpDecode(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
-  CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
-  if (d_len(ctx->params) > 2) return req_set_error(ctx->req, "must be max 2 arguments", IN3_EINVAL);
-  char     result[45];
-  bytes_t* adr = d_get_bytes_at(ctx->params, 0);
-  if (!adr || adr->len != 20) return req_set_error(ctx->req, "the address must have 20 bytes", IN3_EINVAL);
-  in3_ret_t res = to_checksum(adr->data, d_get_int_at(ctx->params, 1) ? in3_chain_id(ctx->req) : 0, result + 1);
+  uint8_t* src;
+  bool     use_chain_id;
+  TRY_PARAM_GET_REQUIRED_ADDRESS(src, ctx, 0)
+  TRY_PARAM_GET_BOOL(use_chain_id, ctx, 1, 0)
+  char      result[45];
+  in3_ret_t res = to_checksum(src, use_chain_id ? in3_chain_id(ctx->req) : 0, result + 1);
   if (res) return req_set_error(ctx->req, "Could not create the checksum address", res);
   result[0]  = '\'';
   result[43] = '\'';
@@ -143,16 +142,19 @@ static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx) {
-  char*        name     = d_get_string_at(ctx->params, 0);
-  char*        type     = d_get_string_at(ctx->params, 1);
-  bytes_t      registry = d_to_bytes(d_get_at(ctx->params, 2));
+  char *  name, *type;
+  bytes_t registry = bytes(NULL, 20);
+
+  TRY_PARAM_GET_REQUIRED_STRING(name, ctx, 0)
+  TRY_PARAM_GET_STRING(type, ctx, 1, "addr")
+  TRY_PARAM_GET_ADDRESS(registry.data, ctx, 2, NULL)
+
   int          res_len  = 20;
   in3_ens_type ens_type = ENS_ADDR;
   bytes32_t    result;
 
   // verify input
-  if (!type) type = "addr";
-  if (!name || !strchr(name, '.')) return req_set_error(ctx->req, "the first param msut be a valid domain name", IN3_EINVAL);
+  if (!strchr(name, '.')) return req_set_error(ctx->req, "the first param must be a valid domain name", IN3_EINVAL);
   if (strcmp(type, "addr") == 0)
     ens_type = ENS_ADDR;
   else if (strcmp(type, "resolver") == 0)
@@ -163,7 +165,6 @@ static in3_ret_t in3_ens(in3_rpc_handle_ctx_t* ctx) {
     ens_type = ENS_HASH;
   else
     return req_set_error(ctx->req, "currently only 'hash','addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
-  if (registry.data && registry.len != 20) return req_set_error(ctx->req, "the registry must be a 20 bytes address", IN3_EINVAL);
 
   TRY(ens_resolve(ctx->req, name, registry.data, ens_type, result, &res_len))
 
@@ -399,6 +400,10 @@ static in3_ret_t parse_tx_param(in3_rpc_handle_ctx_t* ctx, char* params, sb_t* f
     }
     else if (strcmp(name, "gasPrice") == 0) {
       sb_add_chars(sb, ",\"gasPrice\":");
+      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
+    }
+    else if (strcmp(name, "data") == 0) {
+      sb_add_chars(sb, ",\"data\":");
       sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
     }
     else if (strcmp(name, "data") == 0) {
