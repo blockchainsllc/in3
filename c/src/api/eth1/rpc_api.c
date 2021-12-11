@@ -126,6 +126,131 @@ static in3_ret_t in3_rlpDecode(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_finish(ctx);
 }
 
+static const char* TX_FIELDS_0[] = {"nonce", "gasPrice", "gas", "to", "value", "data", "v", "r", "s", 0};
+static const char* TX_FIELDS_1[] = {"chainId", "nonce", "gasPrice", "gas", "to", "value", "data", "accessList", "v", "r", "s", 0};
+static const char* TX_FIELDS_2[] = {"chainId", "nonce", "maxPriorityFeePerGas", "maxFeePerGas", "gas", "to", "value", "data", "accessList", "v", "r", "s", 0};
+
+static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t      data = {0}, val;
+  bytes32_t    hash;
+  sb_t         sb    = {0};
+  int64_t      type  = 0;
+  const char** names = TX_FIELDS_0;
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 1, 0)
+  keccak(data, hash);
+
+  if (data.data[0] < 0xc0) {
+    type  = data.data[0];
+    names = type == 1 ? TX_FIELDS_1 : TX_FIELDS_2;
+    if (type > 2) return req_set_error(ctx->req, "Invalid TxType", IN3_EINVAL);
+    data.len--;
+    data.data++;
+  }
+  if (rlp_decode(&data, 0, &data) != 2) return req_set_error(ctx->req, "Invalid Tx-Data, must be a list", IN3_EINVAL);
+  int len = rlp_decode_len(&data);
+
+  sb_printx(&sb, "{\"type\":%d,\"hash\":\"%B\"", type, bytes(hash, 32));
+
+  for (int i = 0; names[i] && i < len; i++) {
+    int t = rlp_decode(&data, i, &val);
+    if (strcmp(names[i], "accessList") == 0 && t == 2) {
+      sb_printx(&sb, ",\"%s\":[", names[i]);
+      bytes_t account, addr, storage;
+      for (int a = 0;; a++) {
+        t = rlp_decode(&val, a, &account);
+        if (!t) break;
+        if (t != 2 || rlp_decode(&account, 0, &addr) != 1 || rlp_decode(&account, 1, &storage) != 2) {
+          _free(sb.data);
+          return req_set_error(ctx->req, "Invalid Tx-Data, wrong accessList account", IN3_EINVAL);
+        }
+        if (a) sb_add_char(&sb, ',');
+        sb_printx(&sb, "{\"address\":\"%B\",\"storageKeys\":[", addr);
+        for (int b = 0;; b++) {
+          t = rlp_decode(&storage, b, &addr);
+          if (!t) break;
+          if (t != 1) {
+            _free(sb.data);
+            return req_set_error(ctx->req, "Invalid Tx-Data, wrong accessList sotrage key", IN3_EINVAL);
+          }
+          if (b) sb_add_char(&sb, ',');
+          sb_printx(&sb, "\"%B\"", addr);
+        }
+        sb_add_chars(&sb, "]}");
+      }
+      sb_add_chars(&sb, "]");
+    }
+    else if ((strlen(names[i]) < 3 || strcmp(names[i], "data") == 0) && t == 1)
+      sb_printx(&sb, ",\"%s\":\"%B\"", names[i], val);
+    else if (t == 1)
+      sb_printx(&sb, ",\"%s\":\"%V\"", names[i], val);
+    else {
+      _free(sb.data);
+      return req_set_error(ctx->req, "Invalid Tx-Data, wrong item", IN3_EINVAL);
+    }
+  }
+
+  // determine from-address
+  if (len && !names[len]) {
+    uint8_t pub[65];
+    bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
+    bytes_t last, v;
+    rlp_decode(&data, len - 1, &v);
+    if (v.len == 0) {
+      rlp_decode(&data, len - 3, &v);
+      sb_printx(&sb, ",\"chainId\":\"%V\"", v);
+    }
+    else {
+
+      rlp_decode(&data, len - 3, &v);
+      rlp_decode(&data, len - 4, &last);
+      uint8_t          r   = v.len ? v.data[v.len - 1] : 0;
+      uint8_t          tt  = (uint8_t) type;
+      bytes_builder_t* rlp = bb_newl(data.len);
+      bb_write_raw_bytes(rlp, data.data, last.data + last.len - data.data); // copy the existing data without signature
+      if (type == 0 && (v.len > 1 || (v.len == 1 && r > 28))) {
+        int c = bytes_to_int(v.data, v.len);
+        r     = 1 - c % 2;
+        c     = (c - (36 - c % 2)) / 2;
+        uint8_t tmp[4];
+        int_to_bytes((uint32_t) c, tmp);
+        bytes_t bb = bytes(tmp, 4);
+        b_optimize_len(&bb);
+        sb_printx(&sb, ",\"chainId\":\"%V\"", bb);
+        rlp_encode_item(rlp, &bb);
+        bb.len = 0;
+        rlp_encode_item(rlp, &bb);
+        rlp_encode_item(rlp, &bb);
+      }
+      else if (type == 0 && r > 26)
+        r -= 27;
+      rlp_encode_to_list(rlp);
+      if (type) bb_replace(rlp, 0, 0, &tt, 1); // we insert the type
+      sb_printx(&sb, ",\"unsigned\":\"%B\"", rlp->b);
+      keccak(rlp->b, hash);
+      bb_free(rlp);
+      uint8_t signature[65] = {0};
+      rlp_decode(&data, len - 2, &v);
+      memcpy(signature + 32 - v.len, v.data, v.len);
+      rlp_decode(&data, len - 1, &v);
+      memcpy(signature + 64 - v.len, v.data, v.len);
+      signature[64] = r;
+      sb_printx(&sb, ",\"signature\":\"%B\"", bytes(signature, 65));
+
+      if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature, hash, r)) {
+        _free(sb.data);
+        return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
+      }
+      keccak(pubkey_bytes, hash);
+      sb_printx(&sb, ",\"publicKey\":\"%B\",\"from\":\"%B\"", pubkey_bytes, bytes(hash + 12, 20));
+    }
+  }
+
+  sb_add_char(&sb, '}');
+  in3_rpc_handle_with_string(ctx, sb.data);
+  _free(sb.data);
+  return IN3_OK;
+}
+
 static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
   uint8_t* src;
   bool     use_chain_id;
@@ -720,6 +845,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_RLPDECODE)
   TRY_RPC("in3_rlpDecode", in3_rlpDecode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_DECODETX)
+  TRY_RPC("in3_decodeTx", in3_decodeTx(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CHECKSUMADDRESS)
   TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))

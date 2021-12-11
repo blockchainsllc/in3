@@ -323,7 +323,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   TRY(get_nonce_and_gasprice(&td, ctx))
 
   // create raw without signature
-  bytes_t* raw = serialize_tx_raw(&td, chain_id, get_v(chain_id), NULL_BYTES, NULL_BYTES);
+  bytes_t* raw = serialize_tx_raw(&td, chain_id, td.type ? 0 : get_v(chain_id), NULL_BYTES, NULL_BYTES);
   *dst         = *raw;
   _free(raw);
 
@@ -383,10 +383,18 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
 
   // if we reached that point we have a valid signature in sig
   // create raw transaction with signature
+  uint8_t  type = raw_tx.len && raw_tx.data[0] < 10 ? raw_tx.data[0] : 0;
   bytes_t  data, last;
-  uint32_t v = 27 + signature.data[64] + (get_v(chain_id) ? (get_v(chain_id) * 2 + 8) : 0);
+  uint32_t v         = type ? signature.data[64] : (27 + signature.data[64] + (get_v(chain_id) ? (get_v(chain_id) * 2 + 8) : 0));
+  int      last_item = 5;
+  if (type) {
+    raw_tx.data++;
+    raw_tx.len--;
+    if (type == 1) last_item = 7;
+    if (type == 1) last_item = 8;
+  }
   EXPECT_EQ(rlp_decode(&raw_tx, 0, &data), 2)                           // the raw data must be a list(2)
-  EXPECT_EQ(rlp_decode(&data, 5, &last), 1)                             // the last element (data) must be an item (1)
+  EXPECT_EQ(rlp_decode(&data, last_item, &last), (type ? 2 : 1))        // the last element (data) must be an item (1) for type=0 otherwise it is a list (accessList)
   bytes_builder_t* rlp = bb_newl(raw_tx.len + 68);                      // we try to make sure, we don't have to reallocate
   bb_write_raw_bytes(rlp, data.data, last.data + last.len - data.data); // copy the existing data without signature
 
@@ -409,6 +417,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
 
   // finish up
   rlp_encode_to_list(rlp);
+  if (type) bb_replace(rlp, 0, 0, &type, 1); // we insert the type
   *dst = rlp->b;
 
   _free(rlp);

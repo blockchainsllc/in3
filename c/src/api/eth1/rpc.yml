@@ -1,4 +1,76 @@
 types:
+  eth_tx_decoded:
+    hash:
+      descr: the hash of the raw transaction. In case of a signed tx, this is the the tx-hash
+      type: bytes32
+    type:
+      descr: the eth-transaction-type (0=legacy, 1 or 2 EIP1559)
+      type: uint32
+    to:
+      descr: receipient of the transaction or a 0x for a deployment tx.
+      type: address
+    from:
+      descr: address of the sender (only available if the tx is signed)
+      type: address
+      optional: true
+    value:
+      descr: value in wei to send
+      type: uint256
+    gas:
+      descr: the gas to be send along
+      type: uint64
+    gasPrice:
+      descr: the price in wei for one gas-unit. only available for tx type 1 and 2.
+      type: uint64
+      optional: true
+    maxFeePerGas:
+      descr: the max fees per gas ( See EIP- 1559 )
+      type: uint64
+      optional: true
+    maxPriorityFeePerGas:
+      descr: the max Prioritiyfees per gas ( See EIP- 1559 )
+      type: uint64
+      optional: true
+    accessList:
+      descr: the access list of storage values
+      type: eth_accesslist
+      array: true
+      optional: true
+    nonce:
+      descr: the used nonce of the sender.
+      type: uint64
+    data:
+      descr: the data-section of the transaction
+      type: bytes
+    signature:  
+      descr: the 65 bytes signature
+      type: bytes
+      optional: true
+    chainId:  
+      descr: the chainId as encoded in the transaction. (only missing in legacy tx if EIP-155 is not used)
+      type: uint64
+      optional: true
+    v:  
+      descr: the recovery-byte. For legacy-tx ( this will be either + 27 or chain_id*2 + 35 - See EIP 155)
+      type: uint32
+      optional: true
+    r:  
+      descr: r-value of the sifgnature ( the R.y value)
+      type: bytes32
+      optional: true
+    s:  
+      descr: s-value of the sifgnature 
+      type: bytes32
+      optional: true
+    publicKey:  
+      descr: the public Key of the sender as 64 bytes
+      type: bytes
+      optional: true
+    unsigned:  
+      descr: the raw unsigned transaction to extract the hash for the signature
+      type: bytes
+      optional: true
+
   keyparams:
     version:
       descr: the version
@@ -126,6 +198,39 @@ utils:
         -  "0x01"
         -  "0x"
         -  "0x"
+
+  in3_decodeTx:
+    sync: true
+    descr: decodes a raw transaction and returns the values. The transaction may be a signed or unsigned tx. In case of a signed transaction, the from-address will be calculated along with many other helpful values.
+    params:
+      data:
+        type: bytes
+        descr: input data
+    result:
+      type: eth_tx_decoded
+      descr: the decoded transaction.
+    example:
+      request:
+        - '0x02f8b0013f8459682f008518c2cdf18982bcbb940...edbc296ce'
+      response:
+        type: 2
+        hash: '0x0a7f5daa71ad3e0115cae737559d14cdf914510a6a19c16267b8d5142d82de42'
+        chainId: '0x1'
+        nonce: '0x3f'
+        maxPriorityFeePerGas: '0x59682f00'
+        maxFeePerGas: '0x18c2cdf189'
+        gas: '0xbcbb'
+        to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
+        value: '0x0'
+        data: '0x1896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        accessList: []
+        v: 0x
+        r: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b06587798'
+        s: '0x37b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce'
+        unsigned: '0x02f86d013f8459682f008518c2cdf18982bcbb9400000000000c2e074ec69a0dfb2997ba6c7d2e1e80b8441896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41c0'
+        signature: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b0658779837b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce00'
+        publicKey: '0x63cfcd2900a37247214361d0ca3637980af8e4b64acdf2f1e1b11573b502b576df4387cbf6f94c6cdc750e3aaa23026c5b0cef0f3bb2f5bb42c093ec394fd1bb'
+        from: '0xd034648eaea1d29f4e9cfa8312feff9783f31fd4'
 
   in3_checksumAddress:
     sync: true

@@ -68,6 +68,7 @@ subcmds=(
     'in3_cacheClear: clears the incubed cache (usually found in the '
     'in3_calcDeployAddress: calculates the address of a contract about to deploy <sender> <nonce>'
     'in3_checksumAddress: Will convert an upper or lowercase Ethereum address to a checksum address <address> <useChainId>'
+    'in3_decodeTx: decodes a raw transaction and returns the values <data>'
     'in3_fromWei: converts a given uint (also as hex) with a wei-value into a specified unit <value> <unit> <digits>'
     'in3_parse_tx_url: parse a ethereum-url based on EIP 681 (https://eips <url>'
     'in3_rlpDecode: rlp decode the data <data>'
