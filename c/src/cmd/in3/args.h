@@ -69,6 +69,7 @@ const char* help_args = "\
 --data                        -d     the data for a transaction\n\
 --gas_price                   -gp    the gas price to use when sending transactions\n\
 --gas                         -gas   the gas limit to use when sending transactions\n\
+--token                       -token the address of the erc20-token contract\n\
 --nonce                       -nonce the nonce\n\
 --test                        -test  creates a new json-test written to stdout with the name as specified\n\
 --path                        -path  the HD wallet derivation path \n\
@@ -166,6 +167,7 @@ const char* aliases[] = {
     "d", "data",
     "gp", "gas_price",
     "gas", "gas",
+    "token", "token",
     "nonce", "nonce",
     "test", "test",
     "path", "path",
