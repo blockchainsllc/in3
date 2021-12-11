@@ -674,7 +674,7 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   const bool is_eth_sign = strcmp(ctx->method, "eth_sign") == 0;
-  bytes_t    data, signer = NULL_BYTES;
+  bytes_t    data, signer;
   char*      sig_type;
   //  const bytes_t* pk          = &signer;
 
