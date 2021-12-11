@@ -485,15 +485,12 @@ clean:
 }
 
 static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t sender = d_to_bytes(d_get_at(ctx->params, 0));
-  bytes_t nonce  = d_to_bytes(d_get_at(ctx->params, 1));
-  if (sender.len != 20) return req_set_error(ctx->req, "Invalid sender address, must be 20 bytes", IN3_EINVAL);
+  bytes_t sender = bytes(NULL, 20), nonce = {0};
+  TRY_PARAM_GET_REQUIRED_ADDRESS(sender.data, ctx, 0);
+  TRY_PARAM_GET_BYTES(nonce, ctx, 1, 0, 0);
   if (!nonce.data) {
-    sb_t sb = sb_stack(alloca(100));
-    sb_add_rawbytes(&sb, "\"0x", sender, 0);
-    sb_add_chars(&sb, "\",\"latest\"");
     d_token_t* result;
-    TRY(req_send_sub_request(ctx->req, "eth_getTransactionCount", sb.data, NULL, &result, NULL))
+    TRY_SUB_REQUEST(ctx->req, "eth_getTransactionCount", &result, "\"%B\",\"latest\"", sender)
     nonce = d_to_bytes(result);
   }
 
@@ -513,12 +510,11 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t  msg      = d_to_bytes(d_get_at(ctx->params, 0));
-  bytes_t* sig      = d_get_bytes_at(ctx->params, 1);
-  char*    sig_type = d_get_string_at(ctx->params, 2);
-  if (!sig_type) sig_type = "raw";
-  if (!sig || sig->len != 65) return req_set_error(ctx->req, "Invalid signature! must be 65 bytes long", IN3_EINVAL);
-  if (!msg.data) return req_set_error(ctx->req, "Missing message", IN3_EINVAL);
+  bytes_t msg, signature;
+  char*   sig_type;
+  TRY_PARAM_GET_REQUIRED_BYTES(msg, ctx, 0, 0, 0)
+  TRY_PARAM_GET_REQUIRED_BYTES(signature, ctx, 1, 65, 65)
+  TRY_PARAM_GET_STRING(sig_type, ctx, 2, "raw")
 
   bytes32_t hash;
   uint8_t   pub[65];
@@ -537,7 +533,7 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   else
     keccak(msg, hash);
 
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig->data, hash, sig->data[64] >= 27 ? sig->data[64] - 27 : sig->data[64]))
+  if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, hash, signature.data[64] >= 27 ? signature.data[64] - 27 : signature.data[64]))
     return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
 
   sb_t* sb = in3_rpc_handle_start(ctx);

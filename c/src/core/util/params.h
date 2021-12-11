@@ -53,7 +53,7 @@
 /* fetches the parameter with the given index as bytes and stores it in the target, which must be a bytes_t variable*/
 #define TRY_PARAM_GET_BYTES(target, ctx, index, min_len, max_len)                                                                             \
   {                                                                                                                                           \
-    const d_token_t* t = d_get_at(ctx->params, index);                                                                                        \
+    d_token_t* t = d_get_at(ctx->params, index);                                                                                              \
     if (d_type(t) == T_NULL)                                                                                                                  \
       target = NULL_BYTES;                                                                                                                    \
     else if (d_type(t) == T_OBJECT || d_type(t) == T_ARRAY)                                                                                   \
