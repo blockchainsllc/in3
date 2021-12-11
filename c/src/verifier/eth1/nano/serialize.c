@@ -124,7 +124,15 @@ static void rlp_add_list(bytes_builder_t* rlp, d_token_t* t) {
     bb_clear(&bb2);
     bb_clear(&bb3);
     rlp_add(&bb2, d_get(adr.token, K_ADDRESS), ADDRESS);
-    for (d_iterator_t st = d_iter(d_get(adr.token, K_STORAGE_KEYS)); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) rlp_add(&bb3, st.token, HASH);
+    d_token_t* keys = d_get(adr.token, K_STORAGE_KEYS);
+    if (!keys) keys = d_get(adr.token, K_STORAGE_PROOF);
+    if (keys) {
+      for (d_iterator_t st = d_iter(keys); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) {
+        d_token_t* h = st.token;
+        if (d_type(h) == T_OBJECT) h = d_get(h, K_KEY);
+        rlp_add(&bb3, h, HASH);
+      }
+    }
     rlp_encode_list(&bb2, &bb3.b);
     rlp_encode_list(&bb1, &bb2.b);
   }
@@ -156,9 +164,6 @@ bytes_t* serialize_tx(d_token_t* tx) {
       rlp_add(rlp, d_getl(tx, K_TO, 20), ADDRESS);
       rlp_add(rlp, d_get(tx, K_VALUE), UINT);
       rlp_add(rlp, d_get_or(tx, K_INPUT, K_DATA), BYTES);
-      rlp_add(rlp, d_get(tx, K_V), UINT);
-      rlp_add(rlp, d_getl(tx, K_R, 32), UINT);
-      rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
       break;
 
     case 1: // EIP 2930
@@ -170,9 +175,6 @@ bytes_t* serialize_tx(d_token_t* tx) {
       rlp_add(rlp, d_get(tx, K_VALUE), UINT);
       rlp_add(rlp, d_get_or(tx, K_INPUT, K_DATA), BYTES);
       rlp_add_list(rlp, d_get(tx, K_ACCESS_LIST));
-      rlp_add(rlp, d_get(tx, K_V), UINT);
-      rlp_add(rlp, d_getl(tx, K_R, 32), UINT);
-      rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
       break;
 
     case 2: // EIP 1559
@@ -185,23 +187,57 @@ bytes_t* serialize_tx(d_token_t* tx) {
       rlp_add(rlp, d_get(tx, K_VALUE), UINT);
       rlp_add(rlp, d_get_or(tx, K_INPUT, K_DATA), BYTES);
       rlp_add_list(rlp, d_get(tx, K_ACCESS_LIST));
-      rlp_add(rlp, d_get(tx, K_V), UINT);
-      rlp_add(rlp, d_getl(tx, K_R, 32), UINT);
-      rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
       break;
   }
+
+  rlp_add(rlp, d_get(tx, K_V), UINT);
+  rlp_add(rlp, d_getl(tx, K_R, 32), UINT);
+  rlp_add(rlp, d_getl(tx, K_S, 32), UINT);
+
   return convert_to_typed_list(rlp, type);
 }
 
-bytes_t* serialize_tx_raw(bytes_t nonce, bytes_t gas_price, bytes_t gas_limit, bytes_t to, bytes_t value, bytes_t data, uint64_t v, bytes_t r, bytes_t s) {
+// bytes_t* serialize_tx_raw(int type, bytes_t nonce, bytes_t gas_price, bytes_t max_fee_per_gas, bytes_t max_priority_fee_per_gas, d_token_t* access_list, uint64_t chain_id, bytes_t gas_limit, bytes_t to, bytes_t value, bytes_t data, uint64_t v, bytes_t r, bytes_t s) {
+bytes_t* serialize_tx_raw(eth_tx_data_t* tx, uint64_t chain_id, uint64_t v, bytes_t r, bytes_t s) {
   bytes_builder_t* rlp = bb_new();
+  uint8_t          chain_tmp[8];
+  long_to_bytes(chain_id, chain_tmp);
+
   // clang-format off
-  rlp_add_bytes(rlp, nonce             , UINT);
-  rlp_add_bytes(rlp, gas_price         , UINT);
-  rlp_add_bytes(rlp, gas_limit         , UINT);
-  rlp_add_bytes(rlp, to                , ADDRESS);
-  rlp_add_bytes(rlp, value             , UINT);
-  rlp_add_bytes(rlp, data              , BYTES);
+  switch (tx->type) {
+    case 0: // legacy tx
+      rlp_add_bytes(rlp, tx->nonce             , UINT);
+      rlp_add_bytes(rlp, tx->gas_price         , UINT);
+      rlp_add_bytes(rlp, tx->gas_limit         , UINT);
+      rlp_add_bytes(rlp, tx->to                , ADDRESS);
+      rlp_add_bytes(rlp, tx->value             , UINT);
+      rlp_add_bytes(rlp, tx->data              , BYTES);
+      break;
+
+    case 1: // EIP 2930
+      rlp_add_bytes(rlp, bytes(chain_tmp,8), UINT);
+      rlp_add_bytes(rlp, tx->nonce             , UINT);
+      rlp_add_bytes(rlp, tx->gas_price         , UINT);
+      rlp_add_bytes(rlp, tx->gas_limit         , UINT);
+      rlp_add_bytes(rlp, tx->to                , ADDRESS);
+      rlp_add_bytes(rlp, tx->value             , UINT);
+      rlp_add_bytes(rlp, tx->data              , BYTES);
+      rlp_add_list(rlp, tx->access_list);
+      break;
+
+    case 2: // EIP 1559
+      rlp_add_bytes(rlp, bytes(chain_tmp,8)      , UINT);
+      rlp_add_bytes(rlp, tx->nonce                   , UINT);
+      rlp_add_bytes(rlp, tx->max_priority_fee_per_gas, UINT);
+      rlp_add_bytes(rlp, tx->max_fee_per_gas         , UINT);
+      rlp_add_bytes(rlp, tx->gas_limit               , UINT);
+      rlp_add_bytes(rlp, tx->to                      , ADDRESS);
+      rlp_add_bytes(rlp, tx->value                   , UINT);
+      rlp_add_bytes(rlp, tx->data                    , BYTES);
+      rlp_add_list(rlp, tx->access_list);
+      break;
+  }
+
   if (v) {
      uint8_t tmp[8],*p=tmp,l=8;
      long_to_bytes(v,tmp);
@@ -212,7 +248,7 @@ bytes_t* serialize_tx_raw(bytes_t nonce, bytes_t gas_price, bytes_t gas_limit, b
   }
 
   // clang-format on
-  return bb_move_to_bytes(rlp_encode_to_list(rlp));
+  return convert_to_typed_list(rlp, tx->type);
 }
 
 bytes_t* serialize_block_header(d_token_t* block) {

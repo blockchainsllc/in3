@@ -1,4 +1,13 @@
 types:
+  eth_accesslist:
+    address: 
+      type: address
+      descr: the address of the contract
+    storageKeys:
+      array: true
+      type: bytes32
+      descr: list of storageKeys
+    
 
   eth_transaction:
     to:
@@ -25,6 +34,23 @@ types:
     gasPrice:
       descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
       type: uint64
+      optional: true
+    type:
+      descr: the transaction type ( See EIP- 1559 ) , 0 (default), 1 or 2
+      type: uint32
+      optional: true
+    maxFeePerGas:
+      descr: the max fees per gas ( See EIP- 1559 )
+      type: uint64
+      optional: true
+    maxPriorityFeePerGas:
+      descr: the max Prioritiyfees per gas ( See EIP- 1559 )
+      type: uint64
+      optional: true
+    accessList:
+      descr: the access list of storage values
+      type: eth_accesslist
+      array: true
       optional: true
     nonce:
       descr: the current nonce of the sender. If not specified it will be fetched using `eth_getTransactionCount`
@@ -165,14 +191,7 @@ types:
       descr: the list of storage keys accesses as defined in EIP-2930 transactions of type 0x1 or 0x2. Will only be included if the type>0
       array: true
       typeName: EthTxAccessList
-      type:
-        address:
-          descr: the address being accessed.
-          type: address
-        storageKeys:
-          array: true
-          descr: The storage location being accessed.
-          type: bytes32
+      type: eth_accesslist
     type:
       optional: true
       descr: the transaction type (0 = legacy tx, 1 = EIP-2930, 2= EIP-1559)
