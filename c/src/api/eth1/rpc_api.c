@@ -605,8 +605,9 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
     }
     else
       sb_printx(sb, "\"messageHash\":\"%B\",", data);
+    int64_t v = sc.signature.data[64];
     sb_printx(sb, "\"signature\":\"%B\",\"r\":\"%B\",\"s\":\"%B\",\"v\":%d}",
-              sig_bytes, bytes(sc.signature.data, 32), bytes(sc.signature.data + 32, 32), (unsigned int) sc.signature.data[64]);
+              sig_bytes, bytes(sc.signature.data, 32), bytes(sc.signature.data + 32, 32), v);
   }
 
   _free(sc.signature.data);
