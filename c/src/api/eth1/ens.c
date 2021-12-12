@@ -69,7 +69,7 @@ static void ens_hash(const char* domain, bytes32_t dst) {
   memcpy(dst, hash, 32);                                                                       // we only the first 32 bytes - the root
 }
 
-in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
+in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type_t type, uint8_t* dst, int* res_len) {
   const int len = strlen(name);
   if (*name == '0' && name[1] == 'x' && len == 42) {
     hex_to_bytes(name, 40, dst, 20);

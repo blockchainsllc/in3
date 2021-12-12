@@ -43,8 +43,8 @@ typedef enum {
   ENS_OWNER    = 2, /**< owner */
   ENS_NAME     = 3, /**< name */
   ENS_HASH     = 4  /**< hash */
-} in3_ens_type;
+} in3_ens_type_t;
 
-in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* len);
+in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type_t type, uint8_t* dst, int* len);
 
 #endif // _ETH_API_ENS_H_
