@@ -106,7 +106,7 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   // create response
   sb_add_json(in3_rpc_handle_start(ctx), "", result->result);
   if (result) json_free(result);
-  return IN3_OK;
+  return in3_rpc_handle_finish(ctx);
 }
 
 // recursive function decoding and writing the result
@@ -664,8 +664,12 @@ clean:
 
 static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
   bytes_t sender = bytes(NULL, 20), nonce = {0};
+
+  // fetch arguments
   TRY_PARAM_GET_REQUIRED_ADDRESS(sender.data, ctx, 0);
   TRY_PARAM_GET_BYTES(nonce, ctx, 1, 0, 0);
+
+  // fetch nonce
   if (!nonce.data) {
     d_token_t* result;
     TRY_SUB_REQUEST(ctx->req, "eth_getTransactionCount", &result, "\"%B\",\"latest\"", sender)
@@ -676,6 +680,7 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
   b_optimize_len(&nonce);
   if (nonce.len == 1 && nonce.data[0] == 0) nonce.len = 0;
 
+  // encode
   bytes_builder_t* bb = bb_new();
   rlp_encode_item(bb, &sender);
   rlp_encode_item(bb, &nonce);
@@ -688,15 +693,17 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t msg, signature;
-  char*   sig_type;
+  bytes32_t hash;
+  uint8_t   pub[65];
+  bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
+  bytes_t   msg, signature;
+  char*     sig_type;
+
+  // get arguments
   TRY_PARAM_GET_REQUIRED_BYTES(msg, ctx, 0, 0, 0)
   TRY_PARAM_GET_REQUIRED_BYTES(signature, ctx, 1, 65, 65)
   TRY_PARAM_GET_STRING(sig_type, ctx, 2, "raw")
 
-  bytes32_t hash;
-  uint8_t   pub[65];
-  bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
   if (strcmp(sig_type, "eth_sign") == 0) {
     char*     tmp = alloca(msg.len + 30);
     const int l   = sprintf(tmp, ETH_SIGN_PREFIX, msg.len);
@@ -815,24 +822,27 @@ static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   d_token_t* tx;
+  bytes_t    dst           = {0};
+  sb_t       debug_payload = {0};
+
+  // fetch arguments
   TRY_PARAM_GET_REQUIRED_OBJECT(tx, ctx, 0);
-  bytes_t dst = {0};
-  sb_t    sb  = {0};
+
 #if defined(ETH_BASIC) || defined(ETH_FULL)
   bool write_debug = (d_len(ctx->params) == 2 && d_get_int_at(ctx->params, 1));
-  if (write_debug) sb_add_char(&sb, '{');
-  TRY_CATCH(eth_prepare_unsigned_tx(tx, ctx->req, &dst, write_debug ? &sb : NULL), _free(sb.data))
+  if (write_debug) sb_add_char(&debug_payload, '{');
+  TRY_CATCH(eth_prepare_unsigned_tx(tx, ctx->req, &dst, write_debug ? &debug_payload : NULL), _free(debug_payload.data))
 #else
   if (ctx->params || tx || ctx) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
-  if (sb.data) {
-    sb_add_chars(&sb, ",\"state\":\"unsigned\"}");
-    in3_rpc_handle_with_string(ctx, sb.data);
+  if (debug_payload.data) {
+    sb_add_chars(&debug_payload, ",\"state\":\"unsigned\"}");
+    in3_rpc_handle_with_string(ctx, debug_payload.data);
   }
   else
     in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
-  _free(sb.data);
+  _free(debug_payload.data);
   return IN3_OK;
 }
 
