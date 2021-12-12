@@ -52,7 +52,7 @@ types:
       optional: true
     v:  
       descr: the recovery-byte. For legacy-tx ( this will be either + 27 or chain_id*2 + 35 - See EIP 155)
-      type: uint32
+      type: bytes
       optional: true
     r:  
       descr: r-value of the sifgnature ( the R.y value)
