@@ -8,7 +8,7 @@
     - if: '$CI_COMMIT_REF_PROTECTED == "true"'
 
 dotnet:
-  image: docker.slock.it/build-images/dotnet-sdk:5.0
+  image: docker.slock.it/build-images/dotnet-sdk:6.0
   stage: bindings
   needs:
     - mac_os
@@ -62,7 +62,7 @@ dotnet_win:
 dotnet_linux:
   extends:
     - .dotnet_test
-  image: docker.slock.it/build-images/dotnet-sdk:5.0
+  image: docker.slock.it/build-images/dotnet-sdk:6.0
   tags:
     - short-jobs
 
@@ -77,13 +77,13 @@ dotnet_arm:
   extends:
     - .dotnet_test
     - .only_dotnet
-  image: mcr.microsoft.com/dotnet/sdk:5.0
+  image: mcr.microsoft.com/dotnet/sdk:6.0
   tags:
     - arm
 
 release_nuget:
   stage: deploy
-  image: docker.slock.it/build-images/dotnet-sdk:5.0
+  image: docker.slock.it/build-images/dotnet-sdk:6.0
   tags:
     - short-jobs
   extends: .only_deploy
