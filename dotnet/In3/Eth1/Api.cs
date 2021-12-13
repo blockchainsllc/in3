@@ -165,7 +165,10 @@ namespace In3.Eth1
             int i = 0;
             while (arr.MoveNext())
             {
-                arrayResult[i] = arr.Current.GetString();
+                if (arr.Current.ValueKind == JsonValueKind.String)
+                    arrayResult[i] = arr.Current.GetString();
+                else if (arr.Current.ValueKind == JsonValueKind.Number)
+                    arrayResult[i] = $"0x{arr.Current.GetUInt32():X}";
                 i++;
             }
 

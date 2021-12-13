@@ -87,7 +87,7 @@ class MainNetContractTest(unittest.TestCase):
                  "00000000000000000000000000000000000000000000000000000000000000000003616263000000000000000000000" + \
                  "0000000000000000000000000000000000000"
         expected = ["0x1234567890123456789012345678901234567890",
-                    "xyz", "0xff", "abc"]
+                    "xyz", 255, "abc"]
         decoded = self.client.eth.contract.decode(*params)
         self.assertEqual(decoded, expected)
 
