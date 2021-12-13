@@ -364,7 +364,7 @@ namespace Test.Eth1
             Assert.That(res1.Length, Is.EqualTo(6));
             Assert.That(res1[0], Is.EqualTo("https://in3.slock.it/mainnet/nd-4"));
             Assert.That(res1[1], Is.EqualTo("0xbc0ea09c1651a3d5d40bacb4356fb59159a99564"));
-            Assert.That(res1[2], Is.EqualTo("0xffff"));
+            Assert.That(res1[2], Is.EqualTo(65535));
             Assert.That(res1[3], Is.EqualTo("0xffff"));
         }
 
