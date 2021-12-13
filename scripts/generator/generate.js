@@ -34,7 +34,9 @@ process.argv.slice(2).forEach(a => {
 if (!src_dirs.length) src_dirs.push('../c/src')
 let examples = {};
 (doc_dir || []).forEach(p => {
-    examples = { ...examples, ...JSON.parse(fs.readFileSync(p + '/rpc_examples.json', 'utf-8')) }
+    try {
+        examples = { ...examples, ...JSON.parse(fs.readFileSync(p + '/rpc_examples.json', 'utf-8')) }
+    } catch (x) { }
 })
 
 console.log("examples: ", examples)
