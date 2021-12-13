@@ -147,7 +147,7 @@ namespace In3.Eth1
         /// <param name="signature">Function signature i.e. <i>>(address,string,uint256)</i> or <i>>getBalance(uint256):uint256</i>. In case of the latter, the function signature will be ignored and only the return types will be parsed.</param>
         /// <param name="encodedData">Abi encoded values. Usually the string returned from a rpc to the EVM.</param>
         /// <returns>The decoded argugments for the function call given the encded data.</returns>
-        public async Task<string[]> AbiDecode(string signature, string encodedData)
+        public async Task<object[]> AbiDecode(string signature, string encodedData)
         {
             string jsonResponse = await _in3.SendRpc(In3AbiDecode, new object[] {
                 signature, encodedData});
@@ -161,14 +161,17 @@ namespace In3.Eth1
             }
 
             IEnumerator<JsonElement> arr = result.EnumerateArray();
-            string[] arrayResult = new string[result.GetArrayLength()];
+            object[] arrayResult = new object[result.GetArrayLength()];
             int i = 0;
             while (arr.MoveNext())
             {
-                if (arr.Current.ValueKind == JsonValueKind.String)
-                    arrayResult[i] = arr.Current.GetString();
-                else if (arr.Current.ValueKind == JsonValueKind.Number)
-                    arrayResult[i] = $"0x{arr.Current.GetUInt32():x}";
+                arrayResult[i] = arr.Current.ValueKind switch
+                {
+                    JsonValueKind.String => arr.Current.GetString(),
+                    JsonValueKind.Number => arr.Current.GetUInt32(),
+                    JsonValueKind.False or JsonValueKind.True => arr.Current.GetBoolean(),
+                    _ => arrayResult[i]
+                };
                 i++;
             }
 
