@@ -57,7 +57,7 @@ readthedocs:
     - cp python_multilib/docs/documentation.md doc/docs/api-python.md
     - cp dotnet/docs/api-dotnet.md doc/docs/
     - cd generator
-    - npm --cache .npm i && npm run build
+    - npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - chmod 777 bin/*
