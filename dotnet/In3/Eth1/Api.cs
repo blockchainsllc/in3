@@ -168,7 +168,7 @@ namespace In3.Eth1
                 if (arr.Current.ValueKind == JsonValueKind.String)
                     arrayResult[i] = arr.Current.GetString();
                 else if (arr.Current.ValueKind == JsonValueKind.Number)
-                    arrayResult[i] = $"0x{arr.Current.GetUInt32():X}";
+                    arrayResult[i] = $"0x{arr.Current.GetUInt32():x}";
                 i++;
             }
 
