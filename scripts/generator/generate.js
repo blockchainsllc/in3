@@ -39,7 +39,6 @@ let examples = {};
     } catch (x) { }
 })
 
-console.log("examples: ", examples)
 
 //const doc_dir = process.argv[process.argv.length - 1]
 const main_conf = yaml.parse(fs.readFileSync(in3_core_dir + '/c/src/cmd/in3/in3.yml', 'utf-8'))
