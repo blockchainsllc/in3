@@ -90,7 +90,47 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size);
 sb_t* sb_print(sb_t* sb, const char* fmt, ...);
 sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args);
 sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
+/**
+ * adds the arguments as defined in the formt-string.
+ * it works similiar to sprintf
+ *
+ * The format supports:
+ *
+ * %s - expects a char* and inserts the string
+ * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
+ * %i - expects int32_t and inserts a decimal representation
+ * %d - expects int64_t and inserts a decimal representation
+ * %u - expects uint64_t and inserts a decimal representation
+ * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
+ * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
+ * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
+ * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
+ * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
+ * %j - expects a d_token_t* and inserts the json-representation
+ *
+ */
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
+
+/**
+ * creates a new string by allocating memory and formating the arguments based on the formast string.
+ * if works similiar to sprintf, but allocates the memory and returns the pointer to the new string, which must be freed after usage.
+ *
+ * The format supports:
+ *
+ * %s - expects a char* and inserts the string
+ * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
+ * %i - expects int32_t and inserts a decimal representation
+ * %d - expects int64_t and inserts a decimal representation
+ * %u - expects uint64_t and inserts a decimal representation
+ * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
+ * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
+ * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
+ * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
+ * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
+ * %j - expects a d_token_t* and inserts the json-representation
+ *
+ */
+char* sprintx(const char* fmt, ...);
 
 #ifdef __cplusplus
 }

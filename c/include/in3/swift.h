@@ -35,9 +35,11 @@
 #ifndef IN3_SWIFT_H
 #define IN3_SWIFT_H
 #ifdef __clang__
-#define _NONULL _Nonnull
+#define _NONULL   _Nonnull
+#define _NULLABLE _Nullable
 #else
 #define _NONULL
+#define _NULLABLE
 #endif
 #include "plugin.h"
 
@@ -45,14 +47,14 @@ typedef struct in3_swift_cb {
   in3_ret_t (*_NONULL cache_get)(in3_cache_ctx_t* _Nonnull ctx);
   in3_ret_t (*_NONULL cache_set)(in3_cache_ctx_t* _Nonnull ctx);
   in3_ret_t (*_NONULL cache_clear)();
-  char* (*_NONULL sign_accounts)(in3_sign_account_ctx_t* _Nonnull ctx);
+  char* _NULLABLE (*_NONULL sign_accounts)(in3_sign_account_ctx_t* _Nonnull ctx);
 } swift_cb_t;
 
 in3_ret_t in3_register_swift(in3_t* _NONULL c, swift_cb_t* _NONULL cbs);
 
-char*    sign_get_method(in3_req_t* r);
-bytes_t  sign_get_message(in3_req_t* r);
-uint8_t* sign_get_from(in3_req_t* r);
-int      sign_get_payload_type(in3_req_t* r);
-char*    sign_get_metadata(in3_req_t* r);
+char* _NULLABLE    sign_get_method(in3_req_t* _NULLABLE r);
+bytes_t            sign_get_message(in3_req_t* _NULLABLE r);
+uint8_t* _NULLABLE sign_get_from(in3_req_t* _NULLABLE r);
+int                sign_get_payload_type(in3_req_t* _NULLABLE r);
+char* _NULLABLE    sign_get_metadata(in3_req_t* _NULLABLE r);
 #endif // IN3_SWIFT_H

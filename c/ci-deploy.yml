@@ -57,7 +57,7 @@ readthedocs:
     - cp python_multilib/docs/documentation.md doc/docs/api-python.md
     - cp dotnet/docs/api-dotnet.md doc/docs/
     - cd generator
-    - npm --cache .npm i && npm run build
+    - npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - chmod 777 bin/*
@@ -278,7 +278,7 @@ pages:
     - echo Grab file at BASE_PAGES_URL/lib/libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
     - cp -r cov_build/ccov/all-merged public/coverage
     - cp -r report/* public/code_analysis
-    - cp -r doc/build public/rtd
+    - cp -r doc/build public/rtd || true
     - cp -r java/build/reports/jacoco/test/html    public/coverage_java
     - cp -r python_multilib/htmlcov public/coverage_python
     - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li><li><a href='coverage_python/index.html'>Code Coverage PYTHON</a></li></ul></body></html>" > public/index.html

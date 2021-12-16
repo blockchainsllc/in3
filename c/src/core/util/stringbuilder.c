@@ -293,13 +293,13 @@ sb_t* sb_print(sb_t* sb, const char* fmt, ...) {
 
 sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
   if (!token) return sb;
-  if (prefix) sb_add_chars(sb, prefix);
+  if (prefix && *prefix) sb_add_chars(sb, prefix);
   switch (d_type(token)) {
     case T_ARRAY:
     case T_OBJECT: {
-      const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
-      str_range_t r        = d_to_json(token);
+      str_range_t r = d_to_json(token);
       if (r.data) return sb_add_range(sb, r.data, 0, r.len);
+      const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
       sb_add_char(sb, brackets[0]);
       for (d_iterator_t iter = d_iter(token); iter.left; d_iter_next(&iter))
         sb_add_json(sb, iter.token != token + 1 ? "," : "", iter.token);
@@ -322,10 +322,8 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
   return sb;
 }
 
-sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
+void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
   check_size(sb, strlen(fmt));
-  va_list args;
-  va_start(args, fmt);
   for (const char* c = fmt; *c; c++) {
     if (*c == '%') {
       c++;
@@ -347,15 +345,20 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
         case 'b':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), 0);
           break;
+        case 'B':
+          sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), 0);
+          break;
         case 'v':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), -1);
+          break;
+        case 'V':
+          sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), -1);
           break;
         case 'j':
           sb_add_json(sb, "", va_arg(args, d_token_t*));
           break;
         case 0:
-          va_end(args);
-          return sb;
+          return;
         default:
           break;
       }
@@ -364,7 +367,21 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
     if (sb->len + 1 >= sb->allocted) check_size(sb, 1);
     sb->data[sb->len++] = *c;
   }
-  va_end(args);
   sb->data[sb->len] = 0;
+}
+sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(sb, fmt, args);
+  va_end(args);
   return sb;
+}
+
+char* sprintx(const char* fmt, ...) {
+  sb_t    s = {0};
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(&s, fmt, args);
+  va_end(args);
+  return s.data;
 }
