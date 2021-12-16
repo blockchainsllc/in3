@@ -293,13 +293,13 @@ sb_t* sb_print(sb_t* sb, const char* fmt, ...) {
 
 sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
   if (!token) return sb;
-  if (prefix) sb_add_chars(sb, prefix);
+  if (prefix && *prefix) sb_add_chars(sb, prefix);
   switch (d_type(token)) {
     case T_ARRAY:
     case T_OBJECT: {
-      const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
-      str_range_t r        = d_to_json(token);
+      str_range_t r = d_to_json(token);
       if (r.data) return sb_add_range(sb, r.data, 0, r.len);
+      const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
       sb_add_char(sb, brackets[0]);
       for (d_iterator_t iter = d_iter(token); iter.left; d_iter_next(&iter))
         sb_add_json(sb, iter.token != token + 1 ? "," : "", iter.token);
