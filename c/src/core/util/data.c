@@ -388,7 +388,21 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
         case 'E':
           // this is still a number, but not a simple integer, so we find the end and add it as string
           i++;
-          while ((jp->c[i] >= '0' && jp->c[i] <= '9') || jp->c[i] == 'E' || jp->c[i] == 'e' || jp->c[i] == '-') i++;
+          while ((jp->c[i] >= '0' && jp->c[i] <= '9') || jp->c[i] == '-') i++;
+          switch (jp->c[i]) {
+            case ' ':
+            case '\n':
+            case '\r':
+            case '\t':
+            case '}':
+            case ']':
+            case ',':
+            case 0:
+              break;
+            default:
+              jp->c += i;
+              return JSON_E_INVALID_CHAR;
+          }
           item->data = _malloc(i + 1);
           item->len  = T_STRING << 28 | (unsigned) i;
           memcpy(item->data, jp->c, i);
