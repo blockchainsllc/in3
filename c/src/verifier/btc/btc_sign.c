@@ -28,22 +28,21 @@ static void append_bytes(bytes_t* dst, const bytes_t* src) {
 // WARNING: You need to free hash_message.data after calling this function!
 static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const uint8_t sighash, const alg_t script_type) {
   switch (script_type) {
-    case BARE_MULTISIG:
+    case BTC_BARE_MULTISIG:
       // Bare multisig hash message will be built same way as P2PK or P2PKH
-    case P2SH:
+    case BTC_P2SH:
       // Pay-To-Script-Hash hash message will be built same way as P2PK or P2PKH
-    case P2PK:
-    case P2PKH: {
-      hash_message->len  = btc_get_raw_tx_size(tx) + 4;
-      hash_message->data = _malloc(hash_message->len);
+    case BTC_P2PK:
+    case BTC_P2PKH: {
+      hash_message = b_new(NULL, btc_get_raw_tx_size(tx) + 4);
       btc_serialize_tx(tx, hash_message);
 
       // write sighash (4 bytes) at the end of the input
       uint_to_le(hash_message, hash_message->len - 4, sighash);
     } break;
-    case P2WSH:
+    case BTC_P2WSH:
       // Pay-To-Witness-Script-Hash hash message will be built same way as V0_P2WPKH
-    case V0_P2WPKH: {
+    case BTC_V0_P2WPKH: {
       bytes_t prev_outputs, sequence;
       uint8_t hash_prev_outputs[32], hash_sequence[32], hash_outputs[32];
 
@@ -128,11 +127,11 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     return req_set_error(req, "ERROR: in build_unlocking_script: tx_in missing.", IN3_EINVAL);
   }
 
-  if (utxo->script_type == P2SH || utxo->script_type == P2WSH) {
+  if (utxo->script_type == BTC_P2SH || utxo->script_type == BTC_P2WSH) {
     if (utxo->unlocking_script.len == 0) {
       return req_set_error(req, "ERROR: in build_unlocking_script: trying to redeem a P2SH or P2WSH utxo without providing a valid script.", IN3_EINVAL);
     }
-    if (utxo->script_type == P2SH && utxo->unlocking_script.len > MAX_P2SH_SCRIPT_SIZE_BYTES) {
+    if (utxo->script_type == BTC_P2SH && utxo->unlocking_script.len > MAX_P2SH_SCRIPT_SIZE_BYTES) {
       char message[100];
       sprintf(message, "ERROR: in build_unlocking_script: provided redeem script is bigger than the %d bytes limit.", MAX_P2SH_SCRIPT_SIZE_BYTES);
       return req_set_error(req, message, IN3_EINVAL);
@@ -144,20 +143,20 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     }
   }
 
-  if (!witness && (utxo->script_type == V0_P2WPKH || utxo->script_type == P2WSH)) {
+  if (!witness && (utxo->script_type == BTC_V0_P2WPKH || utxo->script_type == BTC_P2WSH)) {
     return req_set_error(req, "ERROR: in build_unlocking_script: witness missing.", IN3_EINVAL);
   }
 
   bytes_t **signatures = (bytes_t * *const) &(utxo->signatures), *pub_key = &(utxo->accounts[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
   switch (utxo->script_type) {
-    case P2PK: {
+    case BTC_P2PK: {
       // Unlocking script format is: DER_SIG_LEN|DER_SIG
       tx_in->script.data    = tx_in->script.data ? _realloc(tx_in->script.data, signatures[0]->len + 1, tx_in->script.len) : _malloc(signatures[0]->len + 1);
       tx_in->script.len     = signatures[0]->len + 1;
       tx_in->script.data[0] = (uint8_t) signatures[0]->len;
       memcpy(tx_in->script.data + 1, signatures[0]->data, signatures[0]->len);
     } break;
-    case P2PKH: {
+    case BTC_P2PKH: {
       // Unlocking script format is: DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
       uint32_t script_len = 1 + signatures[0]->len + 1 + 64; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
       tx_in->script.data  = tx_in->script.data ? _realloc(tx_in->script.data, script_len, tx_in->script.len) : _malloc(script_len);
@@ -172,7 +171,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       b->data[index++] = (uint8_t) pub_key->len;            // write PUB_KEY_LEN field
       memcpy(b->data + index, pub_key->data, pub_key->len); // write PUB_KEY field
     } break;
-    case V0_P2WPKH: {
+    case BTC_V0_P2WPKH: {
       // Unlocking script format is: NUM_ELEMENTS | DER_SIG_LEN | DER_SIG | PUB_KEY_LEN | PUB_KEY
       // tx_in script field should be empty. Unlocking script will be written to witness instead
 
@@ -191,7 +190,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       witness->data[index++] = pub_key->len;                      // write PUB_KEY_LEN
       memcpy(witness->data + index, pub_key->data, pub_key->len); // write PUB_KEY
     } break;
-    case BARE_MULTISIG: {
+    case BTC_BARE_MULTISIG: {
       // Unlocking script format is: ZERO_BYTE | SIG_1_LEN | SIG_1 | SIG_2_LEN | SIG_2 | .....
       // Zero byte is present to remedy a bug in OP_CHECKMULTISIG which makes it read one more input
       // than it should.
@@ -209,10 +208,10 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
         append_bytes(&tx_in->script, &sig_field);
       }
     } break;
-    case P2WSH:
-    case P2SH:
+    case BTC_P2WSH:
+    case BTC_P2SH:
       tx_in->script.len = 0;
-      if (utxo->script_type == P2WSH) {
+      if (utxo->script_type == BTC_P2WSH) {
         // witness:         NUM_ELEMENTS | ZERO_BYTE | SIG_1_LEN | SIG_1 | ... | SIG_N_LEN | SIG_N | VALID_BTC_SCRIPT
         // tx_in_script:    (empty)
         num_elements.len     = 1;
@@ -358,9 +357,9 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, btc_utxo_t* selected_utxo_li
     btc_tx_in_t tx_in   = {0};
     bytes_t     witness = NULL_BYTES;
     TRY(prepare_tx_in(req, &selected_utxo_list[i], &tx_in))
-    bool is_segwit = selected_utxo_list[i].script_type == V0_P2WPKH || selected_utxo_list[i].script_type == P2WSH;
+    bool is_segwit = selected_utxo_list[i].script_type == BTC_V0_P2WPKH || selected_utxo_list[i].script_type == BTC_P2WSH;
 
-    if (selected_utxo_list[i].script_type == UNSUPPORTED || selected_utxo_list[i].script_type == NON_STANDARD) {
+    if (selected_utxo_list[i].script_type == BTC_UNSUPPORTED || selected_utxo_list[i].script_type == BTC_NON_STANDARD) {
       return req_set_error(req, "ERROR: in btc_sign_tx: utxo script is non-standard or unsupported.", IN3_EINVAL);
     }
     // -- for each signature:

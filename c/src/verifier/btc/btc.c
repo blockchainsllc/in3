@@ -601,7 +601,6 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   tx_out_change.value = utxo_total - miner_fee - outputs_total;
 
   // create unsigned transaction
-  bytes_t  signed_tx = NULL_BYTES;
   btc_tx_t tx;
   btc_init_tx(&tx);
   add_outputs_to_tx(req, outputs, &tx);
@@ -614,13 +613,14 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len));
 
-  btc_serialize_tx(&tx, &signed_tx);
+  bytes_t*  signed_tx = b_new(NULL, btc_get_raw_tx_size(&tx));
+  btc_serialize_tx(&tx, signed_tx);
   sb_t sb = {0};
-  sb_add_rawbytes(&sb, "\"", signed_tx, 0);
+  sb_add_rawbytes(&sb, "\"", *signed_tx, 0);
   sb_add_chars(&sb, "\"");
 
   // Now that we wrote the request, we can free all allocated memory
-  if (signed_tx.data) _free(signed_tx.data);
+  b_free(signed_tx);
 
   if (selected_utxo_list) {
     for (uint32_t i = 0; i < utxo_list_len; i++) {

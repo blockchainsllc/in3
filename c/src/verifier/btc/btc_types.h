@@ -7,14 +7,14 @@
 #include "../../core/util/error.h"
 #include <stdint.h>
 
-typedef enum alg { UNSUPPORTED,
-                   NON_STANDARD,
-                   P2PK,
-                   P2PKH,
-                   P2SH,
-                   V0_P2WPKH,
-                   P2WSH,
-                   BARE_MULTISIG,
+typedef enum alg { BTC_UNSUPPORTED,
+                   BTC_NON_STANDARD,
+                   BTC_P2PK,
+                   BTC_P2PKH,
+                   BTC_P2SH,
+                   BTC_V0_P2WPKH,
+                   BTC_P2WSH,
+                   BTC_BARE_MULTISIG,
 } alg_t;
 
 typedef struct btc_tx {
