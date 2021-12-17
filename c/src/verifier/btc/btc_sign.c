@@ -324,7 +324,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_t* tx, c
   }
 
   // prepare array for hashing
-  bytes_t hash_message;
+  bytes_t hash_message = NULL_BYTES;
   build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_list, utxo_list_len, utxo_index, sighash, utxo_list[utxo_index].script_type);
 
   // Finally, sign transaction input
