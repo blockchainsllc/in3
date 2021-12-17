@@ -163,26 +163,28 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   return IN3_OK;
 }
 
+uint32_t btc_get_raw_tx_size(const btc_tx_t* tx) {
+  return (BTC_TX_VERSION_SIZE_BYTES +
+          (2 * tx->flag) +
+          get_compact_uint_size((uint64_t) tx->input_count) +
+          tx->input.len +
+          get_compact_uint_size((uint64_t) tx->output_count) +
+          tx->output.len +
+          (tx->flag ? tx->witnesses.len : 0) +
+          BTC_TX_LOCKTIME_SIZE_BYTES);
+}
+
 // Converts a btc transaction into a serialized transaction
 // WARNING: You need to free dst pointer after using this function!
 // TODO: Error handling for null tx and dst pointers
-in3_ret_t btc_serialize_tx(btc_tx_t* tx, bytes_t* dst) {
-  // Clean exit buffer
-  dst->len = 0;
-
+in3_ret_t btc_serialize_tx(const btc_tx_t* tx, bytes_t* dst) {
   // calculate transaction size in bytes
-  uint32_t tx_size;
-  tx_size = (BTC_TX_VERSION_SIZE_BYTES +
-             (2 * tx->flag) +
-             get_compact_uint_size((uint64_t) tx->input_count) +
-             tx->input.len +
-             get_compact_uint_size((uint64_t) tx->output_count) +
-             tx->output.len +
-             (tx->flag ? tx->witnesses.len : 0) +
-             BTC_TX_LOCKTIME_SIZE_BYTES);
+  uint32_t tx_size = btc_get_raw_tx_size(tx);
 
-  dst->data = _calloc(tx_size, 1);
-  dst->len  = tx_size;
+  if (dst->len < tx_size) {
+    dst->data = _realloc(dst->data, tx_size, dst->len);
+    dst->len  = tx_size;
+  }
 
   // Serialize transaction data
   uint32_t index = 0;
@@ -246,6 +248,42 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   btc_hash(data, dst);
   if (data.len > 1000) _free(data.data);
   return IN3_OK;
+}
+
+alg_t btc_get_script_type(const bytes_t* script) {
+  if ((!script->data) || (script->len < 21) || (script->len > MAX_SCRIPT_SIZE_BYTES)) {
+    return BTC_UNSUPPORTED;
+  }
+
+  alg_t    script_type = BTC_NON_STANDARD;
+  uint32_t len         = script->len;
+  uint8_t* p           = script->data;
+
+  if ((len == (uint32_t) p[0] + 2) && (p[0] == 33 || p[0] == 65) && (p[len - 1] == OP_CHECKSIG)) {
+    // locking script has format: PUB_KEY_LEN(1) PUB_KEY(33 or 65 bytes) OP_CHECKSIG(1)
+    script_type = BTC_P2PK;
+  }
+  else if ((len == 25) && (p[0] == OP_DUP) && (p[1] == OP_HASH160) && (p[2] == 0x14) && (p[len - 2] == OP_EQUALVERIFY) && (p[len - 1] == OP_CHECKSIG)) {
+    // locking script has format: OP_DUP(1) OP_HASH160(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20) OP_EQUALVERIFY(1) OP_CHECKSIG(1)
+    script_type = BTC_P2PKH;
+  }
+  else if ((len == 23) && (p[0] == OP_HASH160) && (p[1] == 0x14) && (p[len - 1] == OP_EQUAL)) {
+    // locking script has format: OP_HASH160(1) SCRIPT_HASH_LEN(1) SCRIPT_HASH(20) OP_EQUAL(1)
+    script_type = BTC_P2SH;
+  }
+  else if ((len == 22) && (p[0] == 0) && (p[1] == 0x14)) {
+    // locking script has format: OP_0(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20)
+    script_type = BTC_V0_P2WPKH;
+  }
+  else if ((len == 34) && (p[0] < OP_PUSHDATA1) && (p[1] == 0x20)) {
+    // locking script has format: OP_0(1) WITNESS_SCRIPT_HASH_LEN(1) WITNESS_SCRIPT_HASH(32)
+    script_type = BTC_P2WSH;
+  }
+  else if ((p[len - 1] == OP_CHECKMULTISIG) && (p[0] <= p[len - 2])) {
+    // locking script has format: M(1) LEN_PK_1(1) PK_1(33 or 65 bytes) ... LEN_PK_N(1) PK_N(33 or 65 bytes) N(1) OP_CHECKMULTISIG
+    script_type = (p[len - 2] <= 20) ? BTC_BARE_MULTISIG : BTC_UNSUPPORTED;
+  }
+  return script_type;
 }
 
 static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
@@ -332,17 +370,28 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
   return IN3_OK;
 }
 
+static void add_account_pub_key_to_utxo(btc_utxo_t* utxo, btc_account_pub_key_t* acc_pk) {
+  size_t current_size                  = utxo->accounts_count * sizeof(btc_account_pub_key_t);
+  size_t new_size                      = current_size + sizeof(btc_account_pub_key_t);
+  utxo->accounts                       = utxo->accounts ? _realloc(utxo->accounts, new_size, current_size) : _malloc(new_size);
+  utxo->accounts[utxo->accounts_count] = *acc_pk;
+  utxo->accounts_count++;
+}
+
 // WARNING: You must free selected_utxos pointer after calling this function, as well as the pointed utxos tx_hash and tx_out.data fields
 // TODO: Currently we are adding all utxo_inputs to the list of selected_utxos. Implement an algorithm to select only the necessary utxos for the transaction, given the outputs.
-in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo_t** selected_utxos, uint32_t* len) {
+in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args, btc_utxo_t** selected_utxos, uint32_t* len) {
   UNUSED_VAR(tx);
+  UNUSED_VAR(req);
 
   *len            = d_len(utxo_inputs);
   *selected_utxos = _malloc(*len * sizeof(btc_utxo_t));
 
+  // Read and initialize each utxo we need for the transaction
   // TODO: Only add the necessary utxos to selected_utxos
   for (uint32_t i = 0; i < *len; i++) {
     btc_utxo_t  utxo;
+    alg_t       script_type;
     d_token_t*  utxo_input       = d_get_at(utxo_inputs, i);
     uint32_t    tx_index         = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
     uint64_t    value            = d_get_long(d_get(utxo_input, key("value")), 0L);
@@ -357,12 +406,85 @@ in3_ret_t btc_prepare_utxos(const btc_tx_t* tx, d_token_t* utxo_inputs, btc_utxo
     bytes_t  tx_script     = bytes(_malloc(tx_script_len), tx_script_len);
     hex_to_bytes(tx_script_string, strlen(tx_script_string), tx_script.data, tx_script.len);
 
+    // Write the values we already have
     utxo.tx_hash       = tx_hash.data;
     utxo.tx_index      = tx_index;
     utxo.tx_out.value  = value;
     utxo.tx_out.script = tx_script;
+    script_type        = btc_get_script_type(&utxo.tx_out.script);
 
+    if (script_type == BTC_UNSUPPORTED) return IN3_ENOTSUP;
+    utxo.script_type = script_type;
+
+    // write default values for the other fields. These are not final
+    utxo.unlocking_script = NULL_BYTES;
+    utxo.accounts_count   = 0;
+    utxo.accounts         = NULL;
+    utxo.signatures       = NULL;
+    utxo.sig_count        = 0;
+
+    // Finally, add initialized utxo to our list
     *selected_utxos[i] = utxo;
+  }
+
+  // Handle optional arguments
+  if (args) {
+    uint32_t args_len = d_len(args);
+    for (uint32_t i = 0; i < args_len; i++) {
+      d_token_t* arg        = d_get_at(args, i);
+      uint32_t   utxo_index = d_get_long(arg, key("utxo_index"));
+
+      btc_utxo_t* utxo = selected_utxos[utxo_index];
+      alg_t       type = utxo->script_type;
+
+      if (type == BTC_P2SH || type == BTC_P2WSH) {
+        // is the argument defining an unlocking script?
+        const char* script_str = d_string(d_get(arg, key("script")));
+        if (script_str) {
+          utxo->unlocking_script.len  = (strlen(script_str) >> 1);
+          utxo->unlocking_script.data = _malloc(utxo->unlocking_script.len);
+          hex_to_bytes(script_str, -1, utxo->unlocking_script.data, utxo->unlocking_script.len);
+        }
+      }
+
+      if (type == BTC_BARE_MULTISIG || type == BTC_P2SH || type == BTC_P2WSH) {
+        // is the argument defining a new "account<->pub_key" pair?
+        d_token_t*  acc         = d_get(arg, key("account"));
+        const char* pub_key_str = d_string(d_get(arg, key("pub_key")));
+        if (acc && pub_key_str) {
+          btc_account_pub_key_t acc_pk;
+          acc_pk.account.len  = acc->len;
+          acc_pk.account.data = _malloc(acc->len);
+          memcpy(acc_pk.account.data, acc->data, acc->len);
+
+          acc_pk.pub_key.len  = (strlen(pub_key_str) >> 1);
+          acc_pk.pub_key.data = _malloc(acc_pk.pub_key.len);
+          hex_to_bytes(pub_key_str, -1, acc_pk.pub_key.data, acc_pk.pub_key.len);
+
+          add_account_pub_key_to_utxo(utxo, &acc_pk);
+        }
+      }
+    }
+  }
+
+  // Now that all optional arguments were parsed, we fill the last remaining
+  // fields into our utxo data
+  for (uint32_t i = 0; i < *len; i++) {
+    btc_utxo_t* utxo    = selected_utxos[i];
+    alg_t       subtype = (utxo->script_type == BTC_P2SH || utxo->script_type == BTC_P2WSH) ? btc_get_script_type(&utxo->unlocking_script) : utxo->script_type;
+
+    // how many signatures do we need to unlock th utxo?
+    if (subtype == BTC_BARE_MULTISIG) {
+      utxo->req_sigs = (utxo->unlocking_script.len > 0) ? utxo->unlocking_script.data[1] : utxo->tx_out.script.data[1];
+    }
+    else {
+      utxo->req_sigs = 1;
+    }
+
+    // Guarantee every utxo has at least one account<->pub_key pair assigned to it
+    if (!utxo->accounts) {
+      add_account_pub_key_to_utxo(utxo, default_acc_pk);
+    }
   }
 
   return IN3_OK;
