@@ -30,19 +30,19 @@ static void   _lock_registry() {
   }
   MUTEX_LOCK(lock_registry);
 }
-#define LOCK_REGISTRY(code)     \
-  {                             \
-    _lock_registry();           \
-    code                        \
-    MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)         \
+  {                                 \
+    _lock_registry();               \
+    code                            \
+        MUTEX_UNLOCK(lock_registry) \
   }
 #else
 static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
-#define LOCK_REGISTRY(code)     \
-  {                             \
-    MUTEX_LOCK(lock_registry);  \
-    code                        \
-    MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)         \
+  {                                 \
+    MUTEX_LOCK(lock_registry);      \
+    code                            \
+        MUTEX_UNLOCK(lock_registry) \
   }
 #endif
 #else

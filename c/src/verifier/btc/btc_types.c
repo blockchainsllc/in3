@@ -391,7 +391,7 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_
   // TODO: Only add the necessary utxos to selected_utxos
   for (uint32_t i = 0; i < *len; i++) {
     btc_utxo_t  utxo;
-    alg_t  script_type;
+    alg_t       script_type;
     d_token_t*  utxo_input       = d_get_at(utxo_inputs, i);
     uint32_t    tx_index         = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
     uint64_t    value            = d_get_long(d_get(utxo_input, key("value")), 0L);
@@ -411,7 +411,7 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_
     utxo.tx_index      = tx_index;
     utxo.tx_out.value  = value;
     utxo.tx_out.script = tx_script;
-    script_type   = btc_get_script_type(&utxo.tx_out.script);
+    script_type        = btc_get_script_type(&utxo.tx_out.script);
 
     if (script_type == BTC_UNSUPPORTED) return IN3_ENOTSUP;
     utxo.script_type = script_type;

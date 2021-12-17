@@ -613,7 +613,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len));
 
-  bytes_t*  signed_tx = b_new(NULL, btc_get_raw_tx_size(&tx));
+  bytes_t* signed_tx = b_new(NULL, btc_get_raw_tx_size(&tx));
   btc_serialize_tx(&tx, signed_tx);
   sb_t sb = {0};
   sb_add_rawbytes(&sb, "\"", *signed_tx, 0);
