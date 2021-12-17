@@ -196,14 +196,14 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       // Zero byte is present to remedy a bug in OP_CHECKMULTISIG which makes it read one more input
       // than it should.
       uint32_t req_sigs = (utxo->req_sigs > utxo->sig_count) ? utxo->sig_count : utxo->req_sigs; // get how many signatures are required from the locking script
-      tx_in->script.len = 0;                     // cleanup tx_in script to receive unlocking script
+      tx_in->script.len = 0;                                                                     // cleanup tx_in script to receive unlocking script
       bytes_t zero_byte = {alloca(1), 1};
       zero_byte.data[0] = 0x0;
       append_bytes(&tx_in->script, &zero_byte);
       for (uint32_t i = 0; i < req_sigs; i++) {
         bytes_t sig_field;
-        sig_field.len = utxo->signatures->len + 1;
-        sig_field.data = alloca(sig_field.len);
+        sig_field.len     = utxo->signatures->len + 1;
+        sig_field.data    = alloca(sig_field.len);
         sig_field.data[0] = utxo->signatures->len;
         memcpy(sig_field.data + 1, utxo->signatures->data, utxo->signatures->len);
         append_bytes(&tx_in->script, &sig_field);
