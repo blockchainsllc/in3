@@ -545,7 +545,7 @@ int op_call(evm_t* evm, uint8_t mode) {
   if ((out_len = evm_stack_pop_int(evm)) < 0) return out_len;
   uint64_t gas = bytes_to_long(gas_limit, l_gas);
 
-  if ((out_len > 0 && mem_check(evm, out_offset + out_len, true) < 0) || (in_len && mem_check(evm, in_offset + in_len, true) < 0)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if ((out_len > 0 && mem_check(evm, out_offset + out_len, true) < 0) || (in_len && mem_check(evm, in_offset + in_len, false) < 0)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   switch (mode) {
     case CALL_CALL:
