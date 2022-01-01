@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -189,16 +189,10 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   }
 
   if (!_tmp_bin) {
-    sb_t*       sb = sb_new(NULL);
-    str_range_t r  = d_to_json(d_get_at(_tmp_responses, _tmp_pos));
-    sb_add_char(sb, '[');
-    sb_add_range(sb, r.data, 0, r.len);
-    sb_add_char(sb, ']');
-
+    char* res = sprintx("[%j]", d_get_at(_tmp_responses, _tmp_pos));
     if (fuzz_pos >= 0)
-      mod_hex(sb->data + fuzz_pos + 1);
-    response = bytes((uint8_t*) sb->data, sb->len);
-    _free(sb);
+      mod_hex(res + fuzz_pos + 1);
+    response = bytes((uint8_t*) res, strlen(res));
   }
   else {
     bytes_builder_t* bb = bb_new();
@@ -207,11 +201,7 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
     _free(bb);
   }
 
-  // printf("payload: %s\n",payload);
-  for (i = 0; i < req->urls_len; i++) {
-    sb_add_range(&(req->req->raw_response + i)->data, (char*) response.data, 0, response.len);
-    req->req->raw_response[i].state = IN3_OK;
-  }
+  for (i = 0; i < req->urls_len; i++) in3_req_add_response(req, i, 0, (char*) response.data, response.len, 0);
 
   _free(response.data);
   _tmp_pos++;
@@ -219,19 +209,19 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
 }
 
 int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* descr) {
-  d_token_t* request  = d_get(test, key("request"));
-  d_token_t* response = d_get(test, key("response"));
-  d_token_t* config   = d_get(request, key("config"));
-  d_token_t* t        = NULL;
-  char*      method   = NULL;
-  char       params[10000];
+  d_token_t*  request  = d_get(test, key("request"));
+  d_token_t*  response = d_get(test, key("response"));
+  d_token_t*  config   = d_get(request, key("config"));
+  d_token_t*  t        = NULL;
+  str_range_t s        = d_to_json(d_get(request, key("params")));
+  char*       method   = d_get_string(request, key("method"));
+  d_token_t*  result   = d_get(test, key("result"));
+  bool        intern   = result ? true : d_get_int(test, key("intern"));
+  char        params[10000];
 
   // configure in3
   sprintf(params, "{\"requestCount\":%d}", (t = d_get(config, key("requestCount"))) ? d_int(t) : 1);
   in3_configure(c, params);
-  method             = d_get_string(request, key("method"));
-  bool        intern = d_get_int(test, key("intern"));
-  str_range_t s      = d_to_json(d_get(request, key("params")));
 
   if (!method) {
     printf("NO METHOD");
@@ -241,26 +231,30 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     printf("NO PARAMS");
     return -1;
   }
+  if (!result && !response) {
+    printf("no result");
+    return -1;
+  }
   strncpy(params, s.data, s.len);
   params[s.len] = 0;
 
   char *res = NULL, *err = NULL;
   int   success = must_fail ? 0 : d_get_intd(test, key("success"), 1);
-  if (intern) _tmp_pos++; // if this is a intern, then the first response is the expected, while the all other come after this.
+  if (intern && !result) _tmp_pos++; // if this is a intern, then the first response is the expected, while the all other come after this.
 
   //  _tmp_response = response;
   int is_bin = d_get_int(test, key("binaryFormat"));
 
-  in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err);
+  in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err); // we cast request to string, since we know the data-pointer will point to the beginning of the object and the json parser will only parse until the end of the object
   fflush(stdout);
   fflush(stderr);
   printf("\n%2i : %-60s ", counter, descr);
 
   if (res && intern) {
+    if (!result) result = d_get(response + 1, key("result"));
     json_ctx_t* actual_json = parse_json(res);
     d_token_t*  actual      = actual_json->result;
-    d_token_t*  expected    = d_get(response + 1, key("result"));
-    if (!d_eq(actual, expected)) {
+    if (!d_eq(actual, result)) {
       err = _malloc(strlen(res) + 200);
       sprintf(err, "wrong response: %s", res);
       _free(res);
@@ -309,6 +303,50 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   }
 }
 
+static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
+  in3_t* c = in3_for_chain(d_get_intd(test, key("chainId"), 1));
+  in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
+
+  int j;
+  c->max_attempts        = 1;
+  c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST | FLAGS_ALLOW_EXPERIMENTAL;
+  c->finality            = d_get_intd(test, key("finality"), 0);
+  d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
+  d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
+
+  in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}}");
+  if (d_type(d_get(test, key("config"))) == T_OBJECT) {
+    char* conf = sprintx("%j", d_get(test, key("config")));
+    char* err  = in3_configure(c, conf);
+    _free(conf);
+    if (err) {
+      printf("Invalid config: %s ", err);
+      _free(c);
+      return NULL;
+    }
+  }
+
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  if (registry_id) {
+    c->chain.version = 2;
+    memcpy(nl->registry_id, d_bytesl(registry_id, 32)->data, 32);
+    memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20)->data, 20);
+  }
+  c->proof = proof;
+
+  d_token_t* signatures = d_get(test, key("signatures"));
+  if (signatures) {
+    c->signature_count = d_len(signatures);
+    for (int i = 0; i < nl->nodelist_length; i++) {
+      if (i < c->signature_count)
+        memcpy(nl->nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
+      else
+        nl->weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
+    }
+  }
+  return c;
+}
+
 int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   char  temp[300];
   char* descr = NULL;
@@ -324,50 +362,20 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   else
     sprintf(temp, "Request #%i", counter);
 
-  in3_t* c = in3_for_chain(d_get_intd(test, key("chainId"), 1));
-  in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
+  in3_t* c    = create_client(test, proof);
+  int    fail = c ? execRequest(c, test, fuzz_prop != NULL, counter, temp) : 1;
+  if (c) in3_free(c);
 
-  int j;
-  c->max_attempts        = 1;
-  c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST | FLAGS_ALLOW_EXPERIMENTAL;
-  c->finality            = d_get_intd(test, key("finality"), 0);
-  d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
-  d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
+  d_token_t* response = d_get(test, key("response"));
+  if (response) {
+    str_range_t      res_size = d_to_json(response);
+    bytes_builder_t* bb       = bb_new();
 
-  sb_t* config = sb_new("{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}}");
-  in3_configure(c, config->data);
-  sb_free(config);
+    d_serialize_binary(bb, response);
 
-  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
-  if (registry_id) {
-    c->chain.version = 2;
-    memcpy(nl->registry_id, d_bytesl(registry_id, 32)->data, 32);
-    memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20)->data, 20);
+    printf(" ( json: %lu bin: %u) ", res_size.len, bb->b.len);
+    bb_free(bb);
   }
-  c->proof = proof;
-
-  d_token_t* signatures = d_get(test, key("signatures"));
-  if (signatures) {
-    c->signature_count = d_len(signatures);
-    for (i = 0; i < nl->nodelist_length; i++) {
-      if (i < c->signature_count)
-        memcpy(nl->nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
-      else
-        nl->weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
-    }
-  }
-
-  int fail = execRequest(c, test, fuzz_prop != NULL, counter, temp);
-  in3_free(c);
-
-  d_token_t*       response = d_get(test, key("response"));
-  str_range_t      res_size = d_to_json(response);
-  bytes_builder_t* bb       = bb_new();
-
-  d_serialize_binary(bb, response);
-
-  printf(" ( json: %lu bin: %u) ", res_size.len, bb->b.len);
-  bb_free(bb);
   return fail;
 }
 
@@ -455,6 +463,7 @@ int runRequests(char** names, int test_index) {
 int main(int argc, char* argv[]) {
   use_color = 1;
   in3_log_set_level(LOG_INFO);
+
 #ifdef VADE
   in3_ret_t in3_register_vade(in3_t*);
   in3_register_default(in3_register_vade);
