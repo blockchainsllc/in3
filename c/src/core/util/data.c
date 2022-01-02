@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "data.h"
+#include "../../third-party/tommath/tommath.h"
 #include "bytes.h"
 #include "debug.h"
 #include "mem.h"
@@ -41,9 +42,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef ETH_FULL
-#include "../../third-party/tommath/tommath.h"
-#endif
 #ifdef LOGGING
 #include "used_keys.h"
 #endif
