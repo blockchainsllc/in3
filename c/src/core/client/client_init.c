@@ -180,7 +180,7 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   return c;
 }
 
-static chain_id_t chain_id(d_token_t* t) {
+chain_id_t in3_token_chain_id(d_token_t* t) {
   if (d_type(t) == T_STRING) {
     char* c = d_string(t);
     if (!strcmp(c, "mainnet")) return CHAIN_ID_MAINNET;
@@ -275,7 +275,7 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == CONFIG_KEY("chainType"))
       ; // Ignore - handled within `chainId` case
     else if (token->key == CONFIG_KEY("chainId")) {
-      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
+      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && in3_token_chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
 
       // check if chainType is set
       int        ct_      = -1;
@@ -285,8 +285,8 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK(ct_token, ct_ != -1, "expected (btc|eth|ipfs|<u8-value>)");
       }
 
-      bool changed  = (c->chain.id != chain_id(token));
-      c->chain.id   = chain_id(token);
+      bool changed  = (c->chain.id != in3_token_chain_id(token));
+      c->chain.id   = in3_token_chain_id(token);
       c->chain.type = ct_ == -1 ? chain_type_from_id(c->chain.id) : ((in3_chain_type_t) ct_);
       if (c->chain.id == CHAIN_ID_BTC && !c->finality && !d_get(json->result, key("finality"))) c->finality = 7;
       in3_client_register_chain(c, c->chain.id, c->chain.type, 2);
