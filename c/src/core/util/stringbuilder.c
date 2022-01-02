@@ -207,10 +207,26 @@ void sb_free(sb_t* sb) {
 
 char* format_json(const char* json) {
   sb_t  _sb = {0}, level = {0};
-  sb_t* sb = &_sb;
+  sb_t* sb       = &_sb;
+  bool  in_quote = false;
   sb_add_char(&level, '\n');
   for (char c = *json; c; c = *(++json)) {
+    if (in_quote && c != '\\' && c != '"') {
+      sb_add_char(sb, c);
+      continue;
+    }
     switch (c) {
+      case '"':
+        in_quote = !in_quote;
+        sb_add_char(sb, c);
+        break;
+      case '\\':
+        sb_add_char(sb, c);
+        if (!(c = *(++json)))
+          --json;
+        else
+          sb_add_char(sb, c);
+        break;
       case '{':
         sb_add_char(sb, c);
         sb_add_chars(&level, "  ");
@@ -224,6 +240,12 @@ char* format_json(const char* json) {
       case ',':
         sb_add_char(sb, c);
         sb_add_range(sb, level.data, 0, level.len);
+        break;
+      case '\n':
+      case ' ':
+        break;
+      case ':':
+        sb_add_chars(sb, ": ");
         break;
       default:
         sb_add_char(sb, c);
@@ -357,6 +379,15 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         case 'j':
           sb_add_json(sb, "", va_arg(args, d_token_t*));
           break;
+        case 'J': {
+          sb_t tmp = {0};
+          sb_add_json(&tmp, "", va_arg(args, d_token_t*));
+          char* t2 = format_json(tmp.data);
+          sb_add_chars(sb, t2);
+          _free(t2);
+          _free(tmp.data);
+          break;
+        }
         case 0:
           return;
         default:
