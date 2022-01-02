@@ -62,3 +62,7 @@ add_static_library(
 if(CRYPTO_LIB)
   target_link_libraries(core crypto)
 endif()
+
+if(ETH_FULL OR IN3API)
+  target_link_libraries(core tommath)
+endif()
