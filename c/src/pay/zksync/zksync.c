@@ -229,6 +229,20 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // format result
   char* json = d_create_json(NULL, result);
+
+  if (strcmp(ctx->method, "get_token_price") == 0 && strchr(json, '.') && d_type(result) == T_STRING) {
+    // remove pending zeros
+    for (char* p = json + strlen(json) - 1; *p && p > json; p--) {
+      if (*p == '"') continue;
+      if (*p == '0' && p > json) {
+        if (p[-1] == '.') break;
+        *p   = '"';
+        p[1] = 0;
+      }
+      else
+        break;
+    }
+  }
   in3_rpc_handle_with_string(ctx, json);
   _free(json);
   return IN3_OK;
