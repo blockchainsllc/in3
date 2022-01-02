@@ -142,14 +142,6 @@ zksync:
       - "ETH"
     expected_output: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
     mockedResponses:
-      - eth_chainId:
-          req:
-          -
-            method: "eth_chainId"
-            params: []
-          res:
-          -
-            result: "0x4"
       - account_info:
           req:
           -
@@ -186,6 +178,14 @@ zksync:
           res:
           - 
             result: *tokens
+      - eth_chainId:
+          req:
+          -
+            method: "eth_chainId"
+            params: []
+          res:
+          -
+            result: "0x4"
       - get_tx_fee:
           req:
           -
@@ -255,8 +255,8 @@ zksync:
       to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
       token: 0
       tokenId: 0
-      amount: "100000000000000000"
-      fee: "30300000000000"
+      amount: 100000000000000000
+      fee: 30300000000000
       validFrom: 0
       validUntil: 4294967295
       nonce: 3
@@ -405,14 +405,6 @@ zksync:
         to: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
       priorityOpId: 63695
     mockedResponses:
-      - eth_chainId:
-          req:
-            -
-              method: "eth_chainId"
-              params: []
-          res:
-            -
-              result: "0x4"
       - contract_address:
           req:
           -
@@ -433,6 +425,14 @@ zksync:
             jsonrpc: '2.0'
             id: 3
             result: *tokens
+      - eth_chainId:
+          req:
+            -
+              method: "eth_chainId"
+              params: []
+          res:
+            -
+              result: "0x4"
       - eth_getTransactionCount:
           req:
           -
@@ -704,6 +704,14 @@ zksync:
                 nfts: {}
               depositing:
                 balances: {}
+      - eth_chainId:
+          req:
+            -
+              method: "eth_chainId"
+              params: []
+          res:
+            -
+              result: "0x4"
       - eth_getTransactionCount:
           req:
           -
@@ -759,14 +767,7 @@ zksync:
                 0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
               status: '0x0'
               to: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
-      - eth_chainId:
-          req:
-            -
-              method: "eth_chainId"
-              params: []
-          res:
-            -
-              result: "0x4"
+
 
   zksync_contract_address:
     config:
@@ -989,11 +990,11 @@ zksync:
       - "0xabea9132b05a70803a4e85094fd0e1800777fbef"
       - "BAT"
     expected_output:
-      zkpFee: 9488974513464088
-      totalFee: 10410000000000000
-      gasPriceWei: 1000000000
-      gasFee: 928245040812996
-      gasTxAmount: 700
+      zkpFee: "9488974513464088"
+      totalFee: "10410000000000000"
+      gasPriceWei: "1000000000"
+      gasFee: "928245040812996"
+      gasTxAmount: "700"
       feeType: 'Transfer'
     mockedResponses:
       - get_tx_fee:
@@ -1044,25 +1045,25 @@ zksync:
       - "0x9b9f20c7c136a64f26bc3c63ef857e3c91e8ce307ae110f1dc1945bb41e629c1"
     expected_output:
       from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
-      amount: 1
+      fail_reason: null
+      amount: "1"
       tx_type: "Transfer"
       created_at: "2021-06-10T13:16:55.148346"
-      fail_reason: null
       tx:
         from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
-        amount: 1
+        amount: "1"
         accountId: 7873
         nonce: 8724
         signature:
           signature: "93f872d67e8746770e6cabd6777395d03c546fadf19dd5731fecd6795924f31059d425ee597c8c6eaf2653cb548ac5eee0404141bd428eb5819c0893ee777c02"
           pubKey: "cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9"
-        validFrom: 0,
-        fee: 0
+        validFrom: 0
+        fee: "0"
         type: "Transfer"
         to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
         token: 0
         validUntil: 184467440737095
-      fee: 0
+      fee: "0"
       token: 0
       block_number: 32027
       to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
@@ -1116,7 +1117,7 @@ zksync:
       - hash: 'sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732'
         pq_id: null
         tx:
-          amount: 2
+          amount: '2'
           from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
           token: ETH
           accountId: 7873
@@ -1125,7 +1126,7 @@ zksync:
             signature: >-
               4838bd78393fc2f129a95b00ea76aace63ee3839296e25abb2d77cfc19f92d06382f715bbdbd326ccde9216c97d053a71e335e0ce57c24ca724d5575c8761701
             pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
-          fee: 0
+          fee: '0'
           type: Transfer
           to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
           validUntil: 184467440737095
@@ -1140,7 +1141,7 @@ zksync:
       - hash: 'sync-tx:c54dc9e117c9b1e461b078b64d5f4cd7bd180b0cdfb06793189332cd522328be'
         pq_id: null
         tx:
-          amount: 3
+          amount: '3'
           from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
           accountId: 7873
           type: Transfer
@@ -1149,7 +1150,7 @@ zksync:
             signature: >-
               5b501751a9fabc613b1327f204655f8b16065545cf57ad38c5dff9ac39dd90a73fafe218d574569280e47e7cd053db500ec1bdb6fca377aee96d940a7851b601
           validFrom: 0
-          fee: 0
+          fee: '0'
           token: ETH
           to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
           validUntil: 184467440737095
