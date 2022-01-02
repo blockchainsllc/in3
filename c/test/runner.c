@@ -41,6 +41,7 @@
 #include "../src/core/client/plugin.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
+#include "../src/init/in3_init.h"
 #include "../src/verifier/btc/btc.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include "../src/verifier/ipfs/ipfs.h"
@@ -183,13 +184,13 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   if (d_len(_tmp_responses) <= _tmp_pos) {
     for (i = 0; i < req->urls_len; i++) {
       req->req->raw_response[i].state = IN3_ECONFIG;
-      sb_add_chars(&(req->req->raw_response + i)->data, "Reached end of available responses!");
+      sb_printx(&(req->req->raw_response + i)->data, "Reached end of available responses! expected request: %s", req->payload);
     }
     return IN3_EINVAL;
   }
 
   if (!_tmp_bin) {
-    char* res = sprintx("[%j]", d_get_at(_tmp_responses, _tmp_pos));
+    char* res = sprintx(strcmp(d_get_string(req->req->requests[0], key("method")), "in3_http") == 0 ? "%j" : "[%j]", d_get_at(_tmp_responses, _tmp_pos));
     if (fuzz_pos >= 0)
       mod_hex(res + fuzz_pos + 1);
     response = bytes((uint8_t*) res, strlen(res));
@@ -255,8 +256,19 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     json_ctx_t* actual_json = parse_json(res);
     d_token_t*  actual      = actual_json->result;
     if (!d_eq(actual, result)) {
-      err = _malloc(strlen(res) + 200);
-      sprintf(err, "wrong response: %s", res);
+      char* a = sprintx("%J ", actual);
+      char* b = sprintx("%J ", result);
+      for (int i = 0; a[i] && b[i]; i++) {
+        if (a[i] != b[i]) {
+          while (i > 0 && a[i] != '\n') i--;
+          a[i + 1] = '*';
+          b[i + 1] = '*';
+          break;
+        }
+      }
+      err = sprintx("wrong response: \ngot     : %s\nexpected: %s", a, b);
+      _free(a);
+      _free(b);
       _free(res);
       res = NULL;
     }
@@ -304,7 +316,10 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
 }
 
 static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
-  in3_t* c = in3_for_chain(d_get_intd(test, key("chainId"), 1));
+  d_token_t* config      = d_get(test, key("config"));
+  d_token_t* chainConfig = d_get(config, key("chainId"));
+  uint64_t   chain_id    = chainConfig ? in3_token_chain_id(chainConfig) : CHAIN_ID_MAINNET;
+  in3_t*     c           = in3_for_chain(d_get_intd(test, key("chainId"), chain_id));
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, send_mock, NULL, true);
 
   int j;
@@ -315,16 +330,6 @@ static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
 
   in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}}");
-  if (d_type(d_get(test, key("config"))) == T_OBJECT) {
-    char* conf = sprintx("%j", d_get(test, key("config")));
-    char* err  = in3_configure(c, conf);
-    _free(conf);
-    if (err) {
-      printf("Invalid config: %s ", err);
-      _free(c);
-      return NULL;
-    }
-  }
 
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   if (registry_id) {
@@ -344,6 +349,17 @@ static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
         nl->weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
     }
   }
+  if (d_type(config) == T_OBJECT && d_len(config)) {
+    char* conf = sprintx("%j", config);
+    char* err  = in3_configure(c, conf);
+    _free(conf);
+    if (err) {
+      printf("Invalid config: %s ", err);
+      _free(c);
+      return NULL;
+    }
+  }
+
   return c;
 }
 
@@ -463,18 +479,6 @@ int runRequests(char** names, int test_index) {
 int main(int argc, char* argv[]) {
   use_color = 1;
   in3_log_set_level(LOG_INFO);
-
-#ifdef VADE
-  in3_ret_t in3_register_vade(in3_t*);
-  in3_register_default(in3_register_vade);
-#endif
-
-  in3_register_default(in3_register_eth_full);
-  in3_register_default(in3_register_eth_api);
-  in3_register_default(in3_register_ipfs);
-  in3_register_default(in3_register_btc);
-  in3_register_default(in3_register_core_api);
-  in3_register_default(in3_register_nodeselect_def);
 
   int    i = 0, size = 1;
   int    testIndex = -1;
