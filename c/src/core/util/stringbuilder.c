@@ -382,10 +382,12 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         case 'J': {
           sb_t tmp = {0};
           sb_add_json(&tmp, "", va_arg(args, d_token_t*));
-          char* t2 = format_json(tmp.data);
-          sb_add_chars(sb, t2);
-          _free(t2);
-          _free(tmp.data);
+          if (tmp.data) {
+            char* t2 = format_json(tmp.data);
+            sb_add_chars(sb, t2);
+            _free(t2);
+            _free(tmp.data);
+          }
           break;
         }
         case 0:
