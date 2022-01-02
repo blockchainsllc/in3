@@ -250,7 +250,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->musig_urls) {
-    for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
+    for (unsigned int i = 0; i < conf->musig_len; i++) {
       if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
     }
     _free(conf->musig_urls);
@@ -342,7 +342,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   d_token_t* urls = d_get(ctx->token, CONFIG_KEY("musig_urls"));
   if (urls) {
     if (conf->musig_urls) {
-      for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
+      for (unsigned int i = 0; i < conf->musig_len; i++) {
         if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
       }
       _free(conf->musig_urls);
@@ -350,10 +350,12 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     if (d_type(urls) == T_STRING) {
       conf->musig_urls    = _calloc(2, sizeof(char*));
       conf->musig_urls[1] = _strdupn(d_string(urls), -1);
+      conf->musig_len     = 2;
     }
     else if (d_type(urls) == T_ARRAY) {
-      conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
-      for (int i = 0; i < d_len(urls); i++) {
+      conf->musig_len  = (uint_fast8_t) d_len(urls);
+      conf->musig_urls = _calloc(conf->musig_len, sizeof(char*));
+      for (int i = 0; i < conf->musig_len; i++) {
         char* s = d_get_string_at(urls, i);
         if (s && strlen(s)) conf->musig_urls[i] = _strdupn(s, -1);
       }
