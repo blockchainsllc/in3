@@ -111,7 +111,8 @@ typedef struct json_parser {
  * and NULL as 0x.
  * Objects or arrays will return 0x.
  */
-bytes_t                d_to_bytes(d_token_t* item);
+bytes_t                d_to_bytes(d_token_t* item);                                                                 /**< converts the data to bytes .*/
+bytes_t                d_num_bytes(d_token_t* f);                                                                   /**< converts the token into bytes, assuming this to be a numeric value. in case of an string it will be converted (chainging the token) */
 int                    d_bytes_to(d_token_t* item, uint8_t* dst, const int max);                                    /**< writes the byte-representation to the dst. details see d_to_bytes.*/
 bytes_t*               d_bytes(const d_token_t* item);                                                              /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
 bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                         /**< returns the value as bytes with length l (may reallocates) */
