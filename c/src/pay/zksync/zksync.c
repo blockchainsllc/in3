@@ -258,6 +258,7 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->rest_api) _free(conf->rest_api);
   if (conf->provider_url) _free(conf->provider_url);
   if (conf->main_contract) _free(conf->main_contract);
+  if (conf->gov_contract) _free(conf->gov_contract);
   if (conf->account) _free(conf->account);
   if (conf->tokens) _free(conf->tokens);
   if (conf->proof_verify_method) _free(conf->proof_verify_method);
