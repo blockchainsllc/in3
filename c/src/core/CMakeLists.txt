@@ -63,6 +63,6 @@ if(CRYPTO_LIB)
   target_link_libraries(core crypto)
 endif()
 
-if(ETH_FULL)
+if(ETH_FULL AND IN3API)
   target_link_libraries(core tommath)
 endif()

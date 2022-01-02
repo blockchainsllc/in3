@@ -1122,7 +1122,7 @@ bytes_t d_num_bytes(d_token_t* f) {
   if (d_type(f) == T_STRING) {
     bytes32_t target = {0};
     bytes_t   b      = bytes(target, 0);
-#ifdef ETH_FULL
+#if defined(ETH_FULL) || defined(ETH_API)
     size_t s = 0;
     mp_int d;
     mp_init(&d);
