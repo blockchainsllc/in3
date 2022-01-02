@@ -62,7 +62,7 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
     let tests = [];
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
-        const tn = testname + (index ? ('_' + (index + 1)) : '')
+        const tn = t.descr || testname + (index ? ('_' + (index + 1)) : '')
         if (rpcResult.options && t.expected_output && t.expected_output.options)
             Object.keys(t.expected_output.options).forEach(k => {
                 const tc = { ...t, input: [...t.input], expected_output: t.expected_output.options[k], mockedResponses: t.mockedResponses.options[k] }
