@@ -41,6 +41,14 @@ class HttpError extends Error {
         this.status = status
     }
 }
+
+let in3FinalizationRegistry = null
+try {
+    if (FinalizationRegistry) in3FinalizationRegistry = new FinalizationRegistry(val => { if (val.ptr) val.free(true) })
+} catch (x) {
+    console.log("Autofinalization not supported! " + x)
+}
+
 // implement the transport and storage handlers
 /* istanbul ignore next */
 if (isBrowserEnvironment) {
@@ -199,6 +207,7 @@ class IN3 {
         this.setConfig(config ? { ...def, ...config } : def)
         in3w.extensions.forEach(_ => _(this))
         this.plugins = []
+        if (in3FinalizationRegistry) in3FinalizationRegistry.register(this)
     }
 
     /**
@@ -383,10 +392,11 @@ class IN3 {
 
     createWeb3Provider() { return this }
 
-    free() {
+    free(gc) {
         if (this.pending)
             this.delayFree = true
         else if (this.ptr) {
+            if (in3FinalizationRegistry && !gc) in3FinalizationRegistry.unregister(this)
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
             delete clients['' + this.ptr]
             this.ptr = 0
