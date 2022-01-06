@@ -115,27 +115,26 @@ java_arm:
     reports:
       junit: java/build/test-results/test/TEST-*.xml
 
-java_macos:
-  stage: java
-  when: never
-  allow_failure: true
-  extends: .only_java
-  needs:
-    - java
-  # Caches per branch - per job
-  before_script:
-    - export GRADLE_USER_HOME=`pwd`/.gradle
-  cache:
-    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
-    paths:
-      - .gradle/wrapper
-      - .gradle/caches
-  script:
-    - mv java_build build
-    - cd java; cp test/build_test.gradle build.gradle
-    - ./gradlew  --info  test
-  tags:
-    - mac-os
+#java_macos:
+#  stage: java
+#  allow_failure: true
+#  extends: .only_java
+#  needs:
+#    - java
+#  # Caches per branch - per job
+#  before_script:
+#    - export GRADLE_USER_HOME=`pwd`/.gradle
+#  cache:
+#    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+#    paths:
+#      - .gradle/wrapper
+#      - .gradle/caches
+#  script:
+#    - mv java_build build
+#    - cd java; cp test/build_test.gradle build.gradle
+#    - ./gradlew  --info  test
+#  tags:
+#    - mac-os
 
 java_win:
   stage: java

@@ -61,30 +61,29 @@ python:
     paths:
       - python_multilib
 
-python_arm:
-  allow_failure: true
-  when: never
-  image: "python:3.9"
-  extends: .cache_setup_with_only_python
-  needs:
-    - python
-  stage: python
-  before_script:
-    - *cache_scipt_before
-  script:
-    - cd python_multilib
-    - pip3 install --upgrade pip
-    - pip3 install -r requirements.txt
-    - coverage run -m pytest --pylama --junitxml=report.xml
-    - coverage report
-    - coverage-badge -fo docs/coverage.svg
-  artifacts:
-    reports:
-      junit: python_multilib/report.xml
-  tags:
-    - arm
-  variables:
-    CRYPTOGRAPHY_DONT_BUILD_RUST : 1
+#python_arm:
+#  allow_failure: true
+#  image: "python:3.9"
+#  extends: .cache_setup_with_only_python
+#  needs:
+#    - python
+#  stage: python
+#  before_script:
+#    - *cache_scipt_before
+#  script:
+#    - cd python_multilib
+#    - pip3 install --upgrade pip
+#    - pip3 install -r requirements.txt
+#    - coverage run -m pytest --pylama --junitxml=report.xml
+#    - coverage report
+#    - coverage-badge -fo docs/coverage.svg
+#  artifacts:
+#    reports:
+#      junit: python_multilib/report.xml
+#  tags:
+#    - arm
+#  variables:
+#    CRYPTOGRAPHY_DONT_BUILD_RUST : 1
 
 python_win:
   extends: .only_python
