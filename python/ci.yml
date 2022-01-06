@@ -63,6 +63,7 @@ python:
 
 python_arm:
   allow_failure: true
+  when: never
   image: "python:3.9"
   extends: .cache_setup_with_only_python
   needs:

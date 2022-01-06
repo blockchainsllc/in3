@@ -117,6 +117,7 @@ java_arm:
 
 java_macos:
   stage: java
+  when: never
   allow_failure: true
   extends: .only_java
   needs:
