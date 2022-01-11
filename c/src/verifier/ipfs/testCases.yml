@@ -1,39 +1,36 @@
 ipfs:
-
   ipfs_get:
     config:
-      proof: 'none'
+      proof: "none"
     input:
       - Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH
       - utf8
     expected_output: "I love Incubed"
     mockedResponses:
-      - ipfs_get:
-          req:
-          -
+      - req:
+          method: "GET"
+          body:
             method: "ipfs_get"
             params:
               - Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH
               - utf8
-          res:
-          -
-            result: "I love Incubed"
-  
+        res:
+          result: "I love Incubed"
+
   ipfs_put:
     config:
-      proof: 'none'
+      proof: "none"
     input:
       - "I love incubed"
       - "utf8"
     expected_output: "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH"
     mockedResponses:
-      - ipfs_put:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "ipfs_put"
             params:
               - "I love incubed"
               - "utf8"
-          res:
-          - 
-            result: "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH"
+        res:
+          result: "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH"

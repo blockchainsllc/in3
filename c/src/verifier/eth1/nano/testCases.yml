@@ -35,11 +35,11 @@ eth:
       - "0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2"
     expected_output: *eth_tx_receipt
     mockedResponses:
-      - eth_getTransactionReceipt:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "eth_getTransactionReceipt"
             params:
               - "0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2"
-          res:
-            - result: *eth_tx_receipt
+        res:
+          result: *eth_tx_receipt
