@@ -49,10 +49,11 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       prev_outputs.len = utxo_list_len * 36; // 32 bytes tx_hash + 4 bytes tx_index
       sequence.len     = utxo_list_len * 4;
 
-      prev_outputs.data = alloca(prev_outputs.len * sizeof(*prev_outputs.data));
-      sequence.data     = alloca(sequence.len * sizeof(*sequence.data));
+      prev_outputs.data = _malloc(prev_outputs.len);
+      sequence.data     = _malloc(sequence.len);
 
-      uint32_t default_sequence = 0xffffffff;
+      uint32_t default_sequence = 0xffffffff; // Change this to use provided sequence value once BIP68 is implemented
+
       for (uint32_t i = 0; i < utxo_list_len; i++) {
         rev_memcpy(prev_outputs.data + (36 * i), utxo_list[i].tx_hash, 32);
         rev_memcpy(prev_outputs.data + (32 * i), (uint8_t*) &utxo_list[i].tx_index, 4);
@@ -107,6 +108,9 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       memcpy(d + index, (uint8_t*) &tx->lock_time, 4);
       index += 4;
       uint_to_le(hash_message, index, sighash);
+
+      _free(prev_outputs.data);
+      _free(sequence.data);
     } break;
     default:
       return req_set_error(req, "ERROR: utxo script type is non-standard or unsupported", IN3_EINVAL);
@@ -391,9 +395,3 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_t* tx, btc_utxo_t* selected_utxo_li
   }
   return IN3_OK;
 }
-
-// A Fazer:
-//   - Receber aquela estrutura de account_tx_pub_key na linha de comando [utxo_index, account, pub_key] e interpretar isso no handler btc
-//   - escrever os dados na estrutura da utxo durante a preparacao
-//   - Ajustar argumentos de funcoes conforme necessário
-//   - Só isso... Tem que funcionar.

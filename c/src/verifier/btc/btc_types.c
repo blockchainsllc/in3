@@ -286,6 +286,14 @@ alg_t btc_get_script_type(const bytes_t* script) {
   return script_type;
 }
 
+in3_ret_t btc_verify_public_key(in3_req_t* req, const bytes_t *public_key) {
+  if (((public_key->len == 33) && (public_key->data[0] == 0x2 || public_key->data[0] == 0x3)) ||
+     (public_key->len == 65 && public_key->data[0] == 0x4)) {
+       return IN3_OK;
+  }
+  return req_set_error(req, "ERROR: in btc_verif_public_key: Provided public key has invalid data format", IN3_EINVAL);
+}
+
 static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field_t field_type) {
   if (!tx || !src) {
     return req_set_error(req, "ERROR: in add_to_tx: Function arguments cannot be null!", IN3_EINVAL);
