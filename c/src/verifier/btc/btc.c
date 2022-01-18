@@ -581,11 +581,11 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   d_token_t* utxo_list = d_get_at(params, 3);
   d_token_t* args      = d_get_at(params, 4);
 
-  default_pub_key.len = (strlen(default_pub_key_str) >> 1);
+  default_pub_key.len  = (strlen(default_pub_key_str) >> 1);
   default_pub_key.data = alloca(default_pub_key.len);
   hex_to_bytes(default_pub_key_str, -1, default_pub_key.data, default_pub_key.len);
 
-  TRY(btc_verify_public_key(req, (const bytes_t*) &default_pub_key)) 
+  TRY(btc_verify_public_key(req, (const bytes_t*) &default_pub_key))
 
   btc_account_pub_key_t default_acc_pk;
   default_acc_pk.account = default_account;

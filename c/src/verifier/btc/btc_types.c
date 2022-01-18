@@ -6,51 +6,51 @@
 #include "btc_script.h"
 #include "btc_serialize.h"
 
-// Transaction fixed size values
-#define BTC_TX_VERSION_SIZE_BYTES  4
-#define BTC_TX_LOCKTIME_SIZE_BYTES 4
-
-// Input fixed size values
-#define BTC_TX_IN_PREV_OUPUT_SIZE_BYTES 36 // Outpoint = prev txid (32 bytes) + output index (4 bytes)
-#define BTC_TX_IN_SEQUENCE_SIZE_BYTES   4
-
-// Output fixed size values
-#define BTC_TX_OUT_VALUE_SIZE_BYTES 8
-
 typedef enum btc_tx_field {
   BTC_INPUT,
   BTC_OUTPUT,
   BTC_WITNESS
 } btc_tx_field_t;
 
+bool script_is_standard(alg_t script_type) {
+  return script_type != BTC_NON_STANDARD && script_type != BTC_UNSUPPORTED;
+}
+
 void btc_init_tx(btc_tx_t* tx) {
-  memset(tx, 0, sizeof(btc_tx_t));
-  tx->version = 1;
+  if (tx) {
+    memset(tx, 0, sizeof(btc_tx_t));
+    tx->version = 1;
+  }
 }
 
 void btc_init_tx_in(btc_tx_in_t* tx_in) {
-  tx_in->prev_tx_hash  = NULL;
-  tx_in->prev_tx_index = 0;
-  tx_in->script.len    = 0;
-  tx_in->script.data   = NULL;
-  tx_in->sequence      = 0xffffffff;
+  if (tx_in) {
+    memset(tx_in, 0, sizeof(btc_tx_in_t));
+    tx_in->sequence = 0xffffffff;
+  }
 }
 
 void btc_init_tx_out(btc_tx_out_t* tx_out) {
-  tx_out->script.len  = 0;
-  tx_out->script.data = NULL;
-  tx_out->value       = 0;
+  if (tx_out) {
+    memset(tx_out, 0, sizeof(btc_tx_out_t));
+  }
+}
+
+void btc_init_utxo(btc_utxo_t* utxo) {
+  if (utxo) {
+    memset(utxo, 0, sizeof(btc_utxo_t));
+  }
 }
 
 uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
-  dst->prev_tx_hash  = data;
-  dst->prev_tx_index = le_to_int(data + 32);
-  dst->script.data   = data + 36 + decode_var_int(data + 36, &len);
-  dst->script.len    = (uint32_t) len;
-  if (dst->script.data + dst->script.len + 4 > limit) return NULL; // check limit
-  dst->sequence = le_to_int(dst->script.data + dst->script.len);
-  return dst->script.data + dst->script.len + 4;
+  dst->prev_tx_hash     = data;
+  dst->prev_tx_index    = le_to_int(data + BTC_TX_HASH_SIZE_BYTES);
+  dst->script.data.data = data + BTC_TX_IN_PREV_OUPUT_SIZE_BYTES + decode_var_int(data + BTC_TX_IN_PREV_OUPUT_SIZE_BYTES, &len);
+  dst->script.data.len  = (uint32_t) len;
+  if (dst->script.data.data + dst->script.data.len + 4 > limit) return NULL; // check limit
+  dst->sequence = le_to_int(dst->script.data.data + dst->script.data.len);
+  return dst->script.data.data + dst->script.data.len + 4;
 }
 
 // WARNING: You need to free dst.data after calling this function
@@ -58,35 +58,31 @@ uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
 // TODO: Handle null arguments
 // TODO: Handle max script len = 10000 bytes
 in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) {
-  if (!tx_in || !dst) return IN3_EINVAL;
+  if (!tx_in || !dst) return req_set_error(req, "ERROR: in btc_serialize_tx_in: Arguments cannot be null", IN3_EINVAL);
   // calculate serialized tx input size in bytes
   uint32_t tx_in_size = (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES +
-                         get_compact_uint_size((uint64_t) tx_in->script.len) +
-                         tx_in->script.len +
+                         get_compact_uint_size((uint64_t) tx_in->script.data.len) +
+                         tx_in->script.data.len +
                          BTC_TX_IN_SEQUENCE_SIZE_BYTES);
 
   // serialize tx_in
   // -- Previous outpoint
-  if (!tx_in->prev_tx_hash) return req_set_error(req, "missing prevtash_hash", IN3_ERPC);
+  if (!tx_in->prev_tx_hash) return req_set_error(req, "ERROR: in btc_serialize_tx_in: missing previous transaction hash", IN3_ERPC);
 
   // alloc memory in dst
   dst->data = _malloc(tx_in_size);
   dst->len  = tx_in_size;
 
   uint32_t index = 0;
-  for (uint32_t i = 0; i < 32; i++) {
-    dst->data[index++] = tx_in->prev_tx_hash[31 - i];
-  }
+  rev_memcpy(dst->data + index, tx_in->prev_tx_hash, BTC_TX_HASH_SIZE_BYTES);
+  index += BTC_TX_HASH_SIZE_BYTES;
   uint_to_le(dst, index, tx_in->prev_tx_index);
-  index += 4;
+  index += BTX_TX_INDEX_SIZE_BYTES;
 
   // -- script
-  long_to_compact_uint(dst, index, tx_in->script.len);
-  index += get_compact_uint_size(tx_in->script.len);
-
-  for (uint32_t i = 0; i < tx_in->script.len; i++) {
-    dst->data[index++] = tx_in->script.data[i];
-  }
+  long_to_compact_uint(dst, index, tx_in->script.data.len);
+  index += get_compact_uint_size(tx_in->script.data.len);
+  memcpy(dst->data + index, tx_in->script.data.data, tx_in->script.data.len);
 
   // -- sequence
   uint_to_le(dst, index, tx_in->sequence);
@@ -95,20 +91,22 @@ in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) 
 
 uint8_t* btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst) {
   uint64_t len;
-  dst->value       = le_to_long(data);
-  dst->script.data = data + 8 + decode_var_int(data + 8, &len);
-  dst->script.len  = (uint32_t) len;
-  return dst->script.data + dst->script.len;
+  dst->value            = le_to_long(data);
+  dst->script.data.data = data + BTC_TX_OUT_VALUE_SIZE_BYTES + decode_var_int(data + BTC_TX_OUT_VALUE_SIZE_BYTES, &len);
+  dst->script.data.len  = (uint32_t) len;
+  return dst->script.data.data + dst->script.data.len;
 }
 
 // WARNING: You need to free 'dst' pointer after calling this function
 // TODO: Handle null arguments
-// TODO: Handle max script len = 10000 bytes
-void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
+in3_ret_t btc_serialize_tx_out(in3_req_t* req, btc_tx_out_t* tx_out, bytes_t* dst) {
+  if (!tx_out || !dst) return req_set_error(req, "ERROR: in btc_serialize_tx_out: Arguments cannot be null", IN3_EINVAL);
+  if (tx_out->script.data.len > MAX_SCRIPT_SIZE_BYTES) return req_set_error(req, "ERROR: in btc_serialize_tx_out: Script is bigger than the maximum allowed size", IN3_ENOTSUP);
+
   // calculate serialized tx output size in bytes
   uint32_t tx_out_size = (BTC_TX_OUT_VALUE_SIZE_BYTES +
-                          get_compact_uint_size((uint64_t) tx_out->script.len) +
-                          tx_out->script.len);
+                          get_compact_uint_size((uint64_t) tx_out->script.data.len) +
+                          tx_out->script.data.len);
 
   // alloc memory in dst
   dst->data = _malloc(tx_out_size);
@@ -119,14 +117,15 @@ void btc_serialize_tx_out(btc_tx_out_t* tx_out, bytes_t* dst) {
 
   // -- value
   long_to_le(dst, index, tx_out->value);
-  index += 8;
+  index += BTC_TX_OUT_VALUE_SIZE_BYTES;
 
   // -- lock-script size
-  long_to_compact_uint(dst, index, tx_out->script.len);
-  index += get_compact_uint_size((uint64_t) tx_out->script.len);
+  long_to_compact_uint(dst, index, tx_out->script.data.len);
+  index += get_compact_uint_size((uint64_t) tx_out->script.data.len);
 
   // -- lock-script
-  memcpy(dst->data + index, tx_out->script.data, tx_out->script.len);
+  memcpy(dst->data + index, tx_out->script.data.data, tx_out->script.data.len);
+  return IN3_OK;
 }
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
@@ -176,8 +175,11 @@ uint32_t btc_get_raw_tx_size(const btc_tx_t* tx) {
 
 // Converts a btc transaction into a serialized transaction
 // WARNING: You need to free dst pointer after using this function!
-// TODO: Error handling for null tx and dst pointers
-in3_ret_t btc_serialize_tx(const btc_tx_t* tx, bytes_t* dst) {
+in3_ret_t btc_serialize_tx(in3_req_t* req, const btc_tx_t* tx, bytes_t* dst) {
+  if (!tx || !dst) return req_set_error(req, "ERROR: in btc_serialize_tx: Arguments cannot be null", IN3_EINVAL);
+  if (tx->input.len == 0 || tx->output.len == 0) return req_set_error(req, "ERROR: in btc_serialize_tx: Transaction inputs or outputs missing", IN3_EINVAL);
+  if (tx->flag && tx->witnesses.len == 0) return req_set_error(req, "ERROR: in btc_serialize_tx: Missing witness data in a segwit transaction", IN3_EINVAL);
+
   // calculate transaction size in bytes
   uint32_t tx_size = btc_get_raw_tx_size(tx);
 
@@ -188,33 +190,39 @@ in3_ret_t btc_serialize_tx(const btc_tx_t* tx, bytes_t* dst) {
 
   // Serialize transaction data
   uint32_t index = 0;
+
   // version
   uint_to_le(dst, index, tx->version);
-  index += 4;
+  index += BTC_TX_VERSION_SIZE_BYTES;
+
   // Check if transaction uses SegWit
   if (tx->flag) {
     dst->data[index++] = 0;
     dst->data[index++] = 1;
   }
+
   // input_count
   long_to_compact_uint(dst, index, tx->input_count);
   index += get_compact_uint_size(tx->input_count);
+
   // inputs
-  // TODO: serialize struct if tx_in is not null
   memcpy(dst->data + index, tx->input.data, tx->input.len);
   index += tx->input.len;
+
   // output_count
   long_to_compact_uint(dst, index, tx->output_count);
   index += get_compact_uint_size(tx->output_count);
+
   // outputs
-  // TODO: serialize struct if tx_out is not null
   memcpy(dst->data + index, tx->output.data, tx->output.len);
   index += tx->output.len;
+
   // witnesses
   if (tx->flag) {
     memcpy(dst->data + index, tx->witnesses.data, tx->witnesses.len);
     index += tx->output.len;
   }
+
   // locktime
   dst->data[index + 3] = ((tx->lock_time >> 24) & 0xff);
   dst->data[index + 2] = ((tx->lock_time >> 16) & 0xff);
@@ -251,7 +259,7 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
 }
 
 alg_t btc_get_script_type(const bytes_t* script) {
-  if ((!script->data) || (script->len < 21) || (script->len > MAX_SCRIPT_SIZE_BYTES)) {
+  if ((!script->data) || (script->len > MAX_SCRIPT_SIZE_BYTES)) {
     return BTC_UNSUPPORTED;
   }
 
@@ -286,10 +294,10 @@ alg_t btc_get_script_type(const bytes_t* script) {
   return script_type;
 }
 
-in3_ret_t btc_verify_public_key(in3_req_t* req, const bytes_t *public_key) {
+in3_ret_t btc_verify_public_key(in3_req_t* req, const bytes_t* public_key) {
   if (((public_key->len == 33) && (public_key->data[0] == 0x2 || public_key->data[0] == 0x3)) ||
-     (public_key->len == 65 && public_key->data[0] == 0x4)) {
-       return IN3_OK;
+      (public_key->len == 65 && public_key->data[0] == 0x4)) {
+    return IN3_OK;
   }
   return req_set_error(req, "ERROR: in btc_verif_public_key: Provided public key has invalid data format", IN3_EINVAL);
 }
@@ -305,14 +313,14 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
 
   switch (field_type) {
     case BTC_INPUT:
-      btc_serialize_tx_in(req, (btc_tx_in_t*) src, &raw_src);
+      TRY(btc_serialize_tx_in(req, (btc_tx_in_t*) src, &raw_src))
       old_len = tx->input.len;
       dst     = &tx->input;
       tx->input_count++;
       must_free = true;
       break;
     case BTC_OUTPUT:
-      btc_serialize_tx_out((btc_tx_out_t*) src, &raw_src);
+      TRY(btc_serialize_tx_out(req, (btc_tx_out_t*) src, &raw_src))
       old_len = tx->output.len;
       dst     = &tx->output;
       tx->output_count++;
@@ -325,8 +333,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_t* tx, void* src, btc_tx_field
       raw_src.data = ((bytes_t*) src)->data;
       break;
     default:
-      // TODO: Implement better error handling
-      return req_set_error(req, "Unrecognized transaction field code. No action was performed", IN3_EINVAL);
+      return req_set_error(req, "ERROR: in add_to_tx: Unrecognized transaction field code.", IN3_EINVAL);
   }
 
   dst->len += raw_src.len;
@@ -370,8 +377,8 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx) {
     bytes_t      script     = bytes(_malloc(script_len), script_len);
     hex_to_bytes(script_string, strlen(script_string), script.data, script.len);
 
-    tx_out.script = script;
-    tx_out.value  = value;
+    tx_out.script.data = script;
+    tx_out.value       = value;
 
     TRY_FINAL(add_output_to_tx(req, tx, &tx_out), _free(script.data);)
   }
@@ -386,104 +393,130 @@ static void add_account_pub_key_to_utxo(btc_utxo_t* utxo, btc_account_pub_key_t*
   utxo->accounts_count++;
 }
 
+static in3_ret_t fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
+  if (!utxo || !utxo_input) return IN3_EINVAL;
+
+  uint32_t    tx_index         = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
+  uint64_t    value            = d_get_long(d_get(utxo_input, key("value")), 0L);
+  const char* tx_hash_string   = d_string(d_get(utxo_input, key("tx_hash")));
+  const char* tx_script_string = d_string(d_get(utxo_input, key("script")));
+
+  uint32_t tx_hash_len = strlen(tx_hash_string) / 2;
+  bytes_t  tx_hash     = bytes(_malloc(tx_hash_len), tx_hash_len);
+  hex_to_bytes(tx_hash_string, strlen(tx_hash_string), tx_hash.data, tx_hash.len);
+
+  uint32_t tx_script_len = strlen(tx_script_string) / 2;
+  bytes_t  tx_script     = bytes(_malloc(tx_script_len), tx_script_len);
+  hex_to_bytes(tx_script_string, strlen(tx_script_string), tx_script.data, tx_script.len);
+
+  // Write the values we have
+  btc_init_utxo(utxo);
+  utxo->tx_hash            = tx_hash.data;
+  utxo->tx_index           = tx_index;
+  utxo->tx_out.value       = value;
+  utxo->tx_out.script.data = tx_script;
+  utxo->tx_out.script.type = btc_get_script_type(&tx_script);
+  utxo->raw_script.type    = utxo->tx_out.script.type;
+
+  return IN3_OK;
+}
+
+static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
+  if (!utxo || !arg) return IN3_EINVAL;
+  alg_t type = utxo->tx_out.script.type;
+
+  if (type == BTC_P2SH || type == BTC_P2WSH) {
+    // is the argument defining an unlocking script?
+    const char* script_str = d_string(d_get(arg, key("script")));
+    if (script_str) {
+      uint32_t script_len   = (strlen(script_str) >> 1);
+      utxo->raw_script.data = bytes(_malloc(script_len), script_len);
+      hex_to_bytes(script_str, -1, utxo->raw_script.data.data, utxo->raw_script.data.len);
+      utxo->raw_script.type = btc_get_script_type(&utxo->raw_script.data);
+    }
+    else {
+      return IN3_EINVAL;
+    }
+  }
+
+  if (type == BTC_BARE_MULTISIG || type == BTC_P2SH || type == BTC_P2WSH) {
+    // is the argument defining a new "account<->pub_key" pair?
+    d_token_t*  acc         = d_get(arg, key("account"));
+    const char* pub_key_str = d_string(d_get(arg, key("pub_key")));
+    if (acc && pub_key_str) {
+      btc_account_pub_key_t acc_pk;
+      acc_pk.account.len  = acc->len;
+      acc_pk.account.data = _malloc(acc->len);
+      memcpy(acc_pk.account.data, acc->data, acc->len);
+
+      acc_pk.pub_key.len  = (strlen(pub_key_str) >> 1);
+      acc_pk.pub_key.data = _malloc(acc_pk.pub_key.len);
+      hex_to_bytes(pub_key_str, -1, acc_pk.pub_key.data, acc_pk.pub_key.len);
+
+      add_account_pub_key_to_utxo(utxo, &acc_pk);
+    }
+    else {
+      return IN3_EINVAL;
+    }
+  }
+
+  return IN3_OK;
+}
+
 // WARNING: You must free selected_utxos pointer after calling this function, as well as the pointed utxos tx_hash and tx_out.data fields
 // TODO: Currently we are adding all utxo_inputs to the list of selected_utxos. Implement an algorithm to select only the necessary utxos for the transaction, given the outputs.
-in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args, btc_utxo_t** selected_utxos, uint32_t* len) {
-  UNUSED_VAR(tx);
-  UNUSED_VAR(req);
+in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args) {
+  if (!tx_ctx) return req_set_error(req, "ERROR: in btc_prepare_utxos: transaction context cannot be null", IN3_EINVAL);
 
-  *len            = d_len(utxo_inputs);
-  *selected_utxos = _malloc(*len * sizeof(btc_utxo_t));
+  tx_ctx->utxo_count = d_len(utxo_inputs);
+  tx_ctx->utxos      = _malloc(tx_ctx->utxo_count * sizeof(btc_utxo_t));
 
   // Read and initialize each utxo we need for the transaction
   // TODO: Only add the necessary utxos to selected_utxos
-  for (uint32_t i = 0; i < *len; i++) {
-    btc_utxo_t  utxo;
-    alg_t       script_type;
-    d_token_t*  utxo_input       = d_get_at(utxo_inputs, i);
-    uint32_t    tx_index         = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
-    uint64_t    value            = d_get_long(d_get(utxo_input, key("value")), 0L);
-    const char* tx_hash_string   = d_string(d_get(utxo_input, key("tx_hash")));
-    const char* tx_script_string = d_string(d_get(utxo_input, key("script")));
-
-    uint32_t tx_hash_len = strlen(tx_hash_string) / 2;
-    bytes_t  tx_hash     = bytes(_malloc(tx_hash_len), tx_hash_len);
-    hex_to_bytes(tx_hash_string, strlen(tx_hash_string), tx_hash.data, tx_hash.len);
-
-    uint32_t tx_script_len = strlen(tx_script_string) / 2;
-    bytes_t  tx_script     = bytes(_malloc(tx_script_len), tx_script_len);
-    hex_to_bytes(tx_script_string, strlen(tx_script_string), tx_script.data, tx_script.len);
-
-    // Write the values we already have
-    utxo.tx_hash       = tx_hash.data;
-    utxo.tx_index      = tx_index;
-    utxo.tx_out.value  = value;
-    utxo.tx_out.script = tx_script;
-    script_type        = btc_get_script_type(&utxo.tx_out.script);
-
-    if (script_type == BTC_UNSUPPORTED) return IN3_ENOTSUP;
-    utxo.script_type = script_type;
-
-    // write default values for the other fields. These are not final
-    utxo.unlocking_script = NULL_BYTES;
-    utxo.accounts_count   = 0;
-    utxo.accounts         = NULL;
-    utxo.signatures       = NULL;
-    utxo.sig_count        = 0;
-
-    // Finally, add initialized utxo to our list
-    *selected_utxos[i] = utxo;
+  for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+    btc_utxo_t utxo;
+    d_token_t* utxo_input = d_get_at(utxo_inputs, i);
+    TRY(btc_fill_utxo(&utxo, utxo_input))
+    if (utxo.tx_out.script.type == BTC_UNSUPPORTED) {
+      return req_set_error(req, "ERROR: in btc_prepare_utxos: utxo script type is not supported", IN3_ENOTSUP);
+    }
+    // finally, add utxo to context
+    tx_ctx->utxos[i] = utxo;
   }
 
   // Handle optional arguments
   if (args) {
     uint32_t args_len = d_len(args);
     for (uint32_t i = 0; i < args_len; i++) {
-      d_token_t* arg        = d_get_at(args, i);
-      uint32_t   utxo_index = d_get_long(arg, key("utxo_index"));
+      d_token_t*  arg        = d_get_at(args, i);
+      uint32_t    utxo_index = d_get_long(arg, key("utxo_index"));
+      btc_utxo_t* utxo       = &tx_ctx->utxos[utxo_index];
 
-      btc_utxo_t* utxo = selected_utxos[utxo_index];
-      alg_t       type = utxo->script_type;
-
-      if (type == BTC_P2SH || type == BTC_P2WSH) {
-        // is the argument defining an unlocking script?
-        const char* script_str = d_string(d_get(arg, key("script")));
-        if (script_str) {
-          utxo->unlocking_script.len  = (strlen(script_str) >> 1);
-          utxo->unlocking_script.data = _malloc(utxo->unlocking_script.len);
-          hex_to_bytes(script_str, -1, utxo->unlocking_script.data, utxo->unlocking_script.len);
-        }
-      }
-
-      if (type == BTC_BARE_MULTISIG || type == BTC_P2SH || type == BTC_P2WSH) {
-        // is the argument defining a new "account<->pub_key" pair?
-        d_token_t*  acc         = d_get(arg, key("account"));
-        const char* pub_key_str = d_string(d_get(arg, key("pub_key")));
-        if (acc && pub_key_str) {
-          btc_account_pub_key_t acc_pk;
-          acc_pk.account.len  = acc->len;
-          acc_pk.account.data = _malloc(acc->len);
-          memcpy(acc_pk.account.data, acc->data, acc->len);
-
-          acc_pk.pub_key.len  = (strlen(pub_key_str) >> 1);
-          acc_pk.pub_key.data = _malloc(acc_pk.pub_key.len);
-          hex_to_bytes(pub_key_str, -1, acc_pk.pub_key.data, acc_pk.pub_key.len);
-
-          add_account_pub_key_to_utxo(utxo, &acc_pk);
-        }
-      }
+      TRY(handle_utxo_arg(utxo, arg))
     }
   }
 
   // Now that all optional arguments were parsed, we fill the last remaining
   // fields into our utxo data
-  for (uint32_t i = 0; i < *len; i++) {
-    btc_utxo_t* utxo    = selected_utxos[i];
-    alg_t       subtype = (utxo->script_type == BTC_P2SH || utxo->script_type == BTC_P2WSH) ? btc_get_script_type(&utxo->unlocking_script) : utxo->script_type;
+  for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+    btc_utxo_t* utxo = &tx_ctx->utxos[i];
+    alg_t       type = utxo->tx_out.script.type;
 
-    // how many signatures do we need to unlock th utxo?
-    if (subtype == BTC_BARE_MULTISIG) {
-      utxo->req_sigs = (utxo->unlocking_script.len > 0) ? utxo->unlocking_script.data[1] : utxo->tx_out.script.data[1];
+    if (type == BTC_P2SH || type == BTC_P2WSH) {
+      // argument containing unhashed script should have been provided
+      // otherwise it is impossible to obtain a signature
+      if (!utxo->raw_script.data.len) {
+        return req_set_error(req, "ERROR: in btc_prepare_utxos: utxo unhashed script not provided in P2SH or P2WSH transaction", IN3_ENOTSUP);
+      }
+      type = utxo->raw_script.type; // get the type of the unhashed script instead
+    }
+    else {
+      utxo->raw_script = utxo->tx_out.script;
+    }
+
+    // how many signatures do we need to unlock the utxo?
+    if (type == BTC_BARE_MULTISIG) {
+      utxo->req_sigs = utxo->raw_script.data.data[1];
     }
     else {
       utxo->req_sigs = 1;
@@ -498,11 +531,11 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_
   return IN3_OK;
 }
 
-in3_ret_t btc_set_segwit(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, const uint32_t utxo_list_len) {
-  tx->flag = 0;
-  for (uint32_t i = 0; i < utxo_list_len; i++) {
-    if (selected_utxo_list[i].tx_out.script.data[0] < OP_PUSHDATA1) {
-      tx->flag = 1;
+in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx) {
+  tx_ctx->tx.flag = 0;
+  for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+    if (tx_ctx->utxos[i].tx_out.script.data.data[0] < OP_PUSHDATA1) {
+      tx_ctx->tx.flag = 1;
       break;
     }
   }
