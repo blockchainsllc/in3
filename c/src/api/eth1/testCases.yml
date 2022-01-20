@@ -93,7 +93,7 @@ account:
       expected_output: "0xe48080829c409463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
       mockedResponses:
         - req:
-            method: "GET"
+            method: "POST"
             body:
               method: "eth_getTransactionCount"
               params:
@@ -102,7 +102,7 @@ account:
           res:
             result: "0x0"
         - req:
-            method: "GET"
+            method: "POST"
             body:
               method: "eth_gasPrice"
               params: []
@@ -118,7 +118,7 @@ account:
       expected_output: "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
       mockedResponses:
         - req:
-            method: "GET"
+            method: "POST"
             body:
               method: "eth_getTransactionCount"
               params:
@@ -127,8 +127,8 @@ account:
           res:
             result: "0x0"
         - req:
-            method: "GET"
-            bdoy:
+            method: "POST"
+            body:
               method: "eth_gasPrice"
               params: []
           res:
