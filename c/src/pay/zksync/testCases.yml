@@ -285,8 +285,10 @@ zksync:
                 pubKeyHash: "sync:0000000000000000000000000000000000000000"
               address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
         - req:
-            method: "tokens"
-            params: []
+            method: "POST"
+            body:
+              method: "tokens"
+              params: []
           res:
             jsonrpc: "2.0"
             id: 3
