@@ -1118,8 +1118,10 @@ zksync:
         tx_id: "32067,5"
     mockedResponses:
       - req:
-          method: "GET"
-          url: "https://rinkeby-api.zksync.io/api/v0.1/account/0x3169131f0e744c1b8ef1ca8371c20d328f7f204d/history/0/100"
+          method: "POST"
+          body:
+            method: "GET"
+            url: "https://rinkeby-api.zksync.io/api/v0.1/account/0x3169131f0e744c1b8ef1ca8371c20d328f7f204d/history/0/100"
         res:
           result:
             - hash: "sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732"
