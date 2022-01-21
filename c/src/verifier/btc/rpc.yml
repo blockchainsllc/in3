@@ -1,5 +1,19 @@
 types:
-  the value:
+  btc_tx_args:
+    utxo_index:
+      descr: index of the utxo
+      type: uint32
+    script:
+      descr: the script
+      type: string
+    account:
+      descr: the account
+      type: address
+    pub_key:
+      descr: the pubkey for the account
+      type: bytes
+    
+  btc_value:
     script:
       descr: the script
       type: string
@@ -175,24 +189,31 @@ types:
               array: true
               type: string
               optional: true
-    tx_args_pub_key:
-      utxo_index:
-        descr: index of the utxo this is related to
-        type: int
-      account:
-        descr: eth account used to sign the transaction with in3
-        type: address
-      pub_key:
-        descr: public key related to the eth address
-        type: bytes
-    tx_args_script:
-      descr: used to redeem utxos of type P2SH and P2WSH 
-      utxo_index:
-        descr: index of the utxo this is related to
-        type: int
-      script: 
-        descr: raw script, which was hashed in the P2SH utxo
-        type: bytes
+
+
+#    tx_args_pub_key:
+#      descr: tx args pub key
+#      typeName: BTCTxPubKey
+#      type:
+#        utxo_index:
+#          descr: index of the utxo this is related to
+#          type: int
+#        account:
+#          descr: eth account used to sign the transaction with in3
+#          type: address
+#        pub_key:
+#          descr: public key related to the eth address
+#          type: bytes
+#    tx_args_script:
+#      descr: used to redeem utxos of type P2SH and P2WSH 
+#      typeName: BTCTxArgsScript
+#      type:
+#        utxo_index:
+#          descr: index of the utxo this is related to
+#          type: int
+#        script: 
+#          descr: raw script, which was hashed in the P2SH utxo
+#          type: bytes
       
 
   btctransaction:
@@ -1108,7 +1129,7 @@ btc:
         array: true
       args:
         descr: aditional arguments used by specific transaction types
-        type: tx_args
+        type: btc_tx_args
         array: true
         optional: true
     result:

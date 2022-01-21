@@ -62,8 +62,7 @@ if (CODE_COVERAGE)
 endif()
 # first we build the runners
 add_executable(runner runner.c)
-target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API} ${IN3_NODESELECT})
-
+target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API} init ${IN3_NODESELECT})
 add_executable(junit util/junit.c)
 target_link_libraries(junit eth_full)
 

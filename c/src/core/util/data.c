@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "data.h"
+#include "../../third-party/tommath/tommath.h"
 #include "bytes.h"
 #include "debug.h"
 #include "mem.h"
@@ -41,7 +42,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
 #ifdef LOGGING
 #include "used_keys.h"
 #endif
@@ -1114,4 +1114,42 @@ d_token_t* token_from_bytes(bytes_t b, d_token_t* d) {
     d->len  = b.len;
   }
   return d;
+}
+
+bytes_t d_num_bytes(d_token_t* f) {
+  if (d_type(f) == T_STRING) {
+    bytes32_t target = {0};
+    bytes_t   b      = bytes(target, 0);
+#if defined(ETH_FULL) && defined(ETH_API)
+    size_t s = 0;
+    mp_int d;
+    mp_init(&d);
+    if (mp_read_radix(&d, d_string(f), 10)) {
+      // this is not a number
+      mp_clear(&d);
+      return d_to_bytes(f);
+    }
+    mp_export(target, &s, 1, sizeof(uint8_t), 1, 0, &d);
+    mp_clear(&d);
+    b.len = s;
+#else
+    for (int i = 0; i < d_len(f); i++) {
+      if (f->data[i] < '0' || f->data[i] > '9') return d_to_bytes(f);
+    }
+    b.len = 8;
+    long_to_bytes(parse_float_val(d_string(f), 0), target);
+#endif
+    b_optimize_len(&b);
+    _free(f->data);
+    if (b.len < 4) {
+      f->data = NULL;
+      f->len  = (T_INTEGER << 28) | bytes_to_int(b.data, b.len);
+    }
+    else {
+      f->data = _malloc(b.len);
+      f->len  = b.len;
+      memcpy(f->data, b.data, b.len);
+    }
+  }
+  return d_to_bytes(f);
 }

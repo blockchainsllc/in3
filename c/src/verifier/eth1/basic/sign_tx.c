@@ -45,14 +45,13 @@
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "eth_basic.h"
-
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
 /** helper to get a key and convert it to bytes*/
 static inline bytes_t get(d_token_t* t, uint16_t key) {
-  return d_to_bytes(d_get(t, key));
+  return d_num_bytes(d_get(t, key));
 }
 /** helper to get a key and convert it to bytes with a specified length*/
 static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {

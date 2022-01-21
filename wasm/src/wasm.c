@@ -129,18 +129,18 @@ void storage_set_item(void* cptr, const char* key, bytes_t* content) {
 
 EM_JS(int, plgn_exec_term, (in3_t * c, int index), {
   var client = Module.clients[c];
-  var plgn   = client && client.plugins[index];
+  var plgn   = client && client.deref() && client.deref().plugins[index];
   if (!plgn) return -4;
-  return plgn.term(client) || 0;
+  return plgn.term(client.deref()) || 0;
 })
 
 EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_req_t* ctx, char* req, int index), {
   var client = Module.clients[c];
-  var plgn   = client && client.plugins[index];
+  var plgn   = client && client.deref() && client.deref().plugins[index];
   if (!plgn) return -4;
   try {
     var json = JSON.parse(UTF8ToString(req));
-    var val  = plgn.handleRPC(client, json);
+    var val  = plgn.handleRPC(client.deref(), json);
     if (typeof(val) == "undefined") return -17;
     if (!val.then) val = Promise.resolve(val);
     var id                 = ++in3w.promiseCount;
@@ -155,10 +155,10 @@ EM_JS(int, plgn_exec_rpc_handle, (in3_t * c, in3_req_t* ctx, char* req, int inde
 
 EM_JS(int, plgn_exec_sign_accounts, (in3_t * c, in3_sign_account_ctx_t* sctx, int index), {
   var client = Module.clients[c];
-  var plgn   = client && client.plugins[index];
+  var plgn   = client && client.deref() && client.deref().plugins[index];
   if (!plgn) return -4;
   try {
-    var val = plgn.getAccounts(client);
+    var val = plgn.getAccounts(client.deref());
     if (val)
       in3w.ccall("wasm_set_sign_account", "void", [ "number", "number", "string" ], [ sctx, val.length, '0x' + val.map(function(a){return a.substr(2)}).join("") ]);
   } catch (x) {

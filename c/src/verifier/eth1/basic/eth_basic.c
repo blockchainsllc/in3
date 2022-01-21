@@ -119,6 +119,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   in3_req_t* send_req = NULL;
   in3_req_t* last_r   = NULL;
   TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash, &send_req))
+  if (d_type(tx_hash) != T_BYTES || d_len(tx_hash) != 32) return req_set_error(ctx->req, "Invalid Response from sendTransaction, expecting a hash!", IN3_EINVAL);
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];
   bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);

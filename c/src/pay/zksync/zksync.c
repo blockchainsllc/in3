@@ -229,6 +229,20 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // format result
   char* json = d_create_json(NULL, result);
+
+  if (strcmp(ctx->method, "get_token_price") == 0 && strchr(json, '.') && d_type(result) == T_STRING) {
+    // remove pending zeros
+    for (char* p = json + strlen(json) - 1; *p && p > json; p--) {
+      if (*p == '"') continue;
+      if (*p == '0' && p > json) {
+        if (p[-1] == '.') break;
+        *p   = '"';
+        p[1] = 0;
+      }
+      else
+        break;
+    }
+  }
   in3_rpc_handle_with_string(ctx, json);
   _free(json);
   return IN3_OK;
@@ -236,7 +250,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->musig_urls) {
-    for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
+    for (unsigned int i = 0; i < conf->musig_len; i++) {
       if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
     }
     _free(conf->musig_urls);
@@ -244,6 +258,7 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->rest_api) _free(conf->rest_api);
   if (conf->provider_url) _free(conf->provider_url);
   if (conf->main_contract) _free(conf->main_contract);
+  if (conf->gov_contract) _free(conf->gov_contract);
   if (conf->account) _free(conf->account);
   if (conf->tokens) _free(conf->tokens);
   if (conf->proof_verify_method) _free(conf->proof_verify_method);
@@ -328,7 +343,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   d_token_t* urls = d_get(ctx->token, CONFIG_KEY("musig_urls"));
   if (urls) {
     if (conf->musig_urls) {
-      for (unsigned int i = 0; i < conf->musig_pub_keys.len / 32; i++) {
+      for (unsigned int i = 0; i < conf->musig_len; i++) {
         if (conf->musig_urls[i]) _free(conf->musig_urls[i]);
       }
       _free(conf->musig_urls);
@@ -336,10 +351,12 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     if (d_type(urls) == T_STRING) {
       conf->musig_urls    = _calloc(2, sizeof(char*));
       conf->musig_urls[1] = _strdupn(d_string(urls), -1);
+      conf->musig_len     = 2;
     }
     else if (d_type(urls) == T_ARRAY) {
-      conf->musig_urls = _calloc(d_len(urls), sizeof(char*));
-      for (int i = 0; i < d_len(urls); i++) {
+      conf->musig_len  = (uint_fast8_t) d_len(urls);
+      conf->musig_urls = _calloc(conf->musig_len, sizeof(char*));
+      for (int i = 0; i < conf->musig_len; i++) {
         char* s = d_get_string_at(urls, i);
         if (s && strlen(s)) conf->musig_urls[i] = _strdupn(s, -1);
       }
