@@ -137,3 +137,34 @@ config:
                 props: "0xFFFF"
       response: true
 
+  in3_http:
+    descr: sends a simple http-request. This is used internally to fetch data from REST-APIs.
+    params: 
+      method:
+        type: string
+        descr: the HTTP-method to use like 'GET', 'POST', 'PUT', 'DELETE',...
+      url:
+        type: string
+        descr: the url of the endpoint
+      payload:
+        type: string
+        descr: the payload or null, if it does not apply
+        nullable: true
+        optional: true
+      headers:
+        type: string
+        array: true
+        optional: true
+        descr: "a array of additional headers to send. each header must be a string in the form `Key: Value`"
+    result:
+      type: any
+      descr: the response will depend on the http-response. If the data are json-data, the json-object will the response.
+    example:
+      request:
+        - POST
+        - https://reqbin.com/echo/post/json
+        - {"id":78912,"Customer":"Jason Sweet","Price": 18}
+        - ["Accept: application/json","Content-Type: application/json"]
+      
+      
+      
