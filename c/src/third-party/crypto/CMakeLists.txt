@@ -54,6 +54,8 @@ set(CRYPTO_SRC
   aes/aeskey.c
   aes/aestab.c
 
+  bip39.c
+
   curves.c
   bip32.c
   nist256p1.c

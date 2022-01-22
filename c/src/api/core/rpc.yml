@@ -132,3 +132,41 @@ account:
         - secp256k1
         - m/4
       response: "0xd747eb5734828a3c3fc617cb98c47964bd1df96ec05ce2a2c6618782d2c43645"
+
+
+  in3_bip39_create:
+    sync: true
+    descr: |
+      generates a mnemonic based on bip39
+    params:
+      seed:
+        descr: the seed. if a seed is passed, this seed will be used to generate it, making it deterministic.
+        optional: true
+        type: bytes
+    result:
+      descr: a list of words based on bip39
+      type: string
+    example:
+      request: 
+        - "0x1ff06206d4d2e44b104644b619d070821a781c05ccca2579728bab0be6010e52"
+      response: "cable loan like predict comic cereal donate silk render soldier bring aerobic pole asthma blame off century slide pepper figure salmon above deer found"
+
+  in3_bip39_decode:
+    sync: true
+    descr: |
+      decodes a mnemonic and returns the seed as 64 bytes.
+    params:
+      mnemonic:
+        descr: the mnemonic
+        type: string
+      passphrase:
+        descr: the passphrase
+        type: string
+    result:
+      descr: the resulting seed
+      type: bytes
+    example:
+      request: 
+        -  "cable loan like predict comic cereal donate silk render soldier bring aerobic pole asthma blame off century slide pepper figure salmon above deer found"
+        - test
+      response: "0x751ff30f38a674397010348a36c4ba0dac0f943bfaca936ea725a6ac2e16f68798e0ef8fa11992882b2c2f968c44e6afbc8aced61b96403834998e7b7faeeb5e"
