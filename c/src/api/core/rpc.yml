@@ -36,6 +36,66 @@ utils:
         - "0x1234567890"
       response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
 
+  in3_base58_encode:
+    sync: true
+    descr: |
+      Returns base58 encoded data
+    params:
+      data:
+        descr: data to encode
+        type: bytes
+    result:
+      descr: the encoded data
+    example:
+      request:
+        - "3K3F4C"
+      response: "SYUwqHgn"
+
+  in3_base58_decode:
+    sync: true
+    descr: |
+      Returns base58 decoded data
+    params:
+      data:
+        descr: data to decode
+        type: string
+    result:
+      descr: the decoded bytes
+    example:
+      request:
+        - "3K3F4C"
+      response: "0x5a694361"
+
+  in3_base64_encode:
+    sync: true
+    descr: |
+      Returns base64 encoded data
+    params:
+      data:
+        descr: data to encode
+        type: bytes
+    result:
+      descr: the encoded data
+    example:
+      request:
+        - "abcdef"
+      response: "YWJjZGVm"
+
+  in3_base64_decode:
+    sync: true
+    descr: |
+      Returns base64 decoded data
+    params:
+      data:
+        descr: data to decode
+        type: string
+    result:
+      descr: the decoded bytes
+    example:
+      request:
+        - "YWJjZGVm"
+      response: "0x616263646566"
+
   sha256:
     sync: true
     descr: |

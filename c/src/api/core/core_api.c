@@ -39,11 +39,16 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/crypto/base58.h"
 #include "../../third-party/crypto/bip32.h"
 #include "../../third-party/crypto/bip39.h"
 #include "../../third-party/crypto/memzero.h"
 #include "../../third-party/crypto/rand.h"
 #include "../../third-party/crypto/secp256k1.h"
+#ifdef IPFS
+#include "../../third-party/libb64/cdecode.h"
+#include "../../third-party/libb64/cencode.h"
+#endif
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -191,6 +196,61 @@ static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_bytes(ctx, bytes(seed, 64));
 }
 
+static in3_ret_t in3_base58_encode(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t data;
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 128)
+  size_t size    = data.len * 2 + 1;
+  char*  res     = _malloc(size);
+  bool   success = b58enc(res, &size, data.data, data.len) && size < data.len * 2;
+  if (success)
+    sb_printx(in3_rpc_handle_start(ctx), "\"%S\"", res);
+  else
+    req_set_error(ctx->req, "Invalid data for base58", IN3_EINVAL);
+  _free(res);
+  return success ? in3_rpc_handle_finish(ctx) : IN3_EINVAL;
+}
+
+static in3_ret_t in3_base64_encode(in3_rpc_handle_ctx_t* ctx) {
+#ifdef IPFS
+  bytes_t data;
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 0)
+  char* r = base64_encode(data.data, data.len);
+  sb_printx(in3_rpc_handle_start(ctx), "\"%S\"", r);
+  _free(r);
+  return in3_rpc_handle_finish(ctx);
+#else
+  return req_set_error(ctx->req, "not supported, if IPFS is turned off", IN3_EINVAL);
+#endif
+}
+
+static in3_ret_t in3_base64_decode(in3_rpc_handle_ctx_t* ctx) {
+#ifdef IPFS
+  char* txt;
+  TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
+  size_t   len = 0;
+  uint8_t* r   = base64_decode(txt, &len);
+  in3_rpc_handle_with_bytes(ctx, bytes(r, len));
+  _free(r);
+  return IN3_OK;
+#else
+  return req_set_error(ctx->req, "not supported, if IPFS is turned off", IN3_EINVAL);
+#endif
+}
+
+static in3_ret_t in3_base58_decode(in3_rpc_handle_ctx_t* ctx) {
+  char* txt;
+  TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
+
+  size_t    ssize = strlen(txt);
+  size_t    size  = ssize;
+  uint8_t*  res   = _malloc(size);
+  in3_ret_t ret   = b58tobin(res, &size, txt)
+                        ? in3_rpc_handle_with_bytes(ctx, bytes(res + ssize - size, size))
+                        : req_set_error(ctx->req, "Invalid data for base58", IN3_EINVAL);
+  _free(res);
+  return ret;
+}
+
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
   UNUSED_VAR(pdata);
@@ -234,6 +294,18 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_bip39_decode", in3_bip39_decode(ctx))
 #endif
 
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_ENCODE)
+  TRY_RPC("in3_base58_encode", in3_base58_encode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_DECODE)
+  TRY_RPC("in3_base58_decode", in3_base58_decode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_ENCODE)
+  TRY_RPC("in3_base64_encode", in3_base64_encode(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_DECODE)
+  TRY_RPC("in3_base64_decode", in3_base64_decode(ctx))
+#endif
   return IN3_EIGNORE;
 }
 
