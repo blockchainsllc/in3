@@ -105,11 +105,11 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
-static void in3_random(uint8_t* dst, int len) {
+void random_buffer(uint8_t* dst, size_t len) {
 #ifndef WASM
   FILE* r = fopen("/dev/urandom", "r");
   if (r) {
-    for (int i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
+    for (size_t i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
     fclose(r);
     return;
   }
@@ -117,15 +117,15 @@ static void in3_random(uint8_t* dst, int len) {
   srand(current_ms() % 0xFFFFFFFF);
 #if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
   unsigned int number;
-  for (int i = 0; i < len; i++) dst[i] = (rand_s(&number) ? rand() : (int) number) % 256;
+  for (size_t i = 0; i < len; i++) dst[i] = (rand_s(&number) ? rand() : (int) number) % 256;
 #else
-  for (int i = 0; i < len; i++) dst[i] = rand() % 256;
+  for (size_t i = 0; i < len; i++) dst[i] = rand() % 256;
 #endif
 }
 
 static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t hash;
-  in3_random(hash, 32);
+  random_buffer(hash, 32);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 
@@ -166,7 +166,7 @@ static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
   bytes_t   pk = {0};
   TRY_PARAM_GET_BYTES(pk, ctx, 0, 0, 0)
   if (!pk.data) {
-    in3_random(hash, 32);
+    random_buffer(hash, 32);
     pk = bytes(hash, 32);
   }
 
