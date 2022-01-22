@@ -4,153 +4,150 @@ tokens: &tokens
     id: 2
     symbol: USDC
     is_nft: false
-    address: '0xeb8f08a975ab53e34d8a0330e0d34de942c95926'
+    address: "0xeb8f08a975ab53e34d8a0330e0d34de942c95926"
   USDT:
     decimals: 6
     id: 1
     symbol: USDT
     is_nft: false
-    address: '0x3b00ef435fa4fcff5c209a37d1f3dcff37c705ad'
+    address: "0x3b00ef435fa4fcff5c209a37d1f3dcff37c705ad"
   PHNX:
     decimals: 18
     id: 20
     symbol: PHNX
     is_nft: false
-    address: '0xfe1b6abc39e46cec54d275efb4b29b33be176c2a'
+    address: "0xfe1b6abc39e46cec54d275efb4b29b33be176c2a"
   TRB:
     decimals: 18
     id: 7
     symbol: TRB
     is_nft: false
-    address: '0x2655f3a9eeb7f960be83098457144813ffad07a4'
+    address: "0x2655f3a9eeb7f960be83098457144813ffad07a4"
   TUSD:
     decimals: 18
     id: 4
     symbol: TUSD
     is_nft: false
-    address: '0xd2255612f9b045e9c81244bb874abb413ca139a3'
+    address: "0xd2255612f9b045e9c81244bb874abb413ca139a3"
   ZRX:
     decimals: 18
     id: 8
     symbol: ZRX
     is_nft: false
-    address: '0xdb7f2b9f6a0cb35fe5d236e5ed871d3ad4184290'
+    address: "0xdb7f2b9f6a0cb35fe5d236e5ed871d3ad4184290"
   OMG:
     decimals: 18
     id: 6
     symbol: OMG
     is_nft: false
-    address: '0x2b203de02ad6109521e09985b3af9b8c62541cd6'
+    address: "0x2b203de02ad6109521e09985b3af9b8c62541cd6"
   STORJ:
     decimals: 8
     id: 11
     symbol: STORJ
     is_nft: false
-    address: '0x8098165d982765097e4aa17138816e5b95f9fdb5'
+    address: "0x8098165d982765097e4aa17138816e5b95f9fdb5"
   XEM:
     decimals: 0
     id: 18
     symbol: XEM
     is_nft: false
-    address: '0xc3904a7c3a95bc265066bb5bfc4d6664b2174774'
+    address: "0xc3904a7c3a95bc265066bb5bfc4d6664b2174774"
   HT:
     decimals: 18
     id: 5
     symbol: HT
     is_nft: false
-    address: '0x14700cae8b2943bad34c70bb76ae27ecf5bc5013'
+    address: "0x14700cae8b2943bad34c70bb76ae27ecf5bc5013"
   LINK:
     decimals: 18
     id: 3
     symbol: LINK
     is_nft: false
-    address: '0x4da8d0795830f75be471f072a034d42c369b5d0a'
+    address: "0x4da8d0795830f75be471f072a034d42c369b5d0a"
   KNC:
     decimals: 18
     id: 14
     symbol: KNC
     is_nft: false
-    address: '0x290eba6ec56ecc9ff81c72e8eccc77d2c2bf63eb'
+    address: "0x290eba6ec56ecc9ff81c72e8eccc77d2c2bf63eb"
   DAI:
     decimals: 18
     id: 19
     symbol: DAI
     is_nft: false
-    address: '0x2e055eee18284513b993db7568a592679ab13188'
+    address: "0x2e055eee18284513b993db7568a592679ab13188"
   REP:
     decimals: 18
     id: 10
     symbol: REP
     is_nft: false
-    address: '0x9cac8508b9ff26501439590a24893d80e7e84d21'
+    address: "0x9cac8508b9ff26501439590a24893d80e7e84d21"
   LAMB:
     decimals: 18
     id: 15
     symbol: LAMB
     is_nft: false
-    address: '0x9ecec4d48efdd96ae377af3ab868f99de865cff8'
+    address: "0x9ecec4d48efdd96ae377af3ab868f99de865cff8"
   NEXO:
     decimals: 18
     id: 12
     symbol: NEXO
     is_nft: false
-    address: '0x02d01f0835b7fdfa5d801a8f5f74c37f2bb1ae6a'
+    address: "0x02d01f0835b7fdfa5d801a8f5f74c37f2bb1ae6a"
   tGLM:
     decimals: 18
     id: 16
     symbol: tGLM
     is_nft: false
-    address: '0xd94e3dc39d4cad1dad634e7eb585a57a19dc7efe'
+    address: "0xd94e3dc39d4cad1dad634e7eb585a57a19dc7efe"
   MCO:
     decimals: 8
     id: 13
     symbol: MCO
     is_nft: false
-    address: '0xd93addb2921b8061b697c2ab055979bbefe2b7ac'
+    address: "0xd93addb2921b8061b697c2ab055979bbefe2b7ac"
   ETH:
     decimals: 18
     id: 0
     symbol: ETH
     is_nft: false
-    address: '0x0000000000000000000000000000000000000000'
+    address: "0x0000000000000000000000000000000000000000"
   MLTT:
     decimals: 18
     id: 17
     symbol: MLTT
     is_nft: false
-    address: '0x690f4886c6911d81beb8130db30c825c27281f22'
+    address: "0x690f4886c6911d81beb8130db30c825c27281f22"
   BAT:
     decimals: 18
     id: 9
     symbol: BAT
     is_nft: false
-    address: '0xd2084ea2ae4bbe1424e4fe3cde25b713632fb988'
+    address: "0xd2084ea2ae4bbe1424e4fe3cde25b713632fb988"
 
 zksync:
-
   zksync_set_key:
-  -
-    config:
-      proof: 'none'
-      experimental: true
-      pk: 
-        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-      rpc: "https://rinkeby-light.eth.linkpool.io"
-      zksync: 
-        provider_url: "https://rinkeby-api.zksync.io/jsrpc"
-    input: 
-      - "ETH"
-    expected_output: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
-    mockedResponses:
-      - account_info:
-          req:
-          -
-            method: "account_info"
-            params:
-              - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+    - config:
+        proof: "none"
+        experimental: true
+        pk:
+          - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+        rpc: "https://rinkeby-light.eth.linkpool.io"
+        zksync:
+          provider_url: "https://rinkeby-api.zksync.io/jsrpc"
+      input:
+        - "ETH"
+      expected_output: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+      mockedResponses:
+        - req:
+            method: "POST"
+            body:
+              method: "account_info"
+              params:
+                - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
           res:
-          - 
-            jsonrpc: '2.0'
+            jsonrpc: "2.0"
             id: 1
             result:
               depositing:
@@ -158,45 +155,41 @@ zksync:
               committed:
                 nonce: 0
                 balances:
-                  ETH: '1100000000000101000'
+                  ETH: "1100000000000101000"
                 nfts: {}
                 mintedNfts: {}
-                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
+                pubKeyHash: "sync:0000000000000000000000000000000000000000"
               id: 167067
               verified:
                 nonce: 0
                 balances: {}
                 nfts: {}
                 mintedNfts: {}
-                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
-              address: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-      - tokens:
-          req:
-          -
-            method: "tokens"
-            params: []
+                pubKeyHash: "sync:0000000000000000000000000000000000000000"
+              address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+        - req:
+            method: "POST"
+            body:
+              method: "tokens"
+              params: []
           res:
-          - 
             result: *tokens
-      - eth_chainId:
-          req:
-          -
-            method: "eth_chainId"
-            params: []
+        - req:
+            method: "POST"
+            body:
+              method: "eth_chainId"
+              params: []
           res:
-          -
             result: "0x4"
-      - get_tx_fee:
-          req:
-          -
-            method: "get_tx_fee"
-            params:
-              -
-                ChangePubKey: "ECDSA"
-              - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-              - "ETH"
+        - req:
+            method: "POST"
+            body:
+              method: "get_tx_fee"
+              params:
+                - ChangePubKey: "ECDSA"
+                - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+                - "ETH"
           res:
-          -
             result:
               zkpFee: 30541131762442
               totalFee: 64600000000000
@@ -205,161 +198,150 @@ zksync:
               gasFee: 34060000000000
               feeType:
                 ChangePubKey: "ECDSA"
-      - tx_submit:
-          req:
-          -
-            method: "tx_submit"
-            params:
-            -
-              nonce: 0
-              fee: "64600000000000"
-              validUntil: 4294967295
-              type: "ChangePubKey"
-              ethAuthData:
-                type: "ECDSA"
-                ethSignature: "0x2b281880b7c73127570aaa4696ea6024f826977649d15fc37e422ffc996121153a909302fad27e4548c66c7e0520b6f77c5027c88104b38fe82af16b85d4c7061b"
-              accountId: 167067
-              signature: 
-                pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
-                signature: "c936c89a624dc5effbb54bd3b2a2d56f4deac9103051d4607476770c3451d321784751218821e73f2f4d514068cd2bfd511bc4137fa28bdb660682944a754001"
-              validFrom: 0
-              account: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-              feeToken: 0
-              feeTokenId: 0
-              newPkHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
-            - null
-            - false
-
+        - req:
+            method: "POST"
+            body:
+              method: "tx_submit"
+              params:
+                - nonce: 0
+                  fee: "64600000000000"
+                  validUntil: 4294967295
+                  type: "ChangePubKey"
+                  ethAuthData:
+                    type: "ECDSA"
+                    ethSignature: "0x2b281880b7c73127570aaa4696ea6024f826977649d15fc37e422ffc996121153a909302fad27e4548c66c7e0520b6f77c5027c88104b38fe82af16b85d4c7061b"
+                  accountId: 167067
+                  signature:
+                    pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
+                    signature: "c936c89a624dc5effbb54bd3b2a2d56f4deac9103051d4607476770c3451d321784751218821e73f2f4d514068cd2bfd511bc4137fa28bdb660682944a754001"
+                  validFrom: 0
+                  account: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+                  feeToken: 0
+                  feeTokenId: 0
+                  newPkHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+                - null
+                - false
           res:
-          -
             result: "sync-tx:4f8b59a5d7d4f128c3024b481eebc66de41428636c385ca68f00ea5f0d785564"
-  
+
   zksync_transfer:
-  -
-    config:
-      proof: 'none'
-      experimental: true
-      pk: 
-        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-      rpc: "https://rinkeby-light.eth.linkpool.io"
-      zksync: 
-        provider_url: "https://rinkeby-api.zksync.io/jsrpc"
-    input:
-      - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-      - "100000000000000000"
-      - "ETH"
-    expected_output:
-      type: 'Transfer'
-      accountId: 167067
-      from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-      to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-      token: 0
-      tokenId: 0
-      amount: 100000000000000000
-      fee: 30300000000000
-      validFrom: 0
-      validUntil: 4294967295
-      nonce: 3
-      txHash: "sync-tx:b431fad24a0b3ccc324c09b1dd3f2484ac070d944a615e46d7b822dd9e883c02"
-    mockedResponses:
-      - eth_chainId:
-          req:
-            -
+    - config:
+        proof: "none"
+        experimental: true
+        pk:
+          - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+        rpc: "https://rinkeby-light.eth.linkpool.io"
+        zksync:
+          provider_url: "https://rinkeby-api.zksync.io/jsrpc"
+      input:
+        - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+        - "100000000000000000"
+        - "ETH"
+      expected_output:
+        type: "Transfer"
+        accountId: 167067
+        from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+        to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+        token: 0
+        tokenId: 0
+        amount: 100000000000000000
+        fee: 30300000000000
+        validFrom: 0
+        validUntil: 4294967295
+        nonce: 3
+        txHash: "sync-tx:b431fad24a0b3ccc324c09b1dd3f2484ac070d944a615e46d7b822dd9e883c02"
+      mockedResponses:
+        - req:
+            method: "POST"
+            body:
               method: "eth_chainId"
               params: []
           res:
-            -
-              result: "0x4"
-      - account_info:
-          req:
-          -
-            method: "account_info"
-            params:
-              - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+            result: "0x4"
+        - req:
+            method: "POST"
+            body:
+              method: "account_info"
+              params:
+                - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
           res:
-          - 
             result:
               depositing:
                 balances: {}
               committed:
                 nonce: 3
                 balances:
-                  ETH: '1099802600000100800'
+                  ETH: "1099802600000100800"
                 nfts: {}
                 mintedNfts: {}
-                pubKeyHash: 'sync:ec0de4692863fc7b1459cb98c6be56ada438d991'
+                pubKeyHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
               id: 167067
               verified:
                 nonce: 0
                 balances:
-                  ETH: '1100000000000101000'
+                  ETH: "1100000000000101000"
                 nfts: {}
                 mintedNfts: {}
-                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
-              address: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-      - tokens:
-          req:
-          -
-            method: "tokens"
-            params: []
+                pubKeyHash: "sync:0000000000000000000000000000000000000000"
+              address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+        - req:
+            method: "POST"
+            body:
+              method: "tokens"
+              params: []
           res:
-          - 
-            jsonrpc: '2.0'
+            jsonrpc: "2.0"
             id: 3
             result: *tokens
-              
-      - get_tx_fee:
-          req:
-          -
-            method: "get_tx_fee"
-            params: 
-              - "Transfer"
-              - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-              - "ETH"
+
+        - req:
+            method: "POST"
+            body:
+              method: "get_tx_fee"
+              params:
+                - "Transfer"
+                - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+                - "ETH"
           res:
-          - 
             result:
-              zkpFee: '27570375927574'
-              totalFee: '30300000000000'
-              gasTxAmount: '2140'
-              gasFee: '2782000000000'
-              gasPriceWei: '1000000000'
+              zkpFee: "27570375927574"
+              totalFee: "30300000000000"
+              gasTxAmount: "2140"
+              gasFee: "2782000000000"
+              gasPriceWei: "1000000000"
               feeType: TransferToNew
-      - tx_submit:
-          req:
-          -
-            method: "tx_submit"
-            params:
-              -
-                amount: 100000000000000000
-                nonce: 3
-                from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-                fee: 30300000000000
-                validUntil: 4294967295
-                validFrom: 0
-                type: "Transfer"
-                accountId: 167067
-                token: 0
-                tokenId: 0
-                signature: 
-                  pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
-                  signature: "31cf12e7252010b008ac14d24d2c67a336d8dd46a5b224df40892029c8a2e41315b8345b39fde5384ab3875ec957512ae9be3fcee62eb01b82654d7ddb3cd603"
-                to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-              -
-                type: "EthereumSignature"
-                signature: "0x6937238185200aa4f7363c37b9ff885b90b56c1cc6b862c47733f4cc612fecb14cfdd34e42eddeab5c0d0247db8ca5588305a8b3571cab9218f50dbeef8003001b"
+        - req:
+            method: "POST"
+            body:
+              method: "tx_submit"
+              params:
+                - amount: 100000000000000000
+                  nonce: 3
+                  from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+                  fee: 30300000000000
+                  validUntil: 4294967295
+                  validFrom: 0
+                  type: "Transfer"
+                  accountId: 167067
+                  token: 0
+                  tokenId: 0
+                  signature:
+                    pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
+                    signature: "31cf12e7252010b008ac14d24d2c67a336d8dd46a5b224df40892029c8a2e41315b8345b39fde5384ab3875ec957512ae9be3fcee62eb01b82654d7ddb3cd603"
+                  to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+                - type: "EthereumSignature"
+                  signature: "0x6937238185200aa4f7363c37b9ff885b90b56c1cc6b862c47733f4cc612fecb14cfdd34e42eddeab5c0d0247db8ca5588305a8b3571cab9218f50dbeef8003001b"
           res:
-          -
             result: "sync-tx:b431fad24a0b3ccc324c09b1dd3f2484ac070d944a615e46d7b822dd9e883c02"
-  
+
   zksync_deposit:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
       rpc: "https://rinkeby-light.eth.linkpool.io"
-      zksync: 
+      zksync:
         provider_url: "https://rinkeby-api.zksync.io/jsrpc"
     input:
       - "10000000000000000"
@@ -368,164 +350,157 @@ zksync:
     expected_output:
       receipt:
         contractAddress: null
-        transactionHash: '0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e'
-        from: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-        blockHash: '0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c'
-      #  type: '0x0'
+        transactionHash: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
+        from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+        blockHash: "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c"
+        #  type: '0x0'
         logs:
-          - address: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
+          - address: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
             topics:
-              - '0xd0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830'
-            transactionHash: '0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e'
+              - "0xd0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830"
+            transactionHash: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
             removed: false
             data: >-
               0x0000000000000000000000008d33caff9b73a3eb24c83ac79bb5ed56126f284c000000000000000000000000000000000000000000000000000000000000f8cf000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000085f483000000000000000000000000000000000000000000000000000000000000002d0100000000000000000000000000000000002386f26fc100008d33caff9b73a3eb24c83ac79bb5ed56126f284c00000000000000000000000000000000000000
-            blockHash: '0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c'
-            blockNumber: '0x85b103'
-            transactionIndex: '0xe'
-            logIndex: '0x9'
-          - address: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
+            blockHash: "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c"
+            blockNumber: "0x85b103"
+            transactionIndex: "0xe"
+            logIndex: "0x9"
+          - address: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
             topics:
-              - '0x8f5f51448394699ad6a3b80cdadf4ec68c5d724c8c3fea09bea55b3c2d0e2dd0'
-              - '0x0000000000000000000000000000000000000000000000000000000000000000'
-            transactionHash: '0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e'
+              - "0x8f5f51448394699ad6a3b80cdadf4ec68c5d724c8c3fea09bea55b3c2d0e2dd0"
+              - "0x0000000000000000000000000000000000000000000000000000000000000000"
+            transactionHash: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
             removed: false
-            blockHash: '0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c'
-            data: '0x000000000000000000000000000000000000000000000000002386f26fc10000'
-            blockNumber: '0x85b103'
-            transactionIndex: '0xe'
-            logIndex: '0xa'
-        cumulativeGasUsed: '0x158213'
-        transactionIndex: '0xe'
-        gasUsed: '0xf47e'
+            blockHash: "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c"
+            data: "0x000000000000000000000000000000000000000000000000002386f26fc10000"
+            blockNumber: "0x85b103"
+            transactionIndex: "0xe"
+            logIndex: "0xa"
+        cumulativeGasUsed: "0x158213"
+        transactionIndex: "0xe"
+        gasUsed: "0xf47e"
         logsBloom: >-
           0x00000000000000000000000000100000000000000000000000000080000000000000000000000008000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000010000000000000000020000000000000000000800000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000020000000000000000000000000000000000000000000000000000000010000000000
-        blockNumber: '0x85b103'
-        status: '0x1'
-        to: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
+        blockNumber: "0x85b103"
+        status: "0x1"
+        to: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
       priorityOpId: 63695
     mockedResponses:
-      - contract_address:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "contract_address"
             params: []
-          res:
-          - 
-            result:
-              mainContract: "0x82F67958A5474e40E1485742d648C0b0686b6e5D"
-              govContract: "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246"
-      - tokens:
-          req:
-          -
+        res:
+          result:
+            mainContract: "0x82F67958A5474e40E1485742d648C0b0686b6e5D"
+            govContract: "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246"
+      - req:
+          method: "POST"
+          body:
             method: "tokens"
             params: []
-          res:
-          - 
-            jsonrpc: '2.0'
-            id: 3
-            result: *tokens
-      - eth_chainId:
-          req:
-            -
-              method: "eth_chainId"
-              params: []
-          res:
-            -
-              result: "0x4"
-      - eth_getTransactionCount:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          id: 3
+          result: *tokens
+      - req:
+          method: "POST"
+          body:
+            method: "eth_chainId"
+            params: []
+        res:
+          result: "0x4"
+      - req:
+          method: "POST"
+          body:
             method: "eth_getTransactionCount"
             params:
               - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
               - "latest"
-          res:
-          - 
-            result: "0x5"
-      - eth_gasPrice:
-          req:
-          -
+        res:
+          result: "0x5"
+      - req:
+          method: "POST"
+          body:
             method: "eth_gasPrice"
             params: []
-          res:
-          -
-            result: "0x3b9aca00"
-      - eth_sendRawTransaction:
-          req:
-          -
+        res:
+          result: "0x3b9aca00"
+      - req:
+          method: "POST"
+          body:
             method: "eth_sendRawTransaction"
             params:
               - "0xf88f05843b9aca0083030d409482f67958a5474e40e1485742d648c0b0686b6e5d872386f26fc10000a42d2da8060000000000000000000000008d33caff9b73a3eb24c83ac79bb5ed56126f284c2ca0974482f63da156a0d76ef504e67a5ffb2c94d6d2d9182956746a6ea8df7f6934a007546b83049ce29a0fc38ba3aae98fa4c0ae32d0f86f0751b7ad534452024150"
-          res:
-          - 
-            result: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
-      - eth_getTransactionReceipt:
-          req:
-          -
+        res:
+          result: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
+      - req:
+          method: "POST"
+          body:
             method: "eth_getTransactionReceipt"
             params:
               - "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
-          res:
-          -
-            jsonrpc: '2.0'
-            id: 12
-            result:
-              contractAddress: null
-              transactionHash: '0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e'
-              from: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-              blockHash: '0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c'
-           #   type: '0x0'
-              logs:
-                - address: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
-                  topics:
-                    - '0xd0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830'
-                  transactionHash: '0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e'
-                  removed: false
-                  data: >-
-                    0x0000000000000000000000008d33caff9b73a3eb24c83ac79bb5ed56126f284c000000000000000000000000000000000000000000000000000000000000f8cf000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000085f483000000000000000000000000000000000000000000000000000000000000002d0100000000000000000000000000000000002386f26fc100008d33caff9b73a3eb24c83ac79bb5ed56126f284c00000000000000000000000000000000000000
-                  blockHash: '0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c'
-                  blockNumber: '0x85b103'
-                  transactionIndex: '0xe'
-                  logIndex: '0x9'
-                - address: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
-                  topics:
-                    - '0x8f5f51448394699ad6a3b80cdadf4ec68c5d724c8c3fea09bea55b3c2d0e2dd0'
-                    - '0x0000000000000000000000000000000000000000000000000000000000000000'
-                  transactionHash: '0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e'
-                  removed: false
-                  blockHash: '0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c'
-                  data: '0x000000000000000000000000000000000000000000000000002386f26fc10000'
-                  blockNumber: '0x85b103'
-                  transactionIndex: '0xe'
-                  logIndex: '0xa'
-              cumulativeGasUsed: '0x158213'
-              transactionIndex: '0xe'
-              gasUsed: '0xf47e'
-              logsBloom: >-
-                0x00000000000000000000000000100000000000000000000000000080000000000000000000000008000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000010000000000000000020000000000000000000800000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000020000000000000000000000000000000000000000000000000000000010000000000
-              blockNumber: '0x85b103'
-              status: '0x1'
-              to: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
+        res:
+          jsonrpc: "2.0"
+          id: 12
+          result:
+            contractAddress: null
+            transactionHash: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
+            from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+            blockHash: "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c"
+            #   type: '0x0'
+            logs:
+              - address: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
+                topics:
+                  - "0xd0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830"
+                transactionHash: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
+                removed: false
+                data: >-
+                  0x0000000000000000000000008d33caff9b73a3eb24c83ac79bb5ed56126f284c000000000000000000000000000000000000000000000000000000000000f8cf000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000085f483000000000000000000000000000000000000000000000000000000000000002d0100000000000000000000000000000000002386f26fc100008d33caff9b73a3eb24c83ac79bb5ed56126f284c00000000000000000000000000000000000000
+                blockHash: "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c"
+                blockNumber: "0x85b103"
+                transactionIndex: "0xe"
+                logIndex: "0x9"
+              - address: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
+                topics:
+                  - "0x8f5f51448394699ad6a3b80cdadf4ec68c5d724c8c3fea09bea55b3c2d0e2dd0"
+                  - "0x0000000000000000000000000000000000000000000000000000000000000000"
+                transactionHash: "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
+                removed: false
+                blockHash: "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c"
+                data: "0x000000000000000000000000000000000000000000000000002386f26fc10000"
+                blockNumber: "0x85b103"
+                transactionIndex: "0xe"
+                logIndex: "0xa"
+            cumulativeGasUsed: "0x158213"
+            transactionIndex: "0xe"
+            gasUsed: "0xf47e"
+            logsBloom: >-
+              0x00000000000000000000000000100000000000000000000000000080000000000000000000000008000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000010000000000000000020000000000000000000800000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000020000000000000000000000000000000000000000000000000000000010000000000
+            blockNumber: "0x85b103"
+            status: "0x1"
+            to: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
 
   zksync_withdraw:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-      rpc: 'https://rinkeby-light.eth.linkpool.io'
+      rpc: "https://rinkeby-light.eth.linkpool.io"
       zksync:
-        provider_url: 'https://rinkeby-light.eth.linkpool.io'
+        provider_url: "https://rinkeby-light.eth.linkpool.io"
     input:
       - "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
       - 100
       - "ETH"
-    expected_output: 
-      type: 'Withdraw'
+    expected_output:
+      type: "Withdraw"
       accountId: 167067
-      from: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-      to: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
+      from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+      to: "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
       token: 0
       tokenId: 0
       amount: 100
@@ -535,78 +510,73 @@ zksync:
       nonce: 2
       txHash: "sync-tx:46e73c497fe623fbc9d41e0f8242f808cb80447b84e2bcba42fe5970f158aefa"
     mockedResponses:
-      - eth_chainId:
-          req:
-            -
-              method: "eth_chainId"
-              params: []
-          res:
-            -
-              result: "0x4"
-      - account_info:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
+            method: "eth_chainId"
+            params: []
+        res:
+          result: "0x4"
+      - req:
+          method: "POST"
+          body:
             method: "account_info"
-            params: 
+            params:
               - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-          res:
-          - 
-            jsonrpc: '2.0'
-            id: 2
-            result:
-              address: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-              id: 167067
-              committed:
-                nfts: {}
-                balances:
-                  ETH: '1099902100000100900'
-                pubKeyHash: 'sync:ec0de4692863fc7b1459cb98c6be56ada438d991'
-                mintedNfts: {}
-                nonce: 2
-              verified:
-                nonce: 0
-                nfts: {}
-                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
-                mintedNfts: {}
-                balances: {}
-              depositing:
-                balances: {}
-      - tokens:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          id: 2
+          result:
+            address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+            id: 167067
+            committed:
+              nfts: {}
+              balances:
+                ETH: "1099902100000100900"
+              pubKeyHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+              mintedNfts: {}
+              nonce: 2
+            verified:
+              nonce: 0
+              nfts: {}
+              pubKeyHash: "sync:0000000000000000000000000000000000000000"
+              mintedNfts: {}
+              balances: {}
+            depositing:
+              balances: {}
+      - req:
+          method: "POST"
+          body:
             method: "tokens"
             params: []
-          res:
-          - 
-            jsonrpc: '2.0'
-            id: 3
-            result: *tokens
-      - get_tx_fee:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          id: 3
+          result: *tokens
+      - req:
+          method: "POST"
+          body:
             method: "get_tx_fee"
             params:
               - "Withdraw"
               - "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
               - "ETH"
-          res:
-          - 
-            jsonrpc: '2.0'
-            id: 4
-            result:
-              zkpFee: '30541131762442'
-              totalFee: '99500000000000'
-              gasPriceWei: '1000000000'
-              gasFee: '69030000000000'
-              gasTxAmount: '53100'
-              feeType: Withdraw
-      - tx_submit:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          id: 4
+          result:
+            zkpFee: "30541131762442"
+            totalFee: "99500000000000"
+            gasPriceWei: "1000000000"
+            gasFee: "69030000000000"
+            gasTxAmount: "53100"
+            feeType: Withdraw
+      - req:
+          method: "POST"
+          body:
             method: "tx_submit"
             params:
-              -
-                amount: 100
+              - amount: 100
                 nonce: 2
                 from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
                 fee: 99500000000000
@@ -620,340 +590,327 @@ zksync:
                   signature: "92626f9b38822a83e6e3ccb6d0b7926a47bd70170b3e6e31d8cb76ae22d1ca08bd705f2c2d5e2121ba48b49d3dd1a3c423f74194cd140e28708726da354dae01"
                 tokenId: 0
                 to: "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
-              -
-                type: "EthereumSignature"
+              - type: "EthereumSignature"
                 signature: "0x32a3417db2c73b2637da044834e6cff49f37bb73b7bd05d4256aaf240b17e48e09803948074e5bc7bd3d603e969872e42e7db89315a6f1c348f7f6e877b142911c"
-          res:
-          -
-            result: "sync-tx:46e73c497fe623fbc9d41e0f8242f808cb80447b84e2bcba42fe5970f158aefa"
-    
+        res:
+          result: "sync-tx:46e73c497fe623fbc9d41e0f8242f808cb80447b84e2bcba42fe5970f158aefa"
+
   zksync_emergency_withdraw:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-      rpc: 'https://rinkeby-light.eth.linkpool.io'
+      rpc: "https://rinkeby-light.eth.linkpool.io"
       zksync:
-        provider_url: 'https://rinkeby-light.eth.linkpool.io'
+        provider_url: "https://rinkeby-light.eth.linkpool.io"
     input:
       - ETH
     expected_output:
       contractAddress: null
-      transactionHash: '0x0557b4c73ebee5cd701c8ce86865385ee1aff57cf133ebd4d9b8ca8bd870a46c'
-      from: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-      blockHash: '0x28feb8f6f29ec0b04a94abaae7d03bed3bc17799989232289f4d3532f284196d'
-    #  type: '0x0'
+      transactionHash: "0x0557b4c73ebee5cd701c8ce86865385ee1aff57cf133ebd4d9b8ca8bd870a46c"
+      from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+      blockHash: "0x28feb8f6f29ec0b04a94abaae7d03bed3bc17799989232289f4d3532f284196d"
+      #  type: '0x0'
       logs: []
-      cumulativeGasUsed: '0x24bbab'
-      transactionIndex: '0xa'
-      gasUsed: '0x67d1'
-      blockNumber: '0x85b120'
+      cumulativeGasUsed: "0x24bbab"
+      transactionIndex: "0xa"
+      gasUsed: "0x67d1"
+      blockNumber: "0x85b120"
       logsBloom: >-
         0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-      status: '0x0'
-      to: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
+      status: "0x0"
+      to: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
 
     mockedResponses:
-      - contract_address:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "contract_address"
             params: []
-          res:
-          -
-            result:
-              govContract : "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246"
-              mainContract : "0x82F67958A5474e40E1485742d648C0b0686b6e5D"
-      - tokens:
-          req: 
-          - 
+        res:
+          result:
+            govContract: "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246"
+            mainContract: "0x82F67958A5474e40E1485742d648C0b0686b6e5D"
+      - req:
+          method: "POST"
+          body:
             method: "tokens"
             params: []
-          res:
-          - 
-            jsonrpc: '2.0'
-            id: 3
-            result: *tokens
-      - account_info:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          id: 3
+          result: *tokens
+      - req:
+          method: "POST"
+          body:
             method: "account_info"
             params:
               - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-          res:
-          -
-            jsonrpc: '2.0'
-            id: 3
-            result:
-              address: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-              id: 167067
-              committed:
-                balances:
-                  ETH: '1019772300000100800'
-                nfts: {}
-                pubKeyHash: 'sync:ec0de4692863fc7b1459cb98c6be56ada438d991'
-                mintedNfts: {}
-                nonce: 4
-              verified:
-                nonce: 4
-                balances:
-                  ETH: '999772300000100800'
-                pubKeyHash: 'sync:ec0de4692863fc7b1459cb98c6be56ada438d991'
-                mintedNfts: {}
-                nfts: {}
-              depositing:
-                balances: {}
-      - eth_chainId:
-          req:
-            -
-              method: "eth_chainId"
-              params: []
-          res:
-            -
-              result: "0x4"
-      - eth_getTransactionCount:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          id: 3
+          result:
+            address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+            id: 167067
+            committed:
+              balances:
+                ETH: "1019772300000100800"
+              nfts: {}
+              pubKeyHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+              mintedNfts: {}
+              nonce: 4
+            verified:
+              nonce: 4
+              balances:
+                ETH: "999772300000100800"
+              pubKeyHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+              mintedNfts: {}
+              nfts: {}
+            depositing:
+              balances: {}
+      - req:
+          method: "POST"
+          body:
+            method: "eth_chainId"
+            params: []
+        res:
+          result: "0x4"
+      - req:
+          method: "POST"
+          body:
             method: "eth_getTransactionCount"
             params:
               - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
               - "latest"
-          res:
-          -
-            jsonrpc: "2.0"
-            result: "0x6"
-      - eth_gasPrice:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          result: "0x6"
+      - req:
+          method: "POST"
+          body:
             method: "eth_gasPrice"
             params: []
-          res:
-          -
-            jsonrpc: "2.0"
-            result: "0x3b9aca00"
-      - eth_sendRawTransaction:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          result: "0x3b9aca00"
+      - req:
+          method: "POST"
+          body:
             method: "eth_sendRawTransaction"
-            params: 
+            params:
               - "0xf8a906843b9aca008307a1209482f67958a5474e40e1485742d648c0b0686b6e5d80b844000000e20000000000000000000000000000000000000000000000000000000000028c9b00000000000000000000000000000000000000000000000000000000000000002ba06cc9a38b6d64bb73d50612a7fe8605cc591a4521e33f99daa98fea705cae059ea072824445db895c5d4aa81c1aaa6698f69bb9074c8ac9a4888f83b882e1744da2"
-          res:
-          - 
-            jsonrpc: "2.0"
-            result: "0x0557b4c73ebee5cd701c8ce86865385ee1aff57cf133ebd4d9b8ca8bd870a46c"
-      - eth_getTransactionReceipt:
-          req:
-          -
+        res:
+          jsonrpc: "2.0"
+          result: "0x0557b4c73ebee5cd701c8ce86865385ee1aff57cf133ebd4d9b8ca8bd870a46c"
+      - req:
+          method: "POST"
+          body:
             method: "eth_getTransactionReceipt"
             params:
               - "0x0557b4c73ebee5cd701c8ce86865385ee1aff57cf133ebd4d9b8ca8bd870a46c"
-          res:
-          -
-            jsonrpc: '2.0'
-            id: 13
-            result:
-              contractAddress: null
-              transactionHash: '0x0557b4c73ebee5cd701c8ce86865385ee1aff57cf133ebd4d9b8ca8bd870a46c'
-              from: '0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c'
-              blockHash: '0x28feb8f6f29ec0b04a94abaae7d03bed3bc17799989232289f4d3532f284196d'
-     #         type: '0x0'
-              logs: []
-              cumulativeGasUsed: '0x24bbab'
-              transactionIndex: '0xa'
-              gasUsed: '0x67d1'
-              blockNumber: '0x85b120'
-              logsBloom: >-
-                0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-              status: '0x0'
-              to: '0x82f67958a5474e40e1485742d648c0b0686b6e5d'
-
+        res:
+          jsonrpc: "2.0"
+          id: 13
+          result:
+            contractAddress: null
+            transactionHash: "0x0557b4c73ebee5cd701c8ce86865385ee1aff57cf133ebd4d9b8ca8bd870a46c"
+            from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+            blockHash: "0x28feb8f6f29ec0b04a94abaae7d03bed3bc17799989232289f4d3532f284196d"
+            #         type: '0x0'
+            logs: []
+            cumulativeGasUsed: "0x24bbab"
+            transactionIndex: "0xa"
+            gasUsed: "0x67d1"
+            blockNumber: "0x85b120"
+            logsBloom: >-
+              0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+            status: "0x0"
+            to: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
 
   zksync_contract_address:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     expected_output:
       mainContract: "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
       govContract: "0xc8568f373484cd51fdc1fe3675e46d8c0dc7d246"
     mockedResponses:
-      - contract_address:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "contract_address"
             params: []
-          res:
-          - 
-            result:
-              govContract: "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246"
-              mainContract: "0x82F67958A5474e40E1485742d648C0b0686b6e5D"
-    
+        res:
+          result:
+            govContract: "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246"
+            mainContract: "0x82F67958A5474e40E1485742d648C0b0686b6e5D"
+
   zksync_tokens:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     expected_output:
       USDC:
         decimals: 6
         id: 2
         symbol: USDC
-        address: '0xeb8f08a975ab53e34d8a0330e0d34de942c95926'
+        address: "0xeb8f08a975ab53e34d8a0330e0d34de942c95926"
       USDT:
         decimals: 6
         id: 1
         symbol: USDT
-        address: '0x3b00ef435fa4fcff5c209a37d1f3dcff37c705ad'
+        address: "0x3b00ef435fa4fcff5c209a37d1f3dcff37c705ad"
       PHNX:
         decimals: 18
         id: 20
         symbol: PHNX
-        address: '0xfe1b6abc39e46cec54d275efb4b29b33be176c2a'
+        address: "0xfe1b6abc39e46cec54d275efb4b29b33be176c2a"
       TRB:
         decimals: 18
         id: 7
         symbol: TRB
-        address: '0x2655f3a9eeb7f960be83098457144813ffad07a4'
+        address: "0x2655f3a9eeb7f960be83098457144813ffad07a4"
       TUSD:
         decimals: 18
         id: 4
         symbol: TUSD
-        address: '0xd2255612f9b045e9c81244bb874abb413ca139a3'
+        address: "0xd2255612f9b045e9c81244bb874abb413ca139a3"
       ZRX:
         decimals: 18
         id: 8
         symbol: ZRX
-        address: '0xdb7f2b9f6a0cb35fe5d236e5ed871d3ad4184290'
+        address: "0xdb7f2b9f6a0cb35fe5d236e5ed871d3ad4184290"
       OMG:
         decimals: 18
         id: 6
         symbol: OMG
-        address: '0x2b203de02ad6109521e09985b3af9b8c62541cd6'
+        address: "0x2b203de02ad6109521e09985b3af9b8c62541cd6"
       STORJ:
         decimals: 8
         id: 11
         symbol: STORJ
-        address: '0x8098165d982765097e4aa17138816e5b95f9fdb5'
+        address: "0x8098165d982765097e4aa17138816e5b95f9fdb5"
       XEM:
         decimals: 0
         id: 18
         symbol: XEM
-        address: '0xc3904a7c3a95bc265066bb5bfc4d6664b2174774'
+        address: "0xc3904a7c3a95bc265066bb5bfc4d6664b2174774"
       HT:
         decimals: 18
         id: 5
         symbol: HT
-        address: '0x14700cae8b2943bad34c70bb76ae27ecf5bc5013'
+        address: "0x14700cae8b2943bad34c70bb76ae27ecf5bc5013"
       LINK:
         decimals: 18
         id: 3
         symbol: LINK
-        address: '0x4da8d0795830f75be471f072a034d42c369b5d0a'
+        address: "0x4da8d0795830f75be471f072a034d42c369b5d0a"
       KNC:
         decimals: 18
         id: 14
         symbol: KNC
-        address: '0x290eba6ec56ecc9ff81c72e8eccc77d2c2bf63eb'
+        address: "0x290eba6ec56ecc9ff81c72e8eccc77d2c2bf63eb"
       DAI:
         decimals: 18
         id: 19
         symbol: DAI
-        address: '0x2e055eee18284513b993db7568a592679ab13188'
+        address: "0x2e055eee18284513b993db7568a592679ab13188"
       REP:
         decimals: 18
         id: 10
         symbol: REP
-        address: '0x9cac8508b9ff26501439590a24893d80e7e84d21'
+        address: "0x9cac8508b9ff26501439590a24893d80e7e84d21"
       LAMB:
         decimals: 18
         id: 15
         symbol: LAMB
-        address: '0x9ecec4d48efdd96ae377af3ab868f99de865cff8'
+        address: "0x9ecec4d48efdd96ae377af3ab868f99de865cff8"
       NEXO:
         decimals: 18
         id: 12
         symbol: NEXO
-        address: '0x02d01f0835b7fdfa5d801a8f5f74c37f2bb1ae6a'
+        address: "0x02d01f0835b7fdfa5d801a8f5f74c37f2bb1ae6a"
       tGLM:
         decimals: 18
         id: 16
         symbol: tGLM
-        address: '0xd94e3dc39d4cad1dad634e7eb585a57a19dc7efe'
+        address: "0xd94e3dc39d4cad1dad634e7eb585a57a19dc7efe"
       MCO:
         decimals: 8
         id: 13
         symbol: MCO
-        address: '0xd93addb2921b8061b697c2ab055979bbefe2b7ac'
+        address: "0xd93addb2921b8061b697c2ab055979bbefe2b7ac"
       ETH:
         decimals: 18
         id: 0
         symbol: ETH
-        address: '0x0000000000000000000000000000000000000000'
+        address: "0x0000000000000000000000000000000000000000"
       MLTT:
         decimals: 18
         id: 17
         symbol: MLTT
-        address: '0x690f4886c6911d81beb8130db30c825c27281f22'
+        address: "0x690f4886c6911d81beb8130db30c825c27281f22"
       BAT:
         decimals: 18
         id: 9
         symbol: BAT
-        address: '0xd2084ea2ae4bbe1424e4fe3cde25b713632fb988'
+        address: "0xd2084ea2ae4bbe1424e4fe3cde25b713632fb988"
     mockedResponses:
-      - tokens:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "tokens"
             params: []
-          res:
-          -
-            result: *tokens
+        res:
+          result: *tokens
 
   zksync_pubkeyhash:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-    input: 
+    input:
       - "0x5303a0015f8d5a8fef6cb1d60a034ef28dc4ac6aefa33c936d5aa0927f7c169a"
     expected_output: "sync:827a841d753a8eefe82e02b25b5158305dab4d58"
 
   zksync_pubkey:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     expected_output: "0xd274ec1a5e9a513ff8f4eeb344fc02ca61e0823a7821c76e459ea0e8c5140826"
 
   zksync_account_address:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     expected_output: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-  
+
   zksync_sign:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
-        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"   
-    input: 
+      pk:
+        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+    input:
       - "0xaabbccddeeff"
     expected_output: "0xd274ec1a5e9a513ff8f4eeb344fc02ca61e0823a7821c76e459ea0e8c5140826d78eb2c9661541f31ca097f5d38dc39aa9813017b4db929242e8e633839bdc80e4df4cbc14f9c8ca530c95ac005646c4b4b00f0a52a3dcb588db14b86fd66f02"
-  
+
   zksync_verify:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
-        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"   
+      pk:
+        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     input:
       - "0xaabbccddeeff"
       - "0x5303a0015f8d5a8fef6cb1d60a034ef28dc4ac6aefa33c936d5aa0927f7c169a52196178c5023fe88a56872439330bdd1c6c9578cb6e996dfcb704c52ae24a837e6acd5024aca9f5b5507e61cd4388c848a5752ef5e961e10d73b29b4a6b3902"
@@ -961,30 +918,29 @@ zksync:
 
   zksync_get_token_price:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     input:
       - "ETH"
-    expected_output:  214.996782624198
+    expected_output: 214.996782624198
     mockedResponses:
-      - get_token_price:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "get_token_price"
             params:
               - "ETH"
-          res:
-          -
-            result: "214.9967826241980000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        res:
+          result: "214.9967826241980000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 
   zksync_get_tx_fee:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
-        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"   
+      pk:
+        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     input:
       - "Transfer"
       - "0xabea9132b05a70803a4e85094fd0e1800777fbef"
@@ -995,39 +951,38 @@ zksync:
       gasPriceWei: "1000000000"
       gasFee: "928245040812996"
       gasTxAmount: "700"
-      feeType: 'Transfer'
+      feeType: "Transfer"
     mockedResponses:
-      - get_tx_fee:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "get_tx_fee"
             params:
               - "Transfer"
               - "0xabea9132b05a70803a4e85094fd0e1800777fbef"
               - "BAT"
-          res:
-            -
-              result:
-                zkpFee : "9488974513464088"
-                totalFee : "10410000000000000"
-                gasPriceWei : "1000000000"
-                gasFee : "928245040812996"
-                gasTxAmount : "700"
-                feeType : "Transfer"
-  
+        res:
+          result:
+            zkpFee: "9488974513464088"
+            totalFee: "10410000000000000"
+            gasPriceWei: "1000000000"
+            gasFee: "928245040812996"
+            gasTxAmount: "700"
+            feeType: "Transfer"
+
   zksync_sync_key:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     expected_output: "0x0492fb6558207a6e006870bdaeab911e490ff9cedb0c8eca67560122ac2f7256"
 
   zksync_aggregate_pubkey:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     input:
       - "0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409"
@@ -1035,9 +990,9 @@ zksync:
 
   zksync_tx_data:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
       zksync:
         rest_api: "https://rinkeby-api.zksync.io/api/v0.1"
@@ -1069,56 +1024,55 @@ zksync:
       to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
       nonce: 8724
     mockedResponses:
-    - in3_http:
-        req:
-        -
-          method: "GET"
-          url: "https://rinkeby-api.zksync.io/api/v0.1/transactions_all/0x9b9f20c7c136a64f26bc3c63ef857e3c91e8ce307ae110f1dc1945bb41e629c1"
+      - req:
+          method: "POST"
+          body:
+            method: "GET"
+            url: "https://rinkeby-api.zksync.io/api/v0.1/transactions_all/0x9b9f20c7c136a64f26bc3c63ef857e3c91e8ce307ae110f1dc1945bb41e629c1"
         res:
-          -
-            result:
-              from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
-              fail_reason: null
-              amount: '1'
-              tx_type: Transfer
-              created_at: '2021-06-10T13:16:55.148346'
-              tx:
-                from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
-                amount: '1'
-                accountId: 7873
-                nonce: 8724
-                signature:
-                  signature: >-
-                    93f872d67e8746770e6cabd6777395d03c546fadf19dd5731fecd6795924f31059d425ee597c8c6eaf2653cb548ac5eee0404141bd428eb5819c0893ee777c02
-                  pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
-                validFrom: 0
-                fee: '0'
-                type: Transfer
-                to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
-                token: 0
-                validUntil: 184467440737095
-              fee: '0'
-              token: 0
-              block_number: 32027
-              to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
+          result:
+            from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
+            fail_reason: null
+            amount: "1"
+            tx_type: Transfer
+            created_at: "2021-06-10T13:16:55.148346"
+            tx:
+              from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
+              amount: "1"
+              accountId: 7873
               nonce: 8724
+              signature:
+                signature: >-
+                  93f872d67e8746770e6cabd6777395d03c546fadf19dd5731fecd6795924f31059d425ee597c8c6eaf2653cb548ac5eee0404141bd428eb5819c0893ee777c02
+                pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
+              validFrom: 0
+              fee: "0"
+              type: Transfer
+              to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
+              token: 0
+              validUntil: 184467440737095
+            fee: "0"
+            token: 0
+            block_number: 32027
+            to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
+            nonce: 8724
 
   zksync_account_history:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
       zksync:
         rest_api: "https://rinkeby-api.zksync.io/api/v0.1"
     input:
       - "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
     expected_output:
-      - hash: 'sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732'
+      - hash: "sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732"
         pq_id: null
         tx:
-          amount: '2'
-          from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
+          amount: "2"
+          from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
           token: ETH
           accountId: 7873
           validFrom: 0
@@ -1126,23 +1080,23 @@ zksync:
             signature: >-
               4838bd78393fc2f129a95b00ea76aace63ee3839296e25abb2d77cfc19f92d06382f715bbdbd326ccde9216c97d053a71e335e0ce57c24ca724d5575c8761701
             pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
-          fee: '0'
+          fee: "0"
           type: Transfer
-          to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
+          to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
           validUntil: 184467440737095
           nonce: 8738
-        created_at: '2021-06-10T15:04:24.632399Z'
+        created_at: "2021-06-10T15:04:24.632399Z"
         success: true
         commited: true
         verified: false
         fail_reason: null
-        tx_id: '32069,47'
+        tx_id: "32069,47"
         eth_block: null
-      - hash: 'sync-tx:c54dc9e117c9b1e461b078b64d5f4cd7bd180b0cdfb06793189332cd522328be'
+      - hash: "sync-tx:c54dc9e117c9b1e461b078b64d5f4cd7bd180b0cdfb06793189332cd522328be"
         pq_id: null
         tx:
-          amount: '3'
-          from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
+          amount: "3"
+          from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
           accountId: 7873
           type: Transfer
           signature:
@@ -1150,161 +1104,158 @@ zksync:
             signature: >-
               5b501751a9fabc613b1327f204655f8b16065545cf57ad38c5dff9ac39dd90a73fafe218d574569280e47e7cd053db500ec1bdb6fca377aee96d940a7851b601
           validFrom: 0
-          fee: '0'
+          fee: "0"
           token: ETH
-          to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
+          to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
           validUntil: 184467440737095
           nonce: 8737
-        created_at: '2021-06-10T14:50:56.793876Z'
+        created_at: "2021-06-10T14:50:56.793876Z"
         success: true
         commited: true
         verified: false
         fail_reason: null
         eth_block: null
-        tx_id: '32067,5'
+        tx_id: "32067,5"
     mockedResponses:
-      - in3_http: 
-          req:
-            - 
-              method: "GET"
-              url: "https://rinkeby-api.zksync.io/api/v0.1/account/0x3169131f0e744c1b8ef1ca8371c20d328f7f204d/history/0/100"
-          res:
-            -
-              result:
-                - hash: 'sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732'
-                  pq_id: null
-                  tx:
-                    amount: '2'
-                    from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
-                    token: ETH
-                    accountId: 7873
-                    validFrom: 0
-                    signature:
-                      signature: >-
-                        4838bd78393fc2f129a95b00ea76aace63ee3839296e25abb2d77cfc19f92d06382f715bbdbd326ccde9216c97d053a71e335e0ce57c24ca724d5575c8761701
-                      pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
-                    fee: '0'
-                    type: Transfer
-                    to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
-                    validUntil: 184467440737095
-                    nonce: 8738
-                  created_at: '2021-06-10T15:04:24.632399Z'
-                  success: true
-                  commited: true
-                  verified: false
-                  fail_reason: null
-                  tx_id: '32069,47'
-                  eth_block: null
-                - hash: 'sync-tx:c54dc9e117c9b1e461b078b64d5f4cd7bd180b0cdfb06793189332cd522328be'
-                  pq_id: null
-                  tx:
-                    amount: '3'
-                    from: '0x3169131f0e744c1b8ef1ca8371c20d328f7f204d'
-                    accountId: 7873
-                    type: Transfer
-                    signature:
-                      pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
-                      signature: >-
-                        5b501751a9fabc613b1327f204655f8b16065545cf57ad38c5dff9ac39dd90a73fafe218d574569280e47e7cd053db500ec1bdb6fca377aee96d940a7851b601
-                    validFrom: 0
-                    fee: '0'
-                    token: ETH
-                    to: '0x8c469877b27932abdd2313c4b6bf7cff5667fdb9'
-                    validUntil: 184467440737095
-                    nonce: 8737
-                  created_at: '2021-06-10T14:50:56.793876Z'
-                  success: true
-                  commited: true
-                  verified: false
-                  fail_reason: null
-                  eth_block: null
-                  tx_id: '32067,5'
+      - req:
+          method: "POST"
+          body:
+            method: "GET"
+            url: "https://rinkeby-api.zksync.io/api/v0.1/account/0x3169131f0e744c1b8ef1ca8371c20d328f7f204d/history/0/100"
+        res:
+          result:
+            - hash: "sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732"
+              pq_id: null
+              tx:
+                amount: "2"
+                from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
+                token: ETH
+                accountId: 7873
+                validFrom: 0
+                signature:
+                  signature: >-
+                    4838bd78393fc2f129a95b00ea76aace63ee3839296e25abb2d77cfc19f92d06382f715bbdbd326ccde9216c97d053a71e335e0ce57c24ca724d5575c8761701
+                  pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
+                fee: "0"
+                type: Transfer
+                to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
+                validUntil: 184467440737095
+                nonce: 8738
+              created_at: "2021-06-10T15:04:24.632399Z"
+              success: true
+              commited: true
+              verified: false
+              fail_reason: null
+              tx_id: "32069,47"
+              eth_block: null
+            - hash: "sync-tx:c54dc9e117c9b1e461b078b64d5f4cd7bd180b0cdfb06793189332cd522328be"
+              pq_id: null
+              tx:
+                amount: "3"
+                from: "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
+                accountId: 7873
+                type: Transfer
+                signature:
+                  pubKey: cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9
+                  signature: >-
+                    5b501751a9fabc613b1327f204655f8b16065545cf57ad38c5dff9ac39dd90a73fafe218d574569280e47e7cd053db500ec1bdb6fca377aee96d940a7851b601
+                validFrom: 0
+                fee: "0"
+                token: ETH
+                to: "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9"
+                validUntil: 184467440737095
+                nonce: 8737
+              created_at: "2021-06-10T14:50:56.793876Z"
+              success: true
+              commited: true
+              verified: false
+              fail_reason: null
+              eth_block: null
+              tx_id: "32067,5"
 
   zksync_account_info:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     input:
       - "0x0e8b4fe889b126b9b502b244c9130912510f014f"
     expected_output:
-      address: '0x0e8b4fe889b126b9b502b244c9130912510f014f'
+      address: "0x0e8b4fe889b126b9b502b244c9130912510f014f"
       id: null
       committed:
         nonce: 0
         balances: {}
-        pubKeyHash: 'sync:0000000000000000000000000000000000000000'
+        pubKeyHash: "sync:0000000000000000000000000000000000000000"
         mintedNfts: {}
         nfts: {}
       verified:
         nonce: 0
         balances: {}
-        pubKeyHash: 'sync:0000000000000000000000000000000000000000'
+        pubKeyHash: "sync:0000000000000000000000000000000000000000"
         mintedNfts: {}
         nfts: {}
       depositing:
         balances: {}
     mockedResponses:
-      - account_info:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "account_info"
             params:
               - "0x0e8b4fe889b126b9b502b244c9130912510f014f"
-          res:
-          -
-            result:
-              address: '0x0e8b4fe889b126b9b502b244c9130912510f014f'
-              id: null
-              committed:
-                nonce: 0
-                balances: {}
-                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
-                mintedNfts: {}
-                nfts: {}
-              verified:
-                nonce: 0
-                balances: {}
-                pubKeyHash: 'sync:0000000000000000000000000000000000000000'
-                mintedNfts: {}
-                nfts: {}
-              depositing:
-                balances: {}
+        res:
+          result:
+            address: "0x0e8b4fe889b126b9b502b244c9130912510f014f"
+            id: null
+            committed:
+              nonce: 0
+              balances: {}
+              pubKeyHash: "sync:0000000000000000000000000000000000000000"
+              mintedNfts: {}
+              nfts: {}
+            verified:
+              nonce: 0
+              balances: {}
+              pubKeyHash: "sync:0000000000000000000000000000000000000000"
+              mintedNfts: {}
+              nfts: {}
+            depositing:
+              balances: {}
 
   zksync_tx_info:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     input:
       - "sync-tx:e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000"
-    expected_output: 
-      executed : false
-      failReason : null
-      block : null
-      success : null
+    expected_output:
+      executed: false
+      failReason: null
+      block: null
+      success: null
     mockedResponses:
-      - tx_info:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: "tx_info"
             params:
               - "sync-tx:e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000"
-          res:
-          - 
-            result:
-              executed : false
-              failReason : null
-              block : null
-              success : null
+        res:
+          result:
+            executed: false
+            failReason: null
+            block: null
+            success: null
 
   zksync_ethop_info:
     config:
-      proof: 'none'
+      proof: "none"
       experimental: true
-      pk: 
+      pk:
         - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
     input:
       - 1
@@ -1313,19 +1264,18 @@ zksync:
         blockNumber: 4
         committed: true
         verified: true
-      executed : true
+      executed: true
     mockedResponses:
-      - ethop_info:
-          req:
-          -
+      - req:
+          method: "POST"
+          body:
             method: ethop_info
             params:
               - 1
-          res:
-          -
-            result:
-              block:
-                blockNumber: 4
-                committed: true
-                verified: true
-              executed : true
+        res:
+          result:
+            block:
+              blockNumber: 4
+              committed: true
+              verified: true
+            executed: true

@@ -136,4 +136,3 @@ config:
                 url: "https://mybootnode-B.com"
                 props: "0xFFFF"
       response: true
-

@@ -39,6 +39,9 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/crypto/bip32.h"
+#include "../../third-party/crypto/bip39.h"
+#include "../../third-party/crypto/memzero.h"
 #include "../../third-party/crypto/rand.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include <errno.h>
@@ -102,37 +105,84 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_string(ctx, "true");
 }
 
-static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
-  bytes32_t  hash;
-  d_token_t* arg = d_get_at(ctx->params, 0);
-  FILE*      r   = NULL;
-  if (d_type(arg) == T_BYTES) {
-    keccak(d_to_bytes(arg), hash);
-    srand(bytes_to_int(hash, 4));
-  }
-  else {
+static void in3_random(uint8_t* dst, int len) {
 #ifndef WASM
-    r = fopen("/dev/urandom", "r");
-    if (r) {
-      for (int i = 0; i < 32; i++) hash[i] = (uint8_t) fgetc(r);
-      fclose(r);
-    }
-    else
+  FILE* r = fopen("/dev/urandom", "r");
+  if (r) {
+    for (int i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
+    fclose(r);
+    return;
+  }
 #endif
-      srand(current_ms() % 0xFFFFFFFF);
+  srand(current_ms() % 0xFFFFFFFF);
+#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
+  unsigned int number;
+  for (int i = 0; i < len; i++) dst[i] = (rand_s(&number) ? rand() : (int) number) % 256;
+#else
+  for (int i = 0; i < len; i++) dst[i] = rand() % 256;
+#endif
+}
+
+static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
+  bytes32_t hash;
+  in3_random(hash, 32);
+  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+}
+
+static in3_ret_t in3_bip32(in3_rpc_handle_ctx_t* ctx) {
+  char*   curvename = NULL;
+  char*   path      = NULL;
+  bytes_t seed      = {0};
+
+  TRY_PARAM_GET_REQUIRED_BYTES(seed, ctx, 0, 16, 0)
+  TRY_PARAM_GET_STRING(curvename, ctx, 1, "secp256k1")
+  TRY_PARAM_GET_STRING(path, ctx, 2, NULL)
+
+  HDNode node = {0};
+  if (!hdnode_from_seed(seed.data, (int) seed.len, curvename, &node)) return req_set_error(ctx->req, "Invalid seed!", IN3_ERPC);
+  if (path) {
+    char* tmp = alloca(strlen(path) + 1);
+    strcpy(tmp, path);
+    char* p = NULL;
+    while ((p = strtok(p ? NULL : tmp, "/"))) {
+      if (strcmp(p, "m") == 0) continue;
+      if (p[0] == '\'')
+        hdnode_private_ckd_prime(&node, atoi(p + 1));
+      else
+        hdnode_private_ckd(&node, atoi(p));
+    }
+  }
+  return in3_rpc_handle_with_bytes(ctx, bytes(node.private_key, 32));
+}
+
+static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
+  bytes32_t hash;
+  bytes_t   pk = {0};
+  TRY_PARAM_GET_BYTES(pk, ctx, 0, 0, 0)
+  if (!pk.data) {
+    in3_random(hash, 32);
+    pk = bytes(hash, 32);
   }
 
-  if (!r) {
-#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
-    unsigned int number;
-    for (int i = 0; i < 32; i++) {
-      hash[i] = (rand_s(&number) ? rand() : (int) number) % 256;
-    }
-#else
-    for (int i = 0; i < 32; i++) hash[i] = rand() % 256;
-#endif
-  }
-  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+  const char* res = mnemonic_from_data(pk.data, pk.len);
+  sb_printx(in3_rpc_handle_start(ctx), "\"%s\"", res);
+  memzero(hash, 32);
+  mnemonic_clear();
+  return in3_rpc_handle_finish(ctx);
+}
+
+static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
+  char*   mnemonic   = NULL;
+  char*   passphrase = NULL;
+  uint8_t seed[64];
+
+  TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
+  TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
+
+  if (!mnemonic_check(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+
+  mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
+  return in3_rpc_handle_with_bytes(ctx, bytes(seed, 64));
 }
 
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
@@ -164,6 +214,18 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CREATEKEY)
   TRY_RPC("in3_createKey", in3_createKey(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BIP32)
+  TRY_RPC("in3_bip32", in3_bip32(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BIP39_CREATE)
+  TRY_RPC("in3_bip39_create", in3_bip39_create(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BIP39_decode)
+  TRY_RPC("in3_bip39_decode", in3_bip39_decode(ctx))
 #endif
 
   return IN3_EIGNORE;

@@ -1,44 +1,41 @@
 utils:
-
   in3_abiEncode:
-    input: 
+    input:
       - "getBalance(address)"
       - "0x1234567890123456789012345678901234567890"
     expected_output: "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
-  
+
   in3_decodeTx:
-    input: 
+    input:
       - "0x02f88f01128459682f00851102dc833e82b4bb94283af0b28c62c092c9727f1ee09c02ca627eb7f580a4f14fcbc8570e1c3a1976b37166e49ae15c8668b80e6b22cb19ab92ab6e0a85b22c5763d8c080a0acc21e87ad6700c380534323e3a01a582a9c89f73c9a9a527342530c13d9707fa06a5e1f5c85a641be8d20f7a55be5452220c8a5fce1e91f04dd26fc25358b66a2"
-    expected_output: 
+    expected_output:
       type: 2
-      hash: '0x4bb11ae4af2bd4d40e448a29c01fcac7050f8ce00d6bb5765bf5259517e34103'
+      hash: "0x4bb11ae4af2bd4d40e448a29c01fcac7050f8ce00d6bb5765bf5259517e34103"
       chainId: 1
       nonce: 18
       maxPriorityFeePerGas: 1500000000
       maxFeePerGas: 73062449982
       gas: 46267
-      to: '0x283af0b28c62c092c9727f1ee09c02ca627eb7f5'
+      to: "0x283af0b28c62c092c9727f1ee09c02ca627eb7f5"
       value: 0
-      data: '0xf14fcbc8570e1c3a1976b37166e49ae15c8668b80e6b22cb19ab92ab6e0a85b22c5763d8'
+      data: "0xf14fcbc8570e1c3a1976b37166e49ae15c8668b80e6b22cb19ab92ab6e0a85b22c5763d8"
       accessList: []
-      v: '0x'
-      r: '0xacc21e87ad6700c380534323e3a01a582a9c89f73c9a9a527342530c13d9707f'
-      s: '0x6a5e1f5c85a641be8d20f7a55be5452220c8a5fce1e91f04dd26fc25358b66a2'
-      unsigned: '0x02f84c01128459682f00851102dc833e82b4bb94283af0b28c62c092c9727f1ee09c02ca627eb7f580a4f14fcbc8570e1c3a1976b37166e49ae15c8668b80e6b22cb19ab92ab6e0a85b22c5763d8c0'
-      signature: '0xacc21e87ad6700c380534323e3a01a582a9c89f73c9a9a527342530c13d9707f6a5e1f5c85a641be8d20f7a55be5452220c8a5fce1e91f04dd26fc25358b66a200'
-      publicKey: '0x2fe90620bae0f3f008847a39868f1eb841e7b5cbf8840cbe86deeda87ab06877df81ed697c44a70f77161a0bff7031e0f78c677fe35dbf670491974806fc4fc7'
-      from: '0xde82a4504dfa72089be9a0c569b8afb76a1de421'
-  
+      v: "0x"
+      r: "0xacc21e87ad6700c380534323e3a01a582a9c89f73c9a9a527342530c13d9707f"
+      s: "0x6a5e1f5c85a641be8d20f7a55be5452220c8a5fce1e91f04dd26fc25358b66a2"
+      unsigned: "0x02f84c01128459682f00851102dc833e82b4bb94283af0b28c62c092c9727f1ee09c02ca627eb7f580a4f14fcbc8570e1c3a1976b37166e49ae15c8668b80e6b22cb19ab92ab6e0a85b22c5763d8c0"
+      signature: "0xacc21e87ad6700c380534323e3a01a582a9c89f73c9a9a527342530c13d9707f6a5e1f5c85a641be8d20f7a55be5452220c8a5fce1e91f04dd26fc25358b66a200"
+      publicKey: "0x2fe90620bae0f3f008847a39868f1eb841e7b5cbf8840cbe86deeda87ab06877df81ed697c44a70f77161a0bff7031e0f78c677fe35dbf670491974806fc4fc7"
+      from: "0xde82a4504dfa72089be9a0c569b8afb76a1de421"
+
   in3_abiDecode:
     input:
       - "(address,uint256)"
       - "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005"
     expected_output:
-      -  
-        value: "0x1234567890123456789012345678901234567890"
+      - value: "0x1234567890123456789012345678901234567890"
         type: string
-      -  
-        value: "5"
+      - value: "5"
         type: uint256
 
   in3_checksumAddress:
@@ -53,13 +50,13 @@ utils:
       - eth
       - 3
     expected_output: "0.158"
-  
+
   in3_toWei:
     input:
       - "20.0009123"
       - eth
     expected_output: "0x01159183c4793db800"
-  
+
   in3_calcDeployAddress:
     input:
       - "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c"
@@ -67,7 +64,6 @@ utils:
     expected_output: "0xba866e7bd2573be3eaf5077b557751bb6d58076e"
 
 account:
-
   in3_pk2address:
     input:
       - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
@@ -88,36 +84,32 @@ account:
       address: "0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"
 
   in3_prepareTx:
-    -
-      config:
-        proof: 'none'
+    - config:
+        proof: "none"
       input:
         - to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
           value: "0x100000000"
-          from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f" 
+          from: "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
       expected_output: "0xe48080829c409463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
       mockedResponses:
-        - eth_getTransactionCount:
-            req:
-              -
-                method: "eth_getTransactionCount"
-                params:
-                  - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
-                  - "latest"
-            res:
-            - 
-              result: "0x0"
-        - eth_gasPrice:
-            req:
-            -
+        - req:
+            method: "POST"
+            body:
+              method: "eth_getTransactionCount"
+              params:
+                - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+                - "latest"
+          res:
+            result: "0x0"
+        - req:
+            method: "POST"
+            body:
               method: "eth_gasPrice"
-              params: [] 
-            res:
-            - 
-              result: "0x0"
-    -
-      config:
-        proof: 'none'
+              params: []
+          res:
+            result: "0x0"
+    - config:
+        proof: "none"
       input:
         - to: "0x63f666a23cbd135a91187499b5cc51d589c302a0"
           value: "0x100000000"
@@ -125,28 +117,26 @@ account:
           gas: 21000
       expected_output: "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
       mockedResponses:
-        - eth_getTransactionCount:
-            req:
-              -
-                method: "eth_getTransactionCount"
-                params:
-                  - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
-                  - "latest"
-            res:
-            - 
-              result: "0x0"
-        - eth_gasPrice:
-            req:
-            -
+        - req:
+            method: "POST"
+            body:
+              method: "eth_getTransactionCount"
+              params:
+                - "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+                - "latest"
+          res:
+            result: "0x0"
+        - req:
+            method: "POST"
+            body:
               method: "eth_gasPrice"
-              params: [] 
-            res:
-            - 
-              result: "0x0"
+              params: []
+          res:
+            result: "0x0"
   in3_signTx:
     config:
       proof: "none"
-      pk: 
+      pk:
         - "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
     input:
       - "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080"
@@ -156,7 +146,7 @@ account:
   in3_signData:
     config:
       proof: "none"
-      pk: 
+      pk:
         - "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
     input:
       - "0x0102030405060708090a0b0c0d0e0f"
@@ -175,13 +165,13 @@ account:
       - version: 3,
         id: "f6b5c0b1-ba7a-4b67-9086-a01ea54ec638"
         address: "08aa30739030f362a8dd597fd3fcde283e36f4a1"
-        crypto: 
+        crypto:
           ciphertext: "d5c5aafdee81d25bb5ac4048c8c6954dd50c595ee918f120f5a2066951ef992d"
-          cipherparams: 
+          cipherparams:
             iv: "415440d2b1d6811d5c8a3f4c92c73f49"
           cipher: "aes-128-ctr"
           kdf: pbkdf2
-          kdfparams: 
+          kdfparams:
             dklen: 32
             salt: "691e9ad0da2b44404f65e0a60cf6aabe3e92d2c23b7410fd187eeeb2c1de4a0d"
             c: 16384
@@ -193,7 +183,7 @@ account:
   eth_sign:
     config:
       proof: "none"
-      pk: 
+      pk:
         - "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
     input:
       - "0x8A91DC2D28b689474298D91899f0c1baF62cB85b"
@@ -202,18 +192,15 @@ account:
 
   eth_signTransaction:
     config:
-      proof: 'none'
-      pk: 
+      proof: "none"
+      pk:
         - "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
-      chainId: 'goerli'
+      chainId: "goerli"
     input:
-      - 
-        from: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+      - from: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
         to: "0x2c055df8d095a98099dc8942510a65d51480840e"
         data: "0x"
         value: "15023483000000000"
         gasPrice: 1000000000
         nonce: 32
     expected_output: "0xf86a20843b9aca00829c40942c055df8d095a98099dc8942510a65d51480840e87355fc737810e00802ea038448f7f8591b29e97694ae8c317de840fb2e7b178714fd3d102ed082682c639a04ab7da09a2e7acb717c53c7a610c63ea9e703d483603abd066f9ada4adf88c98"
-
-
