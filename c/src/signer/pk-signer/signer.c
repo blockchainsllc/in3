@@ -37,9 +37,13 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
+#include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "../../third-party/crypto/bip32.h"
+#include "../../third-party/crypto/bip39.h"
 #include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/memzero.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include <string.h>
@@ -196,6 +200,79 @@ static in3_ret_t add_raw_key(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
 }
 
+static in3_ret_t in3_addJsonKey(in3_rpc_handle_ctx_t* ctx) {
+  char*      passphrase = NULL;
+  d_token_t* res        = NULL;
+  d_token_t* data       = NULL;
+  TRY_PARAM_GET_REQUIRED_OBJECT(data, ctx, 0)
+  TRY_PARAM_GET_REQUIRED_STRING(passphrase, ctx, 1)
+  char* params = sprintx("%j,\"%S\"", data, passphrase);
+  TRY_FINAL(req_send_sub_request(ctx->req, "in3_decryptKey", params, NULL, &res, NULL), _free(params))
+  if (d_type(res) != T_BYTES && d_len(res) != 32) return req_set_error(ctx->req, "invalid key", IN3_EINVAL);
+  address_t adr;
+  get_address(d_bytes(res)->data, adr);
+  add_key(ctx->req->client, d_bytes(res)->data);
+  return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
+}
+
+static void addPath(in3_t* c, HDNode node, char* path, sb_t* sb) {
+  char* tmp = alloca(strlen(path) + 1);
+  strcpy(tmp, path);
+  char* p = NULL;
+  while ((p = strtok(p ? NULL : tmp, "/"))) {
+    if (strcmp(p, "m") == 0) continue;
+    if (p[0] == '\'')
+      hdnode_private_ckd_prime(&node, atoi(p + 1));
+    else if (p[strlen(p) - 1] == '\'') {
+      char tt[50];
+      strcpy(tt, p);
+      tt[strlen(p) - 1] = 0;
+      hdnode_private_ckd_prime(&node, atoi(p + 1));
+    }
+    else
+      hdnode_private_ckd(&node, atoi(p));
+  }
+
+  if (!add_key(c, node.private_key)) return;
+  if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
+  address_t adr;
+  get_address(node.private_key, adr);
+  memzero(&node, sizeof(node));
+  sb_printx(sb, "\"%B\"", bytes(adr, 20));
+}
+
+static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
+
+  char*      curvename  = NULL;
+  char*      mnemonic   = NULL;
+  char*      passphrase = NULL;
+  d_token_t* paths      = NULL;
+  uint8_t    seed[64];
+  HDNode     node = {0};
+
+  TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
+  TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
+  TRY_PARAM_GET_ARRAY(paths, ctx, 2);
+  TRY_PARAM_GET_STRING(curvename, ctx, 3, "secp256k1")
+
+  if (!mnemonic_check(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+
+  mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
+  if (!hdnode_from_seed(seed, 64, curvename, &node)) return req_set_error(ctx->req, "Invalid seed!", IN3_ERPC);
+  sb_t* sb = in3_rpc_handle_start(ctx);
+  sb_add_char(sb, '[');
+  if (!paths)
+    addPath(ctx->req->client, node, "m/44'/60'/0'/0/0", sb);
+  else
+    for (d_iterator_t iter = d_iter(paths); iter.left; d_iter_next(&iter)) {
+      addPath(ctx->req->client, node, d_string(iter.token), sb);
+    }
+  sb_add_char(sb, ']');
+  memzero(&node, sizeof(node));
+  memzero(seed, 64);
+  return in3_rpc_handle_finish(ctx);
+}
+
 static in3_ret_t eth_accounts(in3_rpc_handle_ctx_t* ctx) {
   sb_t*                  sb    = in3_rpc_handle_start(ctx);
   bool                   first = true;
@@ -260,8 +337,14 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
     case PLGN_ACT_RPC_HANDLE: {
       in3_rpc_handle_ctx_t* ctx = action_ctx;
       UNUSED_VAR(ctx); // in case RPC_ONLY is used
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ADDJSONKEY)
+      TRY_RPC("in3_addJsonKey", in3_addJsonKey(ctx))
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ADDRAWKEY)
       TRY_RPC("in3_addRawKey", add_raw_key(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_ADDMNEMONIC)
+      TRY_RPC("in3_addMnemonic", in3_addMnemonic(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_ACCOUNTS)
       TRY_RPC("eth_accounts", eth_accounts(ctx))

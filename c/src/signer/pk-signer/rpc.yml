@@ -33,6 +33,72 @@ account:
         - "0x1234567890123456789012345678901234567890123456789012345678901234"
       response: "0x2e988a386a799f506693793c6a5af6b54dfaabfb"
 
+  in3_addJsonKey:
+    sync: true
+    descr: decrypts a JSON Keystore file as defined in the [Web3 Secret Storage Definition](https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition) and adds it as signer.
+    params:
+      key:
+        type: keyparams
+        descr: the keyparams
+      passphrase:
+        descr: the password to decrypt it.
+        type: string
+    result:
+      descr: the added address
+      type: address
+    example:
+      request:
+        - version: 3,
+          id: "f6b5c0b1-ba7a-4b67-9086-a01ea54ec638"
+          address: "08aa30739030f362a8dd597fd3fcde283e36f4a1"
+          crypto:
+            ciphertext: "d5c5aafdee81d25bb5ac4048c8c6954dd50c595ee918f120f5a2066951ef992d"
+            cipherparams:
+              iv: "415440d2b1d6811d5c8a3f4c92c73f49"
+            cipher: "aes-128-ctr"
+            kdf: pbkdf2
+            kdfparams:
+              dklen: 32
+              salt: "691e9ad0da2b44404f65e0a60cf6aabe3e92d2c23b7410fd187eeeb2c1de4a0d"
+              c: 16384
+              prf: hmac-sha256
+            mac: "de651c04fc67fd552002b4235fa23ab2178d3a500caa7070b554168e73359610"
+        - test
+      response: "0x08aa30739030f362a8dd597fd3fcde283e36f4a1"
+
+  in3_addMnemonic:
+    sync: true
+    descr: adds a signer from a mnemomic phrase
+    params:
+      mnemomic:
+        type: string
+        descr: the mnemomic phrase
+      passphrase:
+        optional: true
+        descr: the password to decrypt it or null.
+        type: string
+      derivation:
+        optional: true
+        descr: the BIP32 derivation-path
+        array: true
+        type: string
+      curve:
+        descr: the name of the curve. should be one of `secp256k1`,`secp256k1-decred`,`secp256k1-groestl`,`secp256k1-smart`,`nist256p1`,`ed25519`,`ed25519 cardano seed`,`ed25519-sha3`,`curve25519`,`ed25519-keccak`
+        default: secp256k1
+        optional: true
+        type: string
+
+    result:
+      descr: the added address
+      type: address
+      array: true
+    example:
+      request:
+        - 'time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful'
+        - test
+      response: 
+        - "0xd66a0C40d3d8B245211C7E174f89CA3a5bA93795"
+
   eth_accounts:
     sync: true
     descr: |
