@@ -39,6 +39,7 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/crypto/bip32.h"
 #include "../../third-party/crypto/rand.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include <errno.h>
@@ -135,6 +136,32 @@ static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 
+static in3_ret_t in3_bip32(in3_rpc_handle_ctx_t* ctx) {
+  char*   curvename = NULL;
+  char*   path      = NULL;
+  bytes_t seed      = {0};
+
+  TRY_PARAM_GET_REQUIRED_BYTES(seed, ctx, 0, 16, 0)
+  TRY_PARAM_GET_STRING(curvename, ctx, 1, "secp256k1")
+  TRY_PARAM_GET_STRING(path, ctx, 2, NULL)
+
+  HDNode node = {0};
+  if (!hdnode_from_seed(seed.data, (int) seed.len, curvename, &node)) return req_set_error(ctx->req, "Invalid seed!", IN3_ERPC);
+  if (path) {
+    char* tmp = alloca(strlen(path) + 1);
+    strcpy(tmp, path);
+    char* p = NULL;
+    while ((p = strtok(p ? NULL : tmp, "/"))) {
+      if (strcmp(p, "m") == 0) continue;
+      if (p[0] == '\'')
+        hdnode_private_ckd_prime(&node, atoi(p + 1));
+      else
+        hdnode_private_ckd(&node, atoi(p));
+    }
+  }
+  return in3_rpc_handle_with_bytes(ctx, bytes(node.private_key, 32));
+}
+
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
   UNUSED_VAR(pdata);
@@ -164,6 +191,10 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CREATEKEY)
   TRY_RPC("in3_createKey", in3_createKey(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BIP32)
+  TRY_RPC("in3_bip32", in3_bip32(ctx))
 #endif
 
   return IN3_EIGNORE;

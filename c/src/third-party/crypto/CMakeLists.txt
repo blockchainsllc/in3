@@ -53,6 +53,21 @@ set(CRYPTO_SRC
   aes/aescrypt.c
   aes/aeskey.c
   aes/aestab.c
+
+  curves.c
+  bip32.c
+  nist256p1.c
+
+  ed25519-donna/curve25519-donna-32bit.c
+  ed25519-donna/curve25519-donna-helpers.c
+  ed25519-donna/curve25519-donna-scalarmult-base.c
+  ed25519-donna/ed25519-donna-32bit-tables.c
+  ed25519-donna/ed25519-donna-basepoint-table.c
+  ed25519-donna/ed25519-donna-impl-base.c
+  ed25519-donna/ed25519-keccak.c
+  ed25519-donna/ed25519-sha3.c
+  ed25519-donna/ed25519.c
+  ed25519-donna/modm-donna-32bit.c
 )
 if (NOT ESP_IDF)
     set(CRYPTO_SRC ${CRYPTO_SRC} hmac.c)
