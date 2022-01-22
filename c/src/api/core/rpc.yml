@@ -54,6 +54,41 @@ utils:
       response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
 
 
+  in3_http:
+    apiName: fetchHttp
+    descr: sends a simple http-request. This is used internally to fetch data from REST-APIs.
+    params: 
+      method:
+        type: string
+        descr: the HTTP-method to use like 'GET', 'POST', 'PUT', 'DELETE',...
+      url:
+        type: string
+        descr: the url of the endpoint
+      payload:
+        type: string
+        descr: the payload or null, if it does not apply
+        nullable: true
+        optional: true
+      headers:
+        type: string
+        array: true
+        optional: true
+        descr: "a array of additional headers to send. each header must be a string in the form `Key: Value`"
+    result:
+      type: any
+      descr: the response will depend on the http-response. If the data are json-data, the json-object will the response.
+    example:
+      request:
+        - POST
+        - https://reqbin.com/echo/post/json
+        - {"id":78912,"Customer":"Jason Sweet","Price": 18}
+        - ["Accept: application/json","Content-Type: application/json"]
+      response: 
+        success: true
+      
+      
+      
+
 account:
 
   in3_createKey:
@@ -69,6 +104,73 @@ account:
         type: bytes
     result:
       descr: the 32byte random data
+      type: bytes32
     example:
       request: []
       response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
+
+  in3_bip32:
+    sync: true
+    descr: |
+      Generates 32 byte private key based on BIP 32.
+    params:
+      seed:
+        descr: the seed. it mus be at least 16 bytes long
+        type: bytes
+      curve:
+        descr: the name of the curve. should be one of `secp256k1`,`secp256k1-decred`,`secp256k1-groestl`,`secp256k1-smart`,`nist256p1`,`ed25519`,`ed25519 cardano seed`,`ed25519-sha3`,`curve25519`,`ed25519-keccak`
+        default: secp256k1
+        optional: true
+        type: string
+      path:
+        descr: the derivation path as specified in BIP32
+        example: m/2/3
+        type: string
+        optional: true
+    result:
+      descr: theprivate key
+      type: bytes32
+    example:
+      request: 
+        - "0x1234567890123456789012345678901234567890"
+        - secp256k1
+        - m/4
+      response: "0xd747eb5734828a3c3fc617cb98c47964bd1df96ec05ce2a2c6618782d2c43645"
+
+
+  in3_bip39_create:
+    sync: true
+    descr: |
+      generates a mnemonic based on bip39
+    params:
+      seed:
+        descr: the seed. if a seed is passed, this seed will be used to generate it, making it deterministic.
+        optional: true
+        type: bytes
+    result:
+      descr: a list of words based on bip39
+      type: string
+    example:
+      request: 
+        - "0x1ff06206d4d2e44b104644b619d070821a781c05ccca2579728bab0be6010e52"
+      response: "cable loan like predict comic cereal donate silk render soldier bring aerobic pole asthma blame off century slide pepper figure salmon above deer found"
+
+  in3_bip39_decode:
+    sync: true
+    descr: |
+      decodes a mnemonic and returns the seed as 64 bytes.
+    params:
+      mnemonic:
+        descr: the mnemonic
+        type: string
+      passphrase:
+        descr: the passphrase
+        type: string
+    result:
+      descr: the resulting seed
+      type: bytes
+    example:
+      request: 
+        - "cable loan like predict comic cereal donate silk render soldier bring aerobic pole asthma blame off century slide pepper figure salmon above deer found"
+        - test
+      response: "0x751ff30f38a674397010348a36c4ba0dac0f943bfaca936ea725a6ac2e16f68798e0ef8fa11992882b2c2f968c44e6afbc8aced61b96403834998e7b7faeeb5e"
