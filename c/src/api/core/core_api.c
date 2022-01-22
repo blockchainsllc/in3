@@ -148,6 +148,12 @@ static in3_ret_t in3_bip32(in3_rpc_handle_ctx_t* ctx) {
       if (strcmp(p, "m") == 0) continue;
       if (p[0] == '\'')
         hdnode_private_ckd_prime(&node, atoi(p + 1));
+      else if (p[strlen(p) - 1] == '\'') {
+        char tt[50];
+        strcpy(tt, p);
+        tt[strlen(p) - 1] = 0;
+        hdnode_private_ckd_prime(&node, atoi(p + 1));
+      }
       else
         hdnode_private_ckd(&node, atoi(p));
     }
