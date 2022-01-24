@@ -149,11 +149,11 @@ typedef enum btc_opcode {
 
 typedef enum alg { BTC_UNSUPPORTED,
                    BTC_NON_STANDARD,
-                   BTC_P2PK,
-                   BTC_P2PKH,
-                   BTC_P2SH,
-                   BTC_V0_P2WPKH,
-                   BTC_P2WSH,
+                   BTC_P2PK,            // Pay-to-Public-Key
+                   BTC_P2PKH,           // Pay-to-Public-Key-Hash
+                   BTC_P2SH,            // Pay-to-Script-Hash
+                   BTC_V0_P2WPKH,       // Pay-to-Witness-Public-Key-Hash (Version Zero)
+                   BTC_P2WSH,           // Pay-to-Witness-Script-Hash
                    BTC_BARE_MULTISIG,
 } alg_t;
 

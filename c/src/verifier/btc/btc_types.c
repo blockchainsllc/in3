@@ -3,6 +3,7 @@
 #include "../../core/client/request_internal.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "btc_utils.h"
 #include "btc_script.h"
 #include "btc_serialize.h"
 
@@ -14,6 +15,10 @@ typedef enum btc_tx_field {
 
 bool script_is_standard(alg_t script_type) {
   return script_type != BTC_NON_STANDARD && script_type != BTC_UNSUPPORTED;
+}
+
+bool pub_key_is_valid(const bytes_t *pub_key) {
+  return (pub_key->len == BTC_UNCOMP_PUB_KEY_SIZE_BYTES && pub_key->data[0] == 0x4) || (pub_key->len == BTC_COMP_PUB_KEY_SIZE_BYTES && (pub_key->data[0] == 0x2 || pub_key->data[0] == 0x3));
 }
 
 void btc_init_tx(btc_tx_t* tx) {
@@ -267,7 +272,7 @@ alg_t btc_get_script_type(const bytes_t* script) {
   uint32_t len         = script->len;
   uint8_t* p           = script->data;
 
-  if ((len == (uint32_t) p[0] + 2) && (p[0] == 33 || p[0] == 65) && (p[len - 1] == OP_CHECKSIG)) {
+  if ((len == (uint32_t) p[0] + 2) && (p[0] == BTC_COMP_PUB_KEY_SIZE_BYTES || p[0] == BTC_UNCOMP_PUB_KEY_SIZE_BYTES) && (p[len - 1] == OP_CHECKSIG)) {
     // locking script has format: PUB_KEY_LEN(1) PUB_KEY(33 or 65 bytes) OP_CHECKSIG(1)
     script_type = BTC_P2PK;
   }
@@ -393,7 +398,7 @@ static void add_account_pub_key_to_utxo(btc_utxo_t* utxo, btc_account_pub_key_t*
   utxo->accounts_count++;
 }
 
-static in3_ret_t fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
+static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   if (!utxo || !utxo_input) return IN3_EINVAL;
 
   uint32_t    tx_index         = d_get_long(d_get(utxo_input, key("tx_index")), 0L);

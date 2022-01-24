@@ -9,8 +9,8 @@
 #include <stdint.h>
 
 // General size values
-#define BTC_UNCOMP_PUB_KEY_SIZE_BYTES 65
-#define BTC_COMP_UB_KEY_SIZE_BYTES    33
+#define BTC_UNCOMP_PUB_KEY_SIZE_BYTES  65
+#define BTC_COMP_PUB_KEY_SIZE_BYTES    33
 
 // Transaction fixed size values
 #define BTC_TX_VERSION_SIZE_BYTES  4
@@ -21,6 +21,7 @@
 // Input fixed size values
 #define BTC_TX_IN_PREV_OUPUT_SIZE_BYTES (BTC_TX_HASH_SIZE_BYTES + BTX_TX_INDEX_SIZE_BYTES)
 #define BTC_TX_IN_SEQUENCE_SIZE_BYTES   4
+#define BTC_TX_IN_SIGHASH_SIZE_BYTES    4
 
 // Output fixed size values
 #define BTC_TX_OUT_VALUE_SIZE_BYTES 8
@@ -82,6 +83,7 @@ void btc_init_tx_out(btc_tx_out_t* tx_out);
 
 alg_t btc_get_script_type(const bytes_t* script);
 bool  script_is_standard(alg_t script_type);
+bool  pub_key_is_valid(const bytes_t *pub_key);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
 uint32_t  btc_get_raw_tx_size(const btc_tx_t* tx);
