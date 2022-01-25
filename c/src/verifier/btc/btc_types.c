@@ -28,6 +28,13 @@ void btc_init_tx(btc_tx_t* tx) {
   }
 }
 
+void btc_init_tx_ctx(btc_tx_ctx_t *tx_ctx) {
+  if (tx_ctx) {
+    memset(tx_ctx, 0, sizeof(btc_tx_ctx_t));
+    btc_init_tx(&tx_ctx->tx);
+  }
+}
+
 void btc_init_tx_in(btc_tx_in_t* tx_in) {
   if (tx_in) {
     memset(tx_in, 0, sizeof(btc_tx_in_t));
@@ -44,6 +51,66 @@ void btc_init_tx_out(btc_tx_out_t* tx_out) {
 void btc_init_utxo(btc_utxo_t* utxo) {
   if (utxo) {
     memset(utxo, 0, sizeof(btc_utxo_t));
+  }
+}
+
+void btc_free_tx(btc_tx_t *tx) {
+  if (tx->all.data)       _free(tx->all.data);
+  if (tx->input.data)     _free(tx->input.data);
+  if (tx->output.data)    _free(tx->output.data);
+  if (tx->witnesses.data) _free(tx->witnesses.data);
+}
+
+void btc_free_tx_in(btc_tx_in_t *tx_in) {
+  if (tx_in->prev_tx_hash)      _free(tx_in->prev_tx_hash);
+  if (tx_in->script.data.data)  _free(tx_in->script.data.data);
+}
+
+void btc_free_tx_out(btc_tx_out_t *tx_out) {
+  if (tx_out->script.data.data) _free(tx_out->script.data.data);
+}
+
+void btc_free_utxo(btc_utxo_t *utxo) {
+  if (utxo->tx_hash)              _free(utxo->tx_hash);
+  if (utxo->raw_script.data.data) _free(utxo->raw_script.data.data);
+  
+  btc_free_tx_out(&utxo->tx_out);
+  
+  if (utxo->signatures) {
+    for (uint32_t i = 0; i < utxo->sig_count; i++) {
+      _free(utxo->signatures[i].data);
+    }
+    _free(utxo->signatures);
+  }
+
+  if (utxo->accounts) {
+    for (uint32_t i = 0; i < utxo->accounts_count; i++) {
+      _free(utxo->accounts[i].pub_key.data);
+      _free(utxo->accounts[i].account.data);
+    }
+    _free(utxo->accounts);
+  }
+}
+
+void btc_free_tx_ctx(btc_tx_ctx_t *tx_ctx) {
+  btc_free_tx(&tx_ctx->tx);
+  if (tx_ctx->utxos) {
+    for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+      btc_free_utxo(&tx_ctx->utxos[i]);
+    }
+    _free(tx_ctx->utxos);
+  }
+  if (tx_ctx->inputs) {
+    for (uint32_t i = 0; i < tx_ctx->input_count; i++) {
+      btc_free_tx_in(&tx_ctx->inputs[i]);
+    }
+    _free(tx_ctx->inputs);
+  }
+  if (tx_ctx->outputs) {
+    for (uint32_t i = 0; i < tx_ctx->output_count; i++) {
+      btc_free_tx_out(&tx_ctx->outputs[i]);
+    }
+    _free(tx_ctx->outputs);
   }
 }
 

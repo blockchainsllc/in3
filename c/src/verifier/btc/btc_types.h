@@ -78,8 +78,15 @@ typedef struct btc_tx_ctx {
 } btc_tx_ctx_t;
 
 void btc_init_tx(btc_tx_t* tx);
+void btc_init_tx_ctx(btc_tx_ctx_t *tx_ctx);
 void btc_init_tx_in(btc_tx_in_t* tx_in);
 void btc_init_tx_out(btc_tx_out_t* tx_out);
+
+void btc_free_tx(btc_tx_t *tx);
+void btc_free_tx_in(btc_tx_in_t *tx_in);
+void btc_free_tx_out(btc_tx_out_t *tx_out);
+void btc_free_utxo(btc_utxo_t *utxo);
+void btc_free_tx_ctx(btc_tx_ctx_t *tx_ctx);
 
 alg_t btc_get_script_type(const bytes_t* script);
 bool  script_is_standard(alg_t script_type);
@@ -103,8 +110,8 @@ in3_ret_t add_input_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_in_t* tx_in);
 in3_ret_t add_output_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_out_t* tx_out);
 in3_ret_t add_witness_to_tx(in3_req_t* req, btc_tx_t* tx, bytes_t* witness);
 
-in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args); //(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args, btc_utxo_t** selected_utxos, uint32_t* len);
-in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);                                                                                                    //(btc_tx_t* tx, const btc_utxo_t* selected_utxo_list, const uint32_t utxo_list_len);
+in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args);
+in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);                                                                           
 
 in3_ret_t btc_verify_public_key(in3_req_t* req, const bytes_t* public_key);
 
