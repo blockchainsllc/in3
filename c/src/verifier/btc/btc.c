@@ -81,9 +81,9 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
 
   // the coinbase tx has only one input
   if (tx_data.input_count != 1) return vc_err(vc, "vin count needs to be 1 for coinbase tx");
-  if (btc_parse_tx_in(tx_data.input.data, &tx_in, tx_data.input.data + tx_data.input.len) == NULL || *tx_in.script.data != 3) return vc_err(vc, "invalid coinbase signature");
+  if (btc_parse_tx_in(tx_data.input.data, &tx_in, tx_data.input.data + tx_data.input.len) == NULL || *tx_in.script.data.data != 3) return vc_err(vc, "invalid coinbase signature");
 
-  *dst_block_number = ((uint32_t) tx_in.script.data[1]) | (((uint32_t) tx_in.script.data[2]) << 8) | (((uint32_t) tx_in.script.data[3]) << 16);
+  *dst_block_number = ((uint32_t) tx_in.script.data.data[1]) | (((uint32_t) tx_in.script.data.data[2]) << 8) | (((uint32_t) tx_in.script.data.data[3]) << 16);
 
   return IN3_OK;
 }
@@ -223,7 +223,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
       if (tx_index == 0) {
         // coinbase
         hex = d_get_string(iter.token, key("coinbase"));
-        if (!hex || !equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid coinbase");
+        if (!hex || !equals_hex(tx_in.script.data, hex)) return vc_err(vc, "invalid coinbase");
       }
       else {
         // txid
@@ -235,7 +235,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
         // sig.hex
         hex = d_get_string(d_get(iter.token, key("scriptSig")), key("hex"));
-        if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
+        if (!equals_hex(tx_in.script.data, hex)) return vc_err(vc, "invalid vin.hex");
       }
     }
 
@@ -255,7 +255,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
       // sig.hex
       char* hex = d_get_string(d_get(iter.token, key("scriptPubKey")), key("hex"));
-      if (!equals_hex(tx_out.script, hex)) return vc_err(vc, "invalid vout.hex");
+      if (!equals_hex(tx_out.script.data, hex)) return vc_err(vc, "invalid vout.hex");
       d_token_t* value = d_get(iter.token, K_VALUE);
       if (!value) return vc_err(vc, "no value found!");
 
@@ -493,6 +493,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   }
 #endif
 
+  // TODO: Uncomment and implement functions bellow once conditions are met
   // #if !defined(RPC_ONLY) || defined(RPC_GETUTXOS)
 
   //   // fetch whole list of utxos
@@ -591,46 +592,36 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   default_acc_pk.account = default_account;
   default_acc_pk.pub_key = default_pub_key;
 
-  uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
+  btc_tx_ctx_t tx_ctx; // btc transaction context
+  memset(&tx_ctx, 0, sizeof(tx_ctx));
+
+  // create unsigned transaction
+  btc_init_tx_ctx(&tx_ctx);
+  add_outputs_to_tx(req, outputs, &tx_ctx);
 
   // create output for receiving the transaction "change", discounting miner fee
+  uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
+  // TODO: include a redeeming script, otherwise we won't be able to receive our unspent funds again
   btc_tx_out_t tx_out_change;
   btc_init_tx_out(&tx_out_change);
   tx_out_change.value = utxo_total - miner_fee - outputs_total;
-
-  // create unsigned transaction
-  btc_tx_t tx;
-  btc_init_tx(&tx);
-  add_outputs_to_tx(req, outputs, &tx);
+  btc_add_output_to_tx(req, &tx_ctx, &tx_out_change);
 
   // select "best" set of UTXOs
-  btc_utxo_t* selected_utxo_list = NULL;
-  uint32_t    utxo_list_len      = 0;
-  btc_prepare_utxos(req, &tx, &default_acc_pk, utxo_list, args, &selected_utxo_list, &utxo_list_len);
-  btc_set_segwit(&tx, selected_utxo_list, utxo_list_len);
+  btc_prepare_utxos(req, &tx_ctx, &default_acc_pk, utxo_list, args);
+  btc_set_segwit(&tx_ctx);
 
-  TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len));
+  TRY(btc_sign_tx(ctx->req, &tx_ctx));
 
-  bytes_t* signed_tx = b_new(NULL, btc_get_raw_tx_size(&tx));
-  btc_serialize_tx(&tx, signed_tx);
+  bytes_t* signed_tx = b_new(NULL, btc_get_raw_tx_size(&tx_ctx.tx));
+  btc_serialize_tx(req, &tx_ctx.tx, signed_tx);
   sb_t sb = {0};
   sb_add_rawbytes(&sb, "\"", *signed_tx, 0);
   sb_add_chars(&sb, "\"");
 
   // Now that we wrote the request, we can free all allocated memory
   b_free(signed_tx);
-
-  if (selected_utxo_list) {
-    for (uint32_t i = 0; i < utxo_list_len; i++) {
-      _free(selected_utxo_list[i].tx_hash);
-      _free(selected_utxo_list[i].tx_out.script.data);
-    }
-    _free(selected_utxo_list);
-  }
-
-  if (tx.input.data) _free(tx.input.data);
-  if (tx.output.data) _free(tx.output.data);
-  if (tx.witnesses.data) _free(tx.witnesses.data);
+  btc_free_tx_ctx(&tx_ctx);
 
   // finally, send transaction
   d_token_t* result = NULL;

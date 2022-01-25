@@ -20,6 +20,6 @@
 //    - sighash: how do we want to sign our transaction input
 in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* tx_ctx, const uint32_t utxo_index, const uint32_t account_index, const btc_tx_in_t* tx_in, uint8_t sighash);
 
-in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t *tx_ctx);
+in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx);
 
 #endif

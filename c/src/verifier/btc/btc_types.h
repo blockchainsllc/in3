@@ -9,8 +9,8 @@
 #include <stdint.h>
 
 // General size values
-#define BTC_UNCOMP_PUB_KEY_SIZE_BYTES  65
-#define BTC_COMP_PUB_KEY_SIZE_BYTES    33
+#define BTC_UNCOMP_PUB_KEY_SIZE_BYTES 65
+#define BTC_COMP_PUB_KEY_SIZE_BYTES   33
 
 // Transaction fixed size values
 #define BTC_TX_VERSION_SIZE_BYTES  4
@@ -78,19 +78,19 @@ typedef struct btc_tx_ctx {
 } btc_tx_ctx_t;
 
 void btc_init_tx(btc_tx_t* tx);
-void btc_init_tx_ctx(btc_tx_ctx_t *tx_ctx);
+void btc_init_tx_ctx(btc_tx_ctx_t* tx_ctx);
 void btc_init_tx_in(btc_tx_in_t* tx_in);
 void btc_init_tx_out(btc_tx_out_t* tx_out);
 
-void btc_free_tx(btc_tx_t *tx);
-void btc_free_tx_in(btc_tx_in_t *tx_in);
-void btc_free_tx_out(btc_tx_out_t *tx_out);
-void btc_free_utxo(btc_utxo_t *utxo);
-void btc_free_tx_ctx(btc_tx_ctx_t *tx_ctx);
+void btc_free_tx(btc_tx_t* tx);
+void btc_free_tx_in(btc_tx_in_t* tx_in);
+void btc_free_tx_out(btc_tx_out_t* tx_out);
+void btc_free_utxo(btc_utxo_t* utxo);
+void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx);
 
 alg_t btc_get_script_type(const bytes_t* script);
 bool  script_is_standard(alg_t script_type);
-bool  pub_key_is_valid(const bytes_t *pub_key);
+bool  pub_key_is_valid(const bytes_t* pub_key);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
 uint32_t  btc_get_raw_tx_size(const btc_tx_t* tx);
@@ -106,12 +106,12 @@ in3_ret_t btc_serialize_tx_out(in3_req_t* req, btc_tx_out_t* tx_out, bytes_t* ds
 uint32_t btc_vsize(btc_tx_t* tx);
 uint32_t btc_weight(btc_tx_t* tx);
 
-in3_ret_t add_input_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_in_t* tx_in);
-in3_ret_t add_output_to_tx(in3_req_t* req, btc_tx_t* tx, btc_tx_out_t* tx_out);
-in3_ret_t add_witness_to_tx(in3_req_t* req, btc_tx_t* tx, bytes_t* witness);
+in3_ret_t btc_add_input_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_in_t* tx_in);
+in3_ret_t btc_add_output_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_out_t* tx_out);
+in3_ret_t btc_add_witness_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, bytes_t* witness);
 
 in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args);
-in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);                                                                           
+in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);
 
 in3_ret_t btc_verify_public_key(in3_req_t* req, const bytes_t* public_key);
 
@@ -119,6 +119,6 @@ static inline bool btc_is_witness(bytes_t tx) {
   return tx.data[4] == 0 && tx.data[5] == 1;
 }
 
-in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_t* tx);
+in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_ctx_t* tx_ctx);
 
 #endif

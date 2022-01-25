@@ -214,3 +214,28 @@ in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header) {
   rev_copyl(block_header + 76, d_to_bytes(d_get(data, key("nonce"))), 4);
   return IN3_OK;
 }
+
+// copy a byte array in reverse order
+in3_ret_t rev_memcpy(uint8_t* dst, uint8_t* src, uint32_t len) {
+  if (src && dst) {
+    for (uint32_t i = 0; i < len; i++) {
+      dst[(len - 1) - i] = src[i];
+    }
+    return IN3_OK;
+  }
+  else {
+    return IN3_EINVAL;
+  }
+}
+
+in3_ret_t append_bytes(bytes_t* dst, const bytes_t* src) {
+  if (dst && src && src->len > 0 && src->data) {
+    dst->data = (dst->data) ? _realloc(dst->data, dst->len + src->len, dst->len) : _malloc(dst->len + src->len);
+    memcpy(dst->data + dst->len, src->data, src->len);
+    dst->len += src->len;
+    return IN3_OK;
+  }
+  else {
+    return IN3_EINVAL;
+  }
+}
