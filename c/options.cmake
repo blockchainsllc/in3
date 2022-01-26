@@ -51,6 +51,8 @@ OPTION(THREADSAFE "uses mutex to protect shared nodelist access" ON)
 OPTION(SWIFT "swift API for swift bindings" OFF)
 OPTION(CORE_API "include basic core-utils" ON)
 OPTION(CRYPTO_LIB "include crypto-lib" ON)
+OPTION(BASE64 "include base64-encode" ON)
+OPTION(ED25519 "include ED25519 curve" ON)
 OPTION(RPC_ONLY "specifies a coma-seperqted list of rpc-methods which should be supported. all other rpc-methods will be removed reducing the size of executable a lot." OFF)
 
 
@@ -153,7 +155,7 @@ if(IPFS)
     ADD_DEFINITIONS(-DIPFS)
     set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
     set(WASM_MODULES ${WASM_MODULES} ipfs)
-
+    set(BASE64 true)
     if(IN3API)
        set(IN3_API ${IN3_API} ipfs_api)
     endif()
@@ -203,6 +205,15 @@ if (SENTRY)
   ADD_DEFINITIONS(-DSENTRY)
   set(IN3_API ${IN3_API} in3_sentry)
 endif()
+
+if (BASE64)
+  ADD_DEFINITIONS(-DBASE64)
+endif()
+
+if (ED25519)
+  ADD_DEFINITIONS(-DED25519)
+endif()
+
 
 if (NODESELECT_DEF)
   ADD_DEFINITIONS(-DNODESELECT_DEF)

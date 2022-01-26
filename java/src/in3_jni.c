@@ -52,9 +52,11 @@
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/eth1/basic/eth_basic.h"
 
-#ifdef IPFS
+#ifdef BASE64
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
+#endif
+#if IPFS
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
 
@@ -666,7 +668,7 @@ JNIEXPORT jobject Java_in3_IN3_getDefaultConfig(JNIEnv* env, jobject ob) {
   return res;
 }
 
-#ifdef IPFS
+#ifdef BASE64
 /*
  * Class:     in3_ipfs_API
  * Method:    base64Decode

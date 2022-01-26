@@ -45,7 +45,7 @@
 #include "../../third-party/crypto/memzero.h"
 #include "../../third-party/crypto/rand.h"
 #include "../../third-party/crypto/secp256k1.h"
-#ifdef IPFS
+#ifdef BASE64
 #include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/libb64/cencode.h"
 #endif
@@ -211,7 +211,7 @@ static in3_ret_t in3_base58_encode(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_base64_encode(in3_rpc_handle_ctx_t* ctx) {
-#ifdef IPFS
+#ifdef BASE64
   bytes_t data;
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 0)
   char* r = base64_encode(data.data, data.len);
@@ -219,12 +219,12 @@ static in3_ret_t in3_base64_encode(in3_rpc_handle_ctx_t* ctx) {
   _free(r);
   return in3_rpc_handle_finish(ctx);
 #else
-  return req_set_error(ctx->req, "not supported, if IPFS is turned off", IN3_EINVAL);
+  return req_set_error(ctx->req, "not supported, if BASE64 is turned off", IN3_EINVAL);
 #endif
 }
 
 static in3_ret_t in3_base64_decode(in3_rpc_handle_ctx_t* ctx) {
-#ifdef IPFS
+#ifdef BASE64
   char* txt;
   TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
   size_t   len = 0;
@@ -233,7 +233,7 @@ static in3_ret_t in3_base64_decode(in3_rpc_handle_ctx_t* ctx) {
   _free(r);
   return IN3_OK;
 #else
-  return req_set_error(ctx->req, "not supported, if IPFS is turned off", IN3_EINVAL);
+  return req_set_error(ctx->req, "not supported, if BASE64 is turned off", IN3_EINVAL);
 #endif
 }
 

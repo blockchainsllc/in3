@@ -301,7 +301,7 @@ typedef enum {
   SIGN_EC_HASH   = 1, /**< hash and sign the data */
   SIGN_EC_PREFIX = 2, /**< add Ethereum Signed Message-Proefix, hash and sign the data */
   SIGN_EC_BTC    = 3, /**< hashes the data twice with sha256 and signs it */
-} d_signature_type_t;
+} d_digest_type_t;
 
 /** payload type of the requested signature. It describes how to deserialize the payload. */
 typedef enum {
@@ -315,13 +315,14 @@ typedef enum {
  * signing context. This Context is passed to the signer-function.
  */
 typedef struct sign_ctx {
-  bytes_t            signature;    /**< the resulting signature  */
-  d_signature_type_t type;         /**< the type of signature*/
-  d_payload_type_t   payload_type; /**< the type of payload in order to deserialize the payload */
-  struct in3_req*    req;          /**< the context of the request in order report errors */
-  bytes_t            message;      /**< the message to sign*/
-  bytes_t            account;      /**< the account to use for the signature */
-  d_token_t*         meta;         /**< optional metadata to pass a long, which could include data to present to the user before signing */
+  bytes_t          signature;    /**< the resulting signature  */
+  d_digest_type_t  type;         /**< the type of signature*/
+  d_curve_type_t   curve;        /**< type of curved used to sign */
+  d_payload_type_t payload_type; /**< the type of payload in order to deserialize the payload */
+  struct in3_req*  req;          /**< the context of the request in order report errors */
+  bytes_t          message;      /**< the message to sign*/
+  bytes_t          account;      /**< the account to use for the signature */
+  d_token_t*       meta;         /**< optional metadata to pass a long, which could include data to present to the user before signing */
 } in3_sign_ctx_t;
 
 /**

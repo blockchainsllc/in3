@@ -750,17 +750,17 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   sc.req            = ctx->req;
   sc.message        = data;
   sc.account        = signer;
-  sc.type           = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
-  if (strcmp(sig_type, "sign_ec_hash") == 0) sc.type = SIGN_EC_HASH;
-  if (strcmp(sig_type, "sign_ec_raw") == 0) sc.type = SIGN_EC_RAW;
-  if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.type = SIGN_EC_PREFIX;
-  if (strcmp(sig_type, "sign_ec_btc") == 0) sc.type = SIGN_EC_BTC;
+  sc.digest_type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+  if (strcmp(sig_type, "sign_ec_hash") == 0) sc.digest_type = SIGN_EC_HASH;
+  if (strcmp(sig_type, "sign_ec_raw") == 0) sc.digest_type = SIGN_EC_RAW;
+  if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.digest_type = SIGN_EC_PREFIX;
+  if (strcmp(sig_type, "sign_ec_btc") == 0) sc.digest_type = SIGN_EC_BTC;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));
   }
   else if (sc.account.len == 32) {
-    sc.signature = sign_with_pk(signer.data, data, sc.type);
+    sc.signature = sign_with_pk(signer.data, data, sc.digest_type);
     if (!sc.signature.data) return req_set_error(ctx->req, "unsupported sigType", IN3_EINVAL);
   }
   else
