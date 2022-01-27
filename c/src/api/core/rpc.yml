@@ -3,6 +3,7 @@ utils:
     sync: true
     descr: clears the incubed cache (usually found in the .in3-folder)
     result:
+      type: bool
       descr: true indicating the success
     example: 
       request: []
@@ -11,6 +12,7 @@ utils:
   web3_clientVersion:
     descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
     result:
+      type: string
       descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
 
   keccak:
@@ -31,6 +33,7 @@ utils:
         type: bytes
     result:
       descr: the 32byte hash of the data
+      type: bytes
     example:
       request:
         - "0x1234567890"
@@ -45,6 +48,7 @@ utils:
         descr: data to encode
         type: bytes
     result:
+      type: string
       descr: the encoded data
     example:
       request:
@@ -60,6 +64,7 @@ utils:
         descr: data to decode
         type: string
     result:
+      type: bytes
       descr: the decoded bytes
     example:
       request:
@@ -76,6 +81,7 @@ utils:
         type: bytes
     result:
       descr: the encoded data
+      type: string
     example:
       request:
         - "abcdef"
@@ -90,6 +96,7 @@ utils:
         descr: data to decode
         type: string
     result:
+      type: bytes
       descr: the decoded bytes
     example:
       request:
@@ -107,6 +114,7 @@ utils:
         descr: data to hash
         type: bytes
     result:
+      type: bytes32
       descr: the 32byte hash of the data
     example:
       request:

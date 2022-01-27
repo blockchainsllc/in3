@@ -957,6 +957,7 @@ zksync:
   zksync_sync_key:
     descr: returns private key used for signing zksync-transactions
     result:
+      type: bytes
       descr: the raw private key configured based on the signers seed
     example: 
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
