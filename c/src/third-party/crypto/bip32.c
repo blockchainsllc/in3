@@ -32,8 +32,10 @@
 #include "bip32.h"
 #include "curves.h"
 #include "ecdsa.h"
+#ifdef ED25519
 #include "ed25519-donna/ed25519-sha3.h"
 #include "ed25519-donna/ed25519.h"
+#endif
 #include "hmac.h"
 #include "nist256p1.h"
 #include "secp256k1.h"

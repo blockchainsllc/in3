@@ -358,7 +358,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
 }
 
 /// RPC-signer
-
+/** signs a reques*/
 in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
   signer_key_t* k = data;
   switch (action) {
@@ -401,6 +401,7 @@ in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
   return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_sign_req, k, true);
 }
 
+/** register the signer as rpc-plugin providing accounts management functions */
 in3_ret_t eth_register_pk_signer(in3_t* in3) {
   return in3_plugin_register(in3, PLGN_ACT_CONFIG_SET | PLGN_ACT_RPC_HANDLE, pk_rpc, NULL, true);
 }

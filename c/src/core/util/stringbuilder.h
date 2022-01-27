@@ -99,14 +99,18 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
  * %s - expects a char* and inserts the string
  * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
  * %i - expects int32_t and inserts a decimal representation
- * %d - expects int64_t and inserts a decimal representation
- * %u - expects uint64_t and inserts a decimal representation
+ * %d - expects int32_t and inserts a decimal representation
+ * %u - expects uint32_t and inserts a decimal representation
+ * %I - expects int64_t and inserts a decimal representation
+ * %D - expects int64_t and inserts a decimal representation
+ * %U - expects uint64_t and inserts a decimal representation
  * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
  * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
  * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
  * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
  * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
  * %j - expects a d_token_t* and inserts the json-representation
+ * %w - expects a bytes_t and inserts the decimal representation of bytes as bugendian (max 32 bytes)
  *
  */
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
@@ -120,14 +124,18 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  * %s - expects a char* and inserts the string
  * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
  * %i - expects int32_t and inserts a decimal representation
- * %d - expects int64_t and inserts a decimal representation
- * %u - expects uint64_t and inserts a decimal representation
+ * %d - expects int32_t and inserts a decimal representation
+ * %u - expects uint32_t and inserts a decimal representation
+ * %I - expects int64_t and inserts a decimal representation
+ * %D - expects int64_t and inserts a decimal representation
+ * %U - expects uint64_t and inserts a decimal representation
  * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
  * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
  * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
  * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
  * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
  * %j - expects a d_token_t* and inserts the json-representation
+ * %w - expects a bytes_t and inserts the decimal representation of bytes as bugendian (max 32 bytes)
  *
  */
 char* sprintx(const char* fmt, ...);

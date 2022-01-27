@@ -45,8 +45,8 @@
 
 // implement BIP32 caching
 #ifndef USE_BIP32_CACHE
-#define USE_BIP32_CACHE 1
-#define BIP32_CACHE_SIZE 10
+#define USE_BIP32_CACHE      1
+#define BIP32_CACHE_SIZE     10
 #define BIP32_CACHE_MAXDEPTH 8
 #endif
 
@@ -57,7 +57,7 @@
 
 // implement BIP39 caching
 #ifndef USE_BIP39_CACHE
-#define USE_BIP39_CACHE 1
+#define USE_BIP39_CACHE  1
 #define BIP39_CACHE_SIZE 4
 #endif
 

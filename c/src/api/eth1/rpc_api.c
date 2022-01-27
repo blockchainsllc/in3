@@ -148,7 +148,7 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
   bytes_t      data = {0}, val;        // rlp decoded data
   bytes32_t    hash;                   // tx hash
   sb_t         response = {0};         // temp json-result buffer
-  int64_t      type     = 0;           // tx type
+  uint32_t     type     = 0;           // tx type
   const char** fields   = TX_FIELDS_0; // field names depending on the type
 
   // we only require bytes as input
@@ -785,9 +785,8 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
     }
     else
       sb_printx(sb, "\"messageHash\":\"%B\",", data);
-    int64_t v = sc.signature.data[64];
     sb_printx(sb, "\"signature\":\"%B\",\"r\":\"%B\",\"s\":\"%B\",\"v\":%d}",
-              sig_bytes, bytes(sc.signature.data, 32), bytes(sc.signature.data + 32, 32), v);
+              sig_bytes, bytes(sc.signature.data, 32), bytes(sc.signature.data + 32, 32), sc.signature.data[64]);
   }
 
   _free(sc.signature.data);
