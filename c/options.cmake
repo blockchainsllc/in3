@@ -208,6 +208,7 @@ endif()
 
 if (BASE64)
   ADD_DEFINITIONS(-DBASE64)
+  set(IN3_API ${IN3_API} b64)
 endif()
 
 if (ED25519)
