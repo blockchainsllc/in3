@@ -5,6 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "args": [
+                "-u",
+                "tdd",
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/wasm/test/testEthApi.js"
+            ],
+            "cwd": "${workspaceFolder}/wasm/test",
+            "internalConsoleOptions": "openOnSessionStart",
+            "name": "Mocha Tests",
+            "program": "${workspaceFolder}/wasm/test/node_modules/mocha/bin/_mocha",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node"
+        },
+        {
             "type": "lldb",
             "request": "attach",
             "name": "Attach to python-test",
@@ -25,7 +44,6 @@
                 ""
             ]
         },
-
         {
             "type": "java",
             "name": "Debug (Attach)",

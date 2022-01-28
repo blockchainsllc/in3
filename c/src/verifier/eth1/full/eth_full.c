@@ -59,17 +59,16 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
 #if !defined(RPC_ONLY) || defined(RPC_ETH_CALL)
   if (VERIFY_RPC("eth_call")) {
     if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
-    d_token_t* tx      = d_get_at(d_get(vc->request, K_PARAMS), 0);
-    bytes_t*   address = d_get_byteskl(tx, K_TO, 20);
-    address_t  zeros;
-    memset(zeros, 0, 20);
-    int      res       = 0;
-    bytes_t* from      = d_get_byteskl(tx, K_FROM, 20);
-    bytes_t* value     = d_get_bytes(tx, K_VALUE);
-    bytes_t* data      = d_get_bytes(tx, K_DATA);
-    bytes_t  gas       = d_to_bytes(d_get_or(tx, K_GAS_LIMIT, K_GAS));
-    bytes_t* result    = NULL;
-    uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
+    d_token_t* tx        = d_get_at(d_get(vc->request, K_PARAMS), 0);
+    bytes_t    address   = d_get_byteskl(tx, K_TO, 20);
+    address_t  zeros     = {0};
+    int        res       = 0;
+    bytes_t    from      = d_get_byteskl(tx, K_FROM, 20);
+    bytes_t    value     = d_get_bytes(tx, K_VALUE);
+    bytes_t    data      = d_get_bytes(tx, K_DATA);
+    bytes_t    gas       = d_to_bytes(d_get_or(tx, K_GAS_LIMIT, K_GAS));
+    bytes_t*   result    = NULL;
+    uint64_t   gas_limit = bytes_to_long(gas.data, gas.len);
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
 #if defined(DEBUG) && defined(LOGGING)
     in3_log_level_t old = in3_log_get_level();
@@ -85,7 +84,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
       }
     }
 
-    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->id, &result, receipt);
+    int ret = evm_call(vc, address.data ? address.data : zeros, value.data ? value.data : zeros, value.data ? value.len : 1, data.data ? data.data : zeros, data.data ? data.len : 0, from.data ? from.data : zeros, gas_limit, vc->chain->id, &result, receipt);
 #if defined(DEBUG) && defined(LOGGING)
     in3_log_set_level(old);
     in3_log_enable_prefix();
@@ -116,7 +115,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
         return vc_err(vc, "not enough funds to transfer the requested value.");
       case 0:
         if (!result) return d_len(vc->result) == 0 ? 0 : vc_err(vc, "no result");
-        res = b_cmp(d_bytes(vc->result), result);
+        res = bytes_cmp(d_to_bytes(vc->result), *result);
 
         b_free(result);
         if (!res) {

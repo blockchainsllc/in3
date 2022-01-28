@@ -59,16 +59,16 @@ bytes_t* create_tx_path(uint32_t index) {
   return bb_move_to_bytes(bb);
 }
 
-in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
+in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t tx_hash) {
 
   in3_ret_t  res = IN3_OK;
   int        i;
   bytes_t    root;
   d_token_t* block_hash = d_getl(vc->result, K_BLOCK_HASH, 32);
 
-  if (!tx_hash)
+  if (!tx_hash.data)
     return vc_err(vc, "No Transaction Hash found");
-  if (tx_hash->len != 32)
+  if (tx_hash.len != 32)
     return vc_err(vc, "The transactionHash has the wrong length!");
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
@@ -78,15 +78,16 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
   if (!vc->proof)
     return vc_err(vc, "Proof is missing!");
 
-  bytes_t* blockHeader = d_get_bytes(vc->proof, K_BLOCK);
-  if (!blockHeader)
+  bytes_t blockHeader = d_get_bytes(vc->proof, K_BLOCK);
+  if (!blockHeader.data)
     return vc_err(vc, "No Block-Proof!");
 
   // verify the header
-  res = eth_verify_blockheader(vc, blockHeader, d_bytes(block_hash));
+  bytes_t bh = d_to_bytes(block_hash);
+  res        = eth_verify_blockheader(vc, blockHeader, bh);
 
   // make sure the blocknumner on the receipt is correct
-  if (res == IN3_OK && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) != d_get_long(vc->result, K_BLOCK_NUMBER)))
+  if (res == IN3_OK && (rlp_decode_in_list(&blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) != d_get_long(vc->result, K_BLOCK_NUMBER)))
     res = vc_err(vc, "wrong blocknumber in the result");
 
   if (res == IN3_OK) {
@@ -94,7 +95,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
     bytes_t* path = create_tx_path(d_get_int(vc->proof, K_TX_INDEX));
 
     // verify the merkle proof for the receipt
-    if (rlp_decode_in_list(blockHeader, BLOCKHEADER_RECEIPT_ROOT, &root) != 1)
+    if (rlp_decode_in_list(&blockHeader, BLOCKHEADER_RECEIPT_ROOT, &root) != 1)
       res = vc_err(vc, "no receipt_root");
     else {
       bytes_t*  receipt_raw = serialize_tx_receipt(vc->result);
@@ -113,7 +114,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
       bytes_t** proof           = d_create_bytes_vec(d_get(vc->proof, K_TX_PROOF));
 
       // get the transaction root and do the merkle proof.
-      if (rlp_decode_in_list(blockHeader, BLOCKHEADER_TRANSACTIONS_ROOT, &root) != 1)
+      if (rlp_decode_in_list(&blockHeader, BLOCKHEADER_TRANSACTIONS_ROOT, &root) != 1)
         res = vc_err(vc, "no tx root");
       else {
         if (!proof || !trie_verify_proof(&root, path, proof, &raw_transaction))
@@ -124,7 +125,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
           // after a successfull merkle proof, we want to make sure the transaction hash we asked for matches the hash of the last value.
           uint8_t proofed_hash[32];
           keccak(raw_transaction, proofed_hash);
-          if (memcmp(proofed_hash, tx_hash->data, 32))
+          if (memcmp(proofed_hash, tx_hash.data, 32))
             res = vc_err(vc, "The TransactionHash is not the same as expected");
         }
       }
@@ -139,7 +140,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
     // check rest of the values
     if (!d_eq(d_get(vc->proof, K_TX_INDEX), d_get(vc->result, K_TRANSACTION_INDEX)))
       return vc_err(vc, "wrong transactionIndex");
-    if (!b_cmp(tx_hash, d_get_bytes(vc->result, K_TRANSACTION_HASH)))
+    if (!b_compare(tx_hash, d_get_bytes(vc->result, K_TRANSACTION_HASH)))
       return vc_err(vc, "wrong transactionHash");
 
     d_token_t *l, *logs = d_get(vc->result, K_LOGS), *block_number = d_get(vc->result, K_BLOCK_NUMBER);
@@ -150,7 +151,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
         return vc_err(vc, "wrong block hash in log");
       if (in3_req_get_proof(vc->req, vc->index) == PROOF_FULL && d_get_int(l, K_LOG_INDEX) != i)
         return vc_err(vc, "wrong log index");
-      if (!b_cmp(d_get_bytes(l, K_TRANSACTION_HASH), tx_hash))
+      if (!b_compare(d_get_bytes(l, K_TRANSACTION_HASH), tx_hash))
         return vc_err(vc, "wrong tx Hash");
       if (!d_eq(d_get(vc->proof, K_TX_INDEX), d_get(l, K_TRANSACTION_INDEX)))
         return vc_err(vc, "wrong tx index");

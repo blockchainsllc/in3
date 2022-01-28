@@ -267,6 +267,7 @@ char* in3_configure(in3_t* c, const char* config) {
   // we iterate over the root-props
   for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter), prop_index++) {
     d_token_t* token = iter.token;
+    if (d_is_bytes(token)) d_to_bytes(token);
 
     if (token->key == CONFIG_KEY("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);
@@ -381,7 +382,7 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK_U64(d_get(n.token, key("block")));
         EXPECT_TOK_B256(d_get(n.token, key("hash")));
         c->chain.verified_hashes[i].block_number = d_get_long(n.token, key("block"));
-        memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
+        memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32).data, 32);
       }
       c->alloc_verified_hashes = c->max_verified_hashes;
     }

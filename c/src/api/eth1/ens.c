@@ -19,8 +19,8 @@ static in3_req_t* find_pending_ctx(in3_req_t* ctx, bytes_t data) {
   // ok, we need a request, do we have a useable?
   for (ctx = ctx->required; ctx; ctx = ctx->required) {
     if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_call") == 0) {
-      bytes_t* ctx_data = d_get_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0), K_DATA);
-      if (ctx_data && b_cmp(ctx_data, &data)) return ctx;
+      bytes_t ctx_data = d_get_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0), K_DATA);
+      if (ctx_data.data && b_cmp(&ctx_data, &data)) return ctx;
     }
   }
   return NULL;
@@ -33,8 +33,9 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
     switch (in3_req_state(ctx)) {
       case REQ_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
+        d_to_bytes(rpc_result);
         if (!ctx->error && rpc_result && d_type(rpc_result) == T_BYTES && d_len(rpc_result) >= 20) {
-          *result = d_bytes(rpc_result);
+          *result = d_as_bytes(rpc_result);
           //          req_remove_required(parent, ctx);
           return IN3_OK;
         }

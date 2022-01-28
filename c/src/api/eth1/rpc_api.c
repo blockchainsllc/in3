@@ -849,13 +849,13 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
   d_token_t* tx_data = ctx->params + 1;
   bytes_t    tx_raw  = NULL_BYTES;
-  bytes_t*   from_b  = NULL;
-  bytes_t*   data    = NULL;
+  bytes_t    from_b  = NULL_BYTES;
+  bytes_t    data    = NULL_BYTES;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
     TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw, NULL))
     from_b = d_get_bytes(tx_data, K_FROM);
-    data   = &tx_raw;
+    data   = tx_raw;
 #else
     return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
@@ -867,13 +867,13 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
 
   address_t from;
   memset(from, 0, 20);
-  if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
+  if (from_b.data && from_b.len == 20) memcpy(from, from_b.data, 20);
   bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY_FINAL(eth_sign_raw_tx(*data, ctx->req, from, &dst), _free(tx_raw.data))
+  TRY_FINAL(eth_sign_raw_tx(data, ctx->req, from, &dst), _free(tx_raw.data))
 #else
   _free(tx_raw.data);
-  if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
+  if (data.data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);

@@ -56,14 +56,14 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   int             i;
   uint8_t         hash[32], val[36];
   bytes_t**       proof;
-  bytes_t *       tmp, root, *account_raw, path = {.data = hash, .len = 32};
+  bytes_t         tmp, root, *account_raw, path = {.data = hash, .len = 32};
   bytes_builder_t bb = {.bsize = 36, .b = {.data = val, .len = 0}};
 
   // verify the account proof
   if (rlp_decode_in_list(header, BLOCKHEADER_STATE_ROOT, &root) != 1) return vc_err(vc, "no state root in the header");
 
-  if ((tmp = d_get_byteskl(account, K_ADDRESS, 20)))
-    keccak(*tmp, hash);
+  if ((tmp = d_get_byteskl(account, K_ADDRESS, 20)).data)
+    keccak(tmp, hash);
   else
     return vc_err(vc, "no address in the account");
 
@@ -83,11 +83,10 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   if (!(storage_proof = d_get(account, K_STORAGE_PROOF))) return vc_err(vc, "no stortage-proof found!");
 
   if ((t = d_getl(account, K_STORAGE_HASH, 32)))
-    root = *d_bytes(t);
+    root = d_to_bytes(t);
   else
     return vc_err(vc, "no storage-hash found!");
 
-  //                                "storageHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
   bool is_empty = memcmp(root.data, EMPTY_ROOT_HASH, 32) == 0;
 
   for (i = 0, p = storage_proof + 1; i < d_len(storage_proof); i++, p = d_next(p)) {
@@ -150,13 +149,13 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   }
 
   // verify header
-  bytes_t* header = d_get_bytes(vc->proof, K_BLOCK);
-  if (!header) return vc_err(vc, "no blockheader");
-  if (eth_verify_blockheader(vc, header, NULL)) return vc_err(vc, "invalid blockheader");
+  bytes_t header = d_get_bytes(vc->proof, K_BLOCK);
+  if (!header.data) return vc_err(vc, "no blockheader");
+  if (eth_verify_blockheader(vc, header, NULL_BYTES)) return vc_err(vc, "invalid blockheader");
 
   // make sure we blockheader is based on the right blocknumber (unless it is a nodelist or a 'latest'-string)
   t = d_get(vc->request, K_PARAMS);
-  if (strcmp(vc->method, "in3_nodeList") && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
+  if (strcmp(vc->method, "in3_nodeList") && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(&header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
     return vc_err(vc, "the blockheader has the wrong blocknumber");
 
   // get the account this proof is based on
@@ -168,7 +167,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   // now check the results
   if (!(accounts = d_get(vc->proof, K_ACCOUNTS))) return vc_err(vc, "no accounts");
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-    if (verify_proof(vc, header, t))
+    if (verify_proof(vc, &header, t))
       return vc_err(vc, "failed verifying the account");
     else if (proofed_account == NULL && d_eq(contract, d_getl(t, K_ADDRESS, 20)))
       proofed_account = t;
@@ -187,10 +186,10 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   else if (strcmp(vc->method, "eth_getCode") == 0) {
     bytes_t data = d_to_bytes(vc->result);
     if (data.len) {
-      if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
+      if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32).data, hash, 32))
         return vc_err(vc, "the codehash in the proof is different");
     }
-    else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, EMPTY_HASH, 32)) // must be empty
+    else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32).data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");
   }
   else if (strcmp(vc->method, "eth_getStorageAt") == 0) {

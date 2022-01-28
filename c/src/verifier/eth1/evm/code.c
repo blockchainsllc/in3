@@ -43,10 +43,10 @@ NONULL static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address,
   d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
   if (!accounts) return IN3_EFIND;
   for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
-    if (memcmp(d_get_byteskl(iter.token, K_ADDRESS, 20)->data, address, 20) == 0) {
+    if (memcmp(d_get_byteskl(iter.token, K_ADDRESS, 20).data, address, 20) == 0) {
       // even if we don't have a code, we still set the code_hash, since we need it later to verify
-      *code_hash    = d_get_bytes(iter.token, K_CODE_HASH);
-      bytes_t* code = d_get_bytes(iter.token, K_CODE);
+      *code_hash    = d_as_bytes(d_get(iter.token, K_CODE_HASH));
+      bytes_t* code = d_as_bytes(d_get(iter.token, K_CODE));
       if (code) {
         bytes32_t calculated_hash;
         keccak(*code, calculated_hash);

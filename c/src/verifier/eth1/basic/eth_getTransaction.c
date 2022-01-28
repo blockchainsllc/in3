@@ -88,17 +88,17 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   uint8_t    hash[32], pubkey[65], sdata[64];
   bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
   int        type         = raw && raw->len && raw->data && raw->data[0] < 0x7f ? raw->data[0] : 0;
-  bytes_t*   r            = d_get_byteskl(tx, K_R, 32);
-  bytes_t*   s            = d_get_byteskl(tx, K_S, 32);
+  bytes_t    r            = d_get_byteskl(tx, K_R, 32);
+  bytes_t    s            = d_get_byteskl(tx, K_S, 32);
   uint32_t   v            = d_get_int(tx, K_V);
   uint32_t   chain_id     = d_get(tx, K_CHAIN_ID) ? (uint32_t) d_get_int(tx, K_CHAIN_ID) : (v > 35 ? (v - 35) / 2 : 0);
 
   // check transaction hash
-  if (keccak(raw ? *raw : d_to_bytes(d_get(tx, K_RAW)), hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32)->data, 32))
+  if (keccak(raw ? *raw : d_to_bytes(d_get(tx, K_RAW)), hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32).data, 32))
     return vc_err(vc, "wrong transactionHash");
 
   // check raw data
-  if ((t = d_get(tx, K_RAW)) && raw && !b_cmp(raw, d_bytes(t)))
+  if ((t = d_get(tx, K_RAW)) && raw && !bytes_cmp(*raw, d_to_bytes(t)))
     return vc_err(vc, "invalid raw-value");
 
   // check standardV
@@ -110,17 +110,17 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     return vc_err(vc, "wrong chain_id");
 
   // All transaction signatures whose s-value is greater than secp256k1n/2 are considered invalid.
-  if (!s || s->len > 32 || (s->len == 32 && memcmp(s->data, secp256k1n_2, 32) > 0))
+  if (!s.data || s.len > 32 || (s.len == 32 && memcmp(s.data, secp256k1n_2, 32) > 0))
     return vc_err(vc, "invalid v-value of the signature");
 
   // r & s have valid length?
-  if (r == NULL || s == NULL || r->len + s->len > 64)
+  if (r.data == NULL || s.data == NULL || r.len + s.len > 64)
     return vc_err(vc, "invalid r/s-value of the signature");
 
   // combine r+s
   memset(sdata, 0, 64);
-  memcpy(sdata + 32 - r->len, r->data, r->len);
-  memcpy(sdata + 64 - s->len, s->data, s->len);
+  memcpy(sdata + 32 - r.len, r.data, r.len);
+  memcpy(sdata + 64 - s.len, s.data, s.len);
 
   // calculate the unsigned hash
   bytes_t unsigned_tx = create_unsigned_tx(raw ? *raw : d_to_bytes(d_get(tx, K_RAW)), chain_id);
@@ -139,18 +139,18 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   return IN3_OK;
 }
 
-in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
+in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t tx_hash) {
 
   in3_ret_t res = IN3_OK;
 
-  if (!tx_hash) return vc_err(vc, "No Transaction Hash found");
-  if (tx_hash->len != 32) return vc_err(vc, "The transactionHash has the wrong length!");
+  if (!tx_hash.data) return vc_err(vc, "No Transaction Hash found");
+  if (tx_hash.len != 32) return vc_err(vc, "The transactionHash has the wrong length!");
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
   if (!vc->proof) return vc_err(vc, "Proof is missing!");
 
-  bytes_t* blockHeader = d_get_bytes(vc->proof, K_BLOCK);
-  if (!blockHeader)
+  bytes_t blockHeader = d_get_bytes(vc->proof, K_BLOCK);
+  if (!blockHeader.data)
     return vc_err(vc, "No Block-Proof!");
 
   res = eth_verify_blockheader(vc, blockHeader, d_get_byteskl(vc->result, K_BLOCK_HASH, 32));
@@ -159,7 +159,7 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
     bytes_t   root, raw_transaction = {.len = 0, .data = NULL};
     bytes_t** proof = d_create_bytes_vec(d_get(vc->proof, K_MERKLE_PROOF));
 
-    if (rlp_decode_in_list(blockHeader, 4, &root) != 1)
+    if (rlp_decode_in_list(&blockHeader, 4, &root) != 1)
       res = vc_err(vc, "no tx root");
     else {
       if (!proof || !trie_verify_proof(&root, path, proof, &raw_transaction) || raw_transaction.data == NULL)
@@ -167,7 +167,7 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
       else {
         uint8_t proofed_hash[32];
         keccak(raw_transaction, proofed_hash);
-        if (memcmp(proofed_hash, tx_hash->data, 32))
+        if (memcmp(proofed_hash, tx_hash.data, 32))
           res = vc_err(vc, "The TransactionHash is not the same as expected");
       }
     }
@@ -177,7 +177,7 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
 
     if (res == IN3_OK && !d_eq(d_get(vc->result, K_TRANSACTION_INDEX), d_get(vc->proof, K_TX_INDEX)))
       res = vc_err(vc, "wrong transaction index");
-    if (res == IN3_OK && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || d_get_long(vc->result, K_BLOCK_NUMBER) != bytes_to_long(root.data, root.len)))
+    if (res == IN3_OK && (rlp_decode_in_list(&blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || d_get_long(vc->result, K_BLOCK_NUMBER) != bytes_to_long(root.data, root.len)))
       res = vc_err(vc, "wrong block number");
 
     if (proof) _free(proof);
@@ -194,24 +194,24 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
 
 in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, uint32_t tx_idx) {
   in3_ret_t res   = IN3_OK;
-  bytes_t*  hash_ = d_get_byteskl(vc->result, K_BLOCK_HASH, 32);
+  bytes_t   hash_ = d_get_byteskl(vc->result, K_BLOCK_HASH, 32);
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
   if (!vc->proof) return vc_err(vc, "Proof is missing!");
 
-  bytes_t* blockHeader = d_get_bytes(vc->proof, K_BLOCK);
-  if (!blockHeader) return vc_err(vc, "No Block-Proof!");
+  bytes_t blockHeader = d_get_bytes(vc->proof, K_BLOCK);
+  if (!blockHeader.data) return vc_err(vc, "No Block-Proof!");
 
   // verify that the block matches the block as described in the transaction
+  bytes_t blk_hash = d_to_bytes(blk);
   if (d_type(blk) == T_BYTES) {
     bytes32_t bhash;
-    bytes_t*  blk_hash = d_bytes(blk);
 
-    if (!blk_hash || blk_hash->len != 32)
+    if (!blk_hash.data || blk_hash.len != 32)
       return vc_err(vc, "No block hash found");
-    else if (hash_ && !b_cmp(blk_hash, hash_))
+    else if (hash_.data && !bytes_cmp(blk_hash, hash_))
       return vc_err(vc, "The block hash does not match the required");
-    else if (keccak(*blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
+    else if (keccak(blockHeader, bhash) || memcmp(bhash, blk_hash.data, 32))
       return vc_err(vc, "The block header does not match the required");
   }
   else if (d_type(blk) == T_INTEGER) {
@@ -221,7 +221,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
       return vc_err(vc, "No block number found");
     else if (d_get(vc->result, K_BLOCK_NUMBER) && blk_num != d_get_long(vc->result, K_BLOCK_NUMBER))
       return vc_err(vc, "The block number does not match the required");
-    else if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &number_in_header) != 1 || bytes_to_long(number_in_header.data, number_in_header.len) != blk_num)
+    else if (rlp_decode_in_list(&blockHeader, BLOCKHEADER_NUMBER, &number_in_header) != 1 || bytes_to_long(number_in_header.data, number_in_header.len) != blk_num)
       return vc_err(vc, "The block number in the header does not match the required");
   }
   else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
@@ -240,7 +240,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
     bytes_t   root, raw_transaction = {.len = 0, .data = NULL};
     bytes_t** proof = d_create_bytes_vec(d_get(vc->proof, K_MERKLE_PROOF));
 
-    if (rlp_decode_in_list(blockHeader, BLOCKHEADER_TRANSACTIONS_ROOT, &root) != 1)
+    if (rlp_decode_in_list(&blockHeader, BLOCKHEADER_TRANSACTIONS_ROOT, &root) != 1)
       res = vc_err(vc, "no tx root");
     else {
       if (!proof) {
@@ -264,7 +264,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
 
       if (res == IN3_OK && !d_eq(d_get(vc->result, K_TRANSACTION_INDEX), d_get(vc->proof, K_TX_INDEX)))
         res = vc_err(vc, "wrong transaction index");
-      if (res == IN3_OK && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || d_get_long(vc->result, K_BLOCK_NUMBER) != bytes_to_long(root.data, root.len)))
+      if (res == IN3_OK && (rlp_decode_in_list(&blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || d_get_long(vc->result, K_BLOCK_NUMBER) != bytes_to_long(root.data, root.len)))
         res = vc_err(vc, "wrong block number");
 
       bytes_t* tx_data = serialize_tx(vc->result);

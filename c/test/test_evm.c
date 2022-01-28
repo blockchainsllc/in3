@@ -3,34 +3,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -459,7 +459,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
   evm.last_returned.data = NULL;
   evm.last_returned.len  = 0;
 
-  evm.properties = props | (exec ? EVM_PROP_FRONTIER : 0); //EVM_PROP_CONSTANTINOPL;
+  evm.properties = props | (exec ? EVM_PROP_FRONTIER : 0); // EVM_PROP_CONSTANTINOPL;
 
   evm.env      = runner_get_env;
   evm.env_ptr  = test;
@@ -474,10 +474,10 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.call_data  = d_to_bytes(d_get(exec, ikey(jc, "data")));
     evm.call_value = d_to_bytes(d_get(exec, ikey(jc, "value")));
 
-    evm.caller  = d_get_bytes(exec, ikey(jc, "caller"))->data;
-    evm.origin  = d_get_bytes(exec, ikey(jc, "origin"))->data;
-    evm.address = d_get_bytes(exec, ikey(jc, "address"))->data;
-    evm.account = d_get_bytes(exec, ikey(jc, "address"))->data;
+    evm.caller  = d_get_bytes(exec, ikey(jc, "caller")).data;
+    evm.origin  = d_get_bytes(exec, ikey(jc, "origin")).data;
+    evm.address = d_get_bytes(exec, ikey(jc, "address")).data;
+    evm.account = d_get_bytes(exec, ikey(jc, "address")).data;
 
 #ifdef EVM_GAS
     evm.accounts = NULL;
@@ -494,7 +494,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.call_data  = d_to_bytes(get_test_val(transaction, "data", indexes));
     evm.call_value = d_to_bytes(get_test_val(transaction, "value", indexes));
 
-    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey"))->data, public_key[65], sdata[32];
+    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey")).data, public_key[65], sdata[32];
     ecdsa_get_public_key65(&secp256k1, pk, public_key);
     // hash it and return the last 20 bytes as address
     if (keccak(bytes(public_key + 1, 64), sdata) == 0)
@@ -512,7 +512,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.account = evm.address;
 
     if (d_getl(transaction, ikey(jc, "to"), 20) && d_len(d_getl(transaction, ikey(jc, "to"), 20)))
-      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to"))->data), ikey(jc, "code")));
+      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to")).data), ikey(jc, "code")));
     else
       evm.code = evm.call_data;
 
@@ -668,7 +668,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
       // pay the miner the total gas
       account_t* miner = NULL;
-      TRY(evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1, &miner))
+      TRY(evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase")).data, 1, &miner))
 
       // increase balance of the miner
       long_to_bytes(total_gas, tmp);

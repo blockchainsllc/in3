@@ -42,7 +42,8 @@
 #include <stdio.h>
 
 static bool filter_addrs_valid(d_token_t* addr) {
-  if (d_type(addr) == T_BYTES && d_len(addr) == 20)
+  bytes_t b = d_to_bytes(addr);
+  if (b.len == 20)
     return true;
   else if (d_type(addr) != T_ARRAY)
     return false;
@@ -50,7 +51,7 @@ static bool filter_addrs_valid(d_token_t* addr) {
   int len = d_len(addr);
   addr += 1;
   for (int i = 0; i < len; i++, addr = d_next(addr))
-    if (d_type(addr) != T_BYTES || d_len(addr) != 20)
+    if (!d_is_bytes(addr) || d_to_bytes(addr).len != 20)
       return false;
   return true;
 }
@@ -60,14 +61,14 @@ static bool filter_topics_valid(d_token_t* topics) {
     return false;
 
   for (d_iterator_t it1 = d_iter(topics); it1.left; d_iter_next(&it1)) {
-    if (d_type(it1.token) == T_BYTES && d_len(it1.token) == 32)
+    if (d_is_bytes(it1.token) && d_to_bytes(it1.token).len == 32)
       continue;
     else if (d_type(it1.token) == T_NULL)
       continue;
     else if (d_type(it1.token) == T_ARRAY) {
       d_token_t* t = it1.token;
       for (d_iterator_t it2 = d_iter(t); it2.left; d_iter_next(&it2)) {
-        if (d_type(it2.token) == T_BYTES && d_len(it2.token) == 32)
+        if (d_is_bytes(it2.token) && d_to_bytes(it2.token).len == 32)
           continue;
         else if (d_type(it2.token) == T_NULL)
           continue;
@@ -83,6 +84,7 @@ static bool filter_topics_valid(d_token_t* topics) {
 
 bool filter_opt_valid(d_token_t* tx_params) {
   d_token_t* frmblk = d_get(tx_params, K_FROM_BLOCK);
+  d_to_bytes(frmblk);
   if (!frmblk) { /* Optional */
   }
   else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
@@ -93,6 +95,7 @@ bool filter_opt_valid(d_token_t* tx_params) {
     return false;
 
   d_token_t* toblk = d_get(tx_params, K_TO_BLOCK);
+  d_to_bytes(toblk);
   if (!toblk) { /* Optional */
   }
   else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
@@ -103,6 +106,7 @@ bool filter_opt_valid(d_token_t* tx_params) {
     return false;
 
   d_token_t* blockhash = d_getl(tx_params, K_BLOCK_HASH, 32);
+  d_to_bytes(blockhash);
   if (blockhash == NULL) { /* Optional */
   }
   else if ((d_type(blockhash) == T_BYTES && d_len(blockhash) == 32) && !frmblk && !toblk) {
@@ -352,7 +356,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
             d_token_t* hash = d_getl(d_get(block_ctx->responses[0], K_RESULT), K_HASH, 32);
             if (i > f->last_block + 1)
               sb_add_char(result, ',');
-            sb_add_bytes(result, NULL, d_bytes(hash), 1, false);
+            sb_add_bytes(result, NULL, d_as_bytes(hash), 1, false);
           }
         }
 

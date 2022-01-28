@@ -225,7 +225,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1);
   d_token_t* result  = NULL;
   d_token_t* proof   = NULL;
-  bytes_t*   account = NULL;
+  bytes_t    account = NULL_BYTES;
   bytes_t    message;
 
   if (d_type(ctx->params + 1) == T_OBJECT) {
@@ -272,7 +272,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     if (conf->proof_create_method && proof == NULL)
       TRY(create_proof(conf, ctx->req, &message, &proof_data))
     else
-      TRY(verify_proof(conf, ctx->req, account, proof, &message, &pub_keys))
+      TRY(verify_proof(conf, ctx->req, account.data ? &account : NULL, proof, &message, &pub_keys))
 
     // make sure we don't have too many old sessions.
     check_max_sessions(conf);

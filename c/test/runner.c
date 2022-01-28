@@ -334,8 +334,8 @@ static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   if (registry_id) {
     c->chain.version = 2;
-    memcpy(nl->registry_id, d_bytesl(registry_id, 32)->data, 32);
-    memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20)->data, 20);
+    memcpy(nl->registry_id, d_to_bytesl(registry_id, 32).data, 32);
+    memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20).data, 20);
   }
   c->proof = proof;
 
@@ -344,7 +344,7 @@ static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
     c->signature_count = d_len(signatures);
     for (int i = 0; i < nl->nodelist_length; i++) {
       if (i < c->signature_count)
-        memcpy(nl->nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
+        memcpy(nl->nodelist[i].address, d_get_bytes_at(signatures, i).data, 20);
       else
         nl->weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
     }

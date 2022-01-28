@@ -106,7 +106,7 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
       case REQ_ERROR:
         return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
-        *result = d_get_bytes(ctx->responses[0], K_RESULT);
+        *result = d_as_bytes(d_get(ctx->responses[0], K_RESULT));
         if (!*result) {
           char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
           return req_set_error(parent, s ? s : "error executing eth_call", IN3_ERPC);
@@ -137,7 +137,7 @@ static bytes_t create_signatures(sig_data_t* signatures, uint32_t sig_count) {
     if (signatures[i].data.len) {
       memset(bb.b.data + (i * 65) + 32, 0, 32);               // clear
       int_to_bytes(bb.b.len, bb.b.data + (i * 65) + 32 + 28); // set the offset
-      bb_write_fixed_bytes(&bb, &signatures[i].data);         // add the data
+      bb_write_fixed_bytes(&bb, signatures[i].data);          // add the data
     }
   }
   return bb.b;
@@ -221,27 +221,27 @@ static bool is_valid(sig_data_t* data, multisig_t* ms, address_t new_sig, int si
   return true;
 }
 
-static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t* signatures, uint32_t* sig_count, multisig_t* ms, sig_data_t* sig_data, bytes32_t tx_hash) {
+static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t signatures, uint32_t* sig_count, multisig_t* ms, sig_data_t* sig_data, bytes32_t tx_hash) {
   // check passed signatures
-  if (!signatures) return IN3_OK;
+  if (!signatures.data) return IN3_OK;
   uint32_t index = *sig_count;
-  for (unsigned int i = 0; i < signatures->len && index < ms->threshold; i += 65) {
-    uint8_t v = signatures->data[i + 64];
+  for (unsigned int i = 0; i < signatures.len && index < ms->threshold; i += 65) {
+    uint8_t v = signatures.data[i + 64];
     if (v == 0) { // contract signature
-      uint32_t offset = bytes_to_int(signatures->data + i + 64 - 4, 4);
-      memcpy(sig_data[index].sig, signatures->data + i, 65);
-      sig_data[index].address = signatures->data + i + 12;
-      sig_data[index].data    = bytes(signatures->data + offset, 32 + bytes_to_int(signatures->data + offset + 32 - 4, 4));
+      uint32_t offset = bytes_to_int(signatures.data + i + 64 - 4, 4);
+      memcpy(sig_data[index].sig, signatures.data + i, 65);
+      sig_data[index].address = signatures.data + i + 12;
+      sig_data[index].data    = bytes(signatures.data + offset, 32 + bytes_to_int(signatures.data + offset + 32 - 4, 4));
     }
     else if (v == 1) {
       memset(sig_data + index, 0, sizeof(sig_data_t));
-      memcpy(sig_data[index].sig, signatures->data + i, 65);
-      sig_data[index].address = signatures->data + i + 12;
+      memcpy(sig_data[index].sig, signatures.data + i, 65);
+      sig_data[index].address = signatures.data + i + 12;
       sig_data[index].data    = NULL_BYTES;
     }
     else if (v > 26) {
-      if (!ecrecover_sig(tx_hash, signatures->data + i, sig_data[index].address)) return req_set_error(ctx, "could not recover the signature", IN3_EINVAL);
-      memcpy(sig_data[index].sig, signatures->data + i, 65);
+      if (!ecrecover_sig(tx_hash, signatures.data + i, sig_data[index].address)) return req_set_error(ctx, "could not recover the signature", IN3_EINVAL);
+      memcpy(sig_data[index].sig, signatures.data + i, 65);
       sig_data[index].data = NULL_BYTES;
     }
     else

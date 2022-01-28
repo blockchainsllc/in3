@@ -188,12 +188,12 @@ chainspec_t* chainspec_create_from_json(json_ctx_t* ctx) {
       fill_aura(ctx, params, spec->consensus_transitions, NULL);
   }
   else if (d_get(d_get(engine, ikey(ctx, "clique")), ikey(ctx, "params"))) {
-    bytes_t* extra = d_get_bytes(genesis, ikey(ctx, "extraData"));
-    if (!extra) return log_error("no extra data in the genesis-block");
+    bytes_t extra = d_get_bytes(genesis, ikey(ctx, "extraData"));
+    if (!extra.data) return log_error("no extra data in the genesis-block");
     spec->consensus_transitions->type            = ETH_POA_CLIQUE;
-    spec->consensus_transitions->validators.data = _malloc(extra->len - 32 - 65);
-    spec->consensus_transitions->validators.len  = extra->len - 32 - 65;
-    memcpy(spec->consensus_transitions->validators.data, extra->data + 32, spec->consensus_transitions->validators.len);
+    spec->consensus_transitions->validators.data = _malloc(extra.len - 32 - 65);
+    spec->consensus_transitions->validators.len  = extra.len - 32 - 65;
+    memcpy(spec->consensus_transitions->validators.data, extra.data + 32, spec->consensus_transitions->validators.len);
   }
 
   return spec;

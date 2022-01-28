@@ -170,6 +170,7 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   char*               p        = alloca(params.len + 1);
   sb_t*               filename = sb_new(method);
   for (d_iterator_t iter = d_iter(d_get(request, K_PARAMS)); iter.left; d_iter_next(&iter)) {
+    d_to_bytes(iter.token);
     switch (d_type(iter.token)) {
       case T_BOOLEAN:
       case T_INTEGER:

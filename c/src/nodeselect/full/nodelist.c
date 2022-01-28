@@ -102,15 +102,15 @@ NONULL static in3_ret_t fill_chain(in3_nodeselect_def_t* data, in3_req_t* ctx, d
       break;
     }
 
-    int old_index      = (int) i;
-    n->capacity        = d_get_intd(node, K_CAPACITY, 1);
-    n->index           = d_get_intd(node, K_INDEX, i);
-    n->deposit         = d_get_long(node, K_DEPOSIT);
-    n->props           = d_get_longd(node, K_PROPS, 65535);
-    n->url             = d_get_string(node, K_URL);
-    bytes_t* adr_bytes = d_get_byteskl(node, K_ADDRESS, 20);
-    if (adr_bytes && adr_bytes->len == 20)
-      memcpy(n->address, adr_bytes->data, 20);
+    int old_index     = (int) i;
+    n->capacity       = d_get_intd(node, K_CAPACITY, 1);
+    n->index          = d_get_intd(node, K_INDEX, i);
+    n->deposit        = d_get_long(node, K_DEPOSIT);
+    n->props          = d_get_longd(node, K_PROPS, 65535);
+    n->url            = d_get_string(node, K_URL);
+    bytes_t adr_bytes = d_get_byteskl(node, K_ADDRESS, 20);
+    if (adr_bytes.data && adr_bytes.len == 20)
+      memcpy(n->address, adr_bytes.data, 20);
     else {
       res = req_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
       break;
@@ -411,7 +411,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in
     if (filter && filter->nodes) {
       bool in_filter_nodes = false;
       for (d_iterator_t it = d_iter(filter->nodes); it.left; d_iter_next(&it)) {
-        if (memcmp(d_bytesl(it.token, 20)->data, node_def->address, 20) == 0) {
+        if (memcmp(d_to_bytesl(it.token, 20).data, node_def->address, 20) == 0) {
           in_filter_nodes = true;
           break;
         }

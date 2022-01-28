@@ -143,9 +143,9 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
   memset(block_target, 0, 32);
 
   // get the header
-  t = d_get(vc->proof, K_BLOCK);
-  if (!t || d_type(t) != T_BYTES || d_len(t) != 80) return vc_err(vc, "missing or invalid blockheader!");
+  t      = d_get(vc->proof, K_BLOCK);
   header = d_to_bytes(t);
+  if (!t || d_type(t) != T_BYTES || d_len(t) != 80) return vc_err(vc, "missing or invalid blockheader!");
 
   if (json) {
 
@@ -289,9 +289,9 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
   if (memcmp(hash, tx_id, 32)) return vc_err(vc, "invalid txid");
 
   // now check the merkle proof
-  t = d_get(vc->proof, K_MERKLE_PROOF);
-  if (!t || d_type(t) != T_BYTES) return vc_err(vc, "missing merkle proof!");
+  t           = d_get(vc->proof, K_MERKLE_PROOF);
   merkle_data = d_to_bytes(t);
+  if (!t || d_type(t) != T_BYTES) return vc_err(vc, "missing merkle proof!");
 
   // check the transactionIndex
   t = d_get(vc->proof, K_TX_INDEX);

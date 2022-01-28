@@ -47,7 +47,7 @@ static d_token_t* get_account(in3_vctx_t* vc, d_token_t* accounts, uint8_t* addr
     return NULL;
   }
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-    if (memcmp(d_get_byteskl(t, K_ADDRESS, 20)->data, address, 20) == 0)
+    if (memcmp(d_get_byteskl(t, K_ADDRESS, 20).data, address, 20) == 0)
       return t;
   }
   vc_err(vc, "The account could not be found!");
@@ -81,7 +81,7 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
 
   switch (evm_key) {
     case EVM_ENV_BLOCKHEADER:
-      if (!(res = d_get_bytes(vc->proof, K_BLOCK)))
+      if (!(res = d_as_bytes(d_get(vc->proof, K_BLOCK))))
         INVALID("no blockheader found")
       *out_data = res->data;
       return res->len;

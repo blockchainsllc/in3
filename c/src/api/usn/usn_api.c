@@ -81,8 +81,8 @@ static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;
   hex_to_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
   for (d_iterator_t iter = d_iter(d_get(receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
-    bytes_t* t = d_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
-    if (t && t->len == 32 && memcmp(event_hash, t->data, 32) == 0) return iter.token;
+    bytes_t t = d_to_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
+    if (t.data && t.len == 32 && memcmp(event_hash, t.data, 32) == 0) return iter.token;
   }
   return NULL;
 }
@@ -189,10 +189,10 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   b_free(signer);
 
   // look for a transaction hash
-  bytes_t* tx_hash = d_get_bytes(msg, K_TRANSACTIONHASH);
-  rejectp_if(tx_hash && tx_hash->len != 32, "incorrect transactionhash");
+  bytes_t tx_hash = d_get_bytes(msg, K_TRANSACTIONHASH);
+  rejectp_if(tx_hash.data && tx_hash.len != 32, "incorrect transactionhash");
 
-  if (!tx_hash) {
+  if (!tx_hash.data) {
     // without a tx_hash, we can only call "hasAccess()" of the contract.
     uint8_t   calldata[64];
     bytes32_t access;
@@ -213,10 +213,10 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     usn_booking_t        r;
 
     // store the txhash
-    memcpy(r.tx_hash, tx_hash->data, 32);
+    memcpy(r.tx_hash, tx_hash.data, 32);
 
     // can we use a chached version?
-    if (memcmp(last_receipt.tx_hash, tx_hash->data, 32) == 0) {
+    if (memcmp(last_receipt.tx_hash, tx_hash.data, 32) == 0) {
       // same hash, so we can copy the last one
       r = last_receipt;
     }
@@ -224,7 +224,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       // build request
       char params[71];
       strcpy(params, "[\"0x");
-      for (int i = 0; i < 32; i++) sprintf(params + 4 + 2 * i, "%02x", tx_hash->data[i]);
+      for (int i = 0; i < 32; i++) sprintf(params + 4 + 2 * i, "%02x", tx_hash.data[i]);
       strcpy(params + 4 + 64, "\"]");
 
       // send the request
@@ -242,18 +242,18 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       rejectp_if(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
 
       // extract the values
-      bytes_t* data      = d_get_bytes(event, K_DATA);
-      bytes_t* address   = d_get_byteskl(event, K_ADDRESS, 20);
-      bytes_t* device_id = d_bytesl(d_get_at(d_get(event, K_TOPICS), 2), 32);
-      r.rented_from      = bytes_to_long(data->data + 32, 32);
-      r.rented_until     = bytes_to_long(data->data + 64, 32);
-      memcpy(r.controller, data->data + 12, 20);
+      bytes_t data      = d_get_bytes(event, K_DATA);
+      bytes_t address   = d_get_byteskl(event, K_ADDRESS, 20);
+      bytes_t device_id = d_to_bytesl(d_get_at(d_get(event, K_TOPICS), 2), 32);
+      r.rented_from     = bytes_to_long(data.data + 32, 32);
+      r.rented_until    = bytes_to_long(data.data + 64, 32);
+      memcpy(r.controller, data.data + 12, 20);
 
-      dbg_log("device_id in topic (len=%u) : 0x%02x%02x%02x%02x\n", device_id->len, device_id->data[0], device_id->data[1], device_id->data[2], device_id->data[3]);
+      dbg_log("device_id in topic (len=%u) : 0x%02x%02x%02x%02x\n", device_id.len, device_id.data[0], device_id.data[1], device_id.data[2], device_id.data[3]);
       dbg_log("device_id in result  : 0x%02x%02x%02x%02x\n", result->device->id[0], result->device->id[1], result->device->id[2], result->device->id[3]);
       // check device_id and contract
-      rejectp_if(!device_id || device_id->len != 32 || memcmp(device_id->data, result->device->id, 32), "Invalid DeviceId");
-      rejectp_if(!address || address->len != 20 || memcmp(address->data, conf->contract, 20), "Invalid contract");
+      rejectp_if(!device_id.data || device_id.len != 32 || memcmp(device_id.data, result->device->id, 32), "Invalid DeviceId");
+      rejectp_if(!address.data || address.len != 20 || memcmp(address.data, conf->contract, 20), "Invalid contract");
 
       // cache it for next time.
       last_receipt = r;
@@ -452,15 +452,15 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
     // let's iterate over the found events
     for (d_iterator_t iter = d_iter(d_get(ctx->responses[0], K_RESULT)); iter.left; d_iter_next(&iter)) {
       d_token_t*    topics = d_get(iter.token, K_TOPICS);
-      bytes_t*      t0     = d_bytesl(d_get_at(topics, 0), 32);
+      bytes_t       t0     = d_to_bytesl(d_get_at(topics, 0), 32);
       usn_device_t* device = find_device_by_id(conf, d_to_bytes(d_get_at(topics, 2)).data);
-      bytes_t*      data   = d_get_bytes(iter.token, K_DATA);
-      if (t0->len != 32 || !device || !data) continue;
-      usn_add_booking(device, data->data + 12,
-                      bytes_to_long(data->data + 32 + 24, 8),
-                      bytes_to_long(data->data + 64 + 24, 8),
-                      *(t0->data) == 0x63 ? NULL : data->data + 6 + 32 + 16,
-                      d_get_bytes(iter.token, K_TRANSACTION_HASH)->data);
+      bytes_t       data   = d_get_bytes(iter.token, K_DATA);
+      if (t0.len != 32 || !device || !data.data) continue;
+      usn_add_booking(device, data.data + 12,
+                      bytes_to_long(data.data + 32 + 24, 8),
+                      bytes_to_long(data.data + 64 + 24, 8),
+                      *(t0.data) == 0x63 ? NULL : data.data + 6 + 32 + 16,
+                      d_get_bytes(iter.token, K_TRANSACTION_HASH).data);
     }
 
     req_free(ctx);

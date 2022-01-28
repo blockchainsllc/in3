@@ -76,7 +76,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYNUMBER)
   if (VERIFY_RPC("eth_getBlockByNumber"))
-    return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
+    return eth_verify_eth_getBlock(vc, NULL_BYTES, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYHASH)
   if (VERIFY_RPC("eth_getBlockTransactionCountByHash"))
@@ -84,7 +84,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYNUMBER)
   if (VERIFY_RPC("eth_getBlockTransactionCountByNumber"))
-    return eth_verify_eth_getBlockTransactionCount(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
+    return eth_verify_eth_getBlockTransactionCount(vc, NULL_BYTES, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYHASH)
   if (VERIFY_RPC("eth_getBlockByHash"))
@@ -104,7 +104,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (VERIFY_RPC("eth_sendRawTransaction")) {
     bytes32_t hash;
     keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
-    return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
+    return bytes_cmp(d_to_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   }
 #endif
   return IN3_EIGNORE;
@@ -119,14 +119,11 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   in3_req_t* send_req = NULL;
   in3_req_t* last_r   = NULL;
   TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash, &send_req))
-  if (d_type(tx_hash) != T_BYTES || d_len(tx_hash) != 32) return req_set_error(ctx->req, "Invalid Response from sendTransaction, expecting a hash!", IN3_EINVAL);
+  bytes_t th = d_to_bytes(tx_hash);
+  if (!th.data || th.len != 32) return req_set_error(ctx->req, "Invalid Response from sendTransaction, expecting a hash!", IN3_EINVAL);
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];
-  bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
-  tx_hash_hex[0] = tx_hash_hex[67] = '"';
-  tx_hash_hex[1]                   = '0';
-  tx_hash_hex[2]                   = 'x';
-  tx_hash_hex[68]                  = 0;
+  bytes_to_hex_string(tx_hash_hex, "\"0x", th, "\"");
 
   // get the tx_receipt
   TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt, &last_r))

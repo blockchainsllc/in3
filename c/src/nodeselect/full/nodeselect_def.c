@@ -30,19 +30,19 @@ static void   _lock_registry() {
   }
   MUTEX_LOCK(lock_registry);
 }
-#define LOCK_REGISTRY(code)         \
-  {                                 \
-    _lock_registry();               \
-    code                            \
-        MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)     \
+  {                             \
+    _lock_registry();           \
+    code                        \
+    MUTEX_UNLOCK(lock_registry) \
   }
 #else
 static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
-#define LOCK_REGISTRY(code)         \
-  {                                 \
-    MUTEX_LOCK(lock_registry);      \
-    code                            \
-        MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)     \
+  {                             \
+    MUTEX_LOCK(lock_registry);  \
+    code                        \
+    MUTEX_UNLOCK(lock_registry) \
   }
 #endif
 #else
@@ -171,11 +171,11 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   char*       res   = NULL;
   json_ctx_t* json  = ctx->json;
   d_token_t*  token = ctx->token;
-
+  d_to_bytes(token);
   if (token->key == CONFIG_KEY("preselect_nodes")) {
     if (data->pre_address_filter) b_free(data->pre_address_filter);
     if (d_type(token) == T_BYTES && d_len(token) % 20 == 0)
-      data->pre_address_filter = b_dup(d_bytes(token));
+      data->pre_address_filter = b_dup2(d_to_bytes(token));
     else if (d_type(token) == T_NULL)
       data->pre_address_filter = NULL;
     else {
@@ -249,7 +249,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
         data->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
         for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
           EXPECT_TOK_ADDR(n.token);
-          const uint8_t* whitelist_address = d_bytes(n.token)->data;
+          const uint8_t* whitelist_address = d_to_bytes(n.token).data;
           for (uint32_t j = 0; j < data->whitelist->addresses.len; j += 20) {
             if (!memcmp(whitelist_address, data->whitelist->addresses.data + j, 20)) {
               in3_whitelist_clear(data->whitelist);
@@ -285,7 +285,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
           EXPECT_TOK_ADDR(d_get(n.token, CONFIG_KEY("address")));
           EXPECT_CFG(add_node(data, d_get_string(n.token, CONFIG_KEY("url")),
                               d_get_longd(n.token, CONFIG_KEY("props"), 65535),
-                              d_get_byteskl(n.token, CONFIG_KEY("address"), 20)->data) == IN3_OK,
+                              d_get_byteskl(n.token, CONFIG_KEY("address"), 20).data) == IN3_OK,
                      "add node failed");
           assert(data->nodelist_length > 0);
           BIT_SET(data->nodelist[data->nodelist_length - 1].attrs, ATTR_BOOT_NODE);
@@ -393,9 +393,10 @@ static node_match_t* parse_signers(d_token_t* dsigners) {
     unsigned int len = d_len(dsigners);
     for (unsigned int i = 0; i < len; i++) {
       d_token_t* dsigner = d_get_at(dsigners, i);
-      if (d_type(dsigner) == T_BYTES && d_len(dsigner) == 20) {
+      bytes_t    bs      = d_to_bytes(dsigner);
+      if (bs.data && bs.len == 20) {
         *s = _calloc(1, sizeof(node_match_t));
-        memcpy((*s)->address, d_bytes(dsigner)->data, 20);
+        memcpy((*s)->address, bs.data, 20);
         (*s)->next = NULL;
         s          = &(*s)->next;
       }

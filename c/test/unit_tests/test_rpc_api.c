@@ -199,8 +199,8 @@ static void test_in3_client_rpc() {
 IN3_IMPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract);
 
 static void checksum(d_token_t* params, chain_id_t chain, char* result) {
-  bytes_t*  adr = d_get_bytes_at(params, 0);
-  in3_ret_t res = to_checksum(adr->data, 0, result);
+  bytes_t   adr = d_get_bytes_at(params, 0);
+  in3_ret_t res = to_checksum(adr.data, 0, result);
 }
 
 static void test_in3_checksum_rpc() {

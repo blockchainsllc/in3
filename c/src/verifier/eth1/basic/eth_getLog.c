@@ -59,7 +59,7 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
   if (jaddrs == NULL) {
     return true; // address param is optional
   }
-  else if (d_type(jaddrs) == T_BYTES) {
+  else if (d_is_bytes(jaddrs)) {
     return !!bytes_cmp(addrs, d_to_bytes(jaddrs));
   }
   else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
@@ -72,6 +72,7 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
 
 static bool matches_filter_from_to(d_token_t* tx_params, const d_key_t k, uint64_t blockno) {
   d_token_t* jrange = d_get(tx_params, k);
+  d_to_bytes(jrange);
   if (d_type(jrange) == T_INTEGER || d_type(jrange) == T_BYTES) {
     if (k == K_FROM_BLOCK)
       return blockno >= d_long(jrange);
@@ -110,14 +111,13 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
   for (int i = 0; i < l; i++, d_iter_next(&it1), d_iter_next(&it2)) {
     if (d_type(it1.token) == T_NULL)
       continue; // null matches anything in this position
-    else if (d_type(it1.token) == T_BYTES && !bytes_cmp(d_to_bytes(it1.token), d_to_bytes(it2.token)))
+    else if (d_is_bytes(it1.token) && !bytes_cmp(d_to_bytes(it1.token), d_to_bytes(it2.token)))
       return false;
     else if (d_type(it1.token) == T_ARRAY) { // must match atleast one in array
       bool found = false;
       for (d_iterator_t it_ = d_iter(it1.token); it_.left; d_iter_next(&it_)) {
-        if (d_type(it_.token) != T_BYTES) {
+        if (!d_is_bytes(it_.token))
           return false;
-        }
         else if (bytes_cmp(d_to_bytes(it_.token), d_to_bytes(it2.token))) {
           found = true;
           break;
@@ -155,9 +155,11 @@ bool filter_from_equals_to(d_token_t* req) {
   d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
   d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
   if (frm && to && d_type(frm) == d_type(to)) {
+    if (d_is_bytes(to)) d_to_bytes(to);
+    if (d_is_bytes(frm)) d_to_bytes(frm);
     if (d_type(frm) == T_STRING && !strcmp(d_string(frm), d_string(to)))
       return true;
-    else if (d_type(frm) == T_BYTES && b_cmp(d_bytes(frm), d_bytes(to)))
+    else if (d_type(frm) == T_BYTES && bytes_cmp(d_to_bytes(frm), d_to_bytes(to)))
       return true;
   }
   return false;
@@ -233,7 +235,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     // verify the blockheader of the log entry
     bytes_t block = d_to_bytes(d_get(it.token, K_BLOCK)), tx_root, receipt_root;
     int     bl    = i;
-    if (!block.len || eth_verify_blockheader(vc, &block, NULL) < 0) return vc_err(vc, "invalid blockheader");
+    if (!block.len || eth_verify_blockheader(vc, block, NULL_BYTES) < 0) return vc_err(vc, "invalid blockheader");
     keccak(block, receipts[i].block_hash);
     rlp_decode(&block, 0, &block);
     if (rlp_decode(&block, BLOCKHEADER_RECEIPT_ROOT, &receipt_root) != 1) return vc_err(vc, "invalid receipt root");
@@ -313,7 +315,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (rlp_decode_len(&tops) != d_len(topics)) return vc_err(vc, "invalid topics len");
 
     for (d_iterator_t t = d_iter(topics); t.left; d_iter_next(&t)) {
-      if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, *d_bytesl(t.token, 32))) return vc_err(vc, "invalid topic");
+      if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, d_to_bytesl(t.token, 32))) return vc_err(vc, "invalid topic");
     }
 
     if (d_get_long(it.token, K_BLOCK_NUMBER) != bytes_to_long(r->block_number.data, r->block_number.len)) return vc_err(vc, "invalid blocknumber");

@@ -73,31 +73,10 @@ static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
 }
 
 int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
-  uint8_t tmp[4];
-  bytes_t b;
-
-  switch (d_type(t)) {
-    case T_NULL:
-      b.data = tmp;
-      b.len  = 0;
-      break;
-    case T_INTEGER:
-      tmp[3] = t->len & 0xFF;
-      tmp[2] = (t->len & 0xFF00) >> 8;
-      tmp[1] = (t->len & 0xFF0000) >> 16;
-      tmp[0] = (t->len & 0xF000000) >> 24;
-      b.len  = tmp[0] ? 4 : (tmp[1] ? 3 : (tmp[2] ? 2 : (tmp[3] ? 1 : 0)));
-      b.data = (uint8_t*) &tmp + 4 - b.len;
-      break;
-    case T_BYTES:
-      b.data = t->data;
-      b.len  = t->len;
-      break;
-    default:
-      return -1;
-  }
-
-  return rlp_add_bytes(rlp, b, ml);
+  uint8_t tmp[4] = {0};
+  bytes_t b      = d_to_bytes(t);
+  if (d_type(t) == T_NULL) b = bytes(tmp, 0);
+  return b.data || d_type(t) == T_BYTES ? rlp_add_bytes(rlp, b, ml) : -1;
 }
 
 static bytes_t* convert_to_typed_list(bytes_builder_t* rlp, int32_t type) {
@@ -127,7 +106,7 @@ static void rlp_add_list(bytes_builder_t* rlp, d_token_t* t) {
     d_token_t* keys = d_get(adr.token, K_STORAGE_KEYS);
     if (!keys) keys = d_get(adr.token, K_STORAGE_PROOF);
     if (keys) {
-      for (d_iterator_t st = d_iter(keys); st.left && d_type(st.token) == T_BYTES; d_iter_next(&st)) {
+      for (d_iterator_t st = d_iter(keys); st.left && d_is_bytes(st.token); d_iter_next(&st)) {
         d_token_t* h = st.token;
         if (d_type(h) == T_OBJECT) h = d_get(h, K_KEY);
         rlp_add(&bb3, h, HASH);
@@ -278,8 +257,10 @@ bytes_t* serialize_block_header(d_token_t* block) {
 
   // if there are sealed field we take them as raw already rlp-encoded data and add them.
   if ((sealed_fields=d_get(block,K_SEAL_FIELDS))) {
-    for (i=0,t=sealed_fields+1;i<d_len(sealed_fields);i++,t=d_next(t))
-       bb_write_raw_bytes(rlp,t->data, t->len);   // we need to check if the nodes is within the bounds!
+    for (i=0,t=sealed_fields+1;i<d_len(sealed_fields);i++,t=d_next(t)) {
+      bytes_t b = d_to_bytes(t);
+      bb_write_raw_bytes(rlp,b.data, b.len);   // we need to check if the nodes is within the bounds!
+    }
   }
   else {
     // good old proof of work...

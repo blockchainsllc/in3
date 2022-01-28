@@ -30,7 +30,8 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // make sure we have an account
   uint8_t* account = conf->account;
-  if ((tmp = params_get(ctx->params, key("depositTo"), 3)) && d_type(tmp) == T_BYTES) {
+  if ((tmp = params_get(ctx->params, key("depositTo"), 3)) && d_is_bytes(tmp)) {
+    d_to_bytes(tmp);
     if (tmp->len != 20) return req_set_error(ctx->req, "invalid depositTo", IN3_ERPC);
     account = tmp->data;
   }
@@ -76,16 +77,16 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // now that we have the receipt, we need to find the opId in the log
   const uint8_t event_hash[] = {0xd0, 0x94, 0x33, 0x72, 0xc0, 0x8b, 0x43, 0x8a, 0x88, 0xd4, 0xb3, 0x9d, 0x77, 0x21, 0x69, 0x01, 0x07, 0x9e, 0xda, 0x9c, 0xa5, 0x9d, 0x45, 0x34, 0x98, 0x41, 0xc0, 0x99, 0x08, 0x3b, 0x68, 0x30};
   for (d_iterator_t iter = d_iter(d_get(tx_receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
-    bytes_t* ev = d_get_bytes_at(d_get(iter.token, K_TOPICS), 0);
-    if (ev && ev->len == 32 && memcmp(event_hash, ev->data, 32) == 0) {
-      bytes_t* data = d_get_bytes(iter.token, K_DATA);
-      if (data && data->len > 64) {
+    bytes_t ev = d_get_bytes_at(d_get(iter.token, K_TOPICS), 0);
+    if (ev.data && ev.len == 32 && memcmp(event_hash, ev.data, 32) == 0) {
+      bytes_t data = d_get_bytes(iter.token, K_DATA);
+      if (data.data && data.len > 64) {
         str_range_t r  = d_to_json(tx_receipt);
         sb_t*       sb = in3_rpc_handle_start(ctx);
         sb_add_chars(sb, "{\"receipt\":");
         sb_add_range(sb, r.data, 0, r.len);
         sb_add_chars(sb, ",\"priorityOpId\":");
-        sb_add_int(sb, bytes_to_long(data->data + 64 - 8, 8));
+        sb_add_int(sb, bytes_to_long(data.data + 64 - 8, 8));
         sb_add_chars(sb, "}");
         req_remove_required(ctx->req, req_find_required(ctx->req, "eth_sendTransactionAndWait", NULL), true);
         return in3_rpc_handle_finish(ctx);

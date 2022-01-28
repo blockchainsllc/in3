@@ -46,7 +46,7 @@ NONULL in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void
 
 /** verifies a blockheader. */
 NONULL_FOR((1, 2))
-in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash);
+in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t header, bytes_t expected_blockhash);
 
 /**
  * verifies a single signature blockheader.
@@ -65,7 +65,7 @@ NONULL bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig);
 /**
  * verifies a transaction receipt.
  */
-NONULL in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
+NONULL in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t tx_hash);
 
 /**
  * this function should only be called once and will register the eth-nano verifier.

@@ -317,8 +317,8 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     if (conf->proof_create_method) _free(conf->proof_create_method);
     conf->proof_create_method = _strdupn(pcm, -1);
   }
-  bytes_t* account = d_get_bytes(ctx->token, CONFIG_KEY("account"));
-  if (account && account->len == 20) memcpy(conf->account = _malloc(20), account->data, 20);
+  bytes_t account = d_get_bytes(ctx->token, CONFIG_KEY("account"));
+  if (account.data && account.len == 20) memcpy(conf->account = _malloc(20), account.data, 20);
   bytes_t sync_key = d_to_bytes(d_get(ctx->token, CONFIG_KEY("sync_key")));
   if (sync_key.len) {
     zkcrypto_pk_from_seed(sync_key, conf->sync_key);
@@ -326,19 +326,19 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
     zkcrypto_pubkey_hash(bytes(conf->pub_key, 32), conf->pub_key_hash_pk);
   }
 
-  bytes_t* main_contract = d_get_bytes(ctx->token, CONFIG_KEY("main_contract"));
-  if (main_contract && main_contract->len == 20) memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
+  bytes_t main_contract = d_get_bytes(ctx->token, CONFIG_KEY("main_contract"));
+  if (main_contract.data && main_contract.len == 20) memcpy(conf->main_contract = _malloc(20), main_contract.data, 20);
   d_token_t* st = d_get(ctx->token, CONFIG_KEY("signer_type"));
   if (st)
     conf->sign_type = get_sign_type(st);
   else if (conf->sign_type == 0)
     conf->sign_type = ZK_SIGN_PK;
-  conf->version    = (uint32_t) d_intd(d_get(ctx->token, CONFIG_KEY("version")), conf->version);
-  d_token_t* musig = d_get(ctx->token, CONFIG_KEY("musig_pub_keys"));
-  if (musig && d_type(musig) == T_BYTES && d_len(musig) % 32 == 0) {
+  conf->version = (uint32_t) d_intd(d_get(ctx->token, CONFIG_KEY("version")), conf->version);
+  bytes_t musig = d_get_bytes(ctx->token, CONFIG_KEY("musig_pub_keys"));
+  if (musig.data && musig.len % 32 == 0) {
     if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
-    conf->musig_pub_keys = bytes(_malloc(d_len(musig)), musig->len);
-    memcpy(conf->musig_pub_keys.data, musig->data, musig->len);
+    conf->musig_pub_keys = bytes(_malloc(musig.len), musig.len);
+    memcpy(conf->musig_pub_keys.data, musig.data, musig.len);
   }
   d_token_t* urls = d_get(ctx->token, CONFIG_KEY("musig_urls"));
   if (urls) {
@@ -365,12 +365,12 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   d_token_t* create2 = d_get(ctx->token, CONFIG_KEY("create2"));
   if (create2) {
     conf->sign_type = ZK_SIGN_CREATE2;
-    bytes_t* t      = d_get_bytes(create2, CONFIG_KEY("creator"));
-    if (t && t->len == 20) memcpy(conf->create2.creator, t->data, 20);
+    bytes_t t       = d_get_bytes(create2, CONFIG_KEY("creator"));
+    if (t.data && t.len == 20) memcpy(conf->create2.creator, t.data, 20);
     t = d_get_bytes(create2, CONFIG_KEY("saltarg"));
-    if (t && t->len == 32) memcpy(conf->create2.salt_arg, t->data, 32);
+    if (t.data && t.len == 32) memcpy(conf->create2.salt_arg, t.data, 32);
     t = d_get_bytes(create2, CONFIG_KEY("codehash"));
-    if (t && t->len == 32) memcpy(conf->create2.codehash, t->data, 32);
+    if (t.data && t.len == 32) memcpy(conf->create2.codehash, t.data, 32);
   }
 
   d_token_t* incentive = d_get(ctx->token, CONFIG_KEY("incentive"));

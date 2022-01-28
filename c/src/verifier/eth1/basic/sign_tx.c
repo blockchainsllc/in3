@@ -101,11 +101,11 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
 
 /** gets the from-fied from the tx or ask the signer */
 in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
-  d_token_t* t = d_get(tx, K_FROM);
-  if (t) {
+  bytes_t t = d_get_bytes(tx, K_FROM);
+  if (t.data) {
     // we only accept valid from addresses which need to be 20 bytes
-    if (d_type(t) != T_BYTES || d_len(t) != 20) return req_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
-    memcpy(res, d_bytes(t)->data, 20);
+    if (t.len != 20) return req_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
+    memcpy(res, t.data, 20);
     return IN3_OK;
   }
 
@@ -250,7 +250,7 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
       // if this is a deployment transaction we concate it with the arguments without the functionhash
       bytes_t new_data = get_or_create_cached(req, key("deploy_data"), data->len + d_len(res) - 4);
       memcpy(new_data.data, data->data, data->len);
-      memcpy(new_data.data + data->len, d_bytes(res)->data + 4, d_len(res) - 4);
+      memcpy(new_data.data + data->len, d_to_bytes(res).data + 4, d_len(res) - 4);
       *data = new_data;
     }
     else
@@ -437,7 +437,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // we get the raw transaction from this request
   in3_req_t* sig_ctx = req_find_required(ctx, "sign_ec_hash", NULL);
   if (sig_ctx) {
-    bytes_t raw = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
+    bytes_t raw = d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
     unsigned_tx = bytes(_malloc(raw.len), raw.len);
     memcpy(unsigned_tx.data, raw.data, raw.len);
   }

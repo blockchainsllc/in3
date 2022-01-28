@@ -652,7 +652,7 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
       txr->cumulative_gas_used = d_get_long(result, K_CUMULATIVE_GAS_USED);
       txr->gas_used            = d_get_long(result, K_GAS_USED);
       txr->status              = (d_get_int(result, K_STATUS) == 1);
-      txr->contract_address    = b_dup(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
+      txr->contract_address    = b_dup2(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
       txr->logs                = parse_logs(d_get(result, K_LOGS));
       copy_fixed(txr->transaction_hash, 32, d_to_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));
       copy_fixed(txr->block_hash, 32, d_to_bytes(d_getl(result, K_BLOCK_HASH, 32)));
@@ -722,13 +722,13 @@ bytes_t* eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_
   }
   if (nonce.defined) params_add_next_pair(params, "nonce", sb_add_hexuint(params, nonce.value), true);
   sb_add_char(params, '}');
-  rpc_exec("eth_sendTransaction", bytes_t*, b_dup(d_bytes(result)));
+  rpc_exec("eth_sendTransaction", bytes_t*, b_dup2(d_to_bytes(result)));
 }
 
 bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
   rpc_init;
   params_add_bytes(params, data);
-  rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup(d_bytes(result)));
+  rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup2(d_to_bytes(result)));
 }
 
 in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {

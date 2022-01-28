@@ -13,7 +13,8 @@
   if (d_type(params) != T_ARRAY || d_len(params) < len) return req_set_error(ctx, "arguments need to be a array with at least " #len " arguments", IN3_EINVAL);
 
 /* checks that the parameter at the given index is of the specified type */
-#define CHECK_PARAM_TYPE(ctx, params, index, type) \
+#define CHECK_PARAM_TYPE(ctx, params, index, type)          \
+  if (type == T_BYTES) d_to_bytes(d_get_at(params, index)); \
   if (d_type(d_get_at(params, index)) != type) return req_set_error(ctx, "argument at index " #index " must be a " #type, IN3_EINVAL);
 
 /* checks that the parameter at the given index is a number */
@@ -57,7 +58,7 @@
     d_token_t* t = d_get_at(ctx->params, index);                                                                                                          \
     if (d_type(t) == T_NULL)                                                                                                                              \
       target = NULL_BYTES;                                                                                                                                \
-    else if (d_type(t) == T_OBJECT || d_type(t) == T_ARRAY)                                                                                               \
+    else if (!d_is_bytes(t) && d_type(t) != T_INTEGER)                                                                                                    \
       return req_set_error(ctx->req, "Param at " #index " must be bytes!", IN3_EINVAL);                                                                   \
     else {                                                                                                                                                \
       target = d_to_bytes(t);                                                                                                                             \
@@ -126,7 +127,7 @@
 /* fetches the parameter with the given index as boolean and stores it in the target, which must be a bool or int variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
 #define TRY_PARAM_GET_BOOL(target, ctx, index, def)                                                \
   {                                                                                                \
-    const d_token_t* t = d_get_at(ctx->params, index);                                             \
+    d_token_t* t = d_get_at(ctx->params, index);                                                   \
     if (d_type(t) == T_NULL)                                                                       \
       target = def;                                                                                \
     else if (d_type(t) != T_BOOLEAN)                                                               \
@@ -138,10 +139,10 @@
 /* fetches the parameter with the given index as address (20 bytes) and stores it in the target, which must be a uint8_t* variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
 #define TRY_PARAM_GET_ADDRESS(target, ctx, index, def)                                            \
   {                                                                                               \
-    const d_token_t* t = d_get_at(ctx->params, index);                                            \
+    d_token_t* t = d_get_at(ctx->params, index);                                                  \
     if (d_type(t) == T_NULL)                                                                      \
       target = def;                                                                               \
-    else if (d_type(t) != T_BYTES || d_len(t) != 20)                                              \
+    else if (!d_is_bytes(t) || d_to_bytes(t).len != 20)                                           \
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
       target = t->data;                                                                           \
@@ -150,8 +151,8 @@
 /* fetches the required parameter with the given index as address (20 bytes) and stores it in the target, which must be a uint8_t* variable*/
 #define TRY_PARAM_GET_REQUIRED_ADDRESS(target, ctx, index)                                        \
   {                                                                                               \
-    const d_token_t* t = d_get_at(ctx->params, index);                                            \
-    if (d_type(t) != T_BYTES || d_len(t) != 20)                                                   \
+    d_token_t* t = d_get_at(ctx->params, index);                                                  \
+    if (!d_is_bytes(t) || d_to_bytes(t).len != 20)                                                \
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
       target = t->data;                                                                           \
@@ -160,14 +161,14 @@
 /* fetches the parameter with the given index as string and stores it in the target, which must be a char* variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
 #define TRY_PARAM_GET_STRING(target, ctx, index, def)                                              \
   {                                                                                                \
-    const d_token_t* t = d_get_at(ctx->params, index);                                             \
+    d_token_t* t = d_get_at(ctx->params, index);                                                   \
     switch (d_type(t)) {                                                                           \
       case T_NULL:                                                                                 \
         target = def;                                                                              \
         break;                                                                                     \
       case T_BYTES:                                                                                \
         target = alloca(t->len * 2 + 3);                                                           \
-        bytes_to_hex_string(target, "0x", *d_bytes(t), NULL);                                      \
+        bytes_to_hex_string(target, "0x", bytes(t->data, t->len), NULL);                           \
         break;                                                                                     \
       case T_INTEGER:                                                                              \
         target = alloca(10);                                                                       \

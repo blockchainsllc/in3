@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -67,7 +67,7 @@ const char* account_proof_array[] = {
 
 static json_ctx_t* init() {
   bytes_t b = {.data = (uint8_t*) mock_eth_call_response, .len = mock_eth_call_response_len};
-  //print_debug(&b);
+  // print_debug(&b);
   return parse_binary(&b);
 }
 
@@ -76,9 +76,9 @@ static void test_binary_primitives() {
   int         k_result   = key_("result");
   int         k_id       = key_("id");
   int         k_jsonrpc  = key_("jsonrpc");
-  bytes_t*    d          = d_bytes(d_get(ctx->result, k_result));
-  char*       str_result = malloc(d->len * 2 + 2);
-  bytes_to_hex(d->data, d->len, str_result);
+  bytes_t     d          = d_to_bytes(d_get(ctx->result, k_result));
+  char*       str_result = malloc(d.len * 2 + 2);
+  bytes_to_hex(d.data, d.len, str_result);
   char*   jsonrpc = d_get_string(ctx->result, k_jsonrpc);
   int32_t id_     = d_get_int(ctx->result, k_id);
   TEST_ASSERT_EQUAL_STRING(str_result, "0000000000000000000000000000000000000000000000000000000000000001");
@@ -96,16 +96,16 @@ static void test_binary_object() {
   int         k_key          = key_("key");
   int         k_proof        = key_("proof");
   int         k_value        = key_("value");
-  //test object
+  // test object
   d_token_t* accounts  = d_get(d_get(d_get(ctx->result, k_in3), k_proof), k_accounts);
   char*      str_proof = NULL;
   for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
     d_token_t* storage_object = d_get_at(d_get(iter.token, k_storageProof), 0);
-    bytes_t*   proof_s        = d_get_bytes_at(d_get(storage_object, k_proof), 0);
+    bytes_t    proof_s        = d_get_bytes_at(d_get(storage_object, k_proof), 0);
     int32_t    key            = d_int(d_get(storage_object, k_key));
     int32_t    value          = d_int(d_get(storage_object, k_value));
-    str_proof                 = malloc(proof_s->len * 2 + 10);
-    bytes_to_hex(proof_s->data, proof_s->len, str_proof);
+    str_proof                 = malloc(proof_s.len * 2 + 10);
+    bytes_to_hex(proof_s.data, proof_s.len, str_proof);
     TEST_ASSERT_EQUAL_STRING(str_proof, "e3a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56301");
     TEST_ASSERT_EQUAL_INT32(key, 0);
     TEST_ASSERT_EQUAL_INT32(value, 1);
@@ -126,9 +126,9 @@ static void test_binary_array() {
     int        index          = 0;
     char*      str_proof      = NULL;
     for (d_iterator_t iter_arr = d_iter(accounts_array); iter_arr.left; d_iter_next(&iter_arr)) {
-      bytes_t* proof_data = d_bytes(iter_arr.token);
-      str_proof           = malloc(proof_data->len * 2 + 10);
-      bytes_to_hex(proof_data->data, proof_data->len, str_proof);
+      bytes_t proof_data = d_to_bytes(iter_arr.token);
+      str_proof          = malloc(proof_data.len * 2 + 10);
+      bytes_to_hex(proof_data.data, proof_data.len, str_proof);
       TEST_ASSERT_EQUAL_STRING(str_proof, account_proof_array[index]);
       index++;
       free(str_proof);

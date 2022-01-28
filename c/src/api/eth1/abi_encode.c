@@ -59,6 +59,7 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       break;
     }
     case ABI_NUMBER: {
+      d_to_bytes(src);
       bytes_t      data;
       unsigned int bl = coder->data.number.size / 8;
       if (d_type(src) == T_STRING) {
@@ -100,6 +101,7 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       return encode_tuple(coder, src, bb, error);
     case ABI_STRING:
     case ABI_BYTES: {
+      d_to_bytes(src);
       if (d_type(src) != T_STRING && d_type(src) != T_BYTES && d_type(src) != T_INTEGER)
         return encode_error("invalid bytes or string value", error);
       bytes_t data = d_to_bytes(src);
@@ -173,8 +175,8 @@ static in3_ret_t encode_tuple(abi_coder_t* tuple, d_token_t* src, bytes_builder_
     if (updates[i] != -1) int_to_bytes(bytes_to_int(b_static.b.data + 28 + updates[i], 4) + b_static.b.len, b_static.b.data + 28 + updates[i]);
   }
 
-  bb_write_fixed_bytes(bb, &b_static.b);
-  bb_write_fixed_bytes(bb, &b_dynamic.b);
+  bb_write_fixed_bytes(bb, b_static.b);
+  bb_write_fixed_bytes(bb, b_dynamic.b);
 
 clean:
   if (b_dynamic.b.data) _free(b_dynamic.b.data);
