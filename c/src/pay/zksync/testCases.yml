@@ -128,211 +128,211 @@ tokens: &tokens
 
 zksync:
   zksync_set_key:
-    - config:
-        proof: "none"
-        experimental: true
-        pk:
-          - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-        rpc: "https://rinkeby-light.eth.linkpool.io"
-        zksync:
-          provider_url: "https://rinkeby-api.zksync.io/jsrpc"
-      input:
-        - "ETH"
-      expected_output: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
-      mockedResponses:
-        - req:
-            method: "POST"
-            body:
-              method: "account_info"
-              params:
-                - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-          res:
-            jsonrpc: "2.0"
-            id: 1
-            result:
-              depositing:
-                balances: {}
-              committed:
-                nonce: 0
-                balances:
-                  ETH: "1100000000000101000"
-                nfts: {}
-                mintedNfts: {}
-                pubKeyHash: "sync:0000000000000000000000000000000000000000"
-              id: 167067
-              verified:
-                nonce: 0
-                balances: {}
-                nfts: {}
-                mintedNfts: {}
-                pubKeyHash: "sync:0000000000000000000000000000000000000000"
-              address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-        - req:
-            method: "POST"
-            body:
-              method: "tokens"
-              params: []
-          res:
-            result: *tokens
-        - req:
-            method: "POST"
-            body:
-              method: "eth_chainId"
-              params: []
-          res:
-            result: "0x4"
-        - req:
-            method: "POST"
-            body:
-              method: "get_tx_fee"
-              params:
-                - ChangePubKey: "ECDSA"
-                - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-                - "ETH"
-          res:
-            result:
-              zkpFee: 30541131762442
-              totalFee: 64600000000000
-              gasTxAmount: 26200
-              gasPriceWei: 1000000000
-              gasFee: 34060000000000
-              feeType:
-                ChangePubKey: "ECDSA"
-        - req:
-            method: "POST"
-            body:
-              method: "tx_submit"
-              params:
-                - nonce: 0
-                  fee: "64600000000000"
-                  validUntil: 4294967295
-                  type: "ChangePubKey"
-                  ethAuthData:
-                    type: "ECDSA"
-                    ethSignature: "0x2b281880b7c73127570aaa4696ea6024f826977649d15fc37e422ffc996121153a909302fad27e4548c66c7e0520b6f77c5027c88104b38fe82af16b85d4c7061b"
-                  accountId: 167067
-                  signature:
-                    pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
-                    signature: "c936c89a624dc5effbb54bd3b2a2d56f4deac9103051d4607476770c3451d321784751218821e73f2f4d514068cd2bfd511bc4137fa28bdb660682944a754001"
-                  validFrom: 0
-                  account: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-                  feeToken: 0
-                  feeTokenId: 0
-                  newPkHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
-                - null
-                - false
-          res:
-            result: "sync-tx:4f8b59a5d7d4f128c3024b481eebc66de41428636c385ca68f00ea5f0d785564"
+    config:
+      proof: "none"
+      experimental: true
+      pk:
+        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      rpc: "https://rinkeby-light.eth.linkpool.io"
+      zksync:
+        provider_url: "https://rinkeby-api.zksync.io/jsrpc"
+    input:
+      - "ETH"
+    expected_output: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+    mockedResponses:
+      - req:
+          method: "POST"
+          body:
+            method: "account_info"
+            params:
+              - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+        res:
+          jsonrpc: "2.0"
+          id: 1
+          result:
+            depositing:
+              balances: {}
+            committed:
+              nonce: 0
+              balances:
+                ETH: "1100000000000101000"
+              nfts: {}
+              mintedNfts: {}
+              pubKeyHash: "sync:0000000000000000000000000000000000000000"
+            id: 167067
+            verified:
+              nonce: 0
+              balances: {}
+              nfts: {}
+              mintedNfts: {}
+              pubKeyHash: "sync:0000000000000000000000000000000000000000"
+            address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+      - req:
+          method: "POST"
+          body:
+            method: "tokens"
+            params: []
+        res:
+          result: *tokens
+      - req:
+          method: "POST"
+          body:
+            method: "eth_chainId"
+            params: []
+        res:
+          result: "0x4"
+      - req:
+          method: "POST"
+          body:
+            method: "get_tx_fee"
+            params:
+              - ChangePubKey: "ECDSA"
+              - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+              - "ETH"
+        res:
+          result:
+            zkpFee: 30541131762442
+            totalFee: 64600000000000
+            gasTxAmount: 26200
+            gasPriceWei: 1000000000
+            gasFee: 34060000000000
+            feeType:
+              ChangePubKey: "ECDSA"
+      - req:
+          method: "POST"
+          body:
+            method: "tx_submit"
+            params:
+              - nonce: 0
+                fee: "64600000000000"
+                validUntil: 4294967295
+                type: "ChangePubKey"
+                ethAuthData:
+                  type: "ECDSA"
+                  ethSignature: "0x2b281880b7c73127570aaa4696ea6024f826977649d15fc37e422ffc996121153a909302fad27e4548c66c7e0520b6f77c5027c88104b38fe82af16b85d4c7061b"
+                accountId: 167067
+                signature:
+                  pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
+                  signature: "c936c89a624dc5effbb54bd3b2a2d56f4deac9103051d4607476770c3451d321784751218821e73f2f4d514068cd2bfd511bc4137fa28bdb660682944a754001"
+                validFrom: 0
+                account: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+                feeToken: 0
+                feeTokenId: 0
+                newPkHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+              - null
+              - false
+        res:
+          result: "sync-tx:4f8b59a5d7d4f128c3024b481eebc66de41428636c385ca68f00ea5f0d785564"
 
   zksync_transfer:
-    - config:
-        proof: "none"
-        experimental: true
-        pk:
-          - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
-        rpc: "https://rinkeby-light.eth.linkpool.io"
-        zksync:
-          provider_url: "https://rinkeby-api.zksync.io/jsrpc"
-      input:
-        - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-        - "100000000000000000"
-        - "ETH"
-      expected_output:
-        type: "Transfer"
-        accountId: 167067
-        from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-        to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-        token: 0
-        tokenId: 0
-        amount: 100000000000000000
-        fee: 30300000000000
-        validFrom: 0
-        validUntil: 4294967295
-        nonce: 3
-        txHash: "sync-tx:b431fad24a0b3ccc324c09b1dd3f2484ac070d944a615e46d7b822dd9e883c02"
-      mockedResponses:
-        - req:
-            method: "POST"
-            body:
-              method: "eth_chainId"
-              params: []
-          res:
-            result: "0x4"
-        - req:
-            method: "POST"
-            body:
-              method: "account_info"
-              params:
-                - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-          res:
-            result:
-              depositing:
-                balances: {}
-              committed:
-                nonce: 3
-                balances:
-                  ETH: "1099802600000100800"
-                nfts: {}
-                mintedNfts: {}
-                pubKeyHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
-              id: 167067
-              verified:
-                nonce: 0
-                balances:
-                  ETH: "1100000000000101000"
-                nfts: {}
-                mintedNfts: {}
-                pubKeyHash: "sync:0000000000000000000000000000000000000000"
-              address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-        - req:
-            method: "POST"
-            body:
-              method: "tokens"
-              params: []
-          res:
-            jsonrpc: "2.0"
-            id: 3
-            result: *tokens
+    config:
+      proof: "none"
+      experimental: true
+      pk:
+        - "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      rpc: "https://rinkeby-light.eth.linkpool.io"
+      zksync:
+        provider_url: "https://rinkeby-api.zksync.io/jsrpc"
+    input:
+      - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+      - "100000000000000000"
+      - "ETH"
+    expected_output:
+      type: "Transfer"
+      accountId: 167067
+      from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+      to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+      token: 0
+      tokenId: 0
+      amount: 100000000000000000
+      fee: 30300000000000
+      validFrom: 0
+      validUntil: 4294967295
+      nonce: 3
+      txHash: "sync-tx:b431fad24a0b3ccc324c09b1dd3f2484ac070d944a615e46d7b822dd9e883c02"
+    mockedResponses:
+      - req:
+          method: "POST"
+          body:
+            method: "eth_chainId"
+            params: []
+        res:
+          result: "0x4"
+      - req:
+          method: "POST"
+          body:
+            method: "account_info"
+            params:
+              - "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+        res:
+          result:
+            depositing:
+              balances: {}
+            committed:
+              nonce: 3
+              balances:
+                ETH: "1099802600000100800"
+              nfts: {}
+              mintedNfts: {}
+              pubKeyHash: "sync:ec0de4692863fc7b1459cb98c6be56ada438d991"
+            id: 167067
+            verified:
+              nonce: 0
+              balances:
+                ETH: "1100000000000101000"
+              nfts: {}
+              mintedNfts: {}
+              pubKeyHash: "sync:0000000000000000000000000000000000000000"
+            address: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+      - req:
+          method: "POST"
+          body:
+            method: "tokens"
+            params: []
+        res:
+          jsonrpc: "2.0"
+          id: 3
+          result: *tokens
 
-        - req:
-            method: "POST"
-            body:
-              method: "get_tx_fee"
-              params:
-                - "Transfer"
-                - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-                - "ETH"
-          res:
-            result:
-              zkpFee: "27570375927574"
-              totalFee: "30300000000000"
-              gasTxAmount: "2140"
-              gasFee: "2782000000000"
-              gasPriceWei: "1000000000"
-              feeType: TransferToNew
-        - req:
-            method: "POST"
-            body:
-              method: "tx_submit"
-              params:
-                - amount: 100000000000000000
-                  nonce: 3
-                  from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
-                  fee: 30300000000000
-                  validUntil: 4294967295
-                  validFrom: 0
-                  type: "Transfer"
-                  accountId: 167067
-                  token: 0
-                  tokenId: 0
-                  signature:
-                    pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
-                    signature: "31cf12e7252010b008ac14d24d2c67a336d8dd46a5b224df40892029c8a2e41315b8345b39fde5384ab3875ec957512ae9be3fcee62eb01b82654d7ddb3cd603"
-                  to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
-                - type: "EthereumSignature"
-                  signature: "0x6937238185200aa4f7363c37b9ff885b90b56c1cc6b862c47733f4cc612fecb14cfdd34e42eddeab5c0d0247db8ca5588305a8b3571cab9218f50dbeef8003001b"
-          res:
-            result: "sync-tx:b431fad24a0b3ccc324c09b1dd3f2484ac070d944a615e46d7b822dd9e883c02"
+      - req:
+          method: "POST"
+          body:
+            method: "get_tx_fee"
+            params:
+              - "Transfer"
+              - "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+              - "ETH"
+        res:
+          result:
+            zkpFee: "27570375927574"
+            totalFee: "30300000000000"
+            gasTxAmount: "2140"
+            gasFee: "2782000000000"
+            gasPriceWei: "1000000000"
+            feeType: TransferToNew
+      - req:
+          method: "POST"
+          body:
+            method: "tx_submit"
+            params:
+              - amount: 100000000000000000
+                nonce: 3
+                from: "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c"
+                fee: 30300000000000
+                validUntil: 4294967295
+                validFrom: 0
+                type: "Transfer"
+                accountId: 167067
+                token: 0
+                tokenId: 0
+                signature:
+                  pubKey: "1604e29d6544afa77334fce3964f68b01cdedbbdaf739355311195fd25292f04"
+                  signature: "31cf12e7252010b008ac14d24d2c67a336d8dd46a5b224df40892029c8a2e41315b8345b39fde5384ab3875ec957512ae9be3fcee62eb01b82654d7ddb3cd603"
+                to: "0x448d2286d9d6996241ff1f87bd2e24692975cabd"
+              - type: "EthereumSignature"
+                signature: "0x6937238185200aa4f7363c37b9ff885b90b56c1cc6b862c47733f4cc612fecb14cfdd34e42eddeab5c0d0247db8ca5588305a8b3571cab9218f50dbeef8003001b"
+        res:
+          result: "sync-tx:b431fad24a0b3ccc324c09b1dd3f2484ac070d944a615e46d7b822dd9e883c02"
 
   zksync_deposit:
     config:
