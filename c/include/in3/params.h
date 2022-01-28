@@ -18,6 +18,7 @@
 
 /* checks that the parameter at the given index is a number */
 #define CHECK_PARAM_NUMBER(ctx, params, index)                                                       \
+  d_num_bytes(d_get_at(params, index));                                                              \
   switch (d_type(d_get_at(params, index))) {                                                         \
     case T_INTEGER:                                                                                  \
     case T_BYTES: break;                                                                             \
@@ -77,7 +78,8 @@
 /* fetches the parameter with the given index as integer and stores it in the target, which must be a int or int32_t variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
 #define TRY_PARAM_GET_INT(target, ctx, index, def)                                                 \
   {                                                                                                \
-    const d_token_t* t = d_get_at(ctx->params, index);                                             \
+    d_token_t* t = d_get_at(ctx->params, index);                                                   \
+    d_num_bytes(t);                                                                                \
     if (d_type(t) == T_NULL)                                                                       \
       target = def;                                                                                \
     else if (d_type(t) != T_INTEGER)                                                               \
@@ -89,7 +91,8 @@
 /* fetches the required parameter with the given index as integer and stores it in the target, which must be a int or int32_t variable*/
 #define TRY_PARAM_GET_REQUIRED_INT(target, ctx, index)                                             \
   {                                                                                                \
-    const d_token_t* t = d_get_at(ctx->params, index);                                             \
+    d_token_t* t = d_get_at(ctx->params, index);                                                   \
+    d_num_bytes(t);                                                                                \
     if (d_type(t) != T_INTEGER)                                                                    \
       return req_set_error(ctx->req, "Param at " #index " must be an integer value!", IN3_EINVAL); \
     else                                                                                           \
@@ -99,7 +102,8 @@
 /* fetches the parameter with the given index as unsigned long integer and stores it in the target, which must be a uint64_t variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
 #define TRY_PARAM_GET_LONG(target, ctx, index, def)                                             \
   {                                                                                             \
-    const d_token_t* t = d_get_at(ctx->params, index);                                          \
+    d_token_t* t = d_get_at(ctx->params, index);                                                \
+    d_num_bytes(t);                                                                             \
     if (d_type(t) == T_NULL)                                                                    \
       target = def;                                                                             \
     else if (d_type(t) == T_INTEGER || (d_type(t) == T_BYTES && d_len(t) <= 8))                 \
@@ -111,7 +115,8 @@
 /* fetches the required parameter with the given index as unsigned long integer and stores it in the target, which must be a uint64_t variable*/
 #define TRY_PARAM_GET_REQUIRED_LONG(target, ctx, index)                                         \
   {                                                                                             \
-    const d_token_t* t = d_get_at(ctx->params, index);                                          \
+    d_token_t* t = d_get_at(ctx->params, index);                                                \
+    d_num_bytes(t);                                                                             \
     if (d_type(t) == T_INTEGER || (d_type(t) == T_BYTES && d_len(t) <= 8))                      \
       target = d_long(t);                                                                       \
     else                                                                                        \
