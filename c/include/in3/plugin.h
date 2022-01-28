@@ -294,8 +294,13 @@ typedef struct sign_prepare_ctx {
 } in3_sign_prepare_ctx_t;
 
 // -------------- SIGN -----------------------
+/** type of the curve used for signing*/
+typedef enum {
+  SIGN_CURVE_ECDSA   = 0, /**< sign with ecdsa */
+  SIGN_CURVE_ED25519 = 1, /**< use ed25519 curve */
+} d_curve_type_t;
 
-/** type of the requested signature */
+/** type of the hashing method for the pqyload for the requested signature */
 typedef enum {
   SIGN_EC_RAW    = 0, /**< sign the data directly */
   SIGN_EC_HASH   = 1, /**< hash and sign the data */
@@ -316,8 +321,8 @@ typedef enum {
  */
 typedef struct sign_ctx {
   bytes_t          signature;    /**< the resulting signature  */
-  d_digest_type_t  type;         /**< the type of signature*/
-  d_curve_type_t   curve;        /**< type of curved used to sign */
+  d_digest_type_t  digest_type;  /**< the type of signature*/
+  d_curve_type_t   curve_type;   /**< type of curved used to sign */
   d_payload_type_t payload_type; /**< the type of payload in order to deserialize the payload */
   struct in3_req*  req;          /**< the context of the request in order report errors */
   bytes_t          message;      /**< the message to sign*/

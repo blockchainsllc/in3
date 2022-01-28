@@ -32,7 +32,7 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if (IPFS)
+if (BASE64)
   set(B64 b64)
 endif()
 

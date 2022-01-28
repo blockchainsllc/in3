@@ -311,6 +311,11 @@ NONULL char* in3_get_config(
     in3_t* c /**< the incubed client */
 );
 
+/**
+ * converts a token to a chain_id
+ */
+chain_id_t in3_token_chain_id(d_token_t* t);
+
 /** a register-function for a plugin.
  */
 typedef in3_ret_t (*plgn_register)(in3_t* c);

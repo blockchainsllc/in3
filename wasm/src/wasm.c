@@ -532,7 +532,7 @@ uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
 }
 
 /** signs the given data */
-uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
+uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_digest_type_t type, uint8_t* data, int len, bool adjust_v) {
   uint8_t* dst = malloc(65);
 #ifdef CRYPTO_LIB
   bytes_t sig = sign_with_pk(pk, bytes(data, len), type);
