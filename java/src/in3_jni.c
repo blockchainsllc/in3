@@ -601,7 +601,7 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
   bytes_to_hex(sc->message.data, sc->message.len, data + 2);
   bytes_to_hex(sc->account.data, sc->account.len, address + 2);
 
-  jobject jSignatureType = get_enum("in3/utils/SignatureType", "(I)Lin3/utils/SignatureType;", sc->type);
+  jobject jSignatureType = get_enum("in3/utils/SignatureType", "(I)Lin3/utils/SignatureType;", sc->digest_type);
   jobject jPayloadType   = get_enum("in3/utils/PayloadType", "(I)Lin3/utils/PayloadType;", sc->payload_type);
   jstring jdata          = (*jni)->NewStringUTF(jni, data);
   jstring jaddress       = (*jni)->NewStringUTF(jni, address);
