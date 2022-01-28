@@ -375,13 +375,14 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
             sb_add_char(sb, 'X');
             break;
           }
-          char*     tmp = alloca(wei.len * 3 + 1);
+          char*     tmp = _malloc(wei.len * 3 + 1);
           bytes32_t val = {0};
           memcpy(val + 32 - wei.len, wei.data, wei.len);
           bignum256 bn;
           bn_read_be(val, &bn);
-          size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, 300);
+          size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, wei.len * 3);
           sb_add_range(sb, tmp, 0, l);
+          _free(tmp);
           break;
         }
         case 'x':
