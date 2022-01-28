@@ -52,9 +52,11 @@
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/eth1/basic/eth_basic.h"
 
-#ifdef IPFS
+#ifdef BASE64
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
+#endif
+#if IPFS
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
 
@@ -382,15 +384,22 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   // handle exception
   jthrowable transport_exception = (*jni)->ExceptionOccurred(jni);
   if (transport_exception) {
-    jclass    cls    = (*jni)->GetObjectClass(jni, transport_exception);
-    jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getStatus", "()I");
-    int       status = (*jni)->CallIntMethod(jni, transport_exception, mid);
-    mid              = (*jni)->GetMethodID(jni, cls, "getIndex", "()I");
-    int index        = (*jni)->CallIntMethod(jni, transport_exception, mid);
-    mid              = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
-    jstring     jmsg = (*jni)->CallObjectMethod(jni, transport_exception, mid);
-    const char* msg  = (*jni)->GetStringUTFChars(jni, jmsg, 0);
-    in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t) (end - start));
+    jclass      cls         = (*jni)->GetObjectClass(jni, transport_exception);
+    jmethodID   message_mid = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
+    jstring     jmsg        = (*jni)->CallObjectMethod(jni, transport_exception, message_mid); // This is fine because getMessage is a method of Throwable
+    const char* msg         = (*jni)->GetStringUTFChars(jni, jmsg, 0);
+
+    jmethodID status_mid = (*jni)->GetMethodID(jni, cls, "getStatus", "()I");
+    jmethodID index_mid  = (*jni)->GetMethodID(jni, cls, "getIndex", "()I");
+    if (status_mid && index_mid) { // Aka if this exception is actually a kind of TransportException (our custom exception)
+      int status = (*jni)->CallIntMethod(jni, transport_exception, status_mid);
+      int index  = (*jni)->CallIntMethod(jni, transport_exception, index_mid);
+      in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t) (end - start));
+    }
+    else {
+      in3_req_add_response(req, 0, -500, msg, -1, (uint32_t) (end - start));
+    }
+
     (*jni)->ReleaseStringUTFChars(jni, jmsg, msg);
     (*jni)->ExceptionClear(jni);
   }
@@ -666,7 +675,7 @@ JNIEXPORT jobject Java_in3_IN3_getDefaultConfig(JNIEnv* env, jobject ob) {
   return res;
 }
 
-#ifdef IPFS
+#ifdef BASE64
 /*
  * Class:     in3_ipfs_API
  * Method:    base64Decode

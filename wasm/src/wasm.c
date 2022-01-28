@@ -48,7 +48,7 @@
 #ifdef ETH_FULL
 #include "../../c/src/third-party/tommath/tommath.h"
 #endif
-#ifdef IPFS
+#ifdef BASE64
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
 #endif
@@ -329,7 +329,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_req_t* ctx, int i, int is_error, 
   else
     sb_add_chars(&ctx->raw_response[i].data, msg);
 }
-#ifdef IPFS
+#ifdef BASE64
 
 uint8_t* EMSCRIPTEN_KEEPALIVE base64Decode(char* input) {
   size_t   len = 0;

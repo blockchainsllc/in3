@@ -169,7 +169,7 @@ static void test_signer() {
   in3_sign_ctx_t sc       = {0};
   sc.req                  = ctx;
   sc.message              = *data;
-  sc.type                 = SIGN_EC_RAW;
+  sc.digest_type                 = SIGN_EC_RAW;
   sc.account              = NULL_BYTES;
   TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_SIGN, &sc));
   TEST_ASSERT_FALSE(memiszero(sc.signature.data, 65));

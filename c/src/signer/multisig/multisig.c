@@ -437,7 +437,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
 
   // calculate the hash
   bytes32_t hash;
-  switch (ctx->type) {
+  switch (ctx->digest_type) {
     case SIGN_EC_RAW: // already hashed
       if (ctx->message.len != 32) return req_set_error(ctx->req, "invalid message, must be a 256bit hash", IN3_EINVAL);
       if (ms->type == MS_IAMO_SAFE)
@@ -463,7 +463,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
 
       struct SHA3_CTX kctx;
       sha3_256_Init(&kctx);
-      if (ctx->type == SIGN_EC_PREFIX) {
+      if (ctx->digest_type == SIGN_EC_PREFIX) {
         const char* PREFIX = "\x19"
                              "Ethereum Signed Message:\n";
         sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));

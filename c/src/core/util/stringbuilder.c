@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "stringbuilder.h"
+#include "../../third-party/crypto/bignum.h"
 #include "../util/bytes.h"
 #include "../util/utils.h"
 #include "debug.h"
@@ -358,9 +359,31 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           break;
         case 'i':
         case 'd':
+          sb_add_int(sb, (int64_t) va_arg(args, int32_t));
+          break;
         case 'u':
+          sb_add_int(sb, (int64_t) va_arg(args, uint32_t));
+          break;
+        case 'I':
+        case 'D':
+        case 'U':
           sb_add_int(sb, va_arg(args, int64_t));
           break;
+        case 'w': {
+          bytes_t wei = va_arg(args, bytes_t);
+          if (wei.len > 32) {
+            sb_add_char(sb, 'X');
+            break;
+          }
+          char*     tmp = alloca(wei.len * 3 + 1);
+          bytes32_t val = {0};
+          memcpy(val + 32 - wei.len, wei.data, wei.len);
+          bignum256 bn;
+          bn_read_be(val, &bn);
+          size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, 300);
+          sb_add_range(sb, tmp, 0, l);
+          break;
+        }
         case 'x':
           sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
           break;
