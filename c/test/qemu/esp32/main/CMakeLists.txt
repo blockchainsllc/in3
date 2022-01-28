@@ -3,7 +3,6 @@ idf_component_register(SRCS in3_main.c
 
 
 ADD_DEFINITIONS(-DDTEST)
-ADD_DEFINITIONS(-DUSE_BIP32_25519_CURVES=0)
 ADD_DEFINITIONS(-DDEBUG)
 ADD_DEFINITIONS(-DETH_FULL)
 ADD_DEFINITIONS(-DIN3_LIB)
@@ -23,6 +22,7 @@ OPTION(ESP_IDF "Esp-idf framework" ON)
 ADD_DEFINITIONS(-DIN3_MATH_LITE)
 set(IN3_SRC ../../../..)
 set(ETH_FULL true)
+set(ED25519 false)
 add_subdirectory(${IN3_SRC}/src/core build_core)
 add_subdirectory(${IN3_SRC}/src/third-party/tommath build_tommath)
 add_subdirectory(${IN3_SRC}/src/third-party/crypto build_crypto)
