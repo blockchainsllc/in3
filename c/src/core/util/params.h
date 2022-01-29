@@ -27,10 +27,10 @@
   }
 
 /* checks that the parameter at the given index is a address */
-#define CHECK_PARAM_ADDRESS(ctx, params, index)                                                                                                  \
-  {                                                                                                                                              \
-    const d_token_t* val = d_get_at(params, index);                                                                                              \
-    if (d_type(val) != T_BYTES || val->len != 20) return req_set_error(ctx, "argument at index " #index " must be a valid address", IN3_EINVAL); \
+#define CHECK_PARAM_ADDRESS(ctx, params, index)                                                                                                             \
+  {                                                                                                                                                         \
+    d_token_t* val = d_get_at(params, index);                                                                                                               \
+    if (d_to_bytes(val).len != 20 || d_type(val) != T_BYTES) return req_set_error(ctx, "argument at index " #index " must be a valid address", IN3_EINVAL); \
   }
 
 /* checks that the parameter at the given index has exactly the given len*/
