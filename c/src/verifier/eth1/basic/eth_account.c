@@ -48,7 +48,7 @@ static const uint8_t* EMPTY_HASH      = (uint8_t*) "\xc5\xd2\x46\x01\x86\xf7\x23
 static const uint8_t* EMPTY_ROOT_HASH = (uint8_t*) "\x56\xe8\x1f\x17\x1b\xcc\x55\xa6\xff\x83\x45\xe6\x92\xc0\xf8\x6e\x5b\x48\xe0\x1b\x99\x6c\xad\xc0\x01\x62\x2f\xb5\xe3\x63\xb4\x21";
 static int            is_not_existened(d_token_t* account) {
   d_token_t* t = NULL;
-  return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_long(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
+  return ((t = d_get(account, K_BALANCE)) && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_long(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
 }
 const uint8_t*   empty_hash() { return EMPTY_HASH; }
 static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
@@ -97,7 +97,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
       optimize_len(vp, bb.b.len);
       if (bb.b.len > 1 || (bb.b.len == 1 && *vp))
         return vc_err(vc, "empty storagehash, so we exepct 0 values");
-      if (d_type(pt) != T_ARRAY || d_len(pt) > 1 || (d_len(pt) == 1 && (d_type(pt + 1) != T_INTEGER || d_int(pt + 1) != 0x80)))
+      if (d_type(pt) != T_ARRAY || d_len(pt) > 1 || (d_len(pt) == 1 && d_int(pt + 1) != 0x80))
         return vc_err(vc, "invalid proof");
     }
     else {
