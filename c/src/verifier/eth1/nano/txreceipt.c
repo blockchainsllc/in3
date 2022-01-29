@@ -151,7 +151,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t tx_hash) 
         return vc_err(vc, "wrong block hash in log");
       if (in3_req_get_proof(vc->req, vc->index) == PROOF_FULL && d_get_int(l, K_LOG_INDEX) != i)
         return vc_err(vc, "wrong log index");
-      if (!b_compare(d_get_bytes(l, K_TRANSACTION_HASH), tx_hash))
+      if (!bytes_cmp(d_get_bytes(l, K_TRANSACTION_HASH), tx_hash))
         return vc_err(vc, "wrong tx Hash");
       if (!d_eq(d_get(vc->proof, K_TX_INDEX), d_get(l, K_TRANSACTION_INDEX)))
         return vc_err(vc, "wrong tx index");
