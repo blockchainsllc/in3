@@ -29,7 +29,7 @@ class MainNetContractTest(unittest.TestCase):
         storage = self.client.eth.contract.storage_at(
             "0x3589d05a1ec4Af9f65b0E5554e645707775Ee43C", 1)
         self.assertEqual(
-            storage, '0x000000000000000000000000000000000000000000000000000000647261676f')
+            storage, '0x647261676f')
 
     def test_get_code(self):
         code = self.client.eth.contract.code(
