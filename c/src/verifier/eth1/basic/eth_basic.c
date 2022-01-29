@@ -175,10 +175,8 @@ static in3_ret_t eth_newBlockFilter(in3_filter_handler_t* filters, in3_rpc_handl
 }
 
 static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-    return req_set_error(ctx->req, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
-
-  uint64_t  id  = d_get_long_at(ctx->params, 0);
+  uint64_t id;
+  TRY_PARAM_GET_REQUIRED_LONG(id, ctx, 0);
   sb_t      sb  = {0};
   in3_ret_t ret = filter_get_changes(filters, ctx->req, id, &sb);
   if (ret != IN3_OK) {
@@ -188,6 +186,12 @@ static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_han
   in3_rpc_handle_with_string(ctx, sb.data);
   _free(sb.data);
   return IN3_OK;
+}
+
+static in3_ret_t eth_uninstallFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
+  uint64_t id;
+  TRY_PARAM_GET_REQUIRED_LONG(id, ctx, 0)
+  return in3_rpc_handle_with_string(ctx, filter_remove(filters, id) ? "true" : "false");
 }
 
 /** called to see if we can handle the request internally */
@@ -219,9 +223,7 @@ static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle
   TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(filters, ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_UNINSTALLFILTER)
-  TRY_RPC("eth_uninstallFilter", (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-                                     ? req_set_error(ctx->req, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
-                                     : in3_rpc_handle_with_string(ctx, filter_remove(filters, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
+  TRY_RPC("eth_uninstallFilter", eth_uninstallFilter(filters, ctx))
 #endif
 
   if (strcmp(ctx->method, "eth_chainId") == 0 && in3_chain_id(ctx->req) != CHAIN_ID_LOCAL)
