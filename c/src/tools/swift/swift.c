@@ -76,7 +76,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       if (ctx->account.data) sha3_Update(&kctx, ctx->account.data, ctx->account.len);
       keccak_Final(&kctx, msghash);
 
-      TRY(req_send_sign_request(ctx->req, ctx->type, ctx->payload_type, &signature, ctx->message, ctx->account, ctx->meta, bytes(msghash, 32)))
+      TRY(req_send_sign_request(ctx->req, ctx->digest_type, ctx->payload_type, &signature, ctx->message, ctx->account, ctx->meta, bytes(msghash, 32)))
       ctx->signature = bytes_dup(signature);
       return IN3_OK;
     }
