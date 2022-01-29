@@ -45,7 +45,7 @@
 NONULL in3_ret_t in3_verify_eth_nano(void* p_data, in3_plugin_act_t action, void* pctx);
 
 /** verifies a blockheader. */
-NONULL_FOR((1, 2))
+NONULL_FOR((1))
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t header, bytes_t expected_blockhash);
 
 /**

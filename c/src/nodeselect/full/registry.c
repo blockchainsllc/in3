@@ -170,7 +170,8 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
     }
 
     // create indexes
-    uint32_t* indexes = alloca(node_limit);
+    uint32_t* indexes = alloca(node_limit * sizeof(uint32_t));
+    memset(indexes, 0, node_limit * sizeof(uint32_t));
     create_random_indexes(total_servers, node_limit, seed, seed_indexes, seed_len, indexes);
 
     // check that we have the correct indexes in the nodelist
