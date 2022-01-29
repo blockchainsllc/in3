@@ -171,7 +171,7 @@ bytes_t* d_bytesl(d_token_t* item, size_t l) {
 bytes_t d_to_bytesl(d_token_t* item, uint32_t len) {
   bytes_t b = d_to_bytes(item);
   if (!b.data) return b;
-  if (b.len < len && len > 4) {
+  if (b.len < len && len > 4 && d_type(item) == T_BYTES) {
     bytes_t t = bytes(_calloc(1, len), len);
     memcpy(t.data + len - b.len, b.data, b.len);
     if (item->state & TOKEN_STATE_ALLOCATED) _free(item->data);
