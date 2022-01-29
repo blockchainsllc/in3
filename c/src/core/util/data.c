@@ -1184,7 +1184,8 @@ bytes_t d_num_bytes(d_token_t* f) {
   if (bb.data && d_type(f) == T_STRING && d_len(f) < 80) {
     // still a string?, then we need to look for numeric values
     char input[80];
-    strncpy(input, (char*) bb.data, d_len(f));
+    memcpy(input, bb.data, bb.len);
+    input[bb.len]    = 0;
     bytes32_t target = {0};
     bytes_t   b      = bytes(target, 0);
 #if defined(ETH_FULL) && defined(ETH_API)
