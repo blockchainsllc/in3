@@ -286,12 +286,8 @@ char* d_string(d_token_t* item) {
       return (char*) item->data;
     }
     case T_ARRAY:
-    case T_OBJECT: {
-      item->data  = (uint8_t*) sprintx("%j", item);
-      item->len   = (T_STRING << 28) | strlen((char*) item->data);
-      item->state = TOKEN_STATE_ALLOCATED;
+    case T_OBJECT:
       return (char*) item->data;
-    }
 
     default:
       return NULL;
@@ -375,7 +371,7 @@ bool d_eq(d_token_t* a, d_token_t* b) {
 
   return (a->data && b->data && d_type(a) == T_BYTES)
              ? b_cmp(d_bytes(a), d_bytes(b))
-             : a->data == NULL && b->data == NULL;
+             : d_type(a) > T_OBJECT && d_type(b) > T_OBJECT;
 }
 
 d_token_t* d_get(d_token_t* item, const uint16_t key) {
@@ -1074,7 +1070,8 @@ static void write_token(bytes_builder_t* bb, d_token_t* t) {
       }
       break;
     case T_STRING:
-      bb_write_raw_bytes(bb, t->data, len + 1);
+      bb_write_raw_bytes(bb, t->data, len);
+      bb_write_byte(bb, 0);
       break;
     case T_BOOLEAN:
     case T_INTEGER:
@@ -1127,11 +1124,13 @@ char* d_get_keystr(json_ctx_t* ctx, d_key_t k) {
   }
   return NULL;
 }
-int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
+int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
   bytes_t val = d_to_bytes(item);
+  if (max == -1) max = (int) val.len;
   if (max && (uint32_t) max < val.len) val.len = (uint32_t) max;
-  if (val.data) memcpy(dst, val.data, val.len);
-  return val.len;
+  if (val.len < (uint32_t) max) memset(dst, 0, max - val.len);
+  if (val.data) memcpy(dst + max - val.len, val.data, val.len);
+  return max;
 }
 bytes_t d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
   d_token_t* t = d_get(r, k);
