@@ -849,8 +849,8 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
   d_token_t* tx_data = ctx->params + 1;
   bytes_t    tx_raw  = NULL_BYTES;
-  bytes_t    from_b  = NULL_BYTES;
-  bytes_t    data    = NULL_BYTES;
+  bytes_t    from_b;
+  bytes_t    data;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
     TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw, NULL))

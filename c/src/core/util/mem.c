@@ -120,7 +120,9 @@ static int mem_count = 0;
 
 void* t_malloc(size_t size, char* file, const char* func, int line) {
   mem_count++;
-  return _malloc_(size, file, func, line);
+  void* p = _malloc_(size, file, func, line);
+  //  printf("+++  malloc %p %s : %s : %i\n", p, file, func, line);
+  return p;
 }
 
 void* t_calloc(size_t n, size_t size, char* file, const char* func, int line) {
@@ -137,7 +139,7 @@ void t_free(void* ptr, char* file, const char* func, int line) {
   if (!ptr) return;
   mem_count--;
 
-  //  printf("freeing a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
+  //  printf("--- free   %p  %s : %s : %i\n", ptr, file, func, line);
   _free_(ptr);
 }
 void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line) {

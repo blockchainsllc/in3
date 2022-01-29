@@ -75,14 +75,24 @@ typedef enum {
   T_NULL    = 6  /**< a NULL-value */
 } d_type_t;
 
+/**
+ * there was memory allocated for this token, which needs to be freed.
+ */
+#define TOKEN_STATE_ALLOCATED 1
+/**
+ * The data has been converted, which means in case of an string, it does not point to the original anymore.
+ */
+#define TOKEN_STATE_CONVERTED 2
+
 /** a token holding any kind of value.
  *
  * use d_type,  d_len or the cast-function to get the value.
  */
 typedef struct item {
-  uint8_t* data; /**< the byte or string-data  */
-  uint32_t len;  /**< the length of the content (or number of properties) depending +  type. */
-  d_key_t  key;  /**< the key of the property. */
+  uint8_t* data;  /**< the byte or string-data  */
+  uint32_t len;   /**< the length of the content (or number of properties) depending +  type. */
+  d_key_t  key;   /**< the key of the property. */
+  uint16_t state; /**< the state of the token: */
 } d_token_t;
 
 /** internal type used to represent the a range within a string. */
@@ -111,26 +121,28 @@ typedef struct json_parser {
  * and NULL as 0x.
  * Objects or arrays will return 0x.
  */
-bytes_t                d_to_bytes(d_token_t* item);                                                                 /**< converts the data to bytes .*/
-bytes_t                d_num_bytes(d_token_t* f);                                                                   /**< converts the token into bytes, assuming this to be a numeric value. in case of an string it will be converted (chainging the token) */
-int                    d_bytes_to(d_token_t* item, uint8_t* dst, const int max);                                    /**< writes the byte-representation to the dst. details see d_to_bytes.*/
-bytes_t*               d_bytes(const d_token_t* item);                                                              /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
-bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                         /**< returns the value as bytes with length l (may reallocates) */
-char*                  d_string(const d_token_t* item);                                                             /**< converts the value as string. Make sure the type is string! */
-int32_t                d_int(const d_token_t* item);                                                                /**< returns the value as integer. only if type is integer */
-int32_t                d_intd(const d_token_t* item, const uint32_t def_val);                                       /**< returns the value as integer or if NULL the default. only if type is integer */
-uint64_t               d_long(const d_token_t* item);                                                               /**< returns the value as long. only if type is integer or bytes, but short enough */
-uint64_t               d_longd(const d_token_t* item, const uint64_t def_val);                                      /**< returns the value as long or if NULL the default. only if type is integer or bytes, but short enough */
-bytes_t**              d_create_bytes_vec(const d_token_t* arr);                                                    /** creates a array of bytes from JOSN-array */
-size_t                 d_token_size(const d_token_t* item);                                                         /** returns the size (number of tokens ) of the token */
+bytes_t  d_to_bytes(d_token_t* item);                              /**< converts the data to bytes .*/
+bytes_t  d_to_bytesl(d_token_t* item, uint32_t len);               /**< converts the data to bytes .*/
+bytes_t  d_num_bytes(d_token_t* f);                                /**< converts the token into bytes, assuming this to be a numeric value. in case of an string it will be converted (chainging the token) */
+int      d_bytes_to(d_token_t* item, uint8_t* dst, const int max); /**< writes the byte-representation to the dst. details see d_to_bytes.*/
+bytes_t* d_as_bytes(d_token_t* item);                              /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
+// bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                         /**< returns the value as bytes with length l (may reallocates) */
+char*                  d_string(d_token_t* item);                                                                   /**< converts the value as string. Make sure the type is string! */
+int32_t                d_int(d_token_t* item);                                                                      /**< returns the value as integer. only if type is integer */
+int32_t                d_intd(d_token_t* item, const uint32_t def_val);                                             /**< returns the value as integer or if NULL the default. only if type is integer */
+uint64_t               d_long(d_token_t* item);                                                                     /**< returns the value as long. only if type is integer or bytes, but short enough */
+uint64_t               d_longd(d_token_t* item, const uint64_t def_val);                                            /**< returns the value as long or if NULL the default. only if type is integer or bytes, but short enough */
+bytes_t**              d_create_bytes_vec(d_token_t* arr);                                                          /**< creates a array of bytes from JOSN-array */
+size_t                 d_token_size(const d_token_t* item);                                                         /**< returns true, if the token is either a string starting with 0x or bytes */
+bool                   d_is_bytes(const d_token_t* item);                                                           /** returns the size (number of tokens ) of the token */
 static inline d_type_t d_type(const d_token_t* item) { return (item ? ((item->len & 0xF0000000) >> 28) : T_NULL); } /**< type of the token */
 static inline int      d_len(const d_token_t* item) {                                                               /**< number of elements in the token (only for object or array, other will return 0) */
   if (item == NULL) return 0;
   return item->len & 0xFFFFFFF;
 }
-bool           d_eq(const d_token_t* a, const d_token_t* b); /**< compares 2 token and if the value is equal */
-NONULL d_key_t keyn(const char* c, const size_t len);        /**< generates the keyhash for the given stringrange as defined by len */
-d_key_t        ikey(json_ctx_t* ctx, const char* name);      /**<  returnes the indexed key for the given name. */
+bool           d_eq(d_token_t* a, d_token_t* b);        /**< compares 2 token and if the value is equal */
+NONULL d_key_t keyn(const char* c, const size_t len);   /**< generates the keyhash for the given stringrange as defined by len */
+d_key_t        ikey(json_ctx_t* ctx, const char* name); /**<  returnes the indexed key for the given name. */
 
 d_token_t* d_get(d_token_t* item, const uint16_t key);                          /**< returns the token with the given propertyname (only if item is a object) */
 d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
@@ -180,10 +192,10 @@ static inline int32_t  d_get_int_at(d_token_t* r, uint32_t pos) { return d_int(d
 static inline uint64_t d_get_long(d_token_t* r, d_key_t k) { return d_long(d_get(r, k)); }                  /**< reads token of a property as long. */
 static inline uint64_t d_get_longd(d_token_t* r, d_key_t k, uint64_t d) { return d_longd(d_get(r, k), d); } /**< reads token of a property as long. */
 static inline uint64_t d_get_long_at(d_token_t* r, uint32_t pos) { return d_long(d_get_at(r, pos)); }       /**< reads long at given pos of an array. */
-static inline bytes_t* d_get_bytes(d_token_t* r, d_key_t k) { return d_bytes(d_get(r, k)); }                /**< reads token of a property as bytes. */
-static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_bytes(d_get_at(r, pos)); }     /**< reads bytes at given pos of an array. */
+static inline bytes_t  d_get_bytes(d_token_t* r, d_key_t k) { return d_to_bytes(d_get(r, k)); }             /**< reads token of a property as bytes. */
+static inline bytes_t  d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_to_bytes(d_get_at(r, pos)); }  /**< reads bytes at given pos of an array. */
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                     /**< check if the parser context was created from binary data. */
-bytes_t*               d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
+bytes_t                d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
 d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
 /**
  * iterator over elements of a array opf object.

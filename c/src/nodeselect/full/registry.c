@@ -87,6 +87,7 @@ static uint8_t* as_bytes32(bytes32_t dst, bytes_t b) {
 
 static void create_random_indexes(const uint32_t total_servers, const uint32_t node_limit, bytes_t* src_seed, uint32_t* seed_indexes, uint32_t seed_len, uint32_t* indexes) {
   bytes32_t seed_data;
+  if (!src_seed) return;
 
   memset(seed_data, 0, 32);
   memcpy(seed_data + 32 - src_seed->len, src_seed->data, src_seed->len);

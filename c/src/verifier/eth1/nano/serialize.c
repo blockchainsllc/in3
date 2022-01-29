@@ -44,6 +44,10 @@
 
 static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
   // if this is a unit we need to make sure we remove the leading zeros.
+  if (!b.data) {
+    b.len  = 0;
+    b.data = (uint8_t*) &b;
+  }
   while (ml == 0 && b.len > 1 && *b.data == 0) {
     b.len--;
     b.data++;

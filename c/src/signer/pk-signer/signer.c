@@ -185,6 +185,7 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
 
 /** sets the signer and a pk to the client*/
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
+  if (!pk) return IN3_EINVAL;
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   get_address(pk, k->account);
   memcpy(k->pk, pk, 32);

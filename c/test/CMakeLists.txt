@@ -218,6 +218,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*(RawCreateFailGasValue(Transfer|Transfer2)).json$") # in "GeneralStateTests/stEIP150singleCodeGasPrices"
     list(FILTER files EXCLUDE REGEX ".*(CallContractToCreateContract(NoCash|OOG)).json$") # in "GeneralStateTests/stInitCodeTest"
 
+#    list(FILTER files EXCLUDE REGEX ".*.json$") # in "GeneralStateTests/stInitCodeTest"
     foreach (file ${files})
         get_filename_component(testname "${file}" NAME_WE)
         add_test(

@@ -13,9 +13,11 @@
   if (d_type(params) != T_ARRAY || d_len(params) < len) return req_set_error(ctx, "arguments need to be a array with at least " #len " arguments", IN3_EINVAL);
 
 /* checks that the parameter at the given index is of the specified type */
-#define CHECK_PARAM_TYPE(ctx, params, index, type)          \
-  if (type == T_BYTES) d_to_bytes(d_get_at(params, index)); \
-  if (d_type(d_get_at(params, index)) != type) return req_set_error(ctx, "argument at index " #index " must be a " #type, IN3_EINVAL);
+#define CHECK_PARAM_TYPE(ctx, params, index, type)                                                                                       \
+  {                                                                                                                                      \
+    if (type == T_BYTES) d_to_bytes(d_get_at(params, index));                                                                            \
+    if (d_type(d_get_at(params, index)) != type) return req_set_error(ctx, "argument at index " #index " must be a " #type, IN3_EINVAL); \
+  }
 
 /* checks that the parameter at the given index is a number */
 #define CHECK_PARAM_NUMBER(ctx, params, index)                                                       \
