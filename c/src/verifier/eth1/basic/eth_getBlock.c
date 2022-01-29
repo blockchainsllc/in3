@@ -73,11 +73,11 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t block_
   int        i;
   d_token_t *transactions, *t = NULL;
   bytes_t    t_root, tmp;
-  if (d_type(vc->result) != T_INTEGER)
-    return vc_err(vc, "Invalid transaction count");
-
   // transactions count
   int32_t count = d_int(vc->result);
+
+  if (d_type(vc->result) != T_INTEGER)
+    return vc_err(vc, "Invalid transaction count");
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
   if (!vc->proof)
