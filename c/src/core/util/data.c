@@ -994,6 +994,7 @@ d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
     optimize_len(p, l);
     d_token_t* r = next_item(jp, T_BYTES, l);
     r->data      = _malloc(l);
+    r->state     = TOKEN_STATE_ALLOCATED;
     memcpy(r->data, p, l);
     return r;
   }
