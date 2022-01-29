@@ -24,7 +24,7 @@ in3_ret_t zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   in3_req_t* req = NULL;
   sb_t       sb  = {0};
   sb_add_chars(&sb, "\"GET\",\"");
-  sb_add_escaped_chars(&sb, conf->rest_api);
+  sb_add_escaped_chars(&sb, conf->rest_api, -1);
   sb_add_rawbytes(&sb, "/transactions_all/0x", d_to_bytes(ctx->params + 1), 32);
   sb_add_chars(&sb, "\"");
 
@@ -57,7 +57,7 @@ in3_ret_t zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ct
   in3_req_t* req = NULL;
   sb_t       sb  = {0};
   sb_add_chars(&sb, "\"GET\",\"");
-  sb_add_escaped_chars(&sb, conf->rest_api);
+  sb_add_escaped_chars(&sb, conf->rest_api, -1);
   sb_add_rawbytes(&sb, "/account/0x", d_to_bytes(ctx->params + 1), 20);
   sb_add_chars(&sb, "/history/");
   if (!ref_tx) {

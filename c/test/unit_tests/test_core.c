@@ -174,7 +174,7 @@ void test_parse_json() {
 void test_sb() {
   sb_t* sb = sb_new("a=\"");
   TEST_ASSERT_EQUAL_STRING("a=\"", sb->data);
-  sb_add_escaped_chars(sb, ",x=\"123\"");
+  sb_add_escaped_chars(sb, ",x=\"123\"", -1);
   TEST_ASSERT_EQUAL_STRING("a=\",x=\\\"123\\\"", sb->data);
 
   sb->len            = 0;

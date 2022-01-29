@@ -173,7 +173,7 @@ static char* create_rpc_error(in3_req_t* ctx, int code, char* error) {
     sb_add_chars(&sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
     sb_add_int(&sb, code);
     sb_add_chars(&sb, ",\"message\":\"");
-    sb_add_escaped_chars(&sb, error);
+    sb_add_escaped_chars(&sb, error, -1);
     sb_add_chars(&sb, "\"}}");
   }
   if (is_array) sb_add_char(&sb, ']');

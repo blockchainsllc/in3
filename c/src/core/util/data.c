@@ -825,7 +825,7 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
     case T_STRING: {
       sb_t sb = {.allocted = l + 1, .len = 0, .data = _malloc(l + 3)};
       sb_add_char(&sb, '"');
-      sb_add_escaped_chars(&sb, (char*) item->data);
+      sb_add_escaped_chars(&sb, (char*) item->data, l);
       sb_add_char(&sb, '"');
       return sb.data;
     }

@@ -88,8 +88,8 @@ sb_t* sb_add_chars(sb_t* sb, const char* chars) {
   return sb;
 }
 
-sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
-  int l       = strlen(chars);
+sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int l) {
+  if (l == -1) l = strlen(chars);
   int escapes = 0;
   if (l == 0 || chars == NULL) return sb;
   for (int i = 0; i < l; i++) {
@@ -338,7 +338,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
     }
     case T_STRING: {
       sb_add_char(sb, '\"');
-      sb_add_escaped_chars(sb, d_string(token));
+      sb_add_escaped_chars(sb, (char*) token->data, d_len(token));
       return sb_add_char(sb, '\"');
     }
     case T_NULL:
@@ -357,7 +357,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           sb_add_chars(sb, va_arg(args, char*));
           break;
         case 'S':
-          sb_add_escaped_chars(sb, va_arg(args, char*));
+          sb_add_escaped_chars(sb, va_arg(args, char*), -1);
           break;
         case 'i':
         case 'd':
