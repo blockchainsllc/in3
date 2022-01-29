@@ -140,7 +140,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t tx_hash) 
     // check rest of the values
     if (!d_eq(d_get(vc->proof, K_TX_INDEX), d_get(vc->result, K_TRANSACTION_INDEX)))
       return vc_err(vc, "wrong transactionIndex");
-    if (!b_compare(tx_hash, d_get_bytes(vc->result, K_TRANSACTION_HASH)))
+    if (!bytes_cmp(tx_hash, d_get_bytes(vc->result, K_TRANSACTION_HASH)))
       return vc_err(vc, "wrong transactionHash");
 
     d_token_t *l, *logs = d_get(vc->result, K_LOGS), *block_number = d_get(vc->result, K_BLOCK_NUMBER);

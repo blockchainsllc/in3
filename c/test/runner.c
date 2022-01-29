@@ -197,7 +197,7 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   }
   else {
     bytes_builder_t* bb = bb_new();
-    d_serialize_binary(bb, _tmp_responses + _tmp_pos + 1);
+    d_serialize_binary(bb, d_get_at(_tmp_responses, _tmp_pos));
     response = bb->b;
     _free(bb);
   }
@@ -246,7 +246,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   //  _tmp_response = response;
   int is_bin = d_get_int(test, key("binaryFormat"));
 
-  in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err); // we cast request to string, since we know the data-pointer will point to the beginning of the object and the json parser will only parse until the end of the object
+  in3_client_rpc_raw(c, (char*) request->data, is_bin ? NULL : &res, &err); // we cast request to string, since we know the data-pointer will point to the beginning of the object and the json parser will only parse until the end of the object
   fflush(stdout);
   fflush(stderr);
   printf("\n%2i : %-60s ", counter, descr);
@@ -386,6 +386,10 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   if (response) {
     str_range_t      res_size = d_to_json(response);
     bytes_builder_t* bb       = bb_new();
+    size_t           s        = d_token_size(response);
+    for (size_t i = 0; i < s; i++) {
+      if (d_is_bytes(response + i) && d_type(response + i) == T_STRING) d_to_bytes(response + i);
+    }
 
     d_serialize_binary(bb, response);
 
