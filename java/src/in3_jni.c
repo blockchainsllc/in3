@@ -245,18 +245,15 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
     case T_STRING:
       return (*env)->NewStringUTF(env, d_string(t));
     case T_BYTES: {
-      char* tmp = alloca(t->len * 2 + 3);
-      tmp[0]    = '0';
-      tmp[1]    = 'x';
-      bytes_to_hex(t->data, t->len, tmp + 2);
-      return (*env)->NewStringUTF(env, tmp);
+      bytes_t b = d_to_bytes(t);
+      return (*env)->NewStringUTF(env, bytes_to_hex_string(alloca(b.len * 2 + 3), "0x", b, NULL));
     }
     case T_OBJECT: {
       clz           = (*env)->FindClass(env, "in3/utils/JSON");
       jobject   map = (*env)->NewObject(env, clz, (*env)->GetMethodID(env, clz, "<init>", "()V"));
       jmethodID put = (*env)->GetMethodID(env, clz, "put", "(ILjava/lang/Object;)V");
       for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter))
-        (*env)->CallVoidMethod(env, map, put, iter.token->key, toObject(env, iter.token));
+        (*env)->CallVoidMethod(env, map, put, d_get_key(iter.token), toObject(env, iter.token));
       return map;
     }
     case T_ARRAY: {
@@ -666,9 +663,7 @@ JNIEXPORT jobject Java_in3_IN3_getDefaultConfig(JNIEnv* env, jobject ob) {
 
   char*       ret  = in3_get_config(get_in3(env, ob));
   json_ctx_t* json = parse_json(ret);
-  d_token_t*  r    = &json->result[0];
-  jobject     res  = toObject(env, r);
-
+  jobject     res  = toObject(env, json->result);
   _free(ret);
   json_free(json);
 
