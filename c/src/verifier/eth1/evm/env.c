@@ -135,7 +135,7 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
         return EVM_ERROR_INVALID_ENV;
       t = d_getl(t, K_CODE_HASH, 32);
       if (!t) return EVM_ERROR_INVALID_ENV;
-      *out_data = t->data;
+      *out_data = d_to_bytes(t).data;
       return 32;
     }
     case EVM_ENV_CODE_COPY: {

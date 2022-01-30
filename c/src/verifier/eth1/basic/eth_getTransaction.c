@@ -131,10 +131,10 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, hash, type ? v : ((chain_id ? v - chain_id * 2 - 8 : v) - 27)))
     return vc_err(vc, "could not recover signature");
 
-  if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey_bytes.data, t->data, t->len) != 0)
+  if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey_bytes.data, d_to_bytes(t).data, d_len(t)) != 0)
     return vc_err(vc, "invalid public Key");
 
-  if ((t = d_getl(tx, K_FROM, 20)) && keccak(pubkey_bytes, hash) == 0 && memcmp(hash + 12, t->data, 20))
+  if ((t = d_getl(tx, K_FROM, 20)) && keccak(pubkey_bytes, hash) == 0 && memcmp(hash + 12, d_to_bytes(t).data, 20))
     return vc_err(vc, "invalid from address");
   return IN3_OK;
 }

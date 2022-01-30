@@ -399,7 +399,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
         return IN3_OK;
       }
     }
-    else if (d_type(token_src) == T_BYTES && token_src->len == 20 && memcmp(token_src->data, conf->tokens[i].address, 20) == 0) {
+    else if (d_type(token_src) == T_BYTES && d_len(token_src) == 20 && memcmp(d_to_bytes(token_src).data, conf->tokens[i].address, 20) == 0) {
       *token_dst = conf->tokens + i;
       return IN3_OK;
     }

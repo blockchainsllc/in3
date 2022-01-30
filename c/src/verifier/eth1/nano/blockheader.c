@@ -401,7 +401,7 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   int        i   = 0;
   d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
   for (d_token_t* t = sig + 1; i < d_len(sig); t = d_next(t), i++) {
-    if (t->key == K_R || t->key == K_S || t->key == K_V || t->key == K_MSG_HASH)
+    if (d_is_key(t, K_R) || d_is_key(t, K_S) || d_is_key(t, K_V) || d_is_key(t, K_MSG_HASH))
       continue;
     d_to_bytes(t);
 

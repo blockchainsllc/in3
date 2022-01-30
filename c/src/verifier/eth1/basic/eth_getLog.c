@@ -229,7 +229,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       xtmp[2] = '0';
     }
     // verify that block number matches key
-    if (key(xtmp) != it.token->key)
+    if (!d_is_key(it.token, key(xtmp)))
       return vc_err(vc, "block number mismatch");
 
     // verify the blockheader of the log entry

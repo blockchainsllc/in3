@@ -31,7 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
+#define IN3_INTERNAL
 #include "data.h"
 #include "../../third-party/tommath/tommath.h"
 #include "bytes.h"

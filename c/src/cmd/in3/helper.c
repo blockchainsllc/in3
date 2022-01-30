@@ -267,7 +267,8 @@ bytes_t* get_std_in() {
   return res;
 }
 
-void print_val(d_token_t* t) {
+void print_val(d_token_t* token) {
+  d_token_internal_t* t = token;
   d_to_bytes(t);
   switch (d_type(t)) {
     case T_ARRAY:

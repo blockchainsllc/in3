@@ -294,7 +294,7 @@ static in3_ret_t config_get(zksync_config_t* conf, in3_get_config_ctx_t* ctx) {
 }
 
 static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
-  if (ctx->token->key != key("zksync")) return IN3_EIGNORE;
+  if (!d_is_key(ctx->token, key("zksync"))) return IN3_EIGNORE;
   // TODO error-reporting for invalid config
 
   const char* provider = d_get_string(ctx->token, CONFIG_KEY("provider_url"));
@@ -377,7 +377,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   if (incentive) {
     if (!conf->incentive) conf->incentive = _calloc(1, sizeof(pay_criteria_t));
     for (d_iterator_t iter = d_iter(incentive); iter.left; d_iter_next(&iter)) {
-      if (iter.token->key == CONFIG_KEY("nodes")) {
+      if (d_is_key(iter.token, CONFIG_KEY("nodes"))) {
         conf->incentive->payed_nodes = d_int(iter.token);
         in3_req_t c                  = {0};
         c.client                     = ctx->client;
@@ -387,9 +387,9 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
           return ret;
         }
       }
-      else if (iter.token->key == CONFIG_KEY("max_price"))
+      else if (d_is_key(iter.token, CONFIG_KEY("max_price")))
         conf->incentive->max_price_per_hundred_igas = d_long(iter.token);
-      else if (iter.token->key == CONFIG_KEY("token")) {
+      else if (d_is_key(iter.token, CONFIG_KEY("token"))) {
         _free(conf->incentive->token);
         conf->incentive->token = _strdupn(d_string(iter.token), -1);
       }

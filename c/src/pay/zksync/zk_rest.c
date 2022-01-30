@@ -66,8 +66,8 @@ in3_ret_t zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ct
   }
   else if (strcmp(d_string(ref_tx), "pending") == 0)
     sb_add_chars(&sb, "newer_than");
-  else if (ref_tx->data[0] == '<' || ref_tx->data[0] == '>') {
-    sb_add_chars(&sb, ref_tx->data[0] == '<' ? "older_than?tx_id=" : "newer_than?tx_id=");
+  else if (d_string(ref_tx)[0] == '<' || d_string(ref_tx)[0] == '>') {
+    sb_add_chars(&sb, d_string(ref_tx)[0] == '<' ? "older_than?tx_id=" : "newer_than?tx_id=");
     sb_add_chars(&sb, d_string(ref_tx) + 1);
     sb_add_chars(&sb, "&limit=");
     sb_add_int(&sb, limit ? (int64_t) d_long(limit) : 100);

@@ -210,12 +210,12 @@ int check_post_state(evm_t* evm, d_token_t* post) {
   int        i, j;
   d_token_t *t, *storages, *s;
   for (i = 0, t = post + 1; i < d_len(post); i++, t = d_next(t)) {
-    char*   adr_str = d_get_keystr(jc, t->key);
+    char*   adr_str = d_get_keystr(jc, d_get_key(t));
     uint8_t address[20];
     hex_to_bytes(adr_str + 2, strlen(adr_str) - 2, address, 20);
     storages = d_get(t, ikey(jc, "storage"));
     for (j = 0, s = storages + 1; j < d_len(storages); j++, t = d_next(s)) {
-      char*      s_str = d_get_keystr(jc, s->key);
+      char*      s_str = d_get_keystr(jc, d_get_key(s));
       uint8_t    s_key[32];
       int        l_key    = hex_to_bytes(s_str + 2, strlen(s_str) - 2, s_key, 32);
       bytes_t    val_must = d_to_bytes(s);
@@ -348,7 +348,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
   int        i;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     uint8_t adr[20];
-    hex_to_bytes(d_get_keystr(jc, t->key) + 2, 40, adr, 20);
+    hex_to_bytes(d_get_keystr(jc, d_get_key(t)) + 2, 40, adr, 20);
     TRY(evm_get_account(evm, adr, 1, &tmp))
   }
   EVM_DEBUG_BLOCK({
@@ -403,14 +403,14 @@ static void read_accounts(evm_t* evm, d_token_t* accounts) {
   storage_t* st  = NULL;
   d_token_t *t, *storage, *s;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-    char*   adr_str = d_get_keystr(jc, t->key);
+    char*   adr_str = d_get_keystr(jc, d_get_key(t));
     uint8_t address[20];
     hex_to_bytes(adr_str + 2, strlen(adr_str) - 2, address, 20);
     evm_get_account(evm, address, true, &tmp);
     storage = d_get(t, ikey(jc, "storage"));
     if (storage) {
       for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
-        char*   k = d_get_keystr(jc, s->key);
+        char*   k = d_get_keystr(jc, d_get_key(s));
         uint8_t kk[32];
         hex_to_bytes(k + 2, strlen(k) - 2, kk, 32);
         evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true, &st);

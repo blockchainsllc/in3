@@ -59,19 +59,19 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
 }
 
 in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool only_update) {
-  address_t      pub_hash;
-  d_token_t      tmp;
-  zksync_valid_t valid;
-  uint32_t       nonce;
-  int            plen    = only_update ? 0 : d_len(ctx->params);
-  d_token_t*     token   = plen == 1 ? ctx->params + 1 : NULL;
-  bytes_t        new_key = d_get_bytes_at(ctx->params, 1);
-  valid.from             = plen > 2 ? d_get_long_at(ctx->params, 2) : 0;
-  valid.to               = plen > 3 ? d_get_long_at(ctx->params, 3) : 0;
+  address_t          pub_hash;
+  d_token_internal_t tmp;
+  zksync_valid_t     valid;
+  uint32_t           nonce;
+  int                plen    = only_update ? 0 : d_len(ctx->params);
+  d_token_t*         token   = plen == 1 ? ctx->params + 1 : NULL;
+  bytes_t            new_key = d_get_bytes_at(ctx->params, 1);
+  valid.from                 = plen > 2 ? d_get_long_at(ctx->params, 2) : 0;
+  valid.to                   = plen > 3 ? d_get_long_at(ctx->params, 3) : 0;
   if (!valid.to) valid.to = 0xffffffffl;
   if (!token) {
     token = &tmp;
-    tmp   = (d_token_t){.data = (void*) "ETH", .len = T_STRING << 28 | 3, .key = 0};
+    tmp   = (d_token_internal_t){.data = (void*) "ETH", .len = T_STRING << 28 | 3, .key = 0, .state = 0};
   }
 
   zksync_token_t* token_data = NULL;

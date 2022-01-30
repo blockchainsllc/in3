@@ -449,13 +449,13 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, const btc_tx_t* tx, btc_account_pub_
 
       if (type == BTC_BARE_MULTISIG || type == BTC_P2SH || type == BTC_P2WSH) {
         // is the argument defining a new "account<->pub_key" pair?
-        d_token_t*  acc         = d_get(arg, key("account"));
+        bytes_t     acc         = d_get_bytes(arg, key("account"));
         const char* pub_key_str = d_string(d_get(arg, key("pub_key")));
-        if (acc && pub_key_str) {
+        if (acc.data && pub_key_str) {
           btc_account_pub_key_t acc_pk;
-          acc_pk.account.len  = acc->len;
-          acc_pk.account.data = _malloc(acc->len);
-          memcpy(acc_pk.account.data, acc->data, acc->len);
+          acc_pk.account.len  = acc.len;
+          acc_pk.account.data = _malloc(acc.len);
+          memcpy(acc_pk.account.data, acc.data, acc.len);
 
           acc_pk.pub_key.len  = (strlen(pub_key_str) >> 1);
           acc_pk.pub_key.data = _malloc(acc_pk.pub_key.len);

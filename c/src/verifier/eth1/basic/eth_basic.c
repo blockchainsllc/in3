@@ -156,7 +156,6 @@ static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx
     return req_set_error(ctx->req, "invalid type of params, expected object", IN3_EINVAL);
   else if (!filter_opt_valid(ctx->params + 1))
     return req_set_error(ctx->req, "filter option parsing failed", IN3_EINVAL);
-  if (!ctx->params->data) return req_set_error(ctx->req, "binary request are not supported!", IN3_ENOTSUP);
 
   char*     fopt = d_create_json(ctx->req->request_context, ctx->params + 1);
   in3_ret_t res  = filter_add(filters, ctx->req, FILTER_EVENT, fopt);

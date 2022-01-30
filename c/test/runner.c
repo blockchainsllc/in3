@@ -246,7 +246,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   //  _tmp_response = response;
   int is_bin = d_get_int(test, key("binaryFormat"));
 
-  in3_client_rpc_raw(c, (char*) request->data, is_bin ? NULL : &res, &err); // we cast request to string, since we know the data-pointer will point to the beginning of the object and the json parser will only parse until the end of the object
+  in3_client_rpc_raw(c, (char*) ((d_token_internal_t*) request)->data, is_bin ? NULL : &res, &err); // we cast request to string, since we know the data-pointer will point to the beginning of the object and the json parser will only parse until the end of the object
   fflush(stdout);
   fflush(stderr);
   printf("\n%2i : %-60s ", counter, descr);

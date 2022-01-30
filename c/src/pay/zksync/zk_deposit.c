@@ -31,9 +31,9 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // make sure we have an account
   uint8_t* account = conf->account;
   if ((tmp = params_get(ctx->params, key("depositTo"), 3)) && d_is_bytes(tmp)) {
-    d_to_bytes(tmp);
-    if (tmp->len != 20) return req_set_error(ctx->req, "invalid depositTo", IN3_ERPC);
-    account = tmp->data;
+    bytes_t b = d_to_bytes(tmp);
+    if (b.len != 20) return req_set_error(ctx->req, "invalid depositTo", IN3_ERPC);
+    account = b.data;
   }
   else if (!account)
     TRY(zksync_get_account(conf, ctx->req, &account))

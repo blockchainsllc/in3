@@ -99,7 +99,7 @@ int run_test(json_ctx_t* jc, d_token_t* test, int counter, char* name, uint32_t 
   if (sname) name = sname + 10;
   int l = strlen(name), fail = 0;
   if (name[l - 5] == '.') name[l - 5] = 0;
-  char*    tname = d_get_keystr(jc, test->key);
+  char*    tname = d_get_keystr(jc, d_get_key(test));
   uint64_t ms    = 0;
 
   // debug

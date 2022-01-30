@@ -93,7 +93,7 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_STRING(method_sig, ctx, 0)
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 1, 0, 0)
   TRY_PARAM_GET_BYTES(topics, ctx, 2, 0, 0)
-  CHECK_PARAM(ctx->req, ctx->params, 1, val->len % 32 == 0)
+  CHECK_PARAM(ctx->req, ctx->params, 1, d_to_bytes(val).len % 32 == 0)
 
   // decode
   abi_sig_t* abi_signature = abi_sig_create(method_sig, &error);
