@@ -50,7 +50,7 @@
 /* checks that the parameter at the given index fulfills the given condition*/
 #define CHECK_PARAM(ctx, params, index, cond)                                                             \
   {                                                                                                       \
-    const d_token_t* val = d_get_at(params, index);                                                       \
+    d_token_t* val = d_get_at(params, index);                                                             \
     if (!(cond)) return req_set_error(ctx, "argument at index " #index " must match " #cond, IN3_EINVAL); \
   }
 
@@ -147,7 +147,7 @@
     else if (!d_is_bytes(t) || d_to_bytes(t).len != 20)                                           \
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
-      target = t->data;                                                                           \
+      target = d_to_bytes(t).data;                                                                \
   }
 
 /* fetches the required parameter with the given index as address (20 bytes) and stores it in the target, which must be a uint8_t* variable*/
@@ -157,7 +157,7 @@
     if (!d_is_bytes(t) || d_to_bytes(t).len != 20)                                                \
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
-      target = t->data;                                                                           \
+      target = d_to_bytes(t).data;                                                                \
   }
 
 /* fetches the parameter with the given index as string and stores it in the target, which must be a char* variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
@@ -169,8 +169,8 @@
         target = def;                                                                              \
         break;                                                                                     \
       case T_BYTES:                                                                                \
-        target = alloca(t->len * 2 + 3);                                                           \
-        bytes_to_hex_string(target, "0x", bytes(t->data, t->len), NULL);                           \
+        target = alloca(d_len(t) * 2 + 3);                                                         \
+        bytes_to_hex_string(target, "0x", d_to_bytes(t), NULL);                                    \
         break;                                                                                     \
       case T_INTEGER:                                                                              \
         target = alloca(10);                                                                       \

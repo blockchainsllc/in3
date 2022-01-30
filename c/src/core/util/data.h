@@ -98,7 +98,8 @@ typedef struct item {
 #ifdef IN3_INTERNAL
 typedef d_token_internal_t d_token_t;
 #else
-typedef void d_token_t;
+typedef d_token_internal_t d_token_t; // this will be a void soon, but right now we still have too many pointer arithmetics using the size of the token.
+                                      // typedef void d_token_t;
 #endif
 /** internal type used to represent the a range within a string. */
 typedef struct str_range {
@@ -132,21 +133,21 @@ bytes_t  d_num_bytes(d_token_t* f);                                /**< converts
 int      d_bytes_to(d_token_t* item, uint8_t* dst, const int max); /**< writes the byte-representation to the dst. details see d_to_bytes.*/
 bytes_t* d_as_bytes(d_token_t* item);                              /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
 // bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                         /**< returns the value as bytes with length l (may reallocates) */
-char*                     d_string(d_token_t* item);                                                                            /**< converts the value as string. Make sure the type is string! */
-int32_t                   d_int(d_token_t* item);                                                                               /**< returns the value as integer. only if type is integer */
-int32_t                   d_intd(d_token_t* item, const uint32_t def_val);                                                      /**< returns the value as integer or if NULL the default. only if type is integer */
-uint64_t                  d_long(d_token_t* item);                                                                              /**< returns the value as long. only if type is integer or bytes, but short enough */
-uint64_t                  d_longd(d_token_t* item, const uint64_t def_val);                                                     /**< returns the value as long or if NULL the default. only if type is integer or bytes, but short enough */
-bytes_t**                 d_create_bytes_vec(d_token_t* arr);                                                                   /**< creates a array of bytes from JOSN-array */
-size_t                    d_token_size(const d_token_t* item);                                                                  /**< returns true, if the token is either a string starting with 0x or bytes */
-bool                      d_is_bytes(const d_token_t* item);                                                                    /** returns the size (number of tokens ) of the token */
-NONULL static inline bool d_is_key(const d_token_internal_t* item, d_key_t k) { return item->key == k; }                        /** returns true if the key macthes the key of the item */
-NONULL static inline bool d_get_key(const d_token_internal_t* item) { return item->key; }                                       /** returns  the key  of the item */
-static inline d_type_t    d_type(const d_token_internal_t* item) { return (item ? ((item->len & 0xF0000000) >> 28) : T_NULL); } /**< type of the token */
-static inline int         d_len(const d_token_internal_t* item) { return item ? (item->len & 0xFFFFFFF) : 0; }                  /**< number of elements in the token (only for object or array, other will return 0) */
-bool                      d_eq(d_token_t* a, d_token_t* b);                                                                     /**< compares 2 token and if the value is equal */
-NONULL d_key_t            keyn(const char* c, const size_t len);                                                                /**< generates the keyhash for the given stringrange as defined by len */
-d_key_t                   ikey(json_ctx_t* ctx, const char* name);                                                              /**<  returnes the indexed key for the given name. */
+char*                        d_string(d_token_t* item);                                                                            /**< converts the value as string. Make sure the type is string! */
+int32_t                      d_int(d_token_t* item);                                                                               /**< returns the value as integer. only if type is integer */
+int32_t                      d_intd(d_token_t* item, const uint32_t def_val);                                                      /**< returns the value as integer or if NULL the default. only if type is integer */
+uint64_t                     d_long(d_token_t* item);                                                                              /**< returns the value as long. only if type is integer or bytes, but short enough */
+uint64_t                     d_longd(d_token_t* item, const uint64_t def_val);                                                     /**< returns the value as long or if NULL the default. only if type is integer or bytes, but short enough */
+bytes_t**                    d_create_bytes_vec(d_token_t* arr);                                                                   /**< creates a array of bytes from JOSN-array */
+size_t                       d_token_size(const d_token_t* item);                                                                  /**< returns true, if the token is either a string starting with 0x or bytes */
+bool                         d_is_bytes(const d_token_t* item);                                                                    /** returns the size (number of tokens ) of the token */
+NONULL static inline bool    d_is_key(const d_token_internal_t* item, d_key_t k) { return item->key == k; }                        /** returns true if the key macthes the key of the item */
+NONULL static inline d_key_t d_get_key(const d_token_internal_t* item) { return item->key; }                                       /** returns  the key  of the item */
+static inline d_type_t       d_type(const d_token_internal_t* item) { return (item ? ((item->len & 0xF0000000) >> 28) : T_NULL); } /**< type of the token */
+static inline int            d_len(const d_token_internal_t* item) { return item ? (item->len & 0xFFFFFFF) : 0; }                  /**< number of elements in the token (only for object or array, other will return 0) */
+bool                         d_eq(d_token_t* a, d_token_t* b);                                                                     /**< compares 2 token and if the value is equal */
+NONULL d_key_t               keyn(const char* c, const size_t len);                                                                /**< generates the keyhash for the given stringrange as defined by len */
+d_key_t                      ikey(json_ctx_t* ctx, const char* name);                                                              /**<  returnes the indexed key for the given name. */
 
 d_token_t* d_get(d_token_t* item, const uint16_t key);                          /**< returns the token with the given propertyname (only if item is a object) */
 d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
