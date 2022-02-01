@@ -215,7 +215,7 @@ bytes_t d_to_bytes(d_token_t* item) {
         item->data  = NULL;
         item->len   = 0;
         item->state = TOKEN_STATE_CONVERTED;
-        return NULL_BYTES;
+        return bytes((uint8_t*) &item->data, 0);
       }
       else if (l < 10) {
         item->data  = NULL;
