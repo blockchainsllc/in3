@@ -227,16 +227,17 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   d_token_t* proof   = NULL;
   bytes_t    account = NULL_BYTES;
   bytes_t    message;
+  d_token_t* first_arg = d_get_at(ctx->params, 0);
 
-  if (d_type(ctx->params + 1) == T_OBJECT) {
-    result  = ctx->params + 1;
+  if (d_type(first_arg) == T_OBJECT) {
+    result  = first_arg;
     message = d_to_bytes(d_get(result, key("message")));
     account = d_get_bytes(result, key("account"));
     proof   = d_get(result, K_PROOF);
     if (!message.data) return req_set_error(ctx->req, "missing message in request", IN3_EINVAL);
   }
   else {
-    message = d_to_bytes(ctx->params + 1);
+    message = d_to_bytes(first_arg);
     if (d_len(ctx->params) > 1) proof = d_get_at(ctx->params, 1);
     if (!conf->musig_pub_keys.data) {
       bytes32_t pk;
@@ -262,7 +263,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY(pos)
 
     // check if we have all musig_urls (but only if we are in client mode)
-    if (d_type(ctx->params + 1) != T_OBJECT)
+    if (d_type(first_arg) != T_OBJECT)
       for (unsigned int n = 0; n < pub_keys.len; n += 32) {
         if (n / 32 == (unsigned) pos) continue;
         if (conf->musig_urls == NULL || !conf->musig_urls[n / 32]) return req_set_error(ctx->req, "Missing musig_url!", IN3_ECONFIG);
@@ -340,7 +341,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     }
   }
 
-  if (is_complete(s->signature_shares) && d_type(ctx->params + 1) != T_OBJECT) {
+  if (is_complete(s->signature_shares) && d_type(first_arg) != T_OBJECT) {
     uint8_t res[96];
     TRY_SIG(zkcrypto_compute_aggregated_pubkey(s->pub_keys, res))
     TRY_SIG(zkcrypto_signer_receive_signature_shares(s->signer, s->signature_shares, res + 32))

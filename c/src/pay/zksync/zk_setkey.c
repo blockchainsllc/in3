@@ -64,7 +64,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool 
   zksync_valid_t     valid;
   uint32_t           nonce;
   int                plen    = only_update ? 0 : d_len(ctx->params);
-  d_token_t*         token   = plen == 1 ? ctx->params + 1 : NULL;
+  d_token_t*         token   = plen == 1 ? d_get_at(ctx->params, 0) : NULL;
   bytes_t            new_key = d_get_bytes_at(ctx->params, 1);
   valid.from                 = plen > 2 ? d_get_long_at(ctx->params, 2) : 0;
   valid.to                   = plen > 3 ? d_get_long_at(ctx->params, 3) : 0;

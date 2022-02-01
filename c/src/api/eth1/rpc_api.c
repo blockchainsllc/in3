@@ -446,12 +446,13 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
 }
 
 static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 2 || d_type(ctx->params + 2) != T_STRING) return req_set_error(ctx->req, "must have 2 params as strings", IN3_EINVAL);
+  if (!ctx->params || d_len(ctx->params) != 2 || d_type(d_get_at(ctx->params, 1)) != T_STRING) return req_set_error(ctx->req, "must have 2 params as strings", IN3_EINVAL);
   char* val = d_get_string_at(ctx->params, 0);
   if (!val) {
-    if (d_type(ctx->params + 1) == T_INTEGER) {
+    d_token_t* t = d_get_at(ctx->params, 0);
+    if (d_type(t) == T_INTEGER) {
       val = alloca(20);
-      sprintf(val, "%i", d_int(ctx->params + 1));
+      sprintf(val, "%i", d_int(t));
     }
     else
       return req_set_error(ctx->req, "the value must be a string", IN3_EINVAL);
@@ -501,7 +502,7 @@ char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
 
 static in3_ret_t in3_fromWei(in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_len(ctx->params) < 1) return req_set_error(ctx->req, "must have 1 params as number or bytes", IN3_EINVAL);
-  bytes_t    val  = d_to_bytes(ctx->params + 1);
+  bytes_t    val  = d_get_bytes_at(ctx->params, 0);
   d_token_t* unit = d_get_at(ctx->params, 1);
   int        exp  = 0;
   if (d_type(unit) == T_STRING) {
@@ -847,7 +848,7 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
-  d_token_t* tx_data = ctx->params + 1;
+  d_token_t* tx_data = d_get_at(ctx->params, 0);
   bytes_t    tx_raw  = NULL_BYTES;
   bytes_t    from_b;
   bytes_t    data;

@@ -135,7 +135,7 @@ in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
-  d_token_t*  request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  d_token_t*  request = d_type(r->result) == T_ARRAY ? d_get_at(r->result, 0) : r->result;
   char*       method  = d_get_string(request, K_METHOD);
   str_range_t params  = d_to_json(d_get(request, key("params")));
   char*       p       = alloca(params.len + 1);
@@ -164,7 +164,7 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
 
   in3_http_request_t* req      = plugin_ctx;
   json_ctx_t*         r        = parse_json(req->payload);
-  d_token_t*          request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  d_token_t*          request  = d_type(r->result) == T_ARRAY ? d_get_at(r->result, 0) : r->result;
   char*               method   = d_get_string(request, K_METHOD);
   str_range_t         params   = d_to_json(d_get(request, K_PARAMS));
   char*               p        = alloca(params.len + 1);

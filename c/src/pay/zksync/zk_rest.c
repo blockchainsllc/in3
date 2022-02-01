@@ -25,7 +25,7 @@ in3_ret_t zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   sb_t       sb  = {0};
   sb_add_chars(&sb, "\"GET\",\"");
   sb_add_escaped_chars(&sb, conf->rest_api, -1);
-  sb_add_rawbytes(&sb, "/transactions_all/0x", d_to_bytes(ctx->params + 1), 32);
+  sb_add_rawbytes(&sb, "/transactions_all/0x", d_get_bytes_at(ctx->params, 0), 32);
   sb_add_chars(&sb, "\"");
 
   TRY_FINAL(req_send_sub_request(ctx->req, "in3_http", sb.data, NULL, &res, &req), _free(sb.data))
@@ -58,7 +58,7 @@ in3_ret_t zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ct
   sb_t       sb  = {0};
   sb_add_chars(&sb, "\"GET\",\"");
   sb_add_escaped_chars(&sb, conf->rest_api, -1);
-  sb_add_rawbytes(&sb, "/account/0x", d_to_bytes(ctx->params + 1), 20);
+  sb_add_rawbytes(&sb, "/account/0x", d_get_bytes_at(ctx->params, 0), 20);
   sb_add_chars(&sb, "/history/");
   if (!ref_tx) {
     sb_add_chars(&sb, "0/");

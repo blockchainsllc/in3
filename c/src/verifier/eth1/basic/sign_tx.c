@@ -426,12 +426,12 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
 /** handle the sendTransaction internally */
 in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // get the transaction-object
-  d_token_t* tx_params   = d_get(req, K_PARAMS);
+  d_token_t* tx          = d_get_at(d_get(req, K_PARAMS), 0);
   bytes_t    unsigned_tx = NULL_BYTES, signed_tx = NULL_BYTES;
   address_t  from;
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
+  if (d_type(tx) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
 
-  TRY(get_from_address(tx_params + 1, ctx, from));
+  TRY(get_from_address(tx, ctx, from));
 
   // is there a pending signature?
   // we get the raw transaction from this request
@@ -442,7 +442,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
     memcpy(unsigned_tx.data, raw.data, raw.len);
   }
   else
-    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx, NULL));
+    TRY(eth_prepare_unsigned_tx(tx, ctx, &unsigned_tx, NULL));
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (unsigned_tx.data) _free(unsigned_tx.data);)
 

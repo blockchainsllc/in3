@@ -373,7 +373,7 @@ static in3_ret_t init_boot_nodes(in3_nodeselect_def_t* data, in3_t* c, chain_id_
   if (json == NULL)
     return IN3_ECONFIG;
 
-  in3_configure_ctx_t cctx = {.client = c, .json = json, .token = json->result + 1, .error_msg = NULL};
+  in3_configure_ctx_t cctx = {.client = c, .json = json, .token = d_get(json->result, key("nodeRegistry")), .error_msg = NULL};
   in3_ret_t           ret  = config_set(data, &cctx, NULL);
   json_free(json);
   if (IN3_OK != ret) {

@@ -61,7 +61,7 @@ static in3_ret_t zksync_get_pubkeyhash(zksync_config_t* conf, in3_rpc_handle_ctx
   if (d_len(ctx->params) == 1) {
     CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
     CHECK_PARAM_LEN(ctx->req, ctx->params, 0, 32)
-    TRY(zkcrypto_pubkey_hash(d_to_bytes(ctx->params + 1), pubkey_hash));
+    TRY(zkcrypto_pubkey_hash(d_get_bytes_at(ctx->params, 0), pubkey_hash));
   }
   else
     TRY(zksync_get_pubkey_hash(conf, ctx->req, pubkey_hash))
@@ -92,7 +92,7 @@ static in3_ret_t zksync_aggregate_pubkey(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAM_TYPE(ctx->req, ctx->params, 0, T_BYTES)
   CHECK_PARAM(ctx->req, ctx->params, 0, d_len(val) % 32 == 0)
 
-  TRY(zkcrypto_compute_aggregated_pubkey(d_to_bytes(ctx->params + 1), dst))
+  TRY(zkcrypto_compute_aggregated_pubkey(d_get_bytes_at(ctx->params, 0), dst))
   return in3_rpc_handle_with_bytes(ctx, bytes(dst, 32));
 }
 
@@ -191,8 +191,8 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_VERIFY)
   TRY_RPC("verify", in3_rpc_handle_with_int(ctx, conf->musig_pub_keys.data
-                                                     ? zkcrypto_verify_signatures(d_to_bytes(ctx->params + 1), conf->musig_pub_keys, d_to_bytes(ctx->params + 2))
-                                                     : zkcrypto_verify_musig(d_to_bytes(ctx->params + 1), d_to_bytes(ctx->params + 2))))
+                                                     ? zkcrypto_verify_signatures(d_get_bytes_at(ctx->params, 0), conf->musig_pub_keys, d_get_bytes_at(ctx->params, 1))
+                                                     : zkcrypto_verify_musig(d_get_bytes_at(ctx->params, 0), d_get_bytes_at(ctx->params, 1))))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_TX_DATA)
   TRY_RPC("tx_data", zksync_tx_data(conf, ctx))

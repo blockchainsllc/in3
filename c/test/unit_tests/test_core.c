@@ -136,7 +136,7 @@ void test_json() {
   int         array = json_create_array(json);
   json_array_add_value(json, array, json_create_bool(json, true));
   json_object_add_prop(json, array, key("key"), json_create_null(json));
-  json_array_add_value(json, array, json->result + json_create_object(json));
+  json_array_add_value(json, array, ((d_token_internal_t*) json->result) + json_create_object(json));
   json_array_add_value(json, array, json_create_bytes(json, bytes((uint8_t*) data, 3)));
   json_array_add_value(json, array, json_create_string(json, data, -1));
   json_array_add_value(json, array, json_create_int(json, 10));

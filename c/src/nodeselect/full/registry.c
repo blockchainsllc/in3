@@ -240,7 +240,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
     return vc_err(vc, "The signature is based on older block!");
 
   // check accounts
-  d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
+  d_token_internal_t* accounts = d_get(vc->proof, K_ACCOUNTS);
   if (!accounts || d_len(accounts) != 1)
     return vc_err(vc, "Invalid accounts!");
   d_token_t* account = accounts + 1;

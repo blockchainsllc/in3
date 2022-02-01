@@ -70,10 +70,10 @@ int test_trie(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms) {
       in3_log_trace("\n using secure trie and hashing the key...\n");
     });
   }
-  uint64_t   start  = clock();
-  trie_t*    trie   = trie_new();
-  d_token_t *in     = d_get(test, ikey(jc, "in")), *t, *el;
-  uint8_t    is_hex = d_get_int(test, ikey(jc, "hexEncoded")), i, tmp[64], tmp2[64], tmp3[32], res = 0;
+  uint64_t            start  = clock();
+  trie_t*             trie   = trie_new();
+  d_token_internal_t *in     = d_get(test, ikey(jc, "in")), *t, *el;
+  uint8_t             is_hex = d_get_int(test, ikey(jc, "hexEncoded")), i, tmp[64], tmp2[64], tmp3[32], res = 0;
 
   if (d_type(in) == T_ARRAY) {
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t)) {

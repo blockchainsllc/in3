@@ -261,7 +261,7 @@ bytes_t* serialize_block_header(d_token_t* block) {
 
   // if there are sealed field we take them as raw already rlp-encoded data and add them.
   if ((sealed_fields=d_get(block,K_SEAL_FIELDS))) {
-    for (i=0,t=sealed_fields+1;i<d_len(sealed_fields);i++,t=d_next(t)) {
+    for (i=0,t=d_get_at(sealed_fields,0);i<d_len(sealed_fields);i++,t=d_next(t)) {
       bytes_t b = d_to_bytes(t);
       bb_write_raw_bytes(rlp,b.data, b.len);   // we need to check if the nodes is within the bounds!
     }
@@ -297,14 +297,14 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt) {
 
   if ((logs =  d_get(receipt,K_LOGS))) {
     // iterate over log-entries
-    for (i = 0,l=logs+1; i < d_len(logs); i++, l=d_next(l)) {
+    for (i = 0,l=d_get_at(logs,0); i < d_len(logs); i++, l=d_next(l)) {
       bb_clear(rlp_log);
 
       rlp_add(rlp_log, d_getl(l, K_ADDRESS, 20)    , ADDRESS);
 
       topics = d_get(l,K_TOPICS);
       bb_clear(rlp_topics);
-      for (j = 0, t = topics+1; j < d_len(topics); j++, t=d_next(t))
+      for (j = 0, t = d_get_at(topics,0); j < d_len(topics); j++, t=d_next(t))
          rlp_add( rlp_topics, t, HASH);
 
       rlp_encode_list(rlp_log, &rlp_topics->b);

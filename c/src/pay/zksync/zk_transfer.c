@@ -15,7 +15,8 @@
 
 in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_msg_type_t type) {
   // check ctx->params
-  if (!(d_len(ctx->params) == 1 && d_type(ctx->params + 1) == T_OBJECT)) {
+
+  if (!(d_len(ctx->params) == 1 && d_type(d_get_at(ctx->params, 0)) == T_OBJECT)) {
     CHECK_PARAMS_LEN(ctx->req, ctx->params, 3)
     CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
     CHECK_PARAM_NUMBER(ctx->req, ctx->params, 1)

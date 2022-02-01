@@ -398,8 +398,8 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   bytes_builder_t* bb = bb_new();
   bb_write_int(bb, d_get_int(err, K_CODE));
 
-  int        i   = 0;
-  d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
+  int                 i   = 0;
+  d_token_internal_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
   for (d_token_t* t = sig + 1; i < d_len(sig); t = d_next(t), i++) {
     if (d_is_key(t, K_R) || d_is_key(t, K_S) || d_is_key(t, K_V) || d_is_key(t, K_MSG_HASH))
       continue;
@@ -555,7 +555,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t header, bytes_t expecte
 
   unsigned int confirmed = 0; // bitmask for signed block-hashes
   unsigned int erred     = 0; // bitmask for signed errors
-  for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
+  for (i = 0, sig = d_get_at(signatures, 0); i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
     if ((err = d_get(sig, K_ERROR))) {
       if (!is_err_signed(err)) {
         if (d_get_int(err, K_CODE) != JSON_RPC_ERR_INTERNAL)

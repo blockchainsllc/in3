@@ -618,9 +618,9 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   // PASSING..
+  RUN_TEST(test_get_balance);
   RUN_TEST(test_eth_chain_id);
   RUN_TEST(test_eth_get_storage_at);
-  RUN_TEST(test_get_balance);
   RUN_TEST(test_block_number);
   RUN_TEST(test_eth_gas_price);
   RUN_TEST(test_eth_getblock_number);

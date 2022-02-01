@@ -33,6 +33,8 @@
 ###############################################################################
 
 set(EMC_PROPS "-s ALLOW_MEMORY_GROWTH=1 -s NODEJS_CATCH_REJECTION=0 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wpointer-arith ")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wpointer-arith ")
 
 IF (ASMJS)
   set(WASM_EMBED true)

@@ -130,17 +130,18 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
 }
 
 bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blockhash, d_token_t* topics) {
-  d_token_t* tx_params = d_get(req, K_PARAMS);
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return false;
-  if (!matches_filter_address(tx_params + 1, addrs)) {
+  d_token_t* opts = d_get_at(d_get(req, K_PARAMS), 0);
+
+  if (d_type(opts) != T_OBJECT) return false;
+  if (!matches_filter_address(opts, addrs)) {
     in3_log_error("filter address mismatch\n");
     return false;
   }
-  else if (!matches_filter_range(tx_params + 1, blockno, blockhash)) {
+  else if (!matches_filter_range(opts, blockno, blockhash)) {
     in3_log_error("filter range mismatch\n");
     return false;
   }
-  else if (!matches_filter_topics(tx_params + 1, topics)) {
+  else if (!matches_filter_topics(opts, topics)) {
     in3_log_error("filter topics mismatch\n");
     return false;
   }
@@ -150,49 +151,35 @@ bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blo
 }
 
 bool filter_from_equals_to(d_token_t* req) {
-  d_token_t* tx_params = d_get(req, K_PARAMS);
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return false;
-  d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
-  d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
-  if (frm && to && d_type(frm) == d_type(to)) {
-    if (d_is_bytes(to)) d_to_bytes(to);
-    if (d_is_bytes(frm)) d_to_bytes(frm);
-    if (d_type(frm) == T_STRING && !strcmp(d_string(frm), d_string(to)))
-      return true;
-    else if (d_type(frm) == T_BYTES && bytes_cmp(d_to_bytes(frm), d_to_bytes(to)))
-      return true;
-  }
-  return false;
+  d_token_t* opts = d_get_at(d_get(req, K_PARAMS), 0);
+  return d_type(opts) != T_OBJECT && bytes_cmp(d_get_bytes(opts, K_FROM_BLOCK), d_get_bytes(opts, K_TO_BLOCK));
 }
 
 static bool is_latest(d_token_t* block) {
-  return block && d_type(block) == T_STRING && !strcmp(d_string(block), "latest");
+  if (d_is_bytes(block)) {
+    d_to_bytes(block);
+    return false;
+  }
+  return d_type(block) == T_STRING && !strcmp(d_string(block), "latest");
 }
 
 // returns IN3_OK on success and IN3_EINVAL/IN3_EUNKNOWN on failure
 static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr_blk, bool last) {
-  d_token_t* tx_params = d_get(req, K_PARAMS);
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
-    return IN3_EINVAL;
-  d_token_t* block_hash = d_get(tx_params + 1, K_BLOCK_HASH);
-  if (block_hash) {
-    // There'a a blockHash so toBlock and fromBlock are ignored (or should not exist)
-    return IN3_OK;
-  }
+  d_token_t* opt = d_get_at(d_get(req, K_PARAMS), 0);
+  if (d_type(opt) != T_OBJECT) return IN3_EINVAL;
+  if (d_get_bytes(opt, K_BLOCK_HASH).data) return IN3_OK;
 
-  d_token_t* frm         = d_get(tx_params + 1, K_FROM_BLOCK);
-  d_token_t* to          = d_get(tx_params + 1, K_TO_BLOCK);
+  d_token_t* frm         = d_get(opt, K_FROM_BLOCK);
+  d_token_t* to          = d_get(opt, K_TO_BLOCK);
   bool       from_latest = is_latest(frm);
   bool       to_latest   = is_latest(to);
-  if (from_latest && to_latest) {
+  if (from_latest && to_latest)
     // Both fromBlock and toBlock are both latest
     return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  }
-  else if (from_latest) {
+  else if (from_latest)
     // only fromBlock is latest
     // unlikely as this doesn't make much sense, but valid if "toBlock" is approx(curr_blk)
     return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
-  }
   else if (to_latest) {
     // only toBlock is latest
     if (last)

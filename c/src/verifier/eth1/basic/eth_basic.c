@@ -112,7 +112,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 
 static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   d_token_t * tx_hash, *tx_receipt;
-  str_range_t r       = d_to_json(ctx->params + 1);
+  str_range_t r       = d_to_json(d_get_at(ctx->params, 0));
   char*       tx_data = alloca(r.len + 1);
   memcpy(tx_data, r.data, r.len);
   tx_data[r.len]      = 0;
@@ -152,12 +152,11 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_type(ctx->params) != T_ARRAY || !d_len(ctx->params) || d_type(ctx->params + 1) != T_OBJECT)
-    return req_set_error(ctx->req, "invalid type of params, expected object", IN3_EINVAL);
-  else if (!filter_opt_valid(ctx->params + 1))
-    return req_set_error(ctx->req, "filter option parsing failed", IN3_EINVAL);
+  d_token_t* opts;
+  TRY_PARAM_GET_REQUIRED_OBJECT(opts, ctx, 0)
+  if (!filter_opt_valid(opts)) return req_set_error(ctx->req, "filter option parsing failed", IN3_EINVAL);
 
-  char*     fopt = d_create_json(ctx->req->request_context, ctx->params + 1);
+  char*     fopt = d_create_json(ctx->req->request_context, opts);
   in3_ret_t res  = filter_add(filters, ctx->req, FILTER_EVENT, fopt);
   if (res < 0) {
     _free(fopt);

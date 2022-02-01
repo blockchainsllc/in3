@@ -147,7 +147,7 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
     }
     else if (d_type(ctx->request_context->result) == T_ARRAY) {
       // we have an array, so we need to store the request-data as array
-      d_token_t* t  = ctx->request_context->result + 1;
+      d_token_t* t  = d_get_at(ctx->request_context->result, 0);
       ctx->len      = d_len(ctx->request_context->result);
       ctx->requests = _malloc(sizeof(d_token_t*) * ctx->len);
       for (uint_fast16_t i = 0; i < ctx->len; i++, t = d_next(t))

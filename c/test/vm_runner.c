@@ -159,16 +159,15 @@ int runRequests(char** names, int test_index, uint32_t props) {
     // parse the data;
     int        i;
     char*      str_proof = NULL;
-    d_token_t *t = NULL, *tests = NULL, *test = NULL;
-    d_token_t* tokens = NULL;
+    d_token_t* tokens    = NULL;
 
-    if ((tests = parsed->result)) {
-      for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {
+    if (parsed->result) {
+      for (d_iterator_t it = d_iter(parsed->result); it.left; d_iter_next(&it)) {
         count++;
         if (test_index < 0 || count == test_index) {
           total++;
           mem_reset();
-          if (run_test(parsed, test, count, name, props)) failed++;
+          if (run_test(parsed, it.token, count, name, props)) failed++;
         }
       }
     }

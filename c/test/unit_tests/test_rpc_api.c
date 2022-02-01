@@ -206,11 +206,11 @@ static void checksum(d_token_t* params, chain_id_t chain, char* result) {
 static void test_in3_checksum_rpc() {
   char*       param_test = "[\"0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2\",false]";
   char *      result = NULL, *error = NULL;
-  in3_t*      in3     = in3_for_chain(CHAIN_ID_MAINNET);
-  json_ctx_t* json    = parse_json(param_test);
-  d_token_t*  address = &json->result[0];
+  in3_t*      in3    = in3_for_chain(CHAIN_ID_MAINNET);
+  json_ctx_t* json   = parse_json(param_test);
+  d_token_t*  params = json->result;
   char        ret_checksum[43];
-  checksum(address, 0, ret_checksum);
+  checksum(params, 0, ret_checksum);
   in3_ret_t ret = in3_client_rpc(in3, "in3_checksumAddress", param_test, &result, &error);
   // remove quotes from result
   char str_result[43];

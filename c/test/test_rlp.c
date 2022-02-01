@@ -47,7 +47,7 @@
 
 #include "vm_runner.h"
 
-void append_rlp(bytes_builder_t* bb, d_token_t* in) {
+void append_rlp(bytes_builder_t* bb, d_token_internal_t* in) {
   int i;
   if (d_type(in) == T_ARRAY) {
     bytes_builder_t* tmp = bb_new();

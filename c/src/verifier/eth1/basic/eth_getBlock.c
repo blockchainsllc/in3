@@ -107,7 +107,7 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t block_
     return vc_err(vc, "Transaction count mismatch");
 
   trie_t* trie = trie_new();
-  for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
+  for (i = 0, t = d_get_at(transactions, 0); i < d_len(transactions); i++, t = d_next(t)) {
     bool     is_raw_tx = d_is_bytes(t);
     bytes_t* path      = create_tx_path(i);
     bytes_t* tx        = is_raw_tx ? d_as_bytes(t) : serialize_tx(t);
@@ -169,7 +169,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t b
 
   if (!include_full_tx) {
     tx_hashs = d_get(vc->result, K_TRANSACTIONS);
-    txh      = tx_hashs + 1;
+    txh      = d_get_at(tx_hashs, 0);
   }
   // if we have transaction, we need to verify them as well
   if ((transactions = d_get(include_full_tx ? vc->result : vc->proof, K_TRANSACTIONS))) {
@@ -178,7 +178,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t b
       return vc_err(vc, "no transactionhashes found!");
 
     trie_t* trie = trie_new();
-    for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
+    for (i = 0, t = d_get_at(transactions, 0); i < d_len(transactions); i++, t = d_next(t)) {
       bool     is_raw_tx = d_is_bytes(t);
       bytes_t* path      = create_tx_path(i);
       bytes_t* tx        = is_raw_tx ? d_as_bytes(t) : serialize_tx(t);

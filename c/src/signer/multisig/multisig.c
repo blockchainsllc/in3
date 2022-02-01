@@ -93,9 +93,7 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
   in3_req_t* ctx = parent;
   for (; ctx; ctx = ctx->required) {
     if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_call")) continue;
-    d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
-    if (!t || d_type(t) != T_ARRAY || !d_len(t)) continue;
-    t = t + 1;
+    d_token_t* t = d_get_at(d_get(ctx->requests[0], K_PARAMS), 0);
     if (d_type(t) != T_OBJECT || !d_len(t)) continue;
     bytes_t tx_data = d_to_bytes(d_get(t, K_DATA));
     if (tx_data.len == data.len && memcmp(data.data, tx_data.data, data.len) == 0) break;
@@ -255,7 +253,7 @@ static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t signatures, uint32_t* si
 static in3_ret_t add_approved(in3_req_t* ctx, uint32_t* sig_count, sig_data_t* sig_data, bytes32_t tx_hash, multisig_t* ms) {
   // we don't have enough signatures, so we need to check if owners have preapproved
   for (unsigned int i = 0; i < ms->owners_len && *sig_count < ms->threshold; i++) {
-    if (is_valid(sig_data, ms, (void*) ms->owners + i, *sig_count)) {
+    if (is_valid(sig_data, ms, (void*) (ms->owners + i), *sig_count)) {
       // we don't have a signature from this owner
       uint8_t  check_approved[68];
       bytes_t* result = NULL;
@@ -268,7 +266,7 @@ static in3_ret_t add_approved(in3_req_t* ctx, uint32_t* sig_count, sig_data_t* s
       if (result->data[31]) {
         memset(sig_data + *sig_count, 0, sizeof(sig_data_t));
         memcpy(sig_data[*sig_count].sig + 12, ms->owners + i, 20);
-        sig_data[*sig_count].address = (void*) ms->owners + i;
+        sig_data[*sig_count].address = (void*) (ms->owners + i);
         sig_data[*sig_count].data    = NULL_BYTES;
         (*sig_count)++;
       }
@@ -329,7 +327,7 @@ static in3_ret_t ensure_ms_type(multisig_t* ms, in3_req_t* ctx) {
     bytes_t* tmp = NULL;
     TRY(call(ctx, ms->address, bytes((uint8_t*) "\xa3\xf4\xdf\x7e", 4), &tmp))
     if (!tmp || tmp->len < 96) return req_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
-    char* name = (void*) tmp->data + 64;
+    char* name = (void*) (tmp->data + 64);
     if (strcmp(name, "Gnosis Safe") == 0)
       ms->type = MS_GNOSIS_SAFE;
     else if (strcmp(name, "IAMO Safe") == 0)

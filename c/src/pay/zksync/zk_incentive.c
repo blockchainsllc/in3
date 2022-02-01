@@ -132,7 +132,7 @@ static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, byte
     sb_add_chars(&sb, "\"}");
   }
   in3_configure_ctx_t cctx = {.client = ctx->client, .json = parse_json(sb.data), .token = NULL, .error_msg = NULL};
-  cctx.token               = cctx.json->result + 1;
+  cctx.token               = d_get(cctx.json->result, key("preselect_nodes"));
   in3_ret_t ret            = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CONFIG_SET, &cctx);
   if (ret && ret != IN3_EIGNORE) req_set_error(ctx, cctx.error_msg ? cctx.error_msg : "Could not update the preselect nodelist", ret);
   if (cctx.error_msg) _free(cctx.error_msg);

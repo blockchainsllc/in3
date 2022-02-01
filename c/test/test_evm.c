@@ -205,10 +205,10 @@ void prepare_header(d_token_t* block) {
   _free(b);
 }
 
-int check_post_state(evm_t* evm, d_token_t* post) {
+int check_post_state(evm_t* evm, d_token_internal_t* post) {
 #ifdef EVM_GAS
-  int        i, j;
-  d_token_t *t, *storages, *s;
+  int                 i, j;
+  d_token_internal_t *t, *storages, *s;
   for (i = 0, t = post + 1; i < d_len(post); i++, t = d_next(t)) {
     char*   adr_str = d_get_keystr(jc, d_get_key(t));
     uint8_t address[20];
@@ -344,8 +344,8 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
   account_t* tmp;
 #ifdef EVM_GAS
   // make sure we have all accounts
-  d_token_t *accounts = d_get(test, ikey(jc, "pre")), *t;
-  int        i;
+  d_token_internal_t *accounts = d_get(test, ikey(jc, "pre")), *t;
+  int                 i;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     uint8_t adr[20];
     hex_to_bytes(d_get_keystr(jc, d_get_key(t)) + 2, 40, adr, 20);
@@ -397,11 +397,11 @@ static void uint256_setb(uint8_t* dst, uint8_t* data, int len) {
 }
 
 #ifdef EVM_GAS
-static void read_accounts(evm_t* evm, d_token_t* accounts) {
-  int        i, j;
-  account_t* tmp = NULL;
-  storage_t* st  = NULL;
-  d_token_t *t, *storage, *s;
+static void read_accounts(evm_t* evm, d_token_internal_t* accounts) {
+  int                 i, j;
+  account_t*          tmp = NULL;
+  storage_t*          st  = NULL;
+  d_token_internal_t *t, *storage, *s;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     char*   adr_str = d_get_keystr(jc, d_get_key(t));
     uint8_t address[20];

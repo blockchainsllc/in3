@@ -144,7 +144,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t tx_hash) 
       return vc_err(vc, "wrong transactionHash");
 
     d_token_t *l, *logs = d_get(vc->result, K_LOGS), *block_number = d_get(vc->result, K_BLOCK_NUMBER);
-    for (i = 0, l = logs + 1; i < d_len(logs); i++, l = d_next(l)) {
+    for (i = 0, l = d_get_at(logs, 0); i < d_len(logs); i++, l = d_next(l)) {
       if (!d_eq(block_number, d_get(l, K_BLOCK_NUMBER)))
         return vc_err(vc, "wrong block number in log");
       if (!d_eq(block_hash, d_getl(l, K_BLOCK_HASH, 32)))

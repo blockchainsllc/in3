@@ -366,7 +366,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
       }
     }
 
-    if (!error) data = abi_encode(req, in_data->result + args, &error);
+    if (!error) data = abi_encode(req, ((d_token_internal_t*) in_data->result) + args, &error);
     json_free(in_data);
   }
 

@@ -210,15 +210,15 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
 }
 
 int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* descr) {
-  d_token_t*  request  = d_get(test, key("request"));
-  d_token_t*  response = d_get(test, key("response"));
-  d_token_t*  config   = d_get(request, key("config"));
-  d_token_t*  t        = NULL;
-  str_range_t s        = d_to_json(d_get(request, key("params")));
-  char*       method   = d_get_string(request, key("method"));
-  d_token_t*  result   = d_get(test, key("result"));
-  bool        intern   = result ? true : d_get_int(test, key("intern"));
-  char        params[10000];
+  d_token_t*          request  = d_get(test, key("request"));
+  d_token_internal_t* response = d_get(test, key("response"));
+  d_token_t*          config   = d_get(request, key("config"));
+  d_token_t*          t        = NULL;
+  str_range_t         s        = d_to_json(d_get(request, key("params")));
+  char*               method   = d_get_string(request, key("method"));
+  d_token_t*          result   = d_get(test, key("result"));
+  bool                intern   = result ? true : d_get_int(test, key("intern"));
+  char                params[10000];
 
   // configure in3
   sprintf(params, "{\"requestCount\":%d}", (t = d_get(config, key("requestCount"))) ? d_int(t) : 1);
@@ -382,7 +382,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   int    fail = c ? execRequest(c, test, fuzz_prop != NULL, counter, temp) : 1;
   if (c) in3_free(c);
 
-  d_token_t* response = d_get(test, key("response"));
+  d_token_internal_t* response = d_get(test, key("response"));
   if (response) {
     str_range_t      res_size = d_to_json(response);
     bytes_builder_t* bb       = bb_new();
@@ -420,10 +420,10 @@ int runRequests(char** names, int test_index) {
     }
 
     // parse the data;
-    int        i;
-    char*      str_proof = NULL;
-    d_token_t *t = NULL, *tests = NULL, *test = NULL;
-    d_token_t* tokens = NULL;
+    int                 i;
+    char*               str_proof = NULL;
+    d_token_internal_t *t = NULL, *tests = NULL, *test = NULL;
+    d_token_t*          tokens = NULL;
 
     if ((tests = parsed->result)) {
       for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {

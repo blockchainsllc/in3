@@ -88,7 +88,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
 
   bool is_empty = memcmp(root.data, EMPTY_ROOT_HASH, 32) == 0;
 
-  for (i = 0, p = storage_proof + 1; i < d_len(storage_proof); i++, p = d_next(p)) {
+  for (i = 0, p = d_get_at(storage_proof, 0); i < d_len(storage_proof); i++, p = d_next(p)) {
     d_token_t* pt = d_get(p, K_PROOF);
     bb.b.len      = d_bytes_to(d_get(p, K_VALUE), val, 32);
     if (is_empty) {
@@ -96,7 +96,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
       optimize_len(vp, bb.b.len);
       if (bb.b.len > 1 || (bb.b.len == 1 && *vp))
         return vc_err(vc, "empty storagehash, so we exepct 0 values");
-      if (d_type(pt) != T_ARRAY || d_len(pt) > 1 || (d_len(pt) == 1 && d_int(pt + 1) != 0x80))
+      if (d_type(pt) != T_ARRAY || d_len(pt) > 1 || (d_len(pt) == 1 && d_get_int_at(pt, 0) != 0x80))
         return vc_err(vc, "invalid proof");
     }
     else {
@@ -135,10 +135,10 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
 
 in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
-  d_token_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
-  bytes_t    tmp;
-  uint8_t    hash[32];
-  int        i;
+  d_token_internal_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
+  bytes_t             tmp;
+  uint8_t             hash[32];
+  int                 i;
 
   // no result -> nothing to verify
   if (!vc->result) return IN3_OK;
@@ -200,11 +200,11 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     if (!requested_key.data) return vc_err(vc, "missing key");
     b_optimize_len(&requested_key);
 
-    for (i = 0, t = storage + 1; i < d_len(storage); i++, t = d_next(t)) {
-      bytes_t storage_key = d_to_bytes(d_get(t, K_KEY));
+    for (d_iterator_t it = d_iter(storage); it.left; d_iter_next(&it)) {
+      bytes_t storage_key = d_to_bytes(d_get(it.token, K_KEY));
       b_optimize_len(&storage_key);
       if (b_cmp(&storage_key, &requested_key)) {
-        d_bytes_to(d_get(t, K_VALUE), proofed_result, 32);
+        d_bytes_to(d_get(it.token, K_VALUE), proofed_result, 32);
         if (memcmp(result, proofed_result, 32) == 0)
           return IN3_OK;
         break;
