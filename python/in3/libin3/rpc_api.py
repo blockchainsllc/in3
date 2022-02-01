@@ -21,8 +21,10 @@ def _load_shared_library() -> c.CDLL:
 
         global DEBUG
         suffix = None
-        if processor in ('i386', 'x86_64') or 'Intel' in processor or 'AMD' in processor:
-            if '64' in machine:
+        if processor in ('i386', 'x86_64') or 'Intel' in processor or 'AMD' in processor or 'arm' in processor:
+            if 'arm64' in machine.lower():
+                suffix = 'arm64'
+            elif '64' in machine:
                 suffix = 'x64'
             elif '32' in machine or '86' in machine:
                 suffix = 'x86'
