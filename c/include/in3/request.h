@@ -45,11 +45,11 @@
 extern "C" {
 #endif
 
-#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 /**

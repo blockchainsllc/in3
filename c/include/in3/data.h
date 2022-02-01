@@ -86,6 +86,7 @@ typedef enum {
 
 /** a token holding any kind of value.
  *
+ * This structure should be consideren internal or private and you should not rely or access those values directly.
  * use d_type,  d_len or the cast-function to get the value.
  */
 typedef struct item {
@@ -98,8 +99,12 @@ typedef struct item {
 #ifdef IN3_INTERNAL
 typedef d_token_internal_t d_token_t;
 #else
-typedef d_token_internal_t d_token_t; // this will be a void soon, but right now we still have too many pointer arithmetics using the size of the token.
-                                      // typedef void d_token_t;
+/** a token holding any kind of value.
+ *
+ * This structure should be consideren internal or private and you should not rely or access those values directly.
+ * use d_type,  d_len or the cast-function to get the value.
+ */
+typedef void d_token_t;
 #endif
 /** internal type used to represent the a range within a string. */
 typedef struct str_range {
