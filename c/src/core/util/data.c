@@ -1183,8 +1183,9 @@ bytes_t d_num_bytes(d_token_t* f) {
 
 bool d_is_bytes(const d_token_t* item) {
   switch (d_type(item)) {
-    case T_STRING: return item->data[0] == '0' && item->data[1] == 'x';
-    case T_BYTES: return true;
+    case T_STRING: return (item->state & TOKEN_STATE_CONVERTED) == 0 && item->data[0] == '0' && item->data[1] == 'x';
+    case T_BYTES:
+    case T_INTEGER: return true;
     default: return false;
   }
 }
