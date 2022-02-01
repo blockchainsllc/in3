@@ -403,11 +403,11 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   for (d_token_t* t = sig + 1; i < d_len(sig); t = d_next(t), i++) {
     if (d_is_key(t, K_R) || d_is_key(t, K_S) || d_is_key(t, K_V) || d_is_key(t, K_MSG_HASH))
       continue;
-    d_to_bytes(t);
+    d_bytes(t);
 
     switch (d_type(t)) {
       case T_BYTES:
-        bb_write_fixed_bytes(bb, d_to_bytes(t));
+        bb_write_fixed_bytes(bb, d_bytes(t));
         break;
       case T_STRING: {
         char* s = d_string(t);

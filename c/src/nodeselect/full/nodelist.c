@@ -411,7 +411,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in
     if (filter && filter->nodes) {
       bool in_filter_nodes = false;
       for (d_iterator_t it = d_iter(filter->nodes); it.left; d_iter_next(&it)) {
-        if (memcmp(d_to_bytesl(it.token, 20).data, node_def->address, 20) == 0) {
+        if (memcmp(d_bytesl(it.token, 20).data, node_def->address, 20) == 0) {
           in_filter_nodes = true;
           break;
         }

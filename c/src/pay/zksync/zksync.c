@@ -319,7 +319,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   }
   bytes_t account = d_get_bytes(ctx->token, CONFIG_KEY("account"));
   if (account.data && account.len == 20) memcpy(conf->account = _malloc(20), account.data, 20);
-  bytes_t sync_key = d_to_bytes(d_get(ctx->token, CONFIG_KEY("sync_key")));
+  bytes_t sync_key = d_bytes(d_get(ctx->token, CONFIG_KEY("sync_key")));
   if (sync_key.len) {
     zkcrypto_pk_from_seed(sync_key, conf->sync_key);
     zkcrypto_pk_to_pubkey(conf->sync_key, conf->pub_key);

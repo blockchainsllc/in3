@@ -111,7 +111,7 @@ static size_t align(size_t val) {
 
 /** copy the data from the token to a eth_tx_t-object */
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
-  bytes_t b = d_to_bytes(d_get(t, K_INPUT));
+  bytes_t b = d_bytes(d_get(t, K_INPUT));
 
   tx->signature[64]     = d_get_int(t, K_V);
   tx->block_number      = d_get_long(t, K_BLOCK_NUMBER);
@@ -121,18 +121,18 @@ static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
   tx->transaction_index = d_get_int(t, K_TRANSACTION_INDEX);
   memcpy((uint8_t*) tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
-  copy_fixed(tx->block_hash, 32, d_to_bytes(d_getl(t, K_BLOCK_HASH, 32)));
-  copy_fixed(tx->from, 20, d_to_bytes(d_getl(t, K_FROM, 20)));
-  copy_fixed(tx->to, 20, d_to_bytes(d_getl(t, K_TO, 20)));
-  copy_fixed(tx->value.data, 32, d_to_bytes(d_getl(t, K_VALUE, 32)));
-  copy_fixed(tx->hash, 32, d_to_bytes(d_getl(t, K_HASH, 32)));
-  copy_fixed(tx->signature, 32, d_to_bytes(d_getl(t, K_R, 32)));
-  copy_fixed(tx->signature + 32, 32, d_to_bytes(d_getl(t, K_S, 32)));
+  copy_fixed(tx->block_hash, 32, d_bytes(d_getl(t, K_BLOCK_HASH, 32)));
+  copy_fixed(tx->from, 20, d_bytes(d_getl(t, K_FROM, 20)));
+  copy_fixed(tx->to, 20, d_bytes(d_getl(t, K_TO, 20)));
+  copy_fixed(tx->value.data, 32, d_bytes(d_getl(t, K_VALUE, 32)));
+  copy_fixed(tx->hash, 32, d_bytes(d_getl(t, K_HASH, 32)));
+  copy_fixed(tx->signature, 32, d_bytes(d_getl(t, K_R, 32)));
+  copy_fixed(tx->signature + 32, 32, d_bytes(d_getl(t, K_S, 32)));
 
   return align(sizeof(eth_tx_t) + b.len);
 }
 /** calculate the tx size as struct+data */
-static uint32_t get_tx_size(d_token_t* tx) { return align(d_to_bytes(d_get(tx, K_INPUT)).len) + sizeof(eth_tx_t); }
+static uint32_t get_tx_size(d_token_t* tx) { return align(d_bytes(d_get(tx, K_INPUT)).len) + sizeof(eth_tx_t); }
 
 /**
  * allocates memory for the block and all required lists like the transactions and copies the data.
@@ -155,7 +155,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
     else {
       d_token_t* sealed = d_get(result, K_SEAL_FIELDS);
       d_token_t* txs    = d_get(result, K_TRANSACTIONS);
-      bytes_t    extra  = d_to_bytes(d_get(result, K_EXTRA_DATA));
+      bytes_t    extra  = d_bytes(d_get(result, K_EXTRA_DATA));
 
       // calc size
       uint32_t s = align(sizeof(eth_block_t));
@@ -167,7 +167,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
         s += 32 * d_len(txs); // just the transaction hashes
       s += align(extra.len);  // extra-data
       for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
-        bytes_t t = d_to_bytes(sf.token);
+        bytes_t t = d_bytes(sf.token);
         rlp_decode(&t, 0, &t);
         s += align(t.len) + align(sizeof(bytes_t)); // for each field in the selad-fields we need a bytes_t-struct in the array + the data itself
       }
@@ -179,19 +179,19 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
         return NULL;
       }
       uint8_t* p = (uint8_t*) b + align(sizeof(eth_block_t)); // pointer where we add the next data after the block-struct
-      copy_fixed(b->author, 20, d_to_bytes(d_getl(result, K_AUTHOR, 20)));
-      copy_fixed(b->difficulty.data, 32, d_to_bytes(d_get(result, K_DIFFICULTY)));
-      copy_fixed(b->hash, 32, d_to_bytes(d_getl(result, K_HASH, 32)));
-      copy_fixed(b->logsBloom, 256, d_to_bytes(d_getl(result, K_LOGS_BLOOM, 256)));
-      copy_fixed(b->parent_hash, 32, d_to_bytes(d_getl(result, K_PARENT_HASH, 32)));
-      copy_fixed(b->transaction_root, 32, d_to_bytes(d_getl(result, K_TRANSACTIONS_ROOT, 32)));
+      copy_fixed(b->author, 20, d_bytes(d_getl(result, K_AUTHOR, 20)));
+      copy_fixed(b->difficulty.data, 32, d_bytes(d_get(result, K_DIFFICULTY)));
+      copy_fixed(b->hash, 32, d_bytes(d_getl(result, K_HASH, 32)));
+      copy_fixed(b->logsBloom, 256, d_bytes(d_getl(result, K_LOGS_BLOOM, 256)));
+      copy_fixed(b->parent_hash, 32, d_bytes(d_getl(result, K_PARENT_HASH, 32)));
+      copy_fixed(b->transaction_root, 32, d_bytes(d_getl(result, K_TRANSACTIONS_ROOT, 32)));
 
       d_token_t* t = NULL;
       if ((t = d_getl(result, K_RECEIPT_ROOT, 32)) || (t = d_getl(result, K_RECEIPTS_ROOT, 32)))
-        copy_fixed(b->receipts_root, 32, d_to_bytes(t));
+        copy_fixed(b->receipts_root, 32, d_bytes(t));
 
-      copy_fixed(b->sha3_uncles, 32, d_to_bytes(d_getl(result, K_SHA3_UNCLES, 32)));
-      copy_fixed(b->state_root, 32, d_to_bytes(d_getl(result, K_STATE_ROOT, 32)));
+      copy_fixed(b->sha3_uncles, 32, d_bytes(d_getl(result, K_SHA3_UNCLES, 32)));
+      copy_fixed(b->state_root, 32, d_bytes(d_getl(result, K_STATE_ROOT, 32)));
       b->gasLimit          = d_get_long(result, K_GAS_LIMIT);
       b->gasUsed           = d_get_long(result, K_GAS_USED);
       b->number            = d_get_long(result, K_NUMBER);
@@ -204,7 +204,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       b->seal_fields = (void*) p;
       p += align(sizeof(bytes_t)) * b->seal_fields_count;
       for (d_iterator_t sfitr = d_iter(sealed); sfitr.left; d_iter_next(&sfitr)) {
-        bytes_t sf = d_to_bytes(sfitr.token);
+        bytes_t sf = d_bytes(sfitr.token);
         rlp_decode(&sf, 0, &sf);
         b->seal_fields[b->seal_fields_count - sfitr.left] = bytes(p, sf.len);
         memcpy(p, sf.data, sf.len);
@@ -218,7 +218,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
         if (include_tx)
           p += write_tx(it.token, (eth_tx_t*) p);
         else {
-          copy_fixed(p, 32, d_to_bytes(it.token));
+          copy_fixed(p, 32, d_bytes(it.token));
           p += 32;
         }
       }
@@ -246,14 +246,14 @@ uint256_t eth_getBalance(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getBalance", uint256_t, uint256_from_bytes(d_to_bytes(result)));
+  rpc_exec("eth_getBalance", uint256_t, uint256_from_bytes(d_bytes(result)));
 }
 
 bytes_t eth_getCode(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getCode", bytes_t, cloned_bytes(d_to_bytes(result)));
+  rpc_exec("eth_getCode", bytes_t, cloned_bytes(d_bytes(result)));
 }
 
 uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block) {
@@ -261,7 +261,7 @@ uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blk
   params_add_bytes(params, bytes(account, 20));
   params_add_bytes(params, bytes(key, 32));
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_to_bytes(result)));
+  rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_bytes(result)));
 }
 
 uint64_t eth_blockNumber(in3_t* in3) {
@@ -286,13 +286,13 @@ static eth_log_t* parse_logs(d_token_t* result) {
     log->data.len          = d_len(d_get(it.token, K_DATA));
     log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
     log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
-    copy_fixed(log->address, 20, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)));
-    copy_fixed(log->transaction_hash, 32, d_to_bytes(d_getl(it.token, K_TRANSACTION_HASH, 32)));
-    copy_fixed(log->block_hash, 32, d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)));
-    copy_fixed(log->data.data, log->data.len, d_to_bytes(d_get(it.token, K_DATA)));
+    copy_fixed(log->address, 20, d_bytes(d_getl(it.token, K_ADDRESS, 20)));
+    copy_fixed(log->transaction_hash, 32, d_bytes(d_getl(it.token, K_TRANSACTION_HASH, 32)));
+    copy_fixed(log->block_hash, 32, d_bytes(d_getl(it.token, K_BLOCK_HASH, 32)));
+    copy_fixed(log->data.data, log->data.len, d_bytes(d_get(it.token, K_DATA)));
     size_t i = 0;
     for (d_iterator_t t = d_iter(d_getl(it.token, K_TOPICS, 32)); t.left; d_iter_next(&t), i++) {
-      copy_fixed(log->topics[i], 32, d_to_bytes(t.token));
+      copy_fixed(log->topics[i], 32, d_bytes(t.token));
       log->topic_count += 1;
     }
     log->next = NULL;
@@ -313,7 +313,7 @@ eth_log_t* eth_getLogs(in3_t* in3, char* fopt) {
 
 static json_ctx_t* parse_call_result(abi_sig_t* req, d_token_t* result) {
   char*       error = NULL;
-  json_ctx_t* res   = abi_decode(req, d_to_bytes(result), &error);
+  json_ctx_t* res   = abi_decode(req, d_bytes(result), &error);
   abi_sig_free(req);
   if (error) {
     api_set_error(0, error);
@@ -654,8 +654,8 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
       txr->status              = (d_get_int(result, K_STATUS) == 1);
       txr->contract_address    = b_dup2(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
       txr->logs                = parse_logs(d_get(result, K_LOGS));
-      copy_fixed(txr->transaction_hash, 32, d_to_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));
-      copy_fixed(txr->block_hash, 32, d_to_bytes(d_getl(result, K_BLOCK_HASH, 32)));
+      copy_fixed(txr->transaction_hash, 32, d_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));
+      copy_fixed(txr->block_hash, 32, d_bytes(d_getl(result, K_BLOCK_HASH, 32)));
       return txr;
     }
   }
@@ -722,13 +722,13 @@ bytes_t* eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_
   }
   if (nonce.defined) params_add_next_pair(params, "nonce", sb_add_hexuint(params, nonce.value), true);
   sb_add_char(params, '}');
-  rpc_exec("eth_sendTransaction", bytes_t*, b_dup2(d_to_bytes(result)));
+  rpc_exec("eth_sendTransaction", bytes_t*, b_dup2(d_bytes(result)));
 }
 
 bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
   rpc_init;
   params_add_bytes(params, data);
-  rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup2(d_to_bytes(result)));
+  rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup2(d_bytes(result)));
 }
 
 in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {

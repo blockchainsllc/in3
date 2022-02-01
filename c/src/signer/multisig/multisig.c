@@ -95,7 +95,7 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
     if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_call")) continue;
     d_token_t* t = d_get_at(d_get(ctx->requests[0], K_PARAMS), 0);
     if (d_type(t) != T_OBJECT || !d_len(t)) continue;
-    bytes_t tx_data = d_to_bytes(d_get(t, K_DATA));
+    bytes_t tx_data = d_bytes(d_get(t, K_DATA));
     if (tx_data.len == data.len && memcmp(data.data, tx_data.data, data.len) == 0) break;
   }
 

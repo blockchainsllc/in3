@@ -209,7 +209,7 @@ static in3_ret_t in3_addJsonKey(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_STRING(passphrase, ctx, 1)
   char* params = sprintx("%j,\"%S\"", data, passphrase);
   TRY_FINAL(req_send_sub_request(ctx->req, "in3_decryptKey", params, NULL, &res, NULL), _free(params))
-  bytes_t pk = d_to_bytes(res);
+  bytes_t pk = d_bytes(res);
   if (!pk.data && pk.len != 32) return req_set_error(ctx->req, "invalid key", IN3_EINVAL);
   address_t adr;
   get_address(pk.data, adr);
@@ -302,7 +302,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* ctx = action_ctx;
       if (d_is_key(ctx->token, CONFIG_KEY("key"))) {
-        bytes_t b = d_to_bytes(ctx->token);
+        bytes_t b = d_bytes(ctx->token);
         if (b.len != 32) {
           ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
           return IN3_EINVAL;
@@ -313,7 +313,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
       if (d_is_key(ctx->token, CONFIG_KEY("pk"))) {
         if (d_type(ctx->token) == T_ARRAY) {
           for (d_iterator_t iter = d_iter(ctx->token); iter.left; d_iter_next(&iter)) {
-            bytes_t b = d_to_bytes(iter.token);
+            bytes_t b = d_bytes(iter.token);
             if (b.len != 32) {
               ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
               return IN3_EINVAL;
@@ -322,7 +322,7 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
           }
         }
         else {
-          bytes_t b = d_to_bytes(ctx->token);
+          bytes_t b = d_bytes(ctx->token);
           if (b.len != 32) {
             ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
             return IN3_EINVAL;

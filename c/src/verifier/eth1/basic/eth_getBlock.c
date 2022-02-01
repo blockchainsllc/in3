@@ -52,8 +52,8 @@ static in3_ret_t eth_verify_uncles(in3_vctx_t* vc, bytes32_t uncle_hash, d_token
   bytes_t          hash, header;
   bytes_builder_t* bb = bb_new();
   for (d_iterator_t iter_hash = d_iter(uncle_hashes), iter_header = d_iter(uncles_headers); iter_header.left && iter_hash.left; d_iter_next(&iter_hash), d_iter_next(&iter_header)) {
-    hash   = d_to_bytes(iter_hash.token);
-    header = d_to_bytes(iter_header.token);
+    hash   = d_bytes(iter_hash.token);
+    header = d_bytes(iter_header.token);
     keccak(header, hash2);
     if (memcmp(hash.data, hash2, 32)) {
       bb_free(bb);
@@ -158,7 +158,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t b
     return vc_err(vc, "invalid author");
 
   if ((t = d_getl(vc->result, K_MIX_HASH, 32)) && (t2 = d_get(vc->result, K_SEAL_FIELDS))) {
-    if (rlp_decode(d_as_bytes(d_get_at(t2, 0)), 0, &tmp) != 1 || b_compare(d_to_bytes(t), tmp))
+    if (rlp_decode(d_as_bytes(d_get_at(t2, 0)), 0, &tmp) != 1 || b_compare(d_bytes(t), tmp))
       return vc_err(vc, "invalid mixhash");
     if (rlp_decode(d_as_bytes(d_get_at(t2, 1)), 0, &tmp) != 1 || b_compare(d_get_bytes(vc->result, K_NONCE), tmp))
       return vc_err(vc, "invalid nonce");
@@ -190,7 +190,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t b
         if (eth_verify_tx_values(vc, t, tx))
           res = IN3_EUNKNOWN;
 
-        if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !bytes_cmp(d_to_bytes(t2), bhash))
+        if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !bytes_cmp(d_bytes(t2), bhash))
           res = vc_err(vc, "Wrong Blockhash in tx");
 
         if ((t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != bnumber)
@@ -201,7 +201,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t b
       }
 
       if (h && txh) {
-        bytes_t th = d_to_bytes(txh);
+        bytes_t th = d_bytes(txh);
         if (th.len != 32 || memcmp(th.data, h, 32))
           res = vc_err(vc, "Wrong Transactionhash");
         txh = d_next(txh);
@@ -211,7 +211,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t b
       b_free(path);
     }
 
-    bytes_t t_root = d_to_bytes(d_getl(vc->result, K_TRANSACTIONS_ROOT, 32));
+    bytes_t t_root = d_bytes(d_getl(vc->result, K_TRANSACTIONS_ROOT, 32));
 
     if (t_root.len != 32 || memcmp(t_root.data, trie->root, 32))
       res = vc_err(vc, "Wrong Transaction root");

@@ -30,7 +30,7 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
 
   // send request
   TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_call", sb.data, &result), _free(sb.data))
-  bytes_t call_res = d_to_bytes(result);
+  bytes_t call_res = d_bytes(result);
 
   // check result
   bytes32_t pub_hash_hash;

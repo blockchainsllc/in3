@@ -107,7 +107,7 @@ static void test_context_bulk() {
     d_token_t* hash = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);
     TEST_ASSERT_NOT_NULL(hash);
     char h[67] = "0x";
-    bytes_to_hex(d_to_bytes(hash).data, 32, h + 2);
+    bytes_to_hex(d_bytes(hash).data, 32, h + 2);
     in3_log_trace("HASH %s\n", h);
   }
   req_free(block_ctx);

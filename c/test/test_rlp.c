@@ -58,7 +58,7 @@ void append_rlp(bytes_builder_t* bb, d_token_internal_t* in) {
     bb_free(tmp);
     return;
   }
-  bytes_t b = d_to_bytes(in);
+  bytes_t b = d_bytes(in);
   if (d_type(in) == T_INTEGER && d_int(in) == 0) b.len = 0;
   rlp_encode_item(bb, &b);
 }
@@ -67,7 +67,7 @@ int test_rlp(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms) {
   uint64_t            start = clock();
   int                 res   = 0;
   d_token_internal_t* in    = d_get(test, ikey(jc, "in"));
-  bytes_t             out   = d_to_bytes(d_get(test, ikey(jc, "out")));
+  bytes_t             out   = d_bytes(d_get(test, ikey(jc, "out")));
   if (d_type(in) == T_STRING && d_len(in) > 0 && *in->data == '#') return 0;
   bytes_builder_t* bb = bb_new();
   append_rlp(bb, in);

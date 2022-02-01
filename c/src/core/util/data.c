@@ -45,7 +45,7 @@
 #ifdef LOGGING
 #include "used_keys.h"
 #endif
-// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
+// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_bytes() for a T_INTEGER
 // verify(sizeof(void*) >= 4);
 
 // number of tokens to allocate memory for when parsing
@@ -117,16 +117,12 @@ size_t d_token_size(const d_token_t* item) {
 }
 
 bytes_t* d_as_bytes(d_token_t* item) {
-  if (d_type(item) != T_BYTES && d_is_bytes(item)) d_to_bytes(item);
+  if (d_type(item) != T_BYTES && d_is_bytes(item)) d_bytes(item);
   return d_type(item) == T_BYTES ? (void*) item : NULL;
 }
 
-static bytes_t* d_bytes(const d_token_t* item) {
-  return item->data ? (void*) item : NULL;
-}
-
-bytes_t d_to_bytesl(d_token_t* item, uint32_t len) {
-  bytes_t b = d_to_bytes(item);
+bytes_t d_bytesl(d_token_t* item, uint32_t len) {
+  bytes_t b = d_bytes(item);
   if (!b.data) return b;
   if (b.len < len && len > 4 && d_type(item) == T_BYTES) {
     bytes_t t = bytes(_calloc(1, len), len);
@@ -141,7 +137,7 @@ bytes_t d_to_bytesl(d_token_t* item, uint32_t len) {
   return b;
 }
 
-bytes_t d_to_bytes(d_token_t* item) {
+bytes_t d_bytes(d_token_t* item) {
   switch (d_type(item)) {
     case T_BYTES:
       return bytes(item->data, item->len);
@@ -267,7 +263,7 @@ int32_t d_intd(d_token_t* item, const uint32_t def_val) {
     }
     case T_STRING:
       if (d_is_bytes(item)) {
-        bytes_t b = d_to_bytes(item);
+        bytes_t b = d_bytes(item);
         return bytes_to_int(b.data, min(4, b.len));
       }
       return atoi((char*) item->data);
@@ -282,7 +278,7 @@ bytes_t** d_create_bytes_vec(d_token_t* arr) {
   bytes_t**  dst = _calloc(l + 1, sizeof(bytes_t*));
   d_token_t* t   = arr + 1;
   for (i = 0; i < l; i++, t += d_token_size(t)) {
-    d_to_bytes(t);
+    d_bytes(t);
     dst[i] = (bytes_t*) (void*) (t);
   }
   return dst;
@@ -296,7 +292,7 @@ uint64_t d_longd(d_token_t* item, const uint64_t def_val) {
   if (d_type(item) == T_INTEGER)
     return item->len & 0x0FFFFFFF;
   else if (d_is_bytes(item)) {
-    bytes_t b = d_to_bytes(item);
+    bytes_t b = d_bytes(item);
     return bytes_to_long(b.data, b.len);
   }
   else if (d_type(item) == T_STRING)
@@ -306,8 +302,8 @@ uint64_t d_longd(d_token_t* item, const uint64_t def_val) {
 
 bool d_eq(d_token_t* a, d_token_t* b) {
   if (a == NULL || b == NULL) return false;
-  if (d_is_bytes(a) && d_type(a) == T_STRING) d_to_bytes(a);
-  if (d_is_bytes(b) && d_type(b) == T_STRING) d_to_bytes(b);
+  if (d_is_bytes(a) && d_type(a) == T_STRING) d_bytes(a);
+  if (d_is_bytes(b) && d_type(b) == T_STRING) d_bytes(b);
   if (d_type(a) == T_BYTES && d_type(b) == T_INTEGER && d_len(a) < 5 && d_int(a) == d_int(b)) return true;
   if (d_type(b) == T_BYTES && d_type(a) == T_INTEGER && d_len(b) < 5 && d_int(a) == d_int(b)) return true;
   if (a->len != b->len) return false;
@@ -327,7 +323,7 @@ bool d_eq(d_token_t* a, d_token_t* b) {
   if (d_type(a) == T_STRING) return strncmp((char*) a->data, (char*) b->data, d_len(b)) == 0;
 
   return (a->data && b->data && d_type(a) == T_BYTES)
-             ? b_cmp(d_bytes(a), d_bytes(b))
+             ? bytes_cmp(d_bytes(a), d_bytes(b))
              : d_type(a) > T_OBJECT && d_type(b) > T_OBJECT;
 }
 
@@ -688,7 +684,7 @@ json_ctx_t* parse_json(const char* js) {
   }                                                                   //
   parser->c = (char*) js;                                             // since this pointer changed during parsing, we set it back to the original string
   for (size_t i = 0; i < parser->len; i++) {
-    //    if (d_is_bytes(parser->result + i) && d_type(parser->result + i) == T_STRING) d_to_bytes(parser->result + i);
+    //    if (d_is_bytes(parser->result + i) && d_type(parser->result + i) == T_STRING) d_bytes(parser->result + i);
   }
   return parser;
 }
@@ -1083,7 +1079,7 @@ char* d_get_keystr(json_ctx_t* ctx, d_key_t k) {
   return NULL;
 }
 int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
-  bytes_t val = d_to_bytes(item);
+  bytes_t val = d_bytes(item);
   if (max == -1) max = (int) val.len;
   if (max && (uint32_t) max < val.len) val.len = (uint32_t) max;
   if (val.len < (uint32_t) max) memset(dst, 0, max - val.len);
@@ -1092,7 +1088,7 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
 }
 bytes_t d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
   d_token_t* t = d_get(r, k);
-  return d_to_bytesl(t, minl);
+  return d_bytesl(t, minl);
 }
 
 d_token_t* d_getl(d_token_t* item, uint16_t k, uint32_t minl) {
@@ -1138,7 +1134,7 @@ d_token_t* token_from_bytes(bytes_t b, d_token_t* d) {
 }
 
 bytes_t d_num_bytes(d_token_t* f) {
-  bytes_t bb = d_to_bytes(f);
+  bytes_t bb = d_bytes(f);
   if (bb.data && d_type(f) == T_STRING && d_len(f) < 80) {
     // still a string?, then we need to look for numeric values
     char input[80];

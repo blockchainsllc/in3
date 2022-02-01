@@ -42,14 +42,14 @@
 #include <stdio.h>
 
 static bool filter_addrs_valid(d_token_t* addr) {
-  bytes_t b = d_to_bytes(addr);
+  bytes_t b = d_bytes(addr);
   if (b.len == 20)
     return true;
   else if (d_type(addr) != T_ARRAY)
     return false;
 
   for (d_iterator_t it = d_iter(addr); it.left; d_iter_next(&it)) {
-    if (d_to_bytes(it.token).len != 20) return false;
+    if (d_bytes(it.token).len != 20) return false;
   }
   return true;
 }
@@ -59,14 +59,14 @@ static bool filter_topics_valid(d_token_t* topics) {
     return false;
 
   for (d_iterator_t it1 = d_iter(topics); it1.left; d_iter_next(&it1)) {
-    if (d_is_bytes(it1.token) && d_to_bytes(it1.token).len == 32)
+    if (d_is_bytes(it1.token) && d_bytes(it1.token).len == 32)
       continue;
     else if (d_type(it1.token) == T_NULL)
       continue;
     else if (d_type(it1.token) == T_ARRAY) {
       d_token_t* t = it1.token;
       for (d_iterator_t it2 = d_iter(t); it2.left; d_iter_next(&it2)) {
-        if (d_is_bytes(it2.token) && d_to_bytes(it2.token).len == 32)
+        if (d_is_bytes(it2.token) && d_bytes(it2.token).len == 32)
           continue;
         else if (d_type(it2.token) == T_NULL)
           continue;
@@ -82,7 +82,7 @@ static bool filter_topics_valid(d_token_t* topics) {
 
 bool filter_opt_valid(d_token_t* tx_params) {
   d_token_t* frmblk = d_get(tx_params, K_FROM_BLOCK);
-  d_to_bytes(frmblk);
+  d_bytes(frmblk);
   if (!frmblk) { /* Optional */
   }
   else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
@@ -93,7 +93,7 @@ bool filter_opt_valid(d_token_t* tx_params) {
     return false;
 
   d_token_t* toblk = d_get(tx_params, K_TO_BLOCK);
-  d_to_bytes(toblk);
+  d_bytes(toblk);
   if (!toblk) { /* Optional */
   }
   else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
@@ -104,7 +104,7 @@ bool filter_opt_valid(d_token_t* tx_params) {
     return false;
 
   d_token_t* blockhash = d_getl(tx_params, K_BLOCK_HASH, 32);
-  d_to_bytes(blockhash);
+  d_bytes(blockhash);
   if (blockhash == NULL) { /* Optional */
   }
   else if ((d_type(blockhash) == T_BYTES && d_len(blockhash) == 32) && !frmblk && !toblk) {

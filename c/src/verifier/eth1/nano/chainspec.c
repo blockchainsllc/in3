@@ -71,7 +71,7 @@ static void           fill_aura(json_ctx_t* ctx, d_token_t* validators, consensu
   t->type = ETH_POA_AURA;
   if (contract) {
     t->contract = _calloc(20, 1);
-    bytes_t bb  = d_to_bytes(contract);
+    bytes_t bb  = d_bytes(contract);
     memcpy(t->contract + 20 - bb.len, bb.data, bb.len);
   }
   else
@@ -83,7 +83,7 @@ static void           fill_aura(json_ctx_t* ctx, d_token_t* validators, consensu
     t->validators.data = _calloc(1, t->validators.len);
     int n              = 0;
     for (d_iterator_t iter = d_iter(list); iter.left; d_iter_next(&iter)) {
-      bytes_t bb = d_to_bytes(iter.token);
+      bytes_t bb = d_bytes(iter.token);
       memcpy(t->validators.data + 20 * (n++) + 20 - bb.len, bb.data, bb.len);
     }
   }

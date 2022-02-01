@@ -93,7 +93,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_BALANCE:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "balance")));
+        res = d_bytes(d_get(t, ikey(jc, "balance")));
         if (res.data != NULL) {
           *out_data = res.data;
           return res.len;
@@ -104,7 +104,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
 
     case EVM_ENV_STORAGE:
       if ((t = vm_get_storage(test, evm->address, in_data, in_len))) {
-        res       = d_to_bytes(t);
+        res       = d_bytes(t);
         *out_data = res.data;
         return res.len;
       }
@@ -117,7 +117,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_CODE_SIZE:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "code")));
+        res = d_bytes(d_get(t, ikey(jc, "code")));
         if (res.data != NULL) {
           int ll = 4;
           int_to_bytes(res.len, __tmp);
@@ -137,7 +137,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_NONCE:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "nonce")));
+        res = d_bytes(d_get(t, ikey(jc, "nonce")));
         if (res.data != NULL) {
           *out_data = res.data;
           return res.len;
@@ -149,7 +149,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_CODE_HASH:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "code")));
+        res = d_bytes(d_get(t, ikey(jc, "code")));
         if (res.data != NULL) {
           keccak(res, __tmp);
           *out_data = __tmp;
@@ -162,7 +162,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_CODE_COPY:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "code")));
+        res = d_bytes(d_get(t, ikey(jc, "code")));
         if (res.data != NULL) {
           *out_data = res.data;
           return res.len;
@@ -181,20 +181,20 @@ void prepare_header(d_token_t* block) {
   memset(data, 0, 32);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentCoinbase")));
+  r = d_bytes(d_get(block, ikey(jc, "currentCoinbase")));
   rlp_encode_item(rlp, &r);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentDifficulty")));
+  r = d_bytes(d_get(block, ikey(jc, "currentDifficulty")));
   rlp_encode_item(rlp, &r);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentNumber")));
+  r = d_bytes(d_get(block, ikey(jc, "currentNumber")));
   rlp_encode_item(rlp, &r);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentGasLimit")));
+  r = d_bytes(d_get(block, ikey(jc, "currentGasLimit")));
   rlp_encode_item(rlp, &r);
   rlp_encode_item(rlp, &tmp);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentTimestamp")));
+  r = d_bytes(d_get(block, ikey(jc, "currentTimestamp")));
   rlp_encode_item(rlp, &r);
   rlp_encode_item(rlp, &tmp);
 
@@ -218,7 +218,7 @@ int check_post_state(evm_t* evm, d_token_internal_t* post) {
       char*      s_str = d_get_keystr(jc, d_get_key(s));
       uint8_t    s_key[32];
       int        l_key    = hex_to_bytes(s_str + 2, strlen(s_str) - 2, s_key, 32);
-      bytes_t    val_must = d_to_bytes(s);
+      bytes_t    val_must = d_bytes(s);
       storage_t* st       = NULL;
       TRY(evm_get_storage(evm, address, s_key, l_key, 0, &st))
       if (!st) {
@@ -470,9 +470,9 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
   if (exec) {
 
-    evm.gas_price  = d_to_bytes(d_get(exec, ikey(jc, "gasPrice")));
-    evm.call_data  = d_to_bytes(d_get(exec, ikey(jc, "data")));
-    evm.call_value = d_to_bytes(d_get(exec, ikey(jc, "value")));
+    evm.gas_price  = d_bytes(d_get(exec, ikey(jc, "gasPrice")));
+    evm.call_data  = d_bytes(d_get(exec, ikey(jc, "data")));
+    evm.call_value = d_bytes(d_get(exec, ikey(jc, "value")));
 
     evm.caller  = d_get_bytes(exec, ikey(jc, "caller")).data;
     evm.origin  = d_get_bytes(exec, ikey(jc, "origin")).data;
@@ -482,7 +482,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 #ifdef EVM_GAS
     evm.accounts = NULL;
     evm.gas      = d_get_long(exec, ikey(jc, "gas"));
-    evm.code     = d_to_bytes(d_get(exec, ikey(jc, "code")));
+    evm.code     = d_bytes(d_get(exec, ikey(jc, "code")));
     evm.parent   = NULL;
     evm.logs     = NULL;
     evm.init_gas = 0;
@@ -490,9 +490,9 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
   }
   else if (transaction) {
     indexes        = d_get(d_get_at(d_get(post, ikey(jc, fork_name)), test_index), ikey(jc, "indexes"));
-    evm.gas_price  = d_to_bytes(d_get(transaction, ikey(jc, "gasPrice")));
-    evm.call_data  = d_to_bytes(get_test_val(transaction, "data", indexes));
-    evm.call_value = d_to_bytes(get_test_val(transaction, "value", indexes));
+    evm.gas_price  = d_bytes(d_get(transaction, ikey(jc, "gasPrice")));
+    evm.call_data  = d_bytes(get_test_val(transaction, "data", indexes));
+    evm.call_value = d_bytes(get_test_val(transaction, "value", indexes));
 
     uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey")).data, public_key[65], sdata[32];
     ecdsa_get_public_key65(&secp256k1, pk, public_key);
@@ -505,14 +505,14 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.caller = caller;
     evm.origin = caller;
 
-    bytes_t to_address = d_to_bytes(d_get(transaction, ikey(jc, "to")));
+    bytes_t to_address = d_bytes(d_get(transaction, ikey(jc, "to")));
     evm.address        = _to;
     if (to_address.len) memcpy(_to, to_address.data, 20);
     //      memcpy(_to + 32 - to_address.len, to_address.data, to_address.len);
     evm.account = evm.address;
 
     if (d_getl(transaction, ikey(jc, "to"), 20) && d_len(d_getl(transaction, ikey(jc, "to"), 20)))
-      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to")).data), ikey(jc, "code")));
+      evm.code = d_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to")).data), ikey(jc, "code")));
     else
       evm.code = evm.call_data;
 
@@ -682,12 +682,12 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
   // now check results...
   if (!fail) {
-    bytes_t must_out = d_to_bytes(d_get(test, ikey(jc, "out")));
+    bytes_t must_out = d_bytes(d_get(test, ikey(jc, "out")));
     if (transaction) {
       uint8_t state_root[32];
       generate_state_root(&evm, state_root);
       d_token_t* pp       = d_get_at(d_get(post, ikey(jc, fork_name)), test_index);
-      bytes_t    expected = d_to_bytes(d_getl(pp, ikey(jc, "hash"), 32));
+      bytes_t    expected = d_bytes(d_getl(pp, ikey(jc, "hash"), 32));
       if (pp && (expected.len != 32 || memcmp(state_root, expected.data, 32))) {
         print_error("wrong state root : ");
         ba_print(state_root, 32);

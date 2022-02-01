@@ -87,14 +87,14 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
     case EVM_ENV_BALANCE:
       if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), in_data)) || !(t = d_get(t, K_BALANCE)))
         INVALID("account not found in proof")
-      bytes_t b1 = d_to_bytes(t);
+      bytes_t b1 = d_bytes(t);
       *out_data  = b1.data;
       return b1.len;
 
     case EVM_ENV_NONCE:
       if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), in_data)) || !(t = d_get(t, K_NONCE)))
         INVALID("account not found in proof")
-      bytes_t b2 = d_to_bytes(t);
+      bytes_t b2 = d_bytes(t);
       *out_data  = b2.data;
       return b2.len;
 
@@ -103,11 +103,11 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
         INVALID("account not found in proof")
 
       for (i = 0, t2 = d_get_at(t, 0); i < d_len(t); i++, t2 = d_next(t2)) {
-        bytes_t k = d_to_bytes(d_get(t2, K_KEY));
+        bytes_t k = d_bytes(d_get(t2, K_KEY));
         if (!k.data) INVALID("no data on storage")
 
         if (big_cmp(in_data, in_len, k.data, k.len) == 0) {
-          k = d_to_bytes(d_get(t2, K_VALUE));
+          k = d_bytes(d_get(t2, K_VALUE));
           if (!k.data) INVALID("no data on storage")
           *out_data = k.data;
           return k.len;
@@ -133,7 +133,7 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
         return EVM_ERROR_INVALID_ENV;
       t = d_getl(t, K_CODE_HASH, 32);
       if (!t) return EVM_ERROR_INVALID_ENV;
-      *out_data = d_to_bytes(t).data;
+      *out_data = d_bytes(t).data;
       return 32;
     }
     case EVM_ENV_CODE_COPY: {

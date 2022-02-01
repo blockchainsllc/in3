@@ -50,7 +50,7 @@
 
 bytes_t get_bytes(d_token_t* t, uint8_t* tmp, uint8_t is_hex) {
   bytes_t res;
-  res = d_to_bytes(t);
+  res = d_bytes(t);
   /*
   if (d_type(t) == T_BYTES && !is_hex) {
     tmp[0] = '0';
@@ -83,7 +83,7 @@ int test_trie(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms) {
       int        n;
       d_token_t* tt = NULL;
       for (n = i + 1, tt = d_next(t); n < d_len(in) && !will_be_null; n++, tt = d_next(tt)) {
-        tmp_key = d_to_bytes(d_get_at(tt, 0));
+        tmp_key = d_bytes(d_get_at(tt, 0));
 
         if (b_cmp(&key_bytes, &tmp_key) && d_type(d_get_at(tt, 1)) == T_NULL)
           will_be_null = 1;
@@ -140,7 +140,7 @@ int test_trie(json_ctx_t* jc, d_token_t* test, uint32_t props, uint64_t* ms) {
 #endif
     }
   }
-  bytes_t root_bytes = d_to_bytes(d_get(test, ikey(jc, "root")));
+  bytes_t root_bytes = d_bytes(d_get(test, ikey(jc, "root")));
   if (root_bytes.len == 32 && memcmp(root_bytes.data, trie->root, 32)) {
     EVM_DEBUG_BLOCK({
       in3_log_trace("\n expected : ");

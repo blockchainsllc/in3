@@ -93,7 +93,7 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_STRING(method_sig, ctx, 0)
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 1, 0, 0)
   TRY_PARAM_GET_BYTES(topics, ctx, 2, 0, 0)
-  CHECK_PARAM(ctx->req, ctx->params, 1, d_to_bytes(val).len % 32 == 0)
+  CHECK_PARAM(ctx->req, ctx->params, 1, d_bytes(val).len % 32 == 0)
 
   // decode
   abi_sig_t* abi_signature = abi_sig_create(method_sig, &error);
@@ -674,7 +674,7 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
   if (!nonce.data) {
     d_token_t* result;
     TRY_SUB_REQUEST(ctx->req, "eth_getTransactionCount", &result, "\"%B\",\"latest\"", sender)
-    nonce = d_to_bytes(result);
+    nonce = d_bytes(result);
   }
 
   // handle nonce as number, which means no leading zeros and if 0 it should be an empty bytes-array
@@ -796,7 +796,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
   d_token_t*  keyfile        = d_get_at(ctx->params, 0);
-  bytes_t     password_bytes = d_to_bytes(d_get_at(ctx->params, 1));
+  bytes_t     password_bytes = d_bytes(d_get_at(ctx->params, 1));
   bytes32_t   dst;
   json_ctx_t* sctx = NULL;
 

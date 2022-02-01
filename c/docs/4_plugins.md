@@ -444,7 +444,7 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* args)
         if (!params || d_len(params) != 1) return req_set_error(rpc->ctx, "invalid params", IN3_EINVAL);
         bytes32_t hash;
         // hash the first param
-        keccak(d_to_bytes(d_get_at(params,0)), hash);
+        keccak(d_bytes(d_get_at(params,0)), hash);
         // return the hash as resut.
         return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
       }

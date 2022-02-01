@@ -268,7 +268,7 @@ char* in3_configure(in3_t* c, const char* config) {
   // we iterate over the root-props
   for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter), prop_index++) {
     d_token_t* token = iter.token;
-    if (d_is_bytes(token)) d_to_bytes(token);
+    if (d_is_bytes(token)) d_bytes(token);
 
     if (token->key == CONFIG_KEY("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);

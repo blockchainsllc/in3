@@ -103,8 +103,8 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 #if !defined(RPC_ONLY) || defined(RPC_ETH_SENDRAWTRANSACTION)
   if (VERIFY_RPC("eth_sendRawTransaction")) {
     bytes32_t hash;
-    keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
-    return bytes_cmp(d_to_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
+    keccak(d_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
+    return bytes_cmp(d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   }
 #endif
   return IN3_EIGNORE;
@@ -119,7 +119,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   in3_req_t* send_req = NULL;
   in3_req_t* last_r   = NULL;
   TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash, &send_req))
-  bytes_t th = d_to_bytes(tx_hash);
+  bytes_t th = d_bytes(tx_hash);
   if (!th.data || th.len != 32) return req_set_error(ctx->req, "Invalid Response from sendTransaction, expecting a hash!", IN3_EINVAL);
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];

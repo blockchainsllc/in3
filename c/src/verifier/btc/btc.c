@@ -53,8 +53,8 @@ static bool equals_hex_rev(bytes_t data, char* hex) {
 
 // extract the blocknumber from the proof based on BIP 34
 static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_token_t* proof, bytes_t header) {
-  bytes_t     merkle_proof = d_to_bytes(d_get(proof, key("cbtxMerkleProof")));
-  bytes_t     tx           = d_to_bytes(d_get(proof, key("cbtx")));
+  bytes_t     merkle_proof = d_bytes(d_get(proof, key("cbtxMerkleProof")));
+  bytes_t     tx           = d_bytes(d_get(proof, key("cbtx")));
   bytes32_t   tx_id;
   btc_tx_t    tx_data;
   btc_tx_in_t tx_in;
@@ -63,7 +63,7 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
     *dst_block_number = (uint32_t) d_get_int(proof, key("height"));
     if (!*dst_block_number) return vc_err(vc, "missing height in proof for blocks pre bip34");
 #ifdef BTC_PRE_BPI34
-    return check_pre_bip34(vc, d_to_bytes(d_get(proof, key("final"))), *dst_block_number);
+    return check_pre_bip34(vc, d_bytes(d_get(proof, key("final"))), *dst_block_number);
 #else
     return vc_err(vc, "no pre bip34 support");
 #endif
@@ -144,7 +144,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
   // get the header
   t      = d_get(vc->proof, K_BLOCK);
-  header = d_to_bytes(t);
+  header = d_bytes(t);
   if (!t || d_type(t) != T_BYTES || d_len(t) != 80) return vc_err(vc, "missing or invalid blockheader!");
 
   if (json) {
@@ -290,7 +290,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
   // now check the merkle proof
   t           = d_get(vc->proof, K_MERKLE_PROOF);
-  merkle_data = d_to_bytes(t);
+  merkle_data = d_bytes(t);
   if (!t || d_type(t) != T_BYTES) return vc_err(vc, "missing merkle proof!");
 
   // check the transactionIndex
@@ -302,7 +302,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
   // now verify the blockheader including finality and target
   uint32_t  block_number     = 0;
-  bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
+  bytes_t   finality_headers = d_bytes(d_get(vc->proof, key("final")));
   in3_ret_t ret;
 
   if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, vc->proof))) return ret;
@@ -332,7 +332,7 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
   bytes32_t block_target, hash, tmp, tmp2;
   in3_ret_t ret              = IN3_OK;
   uint32_t  block_number     = 0;
-  bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
+  bytes_t   finality_headers = d_bytes(d_get(vc->proof, key("final")));
   if (!vc->proof) return vc_err(vc, "missing the proof");
   if (verbose)
     btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
@@ -419,8 +419,8 @@ in3_ret_t btc_verify_target_proof(btc_target_conf_t* conf, in3_vctx_t* vc, d_tok
 
   for (d_iterator_t iter = d_iter(vc->result); iter.left; d_iter_next(&iter)) {
     if (d_type(iter.token) != T_OBJECT) return vc_err(vc, "invalid type for proof");
-    bytes_t header           = d_to_bytes(d_get(iter.token, K_BLOCK));
-    bytes_t finality_headers = d_to_bytes(d_get(iter.token, key("final")));
+    bytes_t header           = d_bytes(d_get(iter.token, K_BLOCK));
+    bytes_t finality_headers = d_bytes(d_get(iter.token, key("final")));
     if (header.len != 80) return vc_err(vc, "invalid header");
 
     if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, iter.token))) return ret;

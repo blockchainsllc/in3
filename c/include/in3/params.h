@@ -15,7 +15,7 @@
 /* checks that the parameter at the given index is of the specified type */
 #define CHECK_PARAM_TYPE(ctx, params, index, type)                                                                                       \
   {                                                                                                                                      \
-    if (type == T_BYTES) d_to_bytes(d_get_at(params, index));                                                                            \
+    if (type == T_BYTES) d_bytes(d_get_at(params, index));                                                                               \
     if (d_type(d_get_at(params, index)) != type) return req_set_error(ctx, "argument at index " #index " must be a " #type, IN3_EINVAL); \
   }
 
@@ -29,10 +29,10 @@
   }
 
 /* checks that the parameter at the given index is a address */
-#define CHECK_PARAM_ADDRESS(ctx, params, index)                                                                                                             \
-  {                                                                                                                                                         \
-    d_token_t* val = d_get_at(params, index);                                                                                                               \
-    if (d_to_bytes(val).len != 20 || d_type(val) != T_BYTES) return req_set_error(ctx, "argument at index " #index " must be a valid address", IN3_EINVAL); \
+#define CHECK_PARAM_ADDRESS(ctx, params, index)                                                                                                          \
+  {                                                                                                                                                      \
+    d_token_t* val = d_get_at(params, index);                                                                                                            \
+    if (d_bytes(val).len != 20 || d_type(val) != T_BYTES) return req_set_error(ctx, "argument at index " #index " must be a valid address", IN3_EINVAL); \
   }
 
 /* checks that the parameter at the given index has exactly the given len*/
@@ -63,7 +63,7 @@
     else if (!d_is_bytes(t) && d_type(t) != T_INTEGER)                                                                                                    \
       return req_set_error(ctx->req, "Param at " #index " must be bytes!", IN3_EINVAL);                                                                   \
     else {                                                                                                                                                \
-      target = d_to_bytes(t);                                                                                                                             \
+      target = d_bytes(t);                                                                                                                                \
       if ((int) target.len < (int) min_len) return req_set_error(ctx->req, "Param at " #index " must have at least a length of " #min_len, IN3_EINVAL);   \
       if (max_len && (int) target.len > (int) max_len) return req_set_error(ctx->req, "Param at " #index " must have max " #max_len "bytes", IN3_EINVAL); \
     }                                                                                                                                                     \
@@ -72,7 +72,7 @@
 /* fetches the required parameter with the given index as bytes and stores it in the target, which must be a bytes_t variable*/
 #define TRY_PARAM_GET_REQUIRED_BYTES(target, ctx, index, min_len, max_len)                                                                              \
   {                                                                                                                                                     \
-    target = d_to_bytes(d_get_at(ctx->params, index));                                                                                                  \
+    target = d_bytes(d_get_at(ctx->params, index));                                                                                                     \
     if (!target.data) return req_set_error(ctx->req, "Param at " #index " must be bytes!", IN3_EINVAL);                                                 \
     if ((int) target.len < (int) min_len) return req_set_error(ctx->req, "Param at " #index " must have at least a length of " #min_len, IN3_EINVAL);   \
     if (max_len && (int) target.len > (int) max_len) return req_set_error(ctx->req, "Param at " #index " must have max " #max_len "bytes", IN3_EINVAL); \
@@ -144,20 +144,20 @@
     d_token_t* t = d_get_at(ctx->params, index);                                                  \
     if (d_type(t) == T_NULL)                                                                      \
       target = def;                                                                               \
-    else if (!d_is_bytes(t) || d_to_bytes(t).len != 20)                                           \
+    else if (!d_is_bytes(t) || d_bytes(t).len != 20)                                              \
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
-      target = d_to_bytes(t).data;                                                                \
+      target = d_bytes(t).data;                                                                   \
   }
 
 /* fetches the required parameter with the given index as address (20 bytes) and stores it in the target, which must be a uint8_t* variable*/
 #define TRY_PARAM_GET_REQUIRED_ADDRESS(target, ctx, index)                                        \
   {                                                                                               \
     d_token_t* t = d_get_at(ctx->params, index);                                                  \
-    if (!d_is_bytes(t) || d_to_bytes(t).len != 20)                                                \
+    if (!d_is_bytes(t) || d_bytes(t).len != 20)                                                   \
       return req_set_error(ctx->req, "Param at " #index " must be a valid address!", IN3_EINVAL); \
     else                                                                                          \
-      target = d_to_bytes(t).data;                                                                \
+      target = d_bytes(t).data;                                                                   \
   }
 
 /* fetches the parameter with the given index as string and stores it in the target, which must be a char* variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
@@ -170,7 +170,7 @@
         break;                                                                                     \
       case T_BYTES:                                                                                \
         target = alloca(d_len(t) * 2 + 3);                                                         \
-        bytes_to_hex_string(target, "0x", d_to_bytes(t), NULL);                                    \
+        bytes_to_hex_string(target, "0x", d_bytes(t), NULL);                                       \
         break;                                                                                     \
       case T_INTEGER:                                                                              \
         target = alloca(10);                                                                       \

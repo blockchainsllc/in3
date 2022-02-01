@@ -23,7 +23,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   d_token_t*      tmp           = NULL;
   d_token_t*      tx_receipt    = NULL;
   zksync_token_t* token_conf    = NULL;
-  bytes_t         amount        = d_to_bytes(params_get(ctx->params, key("amount"), 0));
+  bytes_t         amount        = d_bytes(params_get(ctx->params, key("amount"), 0));
   d_token_t*      token         = params_get(ctx->params, key("token"), 1);
   bool            approve       = d_int(params_get(ctx->params, key("approveDepositAmountForERC20"), 2));
   uint8_t*        main_contract = conf->main_contract;
@@ -31,7 +31,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // make sure we have an account
   uint8_t* account = conf->account;
   if ((tmp = params_get(ctx->params, key("depositTo"), 3)) && d_is_bytes(tmp)) {
-    bytes_t b = d_to_bytes(tmp);
+    bytes_t b = d_bytes(tmp);
     if (b.len != 20) return req_set_error(ctx->req, "invalid depositTo", IN3_ERPC);
     account = b.data;
   }

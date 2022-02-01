@@ -68,7 +68,7 @@ NONULL static in3_req_t* find_pending_code_request(in3_vctx_t* vc, address_t add
   while (ctx) {
     if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
       // the first param of the eth_getCode is the address
-      bytes_t adr = d_to_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
+      bytes_t adr = d_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
       if (adr.len == 20 && memcmp(adr.data, address, 20) == 0) return ctx;
     }
     ctx = ctx->required;
@@ -93,7 +93,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
         d_token_internal_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result) {
           bytes32_t calculated_code_hash;
-          bytes_t   code = d_to_bytes(rpc_result);
+          bytes_t   code = d_bytes(rpc_result);
           keccak(code, calculated_code_hash);
           if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");

@@ -225,7 +225,7 @@ static void test_json() {
     //    printf("%02i ## %s : %s\n", count, d_get_string(iter.token, key("name")), sig);
     abi_sig_t* s = abi_sig_create(sig, &error);
     TEST_ASSERT_NULL_MESSAGE(error, error);
-    bytes_t expected = d_to_bytes(d_get(iter.token, key("result")));
+    bytes_t expected = d_bytes(d_get(iter.token, key("result")));
     bytes_t data     = abi_encode(s, values, &error);
     if (error) {
       // this is just for setting breakpoints

@@ -129,7 +129,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   if ((r = (is_obj ? d_get(ctx->responses[0], K_RESULT) : NULL)) == NULL) {
     if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "in3_http") == 0) {
       *result = d_is_bytes(ctx->responses[0])
-                    ? _strdupn((void*) d_to_bytes(ctx->responses[0]).data, d_len(ctx->responses[0]) + 1)
+                    ? _strdupn((void*) d_bytes(ctx->responses[0]).data, d_len(ctx->responses[0]) + 1)
                     : d_create_json(ctx->response_context, r ? r : ctx->responses[0]);
       res = IN3_OK;
     }

@@ -76,7 +76,7 @@ static void test_binary_primitives() {
   int         k_result   = key_("result");
   int         k_id       = key_("id");
   int         k_jsonrpc  = key_("jsonrpc");
-  bytes_t     d          = d_to_bytes(d_get(ctx->result, k_result));
+  bytes_t     d          = d_bytes(d_get(ctx->result, k_result));
   char*       str_result = malloc(d.len * 2 + 2);
   bytes_to_hex(d.data, d.len, str_result);
   char*   jsonrpc = d_get_string(ctx->result, k_jsonrpc);
@@ -126,7 +126,7 @@ static void test_binary_array() {
     int        index          = 0;
     char*      str_proof      = NULL;
     for (d_iterator_t iter_arr = d_iter(accounts_array); iter_arr.left; d_iter_next(&iter_arr)) {
-      bytes_t proof_data = d_to_bytes(iter_arr.token);
+      bytes_t proof_data = d_bytes(iter_arr.token);
       str_proof          = malloc(proof_data.len * 2 + 10);
       bytes_to_hex(proof_data.data, proof_data.len, str_proof);
       TEST_ASSERT_EQUAL_STRING(str_proof, account_proof_array[index]);

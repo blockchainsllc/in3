@@ -50,7 +50,7 @@ d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
   t            = d_type(t) == T_OBJECT
                      ? d_get(t, k)
                      : d_get_at(params, index);
-  d_to_bytes(t);
+  d_bytes(t);
   return t;
 }
 
@@ -295,7 +295,7 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_req_t* ctx, d_token_t* non
 
 in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
   if (fee_in && (d_type(fee_in) == T_INTEGER || d_is_bytes(fee_in))) {
-    bytes_t b = d_to_bytes(fee_in);
+    bytes_t b = d_bytes(fee_in);
     if (b.data && b.len) {
 #ifdef ZKSYNC_256
       memcpy(fee + 32 - b.len, b.data, b.len);
@@ -313,7 +313,7 @@ in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_i
   sb_add_chars(&sb, type);
   sb_add_bytes(&sb, is_object_type ? "," : "\",", &to, 1, false);
   sb_add_char(&sb, ',');
-  if (d_is_bytes(token)) d_to_bytes(token);
+  if (d_is_bytes(token)) d_bytes(token);
   switch (d_type(token)) {
     case T_BYTES:
       sb_add_bytes(&sb, ",", d_as_bytes(token), 1, false);
@@ -388,7 +388,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
 
   if (!token_dst) return IN3_OK;
 
-  d_to_bytes(token_src);
+  d_bytes(token_src);
   for (unsigned int i = 0; i < conf->token_len; i++) {
     if (d_type(token_src) == T_INTEGER) {
       if (d_int(token_src) == (int32_t) conf->tokens[i].id) {
@@ -402,7 +402,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
         return IN3_OK;
       }
     }
-    else if (d_type(token_src) == T_BYTES && d_len(token_src) == 20 && memcmp(d_to_bytes(token_src).data, conf->tokens[i].address, 20) == 0) {
+    else if (d_type(token_src) == T_BYTES && d_len(token_src) == 20 && memcmp(d_bytes(token_src).data, conf->tokens[i].address, 20) == 0) {
       *token_dst = conf->tokens + i;
       return IN3_OK;
     }

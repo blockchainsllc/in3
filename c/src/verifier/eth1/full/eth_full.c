@@ -66,7 +66,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
     bytes_t    from      = d_get_byteskl(tx, K_FROM, 20);
     bytes_t    value     = d_get_bytes(tx, K_VALUE);
     bytes_t    data      = d_get_bytes(tx, K_DATA);
-    bytes_t    gas       = d_to_bytes(d_get_or(tx, K_GAS_LIMIT, K_GAS));
+    bytes_t    gas       = d_bytes(d_get_or(tx, K_GAS_LIMIT, K_GAS));
     bytes_t*   result    = NULL;
     uint64_t   gas_limit = bytes_to_long(gas.data, gas.len);
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
@@ -115,7 +115,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
         return vc_err(vc, "not enough funds to transfer the requested value.");
       case 0:
         if (!result) return d_len(vc->result) == 0 ? 0 : vc_err(vc, "no result");
-        res = bytes_cmp(d_to_bytes(vc->result), *result);
+        res = bytes_cmp(d_bytes(vc->result), *result);
 
         b_free(result);
         if (!res) {

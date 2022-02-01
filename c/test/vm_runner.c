@@ -154,7 +154,7 @@ int runRequests(char** names, int test_index, uint32_t props) {
       return -1;
     }
 
-    //    for (int i = 0; i < parsed->len; i++) d_to_bytes(parsed->result + i);
+    //    for (int i = 0; i < parsed->len; i++) d_bytes(parsed->result + i);
 
     // parse the data;
     int        i;

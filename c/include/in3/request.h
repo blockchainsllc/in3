@@ -45,11 +45,11 @@
 extern "C" {
 #endif
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 /**
@@ -276,9 +276,9 @@ NONULL in3_req_state_t in3_req_exec_state(
             // read the data to sign from the request
             d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
             // the data to sign
-            bytes_t    data   = d_to_bytes(d_get_at(params, 0));
+            bytes_t    data   = d_bytes(d_get_at(params, 0));
             // the account to sign with
-            bytes_t    from   = d_to_bytes(d_get_at(params, 1));
+            bytes_t    from   = d_bytes(d_get_at(params, 1));
 
             // prepare the response
             ctx->raw_response = _malloc(sizeof(in3_response_t));
@@ -380,7 +380,7 @@ in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t*
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result, so write it back to the dst
-          *dst = d_to_bytes(r);
+          *dst = d_bytes(r);
           return IN3_OK;
         } else
           // or check the error and report it

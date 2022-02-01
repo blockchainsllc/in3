@@ -209,8 +209,8 @@ in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header) {
   rev_hex(d_get_string(data, key("versionHex")), block_header, 4);
   rev_hex(d_get_string(data, key("previousblockhash")), block_header + 4, 32);
   rev_hex(d_get_string(data, key("merkleroot")), block_header + 36, 32);
-  rev_copyl(block_header + 68, d_to_bytes(d_get(data, key("time"))), 4);
+  rev_copyl(block_header + 68, d_bytes(d_get(data, key("time"))), 4);
   rev_hex(d_get_string(data, key("bits")), block_header + 72, 4);
-  rev_copyl(block_header + 76, d_to_bytes(d_get(data, key("nonce"))), 4);
+  rev_copyl(block_header + 76, d_bytes(d_get(data, key("nonce"))), 4);
   return IN3_OK;
 }

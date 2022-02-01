@@ -82,7 +82,7 @@ static bool _abi_decode(sb_t* args) {
   if (!get_txdata()->sig) die("missing signature");
   abi_sig_t* s = abi_sig_create(get_txdata()->sig, &error);
   if (s && !error) {
-    bytes_t     data = d_to_bytes(d_get_at(parse_json(args->data)->result, 0));
+    bytes_t     data = d_bytes(d_get_at(parse_json(args->data)->result, 0));
     json_ctx_t* res  = abi_decode(s, data, &error);
     if (error) die(error);
     if (*get_output_conf() & out_json)

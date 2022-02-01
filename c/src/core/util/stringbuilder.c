@@ -334,7 +334,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
     case T_INTEGER:
       return sb_add_int(sb, d_int(token));
     case T_BYTES: {
-      bytes_t b = d_to_bytes(token);
+      bytes_t b = d_bytes(token);
       sb_add_rawbytes(sb, "\"0x", b, b.len < 20 && !(b.len && b.data[0] == 0) ? -1 : 0);
       return sb_add_char(sb, '"');
     }

@@ -260,7 +260,7 @@ in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_
   p[msg.len * 2 + 4] = 0;
   d_token_t* result;
   TRY(req_send_sub_request(ctx, "zk_sign", p, NULL, &result, NULL))
-  bytes_t bsig = d_to_bytes(result);
+  bytes_t bsig = d_bytes(result);
   if (!bsig.data || bsig.len != 96) return req_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
   memcpy(sig, bsig.data, 96);
   return IN3_OK;

@@ -138,7 +138,7 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
       return;
 
     default: {
-      bytes_t b = d_to_bytes(t);
+      bytes_t b = d_bytes(t);
       sha3_Update(msg_hash, b.data, b.len);
     }
   }
@@ -665,8 +665,8 @@ in3_req_t* in3_req_last_waiting(in3_req_t* ctx) {
 
 static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
   d_token_t* params     = d_get(ctx->requests[0], K_PARAMS);
-  sign_ctx->message     = d_to_bytes(d_get_at(params, 0));
-  sign_ctx->account     = d_to_bytes(d_get_at(params, 1));
+  sign_ctx->message     = d_bytes(d_get_at(params, 0));
+  sign_ctx->account     = d_bytes(d_get_at(params, 1));
   sign_ctx->digest_type = SIGN_EC_HASH;
   sign_ctx->curve_type  = SIGN_CURVE_ECDSA;
   sign_ctx->req         = ctx;

@@ -48,19 +48,19 @@ static in3_ret_t send_sign_request(in3_req_t* parent, int pos, zksync_config_t* 
 
 static in3_ret_t update_session(zk_musig_session_t* s, in3_req_t* ctx, d_token_t* data) {
   if (!data || d_type(data) != T_OBJECT) return req_set_error(ctx, "invalid response from signer handler", IN3_EINVAL);
-  bytes_t d = d_to_bytes(d_get(data, key("pre_commitment")));
+  bytes_t d = d_bytes(d_get(data, key("pre_commitment")));
   if (!d.data || d.len != s->len * 32) return req_set_error(ctx, "invalid precommitment from signer handler", IN3_EINVAL);
   for (unsigned int i = 0; i < s->len; i++) {
     if (i != s->pos && memiszero(s->precommitments.data + i * 32, 32) && !memiszero(d.data + i * 32, 32)) memcpy(s->precommitments.data + i * 32, d.data + i * 32, 32);
   }
-  d = d_to_bytes(d_get(data, key("commitment")));
+  d = d_bytes(d_get(data, key("commitment")));
   if (d.data) {
     if (d.len != s->len * 32) return req_set_error(ctx, "invalid commitment from signer handler", IN3_EINVAL);
     for (unsigned int i = 0; i < s->len; i++) {
       if (i != s->pos && memiszero(s->commitments.data + i * 32, 32) && !memiszero(d.data + i * 32, 32)) memcpy(s->commitments.data + i * 32, d.data + i * 32, 32);
     }
   }
-  d = d_to_bytes(d_get(data, key("sig")));
+  d = d_bytes(d_get(data, key("sig")));
   if (d.data) {
     if (d.len != s->len * 32) return req_set_error(ctx, "invalid sigshares from signer handler", IN3_EINVAL);
     for (unsigned int i = 0; i < s->len; i++) {
@@ -231,13 +231,13 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   if (d_type(first_arg) == T_OBJECT) {
     result  = first_arg;
-    message = d_to_bytes(d_get(result, key("message")));
+    message = d_bytes(d_get(result, key("message")));
     account = d_get_bytes(result, key("account"));
     proof   = d_get(result, K_PROOF);
     if (!message.data) return req_set_error(ctx->req, "missing message in request", IN3_EINVAL);
   }
   else {
-    message = d_to_bytes(first_arg);
+    message = d_bytes(first_arg);
     if (d_len(ctx->params) > 1) proof = d_get_at(ctx->params, 1);
     if (!conf->musig_pub_keys.data) {
       bytes32_t pk;
@@ -255,7 +255,7 @@ in3_ret_t zksync_musig_sign(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     TRY(zksync_get_sync_key(conf, ctx->req, NULL))
 
     char*   proof_data = NULL;
-    bytes_t pub_keys   = result ? d_to_bytes(d_get(result, key("pub_keys"))) : NULL_BYTES;
+    bytes_t pub_keys   = result ? d_bytes(d_get(result, key("pub_keys"))) : NULL_BYTES;
     if (!pub_keys.data && conf->musig_pub_keys.data) pub_keys = conf->musig_pub_keys;
     if (!pub_keys.data) return req_set_error(ctx->req, "no public keys found for musig signature", IN3_EINVAL);
     int pos = get_pubkey_pos(conf, pub_keys, ctx->req);

@@ -245,7 +245,7 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
     case T_STRING:
       return (*env)->NewStringUTF(env, d_string(t));
     case T_BYTES: {
-      bytes_t b = d_to_bytes(t);
+      bytes_t b = d_bytes(t);
       return (*env)->NewStringUTF(env, bytes_to_hex_string(alloca(b.len * 2 + 3), "0x", b, NULL));
     }
     case T_OBJECT: {

@@ -78,7 +78,7 @@ static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
 
 int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
   uint8_t tmp[4] = {0};
-  bytes_t b      = d_to_bytes(t);
+  bytes_t b      = d_bytes(t);
   if (d_type(t) == T_NULL) b = bytes(tmp, 0);
   return b.data || d_type(t) == T_BYTES ? rlp_add_bytes(rlp, b, ml) : -1;
 }
@@ -262,7 +262,7 @@ bytes_t* serialize_block_header(d_token_t* block) {
   // if there are sealed field we take them as raw already rlp-encoded data and add them.
   if ((sealed_fields=d_get(block,K_SEAL_FIELDS))) {
     for (i=0,t=d_get_at(sealed_fields,0);i<d_len(sealed_fields);i++,t=d_next(t)) {
-      bytes_t b = d_to_bytes(t);
+      bytes_t b = d_bytes(t);
       bb_write_raw_bytes(rlp,b.data, b.len);   // we need to check if the nodes is within the bounds!
     }
   }

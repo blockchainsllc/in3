@@ -55,7 +55,7 @@ static inline bytes_t get(d_token_t* t, uint16_t key) {
 }
 /** helper to get a key and convert it to bytes with a specified length*/
 static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
-  return d_to_bytes(d_getl(t, key, l));
+  return d_bytes(d_getl(t, key, l));
 }
 
 /**  return data from the client.*/
@@ -78,7 +78,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result, so write it back to the dst
-          *dst = d_to_bytes(r);
+          *dst = d_bytes(r);
           return IN3_OK;
         }
         else
@@ -165,7 +165,7 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
     fees = d_get(result, key("reward"));
     if (fees && d_len(fees) && d_type(fees) == T_ARRAY) {
       for (int i = d_len(fees) - 1; i >= 0 && tx->max_priority_fee_per_gas.len < 2; i--)
-        tx->max_priority_fee_per_gas = d_to_bytes(d_get_at(d_get_at(fees, i), 0));
+        tx->max_priority_fee_per_gas = d_bytes(d_get_at(d_get_at(fees, i), 0));
       prio_fee = tx->max_priority_fee_per_gas.data ? bytes_to_long(tx->max_priority_fee_per_gas.data, tx->max_priority_fee_per_gas.len) : 0;
     }
     if (!prio_fee) return req_set_error(ctx, "Could not determine the max priority fees!", IN3_EFIND);
@@ -250,11 +250,11 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
       // if this is a deployment transaction we concate it with the arguments without the functionhash
       bytes_t new_data = get_or_create_cached(req, key("deploy_data"), data->len + d_len(res) - 4);
       memcpy(new_data.data, data->data, data->len);
-      memcpy(new_data.data + data->len, d_to_bytes(res).data + 4, d_len(res) - 4);
+      memcpy(new_data.data + data->len, d_bytes(res).data + 4, d_len(res) - 4);
       *data = new_data;
     }
     else
-      *data = d_to_bytes(res);
+      *data = d_bytes(res);
   }
 
   return IN3_OK;

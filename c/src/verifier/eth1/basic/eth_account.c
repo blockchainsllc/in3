@@ -47,7 +47,7 @@
 static const uint8_t* EMPTY_HASH      = (uint8_t*) "\xc5\xd2\x46\x01\x86\xf7\x23\x3c\x92\x7e\x7d\xb2\xdc\xc7\x03\xc0\xe5\x00\xb6\x53\xca\x82\x27\x3b\x7b\xfa\xd8\x04\x5d\x85\xa4\x70";
 static const uint8_t* EMPTY_ROOT_HASH = (uint8_t*) "\x56\xe8\x1f\x17\x1b\xcc\x55\xa6\xff\x83\x45\xe6\x92\xc0\xf8\x6e\x5b\x48\xe0\x1b\x99\x6c\xad\xc0\x01\x62\x2f\xb5\xe3\x63\xb4\x21";
 static int            is_not_existened(d_token_t* account) {
-  return d_get_long(account, K_BALANCE) == 0 && bytes_cmp(d_to_bytesl(d_get(account, K_CODE_HASH), 32), bytes((uint8_t*) EMPTY_HASH, 32)) && bytes_cmp(d_to_bytesl(d_get(account, K_STORAGE_HASH), 32), bytes((uint8_t*) EMPTY_ROOT_HASH, 32)) && d_get_long(account, K_NONCE) == 0;
+  return d_get_long(account, K_BALANCE) == 0 && bytes_cmp(d_bytesl(d_get(account, K_CODE_HASH), 32), bytes((uint8_t*) EMPTY_HASH, 32)) && bytes_cmp(d_bytesl(d_get(account, K_STORAGE_HASH), 32), bytes((uint8_t*) EMPTY_ROOT_HASH, 32)) && d_get_long(account, K_NONCE) == 0;
 }
 const uint8_t*   empty_hash() { return EMPTY_HASH; }
 static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
@@ -82,7 +82,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   if (!(storage_proof = d_get(account, K_STORAGE_PROOF))) return vc_err(vc, "no stortage-proof found!");
 
   if ((t = d_getl(account, K_STORAGE_HASH, 32)))
-    root = d_to_bytes(t);
+    root = d_bytes(t);
   else
     return vc_err(vc, "no storage-hash found!");
 
@@ -183,7 +183,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
       return vc_err(vc, "the nonce in the proof is different");
   }
   else if (strcmp(vc->method, "eth_getCode") == 0) {
-    bytes_t data = d_to_bytes(vc->result);
+    bytes_t data = d_bytes(vc->result);
     if (data.len) {
       if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32).data, hash, 32))
         return vc_err(vc, "the codehash in the proof is different");
@@ -196,12 +196,12 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     d_bytes_to(vc->result, result, 32);
     d_token_t* storage       = d_get(proofed_account, K_STORAGE_PROOF);
     d_token_t* skey          = d_get_at(d_get(vc->request, K_PARAMS), 1);
-    bytes_t    requested_key = d_to_bytes(skey);
+    bytes_t    requested_key = d_bytes(skey);
     if (!requested_key.data) return vc_err(vc, "missing key");
     b_optimize_len(&requested_key);
 
     for (d_iterator_t it = d_iter(storage); it.left; d_iter_next(&it)) {
-      bytes_t storage_key = d_to_bytes(d_get(it.token, K_KEY));
+      bytes_t storage_key = d_bytes(d_get(it.token, K_KEY));
       b_optimize_len(&storage_key);
       if (b_cmp(&storage_key, &requested_key)) {
         d_bytes_to(d_get(it.token, K_VALUE), proofed_result, 32);

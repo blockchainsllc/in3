@@ -81,7 +81,7 @@ static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;
   hex_to_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
   for (d_iterator_t iter = d_iter(d_get(receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
-    bytes_t t = d_to_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
+    bytes_t t = d_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
     if (t.data && t.len == 32 && memcmp(event_hash, t.data, 32) == 0) return iter.token;
   }
   return NULL;
@@ -196,7 +196,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     // without a tx_hash, we can only call "hasAccess()" of the contract.
     uint8_t   calldata[64];
     bytes32_t access;
-    bytes_t   action_bytes = d_to_bytes(d_get(msg, K_ACTION));
+    bytes_t   action_bytes = d_bytes(d_get(msg, K_ACTION));
     memset(calldata, 0, 64);
     memcpy(calldata + 12, signer->data, 20); // the signer
     keccak(action_bytes, calldata + 32);     // add the hash of the action
@@ -244,7 +244,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       // extract the values
       bytes_t data      = d_get_bytes(event, K_DATA);
       bytes_t address   = d_get_byteskl(event, K_ADDRESS, 20);
-      bytes_t device_id = d_to_bytesl(d_get_at(d_get(event, K_TOPICS), 2), 32);
+      bytes_t device_id = d_bytesl(d_get_at(d_get(event, K_TOPICS), 2), 32);
       r.rented_from     = bytes_to_long(data.data + 32, 32);
       r.rented_until    = bytes_to_long(data.data + 64, 32);
       memcpy(r.controller, data.data + 12, 20);
@@ -452,8 +452,8 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
     // let's iterate over the found events
     for (d_iterator_t iter = d_iter(d_get(ctx->responses[0], K_RESULT)); iter.left; d_iter_next(&iter)) {
       d_token_t*    topics = d_get(iter.token, K_TOPICS);
-      bytes_t       t0     = d_to_bytesl(d_get_at(topics, 0), 32);
-      usn_device_t* device = find_device_by_id(conf, d_to_bytes(d_get_at(topics, 2)).data);
+      bytes_t       t0     = d_bytesl(d_get_at(topics, 0), 32);
+      usn_device_t* device = find_device_by_id(conf, d_bytes(d_get_at(topics, 2)).data);
       bytes_t       data   = d_get_bytes(iter.token, K_DATA);
       if (t0.len != 32 || !device || !data.data) continue;
       usn_add_booking(device, data.data + 12,

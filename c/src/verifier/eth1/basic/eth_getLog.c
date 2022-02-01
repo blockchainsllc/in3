@@ -60,11 +60,11 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
     return true; // address param is optional
   }
   else if (d_is_bytes(jaddrs)) {
-    return !!bytes_cmp(addrs, d_to_bytes(jaddrs));
+    return !!bytes_cmp(addrs, d_bytes(jaddrs));
   }
   else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
     for (d_iterator_t it = d_iter(jaddrs); it.left; d_iter_next(&it)) {
-      if (bytes_cmp(addrs, d_to_bytes(it.token))) return true;
+      if (bytes_cmp(addrs, d_bytes(it.token))) return true;
     }
   }
   return false;
@@ -72,7 +72,7 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
 
 static bool matches_filter_from_to(d_token_t* tx_params, const d_key_t k, uint64_t blockno) {
   d_token_t* jrange = d_get(tx_params, k);
-  d_to_bytes(jrange);
+  d_bytes(jrange);
   if (d_type(jrange) == T_INTEGER || d_type(jrange) == T_BYTES) {
     if (k == K_FROM_BLOCK)
       return blockno >= d_long(jrange);
@@ -88,7 +88,7 @@ static bool matches_filter_range(d_token_t* tx_params, uint64_t blockno, bytes_t
     return matches_filter_from_to(tx_params, K_FROM_BLOCK, blockno) && matches_filter_from_to(tx_params, K_TO_BLOCK, blockno);
   else if (d_type(jblkhash) == T_BYTES)
     // checl blockhash
-    return !!bytes_cmp(blockhash, d_to_bytes(jblkhash));
+    return !!bytes_cmp(blockhash, d_bytes(jblkhash));
   else
     // we have a blockhash-property, which is not a bytes-type
     return false;
@@ -111,14 +111,14 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
   for (int i = 0; i < l; i++, d_iter_next(&it1), d_iter_next(&it2)) {
     if (d_type(it1.token) == T_NULL)
       continue; // null matches anything in this position
-    else if (d_is_bytes(it1.token) && !bytes_cmp(d_to_bytes(it1.token), d_to_bytes(it2.token)))
+    else if (d_is_bytes(it1.token) && !bytes_cmp(d_bytes(it1.token), d_bytes(it2.token)))
       return false;
     else if (d_type(it1.token) == T_ARRAY) { // must match atleast one in array
       bool found = false;
       for (d_iterator_t it_ = d_iter(it1.token); it_.left; d_iter_next(&it_)) {
         if (!d_is_bytes(it_.token))
           return false;
-        else if (bytes_cmp(d_to_bytes(it_.token), d_to_bytes(it2.token))) {
+        else if (bytes_cmp(d_bytes(it_.token), d_bytes(it2.token))) {
           found = true;
           break;
         }
@@ -157,7 +157,7 @@ bool filter_from_equals_to(d_token_t* req) {
 
 static bool is_latest(d_token_t* block) {
   if (d_is_bytes(block)) {
-    d_to_bytes(block);
+    d_bytes(block);
     return false;
   }
   return d_type(block) == T_STRING && !strcmp(d_string(block), "latest");
@@ -220,7 +220,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       return vc_err(vc, "block number mismatch");
 
     // verify the blockheader of the log entry
-    bytes_t block = d_to_bytes(d_get(it.token, K_BLOCK)), tx_root, receipt_root;
+    bytes_t block = d_bytes(d_get(it.token, K_BLOCK)), tx_root, receipt_root;
     int     bl    = i;
     if (!block.len || eth_verify_blockheader(vc, block, NULL_BYTES) < 0) return vc_err(vc, "invalid blockheader");
     keccak(block, receipts[i].block_hash);
@@ -254,7 +254,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       // check txhash
 
       keccak(r->data, r->tx_hash);
-      if (!bytes_cmp(d_to_bytes(d_getl(receipt.token, K_TX_HASH, 32)), bytes(r->tx_hash, 32))) {
+      if (!bytes_cmp(d_bytes(d_getl(receipt.token, K_TX_HASH, 32)), bytes(r->tx_hash, 32))) {
         if (path) b_free(path);
         return vc_err(vc, "invalid tx hash");
       }
@@ -276,7 +276,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     receipt_t* r = NULL;
     i            = 0;
     for (int n = 0; n < l_logs; n++) {
-      if (bytes_cmp(d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)), bytes(receipts[n].tx_hash, 32))) {
+      if (bytes_cmp(d_bytes(d_get(it.token, K_TRANSACTION_HASH)), bytes(receipts[n].tx_hash, 32))) {
         r = receipts + n;
         break;
       }
@@ -296,21 +296,21 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (rlp_decode(&logddata, d_get_int(it.token, K_TRANSACTION_LOG_INDEX), &logddata) != 2) return vc_err(vc, "invalid log index");
 
     // check address
-    if (!rlp_decode(&logddata, 0, &tmp) || !bytes_cmp(tmp, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)))) return vc_err(vc, "invalid address");
-    if (!rlp_decode(&logddata, 2, &tmp) || !bytes_cmp(tmp, d_to_bytes(d_get(it.token, K_DATA)))) return vc_err(vc, "invalid data");
+    if (!rlp_decode(&logddata, 0, &tmp) || !bytes_cmp(tmp, d_bytes(d_getl(it.token, K_ADDRESS, 20)))) return vc_err(vc, "invalid address");
+    if (!rlp_decode(&logddata, 2, &tmp) || !bytes_cmp(tmp, d_bytes(d_get(it.token, K_DATA)))) return vc_err(vc, "invalid data");
     if (rlp_decode(&logddata, 1, &tops) != 2) return vc_err(vc, "invalid topics");
     if (rlp_decode_len(&tops) != d_len(topics)) return vc_err(vc, "invalid topics len");
 
     for (d_iterator_t t = d_iter(topics); t.left; d_iter_next(&t)) {
-      if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, d_to_bytesl(t.token, 32))) return vc_err(vc, "invalid topic");
+      if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, d_bytesl(t.token, 32))) return vc_err(vc, "invalid topic");
     }
 
     if (d_get_long(it.token, K_BLOCK_NUMBER) != bytes_to_long(r->block_number.data, r->block_number.len)) return vc_err(vc, "invalid blocknumber");
-    if (!bytes_cmp(d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), bytes(r->block_hash, 32))) return vc_err(vc, "invalid blockhash");
+    if (!bytes_cmp(d_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), bytes(r->block_hash, 32))) return vc_err(vc, "invalid blockhash");
     if (d_get_int(it.token, K_REMOVED)) return vc_err(vc, "must be removed=false");
     if ((unsigned) d_get_int(it.token, K_TRANSACTION_INDEX) != r->transaction_index) return vc_err(vc, "wrong transactionIndex");
 
-    if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_long(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
+    if (!matches_filter(vc->request, d_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_long(it.token, K_BLOCK_NUMBER), d_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
     if (!prev_blk) prev_blk = d_get_long(it.token, K_BLOCK_NUMBER);
     if (filter_from_equals_to(vc->request) && prev_blk != d_get_long(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
 

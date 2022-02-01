@@ -334,7 +334,7 @@ static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   if (registry_id) {
     c->chain.version = 2;
-    memcpy(nl->registry_id, d_to_bytesl(registry_id, 32).data, 32);
+    memcpy(nl->registry_id, d_bytesl(registry_id, 32).data, 32);
     memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20).data, 20);
   }
   c->proof = proof;
@@ -388,7 +388,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     bytes_builder_t* bb       = bb_new();
     size_t           s        = d_token_size(response);
     for (size_t i = 0; i < s; i++) {
-      if (d_is_bytes(response + i) && d_type(response + i) == T_STRING) d_to_bytes(response + i);
+      if (d_is_bytes(response + i) && d_type(response + i) == T_STRING) d_bytes(response + i);
     }
 
     d_serialize_binary(bb, response);

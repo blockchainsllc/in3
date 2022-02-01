@@ -83,7 +83,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t tx_hash) 
     return vc_err(vc, "No Block-Proof!");
 
   // verify the header
-  bytes_t bh = d_to_bytes(block_hash);
+  bytes_t bh = d_bytes(block_hash);
   res        = eth_verify_blockheader(vc, blockHeader, bh);
 
   // make sure the blocknumner on the receipt is correct

@@ -95,7 +95,7 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
 static in3_ret_t set_amount(zk_fee_t* dst, in3_req_t* ctx, d_token_t* t) {
   if (!t) return req_set_error(ctx, "No value set", IN3_EINVAL);
 #ifdef ZKSYNC_256
-  bytes_t tmp = d_to_bytes(t);
+  bytes_t tmp = d_bytes(t);
   memset(*dst, 0, 32);
   memcpy(*dst + 32 - tmp.len, tmp.data, tmp.len);
 #else
@@ -237,7 +237,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
       .id       = d_get_int(price, K_ID),
       .decimals = d_get_int(price, key("decimals"))};
   strncpy(_token.symbol, d_get_string(price, key("token")), 6);
-  bytes_t tmp = d_to_bytes(d_get(price, K_ADDRESS));
+  bytes_t tmp = d_bytes(d_get(price, K_ADDRESS));
   if (tmp.len == 20)
     memcpy(_token.address, tmp.data, 20);
   else
@@ -252,7 +252,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
       .type       = ZK_TRANSFER};
   TRY(set_amount(&tx.amount, ctx->req, d_get(price, key("amount"))))
   TRY(set_amount(&tx.fee, ctx->req, d_get(price, key("fee"))))
-  tmp = d_to_bytes(d_get(selected_offer, K_ADDRESS));
+  tmp = d_bytes(d_get(selected_offer, K_ADDRESS));
   if (tmp.len != 20) return req_set_error(ctx->req, "invalid address in offer", IN3_ERPC);
   memcpy(tx.to, tmp.data, 20);
   memcpy(tx.from, criteria->config.account, 20);

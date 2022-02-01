@@ -86,6 +86,7 @@ typedef enum {
 
 /** a token holding any kind of value.
  *
+ * This structure should be consideren internal or private and you should not rely or access those values directly.
  * use d_type,  d_len or the cast-function to get the value.
  */
 typedef struct item {
@@ -98,6 +99,11 @@ typedef struct item {
 #ifdef IN3_INTERNAL
 typedef d_token_internal_t d_token_t;
 #else
+/** a token holding any kind of value.
+ *
+ * This structure should be consideren internal or private and you should not rely or access those values directly.
+ * use d_type,  d_len or the cast-function to get the value.
+ */
 typedef void d_token_t;
 #endif
 /** internal type used to represent the a range within a string. */
@@ -126,10 +132,10 @@ typedef struct json_parser {
  * and NULL as 0x.
  * Objects or arrays will return 0x.
  */
-bytes_t  d_to_bytes(d_token_t* item);                              /**< converts the data to bytes .*/
-bytes_t  d_to_bytesl(d_token_t* item, uint32_t len);               /**< converts the data to bytes .*/
+bytes_t  d_bytes(d_token_t* item);                                 /**< converts the data to bytes .*/
+bytes_t  d_bytesl(d_token_t* item, uint32_t len);                  /**< converts the data to bytes .*/
 bytes_t  d_num_bytes(d_token_t* f);                                /**< converts the token into bytes, assuming this to be a numeric value. in case of an string it will be converted (chainging the token) */
-int      d_bytes_to(d_token_t* item, uint8_t* dst, const int max); /**< writes the byte-representation to the dst. details see d_to_bytes.*/
+int      d_bytes_to(d_token_t* item, uint8_t* dst, const int max); /**< writes the byte-representation to the dst. details see d_bytes.*/
 bytes_t* d_as_bytes(d_token_t* item);                              /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
 // bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                         /**< returns the value as bytes with length l (may reallocates) */
 char*                        d_string(d_token_t* item);                                                                            /**< converts the value as string. Make sure the type is string! */
@@ -196,8 +202,8 @@ static inline int32_t  d_get_int_at(d_token_t* r, uint32_t pos) { return d_int(d
 static inline uint64_t d_get_long(d_token_t* r, d_key_t k) { return d_long(d_get(r, k)); }                  /**< reads token of a property as long. */
 static inline uint64_t d_get_longd(d_token_t* r, d_key_t k, uint64_t d) { return d_longd(d_get(r, k), d); } /**< reads token of a property as long. */
 static inline uint64_t d_get_long_at(d_token_t* r, uint32_t pos) { return d_long(d_get_at(r, pos)); }       /**< reads long at given pos of an array. */
-static inline bytes_t  d_get_bytes(d_token_t* r, d_key_t k) { return d_to_bytes(d_get(r, k)); }             /**< reads token of a property as bytes. */
-static inline bytes_t  d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_to_bytes(d_get_at(r, pos)); }  /**< reads bytes at given pos of an array. */
+static inline bytes_t  d_get_bytes(d_token_t* r, d_key_t k) { return d_bytes(d_get(r, k)); }                /**< reads token of a property as bytes. */
+static inline bytes_t  d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_bytes(d_get_at(r, pos)); }     /**< reads bytes at given pos of an array. */
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                     /**< check if the parser context was created from binary data. */
 bytes_t                d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
 d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
