@@ -117,7 +117,7 @@ python_macos:
      - cd python_multilib
      - pip3 install --upgrade pip
      - pip3 install -r requirements.txt
-     - python3 -m pytest --pylama --junitxml=report.xml || echo "Failed See Test-Report!"
+     - python3 -m pytest --pylama --junitxml=report.xml 
    artifacts:
      reports:
        junit: python_multilib/report.xml
