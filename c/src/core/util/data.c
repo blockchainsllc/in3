@@ -125,49 +125,6 @@ static bytes_t* d_bytes(const d_token_t* item) {
   return item->data ? (void*) item : NULL;
 }
 
-/*
-bytes_t* d_bytes(d_token_t* item) {
-  switch (d_type(item)) {
-    case T_BYTES: return (bytes_t*) item;
-    case T_STRING: {
-      if ((item->state & TOKEN_STATE_CONVERTED) == 0) return NULL;
-      int   l     = d_len(item);
-      char* start = item->data;
-      bool  ishex = l > 1 && *start == '0' && start[1] == 'x';
-      if (ishex)
-        for (size_t n = 2; n < l; n++) {
-          char cc = start[n];
-          if (!((cc >= '0' && cc <= '9') || (cc >= 'a' && cc <= 'f') || (cc >= 'A' && cc <= 'F'))) {
-            ishex = false;
-            break;
-          }
-        }
-      if (!ishex) return NULL;
-      bytes_t res = bytes(_malloc((l - 1) / 2), 0);
-      res.len     = hex_to_bytes(start, l, res.data, (l - 1) / 2);
-      if ((item->state & TOKEN_STATE_ALLOCATED)) _free(start);
-      item->data  = res.data;
-      item->len   = res.len;
-      item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
-      return (bytes_t*) item;
-    }
-    default: return NULL;
-  }
-}
-
-bytes_t* d_bytesl(d_token_t* item, size_t l) {
-  if (item == NULL || d_type(item) != T_BYTES)
-    return NULL;
-  else if (item->len >= l)
-    return d_bytes(item);
-
-  item->data = _realloc(item->data, l, item->len);
-  memmove(item->data + l - item->len, item->data, item->len);
-  memset(item->data, 0, l - item->len);
-  item->len = l;
-  return (bytes_t*) item;
-}
-*/
 bytes_t d_to_bytesl(d_token_t* item, uint32_t len) {
   bytes_t b = d_to_bytes(item);
   if (!b.data) return b;
