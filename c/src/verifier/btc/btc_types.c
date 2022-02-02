@@ -12,8 +12,8 @@ typedef enum btc_tx_field {
   BTC_WITNESS
 } btc_tx_field_t;
 
-bool script_is_standard(alg_t script_type) {
-  return script_type != BTC_NON_STANDARD && script_type != BTC_UNSUPPORTED;
+bool script_is_standard(btc_stype_t script_type) {
+  return script_type != BTC_NON_STANDARD && script_type != BTC_UNSUPPORTED && script_type != BTC_UNKNOWN;
 }
 
 bool pub_key_is_valid(const bytes_t* pub_key) {
@@ -54,62 +54,70 @@ void btc_init_utxo(btc_utxo_t* utxo) {
 }
 
 void btc_free_tx(btc_tx_t* tx) {
-  if (tx->all.data) _free(tx->all.data);
-  if (tx->input.data) _free(tx->input.data);
-  if (tx->output.data) _free(tx->output.data);
-  if (tx->witnesses.data) _free(tx->witnesses.data);
+  if (tx) {
+    if (tx->all.data) _free(tx->all.data);
+    if (tx->input.data) _free(tx->input.data);
+    if (tx->output.data) _free(tx->output.data);
+    if (tx->witnesses.data) _free(tx->witnesses.data);
+  }
 }
 
 void btc_free_tx_in(btc_tx_in_t* tx_in) {
-  if (tx_in->prev_tx_hash) _free(tx_in->prev_tx_hash);
-  if (tx_in->script.data.data) _free(tx_in->script.data.data);
+  if (tx_in) {
+    if (tx_in->prev_tx_hash) _free(tx_in->prev_tx_hash);
+    if (tx_in->script.data.data) _free(tx_in->script.data.data);
+  }
 }
 
 void btc_free_tx_out(btc_tx_out_t* tx_out) {
-  if (tx_out->script.data.data) _free(tx_out->script.data.data);
+  if (tx_out && tx_out->script.data.data) _free(tx_out->script.data.data);
 }
 
 void btc_free_utxo(btc_utxo_t* utxo) {
-  if (utxo->tx_hash) _free(utxo->tx_hash);
-  if (utxo->raw_script.data.data) _free(utxo->raw_script.data.data);
+  if (utxo) {
+    if (utxo->tx_hash) _free(utxo->tx_hash);
+    if (utxo->raw_script.data.data) _free(utxo->raw_script.data.data);
 
-  btc_free_tx_out(&utxo->tx_out);
+    btc_free_tx_out(&utxo->tx_out);
 
-  if (utxo->signatures) {
-    for (uint32_t i = 0; i < utxo->sig_count; i++) {
-      _free(utxo->signatures[i].data);
+    if (utxo->signatures) {
+      for (uint32_t i = 0; i < utxo->sig_count; i++) {
+        _free(utxo->signatures[i].data);
+      }
+      _free(utxo->signatures);
     }
-    _free(utxo->signatures);
-  }
 
-  if (utxo->accounts) {
-    for (uint32_t i = 0; i < utxo->accounts_count; i++) {
-      _free(utxo->accounts[i].pub_key.data);
-      _free(utxo->accounts[i].account.data);
+    if (utxo->accounts) {
+      for (uint32_t i = 0; i < utxo->accounts_count; i++) {
+        _free(utxo->accounts[i].pub_key.data);
+        _free(utxo->accounts[i].account.data);
+      }
+      _free(utxo->accounts);
     }
-    _free(utxo->accounts);
   }
 }
 
 void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx) {
-  btc_free_tx(&tx_ctx->tx);
-  if (tx_ctx->utxos) {
-    for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
-      btc_free_utxo(&tx_ctx->utxos[i]);
+  if (tx_ctx) {
+    btc_free_tx(&tx_ctx->tx);
+    if (tx_ctx->utxos) {
+      for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+        btc_free_utxo(&tx_ctx->utxos[i]);
+      }
+      _free(tx_ctx->utxos);
     }
-    _free(tx_ctx->utxos);
-  }
-  if (tx_ctx->inputs) {
-    for (uint32_t i = 0; i < tx_ctx->input_count; i++) {
-      btc_free_tx_in(&tx_ctx->inputs[i]);
+    if (tx_ctx->inputs) {
+      for (uint32_t i = 0; i < tx_ctx->input_count; i++) {
+        btc_free_tx_in(&tx_ctx->inputs[i]);
+      }
+      _free(tx_ctx->inputs);
     }
-    _free(tx_ctx->inputs);
-  }
-  if (tx_ctx->outputs) {
-    for (uint32_t i = 0; i < tx_ctx->output_count; i++) {
-      btc_free_tx_out(&tx_ctx->outputs[i]);
+    if (tx_ctx->outputs) {
+      for (uint32_t i = 0; i < tx_ctx->output_count; i++) {
+        btc_free_tx_out(&tx_ctx->outputs[i]);
+      }
+      _free(tx_ctx->outputs);
     }
-    _free(tx_ctx->outputs);
   }
 }
 
@@ -325,14 +333,14 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   return IN3_OK;
 }
 
-alg_t btc_get_script_type(const bytes_t* script) {
+btc_stype_t btc_get_script_type(const bytes_t* script) {
   if ((!script->data) || (script->len > MAX_SCRIPT_SIZE_BYTES)) {
     return BTC_UNSUPPORTED;
   }
 
-  alg_t    script_type = BTC_NON_STANDARD;
-  uint32_t len         = script->len;
-  uint8_t* p           = script->data;
+  btc_stype_t script_type = BTC_NON_STANDARD;
+  uint32_t    len         = script->len;
+  uint8_t*    p           = script->data;
 
   if ((len == (uint32_t) p[0] + 2) && (p[0] == BTC_COMP_PUB_KEY_SIZE_BYTES || p[0] == BTC_UNCOMP_PUB_KEY_SIZE_BYTES) && (p[len - 1] == OP_CHECKSIG)) {
     // locking script has format: PUB_KEY_LEN(1) PUB_KEY(33 or 65 bytes) OP_CHECKSIG(1)
@@ -356,7 +364,7 @@ alg_t btc_get_script_type(const bytes_t* script) {
   }
   else if ((p[len - 1] == OP_CHECKMULTISIG) && (p[0] <= p[len - 2])) {
     // locking script has format: M(1) LEN_PK_1(1) PK_1(33 or 65 bytes) ... LEN_PK_N(1) PK_N(33 or 65 bytes) N(1) OP_CHECKMULTISIG
-    script_type = (p[len - 2] <= 20) ? BTC_BARE_MULTISIG : BTC_UNSUPPORTED;
+    script_type = (p[len - 2] <= 20) ? BTC_P2MS : BTC_UNSUPPORTED;
   }
   return script_type;
 }
@@ -496,7 +504,7 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
 
 static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
   if (!utxo || !arg) return IN3_EINVAL;
-  alg_t type = utxo->tx_out.script.type;
+  btc_stype_t type = utxo->tx_out.script.type;
 
   if (type == BTC_P2SH || type == BTC_P2WSH) {
     // is the argument defining an unlocking script?
@@ -512,7 +520,7 @@ static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
     }
   }
 
-  if (type == BTC_BARE_MULTISIG || type == BTC_P2SH || type == BTC_P2WSH) {
+  if (type == BTC_P2MS || type == BTC_P2SH || type == BTC_P2WSH) {
     // is the argument defining a new "account<->pub_key" pair?
     d_token_t*  acc         = d_get(arg, key("account"));
     const char* pub_key_str = d_string(d_get(arg, key("pub_key")));
@@ -573,7 +581,7 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pu
   // fields into our utxo data
   for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
     btc_utxo_t* utxo = &tx_ctx->utxos[i];
-    alg_t       type = utxo->tx_out.script.type;
+    btc_stype_t type = utxo->tx_out.script.type;
 
     if (type == BTC_P2SH || type == BTC_P2WSH) {
       // argument containing unhashed script should have been provided
@@ -588,7 +596,7 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pu
     }
 
     // how many signatures do we need to unlock the utxo?
-    if (type == BTC_BARE_MULTISIG) {
+    if (type == BTC_P2MS) {
       utxo->req_sigs = utxo->raw_script.data.data[1];
     }
     else {

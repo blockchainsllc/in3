@@ -13,9 +13,9 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
     return req_set_error(req, "ERROR: in build_tx_in_hash_msg: Function arguments cannot be null", IN3_EINVAL);
   }
 
-  alg_t script_type = utxo_list[utxo_index].tx_out.script.type;
+  btc_stype_t script_type = utxo_list[utxo_index].tx_out.script.type;
   switch (script_type) {
-    case BTC_BARE_MULTISIG:
+    case BTC_P2MS:
     case BTC_P2SH:
     case BTC_P2PK:
     case BTC_P2PKH: {
@@ -185,7 +185,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       witness->data[index++] = pub_key->len;                      // write PUB_KEY_LEN
       memcpy(witness->data + index, pub_key->data, pub_key->len); // write PUB_KEY
     } break;
-    case BTC_BARE_MULTISIG: {
+    case BTC_P2MS: {
       // Unlocking script format is: ZERO_BYTE | SIG_1_LEN | SIG_1 | SIG_2_LEN | SIG_2 | .....
       // Zero byte is present to remedy a bug in OP_CHECKMULTISIG which makes it read one more input
       // than it should.
@@ -259,16 +259,6 @@ static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in
 }
 
 // WARNING: You need to free der_sig.data after calling this function!
-// btc_sign_tx_in : creates a single signature to a given bitcoin transaction input
-// params:
-//    - req: IN3 request context
-//    - der_sig: signature which will be created given a transaction input and a key
-//    - tx_ctx: transaction context. Strores all information about a transaction (inputs, outputs, utxos, witnesses, etc)
-//    - utxo_index: index of the utxo inside tx_ctx to which the transaction input we need to sign is related
-//    - account_index: index of the account inside the utxo which stores the private key used to sign our transaction input
-//    - tx_in: the nut we want to sign
-//    - sighash: how do we want to sign our transaction input
-// in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const bytes_t* account, const bytes_t* pub_key, const btc_tx_in_t* tx_in, uint8_t sighash) {
 in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* tx_ctx, const uint32_t utxo_index, const uint32_t account_index, const btc_tx_in_t* tx_in, uint8_t sighash) {
   if (!tx_ctx || !der_sig || !tx_in) {
     return req_set_error(req, "ERROR: in btc_sign_tx_in: function arguments cannot be NULL.", IN3_ERPC);
@@ -286,6 +276,8 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   const btc_utxo_t* utxos           = tx_ctx->utxos;
   const bytes_t*    signing_account = &tx_ctx->utxos[utxo_index].accounts[account_index].account;
 
+  // Create a temporary unsigned transaction with "empty" input data, which will
+  // be used to create our signature
   btc_tx_ctx_t tmp_tx;
   btc_init_tx_ctx(&tmp_tx);
   tmp_tx.tx.flag         = tx->flag;
@@ -296,7 +288,8 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   for (uint32_t i = 0; i < tmp_tx.tx.output.len; i++) tmp_tx.tx.output.data[i] = tx->output.data[i];
   tmp_tx.tx.lock_time = tx->lock_time;
 
-  // Include inputs into unsigned tx
+  // Include inputs into temporary unsigned tx.
+  // The input we want to sign is the only one which should include script data
   btc_tx_in_t tmp_tx_in;
   for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
     if (i == utxo_index) {
@@ -320,9 +313,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // -- Obtain DER signature
   bytes_t sig   = NULL_BYTES;
   der_sig->data = _malloc(75);
-
   TRY(req_require_signature(req, SIGN_EC_BTC, PL_SIGN_BTCTX, &sig, hash_message, *signing_account, req->requests[0]))
-
   der_sig->len                  = ecdsa_sig_to_der(sig.data, der_sig->data);
   der_sig->data[der_sig->len++] = sig.data[64]; // append verification byte to end of DER signature
 
@@ -342,14 +333,13 @@ static void add_sig_to_utxo(btc_utxo_t* utxo, const bytes_t* sig) {
 }
 
 in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
-
   if (!tx_ctx->utxos || !tx_ctx->utxo_count) return req_set_error(req, "ERROR: in btc_sign_tx: utxo list cannot be empty or null.", IN3_EINVAL);
   if (!tx_ctx->outputs || !tx_ctx->output_count) return req_set_error(req, "ERROR: in btc_sign_tx: transaction should have at least one output.", IN3_EINVAL);
   if (tx_ctx->inputs || tx_ctx->input_count) return req_set_error(req, "ERROR: in btc_sign_tx: transaction should not already contain input data.", IN3_EINVAL);
 
   // for each selected utxo in a tx:
   for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
-    alg_t script_type = tx_ctx->utxos[i].tx_out.script.type;
+    btc_stype_t script_type = tx_ctx->utxos[i].tx_out.script.type;
     if (!script_is_standard(script_type)) {
       return req_set_error(req, "ERROR: in btc_sign_tx: utxo script is non-standard or unsupported.", IN3_EINVAL);
     }
@@ -361,7 +351,6 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
     bool is_segwit = script_type == BTC_V0_P2WPKH || script_type == BTC_P2WSH;
 
     // -- for each signature we need to provide:
-    // for (uint32_t j = 0; j < selected_utxo_list[i].accounts_count; j++) {
     for (uint32_t j = 0; j < tx_ctx->utxos[i].accounts_count; j++) {
       bytes_t sig = NULL_BYTES;
       // TODO: select random unused key to sign if multisig

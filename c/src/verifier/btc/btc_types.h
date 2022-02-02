@@ -26,20 +26,21 @@
 // Output fixed size values
 #define BTC_TX_OUT_VALUE_SIZE_BYTES 8
 
+// Ethereum account which stores our private key. Used by signer module
 typedef struct btc_account_pub_key {
   bytes_t pub_key;
   bytes_t account;
 } btc_account_pub_key_t;
 
 typedef struct btc_tx {
-  bytes_t  all;
-  uint32_t version;
-  uint16_t flag;
+  bytes_t  all;     // This transaction, serialized
+  uint32_t version; // btc protocol version
+  uint16_t flag;    // 1 if segwit, 0 otherwise
   uint32_t input_count;
-  bytes_t  input;
+  bytes_t  input; // serialized inputs data
   uint32_t output_count;
-  bytes_t  output;
-  bytes_t  witnesses;
+  bytes_t  output;    // serialized outputs data
+  bytes_t  witnesses; // serialized witnesses data
   uint32_t lock_time;
 } btc_tx_t;
 
@@ -56,17 +57,18 @@ typedef struct btc_tx_out {
 } btc_tx_out_t;
 
 typedef struct btc_utxo {
-  uint8_t*               tx_hash;    // hash of previous transaction
-  uint32_t               tx_index;   // output index inside previous transaction
-  btc_tx_out_t           tx_out;     // previous output which the utxo represents
-  btc_script_t           raw_script; // Unhashed script used to redeem P2SH or P2WSH utxos
-  uint32_t               req_sigs;   // Number of signatures we need to provide in order to unlock the utxo
-  bytes_t*               signatures; // signatures used to redeem the utxo
-  uint32_t               sig_count;
-  btc_account_pub_key_t* accounts; // ETH accounts used by in3 to sign BTC transactions
-  uint32_t               accounts_count;
+  uint8_t*               tx_hash;        // Hash of previous transaction
+  uint32_t               tx_index;       // Putput index inside previous transaction
+  btc_tx_out_t           tx_out;         // Previous output which the utxo represents
+  btc_script_t           raw_script;     // Unhashed script used to redeem P2SH or P2WSH utxos
+  uint32_t               req_sigs;       // Number of signatures we need to provide in order to unlock the utxo
+  bytes_t*               signatures;     // Array of signatures used to redeem the utxo
+  uint32_t               sig_count;      // Number of signatures we currently have in our array
+  btc_account_pub_key_t* accounts;       // Array of ETH accounts used by in3 to sign BTC transactions
+  uint32_t               accounts_count; // Number of accounts we currently have in our array
 } btc_utxo_t;
 
+/* Bitcoin transaction context */
 typedef struct btc_tx_ctx {
   btc_tx_t      tx;
   btc_utxo_t*   utxos;
@@ -88,9 +90,9 @@ void btc_free_tx_out(btc_tx_out_t* tx_out);
 void btc_free_utxo(btc_utxo_t* utxo);
 void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx);
 
-alg_t btc_get_script_type(const bytes_t* script);
-bool  script_is_standard(alg_t script_type);
-bool  pub_key_is_valid(const bytes_t* pub_key);
+btc_stype_t btc_get_script_type(const bytes_t* script);
+bool        script_is_standard(btc_stype_t script_type);
+bool        pub_key_is_valid(const bytes_t* pub_key);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
 uint32_t  btc_get_raw_tx_size(const btc_tx_t* tx);
