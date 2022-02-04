@@ -50,7 +50,7 @@ void btc_hash(bytes_t data, bytes32_t dst) {
 
 // copy 32 bytes in revers order
 void rev_copy(uint8_t* dst, uint8_t* src) {
-  for (int i = 0; i < 32; i++) dst[31 - i] = src[i];
+  rev_copyl(dst, bytes(src, 32), 32);
 }
 
 void rev_copyl(uint8_t* dst, bytes_t src, int l) {
@@ -213,19 +213,6 @@ in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header) {
   rev_hex(d_get_string(data, key("bits")), block_header + 72, 4);
   rev_copyl(block_header + 76, d_to_bytes(d_get(data, key("nonce"))), 4);
   return IN3_OK;
-}
-
-// copy a byte array in reverse order
-in3_ret_t rev_memcpy(uint8_t* dst, uint8_t* src, uint32_t len) {
-  if (src && dst) {
-    for (uint32_t i = 0; i < len; i++) {
-      dst[(len - 1) - i] = src[i];
-    }
-    return IN3_OK;
-  }
-  else {
-    return IN3_EINVAL;
-  }
 }
 
 in3_ret_t append_bytes(bytes_t* dst, const bytes_t* src) {

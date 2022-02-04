@@ -151,7 +151,7 @@ in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) 
   dst->len  = tx_in_size;
 
   uint32_t index = 0;
-  rev_memcpy(dst->data + index, tx_in->prev_tx_hash, BTC_TX_HASH_SIZE_BYTES);
+  rev_copyl(dst->data + index, bytes(tx_in->prev_tx_hash, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
   index += BTC_TX_HASH_SIZE_BYTES;
   uint_to_le(dst, index, tx_in->prev_tx_index);
   index += BTX_TX_INDEX_SIZE_BYTES;

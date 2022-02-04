@@ -39,9 +39,9 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       uint32_t default_sequence = 0xffffffff; // Change this to use provided sequence value once BIP68 is implemented
 
       for (uint32_t i = 0; i < utxo_list_len; i++) {
-        rev_memcpy(prev_outputs.data + (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES * i), utxo_list[i].tx_hash, BTC_TX_HASH_SIZE_BYTES);
-        rev_memcpy(prev_outputs.data + (BTC_TX_HASH_SIZE_BYTES * i), (uint8_t*) &utxo_list[i].tx_index, BTC_TX_IN_SEQUENCE_SIZE_BYTES);
-        rev_memcpy(sequence.data + (BTC_TX_IN_SEQUENCE_SIZE_BYTES * i), (uint8_t*) &default_sequence, BTC_TX_IN_SEQUENCE_SIZE_BYTES);
+        rev_copy(prev_outputs.data + (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES * i), utxo_list[i].tx_hash);
+        rev_copyl(prev_outputs.data + (BTC_TX_HASH_SIZE_BYTES * i), bytes((uint8_t*) &utxo_list[i].tx_index, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
+        rev_copyl(sequence.data + (BTC_TX_IN_SEQUENCE_SIZE_BYTES * i), bytes((uint8_t*) &default_sequence, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
       }
 
       if (!(sighash & BTC_SIGHASH_ANYONECANPAY)) {
@@ -85,7 +85,7 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       index += BTC_TX_HASH_SIZE_BYTES;
       memcpy(d + index, hash_sequence, BTC_TX_HASH_SIZE_BYTES);
       index += BTC_TX_HASH_SIZE_BYTES;
-      rev_memcpy(d + index, utxo_list[utxo_index].tx_hash, BTC_TX_HASH_SIZE_BYTES);
+      rev_copyl(d + index, bytes(utxo_list[utxo_index].tx_hash, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
       index += BTC_TX_HASH_SIZE_BYTES;
       uint_to_le(hash_message, index, utxo_list[utxo_index].tx_index);
       index += BTX_TX_INDEX_SIZE_BYTES;
