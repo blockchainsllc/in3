@@ -36,7 +36,7 @@ add_static_library(
   NAME     btc
   REGISTER in3_register_btc
 
-  SOURCES 
+  SOURCES
     btc_merkle.c
     btc_types.c
     btc_serialize.c
