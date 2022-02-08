@@ -846,6 +846,17 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   return IN3_OK;
 }
 
+static in3_ret_t eth_getInternalTx(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t tx_hash;
+  TRY_PARAM_GET_REQUIRED_BYTES(tx_hash, ctx, 0, 32, 32)
+  d_token_t*  result;
+  const char* tracer = "{data:[], fault:function(l) {},step:function(l) { var op = this.ops[l.op.toString()]; if (op)  this.data.push({op:l.op.toString(16), to: op[0]!=-1 ? \"0x\"+l.stack.peek(op[0]).toString(16) : null, value: op[1]!=-1 ? \"0x\"+l.stack.peek(op[1]).toString(): null, from:this.hex(l.contract.getAddress()),depth: l.getDepth(), gas:  op[2]!=-1 ? \"0x\"+l.stack.peek(op[2]).toString(): null }) },result:function(){return this.data},ops:{CALL:[1,2,0],CALLCODE:[1,2,0],DELEGATECALL:[1,-1,0],STATICCALL:[1,-1,0],CREATE:[-1,0,-1],CREATE2:[-1,0,-1],SELFDESTRUCT:[0,-1,-1]},hex:function(_) { var s=\"0x\";for (var i=0;i<_.length;i++) {s+= (\"0\"+_[i].toString(16)).slice(-2)} return s}}";
+  char*       params = sprintx("\"%B\",{\"tracer\":\"%S\"}", tx_hash, tracer);
+  TRY_FINAL(req_send_sub_request(ctx->req, "debug_traceTransaction", params, NULL, &result, NULL), _free(params))
+  sb_printx(in3_rpc_handle_start(ctx), "%j", result);
+  return in3_rpc_handle_finish(ctx);
+}
+
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
   d_token_t* tx_data = d_get_at(ctx->params, 0);
@@ -945,6 +956,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PARSE_TX_URL)
   TRY_RPC("in3_parse_tx_url", parse_tx_url(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PGET_INTERNAL_TX)
+  TRY_RPC("in3_get_internal_tx", eth_getInternalTx(ctx))
 #endif
 
   return IN3_EIGNORE;
