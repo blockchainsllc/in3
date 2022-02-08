@@ -123,7 +123,7 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
     if (!p) return IN3_EINVAL;
 
     btc_transaction_in_t* r = res->vin + i;
-    r->script               = vin.script;
+    r->script               = vin.script.data;
     r->sequence             = vin.sequence;
     r->txinwitness          = NULL_BYTES;
     r->vout                 = vin.prev_tx_index;
@@ -140,7 +140,7 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
 
     btc_transaction_out_t* r = res->vout + i;
     r->n                     = i;
-    r->script_pubkey         = vout.script;
+    r->script_pubkey         = vout.script.data;
     r->value                 = vout.value;
   }
 

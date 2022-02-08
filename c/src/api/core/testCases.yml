@@ -3,9 +3,7 @@ utils:
   keccak:
     input:
       - "0x1234567890"
-    expected_output: 
-      value: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
-      type: "uint8Array"
+    expected_output: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
   
   web3_sha3:
     input:
@@ -15,9 +13,7 @@ utils:
   sha256:
     input:
       - "hello world"
-    expected_output: 
-      value: "0xb94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
-      type: "uint8Array"
+    expected_output: "0xb94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
 
 #account:
 

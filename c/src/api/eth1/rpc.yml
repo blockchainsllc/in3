@@ -264,6 +264,7 @@ utils:
         type: bool
         optional: true
     result:
+      type: bytes
       descr: the address-string using the upper/lowercase hex characters.
     example:
       request:
@@ -377,6 +378,7 @@ account:
         type: bytes32
     result:
       descr: the address
+      type: bytes
     example:
       request:
         - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
@@ -391,6 +393,7 @@ account:
         type: bytes32
     result:
       descr: the public key as 64 bytes
+      type: bytes
     example:
       request:
         - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
@@ -438,6 +441,7 @@ account:
         type: eth_transaction
 
     result:
+      type: bytes
       descr: the unsigned raw transaction as hex.
     example:
       request:
@@ -455,8 +459,8 @@ account:
       from:
         descr: the account to sign
         type: address
-
     result:
+      type: bytes
       descr: the raw transaction with signature.
     example:
       request:
@@ -528,9 +532,9 @@ account:
       passphrase:
         descr: the password to decrypt it.
         type: string
-
     result:
       descr: a raw private key (32 bytes)
+      type: bytes32
     example:
       request:
         - version: 3,
@@ -570,6 +574,7 @@ account:
         descr: the message to sign
         type: bytes
     result:
+      type: bytes
       descr: the signature (65 bytes) for the given message.
     example:
       request:
@@ -584,6 +589,7 @@ account:
         descr: transaction to sign
         type: eth_transaction
     result:
+      type: bytes
       descr: the raw signed transaction
     example:
       request:

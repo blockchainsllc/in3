@@ -31,6 +31,7 @@ eth:
         descr: the blockNumber or  `latest`
         type: uint64          
     result:
+      type: hex
       descr: the abi-encoded result of the function.
     
     example:
