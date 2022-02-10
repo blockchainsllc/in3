@@ -46,9 +46,12 @@
 #include <string.h>
 
 d_token_t* params_get(d_token_t* params, d_key_t k, uint32_t index) {
-  return d_type(params + 1) == T_OBJECT
-             ? d_get(params + 1, k)
-             : d_get_at(params, index);
+  d_token_t* t = d_get_at(params, 0);
+  t            = d_type(t) == T_OBJECT
+                     ? d_get(t, k)
+                     : d_get_at(params, index);
+  d_bytes(t);
+  return t;
 }
 
 void set_quoted_address(char* c, uint8_t* address) {
@@ -255,19 +258,19 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
   if (!conf->main_contract) {
     d_token_t* result;
     TRY(send_provider_request(ctx, conf, "contract_address", "", &result))
-    bytes_t* main_contract = d_get_bytes(result, key("mainContract"));
-    if (!main_contract || main_contract->len != 20) return req_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
-    memcpy(conf->main_contract = _malloc(20), main_contract->data, 20);
+    bytes_t main_contract = d_get_bytes(result, key("mainContract"));
+    if (!main_contract.data || main_contract.len != 20) return req_set_error(ctx, "could not get the main_contract from provider", IN3_ERPC);
+    memcpy(conf->main_contract = _malloc(20), main_contract.data, 20);
 
-    bytes_t* gov_contract = d_get_bytes(result, key("govContract"));
-    if (!gov_contract || gov_contract->len != 20) return req_set_error(ctx, "could not get the gov_contract from provider", IN3_ERPC);
-    memcpy(conf->gov_contract = _malloc(20), gov_contract->data, 20);
+    bytes_t gov_contract = d_get_bytes(result, key("govContract"));
+    if (!gov_contract.data || gov_contract.len != 20) return req_set_error(ctx, "could not get the gov_contract from provider", IN3_ERPC);
+    memcpy(conf->gov_contract = _malloc(20), gov_contract.data, 20);
 
     if (cache_name) {
       uint8_t data[40];
       bytes_t content = bytes(data, 40);
-      memcpy(data, main_contract->data, 20);
-      memcpy(data + 20, gov_contract->data, 20);
+      memcpy(data, main_contract.data, 20);
+      memcpy(data + 20, gov_contract.data, 20);
       in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = &content};
       TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &cctx))
     }
@@ -291,8 +294,8 @@ in3_ret_t zksync_get_nonce(zksync_config_t* conf, in3_req_t* ctx, d_token_t* non
 }
 
 in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_in, bytes_t to, d_token_t* token, char* type, zk_fee_p_t* fee) {
-  if (fee_in && (d_type(fee_in) == T_INTEGER || d_type(fee_in) == T_BYTES)) {
-    bytes_t b = d_to_bytes(fee_in);
+  if (fee_in && (d_type(fee_in) == T_INTEGER || d_is_bytes(fee_in))) {
+    bytes_t b = d_bytes(fee_in);
     if (b.data && b.len) {
 #ifdef ZKSYNC_256
       memcpy(fee + 32 - b.len, b.data, b.len);
@@ -310,9 +313,10 @@ in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_i
   sb_add_chars(&sb, type);
   sb_add_bytes(&sb, is_object_type ? "," : "\",", &to, 1, false);
   sb_add_char(&sb, ',');
+  if (d_is_bytes(token)) d_bytes(token);
   switch (d_type(token)) {
     case T_BYTES:
-      sb_add_bytes(&sb, ",", d_bytes(token), 1, false);
+      sb_add_bytes(&sb, ",", d_as_bytes(token), 1, false);
       break;
     case T_STRING: {
       sb_add_char(&sb, '"');
@@ -367,9 +371,9 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
         strncpy(conf->tokens[i].symbol, name, 9);
       else
         strcpy(conf->tokens[i].symbol, name);
-      bytes_t* adr = d_get_bytes(it.token, K_ADDRESS);
-      if (!adr || !adr->data || adr->len != 20) return req_set_error(ctx, "invalid token addr", IN3_EINVAL);
-      memcpy(conf->tokens[i].address, adr->data, 20);
+      bytes_t adr = d_get_bytes(it.token, K_ADDRESS);
+      if (!adr.data || adr.len != 20) return req_set_error(ctx, "invalid token addr", IN3_EINVAL);
+      memcpy(conf->tokens[i].address, adr.data, 20);
     }
 
     // clean up
@@ -384,6 +388,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
 
   if (!token_dst) return IN3_OK;
 
+  d_bytes(token_src);
   for (unsigned int i = 0; i < conf->token_len; i++) {
     if (d_type(token_src) == T_INTEGER) {
       if (d_int(token_src) == (int32_t) conf->tokens[i].id) {
@@ -397,7 +402,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
         return IN3_OK;
       }
     }
-    else if (d_type(token_src) == T_BYTES && token_src->len == 20 && memcmp(token_src->data, conf->tokens[i].address, 20) == 0) {
+    else if (d_type(token_src) == T_BYTES && d_len(token_src) == 20 && memcmp(d_bytes(token_src).data, conf->tokens[i].address, 20) == 0) {
       *token_dst = conf->tokens + i;
       return IN3_OK;
     }

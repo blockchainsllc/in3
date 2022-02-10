@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #ifndef TEST
@@ -96,7 +96,7 @@ static void test_get_tx_count() {
 static void test_new_block_filter() {
   in3_t* in3 = init_in3(mock_transport, 0x5);
   // we can add any mock json as we need trasnport but we are not calling any rpc endpoint
-  //get filter id for new block
+  // get filter id for new block
   size_t fid = eth_newBlockFilter(in3);
   TEST_ASSERT_TRUE(fid > 0);
   in3_free(in3);
@@ -112,7 +112,7 @@ static void test_block_number() {
 static void test_new_pending_tx_filter() {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   in3_ret_t ret = eth_newPendingTransactionFilter(in3);
-  //we expect this to fail we dont support pending
+  // we expect this to fail we dont support pending
   TEST_ASSERT_TRUE(ret == IN3_ENOTSUP);
   in3_free(in3);
 }
@@ -366,7 +366,7 @@ static void test_eth_getblock_number(void) {
 static void test_eth_get_storage_at(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
-  //setup lock access contract address to be excuted with eth_call
+  // setup lock access contract address to be excuted with eth_call
   hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
   bytes32_t key;
   memset(key, 0, 32);
@@ -405,7 +405,7 @@ static void test_eth_getblock_hash(void) {
   bytes32_t blk_hash;
   hex_to_bytes("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
 
-  //eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
+  // eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
   eth_block_t* block = eth_getBlockByHash(in3, blk_hash, false);
   TEST_ASSERT_EQUAL_INT64(block->number, 1550244);
   free(block);
@@ -415,15 +415,15 @@ static void test_eth_getblock_hash(void) {
 static void test_eth_call_fn(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
-  //setup lock access contract address to be excuted with eth_call
+  // setup lock access contract address to be excuted with eth_call
   hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
-  //ask for the access to the lock
+  // ask for the access to the lock
   json_ctx_t* response = eth_call_fn(in3, contract, BLKNUM_LATEST(), "hasAccess():bool");
   if (!response) {
     in3_log_debug("Could not get the response: %s", eth_last_error());
     return;
   }
-  //convert the response to a uint32_t,
+  // convert the response to a uint32_t,
   uint8_t access = d_int(response->result);
   in3_log_debug("Access granted? : %d \n", access);
 
@@ -436,9 +436,9 @@ static void test_eth_call_fn(void) {
 static void test_eth_get_code(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
-  //setup lock access contract address to be excuted with eth_call
+  // setup lock access contract address to be excuted with eth_call
   hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
-  //ask for the access to the lock
+  // ask for the access to the lock
   bytes_t code = eth_getCode(in3, contract, BLKNUM_LATEST());
   //    clean up resources
   TEST_ASSERT_TRUE(code.len > 0);
@@ -449,11 +449,11 @@ static void test_eth_get_code(void) {
 static void test_estimate_fn(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
-  //setup lock access contract address to be excuted with eth_call
+  // setup lock access contract address to be excuted with eth_call
   hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
-  //ask for the access to the lock
+  // ask for the access to the lock
   uint64_t estimate = eth_estimate_fn(in3, contract, BLKNUM_LATEST(), "hasAccess():bool");
-  //convert the response to a uint32_t,
+  // convert the response to a uint32_t,
   in3_log_debug("Gas estimate : %lld \n", estimate);
   TEST_ASSERT_TRUE(estimate > 0);
   in3_free(in3);
@@ -479,9 +479,9 @@ static void test_get_uncle_count_blknum(void) {
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex_to_bytes("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
-  //ask for the access to the lock
+  // ask for the access to the lock
   uint64_t count = eth_getUncleCountByBlockNumber(in3, BLKNUM(56160));
-  //we expect this to fail we dont have verification for this
+  // we expect this to fail we dont have verification for this
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!count);
@@ -493,9 +493,9 @@ static void test_get_uncle_count_blkhash(void) {
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex_to_bytes("0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845", -1, blk_hash, 32);
-  //ask for the access to the lock
+  // ask for the access to the lock
   uint64_t count = eth_getUncleCountByBlockHash(in3, blk_hash);
-  //we expect this to fail we dont have verification for this
+  // we expect this to fail we dont have verification for this
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!count);
@@ -504,9 +504,9 @@ static void test_get_uncle_count_blkhash(void) {
 
 static void test_get_uncle_blknum_index(void) {
   in3_t* in3 = init_in3(mock_transport, 0x1);
-  //get block number
+  // get block number
   eth_block_t* block = eth_getUncleByBlockNumberAndIndex(in3, BLKNUM(56160), 0);
-  //we expect this to fail we dont have verification for this
+  // we expect this to fail we dont have verification for this
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!block);
@@ -548,14 +548,14 @@ static void test_eth_call_multiple(void) {
   TEST_ASSERT_NOT_NULL(response);
 
   char*    url     = d_get_string_at(response->result, 0); // get the first item of the result (the url)
-  bytes_t* owner   = d_get_bytes_at(response->result, 1);  // get the second item of the result (the owner)
+  bytes_t  owner   = d_get_bytes_at(response->result, 1);  // get the second item of the result (the owner)
   uint64_t deposit = d_get_long_at(response->result, 2);   // get the third item of the result (the deposit)
 
   TEST_ASSERT_EQUAL_STRING("https://in3.slock.it/mainnet/nd-1", url);
   TEST_ASSERT_EQUAL_UINT64(65535, deposit);
 
   bytes_t* owner_ = hex_to_new_bytes("784bfa9eb182c3a02dbeb5285e3dba92d717e07a", 40);
-  TEST_ASSERT(b_cmp(owner_, owner));
+  TEST_ASSERT(bytes_cmp(*owner_, owner));
   b_free(owner_);
 
   json_free(response);
@@ -617,10 +617,10 @@ int main() {
 
   // now run tests
   TESTS_BEGIN();
-  //PASSING..
+  // PASSING..
+  RUN_TEST(test_get_balance);
   RUN_TEST(test_eth_chain_id);
   RUN_TEST(test_eth_get_storage_at);
-  RUN_TEST(test_get_balance);
   RUN_TEST(test_block_number);
   RUN_TEST(test_eth_gas_price);
   RUN_TEST(test_eth_getblock_number);

@@ -75,7 +75,7 @@ namespace Test.Eth1
 
             string signature = "(address,uint256)";
             string encoded = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005";
-            object[] expectedDecode = { "0x1234567890123456789012345678901234567890", "0x05" };
+            object[] expectedDecode = { "0x1234567890123456789012345678901234567890", "0x5" };
 
             object[] result = await in3.Eth1.AbiDecode(signature, encoded);
 
@@ -89,7 +89,7 @@ namespace Test.Eth1
 
             string signature = "():uint256";
             string encoded = "0x0000000000000000000000000000000000000000000000000000000000000005";
-            string[] expectedDecode = { "0x05" };
+            string[] expectedDecode = { "0x5" };
 
             object[] result = await in3.Eth1.AbiDecode(signature, encoded);
 
@@ -384,7 +384,7 @@ namespace Test.Eth1
             object[] res1 = (object[])await in3.Eth1.Call(request, BlockParameter.Latest);
 
             Assert.That(res1.Length, Is.EqualTo(1));
-            Assert.That(res1[0], Is.EqualTo("0x05"));
+            Assert.That(res1[0], Is.EqualTo("0x5"));
         }
 
         [Test]

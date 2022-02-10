@@ -56,18 +56,19 @@
 #include <string.h>
 
 static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
+  bytes_t b;
+  TRY_PARAM_GET_REQUIRED_BYTES(b, ctx, 0, 0, 0)
   bytes32_t hash;
-  keccak(d_to_bytes(ctx->params + 1), hash);
+  keccak(b, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
+  bytes_t    b;
   bytes32_t  hash;
-  bytes_t    data = d_to_bytes(ctx->params + 1);
   SHA256_CTX c;
+  TRY_PARAM_GET_REQUIRED_BYTES(b, ctx, 0, 0, 0)
   sha256_Init(&c);
-  sha256_Update(&c, data.data, data.len);
+  sha256_Update(&c, b.data, b.len);
   sha256_Final(&c, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
@@ -79,10 +80,11 @@ static in3_ret_t web3_clientVersion(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_OBJECT) return req_set_error(ctx->req, "no valid config-object as argument", IN3_EINVAL);
+  d_token_t* cnf;
+  TRY_PARAM_GET_REQUIRED_OBJECT(cnf, ctx, 0)
 
   ctx->req->client->pending--; // we need to to temporarly decrees it in order to allow configuring
-  str_range_t r   = d_to_json(ctx->params + 1);
+  str_range_t r   = d_to_json(cnf);
   char        old = r.data[r.len];
   r.data[r.len]   = 0;
   char* ret       = in3_configure(ctx->req->client, r.data);

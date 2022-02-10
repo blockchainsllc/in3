@@ -577,7 +577,7 @@ typedef struct {
  */
 #define CNF_SET_BYTES(dst, token, property, l)                      \
   {                                                                 \
-    const bytes_t tmp = d_to_bytes(d_get(token, key(property)));    \
+    const bytes_t tmp = d_bytes(d_get(token, key(property)));       \
     if (tmp.data) {                                                 \
       if (tmp.len != l) CNF_ERROR(property " must be " #l " bytes") \
       memcpy(dst, tmp.data, l);                                     \
@@ -589,7 +589,7 @@ typedef struct {
  */
 #define CNF_SET_STRING(dst, token, property)                                                        \
   {                                                                                                 \
-    const d_token_t* t = d_get(token, key(property));                                               \
+    d_token_t* t = d_get(token, key(property));                                                     \
     if (d_type(t) != T_NULL && d_type(t) != T_STRING) CNF_ERROR("Invalid config for " property "!") \
     const char* tmp = d_string(t);                                                                  \
     if (tmp) {                                                                                      \

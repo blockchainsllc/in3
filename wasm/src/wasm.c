@@ -242,7 +242,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       break;
     case REQ_ERROR:
       sb_add_chars(sb, "\"error\",\"error\":\"");
-      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
+      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error", -1);
       sb_add_chars(sb, "\"");
       break;
     case REQ_WAITING_FOR_RESPONSE:
@@ -257,7 +257,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       in3_http_request_t* request = in3_create_request(ctx);
       if (request == NULL) {
         sb_add_chars(sb, ",\"error\",\"");
-        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
+        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request", -1);
         sb_add_char(sb, '"');
       }
       else {
@@ -277,14 +277,14 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
           request->req->raw_response[i].time = start;
           if (i) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
-          sb_add_escaped_chars(sb, request->urls[i]);
+          sb_add_escaped_chars(sb, request->urls[i], -1);
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"headers\":[");
         for (in3_req_header_t* h = request->headers; h; h = h->next) {
           if (h != request->headers) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
-          sb_add_escaped_chars(sb, h->value);
+          sb_add_escaped_chars(sb, h->value, -1);
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"ctx\":");

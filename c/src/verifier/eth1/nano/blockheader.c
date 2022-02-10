@@ -398,11 +398,12 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
   bytes_builder_t* bb = bb_new();
   bb_write_int(bb, d_get_int(err, K_CODE));
 
-  int        i   = 0;
-  d_token_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
+  int                 i   = 0;
+  d_token_internal_t* sig = d_get(d_get(err, K_DATA), K_SIGNED_ERR);
   for (d_token_t* t = sig + 1; i < d_len(sig); t = d_next(t), i++) {
-    if (t->key == K_R || t->key == K_S || t->key == K_V || t->key == K_MSG_HASH)
+    if (d_is_key(t, K_R) || d_is_key(t, K_S) || d_is_key(t, K_V) || d_is_key(t, K_MSG_HASH))
       continue;
+    d_bytes(t);
 
     switch (d_type(t)) {
       case T_BYTES:
@@ -445,8 +446,8 @@ static in3_ret_t validate_sig(in3_vctx_t* vc, d_token_t* sig, uint64_t header_nu
   if (d_get_long(sig, K_BLOCK) != header_number)
     return vc_err(vc, "wrong signature blocknumber");
 
-  bytes_t* sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32);
-  if (!sig_hash || memcmp(sig_hash->data, block_hash, 32) != 0)
+  bytes_t sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32);
+  if (!sig_hash.data || memcmp(sig_hash.data, block_hash, 32) != 0)
     return vc_err(vc, "wrong signature hash");
 
   return eth_verify_signature(vc, &msg, sig);
@@ -492,10 +493,9 @@ static uint8_t* get_verified_hash(in3_vctx_t* vc, uint64_t block_number) {
 }
 
 /** verify the header */
-in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
+in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t header, bytes_t expected_blockhash) {
 
-  if (!header || !header->data || !header->len)
-    return vc_err(vc, "no header found");
+  if (!header.data || !header.len) return vc_err(vc, "no header found");
 
   unsigned int i;
   bytes32_t    block_hash;
@@ -505,16 +505,16 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   in3_ret_t    res = IN3_OK;
 
   // generate the blockhash;
-  keccak(*header, block_hash);
+  keccak(header, block_hash);
 
   // if we expect a certain blocknumber, it must match the 8th field in the BlockHeader
-  if (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp) == 1)
+  if (rlp_decode_in_list(&header, BLOCKHEADER_NUMBER, &temp) == 1)
     header_number = bytes_to_long(temp.data, temp.len);
   else
     return vc_err(vc, "Could not rlpdecode the blocknumber");
 
   // if we have a blockhash we verify it
-  if (expected_blockhash && memcmp(block_hash, expected_blockhash->data, 32))
+  if (expected_blockhash.data && (expected_blockhash.len != 32 || memcmp(block_hash, expected_blockhash.data, 32)))
     return vc_err(vc, "wrong blockhash");
 
   // already verified?
@@ -555,7 +555,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   unsigned int confirmed = 0; // bitmask for signed block-hashes
   unsigned int erred     = 0; // bitmask for signed errors
-  for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
+  for (i = 0, sig = d_get_at(signatures, 0); i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
     if ((err = d_get(sig, K_ERROR))) {
       if (!is_err_signed(err)) {
         if (d_get_int(err, K_CODE) != JSON_RPC_ERR_INTERNAL)

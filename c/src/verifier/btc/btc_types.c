@@ -525,10 +525,11 @@ static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
     d_token_t*  acc         = d_get(arg, key("account"));
     const char* pub_key_str = d_string(d_get(arg, key("pub_key")));
     if (acc && pub_key_str) {
+      bytes_t               b = d_bytes(acc);
       btc_account_pub_key_t acc_pk;
-      acc_pk.account.len  = acc->len;
-      acc_pk.account.data = _malloc(acc->len);
-      memcpy(acc_pk.account.data, acc->data, acc->len);
+      acc_pk.account.len  = b.len;
+      acc_pk.account.data = _malloc(b.len);
+      memcpy(acc_pk.account.data, b.data, b.len);
 
       acc_pk.pub_key.len  = (strlen(pub_key_str) >> 1);
       acc_pk.pub_key.data = _malloc(acc_pk.pub_key.len);
