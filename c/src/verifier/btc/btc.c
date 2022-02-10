@@ -571,46 +571,47 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   in3_req_t* req    = ctx->req;
   d_token_t* params = ctx->params;
-  char*      default_pub_key_str;
-  bytes_t    default_account;
-  bytes_t    default_pub_key;
-  default_account.len = 20;
 
-  TRY_PARAM_GET_REQUIRED_ADDRESS(default_account.data, ctx, 0)
-  TRY_PARAM_GET_REQUIRED_STRING(default_pub_key_str, ctx, 1)
-  d_token_t* outputs   = d_get_at(params, 2);
-  d_token_t* utxo_list = d_get_at(params, 3);
-  d_token_t* args      = d_get_at(params, 4);
-
-  default_pub_key.len  = (strlen(default_pub_key_str) >> 1);
-  default_pub_key.data = alloca(default_pub_key.len);
-  hex_to_bytes(default_pub_key_str, -1, default_pub_key.data, default_pub_key.len);
-
-  TRY(btc_verify_public_key(req, (const bytes_t*) &default_pub_key))
-
-  btc_account_pub_key_t default_acc_pk;
-  default_acc_pk.account = default_account;
-  default_acc_pk.pub_key = default_pub_key;
-
-  btc_tx_ctx_t tx_ctx; // btc transaction context
-  memset(&tx_ctx, 0, sizeof(tx_ctx));
-
-  // create unsigned transaction
+  // btc "send transaction" data
+  btc_account_pub_key_t default_account;
+  btc_tx_ctx_t          tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
-  add_outputs_to_tx(req, outputs, &tx_ctx);
+
+  // first parameter is the btc address which shall receive the remaining change, discounting fees, after transaction is complete
+  bytes_t from_addr = d_bytes(d_get(params, key("from")));
+  if (from_addr.len != BTC_ADDR_SIZE) return req_set_error(req, "ERROR: Invalid btc address", IN3_EINVAL);
+
+  // second parameter is the ethereum account used by the signer api
+  d_token_t* sig_acc = d_get(params, key("account"));
+  if (!sig_acc || d_type(sig_acc) != T_OBJECT) return req_set_error(req, "ERROR: Invalid signing account", IN3_EINVAL);
+  default_account.account = d_bytes(d_get(sig_acc, K_ADDRESS));
+  default_account.pub_key = d_bytes(d_get(sig_acc, key("btc_pub_key")));
+  if (!default_account.account.data || !default_account.pub_key.data) return req_set_error(req, "ERROR: Required signing account data is null or missing", IN3_EINVAL);
+  if (!btc_public_key_is_valid((const bytes_t*) &default_account.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
+
+  // third parameter are the transaction outputs data
+  d_token_t* output_data = d_get_at(params, key("outputs"));
+  if (!output_data || d_type(output_data) != T_ARRAY || d_len(output_data) < 1) return req_set_error(req, "ERROR: Invalid transaction output data", IN3_EINVAL);
+  btc_prepare_outputs(req, &tx_ctx, output_data);
+
+  // forth parameter is utxo data
+  d_token_t* utxo_data = d_get_at(params, key("utxos"));
+  if (!utxo_data || d_type(utxo_data) != T_ARRAY || d_len(utxo_data) < 1) return req_set_error(req, "ERROR: Invalid unspent outputs (utxos) data", IN3_EINVAL);
+  btc_prepare_utxos(req, &tx_ctx, &default_account, utxo_data);
 
   // create output for receiving the transaction "change", discounting miner fee
-  uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
-  // TODO: include a redeeming script, otherwise we won't be able to receive our unspent funds again
+  uint32_t     miner_fee = 0, outputs_total = 0, utxo_total = 0;
   btc_tx_out_t tx_out_change;
   btc_init_tx_out(&tx_out_change);
-  tx_out_change.value = utxo_total - miner_fee - outputs_total;
+  tx_out_change.value       = utxo_total - miner_fee - outputs_total;
+  tx_out_change.script.data = btc_build_locking_script(&from_addr, BTC_P2PKH, NULL, 0);
+  tx_out_change.script.type = btc_get_script_type(&tx_out_change.script.data);
   btc_add_output_to_tx(req, &tx_ctx, &tx_out_change);
 
-  // select "best" set of UTXOs
-  btc_prepare_utxos(req, &tx_ctx, &default_acc_pk, utxo_list, args);
+  // Verify segwit
   btc_set_segwit(&tx_ctx);
 
+  // Try signing the transaction
   TRY(btc_sign_tx(ctx->req, &tx_ctx));
 
   bytes_t* signed_tx = b_new(NULL, btc_get_raw_tx_size(&tx_ctx.tx));
