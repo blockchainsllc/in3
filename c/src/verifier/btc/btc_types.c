@@ -37,7 +37,7 @@ void btc_init_tx_ctx(btc_tx_ctx_t* tx_ctx) {
 void btc_init_tx_in(btc_tx_in_t* tx_in) {
   if (tx_in) {
     memset(tx_in, 0, sizeof(btc_tx_in_t));
-    tx_in->sequence = 0xffffffff;
+    tx_in->sequence = DEFAULT_TXIN_SEQUENCE_NUMBER;
   }
 }
 
@@ -50,6 +50,7 @@ void btc_init_tx_out(btc_tx_out_t* tx_out) {
 void btc_init_utxo(btc_utxo_t* utxo) {
   if (utxo) {
     memset(utxo, 0, sizeof(btc_utxo_t));
+    utxo->sequence = DEFAULT_TXIN_SEQUENCE_NUMBER;
   }
 }
 
@@ -498,6 +499,7 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   utxo->tx_out.script.data = tx_script;
   utxo->tx_out.script.type = btc_get_script_type(&tx_script);
   utxo->raw_script.type    = utxo->tx_out.script.type;
+  utxo->sequence           = DEFAULT_TXIN_SEQUENCE_NUMBER; // TODO: enable BIP68
 
   return IN3_OK;
 }
@@ -543,6 +545,31 @@ static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
   }
 
   return IN3_OK;
+}
+
+uint32_t btc_build_nsequence_relative_locktime(uint8_t locktime_type_flag, uint16_t value) {
+
+  uint32_t seq_rel_lcktm = 0;
+
+  // when flag is:
+  // SET: Value represents units of 512 seconds
+  // NOT SET: Value represents number of blocks
+  if (locktime_type_flag > 0) seq_rel_lcktm = SEQUENCE_LOCKTIME_TYPE_FLAG;
+
+  // Add value to the end of relative locktime
+  seq_rel_lcktm += value;
+
+  return seq_rel_lcktm;
+}
+
+bool btc_nsequence_is_relative_locktime(uint32_t nsequence) {
+  return !(nsequence & SEQUENCE_LOCKTIME_DISABLE_FLAG);
+}
+
+uint16_t btc_nsequence_get_relative_locktime_value(uint32_t nsequence) {
+  uint16_t value = 0;
+  if (btc_nsequence_is_relative_locktime(nsequence)) value = nsequence & SEQUENCE_LOCKTIME_MASK;
+  return value;
 }
 
 // WARNING: You must free selected_utxos pointer after calling this function, as well as the pointed utxos tx_hash and tx_out.data fields

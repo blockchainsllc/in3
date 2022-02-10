@@ -26,6 +26,21 @@
 // Output fixed size values
 #define BTC_TX_OUT_VALUE_SIZE_BYTES 8
 
+// Default transaction values
+#define DEFAULT_TXIN_SEQUENCE_NUMBER 0xffffffff
+
+// BIP 68 flags
+// -- when this bit is set, sequence number is NOT interpreted as relative locktime
+#define SEQUENCE_LOCKTIME_DISABLE_FLAG (1 << 31)
+
+// -- When relative locktime is activated and this bit is:
+// -- SET - relative locktime specifies units of 512 seconts
+// -- NOT SET - relative locktime specifies blocks with granularity 1
+#define SEQUENCE_LOCKTIME_TYPE_FLAG (1 << 22)
+
+// -- mask to extract locktim value from nsequence field
+#define SEQUENCE_LOCKTIME_MASK 0x0000ffff
+
 // Ethereum account which stores our private key. Used by signer module
 typedef struct btc_account_pub_key {
   bytes_t pub_key;
@@ -66,9 +81,10 @@ typedef struct btc_utxo {
   uint32_t               sig_count;      // Number of signatures we currently have in our array
   btc_account_pub_key_t* accounts;       // Array of ETH accounts used by in3 to sign BTC transactions
   uint32_t               accounts_count; // Number of accounts we currently have in our array
+  uint32_t               sequence;       // Desired sequence number when utxo is converted to a transaction input
 } btc_utxo_t;
 
-/* Bitcoin transaction context */
+// Bitcoin transaction context
 typedef struct btc_tx_ctx {
   btc_tx_t      tx;
   btc_utxo_t*   utxos;
@@ -111,6 +127,10 @@ uint32_t btc_weight(btc_tx_t* tx);
 in3_ret_t btc_add_input_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_in_t* tx_in);
 in3_ret_t btc_add_output_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_out_t* tx_out);
 in3_ret_t btc_add_witness_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, bytes_t* witness);
+
+uint32_t btc_build_nsequence_relative_locktime(uint8_t locktime_type_flag, uint16_t value);
+uint16_t btc_nsequence_get_relative_locktime_value(uint32_t nsequence);
+bool     btc_nsequence_is_relative_locktime(uint32_t nsequence);
 
 in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args);
 in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);
