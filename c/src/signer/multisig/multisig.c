@@ -421,7 +421,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
     // if not we simply approve it
     approve_hash(new_raw_tx, &tx_data, tx_hash, ms->address);
   else
-    return req_set_error(ctx, "the account is not an owner and does not have enough signatures to exwecute the transaction!", IN3_EINVAL);
+    return req_set_error(ctx, "the account is not an owner and does not have enough signatures to execute the transaction!", IN3_EINVAL);
 
   return IN3_OK;
 }
