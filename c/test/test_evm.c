@@ -39,6 +39,7 @@
 #endif
 #include "../src/core/client/keys.h"
 #include "../src/core/client/request.h"
+#include "../src/core/util/crypto.h"
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"

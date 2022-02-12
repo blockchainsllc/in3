@@ -35,6 +35,7 @@
 #include "eth_api.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/request.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/basic/eth_basic.h"

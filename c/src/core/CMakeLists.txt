@@ -39,6 +39,8 @@ IF (IN3_STAGING)
     ADD_DEFINITIONS(-DIN3_STAGING)
 ENDIF (IN3_STAGING)
 
+set(CRYPTO_SRC util/crypto_trezor.c)
+
 
 add_static_library(
   NAME     core 
@@ -57,6 +59,7 @@ add_static_library(
     util/mem.c
     util/stringbuilder.c
     util/bitset.c
+    ${CRYPTO_SRC}
 )
 
 if(CRYPTO_LIB)

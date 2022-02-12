@@ -36,6 +36,7 @@
 #ifndef TEST
 #define TEST
 #endif
+#include "../src/core/util/crypto.h"
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/utils.h"

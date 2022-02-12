@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "precompiled.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/ecdsa.h"

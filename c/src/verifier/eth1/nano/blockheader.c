@@ -35,6 +35,7 @@
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request.h"
 #include "../../../core/util/bitset.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"

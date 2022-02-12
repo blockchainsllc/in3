@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include <stdint.h>

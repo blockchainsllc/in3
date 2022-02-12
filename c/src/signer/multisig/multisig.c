@@ -37,6 +37,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/request.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
