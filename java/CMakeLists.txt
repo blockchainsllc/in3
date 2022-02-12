@@ -32,7 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wpointer-arith ")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wpointer-arith ")
 #  build modules
 add_subdirectory(src)
 add_subdirectory(docs)

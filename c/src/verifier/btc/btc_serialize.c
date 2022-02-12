@@ -50,7 +50,7 @@ void btc_hash(bytes_t data, bytes32_t dst) {
 
 // copy 32 bytes in revers order
 void rev_copy(uint8_t* dst, uint8_t* src) {
-  for (int i = 0; i < 32; i++) dst[31 - i] = src[i];
+  rev_copyl(dst, bytes(src, 32), 32);
 }
 
 void rev_copyl(uint8_t* dst, bytes_t src, int l) {
@@ -209,8 +209,20 @@ in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header) {
   rev_hex(d_get_string(data, key("versionHex")), block_header, 4);
   rev_hex(d_get_string(data, key("previousblockhash")), block_header + 4, 32);
   rev_hex(d_get_string(data, key("merkleroot")), block_header + 36, 32);
-  rev_copyl(block_header + 68, d_to_bytes(d_get(data, key("time"))), 4);
+  rev_copyl(block_header + 68, d_bytes(d_get(data, key("time"))), 4);
   rev_hex(d_get_string(data, key("bits")), block_header + 72, 4);
-  rev_copyl(block_header + 76, d_to_bytes(d_get(data, key("nonce"))), 4);
+  rev_copyl(block_header + 76, d_bytes(d_get(data, key("nonce"))), 4);
   return IN3_OK;
+}
+
+in3_ret_t append_bytes(bytes_t* dst, const bytes_t* src) {
+  if (dst && src && src->len > 0 && src->data) {
+    dst->data = (dst->data) ? _realloc(dst->data, dst->len + src->len, dst->len) : _malloc(dst->len + src->len);
+    memcpy(dst->data + dst->len, src->data, src->len);
+    dst->len += src->len;
+    return IN3_OK;
+  }
+  else {
+    return IN3_EINVAL;
+  }
 }

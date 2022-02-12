@@ -1,4 +1,24 @@
 types:
+  eth_internal_tx:
+    op:
+      descr: type of transaction or opcode used to send it (CALL, DELEGATECALL, STATICCALL, CALLCODE, ..)
+      type: string
+    to:
+      descr: target address
+      type: address
+    from:
+      descr: address of the sender contract
+      type: address
+    value:
+      descr: value in wei sent
+      type: uint256
+    gas:
+      descr: gas provided for execution
+      type: uint64
+    depth:
+      descr: depth of the internal tx
+      type: uint32
+
   eth_tx_decoded:
     hash:
       descr: the hash of the raw transaction. In case of a signed tx, this is the the tx-hash
@@ -244,6 +264,7 @@ utils:
         type: bool
         optional: true
     result:
+      type: bytes
       descr: the address-string using the upper/lowercase hex characters.
     example:
       request:
@@ -357,6 +378,7 @@ account:
         type: bytes32
     result:
       descr: the address
+      type: bytes
     example:
       request:
         - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
@@ -371,6 +393,7 @@ account:
         type: bytes32
     result:
       descr: the public key as 64 bytes
+      type: bytes
     example:
       request:
         - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
@@ -418,6 +441,7 @@ account:
         type: eth_transaction
 
     result:
+      type: bytes
       descr: the unsigned raw transaction as hex.
     example:
       request:
@@ -435,8 +459,8 @@ account:
       from:
         descr: the account to sign
         type: address
-
     result:
+      type: bytes
       descr: the raw transaction with signature.
     example:
       request:
@@ -508,9 +532,9 @@ account:
       passphrase:
         descr: the password to decrypt it.
         type: string
-
     result:
       descr: a raw private key (32 bytes)
+      type: bytes32
     example:
       request:
         - version: 3,
@@ -550,6 +574,7 @@ account:
         descr: the message to sign
         type: bytes
     result:
+      type: bytes
       descr: the signature (65 bytes) for the given message.
     example:
       request:
@@ -564,6 +589,7 @@ account:
         descr: transaction to sign
         type: eth_transaction
     result:
+      type: bytes
       descr: the raw signed transaction
     example:
       request:
@@ -574,3 +600,43 @@ account:
           to: "0xd46e8dd67c5d32be8058bb8eb970870f07244567"
           value: "0x9184e72a"
       response: "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
+
+  in3_get_internal_tx:
+    descr: returns the internal transactions send during execution of the tx. Currently this only works with geth with activated `debug` module (supporting `debug_traceTransaction` ). Also when running a pruned node, the state of transaction is only available for limited time ( mostly 5 min)
+    params:
+      tx_hash:
+        descr: the transactionhash
+        type: bytes32
+    result:
+      descr: an array of internal transactions
+      type: eth_internal_tx
+
+    example:
+      request:
+        - "0x8f78eb6e9916a4f187b6761d67f56bf6a828b6f197c7443b753e404efa21c8b1"
+      response: 
+        - op: CALL
+          to: '0x1'
+          value: '0x0'
+          from: '0x7be8076f4ea4a4ad08075c2508e481d6c946d12b'
+          depth: 1
+          gas: '0x277854'
+        - op: DELEGATECALL
+          to: '0xf9e266af4bca5890e2781812cc6a6e89495a79f2'
+          value:
+          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          depth: 2
+          gas: '0x181525'
+        - op: CALL
+          to: '0xa5409ec958c83c3f309868babaca7c86dcb077c1'
+          value: '0x0'
+          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          depth: 3
+          gas: '0x170850'
+        - op: CALL
+          to: '0x64dc7f3624a1456a7ba52025fcfddf428fff92e0'
+          value: '0x0'
+          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          depth: 3
+          gas: '0x169426'
+

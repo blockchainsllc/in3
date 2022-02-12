@@ -32,8 +32,10 @@
 #include "bip32.h"
 #include "curves.h"
 #include "ecdsa.h"
+#ifdef ED25519
 #include "ed25519-donna/ed25519-sha3.h"
 #include "ed25519-donna/ed25519.h"
+#endif
 #include "hmac.h"
 #include "nist256p1.h"
 #include "secp256k1.h"
@@ -780,6 +782,7 @@ int hdnode_sign(HDNode* node, const uint8_t* msg, uint32_t msg_len,
     return 1; // signatures are not supported
   }
   else {
+#if USE_BIP32_25519_CURVES
     if (node->curve == &ed25519_info) {
       hdnode_fill_public_key(node);
       ed25519_sign(msg, msg_len, node->private_key, node->public_key + 1, sig);
@@ -800,6 +803,9 @@ int hdnode_sign(HDNode* node, const uint8_t* msg, uint32_t msg_len,
       return 1; // unknown or unsupported curve
     }
     return 0;
+#else
+    return 1; // unknown or unsupported curve
+#endif
   }
 }
 

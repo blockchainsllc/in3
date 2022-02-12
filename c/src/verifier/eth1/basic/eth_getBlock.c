@@ -52,8 +52,8 @@ static in3_ret_t eth_verify_uncles(in3_vctx_t* vc, bytes32_t uncle_hash, d_token
   bytes_t          hash, header;
   bytes_builder_t* bb = bb_new();
   for (d_iterator_t iter_hash = d_iter(uncle_hashes), iter_header = d_iter(uncles_headers); iter_header.left && iter_hash.left; d_iter_next(&iter_hash), d_iter_next(&iter_header)) {
-    hash   = d_to_bytes(iter_hash.token);
-    header = d_to_bytes(iter_header.token);
+    hash   = d_bytes(iter_hash.token);
+    header = d_bytes(iter_header.token);
     keccak(header, hash2);
     if (memcmp(hash.data, hash2, 32)) {
       bb_free(bb);
@@ -67,35 +67,35 @@ static in3_ret_t eth_verify_uncles(in3_vctx_t* vc, bytes32_t uncle_hash, d_token
   return memcmp(hash2, uncle_hash, 32) ? vc_err(vc, "invalid uncles root") : IN3_OK;
 }
 
-in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
+in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t block_hash, uint64_t blockNumber) {
 
   in3_ret_t  res = IN3_OK;
   int        i;
   d_token_t *transactions, *t = NULL;
   bytes_t    t_root, tmp;
-  if (d_type(vc->result) != T_INTEGER)
-    return vc_err(vc, "Invalid transaction count");
-
   // transactions count
   int32_t count = d_int(vc->result);
+
+  if (d_type(vc->result) != T_INTEGER)
+    return vc_err(vc, "Invalid transaction count");
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
   if (!vc->proof)
     return vc_err(vc, "Proof is missing!");
 
   // verify the blockdata
-  bytes_t* header = d_get_bytes(vc->proof, K_BLOCK);
-  if (!header)
+  bytes_t header = d_get_bytes(vc->proof, K_BLOCK);
+  if (!header.data)
     return vc_err(vc, "no blockheader");
   if (eth_verify_blockheader(vc, header, block_hash) != IN3_OK)
     return vc_err(vc, "invalid blockheader");
 
   // check blocknumber
-  if (!block_hash && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) != 1 || bytes_to_long(tmp.data, tmp.len) != blockNumber))
+  if (!block_hash.data && (rlp_decode_in_list(&header, BLOCKHEADER_NUMBER, &tmp) != 1 || bytes_to_long(tmp.data, tmp.len) != blockNumber))
     return vc_err(vc, "Invalid blocknumber");
 
   // extract transaction root
-  if (rlp_decode_in_list(header, BLOCKHEADER_TRANSACTIONS_ROOT, &t_root) != 1)
+  if (rlp_decode_in_list(&header, BLOCKHEADER_TRANSACTIONS_ROOT, &t_root) != 1)
     return vc_err(vc, "invalid transaction root");
 
   // if we have transaction, we need to verify them as well
@@ -107,10 +107,10 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
     return vc_err(vc, "Transaction count mismatch");
 
   trie_t* trie = trie_new();
-  for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
-    bool     is_raw_tx = d_type(t) == T_BYTES;
+  for (i = 0, t = d_get_at(transactions, 0); i < d_len(transactions); i++, t = d_next(t)) {
+    bool     is_raw_tx = d_is_bytes(t);
     bytes_t* path      = create_tx_path(i);
-    bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
+    bytes_t* tx        = is_raw_tx ? d_as_bytes(t) : serialize_tx(t);
     trie_set_value(trie, path, tx);
     if (!is_raw_tx) b_free(tx);
     b_free(path);
@@ -125,17 +125,17 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
   return res;
 }
 
-in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
+in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t blockNumber) {
 
   in3_ret_t  res = IN3_OK;
   int        i;
   bytes32_t  tmp_hash;
   d_token_t *transactions, *t, *t2, *tx_hashs = NULL, *txh = NULL;
-  bytes_t    tmp, *bhash;
+  bytes_t    tmp, bhash;
   uint64_t   bnumber = d_get_long(vc->result, K_NUMBER);
   bhash              = d_get_byteskl(vc->result, K_HASH, 32);
 
-  if (block_hash && !b_cmp(block_hash, bhash))
+  if (block_hash.data && !bytes_cmp(block_hash, bhash))
     return vc_err(vc, "The transactionHash does not match the required");
 
   if (blockNumber && blockNumber != bnumber)
@@ -147,7 +147,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
 
   // verify the blockdata
   bytes_t* header_from_data = serialize_block_header(vc->result);
-  if (eth_verify_blockheader(vc, header_from_data, d_get_byteskl(vc->result, K_HASH, 32))) {
+  if (eth_verify_blockheader(vc, *header_from_data, d_get_byteskl(vc->result, K_HASH, 32))) {
     b_free(header_from_data);
     return vc_err(vc, "invalid blockheader!");
   }
@@ -158,9 +158,9 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
     return vc_err(vc, "invalid author");
 
   if ((t = d_getl(vc->result, K_MIX_HASH, 32)) && (t2 = d_get(vc->result, K_SEAL_FIELDS))) {
-    if (rlp_decode(d_get_bytes_at(t2, 0), 0, &tmp) != 1 || !b_cmp(d_bytes(t), &tmp))
+    if (rlp_decode(d_as_bytes(d_get_at(t2, 0)), 0, &tmp) != 1 || b_compare(d_bytes(t), tmp))
       return vc_err(vc, "invalid mixhash");
-    if (rlp_decode(d_get_bytes_at(t2, 1), 0, &tmp) != 1 || !b_cmp(d_get_bytes(vc->result, K_NONCE), &tmp))
+    if (rlp_decode(d_as_bytes(d_get_at(t2, 1)), 0, &tmp) != 1 || b_compare(d_get_bytes(vc->result, K_NONCE), tmp))
       return vc_err(vc, "invalid nonce");
   }
 
@@ -169,7 +169,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
 
   if (!include_full_tx) {
     tx_hashs = d_get(vc->result, K_TRANSACTIONS);
-    txh      = tx_hashs + 1;
+    txh      = d_get_at(tx_hashs, 0);
   }
   // if we have transaction, we need to verify them as well
   if ((transactions = d_get(include_full_tx ? vc->result : vc->proof, K_TRANSACTIONS))) {
@@ -178,10 +178,10 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
       return vc_err(vc, "no transactionhashes found!");
 
     trie_t* trie = trie_new();
-    for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
-      bool     is_raw_tx = d_type(t) == T_BYTES;
+    for (i = 0, t = d_get_at(transactions, 0); i < d_len(transactions); i++, t = d_next(t)) {
+      bool     is_raw_tx = d_is_bytes(t);
       bytes_t* path      = create_tx_path(i);
-      bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
+      bytes_t* tx        = is_raw_tx ? d_as_bytes(t) : serialize_tx(t);
       uint8_t* h         = (full_proof || !include_full_tx) ? tmp_hash : NULL;
 
       if (h) keccak(*tx, h);
@@ -190,7 +190,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
         if (eth_verify_tx_values(vc, t, tx))
           res = IN3_EUNKNOWN;
 
-        if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !b_cmp(d_bytes(t2), bhash))
+        if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !bytes_cmp(d_bytes(t2), bhash))
           res = vc_err(vc, "Wrong Blockhash in tx");
 
         if ((t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != bnumber)
@@ -201,7 +201,8 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
       }
 
       if (h && txh) {
-        if (d_len(txh) != 32 || memcmp(txh->data, h, 32))
+        bytes_t th = d_bytes(txh);
+        if (th.len != 32 || memcmp(th.data, h, 32))
           res = vc_err(vc, "Wrong Transactionhash");
         txh = d_next(txh);
       }
@@ -210,7 +211,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
       b_free(path);
     }
 
-    bytes_t t_root = d_to_bytes(d_getl(vc->result, K_TRANSACTIONS_ROOT, 32));
+    bytes_t t_root = d_bytes(d_getl(vc->result, K_TRANSACTIONS_ROOT, 32));
 
     if (t_root.len != 32 || memcmp(t_root.data, trie->root, 32))
       res = vc_err(vc, "Wrong Transaction root");
@@ -219,7 +220,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
 
     // verify uncles
     if (res == IN3_OK && full_proof)
-      return eth_verify_uncles(vc, d_get_bytes(vc->result, K_SHA3_UNCLES)->data, d_get(vc->proof, K_UNCLES), d_get(vc->result, K_UNCLES));
+      return eth_verify_uncles(vc, d_get_bytes(vc->result, K_SHA3_UNCLES).data, d_get(vc->proof, K_UNCLES), d_get(vc->result, K_UNCLES));
   }
   else
     res = vc_err(vc, "Missing transaction-properties");

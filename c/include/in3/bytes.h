@@ -93,6 +93,7 @@ int                            bytes_cmp(const bytes_t a, const bytes_t b);     
 void                           b_free(bytes_t* a);                                                                       /**< frees the data */
 bytes_t                        b_concat(int cnt, ...);                                                                   /**< duplicates the content of bytes*/
 NONULL bytes_t*                b_dup(const bytes_t* a);                                                                  /**< clones a byte array*/
+NONULL bytes_t*                b_dup2(const bytes_t a);                                                                  /**< clones a byte array*/
 NONULL bytes_t                 bytes_dup(const bytes_t a);                                                               /**< clones a byte array*/
 NONULL uint8_t                 b_read_byte(bytes_t* b, size_t* pos);                                                     /**< reads a byte on the current position and updates the pos afterwards. */
 NONULL uint32_t                b_read_int(bytes_t* b, size_t* pos);                                                      /**< reads a integer on the current position and updates the pos afterwards. */
@@ -104,7 +105,7 @@ NONULL void                    bb_free(bytes_builder_t* bb);                    
 NONULL int                     bb_check_size(bytes_builder_t* bb, size_t len);                                           /**< internal helper to increase the buffer if needed */
 NONULL void                    bb_write_chars(bytes_builder_t* bb, char* c, int len);                                    /**< writes a string to the builder. */
 NONULL void                    bb_write_dyn_bytes(bytes_builder_t* bb, const bytes_t* src);                              /**< writes bytes to the builder with a prefixed length. */
-NONULL void                    bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src);                            /**< writes fixed bytes to the builder. */
+NONULL void                    bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t src);                             /**< writes fixed bytes to the builder. */
 NONULL void                    bb_write_int(bytes_builder_t* bb, uint32_t val);                                          /**< writes a ineteger to the builder. */
 NONULL void                    bb_write_long(bytes_builder_t* bb, uint64_t val);                                         /**< writes s long to the builder. */
 NONULL void                    bb_write_long_be(bytes_builder_t* bb, uint64_t val, int len);                             /**< writes any integer value with the given length of bytes */

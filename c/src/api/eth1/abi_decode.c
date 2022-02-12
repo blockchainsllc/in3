@@ -1,3 +1,4 @@
+#define IN3_INTERNAL
 
 #include "../../core/util/bitset.h"
 #include "../../core/util/bytes.h"

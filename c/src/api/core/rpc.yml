@@ -3,6 +3,7 @@ utils:
     sync: true
     descr: clears the incubed cache (usually found in the .in3-folder)
     result:
+      type: bool
       descr: true indicating the success
     example: 
       request: []
@@ -11,6 +12,7 @@ utils:
   web3_clientVersion:
     descr: Returns the underlying client version. See [web3_clientversion](https://eth.wiki/json-rpc/API#web3_clientversion) for spec.
     result:
+      type: string
       descr: when connected to the incubed-network, `Incubed/<Version>` will be returned, but in case of a direct enpoint, its's version will be used.
 
   keccak:
@@ -31,10 +33,75 @@ utils:
         type: bytes
     result:
       descr: the 32byte hash of the data
+      type: bytes
     example:
       request:
         - "0x1234567890"
       response: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
+
+  in3_base58_encode:
+    sync: true
+    descr: |
+      Returns base58 encoded data
+    params:
+      data:
+        descr: data to encode
+        type: bytes
+    result:
+      type: string
+      descr: the encoded data
+    example:
+      request:
+        - "3K3F4C"
+      response: "SYUwqHgn"
+
+  in3_base58_decode:
+    sync: true
+    descr: |
+      Returns base58 decoded data
+    params:
+      data:
+        descr: data to decode
+        type: string
+    result:
+      type: bytes
+      descr: the decoded bytes
+    example:
+      request:
+        - "3K3F4C"
+      response: "0x5a694361"
+
+  in3_base64_encode:
+    sync: true
+    descr: |
+      Returns base64 encoded data
+    params:
+      data:
+        descr: data to encode
+        type: bytes
+    result:
+      descr: the encoded data
+      type: string
+    example:
+      request:
+        - "abcdef"
+      response: "YWJjZGVm"
+
+  in3_base64_decode:
+    sync: true
+    descr: |
+      Returns base64 decoded data
+    params:
+      data:
+        descr: data to decode
+        type: string
+    result:
+      type: bytes
+      descr: the decoded bytes
+    example:
+      request:
+        - "YWJjZGVm"
+      response: "0x616263646566"
 
   sha256:
     sync: true
@@ -47,6 +114,7 @@ utils:
         descr: data to hash
         type: bytes
     result:
+      type: bytes32
       descr: the 32byte hash of the data
     example:
       request:

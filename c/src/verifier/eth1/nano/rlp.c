@@ -114,12 +114,12 @@ void rlp_encode_item(bytes_builder_t* bb, bytes_t* val) {
     bb_write_byte(bb, val->len + 0x80);
   else
     rlp_add_length(bb, val->len, 0x80);
-  bb_write_fixed_bytes(bb, val);
+  bb_write_fixed_bytes(bb, *val);
 }
 
 void rlp_encode_list(bytes_builder_t* bb, bytes_t* val) {
   rlp_add_length(bb, val->len, 0xc0);
-  bb_write_fixed_bytes(bb, val);
+  bb_write_fixed_bytes(bb, *val);
 }
 
 bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb) {

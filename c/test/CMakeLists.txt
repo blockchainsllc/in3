@@ -32,6 +32,9 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wpointer-arith ")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wpointer-arith ")
+
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
 if (MSVC OR MSYS OR MINGW)
@@ -218,6 +221,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*(RawCreateFailGasValue(Transfer|Transfer2)).json$") # in "GeneralStateTests/stEIP150singleCodeGasPrices"
     list(FILTER files EXCLUDE REGEX ".*(CallContractToCreateContract(NoCash|OOG)).json$") # in "GeneralStateTests/stInitCodeTest"
 
+#    list(FILTER files EXCLUDE REGEX ".*.json$") # in "GeneralStateTests/stInitCodeTest"
     foreach (file ${files})
         get_filename_component(testname "${file}" NAME_WE)
         add_test(

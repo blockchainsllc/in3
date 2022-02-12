@@ -48,7 +48,7 @@
 #ifdef ETH_FULL
 #include "../../c/src/third-party/tommath/tommath.h"
 #endif
-#ifdef IPFS
+#ifdef BASE64
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
 #endif
@@ -242,7 +242,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       break;
     case REQ_ERROR:
       sb_add_chars(sb, "\"error\",\"error\":\"");
-      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
+      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error", -1);
       sb_add_chars(sb, "\"");
       break;
     case REQ_WAITING_FOR_RESPONSE:
@@ -257,7 +257,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       in3_http_request_t* request = in3_create_request(ctx);
       if (request == NULL) {
         sb_add_chars(sb, ",\"error\",\"");
-        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
+        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request", -1);
         sb_add_char(sb, '"');
       }
       else {
@@ -277,14 +277,14 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
           request->req->raw_response[i].time = start;
           if (i) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
-          sb_add_escaped_chars(sb, request->urls[i]);
+          sb_add_escaped_chars(sb, request->urls[i], -1);
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"headers\":[");
         for (in3_req_header_t* h = request->headers; h; h = h->next) {
           if (h != request->headers) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
-          sb_add_escaped_chars(sb, h->value);
+          sb_add_escaped_chars(sb, h->value, -1);
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"ctx\":");
@@ -329,7 +329,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_req_t* ctx, int i, int is_error, 
   else
     sb_add_chars(&ctx->raw_response[i].data, msg);
 }
-#ifdef IPFS
+#ifdef BASE64
 
 uint8_t* EMSCRIPTEN_KEEPALIVE base64Decode(char* input) {
   size_t   len = 0;
@@ -532,7 +532,7 @@ uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
 }
 
 /** signs the given data */
-uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
+uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_digest_type_t type, uint8_t* data, int len, bool adjust_v) {
   uint8_t* dst = malloc(65);
 #ifdef CRYPTO_LIB
   bytes_t sig = sign_with_pk(pk, bytes(data, len), type);

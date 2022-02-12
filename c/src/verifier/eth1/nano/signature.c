@@ -44,22 +44,22 @@
 bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
 
   // check messagehash
-  bytes_t* sig_msg_hash = d_get_byteskl(sig, K_MSG_HASH, 32);
-  if (sig_msg_hash && !b_cmp(sig_msg_hash, msg_hash)) return NULL;
+  bytes_t sig_msg_hash = d_get_byteskl(sig, K_MSG_HASH, 32);
+  if (sig_msg_hash.data && !bytes_cmp(sig_msg_hash, *msg_hash)) return NULL;
 
-  uint8_t  pubkey[65], sdata[64];
-  bytes_t* r = d_get_byteskl(sig, K_R, 32);
-  bytes_t* s = d_get_byteskl(sig, K_S, 32);
-  int      v = d_get_int(sig, K_V);
+  uint8_t pubkey[65], sdata[64];
+  bytes_t r = d_get_byteskl(sig, K_R, 32);
+  bytes_t s = d_get_byteskl(sig, K_S, 32);
+  int     v = d_get_int(sig, K_V);
 
   // correct v
   if (v >= 27) v -= 27;
-  if (r == NULL || s == NULL || r->len + s->len != 64)
+  if (r.data == NULL || s.data == NULL || r.len + s.len != 64)
     return NULL;
 
   // concat r and s
-  memcpy(sdata, r->data, r->len);
-  memcpy(sdata + r->len, s->data, s->len);
+  memcpy(sdata, r.data, r.len);
+  memcpy(sdata + r.len, s.data, s.len);
 
   // verify signature
   if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, msg_hash->data, v) == 0)

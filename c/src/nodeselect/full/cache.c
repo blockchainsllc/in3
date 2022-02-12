@@ -168,7 +168,7 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
     bb_write_int(bb, n->index);
     bb_write_long(bb, n->deposit);
     bb_write_long(bb, n->props);
-    bb_write_fixed_bytes(bb, &addr);
+    bb_write_fixed_bytes(bb, addr);
     bb_write_chars(bb, n->url, strlen(n->url));
   }
 
@@ -255,7 +255,7 @@ in3_ret_t in3_cache_store_whitelist(in3_t* c, in3_nodeselect_def_t* data) {
   bb_write_byte(bb, CACHE_VERSION); // Version flag
   bb_write_long(bb, wl->last_block);
   bb_write_int(bb, wl->addresses.len / 20);
-  bb_write_fixed_bytes(bb, &wl->addresses);
+  bb_write_fixed_bytes(bb, wl->addresses);
 
   // create key
   char key[MAX_KEYLEN];

@@ -76,7 +76,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       if (ctx->account.data) sha3_Update(&kctx, ctx->account.data, ctx->account.len);
       keccak_Final(&kctx, msghash);
 
-      TRY(req_send_sign_request(ctx->req, ctx->type, ctx->payload_type, &signature, ctx->message, ctx->account, ctx->meta, bytes(msghash, 32)))
+      TRY(req_send_sign_request(ctx->req, ctx->digest_type, ctx->payload_type, &signature, ctx->message, ctx->account, ctx->meta, bytes(msghash, 32)))
       ctx->signature = bytes_dup(signature);
       return IN3_OK;
     }
@@ -101,11 +101,11 @@ char* sign_get_method(in3_req_t* r) {
 
 bytes_t sign_get_message(in3_req_t* r) {
   d_token_t* params = d_get(r->requests[0], K_PARAMS);
-  return d_to_bytes(d_get_at(params, 0));
+  return d_bytes(d_get_at(params, 0));
 }
 uint8_t* sign_get_from(in3_req_t* r) {
   d_token_t* params = d_get(r->requests[0], K_PARAMS);
-  return d_to_bytes(d_get_at(params, 1)).data;
+  return d_bytes(d_get_at(params, 1)).data;
 }
 
 int sign_get_payload_type(in3_req_t* r) {

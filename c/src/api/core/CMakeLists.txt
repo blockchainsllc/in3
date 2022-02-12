@@ -32,6 +32,10 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+if (BASE64)
+  set(B64 b64)
+endif()
+
 
 add_static_library(
   NAME     core_api 
@@ -43,4 +47,6 @@ add_static_library(
 
   DEPENDS 
     api_utils
+    crypto
+    ${B64}
 )

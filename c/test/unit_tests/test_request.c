@@ -137,11 +137,11 @@ static void test_configure_signed_request() {
   json_ctx_t*         json    = parse_json(request->payload);
   d_token_t*          in3     = d_get(d_get_at(json->result, 0), K_IN3);
   TEST_ASSERT_NOT_NULL(in3);
-  bytes_t* sig = d_get_bytes(in3, key("sig"));
-  TEST_ASSERT_NOT_NULL(sig);
-  TEST_ASSERT_EQUAL(65, sig->len);
+  bytes_t sig = d_get_bytes(in3, key("sig"));
+  TEST_ASSERT_NOT_NULL(sig.data);
+  TEST_ASSERT_EQUAL(65, sig.len);
   char hex[150];
-  TEST_ASSERT_EQUAL(65 * 2, bytes_to_hex(sig->data, sig->len, hex)); // 65bytes *2
+  TEST_ASSERT_EQUAL(65 * 2, bytes_to_hex(sig.data, sig.len, hex)); // 65bytes *2
   TEST_ASSERT_EQUAL_STRING("8e39d2066cf9d1898e6bc9fbbfaa8fd6b9e5a86515e643f537c831982718866d0903e91f5f8824363dd3754fe550b37aa1e6eeb3742f13ad36d3321972e959a71c", hex);
   request_free(request);
   json_free(json);

@@ -24,7 +24,7 @@
 static bool set_chainId(char* value, sb_t* conf) {
   if (strstr(value, "://") == NULL) return false;
   sb_add_chars(conf, "{\"rpc\":\"");
-  sb_add_escaped_chars(conf, value);
+  sb_add_escaped_chars(conf, value, -1);
   sb_add_chars(conf, "\"}");
   return false;
 }

@@ -31,6 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#define IN3_INTERNAL
 
 #include "chainspec.h"
 #include "../../../core/util/log.h"
@@ -70,7 +71,7 @@ static void           fill_aura(json_ctx_t* ctx, d_token_t* validators, consensu
   t->type = ETH_POA_AURA;
   if (contract) {
     t->contract = _calloc(20, 1);
-    bytes_t bb  = d_to_bytes(contract);
+    bytes_t bb  = d_bytes(contract);
     memcpy(t->contract + 20 - bb.len, bb.data, bb.len);
   }
   else
@@ -82,7 +83,7 @@ static void           fill_aura(json_ctx_t* ctx, d_token_t* validators, consensu
     t->validators.data = _calloc(1, t->validators.len);
     int n              = 0;
     for (d_iterator_t iter = d_iter(list); iter.left; d_iter_next(&iter)) {
-      bytes_t bb = d_to_bytes(iter.token);
+      bytes_t bb = d_bytes(iter.token);
       memcpy(t->validators.data + 20 * (n++) + 20 - bb.len, bb.data, bb.len);
     }
   }
@@ -188,12 +189,12 @@ chainspec_t* chainspec_create_from_json(json_ctx_t* ctx) {
       fill_aura(ctx, params, spec->consensus_transitions, NULL);
   }
   else if (d_get(d_get(engine, ikey(ctx, "clique")), ikey(ctx, "params"))) {
-    bytes_t* extra = d_get_bytes(genesis, ikey(ctx, "extraData"));
-    if (!extra) return log_error("no extra data in the genesis-block");
+    bytes_t extra = d_get_bytes(genesis, ikey(ctx, "extraData"));
+    if (!extra.data) return log_error("no extra data in the genesis-block");
     spec->consensus_transitions->type            = ETH_POA_CLIQUE;
-    spec->consensus_transitions->validators.data = _malloc(extra->len - 32 - 65);
-    spec->consensus_transitions->validators.len  = extra->len - 32 - 65;
-    memcpy(spec->consensus_transitions->validators.data, extra->data + 32, spec->consensus_transitions->validators.len);
+    spec->consensus_transitions->validators.data = _malloc(extra.len - 32 - 65);
+    spec->consensus_transitions->validators.len  = extra.len - 32 - 65;
+    memcpy(spec->consensus_transitions->validators.data, extra.data + 32, spec->consensus_transitions->validators.len);
   }
 
   return spec;

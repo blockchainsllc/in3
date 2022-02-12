@@ -29,7 +29,7 @@ class MainNetContractTest(unittest.TestCase):
         storage = self.client.eth.contract.storage_at(
             "0x3589d05a1ec4Af9f65b0E5554e645707775Ee43C", 1)
         self.assertEqual(
-            storage, '0x000000000000000000000000000000000000000000000000000000647261676f')
+            storage, '0x647261676f')
 
     def test_get_code(self):
         code = self.client.eth.contract.code(
@@ -76,7 +76,7 @@ class MainNetContractTest(unittest.TestCase):
             self.client.eth.contract.decode(*err3)
         params = "(address,uint256)", "0x0000000000000000000000001234567890123456789012345678901234567890000000000" + \
                  "0000000000000000000000000000000000000000000000000000005"
-        expected = ['0x1234567890123456789012345678901234567890', '0x05']
+        expected = ['0x1234567890123456789012345678901234567890', '0x5']
         decoded = self.client.eth.contract.decode(*params)
         self.assertEqual(decoded, expected)
         params = "(address,string,uint8,string)", \

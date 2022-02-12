@@ -30,11 +30,12 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
 
   // send request
   TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_call", sb.data, &result), _free(sb.data))
+  bytes_t call_res = d_bytes(result);
 
   // check result
   bytes32_t pub_hash_hash;
   keccak(bytes(pub_hash, 20), pub_hash_hash);
-  if (d_type(result) == T_BYTES && d_len(result) == 32 && memcmp(pub_hash_hash, result->data, 32) == 0) return IN3_OK;
+  if (call_res.data && call_res.len == 32 && memcmp(pub_hash_hash, call_res.data, 32) == 0) return IN3_OK;
 
   // not approved yet, so we need to approve in layer 1
   // the abi-ebcoded data for calling setAuthPubkeyHash(bytes calldata _pubkey_hash, uint32 _nonce)
@@ -58,25 +59,25 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
 }
 
 in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool only_update) {
-  address_t      pub_hash;
-  d_token_t      tmp;
-  zksync_valid_t valid;
-  uint32_t       nonce;
-  int            plen    = only_update ? 0 : d_len(ctx->params);
-  d_token_t*     token   = plen == 1 ? ctx->params + 1 : NULL;
-  bytes_t*       new_key = d_get_bytes_at(ctx->params, 1);
-  valid.from             = plen > 2 ? d_get_long_at(ctx->params, 2) : 0;
-  valid.to               = plen > 3 ? d_get_long_at(ctx->params, 3) : 0;
+  address_t          pub_hash;
+  d_token_internal_t tmp;
+  zksync_valid_t     valid;
+  uint32_t           nonce;
+  int                plen    = only_update ? 0 : d_len(ctx->params);
+  d_token_t*         token   = plen == 1 ? d_get_at(ctx->params, 0) : NULL;
+  bytes_t            new_key = d_get_bytes_at(ctx->params, 1);
+  valid.from                 = plen > 2 ? d_get_long_at(ctx->params, 2) : 0;
+  valid.to                   = plen > 3 ? d_get_long_at(ctx->params, 3) : 0;
   if (!valid.to) valid.to = 0xffffffffl;
   if (!token) {
     token = &tmp;
-    tmp   = (d_token_t){.data = (void*) "ETH", .len = T_STRING << 28 | 3, .key = 0};
+    tmp   = (d_token_internal_t){.data = (void*) "ETH", .len = T_STRING << 28 | 3, .key = 0, .state = 0};
   }
 
   zksync_token_t* token_data = NULL;
   if (!token) return req_set_error(ctx->req, "Missing fee token as first token", IN3_EINVAL);
   zk_fee_t fee;
-  if (new_key && new_key->len == 32) memcpy(conf->sync_key, new_key->data, 32);
+  if (new_key.data && new_key.len == 32) memcpy(conf->sync_key, new_key.data, 32);
   TRY(zksync_get_nonce(conf, ctx->req, NULL, &nonce))
   TRY(resolve_tokens(conf, ctx->req, token, &token_data))
   TRY(zksync_get_pubkey_hash(conf, ctx->req, pub_hash))

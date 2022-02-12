@@ -31,8 +31,10 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#define IN3_INTERNAL
 
 #include "stringbuilder.h"
+#include "../../third-party/crypto/bignum.h"
 #include "../util/bytes.h"
 #include "../util/utils.h"
 #include "debug.h"
@@ -87,8 +89,8 @@ sb_t* sb_add_chars(sb_t* sb, const char* chars) {
   return sb;
 }
 
-sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
-  int l       = strlen(chars);
+sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int l) {
+  if (l == -1) l = strlen(chars);
   int escapes = 0;
   if (l == 0 || chars == NULL) return sb;
   for (int i = 0; i < l; i++) {
@@ -331,11 +333,14 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
       return sb_add_chars(sb, d_int(token) ? "true" : "false");
     case T_INTEGER:
       return sb_add_int(sb, d_int(token));
-    case T_BYTES:
-      return sb_add_bytes(sb, NULL, d_bytes(token), 1, false);
+    case T_BYTES: {
+      bytes_t b = d_bytes(token);
+      sb_add_rawbytes(sb, "\"0x", b, b.len < 20 && !(b.len && b.data[0] == 0) ? -1 : 0);
+      return sb_add_char(sb, '"');
+    }
     case T_STRING: {
       sb_add_char(sb, '\"');
-      sb_add_escaped_chars(sb, d_string(token));
+      sb_add_escaped_chars(sb, (char*) token->data, d_len(token));
       return sb_add_char(sb, '\"');
     }
     case T_NULL:
@@ -354,13 +359,36 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           sb_add_chars(sb, va_arg(args, char*));
           break;
         case 'S':
-          sb_add_escaped_chars(sb, va_arg(args, char*));
+          sb_add_escaped_chars(sb, va_arg(args, char*), -1);
           break;
         case 'i':
         case 'd':
+          sb_add_int(sb, (int64_t) va_arg(args, int32_t));
+          break;
         case 'u':
+          sb_add_int(sb, (int64_t) va_arg(args, uint32_t));
+          break;
+        case 'I':
+        case 'D':
+        case 'U':
           sb_add_int(sb, va_arg(args, int64_t));
           break;
+        case 'w': {
+          bytes_t wei = va_arg(args, bytes_t);
+          if (wei.len > 32) {
+            sb_add_char(sb, 'X');
+            break;
+          }
+          char*     tmp = _malloc(wei.len * 3 + 1);
+          bytes32_t val = {0};
+          memcpy(val + 32 - wei.len, wei.data, wei.len);
+          bignum256 bn;
+          bn_read_be(val, &bn);
+          size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, wei.len * 3);
+          sb_add_range(sb, tmp, 0, l);
+          _free(tmp);
+          break;
+        }
         case 'x':
           sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
           break;
