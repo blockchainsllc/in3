@@ -35,6 +35,7 @@
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/request_internal.h"
 #include "../../c/src/core/client/version.h"
+#include "../../c/src/core/util/crypto.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
 #ifdef NODESELECT_DEF
@@ -44,7 +45,7 @@
 #include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
-#include "../../c/src/third-party/crypto/sha2.h"
+
 #ifdef ETH_FULL
 #include "../../c/src/third-party/tommath/tommath.h"
 #endif
@@ -402,10 +403,13 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
   uint8_t* result = malloc(32);
 #ifdef CRYPTO_LIB
   if (result) {
-    SHA256_CTX c;
-    sha256_Init(&c);
-    sha256_Update(&c, data, len);
-    sha256_Final(&c, result);
+    in3_digest_t d = crypto_create_hash(DIGEST_SHA256);
+    if (!d.ctx)
+      in3_set_error("no sha256 support");
+    else {
+      crypto_update_hash(d, bytes(data, len));
+      crypto_finalize_hash(d, result);
+    }
   }
   else
     in3_set_error("malloc failed");

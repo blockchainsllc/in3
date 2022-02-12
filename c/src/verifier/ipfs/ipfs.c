@@ -2,10 +2,10 @@
 #include "ipfs.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/base58.h"
-#include "../../third-party/crypto/sha2.h"
 #include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/multihash/hashes.h"
 #include "../../third-party/multihash/multihash.h"
@@ -80,11 +80,10 @@ static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, 
   size_t   digest_len = 0;
   uint8_t  d_[32]     = {0};
   if (hash == MH_H_SHA2_256) {
-    digest_len = 32;
-    SHA256_CTX ctx;
-    sha256_Init(&ctx);
-    sha256_Update(&ctx, buf2, stream.bytes_written);
-    sha256_Final(&ctx, d_);
+    digest_len     = 32;
+    in3_digest_t d = crypto_create_hash(DIGEST_SHA256);
+    crypto_update_hash(d, bytes(buf2, stream.bytes_written));
+    crypto_finalize_hash(d, d_);
     digest = d_;
   }
 

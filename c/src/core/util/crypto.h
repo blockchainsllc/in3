@@ -51,8 +51,24 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 
-/** writes 32 bytes to the dst pointer. */
+typedef enum {
+  DIGEST_KECCAK     = 1,
+  DIGEST_SHA256     = 2,
+  DIGEST_SHA256_BTC = 3
+} in3_digest_type_t;
+
+typedef struct {
+  void*             ctx;
+  in3_digest_type_t type;
+} in3_digest_t;
+
+/** writes the keccak hash of the data as 32 bytes to the dst pointer. */
 in3_ret_t keccak(bytes_t data, void* dst);
+
+/** create a hash. The supported types */
+in3_digest_t crypto_create_hash(in3_digest_type_t type);
+void         crypto_update_hash(in3_digest_t digest, bytes_t data);
+void         crypto_finalize_hash(in3_digest_t digest, void* dst);
 
 #ifdef __cplusplus
 }
