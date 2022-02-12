@@ -38,9 +38,9 @@
 #include "request.h"
 
 #ifdef LOGGING
-#define req_set_error(c, msg, err) req_set_error_intern(c, msg, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, msg, err, __FILE__, __func__, __LINE__)
 #else
-#define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err, __FILE__, __func__, __LINE__)
 #endif
 #define REQUIRE_EXPERIMENTAL(req, feature) \
   if ((req->client->flags & FLAGS_ALLOW_EXPERIMENTAL) == 0) return req_set_error(req, "The feature " feature " is still experimental. You need to explicitly allow it in the config.", IN3_ECONFIG);
@@ -78,10 +78,11 @@ NONULL void request_free(
  * ```
  */
 in3_ret_t req_set_error_intern(
-    in3_req_t* c,        /**< [in] the current request context. */
-    char*      msg,      /**< [in] the error message. (This string will be copied) */
-    in3_ret_t  errnumber /**< [in] the error code to return */
-);
+    in3_req_t*  c,         /**< [in] the current request context. */
+    char*       msg,       /**< [in] the error message. (This string will be copied) */
+    in3_ret_t   errnumber, /**< [in] the error code to return */
+    const char* filename,
+    const char* function, int line);
 
 /**
  * handles a failable context
