@@ -8,6 +8,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/crypto/sha3.h"
 
@@ -79,4 +81,33 @@ void crypto_finalize_hash(in3_digest_t digest, void* dst) {
     }
   }
   _free(digest.ctx);
+}
+
+in3_ret_t crypto_sign_digest(in3_curve_type_t type, const uint8_t* digest, const uint8_t* pk, uint8_t* dst) {
+  switch (type) {
+    case ECDSA_SECP256K1: return ecdsa_sign_digest(&secp256k1, pk, digest, dst, dst + 64, NULL) < 0 ? IN3_EINVAL : IN3_OK;
+    default: return IN3_ENOTSUP;
+  }
+}
+in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t signature, uint8_t* dst) {
+  switch (type) {
+    case ECDSA_SECP256K1: {
+      uint8_t pub[65] = {0};
+      if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, digest, signature.data[64] % 27)) return IN3_EINVAL;
+      memcpy(dst, pub + 1, 64);
+      return IN3_OK;
+    }
+    default: return IN3_ENOTSUP;
+  }
+}
+in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* pk, uint8_t* dst) {
+  switch (type) {
+    case ECDSA_SECP256K1: {
+      uint8_t public_key[65];
+      ecdsa_get_public_key65(&secp256k1, pk, public_key);
+      memcpy(dst, public_key + 1, 64);
+      return IN3_OK;
+    }
+    default: return IN3_ENOTSUP;
+  }
 }

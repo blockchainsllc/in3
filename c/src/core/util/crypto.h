@@ -57,6 +57,16 @@ typedef enum {
   DIGEST_SHA256_BTC = 3
 } in3_digest_type_t;
 
+typedef enum {
+  ENC_HEX    = 1,
+  ENC_BASE58 = 2,
+  ENC_BASE64 = 3
+} in3_encoding_type_t;
+
+typedef enum {
+  ECDSA_SECP256K1 = 1,
+} in3_curve_type_t;
+
 typedef struct {
   void*             ctx;
   in3_digest_type_t type;
@@ -69,6 +79,15 @@ in3_ret_t keccak(bytes_t data, void* dst);
 in3_digest_t crypto_create_hash(in3_digest_type_t type);
 void         crypto_update_hash(in3_digest_t digest, bytes_t data);
 void         crypto_finalize_hash(in3_digest_t digest, void* dst);
+
+int encode(in3_encoding_type_t type, bytes_t src, char* dst);
+int encode_size(in3_encoding_type_t type, int src_len);
+int decode(in3_encoding_type_t type, const char* src, int src_len, uint8_t* dst);
+int decode_size(in3_encoding_type_t type, int src_len);
+
+in3_ret_t crypto_sign_digest(in3_curve_type_t type, const uint8_t* digest, const uint8_t* pk, uint8_t* dst);
+in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t signature, uint8_t* dst);
+in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* pk, uint8_t* dst);
 
 #ifdef __cplusplus
 }

@@ -59,11 +59,16 @@ add_static_library(
     util/mem.c
     util/stringbuilder.c
     util/bitset.c
+    util/crypto_encode.c
     ${CRYPTO_SRC}
 )
 
 if(CRYPTO_LIB)
   target_link_libraries(core crypto)
+endif()
+
+if (BASE64)
+  target_link_libraries(core b64)
 endif()
 
 if(ETH_FULL AND IN3API)
