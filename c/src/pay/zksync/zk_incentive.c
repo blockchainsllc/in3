@@ -35,8 +35,6 @@
 #include "../../core/client/request_internal.h"
 #include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"
 #include "zksync.h"
@@ -68,11 +66,10 @@ in3_ret_t zksync_add_payload(in3_pay_payload_ctx_t* ctx) {
 static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
   // do we have a sync_key and account already?
   if (!memiszero(conf->sync_key, 32)) return IN3_OK;
-  uint8_t pub[65];
-  bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
-  char*   message      = "\x19"
-                         "Ethereum Signed Message:\n68"
-                         "Access zkSync account.\n\nOnly sign this message for a trusted client!";
+  uint8_t pub[64];
+  char*   message = "\x19"
+                    "Ethereum Signed Message:\n68"
+                    "Access zkSync account.\n\nOnly sign this message for a trusted client!";
 
   in3_pay_sign_req_ctx_t sctx      = {.req = req, .request = NULL, .signature = {0}};
   bytes_t                sig_bytes = bytes(sctx.signature, 65);
@@ -84,9 +81,8 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
   zkcrypto_pk_from_seed(sig_bytes, conf->sync_key);
 
   // determine address
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig_bytes.data, sctx.request_hash, sig_bytes.data[64] >= 27 ? sig_bytes.data[64] - 27 : sig_bytes.data[64]))
-    return req_set_error(req, "Invalid Signature", IN3_EINVAL);
-  keccak(pubkey_bytes, sctx.request_hash);
+  TRY(req_set_error(req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, sctx.request_hash, sig_bytes, pub)))
+  keccak(bytes(pub, 64), sctx.request_hash);
   if (conf->account) _free(conf->account);
   conf->account = _malloc(20);
   memcpy(conf->account, sctx.request_hash + 12, 20);

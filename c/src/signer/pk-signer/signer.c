@@ -54,7 +54,7 @@ typedef struct signer_key {
 
 static void get_address(uint8_t* pk, uint8_t* address) {
   uint8_t public_key[64];
-  if (crypto_pk_to_public_key(ECDSA_SECP256K1, pk, public_key) == IN3_ENOTSUP)
+  if (crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(pk, 32), public_key, NULL) == IN3_ENOTSUP)
     memset(address, 0, 20);
   else {
     keccak(bytes(public_key, 64), public_key);
@@ -162,7 +162,7 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       // generate the address from the key
       in3_sign_public_key_ctx_t* ctx = action_ctx;
       if (ctx->account && memcmp(ctx->account, k->account, 20)) return IN3_EIGNORE;
-      crypto_pk_to_public_key(ECDSA_SECP256K1, k->pk, ctx->public_key);
+      crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(k->pk, 32), ctx->public_key, NULL);
       return IN3_OK;
     }
 

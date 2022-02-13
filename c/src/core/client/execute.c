@@ -33,8 +33,6 @@
  *******************************************************************************/
 #define IN3_INTERNAL
 
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../util/crypto.h"
 #include "../util/data.h"
 #include "../util/log.h"

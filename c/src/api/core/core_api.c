@@ -44,7 +44,6 @@
 #include "../../third-party/crypto/bip39.h"
 #include "../../third-party/crypto/memzero.h"
 #include "../../third-party/crypto/rand.h"
-#include "../../third-party/crypto/secp256k1.h"
 
 #include <errno.h>
 #include <inttypes.h>

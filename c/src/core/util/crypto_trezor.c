@@ -100,13 +100,29 @@ in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t s
     default: return IN3_ENOTSUP;
   }
 }
-in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* pk, uint8_t* dst) {
+static in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* pk, uint8_t* dst) {
   switch (type) {
     case ECDSA_SECP256K1: {
       uint8_t public_key[65];
       ecdsa_get_public_key65(&secp256k1, pk, public_key);
       memcpy(dst, public_key + 1, 64);
       return IN3_OK;
+    }
+    default: return IN3_ENOTSUP;
+  }
+}
+
+in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, bytes_t src, uint8_t* dst, int* dst_len) {
+  switch (conv_type) {
+    case CONV_PK32_TO_PUB64: {
+      if (dst_len) *dst_len = 64;
+      return src.len == 32 ? crypto_pk_to_public_key(type, src.data, dst) : IN3_EINVAL;
+    }
+    case CONV_SIG65_TO_DER: {
+      if (src.len != 65) return IN3_EINVAL;
+      int l = ecdsa_sig_to_der(src.data, dst);
+      if (dst_len) *dst_len = l;
+      return l >= 0 ? IN3_OK : IN3_EINVAL;
     }
     default: return IN3_ENOTSUP;
   }

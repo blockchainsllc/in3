@@ -67,6 +67,11 @@ typedef enum {
   ECDSA_SECP256K1 = 1,
 } in3_curve_type_t;
 
+typedef enum {
+  CONV_PK32_TO_PUB64 = 1,
+  CONV_SIG65_TO_DER  = 2
+} in3_convert_type_t;
+
 typedef struct {
   void*             ctx;
   in3_digest_type_t type;
@@ -87,7 +92,7 @@ int decode_size(in3_encoding_type_t type, int src_len);
 
 in3_ret_t crypto_sign_digest(in3_curve_type_t type, const uint8_t* digest, const uint8_t* pk, uint8_t* dst);
 in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t signature, uint8_t* dst);
-in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* pk, uint8_t* dst);
+in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, bytes_t src, uint8_t* dst, int* dst_len);
 
 #ifdef __cplusplus
 }
