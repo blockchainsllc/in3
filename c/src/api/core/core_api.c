@@ -40,9 +40,6 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
-#include "../../third-party/crypto/bip32.h"
-#include "../../third-party/crypto/bip39.h"
-#include "../../third-party/crypto/rand.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -121,27 +118,12 @@ static in3_ret_t in3_bip32(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_STRING(curvename, ctx, 1, "secp256k1")
   TRY_PARAM_GET_STRING(path, ctx, 2, NULL)
 
-  HDNode node = {0};
-  if (!hdnode_from_seed(seed.data, (int) seed.len, curvename, &node)) return req_set_error(ctx->req, "Invalid seed!", IN3_ERPC);
-  if (path) {
-    char* tmp = alloca(strlen(path) + 1);
-    strcpy(tmp, path);
-    char* p = NULL;
-    while ((p = strtok(p ? NULL : tmp, "/"))) {
-      if (strcmp(p, "m") == 0) continue;
-      if (p[0] == '\'')
-        hdnode_private_ckd_prime(&node, atoi(p + 1));
-      else if (p[strlen(p) - 1] == '\'') {
-        char tt[50];
-        strcpy(tt, p);
-        tt[strlen(p) - 1] = 0;
-        hdnode_private_ckd_prime(&node, atoi(p + 1));
-      }
-      else
-        hdnode_private_ckd(&node, atoi(p));
-    }
-  }
-  return in3_rpc_handle_with_bytes(ctx, bytes(node.private_key, 32));
+  bytes32_t pk;
+  in3_ret_t r = bip32(seed, ECDSA_SECP256K1, path, pk);
+
+  return r
+             ? req_set_error(ctx->req, "BIP32 not supported! Please reconfigure cmake!", r)
+             : in3_rpc_handle_with_bytes(ctx, bytes(pk, 32));
 }
 
 static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
@@ -153,10 +135,11 @@ static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
     pk = bytes(hash, 32);
   }
 
-  const char* res = mnemonic_from_data(pk.data, pk.len);
-  sb_printx(in3_rpc_handle_start(ctx), "\"%s\"", res);
+  char* r = mnemonic_create(pk);
+  sb_printx(in3_rpc_handle_start(ctx), "\"%s\"", r);
   memzero(hash, 32);
-  mnemonic_clear();
+  memzero(r, strlen(r));
+  _free(r);
   return in3_rpc_handle_finish(ctx);
 }
 
@@ -168,7 +151,7 @@ static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
   TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
 
-  if (!mnemonic_check(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+  if (mnemonic_verify(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
 
   mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
   return in3_rpc_handle_with_bytes(ctx, bytes(seed, 64));

@@ -42,7 +42,6 @@
 #include "../../core/util/mem.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../third-party/crypto/bignum.h"
-#include "../../third-party/crypto/rand.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"

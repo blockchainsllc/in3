@@ -41,8 +41,6 @@
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "../../third-party/crypto/bip32.h"
-#include "../../third-party/crypto/bip39.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include <string.h>
 
@@ -209,32 +207,6 @@ static in3_ret_t in3_addJsonKey(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
 }
 
-static void addPath(in3_t* c, HDNode node, char* path, sb_t* sb) {
-  char* tmp = alloca(strlen(path) + 1);
-  strcpy(tmp, path);
-  char* p = NULL;
-  while ((p = strtok(p ? NULL : tmp, "/"))) {
-    if (strcmp(p, "m") == 0) continue;
-    if (p[0] == '\'')
-      hdnode_private_ckd_prime(&node, atoi(p + 1));
-    else if (p[strlen(p) - 1] == '\'') {
-      char tt[50];
-      strcpy(tt, p);
-      tt[strlen(p) - 1] = 0;
-      hdnode_private_ckd_prime(&node, atoi(p + 1));
-    }
-    else
-      hdnode_private_ckd(&node, atoi(p));
-  }
-
-  if (!add_key(c, node.private_key)) return;
-  if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
-  address_t adr;
-  get_address(node.private_key, adr);
-  memzero(&node, sizeof(node));
-  sb_printx(sb, "\"%B\"", bytes(adr, 20));
-}
-
 static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
 
   char*      curvename  = NULL;
@@ -242,29 +214,56 @@ static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
   char*      passphrase = NULL;
   d_token_t* paths      = NULL;
   uint8_t    seed[64];
-  HDNode     node = {0};
 
   TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
   TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
   TRY_PARAM_GET_ARRAY(paths, ctx, 2);
   TRY_PARAM_GET_STRING(curvename, ctx, 3, "secp256k1")
 
-  if (!mnemonic_check(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+  if (mnemonic_verify(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
 
   mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
-  if (!hdnode_from_seed(seed, 64, curvename, &node)) return req_set_error(ctx->req, "Invalid seed!", IN3_ERPC);
-  sb_t* sb = in3_rpc_handle_start(ctx);
-  sb_add_char(sb, '[');
-  if (!paths)
-    addPath(ctx->req->client, node, "m/44'/60'/0'/0/0", sb);
-  else
+  sb_t path = {0};
+
+  if (d_type(paths) == T_ARRAY) {
     for (d_iterator_t iter = d_iter(paths); iter.left; d_iter_next(&iter)) {
-      addPath(ctx->req->client, node, d_string(iter.token), sb);
+      if (path.len) sb_add_char(&path, ' ');
+      sb_add_chars(&path, d_string(iter.token));
     }
-  sb_add_char(sb, ']');
-  memzero(&node, sizeof(node));
+  }
+  else if (d_type(paths) == T_STRING)
+    sb_add_chars(&path, d_string(paths));
+  else
+    sb_add_chars(&path, "m/44'/60'/0'/0/0");
+
+  int l = 1;
+  for (int i = 0; i < (int) path.len; i++) {
+    if (path.data[i] == ' ' || path.data[i] == ',') l++;
+  }
+
+  uint8_t*  pks = _malloc(l * 32);
+  in3_ret_t r   = bip32(bytes(seed, 64), ECDSA_SECP256K1, path.data, pks);
+  _free(path.data);
   memzero(seed, 64);
-  return in3_rpc_handle_finish(ctx);
+  if (r == IN3_OK) {
+    sb_t* sb = in3_rpc_handle_start(ctx);
+    for (int i = 0; i < l; i++) {
+      if (add_key(ctx->req->client, pks + i * 32)) {
+        if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
+        address_t adr;
+        get_address(pks + i * 32, adr);
+        sb_printx(sb, "\"%B\"", bytes(adr, 20));
+      }
+    }
+    sb_add_char(sb, ']');
+    memzero(pks, l * 32);
+    _free(pks);
+    return in3_rpc_handle_finish(ctx);
+  }
+  else {
+    _free(pks);
+    return req_set_error(ctx->req, "Invalid seed or bip39 not supported!", r);
+  }
 }
 
 static in3_ret_t eth_accounts(in3_rpc_handle_ctx_t* ctx) {

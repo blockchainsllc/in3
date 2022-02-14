@@ -36,7 +36,6 @@
 #include "../../../core/util/crypto.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/ripemd160.h"
 #include "../../../third-party/tommath/tommath.h"
 #include "evm.h"
 #include "gas.h"
@@ -93,7 +92,9 @@ int pre_ripemd160(evm_t* evm) {
   subgas(G_PRE_RIPEMD160 + (evm->call_data.len + 31) / 32 * G_PRE_RIPEMD160_WORD);
   evm->return_data.data = _malloc(20);
   evm->return_data.len  = 20;
-  ripemd160(evm->call_data.data, evm->call_data.len, evm->return_data.data);
+  in3_digest_t d        = crypto_create_hash(DIGEST_RIPEMD_160);
+  crypto_update_hash(d, evm->call_data);
+  crypto_finalize_hash(d, evm->return_data.data);
   return 0;
 }
 int pre_identity(evm_t* evm) {

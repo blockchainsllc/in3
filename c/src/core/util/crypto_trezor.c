@@ -8,7 +8,10 @@
 #include <string.h>
 #include <time.h>
 
+#include "../../third-party/crypto/bip32.h"
+#include "../../third-party/crypto/bip39.h"
 #include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/ripemd160.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/crypto/sha3.h"
@@ -46,6 +49,11 @@ in3_digest_t crypto_create_hash(in3_digest_type_t type) {
       sha256_Init(d.ctx);
       return d;
     }
+    case DIGEST_RIPEMD_160: {
+      d.ctx = _calloc(1, sizeof(RIPEMD160_CTX));
+      ripemd160_Init(d.ctx);
+      return d;
+    }
     default: return d;
   }
 }
@@ -58,6 +66,10 @@ void crypto_update_hash(in3_digest_t digest, bytes_t data) {
     case DIGEST_SHA256:
     case DIGEST_SHA256_BTC: {
       if (data.len) sha256_Update(digest.ctx, data.data, data.len);
+      return;
+    }
+    case DIGEST_RIPEMD_160: {
+      if (data.len) ripemd160_Update(digest.ctx, data.data, data.len);
       return;
     }
     default: return;
@@ -79,6 +91,10 @@ void crypto_finalize_hash(in3_digest_t digest, void* dst) {
           sha256_Update(digest.ctx, tmp, 32);
         }
         sha256_Final(digest.ctx, dst);
+        return;
+      }
+      case DIGEST_RIPEMD_160: {
+        ripemd160_Final(digest.ctx, dst);
         return;
       }
       default: return;
@@ -160,4 +176,53 @@ void random_buffer(uint8_t* dst, size_t len) {
 #else
   for (size_t i = 0; i < len; i++) dst[i] = rand() % 256;
 #endif
+}
+
+static void bip32_add_path(HDNode node, char* path, uint8_t* pk) {
+  char* tmp = alloca(strlen(path) + 1);
+  strcpy(tmp, path);
+  char* p = NULL;
+  while ((p = strtok(p ? NULL : tmp, "/"))) {
+    if (strcmp(p, "m") == 0) continue;
+    if (p[0] == '\'')
+      hdnode_private_ckd_prime(&node, atoi(p + 1));
+    else if (p[strlen(p) - 1] == '\'') {
+      char tt[50];
+      strcpy(tt, p);
+      tt[strlen(p) - 1] = 0;
+      hdnode_private_ckd_prime(&node, atoi(p + 1));
+    }
+    else
+      hdnode_private_ckd(&node, atoi(p));
+  }
+  memcpy(pk, node.private_key, 32);
+  memzero(&node, sizeof(node));
+}
+
+in3_ret_t bip32(bytes_t seed, in3_curve_type_t curve, const char* path, uint8_t* dst) {
+  UNUSED_VAR(curve);
+  char*  curvename = "secp256k1";
+  HDNode node      = {0};
+  if (!hdnode_from_seed(seed.data, (int) seed.len, curvename, &node)) return IN3_EINVAL;
+  if (!path)
+    memcpy(dst, node.private_key, 32);
+  else {
+    char* p = _strdupn(path, -1);
+    char* s = strtok(p, ",|; \n");
+    for (uint8_t* pp = dst; s; s = strtok(NULL, ",|; \n"), pp += 32)
+      bip32_add_path(node, s, pp);
+  }
+  memzero(&node, sizeof(node));
+  return IN3_OK;
+}
+
+char* mnemonic_create(bytes_t seed) {
+  const char* res = mnemonic_from_data(seed.data, seed.len);
+  char*       r   = _strdupn(res, -1);
+  mnemonic_clear();
+  return r;
+}
+
+in3_ret_t mnemonic_verify(const char* mnemonic) {
+  return mnemonic_check(mnemonic) ? IN3_OK : IN3_EINVAL;
 }

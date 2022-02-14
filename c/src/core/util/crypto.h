@@ -54,7 +54,8 @@ extern "C" {
 typedef enum {
   DIGEST_KECCAK     = 1,
   DIGEST_SHA256     = 2,
-  DIGEST_SHA256_BTC = 3
+  DIGEST_SHA256_BTC = 3,
+  DIGEST_RIPEMD_160 = 4
 } in3_digest_type_t;
 
 typedef enum {
@@ -96,6 +97,15 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
 
 void random_buffer(uint8_t* dst, size_t len);
 void memzero(void* const pnt, const size_t len);
+
+in3_ret_t bip32(bytes_t seed, in3_curve_type_t curve, const char* path, uint8_t* dst);
+
+in3_ret_t mnemonic_verify(const char* mnemonic);
+void      mnemonic_to_seed(const char* mnemonic, const char* passphrase,
+                           uint8_t seed[512 / 8],
+                           void (*progress_callback)(uint32_t current,
+                                                uint32_t total));
+char*     mnemonic_create(bytes_t seed);
 
 #ifdef __cplusplus
 }
