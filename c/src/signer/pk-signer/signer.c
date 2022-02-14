@@ -43,7 +43,6 @@
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/bip32.h"
 #include "../../third-party/crypto/bip39.h"
-#include "../../third-party/crypto/memzero.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include <string.h>
 

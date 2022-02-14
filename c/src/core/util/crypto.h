@@ -95,7 +95,7 @@ in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t s
 in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, bytes_t src, uint8_t* dst, int* dst_len);
 
 void random_buffer(uint8_t* dst, size_t len);
-void memzero(void* p, size_t l);
+void memzero(void* const pnt, const size_t len);
 
 #ifdef __cplusplus
 }
