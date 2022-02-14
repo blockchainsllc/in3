@@ -34,8 +34,6 @@
 
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../third-party/tommath/tommath.h"
 #include "evm.h"
 #include "gas.h"

@@ -38,7 +38,6 @@
 #include "../../../core/client/request.h"
 #include "../../../core/util/debug.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/ecdsa.h"
 #include "merkle.h"
 #include "serialize.h"
 #include <string.h>

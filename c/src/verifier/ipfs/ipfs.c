@@ -5,8 +5,6 @@
 #include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
-#include "../../third-party/crypto/base58.h"
-#include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/multihash/hashes.h"
 #include "../../third-party/multihash/multihash.h"
 #include "../../third-party/nanopb/pb_decode.h"
@@ -99,7 +97,7 @@ static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, 
 
   size_t b58sz = 64;
   *b58         = _malloc(b58sz);
-  if (!b58enc(*b58, &b58sz, out, mhlen))
+  if (encode(ENC_BASE58, bytes(out, mhlen), *b58) < 0)
     ret = IN3_EUNKNOWN;
 
 EXIT:
@@ -116,10 +114,16 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
   else if (!strcmp(encoding, "utf8"))
     buf = b_new((uint8_t*) content, strlen(content));
   else if (!strcmp(encoding, "base64")) {
-    size_t   l    = 0;
-    uint8_t* data = base64_decode(content, &l);
-    buf           = b_new(data, l);
-    free(data);
+    int      l    = strlen(content);
+    uint8_t* data = _malloc(decode_size(ENC_BASE64, l));
+    l             = decode(ENC_BASE64, content, l, data);
+    if (l < 0) {
+      _free(data);
+      return IN3_ENOTSUP;
+    }
+
+    buf  = _malloc(sizeof(bytes_t));
+    *buf = bytes(data, l);
   }
   else
     return IN3_ENOTSUP;

@@ -127,3 +127,21 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
     default: return IN3_ENOTSUP;
   }
 }
+
+void random_buffer(uint8_t* dst, size_t len) {
+#ifndef WASM
+  FILE* r = fopen("/dev/urandom", "r");
+  if (r) {
+    for (size_t i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
+    fclose(r);
+    return;
+  }
+#endif
+  srand(current_ms() % 0xFFFFFFFF);
+#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
+  unsigned int number;
+  for (size_t i = 0; i < len; i++) dst[i] = (rand_s(&number) ? rand() : (int) number) % 256;
+#else
+  for (size_t i = 0; i < len; i++) dst[i] = rand() % 256;
+#endif
+}

@@ -2,7 +2,6 @@
 #include "crypto.h"
 #include "debug.h"
 #include "mem.h"
-#include "util.h"
 #include "utils.h"
 #include <stdint.h>
 #include <stdlib.h>
