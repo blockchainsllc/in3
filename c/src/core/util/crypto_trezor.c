@@ -8,9 +8,11 @@
 #include <string.h>
 #include <time.h>
 
+#include "../../third-party/crypto/aes/aes.h"
 #include "../../third-party/crypto/bip32.h"
 #include "../../third-party/crypto/bip39.h"
 #include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/pbkdf2.h"
 #include "../../third-party/crypto/ripemd160.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/crypto/sha2.h"
@@ -225,4 +227,11 @@ char* mnemonic_create(bytes_t seed) {
 
 in3_ret_t mnemonic_verify(const char* mnemonic) {
   return mnemonic_check(mnemonic) ? IN3_OK : IN3_EINVAL;
+}
+
+in3_ret_t aes_128_ctr_decrypt(uint8_t* aeskey, bytes_t cipher, uint8_t* iv_data, bytes32_t dst) {
+  aes_init();
+  aes_encrypt_ctx cx[1];
+  aes_encrypt_key128(aeskey, cx);
+  return aes_ctr_decrypt(cipher.data, dst, cipher.len, iv_data, aes_ctr_cbuf_inc, cx) ? IN3_EPASS : IN3_OK;
 }

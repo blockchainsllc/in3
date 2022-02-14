@@ -46,51 +46,82 @@ extern "C" {
 
 #include "bytes.h"
 #include "error.h"
-#include "mem.h"
 #include <stdint.h>
-#include <stdio.h>
-#include <string.h>
 
+/** type pf hashing strategy */
 typedef enum {
-  DIGEST_KECCAK     = 1,
-  DIGEST_SHA256     = 2,
-  DIGEST_SHA256_BTC = 3,
-  DIGEST_RIPEMD_160 = 4
+  DIGEST_KECCAK     = 1, /**< sha3 keccak, which is the default for all ethereum hashes, resulting in 32bytes */
+  DIGEST_SHA256     = 2, /**< sha256, resulting in 32bytes */
+  DIGEST_SHA256_BTC = 3, /**< sha256 hashed twice, as the bitcoin protocol requires it, resulting in 32bytes */
+  DIGEST_RIPEMD_160 = 4  /**< ripemd160 which results in 20 bytes */
 } in3_digest_type_t;
 
+/** encoding types for bytes to string encoding and decoding */
 typedef enum {
-  ENC_HEX     = 1,
-  ENC_BASE58  = 2,
-  ENC_BASE64  = 3,
-  ENC_DECIMAL = 4
+  ENC_HEX     = 1, /**< hexadecimal encoding (without any prefix ) */
+  ENC_BASE58  = 2, /**< base58 encoding as used to represent addresses */
+  ENC_BASE64  = 3, /**< base64 encoding */
+  ENC_DECIMAL = 4  /**< converts the bytes as a decimal number as string. ( max 32 bytes )*/
 } in3_encoding_type_t;
 
+/** type of the eliptic or edward curve */
 typedef enum {
-  ECDSA_SECP256K1 = 1,
+  ECDSA_SECP256K1 = 1, /**< secp256k1 , which is used for bitcoin and ethereum */
 } in3_curve_type_t;
 
+/** type of converter for any signature or private key */
 typedef enum {
-  CONV_PK32_TO_PUB64 = 1,
-  CONV_SIG65_TO_DER  = 2
+  CONV_PK32_TO_PUB64 = 1, /**< extract the publickey from a private key as raw point (64bytes) without any prefix */
+  CONV_SIG65_TO_DER  = 2  /**< converts a 65 byte signtature to a DER format */
 } in3_convert_type_t;
 
+/** represents a digest to use for hashing */
 typedef struct {
-  void*             ctx;
-  in3_digest_type_t type;
+  void*             ctx;  /**< points the internal state, this will be cleaned up during the crypto_finalize_hash call. */
+  in3_digest_type_t type; /**< the type of the digest */
 } in3_digest_t;
 
 /** writes the keccak hash of the data as 32 bytes to the dst pointer. */
 in3_ret_t keccak(bytes_t data, void* dst);
 
-/** create a hash. The supported types */
-in3_digest_t crypto_create_hash(in3_digest_type_t type);
-void         crypto_update_hash(in3_digest_t digest, bytes_t data);
-void         crypto_finalize_hash(in3_digest_t digest, void* dst);
+/** create a digest based on the type passed */
+in3_digest_t crypto_create_hash(
+    in3_digest_type_t type /**< the type as defined in in3_digest_type_t*/
+);
 
-int encode(in3_encoding_type_t type, bytes_t src, char* dst);
-int encode_size(in3_encoding_type_t type, int src_len);
-int decode(in3_encoding_type_t type, const char* src, int src_len, uint8_t* dst);
-int decode_size(in3_encoding_type_t type, int src_len);
+/** updates the hash with the passed bytes */
+void crypto_update_hash(
+    in3_digest_t digest, /**< the digest created with crypto_create_hash */
+    bytes_t      data    /**< the data to hash */
+);
+
+/** finishes the hash and writes the result to the given pointer. This function will also clean up all resources used during hashing */
+void crypto_finalize_hash(
+    in3_digest_t digest, /**< the digest created with crypto_create_hash */
+    void*        dst     /**< pointer to the data to write the final hash. the size depends on the diget type */
+);
+
+/**
+ * encodes bytes to a string */
+int encode(
+    in3_encoding_type_t type, /**< the encoding typr */
+    bytes_t             src,  /**< the src-data to encode */
+    char*               dst   /**< the pointer to resulting string to write to. the caller has to ensure it is big enough. (see encode_size to allocate enough memory)*/
+);
+
+int encode_size(
+    in3_encoding_type_t type,
+    int                 src_len);
+
+int decode(
+    in3_encoding_type_t type,
+    const char*         src,
+    int                 src_len,
+    uint8_t*            dst);
+
+int decode_size(
+    in3_encoding_type_t type,
+    int                 src_len);
 
 in3_ret_t crypto_sign_digest(in3_curve_type_t type, const uint8_t* digest, const uint8_t* pk, uint8_t* dst);
 in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t signature, uint8_t* dst);
@@ -108,7 +139,11 @@ void      mnemonic_to_seed(const char* mnemonic, const char* passphrase,
                                                 uint32_t total));
 char*     mnemonic_create(bytes_t seed);
 
-in3_ret_t bytes_to_decimal(bytes_t src, char* dst);
+void pbkdf2_hmac_sha256(const uint8_t* pass, int passlen, const uint8_t* salt,
+                        int saltlen, uint32_t iterations, uint8_t* key,
+                        int keylen);
+
+in3_ret_t aes_128_ctr_decrypt(uint8_t* aeskey, bytes_t cipher, uint8_t* iv_data, bytes32_t dst);
 
 #ifdef __cplusplus
 }

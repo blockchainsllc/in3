@@ -38,8 +38,6 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "../../third-party/crypto/aes/aes.h"
-#include "../../third-party/crypto/pbkdf2.h"
 
 #ifdef SCRYPT
 // only if scrypt is installed we support it.
@@ -84,14 +82,10 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   if (memcmp(mac, mac_verify, 32)) return IN3_EPASS;
 
   // aes-128-ctr
-  aes_init();
-  aes_encrypt_ctx cx[1];
-  d_token_t*      cipherparams = d_get(crypto, key("cipherparams"));
-  char*           iv_hex       = d_get_string(cipherparams, key("iv"));
-  int             iv_len       = strlen(iv_hex) / 2;
-  uint8_t*        iv_data      = alloca(iv_len);
+  d_token_t* cipherparams = d_get(crypto, key("cipherparams"));
+  char*      iv_hex       = d_get_string(cipherparams, key("iv"));
+  int        iv_len       = strlen(iv_hex) / 2;
+  uint8_t*   iv_data      = alloca(iv_len);
   hex_to_bytes(iv_hex, -1, iv_data, iv_len);
-
-  aes_encrypt_key128(aeskey, cx);
-  return aes_ctr_decrypt(cipher.data, dst, cipher.len, iv_data, aes_ctr_cbuf_inc, cx) ? IN3_EPASS : IN3_OK;
+  return aes_128_ctr_decrypt(aeskey, cipher, iv_data, dst);
 }
