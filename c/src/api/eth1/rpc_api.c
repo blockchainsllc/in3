@@ -41,7 +41,6 @@
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../signer/pk-signer/signer.h"
-#include "../../third-party/crypto/bignum.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
@@ -462,37 +461,37 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
 }
 
 char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
-  char      tmp[300];
-  bytes32_t val = {0};
-  memcpy(val + 32 - wei.len, wei.data, wei.len);
-  bignum256 bn;
-  bn_read_be(val, &bn);
-  size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, 300);
-  if (exp) {
-    if (l <= (size_t) exp) {
-      memmove(tmp + exp - l + 1, tmp, l + 1);
-      memset(tmp, '0', exp - l + 1);
-      l += exp - l + 1;
-    }
-    memmove(tmp + l - exp + 1, tmp + l - exp, exp + 1);
-    tmp[l - exp] = '.';
-    l++;
-  }
-  if (digits == -1 && exp)
-    for (int i = l - 1;; i--) {
-      if (tmp[i] == '0')
-        tmp[i] = 0;
-      else if (tmp[i] == '.') {
-        tmp[i] = 0;
-        break;
+  char tmp[300];
+  int  l = encode(ENC_DECIMAL, wei, tmp);
+  if (l < 0)
+    sprintf(tmp, "<not supported>");
+  else {
+    if (exp) {
+      if (l <= exp) {
+        memmove(tmp + exp - l + 1, tmp, l + 1);
+        memset(tmp, '0', exp - l + 1);
+        l += exp - l + 1;
       }
-      else
-        break;
+      memmove(tmp + l - exp + 1, tmp + l - exp, exp + 1);
+      tmp[l - exp] = '.';
+      l++;
     }
-  else if (digits == 0)
-    tmp[l - exp + digits - 1] = 0;
-  else if (digits < exp)
-    tmp[l - exp + digits] = 0;
+    if (digits == -1 && exp)
+      for (int i = l - 1;; i--) {
+        if (tmp[i] == '0')
+          tmp[i] = 0;
+        else if (tmp[i] == '.') {
+          tmp[i] = 0;
+          break;
+        }
+        else
+          break;
+      }
+    else if (digits == 0)
+      tmp[l - exp + digits - 1] = 0;
+    else if (digits < exp)
+      tmp[l - exp + digits] = 0;
+  }
 
   return _strdupn(tmp, -1);
 }

@@ -4,7 +4,6 @@
 #include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
-#include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"
 #include "zksync.h"

@@ -59,9 +59,10 @@ typedef enum {
 } in3_digest_type_t;
 
 typedef enum {
-  ENC_HEX    = 1,
-  ENC_BASE58 = 2,
-  ENC_BASE64 = 3
+  ENC_HEX     = 1,
+  ENC_BASE58  = 2,
+  ENC_BASE64  = 3,
+  ENC_DECIMAL = 4
 } in3_encoding_type_t;
 
 typedef enum {
@@ -106,6 +107,8 @@ void      mnemonic_to_seed(const char* mnemonic, const char* passphrase,
                            void (*progress_callback)(uint32_t current,
                                                 uint32_t total));
 char*     mnemonic_create(bytes_t seed);
+
+in3_ret_t bytes_to_decimal(bytes_t src, char* dst);
 
 #ifdef __cplusplus
 }

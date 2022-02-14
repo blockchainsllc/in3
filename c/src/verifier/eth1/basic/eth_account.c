@@ -38,7 +38,6 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/bignum.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"

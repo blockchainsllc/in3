@@ -1,6 +1,6 @@
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/log.h"
-#include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"
 #include <limits.h> /* strtoull */
@@ -8,9 +8,9 @@
 
 static int to_dec(char* dst, zk_fee_t val) {
 #ifdef ZKSYNC_256
-  bignum256 bn;
-  bn_read_be(val, &bn);
-  return bn_format(&bn, "", "", 0, 0, false, dst, 80);
+  int l = encode(ENC_DECIMAL, bytes(val, 32), dst);
+  if (l < 0) sprintf(dst, "<NOT SUPPORTED>");
+  return l;
 #else
   return sprintf(dst, "%" PRId64, val);
 #endif
