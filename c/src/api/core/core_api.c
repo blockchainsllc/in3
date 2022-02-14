@@ -43,7 +43,6 @@
 #include "../../third-party/crypto/bip32.h"
 #include "../../third-party/crypto/bip39.h"
 #include "../../third-party/crypto/rand.h"
-
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>

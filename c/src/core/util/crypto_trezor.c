@@ -13,6 +13,10 @@
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/crypto/sha3.h"
 
+#ifdef WASM
+#include "emscripten.h"
+#endif
+
 /** writes 32 bytes to the pointer. */
 in3_ret_t keccak(bytes_t data, void* dst) {
 #ifdef CRYPTO_LIB
@@ -128,8 +132,20 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
   }
 }
 
+#ifdef WASM
+EM_JS(void, wasm_random_buffer, (uint8_t * dst, size_t len), {
+  // unload len
+  var res = randomBytes(len);
+  for (var i = 0; i < len; i++) {
+    HEAPU8[dst + i] = res[i];
+  }
+})
+#endif
 void random_buffer(uint8_t* dst, size_t len) {
-#ifndef WASM
+#ifdef WASM
+  wasm_random_buffer(dst, len);
+  return;
+#else
   FILE* r = fopen("/dev/urandom", "r");
   if (r) {
     for (size_t i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
