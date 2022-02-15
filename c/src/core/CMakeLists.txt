@@ -63,7 +63,7 @@ add_static_library(
     ${CRYPTO_SRC}
 )
 
-if(CRYPTO_LIB)
+if(CRYPTO_TREZOR)
   target_link_libraries(core crypto)
 endif()
 
