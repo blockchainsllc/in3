@@ -24,17 +24,11 @@
 
 /** writes 32 bytes to the pointer. */
 in3_ret_t keccak(bytes_t data, void* dst) {
-#ifdef CRYPTO_LIB
   struct SHA3_CTX ctx;
   sha3_256_Init(&ctx);
   if (data.len) sha3_Update(&ctx, data.data, data.len);
   keccak_Final(&ctx, dst);
   return 0;
-#else
-  UNUSED_VAR(data);
-  UNUSED_VAR(dst);
-  return -1;
-#endif
 }
 
 in3_digest_t crypto_create_hash(in3_digest_type_t type) {
@@ -82,7 +76,7 @@ void crypto_finalize_hash(in3_digest_t digest, void* dst) {
     switch (digest.type) {
       case DIGEST_KECCAK: {
         keccak_Final(digest.ctx, dst);
-        return;
+        break;
       }
       case DIGEST_SHA256:
       case DIGEST_SHA256_BTC: {
@@ -93,13 +87,13 @@ void crypto_finalize_hash(in3_digest_t digest, void* dst) {
           sha256_Update(digest.ctx, tmp, 32);
         }
         sha256_Final(digest.ctx, dst);
-        return;
+        break;
       }
       case DIGEST_RIPEMD_160: {
         ripemd160_Final(digest.ctx, dst);
-        return;
+        break;
       }
-      default: return;
+      default: break;
     }
   }
   _free(digest.ctx);
