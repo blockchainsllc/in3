@@ -473,7 +473,7 @@ char* eth_wallet_sign(const char* key, const char* data) {
   keccak(bytes(data_bytes, hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1)), hash);
   char* res = _calloc(133, 1);
 
-  if (crypto_sign_digest(ECDSA_SECP256K1, hash, key_bytes, res) == IN3_OK) {
+  if (crypto_sign_digest(ECDSA_SECP256K1, hash, key_bytes, dst) == IN3_OK) {
     bytes_to_hex(dst, 65, res + 2);
     res[0] = '0';
     res[1] = 'x';
