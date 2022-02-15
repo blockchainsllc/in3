@@ -116,17 +116,11 @@ static void free_urls(char** urls, int len) {
 
 static int add_bytes_to_hash(in3_digest_t msg_hash, void* data, int len) {
   assert(data);
-#ifdef CRYPTO_LIB
   if (msg_hash.ctx) crypto_update_hash(msg_hash, bytes(data, len));
-#else
-  UNUSED_VAR(msg_hash);
-  UNUSED_VAR(data);
-#endif
   return len;
 }
 
 NONULL static void add_token_to_hash(in3_digest_t msg_hash, d_token_t* t) {
-#ifdef CRYPTO_LIB
   switch (d_type(t)) {
     case T_ARRAY:
     case T_OBJECT:
@@ -141,10 +135,6 @@ NONULL static void add_token_to_hash(in3_digest_t msg_hash, d_token_t* t) {
       crypto_update_hash(msg_hash, bytes(b.data, b.len));
     }
   }
-#else
-  UNUSED_VAR(msg_hash);
-  UNUSED_VAR(t);
-#endif
 }
 
 NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) {
@@ -196,13 +186,11 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
       TRY(in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, &pctx))
 
       if (msg_hash.ctx) {
-#ifdef CRYPTO_LIB
         in3_pay_sign_req_ctx_t sctx      = {.req = c, .request = request_token, .signature = {0}};
         bytes_t                sig_bytes = bytes(sctx.signature, 65);
         crypto_finalize_hash(msg_hash, sctx.request_hash);
         TRY(in3_plugin_execute_first(c, PLGN_ACT_PAY_SIGN_REQ, &sctx))
         sb_add_bytes(sb, ",\"sig\":", &sig_bytes, 1, false);
-#endif
       }
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
