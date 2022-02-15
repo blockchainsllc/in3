@@ -11,6 +11,10 @@
 #include "../../third-party/crypto/base58.h"
 #include "../../third-party/crypto/bignum.h"
 
+#ifdef WASM
+#include "emscripten.h"
+#endif
+
 #ifdef BASE64
 #include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/libb64/cencode.h"
@@ -20,9 +24,13 @@ int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
   switch (type) {
     case ENC_HEX: return bytes_to_hex(src.data, src.len, dst);
     case ENC_BASE58: {
+#ifdef CRYPTO_TREZOR
       size_t size = src.len * 2 + 1;
       if (!b58enc(dst, &size, src.data, src.len) || size > src.len * 2) return -1;
       return (int) size;
+#else
+      return -1;
+#endif
     }
     case ENC_BASE64: {
 #ifdef BASE64
@@ -35,6 +43,7 @@ int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
 #endif
     }
     case ENC_DECIMAL: {
+#ifdef CRYPTO_TREZOR
       bytes32_t val = {0};
       memcpy(val + 32 - src.len, src.data, src.len);
       bignum256 bn;
@@ -44,6 +53,9 @@ int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
       memcpy(dst, tmp, l);
       dst[l] = 0;
       return l;
+#else
+      return -1;
+#endif
     }
     default: return IN3_ENOTSUP;
   }
@@ -62,12 +74,16 @@ int decode(in3_encoding_type_t type, const char* src, int src_len, uint8_t* dst)
   switch (type) {
     case ENC_HEX: return hex_to_bytes(src, src_len, dst, src_len * 2);
     case ENC_BASE58: {
+#ifdef CRYPTO_TREZOR
       size_t size = src_len;
       if (b58tobin(dst, &size, src))
         memmove(dst, dst + src_len - size, size);
       else
         return -1;
       return (int) size;
+#else
+      return -1;
+#endif
     }
     case ENC_BASE64: {
 #ifdef BASE64
@@ -90,4 +106,34 @@ int decode_size(in3_encoding_type_t type, int src_len) {
     case ENC_BASE64: return src_len;
     default: return src_len;
   }
+}
+
+#ifdef WASM
+EM_JS(void, wasm_random_buffer, (uint8_t * dst, size_t len), {
+  // unload len
+  var res = randomBytes(len);
+  for (var i = 0; i < len; i++) {
+    HEAPU8[dst + i] = res[i];
+  }
+})
+#endif
+void random_buffer(uint8_t* dst, size_t len) {
+#ifdef WASM
+  wasm_random_buffer(dst, len);
+  return;
+#else
+  FILE* r = fopen("/dev/urandom", "r");
+  if (r) {
+    for (size_t i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
+    fclose(r);
+    return;
+  }
+#endif
+  srand(current_ms() % 0xFFFFFFFF);
+#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
+  unsigned int number;
+  for (size_t i = 0; i < len; i++) dst[i] = (rand_s(&number) ? rand() : (int) number) % 256;
+#else
+  for (size_t i = 0; i < len; i++) dst[i] = rand() % 256;
+#endif
 }

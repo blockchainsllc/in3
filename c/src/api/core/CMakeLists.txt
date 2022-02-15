@@ -45,5 +45,4 @@ add_static_library(
   DEPENDS 
     core
     api_utils
-    crypto
 )

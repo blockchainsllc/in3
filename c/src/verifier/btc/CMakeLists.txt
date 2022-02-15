@@ -46,5 +46,4 @@ add_static_library(
 
   DEPENDS 
     core
-    crypto
 )

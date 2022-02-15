@@ -18,10 +18,6 @@
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/crypto/sha3.h"
 
-#ifdef WASM
-#include "emscripten.h"
-#endif
-
 /** writes 32 bytes to the pointer. */
 in3_ret_t keccak(bytes_t data, void* dst) {
   struct SHA3_CTX ctx;
@@ -142,36 +138,6 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
     }
     default: return IN3_ENOTSUP;
   }
-}
-
-#ifdef WASM
-EM_JS(void, wasm_random_buffer, (uint8_t * dst, size_t len), {
-  // unload len
-  var res = randomBytes(len);
-  for (var i = 0; i < len; i++) {
-    HEAPU8[dst + i] = res[i];
-  }
-})
-#endif
-void random_buffer(uint8_t* dst, size_t len) {
-#ifdef WASM
-  wasm_random_buffer(dst, len);
-  return;
-#else
-  FILE* r = fopen("/dev/urandom", "r");
-  if (r) {
-    for (size_t i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
-    fclose(r);
-    return;
-  }
-#endif
-  srand(current_ms() % 0xFFFFFFFF);
-#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
-  unsigned int number;
-  for (size_t i = 0; i < len; i++) dst[i] = (rand_s(&number) ? rand() : (int) number) % 256;
-#else
-  for (size_t i = 0; i < len; i++) dst[i] = rand() % 256;
-#endif
 }
 
 static void bip32_add_path(HDNode node, char* path, uint8_t* pk) {
