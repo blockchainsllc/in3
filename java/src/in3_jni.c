@@ -510,7 +510,7 @@ JNIEXPORT jstring JNICALL Java_in3_utils_Signer_getAddressFromKey(JNIEnv* env, j
   uint8_t   public_key[64], sdata[32];
   hex_to_bytes((char*) key, -1, prv_key, 32);
 
-  crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(prv_key, 32), public_key);
+  crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(prv_key, 32), public_key, NULL);
   keccak(bytes(public_key, 64), sdata);
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   char tmp[43];
