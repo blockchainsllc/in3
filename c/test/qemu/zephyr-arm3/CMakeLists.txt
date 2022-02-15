@@ -44,6 +44,7 @@ foreach(dep ${IN3_DEPS})
   #temp fix for building with a GLOB and not include all 3rd party libs
   list(FILTER files EXCLUDE REGEX ".*aestst.c$")
   list(FILTER files EXCLUDE REGEX ".*crypto_none.c$")
+  list(FILTER files EXCLUDE REGEX ".*crypto_openssl.c$")
   target_sources(app PRIVATE "${files}" "${files2}")
   include_directories ("${dep}")
 endforeach()

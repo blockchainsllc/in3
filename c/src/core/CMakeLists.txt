@@ -42,9 +42,11 @@ ENDIF (IN3_STAGING)
 
 if(CRYPTO_TREZOR)
   set(CRYPTO_SRC util/crypto_trezor.c)
+elseif(CRYPTO_OPENSSL)
+  set(CRYPTO_SRC util/crypto_openssl.c)
 else()
   set(CRYPTO_SRC util/crypto_none.c)
-endif(CRYPTO_TREZOR)
+endif()
 
 
 add_static_library(
@@ -79,3 +81,27 @@ endif()
 if(ETH_FULL AND IN3API)
   target_link_libraries(core tommath)
 endif()
+
+if(CRYPTO_OPENSSL)
+  include(ExternalProject)
+  ExternalProject_Add(openssl
+    GIT_REPOSITORY    https://github.com/openssl/openssl.git
+    GIT_TAG           master
+    GIT_PROGRESS      true
+    BUILD_IN_SOURCE   true
+    USES_TERMINAL_CONFIGURE true
+    USES_TERMINAL_BUILD true
+    SOURCE_DIR        "${CMAKE_BINARY_DIR}/openssl"
+    CONFIGURE_COMMAND eval "test -f Makefile || ./Configure --prefix=${CMAKE_INSTALL_PREFIX} no-afalgeng "
+    BUILD_COMMAND     make
+    INSTALL_COMMAND   ""
+  )
+
+  include_directories( ${CMAKE_BINARY_DIR}/openssl/include )
+  add_library(crypto_ssl STATIC IMPORTED GLOBAL)
+  set_target_properties(crypto_ssl PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/openssl/libcrypto.a)
+  add_dependencies(crypto_ssl openssl)
+
+  target_link_libraries(core crypto_ssl)
+endif()
+
