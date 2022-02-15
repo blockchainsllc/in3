@@ -132,12 +132,11 @@ typedef struct json_parser {
  * and NULL as 0x.
  * Objects or arrays will return 0x.
  */
-bytes_t  d_bytes(d_token_t* item);                                 /**< converts the data to bytes .*/
-bytes_t  d_bytesl(d_token_t* item, uint32_t len);                  /**< converts the data to bytes .*/
-bytes_t  d_num_bytes(d_token_t* f);                                /**< converts the token into bytes, assuming this to be a numeric value. in case of an string it will be converted (chainging the token) */
-int      d_bytes_to(d_token_t* item, uint8_t* dst, const int max); /**< writes the byte-representation to the dst. details see d_bytes.*/
-bytes_t* d_as_bytes(d_token_t* item);                              /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
-// bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                         /**< returns the value as bytes with length l (may reallocates) */
+bytes_t                      d_bytes(d_token_t* item);                                                                             /**< converts the data to bytes .*/
+bytes_t                      d_bytesl(d_token_t* item, uint32_t len);                                                              /**< converts the data to bytes .*/
+bytes_t                      d_num_bytes(d_token_t* f);                                                                            /**< converts the token into bytes, assuming this to be a numeric value. in case of an string it will be converted (chainging the token) */
+int                          d_bytes_to(d_token_t* item, uint8_t* dst, const int max);                                             /**< writes the byte-representation to the dst. details see d_bytes.*/
+bytes_t*                     d_as_bytes(d_token_t* item);                                                                          /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
 char*                        d_string(d_token_t* item);                                                                            /**< converts the value as string. Make sure the type is string! */
 int32_t                      d_int(d_token_t* item);                                                                               /**< returns the value as integer. only if type is integer */
 int32_t                      d_intd(d_token_t* item, const uint32_t def_val);                                                      /**< returns the value as integer or if NULL the default. only if type is integer */
