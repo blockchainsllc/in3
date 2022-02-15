@@ -34,6 +34,7 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
@@ -461,4 +462,22 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
   in3_cache_add_ptr(&ctx->cache, old_req)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_NOT_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards, butt only for subrequests
   return IN3_OK;
+}
+
+/** minimum signer for the wallet, returns the signed message which needs to be freed **/
+char* eth_wallet_sign(const char* key, const char* data) {
+  int     data_l = strlen(data) / 2 - 1;
+  uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+  hex_to_bytes(key + 2, -1, key_bytes, 32);
+  bytes32_t hash;
+  keccak(bytes(data_bytes, hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1)), hash);
+  char* res = _calloc(133, 1);
+
+  if (crypto_sign_digest(ECDSA_SECP256K1, hash, key_bytes, res) == IN3_OK) {
+    bytes_to_hex(dst, 65, res + 2);
+    res[0] = '0';
+    res[1] = 'x';
+  }
+
+  return res;
 }

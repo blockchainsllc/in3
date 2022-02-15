@@ -47,23 +47,6 @@ extern "C" {
 #include "../../core/client/client.h"
 #include "../../core/client/plugin.h"
 
-typedef enum {
-  hasher_sha2,
-  hasher_sha2d,
-  hasher_sha2_ripemd,
-  hasher_sha3,
-  hasher_sha3k,
-  hasher_blake,
-  hasher_blaked,
-  hasher_blake_ripemd,
-  hasher_groestld_trunc, /* double groestl512 hasher truncated to 256 bits */
-  hasher_overwinter_prevouts,
-  hasher_overwinter_sequence,
-  hasher_overwinter_outputs,
-  hasher_overwinter_preimage,
-  hasher_sapling_preimage,
-} hasher_t;
-
 /**
  * simply signer with one private key.
  *
@@ -85,7 +68,7 @@ in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk);
 void eth_set_pk_signer_hex(in3_t* in3, char* key);
 
 /** Signs message after hashing it with hasher function given in 'hasher_t', with the given private key*/
-in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, in3_digest_type_t hasher, uint8_t* dst);
+in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, d_digest_type_t hasher, uint8_t* dst);
 
 /** hashes the msg by adding the Ethereum Signed Message-Prefix */
 void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg);

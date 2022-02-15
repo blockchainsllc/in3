@@ -39,7 +39,12 @@ IF (IN3_STAGING)
     ADD_DEFINITIONS(-DIN3_STAGING)
 ENDIF (IN3_STAGING)
 
-set(CRYPTO_SRC util/crypto_trezor.c)
+
+if(CRYPTO_TREZOR)
+  set(CRYPTO_SRC util/crypto_trezor.c)
+else()
+  set(CRYPTO_SRC util/crypto_none.c)
+endif(CRYPTO_TREZOR)
 
 
 add_static_library(
