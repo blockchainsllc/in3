@@ -78,6 +78,16 @@ static bool add_key(in3_t* c, bytes32_t pk) {
   eth_set_pk_signer(c, pk);
   return true;
 }
+/** Signs message after hashing it with hasher function given in 'hasher_t', with the given private key*/
+in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, in3_digest_type_t hasher, uint8_t* dst) {
+  bytes_t res = sign_with_pk(pk, bytes(message, len), hasher);
+  if (res.data) {
+    memcpy(dst, res.data, res.len);
+    _free(res.data);
+    return IN3_OK;
+  }
+  return IN3_EINVAL;
+}
 
 void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
   in3_digest_t d      = crypto_create_hash(DIGEST_KECCAK);

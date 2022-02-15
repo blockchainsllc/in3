@@ -32,7 +32,7 @@ impl Signer for In3Signer {
                 msg.0.as_mut_ptr(),
                 msg.0.len(),
                 self.pk.0.as_mut_ptr(),
-                in3_sys::hasher_t::hasher_sha3k,
+                in3_sys::in3_digest_type_t::DIGEST_KECCAK,
                 dst.as_mut_ptr(),
             )
         };
