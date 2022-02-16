@@ -529,7 +529,7 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
     if (btc_addr.len != 20) return req_set_error(req, "ERROR: one or more outputs have invalid address", IN3_EINVAL);
     if (value == 0) return req_set_error(req, "ERROR: output value cannot be zero", IN3_EINVAL);
 
-    new_tx_out.value       = d_get_long(output_data, key("value"));
+    new_tx_out.value       = value;
     new_tx_out.script.data = btc_build_locking_script(&btc_addr, BTC_P2PKH, NULL, 0);
     new_tx_out.script.type = btc_get_script_type(&new_tx_out.script.data);
 
@@ -554,13 +554,13 @@ static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
   // Check for relative locktime (BIP68)
   d_token_t* rlt = d_get(arg, key("rlt"));
   if (rlt) {
-    const char* type  = d_get_string(rlt, key("rlt_type"));
-    uint16_t    value = (uint16_t) d_get_long(rlt, key("value"));
+    const char* rlt_type = d_get_string(rlt, key("rlt_type"));
+    uint16_t    value    = (uint16_t) d_get_long(rlt, key("value"));
 
     uint8_t rlt_type_flag = 0;
-    if (strstr(type, "block"))
+    if (strstr(rlt_type, "block"))
       rlt_type_flag = SEQUENCE_LOCKTIME_TYPE_BLOCK;
-    else if (strstr(type, "time"))
+    else if (strstr(rlt_type, "time"))
       rlt_type_flag = SEQUENCE_LOCKTIME_TYPE_TIME;
     else
       return IN3_EINVAL;
@@ -572,15 +572,15 @@ static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
   }
 
   // Check for unsupported scripts on utxo
-  btc_stype_t type      = utxo->tx_out.script.type;
-  utxo->raw_script.type = BTC_UNKNOWN;
+  btc_stype_t script_type = utxo->tx_out.script.type;
+  utxo->raw_script.type   = BTC_UNKNOWN;
 
-  if (type == BTC_UNKNOWN || type == BTC_NON_STANDARD || type == BTC_UNSUPPORTED) {
+  if (script_type == BTC_UNKNOWN || script_type == BTC_NON_STANDARD || script_type == BTC_UNSUPPORTED) {
     return IN3_EINVAL;
   }
 
   // Check for raw scripts on pay-to-script-hash utxo
-  if (type == BTC_P2SH || type == BTC_P2WSH) {
+  if (script_type == BTC_P2SH || script_type == BTC_P2WSH) {
     // is the argument defining an unlocking script?
     bytes_t raw_script = d_bytes(d_get(arg, key("script")));
     if (!raw_script.data) return IN3_EINVAL; // A script should be difined to redeem a utxo of this type
@@ -589,7 +589,7 @@ static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
   }
 
   // Check for multisig
-  if (type == BTC_P2MS || utxo->raw_script.type == BTC_P2MS) {
+  if (script_type == BTC_P2MS || utxo->raw_script.type == BTC_P2MS) {
     // is the argument defining a new "account<->pub_key" pair?
     d_token_t* accs = d_get(arg, key("accounts"));
     if (!accs || d_type(accs) != T_ARRAY) return IN3_EINVAL;

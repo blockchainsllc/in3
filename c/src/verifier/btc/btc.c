@@ -578,11 +578,11 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   btc_init_tx_ctx(&tx_ctx);
 
   // first parameter is the btc address which shall receive the remaining change, discounting fees, after transaction is complete
-  bytes_t from_addr = d_bytes(d_get(params, key("from")));
+  bytes_t from_addr = d_bytes(d_get_at(params, 0));
   if (from_addr.len != BTC_ADDR_SIZE) return req_set_error(req, "ERROR: Invalid btc address", IN3_EINVAL);
 
   // second parameter is the ethereum account used by the signer api
-  d_token_t* sig_acc = d_get(params, key("account"));
+  d_token_t* sig_acc = d_get_at(params, 1);
   if (!sig_acc || d_type(sig_acc) != T_OBJECT) return req_set_error(req, "ERROR: Invalid signing account", IN3_EINVAL);
   default_account.account = d_bytes(d_get(sig_acc, K_ADDRESS));
   default_account.pub_key = d_bytes(d_get(sig_acc, key("btc_pub_key")));
@@ -590,12 +590,12 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (!btc_public_key_is_valid((const bytes_t*) &default_account.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
 
   // third parameter are the transaction outputs data
-  d_token_t* output_data = d_get_at(params, key("outputs"));
+  d_token_t* output_data = d_get_at(params, 2);
   if (!output_data || d_type(output_data) != T_ARRAY || d_len(output_data) < 1) return req_set_error(req, "ERROR: Invalid transaction output data", IN3_EINVAL);
   btc_prepare_outputs(req, &tx_ctx, output_data);
 
   // forth parameter is utxo data
-  d_token_t* utxo_data = d_get_at(params, key("utxos"));
+  d_token_t* utxo_data = d_get_at(params, 3);
   if (!utxo_data || d_type(utxo_data) != T_ARRAY || d_len(utxo_data) < 1) return req_set_error(req, "ERROR: Invalid unspent outputs (utxos) data", IN3_EINVAL);
   btc_prepare_utxos(req, &tx_ctx, &default_account, utxo_data);
 
