@@ -1,11 +1,11 @@
 types:
   btc_sign_acc:
-      address:
-        descr: eth address used by in3 to sign btc transactions
-        type: address
-      btc_pub_key:
-        descr: btc public key linked to previously provided eth address
-        type: bytes
+    address:
+      descr: eth address used by in3 to sign btc transactions
+      type: address
+    btc_pub_key:
+      descr: btc public key linked to previously provided eth address
+      type: bytes
 
   btc_value:
     address:
@@ -16,10 +16,6 @@ types:
       type: uint64
   
   btc_rlt:
-    descr: |
-      as defined by BIP68, relative locktime (RLT) is a repurpose of the sequence number 
-      of a transaction input to allow it to remain invalid until a certain time constraint
-      is met.
     rlt_type:
       descr: |
         when set to "block", input will be valid only after <value> blocks are mined
@@ -43,7 +39,7 @@ types:
       type: string
       optional: true
     rlt:
-      descr: relative-locktime (rlt) configurations. When null, rlt is deactivated
+      descr: relative-locktime (rlt) configurations. When null, rlt is deactivated as defined by BIP68, relative locktime (RLT) is a repurpose of the sequence number of a transaction input to allow it to remain invalid until a certain time constraint is met.
       type: btc_rlt
       optional: true
     accounts:
@@ -1111,6 +1107,7 @@ btc:
     params:
       from:
         descr: 20-byte btc address to which the "change" from the utxos will be sent
+        type: address
       account:
         descr: default eth account used by in3 to sign btc transactions
         type: btc_sign_acc
@@ -1125,6 +1122,7 @@ btc:
     result:
       descr: the transactionhash
       type: bytes32
+
   sendrawtransaction:
     descr: sends a transaction to a btc node
     params:
