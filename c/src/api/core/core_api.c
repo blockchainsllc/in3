@@ -49,6 +49,9 @@
 #include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/libb64/cencode.h"
 #endif
+#ifdef WASM
+#include "emscripten.h"
+#endif
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -111,9 +114,21 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
   TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_CACHE_CLEAR, NULL));
   return in3_rpc_handle_with_string(ctx, "true");
 }
+#ifdef WASM
+EM_JS(void, wasm_random_buffer, (uint8_t * dst, size_t len), {
+  // unload len
+  var res = randomBytes(len);
+  for (var i = 0; i < len; i++) {
+    HEAPU8[dst + i] = res[i];
+  }
+})
+#endif
 
 void random_buffer(uint8_t* dst, size_t len) {
-#ifndef WASM
+#ifdef WASM
+  wasm_random_buffer(dst, len);
+  return;
+#else
   FILE* r = fopen("/dev/urandom", "r");
   if (r) {
     for (size_t i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
