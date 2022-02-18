@@ -173,6 +173,7 @@ in3_ret_t bip32(bytes_t seed, in3_curve_type_t curve, const char* path, uint8_t*
     char* s = strtok(p, ",|; \n");
     for (uint8_t* pp = dst; s; s = strtok(NULL, ",|; \n"), pp += 32)
       bip32_add_path(node, s, pp);
+    _free(p);
   }
   memzero(&node, sizeof(node));
   return IN3_OK;
