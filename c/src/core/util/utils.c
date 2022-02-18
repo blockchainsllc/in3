@@ -424,3 +424,23 @@ void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b) {
     pa--;
   }
 }
+
+int tokenize(char* str, const char* del) {
+  int   c = 0;
+  char* l = str;
+  for (; *str; str++) {
+    if (strchr(del, *str)) {
+      *str = 0;
+      c++;
+      int skip = 1;
+      while (*(str + skip) && strchr(del, *(str + skip))) skip++;
+      if (skip > 1) {
+        int len = strlen(str + 1);
+        memmove(str + 1, str + skip, len - skip + 2);
+      }
+      l = str + 1;
+    }
+  }
+  if (l != str) c++;
+  return c;
+}

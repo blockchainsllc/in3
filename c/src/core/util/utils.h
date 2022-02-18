@@ -349,6 +349,11 @@ int64_t parse_float_val(const char* data, /**< the data string*/
 void b256_add(bytes32_t a, uint8_t* b, wlen_t len_b);
 
 /**
+ * tokenizes a string by setting a 0 where the delimiter matches
+ * it returns the number of tokens created
+ */
+int tokenize(char* str, const char* del);
+/**
  * prints a bytes into a string
  */
 char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const char* postfix);

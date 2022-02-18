@@ -143,8 +143,8 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
 static void bip32_add_path(HDNode node, char* path, uint8_t* pk) {
   char* tmp = alloca(strlen(path) + 1);
   strcpy(tmp, path);
-  char* p = NULL;
-  while ((p = strtok(p ? NULL : tmp, "/"))) {
+  int n = tokenize(tmp, "/");
+  for (char* p = tmp; n; n--, p += strlen(p) + 1) {
     if (strcmp(p, "m") == 0) continue;
     if (p[0] == '\'')
       hdnode_private_ckd_prime(&node, atoi(p + 1));
@@ -169,9 +169,10 @@ in3_ret_t bip32(bytes_t seed, in3_curve_type_t curve, const char* path, uint8_t*
   if (!path)
     memcpy(dst, node.private_key, 32);
   else {
-    char* p = _strdupn(path, -1);
-    char* s = strtok(p, ",|; \n");
-    for (uint8_t* pp = dst; s; s = strtok(s, ",|; \n"), pp += 32)
+    char*    p  = _strdupn(path, -1);
+    int      n  = tokenize(p, ",|; \n");
+    uint8_t* pp = dst;
+    for (char* s = p; n; n--, s += strlen(s) + 1, pp += 32)
       bip32_add_path(node, s, pp);
     _free(p);
   }
