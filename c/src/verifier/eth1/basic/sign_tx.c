@@ -34,11 +34,10 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
@@ -469,12 +468,12 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
 char* eth_wallet_sign(const char* key, const char* data) {
   int     data_l = strlen(data) / 2 - 1;
   uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+  hex_to_bytes(key + 2, -1, key_bytes, 32);
+  bytes32_t hash;
+  keccak(bytes(data_bytes, hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1)), hash);
+  char* res = _calloc(133, 1);
 
-  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
-  data_l    = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
-  char* res = _malloc(133);
-
-  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
+  if (crypto_sign_digest(ECDSA_SECP256K1, hash, key_bytes, dst) == IN3_OK) {
     bytes_to_hex(dst, 65, res + 2);
     res[0] = '0';
     res[1] = 'x';

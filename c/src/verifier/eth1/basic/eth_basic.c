@@ -35,6 +35,7 @@
 #include "eth_basic.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/debug.h"
 #include "../../../core/util/mem.h"

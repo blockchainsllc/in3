@@ -36,14 +36,11 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/client/version.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../signer/pk-signer/signer.h"
-#include "../../third-party/crypto/bignum.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/rand.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
@@ -223,13 +220,12 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
 
   // determine from-address, but only if we have all the fields or a signed tx
   if (len && !fields[len]) {
-    uint8_t pub[65];                                                   // pub key-data
-    bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1}; // bytes, which points to offset one because the pubkey will be created as 65 bytes
-    bytes_t last, v;                                                   // bytes structs
-    rlp_decode(&data, len - 1, &v);                                    // get the s-field,
-    if (v.len == 0) {                                                  // and check if this is empty, since it means it is a raw tx without a signature
-      rlp_decode(&data, len - 3, &v);                                  // but in this case the v-value
-      sb_printx(&response, ",\"chainId\":\"%V\"", v);                  // is the chain_id
+    uint8_t pub[65];                                  // pub key-data
+    bytes_t last, v;                                  // bytes structs
+    rlp_decode(&data, len - 1, &v);                   // get the s-field,
+    if (v.len == 0) {                                 // and check if this is empty, since it means it is a raw tx without a signature
+      rlp_decode(&data, len - 3, &v);                 // but in this case the v-value
+      sb_printx(&response, ",\"chainId\":\"%V\"", v); // is the chain_id
     }
     else {
 
@@ -271,14 +267,14 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
       sb_printx(&response, ",\"signature\":\"%B\"", bytes(signature, 65));
 
       // now we recover. returning a none zero value means an invalid signature
-      if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature, hash, r)) {
+      if (crypto_recover(ECDSA_SECP256K1, hash, bytes(signature, 65), pub)) {
         _free(response.data);
         return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
       }
 
       // calculate the address from the pubkey
-      keccak(pubkey_bytes, hash);                                                                        //  by hashing it
-      sb_printx(&response, ",\"publicKey\":\"%B\",\"from\":\"%B\"", pubkey_bytes, bytes(hash + 12, 20)); // and taking the last 20 bytes
+      keccak(bytes(pub, 64), hash);                                                                        //  by hashing it
+      sb_printx(&response, ",\"publicKey\":\"%B\",\"from\":\"%B\"", bytes(pub, 64), bytes(hash + 12, 20)); // and taking the last 20 bytes
     }
   }
 
@@ -465,37 +461,37 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
 }
 
 char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
-  char      tmp[300];
-  bytes32_t val = {0};
-  memcpy(val + 32 - wei.len, wei.data, wei.len);
-  bignum256 bn;
-  bn_read_be(val, &bn);
-  size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, 300);
-  if (exp) {
-    if (l <= (size_t) exp) {
-      memmove(tmp + exp - l + 1, tmp, l + 1);
-      memset(tmp, '0', exp - l + 1);
-      l += exp - l + 1;
-    }
-    memmove(tmp + l - exp + 1, tmp + l - exp, exp + 1);
-    tmp[l - exp] = '.';
-    l++;
-  }
-  if (digits == -1 && exp)
-    for (int i = l - 1;; i--) {
-      if (tmp[i] == '0')
-        tmp[i] = 0;
-      else if (tmp[i] == '.') {
-        tmp[i] = 0;
-        break;
+  char tmp[300];
+  int  l = encode(ENC_DECIMAL, wei, tmp);
+  if (l < 0)
+    sprintf(tmp, "<not supported>");
+  else {
+    if (exp) {
+      if (l <= exp) {
+        memmove(tmp + exp - l + 1, tmp, l + 1);
+        memset(tmp, '0', exp - l + 1);
+        l += exp - l + 1;
       }
-      else
-        break;
+      memmove(tmp + l - exp + 1, tmp + l - exp, exp + 1);
+      tmp[l - exp] = '.';
+      l++;
     }
-  else if (digits == 0)
-    tmp[l - exp + digits - 1] = 0;
-  else if (digits < exp)
-    tmp[l - exp + digits] = 0;
+    if (digits == -1 && exp)
+      for (int i = l - 1;; i--) {
+        if (tmp[i] == '0')
+          tmp[i] = 0;
+        else if (tmp[i] == '.') {
+          tmp[i] = 0;
+          break;
+        }
+        else
+          break;
+      }
+    else if (digits == 0)
+      tmp[l - exp + digits - 1] = 0;
+    else if (digits < exp)
+      tmp[l - exp + digits] = 0;
+  }
 
   return _strdupn(tmp, -1);
 }
@@ -530,22 +526,22 @@ static in3_ret_t in3_fromWei(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
   bytes_t   private_key;
-  uint8_t   public_key[65];
+  uint8_t   public_key[64];
   bytes32_t hash;
 
   // fetch arguments
   TRY_PARAM_GET_REQUIRED_BYTES(private_key, ctx, 0, 32, 32);
 
   // extract public key
-  ecdsa_get_public_key65(&secp256k1, private_key.data, public_key);
+  TRY(crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, private_key, public_key, NULL))
 
   // hash it
   if (strcmp(ctx->method, "in3_pk2address") == 0) {
-    keccak(bytes(public_key + 1, 64), hash);
+    keccak(bytes(public_key, 64), hash);
     return in3_rpc_handle_with_bytes(ctx, bytes(hash + 12, 20));
   }
   else
-    return in3_rpc_handle_with_bytes(ctx, bytes(public_key + 1, 64));
+    return in3_rpc_handle_with_bytes(ctx, bytes(public_key, 64));
 }
 
 static in3_ret_t parse_tx_param(in3_rpc_handle_ctx_t* ctx, char* params, sb_t* fn_args, sb_t* fn_sig, sb_t* sb) {
@@ -695,8 +691,7 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t hash;
-  uint8_t   pub[65];
-  bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
+  uint8_t   pub[64];
   bytes_t   msg, signature;
   char*     sig_type;
 
@@ -719,12 +714,11 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   else
     keccak(msg, hash);
 
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, hash, signature.data[64] >= 27 ? signature.data[64] - 27 : signature.data[64]))
-    return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
+  TRY(req_set_error(ctx->req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, hash, signature, pub)))
 
   // hash the pubkey
-  keccak(pubkey_bytes, hash);
-  sb_printx(in3_rpc_handle_start(ctx), "{\"publicKey\":\"%B\",\"address\":\"%B\"}", pubkey_bytes, bytes(hash + 12, 20));
+  keccak(bytes(pub, 64), hash);
+  sb_printx(in3_rpc_handle_start(ctx), "{\"publicKey\":\"%B\",\"address\":\"%B\"}", bytes(pub, 64), bytes(hash + 12, 20));
   return in3_rpc_handle_finish(ctx);
 }
 

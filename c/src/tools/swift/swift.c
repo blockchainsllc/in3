@@ -5,9 +5,9 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
-#include "../../third-party/crypto/sha3.h"
 
 static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   swift_cb_t* conf = plugin_data;
@@ -70,11 +70,15 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       bytes_t   signature = NULL_BYTES;
       bytes32_t msghash;
 
-      struct SHA3_CTX kctx;
-      sha3_256_Init(&kctx);
-      sha3_Update(&kctx, ctx->message.data, ctx->message.len);
-      if (ctx->account.data) sha3_Update(&kctx, ctx->account.data, ctx->account.len);
-      keccak_Final(&kctx, msghash);
+      if (ctx->account.data) {
+        in3_digest_t d = crypto_create_hash(DIGEST_KECCAK);
+        if (!d.ctx) return req_set_error(ctx->req, "keccak not suported", IN3_ENOTSUP);
+        crypto_update_hash(d, ctx->message);
+        crypto_update_hash(d, ctx->account);
+        crypto_finalize_hash(d, msghash);
+      }
+      else
+        keccak(ctx->message, msghash);
 
       TRY(req_send_sign_request(ctx->req, ctx->digest_type, ctx->payload_type, &signature, ctx->message, ctx->account, ctx->meta, bytes(msghash, 32)))
       ctx->signature = bytes_dup(signature);

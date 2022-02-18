@@ -37,6 +37,7 @@
  * */
 
 #include "../../verifier/eth1/nano/rlp.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"

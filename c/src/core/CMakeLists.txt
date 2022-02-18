@@ -40,6 +40,37 @@ IF (IN3_STAGING)
 ENDIF (IN3_STAGING)
 
 
+if(CRYPTO_TREZOR)
+  set(CRYPTO_SRC util/crypto_trezor.c)
+elseif(CRYPTO_OPENSSL)
+  set(CRYPTO_SRC util/crypto_openssl.c)
+else()
+  set(CRYPTO_SRC util/crypto_none.c)
+endif()
+
+if(CRYPTO_OPENSSL)
+  include(ExternalProject)
+  ExternalProject_Add(openssl
+    GIT_REPOSITORY    https://github.com/openssl/openssl.git
+    GIT_TAG           master
+    GIT_PROGRESS      true
+    BUILD_IN_SOURCE   true
+    USES_TERMINAL_CONFIGURE true
+    USES_TERMINAL_BUILD true
+    SOURCE_DIR        "${CMAKE_BINARY_DIR}/openssl"
+    CONFIGURE_COMMAND eval "test -f Makefile || ./Configure --debug --prefix=${CMAKE_INSTALL_PREFIX} no-uplink no-ui-console no-ts no-threads no-tests no-ssl-trace  no-sse2 no-srtp no-srp no-sock no-rdrand no-psk no-padlockeng no-ocsp  no-nextprotoneg no-multiblock no-makedepend no-legacy no-gost no-dso no-dgram no-deprecated no-ct no-comp no-cms no-cmp no-capieng no-buildtest-c++  no-autoalginit no-async no-asm no-afalgeng no-ktls no-asan "
+    BUILD_COMMAND     make
+    INSTALL_COMMAND   ""
+  )
+
+  include_directories( ${CMAKE_BINARY_DIR}/openssl/include )
+  add_library(crypto_ssl STATIC IMPORTED GLOBAL)
+  set_target_properties(crypto_ssl PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/openssl/libcrypto.a)
+  add_dependencies(crypto_ssl openssl)
+endif()
+
+
+
 add_static_library(
   NAME     core 
   
@@ -57,12 +88,23 @@ add_static_library(
     util/mem.c
     util/stringbuilder.c
     util/bitset.c
+    util/crypto_encode.c
+    ${CRYPTO_SRC}
 )
 
-if(CRYPTO_LIB)
+if(CRYPTO_TREZOR)
   target_link_libraries(core crypto)
+endif()
+
+if (BASE64)
+  target_link_libraries(core b64)
 endif()
 
 if(ETH_FULL AND IN3API)
   target_link_libraries(core tommath)
 endif()
+
+if(CRYPTO_OPENSSL)
+  target_link_libraries(core crypto_ssl)
+endif()
+

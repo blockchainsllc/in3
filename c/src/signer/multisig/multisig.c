@@ -37,27 +37,22 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/request.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "../../verifier/eth1/nano/serialize.h"
 
 static bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
 
   // check messagehash
-  uint8_t pubkey[65], tmp[32];
-  int     v = sig[64];
-
-  // correct v
-  if (v >= 27) v -= 27;
+  uint8_t pubkey[64];
 
   // verify signature
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sig, hash, v)) return false;
-  keccak(bytes(pubkey + 1, 64), tmp);
-  memcpy(result, tmp + 12, 20);
+  if (crypto_recover(ECDSA_SECP256K1, hash, bytes(sig, 65), pubkey)) return false;
+  keccak(bytes(pubkey, 64), pubkey);
+  memcpy(result, pubkey + 12, 20);
   return true;
 }
 
@@ -459,16 +454,15 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       uint8_t tmp[66];
       memcpy(tmp, "\x60\xb3\xcb\xf8\xb4\xa2\x23\xd6\x8d\x64\x1b\x3b\x6d\xdf\x9a\x29\x8e\x7f\x33\x71\x0c\xf3\xd3\xa9\xd1\x14\x6b\x5a\x61\x50\xfb\xca", 32); // SAFE_MSG_TYPEHASH
 
-      struct SHA3_CTX kctx;
-      sha3_256_Init(&kctx);
+      in3_digest_t d = crypto_create_hash(DIGEST_KECCAK);
       if (ctx->digest_type == SIGN_EC_PREFIX) {
         const char* PREFIX = "\x19"
                              "Ethereum Signed Message:\n";
-        sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-        sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", (int) ctx->message.len));
+        crypto_update_hash(d, bytes((uint8_t*) PREFIX, strlen(PREFIX)));
+        crypto_update_hash(d, bytes(hash, sprintf((char*) hash, "%d", (int) ctx->message.len)));
       }
-      if (ctx->message.len) sha3_Update(&kctx, ctx->message.data, ctx->message.len);
-      keccak_Final(&kctx, hash);
+      if (ctx->message.len) crypto_update_hash(d, bytes(ctx->message.data, ctx->message.len));
+      crypto_finalize_hash(d, hash);
 
       if (ms->type == MS_IAMO_SAFE)
         keccak(bytes(hash, 32), tmp + 32);

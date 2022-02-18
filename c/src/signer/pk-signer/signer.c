@@ -36,15 +36,11 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "../../third-party/crypto/bip32.h"
-#include "../../third-party/crypto/bip39.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/memzero.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include <string.h>
 
@@ -53,25 +49,14 @@ typedef struct signer_key {
   address_t account;
 } signer_key_t;
 
-/** hash data with given hasher type and sign the given data with give private key*/
-in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
-  if (hasher == hasher_sha3k && ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message, len, dst, dst + 64, NULL) < 0)
-    return IN3_EUNKNOWN;
-  return IN3_OK;
-}
-
-/**  sign the given data with give private key */
-in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst) {
-  if (ecdsa_sign_digest(&secp256k1, pk, message, dst, dst + 64, NULL) < 0)
-    return IN3_EUNKNOWN;
-  return IN3_OK;
-}
-
 static void get_address(uint8_t* pk, uint8_t* address) {
-  uint8_t public_key[65], sdata[32];
-  ecdsa_get_public_key65(&secp256k1, pk, public_key);
-  keccak(bytes(public_key + 1, 64), sdata);
-  memcpy(address, sdata + 12, 20);
+  uint8_t public_key[64];
+  if (crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(pk, 32), public_key, NULL) == IN3_ENOTSUP)
+    memset(address, 0, 20);
+  else {
+    keccak(bytes(public_key, 64), public_key);
+    memcpy(address, public_key + 12, 20);
+  }
 }
 
 static bool add_key(in3_t* c, bytes32_t pk) {
@@ -93,23 +78,32 @@ static bool add_key(in3_t* c, bytes32_t pk) {
   eth_set_pk_signer(c, pk);
   return true;
 }
+/** Signs message after hashing it with hasher function given in 'hasher_t', with the given private key*/
+in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, d_digest_type_t hasher, uint8_t* dst) {
+  bytes_t res = sign_with_pk(pk, bytes(message, len), hasher);
+  if (res.data) {
+    memcpy(dst, res.data, res.len);
+    _free(res.data);
+    return IN3_OK;
+  }
+  return IN3_EINVAL;
+}
 
 void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
-  struct SHA3_CTX kctx;
-  sha3_256_Init(&kctx);
-  const char* PREFIX = "\x19"
-                       "Ethereum Signed Message:\n";
-  sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-  sha3_Update(&kctx, dst, sprintf((char*) dst, "%d", (int) msg.len));
-  if (msg.len) sha3_Update(&kctx, msg.data, msg.len);
-  keccak_Final(&kctx, dst);
+  in3_digest_t d      = crypto_create_hash(DIGEST_KECCAK);
+  const char*  PREFIX = "\x19"
+                        "Ethereum Signed Message:\n";
+  crypto_update_hash(d, bytes((uint8_t*) PREFIX, strlen(PREFIX)));
+  crypto_update_hash(d, bytes(dst, sprintf((char*) dst, "%d", (int) msg.len)));
+  if (msg.len) crypto_update_hash(d, msg);
+  crypto_finalize_hash(d, dst);
 }
 
 bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_digest_type_t type) {
   bytes_t res = bytes(_malloc(65), 65);
   switch (type) {
     case SIGN_EC_RAW:
-      if (ecdsa_sign_digest(&secp256k1, pk, data.data, res.data, res.data + 64, NULL) < 0) {
+      if (crypto_sign_digest(ECDSA_SECP256K1, data.data, pk, res.data)) {
         _free(res.data);
         res = NULL_BYTES;
       }
@@ -118,24 +112,32 @@ bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_digest_type
     case SIGN_EC_PREFIX: {
       bytes32_t hash;
       eth_create_prefixed_msg_hash(hash, data);
-      if (ecdsa_sign_digest(&secp256k1, pk, hash, res.data, res.data + 64, NULL) < 0) {
+      if (crypto_sign_digest(ECDSA_SECP256K1, hash, pk, res.data)) {
         _free(res.data);
         res = NULL_BYTES;
       }
       break;
     }
-    case SIGN_EC_HASH:
-      if (ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, data.data, data.len, res.data, res.data + 64, NULL) < 0) {
+    case SIGN_EC_HASH: {
+      bytes32_t hash;
+      keccak(data, hash);
+      if (crypto_sign_digest(ECDSA_SECP256K1, hash, pk, res.data)) {
         _free(res.data);
         res = NULL_BYTES;
       }
       break;
-    case SIGN_EC_BTC:
-      if (ecdsa_sign(&secp256k1, HASHER_SHA2D, pk, data.data, data.len, res.data, res.data + 64, NULL) < 0) {
+    }
+    case SIGN_EC_BTC: {
+      bytes32_t    hash;
+      in3_digest_t d = crypto_create_hash(DIGEST_SHA256_BTC);
+      crypto_update_hash(d, data);
+      crypto_finalize_hash(d, hash);
+      if (crypto_sign_digest(ECDSA_SECP256K1, hash, pk, res.data)) {
         _free(res.data);
         res = NULL_BYTES;
       }
       break;
+    }
     default:
       _free(res.data);
       res = NULL_BYTES;
@@ -167,9 +169,7 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       // generate the address from the key
       in3_sign_public_key_ctx_t* ctx = action_ctx;
       if (ctx->account && memcmp(ctx->account, k->account, 20)) return IN3_EIGNORE;
-      uint8_t p[65];
-      ecdsa_get_public_key65(&secp256k1, k->pk, p);
-      memcpy(ctx->public_key, p + 1, 64);
+      crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(k->pk, 32), ctx->public_key, NULL);
       return IN3_OK;
     }
 
@@ -217,32 +217,6 @@ static in3_ret_t in3_addJsonKey(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_bytes(ctx, bytes(adr, 20));
 }
 
-static void addPath(in3_t* c, HDNode node, char* path, sb_t* sb) {
-  char* tmp = alloca(strlen(path) + 1);
-  strcpy(tmp, path);
-  char* p = NULL;
-  while ((p = strtok(p ? NULL : tmp, "/"))) {
-    if (strcmp(p, "m") == 0) continue;
-    if (p[0] == '\'')
-      hdnode_private_ckd_prime(&node, atoi(p + 1));
-    else if (p[strlen(p) - 1] == '\'') {
-      char tt[50];
-      strcpy(tt, p);
-      tt[strlen(p) - 1] = 0;
-      hdnode_private_ckd_prime(&node, atoi(p + 1));
-    }
-    else
-      hdnode_private_ckd(&node, atoi(p));
-  }
-
-  if (!add_key(c, node.private_key)) return;
-  if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
-  address_t adr;
-  get_address(node.private_key, adr);
-  memzero(&node, sizeof(node));
-  sb_printx(sb, "\"%B\"", bytes(adr, 20));
-}
-
 static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
 
   char*      curvename  = NULL;
@@ -250,29 +224,56 @@ static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
   char*      passphrase = NULL;
   d_token_t* paths      = NULL;
   uint8_t    seed[64];
-  HDNode     node = {0};
 
   TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
   TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
   TRY_PARAM_GET_ARRAY(paths, ctx, 2);
   TRY_PARAM_GET_STRING(curvename, ctx, 3, "secp256k1")
 
-  if (!mnemonic_check(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+  if (mnemonic_verify(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
 
   mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
-  if (!hdnode_from_seed(seed, 64, curvename, &node)) return req_set_error(ctx->req, "Invalid seed!", IN3_ERPC);
-  sb_t* sb = in3_rpc_handle_start(ctx);
-  sb_add_char(sb, '[');
-  if (!paths)
-    addPath(ctx->req->client, node, "m/44'/60'/0'/0/0", sb);
-  else
+  sb_t path = {0};
+
+  if (d_type(paths) == T_ARRAY) {
     for (d_iterator_t iter = d_iter(paths); iter.left; d_iter_next(&iter)) {
-      addPath(ctx->req->client, node, d_string(iter.token), sb);
+      if (path.len) sb_add_char(&path, ' ');
+      sb_add_chars(&path, d_string(iter.token));
     }
-  sb_add_char(sb, ']');
-  memzero(&node, sizeof(node));
+  }
+  else if (d_type(paths) == T_STRING)
+    sb_add_chars(&path, d_string(paths));
+  else
+    sb_add_chars(&path, "m/44'/60'/0'/0/0");
+
+  int l = 1;
+  for (int i = 0; i < (int) path.len; i++) {
+    if (path.data[i] == ' ' || path.data[i] == ',') l++;
+  }
+
+  uint8_t*  pks = _malloc(l * 32);
+  in3_ret_t r   = bip32(bytes(seed, 64), ECDSA_SECP256K1, path.data, pks);
+  _free(path.data);
   memzero(seed, 64);
-  return in3_rpc_handle_finish(ctx);
+  if (r == IN3_OK) {
+    sb_t* sb = in3_rpc_handle_start(ctx);
+    for (int i = 0; i < l; i++) {
+      if (add_key(ctx->req->client, pks + i * 32)) {
+        if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
+        address_t adr;
+        get_address(pks + i * 32, adr);
+        sb_printx(sb, "\"%B\"", bytes(adr, 20));
+      }
+    }
+    sb_add_char(sb, ']');
+    memzero(pks, l * 32);
+    _free(pks);
+    return in3_rpc_handle_finish(ctx);
+  }
+  else {
+    _free(pks);
+    return req_set_error(ctx->req, "Invalid seed or bip39 not supported!", r);
+  }
 }
 
 static in3_ret_t eth_accounts(in3_rpc_handle_ctx_t* ctx) {
@@ -364,7 +365,7 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
   switch (action) {
     case PLGN_ACT_PAY_SIGN_REQ: {
       in3_pay_sign_req_ctx_t* ctx = action_ctx;
-      in3_ret_t               r   = ec_sign_pk_raw(ctx->request_hash, k->pk, ctx->signature);
+      in3_ret_t               r   = crypto_sign_digest(ECDSA_SECP256K1, ctx->request_hash, k->pk, ctx->signature);
       ctx->signature[64] += 27;
       return r;
     }
@@ -374,9 +375,12 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
       ctx->signature = bytes(_malloc(65), 65);
       switch (ctx->digest_type) {
         case SIGN_EC_RAW:
-          return ec_sign_pk_raw(ctx->message.data, k->pk, ctx->signature.data);
-        case SIGN_EC_HASH:
-          return ec_sign_pk_hash(ctx->message.data, ctx->message.len, k->pk, hasher_sha3k, ctx->signature.data);
+          return crypto_sign_digest(ECDSA_SECP256K1, ctx->message.data, k->pk, ctx->signature.data);
+        case SIGN_EC_HASH: {
+          bytes32_t hash;
+          keccak(ctx->message, hash);
+          return crypto_sign_digest(ECDSA_SECP256K1, hash, k->pk, ctx->signature.data);
+        }
         default:
           _free(ctx->signature.data);
           return IN3_ENOTSUP;

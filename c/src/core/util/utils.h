@@ -135,9 +135,6 @@ bytes_t* hex_to_new_bytes(const char* buf, int len);
 /** convefrts a bytes into hex */
 int bytes_to_hex(const uint8_t* buffer, int len, char* out);
 
-/** writes 32 bytes to the pointer. */
-int keccak(bytes_t data, void* dst);
-
 /** converts a a uin64_t to 8 bytes written to dst using big endian*/
 void long_to_bytes(uint64_t val, uint8_t* dst);
 

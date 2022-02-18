@@ -2,7 +2,7 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request.h"
 #include "../../core/client/request_internal.h"
-#include "../../third-party/crypto/secp256k1.h"
+#include "../../core/util/crypto.h"
 #include "btc_script.h"
 #include "btc_serialize.h"
 #include "btc_types.h"
@@ -311,10 +311,12 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
 
   // Finally, sign transaction input
   // -- Obtain DER signature
-  bytes_t sig   = NULL_BYTES;
-  der_sig->data = _malloc(75);
+  bytes_t sig = NULL_BYTES;
+  int     l;
   TRY(req_require_signature(req, SIGN_EC_BTC, PL_SIGN_BTCTX, &sig, hash_message, *signing_account, req->requests[0]))
-  der_sig->len                  = ecdsa_sig_to_der(sig.data, der_sig->data);
+  der_sig->data = _malloc(75);
+  TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data))
+  der_sig->len                  = (uint32_t) l;
   der_sig->data[der_sig->len++] = sig.data[64]; // append verification byte to end of DER signature
 
   // signature is complete

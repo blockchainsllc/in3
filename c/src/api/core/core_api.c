@@ -36,22 +36,10 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/client/version.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
-#include "../../third-party/crypto/base58.h"
-#include "../../third-party/crypto/bip32.h"
-#include "../../third-party/crypto/bip39.h"
-#include "../../third-party/crypto/memzero.h"
-#include "../../third-party/crypto/rand.h"
-#include "../../third-party/crypto/secp256k1.h"
-#ifdef BASE64
-#include "../../third-party/libb64/cdecode.h"
-#include "../../third-party/libb64/cencode.h"
-#endif
-#ifdef WASM
-#include "emscripten.h"
-#endif
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -66,13 +54,13 @@ static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx) {
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t    b;
-  bytes32_t  hash;
-  SHA256_CTX c;
+  bytes_t   b;
+  bytes32_t hash;
   TRY_PARAM_GET_REQUIRED_BYTES(b, ctx, 0, 0, 0)
-  sha256_Init(&c);
-  sha256_Update(&c, b.data, b.len);
-  sha256_Final(&c, hash);
+  in3_digest_t c = crypto_create_hash(DIGEST_SHA256);
+  if (!c.ctx) return req_set_error(ctx->req, "sha256 not supported", IN3_ENOTSUP);
+  crypto_update_hash(c, b);
+  crypto_finalize_hash(c, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 static in3_ret_t web3_clientVersion(in3_rpc_handle_ctx_t* ctx) {
@@ -114,36 +102,6 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
   TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_CACHE_CLEAR, NULL));
   return in3_rpc_handle_with_string(ctx, "true");
 }
-#ifdef WASM
-EM_JS(void, wasm_random_buffer, (uint8_t * dst, size_t len), {
-  // unload len
-  var res = randomBytes(len);
-  for (var i = 0; i < len; i++) {
-    HEAPU8[dst + i] = res[i];
-  }
-})
-#endif
-
-void random_buffer(uint8_t* dst, size_t len) {
-#ifdef WASM
-  wasm_random_buffer(dst, len);
-  return;
-#else
-  FILE* r = fopen("/dev/urandom", "r");
-  if (r) {
-    for (size_t i = 0; i < len; i++) dst[i] = (uint8_t) fgetc(r);
-    fclose(r);
-    return;
-  }
-#endif
-  srand(current_ms() % 0xFFFFFFFF);
-#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
-  unsigned int number;
-  for (size_t i = 0; i < len; i++) dst[i] = (rand_s(&number) ? rand() : (int) number) % 256;
-#else
-  for (size_t i = 0; i < len; i++) dst[i] = rand() % 256;
-#endif
-}
 
 static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t hash;
@@ -160,27 +118,12 @@ static in3_ret_t in3_bip32(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_STRING(curvename, ctx, 1, "secp256k1")
   TRY_PARAM_GET_STRING(path, ctx, 2, NULL)
 
-  HDNode node = {0};
-  if (!hdnode_from_seed(seed.data, (int) seed.len, curvename, &node)) return req_set_error(ctx->req, "Invalid seed!", IN3_ERPC);
-  if (path) {
-    char* tmp = alloca(strlen(path) + 1);
-    strcpy(tmp, path);
-    char* p = NULL;
-    while ((p = strtok(p ? NULL : tmp, "/"))) {
-      if (strcmp(p, "m") == 0) continue;
-      if (p[0] == '\'')
-        hdnode_private_ckd_prime(&node, atoi(p + 1));
-      else if (p[strlen(p) - 1] == '\'') {
-        char tt[50];
-        strcpy(tt, p);
-        tt[strlen(p) - 1] = 0;
-        hdnode_private_ckd_prime(&node, atoi(p + 1));
-      }
-      else
-        hdnode_private_ckd(&node, atoi(p));
-    }
-  }
-  return in3_rpc_handle_with_bytes(ctx, bytes(node.private_key, 32));
+  bytes32_t pk;
+  in3_ret_t r = bip32(seed, ECDSA_SECP256K1, path, pk);
+
+  return r
+             ? req_set_error(ctx->req, "BIP32 not supported! Please reconfigure cmake!", r)
+             : in3_rpc_handle_with_bytes(ctx, bytes(pk, 32));
 }
 
 static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
@@ -192,10 +135,11 @@ static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
     pk = bytes(hash, 32);
   }
 
-  const char* res = mnemonic_from_data(pk.data, pk.len);
-  sb_printx(in3_rpc_handle_start(ctx), "\"%s\"", res);
+  char* r = mnemonic_create(pk);
+  sb_printx(in3_rpc_handle_start(ctx), "\"%s\"", r);
   memzero(hash, 32);
-  mnemonic_clear();
+  memzero(r, strlen(r));
+  _free(r);
   return in3_rpc_handle_finish(ctx);
 }
 
@@ -207,65 +151,35 @@ static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
   TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
 
-  if (!mnemonic_check(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+  if (mnemonic_verify(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
 
   mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
   return in3_rpc_handle_with_bytes(ctx, bytes(seed, 64));
 }
 
-static in3_ret_t in3_base58_encode(in3_rpc_handle_ctx_t* ctx) {
-  bytes_t data;
-  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 128)
-  size_t size    = data.len * 2 + 1;
-  char*  res     = _malloc(size);
-  bool   success = b58enc(res, &size, data.data, data.len) && size < data.len * 2;
-  if (success)
-    sb_printx(in3_rpc_handle_start(ctx), "\"%S\"", res);
-  else
-    req_set_error(ctx->req, "Invalid data for base58", IN3_EINVAL);
-  _free(res);
-  return success ? in3_rpc_handle_finish(ctx) : IN3_EINVAL;
-}
-
-static in3_ret_t in3_base64_encode(in3_rpc_handle_ctx_t* ctx) {
-#ifdef BASE64
+static in3_ret_t in3_encode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type) {
   bytes_t data;
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 0)
-  char* r = base64_encode(data.data, data.len);
-  sb_printx(in3_rpc_handle_start(ctx), "\"%S\"", r);
-  _free(r);
-  return in3_rpc_handle_finish(ctx);
-#else
-  return req_set_error(ctx->req, "not supported, if BASE64 is turned off", IN3_EINVAL);
-#endif
+  char* c = _malloc(encode_size(type, data.len));
+  int   l = encode(type, data, c);
+  if (l >= 0) sb_printx(in3_rpc_handle_start(ctx), "\"%S\"", c);
+  _free(c);
+  return l < 0
+             ? req_set_error(ctx->req, "Encoding not supported", IN3_ENOTSUP)
+             : in3_rpc_handle_finish(ctx);
 }
 
-static in3_ret_t in3_base64_decode(in3_rpc_handle_ctx_t* ctx) {
-#ifdef BASE64
+static in3_ret_t in3_decode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type) {
   char* txt;
   TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
-  size_t   len = 0;
-  uint8_t* r   = base64_decode(txt, &len);
-  in3_rpc_handle_with_bytes(ctx, bytes(r, len));
-  _free(r);
-  return IN3_OK;
-#else
-  return req_set_error(ctx->req, "not supported, if BASE64 is turned off", IN3_EINVAL);
-#endif
-}
-
-static in3_ret_t in3_base58_decode(in3_rpc_handle_ctx_t* ctx) {
-  char* txt;
-  TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
-
-  size_t    ssize = strlen(txt);
-  size_t    size  = ssize;
-  uint8_t*  res   = _malloc(size);
-  in3_ret_t ret   = b58tobin(res, &size, txt)
-                        ? in3_rpc_handle_with_bytes(ctx, bytes(res + ssize - size, size))
-                        : req_set_error(ctx->req, "Invalid data for base58", IN3_EINVAL);
-  _free(res);
-  return ret;
+  int      len = strlen(txt);
+  uint8_t* dst = _malloc(decode_size(type, len));
+  int      l   = decode(type, txt, len, dst);
+  if (l >= 0) sb_printx(in3_rpc_handle_start(ctx), "\"%B\"", bytes(dst, l));
+  _free(dst);
+  return l < 0
+             ? req_set_error(ctx->req, "Decoding not supported", IN3_ENOTSUP)
+             : in3_rpc_handle_finish(ctx);
 }
 
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
@@ -312,16 +226,16 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_ENCODE)
-  TRY_RPC("in3_base58_encode", in3_base58_encode(ctx))
+  TRY_RPC("in3_base58_encode", in3_encode(ctx, ENC_BASE58))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_DECODE)
-  TRY_RPC("in3_base58_decode", in3_base58_decode(ctx))
+  TRY_RPC("in3_base58_decode", in3_decode(ctx, ENC_BASE58))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_ENCODE)
-  TRY_RPC("in3_base64_encode", in3_base64_encode(ctx))
+  TRY_RPC("in3_base64_encode", in3_encode(ctx, ENC_BASE64))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_DECODE)
-  TRY_RPC("in3_base64_decode", in3_base64_decode(ctx))
+  TRY_RPC("in3_base64_decode", in3_decode(ctx, ENC_BASE64))
 #endif
   return IN3_EIGNORE;
 }
