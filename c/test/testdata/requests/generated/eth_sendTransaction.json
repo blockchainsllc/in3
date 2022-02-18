@@ -1,0 +1,32 @@
+[
+  {
+    "descr": "eth_sendTransaction",
+    "request": {
+      "method": "eth_sendTransaction",
+      "params": [
+        {
+          "to": "0x1234567890123456789012345678901234567890",
+          "from": "0x00a329c0648769a73afac7f9381e08fb43dbea72",
+          "data": "0x4faa8a2600000000000000000000000000a329c0648769a73afac7f9381e08fb43dbea72",
+          "nonce": 31,
+          "gasPrice": 1000000000,
+          "gas": 85597
+        }
+      ]
+    },
+    "result": "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416",
+    "config": {
+      "proof": "none",
+      "pk": [
+        "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      ],
+      "chainId": "goerli"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
+      }
+    ]
+  }
+]

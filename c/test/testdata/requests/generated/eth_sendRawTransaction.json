@@ -1,0 +1,25 @@
+[
+  {
+    "descr": "eth_sendRawTransaction",
+    "request": {
+      "method": "eth_sendRawTransaction",
+      "params": [
+        "0xf86d8206aa85438558d400825208941ebd5c8cfec45650cf9c80adfeb5488ae36859c3872386f26fc10000801ba06df6fc901a78cea1dfc02baead56c8ec0d8d008c505efcfc3b4462b1a659be25a065152fd2e0dbf04b8e1baac46f31df9033f9c72b9dfad1b4fe41f89ef32c9a53"
+      ]
+    },
+    "result": "0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2",
+    "config": {
+      "proof": "none",
+      "pk": [
+        "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      ],
+      "chainId": "goerli"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2"
+      }
+    ]
+  }
+]

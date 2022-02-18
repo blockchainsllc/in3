@@ -1,0 +1,18 @@
+[
+  {
+    "descr": "zksync_account_address",
+    "request": {
+      "method": "zksync_account_address",
+      "params": []
+    },
+    "result": "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c",
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": []
+  }
+]

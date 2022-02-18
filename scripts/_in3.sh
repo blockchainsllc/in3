@@ -25,6 +25,7 @@ subcmds=(
     'in3_createKey: Generates 32 random bytes <seed>'
     'in3_decryptKey: decrypts a JSON Keystore file as defined in the  <key> <passphrase>'
     'in3_ecrecover: extracts the public key and address from signature <msg> <sig> <sigtype>'
+    'in3_get_internal_tx: returns the internal transactions send during execution of the tx <tx_hash>'
     'in3_pk2address: extracts the address from a private key <pk>'
     'in3_pk2public: extracts the public key from a private key <pk>'
     'in3_prepareTx: prepares a Transaction by filling the unspecified values and returens the unsigned raw Transaction <tx>'

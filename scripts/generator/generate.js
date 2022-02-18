@@ -324,7 +324,7 @@ handle_config(config, '')
 
 generators.forEach(_ => {
     _.generate_config()
-    if (_.mergeExamples && examples && doc_dir.length && _.mergeExamples(examples))
+    if (_.mergeExamples && examples && doc_dir.length && fs.existsSync(doc_dir[0]) && _.mergeExamples(examples))
         fs.writeFileSync(doc_dir[0] + '/rpc_examples.json', JSON.stringify(examples, null, 2), { encoding: 'utf8' })
 })
 
@@ -339,7 +339,7 @@ Object.keys(main_conf.rpc).forEach(k => {
 
 if (zsh_file.length)
     fs.writeFileSync(zsh_file[0].replace('.template', '.sh'), fs.readFileSync(zsh_file[0], 'utf8').replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
-if (doc_dir.length) {
+if (doc_dir.length && fs.existsSync(doc_dir[0])) {
     fs.writeFileSync(doc_dir[0] + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
     fs.writeFileSync(doc_dir[0] + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
 }

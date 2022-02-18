@@ -1,0 +1,64 @@
+[
+  {
+    "descr": "zksync_account_info",
+    "request": {
+      "method": "zksync_account_info",
+      "params": [
+        "0x0e8b4fe889b126b9b502b244c9130912510f014f"
+      ]
+    },
+    "result": {
+      "address": "0x0e8b4fe889b126b9b502b244c9130912510f014f",
+      "id": null,
+      "committed": {
+        "nonce": 0,
+        "balances": {},
+        "pubKeyHash": "sync:0000000000000000000000000000000000000000",
+        "mintedNfts": {},
+        "nfts": {}
+      },
+      "verified": {
+        "nonce": 0,
+        "balances": {},
+        "pubKeyHash": "sync:0000000000000000000000000000000000000000",
+        "mintedNfts": {},
+        "nfts": {}
+      },
+      "depositing": {
+        "balances": {}
+      }
+    },
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": [
+      {
+        "result": {
+          "address": "0x0e8b4fe889b126b9b502b244c9130912510f014f",
+          "id": null,
+          "committed": {
+            "nonce": 0,
+            "balances": {},
+            "pubKeyHash": "sync:0000000000000000000000000000000000000000",
+            "mintedNfts": {},
+            "nfts": {}
+          },
+          "verified": {
+            "nonce": 0,
+            "balances": {},
+            "pubKeyHash": "sync:0000000000000000000000000000000000000000",
+            "mintedNfts": {},
+            "nfts": {}
+          },
+          "depositing": {
+            "balances": {}
+          }
+        }
+      }
+    ]
+  }
+]

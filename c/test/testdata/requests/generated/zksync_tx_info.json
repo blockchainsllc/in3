@@ -1,0 +1,34 @@
+[
+  {
+    "descr": "zksync_tx_info",
+    "request": {
+      "method": "zksync_tx_info",
+      "params": [
+        "sync-tx:e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000"
+      ]
+    },
+    "result": {
+      "executed": false,
+      "failReason": null,
+      "block": null,
+      "success": null
+    },
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": [
+      {
+        "result": {
+          "executed": false,
+          "failReason": null,
+          "block": null,
+          "success": null
+        }
+      }
+    ]
+  }
+]
