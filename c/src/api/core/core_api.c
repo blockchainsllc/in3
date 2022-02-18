@@ -102,6 +102,15 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
   TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_CACHE_CLEAR, NULL));
   return in3_rpc_handle_with_string(ctx, "true");
 }
+#ifdef WASM
+EM_JS(void, wasm_random_buffer, (uint8_t * dst, size_t len), {
+  // unload len
+  var res = randomBytes(len);
+  for (var i = 0; i < len; i++) {
+    HEAPU8[dst + i] = res[i];
+  }
+})
+#endif
 
 static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t hash;
