@@ -53,6 +53,7 @@ function getResult(x) {
 function createTestCaseFunction(testname, testCase, api_name, rpc) {
 
     let tests = [];
+    if (!rpc) console.log("::: missing rpc-def for " + api_name + ' ' + testname)
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
         const tn = t.descr || testname + (index ? ('_' + (index + 1)) : '')
