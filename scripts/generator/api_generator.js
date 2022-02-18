@@ -36,7 +36,7 @@ function createTest(descr, method, tests, tc) {
         request: { method, params: tc.input || [] },
         result: getResult(tc.expected_output),
         config: tc.config || {},
-        response: asArray(tc.mockedResponses).map(r => r.req.body?.params || !r.res.result ? r.res : r.res.result)
+        response: asArray(tc.mockedResponses).map(r => r.req.body?.params || r.res.result === undefined ? r.res : r.res.result)
     });
 }
 function getResult(x) {

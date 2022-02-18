@@ -258,19 +258,21 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     if (!d_eq(actual, result)) {
       char* a = sprintx("%J ", actual);
       char* b = sprintx("%J ", result);
-      for (int i = 0; a[i] && b[i]; i++) {
-        if (a[i] != b[i]) {
-          while (i > 0 && a[i] != '\n') i--;
-          a[i + 1] = '*';
-          b[i + 1] = '*';
-          break;
+      if (strcmp(a, b)) {
+        for (int i = 0; a[i] && b[i]; i++) {
+          if (a[i] != b[i]) {
+            while (i > 0 && a[i] != '\n') i--;
+            a[i + 1] = '*';
+            b[i + 1] = '*';
+            break;
+          }
         }
+        err = sprintx("wrong response: \ngot     : %s\nexpected: %s", a, b);
+        _free(res);
+        res = NULL;
       }
-      err = sprintx("wrong response: \ngot     : %s\nexpected: %s", a, b);
       _free(a);
       _free(b);
-      _free(res);
-      res = NULL;
     }
     json_free(actual_json);
   }
