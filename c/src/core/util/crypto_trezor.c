@@ -12,6 +12,7 @@
 #include "../../third-party/crypto/bip32.h"
 #include "../../third-party/crypto/bip39.h"
 #include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/ed25519-donna/ed25519.h"
 #include "../../third-party/crypto/pbkdf2.h"
 #include "../../third-party/crypto/ripemd160.h"
 #include "../../third-party/crypto/secp256k1.h"
@@ -95,20 +96,34 @@ void crypto_finalize_hash(in3_digest_t digest, void* dst) {
   _free(digest.ctx);
 }
 
-in3_ret_t crypto_sign_digest(in3_curve_type_t type, const uint8_t* digest, const uint8_t* pk, uint8_t* dst) {
+in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const uint8_t* pk, const uint8_t* pubkey, uint8_t* dst) {
   switch (type) {
-    case ECDSA_SECP256K1: return ecdsa_sign_digest(&secp256k1, pk, digest, dst, dst + 64, NULL) < 0 ? IN3_EINVAL : IN3_OK;
+    case ECDSA_SECP256K1: return ecdsa_sign_digest(&secp256k1, pk, digest.data, dst, dst + 64, NULL) < 0 ? IN3_EINVAL : IN3_OK;
+    case EDDSA_ED25519: {
+#ifdef ED25519
+      ed25519_sign(digest.data, digest.len, pk, pubkey, dst);
+      return IN3_OK;
+#else
+      UNUSED_VAR(pubkey);
+      return IN3_ENOTSUP;
+#endif
+    }
     default: return IN3_ENOTSUP;
   }
 }
-in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t signature, uint8_t* dst) {
+in3_ret_t crypto_recover(in3_curve_type_t type, const bytes_t digest, bytes_t signature, uint8_t* dst) {
   switch (type) {
     case ECDSA_SECP256K1: {
       uint8_t pub[65] = {0};
-      if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, digest, signature.data[64] % 27)) return IN3_EINVAL;
+      if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, digest.data, signature.data[64] % 27)) return IN3_EINVAL;
       memcpy(dst, pub + 1, 64);
       return IN3_OK;
     }
+#ifdef ED25519
+    case EDDSA_ED25519: {
+      return !dst || signature.len != 64 || ed25519_sign_open(digest.data, digest.len, dst, signature.data) ? IN3_EINVAL : IN3_OK;
+    }
+#endif
     default: return IN3_ENOTSUP;
   }
 }
@@ -125,17 +140,35 @@ static in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* p
 }
 
 in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, bytes_t src, uint8_t* dst, int* dst_len) {
-  switch (conv_type) {
-    case CONV_PK32_TO_PUB64: {
-      if (dst_len) *dst_len = 64;
-      return src.len == 32 ? crypto_pk_to_public_key(type, src.data, dst) : IN3_EINVAL;
-    }
-    case CONV_SIG65_TO_DER: {
-      if (src.len != 65) return IN3_EINVAL;
-      int l = ecdsa_sig_to_der(src.data, dst);
-      if (dst_len) *dst_len = l;
-      return l >= 0 ? IN3_OK : IN3_EINVAL;
-    }
+  switch (type) {
+    case ECDSA_SECP256K1:
+      switch (conv_type) {
+        case CONV_PK32_TO_PUB64: {
+          if (dst_len) *dst_len = 64;
+          return src.len == 32 ? crypto_pk_to_public_key(type, src.data, dst) : IN3_EINVAL;
+        }
+        case CONV_SIG65_TO_DER: {
+          if (src.len != 65) return IN3_EINVAL;
+          int l = ecdsa_sig_to_der(src.data, dst);
+          if (dst_len) *dst_len = l;
+          return l >= 0 ? IN3_OK : IN3_EINVAL;
+        }
+        default: return IN3_ENOTSUP;
+      }
+    case EDDSA_ED25519:
+      switch (conv_type) {
+        case CONV_PK32_TO_PUB32: {
+#ifdef ED25519
+          if (dst_len) *dst_len = 32;
+          if (src.len != 32) return IN3_EINVAL;
+          ed25519_publickey(src.data, dst);
+          return IN3_OK;
+#else
+          return IN3_ENOTSUP;
+#endif
+        }
+        default: return IN3_ENOTSUP;
+      }
     default: return IN3_ENOTSUP;
   }
 }

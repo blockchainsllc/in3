@@ -3,6 +3,7 @@
 #include <in3/api_utils.h>
 #include <in3/eth_api.h>  // functions for direct api-access
 #include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/plugin.h>   // plugin-api
 #include <in3/signer.h>   // signer-api
 #include <in3/usn_api.h>  // api for renting
 #include <in3/utils.h>
@@ -31,7 +32,7 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
   json_free(key_data);
 
   // create a signer with this key
-  eth_set_pk_signer(c, pk);
+  eth_set_pk_signer(c, pk, SIGNER_ECDSA);
 }
 
 int main(int argc, char* argv[]) {

@@ -65,7 +65,7 @@ int pre_ecrecover(evm_t* evm) {
   sig[64] = *vdata >= 27 ? *vdata - 27 : *vdata;
 
   // verify signature
-  if (crypto_recover(ECDSA_SECP256K1, evm->call_data.data, bytes(sig, 65), pubkey) == IN3_OK) {
+  if (crypto_recover(ECDSA_SECP256K1, bytes(evm->call_data.data, 32), bytes(sig, 65), pubkey) == IN3_OK) {
     evm->return_data.data = _malloc(20);
     evm->return_data.len  = 20;
 

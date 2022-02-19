@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "in3_ed25519_pk2pub",
+    "request": {
+      "method": "in3_ed25519_pk2pub",
+      "params": [
+        "0x4c5b4b2225e51d284ff82947c186a03d89440e591020ff213c18135757df156a"
+      ]
+    },
+    "result": "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52",
+    "config": {},
+    "response": []
+  }
+]

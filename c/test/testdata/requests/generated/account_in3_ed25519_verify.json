@@ -1,0 +1,16 @@
+[
+  {
+    "descr": "in3_ed25519_verify",
+    "request": {
+      "method": "in3_ed25519_verify",
+      "params": [
+        "0x1234567890",
+        "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07",
+        "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
+      ]
+    },
+    "result": true,
+    "config": {},
+    "response": []
+  }
+]

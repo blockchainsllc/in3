@@ -62,7 +62,7 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
   sdata[64] = v;
 
   // verify signature
-  if (crypto_recover(ECDSA_SECP256K1, msg_hash->data, bytes(sdata, 65), pubkey) == IN3_OK)
+  if (crypto_recover(ECDSA_SECP256K1, *msg_hash, bytes(sdata, 65), pubkey) == IN3_OK)
     // hash it and return the last 20 bytes as address
     return keccak(bytes(pubkey, 64), sdata) == 0 ? b_new(sdata + 12, 20) : NULL;
   else

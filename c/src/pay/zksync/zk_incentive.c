@@ -81,7 +81,7 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
   zkcrypto_pk_from_seed(sig_bytes, conf->sync_key);
 
   // determine address
-  TRY(req_set_error(req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, sctx.request_hash, sig_bytes, pub)))
+  TRY(req_set_error(req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, bytes(sctx.request_hash, 32), sig_bytes, pub)))
   keccak(bytes(pub, 64), sctx.request_hash);
   if (conf->account) _free(conf->account);
   conf->account = _malloc(20);

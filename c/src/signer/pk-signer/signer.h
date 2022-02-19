@@ -52,7 +52,7 @@ extern "C" {
  *
  * since the pk pointting to the 32 byte private key is not cloned, please make sure, you manage memory allocation correctly!
  */
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
+in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk, d_curve_type_t type);
 
 /**
  * registers pk signer as plugin so you can use config or in3_addKeys as rpc

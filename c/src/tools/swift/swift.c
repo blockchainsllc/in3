@@ -27,9 +27,11 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       in3_sign_account_ctx_t* _Nonnull ctx = plugin_ctx;
       char* accounts                       = conf->sign_accounts(ctx);
       if (accounts) {
+        int account_len = 20;
+        if (ctx->curve_type == SIGN_CURVE_ED25519) account_len = 32;
         size_t l = strlen(accounts);
-        if (l % 40 == 0) {
-          ctx->accounts_len = l / 40;
+        if (l % (account_len * 2) == 0) {
+          ctx->accounts_len = l / (account_len * 2);
           ctx->accounts     = _malloc(l / 2);
           hex_to_bytes(accounts, l, ctx->accounts, l / 2);
         }
@@ -51,12 +53,14 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
         return IN3_EIGNORE;
       }
 
-      if (ctx->account.len == 20) {
-        char adr[41];
+      int account_len = 20;
+      if (ctx->curve_type == SIGN_CURVE_ED25519) account_len = 32;
+      if (ctx->account.len == account_len) {
+        char adr[65];
         bytes_to_hex_string(adr, "", ctx->account, "");
         bool found = false;
-        for (int i = 2; i < l; i += 40) {
-          if (strncmp(adr, accounts + i, 40) == 0) {
+        for (int i = 2; i < l; i += (2 * account_len)) {
+          if (strncmp(adr, accounts + i, (2 * account_len)) == 0) {
             found = true;
             break;
           }
@@ -80,7 +84,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       else
         keccak(ctx->message, msghash);
 
-      TRY(req_send_sign_request(ctx->req, ctx->digest_type, ctx->payload_type, &signature, ctx->message, ctx->account, ctx->meta, bytes(msghash, 32)))
+      TRY(req_send_sign_request(ctx->req, ctx->digest_type, ctx->curve_type, ctx->payload_type, &signature, ctx->message, ctx->account, ctx->meta, bytes(msghash, 32)))
       ctx->signature = bytes_dup(signature);
       return IN3_OK;
     }
@@ -117,8 +121,12 @@ int sign_get_payload_type(in3_req_t* r) {
   return d_get_int_at(params, 2);
 }
 
+int sign_get_curve_type(in3_req_t* r) {
+  return d_get_int_at(d_get(r->requests[0], K_PARAMS), 3);
+}
+
 char* sign_get_metadata(in3_req_t* r) {
   d_token_t* params = d_get(r->requests[0], K_PARAMS);
-  d_token_t* meta   = d_get_at(params, 3);
+  d_token_t* meta   = d_get_at(params, 4);
   return meta ? d_create_json(r->request_context, meta) : NULL;
 }
