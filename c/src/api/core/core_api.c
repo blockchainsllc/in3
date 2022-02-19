@@ -182,6 +182,39 @@ static in3_ret_t in3_decode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type)
              : in3_rpc_handle_finish(ctx);
 }
 
+static in3_ret_t in3_ed25519_pk2pub(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t   pk;
+  bytes32_t pub;
+  TRY_PARAM_GET_REQUIRED_BYTES(pk, ctx, 0, 32, 32);
+  TRY(crypto_convert(EDDSA_ED25519, CONV_PK32_TO_PUB32, pk, pub, NULL))
+  return in3_rpc_handle_with_bytes(ctx, bytes(pub, 32));
+}
+
+static in3_ret_t in3_ed25519_sign(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t   msg;
+  bytes_t   pk;
+  bytes32_t pub;
+  uint8_t   signature[64];
+  TRY_PARAM_GET_REQUIRED_BYTES(msg, ctx, 0, 0, 0);
+  TRY_PARAM_GET_REQUIRED_BYTES(pk, ctx, 1, 32, 32);
+  TRY(crypto_convert(EDDSA_ED25519, CONV_PK32_TO_PUB32, pk, pub, NULL))
+  TRY(crypto_sign_digest(EDDSA_ED25519, msg, pk.data, pub, signature))
+  return in3_rpc_handle_with_bytes(ctx, bytes(signature, 64));
+}
+
+static in3_ret_t in3_ed25519_verify(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t msg;
+  bytes_t pub;
+  bytes_t signature;
+  TRY_PARAM_GET_REQUIRED_BYTES(msg, ctx, 0, 0, 0);
+  TRY_PARAM_GET_REQUIRED_BYTES(signature, ctx, 1, 64, 64);
+  TRY_PARAM_GET_REQUIRED_BYTES(pub, ctx, 2, 32, 32);
+  in3_ret_t r = crypto_recover(EDDSA_ED25519, msg, signature, pub.data);
+  return (r == IN3_OK || r == IN3_EINVAL)
+             ? in3_rpc_handle_with_string(ctx, r ? "false" : "true")
+             : req_set_error(ctx->req, "ed25519 Not supported", r);
+}
+
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
   UNUSED_VAR(pdata);
@@ -237,6 +270,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_DECODE)
   TRY_RPC("in3_base64_decode", in3_decode(ctx, ENC_BASE64))
 #endif
+  TRY_RPC("in3_ed25519_sign", in3_ed25519_sign(ctx))
+  TRY_RPC("in3_ed25519_pk2pub", in3_ed25519_pk2pub(ctx))
+  TRY_RPC("in3_ed25519_verify", in3_ed25519_verify(ctx))
   return IN3_EIGNORE;
 }
 

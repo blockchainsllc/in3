@@ -127,15 +127,14 @@ void crypto_finalize_hash(
   EVP_MD_CTX_free(d->ctx);
   _free(d);
 }
-
-in3_ret_t crypto_sign_digest(in3_curve_type_t type, const uint8_t* digest, const uint8_t* pk, uint8_t* dst) {
+in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const uint8_t* pk, const uint8_t* pubkey, uint8_t* dst) {
   UNUSED_VAR(type);
   UNUSED_VAR(digest);
   UNUSED_VAR(pk);
   UNUSED_VAR(dst);
   return IN3_ENOTSUP;
 }
-in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t signature, uint8_t* dst) {
+in3_ret_t crypto_recover(in3_curve_type_t type, const bytes_t digest, bytes_t signature, uint8_t* dst) {
   UNUSED_VAR(type);
   UNUSED_VAR(digest);
   UNUSED_VAR(signature);

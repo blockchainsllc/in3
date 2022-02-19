@@ -374,7 +374,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
     chain_id = d_long(r);
   }
 
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, SIGN_CURVE_ECDSA, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required
@@ -473,7 +473,7 @@ char* eth_wallet_sign(const char* key, const char* data) {
   keccak(bytes(data_bytes, hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1)), hash);
   char* res = _calloc(133, 1);
 
-  if (crypto_sign_digest(ECDSA_SECP256K1, hash, key_bytes, dst) == IN3_OK) {
+  if (crypto_sign_digest(ECDSA_SECP256K1, bytes(hash, 32), key_bytes, NULL, dst) == IN3_OK) {
     bytes_to_hex(dst, 65, res + 2);
     res[0] = '0';
     res[1] = 'x';

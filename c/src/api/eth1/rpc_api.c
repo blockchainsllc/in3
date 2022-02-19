@@ -267,7 +267,7 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
       sb_printx(&response, ",\"signature\":\"%B\"", bytes(signature, 65));
 
       // now we recover. returning a none zero value means an invalid signature
-      if (crypto_recover(ECDSA_SECP256K1, hash, bytes(signature, 65), pub)) {
+      if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(signature, 65), pub)) {
         _free(response.data);
         return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
       }
@@ -714,7 +714,7 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   else
     keccak(msg, hash);
 
-  TRY(req_set_error(ctx->req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, hash, signature, pub)))
+  TRY(req_set_error(ctx->req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), signature, pub)))
 
   // hash the pubkey
   keccak(bytes(pub, 64), hash);
@@ -743,6 +743,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
 
   in3_sign_ctx_t sc = {0};
   sc.req            = ctx->req;
+  sc.curve_type     = SIGN_CURVE_ECDSA;
   sc.message        = data;
   sc.account        = signer;
   sc.digest_type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
@@ -750,6 +751,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(sig_type, "sign_ec_raw") == 0) sc.digest_type = SIGN_EC_RAW;
   if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.digest_type = SIGN_EC_PREFIX;
   if (strcmp(sig_type, "sign_ec_btc") == 0) sc.digest_type = SIGN_EC_BTC;
+  if (strcmp(sig_type, "sign_ed25519") == 0) sc.curve_type = SIGN_CURVE_ED25519;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));

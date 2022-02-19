@@ -50,7 +50,7 @@ static bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
   uint8_t pubkey[64];
 
   // verify signature
-  if (crypto_recover(ECDSA_SECP256K1, hash, bytes(sig, 65), pubkey)) return false;
+  if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(sig, 65), pubkey)) return false;
   keccak(bytes(pubkey, 64), pubkey);
   memcpy(result, pubkey + 12, 20);
   return true;
@@ -496,7 +496,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
         uint8_t* account = sctx.accounts + i * 20;
         if (is_valid(sig_data, ms, account, sig_count)) {
           bytes_t signature = NULL_BYTES;
-          TRY(req_require_signature(ctx->req, SIGN_EC_RAW, PL_SIGN_SAFETX, &signature, bytes(hash, 32), bytes(account, 20), ctx->req->requests[0]))
+          TRY(req_require_signature(ctx->req, SIGN_EC_RAW, SIGN_CURVE_ECDSA, PL_SIGN_SAFETX, &signature, bytes(hash, 32), bytes(account, 20), ctx->req->requests[0]))
           sig_data[sig_count].address = NULL;
           for (unsigned int n = 0; n < ms->owners_len; n++) {
             if (memcmp(ms->owners + n, account, 20) == 0) sig_data[sig_count].address = (void*) (ms->owners + n);

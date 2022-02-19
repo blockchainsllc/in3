@@ -126,7 +126,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   _free(unsigned_tx.data);
 
   // verify signature
-  if (crypto_recover(ECDSA_SECP256K1, hash, bytes(sdata, 65), pubkey))
+  if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(sdata, 65), pubkey))
     return vc_err(vc, "could not recover signature");
 
   if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey, d_bytes(t).data, d_len(t)) != 0)

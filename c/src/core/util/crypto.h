@@ -67,12 +67,14 @@ typedef enum {
 /** type of the eliptic or edward curve */
 typedef enum {
   ECDSA_SECP256K1 = 1, /**< secp256k1 , which is used for bitcoin and ethereum */
+  EDDSA_ED25519   = 2  /**< ED25519 */
 } in3_curve_type_t;
 
 /** type of converter for any signature or private key */
 typedef enum {
   CONV_PK32_TO_PUB64 = 1, /**< extract the publickey from a private key as raw point (64bytes) without any prefix */
-  CONV_SIG65_TO_DER  = 2  /**< converts a 65 byte signtature to a DER format */
+  CONV_PK32_TO_PUB32 = 2, /**< extract the publickey from a private key as raw point (32bytes) without any prefix ( for EDDSA )*/
+  CONV_SIG65_TO_DER  = 3  /**< converts a 65 byte signtature to a DER format */
 } in3_convert_type_t;
 
 /** represents a digest to use for hashing */
@@ -123,8 +125,8 @@ int decode_size(
     in3_encoding_type_t type,
     int                 src_len);
 
-in3_ret_t crypto_sign_digest(in3_curve_type_t type, const uint8_t* digest, const uint8_t* pk, uint8_t* dst);
-in3_ret_t crypto_recover(in3_curve_type_t type, const uint8_t* digest, bytes_t signature, uint8_t* dst);
+in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const uint8_t* pk, const uint8_t* pubkey, uint8_t* signature);
+in3_ret_t crypto_recover(in3_curve_type_t type, const bytes_t digest, bytes_t signature, uint8_t* pubkey);
 in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, bytes_t src, uint8_t* dst, int* dst_len);
 
 void random_buffer(uint8_t* dst, size_t len);

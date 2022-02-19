@@ -517,7 +517,7 @@ static inline const char* method_for_sigtype(d_digest_type_t type) {
   }
 }
 
-in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
+in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
 
   bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
   if (cached_sig) {
@@ -533,6 +533,8 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_payload_
   sb_add_bytes(&params, NULL, &from, 1, false);
   sb_add_chars(&params, ",");
   sb_add_int(&params, (int64_t) pl_type);
+  sb_add_json(&params, ",", meta);
+  sb_add_int(&params, (int64_t) curve_type);
   sb_add_json(&params, ",", meta);
   sb_add_chars(&params, "]");
 
@@ -576,7 +578,7 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_payload_
   }
 }
 
-in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta) {
+in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta) {
   bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
   memcpy(cache_key.data, raw_data.data, raw_data.len);
   if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
@@ -590,7 +592,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_p
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
-    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .digest_type = digest_type, .payload_type = pl_type, .meta = meta};
+    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .digest_type = digest_type, .payload_type = pl_type, .meta = meta, .curve_type = curve_type};
     in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
     if (r == IN3_OK && sc.signature.data) {
       in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);
@@ -601,7 +603,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_p
       return r;
   }
   in3_log_debug("nobody picked up the signature, sending req now \n");
-  return req_send_sign_request(ctx, digest_type, pl_type, signature, raw_data, from, meta, cache_key);
+  return req_send_sign_request(ctx, digest_type, curve_type, pl_type, signature, raw_data, from, meta, cache_key);
 }
 
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
