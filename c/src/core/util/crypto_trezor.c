@@ -104,6 +104,7 @@ in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const 
       ed25519_sign(digest.data, digest.len, pk, pubkey, dst);
       return IN3_OK;
 #else
+      UNUSED_VAR(pubkey);
       return IN3_ENOTSUP;
 #endif
     }
@@ -156,14 +157,16 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
       }
     case EDDSA_ED25519:
       switch (conv_type) {
-#ifdef ED25519
         case CONV_PK32_TO_PUB32: {
+#ifdef ED25519
           if (dst_len) *dst_len = 32;
           if (src.len != 32) return IN3_EINVAL;
           ed25519_publickey(src.data, dst);
           return IN3_OK;
-        }
+#else
+          return IN3_ENOTSUP;
 #endif
+        }
         default: return IN3_ENOTSUP;
       }
   }
