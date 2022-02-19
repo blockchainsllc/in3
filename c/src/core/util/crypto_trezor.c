@@ -169,6 +169,7 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
         }
         default: return IN3_ENOTSUP;
       }
+    default: return IN3_ENOTSUP;
   }
 }
 
