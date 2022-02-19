@@ -533,7 +533,7 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_ty
   sb_add_bytes(&params, NULL, &from, 1, false);
   sb_add_chars(&params, ",");
   sb_add_int(&params, (int64_t) pl_type);
-  sb_add_json(&params, ",", meta);
+  sb_add_chars(&params, ",");
   sb_add_int(&params, (int64_t) curve_type);
   sb_add_json(&params, ",", meta);
   sb_add_chars(&params, "]");
