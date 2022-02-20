@@ -55,6 +55,7 @@ OPTION(CRYPTO_OPENSSL "include crypto-lib from openssl" OFF)
 OPTION(BASE64 "include base64-encode" ON)
 OPTION(ED25519 "include ED25519 curve" ON)
 OPTION(RPC_ONLY "specifies a coma-seperqted list of rpc-methods which should be supported. all other rpc-methods will be removed reducing the size of executable a lot." OFF)
+OPTION(SOL "include Solana support" ON)
 
 
 IF (DEFINED ANDROID_ABI)
@@ -174,6 +175,11 @@ if(BTC)
     if(IN3API)
        set(IN3_API ${IN3_API} btc_api)
     endif()
+endif()
+
+if(SOL)
+    ADD_DEFINITIONS(-DSOL)
+    set(IN3_API ${IN3_API} sol)
 endif()
 
 if(LEDGER_NANO)

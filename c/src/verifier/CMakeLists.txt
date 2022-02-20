@@ -55,3 +55,7 @@ IF (BTC)
     add_subdirectory(btc)
 ENDIF(BTC)
 
+IF (SOL)
+    add_subdirectory(sol)
+ENDIF(SOL)
+
