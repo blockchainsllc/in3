@@ -35,6 +35,7 @@
 #include "data.h"
 #include "../../third-party/tommath/tommath.h"
 #include "bytes.h"
+#include "crypto.h"
 #include "debug.h"
 #include "mem.h"
 #include "stringbuilder.h"
@@ -135,6 +136,22 @@ bytes_t d_bytesl(d_token_t* item, uint32_t len) {
   }
   if (b.len > len) b.len = len;
   return b;
+}
+bytes_t d_bytes_enc(d_token_t* item, in3_encoding_type_t enc) {
+  if (enc && d_type(item) == T_STRING) {
+    uint8_t* dst = _malloc(decode_size(enc, d_len(item)));
+    int      l   = decode(enc, (char*) (void*) item->data, d_len(item), dst);
+    if (l >= 0) {
+      if (item->state & TOKEN_STATE_ALLOCATED) _free(item->data);
+      item->len   = l;
+      item->data  = dst;
+      item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+      return bytes(item->data, l);
+    }
+    else
+      _free(dst);
+  }
+  return d_bytes(item);
 }
 
 bytes_t d_bytes(d_token_t* item) {
