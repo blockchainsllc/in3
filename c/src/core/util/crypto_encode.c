@@ -76,6 +76,12 @@ int decode(in3_encoding_type_t type, const char* src, int src_len, uint8_t* dst)
     case ENC_BASE58: {
 #ifdef CRYPTO_TREZOR
       size_t size = src_len;
+      if (src[size]) {
+        char* t = alloca(size + 1);
+        memcpy(t, src, size);
+        t[size] = 0;
+        src     = t;
+      }
       if (b58tobin(dst, &size, src))
         memmove(dst, dst + src_len - size, size);
       else
