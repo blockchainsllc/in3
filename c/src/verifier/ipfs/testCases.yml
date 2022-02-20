@@ -8,7 +8,7 @@ ipfs:
     expected_output: "I love Incubed"
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "ipfs_get"
             params:
