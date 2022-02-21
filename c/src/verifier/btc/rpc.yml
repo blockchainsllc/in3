@@ -1,53 +1,69 @@
 types:
-  btc_tx_args:
-    utxo_index:
-      descr: index of the utxo
-      type: uint32
-    script:
-      descr: the script
-      type: string
-    account:
-      descr: the account
+  btc_sign_acc:
+    address:
+      descr: eth address used by in3 to sign btc transactions
       type: address
-    pub_key:
-      descr: the pubkey for the account
+    btc_pub_key:
+      descr: btc public key linked to previously provided eth address
       type: bytes
-    
+
   btc_value:
-    script:
-      descr: the script
+    address:
+      descr: a 20-byte btc address which should receive the specified value
+      type: address
+    value:
+      descr: the amount in satoshis the provided address should receive 
+      type: uint64
+  
+  btc_rlt:
+    rlt_type:
+      descr: |
+        when set to "block", input will be valid only after <value> blocks are mined
+        when set to "time", input will be valid only after <value> chunks of 512 seconds have passed
       type: string
     value:
-      descr: the value
+      descr: how many blocks or time chunks until this transaction input is valid
+      type: uint16
+
+  btc_tx_output:
+    value:
+      descr: the amount in satoshis in this transaction output 
       type: uint64
+    script:
+      descr: the locking script of this output
+      type: string
+  
+  btc_utxo_args:
+    script:
+      descr: unhashed script used to redeem P2SH and P2WSH transactions
+      type: string
+      optional: true
+    rlt:
+      descr: relative-locktime (rlt) configurations. When null, rlt is deactivated as defined by BIP68, relative locktime (RLT) is a repurpose of the sequence number of a transaction input to allow it to remain invalid until a certain time constraint is met.
+      type: btc_rlt
+      optional: true
+    accounts:
+      descr: additional eth signing accounts used for multisig
+      type: btc_sign_acc
+      array: true
+      optional: true
+
   utxo:
+    tx_hash:
+      descr: the previous transaction to which this utxo belongs
+      type: string
     tx_index:
       descr: the transaction index that this utxo refers to
       type: uint
-    value:
-      descr: the value
-      type: uint64
-    tx_hash:
-      descr: the transaction hash (same as provided)
-      type: string
-    script:
-      descr: the script
-      type: string
+    tx_out:
+      descr: the output this utxo represents
+      type: btc_tx_output
+    args:
+      descr: additional arguments which may be needed to redeem this utxo
+      type: btc_utxo_args
+      optional: true
 
-  output:
-    tx_index:
-      descr: the block hash (same as provided)
-      type: uint
-    value:
-      descr: the block hash (same as provided)
-      type: uint64
-    tx_hash:
-      descr: the block hash (same as provided)
-      type: string
-    script:
-      descr: the block hash (same as provided)
-      type: string
-
+  
   btcblockheader:
     hash:
       descr: the block hash (same as provided)
@@ -189,32 +205,6 @@ types:
               array: true
               type: string
               optional: true
-
-
-#    tx_args_pub_key:
-#      descr: tx args pub key
-#      typeName: BTCTxPubKey
-#      type:
-#        utxo_index:
-#          descr: index of the utxo this is related to
-#          type: int
-#        account:
-#          descr: eth account used to sign the transaction with in3
-#          type: address
-#        pub_key:
-#          descr: public key related to the eth address
-#          type: bytes
-#    tx_args_script:
-#      descr: used to redeem utxos of type P2SH and P2WSH 
-#      typeName: BTCTxArgsScript
-#      type:
-#        utxo_index:
-#          descr: index of the utxo this is related to
-#          type: int
-#        script: 
-#          descr: raw script, which was hashed in the P2SH utxo
-#          type: bytes
-      
 
   btctransaction:
     txid:
@@ -1110,31 +1100,29 @@ btc:
           final: "0x00008020f61dfcc47a6daed717b12221855196dee02d844ebb9c...774f4c"
           cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
           cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
+  
   sendtransaction:
-    descr: sends a transaction to a btc node
+    descr: | 
+      signs and sends a transaction to a btc node
     params:
-      default_account:
-        descr: eth account used to sign btc transactions
+      from:
+        descr: 20-byte btc address to which the "change" from the utxos will be sent
         type: address
-      default_pub_key:
-        descr: btc public key linked to previously provided etc account
-        type: bytes
+      account:
+        descr: default eth account used by in3 to sign btc transactions
+        type: btc_sign_acc
       outputs:
-        descr: the desired outputs of the transaction
-        type: output
+        descr: how much and to which adresses we want to send funds
+        type: btc_value
         array: true
       utxos:
-        descr: the utxos used to proove liquidity for the transaction
+        descr: the utxos used to provide funds for the transaction
         type: utxo
         array: true
-      args:
-        descr: aditional arguments used by specific transaction types
-        type: btc_tx_args
-        array: true
-        optional: true
     result:
       descr: the transactionhash
       type: bytes32
+
   sendrawtransaction:
     descr: sends a transaction to a btc node
     params:

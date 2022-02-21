@@ -11,6 +11,9 @@
 // General size values
 #define BTC_UNCOMP_PUB_KEY_SIZE_BYTES 65
 #define BTC_COMP_PUB_KEY_SIZE_BYTES   33
+#define BTC_SHA256_SIZE_BYTES         32
+#define BTC_HASH160_SIZE_BYTES        20
+#define BTC_ADDR_SIZE                 20
 
 // Transaction fixed size values
 #define BTC_TX_VERSION_SIZE_BYTES  4
@@ -25,6 +28,24 @@
 
 // Output fixed size values
 #define BTC_TX_OUT_VALUE_SIZE_BYTES 8
+
+// Default transaction values
+#define DEFAULT_TXIN_SEQUENCE_NUMBER 0xffffffff
+
+// BIP 68 flags
+#define SEQUENCE_LOCKTIME_TYPE_BLOCK 0
+#define SEQUENCE_LOCKTIME_TYPE_TIME  1
+
+// -- when this bit is set, sequence number is NOT interpreted as relative locktime
+#define SEQUENCE_LOCKTIME_DISABLE_FLAG (1 << 31)
+
+// -- When relative locktime is activated and this bit is:
+// -- SET - relative locktime specifies units of 512 seconts
+// -- NOT SET - relative locktime specifies blocks with granularity 1
+#define SEQUENCE_LOCKTIME_TYPE_FLAG (1 << 22)
+
+// -- mask to extract locktim value from nsequence field
+#define SEQUENCE_LOCKTIME_MASK 0x0000ffff
 
 // Ethereum account which stores our private key. Used by signer module
 typedef struct btc_account_pub_key {
@@ -66,9 +87,10 @@ typedef struct btc_utxo {
   uint32_t               sig_count;      // Number of signatures we currently have in our array
   btc_account_pub_key_t* accounts;       // Array of ETH accounts used by in3 to sign BTC transactions
   uint32_t               accounts_count; // Number of accounts we currently have in our array
+  uint32_t               sequence;       // Desired sequence number when utxo is converted to a transaction input
 } btc_utxo_t;
 
-/* Bitcoin transaction context */
+// Bitcoin transaction context
 typedef struct btc_tx_ctx {
   btc_tx_t      tx;
   btc_utxo_t*   utxos;
@@ -90,6 +112,7 @@ void btc_free_tx_out(btc_tx_out_t* tx_out);
 void btc_free_utxo(btc_utxo_t* utxo);
 void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx);
 
+bytes_t     btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, const bytes_t* args, uint32_t args_len);
 btc_stype_t btc_get_script_type(const bytes_t* script);
 bool        script_is_standard(btc_stype_t script_type);
 bool        pub_key_is_valid(const bytes_t* pub_key);
@@ -112,10 +135,15 @@ in3_ret_t btc_add_input_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_in_t*
 in3_ret_t btc_add_output_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_out_t* tx_out);
 in3_ret_t btc_add_witness_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, bytes_t* witness);
 
-in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_acc_pk, d_token_t* utxo_inputs, d_token_t* args);
+uint32_t btc_build_nsequence_relative_locktime(uint8_t locktime_type_flag, uint16_t value);
+uint16_t btc_nsequence_get_relative_locktime_value(uint32_t nsequence);
+bool     btc_nsequence_is_relative_locktime(uint32_t nsequence);
+
+in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* output_data);
+in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_account, d_token_t* utxo_inputs);
 in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);
 
-in3_ret_t btc_verify_public_key(in3_req_t* req, const bytes_t* public_key);
+bool btc_public_key_is_valid(const bytes_t* public_key);
 
 static inline bool btc_is_witness(bytes_t tx) {
   return tx.data[4] == 0 && tx.data[5] == 1;
