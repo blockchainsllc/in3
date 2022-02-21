@@ -346,6 +346,7 @@ zksync:
     input:
       - "10000000000000000"
       - "ETH"
+      - false
       - "0x8D33cAFf9b73A3EB24c83ac79bb5eD56126f284C"
     expected_output:
       receipt:
