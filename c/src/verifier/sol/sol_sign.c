@@ -203,7 +203,7 @@ in3_ret_t sol_send_tx(in3_rpc_handle_ctx_t* ctx) {
         break;
       }
     }
-    if (ac->flags & FLAG_SIGN) {
+    if (ac && ac->flags & FLAG_SIGN) {
       TRY_CATCH(sol_sign_message(ctx, pubkey, bytes(bb.b.data + start_message, bb.b.len - start_message), bb.b.data + sig_len_bytes + 64 * sign_idx),
                 _free(accounts.data);
                 _free(bb.b.data))
