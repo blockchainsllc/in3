@@ -152,8 +152,8 @@ void test_json() {
     char*       err = d ? NULL : parse_json_error(json);                           \
     TEST_ASSERT_NULL_MESSAGE(err, err);                                            \
     TEST_ASSERT_EQUAL_INT_MESSAGE(d_type(d->result), type, "Wrong typ for " json); \
-    check                                                                          \
-        json_free(d);                                                              \
+    check;                                                                         \
+    json_free(d);                                                                  \
     _free(err);                                                                    \
   }
 #define verify_invalid_json(json, err_msg)                                   \
@@ -167,6 +167,7 @@ void test_json() {
     _free(err);                                                              \
   }
 void test_parse_json() {
+  verify_valid_json("1.2e-5", T_STRING, );
   verify_invalid_json("0eb", "Unexpected character");
   verify_valid_json("[{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\",\"code\":-32000,\"data\":{\"0x1f426a9536e776d61eccca7500db78b53a8296ee50977e50d6c76c44f8430571\":{\"error\":\"revert\",\"program_counter\":112,\"return\":\"0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000002711\",\"reason\":\"\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\"},\"stack\":\"c: VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\n    at Function.c.fromResults (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:2:157333)\n    at readyCall (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:17:121221)\",\"name\":\"c\"}}}]", T_ARRAY, );
 }
