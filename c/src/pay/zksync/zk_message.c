@@ -1,6 +1,6 @@
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/log.h"
-#include "../../third-party/crypto/bignum.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"
 #include <limits.h> /* strtoull */
@@ -8,9 +8,9 @@
 
 static int to_dec(char* dst, zk_fee_t val) {
 #ifdef ZKSYNC_256
-  bignum256 bn;
-  bn_read_be(val, &bn);
-  return bn_format(&bn, "", "", 0, 0, false, dst, 80);
+  int l = encode(ENC_DECIMAL, bytes(val, 32), dst);
+  if (l < 0) sprintf(dst, "<NOT SUPPORTED>");
+  return l;
 #else
   return sprintf(dst, "%" PRId64, val);
 #endif
@@ -180,7 +180,7 @@ in3_ret_t zksync_sign_transfer(sb_t* sb, zksync_tx_data_t* data, in3_req_t* ctx,
     if (data->prepare)
       data->prepare->human_message = _strdupn(msg_data, -1);
     else {
-      TRY(req_require_signature(ctx, SIGN_EC_PREFIX, PL_SIGN_ANY, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20), ctx->requests[0]))
+      TRY(req_require_signature(ctx, SIGN_EC_PREFIX, SIGN_CURVE_ECDSA, PL_SIGN_ANY, &signature, bytes((uint8_t*) msg_data, msg.len), bytes(data->from, 20), ctx->requests[0]))
       in3_log_debug("zksync_sign_transfer human readable :\n%s\n", msg_data);
 
       if (signature.len == 65 && signature.data[64] < 27)
@@ -260,8 +260,9 @@ in3_ret_t zksync_sign(zksync_config_t* conf, bytes_t msg, in3_req_t* ctx, uint8_
   p[msg.len * 2 + 4] = 0;
   d_token_t* result;
   TRY(req_send_sub_request(ctx, "zk_sign", p, NULL, &result, NULL))
-  if (d_type(result) != T_BYTES || d_len(result) != 96) return req_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
-  memcpy(sig, result->data, 96);
+  bytes_t bsig = d_bytes(result);
+  if (!bsig.data || bsig.len != 96) return req_set_error(ctx, "invalid signature returned", IN3_ECONFIG);
+  memcpy(sig, bsig.data, 96);
   return IN3_OK;
 }
 
@@ -294,7 +295,7 @@ in3_ret_t zksync_sign_change_pub_key(sb_t* sb, in3_req_t* ctx, uint8_t* sync_pub
   memset(ethmsg + 28, 0, 32);                  //  msgBatch hash  - currently not supported, so 32x0
 
   if (conf->sign_type != ZK_SIGN_CREATE2) {
-    TRY(req_require_signature(ctx, SIGN_EC_PREFIX, PL_SIGN_ANY, &signature, bytes((uint8_t*) ethmsg, 60), bytes(conf->account, 20), ctx->requests[0]))
+    TRY(req_require_signature(ctx, SIGN_EC_PREFIX, SIGN_CURVE_ECDSA, PL_SIGN_ANY, &signature, bytes((uint8_t*) ethmsg, 60), bytes(conf->account, 20), ctx->requests[0]))
     if (signature.len == 65 && signature.data[64] < 27)
       signature.data[64] += 27; // because EIP155 chainID = 0
   }

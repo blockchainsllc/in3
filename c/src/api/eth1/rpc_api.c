@@ -36,14 +36,11 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/client/version.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../signer/pk-signer/signer.h"
-#include "../../third-party/crypto/bignum.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/rand.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
@@ -93,7 +90,7 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_STRING(method_sig, ctx, 0)
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 1, 0, 0)
   TRY_PARAM_GET_BYTES(topics, ctx, 2, 0, 0)
-  CHECK_PARAM(ctx->req, ctx->params, 1, val->len % 32 == 0)
+  CHECK_PARAM(ctx->req, ctx->params, 1, d_bytes(val).len % 32 == 0)
 
   // decode
   abi_sig_t* abi_signature = abi_sig_create(method_sig, &error);
@@ -223,13 +220,12 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
 
   // determine from-address, but only if we have all the fields or a signed tx
   if (len && !fields[len]) {
-    uint8_t pub[65];                                                   // pub key-data
-    bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1}; // bytes, which points to offset one because the pubkey will be created as 65 bytes
-    bytes_t last, v;                                                   // bytes structs
-    rlp_decode(&data, len - 1, &v);                                    // get the s-field,
-    if (v.len == 0) {                                                  // and check if this is empty, since it means it is a raw tx without a signature
-      rlp_decode(&data, len - 3, &v);                                  // but in this case the v-value
-      sb_printx(&response, ",\"chainId\":\"%V\"", v);                  // is the chain_id
+    uint8_t pub[65];                                  // pub key-data
+    bytes_t last, v;                                  // bytes structs
+    rlp_decode(&data, len - 1, &v);                   // get the s-field,
+    if (v.len == 0) {                                 // and check if this is empty, since it means it is a raw tx without a signature
+      rlp_decode(&data, len - 3, &v);                 // but in this case the v-value
+      sb_printx(&response, ",\"chainId\":\"%V\"", v); // is the chain_id
     }
     else {
 
@@ -271,14 +267,14 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
       sb_printx(&response, ",\"signature\":\"%B\"", bytes(signature, 65));
 
       // now we recover. returning a none zero value means an invalid signature
-      if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature, hash, r)) {
+      if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(signature, 65), pub)) {
         _free(response.data);
         return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
       }
 
       // calculate the address from the pubkey
-      keccak(pubkey_bytes, hash);                                                                        //  by hashing it
-      sb_printx(&response, ",\"publicKey\":\"%B\",\"from\":\"%B\"", pubkey_bytes, bytes(hash + 12, 20)); // and taking the last 20 bytes
+      keccak(bytes(pub, 64), hash);                                                                        //  by hashing it
+      sb_printx(&response, ",\"publicKey\":\"%B\",\"from\":\"%B\"", bytes(pub, 64), bytes(hash + 12, 20)); // and taking the last 20 bytes
     }
   }
 
@@ -446,12 +442,13 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
 }
 
 static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 2 || d_type(ctx->params + 2) != T_STRING) return req_set_error(ctx->req, "must have 2 params as strings", IN3_EINVAL);
+  if (!ctx->params || d_len(ctx->params) != 2 || d_type(d_get_at(ctx->params, 1)) != T_STRING) return req_set_error(ctx->req, "must have 2 params as strings", IN3_EINVAL);
   char* val = d_get_string_at(ctx->params, 0);
   if (!val) {
-    if (d_type(ctx->params + 1) == T_INTEGER) {
+    d_token_t* t = d_get_at(ctx->params, 0);
+    if (d_type(t) == T_INTEGER) {
       val = alloca(20);
-      sprintf(val, "%i", d_int(ctx->params + 1));
+      sprintf(val, "%i", d_int(t));
     }
     else
       return req_set_error(ctx->req, "the value must be a string", IN3_EINVAL);
@@ -464,44 +461,44 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
 }
 
 char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
-  char      tmp[300];
-  bytes32_t val = {0};
-  memcpy(val + 32 - wei.len, wei.data, wei.len);
-  bignum256 bn;
-  bn_read_be(val, &bn);
-  size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, 300);
-  if (exp) {
-    if (l <= (size_t) exp) {
-      memmove(tmp + exp - l + 1, tmp, l + 1);
-      memset(tmp, '0', exp - l + 1);
-      l += exp - l + 1;
-    }
-    memmove(tmp + l - exp + 1, tmp + l - exp, exp + 1);
-    tmp[l - exp] = '.';
-    l++;
-  }
-  if (digits == -1 && exp)
-    for (int i = l - 1;; i--) {
-      if (tmp[i] == '0')
-        tmp[i] = 0;
-      else if (tmp[i] == '.') {
-        tmp[i] = 0;
-        break;
+  char tmp[300];
+  int  l = encode(ENC_DECIMAL, wei, tmp);
+  if (l < 0)
+    sprintf(tmp, "<not supported>");
+  else {
+    if (exp) {
+      if (l <= exp) {
+        memmove(tmp + exp - l + 1, tmp, l + 1);
+        memset(tmp, '0', exp - l + 1);
+        l += exp - l + 1;
       }
-      else
-        break;
+      memmove(tmp + l - exp + 1, tmp + l - exp, exp + 1);
+      tmp[l - exp] = '.';
+      l++;
     }
-  else if (digits == 0)
-    tmp[l - exp + digits - 1] = 0;
-  else if (digits < exp)
-    tmp[l - exp + digits] = 0;
+    if (digits == -1 && exp)
+      for (int i = l - 1;; i--) {
+        if (tmp[i] == '0')
+          tmp[i] = 0;
+        else if (tmp[i] == '.') {
+          tmp[i] = 0;
+          break;
+        }
+        else
+          break;
+      }
+    else if (digits == 0)
+      tmp[l - exp + digits - 1] = 0;
+    else if (digits < exp)
+      tmp[l - exp + digits] = 0;
+  }
 
   return _strdupn(tmp, -1);
 }
 
 static in3_ret_t in3_fromWei(in3_rpc_handle_ctx_t* ctx) {
   if (!ctx->params || d_len(ctx->params) < 1) return req_set_error(ctx->req, "must have 1 params as number or bytes", IN3_EINVAL);
-  bytes_t    val  = d_to_bytes(ctx->params + 1);
+  bytes_t    val  = d_get_bytes_at(ctx->params, 0);
   d_token_t* unit = d_get_at(ctx->params, 1);
   int        exp  = 0;
   if (d_type(unit) == T_STRING) {
@@ -529,22 +526,22 @@ static in3_ret_t in3_fromWei(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
   bytes_t   private_key;
-  uint8_t   public_key[65];
+  uint8_t   public_key[64];
   bytes32_t hash;
 
   // fetch arguments
   TRY_PARAM_GET_REQUIRED_BYTES(private_key, ctx, 0, 32, 32);
 
   // extract public key
-  ecdsa_get_public_key65(&secp256k1, private_key.data, public_key);
+  TRY(crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, private_key, public_key, NULL))
 
   // hash it
   if (strcmp(ctx->method, "in3_pk2address") == 0) {
-    keccak(bytes(public_key + 1, 64), hash);
+    keccak(bytes(public_key, 64), hash);
     return in3_rpc_handle_with_bytes(ctx, bytes(hash + 12, 20));
   }
   else
-    return in3_rpc_handle_with_bytes(ctx, bytes(public_key + 1, 64));
+    return in3_rpc_handle_with_bytes(ctx, bytes(public_key, 64));
 }
 
 static in3_ret_t parse_tx_param(in3_rpc_handle_ctx_t* ctx, char* params, sb_t* fn_args, sb_t* fn_sig, sb_t* sb) {
@@ -673,7 +670,7 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
   if (!nonce.data) {
     d_token_t* result;
     TRY_SUB_REQUEST(ctx->req, "eth_getTransactionCount", &result, "\"%B\",\"latest\"", sender)
-    nonce = d_to_bytes(result);
+    nonce = d_bytes(result);
   }
 
   // handle nonce as number, which means no leading zeros and if 0 it should be an empty bytes-array
@@ -694,8 +691,7 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t hash;
-  uint8_t   pub[65];
-  bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
+  uint8_t   pub[64];
   bytes_t   msg, signature;
   char*     sig_type;
 
@@ -718,12 +714,11 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   else
     keccak(msg, hash);
 
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, hash, signature.data[64] >= 27 ? signature.data[64] - 27 : signature.data[64]))
-    return req_set_error(ctx->req, "Invalid Signature", IN3_EINVAL);
+  TRY(req_set_error(ctx->req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), signature, pub)))
 
   // hash the pubkey
-  keccak(pubkey_bytes, hash);
-  sb_printx(in3_rpc_handle_start(ctx), "{\"publicKey\":\"%B\",\"address\":\"%B\"}", pubkey_bytes, bytes(hash + 12, 20));
+  keccak(bytes(pub, 64), hash);
+  sb_printx(in3_rpc_handle_start(ctx), "{\"publicKey\":\"%B\",\"address\":\"%B\"}", bytes(pub, 64), bytes(hash + 12, 20));
   return in3_rpc_handle_finish(ctx);
 }
 
@@ -748,6 +743,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
 
   in3_sign_ctx_t sc = {0};
   sc.req            = ctx->req;
+  sc.curve_type     = SIGN_CURVE_ECDSA;
   sc.message        = data;
   sc.account        = signer;
   sc.digest_type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
@@ -755,6 +751,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(sig_type, "sign_ec_raw") == 0) sc.digest_type = SIGN_EC_RAW;
   if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.digest_type = SIGN_EC_PREFIX;
   if (strcmp(sig_type, "sign_ec_btc") == 0) sc.digest_type = SIGN_EC_BTC;
+  if (strcmp(sig_type, "sign_ed25519") == 0) sc.curve_type = SIGN_CURVE_ED25519;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));
@@ -795,7 +792,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {
   d_token_t*  keyfile        = d_get_at(ctx->params, 0);
-  bytes_t     password_bytes = d_to_bytes(d_get_at(ctx->params, 1));
+  bytes_t     password_bytes = d_bytes(d_get_at(ctx->params, 1));
   bytes32_t   dst;
   json_ctx_t* sctx = NULL;
 
@@ -845,17 +842,28 @@ static in3_ret_t in3_prepareTx(in3_rpc_handle_ctx_t* ctx) {
   return IN3_OK;
 }
 
+static in3_ret_t eth_getInternalTx(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t tx_hash;
+  TRY_PARAM_GET_REQUIRED_BYTES(tx_hash, ctx, 0, 32, 32)
+  d_token_t*  result;
+  const char* tracer = "{data:[], fault:function(l) {},step:function(l) { var op = this.ops[l.op.toString()]; if (op)  this.data.push({op:l.op.toString(16), to: op[0]!=-1 ? \"0x\"+l.stack.peek(op[0]).toString(16) : null, value: op[1]!=-1 ? \"0x\"+l.stack.peek(op[1]).toString(): null, from:this.hex(l.contract.getAddress()),depth: l.getDepth(), gas:  op[2]!=-1 ? \"0x\"+l.stack.peek(op[2]).toString(): null }) },result:function(){return this.data},ops:{CALL:[1,2,0],CALLCODE:[1,2,0],DELEGATECALL:[1,-1,0],STATICCALL:[1,-1,0],CREATE:[-1,0,-1],CREATE2:[-1,0,-1],SELFDESTRUCT:[0,-1,-1]},hex:function(_) { var s=\"0x\";for (var i=0;i<_.length;i++) {s+= (\"0\"+_[i].toString(16)).slice(-2)} return s}}";
+  char*       params = sprintx("\"%B\",{\"tracer\":\"%S\"}", tx_hash, tracer);
+  TRY_FINAL(req_send_sub_request(ctx->req, "debug_traceTransaction", params, NULL, &result, NULL), _free(params))
+  sb_printx(in3_rpc_handle_start(ctx), "%j", result);
+  return in3_rpc_handle_finish(ctx);
+}
+
 static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   CHECK_PARAMS_LEN(ctx->req, ctx->params, 1)
-  d_token_t* tx_data = ctx->params + 1;
+  d_token_t* tx_data = d_get_at(ctx->params, 0);
   bytes_t    tx_raw  = NULL_BYTES;
-  bytes_t*   from_b  = NULL;
-  bytes_t*   data    = NULL;
+  bytes_t    from_b;
+  bytes_t    data;
   if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
     TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw, NULL))
     from_b = d_get_bytes(tx_data, K_FROM);
-    data   = &tx_raw;
+    data   = tx_raw;
 #else
     return req_set_error(ctx->req, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
@@ -867,13 +875,13 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
 
   address_t from;
   memset(from, 0, 20);
-  if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
+  if (from_b.data && from_b.len == 20) memcpy(from, from_b.data, 20);
   bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY_FINAL(eth_sign_raw_tx(*data, ctx->req, from, &dst), _free(tx_raw.data))
+  TRY_FINAL(eth_sign_raw_tx(data, ctx->req, from, &dst), _free(tx_raw.data))
 #else
   _free(tx_raw.data);
-  if (data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
+  if (data.data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
 #endif
   in3_rpc_handle_with_bytes(ctx, dst);
   _free(dst.data);
@@ -944,6 +952,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PARSE_TX_URL)
   TRY_RPC("in3_parse_tx_url", parse_tx_url(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_PGET_INTERNAL_TX)
+  TRY_RPC("in3_get_internal_tx", eth_getInternalTx(ctx))
 #endif
 
   return IN3_EIGNORE;

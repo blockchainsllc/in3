@@ -32,9 +32,6 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if (BASE64)
-  set(B64 b64)
-endif()
 
 
 add_static_library(
@@ -46,7 +43,6 @@ add_static_library(
     core_api.c 
 
   DEPENDS 
+    core
     api_utils
-    crypto
-    ${B64}
 )

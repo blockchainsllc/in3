@@ -31,20 +31,13 @@ exports.generateAPI = function (api_name, rpcs, descr, types, testCases) {
 }
 
 function createTest(descr, method, tests, tc) {
-    const t = {
+    tests.push({
         descr,
         request: { method, params: tc.input || [] },
         result: getResult(tc.expected_output),
         config: tc.config || {},
-        response: []
-    }
-    tests.push(t);
-    (tc.mockedResponses || []).forEach(r => {
-        Object.keys(r).forEach(_ => {
-            t.response.push(_ == 'in3_http' ? r[_].res[0].result : r[_].res[0])
-            if (r[_].length > 1) throw new Error("Too many responses for " + _ + ' in ' + descr)
-        })
-    })
+        response: asArray(tc.mockedResponses).map(r => r.req.body?.params || r.res.result === undefined ? r.res : r.res.result)
+    });
 }
 function getResult(x) {
     if (x && x.type && x.value !== undefined && Object.keys(x).length == 2) {
@@ -60,6 +53,7 @@ function getResult(x) {
 function createTestCaseFunction(testname, testCase, api_name, rpc) {
 
     let tests = [];
+    if (!rpc) console.log("::: missing rpc-def for " + api_name + ' ' + testname)
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
         const tn = t.descr || testname + (index ? ('_' + (index + 1)) : '')
@@ -84,6 +78,12 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
             createTest(tn, testname, tests, t)
     })
 
-    let fullPath = '../test/requests/generated/' + (testname.startsWith(api_name + '_') ? '' : (api_name + '_')) + testname + '.json'
+    const folders = [
+        "../c/test/testdata/requests/generated",
+        '../test/requests/generated'
+    ]
+    const folder = folders.find(f => fs.existsSync(f))
+
+    let fullPath = folder + '/' + (testname.startsWith(api_name + '_') ? '' : (api_name + '_')) + testname + '.json'
     fs.writeFileSync(fullPath, JSON.stringify(tests, null, 2), 'utf8')
 }

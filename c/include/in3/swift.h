@@ -56,5 +56,6 @@ char* _NULLABLE    sign_get_method(in3_req_t* _NULLABLE r);
 bytes_t            sign_get_message(in3_req_t* _NULLABLE r);
 uint8_t* _NULLABLE sign_get_from(in3_req_t* _NULLABLE r);
 int                sign_get_payload_type(in3_req_t* _NULLABLE r);
+int                sign_get_curve_type(in3_req_t* _NULLABLE r);
 char* _NULLABLE    sign_get_metadata(in3_req_t* _NULLABLE r);
 #endif // IN3_SWIFT_H

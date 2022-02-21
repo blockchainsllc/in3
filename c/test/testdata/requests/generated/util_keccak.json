@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "keccak",
+    "request": {
+      "method": "keccak",
+      "params": [
+        "0x1234567890"
+      ]
+    },
+    "result": "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41",
+    "config": {},
+    "response": []
+  }
+]

@@ -1,0 +1,21 @@
+[
+  {
+    "descr": "ipfs_put",
+    "request": {
+      "method": "ipfs_put",
+      "params": [
+        "I love incubed",
+        "utf8"
+      ]
+    },
+    "result": "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH",
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH"
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "descr": "in3_bip32",
+    "request": {
+      "method": "in3_bip32",
+      "params": [
+        "0x65fadac7008e447c11c6ca9207818e2058c6b8ef437ef277ec03294036c1c34f",
+        "secp256k1",
+        "m/44'/60'/0'/0/0"
+      ]
+    },
+    "result": "0xb4a0adabe68b6df6290bebf959091b3d3d67f1236617d5386d5818dc2494d5fb",
+    "config": {},
+    "response": []
+  }
+]

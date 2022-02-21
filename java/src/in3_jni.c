@@ -42,14 +42,13 @@
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/bytes.h"
+#include "../../c/src/core/util/crypto.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
 #include "../../c/src/nodeselect/full/cache.h"
 #include "../../c/src/nodeselect/full/nodeselect_def.h"
 #include "../../c/src/signer/pk-signer/signer.h"
-#include "../../c/src/third-party/crypto/ecdsa.h"
-#include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/eth1/basic/eth_basic.h"
 
 #ifdef BASE64
@@ -245,18 +244,15 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
     case T_STRING:
       return (*env)->NewStringUTF(env, d_string(t));
     case T_BYTES: {
-      char* tmp = alloca(t->len * 2 + 3);
-      tmp[0]    = '0';
-      tmp[1]    = 'x';
-      bytes_to_hex(t->data, t->len, tmp + 2);
-      return (*env)->NewStringUTF(env, tmp);
+      bytes_t b = d_bytes(t);
+      return (*env)->NewStringUTF(env, bytes_to_hex_string(alloca(b.len * 2 + 3), "0x", b, NULL));
     }
     case T_OBJECT: {
       clz           = (*env)->FindClass(env, "in3/utils/JSON");
       jobject   map = (*env)->NewObject(env, clz, (*env)->GetMethodID(env, clz, "<init>", "()V"));
       jmethodID put = (*env)->GetMethodID(env, clz, "put", "(ILjava/lang/Object;)V");
       for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter))
-        (*env)->CallVoidMethod(env, map, put, iter.token->key, toObject(env, iter.token));
+        (*env)->CallVoidMethod(env, map, put, d_get_key(iter.token), toObject(env, iter.token));
       return map;
     }
     case T_ARRAY: {
@@ -511,10 +507,11 @@ JNIEXPORT jstring JNICALL Java_in3_utils_Signer_getAddressFromKey(JNIEnv* env, j
   const char* key = (*env)->GetStringUTFChars(env, jkey, 0);
 
   bytes32_t prv_key;
-  uint8_t   public_key[65], sdata[32];
+  uint8_t   public_key[64], sdata[32];
   hex_to_bytes((char*) key, -1, prv_key, 32);
-  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  keccak(bytes(public_key + 1, 64), sdata);
+
+  crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(prv_key, 32), public_key, NULL);
+  keccak(bytes(public_key, 64), sdata);
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   char tmp[43];
   bytes_to_hex(sdata + 12, 20, tmp + 2);
@@ -666,9 +663,7 @@ JNIEXPORT jobject Java_in3_IN3_getDefaultConfig(JNIEnv* env, jobject ob) {
 
   char*       ret  = in3_get_config(get_in3(env, ob));
   json_ctx_t* json = parse_json(ret);
-  d_token_t*  r    = &json->result[0];
-  jobject     res  = toObject(env, r);
-
+  jobject     res  = toObject(env, json->result);
   _free(ret);
   json_free(json);
 

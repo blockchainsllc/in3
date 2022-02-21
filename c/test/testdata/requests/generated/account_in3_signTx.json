@@ -1,0 +1,20 @@
+[
+  {
+    "descr": "in3_signTx",
+    "request": {
+      "method": "in3_signTx",
+      "params": [
+        "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080",
+        "0x8A91DC2D28b689474298D91899f0c1baF62cB85b"
+      ]
+    },
+    "result": "0xf86480808252089463f666a23cbd135a91187499b5cc51d589c302a08501000000008025a04c2539db491cd2b4fa0c54a81351aacd726e2460b43718f39300b0bf812eb0eba02913c456e34e5735333d8b39193775aac0e59c9179aaa7fd539571f0f319d594",
+    "config": {
+      "proof": "none",
+      "pk": [
+        "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+      ]
+    },
+    "response": []
+  }
+]

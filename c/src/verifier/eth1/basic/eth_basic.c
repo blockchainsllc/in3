@@ -35,6 +35,7 @@
 #include "eth_basic.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/debug.h"
 #include "../../../core/util/mem.h"
@@ -76,7 +77,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYNUMBER)
   if (VERIFY_RPC("eth_getBlockByNumber"))
-    return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
+    return eth_verify_eth_getBlock(vc, NULL_BYTES, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYHASH)
   if (VERIFY_RPC("eth_getBlockTransactionCountByHash"))
@@ -84,7 +85,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYNUMBER)
   if (VERIFY_RPC("eth_getBlockTransactionCountByNumber"))
-    return eth_verify_eth_getBlockTransactionCount(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
+    return eth_verify_eth_getBlockTransactionCount(vc, NULL_BYTES, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYHASH)
   if (VERIFY_RPC("eth_getBlockByHash"))
@@ -103,8 +104,8 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 #if !defined(RPC_ONLY) || defined(RPC_ETH_SENDRAWTRANSACTION)
   if (VERIFY_RPC("eth_sendRawTransaction")) {
     bytes32_t hash;
-    keccak(d_to_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
-    return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
+    keccak(d_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
+    return bytes_cmp(d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   }
 #endif
   return IN3_EIGNORE;
@@ -112,21 +113,18 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 
 static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   d_token_t * tx_hash, *tx_receipt;
-  str_range_t r       = d_to_json(ctx->params + 1);
+  str_range_t r       = d_to_json(d_get_at(ctx->params, 0));
   char*       tx_data = alloca(r.len + 1);
   memcpy(tx_data, r.data, r.len);
   tx_data[r.len]      = 0;
   in3_req_t* send_req = NULL;
   in3_req_t* last_r   = NULL;
   TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash, &send_req))
-  if (d_type(tx_hash) != T_BYTES || d_len(tx_hash) != 32) return req_set_error(ctx->req, "Invalid Response from sendTransaction, expecting a hash!", IN3_EINVAL);
+  bytes_t th = d_bytes(tx_hash);
+  if (!th.data || th.len != 32) return req_set_error(ctx->req, "Invalid Response from sendTransaction, expecting a hash!", IN3_EINVAL);
   // tx was sent, we have a tx_hash
   char tx_hash_hex[69];
-  bytes_to_hex(d_bytes(tx_hash)->data, 32, tx_hash_hex + 3);
-  tx_hash_hex[0] = tx_hash_hex[67] = '"';
-  tx_hash_hex[1]                   = '0';
-  tx_hash_hex[2]                   = 'x';
-  tx_hash_hex[68]                  = 0;
+  bytes_to_hex_string(tx_hash_hex, "\"0x", th, "\"");
 
   // get the tx_receipt
   TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt, &last_r))
@@ -155,13 +153,11 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_type(ctx->params) != T_ARRAY || !d_len(ctx->params) || d_type(ctx->params + 1) != T_OBJECT)
-    return req_set_error(ctx->req, "invalid type of params, expected object", IN3_EINVAL);
-  else if (!filter_opt_valid(ctx->params + 1))
-    return req_set_error(ctx->req, "filter option parsing failed", IN3_EINVAL);
-  if (!ctx->params->data) return req_set_error(ctx->req, "binary request are not supported!", IN3_ENOTSUP);
+  d_token_t* opts;
+  TRY_PARAM_GET_REQUIRED_OBJECT(opts, ctx, 0)
+  if (!filter_opt_valid(opts)) return req_set_error(ctx->req, "filter option parsing failed", IN3_EINVAL);
 
-  char*     fopt = d_create_json(ctx->req->request_context, ctx->params + 1);
+  char*     fopt = d_create_json(ctx->req->request_context, opts);
   in3_ret_t res  = filter_add(filters, ctx->req, FILTER_EVENT, fopt);
   if (res < 0) {
     _free(fopt);
@@ -178,10 +174,8 @@ static in3_ret_t eth_newBlockFilter(in3_filter_handler_t* filters, in3_rpc_handl
 }
 
 static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-    return req_set_error(ctx->req, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
-
-  uint64_t  id  = d_get_long_at(ctx->params, 0);
+  uint64_t id;
+  TRY_PARAM_GET_REQUIRED_LONG(id, ctx, 0);
   sb_t      sb  = {0};
   in3_ret_t ret = filter_get_changes(filters, ctx->req, id, &sb);
   if (ret != IN3_OK) {
@@ -191,6 +185,12 @@ static in3_ret_t eth_getFilterChanges(in3_filter_handler_t* filters, in3_rpc_han
   in3_rpc_handle_with_string(ctx, sb.data);
   _free(sb.data);
   return IN3_OK;
+}
+
+static in3_ret_t eth_uninstallFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx_t* ctx) {
+  uint64_t id;
+  TRY_PARAM_GET_REQUIRED_LONG(id, ctx, 0)
+  return in3_rpc_handle_with_string(ctx, filter_remove(filters, id) ? "true" : "false");
 }
 
 /** called to see if we can handle the request internally */
@@ -222,9 +222,7 @@ static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle
   TRY_RPC("eth_getFilterLogs", eth_getFilterChanges(filters, ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_UNINSTALLFILTER)
-  TRY_RPC("eth_uninstallFilter", (!ctx->params || d_len(ctx->params) == 0 || d_type(ctx->params + 1) != T_INTEGER)
-                                     ? req_set_error(ctx->req, "invalid type of params, expected filter-id as integer", IN3_EINVAL)
-                                     : in3_rpc_handle_with_string(ctx, filter_remove(filters, d_get_long_at(ctx->params, 0)) ? "true" : "false"))
+  TRY_RPC("eth_uninstallFilter", eth_uninstallFilter(filters, ctx))
 #endif
 
   if (strcmp(ctx->method, "eth_chainId") == 0 && in3_chain_id(ctx->req) != CHAIN_ID_LOCAL)

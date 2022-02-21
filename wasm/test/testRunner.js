@@ -54,7 +54,7 @@ if (process.argv.find(_ => _.indexOf('mocha') >= 0)) {
 
     describe('JSON-Tests', () => {
 
-        for (const f of fs.readdirSync(testDir)) {
+        for (const f of fs.readdirSync(testDir).filter(_ => _.endsWith('*.json'))) {
             it(f, async () => {
                 const all = await run_test([testDir + '/' + f], -1)
                 for (const r of all)

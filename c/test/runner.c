@@ -197,7 +197,7 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   }
   else {
     bytes_builder_t* bb = bb_new();
-    d_serialize_binary(bb, _tmp_responses + _tmp_pos + 1);
+    d_serialize_binary(bb, d_get_at(_tmp_responses, _tmp_pos));
     response = bb->b;
     _free(bb);
   }
@@ -210,15 +210,15 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
 }
 
 int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* descr) {
-  d_token_t*  request  = d_get(test, key("request"));
-  d_token_t*  response = d_get(test, key("response"));
-  d_token_t*  config   = d_get(request, key("config"));
-  d_token_t*  t        = NULL;
-  str_range_t s        = d_to_json(d_get(request, key("params")));
-  char*       method   = d_get_string(request, key("method"));
-  d_token_t*  result   = d_get(test, key("result"));
-  bool        intern   = result ? true : d_get_int(test, key("intern"));
-  char        params[10000];
+  d_token_t*          request  = d_get(test, key("request"));
+  d_token_internal_t* response = d_get(test, key("response"));
+  d_token_t*          config   = d_get(request, key("config"));
+  d_token_t*          t        = NULL;
+  str_range_t         s        = d_to_json(d_get(request, key("params")));
+  char*               method   = d_get_string(request, key("method"));
+  d_token_t*          result   = d_get(test, key("result"));
+  bool                intern   = result ? true : d_get_int(test, key("intern"));
+  char                params[10000];
 
   // configure in3
   sprintf(params, "{\"requestCount\":%d}", (t = d_get(config, key("requestCount"))) ? d_int(t) : 1);
@@ -246,7 +246,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   //  _tmp_response = response;
   int is_bin = d_get_int(test, key("binaryFormat"));
 
-  in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err); // we cast request to string, since we know the data-pointer will point to the beginning of the object and the json parser will only parse until the end of the object
+  in3_client_rpc_raw(c, (char*) ((d_token_internal_t*) request)->data, is_bin ? NULL : &res, &err); // we cast request to string, since we know the data-pointer will point to the beginning of the object and the json parser will only parse until the end of the object
   fflush(stdout);
   fflush(stderr);
   printf("\n%2i : %-60s ", counter, descr);
@@ -258,19 +258,21 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     if (!d_eq(actual, result)) {
       char* a = sprintx("%J ", actual);
       char* b = sprintx("%J ", result);
-      for (int i = 0; a[i] && b[i]; i++) {
-        if (a[i] != b[i]) {
-          while (i > 0 && a[i] != '\n') i--;
-          a[i + 1] = '*';
-          b[i + 1] = '*';
-          break;
+      if (strcmp(a, b)) {
+        for (int i = 0; a[i] && b[i]; i++) {
+          if (a[i] != b[i]) {
+            while (i > 0 && a[i] != '\n') i--;
+            a[i + 1] = '*';
+            b[i + 1] = '*';
+            break;
+          }
         }
+        err = sprintx("wrong response: \ngot     : %s\nexpected: %s", a, b);
+        _free(res);
+        res = NULL;
       }
-      err = sprintx("wrong response: \ngot     : %s\nexpected: %s", a, b);
       _free(a);
       _free(b);
-      _free(res);
-      res = NULL;
     }
     json_free(actual_json);
   }
@@ -334,8 +336,8 @@ static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   if (registry_id) {
     c->chain.version = 2;
-    memcpy(nl->registry_id, d_bytesl(registry_id, 32)->data, 32);
-    memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20)->data, 20);
+    memcpy(nl->registry_id, d_bytesl(registry_id, 32).data, 32);
+    memcpy(nl->contract, d_get_byteskl(first_res, key("contract"), 20).data, 20);
   }
   c->proof = proof;
 
@@ -344,7 +346,7 @@ static in3_t* create_client(d_token_t* test, in3_proof_t proof) {
     c->signature_count = d_len(signatures);
     for (int i = 0; i < nl->nodelist_length; i++) {
       if (i < c->signature_count)
-        memcpy(nl->nodelist[i].address, d_get_bytes_at(signatures, i)->data, 20);
+        memcpy(nl->nodelist[i].address, d_get_bytes_at(signatures, i).data, 20);
       else
         nl->weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
     }
@@ -382,10 +384,14 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   int    fail = c ? execRequest(c, test, fuzz_prop != NULL, counter, temp) : 1;
   if (c) in3_free(c);
 
-  d_token_t* response = d_get(test, key("response"));
+  d_token_internal_t* response = d_get(test, key("response"));
   if (response) {
     str_range_t      res_size = d_to_json(response);
     bytes_builder_t* bb       = bb_new();
+    size_t           s        = d_token_size(response);
+    for (size_t i = 0; i < s; i++) {
+      if (d_is_bytes(response + i) && d_type(response + i) == T_STRING) d_bytes(response + i);
+    }
 
     d_serialize_binary(bb, response);
 
@@ -416,10 +422,10 @@ int runRequests(char** names, int test_index) {
     }
 
     // parse the data;
-    int        i;
-    char*      str_proof = NULL;
-    d_token_t *t = NULL, *tests = NULL, *test = NULL;
-    d_token_t* tokens = NULL;
+    int                 i;
+    char*               str_proof = NULL;
+    d_token_internal_t *t = NULL, *tests = NULL, *test = NULL;
+    d_token_t*          tokens = NULL;
 
     if ((tests = parsed->result)) {
       for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {

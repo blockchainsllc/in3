@@ -1,0 +1,18 @@
+[
+  {
+    "descr": "getblockcount",
+    "request": {
+      "method": "getblockcount",
+      "params": []
+    },
+    "result": 688582,
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": 688582
+      }
+    ]
+  }
+]

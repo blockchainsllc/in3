@@ -138,6 +138,14 @@ bytes_t* b_dup(const bytes_t* a) {
   memcpy(out->data, a->data, a->len);
   return out;
 }
+bytes_t* b_dup2(const bytes_t a) {
+  if (a.data == NULL) return NULL;
+  bytes_t* out = _malloc(sizeof(bytes_t));
+  out->data    = _malloc(a.len);
+  out->len     = a.len;
+  memcpy(out->data, a.data, a.len);
+  return out;
+}
 bytes_t bytes_dup(const bytes_t a) {
   bytes_t out = bytes(_malloc(a.len), a.len);
   memcpy(out.data, a.data, a.len);
@@ -222,11 +230,11 @@ void bb_write_chars(bytes_builder_t* bb, char* c, int len) {
   bb->b.len += len + 1;
 }
 
-void bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src) {
-  if (!src->len) return;
-  bb_check_size(bb, src->len);
-  memcpy(bb->b.data + bb->b.len, src->data, src->len);
-  bb->b.len += src->len;
+void bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t src) {
+  if (!src.len) return;
+  bb_check_size(bb, src.len);
+  memcpy(bb->b.data + bb->b.len, src.data, src.len);
+  bb->b.len += src.len;
 }
 void bb_write_raw_bytes(bytes_builder_t* bb, void* ptr, size_t len) {
   bb_check_size(bb, len);

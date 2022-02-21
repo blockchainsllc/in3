@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "in3_addRawKey",
+    "request": {
+      "method": "in3_addRawKey",
+      "params": [
+        "0x1234567890123456789012345678901234567890123456789012345678901234"
+      ]
+    },
+    "result": "0x2e988a386a799f506693793c6a5af6b54dfaabfb",
+    "config": {},
+    "response": []
+  }
+]

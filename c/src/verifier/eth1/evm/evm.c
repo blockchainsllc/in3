@@ -38,7 +38,6 @@
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/bignum.h"
 #include "../nano/merkle.h"
 #include "../nano/serialize.h"
 #include "gas.h"

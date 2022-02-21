@@ -36,8 +36,6 @@
 #include "../../core/client/request.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include <assert.h>

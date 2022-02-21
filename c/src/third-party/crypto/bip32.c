@@ -835,6 +835,7 @@ int hdnode_get_shared_key(const HDNode* node, const uint8_t* peer_public_key,
     *result_size = 65;
     return 0;
   }
+#if USE_BIP32_25519_CURVES
   else if (node->curve == &curve25519_info) {
     session_key[0] = 0x04;
     if (peer_public_key[0] != 0x40) {
@@ -845,6 +846,7 @@ int hdnode_get_shared_key(const HDNode* node, const uint8_t* peer_public_key,
     *result_size = 33;
     return 0;
   }
+#endif
   else {
     *result_size = 0;
     return 1; // ECDH is not supported

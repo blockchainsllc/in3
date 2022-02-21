@@ -37,27 +37,22 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/request.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "../../verifier/eth1/nano/serialize.h"
 
 static bool ecrecover_sig(bytes32_t hash, uint8_t* sig, address_t result) {
 
   // check messagehash
-  uint8_t pubkey[65], tmp[32];
-  int     v = sig[64];
-
-  // correct v
-  if (v >= 27) v -= 27;
+  uint8_t pubkey[64];
 
   // verify signature
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sig, hash, v)) return false;
-  keccak(bytes(pubkey + 1, 64), tmp);
-  memcpy(result, tmp + 12, 20);
+  if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(sig, 65), pubkey)) return false;
+  keccak(bytes(pubkey, 64), pubkey);
+  memcpy(result, pubkey + 12, 20);
   return true;
 }
 
@@ -93,11 +88,9 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
   in3_req_t* ctx = parent;
   for (; ctx; ctx = ctx->required) {
     if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_call")) continue;
-    d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
-    if (!t || d_type(t) != T_ARRAY || !d_len(t)) continue;
-    t = t + 1;
+    d_token_t* t = d_get_at(d_get(ctx->requests[0], K_PARAMS), 0);
     if (d_type(t) != T_OBJECT || !d_len(t)) continue;
-    bytes_t tx_data = d_to_bytes(d_get(t, K_DATA));
+    bytes_t tx_data = d_bytes(d_get(t, K_DATA));
     if (tx_data.len == data.len && memcmp(data.data, tx_data.data, data.len) == 0) break;
   }
 
@@ -106,7 +99,7 @@ static in3_ret_t call(in3_req_t* parent, address_t ms, bytes_t data, bytes_t** r
       case REQ_ERROR:
         return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
-        *result = d_get_bytes(ctx->responses[0], K_RESULT);
+        *result = d_as_bytes(d_get(ctx->responses[0], K_RESULT));
         if (!*result) {
           char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
           return req_set_error(parent, s ? s : "error executing eth_call", IN3_ERPC);
@@ -137,7 +130,7 @@ static bytes_t create_signatures(sig_data_t* signatures, uint32_t sig_count) {
     if (signatures[i].data.len) {
       memset(bb.b.data + (i * 65) + 32, 0, 32);               // clear
       int_to_bytes(bb.b.len, bb.b.data + (i * 65) + 32 + 28); // set the offset
-      bb_write_fixed_bytes(&bb, &signatures[i].data);         // add the data
+      bb_write_fixed_bytes(&bb, signatures[i].data);          // add the data
     }
   }
   return bb.b;
@@ -221,27 +214,27 @@ static bool is_valid(sig_data_t* data, multisig_t* ms, address_t new_sig, int si
   return true;
 }
 
-static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t* signatures, uint32_t* sig_count, multisig_t* ms, sig_data_t* sig_data, bytes32_t tx_hash) {
+static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t signatures, uint32_t* sig_count, multisig_t* ms, sig_data_t* sig_data, bytes32_t tx_hash) {
   // check passed signatures
-  if (!signatures) return IN3_OK;
+  if (!signatures.data) return IN3_OK;
   uint32_t index = *sig_count;
-  for (unsigned int i = 0; i < signatures->len && index < ms->threshold; i += 65) {
-    uint8_t v = signatures->data[i + 64];
+  for (unsigned int i = 0; i < signatures.len && index < ms->threshold; i += 65) {
+    uint8_t v = signatures.data[i + 64];
     if (v == 0) { // contract signature
-      uint32_t offset = bytes_to_int(signatures->data + i + 64 - 4, 4);
-      memcpy(sig_data[index].sig, signatures->data + i, 65);
-      sig_data[index].address = signatures->data + i + 12;
-      sig_data[index].data    = bytes(signatures->data + offset, 32 + bytes_to_int(signatures->data + offset + 32 - 4, 4));
+      uint32_t offset = bytes_to_int(signatures.data + i + 64 - 4, 4);
+      memcpy(sig_data[index].sig, signatures.data + i, 65);
+      sig_data[index].address = signatures.data + i + 12;
+      sig_data[index].data    = bytes(signatures.data + offset, 32 + bytes_to_int(signatures.data + offset + 32 - 4, 4));
     }
     else if (v == 1) {
       memset(sig_data + index, 0, sizeof(sig_data_t));
-      memcpy(sig_data[index].sig, signatures->data + i, 65);
-      sig_data[index].address = signatures->data + i + 12;
+      memcpy(sig_data[index].sig, signatures.data + i, 65);
+      sig_data[index].address = signatures.data + i + 12;
       sig_data[index].data    = NULL_BYTES;
     }
     else if (v > 26) {
-      if (!ecrecover_sig(tx_hash, signatures->data + i, sig_data[index].address)) return req_set_error(ctx, "could not recover the signature", IN3_EINVAL);
-      memcpy(sig_data[index].sig, signatures->data + i, 65);
+      if (!ecrecover_sig(tx_hash, signatures.data + i, sig_data[index].address)) return req_set_error(ctx, "could not recover the signature", IN3_EINVAL);
+      memcpy(sig_data[index].sig, signatures.data + i, 65);
       sig_data[index].data = NULL_BYTES;
     }
     else
@@ -255,7 +248,7 @@ static in3_ret_t fill_signature(in3_req_t* ctx, bytes_t* signatures, uint32_t* s
 static in3_ret_t add_approved(in3_req_t* ctx, uint32_t* sig_count, sig_data_t* sig_data, bytes32_t tx_hash, multisig_t* ms) {
   // we don't have enough signatures, so we need to check if owners have preapproved
   for (unsigned int i = 0; i < ms->owners_len && *sig_count < ms->threshold; i++) {
-    if (is_valid(sig_data, ms, (void*) ms->owners + i, *sig_count)) {
+    if (is_valid(sig_data, ms, (void*) (ms->owners + i), *sig_count)) {
       // we don't have a signature from this owner
       uint8_t  check_approved[68];
       bytes_t* result = NULL;
@@ -268,7 +261,7 @@ static in3_ret_t add_approved(in3_req_t* ctx, uint32_t* sig_count, sig_data_t* s
       if (result->data[31]) {
         memset(sig_data + *sig_count, 0, sizeof(sig_data_t));
         memcpy(sig_data[*sig_count].sig + 12, ms->owners + i, 20);
-        sig_data[*sig_count].address = (void*) ms->owners + i;
+        sig_data[*sig_count].address = (void*) (ms->owners + i);
         sig_data[*sig_count].data    = NULL_BYTES;
         (*sig_count)++;
       }
@@ -329,7 +322,7 @@ static in3_ret_t ensure_ms_type(multisig_t* ms, in3_req_t* ctx) {
     bytes_t* tmp = NULL;
     TRY(call(ctx, ms->address, bytes((uint8_t*) "\xa3\xf4\xdf\x7e", 4), &tmp))
     if (!tmp || tmp->len < 96) return req_set_error(ctx, "invalid MultiSig Name", IN3_ENOTSUP);
-    char* name = (void*) tmp->data + 64;
+    char* name = (void*) (tmp->data + 64);
     if (strcmp(name, "Gnosis Safe") == 0)
       ms->type = MS_GNOSIS_SAFE;
     else if (strcmp(name, "IAMO Safe") == 0)
@@ -423,7 +416,7 @@ in3_ret_t gs_prepare_tx(multisig_t* ms, in3_sign_prepare_ctx_t* prepare_ctx) {
     // if not we simply approve it
     approve_hash(new_raw_tx, &tx_data, tx_hash, ms->address);
   else
-    return req_set_error(ctx, "the account is not an owner and does not have enough signatures to exwecute the transaction!", IN3_EINVAL);
+    return req_set_error(ctx, "the account is not an owner and does not have enough signatures to execute the transaction!", IN3_EINVAL);
 
   return IN3_OK;
 }
@@ -461,16 +454,15 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
       uint8_t tmp[66];
       memcpy(tmp, "\x60\xb3\xcb\xf8\xb4\xa2\x23\xd6\x8d\x64\x1b\x3b\x6d\xdf\x9a\x29\x8e\x7f\x33\x71\x0c\xf3\xd3\xa9\xd1\x14\x6b\x5a\x61\x50\xfb\xca", 32); // SAFE_MSG_TYPEHASH
 
-      struct SHA3_CTX kctx;
-      sha3_256_Init(&kctx);
+      in3_digest_t d = crypto_create_hash(DIGEST_KECCAK);
       if (ctx->digest_type == SIGN_EC_PREFIX) {
         const char* PREFIX = "\x19"
                              "Ethereum Signed Message:\n";
-        sha3_Update(&kctx, (uint8_t*) PREFIX, strlen(PREFIX));
-        sha3_Update(&kctx, hash, sprintf((char*) hash, "%d", (int) ctx->message.len));
+        crypto_update_hash(d, bytes((uint8_t*) PREFIX, strlen(PREFIX)));
+        crypto_update_hash(d, bytes(hash, sprintf((char*) hash, "%d", (int) ctx->message.len)));
       }
-      if (ctx->message.len) sha3_Update(&kctx, ctx->message.data, ctx->message.len);
-      keccak_Final(&kctx, hash);
+      if (ctx->message.len) crypto_update_hash(d, bytes(ctx->message.data, ctx->message.len));
+      crypto_finalize_hash(d, hash);
 
       if (ms->type == MS_IAMO_SAFE)
         keccak(bytes(hash, 32), tmp + 32);
@@ -504,7 +496,7 @@ in3_ret_t gs_create_contract_signature(multisig_t* ms, in3_sign_ctx_t* ctx) {
         uint8_t* account = sctx.accounts + i * 20;
         if (is_valid(sig_data, ms, account, sig_count)) {
           bytes_t signature = NULL_BYTES;
-          TRY(req_require_signature(ctx->req, SIGN_EC_RAW, PL_SIGN_SAFETX, &signature, bytes(hash, 32), bytes(account, 20), ctx->req->requests[0]))
+          TRY(req_require_signature(ctx->req, SIGN_EC_RAW, SIGN_CURVE_ECDSA, PL_SIGN_SAFETX, &signature, bytes(hash, 32), bytes(account, 20), ctx->req->requests[0]))
           sig_data[sig_count].address = NULL;
           for (unsigned int n = 0; n < ms->owners_len; n++) {
             if (memcmp(ms->owners + n, account, 20) == 0) sig_data[sig_count].address = (void*) (ms->owners + n);

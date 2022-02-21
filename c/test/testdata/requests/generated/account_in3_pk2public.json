@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "in3_pk2public",
+    "request": {
+      "method": "in3_pk2public",
+      "params": [
+        "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+      ]
+    },
+    "result": "0x0903329708d9380aca47b02f3955800179e18bffbb29be3a644593c5f87e4c7fa960983f78186577eccc909cec71cb5763acd92ef4c74e5fa3c43f3a172c6de1",
+    "config": {},
+    "response": []
+  }
+]

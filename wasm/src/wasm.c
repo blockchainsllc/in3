@@ -35,6 +35,7 @@
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/request_internal.h"
 #include "../../c/src/core/client/version.h"
+#include "../../c/src/core/util/crypto.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
 #ifdef NODESELECT_DEF
@@ -42,15 +43,9 @@
 #include "../../c/src/nodeselect/full/nodelist.h"
 #endif
 #include "../../c/src/signer/pk-signer/signer.h"
-#include "../../c/src/third-party/crypto/ecdsa.h"
-#include "../../c/src/third-party/crypto/secp256k1.h"
-#include "../../c/src/third-party/crypto/sha2.h"
+
 #ifdef ETH_FULL
 #include "../../c/src/third-party/tommath/tommath.h"
-#endif
-#ifdef BASE64
-#include "../../c/src/third-party/libb64/cdecode.h"
-#include "../../c/src/third-party/libb64/cencode.h"
 #endif
 #include <emscripten.h>
 #include <string.h>
@@ -242,7 +237,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       break;
     case REQ_ERROR:
       sb_add_chars(sb, "\"error\",\"error\":\"");
-      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
+      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error", -1);
       sb_add_chars(sb, "\"");
       break;
     case REQ_WAITING_FOR_RESPONSE:
@@ -257,7 +252,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
       in3_http_request_t* request = in3_create_request(ctx);
       if (request == NULL) {
         sb_add_chars(sb, ",\"error\",\"");
-        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
+        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request", -1);
         sb_add_char(sb, '"');
       }
       else {
@@ -277,14 +272,14 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_req_t* ctx) {
           request->req->raw_response[i].time = start;
           if (i) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
-          sb_add_escaped_chars(sb, request->urls[i]);
+          sb_add_escaped_chars(sb, request->urls[i], -1);
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"headers\":[");
         for (in3_req_header_t* h = request->headers; h; h = h->next) {
           if (h != request->headers) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
-          sb_add_escaped_chars(sb, h->value);
+          sb_add_escaped_chars(sb, h->value, -1);
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"ctx\":");
@@ -329,19 +324,27 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_req_t* ctx, int i, int is_error, 
   else
     sb_add_chars(&ctx->raw_response[i].data, msg);
 }
-#ifdef BASE64
 
 uint8_t* EMSCRIPTEN_KEEPALIVE base64Decode(char* input) {
-  size_t   len = 0;
-  uint8_t* b64 = base64_decode(input, &len);
-  return b64;
+  int      l   = strlen(input);
+  uint8_t* res = _malloc(decode_size(ENC_BASE64, l));
+  l            = decode(ENC_BASE64, input, l, res);
+  if (l < 0) {
+    _free(res);
+    return NULL;
+  }
+  return res;
 }
 
 char* EMSCRIPTEN_KEEPALIVE base64Encode(uint8_t* input, int len) {
-  char* b64 = base64_encode(input, len);
-  return b64;
+  char* res = _malloc(encode_size(ENC_BASE64, len));
+  int   l   = encode(ENC_BASE64, bytes(input, len), res);
+  if (l < 0) {
+    _free(res);
+    return NULL;
+  }
+  return res;
 }
-#endif
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
   in3_t* c = in3_for_chain(chain);
   in3_set_storage_handler(c, storage_get_item, storage_set_item, NULL, NULL);
@@ -400,18 +403,17 @@ uint8_t* EMSCRIPTEN_KEEPALIVE hash_keccak(uint8_t* data, int len) {
 
 uint8_t* EMSCRIPTEN_KEEPALIVE hash_sha256(uint8_t* data, int len) {
   uint8_t* result = malloc(32);
-#ifdef CRYPTO_LIB
   if (result) {
-    SHA256_CTX c;
-    sha256_Init(&c);
-    sha256_Update(&c, data, len);
-    sha256_Final(&c, result);
+    in3_digest_t d = crypto_create_hash(DIGEST_SHA256);
+    if (!d.ctx)
+      in3_set_error("no sha256 support");
+    else {
+      crypto_update_hash(d, bytes(data, len));
+      crypto_finalize_hash(d, result);
+    }
   }
   else
     in3_set_error("malloc failed");
-#else
-  in3_set_error("no cryptolib installer");
-#endif
 
   return result;
 }
@@ -511,38 +513,34 @@ char* EMSCRIPTEN_KEEPALIVE wasm_to_hex(char* val) {
 /** private key to address */
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
   uint8_t* dst = malloc(20);
-#ifdef CRYPTO_LIB
-  uint8_t public_key[65], sdata[32];
-  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  keccak(bytes(public_key + 1, 64), sdata);
-  memcpy(dst, sdata + 12, 20);
-#endif
+  uint8_t  public_key[64];
+  if (crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(prv_key, 32), public_key, NULL)) {
+    _free(dst);
+    in3_set_error("cound not create the key ( no crypto support) ");
+    return NULL;
+  }
+  keccak(bytes(public_key, 64), public_key);
+  memcpy(dst, public_key + 12, 20);
   return dst;
 }
 
 /** private key to address */
 uint8_t* EMSCRIPTEN_KEEPALIVE private_to_public(bytes32_t prv_key) {
   uint8_t* dst = malloc(64);
-#ifdef CRYPTO_LIB
-  uint8_t public_key[65], sdata[32];
-  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  memcpy(dst, public_key + 1, 64);
-#endif
+  if (crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(prv_key, 32), dst, NULL)) {
+    _free(dst);
+    in3_set_error("cound not create the key ( no crypto support) ");
+    return NULL;
+  }
   return dst;
 }
 
 /** signs the given data */
 uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_digest_type_t type, uint8_t* data, int len, bool adjust_v) {
-  uint8_t* dst = malloc(65);
-#ifdef CRYPTO_LIB
   bytes_t sig = sign_with_pk(pk, bytes(data, len), type);
   if (!sig.data)
     in3_set_error("could not create signature");
   else if (adjust_v && sig.len == 65 && sig.data[64] < 26)
     sig.data[64] += 27;
   return sig.data;
-#else
-  in3_set_error("no cryptolib installed");
-#endif
-  return dst;
 }

@@ -1,0 +1,18 @@
+[
+  {
+    "descr": "zksync_pubkey",
+    "request": {
+      "method": "zksync_pubkey",
+      "params": []
+    },
+    "result": "0xd274ec1a5e9a513ff8f4eeb344fc02ca61e0823a7821c76e459ea0e8c5140826",
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": []
+  }
+]

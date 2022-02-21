@@ -34,37 +34,37 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include <string.h>
 
 bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
 
   // check messagehash
-  bytes_t* sig_msg_hash = d_get_byteskl(sig, K_MSG_HASH, 32);
-  if (sig_msg_hash && !b_cmp(sig_msg_hash, msg_hash)) return NULL;
+  bytes_t sig_msg_hash = d_get_byteskl(sig, K_MSG_HASH, 32);
+  if (sig_msg_hash.data && !bytes_cmp(sig_msg_hash, *msg_hash)) return NULL;
 
-  uint8_t  pubkey[65], sdata[64];
-  bytes_t* r = d_get_byteskl(sig, K_R, 32);
-  bytes_t* s = d_get_byteskl(sig, K_S, 32);
-  int      v = d_get_int(sig, K_V);
+  uint8_t pubkey[64], sdata[65];
+  bytes_t r = d_get_byteskl(sig, K_R, 32);
+  bytes_t s = d_get_byteskl(sig, K_S, 32);
+  int     v = d_get_int(sig, K_V);
 
   // correct v
   if (v >= 27) v -= 27;
-  if (r == NULL || s == NULL || r->len + s->len != 64)
+  if (r.data == NULL || s.data == NULL || r.len + s.len != 64)
     return NULL;
 
   // concat r and s
-  memcpy(sdata, r->data, r->len);
-  memcpy(sdata + r->len, s->data, s->len);
+  memcpy(sdata, r.data, r.len);
+  memcpy(sdata + r.len, s.data, s.len);
+  sdata[64] = v;
 
   // verify signature
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, msg_hash->data, v) == 0)
+  if (crypto_recover(ECDSA_SECP256K1, *msg_hash, bytes(sdata, 65), pubkey) == IN3_OK)
     // hash it and return the last 20 bytes as address
-    return keccak(bytes(pubkey + 1, 64), sdata) == 0 ? b_new(sdata + 12, 20) : NULL;
+    return keccak(bytes(pubkey, 64), sdata) == 0 ? b_new(sdata + 12, 20) : NULL;
   else
     return NULL;
 }

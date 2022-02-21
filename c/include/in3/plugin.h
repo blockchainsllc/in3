@@ -261,6 +261,13 @@ typedef enum {
   SIGNER_ECDSA   = 1,
   SIGNER_EIP1271 = 2
 } in3_signer_type_t;
+
+/** type of the curve used for signing*/
+typedef enum {
+  SIGN_CURVE_ECDSA   = 1, /**< sign with ecdsa */
+  SIGN_CURVE_ED25519 = 2, /**< use ed25519 curve */
+} d_curve_type_t;
+
 /**
  * action context when retrieving the addresses or accounts of a signer.
  */
@@ -268,6 +275,7 @@ typedef struct sign_account_ctx {
   struct in3_req*   req;          /**< the context of the request in order report errors */
   uint8_t*          accounts;     /**< the account to use for the signature */
   int               accounts_len; /**< number of accounts */
+  d_curve_type_t    curve_type;   /**< the type of the curve used */
   in3_signer_type_t signer_type;  /**< the type of the signer used for this account.*/
 } in3_sign_account_ctx_t;
 /**
@@ -275,6 +283,7 @@ typedef struct sign_account_ctx {
  */
 typedef struct sign_public_key_ctx {
   struct in3_req* req;            /**< the context of the request in order report errors */
+  d_curve_type_t  curve_type;     /**< the type of the curve used */
   uint8_t*        account;        /**< the account to use for the signature */
   uint8_t         public_key[64]; /**< the public key in case the plugin returns IN3_OK */
 } in3_sign_public_key_ctx_t;
@@ -294,11 +303,6 @@ typedef struct sign_prepare_ctx {
 } in3_sign_prepare_ctx_t;
 
 // -------------- SIGN -----------------------
-/** type of the curve used for signing*/
-typedef enum {
-  SIGN_CURVE_ECDSA   = 0, /**< sign with ecdsa */
-  SIGN_CURVE_ED25519 = 1, /**< use ed25519 curve */
-} d_curve_type_t;
 
 /** type of the hashing method for the pqyload for the requested signature */
 typedef enum {
@@ -313,7 +317,7 @@ typedef enum {
   PL_SIGN_ANY    = 0, /**< custom data to be signed*/
   PL_SIGN_ETHTX  = 1, /**< the payload is a ethereum-tx */
   PL_SIGN_BTCTX  = 2, /**< the payload is a BTC-Tx-Input */
-  PL_SIGN_SAFETX = 3, /**< The payload is a rlp-encoded data of a Gnosys Safe Tx */
+  PL_SIGN_SAFETX = 3  /**< The payload is a rlp-encoded data of a Gnosys Safe Tx */
 } d_payload_type_t;
 
 /**
@@ -577,7 +581,7 @@ typedef struct {
  */
 #define CNF_SET_BYTES(dst, token, property, l)                      \
   {                                                                 \
-    const bytes_t tmp = d_to_bytes(d_get(token, key(property)));    \
+    const bytes_t tmp = d_bytes(d_get(token, key(property)));       \
     if (tmp.data) {                                                 \
       if (tmp.len != l) CNF_ERROR(property " must be " #l " bytes") \
       memcpy(dst, tmp.data, l);                                     \
@@ -589,7 +593,7 @@ typedef struct {
  */
 #define CNF_SET_STRING(dst, token, property)                                                        \
   {                                                                                                 \
-    const d_token_t* t = d_get(token, key(property));                                               \
+    d_token_t* t = d_get(token, key(property));                                                     \
     if (d_type(t) != T_NULL && d_type(t) != T_STRING) CNF_ERROR("Invalid config for " property "!") \
     const char* tmp = d_string(t);                                                                  \
     if (tmp) {                                                                                      \

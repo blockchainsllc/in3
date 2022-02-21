@@ -31,9 +31,9 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#define IN3_INTERNAL
 
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
+#include "../util/crypto.h"
 #include "../util/data.h"
 #include "../util/log.h"
 #include "client.h"
@@ -114,19 +114,13 @@ static void free_urls(char** urls, int len) {
   _free(urls);
 }
 
-static int add_bytes_to_hash(struct SHA3_CTX* msg_hash, void* data, int len) {
+static int add_bytes_to_hash(in3_digest_t msg_hash, void* data, int len) {
   assert(data);
-#ifdef CRYPTO_LIB
-  if (msg_hash) sha3_Update(msg_hash, data, len);
-#else
-  UNUSED_VAR(msg_hash);
-  UNUSED_VAR(data);
-#endif
+  if (msg_hash.ctx) crypto_update_hash(msg_hash, bytes(data, len));
   return len;
 }
 
-NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
-#ifdef CRYPTO_LIB
+NONULL static void add_token_to_hash(in3_digest_t msg_hash, d_token_t* t) {
   switch (d_type(t)) {
     case T_ARRAY:
     case T_OBJECT:
@@ -137,32 +131,26 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
       return;
 
     default: {
-      bytes_t b = d_to_bytes(t);
-      sha3_Update(msg_hash, b.data, b.len);
+      bytes_t b = d_bytes(t);
+      crypto_update_hash(msg_hash, bytes(b.data, b.len));
     }
   }
-#else
-  UNUSED_VAR(msg_hash);
-  UNUSED_VAR(t);
-#endif
 }
 
 NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) {
   assert_in3_req(c);
   assert(sb);
 
-  char             temp[100];
-  in3_t*           rc       = c->client;
-  struct SHA3_CTX* msg_hash = !no_in3 && in3_plugin_is_registered(rc, PLGN_ACT_PAY_SIGN_REQ) ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  char   temp[100];
+  in3_t* rc           = c->client;
+  bool   use_msg_hash = !no_in3 && in3_plugin_is_registered(rc, PLGN_ACT_PAY_SIGN_REQ);
 
   sb_add_char(sb, '[');
 
   for (uint16_t i = 0; i < c->len; i++) {
-    d_token_t * request_token = c->requests[i], *t;
-    in3_proof_t proof         = no_in3 ? PROOF_NONE : in3_req_get_proof(c, i);
-#ifdef CRYPTO_LIB
-    if (msg_hash) sha3_256_Init(msg_hash);
-#endif
+    d_token_t *  request_token = c->requests[i], *t;
+    in3_proof_t  proof         = no_in3 ? PROOF_NONE : in3_req_get_proof(c, i);
+    in3_digest_t msg_hash      = use_msg_hash ? crypto_create_hash(DIGEST_KECCAK) : ((in3_digest_t){0});
 
     if (i > 0) sb_add_char(sb, ',');
     sb_add_char(sb, '{');
@@ -185,11 +173,11 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
     else {
       if (d_is_binary_ctx(c->request_context)) return req_set_error(c, "only text json input is allowed", IN3_EINVAL);
       const str_range_t ps = d_to_json(t);
-      if (msg_hash) add_token_to_hash(msg_hash, t);
+      if (msg_hash.ctx) add_token_to_hash(msg_hash, t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
     }
 
-    if (proof || msg_hash) {
+    if (proof || msg_hash.ctx) {
       // add in3
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
 
@@ -197,14 +185,12 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
       in3_pay_payload_ctx_t pctx = {.req = c, .request = request_token, .sb = sb};
       TRY(in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, &pctx))
 
-      if (msg_hash) {
-#ifdef CRYPTO_LIB
+      if (msg_hash.ctx) {
         in3_pay_sign_req_ctx_t sctx      = {.req = c, .request = request_token, .signature = {0}};
         bytes_t                sig_bytes = bytes(sctx.signature, 65);
-        keccak_Final(msg_hash, sctx.request_hash);
+        crypto_finalize_hash(msg_hash, sctx.request_hash);
         TRY(in3_plugin_execute_first(c, PLGN_ACT_PAY_SIGN_REQ, &sctx))
         sb_add_bytes(sb, ",\"sig\":", &sig_bytes, 1, false);
-#endif
       }
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
@@ -664,8 +650,8 @@ in3_req_t* in3_req_last_waiting(in3_req_t* ctx) {
 
 static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
   d_token_t* params     = d_get(ctx->requests[0], K_PARAMS);
-  sign_ctx->message     = d_to_bytes(d_get_at(params, 0));
-  sign_ctx->account     = d_to_bytes(d_get_at(params, 1));
+  sign_ctx->message     = d_bytes(d_get_at(params, 0));
+  sign_ctx->account     = d_bytes(d_get_at(params, 1));
   sign_ctx->digest_type = SIGN_EC_HASH;
   sign_ctx->curve_type  = SIGN_CURVE_ECDSA;
   sign_ctx->req         = ctx;

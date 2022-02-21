@@ -34,11 +34,10 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
@@ -55,7 +54,7 @@ static inline bytes_t get(d_token_t* t, uint16_t key) {
 }
 /** helper to get a key and convert it to bytes with a specified length*/
 static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
-  return d_to_bytes(d_getl(t, key, l));
+  return d_bytes(d_getl(t, key, l));
 }
 
 /**  return data from the client.*/
@@ -78,7 +77,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result, so write it back to the dst
-          *dst = d_to_bytes(r);
+          *dst = d_bytes(r);
           return IN3_OK;
         }
         else
@@ -101,11 +100,11 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
 
 /** gets the from-fied from the tx or ask the signer */
 in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
-  d_token_t* t = d_get(tx, K_FROM);
-  if (t) {
+  bytes_t t = d_get_bytes(tx, K_FROM);
+  if (t.data) {
     // we only accept valid from addresses which need to be 20 bytes
-    if (d_type(t) != T_BYTES || d_len(t) != 20) return req_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
-    memcpy(res, d_bytes(t)->data, 20);
+    if (t.len != 20) return req_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
+    memcpy(res, t.data, 20);
     return IN3_OK;
   }
 
@@ -165,7 +164,7 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
     fees = d_get(result, key("reward"));
     if (fees && d_len(fees) && d_type(fees) == T_ARRAY) {
       for (int i = d_len(fees) - 1; i >= 0 && tx->max_priority_fee_per_gas.len < 2; i--)
-        tx->max_priority_fee_per_gas = d_to_bytes(d_get_at(d_get_at(fees, i), 0));
+        tx->max_priority_fee_per_gas = d_bytes(d_get_at(d_get_at(fees, i), 0));
       prio_fee = tx->max_priority_fee_per_gas.data ? bytes_to_long(tx->max_priority_fee_per_gas.data, tx->max_priority_fee_per_gas.len) : 0;
     }
     if (!prio_fee) return req_set_error(ctx, "Could not determine the max priority fees!", IN3_EFIND);
@@ -250,11 +249,11 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
       // if this is a deployment transaction we concate it with the arguments without the functionhash
       bytes_t new_data = get_or_create_cached(req, key("deploy_data"), data->len + d_len(res) - 4);
       memcpy(new_data.data, data->data, data->len);
-      memcpy(new_data.data + data->len, d_bytes(res)->data + 4, d_len(res) - 4);
+      memcpy(new_data.data + data->len, d_bytes(res).data + 4, d_len(res) - 4);
       *data = new_data;
     }
     else
-      *data = d_to_bytes(res);
+      *data = d_bytes(res);
   }
 
   return IN3_OK;
@@ -375,7 +374,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
     chain_id = d_long(r);
   }
 
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, SIGN_CURVE_ECDSA, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required
@@ -426,23 +425,23 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
 /** handle the sendTransaction internally */
 in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // get the transaction-object
-  d_token_t* tx_params   = d_get(req, K_PARAMS);
+  d_token_t* tx          = d_get_at(d_get(req, K_PARAMS), 0);
   bytes_t    unsigned_tx = NULL_BYTES, signed_tx = NULL_BYTES;
   address_t  from;
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
+  if (d_type(tx) != T_OBJECT) return req_set_error(ctx, "invalid params", IN3_EINVAL);
 
-  TRY(get_from_address(tx_params + 1, ctx, from));
+  TRY(get_from_address(tx, ctx, from));
 
   // is there a pending signature?
   // we get the raw transaction from this request
   in3_req_t* sig_ctx = req_find_required(ctx, "sign_ec_hash", NULL);
   if (sig_ctx) {
-    bytes_t raw = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
+    bytes_t raw = d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
     unsigned_tx = bytes(_malloc(raw.len), raw.len);
     memcpy(unsigned_tx.data, raw.data, raw.len);
   }
   else
-    TRY(eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx, NULL));
+    TRY(eth_prepare_unsigned_tx(tx, ctx, &unsigned_tx, NULL));
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (unsigned_tx.data) _free(unsigned_tx.data);)
 
@@ -469,12 +468,12 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
 char* eth_wallet_sign(const char* key, const char* data) {
   int     data_l = strlen(data) / 2 - 1;
   uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+  hex_to_bytes(key + 2, -1, key_bytes, 32);
+  bytes32_t hash;
+  keccak(bytes(data_bytes, hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1)), hash);
+  char* res = _calloc(133, 1);
 
-  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
-  data_l    = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
-  char* res = _malloc(133);
-
-  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
+  if (crypto_sign_digest(ECDSA_SECP256K1, bytes(hash, 32), key_bytes, NULL, dst) == IN3_OK) {
     bytes_to_hex(dst, 65, res + 2);
     res[0] = '0';
     res[1] = 'x';

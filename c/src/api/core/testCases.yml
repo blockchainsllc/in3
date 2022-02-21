@@ -3,9 +3,7 @@ utils:
   keccak:
     input:
       - "0x1234567890"
-    expected_output: 
-      value: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
-      type: "uint8Array"
+    expected_output: "0x3a56b02b60d4990074262f496ac34733f870e1b7815719b46ce155beac5e1a41"
   
   web3_sha3:
     input:
@@ -15,10 +13,68 @@ utils:
   sha256:
     input:
       - "hello world"
-    expected_output: 
-      value: "0xb94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
-      type: "uint8Array"
+    expected_output: "0xb94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
 
+  in3_base58_encode:
+    input:
+      - "0x23f8bf82bdb58994e77856150350e7f9e81430cd"
+    expected_output: "W4ra4JfmD2srvd3AxakAJG37qyn"
+
+  in3_base64_encode:
+    input:
+      - "0x23f8bf82bdb58994e77856150350e7f9e81430cd"
+    expected_output: "I/i/gr21iZTneFYVA1Dn+egUMM0="
+
+  in3_base58_decode:
+    input:
+      - "W4ra4JfmD2srvd3AxakAJG37qyn"
+    expected_output: "0x23f8bf82bdb58994e77856150350e7f9e81430cd"
+
+  in3_base64_decode:
+    input:
+      - "I/i/gr21iZTneFYVA1Dn+egUMM0=" 
+    expected_output: "0x23f8bf82bdb58994e77856150350e7f9e81430cd"
+
+account:
+
+  in3_bip32:
+    input:
+      - "0x65fadac7008e447c11c6ca9207818e2058c6b8ef437ef277ec03294036c1c34f"
+      - secp256k1
+      - "m/44'/60'/0'/0/0"
+    expected_output: "0xb4a0adabe68b6df6290bebf959091b3d3d67f1236617d5386d5818dc2494d5fb"
+
+  in3_bip39_create:
+    input:
+      - "0x65fadac7008e447c11c6ca9207818e2058c6b8ef437ef277ec03294036c1c34f"
+    expected_output: "grass strategy range absurd tone dignity either sun must despair glory doll midnight fragile rug hurt venue satoshi absorb family address genius artwork vacant"
+
+  in3_bip39_decode:
+    input:
+      - "grass strategy range absurd tone dignity either sun must despair glory doll midnight fragile rug hurt venue satoshi absorb family address genius artwork vacant"
+      - test
+    expected_output: "0x153b604f4621a2ef0e5b5b562cb9730402ecb6850cb24dbda6df8d39747db802522dc5f03f3e1518ecc131a99082122083ad40361b5d815454c34058d976894e"
+
+  in3_ed25519_pk2pub:
+    input:
+      - "0x4c5b4b2225e51d284ff82947c186a03d89440e591020ff213c18135757df156a"
+    expected_output: "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
+
+  in3_ed25519_sign:
+    input:
+      - "0x1234567890"
+      - "0x4c5b4b2225e51d284ff82947c186a03d89440e591020ff213c18135757df156a"
+    expected_output: "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07"
+
+
+  in3_ed25519_verify:
+    input:
+      - "0x1234567890"
+      - "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07"
+      - "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
+    expected_output: true
+
+      
 #account:
 
 #  in3_createKey:

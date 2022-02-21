@@ -1,0 +1,61 @@
+[
+  {
+    "descr": "eth_getLogs",
+    "request": {
+      "method": "eth_getLogs",
+      "params": [
+        {
+          "fromBlock": "0x834b77",
+          "toBlock": "0x834b77",
+          "address": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      ]
+    },
+    "result": [
+      {
+        "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "blockHash": "0xcc66dc39266f60a86380bf2df8263e24818bd33e6ffffd7002a4b2d73b37efdc",
+        "blockNumber": "0x834b77",
+        "data": "0x0000000000000000000000000000000000000000000000000000000349d05c5c",
+        "logIndex": "0x24",
+        "removed": false,
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x00000000000000000000000031826a1613470fc3d2eb794e93af7477ee8fe0ad",
+          "0x0000000000000000000000009e6adb80dd43d07df9f2f43f8434080c4528102f"
+        ],
+        "transactionHash": "0x20be6d27ed6a4c99c5dbeeb9081e114a9b400c52b80c4d10096c94ad7d3c1af6",
+        "transactionIndex": "0x25",
+        "transactionLogIndex": "0x0",
+        "type": "mined"
+      }
+    ],
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": [
+          {
+            "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+            "blockHash": "0xcc66dc39266f60a86380bf2df8263e24818bd33e6ffffd7002a4b2d73b37efdc",
+            "blockNumber": "0x834b77",
+            "data": "0x0000000000000000000000000000000000000000000000000000000349d05c5c",
+            "logIndex": "0x24",
+            "removed": false,
+            "topics": [
+              "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+              "0x00000000000000000000000031826a1613470fc3d2eb794e93af7477ee8fe0ad",
+              "0x0000000000000000000000009e6adb80dd43d07df9f2f43f8434080c4528102f"
+            ],
+            "transactionHash": "0x20be6d27ed6a4c99c5dbeeb9081e114a9b400c52b80c4d10096c94ad7d3c1af6",
+            "transactionIndex": "0x25",
+            "transactionLogIndex": "0x0",
+            "type": "mined"
+          }
+        ]
+      }
+    ]
+  }
+]

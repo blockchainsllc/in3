@@ -1,0 +1,28 @@
+[
+  {
+    "descr": "zksync_contract_address",
+    "request": {
+      "method": "zksync_contract_address",
+      "params": []
+    },
+    "result": {
+      "mainContract": "0x82f67958a5474e40e1485742d648c0b0686b6e5d",
+      "govContract": "0xc8568f373484cd51fdc1fe3675e46d8c0dc7d246"
+    },
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": [
+      {
+        "result": {
+          "govContract": "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246",
+          "mainContract": "0x82F67958A5474e40E1485742d648C0b0686b6e5D"
+        }
+      }
+    ]
+  }
+]

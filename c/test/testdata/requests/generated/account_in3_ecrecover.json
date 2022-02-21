@@ -1,0 +1,19 @@
+[
+  {
+    "descr": "in3_ecrecover",
+    "request": {
+      "method": "in3_ecrecover",
+      "params": [
+        "0x487b2cbb7997e45b4e9771d14c336b47c87dc2424b11590e32b3a8b9ab327999",
+        "0x0f804ff891e97e8a1c35a2ebafc5e7f129a630a70787fb86ad5aec0758d98c7b454dee5564310d497ddfe814839c8babd3a727692be40330b5b41e7693a445b71c",
+        "hash"
+      ]
+    },
+    "result": {
+      "publicKey": "0x94b26bafa6406d7b636fbb4de4edd62a2654eeecda9505e9a478a66c4f42e504c4481bad171e5ba6f15a5f11c26acfc620f802c6768b603dbcbe5151355bbffb",
+      "address": "0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"
+    },
+    "config": {},
+    "response": []
+  }
+]

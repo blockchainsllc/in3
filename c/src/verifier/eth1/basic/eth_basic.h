@@ -79,7 +79,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw);
 /**
  * verifies a transaction.
  */
-in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash);
+in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t tx_hash);
 
 /**
  * verifies a transaction by block hash/number and id.
@@ -94,12 +94,12 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc);
 /**
  * verifies a block
  */
-in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber);
+in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t block_hash, uint64_t blockNumber);
 
 /**
  * verifies block transaction count by number or hash
  */
-in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber);
+in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t block_hash, uint64_t blockNumber);
 
 /**
  * this function should only be called once and will register the eth-nano verifier.
