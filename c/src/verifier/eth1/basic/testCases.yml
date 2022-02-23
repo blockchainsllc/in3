@@ -193,7 +193,7 @@ eth:
       options:
         eth_blockdata:
           - req:
-              method: "GET"
+              method: "POST"
               body:
                 method: "eth_getBlockByNumber"
                 params:
@@ -204,7 +204,7 @@ eth:
               result: *blockdata
         eth_blockdataWithTxHashes:
           - req:
-              method: "GET"
+              method: "POST"
               body:
                 method: "eth_getBlockByNumber"
                 params:
@@ -227,7 +227,7 @@ eth:
       options:
         eth_blockdata:
           - req:
-              method: "GET"
+              method: "POST"
               body:
                 method: "eth_getBlockByHash"
                 params:
@@ -238,7 +238,7 @@ eth:
               result: *blockdata
         eth_blockdataWithTxHashes:
           - req:
-              method: "GET"
+              method: "POST"
               body:
                 method: "eth_getBlockByHash"
                 params:
@@ -256,7 +256,7 @@ eth:
     expected_output: 204
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getBlockTransactionCountByHash"
             params:
@@ -273,7 +273,7 @@ eth:
     expected_output: 204
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getBlockTransactionCountByNumber"
             params:
@@ -290,7 +290,7 @@ eth:
     expected_output: 1
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getUncleCountByBlockHash"
             params:
@@ -307,7 +307,7 @@ eth:
     expected_output: 1
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getUncleCountByBlockNumber"
             params:
@@ -325,7 +325,7 @@ eth:
     expected_output: *output_eth_getTransactionByBlock
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getTransactionByBlockHashAndIndex"
             params:
@@ -344,7 +344,7 @@ eth:
     expected_output: *output_eth_getTransactionByBlock
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getTransactionByBlockNumberAndIndex"
             params:
@@ -362,7 +362,7 @@ eth:
     expected_output: *output_eth_getTransactionByBlock
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getTransactionByHash"
             params:
@@ -381,7 +381,7 @@ eth:
     expected_output: *test_eth_getlogs
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getLogs"
             params:
@@ -400,7 +400,7 @@ eth:
     expected_output: "0x329a1e26bab74000"
     mockedResponses:
       - req:
-          method: "Get"
+          method: "POST"
           body:
             method: "eth_getBalance"
             params:
@@ -418,7 +418,7 @@ eth:
     expected_output: 26588838
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getTransactionCount"
             params:
@@ -437,7 +437,7 @@ eth:
     expected_output: "0x60806040526001600160a01b036000541663530ca43760e11b6000351415602a578060005260206000f35b3660008037600080366000845af43d6000803e806046573d6000fd5b3d6000f3fea265627a7a723158203f36691c16ad212e606ff2acbeb8ed1efb9c7d0f4f2c44903f1d6dcb82754f6c64736f6c63430005110032"
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getCode"
             params:
@@ -456,7 +456,7 @@ eth:
     expected_output: "0x0"
     mockedResponses:
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getStorageAt"
             params:
@@ -557,7 +557,7 @@ eth:
           jsonrpc: "2.0"
           result: "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416"
       - req:
-          method: "GET"
+          method: "POST"
           body:
             method: "eth_getTransactionReceipt"
             params:
