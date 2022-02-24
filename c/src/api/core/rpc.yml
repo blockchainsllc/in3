@@ -114,7 +114,7 @@ utils:
         descr: data to hash
         type: bytes
     result:
-      type: uint8Array
+      type: bytes
       descr: the 32byte hash of the data
     example:
       request:
