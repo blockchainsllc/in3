@@ -12,10 +12,6 @@ typedef enum btc_tx_field {
   BTC_WITNESS
 } btc_tx_field_t;
 
-bool script_is_standard(btc_stype_t script_type) {
-  return script_type != BTC_NON_STANDARD && script_type != BTC_UNSUPPORTED && script_type != BTC_UNKNOWN;
-}
-
 bool pub_key_is_valid(const bytes_t* pub_key) {
   return (pub_key->len == BTC_UNCOMP_PUB_KEY_SIZE_BYTES && pub_key->data[0] == 0x4) || (pub_key->len == BTC_COMP_PUB_KEY_SIZE_BYTES && (pub_key->data[0] == 0x2 || pub_key->data[0] == 0x3));
 }
@@ -334,45 +330,85 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   return IN3_OK;
 }
 
-btc_stype_t btc_get_script_type(const bytes_t* script) {
-  if ((!script->data) || (script->len > MAX_SCRIPT_SIZE_BYTES)) {
-    return BTC_UNSUPPORTED;
-  }
-
-  btc_stype_t script_type = BTC_NON_STANDARD;
-  uint32_t    len         = script->len;
-  uint8_t*    p           = script->data;
-
-  if ((len == (uint32_t) p[0] + 2) && (p[0] == BTC_COMP_PUB_KEY_SIZE_BYTES || p[0] == BTC_UNCOMP_PUB_KEY_SIZE_BYTES) && (p[len - 1] == OP_CHECKSIG)) {
-    // locking script has format: PUB_KEY_LEN(1) PUB_KEY(33 or 65 bytes) OP_CHECKSIG(1)
-    script_type = BTC_P2PK;
-  }
-  else if ((len == 25) && (p[0] == OP_DUP) && (p[1] == OP_HASH160) && (p[2] == 0x14) && (p[len - 2] == OP_EQUALVERIFY) && (p[len - 1] == OP_CHECKSIG)) {
-    // locking script has format: OP_DUP(1) OP_HASH160(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20) OP_EQUALVERIFY(1) OP_CHECKSIG(1)
-    script_type = BTC_P2PKH;
-  }
-  else if ((len == 23) && (p[0] == OP_HASH160) && (p[1] == 0x14) && (p[len - 1] == OP_EQUAL)) {
-    // locking script has format: OP_HASH160(1) SCRIPT_HASH_LEN(1) SCRIPT_HASH(20) OP_EQUAL(1)
-    script_type = BTC_P2SH;
-  }
-  else if ((len == 22) && (p[0] == 0) && (p[1] == 0x14)) {
-    // locking script has format: OP_0(1) PUB_KEY_HASH_LEN(1) PUB_KEY_HASH(20)
-    script_type = BTC_V0_P2WPKH;
-  }
-  else if ((len == 34) && (p[0] < OP_PUSHDATA1) && (p[1] == 0x20)) {
-    // locking script has format: OP_0(1) WITNESS_SCRIPT_HASH_LEN(1) WITNESS_SCRIPT_HASH(32)
-    script_type = BTC_P2WSH;
-  }
-  else if ((p[len - 1] == OP_CHECKMULTISIG) && (p[0] <= p[len - 2])) {
-    // locking script has format: M(1) LEN_PK_1(1) PK_1(33 or 65 bytes) ... LEN_PK_N(1) PK_N(33 or 65 bytes) N(1) OP_CHECKMULTISIG
-    script_type = (p[len - 2] <= 20) ? BTC_P2MS : BTC_UNSUPPORTED;
-  }
-  return script_type;
-}
-
 bool btc_public_key_is_valid(const bytes_t* public_key) {
   return (((public_key->len == 33) && (public_key->data[0] == 0x2 || public_key->data[0] == 0x3)) ||
           (public_key->len == 65 && public_key->data[0] == 0x4));
+}
+
+uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub_key_list_dst) {
+  if (!is_p2ms(&multisig_script)) return 0;
+
+  uint32_t script_len    = multisig_script.len;
+  uint32_t pub_key_count = multisig_script.data[script_len - 2];
+
+  // alloc memory and in array of pub keys
+  bytes_t* pub_key_list = _malloc(pub_key_count * sizeof(bytes_t));
+  pub_key_list_dst = pub_key_list;
+
+  // Extract pubKeys and convert each one to an address
+  uint8_t* p = multisig_script.data;
+  uint32_t pklen;
+  for (uint32_t i = 0; i < pub_key_count; i++) {
+    // extract pubKey from script
+    p++;
+    pklen           = *p;
+    bytes_t pub_key = bytes(_malloc(pklen), pklen);
+    memcpy(pub_key.data, p, pklen);
+    p += pklen;
+
+    // write public key into array
+    pub_key_list_dst[i] = pub_key;
+  }
+  return pub_key_count;
+}
+
+// WARNING: You should free addrs_ret after calling this function
+// WARNING: P2WPKH and P2WSH scripts still not supported
+// Returns BTC_UNKNOWN when something goes wrong
+btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst) {
+  if (!tx_out || !dst) return BTC_UNKNOWN;
+
+  btc_stype_t script_type = (tx_out->script.type == BTC_UNKNOWN) ? btc_get_script_type(&tx_out->script.data) : tx_out->script.type;
+
+  switch (script_type) {
+    case BTC_P2PK: {
+      // extract raw PubKey from script
+      bytes_t pub_key;
+      pub_key.len  = (uint32_t) tx_out->script.data.data[0];
+      pub_key.data = _malloc(pub_key.len);
+      memcpy(pub_key.data, tx_out->script.data.data + 1, pub_key.len);
+
+      // use public key to calculate address
+      btc_addr_from_pub_key(pub_key, BTC_P2PK_PREFIX, dst);
+      break;
+    }
+    case BTC_P2PKH: {
+      ripemd160_t pkhash;
+      memcpy(pkhash, tx_out->script.data.data + 3, BTC_HASH160_SIZE_BYTES);
+      btc_addr_from_pub_key_hash(pkhash, BTC_P2PKH_PREFIX, dst);
+      break;
+    }
+    case BTC_P2SH: {
+      ripemd160_t pkhash;
+      memcpy(pkhash, tx_out->script.data.data + 2, BTC_HASH160_SIZE_BYTES);
+      btc_addr_from_pub_key_hash(pkhash, BTC_P2SH_PREFIX, dst);
+      break;
+    }
+    case BTC_P2MS:
+      // P2MS transactions do not have any intrinsic addresses
+      // Should call extract_public_keys_from_multisig
+      break;
+    case BTC_V0_P2WPKH:
+      // Warning: Not supported yet
+      // TODO: Implement BENCH32 encoding
+    case BTC_P2WSH:
+      // WARNING: NOT SUPPORTED YET
+      // TODO: implement BENCH32 encoding
+    default:
+      return BTC_UNSUPPORTED;
+  }
+
+  return script_type;
 }
 
 static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_tx_field_t field_type) {
