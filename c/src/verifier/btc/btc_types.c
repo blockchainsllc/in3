@@ -343,7 +343,7 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub
 
   // alloc memory and in array of pub keys
   bytes_t* pub_key_list = _malloc(pub_key_count * sizeof(bytes_t));
-  pub_key_list_dst = pub_key_list;
+  pub_key_list_dst      = pub_key_list;
 
   // Extract pubKeys and convert each one to an address
   uint8_t* p = multisig_script.data;
@@ -353,7 +353,7 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub
     p++;
     pklen           = *p;
     bytes_t pub_key = bytes(_malloc(pklen), pklen);
-    memcpy(pub_key.data, p, pklen);
+    memcpy(pub_key.data, p + 1, pklen);
     p += pklen;
 
     // write public key into array

@@ -18,7 +18,7 @@ typedef uint8_t ripemd160_t[20];
 typedef uint8_t btc_addr_t[BTC_ADDRESS_SIZE_BYTES];
 
 typedef struct btc_address {
-  btc_addr_t as_bytes; // raw byte representation of btc addres
+  btc_addr_t as_bytes; // raw byte representation of btc address
   char*      encoded;  // Encoding of btc address (usually base58 or bech32)
 } btc_address_t;
 

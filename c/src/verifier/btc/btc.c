@@ -6,6 +6,7 @@
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
+#include "btc_address.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
 #include "btc_sign.h"
@@ -492,6 +493,19 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     return btc_verify_tx(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
 #endif
+  // #if !defined(RPC_ONLY) || defined(RPC_GETTRANSACTIONADDRESSES)
+
+  //   if (VERIFY_RPC("gettransactionaddresses")) {
+  //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
+  //     d_token_t* tx_id      = d_get_at(params, 0);
+  //     d_token_t* block_hash = d_get_at(params, 1);
+  //     if (!tx_id || d_type(tx_id) != T_STRING || d_len(tx_id) != 64) return vc_err(vc, "Invalid tx_id");
+  //     bytes32_t tx_hash_bytes;
+  //     hex_to_bytes(d_string(tx_id), 64, tx_hash_bytes, 32);
+  //     if (block_hash) hex_to_bytes(d_string(block_hash), 64, hash, 32);
+  //     return btc_get_addresses(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
+  //   }
+  // #endif
 
   // TODO: Uncomment and implement functions bellow once conditions are met
   // #if !defined(RPC_ONLY) || defined(RPC_GETUTXOS)
@@ -543,6 +557,106 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   return IN3_EIGNORE;
 }
 
+in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
+  in3_req_t* sub = req_find_required(ctx->req, "getrawtransaction", NULL);
+  if (sub) { // do we have a result?
+    switch (in3_req_state(sub)) {
+      case REQ_ERROR:
+        return req_set_error(ctx->req, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
+      case REQ_SUCCESS: {
+        d_token_t* result = d_get(sub->responses[0], K_RESULT);
+        if (result) {
+          sb_add_json(in3_rpc_handle_start(ctx), "", result);
+        }
+        else {
+          char* error_msg = d_get_string(d_get(sub->responses[0], K_ERROR), K_MESSAGE);
+          return req_set_error(ctx->req, error_msg ? error_msg : "Unable to get addresses", IN3_ERPC);
+        }
+        return in3_rpc_handle_finish(ctx);
+      }
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+    }
+  }
+
+  char* txid;
+  char* blockhash;
+  TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
+  TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
+
+  sb_t sb = {0};
+  sb_add_chars(&sb, "[\"");
+  sb_add_chars(&sb, txid);
+  sb_add_chars(&sb, "\",0,\"");
+  sb_add_chars(&sb, blockhash);
+  sb_add_chars(&sb, "\"]");
+
+  d_token_t* result = NULL;
+  TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+
+  bytes_t transaction = d_get_bytes(result, key("result"));
+
+  // Create transaction context
+  btc_tx_ctx_t tx_ctx;
+  btc_init_tx_ctx(&tx_ctx);
+  btc_parse_tx(transaction, &tx_ctx.tx);
+
+  // Extract all outputs
+  uint8_t* p   = tx_ctx.tx.output.data;
+  uint8_t* end = p + tx_ctx.tx.output.len;
+  while (p < end) {
+    btc_tx_out_t new_output;
+    p = btc_parse_tx_out(p, &new_output);
+    btc_add_output_to_tx(ctx->req, &tx_ctx, &new_output);
+  }
+
+  // Build return object
+  sb_t addrs = {0};
+  sb_add_chars(&addrs, "[");
+
+  // -- For each output, extract addresses or public keys
+  for (uint32_t i = 0; i < tx_ctx.output_count; i++) {
+    sb_add_chars(&addrs, "{\"index\":");
+    sb_add_int(&addrs, i);
+
+    tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
+    sb_add_chars(&addrs, ",\"script_type\":\"");
+    sb_add_chars(&addrs, btc_script_type_to_string(tx_ctx.outputs[i].script.type));
+    sb_add_chars(&addrs, "\",\"addrs\":[");
+
+    if (tx_ctx.outputs[i].script.type == BTC_P2MS) {
+      // extract public keys
+      bytes_t* pub_key_list = NULL;
+      uint32_t pub_key_list_len;
+      pub_key_list_len = extract_public_keys_from_multisig(tx_ctx.outputs[i].script.data, pub_key_list);
+      if (!pub_key_list || pub_key_list_len == 0) return req_set_error(ctx->req, "Error while parsing p2ms public keys", IN3_ERPC);
+
+      // Add public keys do return
+      for (uint32_t j = 0; j < pub_key_list_len; j++) {
+        if (j > 0) sb_add_chars(&addrs, ",");
+        sb_add_bytes(&addrs, "\"", &pub_key_list[j], pub_key_list[j].len, false);
+        sb_add_chars(&addrs, "\"");
+      }
+    }
+    else if (script_is_standard(tx_ctx.outputs[i].script.type)) {
+      // extract btc address
+      btc_address_t addr;
+      extract_address_from_output(&tx_ctx.outputs[i], &addr);
+      // TODO: Add base58 or bech32 encoding instead of bytes
+      bytes_t addr_as_bytes = bytes(addr.as_bytes, BTC_ADDRESS_SIZE_BYTES);
+      sb_add_bytes(&addrs, "\"", &addr_as_bytes, addr_as_bytes.len, false);
+      sb_add_chars(&addrs, "\"");
+    }
+    sb_add_chars(&addrs, "]}");
+  }
+  sb_add_chars(&addrs, "]");
+
+  TRY_FINAL(in3_rpc_handle_with_string(ctx, addrs.data), _free(addrs.data));
+  return in3_rpc_handle_finish(ctx);
+}
+
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
   // This is the RPC that abstracts most of what is done in the background before sending a transaction:
@@ -578,8 +692,9 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   btc_init_tx_ctx(&tx_ctx);
 
   // first parameter is the btc address which shall receive the remaining change, discounting fees, after transaction is complete
+  // TODO: Receive address as Base58 or BECH32 encoding, instead of bytes
   bytes_t from_addr = d_bytes(d_get_at(params, 0));
-  if (from_addr.len != BTC_ADDR_SIZE) return req_set_error(req, "ERROR: Invalid btc address", IN3_EINVAL);
+  if (from_addr.len != BTC_ADDRESS_SIZE_BYTES) return req_set_error(req, "ERROR: Invalid btc address", IN3_EINVAL);
 
   // second parameter is the ethereum account used by the signer api
   d_token_t* sig_acc = d_get_at(params, 1);
@@ -638,6 +753,9 @@ static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t
   // make sure the conf is filled with data from the cache
   btc_check_conf(req, conf);
 
+#if !defined(RPC_ONLY) || defined(RPC_GETADDRESSES)
+  TRY_RPC("getaddresses", btc_get_addresses(conf, ctx))
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
 
   // SERVER: sendtransaction(raw_signed_tx)

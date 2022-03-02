@@ -9,8 +9,8 @@ types:
 
   btc_value:
     address:
-      descr: a 20-byte btc address which should receive the specified value
-      type: address
+      descr: a 25-byte btc address which should receive the specified value
+      type: bytes
     value:
       descr: the amount in satoshis the provided address should receive 
       type: uint64
@@ -63,7 +63,26 @@ types:
       type: btc_utxo_args
       optional: true
 
-  
+  btc_output_address:
+    tx_index:
+      descr: The transaction output index from which the addresses were extracted
+      type: uint
+    script_type:
+      descr: |
+        The script type from wich the address was extracted. 
+        Can be one of "p2pk", "p2pkh", "p2wpkh", "p2sh", "p2wsh", "p2ms", "non-standard" or "unsupported"
+        - When this value is "unknown", "non_standard" or "unsupported", the addrs array is empty
+        - When this value is "p2ms" (pay-to-multisig), the addrs array stores btc public keys. For now, this is the 
+        only case in which the array will have more than one element. 
+        - When this value is "p2sh" or "p2wsh", addrs array stores a single BECH32 encoded address
+        - For every other value, addrs stores a single Base58 encoded btc address
+      type: string
+    addrs:
+      descr: List of btc addresses or public keys extracted from a btc transaction output
+      type: string
+      array: true
+
+
   btcblockheader:
     hash:
       descr: the block hash (same as provided)
@@ -816,6 +835,24 @@ btc:
           merkleProof: 0x348d4bb04943400a80f162c4ef64b746bc4af0...52e688
           cbtx: 0x010000000001010000000000000000000000000000000...9da2fc
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a...52e688
+
+
+  getaddresses:
+    descr: Returns a list of addresses or public keys extracted from the outputs of a transaction
+    params:
+      txid:
+        descr: The transaction id
+        type: bytes32
+      blockhash:
+        descr: The block in which to look for the transaction
+        type: bytes32
+        optinal: true
+    result:
+      addresses:
+        descr: The addresses or public keys extracted fom transaction outputs
+        type: btc_output_address
+        array: true
+
 
   getblockcount:
     descr: Returns the number of blocks in the longest blockchain.

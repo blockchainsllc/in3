@@ -44,7 +44,7 @@ void btc_hash(bytes_t data, bytes32_t dst) {
   rev_copy(dst, tmp);
 }
 
-btc_hash256(bytes_t data, bytes32_t dst) {
+void btc_hash256(bytes_t data, bytes32_t dst) {
   bytes32_t    tmp;
   in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256);
   crypto_update_hash(ctx, data);

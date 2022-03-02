@@ -64,7 +64,7 @@ bool is_p2wsh(const bytes_t* script) {
 }
 
 bool is_witness_program(const bytes_t* script) {
-  return ((script->len > 4) || (script->len < 42)) &&
+  return ((script->len > 4) && (script->len < 42)) &&
          ((script->data[0] == OP_0) || (script->data[0] > OP_1 && script->data[0] < OP_16)) &&
          (((uint32_t) script->data[1] + 2) == script->len);
 }

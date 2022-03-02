@@ -113,9 +113,7 @@ void btc_free_utxo(btc_utxo_t* utxo);
 void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx);
 
 bytes_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, const bytes_t* args, uint32_t args_len);
-// btc_stype_t btc_get_script_type(const bytes_t* script);
-// bool        script_is_standard(btc_stype_t script_type);
-bool pub_key_is_valid(const bytes_t* pub_key);
+bool    pub_key_is_valid(const bytes_t* pub_key);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
 uint32_t  btc_get_raw_tx_size(const btc_tx_t* tx);

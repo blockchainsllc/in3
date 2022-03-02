@@ -38,8 +38,10 @@ add_static_library(
 
   SOURCES
     btc_merkle.c
-    btc_types.c
+    btc_script.c
     btc_serialize.c
+    btc_address.c
+    btc_types.c
     btc_target.c
     btc_sign.c
     btc.c 

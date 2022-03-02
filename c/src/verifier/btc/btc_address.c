@@ -19,7 +19,7 @@ void btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_
 }
 
 void btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_address_t* dst) {
-  uint8_t pub_key_hash[20];
+  ripemd160_t pub_key_hash;
   btc_hash160(pub_key, pub_key_hash);
   btc_addr_from_pub_key_hash(pub_key_hash, prefix, dst);
 }
