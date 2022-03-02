@@ -44,6 +44,22 @@ void btc_hash(bytes_t data, bytes32_t dst) {
   rev_copy(dst, tmp);
 }
 
+btc_hash256(bytes_t data, bytes32_t dst) {
+  bytes32_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
+  rev_copy(dst, tmp);
+}
+
+void btc_hash160(bytes_t data, address_t dst) {
+  address_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_RIPEMD_160);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
+  rev_copy(dst, tmp);
+}
+
 // copy 32 bytes in revers order
 void rev_copy(uint8_t* dst, uint8_t* src) {
   rev_copyl(dst, bytes(src, 32), 32);
