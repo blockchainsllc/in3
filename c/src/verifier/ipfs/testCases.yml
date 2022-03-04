@@ -2,6 +2,7 @@ ipfs:
   ipfs_get:
     config:
       proof: "none"
+      chainId: 'ipfs'
     input:
       - Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH
       - utf8
@@ -20,6 +21,7 @@ ipfs:
   ipfs_put:
     config:
       proof: "none"
+      chainId: 'ipfs'
     input:
       - "I love incubed"
       - "utf8"
