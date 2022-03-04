@@ -573,11 +573,14 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
   TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
 
   sb_t sb = {0};
-  sb_add_chars(&sb, "[\"");
+  sb_add_chars(&sb, "\"");
   sb_add_chars(&sb, txid);
-  sb_add_chars(&sb, "\",0,\"");
-  sb_add_chars(&sb, blockhash);
-  sb_add_chars(&sb, "\"]");
+  sb_add_chars(&sb, "\",0");
+  if (blockhash) {
+    sb_add_chars(&sb, ",\"");
+    sb_add_chars(&sb, blockhash);
+    sb_add_chars(&sb, "\"");
+  }
 
   d_token_t* result = NULL;
   TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
