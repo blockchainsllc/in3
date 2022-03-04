@@ -493,20 +493,6 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     return btc_verify_tx(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
 #endif
-  // #if !defined(RPC_ONLY) || defined(RPC_GETTRANSACTIONADDRESSES)
-
-  //   if (VERIFY_RPC("gettransactionaddresses")) {
-  //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
-  //     d_token_t* tx_id      = d_get_at(params, 0);
-  //     d_token_t* block_hash = d_get_at(params, 1);
-  //     if (!tx_id || d_type(tx_id) != T_STRING || d_len(tx_id) != 64) return vc_err(vc, "Invalid tx_id");
-  //     bytes32_t tx_hash_bytes;
-  //     hex_to_bytes(d_string(tx_id), 64, tx_hash_bytes, 32);
-  //     if (block_hash) hex_to_bytes(d_string(block_hash), 64, hash, 32);
-  //     return btc_get_addresses(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
-  //   }
-  // #endif
-
   // TODO: Uncomment and implement functions bellow once conditions are met
   // #if !defined(RPC_ONLY) || defined(RPC_GETUTXOS)
 

@@ -64,9 +64,9 @@ types:
       optional: true
 
   btc_output_address:
-    tx_index:
+    index:
       descr: The transaction output index from which the addresses were extracted
-      type: uint
+      type: uint32
     script_type:
       descr: |
         The script type from wich the address was extracted. 
@@ -846,12 +846,11 @@ btc:
       blockhash:
         descr: The block in which to look for the transaction
         type: bytes32
-        optinal: true
+        optional: true
     result:
-      addresses:
-        descr: The addresses or public keys extracted fom transaction outputs
-        type: btc_output_address
-        array: true
+      descr: The addresses or public keys extracted fom transaction outputs
+      type: btc_output_address
+      array: true
 
 
   getblockcount:

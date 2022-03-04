@@ -2535,6 +2535,136 @@ btc:
             res:
               result: *btc_segwit_tx
 
+  getaddresses:
+    -
+      descr: |
+        "transaction with 2 p2sh outputs"
+      config:
+        proof: 'none'
+      input:
+        - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+      expected_output:
+        - 
+          index: 0
+          script_type: "p2sh"
+          addrs:
+            - "05e9f20f1225a9528739495649405861ae5d77ba1e5e5f6a85"
+        - 
+          index: 1
+          script_type: "p2sh"
+          addrs:
+            - "051abf9a43d3a56f06930b95b1a8f0161bc0b0c9be64619f9c"
+      mockedResponses:
+        -
+          req: 
+            method: "POST"
+            body:
+              method: "getaddresses"
+              params:
+                - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+          res:
+            result:
+              - 
+                index: 0
+                script_type: "p2sh"
+                addrs:
+                  - "05e9f20f1225a9528739495649405861ae5d77ba1e5e5f6a85"
+              - 
+                index: 1
+                script_type: "p2sh"
+                addrs:
+                  - "051abf9a43d3a56f06930b95b1a8f0161bc0b0c9be64619f9c"
+    -
+      descr: |
+        "raw 1-2 multisig with uncompressed public keys"
+      config:
+        proof: 'none'
+      input:
+        - "60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1"
+      expected_output:
+        -
+          index: 0
+          script_type: "p2ms"
+          addrs:
+            - "04cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4"
+            - "0461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af"
+      mockedResponses:
+        -
+          req: 
+            method: "POST"
+            body:
+              method: "getaddresses"
+              params:
+                - "60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1"
+          res:
+            result:
+              -
+                index: 0
+                script_type: "p2ms"
+                addrs:
+                  - "04cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4"
+                  - "0461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af"
+    -
+      descr: |
+        "raw 1-2 multisig with compressed public keys"
+      config:
+        proof: 'none'
+      input:
+        - "78b28d3c2324da8c2f01840021addbcabb68f7ce1d4da870cabe5e9df6afe63d"
+      expected_output:
+        -
+          index: 0
+          script_type: "p2ms"
+          addrs:
+            - "037953dbf08030f67352134992643d033417eaa6fcfb770c038f364ff40d761588"
+            - "00bd2fda4cf456d64386a0756f580101a607c25bd8d6814693bdf16e2a7ba3e45c"
+      mockedResponses:
+        -
+          req: 
+            method: "POST"
+            body:
+              method: "getaddresses"
+              params:
+                - "78b28d3c2324da8c2f01840021addbcabb68f7ce1d4da870cabe5e9df6afe63d"
+          res:
+            result:
+              -
+                index: 0
+                script_type: "p2ms"
+                addrs:
+                  - "037953dbf08030f67352134992643d033417eaa6fcfb770c038f364ff40d761588"
+                  - "00bd2fda4cf456d64386a0756f580101a607c25bd8d6814693bdf16e2a7ba3e45c"
+    -
+      descr: |
+        "p2pkh trasaction"
+      config:
+        proof: 'none'
+      input:
+        - "a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d"
+      expected_output:
+        -
+          index: 0
+          script_type: "p2pkh"
+          addrs:
+            - "0046af3fb481837fadbb421727f9959c2d32a3682971c823e7"
+      mockedResponses:
+        -
+          req: 
+            method: "POST"
+            body:
+              method: "getaddresses"
+              params:
+                - "a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d"
+          res:
+            result:
+              -
+                index: 0
+                script_type: "p2pkh"
+                addrs:
+                  - "0046af3fb481837fadbb421727f9959c2d32a3682971c823e7"
+      
+      
+
   getblockcount:
     config:
       proof: 'none'

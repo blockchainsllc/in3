@@ -14,7 +14,6 @@ typedef enum {
   BTC_P2SH_PREFIX_TESTNET  = 0xc4
 } btc_address_prefix_t;
 
-typedef uint8_t ripemd160_t[20];
 typedef uint8_t btc_addr_t[BTC_ADDRESS_SIZE_BYTES];
 
 typedef struct btc_address {

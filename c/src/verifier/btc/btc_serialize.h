@@ -18,6 +18,8 @@ typedef enum {
 
 } btc_block_field;
 
+typedef uint8_t ripemd160_t[20];
+
 bytes_t   btc_block_get(bytes_t block, btc_block_field field);
 void      btc_hash(bytes_t data, bytes32_t dst);
 void      btc_hash256(bytes_t data, bytes32_t dst);

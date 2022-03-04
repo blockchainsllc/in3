@@ -44,7 +44,7 @@ bool is_p2ms(const bytes_t* script) {
       if (!pub_key_is_valid(&pub_key)) {
         return false;
       }
-      p += *p + 1; // point to the next public key len
+      p += pk_len + 1; // point to the next public key len
     }
   }
 
@@ -65,7 +65,7 @@ bool is_p2wsh(const bytes_t* script) {
 
 bool is_witness_program(const bytes_t* script) {
   return ((script->len > 4) && (script->len < 42)) &&
-         ((script->data[0] == OP_0) || (script->data[0] > OP_1 && script->data[0] < OP_16)) &&
+         ((script->data[0] == OP_0) || (script->data[0] >= OP_1 && script->data[0] <= OP_16)) &&
          (((uint32_t) script->data[1] + 2) == script->len);
 }
 

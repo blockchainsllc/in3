@@ -362,7 +362,7 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub
   return pub_key_count;
 }
 
-// WARNING: You should free addrs_ret after calling this function
+// WARNING: You should free dst.encoded after calling this function
 // WARNING: P2WPKH and P2WSH scripts still not supported
 // Returns BTC_UNKNOWN when something goes wrong
 btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst) {
