@@ -758,16 +758,17 @@ JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv* env, jclass cl, jstr
   jobject     ob   = NULL;
   const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
   json_ctx_t* ctx  = parse_json(data);
-  (*env)->ReleaseStringUTFChars(env, jdata, data);
   if (ctx == NULL) {
     char* error = _malloc(strlen(data) + 50);
     sprintf(error, "Error parsing the json-data : '%s'", data);
+    (*env)->ReleaseStringUTFChars(env, jdata, data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/RuntimeException"), error);
     _free(error);
   }
   else {
     ob = toObject(env, ctx->result);
     json_free(ctx);
+    (*env)->ReleaseStringUTFChars(env, jdata, data);
   }
 
   return ob;
