@@ -373,13 +373,10 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
   switch (script_type) {
     case BTC_P2PK: {
       // extract raw PubKey from script
-      bytes_t pub_key;
-      pub_key.len  = (uint32_t) tx_out->script.data.data[0];
-      pub_key.data = _malloc(pub_key.len);
-      memcpy(pub_key.data, tx_out->script.data.data + 1, pub_key.len);
+      bytes_t* pub_key = b_new(tx_out->script.data.data + 1, tx_out->script.data.data[0]);
 
       // use public key to calculate address
-      btc_addr_from_pub_key(pub_key, BTC_P2PK_PREFIX, dst);
+      btc_addr_from_pub_key(*pub_key, BTC_P2PK_PREFIX, dst);
       break;
     }
     case BTC_P2PKH: {
@@ -397,6 +394,7 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
     case BTC_P2MS:
       // P2MS transactions do not have any intrinsic addresses
       // Should call extract_public_keys_from_multisig
+      // Only return the script type
       break;
     case BTC_V0_P2WPKH:
       // Warning: Not supported yet

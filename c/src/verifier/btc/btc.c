@@ -598,7 +598,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
   while (p < end) {
     btc_tx_out_t new_output;
     p = btc_parse_tx_out(p, &new_output);
-    btc_add_output_to_tx(ctx->req, &tx_ctx, &new_output);
+    TRY(btc_add_output_to_tx(ctx->req, &tx_ctx, &new_output));
   }
 
   // Build return object
