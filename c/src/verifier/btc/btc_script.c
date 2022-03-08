@@ -1,5 +1,6 @@
 #include "btc_script.h"
 #include "btc_types.h"
+#include "../../core/util/log.h"
 
 bool is_p2pk(const bytes_t* script) {
   // locking script has format: PUB_KEY_LEN(1) PUB_KEY(33 or 65 bytes) OP_CHECKSIG(1)
@@ -26,15 +27,15 @@ bool is_p2ms(const bytes_t* script) {
   // locking script has format: M(1) LEN_PK_1(1) PK_1(33 or 65 bytes) ... LEN_PK_N(1) PK_N(33 or 65 bytes) N(1) OP_CHECKMULTISIG
   uint32_t len = script->len;
   uint8_t* p   = script->data;
-  uint32_t m   = p[0];
-  uint32_t n   = p[len - 2];
+  uint32_t m   = p[0] - 0x50; // OP_1 = 0x51, OP_2 = 0x52, OP_3 = 0x53... we want the n of OP_n
+  uint32_t n   = p[len - 2] - 0x50;
 
-  // check if teh script looks like a p2ms
+  // check if the script looks like a p2ms
   bool result = (p[len - 1] == OP_CHECKMULTISIG) && (m <= n) && (m < 16);
 
   if (result) {
     // Check if all public keys are valid
-    p++;
+    p++; // p1
     uint32_t pk_len;
     uint8_t* pk_data;
     for (uint32_t i = 0; i < n; i++) {
@@ -44,7 +45,7 @@ bool is_p2ms(const bytes_t* script) {
       if (!pub_key_is_valid(&pub_key)) {
         return false;
       }
-      p += pk_len + 1; // point to the next public key len
+      p += pk_len + 1; // point to the next public key len 33 + 1 + 2
     }
   }
 

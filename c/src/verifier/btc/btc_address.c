@@ -8,8 +8,8 @@ void btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_
   memcpy(tmp + 1, pub_key_hash160, 20);
 
   // Calculate hash256(prefiix-hash160). Fist 4 bytes will be used as address checksum
-  btc_hash256(bytes(tmp, 21), hash256_result);
-  memcpy(checksum, hash256_result, 4);
+  btc_hash(bytes(tmp, 21), hash256_result);
+  rev_copyl(checksum, bytes(hash256_result + 28, 4), 4);
 
   memcpy(dst->as_bytes, tmp, 21);
   memcpy(dst->as_bytes + (size_t) 21, checksum, 4);

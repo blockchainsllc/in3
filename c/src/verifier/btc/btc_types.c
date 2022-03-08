@@ -335,15 +335,14 @@ bool btc_public_key_is_valid(const bytes_t* public_key) {
           (public_key->len == 65 && public_key->data[0] == 0x4));
 }
 
-uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub_key_list_dst) {
+uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t** pub_key_list_dst) {
   if (!is_p2ms(&multisig_script)) return 0;
 
   uint32_t script_len    = multisig_script.len;
-  uint32_t pub_key_count = multisig_script.data[script_len - 2];
+  uint32_t pub_key_count = multisig_script.data[script_len - 2] - 0x50;
 
   // alloc memory and in array of pub keys
   bytes_t* pub_key_list = _malloc(pub_key_count * sizeof(bytes_t));
-  pub_key_list_dst      = pub_key_list;
 
   // Extract pubKeys and convert each one to an address
   uint8_t* p = multisig_script.data;
@@ -357,8 +356,9 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub
     p += pklen;
 
     // write public key into array
-    pub_key_list_dst[i] = pub_key;
+    pub_key_list[i] = pub_key;
   }
+  *pub_key_list_dst      = pub_key_list;
   return pub_key_count;
 }
 
@@ -367,7 +367,6 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub
 // Returns BTC_UNKNOWN when something goes wrong
 btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst) {
   if (!tx_out || !dst) return BTC_UNKNOWN;
-
   btc_stype_t script_type = (tx_out->script.type == BTC_UNKNOWN) ? btc_get_script_type(&tx_out->script.data) : tx_out->script.type;
 
   switch (script_type) {
@@ -405,7 +404,6 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
     default:
       return BTC_UNSUPPORTED;
   }
-
   return script_type;
 }
 

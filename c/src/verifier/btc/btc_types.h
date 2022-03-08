@@ -141,7 +141,7 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
  * Public keys are stored on pub_key_list array
  * returns the length of pub_key_list
  */
-uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t* pub_key_list);
+uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t** pub_key_list);
 
 in3_ret_t btc_add_input_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_in_t* tx_in);
 in3_ret_t btc_add_output_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_tx_out_t* tx_out);

@@ -545,13 +545,14 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
 
 in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
-  in3_req_t* sub = req_find_required(ctx->req, "getrawtransaction", NULL);
+  d_token_t* result = NULL;
+  in3_req_t* sub    = req_find_required(ctx->req, "getrawtransaction", NULL);
   if (sub) { // do we have a result?
     switch (in3_req_state(sub)) {
       case REQ_ERROR:
         return req_set_error(ctx->req, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
       case REQ_SUCCESS: {
-        d_token_t* result = d_get(sub->responses[0], K_RESULT);
+        result = d_get(sub->responses[0], K_RESULT);
         if (result) {
           sb_add_json(in3_rpc_handle_start(ctx), "", result);
         }
@@ -559,33 +560,36 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
           char* error_msg = d_get_string(d_get(sub->responses[0], K_ERROR), K_MESSAGE);
           return req_set_error(ctx->req, error_msg ? error_msg : "Unable to get addresses", IN3_ERPC);
         }
-        return in3_rpc_handle_finish(ctx);
+
+        in3_rpc_handle_finish(ctx);
+        break;
       }
       case REQ_WAITING_TO_SEND:
       case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
     }
   }
+  else {
+    char* txid;
+    char* blockhash;
+    TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
+    TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
 
-  char* txid;
-  char* blockhash;
-  TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
-  TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
-
-  sb_t sb = {0};
-  sb_add_chars(&sb, "\"");
-  sb_add_chars(&sb, txid);
-  sb_add_chars(&sb, "\",0");
-  if (blockhash) {
-    sb_add_chars(&sb, ",\"");
-    sb_add_chars(&sb, blockhash);
+    sb_t sb = {0};
     sb_add_chars(&sb, "\"");
+    sb_add_chars(&sb, txid);
+    sb_add_chars(&sb, "\",0");
+    if (blockhash) {
+      sb_add_chars(&sb, ",\"");
+      sb_add_chars(&sb, blockhash);
+      sb_add_chars(&sb, "\"");
+    }
+
+    TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
   }
 
-  d_token_t* result = NULL;
-  TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
-
-  bytes_t transaction = d_get_bytes(result, key("result"));
+  bytes_t transaction = bytes(NULL, d_len(result) / 2);
+  TRY(hex_to_bytes(d_string(result), -1, transaction.data, transaction.len))
 
   // Create transaction context
   btc_tx_ctx_t tx_ctx;
@@ -597,8 +601,10 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
   uint8_t* end = p + tx_ctx.tx.output.len;
   while (p < end) {
     btc_tx_out_t new_output;
-    p = btc_parse_tx_out(p, &new_output);
-    TRY(btc_add_output_to_tx(ctx->req, &tx_ctx, &new_output));
+    p                                   = btc_parse_tx_out(p, &new_output);
+    tx_ctx.outputs                      = _realloc(tx_ctx.outputs, (tx_ctx.output_count + 1) * sizeof(btc_tx_out_t), tx_ctx.output_count * sizeof(btc_tx_out_t));
+    tx_ctx.outputs[tx_ctx.output_count] = new_output;
+    tx_ctx.output_count++;
   }
 
   // Build return object
@@ -609,7 +615,6 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
   for (uint32_t i = 0; i < tx_ctx.output_count; i++) {
     sb_add_chars(&addrs, "{\"index\":");
     sb_add_int(&addrs, i);
-
     tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
     sb_add_chars(&addrs, ",\"script_type\":\"");
     sb_add_chars(&addrs, btc_script_type_to_string(tx_ctx.outputs[i].script.type));
@@ -619,14 +624,14 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
       // extract public keys
       bytes_t* pub_key_list = NULL;
       uint32_t pub_key_list_len;
-      pub_key_list_len = extract_public_keys_from_multisig(tx_ctx.outputs[i].script.data, pub_key_list);
+      pub_key_list_len = extract_public_keys_from_multisig(tx_ctx.outputs[i].script.data, &pub_key_list);
       if (!pub_key_list || pub_key_list_len == 0) return req_set_error(ctx->req, "Error while parsing p2ms public keys", IN3_ERPC);
 
       // Add public keys do return
       for (uint32_t j = 0; j < pub_key_list_len; j++) {
         if (j > 0) sb_add_chars(&addrs, ",");
-        sb_add_bytes(&addrs, "\"", &pub_key_list[j], pub_key_list[j].len, false);
-        sb_add_chars(&addrs, "\"");
+        sb_add_raw_bytes(&addrs, "", &pub_key_list[j], 1, false);
+        sb_add_chars(&addrs, "");
       }
     }
     else if (script_is_standard(tx_ctx.outputs[i].script.type)) {
@@ -635,15 +640,17 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
       extract_address_from_output(&tx_ctx.outputs[i], &addr);
       // TODO: Add base58 or bech32 encoding instead of bytes
       bytes_t addr_as_bytes = bytes(addr.as_bytes, BTC_ADDRESS_SIZE_BYTES);
-      sb_add_bytes(&addrs, "\"", &addr_as_bytes, addr_as_bytes.len, false);
-      sb_add_chars(&addrs, "\"");
+      sb_add_raw_bytes(&addrs, "", &addr_as_bytes, 1, false);
+      sb_add_chars(&addrs, "");
     }
     sb_add_chars(&addrs, "]}");
+    if (i != tx_ctx.output_count - 1) {
+      sb_add_chars(&addrs, ",");
+    }
   }
   sb_add_chars(&addrs, "]");
-
   TRY_FINAL(in3_rpc_handle_with_string(ctx, addrs.data), _free(addrs.data));
-  return in3_rpc_handle_finish(ctx);
+  return IN3_OK;
 }
 
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {

@@ -175,6 +175,27 @@ sb_t* sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, 
   return sb;
 }
 
+sb_t* sb_add_raw_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array) {
+  int p = sb->len, lk = prefix == NULL ? 0 : strlen(prefix), s = 0, i;
+  for (i = 0; i < len; i++) s += bytes[i].len * 2 + 2 + (i > 0 ? 1 : 0);
+  check_size(sb, s + lk + (as_array ? 2 : 0));
+  if (prefix != NULL) memcpy(sb->data + p, prefix, lk);
+  p += lk;
+
+  if (as_array) sb->data[p++] = '[';
+  for (i = 0; i < len; i++) {
+    if (i > 0) sb->data[p++] = ',';
+    sb->data[p++] = '"';
+    bytes_to_hex(bytes[i].data, bytes[i].len, sb->data + p);
+    p += bytes[i].len * 2;
+    sb->data[p++] = '"';
+  }
+  if (as_array) sb->data[p++] = ']';
+  sb->data[p] = 0;
+  sb->len     = p;
+  return sb;
+}
+
 sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l) {
   char tmp[19]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
   switch (l) {

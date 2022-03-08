@@ -2541,6 +2541,7 @@ btc:
         "transaction with 2 p2sh outputs"
       config:
         proof: 'none'
+        chainId: 'btc'
       input:
         - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
       expected_output:
@@ -2562,6 +2563,7 @@ btc:
               method: "getrawtransaction"
               params:
                 - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+                - 0 
           res:
             result: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
     -
@@ -2569,6 +2571,7 @@ btc:
         "raw 1-2 multisig with uncompressed public keys and 2 p2pkh outputs"
       config:
         proof: 'none'
+        chainId: 'btc'
       input:
         - "60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1"
       expected_output:
@@ -2582,11 +2585,11 @@ btc:
           index: 1
           script_type: "p2pkh"
           addrs:
-            - "00C812A297B8E0E778D7A22BB2CD6D23C3E789472BB9697594"
+            - "00c812a297b8e0e778d7a22bb2cd6d23c3e789472bb9697594"
         - index: 2
           script_type: "p2pkh"
           addrs:
-            - "00641AD5051EDD97029A003FE9EFB29359FCEE409DDD756292"
+            - "00641ad5051edd97029a003fe9efb29359fcee409ddd756292"
       mockedResponses:
         -
           req: 
@@ -2595,22 +2598,33 @@ btc:
               method: "getrawtransaction"
               params:
                 - "60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1"
+                - 0 
           res:
             result: "010000000337bd40a022eea1edd40a678cddabe200b131afd5797b232ac21861d8e97eb367020000008a4730440220e8343f8ac7e96582d92a450ce314668db4f7a0e2c94a97aa6df026f93ebee2290220866b5728d4247688d91b4a30144762bc8bfd7f385de7f7d326d665ff5e3e900301410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342afffffffff96420befb14a9357181e5da089824a3e6ea5a95856ff74c06c7d5ea98d633cf9020000008a4730440220b7227a8f816f3810f97057102edf8be4434c1e00f48b4440976bcc478f1431030220af3cba150afdd44618de4369cdc65fea73e447d7b5fbe135d2f08f86d82aa85f01410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342afffffffff96420befb14a9357181e5da089824a3e6ea5a95856ff74c06c7d5ea98d633cf9010000008a47304402207d689e1a61e06440eab18d961517a97c49219a91f2c59d9630e902fcb2f4ea8b0220dcd274349ca264d8bd2bee5135664a92899e94a319a349d6d6e3660d04b564ad0141047a4c5d104002ebc203bef5cab6f13ff57ab624bb5f9f1186beb64c83a396da0d912e11a18ea15a2c784a62fed2bbd8258c3413c18bf4c3f2ba28f3d5565e328bffffffff0340420f000000000087514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae50cec402000000001976a914c812a297b8e0e778d7a22bb2cd6d23c3e789472b88ac20a10700000000001976a914641ad5051edd97029a003fe9efb29359fcee409d88ac00000000"
     -
       descr: |
-        "raw 1-2 multisig with compressed public keys"
+        "raw 1-1 multisig with compressed public keys + 2 p2pkh"
       config:
         proof: 'none'
+        chainId: 'btc'
       input:
-        - "78b28d3c2324da8c2f01840021addbcabb68f7ce1d4da870cabe5e9df6afe63d"
+        - "ac1d9ed701af32ea52fabd0834acfb1ba4e3584cf0553551f1b61b3d7fb05ee7"
       expected_output:
         -
           index: 0
           script_type: "p2ms"
           addrs:
-            - "037953dbf08030f67352134992643d033417eaa6fcfb770c038f364ff40d761588"
-            - "00bd2fda4cf456d64386a0756f580101a607c25bd8d6814693bdf16e2a7ba3e45c"
+            - "0281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1f"
+        -
+          index: 1
+          script_type: "p2pkh"
+          addrs:
+            - "00a988f8039a203cf86136e0d32b9d77eafa5a6bef500e17b1"
+        -
+          index: 2
+          script_type: "p2pkh"
+          addrs:
+            - "00161d7a3d0ee15c793ab300433192f949d8f35665e5619084"
       mockedResponses:
         -
           req: 
@@ -2618,9 +2632,10 @@ btc:
             body:
               method: "getrawtransaction"
               params:
-                - "78b28d3c2324da8c2f01840021addbcabb68f7ce1d4da870cabe5e9df6afe63d"
+                - "ac1d9ed701af32ea52fabd0834acfb1ba4e3584cf0553551f1b61b3d7fb05ee7"
+                - 0 
           res:
-            result: "01000000011f594eadbc692d71a0de4826d18a9f3a5f7d78b4e4c1a75e453f863a3832e8c6000000004a0048304502204aa764d2b30f572cc4ef17c8ed8536c46f595a08ba41a611b14f32c60282c150022100ede45011be565dc225cc9be292638cf7270b129934fe8758634716b8f7a34c0701ffffffff01b040870500000000475121037953dbf08030f67352134992643d033417eaa6fcfb770c038f364ff40d7615882100bd2fda4cf456d64386a0756f580101a607c25bd8d6814693bdf16e2a7ba3e45c52ae00000000"
+            result: "0100000001ffc0d6d6b592cd2b4160300a278ea5e250b5055b5536dcfb2da5dcc46022765a00000000694630430220575ddd235a989befbf98f43b008666e56af07be89e47e09d18690c75846fb587021f00830605aa09febc51132001e0dbcad860e54d4657b55aaf961b527a935b8a01210281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1fffffffff03204e0000000000002551210281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1f51ae204e0000000000001976a914a988f8039a203cf86136e0d32b9d77eafa5a6bef88ac46f4d501000000001976a914161d7a3d0ee15c793ab300433192f949d8f3566588ac00000000"
       
       
 
