@@ -201,7 +201,7 @@ static bytes_t get_or_create_cached(in3_req_t* req, d_key_t k, int size) {
 }
 
 static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
-  char* token = d_get_string(tx, key("token"));
+  char*   token  = d_get_string(tx, key("token"));
   bytes_t nft_id = d_get_bytes(tx, key("nft_id"));
   if (token && nft_id.data == NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
     if (to->len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
@@ -227,10 +227,10 @@ static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, byt
 }
 
 static in3_ret_t transform_erc721(in3_req_t* req, d_token_t* tx, bytes_t* from, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
-  char* token = d_get_string(tx, key("token"));
-  bytes_t nft_id = d_get_bytes(tx, key("nft_id"));
+  char*   token    = d_get_string(tx, key("token"));
+  bytes_t nft_id   = d_get_bytes(tx, key("nft_id"));
   bytes_t nft_from = d_get_bytes(tx, key("nft_from"));
-  if(nft_from.data == NULL) nft_from = *from;
+  if (nft_from.data == NULL) nft_from = *from;
   if (token && nft_id.data != NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
     if (to->len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
     if (nft_from.len != 20) return req_set_error(req, "Invalid to nft_from address!", IN3_EINVAL);
@@ -290,10 +290,10 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
   return IN3_OK;
 }
 /** based on the tx-entries the transaction is manipulated before creating the raw transaction. */
-static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t* from, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t from, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
   // do we need to convert to the ERC20.transfer function?
   TRY(transform_erc20(req, tx, to, value, data, gas_limit))
-  TRY(transform_erc721(req, tx, from, to, value, data, gas_limit))
+  TRY(transform_erc721(req, tx, &from, to, value, data, gas_limit))
   TRY(transform_abi(req, tx, data))
   return IN3_OK;
 }
@@ -349,7 +349,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   }
 
   // do we need to transform the tx before we sign it?
-  TRY(transform_tx(ctx, tx, &td.from, &td.to, &td.value, &td.data, &td.gas_limit));
+  TRY(transform_tx(ctx, tx, bytes(td.from, 20), &td.to, &td.value, &td.data, &td.gas_limit));
   TRY(get_nonce_and_gasprice(&td, ctx))
 
   // create raw without signature
