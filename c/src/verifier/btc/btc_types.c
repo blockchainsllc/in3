@@ -338,8 +338,7 @@ bool btc_public_key_is_valid(const bytes_t* public_key) {
 uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t** pub_key_list_dst) {
   if (!is_p2ms(&multisig_script)) return 0;
 
-  uint32_t script_len    = multisig_script.len;
-  uint32_t pub_key_count = multisig_script.data[script_len - 2] - 0x50;
+  uint32_t pub_key_count = btc_get_multisig_pub_key_count(&multisig_script);
 
   // alloc memory and in array of pub keys
   bytes_t* pub_key_list = _malloc(pub_key_count * sizeof(bytes_t));
@@ -358,7 +357,7 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t** pu
     // write public key into array
     pub_key_list[i] = pub_key;
   }
-  *pub_key_list_dst      = pub_key_list;
+  *pub_key_list_dst = pub_key_list;
   return pub_key_count;
 }
 

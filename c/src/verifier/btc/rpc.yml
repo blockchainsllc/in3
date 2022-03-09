@@ -70,13 +70,23 @@ types:
     script_type:
       descr: |
         The script type from wich the address was extracted. 
-        Can be one of "p2pk", "p2pkh", "p2wpkh", "p2sh", "p2wsh", "p2ms", "non-standard" or "unsupported"
+        Can be one of "p2pk", "p2pkh", "p2wpkh", "p2sh", "p2wsh", "p2ms", "non_standard", "unsupported" or "unknown"
         - When this value is "unknown", "non_standard" or "unsupported", the addrs array is empty
         - When this value is "p2ms" (pay-to-multisig), the addrs array stores btc public keys. For now, this is the 
         only case in which the array will have more than one element. 
         - When this value is "p2sh" or "p2wsh", addrs array stores a single BECH32 encoded address
         - For every other value, addrs stores a single Base58 encoded btc address
       type: string
+      enum:
+        p2pk: p2pk
+        p2pkh: p2pkh
+        p2wpkh: p2wpkh
+        p2sh: p2sh
+        p2wsh: p2wsh
+        p2ms: p2ms
+        non_standard: non_standard
+        unsupported: unsupported
+        unknown: unknown
     addrs:
       descr: List of btc addresses or public keys extracted from a btc transaction output
       type: string

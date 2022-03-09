@@ -166,6 +166,9 @@ typedef struct btc_script {
   btc_stype_t type;
 } btc_script_t;
 
+uint8_t btc_get_multisig_pub_key_count(const bytes_t* ms_script); /* returns the total number of public keys defined in a multisig script. Has undefined behavior when inputed script is not p2ms */
+uint8_t btc_get_multisig_req_sig_count(const bytes_t* ms_script); /* returns the number of signatures required by a multisig script. Has undefined behavior when inputed script is not p2ms*/
+
 bool is_p2pk(const bytes_t* script);
 bool is_p2pkh(const bytes_t* script);
 bool is_p2sh(const bytes_t* script);
@@ -173,10 +176,9 @@ bool is_p2ms(const bytes_t* script);
 bool is_p2wpkh(const bytes_t* script);
 bool is_p2wsh(const bytes_t* script);
 bool is_witness_program(const bytes_t* script);
+bool script_is_standard(btc_stype_t script_type);
 
 btc_stype_t btc_get_script_type(const bytes_t* script);
-bool        script_is_standard(btc_stype_t script_type);
-
 const char* btc_script_type_to_string(btc_stype_t type);
 
 #endif
