@@ -34,6 +34,7 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/plugin.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include <stdio.h>

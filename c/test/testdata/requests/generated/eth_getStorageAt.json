@@ -1,0 +1,22 @@
+[
+  {
+    "descr": "eth_getStorageAt",
+    "request": {
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x862174623bc39e57de552538f424806b947d3d05",
+        "0x0"
+      ]
+    },
+    "result": "0x0",
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0x0"
+      }
+    ]
+  }
+]

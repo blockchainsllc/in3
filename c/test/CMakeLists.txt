@@ -116,6 +116,20 @@ foreach (file ${files})
 
 endforeach ()
 
+file(GLOB files "testdata/requests/generated/*.json")
+foreach (file ${files})
+    get_filename_component(testname "${file}" NAME_WE)
+    add_test(
+            NAME "in3_generated_${testname}"
+            COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
+    )
+    set_tests_properties("in3_generated_${testname}" PROPERTIES 
+      ENVIRONMENT LLVM_PROFILE_FILE=in3_generated_${testname}.profraw
+    )
+
+endforeach ()
+
 if ( NOT CMD_NAME )
   set(CMD_NAME in3)
 endif ()

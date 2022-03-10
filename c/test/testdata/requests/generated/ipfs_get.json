@@ -1,0 +1,21 @@
+[
+  {
+    "descr": "ipfs_get",
+    "request": {
+      "method": "ipfs_get",
+      "params": [
+        "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH",
+        "utf8"
+      ]
+    },
+    "result": "I love Incubed",
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": "I love Incubed"
+      }
+    ]
+  }
+]

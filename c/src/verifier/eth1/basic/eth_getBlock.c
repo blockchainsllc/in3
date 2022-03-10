@@ -34,6 +34,7 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"

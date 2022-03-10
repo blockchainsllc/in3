@@ -1,0 +1,15 @@
+[
+  {
+    "descr": "in3_bip39_decode",
+    "request": {
+      "method": "in3_bip39_decode",
+      "params": [
+        "grass strategy range absurd tone dignity either sun must despair glory doll midnight fragile rug hurt venue satoshi absorb family address genius artwork vacant",
+        "test"
+      ]
+    },
+    "result": "0x153b604f4621a2ef0e5b5b562cb9730402ecb6850cb24dbda6df8d39747db802522dc5f03f3e1518ecc131a99082122083ad40361b5d815454c34058d976894e",
+    "config": {},
+    "response": []
+  }
+]

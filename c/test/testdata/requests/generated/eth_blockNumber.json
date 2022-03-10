@@ -1,0 +1,17 @@
+[
+  {
+    "descr": "eth_blockNumber",
+    "request": {
+      "method": "eth_blockNumber",
+      "params": []
+    },
+    "result": 3220,
+    "config": {},
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0xc94"
+      }
+    ]
+  }
+]

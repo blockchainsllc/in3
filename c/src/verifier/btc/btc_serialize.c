@@ -1,7 +1,7 @@
 #include "btc_serialize.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/data.h"
 #include "../../core/util/utils.h"
-#include "../../third-party/crypto/sha2.h"
 #include "../../third-party/tommath/tommath.h"
 #include "btc_types.h"
 #include <string.h>
@@ -37,14 +37,10 @@ bytes_t btc_block_get(bytes_t block, btc_block_field field) {
 }
 
 void btc_hash(bytes_t data, bytes32_t dst) {
-  bytes32_t  tmp;
-  SHA256_CTX ctx;
-  sha256_Init(&ctx);
-  sha256_Update(&ctx, data.data, data.len);
-  sha256_Final(&ctx, tmp);
-  sha256_Init(&ctx);
-  sha256_Update(&ctx, tmp, 32);
-  sha256_Final(&ctx, tmp);
+  bytes32_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256_BTC);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
   rev_copy(dst, tmp);
 }
 

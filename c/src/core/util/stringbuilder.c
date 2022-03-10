@@ -34,8 +34,8 @@
 #define IN3_INTERNAL
 
 #include "stringbuilder.h"
-#include "../../third-party/crypto/bignum.h"
 #include "../util/bytes.h"
+#include "../util/crypto.h"
 #include "../util/utils.h"
 #include "debug.h"
 #include "mem.h"
@@ -379,13 +379,9 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
             sb_add_char(sb, 'X');
             break;
           }
-          char*     tmp = _malloc(wei.len * 3 + 1);
-          bytes32_t val = {0};
-          memcpy(val + 32 - wei.len, wei.data, wei.len);
-          bignum256 bn;
-          bn_read_be(val, &bn);
-          size_t l = bn_format(&bn, "", "", 0, 0, false, tmp, wei.len * 3);
-          sb_add_range(sb, tmp, 0, l);
+          char* tmp = _malloc(wei.len * 3 + 1);
+          if (encode(ENC_DECIMAL, wei, tmp) < 0) sprintf(tmp, "<not supported>");
+          sb_add_chars(sb, tmp);
           _free(tmp);
           break;
         }

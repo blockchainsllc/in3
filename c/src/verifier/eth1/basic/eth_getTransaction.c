@@ -34,11 +34,9 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/plugin.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/bignum.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
@@ -85,13 +83,12 @@ bytes_t create_unsigned_tx(bytes_t raw, uint32_t chain_id) {
 
 in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   d_token_t* t = NULL;
-  uint8_t    hash[32], pubkey[65], sdata[64];
-  bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
-  int        type         = raw && raw->len && raw->data && raw->data[0] < 0x7f ? raw->data[0] : 0;
-  bytes_t    r            = d_get_byteskl(tx, K_R, 32);
-  bytes_t    s            = d_get_byteskl(tx, K_S, 32);
-  uint32_t   v            = d_get_int(tx, K_V);
-  uint32_t   chain_id     = d_get(tx, K_CHAIN_ID) ? (uint32_t) d_get_int(tx, K_CHAIN_ID) : (v > 35 ? (v - 35) / 2 : 0);
+  uint8_t    hash[32], pubkey[64], sdata[65];
+  int        type     = raw && raw->len && raw->data && raw->data[0] < 0x7f ? raw->data[0] : 0;
+  bytes_t    r        = d_get_byteskl(tx, K_R, 32);
+  bytes_t    s        = d_get_byteskl(tx, K_S, 32);
+  uint32_t   v        = d_get_int(tx, K_V);
+  uint32_t   chain_id = d_get(tx, K_CHAIN_ID) ? (uint32_t) d_get_int(tx, K_CHAIN_ID) : (v > 35 ? (v - 35) / 2 : 0);
 
   // check transaction hash
   if (keccak(raw ? *raw : d_bytes(d_get(tx, K_RAW)), hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32).data, 32))
@@ -121,6 +118,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   memset(sdata, 0, 64);
   memcpy(sdata + 32 - r.len, r.data, r.len);
   memcpy(sdata + 64 - s.len, s.data, s.len);
+  sdata[64] = type ? v : ((chain_id ? v - chain_id * 2 - 8 : v) - 27);
 
   // calculate the unsigned hash
   bytes_t unsigned_tx = create_unsigned_tx(raw ? *raw : d_bytes(d_get(tx, K_RAW)), chain_id);
@@ -128,13 +126,13 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   _free(unsigned_tx.data);
 
   // verify signature
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, hash, type ? v : ((chain_id ? v - chain_id * 2 - 8 : v) - 27)))
+  if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(sdata, 65), pubkey))
     return vc_err(vc, "could not recover signature");
 
-  if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey_bytes.data, d_bytes(t).data, d_len(t)) != 0)
+  if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey, d_bytes(t).data, d_len(t)) != 0)
     return vc_err(vc, "invalid public Key");
 
-  if ((t = d_getl(tx, K_FROM, 20)) && keccak(pubkey_bytes, hash) == 0 && memcmp(hash + 12, d_bytes(t).data, 20))
+  if ((t = d_getl(tx, K_FROM, 20)) && keccak(bytes(pubkey, 64), hash) == 0 && memcmp(hash + 12, d_bytes(t).data, 20))
     return vc_err(vc, "invalid from address");
   return IN3_OK;
 }

@@ -38,9 +38,9 @@
 #include "request.h"
 
 #ifdef LOGGING
-#define req_set_error(c, msg, err) req_set_error_intern(c, msg, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, msg, err, __FILE__, __func__, __LINE__)
 #else
-#define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err)
+#define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err, __FILE__, __func__, __LINE__)
 #endif
 #define REQUIRE_EXPERIMENTAL(req, feature) \
   if ((req->client->flags & FLAGS_ALLOW_EXPERIMENTAL) == 0) return req_set_error(req, "The feature " feature " is still experimental. You need to explicitly allow it in the config.", IN3_ECONFIG);
@@ -78,10 +78,11 @@ NONULL void request_free(
  * ```
  */
 in3_ret_t req_set_error_intern(
-    in3_req_t* c,        /**< [in] the current request context. */
-    char*      msg,      /**< [in] the error message. (This string will be copied) */
-    in3_ret_t  errnumber /**< [in] the error code to return */
-);
+    in3_req_t*  c,         /**< [in] the current request context. */
+    char*       msg,       /**< [in] the error message. (This string will be copied) */
+    in3_ret_t   errnumber, /**< [in] the error code to return */
+    const char* filename,
+    const char* function, int line);
 
 /**
  * handles a failable context
@@ -94,7 +95,7 @@ in3_ret_t req_handle_failable(
 
 NONULL_FOR((1, 2, 3, 5))
 in3_ret_t        req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
-NONULL in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta);
+NONULL in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta);
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
 #define assert_in3_req(ctx)                                                                    \
@@ -117,6 +118,6 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 NONULL void in3_req_free_nodes(node_match_t* c);
 int         req_nodes_len(node_match_t* root);
 NONULL bool req_is_method(const in3_req_t* req, const char* method);
-in3_ret_t   req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key);
+in3_ret_t   req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key);
 
 #endif // REQ_INTERNAL_H

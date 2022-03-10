@@ -2307,6 +2307,7 @@ btc:
   getblockheader:
     config:
       proof: 'none'
+      chainId: 'btc'
     input: 
       - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
     expected_output:
@@ -2372,6 +2373,7 @@ btc:
     -
       config:
         proof: 'none'
+        chainId: 'btc'
       input:
         - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
       expected_output:
@@ -2417,6 +2419,7 @@ btc:
     -
       config:
         proof: 'none'
+        chainId: 'btc'
       extra: "with Segwit"
       input:
         - "0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2"
@@ -2465,6 +2468,7 @@ btc:
   -
     config:
       proof: 'none'
+      chainId: 'btc'
     input:
       - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
     expected_output:
@@ -2498,6 +2502,7 @@ btc:
   -
     config:
       proof: 'none'
+      chainId: 'btc'
     extra: "with Segwit"
     input:
       - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
@@ -2533,6 +2538,7 @@ btc:
   getblockcount:
     config:
       proof: 'none'
+      chainId: 'btc'
     expected_output: 688582
     mockedResponses:
       -
@@ -2547,6 +2553,7 @@ btc:
   getdifficulty:
     config:
       proof: 'none'
+      chainId: 'btc'
     expected_output: 19932791027262.74
     mockedResponses:
       -
@@ -2561,6 +2568,7 @@ btc:
   getbestblockhash:
     config:
       proof: 'none'
+      chainId: 'btc'
     expected_output: "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096"
     mockedResponses:
       -

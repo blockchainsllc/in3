@@ -39,7 +39,6 @@
 #include "../../../core/util/debug.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/ecdsa.h"
 #include "../../../verifier/eth1/basic/eth_basic.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/serialize.h"

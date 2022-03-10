@@ -1,0 +1,16 @@
+[
+  {
+    "descr": "in3_fromWei",
+    "request": {
+      "method": "in3_fromWei",
+      "params": [
+        "0x234324abadefdef",
+        "eth",
+        3
+      ]
+    },
+    "result": "0.158",
+    "config": {},
+    "response": []
+  }
+]

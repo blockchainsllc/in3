@@ -32,7 +32,7 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if(CRYPTO_LIB)
+if(CRYPTO_TREZOR)
   add_subdirectory( crypto )
 endif()
 if(USE_SCRYPT)

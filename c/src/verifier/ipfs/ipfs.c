@@ -2,11 +2,9 @@
 #include "ipfs.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
-#include "../../third-party/crypto/base58.h"
-#include "../../third-party/crypto/sha2.h"
-#include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/multihash/hashes.h"
 #include "../../third-party/multihash/multihash.h"
 #include "../../third-party/nanopb/pb_decode.h"
@@ -80,11 +78,10 @@ static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, 
   size_t   digest_len = 0;
   uint8_t  d_[32]     = {0};
   if (hash == MH_H_SHA2_256) {
-    digest_len = 32;
-    SHA256_CTX ctx;
-    sha256_Init(&ctx);
-    sha256_Update(&ctx, buf2, stream.bytes_written);
-    sha256_Final(&ctx, d_);
+    digest_len     = 32;
+    in3_digest_t d = crypto_create_hash(DIGEST_SHA256);
+    crypto_update_hash(d, bytes(buf2, stream.bytes_written));
+    crypto_finalize_hash(d, d_);
     digest = d_;
   }
 
@@ -100,7 +97,7 @@ static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, 
 
   size_t b58sz = 64;
   *b58         = _malloc(b58sz);
-  if (!b58enc(*b58, &b58sz, out, mhlen))
+  if (encode(ENC_BASE58, bytes(out, mhlen), *b58) < 0)
     ret = IN3_EUNKNOWN;
 
 EXIT:
@@ -117,10 +114,16 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
   else if (!strcmp(encoding, "utf8"))
     buf = b_new((uint8_t*) content, strlen(content));
   else if (!strcmp(encoding, "base64")) {
-    size_t   l    = 0;
-    uint8_t* data = base64_decode(content, &l);
-    buf           = b_new(data, l);
-    free(data);
+    int      l    = strlen(content);
+    uint8_t* data = _malloc(decode_size(ENC_BASE64, l));
+    l             = decode(ENC_BASE64, content, l, data);
+    if (l < 0) {
+      _free(data);
+      return IN3_ENOTSUP;
+    }
+
+    buf  = _malloc(sizeof(bytes_t));
+    *buf = bytes(data, l);
   }
   else
     return IN3_ENOTSUP;

@@ -1,0 +1,135 @@
+[
+  {
+    "descr": "zksync_account_history",
+    "request": {
+      "method": "zksync_account_history",
+      "params": [
+        "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d"
+      ]
+    },
+    "result": [
+      {
+        "hash": "sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732",
+        "pq_id": null,
+        "tx": {
+          "amount": "2",
+          "from": "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d",
+          "token": "ETH",
+          "accountId": 7873,
+          "validFrom": 0,
+          "signature": {
+            "signature": "4838bd78393fc2f129a95b00ea76aace63ee3839296e25abb2d77cfc19f92d06382f715bbdbd326ccde9216c97d053a71e335e0ce57c24ca724d5575c8761701",
+            "pubKey": "cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9"
+          },
+          "fee": "0",
+          "type": "Transfer",
+          "to": "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9",
+          "validUntil": 184467440737095,
+          "nonce": 8738
+        },
+        "created_at": "2021-06-10T15:04:24.632399Z",
+        "success": true,
+        "commited": true,
+        "verified": false,
+        "fail_reason": null,
+        "tx_id": "32069,47",
+        "eth_block": null
+      },
+      {
+        "hash": "sync-tx:c54dc9e117c9b1e461b078b64d5f4cd7bd180b0cdfb06793189332cd522328be",
+        "pq_id": null,
+        "tx": {
+          "amount": "3",
+          "from": "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d",
+          "accountId": 7873,
+          "type": "Transfer",
+          "signature": {
+            "pubKey": "cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9",
+            "signature": "5b501751a9fabc613b1327f204655f8b16065545cf57ad38c5dff9ac39dd90a73fafe218d574569280e47e7cd053db500ec1bdb6fca377aee96d940a7851b601"
+          },
+          "validFrom": 0,
+          "fee": "0",
+          "token": "ETH",
+          "to": "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9",
+          "validUntil": 184467440737095,
+          "nonce": 8737
+        },
+        "created_at": "2021-06-10T14:50:56.793876Z",
+        "success": true,
+        "commited": true,
+        "verified": false,
+        "fail_reason": null,
+        "eth_block": null,
+        "tx_id": "32067,5"
+      }
+    ],
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ],
+      "zksync": {
+        "rest_api": "https://rinkeby-api.zksync.io/api/v0.1"
+      }
+    },
+    "response": [
+      [
+        {
+          "hash": "sync-tx:e435e847df064018e53b6173151dad867c15701054b7dd5c73ccb884fdc70732",
+          "pq_id": null,
+          "tx": {
+            "amount": "2",
+            "from": "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d",
+            "token": "ETH",
+            "accountId": 7873,
+            "validFrom": 0,
+            "signature": {
+              "signature": "4838bd78393fc2f129a95b00ea76aace63ee3839296e25abb2d77cfc19f92d06382f715bbdbd326ccde9216c97d053a71e335e0ce57c24ca724d5575c8761701",
+              "pubKey": "cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9"
+            },
+            "fee": "0",
+            "type": "Transfer",
+            "to": "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9",
+            "validUntil": 184467440737095,
+            "nonce": 8738
+          },
+          "created_at": "2021-06-10T15:04:24.632399Z",
+          "success": true,
+          "commited": true,
+          "verified": false,
+          "fail_reason": null,
+          "tx_id": "32069,47",
+          "eth_block": null
+        },
+        {
+          "hash": "sync-tx:c54dc9e117c9b1e461b078b64d5f4cd7bd180b0cdfb06793189332cd522328be",
+          "pq_id": null,
+          "tx": {
+            "amount": "3",
+            "from": "0x3169131f0e744c1b8ef1ca8371c20d328f7f204d",
+            "accountId": 7873,
+            "type": "Transfer",
+            "signature": {
+              "pubKey": "cbe5d99bb60441dbc8f457372e305608a513a343dd564b2c11c5c0733f779fa9",
+              "signature": "5b501751a9fabc613b1327f204655f8b16065545cf57ad38c5dff9ac39dd90a73fafe218d574569280e47e7cd053db500ec1bdb6fca377aee96d940a7851b601"
+            },
+            "validFrom": 0,
+            "fee": "0",
+            "token": "ETH",
+            "to": "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9",
+            "validUntil": 184467440737095,
+            "nonce": 8737
+          },
+          "created_at": "2021-06-10T14:50:56.793876Z",
+          "success": true,
+          "commited": true,
+          "verified": false,
+          "fail_reason": null,
+          "eth_block": null,
+          "tx_id": "32067,5"
+        }
+      ]
+    ]
+  }
+]

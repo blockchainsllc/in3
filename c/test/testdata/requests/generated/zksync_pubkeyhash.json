@@ -1,0 +1,20 @@
+[
+  {
+    "descr": "zksync_pubkeyhash",
+    "request": {
+      "method": "zksync_pubkeyhash",
+      "params": [
+        "0x5303a0015f8d5a8fef6cb1d60a034ef28dc4ac6aefa33c936d5aa0927f7c169a"
+      ]
+    },
+    "result": "sync:827a841d753a8eefe82e02b25b5158305dab4d58",
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": []
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "in3_bip39_create",
+    "request": {
+      "method": "in3_bip39_create",
+      "params": [
+        "0x65fadac7008e447c11c6ca9207818e2058c6b8ef437ef277ec03294036c1c34f"
+      ]
+    },
+    "result": "grass strategy range absurd tone dignity either sun must despair glory doll midnight fragile rug hurt venue satoshi absorb family address genius artwork vacant",
+    "config": {},
+    "response": []
+  }
+]

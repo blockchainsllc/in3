@@ -1,0 +1,20 @@
+[
+  {
+    "descr": "eth_sign",
+    "request": {
+      "method": "eth_sign",
+      "params": [
+        "0x8A91DC2D28b689474298D91899f0c1baF62cB85b",
+        "0xdeadbeaf"
+      ]
+    },
+    "result": "0xcbb6128a29ae206532e206d9e5cb4155d34bd82a1c1db0faf7c77230febb004d0a12270bf192d501f954e01ebf67c1a29d4972543888dad1b60933a7a2cd7af91b",
+    "config": {
+      "proof": "none",
+      "pk": [
+        "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+      ]
+    },
+    "response": []
+  }
+]

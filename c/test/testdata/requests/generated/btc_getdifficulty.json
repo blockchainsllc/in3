@@ -1,0 +1,18 @@
+[
+  {
+    "descr": "getdifficulty",
+    "request": {
+      "method": "getdifficulty",
+      "params": []
+    },
+    "result": 19932791027262.74,
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": 19932791027262.74
+      }
+    ]
+  }
+]

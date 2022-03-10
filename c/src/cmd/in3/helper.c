@@ -310,7 +310,7 @@ void print_val(d_token_t* token) {
   }
 }
 // decode pk
-void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
+void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t type) {
   if (pk_file) {
     if (!pwd) {
       recorder_print(1, "Passphrase:\n");
@@ -338,7 +338,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
       recorder_exit(0);
     }
     else
-      eth_set_pk_signer(c, pk_seed);
+      eth_set_pk_signer(c, pk_seed, type);
   }
 }
 

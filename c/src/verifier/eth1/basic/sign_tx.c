@@ -34,11 +34,10 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
@@ -375,7 +374,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
     chain_id = d_long(r);
   }
 
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, SIGN_CURVE_ECDSA, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // get the signature from required
@@ -469,12 +468,12 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
 char* eth_wallet_sign(const char* key, const char* data) {
   int     data_l = strlen(data) / 2 - 1;
   uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+  hex_to_bytes(key + 2, -1, key_bytes, 32);
+  bytes32_t hash;
+  keccak(bytes(data_bytes, hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1)), hash);
+  char* res = _calloc(133, 1);
 
-  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
-  data_l    = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
-  char* res = _malloc(133);
-
-  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
+  if (crypto_sign_digest(ECDSA_SECP256K1, bytes(hash, 32), key_bytes, NULL, dst) == IN3_OK) {
     bytes_to_hex(dst, 65, res + 2);
     res[0] = '0';
     res[1] = 'x';

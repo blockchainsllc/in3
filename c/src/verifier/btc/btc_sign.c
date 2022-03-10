@@ -2,25 +2,26 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request.h"
 #include "../../core/client/request_internal.h"
-#include "../../third-party/crypto/secp256k1.h"
+#include "../../core/util/crypto.h"
 #include "btc_script.h"
 #include "btc_serialize.h"
 #include "btc_types.h"
 
 // WARNING: You need to free hash_message.data after calling this function!
-static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const uint8_t sighash) {
-  if (!hash_message || !tx || !utxo_list) {
+// static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, const btc_tx_t* tx, const btc_utxo_t* utxo_list, const uint32_t utxo_list_len, const uint32_t utxo_index, const uint8_t sighash) {
+static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, const btc_tx_ctx_t* tx_ctx, const uint32_t utxo_index, const uint8_t sighash) {
+  if (!hash_message || !tx_ctx || !tx_ctx->utxos) {
     return req_set_error(req, "ERROR: in build_tx_in_hash_msg: Function arguments cannot be null", IN3_EINVAL);
   }
 
-  btc_stype_t script_type = utxo_list[utxo_index].tx_out.script.type;
+  btc_stype_t script_type = tx_ctx->utxos[utxo_index].tx_out.script.type;
   switch (script_type) {
     case BTC_P2MS:
     case BTC_P2SH:
     case BTC_P2PK:
     case BTC_P2PKH: {
-      hash_message = b_new(NULL, btc_get_raw_tx_size(tx) + BTC_TX_IN_SIGHASH_SIZE_BYTES);
-      TRY(btc_serialize_tx(req, tx, hash_message));                                        // write serialized transaction
+      hash_message = b_new(NULL, btc_get_raw_tx_size(&tx_ctx->tx) + BTC_TX_IN_SIGHASH_SIZE_BYTES);
+      TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message));                               // write serialized transaction
       uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash); // write sighash at the end of the input
     } break;
     case BTC_P2WSH:
@@ -30,18 +31,16 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
           hash_sequence[BTC_TX_HASH_SIZE_BYTES],
           hash_outputs[BTC_TX_HASH_SIZE_BYTES];
 
-      prev_outputs.len = utxo_list_len * BTC_TX_IN_PREV_OUPUT_SIZE_BYTES;
-      sequence.len     = utxo_list_len * BTC_TX_IN_SEQUENCE_SIZE_BYTES;
+      prev_outputs.len = tx_ctx->utxo_count * BTC_TX_IN_PREV_OUPUT_SIZE_BYTES;
+      sequence.len     = tx_ctx->utxo_count * BTC_TX_IN_SEQUENCE_SIZE_BYTES;
 
       prev_outputs.data = _malloc(prev_outputs.len);
       sequence.data     = _malloc(sequence.len);
 
-      uint32_t default_sequence = 0xffffffff; // Change this to use provided sequence value once BIP68 is implemented
-
-      for (uint32_t i = 0; i < utxo_list_len; i++) {
-        rev_copy(prev_outputs.data + (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES * i), utxo_list[i].tx_hash);
-        rev_copyl(prev_outputs.data + (BTC_TX_HASH_SIZE_BYTES * i), bytes((uint8_t*) &utxo_list[i].tx_index, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
-        rev_copyl(sequence.data + (BTC_TX_IN_SEQUENCE_SIZE_BYTES * i), bytes((uint8_t*) &default_sequence, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
+      for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+        rev_copy(prev_outputs.data + (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES * i), tx_ctx->utxos[i].tx_hash);
+        rev_copyl(prev_outputs.data + (BTC_TX_HASH_SIZE_BYTES * i), bytes((uint8_t*) &tx_ctx->utxos[i].tx_index, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
+        rev_copyl(sequence.data + (BTC_TX_IN_SEQUENCE_SIZE_BYTES * i), bytes((uint8_t*) &tx_ctx->utxos[i].sequence, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
       }
 
       if (!(sighash & BTC_SIGHASH_ANYONECANPAY)) {
@@ -52,9 +51,9 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       }
 
       if ((sighash & 0x1f) == BTC_SIGHASH_ALL) {
-        btc_hash(tx->output, hash_outputs);
+        btc_hash(tx_ctx->tx.output, hash_outputs);
       }
-      else if (((sighash & 0x1f) != BTC_SIGHASH_SINGLE) && utxo_index < tx->output_count) {
+      else if (((sighash & 0x1f) != BTC_SIGHASH_SINGLE) && utxo_index < tx_ctx->tx.output_count) {
         // TODO: Implement support for sighashes other than SIGHASH_ALL
         // In pseudo-code, this is what should happen:
         // -- serialized_outputs = little_endian(outputs[utxo_index].value, 8_bytes)
@@ -70,7 +69,7 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
                            BTC_TX_HASH_SIZE_BYTES +
                            BTC_TX_IN_PREV_OUPUT_SIZE_BYTES +
                            get_compact_uint_size((uint64_t) utxo_index) +
-                           utxo_list[utxo_index].tx_out.script.data.len +
+                           tx_ctx->utxos[utxo_index].tx_out.script.data.len +
                            BTC_TX_OUT_VALUE_SIZE_BYTES +
                            BTC_TX_IN_SEQUENCE_SIZE_BYTES +
                            BTC_TX_HASH_SIZE_BYTES +
@@ -79,25 +78,25 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
 
       hash_message->data = _calloc(hash_message->len, 1);
       uint8_t* d         = hash_message->data;
-      uint_to_le(hash_message, index, tx->version);
+      uint_to_le(hash_message, index, tx_ctx->tx.version);
       index += BTC_TX_VERSION_SIZE_BYTES;
       memcpy(d + index, hash_prev_outputs, BTC_TX_HASH_SIZE_BYTES);
       index += BTC_TX_HASH_SIZE_BYTES;
       memcpy(d + index, hash_sequence, BTC_TX_HASH_SIZE_BYTES);
       index += BTC_TX_HASH_SIZE_BYTES;
-      rev_copyl(d + index, bytes(utxo_list[utxo_index].tx_hash, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
+      rev_copyl(d + index, bytes(tx_ctx->utxos[utxo_index].tx_hash, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
       index += BTC_TX_HASH_SIZE_BYTES;
-      uint_to_le(hash_message, index, utxo_list[utxo_index].tx_index);
+      uint_to_le(hash_message, index, tx_ctx->utxos[utxo_index].tx_index);
       index += BTX_TX_INDEX_SIZE_BYTES;
-      memcpy(d + index, utxo_list[utxo_index].tx_out.script.data.data, utxo_list[utxo_index].tx_out.script.data.len);
-      index += utxo_list[utxo_index].tx_out.script.data.len;
-      long_to_le(hash_message, index, utxo_list[utxo_index].tx_out.value);
+      memcpy(d + index, tx_ctx->utxos[utxo_index].tx_out.script.data.data, tx_ctx->utxos[utxo_index].tx_out.script.data.len);
+      index += tx_ctx->utxos[utxo_index].tx_out.script.data.len;
+      long_to_le(hash_message, index, tx_ctx->utxos[utxo_index].tx_out.value);
       index += BTC_TX_OUT_VALUE_SIZE_BYTES;
-      uint_to_le(hash_message, index, 0xffffffff); // This is the 'sequence' field. Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
+      uint_to_le(hash_message, index, tx_ctx->utxos[utxo_index].sequence);
       index += BTC_TX_IN_SEQUENCE_SIZE_BYTES;
       memcpy(d + index, hash_outputs, BTC_TX_HASH_SIZE_BYTES);
       index += BTC_TX_HASH_SIZE_BYTES;
-      memcpy(d + index, (uint8_t*) &tx->lock_time, BTC_TX_LOCKTIME_SIZE_BYTES);
+      memcpy(d + index, (uint8_t*) &tx_ctx->tx.lock_time, BTC_TX_LOCKTIME_SIZE_BYTES);
       index += BTC_TX_LOCKTIME_SIZE_BYTES;
       uint_to_le(hash_message, index, sighash);
 
@@ -253,8 +252,9 @@ static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in
   // Before signing, input script field should temporarilly be equal to the utxo we want to redeem
   tx_in->script.data = bytes(_malloc(utxo->tx_out.script.data.len), utxo->tx_out.script.data.len);
   memcpy(tx_in->script.data.data, utxo->tx_out.script.data.data, tx_in->script.data.len);
+  tx_in->script.type = utxo->tx_out.script.type;
 
-  tx_in->sequence = 0xffffffff; // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
+  tx_in->sequence = utxo->sequence;
   return IN3_OK;
 }
 
@@ -298,7 +298,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
     else {
       tmp_tx_in.prev_tx_hash     = utxos[i].tx_hash;
       tmp_tx_in.prev_tx_index    = utxos[i].tx_index;
-      tmp_tx_in.sequence         = 0xffffffff; // Until BIP 125 sequence fields were unused. TODO: Implement support for BIP 125
+      tmp_tx_in.sequence         = utxos[i].sequence;
       tmp_tx_in.script.data.data = NULL;
       tmp_tx_in.script.data.len  = 0;
     }
@@ -307,14 +307,16 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
 
   // prepare array for hashing
   bytes_t hash_message = NULL_BYTES;
-  build_tx_in_hash_msg(req, &hash_message, &tmp_tx.tx, utxos, tx_ctx->utxo_count, utxo_index, sighash);
+  build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_index, sighash);
 
   // Finally, sign transaction input
   // -- Obtain DER signature
-  bytes_t sig   = NULL_BYTES;
+  bytes_t sig = NULL_BYTES;
+  int     l;
+  TRY(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signing_account, req->requests[0]))
   der_sig->data = _malloc(75);
-  TRY(req_require_signature(req, SIGN_EC_BTC, PL_SIGN_BTCTX, &sig, hash_message, *signing_account, req->requests[0]))
-  der_sig->len                  = ecdsa_sig_to_der(sig.data, der_sig->data);
+  TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data))
+  der_sig->len                  = (uint32_t) l;
   der_sig->data[der_sig->len++] = sig.data[64]; // append verification byte to end of DER signature
 
   // signature is complete
@@ -348,7 +350,7 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
     bytes_t     witness = NULL_BYTES;
     TRY(prepare_tx_in(req, &tx_ctx->utxos[i], &tx_in))
 
-    bool is_segwit = script_type == BTC_V0_P2WPKH || script_type == BTC_P2WSH;
+    bool is_segwit = (script_type == BTC_V0_P2WPKH || script_type == BTC_P2WSH);
 
     // -- for each signature we need to provide:
     for (uint32_t j = 0; j < tx_ctx->utxos[i].accounts_count; j++) {

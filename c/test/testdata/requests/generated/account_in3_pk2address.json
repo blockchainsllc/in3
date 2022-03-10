@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "in3_pk2address",
+    "request": {
+      "method": "in3_pk2address",
+      "params": [
+        "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+      ]
+    },
+    "result": "0xdc5c4280d8a286f0f9c8f7f55a5a0c67125efcfd",
+    "config": {},
+    "response": []
+  }
+]

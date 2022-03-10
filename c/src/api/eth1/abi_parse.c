@@ -1,6 +1,7 @@
 
 #include "../../core/util/bitset.h"
 #include "../../core/util/bytes.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/stringbuilder.h"

@@ -1,0 +1,288 @@
+[
+  {
+    "descr": "zksync_deposit",
+    "request": {
+      "method": "zksync_deposit",
+      "params": [
+        "10000000000000000",
+        "ETH",
+        "0x8D33cAFf9b73A3EB24c83ac79bb5eD56126f284C"
+      ]
+    },
+    "result": {
+      "receipt": {
+        "contractAddress": null,
+        "transactionHash": "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e",
+        "from": "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c",
+        "blockHash": "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c",
+        "logs": [
+          {
+            "address": "0x82f67958a5474e40e1485742d648c0b0686b6e5d",
+            "topics": [
+              "0xd0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830"
+            ],
+            "transactionHash": "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e",
+            "removed": false,
+            "data": "0x0000000000000000000000008d33caff9b73a3eb24c83ac79bb5ed56126f284c000000000000000000000000000000000000000000000000000000000000f8cf000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000085f483000000000000000000000000000000000000000000000000000000000000002d0100000000000000000000000000000000002386f26fc100008d33caff9b73a3eb24c83ac79bb5ed56126f284c00000000000000000000000000000000000000",
+            "blockHash": "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c",
+            "blockNumber": "0x85b103",
+            "transactionIndex": "0xe",
+            "logIndex": "0x9"
+          },
+          {
+            "address": "0x82f67958a5474e40e1485742d648c0b0686b6e5d",
+            "topics": [
+              "0x8f5f51448394699ad6a3b80cdadf4ec68c5d724c8c3fea09bea55b3c2d0e2dd0",
+              "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ],
+            "transactionHash": "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e",
+            "removed": false,
+            "blockHash": "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c",
+            "data": "0x000000000000000000000000000000000000000000000000002386f26fc10000",
+            "blockNumber": "0x85b103",
+            "transactionIndex": "0xe",
+            "logIndex": "0xa"
+          }
+        ],
+        "cumulativeGasUsed": "0x158213",
+        "transactionIndex": "0xe",
+        "gasUsed": "0xf47e",
+        "logsBloom": "0x00000000000000000000000000100000000000000000000000000080000000000000000000000008000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000010000000000000000020000000000000000000800000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000020000000000000000000000000000000000000000000000000000000010000000000",
+        "blockNumber": "0x85b103",
+        "status": "0x1",
+        "to": "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
+      },
+      "priorityOpId": 63695
+    },
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ],
+      "rpc": "https://rinkeby-light.eth.linkpool.io",
+      "zksync": {
+        "provider_url": "https://rinkeby-api.zksync.io/jsrpc"
+      }
+    },
+    "response": [
+      {
+        "result": {
+          "mainContract": "0x82F67958A5474e40E1485742d648C0b0686b6e5D",
+          "govContract": "0xC8568F373484Cd51FDc1FE3675E46D8C0dc7D246"
+        }
+      },
+      {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "USDC": {
+            "decimals": 6,
+            "id": 2,
+            "symbol": "USDC",
+            "is_nft": false,
+            "address": "0xeb8f08a975ab53e34d8a0330e0d34de942c95926"
+          },
+          "USDT": {
+            "decimals": 6,
+            "id": 1,
+            "symbol": "USDT",
+            "is_nft": false,
+            "address": "0x3b00ef435fa4fcff5c209a37d1f3dcff37c705ad"
+          },
+          "PHNX": {
+            "decimals": 18,
+            "id": 20,
+            "symbol": "PHNX",
+            "is_nft": false,
+            "address": "0xfe1b6abc39e46cec54d275efb4b29b33be176c2a"
+          },
+          "TRB": {
+            "decimals": 18,
+            "id": 7,
+            "symbol": "TRB",
+            "is_nft": false,
+            "address": "0x2655f3a9eeb7f960be83098457144813ffad07a4"
+          },
+          "TUSD": {
+            "decimals": 18,
+            "id": 4,
+            "symbol": "TUSD",
+            "is_nft": false,
+            "address": "0xd2255612f9b045e9c81244bb874abb413ca139a3"
+          },
+          "ZRX": {
+            "decimals": 18,
+            "id": 8,
+            "symbol": "ZRX",
+            "is_nft": false,
+            "address": "0xdb7f2b9f6a0cb35fe5d236e5ed871d3ad4184290"
+          },
+          "OMG": {
+            "decimals": 18,
+            "id": 6,
+            "symbol": "OMG",
+            "is_nft": false,
+            "address": "0x2b203de02ad6109521e09985b3af9b8c62541cd6"
+          },
+          "STORJ": {
+            "decimals": 8,
+            "id": 11,
+            "symbol": "STORJ",
+            "is_nft": false,
+            "address": "0x8098165d982765097e4aa17138816e5b95f9fdb5"
+          },
+          "XEM": {
+            "decimals": 0,
+            "id": 18,
+            "symbol": "XEM",
+            "is_nft": false,
+            "address": "0xc3904a7c3a95bc265066bb5bfc4d6664b2174774"
+          },
+          "HT": {
+            "decimals": 18,
+            "id": 5,
+            "symbol": "HT",
+            "is_nft": false,
+            "address": "0x14700cae8b2943bad34c70bb76ae27ecf5bc5013"
+          },
+          "LINK": {
+            "decimals": 18,
+            "id": 3,
+            "symbol": "LINK",
+            "is_nft": false,
+            "address": "0x4da8d0795830f75be471f072a034d42c369b5d0a"
+          },
+          "KNC": {
+            "decimals": 18,
+            "id": 14,
+            "symbol": "KNC",
+            "is_nft": false,
+            "address": "0x290eba6ec56ecc9ff81c72e8eccc77d2c2bf63eb"
+          },
+          "DAI": {
+            "decimals": 18,
+            "id": 19,
+            "symbol": "DAI",
+            "is_nft": false,
+            "address": "0x2e055eee18284513b993db7568a592679ab13188"
+          },
+          "REP": {
+            "decimals": 18,
+            "id": 10,
+            "symbol": "REP",
+            "is_nft": false,
+            "address": "0x9cac8508b9ff26501439590a24893d80e7e84d21"
+          },
+          "LAMB": {
+            "decimals": 18,
+            "id": 15,
+            "symbol": "LAMB",
+            "is_nft": false,
+            "address": "0x9ecec4d48efdd96ae377af3ab868f99de865cff8"
+          },
+          "NEXO": {
+            "decimals": 18,
+            "id": 12,
+            "symbol": "NEXO",
+            "is_nft": false,
+            "address": "0x02d01f0835b7fdfa5d801a8f5f74c37f2bb1ae6a"
+          },
+          "tGLM": {
+            "decimals": 18,
+            "id": 16,
+            "symbol": "tGLM",
+            "is_nft": false,
+            "address": "0xd94e3dc39d4cad1dad634e7eb585a57a19dc7efe"
+          },
+          "MCO": {
+            "decimals": 8,
+            "id": 13,
+            "symbol": "MCO",
+            "is_nft": false,
+            "address": "0xd93addb2921b8061b697c2ab055979bbefe2b7ac"
+          },
+          "ETH": {
+            "decimals": 18,
+            "id": 0,
+            "symbol": "ETH",
+            "is_nft": false,
+            "address": "0x0000000000000000000000000000000000000000"
+          },
+          "MLTT": {
+            "decimals": 18,
+            "id": 17,
+            "symbol": "MLTT",
+            "is_nft": false,
+            "address": "0x690f4886c6911d81beb8130db30c825c27281f22"
+          },
+          "BAT": {
+            "decimals": 18,
+            "id": 9,
+            "symbol": "BAT",
+            "is_nft": false,
+            "address": "0xd2084ea2ae4bbe1424e4fe3cde25b713632fb988"
+          }
+        }
+      },
+      {
+        "result": "0x4"
+      },
+      {
+        "result": "0x5"
+      },
+      {
+        "result": "0x3b9aca00"
+      },
+      {
+        "result": "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e"
+      },
+      {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "result": {
+          "contractAddress": null,
+          "transactionHash": "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e",
+          "from": "0x8d33caff9b73a3eb24c83ac79bb5ed56126f284c",
+          "blockHash": "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c",
+          "logs": [
+            {
+              "address": "0x82f67958a5474e40e1485742d648c0b0686b6e5d",
+              "topics": [
+                "0xd0943372c08b438a88d4b39d77216901079eda9ca59d45349841c099083b6830"
+              ],
+              "transactionHash": "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e",
+              "removed": false,
+              "data": "0x0000000000000000000000008d33caff9b73a3eb24c83ac79bb5ed56126f284c000000000000000000000000000000000000000000000000000000000000f8cf000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000085f483000000000000000000000000000000000000000000000000000000000000002d0100000000000000000000000000000000002386f26fc100008d33caff9b73a3eb24c83ac79bb5ed56126f284c00000000000000000000000000000000000000",
+              "blockHash": "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c",
+              "blockNumber": "0x85b103",
+              "transactionIndex": "0xe",
+              "logIndex": "0x9"
+            },
+            {
+              "address": "0x82f67958a5474e40e1485742d648c0b0686b6e5d",
+              "topics": [
+                "0x8f5f51448394699ad6a3b80cdadf4ec68c5d724c8c3fea09bea55b3c2d0e2dd0",
+                "0x0000000000000000000000000000000000000000000000000000000000000000"
+              ],
+              "transactionHash": "0x19d13637be89661646a2cf2b62017ed08dc1b88e61144eda78a95207affc7f7e",
+              "removed": false,
+              "blockHash": "0x7000c3083910c0bcb8eea45d04448af35109bb6a949c9704928c4ea43ed2c48c",
+              "data": "0x000000000000000000000000000000000000000000000000002386f26fc10000",
+              "blockNumber": "0x85b103",
+              "transactionIndex": "0xe",
+              "logIndex": "0xa"
+            }
+          ],
+          "cumulativeGasUsed": "0x158213",
+          "transactionIndex": "0xe",
+          "gasUsed": "0xf47e",
+          "logsBloom": "0x00000000000000000000000000100000000000000000000000000080000000000000000000000008000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000010000000000000000020000000000000000000800000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000020000000000000000000000000000000000000000000000000000000010000000000",
+          "blockNumber": "0x85b103",
+          "status": "0x1",
+          "to": "0x82f67958a5474e40e1485742d648c0b0686b6e5d"
+        }
+      }
+    ]
+  }
+]

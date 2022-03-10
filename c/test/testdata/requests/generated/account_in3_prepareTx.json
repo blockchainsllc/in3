@@ -1,0 +1,53 @@
+[
+  {
+    "descr": "in3_prepareTx",
+    "request": {
+      "method": "in3_prepareTx",
+      "params": [
+        {
+          "to": "0x63f666a23cbd135a91187499b5cc51d589c302a0",
+          "value": "0x100000000",
+          "from": "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f"
+        }
+      ]
+    },
+    "result": "0xe48080829c409463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080",
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": "0x0"
+      },
+      {
+        "result": "0x0"
+      }
+    ]
+  },
+  {
+    "descr": "in3_prepareTx_2",
+    "request": {
+      "method": "in3_prepareTx",
+      "params": [
+        {
+          "to": "0x63f666a23cbd135a91187499b5cc51d589c302a0",
+          "value": "0x100000000",
+          "from": "0xc2b2f4ad0d234b8c135c39eea8409b448e5e496f",
+          "gas": 21000
+        }
+      ]
+    },
+    "result": "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080",
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": "0x0"
+      },
+      {
+        "result": "0x0"
+      }
+    ]
+  }
+]

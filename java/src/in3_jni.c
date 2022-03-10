@@ -42,14 +42,13 @@
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/bytes.h"
+#include "../../c/src/core/util/crypto.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
 #include "../../c/src/nodeselect/full/cache.h"
 #include "../../c/src/nodeselect/full/nodeselect_def.h"
 #include "../../c/src/signer/pk-signer/signer.h"
-#include "../../c/src/third-party/crypto/ecdsa.h"
-#include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/eth1/basic/eth_basic.h"
 
 #ifdef BASE64
@@ -508,10 +507,11 @@ JNIEXPORT jstring JNICALL Java_in3_utils_Signer_getAddressFromKey(JNIEnv* env, j
   const char* key = (*env)->GetStringUTFChars(env, jkey, 0);
 
   bytes32_t prv_key;
-  uint8_t   public_key[65], sdata[32];
+  uint8_t   public_key[64], sdata[32];
   hex_to_bytes((char*) key, -1, prv_key, 32);
-  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  keccak(bytes(public_key + 1, 64), sdata);
+
+  crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(prv_key, 32), public_key, NULL);
+  keccak(bytes(public_key, 64), sdata);
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   char tmp[43];
   bytes_to_hex(sdata + 12, 20, tmp + 2);
@@ -758,16 +758,17 @@ JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv* env, jclass cl, jstr
   jobject     ob   = NULL;
   const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
   json_ctx_t* ctx  = parse_json(data);
-  (*env)->ReleaseStringUTFChars(env, jdata, data);
   if (ctx == NULL) {
     char* error = _malloc(strlen(data) + 50);
     sprintf(error, "Error parsing the json-data : '%s'", data);
+    (*env)->ReleaseStringUTFChars(env, jdata, data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/RuntimeException"), error);
     _free(error);
   }
   else {
     ob = toObject(env, ctx->result);
     json_free(ctx);
+    (*env)->ReleaseStringUTFChars(env, jdata, data);
   }
 
   return ob;

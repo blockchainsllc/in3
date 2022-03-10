@@ -39,11 +39,10 @@
 #endif
 #include "../src/core/client/keys.h"
 #include "../src/core/client/request.h"
+#include "../src/core/util/crypto.h"
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
-#include "../src/third-party/crypto/ecdsa.h"
-#include "../src/third-party/crypto/secp256k1.h"
 #include "../src/verifier/eth1/basic/trie.h"
 #include "../src/verifier/eth1/evm/big.h"
 #include "../src/verifier/eth1/evm/evm.h"
@@ -494,10 +493,10 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.call_data  = d_bytes(get_test_val(transaction, "data", indexes));
     evm.call_value = d_bytes(get_test_val(transaction, "value", indexes));
 
-    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey")).data, public_key[65], sdata[32];
-    ecdsa_get_public_key65(&secp256k1, pk, public_key);
+    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey")).data, public_key[64], sdata[32];
+    crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(pk, 32), public_key, NULL);
     // hash it and return the last 20 bytes as address
-    if (keccak(bytes(public_key + 1, 64), sdata) == 0)
+    if (keccak(bytes(public_key, 64), sdata) == 0)
       memcpy(caller, sdata + 12, 20);
     else
       printf("\nWrong Hash");

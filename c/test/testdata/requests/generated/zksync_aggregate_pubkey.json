@@ -1,0 +1,20 @@
+[
+  {
+    "descr": "zksync_aggregate_pubkey",
+    "request": {
+      "method": "zksync_aggregate_pubkey",
+      "params": [
+        "0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409"
+      ]
+    },
+    "result": "0x9ce5b6f8db3fbbe66a3bdbd3b4731f19ec27f80ee03ead3c0708798dd949882b",
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": []
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "descr": "getbestblockhash",
+    "request": {
+      "method": "getbestblockhash",
+      "params": []
+    },
+    "result": "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096",
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096"
+      }
+    ]
+  }
+]

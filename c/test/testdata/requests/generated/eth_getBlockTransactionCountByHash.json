@@ -1,0 +1,21 @@
+[
+  {
+    "descr": "eth_getBlockTransactionCountByHash",
+    "request": {
+      "method": "eth_getBlockTransactionCountByHash",
+      "params": [
+        "0x0c0728467cee3a0b1b1322e88596d0f9f2a8fa2018fc5447d5072805d3bf9d13"
+      ]
+    },
+    "result": 204,
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0xcc"
+      }
+    ]
+  }
+]

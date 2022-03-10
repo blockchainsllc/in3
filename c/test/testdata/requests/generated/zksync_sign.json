@@ -1,0 +1,20 @@
+[
+  {
+    "descr": "zksync_sign",
+    "request": {
+      "method": "zksync_sign",
+      "params": [
+        "0xaabbccddeeff"
+      ]
+    },
+    "result": "0xd274ec1a5e9a513ff8f4eeb344fc02ca61e0823a7821c76e459ea0e8c5140826d78eb2c9661541f31ca097f5d38dc39aa9813017b4db929242e8e633839bdc80e4df4cbc14f9c8ca530c95ac005646c4b4b00f0a52a3dcb588db14b86fd66f02",
+    "config": {
+      "proof": "none",
+      "experimental": true,
+      "pk": [
+        "0xf5f297cd9e2f7e02944e283bc920075a98c8250ca8fe4576743b1e8e044abee9"
+      ]
+    },
+    "response": []
+  }
+]

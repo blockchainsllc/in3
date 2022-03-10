@@ -114,7 +114,7 @@ utils:
         descr: data to hash
         type: bytes
     result:
-      type: bytes32
+      type: bytes
       descr: the 32byte hash of the data
     example:
       request:
@@ -242,3 +242,63 @@ account:
         - "cable loan like predict comic cereal donate silk render soldier bring aerobic pole asthma blame off century slide pepper figure salmon above deer found"
         - test
       response: "0x751ff30f38a674397010348a36c4ba0dac0f943bfaca936ea725a6ac2e16f68798e0ef8fa11992882b2c2f968c44e6afbc8aced61b96403834998e7b7faeeb5e"
+
+
+  in3_ed25519_pk2pub:
+    sync: true
+    descr: Generates the public key from a private key for ed25519.
+    params:
+      pk:
+        descr: the private key
+        type: bytes32
+    result:
+      descr: the 32byte public key
+      type: bytes32
+    example:
+      request: 
+        - "0x4c5b4b2225e51d284ff82947c186a03d89440e591020ff213c18135757df156a"
+      response: "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
+
+
+  in3_ed25519_sign:
+    sync: true
+    descr: signs the message with for ed25519.
+    params:
+      message:
+        descr: the message to sign
+        type: bytes
+      pk:
+        descr: the private key
+        type: bytes32
+    result:
+      descr: the 64byte signature
+      type: bytes
+    example:
+      request: 
+        - "0x1234567890"
+        - "0x4c5b4b2225e51d284ff82947c186a03d89440e591020ff213c18135757df156a"
+      response: "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07"
+
+
+  in3_ed25519_verify:
+    sync: true
+    descr: verifies the signature based on ed25519.
+    params:
+      message:
+        descr: the message which was signed
+        type: bytes
+      signature:
+        descr: the 64 byte signature
+        type: bytes
+      pubkey:
+        descr: the 32 byte public key, whic is expected
+        type: bytes32
+    result:
+      descr: true, if could be successfully verified.
+      type: bool
+    example:
+      request: 
+        - "0x1234567890"
+        - "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07"
+        - "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
+      response: true

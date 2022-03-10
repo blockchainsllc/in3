@@ -4,6 +4,7 @@
 #include <in3/eth_api.h>  // functions for direct api-access
 #include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
 #include <in3/log.h>      // logging functions
+#include <in3/plugin.h>   // the plugin api
 #include <in3/signer.h>   // default signer implementation
 #include <in3/utils.h>
 #include <stdio.h>
@@ -23,7 +24,7 @@ int main() {
   hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
 
   // create a simple signer with this key
-  eth_set_pk_signer(in3, pk);
+  eth_set_pk_signer(in3, pk, SIGNER_ECDSA);
 
   // send tx using raw RPC call
   send_tx_rpc(in3);
@@ -54,7 +55,8 @@ void send_tx_rpc(in3_t* in3) {
   if (res == IN3_OK) {
     printf("Result: \n%s\n", result);
     free(result);
-  } else {
+  }
+  else {
     printf("Error sending tx: \n%s\n", error);
     free(error);
   }
