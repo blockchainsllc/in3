@@ -463,6 +463,12 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     return btc_verify_blockcount(conf, vc);
   }
 #endif
+#if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHASH)
+  if (VERIFY_RPC("getblockhash")) {
+    REQUIRE_EXPERIMENTAL(vc->req, "btc")
+    return IN3_OK;
+  }
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHEADER)
   if (VERIFY_RPC("getblockheader")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
