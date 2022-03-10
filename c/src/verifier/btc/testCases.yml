@@ -2548,13 +2548,15 @@ btc:
         - 
           index: 0
           script_type: "p2sh"
-          addrs:
-            - "05e9f20f1225a9528739495649405861ae5d77ba1e5e5f6a85"
+          addr: "3P21LnWRCWp92mPNuY2HWvbi4JFrLx1Kwr"
+          raw_addr: "05e9f20f1225a9528739495649405861ae5d77ba1e5e5f6a85"
+          pub_keys: []
         - 
           index: 1
           script_type: "p2sh"
-          addrs:
-            - "051abf9a43d3a56f06930b95b1a8f0161bc0b0c9be64619f9c"
+          addr: "348T2K7sdJSH6zdgvdan5pxqmDfg5zSYxK"
+          raw_addr: "051abf9a43d3a56f06930b95b1a8f0161bc0b0c9be64619f9c"
+          pub_keys: []
       mockedResponses:
         -
           req: 
@@ -2568,6 +2570,27 @@ btc:
             result: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
     -
       descr: |
+        "transaction with 2 p2sh outputs - raw transaction as input"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
+      expected_output:
+        - 
+          index: 0
+          script_type: "p2sh"
+          addr: "3P21LnWRCWp92mPNuY2HWvbi4JFrLx1Kwr"
+          raw_addr: "05e9f20f1225a9528739495649405861ae5d77ba1e5e5f6a85"
+          pub_keys: []
+        - 
+          index: 1
+          script_type: "p2sh"
+          addr: "348T2K7sdJSH6zdgvdan5pxqmDfg5zSYxK"
+          raw_addr: "051abf9a43d3a56f06930b95b1a8f0161bc0b0c9be64619f9c"
+          pub_keys: []   
+    -
+      descr: |
         "raw 1-2 multisig with uncompressed public keys and 2 p2pkh outputs"
       config:
         proof: 'none'
@@ -2578,18 +2601,23 @@ btc:
         -
           index: 0
           script_type: "p2ms"
-          addrs:
+          addr: ""
+          raw_addr: ""
+          pub_keys:
             - "04cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4"
             - "0461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af"
         -
           index: 1
           script_type: "p2pkh"
-          addrs:
-            - "00c812a297b8e0e778d7a22bb2cd6d23c3e789472bb9697594"
-        - index: 2
+          addr: "1KEtUA8f76CpHmFukC28uUsfsUduexvsSB"
+          raw_addr: "00c812a297b8e0e778d7a22bb2cd6d23c3e789472bb9697594"
+          pub_keys: [] 
+        - 
+          index: 2
           script_type: "p2pkh"
-          addrs:
-            - "00641ad5051edd97029a003fe9efb29359fcee409ddd756292"
+          addr: "1A8JiWcwvpY7tAopUkSnGuEYHmzGYfZPiq"
+          raw_addr: "00641ad5051edd97029a003fe9efb29359fcee409ddd756292"
+          pub_keys: [] 
       mockedResponses:
         -
           req: 
@@ -2613,18 +2641,22 @@ btc:
         -
           index: 0
           script_type: "p2ms"
-          addrs:
+          addr: ""
+          raw_addr: ""
+          pub_keys:
             - "0281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1f"
         -
           index: 1
           script_type: "p2pkh"
-          addrs:
-            - "00a988f8039a203cf86136e0d32b9d77eafa5a6bef500e17b1"
+          addr: "1GTRHBNKDnxdaJ5sojxrjQyL5xx9iauucc"
+          raw_addr: "00a988f8039a203cf86136e0d32b9d77eafa5a6bef500e17b1"
+          pub_keys: [] 
         -
           index: 2
           script_type: "p2pkh"
-          addrs:
-            - "00161d7a3d0ee15c793ab300433192f949d8f35665e5619084"
+          addr: "131wBMSiEXZ8bkahDcgF8K3Sh33sFm9iGT"
+          raw_addr: "00161d7a3d0ee15c793ab300433192f949d8f35665e5619084"
+          pub_keys: [] 
       mockedResponses:
         -
           req: 

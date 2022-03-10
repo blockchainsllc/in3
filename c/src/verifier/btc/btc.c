@@ -545,36 +545,19 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
 
 in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
+  bytes_t    transaction;
   d_token_t* result = NULL;
-  in3_req_t* sub    = req_find_required(ctx->req, "getrawtransaction", NULL);
-  if (sub) { // do we have a result?
-    switch (in3_req_state(sub)) {
-      case REQ_ERROR:
-        return req_set_error(ctx->req, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
-      case REQ_SUCCESS: {
-        result = d_get(sub->responses[0], K_RESULT);
-        if (result) {
-          sb_add_json(in3_rpc_handle_start(ctx), "", result);
-        }
-        else {
-          char* error_msg = d_get_string(d_get(sub->responses[0], K_ERROR), K_MESSAGE);
-          return req_set_error(ctx->req, error_msg ? error_msg : "Unable to get addresses", IN3_ERPC);
-        }
+  char*      txid;
+  char*      blockhash;
+  TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
+  TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
 
-        in3_rpc_handle_finish(ctx);
-        break;
-      }
-      case REQ_WAITING_TO_SEND:
-      case REQ_WAITING_FOR_RESPONSE:
-        return IN3_WAITING;
-    }
+  size_t tx_len = strlen(txid);
+  if (tx_len < BTC_TX_HASH_SIZE_BYTES * 2) {
+    return req_set_error(ctx->req, "ERROR: btc_get_addresses: invalid txid", IN3_EINVAL);
   }
-  else {
-    char* txid;
-    char* blockhash;
-    TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
-    TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
-
+  else if (tx_len == BTC_TX_HASH_SIZE_BYTES * 2) {
+    // we received a txid, so we need to fetch the raw transaction data from the blockchain
     sb_t sb = {0};
     sb_add_chars(&sb, "\"");
     sb_add_chars(&sb, txid);
@@ -584,12 +567,15 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
       sb_add_chars(&sb, blockhash);
       sb_add_chars(&sb, "\"");
     }
-
     TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+    transaction = bytes(NULL, d_len(result) / 2);
+    TRY(hex_to_bytes(d_string(result), -1, transaction.data, transaction.len))
   }
-
-  bytes_t transaction = bytes(NULL, d_len(result) / 2);
-  TRY(hex_to_bytes(d_string(result), -1, transaction.data, transaction.len))
+  else {
+    // we received raw transaction data, so we just convert it to bytes
+    transaction = bytes(NULL, tx_len / 2);
+    TRY(hex_to_bytes(txid, -1, transaction.data, transaction.len))
+  }
 
   // Create transaction context
   btc_tx_ctx_t tx_ctx;
@@ -613,35 +599,37 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 
   // -- For each output, extract addresses or public keys
   for (uint32_t i = 0; i < tx_ctx.output_count; i++) {
+    btc_address_t addr;
+    bool          has_addr;
+    tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
+    btc_stype_t script_type       = extract_address_from_output(&tx_ctx.outputs[i], &addr);
+    bytes_t     addr_as_bytes     = bytes(addr.as_bytes, BTC_ADDRESS_SIZE_BYTES);
+
+    has_addr = script_type != BTC_P2MS && script_is_standard(script_type);
+
     sb_add_chars(&addrs, "{\"index\":");
     sb_add_int(&addrs, i);
-    tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
     sb_add_chars(&addrs, ",\"script_type\":\"");
-    sb_add_chars(&addrs, btc_script_type_to_string(tx_ctx.outputs[i].script.type));
-    sb_add_chars(&addrs, "\",\"addrs\":[");
-
-    if (tx_ctx.outputs[i].script.type == BTC_P2MS) {
+    sb_add_chars(&addrs, btc_script_type_to_string(script_type));
+    sb_add_chars(&addrs, "\",\"addr\":\"");
+    if (has_addr) sb_add_chars(&addrs, addr.encoded);
+    sb_add_chars(&addrs, "\",\"raw_addr\":\"");
+    if (has_addr) sb_add_rawbytes(&addrs, NULL, addr_as_bytes, addr_as_bytes.len);
+    sb_add_chars(&addrs, "\",\"pub_keys\":[");
+    if (script_type == BTC_P2MS) {
       // extract public keys
       bytes_t* pub_key_list = NULL;
       uint32_t pub_key_list_len;
       pub_key_list_len = extract_public_keys_from_multisig(tx_ctx.outputs[i].script.data, &pub_key_list);
       if (!pub_key_list || pub_key_list_len == 0) return req_set_error(ctx->req, "Error while parsing p2ms public keys", IN3_ERPC);
 
-      // Add public keys do return
+      // Add public keys to return object
       for (uint32_t j = 0; j < pub_key_list_len; j++) {
         if (j > 0) sb_add_chars(&addrs, ",");
-        sb_add_raw_bytes(&addrs, "", &pub_key_list[j], 1, false);
-        sb_add_chars(&addrs, "");
+        sb_add_chars(&addrs, "\"");
+        sb_add_rawbytes(&addrs, NULL, pub_key_list[j], pub_key_list[j].len);
+        sb_add_chars(&addrs, "\"");
       }
-    }
-    else if (script_is_standard(tx_ctx.outputs[i].script.type)) {
-      // extract btc address
-      btc_address_t addr;
-      extract_address_from_output(&tx_ctx.outputs[i], &addr);
-      // TODO: Add base58 or bech32 encoding instead of bytes
-      bytes_t addr_as_bytes = bytes(addr.as_bytes, BTC_ADDRESS_SIZE_BYTES);
-      sb_add_raw_bytes(&addrs, "", &addr_as_bytes, 1, false);
-      sb_add_chars(&addrs, "");
     }
     sb_add_chars(&addrs, "]}");
     if (i != tx_ctx.output_count - 1) {
