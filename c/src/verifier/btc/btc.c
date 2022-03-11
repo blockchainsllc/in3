@@ -574,12 +574,14 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
       sb_add_chars(&sb, "\"");
     }
     TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
-    transaction = bytes(NULL, d_len(result) / 2);
+    transaction      = bytes(NULL, d_len(result) / 2);
+    transaction.data = alloca(transaction.len);
     TRY(hex_to_bytes(d_string(result), -1, transaction.data, transaction.len))
   }
   else {
     // we received raw transaction data, so we just convert it to bytes
-    transaction = bytes(NULL, tx_len / 2);
+    transaction      = bytes(NULL, tx_len / 2);
+    transaction.data = alloca(transaction.len);
     TRY(hex_to_bytes(txid, -1, transaction.data, transaction.len))
   }
 
