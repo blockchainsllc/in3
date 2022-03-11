@@ -637,7 +637,9 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
         sb_add_chars(&addrs, "\"");
         sb_add_rawbytes(&addrs, NULL, pub_key_list[j], pub_key_list[j].len);
         sb_add_chars(&addrs, "\"");
+        _free(pub_key_list[j].data);
       }
+      _free(pub_key_list);
     }
     sb_add_chars(&addrs, "]}");
     if (i != tx_ctx.output_count - 1) {
