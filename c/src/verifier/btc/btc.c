@@ -647,6 +647,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
     }
     _free(addr.encoded);
   }
+  _free(tx_ctx.outputs);
   sb_add_chars(&addrs, "]");
   TRY_FINAL(in3_rpc_handle_with_string(ctx, addrs.data), _free(addrs.data));
   return IN3_OK;
