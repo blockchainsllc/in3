@@ -1,0 +1,21 @@
+[
+  {
+    "descr": "eth_getTransactionCount",
+    "request": {
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
+      ]
+    },
+    "result": 26588838,
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0x195b6a6"
+      }
+    ]
+  }
+]

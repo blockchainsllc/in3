@@ -41,6 +41,20 @@
 
 #include "../../../core/util/data.h"
 
+typedef struct {
+  int        type;
+  bytes_t    gas_limit;
+  bytes_t    to;
+  bytes_t    value;
+  bytes_t    data;
+  bytes_t    nonce;
+  bytes_t    gas_price;
+  bytes_t    max_fee_per_gas;
+  bytes_t    max_priority_fee_per_gas;
+  d_token_t* access_list;
+  address_t  from;
+} eth_tx_data_t;
+
 /**
  * creates rlp-encoded raw bytes for a receipt.
  *
@@ -67,8 +81,7 @@ bytes_t* serialize_tx(d_token_t* tx);
  *
  *
  */
-bytes_t* serialize_tx_raw(bytes_t nonce, bytes_t gas_price, bytes_t gas_limit, bytes_t to, bytes_t value, bytes_t data, uint64_t v, bytes_t r, bytes_t s);
-
+bytes_t* serialize_tx_raw(eth_tx_data_t* tx, uint64_t chain_id, uint64_t v, bytes_t r, bytes_t s);
 /**
  * creates rlp-encoded raw bytes for a account.
  *

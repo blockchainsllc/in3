@@ -31,6 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#define IN3_INTERNAL
 
 #include "../util/bitset.h"
 #include "../util/data.h"
@@ -114,8 +115,23 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, uint8_t version) {
   assert(c);
 
+  for (in3_chain_t* chain = &c->chain; chain; chain = chain->next) {
+    if (chain->id == chain_id) {
+      if (chain->verified_hashes) _free(chain->verified_hashes);
+      chain->verified_hashes = NULL;
+      chain->type            = type;
+      chain->version         = version;
+      return IN3_OK;
+    }
+  }
+
   in3_chain_t* chain = &c->chain;
-  chain->chain_id    = chain_id;
+  if (chain->id) {
+    while (chain->next) chain = chain->next;
+    chain->next = _calloc(sizeof(in3_chain_t), 1);
+    chain       = chain->next;
+  }
+  chain->id = chain_id;
   if (chain->verified_hashes) _free(chain->verified_hashes);
   chain->verified_hashes = NULL;
   chain->type            = type;
@@ -134,6 +150,13 @@ void in3_free(in3_t* a) {
     in3_plugin_t* n = p->next;
     _free(p);
     p = n;
+  }
+
+  while (a->chain.next) {
+    in3_chain_t* chain = a->chain.next;
+    a->chain.next      = chain->next;
+    if (chain->verified_hashes) _free(chain->verified_hashes);
+    _free(chain);
   }
 
   if (a->chain.verified_hashes) _free(a->chain.verified_hashes);
@@ -158,7 +181,7 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   return c;
 }
 
-static chain_id_t chain_id(d_token_t* t) {
+chain_id_t in3_token_chain_id(d_token_t* t) {
   if (d_type(t) == T_STRING) {
     char* c = d_string(t);
     if (!strcmp(c, "mainnet")) return CHAIN_ID_MAINNET;
@@ -204,7 +227,7 @@ static in3_chain_type_t chain_type_from_id(chain_id_t id) {
 char* in3_get_config(in3_t* c) {
   sb_t* sb = sb_new("");
   add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
-  add_uint(sb, ',', "chainId", c->chain.chain_id);
+  add_uint(sb, ',', "chainId", c->chain.id);
   add_uint(sb, ',', "signatureCount", c->signature_count);
   add_uint(sb, ',', "finality", c->finality);
   add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
@@ -245,6 +268,7 @@ char* in3_configure(in3_t* c, const char* config) {
   // we iterate over the root-props
   for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter), prop_index++) {
     d_token_t* token = iter.token;
+    if (d_is_bytes(token)) d_bytes(token);
 
     if (token->key == CONFIG_KEY("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);
@@ -253,7 +277,7 @@ char* in3_configure(in3_t* c, const char* config) {
     else if (token->key == CONFIG_KEY("chainType"))
       ; // Ignore - handled within `chainId` case
     else if (token->key == CONFIG_KEY("chainId")) {
-      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
+      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && in3_token_chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli)");
 
       // check if chainType is set
       int        ct_      = -1;
@@ -263,11 +287,11 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK(ct_token, ct_ != -1, "expected (btc|eth|ipfs|<u8-value>)");
       }
 
-      bool changed      = (c->chain.chain_id != chain_id(token));
-      c->chain.chain_id = chain_id(token);
-      c->chain.type     = ct_ == -1 ? chain_type_from_id(c->chain.chain_id) : ((in3_chain_type_t) ct_);
-      if (c->chain.chain_id == CHAIN_ID_BTC && !c->finality && !d_get(json->result, key("finality"))) c->finality = 7;
-      in3_client_register_chain(c, c->chain.chain_id, c->chain.type, 2);
+      bool changed  = (c->chain.id != in3_token_chain_id(token));
+      c->chain.id   = in3_token_chain_id(token);
+      c->chain.type = ct_ == -1 ? chain_type_from_id(c->chain.id) : ((in3_chain_type_t) ct_);
+      if (c->chain.id == CHAIN_ID_BTC && !c->finality && !d_get(json->result, key("finality"))) c->finality = 7;
+      in3_client_register_chain(c, c->chain.id, c->chain.type, 2);
       if (changed) in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
     }
     else if (token->key == CONFIG_KEY("signatureCount")) {
@@ -359,7 +383,7 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK_U64(d_get(n.token, key("block")));
         EXPECT_TOK_B256(d_get(n.token, key("hash")));
         c->chain.verified_hashes[i].block_number = d_get_long(n.token, key("block"));
-        memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
+        memcpy(c->chain.verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32).data, 32);
       }
       c->alloc_verified_hashes = c->max_verified_hashes;
     }
@@ -389,12 +413,12 @@ char* in3_configure(in3_t* c, const char* config) {
     }
   }
 
-  if (c->signature_count && c->chain.chain_id != CHAIN_ID_LOCAL && !c->replace_latest_block) {
+  if (c->signature_count && c->chain.id != CHAIN_ID_LOCAL && !c->replace_latest_block) {
     in3_log_warn("signatureCount > 0 without replaceLatestBlock is bound to fail; using default (" STR(DEF_REPL_LATEST_BLK) ")\n");
     c->replace_latest_block = DEF_REPL_LATEST_BLK;
   }
 
-  EXPECT_CFG(c->chain.chain_id, "chain corresponding to chain id not initialized!");
+  EXPECT_CFG(c->chain.id, "chain corresponding to chain id not initialized!");
   assert_in3(c);
 
 cleanup:

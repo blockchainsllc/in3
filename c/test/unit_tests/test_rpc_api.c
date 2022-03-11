@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -38,8 +38,8 @@
 #ifndef TEST
 #define DEBUG
 #endif
-#include "../../src/api/eth1/abi.h"
 #include "../../src/api/core/core_api.h"
+#include "../../src/api/eth1/abi.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/client/request_internal.h"
@@ -94,7 +94,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(1, d_get_int(ctx->responses[0], K_RESULT));
   req_free(ctx);
 
-  TEST_ASSERT_EQUAL(7, c->chain.chain_id);
+  TEST_ASSERT_EQUAL(7, c->chain.id);
   TEST_ASSERT_EQUAL(FLAGS_AUTO_UPDATE_LIST, c->flags & FLAGS_AUTO_UPDATE_LIST);
   TEST_ASSERT_EQUAL(50, c->finality);
   TEST_ASSERT_EQUAL(FLAGS_INCLUDE_CODE, c->flags & FLAGS_INCLUDE_CODE);
@@ -199,18 +199,18 @@ static void test_in3_client_rpc() {
 IN3_IMPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract);
 
 static void checksum(d_token_t* params, chain_id_t chain, char* result) {
-  bytes_t*  adr = d_get_bytes_at(params, 0);
-  in3_ret_t res = to_checksum(adr->data, 0, result);
+  bytes_t   adr = d_get_bytes_at(params, 0);
+  in3_ret_t res = to_checksum(adr.data, 0, result);
 }
 
 static void test_in3_checksum_rpc() {
   char*       param_test = "[\"0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2\",false]";
   char *      result = NULL, *error = NULL;
-  in3_t*      in3     = in3_for_chain(CHAIN_ID_MAINNET);
-  json_ctx_t* json    = parse_json(param_test);
-  d_token_t*  address = &json->result[0];
+  in3_t*      in3    = in3_for_chain(CHAIN_ID_MAINNET);
+  json_ctx_t* json   = parse_json(param_test);
+  d_token_t*  params = json->result;
   char        ret_checksum[43];
-  checksum(address, 0, ret_checksum);
+  checksum(params, 0, ret_checksum);
   in3_ret_t ret = in3_client_rpc(in3, "in3_checksumAddress", param_test, &result, &error);
   // remove quotes from result
   char str_result[43];
@@ -285,7 +285,7 @@ static uint16_t vh_equals(in3_verified_hash_t* hashes, const uint64_t blocknumbe
 
 static void test_in3_verified_hashes() {
   bytes32_t hash = {0};
-  in3_t     c    = {.max_verified_hashes = 3, .pending = 0, .chain = {.chain_id = 1}};
+  in3_t     c    = {.max_verified_hashes = 3, .pending = 0, .chain = {.id = 1}};
   add_verified(&c, &c.chain, 500, hash);
   TEST_ASSERT_EQUAL(1, vh_size(c.chain.verified_hashes, c.alloc_verified_hashes));
   add_verified(&c, &c.chain, 501, hash);

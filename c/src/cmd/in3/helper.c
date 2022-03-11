@@ -267,7 +267,9 @@ bytes_t* get_std_in() {
   return res;
 }
 
-void print_val(d_token_t* t) {
+void print_val(d_token_t* token) {
+  d_token_internal_t* t = token;
+  d_bytes(t);
   switch (d_type(t)) {
     case T_ARRAY:
     case T_OBJECT: {
@@ -308,7 +310,7 @@ void print_val(d_token_t* t) {
   }
 }
 // decode pk
-void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
+void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t type) {
   if (pk_file) {
     if (!pwd) {
       recorder_print(1, "Passphrase:\n");
@@ -336,7 +338,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
       recorder_exit(0);
     }
     else
-      eth_set_pk_signer(c, pk_seed);
+      eth_set_pk_signer(c, pk_seed, type);
   }
 }
 

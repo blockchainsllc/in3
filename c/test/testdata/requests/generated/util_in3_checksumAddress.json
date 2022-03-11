@@ -1,0 +1,15 @@
+[
+  {
+    "descr": "in3_checksumAddress",
+    "request": {
+      "method": "in3_checksumAddress",
+      "params": [
+        "0x1fe2e9bf29aa1938859af64c413361227d04059a",
+        false
+      ]
+    },
+    "result": "0x1Fe2E9bf29aa1938859Af64C413361227d04059a",
+    "config": {},
+    "response": []
+  }
+]

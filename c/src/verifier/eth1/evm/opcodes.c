@@ -34,11 +34,10 @@
 
 #include "opcodes.h"
 #include "../../../core/client/request.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/bignum.h"
-#include "../../../third-party/crypto/ecdsa.h"
 #include "../nano/merkle.h"
 #include "../nano/rlp.h"
 #include "../nano/serialize.h"
@@ -288,27 +287,26 @@ int op_sha3(evm_t* evm) {
   if (len && evm_mem_read_ref(evm, offset, len, &src) < 0) return EVM_ERROR_OUT_OF_GAS;
   subgas(((len + 31) / 32) * G_SHA3WORD);
 
-  uint8_t         res[32];
-  struct SHA3_CTX ctx;
-  sha3_256_Init(&ctx);
+  uint8_t      res[32];
+  in3_digest_t d = crypto_create_hash(DIGEST_KECCAK);
   if (src.data && src.len >= (uint32_t) len)
-    sha3_Update(&ctx, src.data, len);
+    crypto_update_hash(d, bytes(src.data, len));
   else {
     uint8_t  tmp[32];
     uint32_t p = 0;
     memset(tmp, 0, 32);
     if (src.data) {
-      sha3_Update(&ctx, src.data, src.len);
+      crypto_update_hash(d, src);
       p += src.len;
     }
     while (p < (uint32_t) len) {
       uint8_t part = 32;
       if (len - p < 32) part = len - p;
-      sha3_Update(&ctx, tmp, part);
+      crypto_update_hash(d, bytes(tmp, part));
       p += part;
     }
   }
-  keccak_Final(&ctx, res);
+  crypto_finalize_hash(d, res);
   return evm_stack_push(evm, res, 32);
 }
 
@@ -545,7 +543,7 @@ int op_call(evm_t* evm, uint8_t mode) {
   if ((out_len = evm_stack_pop_int(evm)) < 0) return out_len;
   uint64_t gas = bytes_to_long(gas_limit, l_gas);
 
-  if ((out_len > 0 && mem_check(evm, out_offset + out_len, true) < 0) || (in_len && mem_check(evm, in_offset + in_len, true) < 0)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if ((out_len > 0 && mem_check(evm, out_offset + out_len, true) < 0) || (in_len && mem_check(evm, in_offset + in_len, false) < 0)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   switch (mode) {
     case CALL_CALL:

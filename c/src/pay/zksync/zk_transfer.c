@@ -15,7 +15,8 @@
 
 in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_msg_type_t type) {
   // check ctx->params
-  if (!(d_len(ctx->params) == 1 && d_type(ctx->params + 1) == T_OBJECT)) {
+
+  if (!(d_len(ctx->params) == 1 && d_type(d_get_at(ctx->params, 0)) == T_OBJECT)) {
     CHECK_PARAMS_LEN(ctx->req, ctx->params, 3)
     CHECK_PARAM_ADDRESS(ctx->req, ctx->params, 0)
     CHECK_PARAM_NUMBER(ctx->req, ctx->params, 1)
@@ -27,13 +28,13 @@ in3_ret_t zksync_transfer(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, zk_m
   // prepare tx data
   zksync_tx_data_t tx_data = {0};
   tx_data.conf             = conf;
-  bytes_t to               = d_to_bytes(params_get(ctx->params, type == ZK_WITHDRAW ? key("ethAddress") : K_TO, 0));
+  bytes_t to               = d_bytes(params_get(ctx->params, type == ZK_WITHDRAW ? key("ethAddress") : K_TO, 0));
   if (!to.data || to.len != 20) return req_set_error(ctx->req, "invalid to address", IN3_EINVAL);
   memcpy(tx_data.to, to.data, 20);
   tx_data.type = type;
 
 #ifdef ZKSYNC_256
-  bytes_t amount = d_to_bytes(params_get(ctx->params, key("amount"), 1));
+  bytes_t amount = d_bytes(params_get(ctx->params, key("amount"), 1));
   if (amount.len > 33) return req_set_error(ctx->req, "invalid to amount", IN3_EINVAL);
   memcpy(tx_data.amount + 32 - amount.len, amount.data, amount.len);
 #else

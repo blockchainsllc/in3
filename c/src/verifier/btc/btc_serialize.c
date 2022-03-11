@@ -1,7 +1,7 @@
 #include "btc_serialize.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/data.h"
 #include "../../core/util/utils.h"
-#include "../../third-party/crypto/sha2.h"
 #include "../../third-party/tommath/tommath.h"
 #include "btc_types.h"
 #include <string.h>
@@ -37,20 +37,32 @@ bytes_t btc_block_get(bytes_t block, btc_block_field field) {
 }
 
 void btc_hash(bytes_t data, bytes32_t dst) {
-  bytes32_t  tmp;
-  SHA256_CTX ctx;
-  sha256_Init(&ctx);
-  sha256_Update(&ctx, data.data, data.len);
-  sha256_Final(&ctx, tmp);
-  sha256_Init(&ctx);
-  sha256_Update(&ctx, tmp, 32);
-  sha256_Final(&ctx, tmp);
+  bytes32_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256_BTC);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
+  rev_copy(dst, tmp);
+}
+
+void btc_hash256(bytes_t data, bytes32_t dst) {
+  bytes32_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
+  rev_copy(dst, tmp);
+}
+
+void btc_hash160(bytes_t data, address_t dst) {
+  address_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_RIPEMD_160);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
   rev_copy(dst, tmp);
 }
 
 // copy 32 bytes in revers order
 void rev_copy(uint8_t* dst, uint8_t* src) {
-  for (int i = 0; i < 32; i++) dst[31 - i] = src[i];
+  rev_copyl(dst, bytes(src, 32), 32);
 }
 
 void rev_copyl(uint8_t* dst, bytes_t src, int l) {
@@ -209,8 +221,20 @@ in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header) {
   rev_hex(d_get_string(data, key("versionHex")), block_header, 4);
   rev_hex(d_get_string(data, key("previousblockhash")), block_header + 4, 32);
   rev_hex(d_get_string(data, key("merkleroot")), block_header + 36, 32);
-  rev_copyl(block_header + 68, d_to_bytes(d_get(data, key("time"))), 4);
+  rev_copyl(block_header + 68, d_bytes(d_get(data, key("time"))), 4);
   rev_hex(d_get_string(data, key("bits")), block_header + 72, 4);
-  rev_copyl(block_header + 76, d_to_bytes(d_get(data, key("nonce"))), 4);
+  rev_copyl(block_header + 76, d_bytes(d_get(data, key("nonce"))), 4);
   return IN3_OK;
+}
+
+in3_ret_t append_bytes(bytes_t* dst, const bytes_t* src) {
+  if (dst && src && src->len > 0 && src->data) {
+    dst->data = (dst->data) ? _realloc(dst->data, dst->len + src->len, dst->len) : _malloc(dst->len + src->len);
+    memcpy(dst->data + dst->len, src->data, src->len);
+    dst->len += src->len;
+    return IN3_OK;
+  }
+  else {
+    return IN3_EINVAL;
+  }
 }

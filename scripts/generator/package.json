@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "yaml": "^1.10.2"
+  }
+}

@@ -36,11 +36,10 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/client/version.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
-#include "../../third-party/crypto/rand.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -48,33 +47,35 @@
 #include <string.h>
 
 static in3_ret_t in3_sha3(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
+  bytes_t b;
+  TRY_PARAM_GET_REQUIRED_BYTES(b, ctx, 0, 0, 0)
   bytes32_t hash;
-  keccak(d_to_bytes(ctx->params + 1), hash);
+  keccak(b, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 static in3_ret_t in3_sha256(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1) return req_set_error(ctx->req, "no data", IN3_EINVAL);
-  bytes32_t  hash;
-  bytes_t    data = d_to_bytes(ctx->params + 1);
-  SHA256_CTX c;
-  sha256_Init(&c);
-  sha256_Update(&c, data.data, data.len);
-  sha256_Final(&c, hash);
+  bytes_t   b;
+  bytes32_t hash;
+  TRY_PARAM_GET_REQUIRED_BYTES(b, ctx, 0, 0, 0)
+  in3_digest_t c = crypto_create_hash(DIGEST_SHA256);
+  if (!c.ctx) return req_set_error(ctx->req, "sha256 not supported", IN3_ENOTSUP);
+  crypto_update_hash(c, b);
+  crypto_finalize_hash(c, hash);
   return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
 }
 static in3_ret_t web3_clientVersion(in3_rpc_handle_ctx_t* ctx) {
   // for local chains, we return the client version of rpc endpoint.
-  return ctx->req->client->chain.chain_id == CHAIN_ID_LOCAL
+  return in3_chain_id(ctx->req) == CHAIN_ID_LOCAL
              ? IN3_EIGNORE
              : in3_rpc_handle_with_string(ctx, "\"Incubed/" IN3_VERSION "\"");
 }
 
 static in3_ret_t in3_config(in3_rpc_handle_ctx_t* ctx) {
-  if (!ctx->params || d_len(ctx->params) != 1 || d_type(ctx->params + 1) != T_OBJECT) return req_set_error(ctx->req, "no valid config-object as argument", IN3_EINVAL);
+  d_token_t* cnf;
+  TRY_PARAM_GET_REQUIRED_OBJECT(cnf, ctx, 0)
 
   ctx->req->client->pending--; // we need to to temporarly decrees it in order to allow configuring
-  str_range_t r   = d_to_json(ctx->params + 1);
+  str_range_t r   = d_to_json(cnf);
   char        old = r.data[r.len];
   r.data[r.len]   = 0;
   char* ret       = in3_configure(ctx->req->client, r.data);
@@ -103,36 +104,115 @@ static in3_ret_t in3_cacheClear(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_createKey(in3_rpc_handle_ctx_t* ctx) {
-  bytes32_t  hash;
-  d_token_t* arg = d_get_at(ctx->params, 0);
-  FILE*      r   = NULL;
-  if (d_type(arg) == T_BYTES) {
-    keccak(d_to_bytes(arg), hash);
-    srand(bytes_to_int(hash, 4));
-  }
-  else {
-#ifndef WASM
-    r = fopen("/dev/urandom", "r");
-    if (r) {
-      for (int i = 0; i < 32; i++) hash[i] = (uint8_t) fgetc(r);
-      fclose(r);
-    }
-    else
-#endif
-      srand(current_ms() % 0xFFFFFFFF);
+  bytes32_t hash;
+  random_buffer(hash, 32);
+  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+}
+
+static in3_ret_t in3_bip32(in3_rpc_handle_ctx_t* ctx) {
+  char*   curvename = NULL;
+  char*   path      = NULL;
+  bytes_t seed      = {0};
+
+  TRY_PARAM_GET_REQUIRED_BYTES(seed, ctx, 0, 16, 0)
+  TRY_PARAM_GET_STRING(curvename, ctx, 1, "secp256k1")
+  TRY_PARAM_GET_STRING(path, ctx, 2, NULL)
+
+  bytes32_t pk;
+  in3_ret_t r = bip32(seed, ECDSA_SECP256K1, path, pk);
+
+  return r
+             ? req_set_error(ctx->req, "BIP32 not supported! Please reconfigure cmake!", r)
+             : in3_rpc_handle_with_bytes(ctx, bytes(pk, 32));
+}
+
+static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
+  bytes32_t hash;
+  bytes_t   pk = {0};
+  TRY_PARAM_GET_BYTES(pk, ctx, 0, 0, 0)
+  if (!pk.data) {
+    random_buffer(hash, 32);
+    pk = bytes(hash, 32);
   }
 
-  if (!r) {
-#if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__)
-    unsigned int number;
-    for (int i = 0; i < 32; i++) {
-      hash[i] = (rand_s(&number) ? rand() : (int) number) % 256;
-    }
-#else
-    for (int i = 0; i < 32; i++) hash[i] = rand() % 256;
-#endif
-  }
-  return in3_rpc_handle_with_bytes(ctx, bytes(hash, 32));
+  char* r = mnemonic_create(pk);
+  sb_printx(in3_rpc_handle_start(ctx), "\"%s\"", r);
+  memzero(hash, 32);
+  memzero(r, strlen(r));
+  _free(r);
+  return in3_rpc_handle_finish(ctx);
+}
+
+static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
+  char*   mnemonic   = NULL;
+  char*   passphrase = NULL;
+  uint8_t seed[64];
+
+  TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
+  TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
+
+  if (mnemonic_verify(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+
+  mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
+  return in3_rpc_handle_with_bytes(ctx, bytes(seed, 64));
+}
+
+static in3_ret_t in3_encode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type) {
+  bytes_t data;
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 0)
+  char* c = _malloc(encode_size(type, data.len));
+  int   l = encode(type, data, c);
+  if (l >= 0) sb_printx(in3_rpc_handle_start(ctx), "\"%S\"", c);
+  _free(c);
+  return l < 0
+             ? req_set_error(ctx->req, "Encoding not supported", IN3_ENOTSUP)
+             : in3_rpc_handle_finish(ctx);
+}
+
+static in3_ret_t in3_decode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type) {
+  char* txt;
+  TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
+  int      len = strlen(txt);
+  uint8_t* dst = _malloc(decode_size(type, len));
+  int      l   = decode(type, txt, len, dst);
+  if (l >= 0) sb_printx(in3_rpc_handle_start(ctx), "\"%B\"", bytes(dst, l));
+  _free(dst);
+  return l < 0
+             ? req_set_error(ctx->req, "Decoding not supported", IN3_ENOTSUP)
+             : in3_rpc_handle_finish(ctx);
+}
+
+static in3_ret_t in3_ed25519_pk2pub(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t   pk;
+  bytes32_t pub;
+  TRY_PARAM_GET_REQUIRED_BYTES(pk, ctx, 0, 32, 32);
+  TRY(crypto_convert(EDDSA_ED25519, CONV_PK32_TO_PUB32, pk, pub, NULL))
+  return in3_rpc_handle_with_bytes(ctx, bytes(pub, 32));
+}
+
+static in3_ret_t in3_ed25519_sign(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t   msg;
+  bytes_t   pk;
+  bytes32_t pub;
+  uint8_t   signature[64];
+  TRY_PARAM_GET_REQUIRED_BYTES(msg, ctx, 0, 0, 0);
+  TRY_PARAM_GET_REQUIRED_BYTES(pk, ctx, 1, 32, 32);
+  TRY(crypto_convert(EDDSA_ED25519, CONV_PK32_TO_PUB32, pk, pub, NULL))
+  TRY(crypto_sign_digest(EDDSA_ED25519, msg, pk.data, pub, signature))
+  return in3_rpc_handle_with_bytes(ctx, bytes(signature, 64));
+}
+
+static in3_ret_t in3_ed25519_verify(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t msg;
+  bytes_t pub;
+  bytes_t signature;
+  TRY_PARAM_GET_REQUIRED_BYTES(msg, ctx, 0, 0, 0);
+  TRY_PARAM_GET_REQUIRED_BYTES(signature, ctx, 1, 64, 64);
+  TRY_PARAM_GET_REQUIRED_BYTES(pub, ctx, 2, 32, 32);
+  in3_ret_t r = crypto_recover(EDDSA_ED25519, msg, signature, pub.data);
+  return (r == IN3_OK || r == IN3_EINVAL)
+             ? in3_rpc_handle_with_string(ctx, r ? "false" : "true")
+             : req_set_error(ctx->req, "ed25519 Not supported", r);
 }
 
 static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugin_ctx) {
@@ -166,6 +246,33 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_createKey", in3_createKey(ctx))
 #endif
 
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BIP32)
+  TRY_RPC("in3_bip32", in3_bip32(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BIP39_CREATE)
+  TRY_RPC("in3_bip39_create", in3_bip39_create(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BIP39_decode)
+  TRY_RPC("in3_bip39_decode", in3_bip39_decode(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_ENCODE)
+  TRY_RPC("in3_base58_encode", in3_encode(ctx, ENC_BASE58))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_DECODE)
+  TRY_RPC("in3_base58_decode", in3_decode(ctx, ENC_BASE58))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_ENCODE)
+  TRY_RPC("in3_base64_encode", in3_encode(ctx, ENC_BASE64))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_DECODE)
+  TRY_RPC("in3_base64_decode", in3_decode(ctx, ENC_BASE64))
+#endif
+  TRY_RPC("in3_ed25519_sign", in3_ed25519_sign(ctx))
+  TRY_RPC("in3_ed25519_pk2pub", in3_ed25519_pk2pub(ctx))
+  TRY_RPC("in3_ed25519_verify", in3_ed25519_verify(ctx))
   return IN3_EIGNORE;
 }
 

@@ -32,6 +32,13 @@ process.argv.slice(2).forEach(a => {
     else throw new Error('Invalid argument : ' + a)
 })
 if (!src_dirs.length) src_dirs.push('../c/src')
+let examples = {};
+(doc_dir || []).forEach(p => {
+    try {
+        examples = { ...examples, ...JSON.parse(fs.readFileSync(p + '/rpc_examples.json', 'utf-8')) }
+    } catch (x) { }
+})
+
 
 //const doc_dir = process.argv[process.argv.length - 1]
 const main_conf = yaml.parse(fs.readFileSync(in3_core_dir + '/c/src/cmd/in3/in3.yml', 'utf-8'))
@@ -147,14 +154,30 @@ function handle_config(conf, pre, title, descr) {
             if (c.example !== undefined) {
                 config_doc.push('\n*Example:*\n')
                 asArray(c.example).forEach(ex => {
-                    config_doc.push('```sh')
+                    const s = '         '
+
+                    config_doc.push('```eval_rst\n\n.. tabs::\n\n   .. code-tab:: sh\n')
+
                     if (typeof (ex) == 'object')
-                        config_doc.push('> ' + cmdName + ' ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
+                        config_doc.push(s + '> ' + cmdName + ' ' + Object.keys(ex).filter(_ => typeof (ex[_]) !== 'object').map(k => '--' + pre + key + '.' + k + '=' + ex[k]).join(' ') + '  ....\n')
                     else
-                        config_doc.push([...asArray(c.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> ' + cmdName + ' ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n') + '\n')
+                        config_doc.push(s + [...asArray(c.cmd).map(_ => '-' + _), '--' + pre + key].map(_ => '> ' + cmdName + ' ' + _ + (ex === true ? '' : (_.startsWith('--') ? '=' : ' ') + ex) + '  ....').join('\n' + s) + '\n')
+                    if (!title) {
+                        config_doc.push('   .. code-tab:: js\n\n' + s + 'const ' + cmdName + ' = new ' + sdkName + '(' + JSON.stringify({ [key]: ex }, null, 2).split('\n').join('\n' + s) + ')\n\n')
+
+                        config_doc.push('   .. code-tab:: c\n\n' + s + 'in3_configure(in3, "' + JSON.stringify({ [key]: ex }, null, 2).split('"').join('\\"').split('\n').join('\\\n' + s + '       ') + '");\n\n')
+
+                        config_doc.push('   .. code-tab:: java\n\n' + s + sdkName + ' ' + cmdName + ' = new ' + sdkName + '(new ClientConfiguration(JSON.parse("""\n' + s + '           ' + JSON.stringify({ [key]: ex }, null, 2).split('\n').join('\n' + s + '           ') + '\n' + s + '           """)));\n\n')
+
+                        config_doc.push('   .. code-tab:: swift\n\n' + s + 'let ' + ' ' + cmdName + ' = ' + sdkName + '( ' + JSON.stringify({ [key]: ex }, null, 2).split('\n').map(_ => {
+                            let args = _.split(':')
+                            if (args.length > 1) args[0] = args[0].split('"').join('').trim()
+                            else return ''
+                            return args.join(': ')
+                        }).filter(_ => _).join('\n' + s + '           ') + ')\n\n')
+
+                    }
                     config_doc.push('```\n')
-                    if (!title)
-                        config_doc.push('```js\nconst ' + cmdName + ' = new ' + sdkName + '(' + JSON.stringify({ [key]: ex }, null, 2) + ')\n```\n')
                 })
 
             }
@@ -243,7 +266,24 @@ for (const s of Object.keys(docs).sort()) {
             }
         }
 
-        asArray(def.example).forEach(ex => {
+        let exampleList = asArray(def.example)
+        if (exampleList.length) {
+            for (const lang of Object.keys(examples)) {
+                let all = examples[lang][rpc]
+                if (all) {
+                    while (all.length > exampleList.length) {
+                        let l = exampleList.length
+                        for (let i = 0; i < l; i++) exampleList.push({ ...exampleList[i] })
+                    }
+                    exampleList.forEach((ex, i) => {
+                        ex.apis = ex.apis || {}
+                        ex.apis[lang] = all[i % all.length]
+                    })
+                }
+            }
+        }
+        exampleList.forEach(ex => {
+            const s = '         '
             const req = { method: rpc, params: ex.request || [] }
             if (def.proof) req.in3 = { "verification": "proof", ...ex.in3Params }
             const data = { result: ex.response || null }
@@ -253,17 +293,20 @@ for (const s of Object.keys(docs).sort()) {
             rpc_doc.push('*Example:*\n')
             if (ex.descr) rpc_doc.push('\n' + ex.descr + '\n')
 
-            /*
-                        rpc_doc.push('```yaml\n# ---- Request -----\n\n' + yaml.stringify(req))
-                        rpc_doc.push('\n# ---- Response -----\n\n' + yaml.stringify(data))
-                        rpc_doc.push('```\n')
-            */
-            rpc_doc.push('```sh\n> ' + cmdName + ' ' + (ex.cmdParams ? (ex.cmdParams + ' ') : '') + req.method + ' ' + (req.params.map(toCmdParam).join(' ').trim()) + (is_json ? ' | jq' : ''))
-            rpc_doc.push(is_json ? JSON.stringify(data.result, null, 2) : '' + data.result)
-            rpc_doc.push('```\n')
+            rpc_doc.push('```eval_rst\n\n.. tabs::\n\n')
 
-            rpc_doc.push('```js\n//---- Request -----\n\n' + JSON.stringify(req, null, 2))
-            rpc_doc.push('\n//---- Response -----\n\n' + JSON.stringify(data, null, 2))
+            rpc_doc.push('\n   .. code-tab:: sh\n\n' + s + '> ' + cmdName + ' ' + (ex.cmdParams ? (ex.cmdParams + ' ') : '') + req.method + ' ' + (req.params.map(toCmdParam).join(' ').trim()) + (is_json ? ' | jq' : ''))
+            rpc_doc.push(s + (is_json ? JSON.stringify(data.result, null, 2).split('\n').join('\n' + s) : '' + data.result))
+
+            rpc_doc.push('\n   .. code-tab:: js jsonrpc\n\n' + s + '//---- Request -----\n\n' + s + JSON.stringify(req, null, 2).split('\n').join('\n' + s))
+            rpc_doc.push('\n' + s + '//---- Response -----\n\n' + s + JSON.stringify(data, null, 2).split('\n').join('\n' + s))
+
+            rpc_doc.push('\n   .. code-tab:: yaml\n\n' + s + '# ---- Request -----\n\n' + s + yaml.stringify(req).split('\n').join('\n' + s))
+            rpc_doc.push('\n' + s + '//---- Response -----\n\n' + s + yaml.stringify(data).split('\n').join('\n' + s))
+
+            for (const lang of Object.keys(ex.apis || {}).sort())
+                rpc_doc.push('\n   .. code-tab:: ' + lang + '\n\n' + s + ex.apis[lang].split('\n').join('\n' + s) + '\n')
+
             rpc_doc.push('```\n')
 
         })
@@ -279,7 +322,11 @@ for (const s of Object.keys(docs).sort()) {
 
 handle_config(config, '')
 
-generators.forEach(_ => _.generate_config())
+generators.forEach(_ => {
+    _.generate_config()
+    if (_.mergeExamples && examples && doc_dir.length && fs.existsSync(doc_dir[0]) && _.mergeExamples(examples))
+        fs.writeFileSync(doc_dir[0] + '/rpc_examples.json', JSON.stringify(examples, null, 2), { encoding: 'utf8' })
+})
 
 handle_config(main_conf.config, '', 'cmdline options\n\nThose special options are used in the comandline client to pass additional options.\n')
 main_help.push('')
@@ -292,7 +339,7 @@ Object.keys(main_conf.rpc).forEach(k => {
 
 if (zsh_file.length)
     fs.writeFileSync(zsh_file[0].replace('.template', '.sh'), fs.readFileSync(zsh_file[0], 'utf8').replace('$CMDS', zsh_cmds.join('\n')).replace('$CONFS', zsh_conf.join('\n')), { encoding: 'utf8' })
-if (doc_dir.length) {
+if (doc_dir.length && fs.existsSync(doc_dir[0])) {
     fs.writeFileSync(doc_dir[0] + '/rpc.md', rpc_doc.join('\n') + '\n', { encoding: 'utf8' })
     fs.writeFileSync(doc_dir[0] + '/config.md', config_doc.join('\n') + '\n', { encoding: 'utf8' })
 }

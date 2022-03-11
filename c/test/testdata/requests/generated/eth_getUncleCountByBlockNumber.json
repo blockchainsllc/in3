@@ -1,0 +1,21 @@
+[
+  {
+    "descr": "eth_getUncleCountByBlockNumber",
+    "request": {
+      "method": "eth_getUncleCountByBlockNumber",
+      "params": [
+        9830239
+      ]
+    },
+    "result": 1,
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0x1"
+      }
+    ]
+  }
+]

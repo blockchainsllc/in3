@@ -42,19 +42,20 @@
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/bytes.h"
+#include "../../c/src/core/util/crypto.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
 #include "../../c/src/nodeselect/full/cache.h"
 #include "../../c/src/nodeselect/full/nodeselect_def.h"
 #include "../../c/src/signer/pk-signer/signer.h"
-#include "../../c/src/third-party/crypto/ecdsa.h"
-#include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/eth1/basic/eth_basic.h"
 
-#ifdef IPFS
+#ifdef BASE64
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
+#endif
+#if IPFS
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
 
@@ -106,7 +107,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->chain.chain_id;
+  return get_in3(env, ob)->chain.id;
 }
 
 /*
@@ -115,7 +116,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong val) {
-  get_in3(env, ob)->chain.chain_id = val;
+  get_in3(env, ob)->chain.id = val;
 }
 
 static JNIEnv* jni = NULL;
@@ -243,18 +244,15 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
     case T_STRING:
       return (*env)->NewStringUTF(env, d_string(t));
     case T_BYTES: {
-      char* tmp = alloca(t->len * 2 + 3);
-      tmp[0]    = '0';
-      tmp[1]    = 'x';
-      bytes_to_hex(t->data, t->len, tmp + 2);
-      return (*env)->NewStringUTF(env, tmp);
+      bytes_t b = d_bytes(t);
+      return (*env)->NewStringUTF(env, bytes_to_hex_string(alloca(b.len * 2 + 3), "0x", b, NULL));
     }
     case T_OBJECT: {
       clz           = (*env)->FindClass(env, "in3/utils/JSON");
       jobject   map = (*env)->NewObject(env, clz, (*env)->GetMethodID(env, clz, "<init>", "()V"));
       jmethodID put = (*env)->GetMethodID(env, clz, "put", "(ILjava/lang/Object;)V");
       for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter))
-        (*env)->CallVoidMethod(env, map, put, iter.token->key, toObject(env, iter.token));
+        (*env)->CallVoidMethod(env, map, put, d_get_key(iter.token), toObject(env, iter.token));
       return map;
     }
     case T_ARRAY: {
@@ -382,15 +380,22 @@ in3_ret_t Java_in3_IN3_transport(void* plugin_data, in3_plugin_act_t action, voi
   // handle exception
   jthrowable transport_exception = (*jni)->ExceptionOccurred(jni);
   if (transport_exception) {
-    jclass    cls    = (*jni)->GetObjectClass(jni, transport_exception);
-    jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getStatus", "()I");
-    int       status = (*jni)->CallIntMethod(jni, transport_exception, mid);
-    mid              = (*jni)->GetMethodID(jni, cls, "getIndex", "()I");
-    int index        = (*jni)->CallIntMethod(jni, transport_exception, mid);
-    mid              = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
-    jstring     jmsg = (*jni)->CallObjectMethod(jni, transport_exception, mid);
-    const char* msg  = (*jni)->GetStringUTFChars(jni, jmsg, 0);
-    in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t) (end - start));
+    jclass      cls         = (*jni)->GetObjectClass(jni, transport_exception);
+    jmethodID   message_mid = (*jni)->GetMethodID(jni, cls, "getMessage", "()Ljava/lang/String;");
+    jstring     jmsg        = (*jni)->CallObjectMethod(jni, transport_exception, message_mid); // This is fine because getMessage is a method of Throwable
+    const char* msg         = (*jni)->GetStringUTFChars(jni, jmsg, 0);
+
+    jmethodID status_mid = (*jni)->GetMethodID(jni, cls, "getStatus", "()I");
+    jmethodID index_mid  = (*jni)->GetMethodID(jni, cls, "getIndex", "()I");
+    if (status_mid && index_mid) { // Aka if this exception is actually a kind of TransportException (our custom exception)
+      int status = (*jni)->CallIntMethod(jni, transport_exception, status_mid);
+      int index  = (*jni)->CallIntMethod(jni, transport_exception, index_mid);
+      in3_req_add_response(req, index, 0 - status, msg, -1, (uint32_t) (end - start));
+    }
+    else {
+      in3_req_add_response(req, 0, -500, msg, -1, (uint32_t) (end - start));
+    }
+
     (*jni)->ReleaseStringUTFChars(jni, jmsg, msg);
     (*jni)->ExceptionClear(jni);
   }
@@ -502,10 +507,11 @@ JNIEXPORT jstring JNICALL Java_in3_utils_Signer_getAddressFromKey(JNIEnv* env, j
   const char* key = (*env)->GetStringUTFChars(env, jkey, 0);
 
   bytes32_t prv_key;
-  uint8_t   public_key[65], sdata[32];
+  uint8_t   public_key[64], sdata[32];
   hex_to_bytes((char*) key, -1, prv_key, 32);
-  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
-  keccak(bytes(public_key + 1, 64), sdata);
+
+  crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(prv_key, 32), public_key, NULL);
+  keccak(bytes(public_key, 64), sdata);
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   char tmp[43];
   bytes_to_hex(sdata + 12, 20, tmp + 2);
@@ -592,7 +598,7 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
   bytes_to_hex(sc->message.data, sc->message.len, data + 2);
   bytes_to_hex(sc->account.data, sc->account.len, address + 2);
 
-  jobject jSignatureType = get_enum("in3/utils/SignatureType", "(I)Lin3/utils/SignatureType;", sc->type);
+  jobject jSignatureType = get_enum("in3/utils/SignatureType", "(I)Lin3/utils/SignatureType;", sc->digest_type);
   jobject jPayloadType   = get_enum("in3/utils/PayloadType", "(I)Lin3/utils/PayloadType;", sc->payload_type);
   jstring jdata          = (*jni)->NewStringUTF(jni, data);
   jstring jaddress       = (*jni)->NewStringUTF(jni, address);
@@ -657,16 +663,14 @@ JNIEXPORT jobject Java_in3_IN3_getDefaultConfig(JNIEnv* env, jobject ob) {
 
   char*       ret  = in3_get_config(get_in3(env, ob));
   json_ctx_t* json = parse_json(ret);
-  d_token_t*  r    = &json->result[0];
-  jobject     res  = toObject(env, r);
-
+  jobject     res  = toObject(env, json->result);
   _free(ret);
   json_free(json);
 
   return res;
 }
 
-#ifdef IPFS
+#ifdef BASE64
 /*
  * Class:     in3_ipfs_API
  * Method:    base64Decode
@@ -754,16 +758,17 @@ JNIEXPORT jobject JNICALL Java_in3_utils_JSON_parse(JNIEnv* env, jclass cl, jstr
   jobject     ob   = NULL;
   const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
   json_ctx_t* ctx  = parse_json(data);
-  (*env)->ReleaseStringUTFChars(env, jdata, data);
   if (ctx == NULL) {
     char* error = _malloc(strlen(data) + 50);
     sprintf(error, "Error parsing the json-data : '%s'", data);
+    (*env)->ReleaseStringUTFChars(env, jdata, data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/RuntimeException"), error);
     _free(error);
   }
   else {
     ob = toObject(env, ctx->result);
     json_free(ctx);
+    (*env)->ReleaseStringUTFChars(env, jdata, data);
   }
 
   return ob;

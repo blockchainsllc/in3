@@ -160,6 +160,14 @@ NONULL in3_ret_t in3_send_req(
 NONULL in3_req_t* in3_req_last_waiting(
     in3_req_t* req /**< [in] the request context. */
 );
+/** returns the chain id for the given reques*/
+NONULL chain_id_t in3_chain_id(const in3_req_t* req);
+
+/** returns the chain-definition for the given id (or creates it if it does not exists) */
+NONULL in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id);
+
+/** sets the chain_id for this request*/
+NONULL void in3_set_chain_id(in3_req_t* req, chain_id_t id);
 
 /**
  * executes the request and returns its state.
@@ -268,9 +276,9 @@ NONULL in3_req_state_t in3_req_exec_state(
             // read the data to sign from the request
             d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
             // the data to sign
-            bytes_t    data   = d_to_bytes(d_get_at(params, 0));
+            bytes_t    data   = d_bytes(d_get_at(params, 0));
             // the account to sign with
-            bytes_t    from   = d_to_bytes(d_get_at(params, 1));
+            bytes_t    from   = d_bytes(d_get_at(params, 1));
 
             // prepare the response
             ctx->raw_response = _malloc(sizeof(in3_response_t));
@@ -372,7 +380,7 @@ in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, bytes_t*
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result, so write it back to the dst
-          *dst = d_to_bytes(r);
+          *dst = d_bytes(r);
           return IN3_OK;
         } else
           // or check the error and report it
@@ -462,35 +470,32 @@ NONULL in3_proof_t in3_req_get_proof(
     int        i    /**< [in] the index within the request. */
 );
 
-#define TRY_SUB_REQUEST(req, name, res, fmt, ...)                            \
-  {                                                                          \
-    sb_t sb = {0};                                                           \
-    sb_printx(&sb, fmt, __VA_ARGS__);                                        \
-    in3_ret_t r = req_send_sub_request(req, name, sb.data, NULL, res, NULL); \
-    _free(sb.data);                                                          \
-    if (r) return r;                                                         \
+#define TRY_SUB_REQUEST(req, name, res, fmt, ...)                                    \
+  {                                                                                  \
+    char*     jpayload = sprintx(fmt, __VA_ARGS__);                                  \
+    in3_ret_t r        = req_send_sub_request(req, name, jpayload, NULL, res, NULL); \
+    _free(jpayload);                                                                 \
+    if (r) return r;                                                                 \
   }
 
-#define TRY_CATCH_SUB_REQUEST(req, name, res, _catch, fmt, ...)              \
-  {                                                                          \
-    sb_t sb = {0};                                                           \
-    sb_printx(&sb, fmt, __VA_ARGS__);                                        \
-    in3_ret_t r = req_send_sub_request(req, name, sb.data, NULL, res, NULL); \
-    _free(sb.data);                                                          \
-    if (r) {                                                                 \
-      _catch;                                                                \
-      return r;                                                              \
-    }                                                                        \
+#define TRY_CATCH_SUB_REQUEST(req, name, res, _catch, fmt, ...)                      \
+  {                                                                                  \
+    char*     jpayload = sprintx(fmt, __VA_ARGS__);                                  \
+    in3_ret_t r        = req_send_sub_request(req, name, jpayload, NULL, res, NULL); \
+    _free(jpayload);                                                                 \
+    if (r) {                                                                         \
+      _catch;                                                                        \
+      return r;                                                                      \
+    }                                                                                \
   }
-#define TRY_FINAL_SUB_REQUEST(req, name, res, _catch, fmt, ...)              \
-  {                                                                          \
-    sb_t sb = {0};                                                           \
-    sb_printx(&sb, fmt, __VA_ARGS__);                                        \
-    in3_ret_t r = req_send_sub_request(req, name, sb.data, NULL, res, NULL); \
-    _free(sb.data);                                                          \
-    _catch;                                                                  \
-    if (r)                                                                   \
-      return r;                                                              \
+#define TRY_FINAL_SUB_REQUEST(req, name, res, _catch, fmt, ...)                      \
+  {                                                                                  \
+    char*     jpayload = sprintx(fmt, __VA_ARGS__);                                  \
+    in3_ret_t r        = req_send_sub_request(req, name, jpayload, NULL, res, NULL); \
+    _free(jpayload);                                                                 \
+    _catch;                                                                          \
+    if (r)                                                                           \
+      return r;                                                                      \
   }
 
 #ifdef __cplusplus

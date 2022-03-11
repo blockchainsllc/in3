@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -136,7 +136,7 @@ void test_json() {
   int         array = json_create_array(json);
   json_array_add_value(json, array, json_create_bool(json, true));
   json_object_add_prop(json, array, key("key"), json_create_null(json));
-  json_array_add_value(json, array, json->result + json_create_object(json));
+  json_array_add_value(json, array, ((d_token_internal_t*) json->result) + json_create_object(json));
   json_array_add_value(json, array, json_create_bytes(json, bytes((uint8_t*) data, 3)));
   json_array_add_value(json, array, json_create_string(json, data, -1));
   json_array_add_value(json, array, json_create_int(json, 10));
@@ -146,17 +146,46 @@ void test_json() {
   json_free(json);
 }
 
+#define verify_valid_json(json, type, check)                                       \
+  {                                                                                \
+    json_ctx_t* d   = parse_json(json);                                            \
+    char*       err = d ? NULL : parse_json_error(json);                           \
+    TEST_ASSERT_NULL_MESSAGE(err, err);                                            \
+    TEST_ASSERT_EQUAL_INT_MESSAGE(d_type(d->result), type, "Wrong typ for " json); \
+    check;                                                                         \
+    json_free(d);                                                                  \
+    _free(err);                                                                    \
+  }
+#define verify_invalid_json(json, err_msg)                                   \
+  {                                                                          \
+    char* err = parse_json_error(json);                                      \
+    TEST_ASSERT_FALSE_MESSAGE(!err, "parsing " json " should have failed "); \
+    char* e2 = strchr(err, ':');                                             \
+    if (strchr(err, '\n')) strchr(err, '\n')[0] = 0;                         \
+    if (e2) e2 += 2;                                                         \
+    TEST_ASSERT_EQUAL_STRING(err_msg, e2);                                   \
+    _free(err);                                                              \
+  }
 void test_parse_json() {
-  char*       data = "[{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\",\"code\":-32000,\"data\":{\"0x1f426a9536e776d61eccca7500db78b53a8296ee50977e50d6c76c44f8430571\":{\"error\":\"revert\",\"program_counter\":112,\"return\":\"0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000002711\",\"reason\":\"\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\"},\"stack\":\"c: VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\n    at Function.c.fromResults (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:2:157333)\n    at readyCall (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:17:121221)\",\"name\":\"c\"}}}]";
-  json_ctx_t* d    = parse_json(data);
-  TEST_ASSERT_NOT_NULL(d);
-  json_free(d);
+  verify_valid_json("1.2e-5", T_STRING, );
+  verify_invalid_json("0eb", "Unexpected character");
+  verify_valid_json("[{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\",\"code\":-32000,\"data\":{\"0x1f426a9536e776d61eccca7500db78b53a8296ee50977e50d6c76c44f8430571\":{\"error\":\"revert\",\"program_counter\":112,\"return\":\"0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000002711\",\"reason\":\"\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\"},\"stack\":\"c: VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\n    at Function.c.fromResults (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:2:157333)\n    at readyCall (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:17:121221)\",\"name\":\"c\"}}}]", T_ARRAY, );
 }
+
 void test_sb() {
   sb_t* sb = sb_new("a=\"");
   TEST_ASSERT_EQUAL_STRING("a=\"", sb->data);
-  sb_add_escaped_chars(sb, ",x=\"123\"");
+  sb_add_escaped_chars(sb, ",x=\"123\"", -1);
   TEST_ASSERT_EQUAL_STRING("a=\",x=\\\"123\\\"", sb->data);
+
+  sb->len            = 0;
+  uint8_t*  testdata = (uint8_t*) "\"1234567890\"";
+  uint32_t  i        = 5;
+  bytes32_t b        = {0};
+  long_to_bytes(12345678901, b + 24);
+  sb_printx(sb, "a=%B,b=%i,c=%s,d=%S,e=%w", bytes(testdata, 10), i, testdata, testdata, bytes(b, 32));
+  TEST_ASSERT_EQUAL_STRING("a=0x22313233343536373839,b=5,c=\"1234567890\",d=\\\"1234567890\\\",e=12345678901", sb->data);
+
   sb_free(sb);
 }
 

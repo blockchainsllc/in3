@@ -82,7 +82,7 @@ NONULL sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int 
 NONULL_FOR((1, 3))
 sb_t*        sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array); /**< add bytes as 0x-prefixed hexcoded string (including an optional prefix), if len>1 is passed bytes maybe an array ( if as_array==true)  */
 NONULL sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);                                     /**< add a integer value as hexcoded, 0x-prefixed string*/
-NONULL sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars);                                        /**< add chars but escapes all quotes */
+NONULL sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int l);                                 /**< add chars but escapes all quotes, if l==-1 the length will be uaws from strlen */
 NONULL sb_t* sb_add_int(sb_t* sb, int64_t val);                                                        /**< adds a numeric value to the stringbuilder */
 NONULL char* format_json(const char* json);                                                            /**< format a json string and returns a new string, which needs to be freed */
 NONULL_FOR((1))
@@ -90,7 +90,55 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size);
 sb_t* sb_print(sb_t* sb, const char* fmt, ...);
 sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args);
 sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
+/**
+ * adds the arguments as defined in the formt-string.
+ * it works similiar to sprintf
+ *
+ * The format supports:
+ *
+ * %s - expects a char* and inserts the string
+ * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
+ * %i - expects int32_t and inserts a decimal representation
+ * %d - expects int32_t and inserts a decimal representation
+ * %u - expects uint32_t and inserts a decimal representation
+ * %I - expects int64_t and inserts a decimal representation
+ * %D - expects int64_t and inserts a decimal representation
+ * %U - expects uint64_t and inserts a decimal representation
+ * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
+ * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
+ * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
+ * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
+ * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
+ * %j - expects a d_token_t* and inserts the json-representation
+ * %w - expects a bytes_t and inserts the decimal representation of bytes as bugendian (max 32 bytes)
+ *
+ */
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
+
+/**
+ * creates a new string by allocating memory and formating the arguments based on the formast string.
+ * if works similiar to sprintf, but allocates the memory and returns the pointer to the new string, which must be freed after usage.
+ *
+ * The format supports:
+ *
+ * %s - expects a char* and inserts the string
+ * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
+ * %i - expects int32_t and inserts a decimal representation
+ * %d - expects int32_t and inserts a decimal representation
+ * %u - expects uint32_t and inserts a decimal representation
+ * %I - expects int64_t and inserts a decimal representation
+ * %D - expects int64_t and inserts a decimal representation
+ * %U - expects uint64_t and inserts a decimal representation
+ * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
+ * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
+ * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
+ * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
+ * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
+ * %j - expects a d_token_t* and inserts the json-representation
+ * %w - expects a bytes_t and inserts the decimal representation of bytes as bugendian (max 32 bytes)
+ *
+ */
+char* sprintx(const char* fmt, ...);
 
 #ifdef __cplusplus
 }

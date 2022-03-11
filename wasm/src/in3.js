@@ -41,6 +41,17 @@ class HttpError extends Error {
         this.status = status
     }
 }
+
+let in3FinalizationRegistry = null
+try {
+    if (FinalizationRegistry) in3FinalizationRegistry = new FinalizationRegistry(val => {
+        in3w.ccall('in3_dispose', 'void', ['number'], [val])
+        delete clients['' + val];
+    })
+} catch (x) {
+    console.log("Autofinalization not supported! " + x)
+}
+
 // implement the transport and storage handlers
 /* istanbul ignore next */
 if (isBrowserEnvironment) {
@@ -180,8 +191,9 @@ class IN3 {
         let chainId = this.config && this.config.chainId
         if (chainId && aliases[chainId]) chainId = aliases[chainId]
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
-        clients['' + this.ptr] = this
+        clients['' + this.ptr] = in3FinalizationRegistry ? new WeakRef(this) : { deref: () => this }
         this.plugins.forEach(_ => this.registerPlugin(_))
+        if (in3FinalizationRegistry) in3FinalizationRegistry.register(this, this.ptr, this)
     }
 
     // since loading the wasm is async, we always need to check whether the wasm was created before using it.
@@ -383,10 +395,11 @@ class IN3 {
 
     createWeb3Provider() { return this }
 
-    free() {
+    free(gc) {
         if (this.pending)
             this.delayFree = true
         else if (this.ptr) {
+            if (in3FinalizationRegistry && !gc) in3FinalizationRegistry.unregister(this)
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
             delete clients['' + this.ptr]
             this.ptr = 0
@@ -468,7 +481,7 @@ function url_queue(req) {
                 this.getNext().then(
                     r => {
                         // is the client still alive?
-                        if (!clients['' + ptr]) return
+                        if (!clients['' + ptr] || !clients['' + ptr].deref()) return
                         let blacklist = false
                         try {
                             blacklist = r.error || !!JSON.parse(r.response)[0].error
@@ -503,9 +516,8 @@ IN3.clearStorage = function () { // same as 'in3_cacheClear'
 }
 
 IN3.freeAll = function () {
-    Object.keys(clients).forEach(_ => clients[_].free())
+    Object.keys(clients).forEach(_ => { const c = clients[_].deref(); if (c) c.free() })
 }
-
 
 // the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
 IN3.onInit = function (fn) {

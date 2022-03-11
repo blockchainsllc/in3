@@ -1,4 +1,96 @@
 types:
+  eth_internal_tx:
+    op:
+      descr: type of transaction or opcode used to send it (CALL, DELEGATECALL, STATICCALL, CALLCODE, ..)
+      type: string
+    to:
+      descr: target address
+      type: address
+    from:
+      descr: address of the sender contract
+      type: address
+    value:
+      descr: value in wei sent
+      type: uint256
+    gas:
+      descr: gas provided for execution
+      type: uint64
+    depth:
+      descr: depth of the internal tx
+      type: uint32
+
+  eth_tx_decoded:
+    hash:
+      descr: the hash of the raw transaction. In case of a signed tx, this is the the tx-hash
+      type: bytes32
+    type:
+      descr: the eth-transaction-type (0=legacy, 1 or 2 EIP1559)
+      type: uint32
+    to:
+      descr: receipient of the transaction or a 0x for a deployment tx.
+      type: address
+    from:
+      descr: address of the sender (only available if the tx is signed)
+      type: address
+      optional: true
+    value:
+      descr: value in wei to send
+      type: uint256
+    gas:
+      descr: the gas to be send along
+      type: uint64
+    gasPrice:
+      descr: the price in wei for one gas-unit. only available for tx type 1 and 2.
+      type: uint64
+      optional: true
+    maxFeePerGas:
+      descr: the max fees per gas ( See EIP- 1559 )
+      type: uint64
+      optional: true
+    maxPriorityFeePerGas:
+      descr: the max Prioritiyfees per gas ( See EIP- 1559 )
+      type: uint64
+      optional: true
+    accessList:
+      descr: the access list of storage values
+      type: eth_accesslist
+      array: true
+      optional: true
+    nonce:
+      descr: the used nonce of the sender.
+      type: uint64
+    data:
+      descr: the data-section of the transaction
+      type: bytes
+    signature:  
+      descr: the 65 bytes signature
+      type: bytes
+      optional: true
+    chainId:  
+      descr: the chainId as encoded in the transaction. (only missing in legacy tx if EIP-155 is not used)
+      type: uint64
+      optional: true
+    v:  
+      descr: the recovery-byte. For legacy-tx ( this will be either + 27 or chain_id*2 + 35 - See EIP 155)
+      type: bytes
+      optional: true
+    r:  
+      descr: r-value of the sifgnature ( the R.y value)
+      type: bytes32
+      optional: true
+    s:  
+      descr: s-value of the sifgnature 
+      type: bytes32
+      optional: true
+    publicKey:  
+      descr: the public Key of the sender as 64 bytes
+      type: bytes
+      optional: true
+    unsigned:  
+      descr: the raw unsigned transaction to extract the hash for the signature
+      type: bytes
+      optional: true
+
   keyparams:
     version:
       descr: the version
@@ -127,6 +219,39 @@ utils:
         -  "0x"
         -  "0x"
 
+  in3_decodeTx:
+    sync: true
+    descr: decodes a raw transaction and returns the values. The transaction may be a signed or unsigned tx. In case of a signed transaction, the from-address will be calculated along with many other helpful values.
+    params:
+      data:
+        type: bytes
+        descr: input data
+    result:
+      type: eth_tx_decoded
+      descr: the decoded transaction.
+    example:
+      request:
+        - '0x02f8b0013f8459682f008518c2cdf18982bcbb940...edbc296ce'
+      response:
+        type: 2
+        hash: '0x0a7f5daa71ad3e0115cae737559d14cdf914510a6a19c16267b8d5142d82de42'
+        chainId: '0x1'
+        nonce: '0x3f'
+        maxPriorityFeePerGas: '0x59682f00'
+        maxFeePerGas: '0x18c2cdf189'
+        gas: '0xbcbb'
+        to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
+        value: '0x0'
+        data: '0x1896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        accessList: []
+        v: 0x
+        r: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b06587798'
+        s: '0x37b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce'
+        unsigned: '0x02f86d013f8459682f008518c2cdf18982bcbb9400000000000c2e074ec69a0dfb2997ba6c7d2e1e80b8441896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41c0'
+        signature: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b0658779837b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce00'
+        publicKey: '0x63cfcd2900a37247214361d0ca3637980af8e4b64acdf2f1e1b11573b502b576df4387cbf6f94c6cdc750e3aaa23026c5b0cef0f3bb2f5bb42c093ec394fd1bb'
+        from: '0xd034648eaea1d29f4e9cfa8312feff9783f31fd4'
+
   in3_checksumAddress:
     sync: true
     descr: Will convert an upper or lowercase Ethereum address to a checksum address.  (See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md) )
@@ -139,6 +264,7 @@ utils:
         type: bool
         optional: true
     result:
+      type: bytes
       descr: the address-string using the upper/lowercase hex characters.
     example:
       request:
@@ -252,6 +378,7 @@ account:
         type: bytes32
     result:
       descr: the address
+      type: bytes
     example:
       request:
         - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
@@ -266,6 +393,7 @@ account:
         type: bytes32
     result:
       descr: the public key as 64 bytes
+      type: bytes
     example:
       request:
         - "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
@@ -313,6 +441,7 @@ account:
         type: eth_transaction
 
     result:
+      type: bytes
       descr: the unsigned raw transaction as hex.
     example:
       request:
@@ -330,8 +459,8 @@ account:
       from:
         descr: the account to sign
         type: address
-
     result:
+      type: bytes
       descr: the raw transaction with signature.
     example:
       request:
@@ -403,9 +532,9 @@ account:
       passphrase:
         descr: the password to decrypt it.
         type: string
-
     result:
       descr: a raw private key (32 bytes)
+      type: bytes32
     example:
       request:
         - version: 3,
@@ -445,6 +574,7 @@ account:
         descr: the message to sign
         type: bytes
     result:
+      type: bytes
       descr: the signature (65 bytes) for the given message.
     example:
       request:
@@ -459,6 +589,7 @@ account:
         descr: transaction to sign
         type: eth_transaction
     result:
+      type: bytes
       descr: the raw signed transaction
     example:
       request:
@@ -469,3 +600,43 @@ account:
           to: "0xd46e8dd67c5d32be8058bb8eb970870f07244567"
           value: "0x9184e72a"
       response: "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
+
+  in3_get_internal_tx:
+    descr: returns the internal transactions send during execution of the tx. Currently this only works with geth with activated `debug` module (supporting `debug_traceTransaction` ). Also when running a pruned node, the state of transaction is only available for limited time ( mostly 5 min)
+    params:
+      tx_hash:
+        descr: the transactionhash
+        type: bytes32
+    result:
+      descr: an array of internal transactions
+      type: eth_internal_tx
+
+    example:
+      request:
+        - "0x8f78eb6e9916a4f187b6761d67f56bf6a828b6f197c7443b753e404efa21c8b1"
+      response: 
+        - op: CALL
+          to: '0x1'
+          value: '0x0'
+          from: '0x7be8076f4ea4a4ad08075c2508e481d6c946d12b'
+          depth: 1
+          gas: '0x277854'
+        - op: DELEGATECALL
+          to: '0xf9e266af4bca5890e2781812cc6a6e89495a79f2'
+          value:
+          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          depth: 2
+          gas: '0x181525'
+        - op: CALL
+          to: '0xa5409ec958c83c3f309868babaca7c86dcb077c1'
+          value: '0x0'
+          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          depth: 3
+          gas: '0x170850'
+        - op: CALL
+          to: '0x64dc7f3624a1456a7ba52025fcfddf428fff92e0'
+          value: '0x0'
+          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          depth: 3
+          gas: '0x169426'
+

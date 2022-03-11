@@ -24,7 +24,7 @@
 static bool set_chainId(char* value, sb_t* conf) {
   if (strstr(value, "://") == NULL) return false;
   sb_add_chars(conf, "{\"rpc\":\"");
-  sb_add_escaped_chars(conf, value);
+  sb_add_escaped_chars(conf, value, -1);
   sb_add_chars(conf, "\"}");
   return false;
 }
@@ -139,9 +139,9 @@ static bool set_recorder(in3_t* c, char* value, int argc, char** argv, bool writ
     recorder_read_start(c, value);
   return true;
 }
-static bool set_pk(in3_t* c, char* value, int argc, char** argv) {
+static bool set_pk(in3_t* c, char* value, int argc, char** argv, d_curve_type_t type) {
   if (value[0] != '0' || value[1] != 'x') {
-    read_pk(value, get_argument(argc, argv, "-pwd", "--password", true), c, NULL);
+    read_pk(value, get_argument(argc, argv, "-pwd", "--password", true), c, NULL, type);
     return true;
   }
   else
@@ -224,7 +224,8 @@ bool handle_option(in3_t* c, char* key, char* value, sb_t* conf, int argc, char*
 #ifdef NODESELECT_DEF
   CHECK_OPTION("nodelist", set_nodelist(c, value, conf, false))
   CHECK_OPTION("bootnodes", set_nodelist(c, value, conf, true))
-  CHECK_OPTION("pk", set_pk(c, value, argc, argv))
+  CHECK_OPTION("pk", set_pk(c, value, argc, argv, SIGN_CURVE_ECDSA))
+  CHECK_OPTION("pk_ed25519", set_pk(c, value, argc, argv, SIGN_CURVE_ED25519))
 #endif
 #ifdef LEDGER_NANO
   CHECK_OPTION("path", set_path(c, valuev))
@@ -251,7 +252,16 @@ void init_env(in3_t* c, int argc, char* argv[]) {
     bytes32_t pk;
     for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) {
       hex_to_bytes(cc, -1, pk, 32);
-      eth_set_pk_signer(c, pk);
+      eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA);
+    }
+  }
+  // PK
+  if (getenv("IN3_PK_ED25519") && !get_argument(argc, argv, "-pk_ed25519", "--pk_ed25519", true)) {
+    char*     pks = _strdupn(getenv("IN3_PK_ED25519"), -1);
+    bytes32_t pk;
+    for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) {
+      hex_to_bytes(cc, -1, pk, 32);
+      eth_set_pk_signer(c, pk, SIGN_CURVE_ED25519);
     }
   }
 

@@ -1,0 +1,19 @@
+[
+  {
+    "descr": "getdifficulty",
+    "request": {
+      "method": "getdifficulty",
+      "params": []
+    },
+    "result": 19932791027262.74,
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": [
+      {
+        "result": 19932791027262.74
+      }
+    ]
+  }
+]

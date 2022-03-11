@@ -3,34 +3,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -39,11 +39,10 @@
 #endif
 #include "../src/core/client/keys.h"
 #include "../src/core/client/request.h"
+#include "../src/core/util/crypto.h"
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
-#include "../src/third-party/crypto/ecdsa.h"
-#include "../src/third-party/crypto/secp256k1.h"
 #include "../src/verifier/eth1/basic/trie.h"
 #include "../src/verifier/eth1/evm/big.h"
 #include "../src/verifier/eth1/evm/evm.h"
@@ -93,7 +92,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_BALANCE:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "balance")));
+        res = d_bytes(d_get(t, ikey(jc, "balance")));
         if (res.data != NULL) {
           *out_data = res.data;
           return res.len;
@@ -104,7 +103,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
 
     case EVM_ENV_STORAGE:
       if ((t = vm_get_storage(test, evm->address, in_data, in_len))) {
-        res       = d_to_bytes(t);
+        res       = d_bytes(t);
         *out_data = res.data;
         return res.len;
       }
@@ -117,7 +116,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_CODE_SIZE:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "code")));
+        res = d_bytes(d_get(t, ikey(jc, "code")));
         if (res.data != NULL) {
           int ll = 4;
           int_to_bytes(res.len, __tmp);
@@ -137,7 +136,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_NONCE:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "nonce")));
+        res = d_bytes(d_get(t, ikey(jc, "nonce")));
         if (res.data != NULL) {
           *out_data = res.data;
           return res.len;
@@ -149,7 +148,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_CODE_HASH:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "code")));
+        res = d_bytes(d_get(t, ikey(jc, "code")));
         if (res.data != NULL) {
           keccak(res, __tmp);
           *out_data = __tmp;
@@ -162,7 +161,7 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
     case EVM_ENV_CODE_COPY:
       t = vm_get_account(test, in_data);
       if (t) {
-        res = d_to_bytes(d_get(t, ikey(jc, "code")));
+        res = d_bytes(d_get(t, ikey(jc, "code")));
         if (res.data != NULL) {
           *out_data = res.data;
           return res.len;
@@ -181,20 +180,20 @@ void prepare_header(d_token_t* block) {
   memset(data, 0, 32);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentCoinbase")));
+  r = d_bytes(d_get(block, ikey(jc, "currentCoinbase")));
   rlp_encode_item(rlp, &r);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
   rlp_encode_item(rlp, &tmp);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentDifficulty")));
+  r = d_bytes(d_get(block, ikey(jc, "currentDifficulty")));
   rlp_encode_item(rlp, &r);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentNumber")));
+  r = d_bytes(d_get(block, ikey(jc, "currentNumber")));
   rlp_encode_item(rlp, &r);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentGasLimit")));
+  r = d_bytes(d_get(block, ikey(jc, "currentGasLimit")));
   rlp_encode_item(rlp, &r);
   rlp_encode_item(rlp, &tmp);
-  r = d_to_bytes(d_get(block, ikey(jc, "currentTimestamp")));
+  r = d_bytes(d_get(block, ikey(jc, "currentTimestamp")));
   rlp_encode_item(rlp, &r);
   rlp_encode_item(rlp, &tmp);
 
@@ -205,20 +204,20 @@ void prepare_header(d_token_t* block) {
   _free(b);
 }
 
-int check_post_state(evm_t* evm, d_token_t* post) {
+int check_post_state(evm_t* evm, d_token_internal_t* post) {
 #ifdef EVM_GAS
-  int        i, j;
-  d_token_t *t, *storages, *s;
+  int                 i, j;
+  d_token_internal_t *t, *storages, *s;
   for (i = 0, t = post + 1; i < d_len(post); i++, t = d_next(t)) {
-    char*   adr_str = d_get_keystr(jc, t->key);
+    char*   adr_str = d_get_keystr(jc, d_get_key(t));
     uint8_t address[20];
     hex_to_bytes(adr_str + 2, strlen(adr_str) - 2, address, 20);
     storages = d_get(t, ikey(jc, "storage"));
     for (j = 0, s = storages + 1; j < d_len(storages); j++, t = d_next(s)) {
-      char*      s_str = d_get_keystr(jc, s->key);
+      char*      s_str = d_get_keystr(jc, d_get_key(s));
       uint8_t    s_key[32];
       int        l_key    = hex_to_bytes(s_str + 2, strlen(s_str) - 2, s_key, 32);
-      bytes_t    val_must = d_to_bytes(s);
+      bytes_t    val_must = d_bytes(s);
       storage_t* st       = NULL;
       TRY(evm_get_storage(evm, address, s_key, l_key, 0, &st))
       if (!st) {
@@ -344,11 +343,11 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
   account_t* tmp;
 #ifdef EVM_GAS
   // make sure we have all accounts
-  d_token_t *accounts = d_get(test, ikey(jc, "pre")), *t;
-  int        i;
+  d_token_internal_t *accounts = d_get(test, ikey(jc, "pre")), *t;
+  int                 i;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     uint8_t adr[20];
-    hex_to_bytes(d_get_keystr(jc, t->key) + 2, 40, adr, 20);
+    hex_to_bytes(d_get_keystr(jc, d_get_key(t)) + 2, 40, adr, 20);
     TRY(evm_get_account(evm, adr, 1, &tmp))
   }
   EVM_DEBUG_BLOCK({
@@ -397,20 +396,20 @@ static void uint256_setb(uint8_t* dst, uint8_t* data, int len) {
 }
 
 #ifdef EVM_GAS
-static void read_accounts(evm_t* evm, d_token_t* accounts) {
-  int        i, j;
-  account_t* tmp = NULL;
-  storage_t* st  = NULL;
-  d_token_t *t, *storage, *s;
+static void read_accounts(evm_t* evm, d_token_internal_t* accounts) {
+  int                 i, j;
+  account_t*          tmp = NULL;
+  storage_t*          st  = NULL;
+  d_token_internal_t *t, *storage, *s;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-    char*   adr_str = d_get_keystr(jc, t->key);
+    char*   adr_str = d_get_keystr(jc, d_get_key(t));
     uint8_t address[20];
     hex_to_bytes(adr_str + 2, strlen(adr_str) - 2, address, 20);
     evm_get_account(evm, address, true, &tmp);
     storage = d_get(t, ikey(jc, "storage"));
     if (storage) {
       for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
-        char*   k = d_get_keystr(jc, s->key);
+        char*   k = d_get_keystr(jc, d_get_key(s));
         uint8_t kk[32];
         hex_to_bytes(k + 2, strlen(k) - 2, kk, 32);
         evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true, &st);
@@ -459,7 +458,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
   evm.last_returned.data = NULL;
   evm.last_returned.len  = 0;
 
-  evm.properties = props | (exec ? EVM_PROP_FRONTIER : 0); //EVM_PROP_CONSTANTINOPL;
+  evm.properties = props | (exec ? EVM_PROP_FRONTIER : 0); // EVM_PROP_CONSTANTINOPL;
 
   evm.env      = runner_get_env;
   evm.env_ptr  = test;
@@ -470,19 +469,19 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
   if (exec) {
 
-    evm.gas_price  = d_to_bytes(d_get(exec, ikey(jc, "gasPrice")));
-    evm.call_data  = d_to_bytes(d_get(exec, ikey(jc, "data")));
-    evm.call_value = d_to_bytes(d_get(exec, ikey(jc, "value")));
+    evm.gas_price  = d_bytes(d_get(exec, ikey(jc, "gasPrice")));
+    evm.call_data  = d_bytes(d_get(exec, ikey(jc, "data")));
+    evm.call_value = d_bytes(d_get(exec, ikey(jc, "value")));
 
-    evm.caller  = d_get_bytes(exec, ikey(jc, "caller"))->data;
-    evm.origin  = d_get_bytes(exec, ikey(jc, "origin"))->data;
-    evm.address = d_get_bytes(exec, ikey(jc, "address"))->data;
-    evm.account = d_get_bytes(exec, ikey(jc, "address"))->data;
+    evm.caller  = d_get_bytes(exec, ikey(jc, "caller")).data;
+    evm.origin  = d_get_bytes(exec, ikey(jc, "origin")).data;
+    evm.address = d_get_bytes(exec, ikey(jc, "address")).data;
+    evm.account = d_get_bytes(exec, ikey(jc, "address")).data;
 
 #ifdef EVM_GAS
     evm.accounts = NULL;
     evm.gas      = d_get_long(exec, ikey(jc, "gas"));
-    evm.code     = d_to_bytes(d_get(exec, ikey(jc, "code")));
+    evm.code     = d_bytes(d_get(exec, ikey(jc, "code")));
     evm.parent   = NULL;
     evm.logs     = NULL;
     evm.init_gas = 0;
@@ -490,14 +489,14 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
   }
   else if (transaction) {
     indexes        = d_get(d_get_at(d_get(post, ikey(jc, fork_name)), test_index), ikey(jc, "indexes"));
-    evm.gas_price  = d_to_bytes(d_get(transaction, ikey(jc, "gasPrice")));
-    evm.call_data  = d_to_bytes(get_test_val(transaction, "data", indexes));
-    evm.call_value = d_to_bytes(get_test_val(transaction, "value", indexes));
+    evm.gas_price  = d_bytes(d_get(transaction, ikey(jc, "gasPrice")));
+    evm.call_data  = d_bytes(get_test_val(transaction, "data", indexes));
+    evm.call_value = d_bytes(get_test_val(transaction, "value", indexes));
 
-    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey"))->data, public_key[65], sdata[32];
-    ecdsa_get_public_key65(&secp256k1, pk, public_key);
+    uint8_t *pk = d_get_bytes(transaction, ikey(jc, "secretKey")).data, public_key[64], sdata[32];
+    crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(pk, 32), public_key, NULL);
     // hash it and return the last 20 bytes as address
-    if (keccak(bytes(public_key + 1, 64), sdata) == 0)
+    if (keccak(bytes(public_key, 64), sdata) == 0)
       memcpy(caller, sdata + 12, 20);
     else
       printf("\nWrong Hash");
@@ -505,14 +504,14 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
     evm.caller = caller;
     evm.origin = caller;
 
-    bytes_t to_address = d_to_bytes(d_get(transaction, ikey(jc, "to")));
+    bytes_t to_address = d_bytes(d_get(transaction, ikey(jc, "to")));
     evm.address        = _to;
     if (to_address.len) memcpy(_to, to_address.data, 20);
     //      memcpy(_to + 32 - to_address.len, to_address.data, to_address.len);
     evm.account = evm.address;
 
     if (d_getl(transaction, ikey(jc, "to"), 20) && d_len(d_getl(transaction, ikey(jc, "to"), 20)))
-      evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to"))->data), ikey(jc, "code")));
+      evm.code = d_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, ikey(jc, "to")).data), ikey(jc, "code")));
     else
       evm.code = evm.call_data;
 
@@ -668,7 +667,7 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
       // pay the miner the total gas
       account_t* miner = NULL;
-      TRY(evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase"))->data, 1, &miner))
+      TRY(evm_get_account(&evm, d_get_bytes(d_get(test, ikey(jc, "env")), ikey(jc, "currentCoinbase")).data, 1, &miner))
 
       // increase balance of the miner
       long_to_bytes(total_gas, tmp);
@@ -682,12 +681,12 @@ int run_evm(json_ctx_t* jctx, d_token_t* test, uint32_t props, uint64_t* ms, cha
 
   // now check results...
   if (!fail) {
-    bytes_t must_out = d_to_bytes(d_get(test, ikey(jc, "out")));
+    bytes_t must_out = d_bytes(d_get(test, ikey(jc, "out")));
     if (transaction) {
       uint8_t state_root[32];
       generate_state_root(&evm, state_root);
       d_token_t* pp       = d_get_at(d_get(post, ikey(jc, fork_name)), test_index);
-      bytes_t    expected = d_to_bytes(d_getl(pp, ikey(jc, "hash"), 32));
+      bytes_t    expected = d_bytes(d_getl(pp, ikey(jc, "hash"), 32));
       if (pp && (expected.len != 32 || memcmp(state_root, expected.data, 32))) {
         print_error("wrong state root : ");
         ba_print(state_root, 32);

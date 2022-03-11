@@ -118,7 +118,7 @@ java_arm:
 java_macos:
   stage: java
   allow_failure: true
-  extends: .only_java
+  extends: .only_deploy
   needs:
     - java
   # Caches per branch - per job

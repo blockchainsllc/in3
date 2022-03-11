@@ -190,7 +190,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
       ret = bb_find(vh->vldtrs, b->data, 20);
       if (ret == IN3_EFIND) {
         bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
-        bb_write_fixed_bytes(vh->vldtrs, b);
+        bb_write_fixed_bytes(vh->vldtrs, *b);
       }
       else {
         bb_write_int(vh->diffs, ret);

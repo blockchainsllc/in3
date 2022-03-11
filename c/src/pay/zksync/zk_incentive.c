@@ -33,9 +33,8 @@
  *******************************************************************************/
 #include "../../core/client/keys.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/zkcrypto/lib.h"
 #include "zk_helper.h"
 #include "zksync.h"
@@ -67,11 +66,10 @@ in3_ret_t zksync_add_payload(in3_pay_payload_ctx_t* ctx) {
 static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
   // do we have a sync_key and account already?
   if (!memiszero(conf->sync_key, 32)) return IN3_OK;
-  uint8_t pub[65];
-  bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
-  char*   message      = "\x19"
-                         "Ethereum Signed Message:\n68"
-                         "Access zkSync account.\n\nOnly sign this message for a trusted client!";
+  uint8_t pub[64];
+  char*   message = "\x19"
+                    "Ethereum Signed Message:\n68"
+                    "Access zkSync account.\n\nOnly sign this message for a trusted client!";
 
   in3_pay_sign_req_ctx_t sctx      = {.req = req, .request = NULL, .signature = {0}};
   bytes_t                sig_bytes = bytes(sctx.signature, 65);
@@ -83,9 +81,8 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
   zkcrypto_pk_from_seed(sig_bytes, conf->sync_key);
 
   // determine address
-  if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig_bytes.data, sctx.request_hash, sig_bytes.data[64] >= 27 ? sig_bytes.data[64] - 27 : sig_bytes.data[64]))
-    return req_set_error(req, "Invalid Signature", IN3_EINVAL);
-  keccak(pubkey_bytes, sctx.request_hash);
+  TRY(req_set_error(req, "Invalid Signature", crypto_recover(ECDSA_SECP256K1, bytes(sctx.request_hash, 32), sig_bytes, pub)))
+  keccak(bytes(pub, 64), sctx.request_hash);
   if (conf->account) _free(conf->account);
   conf->account = _malloc(20);
   memcpy(conf->account, sctx.request_hash + 12, 20);
@@ -95,7 +92,7 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
 static in3_ret_t set_amount(zk_fee_t* dst, in3_req_t* ctx, d_token_t* t) {
   if (!t) return req_set_error(ctx, "No value set", IN3_EINVAL);
 #ifdef ZKSYNC_256
-  bytes_t tmp = d_to_bytes(t);
+  bytes_t tmp = d_bytes(t);
   memset(*dst, 0, 32);
   memcpy(*dst + 32 - tmp.len, tmp.data, tmp.len);
 #else
@@ -106,7 +103,7 @@ static in3_ret_t set_amount(zk_fee_t* dst, in3_req_t* ctx, d_token_t* t) {
 
 static in3_ret_t get_payed_addresses(in3_req_t* ctx, bytes_t* dst) {
   char key[20];
-  sprintf(key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
+  sprintf(key, "payed_%d", (uint32_t) in3_chain_id(ctx));
   in3_cache_ctx_t c = {.content = NULL, .req = ctx, .key = key};
   TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &c))
   if (c.content) {
@@ -119,7 +116,7 @@ static in3_ret_t get_payed_addresses(in3_req_t* ctx, bytes_t* dst) {
 static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, bytes_t payed, bool update_cache) {
   if (update_cache) {
     char key[20];
-    sprintf(key, "payed_%d", (uint32_t) ctx->client->chain.chain_id);
+    sprintf(key, "payed_%d", (uint32_t) in3_chain_id(ctx));
     in3_cache_ctx_t c = {.content = &payed, .req = ctx, .key = key};
     TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_SET, &c))
   }
@@ -132,7 +129,7 @@ static in3_ret_t update_payed_addresses(in3_req_t* ctx, unsigned int nodes, byte
     sb_add_chars(&sb, "\"}");
   }
   in3_configure_ctx_t cctx = {.client = ctx->client, .json = parse_json(sb.data), .token = NULL, .error_msg = NULL};
-  cctx.token               = cctx.json->result + 1;
+  cctx.token               = d_get(cctx.json->result, key("preselect_nodes"));
   in3_ret_t ret            = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CONFIG_SET, &cctx);
   if (ret && ret != IN3_EIGNORE) req_set_error(ctx, cctx.error_msg ? cctx.error_msg : "Could not update the preselect nodelist", ret);
   if (cctx.error_msg) _free(cctx.error_msg);
@@ -237,7 +234,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
       .id       = d_get_int(price, K_ID),
       .decimals = d_get_int(price, key("decimals"))};
   strncpy(_token.symbol, d_get_string(price, key("token")), 6);
-  bytes_t tmp = d_to_bytes(d_get(price, K_ADDRESS));
+  bytes_t tmp = d_bytes(d_get(price, K_ADDRESS));
   if (tmp.len == 20)
     memcpy(_token.address, tmp.data, 20);
   else
@@ -252,7 +249,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
       .type       = ZK_TRANSFER};
   TRY(set_amount(&tx.amount, ctx->req, d_get(price, key("amount"))))
   TRY(set_amount(&tx.fee, ctx->req, d_get(price, key("fee"))))
-  tmp = d_to_bytes(d_get(selected_offer, K_ADDRESS));
+  tmp = d_bytes(d_get(selected_offer, K_ADDRESS));
   if (tmp.len != 20) return req_set_error(ctx->req, "invalid address in offer", IN3_ERPC);
   memcpy(tx.to, tmp.data, 20);
   memcpy(tx.from, criteria->config.account, 20);

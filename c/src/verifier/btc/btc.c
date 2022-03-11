@@ -6,6 +6,7 @@
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
+#include "btc_address.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
 #include "btc_sign.h"
@@ -53,8 +54,8 @@ static bool equals_hex_rev(bytes_t data, char* hex) {
 
 // extract the blocknumber from the proof based on BIP 34
 static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_token_t* proof, bytes_t header) {
-  bytes_t     merkle_proof = d_to_bytes(d_get(proof, key("cbtxMerkleProof")));
-  bytes_t     tx           = d_to_bytes(d_get(proof, key("cbtx")));
+  bytes_t     merkle_proof = d_bytes(d_get(proof, key("cbtxMerkleProof")));
+  bytes_t     tx           = d_bytes(d_get(proof, key("cbtx")));
   bytes32_t   tx_id;
   btc_tx_t    tx_data;
   btc_tx_in_t tx_in;
@@ -63,7 +64,7 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
     *dst_block_number = (uint32_t) d_get_int(proof, key("height"));
     if (!*dst_block_number) return vc_err(vc, "missing height in proof for blocks pre bip34");
 #ifdef BTC_PRE_BPI34
-    return check_pre_bip34(vc, d_to_bytes(d_get(proof, key("final"))), *dst_block_number);
+    return check_pre_bip34(vc, d_bytes(d_get(proof, key("final"))), *dst_block_number);
 #else
     return vc_err(vc, "no pre bip34 support");
 #endif
@@ -81,9 +82,9 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
 
   // the coinbase tx has only one input
   if (tx_data.input_count != 1) return vc_err(vc, "vin count needs to be 1 for coinbase tx");
-  if (btc_parse_tx_in(tx_data.input.data, &tx_in, tx_data.input.data + tx_data.input.len) == NULL || *tx_in.script.data != 3) return vc_err(vc, "invalid coinbase signature");
+  if (btc_parse_tx_in(tx_data.input.data, &tx_in, tx_data.input.data + tx_data.input.len) == NULL || *tx_in.script.data.data != 3) return vc_err(vc, "invalid coinbase signature");
 
-  *dst_block_number = ((uint32_t) tx_in.script.data[1]) | (((uint32_t) tx_in.script.data[2]) << 8) | (((uint32_t) tx_in.script.data[3]) << 16);
+  *dst_block_number = ((uint32_t) tx_in.script.data.data[1]) | (((uint32_t) tx_in.script.data.data[2]) << 8) | (((uint32_t) tx_in.script.data.data[3]) << 16);
 
   return IN3_OK;
 }
@@ -143,9 +144,9 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
   memset(block_target, 0, 32);
 
   // get the header
-  t = d_get(vc->proof, K_BLOCK);
+  t      = d_get(vc->proof, K_BLOCK);
+  header = d_bytes(t);
   if (!t || d_type(t) != T_BYTES || d_len(t) != 80) return vc_err(vc, "missing or invalid blockheader!");
-  header = d_to_bytes(t);
 
   if (json) {
 
@@ -223,7 +224,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
       if (tx_index == 0) {
         // coinbase
         hex = d_get_string(iter.token, key("coinbase"));
-        if (!hex || !equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid coinbase");
+        if (!hex || !equals_hex(tx_in.script.data, hex)) return vc_err(vc, "invalid coinbase");
       }
       else {
         // txid
@@ -235,7 +236,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
         // sig.hex
         hex = d_get_string(d_get(iter.token, key("scriptSig")), key("hex"));
-        if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
+        if (!equals_hex(tx_in.script.data, hex)) return vc_err(vc, "invalid vin.hex");
       }
     }
 
@@ -255,7 +256,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
       // sig.hex
       char* hex = d_get_string(d_get(iter.token, key("scriptPubKey")), key("hex"));
-      if (!equals_hex(tx_out.script, hex)) return vc_err(vc, "invalid vout.hex");
+      if (!equals_hex(tx_out.script.data, hex)) return vc_err(vc, "invalid vout.hex");
       d_token_t* value = d_get(iter.token, K_VALUE);
       if (!value) return vc_err(vc, "no value found!");
 
@@ -289,9 +290,9 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
   if (memcmp(hash, tx_id, 32)) return vc_err(vc, "invalid txid");
 
   // now check the merkle proof
-  t = d_get(vc->proof, K_MERKLE_PROOF);
+  t           = d_get(vc->proof, K_MERKLE_PROOF);
+  merkle_data = d_bytes(t);
   if (!t || d_type(t) != T_BYTES) return vc_err(vc, "missing merkle proof!");
-  merkle_data = d_to_bytes(t);
 
   // check the transactionIndex
   t = d_get(vc->proof, K_TX_INDEX);
@@ -302,7 +303,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
 
   // now verify the blockheader including finality and target
   uint32_t  block_number     = 0;
-  bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
+  bytes_t   finality_headers = d_bytes(d_get(vc->proof, key("final")));
   in3_ret_t ret;
 
   if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, vc->proof))) return ret;
@@ -332,7 +333,7 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
   bytes32_t block_target, hash, tmp, tmp2;
   in3_ret_t ret              = IN3_OK;
   uint32_t  block_number     = 0;
-  bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
+  bytes_t   finality_headers = d_bytes(d_get(vc->proof, key("final")));
   if (!vc->proof) return vc_err(vc, "missing the proof");
   if (verbose)
     btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
@@ -419,8 +420,8 @@ in3_ret_t btc_verify_target_proof(btc_target_conf_t* conf, in3_vctx_t* vc, d_tok
 
   for (d_iterator_t iter = d_iter(vc->result); iter.left; d_iter_next(&iter)) {
     if (d_type(iter.token) != T_OBJECT) return vc_err(vc, "invalid type for proof");
-    bytes_t header           = d_to_bytes(d_get(iter.token, K_BLOCK));
-    bytes_t finality_headers = d_to_bytes(d_get(iter.token, key("final")));
+    bytes_t header           = d_bytes(d_get(iter.token, K_BLOCK));
+    bytes_t finality_headers = d_bytes(d_get(iter.token, key("final")));
     if (header.len != 80) return vc_err(vc, "invalid header");
 
     if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, iter.token))) return ret;
@@ -442,7 +443,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
 
   // make sure the conf is filled with data from the cache
-  btc_check_conf(vc->client, conf);
+  btc_check_conf(vc->req, conf);
   d_token_t* params = d_get(vc->request, K_PARAMS);
   bytes32_t  hash;
 
@@ -461,6 +462,12 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   if (VERIFY_RPC("getblockcount")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_blockcount(conf, vc);
+  }
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHASH)
+  if (VERIFY_RPC("getblockhash")) {
+    REQUIRE_EXPERIMENTAL(vc->req, "btc")
+    return IN3_OK;
   }
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHEADER)
@@ -492,7 +499,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     return btc_verify_tx(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
 #endif
-
+  // TODO: Uncomment and implement functions bellow once conditions are met
   // #if !defined(RPC_ONLY) || defined(RPC_GETUTXOS)
 
   //   // fetch whole list of utxos
@@ -542,6 +549,107 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   return IN3_EIGNORE;
 }
 
+in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
+  bytes_t    transaction;
+  d_token_t* result = NULL;
+  char*      txid;
+  char*      blockhash;
+  TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
+  TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
+
+  size_t tx_len = strlen(txid);
+  if (tx_len < BTC_TX_HASH_SIZE_BYTES * 2) {
+    return req_set_error(ctx->req, "ERROR: btc_get_addresses: invalid txid", IN3_EINVAL);
+  }
+  else if (tx_len == BTC_TX_HASH_SIZE_BYTES * 2) {
+    // we received a txid, so we need to fetch the raw transaction data from the blockchain
+    sb_t sb = {0};
+    sb_add_chars(&sb, "\"");
+    sb_add_chars(&sb, txid);
+    sb_add_chars(&sb, "\",0");
+    if (blockhash) {
+      sb_add_chars(&sb, ",\"");
+      sb_add_chars(&sb, blockhash);
+      sb_add_chars(&sb, "\"");
+    }
+    TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+    transaction      = bytes(NULL, d_len(result) / 2);
+    transaction.data = alloca(transaction.len);
+    TRY(hex_to_bytes(d_string(result), -1, transaction.data, transaction.len))
+  }
+  else {
+    // we received raw transaction data, so we just convert it to bytes
+    transaction      = bytes(NULL, tx_len / 2);
+    transaction.data = alloca(transaction.len);
+    TRY(hex_to_bytes(txid, -1, transaction.data, transaction.len))
+  }
+
+  // Create transaction context
+  btc_tx_ctx_t tx_ctx;
+  btc_init_tx_ctx(&tx_ctx);
+  btc_parse_tx(transaction, &tx_ctx.tx);
+
+  // Extract all outputs
+  uint8_t* p   = tx_ctx.tx.output.data;
+  uint8_t* end = p + tx_ctx.tx.output.len;
+  while (p < end) {
+    btc_tx_out_t new_output;
+    p                                   = btc_parse_tx_out(p, &new_output);
+    tx_ctx.outputs                      = _realloc(tx_ctx.outputs, (tx_ctx.output_count + 1) * sizeof(btc_tx_out_t), tx_ctx.output_count * sizeof(btc_tx_out_t));
+    tx_ctx.outputs[tx_ctx.output_count] = new_output;
+    tx_ctx.output_count++;
+  }
+
+  // Build return object
+  sb_t addrs = {0};
+  sb_add_chars(&addrs, "[");
+
+  // -- For each output, extract addresses or public keys
+  for (uint32_t i = 0; i < tx_ctx.output_count; i++) {
+    btc_address_t addr = {0};
+    bool          has_addr;
+    tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
+    btc_stype_t script_type       = extract_address_from_output(&tx_ctx.outputs[i], &addr);
+    bytes_t     addr_as_bytes     = bytes(addr.as_bytes, BTC_ADDRESS_SIZE_BYTES);
+
+    has_addr = script_type != BTC_P2MS && script_is_standard(script_type);
+
+    sb_add_chars(&addrs, "{\"index\":");
+    sb_add_int(&addrs, i);
+    sb_add_chars(&addrs, ",\"script_type\":\"");
+    sb_add_chars(&addrs, btc_script_type_to_string(script_type));
+    sb_add_chars(&addrs, "\",\"addr\":\"");
+    if (has_addr) sb_add_chars(&addrs, addr.encoded);
+    sb_add_chars(&addrs, "\",\"raw_addr\":\"");
+    if (has_addr) sb_add_rawbytes(&addrs, NULL, addr_as_bytes, addr_as_bytes.len);
+    sb_add_chars(&addrs, "\",\"pub_keys\":[");
+    if (script_type == BTC_P2MS) {
+      // extract public keys
+      bytes_t* pub_key_list = NULL;
+      uint32_t pub_key_list_len;
+      pub_key_list_len = extract_public_keys_from_multisig(tx_ctx.outputs[i].script.data, &pub_key_list);
+      if (!pub_key_list || pub_key_list_len == 0) return req_set_error(ctx->req, "Error while parsing p2ms public keys", IN3_ERPC);
+
+      // Add public keys to return object
+      for (uint32_t j = 0; j < pub_key_list_len; j++) {
+        if (j > 0) sb_add_chars(&addrs, ",");
+        sb_add_chars(&addrs, "\"");
+        sb_add_rawbytes(&addrs, NULL, pub_key_list[j], pub_key_list[j].len);
+        sb_add_chars(&addrs, "\"");
+      }
+    }
+    sb_add_chars(&addrs, "]}");
+    if (i != tx_ctx.output_count - 1) {
+      sb_add_chars(&addrs, ",");
+    }
+    _free(addr.encoded);
+  }
+  sb_add_chars(&addrs, "]");
+  TRY_FINAL(in3_rpc_handle_with_string(ctx, addrs.data), _free(addrs.data));
+  return IN3_OK;
+}
+
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
   // This is the RPC that abstracts most of what is done in the background before sending a transaction:
@@ -570,58 +678,59 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   in3_req_t* req    = ctx->req;
   d_token_t* params = ctx->params;
-  char*      pub_key_str;
-  bytes_t    account;
-  bytes_t    pub_key;
-  pub_key.len  = 65; // TODO: Implement support to compressed public keys as well (33-bytes)
-  pub_key.data = alloca(pub_key.len * sizeof(uint8_t));
-  account.len  = 20;
-  TRY_PARAM_GET_REQUIRED_ADDRESS(account.data, ctx, 0)
-  TRY_PARAM_GET_REQUIRED_STRING(pub_key_str, ctx, 1)
-  hex_to_bytes(pub_key_str, -1, pub_key.data, pub_key.len);
-  d_token_t* outputs   = d_get_at(params, 2);
-  d_token_t* utxo_list = d_get_at(params, 3);
 
-  uint32_t miner_fee = 0, outputs_total = 0, utxo_total = 0;
+  // btc "send transaction" data
+  btc_account_pub_key_t default_account;
+  btc_tx_ctx_t          tx_ctx;
+  btc_init_tx_ctx(&tx_ctx);
+
+  // first parameter is the btc address which shall receive the remaining change, discounting fees, after transaction is complete
+  // TODO: Receive address as Base58 or BECH32 encoding, instead of bytes
+  bytes_t from_addr = d_bytes(d_get_at(params, 0));
+  if (from_addr.len != BTC_ADDRESS_SIZE_BYTES) return req_set_error(req, "ERROR: Invalid btc address", IN3_EINVAL);
+
+  // second parameter is the ethereum account used by the signer api
+  d_token_t* sig_acc = d_get_at(params, 1);
+  if (!sig_acc || d_type(sig_acc) != T_OBJECT) return req_set_error(req, "ERROR: Invalid signing account", IN3_EINVAL);
+  default_account.account = d_bytes(d_get(sig_acc, K_ADDRESS));
+  default_account.pub_key = d_bytes(d_get(sig_acc, key("btc_pub_key")));
+  if (!default_account.account.data || !default_account.pub_key.data) return req_set_error(req, "ERROR: Required signing account data is null or missing", IN3_EINVAL);
+  if (!btc_public_key_is_valid((const bytes_t*) &default_account.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
+
+  // third parameter are the transaction outputs data
+  d_token_t* output_data = d_get_at(params, 2);
+  if (!output_data || d_type(output_data) != T_ARRAY || d_len(output_data) < 1) return req_set_error(req, "ERROR: Invalid transaction output data", IN3_EINVAL);
+  btc_prepare_outputs(req, &tx_ctx, output_data);
+
+  // forth parameter is utxo data
+  d_token_t* utxo_data = d_get_at(params, 3);
+  if (!utxo_data || d_type(utxo_data) != T_ARRAY || d_len(utxo_data) < 1) return req_set_error(req, "ERROR: Invalid unspent outputs (utxos) data", IN3_EINVAL);
+  btc_prepare_utxos(req, &tx_ctx, &default_account, utxo_data);
 
   // create output for receiving the transaction "change", discounting miner fee
+  uint32_t     miner_fee = 0, outputs_total = 0, utxo_total = 0;
   btc_tx_out_t tx_out_change;
   btc_init_tx_out(&tx_out_change);
-  tx_out_change.value = utxo_total - miner_fee - outputs_total;
+  tx_out_change.value       = utxo_total - miner_fee - outputs_total;
+  tx_out_change.script.data = btc_build_locking_script(&from_addr, BTC_P2PKH, NULL, 0);
+  tx_out_change.script.type = btc_get_script_type(&tx_out_change.script.data);
+  btc_add_output_to_tx(req, &tx_ctx, &tx_out_change);
 
-  // create unsigned transaction
-  bytes_t  signed_tx = NULL_BYTES;
-  btc_tx_t tx;
-  btc_init_tx(&tx);
-  add_outputs_to_tx(req, outputs, &tx);
+  // Verify segwit
+  btc_set_segwit(&tx_ctx);
 
-  // select "best" set of UTXOs
-  btc_utxo_t* selected_utxo_list = NULL;
-  uint32_t    utxo_list_len      = 0;
-  btc_prepare_utxos(&tx, utxo_list, &selected_utxo_list, &utxo_list_len);
-  btc_set_segwit(&tx, selected_utxo_list, utxo_list_len);
+  // Try signing the transaction
+  TRY(btc_sign_tx(ctx->req, &tx_ctx));
 
-  TRY(btc_sign_tx(ctx->req, &tx, selected_utxo_list, utxo_list_len, &account, &pub_key));
-
-  btc_serialize_tx(&tx, &signed_tx);
+  bytes_t* signed_tx = b_new(NULL, btc_get_raw_tx_size(&tx_ctx.tx));
+  btc_serialize_tx(req, &tx_ctx.tx, signed_tx);
   sb_t sb = {0};
-  sb_add_rawbytes(&sb, "\"", signed_tx, 0);
+  sb_add_rawbytes(&sb, "\"", *signed_tx, 0);
   sb_add_chars(&sb, "\"");
 
   // Now that we wrote the request, we can free all allocated memory
-  if (signed_tx.data) _free(signed_tx.data);
-
-  if (selected_utxo_list) {
-    for (uint32_t i = 0; i < utxo_list_len; i++) {
-      _free(selected_utxo_list[i].tx_hash);
-      _free(selected_utxo_list[i].tx_out.script.data);
-    }
-    _free(selected_utxo_list);
-  }
-
-  if (tx.input.data) _free(tx.input.data);
-  if (tx.output.data) _free(tx.output.data);
-  if (tx.witnesses.data) _free(tx.witnesses.data);
+  b_free(signed_tx);
+  btc_free_tx_ctx(&tx_ctx);
 
   // finally, send transaction
   d_token_t* result = NULL;
@@ -635,8 +744,11 @@ static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t
   if (req->client->chain.type != CHAIN_BTC) return IN3_EIGNORE;
 
   // make sure the conf is filled with data from the cache
-  btc_check_conf(req->client, conf);
+  btc_check_conf(req, conf);
 
+#if !defined(RPC_ONLY) || defined(RPC_GETADDRESSES)
+  TRY_RPC("getaddresses", btc_get_addresses(conf, ctx))
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
 
   // SERVER: sendtransaction(raw_signed_tx)
@@ -663,9 +775,9 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
     }
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* cctx = pctx;
-      if (cctx->token->key == CONFIG_KEY("maxDAP"))
+      if (d_is_key(cctx->token, CONFIG_KEY("maxDAP")))
         conf->max_daps = d_int(cctx->token);
-      else if (cctx->token->key == CONFIG_KEY("maxDiff"))
+      else if (d_is_key(cctx->token, CONFIG_KEY("maxDiff")))
         conf->max_diff = d_int(cctx->token);
       else
         return IN3_EIGNORE;

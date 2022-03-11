@@ -1,0 +1,23 @@
+[
+  {
+    "descr": "eth_estimateGas",
+    "request": {
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+          "data": "0x18160ddd"
+        }
+      ]
+    },
+    "result": 2000000,
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "result": "0x1E8480"
+      }
+    ]
+  }
+]

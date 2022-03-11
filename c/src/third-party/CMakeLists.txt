@@ -32,7 +32,7 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if(CRYPTO_LIB)
+if(CRYPTO_TREZOR)
   add_subdirectory( crypto )
 endif()
 if(USE_SCRYPT)
@@ -46,7 +46,7 @@ if (USE_SEGGER_RTT)
   add_subdirectory( segger_rtt )
 endif()
 
-if (IPFS)
+if (BASE64)
   add_subdirectory( libb64 )
 endif()
 

@@ -1,0 +1,19 @@
+[
+  {
+    "descr": "getblockcount",
+    "request": {
+      "method": "getblockcount",
+      "params": []
+    },
+    "result": 688582,
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": [
+      {
+        "result": 688582
+      }
+    ]
+  }
+]

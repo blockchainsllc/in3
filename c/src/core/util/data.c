@@ -31,9 +31,11 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
+#define IN3_INTERNAL
 #include "data.h"
+#include "../../third-party/tommath/tommath.h"
 #include "bytes.h"
+#include "crypto.h"
 #include "debug.h"
 #include "mem.h"
 #include "stringbuilder.h"
@@ -41,11 +43,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
 #ifdef LOGGING
 #include "used_keys.h"
 #endif
-// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
+// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_bytes() for a T_INTEGER
 // verify(sizeof(void*) >= 4);
 
 // number of tokens to allocate memory for when parsing
@@ -116,42 +117,98 @@ size_t d_token_size(const d_token_t* item) {
   }
 }
 
-bytes_t* d_bytes(const d_token_t* item) {
-  return d_type(item) == T_BYTES ? (bytes_t*) item : NULL;
+bytes_t* d_as_bytes(d_token_t* item) {
+  if (d_type(item) != T_BYTES && d_is_bytes(item)) d_bytes(item);
+  return d_type(item) == T_BYTES ? (void*) item : NULL;
 }
 
-bytes_t* d_bytesl(d_token_t* item, size_t l) {
-  if (item == NULL || d_type(item) != T_BYTES)
-    return NULL;
-  else if (item->len >= l)
-    return d_bytes(item);
-
-  item->data = _realloc(item->data, l, item->len);
-  memmove(item->data + l - item->len, item->data, item->len);
-  memset(item->data, 0, l - item->len);
-  item->len = l;
-  return (bytes_t*) item;
+bytes_t d_bytesl(d_token_t* item, uint32_t len) {
+  bytes_t b = d_bytes(item);
+  if (!b.data) return b;
+  if (b.len < len && len > 4 && d_type(item) == T_BYTES) {
+    bytes_t t = bytes(_calloc(1, len), len);
+    memcpy(t.data + len - b.len, b.data, b.len);
+    if (item->state & TOKEN_STATE_ALLOCATED) _free(item->data);
+    item->data  = t.data;
+    item->len   = len;
+    item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+    return t;
+  }
+  if (b.len > len) b.len = len;
+  return b;
+}
+bytes_t d_bytes_enc(d_token_t* item, in3_encoding_type_t enc) {
+  if (enc && d_type(item) == T_STRING) {
+    uint8_t* dst = _malloc(decode_size(enc, d_len(item)));
+    int      l   = decode(enc, (char*) (void*) item->data, d_len(item), dst);
+    if (l >= 0) {
+      if (item->state & TOKEN_STATE_ALLOCATED) _free(item->data);
+      item->len   = l;
+      item->data  = dst;
+      item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+      return bytes(item->data, l);
+    }
+    else
+      _free(dst);
+  }
+  return d_bytes(item);
 }
 
-bytes_t d_to_bytes(d_token_t* item) {
+bytes_t d_bytes(d_token_t* item) {
   switch (d_type(item)) {
     case T_BYTES:
       return bytes(item->data, item->len);
-    case T_STRING:
-      return bytes(item->data, d_len(item));
+    case T_STRING: {
+      int   l     = d_len(item);
+      char* start = (char*) item->data;
+      if (item->state & TOKEN_STATE_CONVERTED) return bytes(item->data, l);
+
+      // is it a hex-string?
+      bool ishex = l > 1 && *start == '0' && start[1] == 'x';
+      if (ishex)
+        for (int n = 2; n < l; n++) {
+          char cc = start[n];
+          if (!((cc >= '0' && cc <= '9') || (cc >= 'a' && cc <= 'f') || (cc >= 'A' && cc <= 'F'))) {
+            ishex = false;
+            break;
+          }
+        }
+      if (!ishex) {
+        item->state |= TOKEN_STATE_CONVERTED;
+        return bytes(item->data, l);
+      }
+
+      // we have a hex string, we need to convert.
+      //  we can store it as number ?
+      if (l == 2) {
+        if (item->state & TOKEN_STATE_ALLOCATED) _free(item->data);
+        item->data  = NULL;
+        item->len   = 0;
+        item->state = TOKEN_STATE_CONVERTED;
+        return bytes((uint8_t*) &item->data, 0);
+      }
+      else if (l < 10) {
+        item->data  = NULL;
+        int tl      = hex_to_bytes(start, l, (uint8_t*) &item->data, 4);
+        item->len   = T_INTEGER << 28 | bytes_to_int((uint8_t*) &item->data, tl);
+        item->state = TOKEN_STATE_CONVERTED;
+        return bytes((uint8_t*) &item->data, tl);
+      }
+
+      item->len   = (l - 1) / 2;
+      item->data  = item->state & TOKEN_STATE_ALLOCATED ? item->data : _malloc(item->len);
+      item->len   = hex_to_bytes(start, l, item->data, item->len);
+      item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+      return bytes(item->data, item->len);
+    }
     case T_INTEGER:
     case T_BOOLEAN: {
-      bytes_t dst;
-      // why do we need this cast?
-      // Because here we set the pointer to the pointer-field in the token.
-      // Since a int/bool does not need the data-pointer, we simply reuse that memory and store the
-      // bigendian representation of the int there.
-      // but since we cannot accept a pointersize that is smaller than 32bit,
-      // we have this check at the top of this file.
-      dst.data = (uint8_t*) &item->data;
-      dst.len  = d_bytes_to(item, dst.data, 4);
-      dst.data += 4 - dst.len;
-      return dst;
+      uint8_t  tmp[4];
+      uint32_t val = item->len & 0xFFFFFFF;
+      int      l   = val & 0xFF000000 ? 4 : (val & 0xFF0000 ? 3 : (val & 0xFF00 ? 2 : 1));
+      int_to_bytes(val, tmp);
+      memcpy(&item->data, tmp + 4 - l, l);
+      return bytes((uint8_t*) &item->data, l);
     }
     case T_NULL:
     default:
@@ -159,75 +216,59 @@ bytes_t d_to_bytes(d_token_t* item) {
   }
 }
 
-int d_bytes_to(d_token_t* item, uint8_t* dst, const int max_size) {
-  int max = max_size;
-  if (item) {
-    int l = d_len(item), i, val;
-    if (l > max && max != -1) l = max;
-    switch (d_type(item)) {
-      case T_BYTES:
-        if (max > l) {
-          memset(dst, 0, max - l);
-          memcpy(dst + max - l, item->data, l);
-          d_bytesl(item, max); // TODO we should not need this!
-          l = max;
-        }
-        else
-          memcpy(dst, item->data, l);
-        return l;
-
-      case T_STRING:
-        if (max > l) {
-          memset(dst, 0, max - 1 - l);
-          dst += max - l - 1;
-        }
-        memcpy(dst, item->data, l);
-        dst[l] = 0;
-        return l + 1;
-      case T_BOOLEAN:
-        memset(dst, 0, max - 1);
-        dst[max - 1] = item->len & 1;
-        return 1;
-      case T_INTEGER:
-        val = item->len & 0xFFFFFFF;
-        l   = 0;
-        if (max == -1) max = val & 0xFF000000 ? 4 : (val & 0xFF0000 ? 3 : (val & 0xFF00 ? 2 : 1));
-        for (i = max < 3 ? max : 3; i >= 0; i--) {
-          if (val & 0xFF << (i << 3)) {
-            l = i + 1;
-            if (max > l) {
-              memset(dst, 0, max - l);
-              dst += max - l;
-            }
-
-            for (; i >= 0; i--)
-              dst[l - i - 1] = (val >> (i << 3)) & 0xFF;
-            return l;
-          }
-        }
-        if (l == 0) {
-          memset(dst, 0, max);
-          return 1;
-        }
-        break;
-      default:
-        break;
-    }
-  }
-  memset(dst, 0, max);
-  return 0;
-}
-
-char* d_string(const d_token_t* item) {
+char* d_string(d_token_t* item) {
   if (item == NULL) return NULL;
-  return (char*) item->data;
+  switch (d_type(item)) {
+    case T_STRING: {
+      if ((item->state & TOKEN_STATE_ALLOCATED) == 0 && item->data) {
+        char* src = (char*) item->data;
+        int   l   = d_len(item);
+        // is the string already null-terminated?
+        if (src[l] == 0) return src;
+        item->data    = _malloc(l + 1);
+        item->data[l] = 0;
+        item->state |= TOKEN_STATE_ALLOCATED;
+        memcpy(item->data, src, l);
+      }
+      return (char*) item->data;
+    }
+    case T_BYTES: {
+      char* p = bytes_to_hex_string(_malloc(item->len * 2 + 3), "0x", bytes(item->data, item->len), NULL);
+      if (item->state & TOKEN_STATE_ALLOCATED && item->data) _free(item->data);
+      item->data  = (uint8_t*) p;
+      item->len   = (T_STRING << 28) | (item->len * 2 + 2);
+      item->state = TOKEN_STATE_ALLOCATED;
+      return (char*) item->data;
+    }
+
+    case T_BOOLEAN: {
+      item->data  = (uint8_t*) _strdupn(d_len(item) ? "true" : "false", -1);
+      item->len   = (T_STRING << 28) | strlen((char*) item->data);
+      item->state = TOKEN_STATE_ALLOCATED;
+      return (char*) item->data;
+    }
+    case T_NULL: return NULL;
+    case T_INTEGER: {
+
+      item->data  = _malloc(10);
+      item->len   = (T_STRING << 28) | sprintf((char*) item->data, "%d", d_len(item));
+      item->state = TOKEN_STATE_ALLOCATED;
+      return (char*) item->data;
+    }
+    case T_ARRAY:
+    case T_OBJECT:
+      return (char*) item->data;
+
+    default:
+      return NULL;
+  }
 }
 
-int32_t d_int(const d_token_t* item) {
+int32_t d_int(d_token_t* item) {
   return d_intd(item, 0);
 }
 
-int32_t d_intd(const d_token_t* item, const uint32_t def_val) {
+int32_t d_intd(d_token_t* item, const uint32_t def_val) {
   if (item == NULL) return def_val;
   switch (d_type(item)) {
     case T_INTEGER:
@@ -238,37 +279,48 @@ int32_t d_intd(const d_token_t* item, const uint32_t def_val) {
       return bytes_to_int(item->data, min(4, item->len));
     }
     case T_STRING:
+      if (d_is_bytes(item)) {
+        bytes_t b = d_bytes(item);
+        return bytes_to_int(b.data, min(4, b.len));
+      }
       return atoi((char*) item->data);
     default:
       return def_val;
   }
 }
 
-bytes_t** d_create_bytes_vec(const d_token_t* arr) {
+bytes_t** d_create_bytes_vec(d_token_t* arr) {
   if (arr == NULL) return NULL;
-  int              l   = d_len(arr), i;
-  bytes_t**        dst = _calloc(l + 1, sizeof(bytes_t*));
-  const d_token_t* t   = arr + 1;
-  for (i = 0; i < l; i++, t += d_token_size(t)) dst[i] = d_bytes(t);
+  int        l   = d_len(arr), i;
+  bytes_t**  dst = _calloc(l + 1, sizeof(bytes_t*));
+  d_token_t* t   = arr + 1;
+  for (i = 0; i < l; i++, t += d_token_size(t)) {
+    d_bytes(t);
+    dst[i] = (bytes_t*) (void*) (t);
+  }
   return dst;
 }
 
-uint64_t d_long(const d_token_t* item) {
+uint64_t d_long(d_token_t* item) {
   return d_longd(item, 0L);
 }
-uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
+uint64_t d_longd(d_token_t* item, const uint64_t def_val) {
   if (item == NULL) return def_val;
   if (d_type(item) == T_INTEGER)
     return item->len & 0x0FFFFFFF;
-  else if (d_type(item) == T_BYTES)
-    return bytes_to_long(item->data, item->len);
+  else if (d_is_bytes(item)) {
+    bytes_t b = d_bytes(item);
+    return bytes_to_long(b.data, b.len);
+  }
   else if (d_type(item) == T_STRING)
     return _strtoull((char*) item->data, NULL, 10);
   return def_val;
 }
 
-bool d_eq(const d_token_t* a, const d_token_t* b) {
+bool d_eq(d_token_t* a, d_token_t* b) {
   if (a == NULL || b == NULL) return false;
+  if (d_is_bytes(a) && d_type(a) == T_STRING) d_bytes(a);
+  if (d_is_bytes(b) && d_type(b) == T_STRING) d_bytes(b);
   if (d_type(a) == T_BYTES && d_type(b) == T_INTEGER && d_len(a) < 5 && d_int(a) == d_int(b)) return true;
   if (d_type(b) == T_BYTES && d_type(a) == T_INTEGER && d_len(b) < 5 && d_int(a) == d_int(b)) return true;
   if (a->len != b->len) return false;
@@ -285,11 +337,11 @@ bool d_eq(const d_token_t* a, const d_token_t* b) {
     }
     return true;
   }
-  if (d_type(a) == T_STRING) return strcmp((char*) a->data, (char*) b->data) == 0;
+  if (d_type(a) == T_STRING) return strncmp((char*) a->data, (char*) b->data, d_len(b)) == 0;
 
   return (a->data && b->data && d_type(a) == T_BYTES)
-             ? b_cmp(d_bytes(a), d_bytes(b))
-             : a->data == NULL && b->data == NULL;
+             ? bytes_cmp(d_bytes(a), d_bytes(b))
+             : d_type(a) > T_OBJECT && d_type(b) > T_OBJECT;
 }
 
 d_token_t* d_get(d_token_t* item, const uint16_t key) {
@@ -349,9 +401,10 @@ static RETURNS_NONULL NONULL d_token_t* parsed_next_item(json_ctx_t* jp, d_type_
   }
   d_token_t* n = jp->result + jp->len;
   jp->len += 1;
-  n->key  = key;
-  n->data = NULL;
-  n->len  = type << 28;
+  n->state = 0;
+  n->key   = key;
+  n->data  = NULL;
+  n->len   = type << 28;
   if (parent >= 0) jp->result[parent].len++;
   return n;
 }
@@ -385,15 +438,32 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
         case '-':
         case '+':
         case 'e':
-        case 'E':
+        case 'E': {
           // this is still a number, but not a simple integer, so we find the end and add it as string
+          bool has_e = jp->c[i] == 'E' || jp->c[i] == 'e';
           i++;
-          while ((jp->c[i] >= '0' && jp->c[i] <= '9') || jp->c[i] == 'E' || jp->c[i] == 'e' || jp->c[i] == '-') i++;
-          item->data = _malloc(i + 1);
-          item->len  = T_STRING << 28 | (unsigned) i;
+          while ((jp->c[i] >= '0' && jp->c[i] <= '9') || jp->c[i] == '-' || (!has_e && (jp->c[i] == 'E' || jp->c[i] == 'e') && (has_e = true))) i++;
+          switch (jp->c[i]) {
+            case ' ':
+            case '\n':
+            case '\r':
+            case '\t':
+            case '}':
+            case ']':
+            case ',':
+            case 0:
+              break;
+            default:
+              jp->c += i;
+              return JSON_E_INVALID_CHAR;
+          }
+          item->state = TOKEN_STATE_CONVERTED | TOKEN_STATE_ALLOCATED;
+          item->data  = _malloc(i + 1);
+          item->len   = T_STRING << 28 | (unsigned) i;
           memcpy(item->data, jp->c, i);
           item->data[i] = 0;
           break;
+        }
 
         case ' ':
         case '\n':
@@ -412,8 +482,9 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
             long_to_bytes(value, tmp);
             uint8_t *p = tmp, len = 8;
             optimize_len(p, len);
-            item->data = _malloc(len);
-            item->len  = T_BYTES << 28 | len;
+            item->state = TOKEN_STATE_CONVERTED | TOKEN_STATE_ALLOCATED;
+            item->data  = _malloc(len);
+            item->len   = T_BYTES << 28 | len;
             memcpy(item->data, p, len);
           }
           break;
@@ -431,9 +502,7 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
 
 static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
-  size_t l, i;
-  int    n;
-  bool   ishex  = false;
+  size_t l;
   int    escape = 0;
 
   while (true) {
@@ -443,39 +512,9 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
       case '\'':
       case '"':
         if (start[-1] != jp->c[-1]) continue; // is the kind of quote the same as the quote we used to start the string?
-        l     = jp->c - start - 1;
-        ishex = l > 1 && *start == '0' && start[1] == 'x' && *(start - 1) != '\'';
-        if (ishex)
-          for (size_t n = 2; n < l; n++) {
-            char cc = start[n];
-            if (!((cc >= '0' && cc <= '9') || (cc >= 'a' && cc <= 'f') || (cc >= 'A' && cc <= 'F'))) {
-              ishex = false;
-              break;
-            }
-          }
-        if (ishex) {
-          // this is a hex-value
-          if (l == 2) {
-            // empty byte array
-            item->len  = 0;
-            item->data = NULL;
-          }
-          else if (l < 10 && !(l > 3 && start[2] == '0' && start[3] == '0')) { // we can accept up to 3,4 bytes as integer
-            item->len = T_INTEGER << 28;
-            for (i = 2; i < l; i++)
-              item->len |= hexchar_to_int(start[i]) << ((l - i - 1) << 2);
-          }
-          else {
-            // we need to allocate bytes for it. and so set the type to bytes
-            item->len  = ((l & 1) ? l - 1 : l - 2) >> 1;
-            item->data = _malloc(item->len);
-            if (l & 1) item->data[0] = hexchar_to_int(start[2]);
-            l = (l & 1) + 2;
-            for (i = l - 2, n = l; i < item->len; i++, n += 2)
-              item->data[i] = hexchar_to_int(start[n]) << 4 | hexchar_to_int(start[n + 1]);
-          }
-        }
-        else if (l == 6 && *start == '\\' && start[1] == 'u') {
+        l = jp->c - start - 1;
+        if (l == 6 && *start == '\\' && start[1] == 'u') {
+          item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
           item->len   = 1;
           item->data  = _malloc(1);
           *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
@@ -488,17 +527,16 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
           }
           l -= escape;
           item->len  = l | T_STRING << 28;
-          item->data = _malloc(l + 1);
+          item->data = escape ? _malloc(l + 1) : start;
           if (escape) {
             char* x = start;
             for (size_t n = 0; n < l; n++, x++) {
               if (*x == '\\') x++;
               item->data[n] = *x;
             }
+            item->state   = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+            item->data[l] = 0;
           }
-          else
-            memcpy(item->data, start, l);
-          item->data[l] = 0;
         }
         return 0;
       case '\\':
@@ -615,11 +653,9 @@ static NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
 
 void json_free(json_ctx_t* jp) {
   if (!jp || jp->result == NULL) return;
-  if (!d_is_binary_ctx(jp)) {
-    for (size_t i = 0; i < jp->len; i++) {
-      if (jp->result[i].data != NULL && d_type(jp->result + i) < 2)
-        _free(jp->result[i].data);
-    }
+  for (size_t i = 0; i < jp->len; i++) {
+    if (jp->result[i].data != NULL && (jp->result[i].state & TOKEN_STATE_ALLOCATED))
+      _free(jp->result[i].data);
   }
   if (jp->keys) _free(jp->keys);
   _free(jp->result);
@@ -627,14 +663,13 @@ void json_free(json_ctx_t* jp) {
 }
 
 char* parse_json_error(const char* js) {
-
   json_ctx_t parser = {0};                                           // new parser
   parser.c          = (char*) js;                                    // the pointer to the string to parse
   parser.allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
   parser.result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
   const int res     = parse_object(&parser, -1, 0);                  // now parse starting without parent (-1)
   for (size_t i = 0; i < parser.len; i++) {
-    if (parser.result[i].data != NULL && d_type(parser.result + i) < 2)
+    if (parser.result[i].data != NULL && parser.result[i].state & TOKEN_STATE_ALLOCATED)
       _free(parser.result[i].data);
   }
   _free(parser.result);
@@ -667,6 +702,9 @@ json_ctx_t* parse_json(const char* js) {
     return NULL;                                                      // and return null
   }                                                                   //
   parser->c = (char*) js;                                             // since this pointer changed during parsing, we set it back to the original string
+  for (size_t i = 0; i < parser->len; i++) {
+    //    if (d_is_bytes(parser->result + i) && d_type(parser->result + i) == T_STRING) d_bytes(parser->result + i);
+  }
   return parser;
 }
 
@@ -755,7 +793,7 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
     case T_STRING: {
       sb_t sb = {.allocted = l + 1, .len = 0, .data = _malloc(l + 3)};
       sb_add_char(&sb, '"');
-      sb_add_escaped_chars(&sb, (char*) item->data);
+      sb_add_escaped_chars(&sb, (char*) item->data, l);
       sb_add_char(&sb, '"');
       return sb.data;
     }
@@ -799,9 +837,10 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
   assert(jp->len < jp->allocated);
   d_token_t* n = jp->result + jp->len;
   jp->len += 1;
-  n->key  = 0;
-  n->data = NULL;
-  n->len  = type << 28 | len;
+  n->key   = 0;
+  n->state = 0;
+  n->data  = NULL;
+  n->len   = type << 28 | len;
   return n;
 }
 
@@ -927,6 +966,7 @@ d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
     optimize_len(p, l);
     d_token_t* r = next_item(jp, T_BYTES, l);
     r->data      = _malloc(l);
+    r->state     = TOKEN_STATE_ALLOCATED;
     memcpy(r->data, p, l);
     return r;
   }
@@ -936,6 +976,7 @@ d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
 d_token_t* json_create_string(json_ctx_t* jp, char* value, int len) {
   if (len == -1) len = strlen(value);
   d_token_t* r = next_item(jp, T_STRING, len);
+  r->state     = TOKEN_STATE_ALLOCATED;
   r->data      = _malloc(len + 1);
   memcpy(r->data, value, len);
   r->data[len] = 0;
@@ -943,6 +984,7 @@ d_token_t* json_create_string(json_ctx_t* jp, char* value, int len) {
 }
 d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {
   d_token_t* r = next_item(jp, T_BYTES, value.len);
+  r->state     = TOKEN_STATE_ALLOCATED;
   memcpy(r->data = _malloc(value.len), value.data, value.len);
   return r;
 }
@@ -1001,7 +1043,8 @@ static void write_token(bytes_builder_t* bb, d_token_t* t) {
       }
       break;
     case T_STRING:
-      bb_write_raw_bytes(bb, t->data, len + 1);
+      bb_write_raw_bytes(bb, t->data, len);
+      bb_write_byte(bb, 0);
       break;
     case T_BOOLEAN:
     case T_INTEGER:
@@ -1054,8 +1097,15 @@ char* d_get_keystr(json_ctx_t* ctx, d_key_t k) {
   }
   return NULL;
 }
-
-bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
+int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
+  bytes_t val = d_bytes(item);
+  if (max == -1) max = (int) val.len;
+  if (max && (uint32_t) max < val.len) val.len = (uint32_t) max;
+  if (val.len < (uint32_t) max) memset(dst, 0, max - val.len);
+  if (val.data) memcpy(dst + max - val.len, val.data, val.len);
+  return max;
+}
+bytes_t d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
   d_token_t* t = d_get(r, k);
   return d_bytesl(t, minl);
 }
@@ -1100,4 +1150,61 @@ d_token_t* token_from_bytes(bytes_t b, d_token_t* d) {
     d->len  = b.len;
   }
   return d;
+}
+
+bytes_t d_num_bytes(d_token_t* f) {
+  bytes_t bb = d_bytes(f);
+  if (bb.data && d_type(f) == T_STRING && d_len(f) < 80) {
+    // still a string?, then we need to look for numeric values
+    char input[80];
+    memcpy(input, bb.data, bb.len);
+    input[bb.len]    = 0;
+    bytes32_t target = {0};
+    bytes_t   b      = bytes(target, 0);
+#if defined(ETH_FULL) && defined(ETH_API)
+    size_t s = 0;
+    mp_int d;
+    mp_init(&d);
+    if (mp_read_radix(&d, input, 10)) {
+      // this is not a number
+      mp_clear(&d);
+      return bb;
+    }
+    mp_export(target, &s, 1, sizeof(uint8_t), 1, 0, &d);
+    mp_clear(&d);
+    b.len = s;
+#else
+    for (int i = 0; i < d_len(f); i++) {
+      if (f->data[i] < '0' || f->data[i] > '9') return bb;
+    }
+    b.len = 8;
+    long_to_bytes(parse_float_val(input, 0), target);
+#endif
+    b_optimize_len(&b);
+
+    if (b.len < 4) {
+      if (f->state & TOKEN_STATE_ALLOCATED) _free(f->data);
+      f->data  = NULL;
+      f->state = 0;
+      f->len   = (T_INTEGER << 28) | bytes_to_int(b.data, b.len);
+      memcpy(&f->data, b.data, b.len);
+      return bytes((uint8_t*) &f->data, b.len);
+    }
+
+    f->data  = (f->state & TOKEN_STATE_ALLOCATED) ? f->data : _malloc(b.len);
+    f->len   = b.len;
+    f->state = TOKEN_STATE_CONVERTED | TOKEN_STATE_ALLOCATED;
+    memcpy(f->data, b.data, b.len);
+    return bytes(f->data, b.len);
+  }
+  return bb;
+}
+
+bool d_is_bytes(const d_token_t* item) {
+  switch (d_type(item)) {
+    case T_STRING: return (item->state & TOKEN_STATE_CONVERTED) == 0 && item->data[0] == '0' && item->data[1] == 'x';
+    case T_BYTES:
+    case T_INTEGER: return true;
+    default: return false;
+  }
 }

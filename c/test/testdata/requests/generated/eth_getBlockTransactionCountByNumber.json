@@ -1,0 +1,21 @@
+[
+  {
+    "descr": "eth_getBlockTransactionCountByNumber",
+    "request": {
+      "method": "eth_getBlockTransactionCountByNumber",
+      "params": [
+        "0x9d6a46"
+      ]
+    },
+    "result": 204,
+    "config": {
+      "proof": "none"
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "result": "0xcc"
+      }
+    ]
+  }
+]

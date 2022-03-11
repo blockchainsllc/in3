@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -137,11 +137,11 @@ static void test_configure_signed_request() {
   json_ctx_t*         json    = parse_json(request->payload);
   d_token_t*          in3     = d_get(d_get_at(json->result, 0), K_IN3);
   TEST_ASSERT_NOT_NULL(in3);
-  bytes_t* sig = d_get_bytes(in3, key("sig"));
-  TEST_ASSERT_NOT_NULL(sig);
-  TEST_ASSERT_EQUAL(65, sig->len);
+  bytes_t sig = d_get_bytes(in3, key("sig"));
+  TEST_ASSERT_NOT_NULL(sig.data);
+  TEST_ASSERT_EQUAL(65, sig.len);
   char hex[150];
-  TEST_ASSERT_EQUAL(65 * 2, bytes_to_hex(sig->data, sig->len, hex)); // 65bytes *2
+  TEST_ASSERT_EQUAL(65 * 2, bytes_to_hex(sig.data, sig.len, hex)); // 65bytes *2
   TEST_ASSERT_EQUAL_STRING("8e39d2066cf9d1898e6bc9fbbfaa8fd6b9e5a86515e643f537c831982718866d0903e91f5f8824363dd3754fe550b37aa1e6eeb3742f13ad36d3321972e959a71c", hex);
   request_free(request);
   json_free(json);
@@ -243,9 +243,8 @@ static void test_configure() {
   // rpc
   tmp = in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
   TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
-  TEST_ASSERT_EQUAL(CHAIN_ID_LOCAL, c->chain.chain_id);
+  TEST_ASSERT_EQUAL(CHAIN_ID_LOCAL, c->chain.id);
   TEST_ASSERT_EQUAL(1, in3_get_nodelist(c)->request_count);
-  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_nodeselect_def_data(c)->nodelist->url);
   free(tmp);
 
   // missing registryId and contract
@@ -279,9 +278,9 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0x1203030230\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("uninitialized chain: chainId", c, "{\"chainId\":0}", "chain corresponding to chain id not initialized!");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"mainnet\"}");
-  TEST_ASSERT_EQUAL(c->chain.chain_id, 1);
+  TEST_ASSERT_EQUAL(c->chain.id, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":5}");
-  TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_GOERLI);
+  TEST_ASSERT_EQUAL(c->chain.id, CHAIN_ID_GOERLI);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"0x1234\"}", "expected uint8");
@@ -459,9 +458,9 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":65536}", "expected string");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"rpc\":\"rpc.local\"}");
   TEST_ASSERT_EQUAL(c->proof, PROOF_NONE);
-  TEST_ASSERT_EQUAL(c->chain.chain_id, CHAIN_ID_LOCAL);
+  TEST_ASSERT_EQUAL(c->chain.id, CHAIN_ID_LOCAL);
   TEST_ASSERT_EQUAL(w->request_count, 1);
-  TEST_ASSERT_EQUAL_STRING(w->data->nodelist[0].url, "rpc.local");
+  TEST_ASSERT_EQUAL_STRING(w->chains[0]->nodelist[0].url, "rpc.local");
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":false}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeRegistry", c, "{\"nodeRegistry\":\"0x123412341234\"}", "expected object");

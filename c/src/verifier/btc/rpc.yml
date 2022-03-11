@@ -1,38 +1,108 @@
 types:
-  the value:
-    script:
-      descr: the script
+  btc_sign_acc:
+    address:
+      descr: eth address used by in3 to sign btc transactions
+      type: address
+    btc_pub_key:
+      descr: btc public key linked to previously provided eth address
+      type: bytes
+
+  btc_value:
+    address:
+      descr: a 25-byte btc address which should receive the specified value
+      type: bytes
+    value:
+      descr: the amount in satoshis the provided address should receive 
+      type: uint64
+  
+  btc_rlt:
+    rlt_type:
+      descr: |
+        when set to "block", input will be valid only after <value> blocks are mined
+        when set to "time", input will be valid only after <value> chunks of 512 seconds have passed
       type: string
     value:
-      descr: the value
+      descr: how many blocks or time chunks until this transaction input is valid
+      type: uint16
+
+  btc_tx_output:
+    value:
+      descr: the amount in satoshis in this transaction output 
       type: uint64
+    script:
+      descr: the locking script of this output
+      type: string
+  
+  btc_utxo_args:
+    script:
+      descr: unhashed script used to redeem P2SH and P2WSH transactions
+      type: string
+      optional: true
+    rlt:
+      descr: relative-locktime (rlt) configurations. When null, rlt is deactivated as defined by BIP68, relative locktime (RLT) is a repurpose of the sequence number of a transaction input to allow it to remain invalid until a certain time constraint is met.
+      type: btc_rlt
+      optional: true
+    accounts:
+      descr: additional eth signing accounts used for multisig
+      type: btc_sign_acc
+      array: true
+      optional: true
+
   utxo:
+    tx_hash:
+      descr: the previous transaction to which this utxo belongs
+      type: string
     tx_index:
       descr: the transaction index that this utxo refers to
       type: uint
-    value:
-      descr: the value
-      type: uint64
-    tx_hash:
-      descr: the transaction hash (same as provided)
-      type: string
-    script:
-      descr: the script
-      type: string
+    tx_out:
+      descr: the output this utxo represents
+      type: btc_tx_output
+    args:
+      descr: additional arguments which may be needed to redeem this utxo
+      type: btc_utxo_args
+      optional: true
 
-  output:
-    tx_index:
-      descr: the block hash (same as provided)
-      type: uint
-    value:
-      descr: the block hash (same as provided)
-      type: uint64
-    tx_hash:
-      descr: the block hash (same as provided)
+  btc_output_address:
+    index:
+      descr: The transaction output index from which the addresses were extracted
+      type: uint32
+    script_type:
+      descr: |
+        The script type from wich the address was extracted. 
+        Can be one of "p2pk", "p2pkh", "p2wpkh", "p2sh", "p2wsh", "p2ms", "non_standard", "unsupported" or "unknown"
+        - When this value is "unknown", "non_standard" or "unsupported", the addr field is empty
+        - When this value is "p2ms" (pay-to-multisig), the addr field is empty and stores btc public keys. For now, this is the 
+        only case in which the array will have more than one element. 
+        - When this value is "p2sh" or "p2wsh", addr field stores a single BECH32 encoded address
+        - For every other value, addr stores a single Base58 encoded btc address
       type: string
-    script:
-      descr: the block hash (same as provided)
+      enum:
+        p2pk: p2pk
+        p2pkh: p2pkh
+        p2wpkh: p2wpkh
+        p2sh: p2sh
+        p2wsh: p2wsh
+        p2ms: p2ms
+        non_standard: non_standard
+        unsupported: unsupported
+        unknown: unknown
+    addr:
+      descr: |
+        The bitcoin address defined in the output script. Depending on the script type, can be encoded as base58 or bech32.
+        This field is empty in an output of type p2ms 
       type: string
+    raw_addr:
+      descr: |
+        The bitcoin raw bytes of the address defined in the output script. This field is empty in an output of type p2ms
+      type: string
+    pub_keys:
+      descr: |
+        when possible, this structure will also include the public keys related to the transaction output. This field will
+        only be filled when dealing with a p2ms output, when it stores a set of btc public keys
+      type: string
+      array: true
+
 
   btcblockheader:
     hash:
@@ -787,6 +857,28 @@ btc:
           cbtx: 0x010000000001010000000000000000000000000000000...9da2fc
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a...52e688
 
+
+  getaddresses:
+    apiName: getAddresses
+    descr: Returns a list of addresses or public keys extracted from the outputs of a transaction
+    params:
+      tx:
+        descr: |
+          Either the transaction id or the raw btc transaction.
+          When this field is 64 characters long (32 bytes), it is treated as transaction id the function will fetch the raw transaction
+          from the configured chain with a subrequest.
+          When it is bigger than 64 characters (32 bytes), this field is treated as a raw transaction, and no subrequest will be made.
+        type: string
+      blockhash:
+        descr: The block in which to look for the transaction
+        type: bytes32
+        optional: true
+    result:
+      descr: The addresses and/or public keys extracted fom transaction outputs
+      type: btc_output_address
+      array: true
+
+
   getblockcount:
     descr: Returns the number of blocks in the longest blockchain.
     in3Params:
@@ -827,6 +919,18 @@ btc:
           final: "0x00008020f61dfcc47a6daed717b12221855196dee02d844ebb9c...774f4c"
           cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
           cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
+
+
+  getblockhash:
+    descr: Returns hash of block in best-block-chain at height provided.
+    params:
+      height:
+        descr: The block number
+        type: uint64
+    result:
+      descr: the current blockheight
+      type: bytes32
+
 
   getdifficulty:
     descr: Returns the proof-of-work difficulty as a multiple of the minimum difficulty.
@@ -1070,23 +1174,29 @@ btc:
           final: "0x00008020f61dfcc47a6daed717b12221855196dee02d844ebb9c...774f4c"
           cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
           cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
+  
   sendtransaction:
-    descr: sends a transaction to a btc node
+    descr: | 
+      signs and sends a transaction to a btc node
     params:
       from:
-        descr: the public key derived from the private key used to sign
+        descr: 20-byte btc address to which the "change" from the utxos will be sent
         type: address
+      account:
+        descr: default eth account used by in3 to sign btc transactions
+        type: btc_sign_acc
       outputs:
-        descr: the desired outputs of the transaction
-        type: output
+        descr: how much and to which adresses we want to send funds
+        type: btc_value
         array: true
-      utxo:
-        descr: the utxo used to proove liquidity for the transaction
+      utxos:
+        descr: the utxos used to provide funds for the transaction
         type: utxo
         array: true
     result:
       descr: the transactionhash
       type: bytes32
+
   sendrawtransaction:
     descr: sends a transaction to a btc node
     params:

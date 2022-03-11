@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "in3_base58_encode",
+    "request": {
+      "method": "in3_base58_encode",
+      "params": [
+        "0x23f8bf82bdb58994e77856150350e7f9e81430cd"
+      ]
+    },
+    "result": "W4ra4JfmD2srvd3AxakAJG37qyn",
+    "config": {},
+    "response": []
+  }
+]

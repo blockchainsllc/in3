@@ -33,9 +33,9 @@
  *******************************************************************************/
 
 #include "trie.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/sha3.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include <stdio.h>
@@ -47,10 +47,7 @@ typedef struct {
 } node_key_t;
 
 static void _sha3(bytes_t* data, uint8_t* out) {
-  struct SHA3_CTX ctx;
-  sha3_256_Init(&ctx);
-  sha3_Update(&ctx, data->data, data->len);
-  keccak_Final(&ctx, out);
+  keccak(*data, out);
 }
 
 static void finish_rlp(bytes_builder_t* bb, bytes_t* dst) {

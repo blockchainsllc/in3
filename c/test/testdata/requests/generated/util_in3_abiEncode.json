@@ -1,0 +1,17 @@
+[
+  {
+    "descr": "in3_abiEncode",
+    "request": {
+      "method": "in3_abiEncode",
+      "params": [
+        "getBalance(address)",
+        [
+          "0x1234567890123456789012345678901234567890"
+        ]
+      ]
+    },
+    "result": "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890",
+    "config": {},
+    "response": []
+  }
+]

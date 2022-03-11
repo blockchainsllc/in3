@@ -1,0 +1,14 @@
+[
+  {
+    "descr": "in3_base64_decode",
+    "request": {
+      "method": "in3_base64_decode",
+      "params": [
+        "I/i/gr21iZTneFYVA1Dn+egUMM0="
+      ]
+    },
+    "result": "0x23f8bf82bdb58994e77856150350e7f9e81430cd",
+    "config": {},
+    "response": []
+  }
+]

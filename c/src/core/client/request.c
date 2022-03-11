@@ -74,6 +74,47 @@ in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
   return r;
 }
 
+void in3_set_chain_id(in3_req_t* req, chain_id_t id) {
+  if (!id || in3_chain_id(req) == id) return;
+
+  cache_entry_t* entry = in3_cache_add_entry(&req->cache, NULL_BYTES, NULL_BYTES);
+  entry->props         = CACHE_PROP_CHAIN_ID | CACHE_PROP_INHERIT;
+  int_to_bytes((uint32_t) id, entry->buffer);
+}
+
+chain_id_t in3_chain_id(const in3_req_t* req) {
+  for (cache_entry_t* entry = req->cache; entry; entry = entry->next) {
+    if (entry->props & CACHE_PROP_CHAIN_ID)
+      return (chain_id_t) bytes_to_int(entry->buffer, 4);
+  }
+  return req->client->chain.id;
+}
+
+in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id) {
+  in3_chain_t* chain = &c->chain;
+  while (chain) {
+    if (chain->id == id) return chain;
+    if (chain->next)
+      chain = chain->next;
+    else
+      break;
+  }
+  chain->next = _calloc(1, sizeof(in3_chain_t));
+  chain       = chain->next;
+  chain->id   = id;
+  switch (id) {
+    case CHAIN_ID_BTC:
+      chain->type = CHAIN_BTC;
+      break;
+    case CHAIN_ID_IPFS:
+      chain->type = CHAIN_IPFS;
+      break;
+    default:
+      chain->type = CHAIN_ETH;
+  }
+  return chain;
+}
+
 in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
@@ -106,7 +147,7 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
     }
     else if (d_type(ctx->request_context->result) == T_ARRAY) {
       // we have an array, so we need to store the request-data as array
-      d_token_t* t  = ctx->request_context->result + 1;
+      d_token_t* t  = d_get_at(ctx->request_context->result, 0);
       ctx->len      = d_len(ctx->request_context->result);
       ctx->requests = _malloc(sizeof(d_token_t*) * ctx->len);
       for (uint_fast16_t i = 0; i < ctx->len; i++, t = d_next(t))
@@ -124,6 +165,8 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
     }
     else if (d_type(t) == T_INTEGER)
       ctx->id = d_int(t);
+
+    in3_set_chain_id(ctx, (chain_id_t) d_get_long(d_get(ctx->requests[0], K_IN3), K_CHAIN_ID));
   }
   // if this is the first request, we initialize the plugins now
   in3_plugin_init(ctx);
@@ -184,12 +227,13 @@ in3_ret_t req_check_response_error(in3_req_t* c, int i) {
     return req_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber) {
+in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber, const char* filename, const char* function, int line) {
   assert(ctx);
 
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING || errnumber == IN3_OK) return errnumber;
   if (message) {
+
     const size_t l   = strlen(message);
     char*        dst = NULL;
     if (ctx->error) {
@@ -208,7 +252,10 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
     error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .req = ctx};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
 
-    in3_log_trace("Intermediate error -> %s\n", message);
+    if (filename && function)
+      in3_log_trace("Intermediate error -> %s in %s:%i %s()\n", message, filename, line, function);
+    else
+      in3_log_trace("Intermediate error -> %s\n", message);
   }
   else if (!ctx->error) {
     ctx->error    = _malloc(2);
@@ -439,7 +486,11 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
 
   // inherit cache-entries
   for (cache_entry_t* ce = parent->cache; ce; ce = ce->next) {
-    if (ce->props & CACHE_PROP_INHERIT) in3_cache_add_entry(&ctx->cache, ce->key, ce->value)->props = ce->props & (~CACHE_PROP_MUST_FREE);
+    if (ce->props & CACHE_PROP_INHERIT) {
+      cache_entry_t* entry = in3_cache_add_entry(&ctx->cache, ce->key, ce->value);
+      entry->props         = ce->props & (~CACHE_PROP_MUST_FREE);
+      memcpy(entry->buffer, ce->buffer, 4);
+    }
   }
 
   if (use_cache)
@@ -456,7 +507,7 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
   return ret;
 }
 
-static inline const char* method_for_sigtype(d_signature_type_t type) {
+static inline const char* method_for_sigtype(d_digest_type_t type) {
   switch (type) {
     case SIGN_EC_RAW: return "sign_ec_raw";
     case SIGN_EC_HASH: return "sign_ec_hash";
@@ -466,7 +517,7 @@ static inline const char* method_for_sigtype(d_signature_type_t type) {
   }
 }
 
-in3_ret_t req_send_sign_request(in3_req_t* ctx, d_signature_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
+in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
 
   bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
   if (cached_sig) {
@@ -482,6 +533,8 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_signature_type_t type, d_paylo
   sb_add_bytes(&params, NULL, &from, 1, false);
   sb_add_chars(&params, ",");
   sb_add_int(&params, (int64_t) pl_type);
+  sb_add_chars(&params, ",");
+  sb_add_int(&params, (int64_t) curve_type);
   sb_add_json(&params, ",", meta);
   sb_add_chars(&params, "]");
 
@@ -525,7 +578,7 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_signature_type_t type, d_paylo
   }
 }
 
-in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta) {
+in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta) {
   bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
   memcpy(cache_key.data, raw_data.data, raw_data.len);
   if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
@@ -535,11 +588,11 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, d_paylo
     return IN3_OK;
   }
 
-  in3_log_debug("requesting signature type=%d from account %x\n", type, from.len > 2 ? bytes_to_int(from.data, 4) : 0);
+  in3_log_debug("requesting signature type=%d from account %x\n", digest_type, from.len > 2 ? bytes_to_int(from.data, 4) : 0);
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
-    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .type = type, .payload_type = pl_type, .meta = meta};
+    in3_sign_ctx_t sc = {.account = from, .req = ctx, .message = raw_data, .signature = NULL_BYTES, .digest_type = digest_type, .payload_type = pl_type, .meta = meta, .curve_type = curve_type};
     in3_ret_t      r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN, &sc);
     if (r == IN3_OK && sc.signature.data) {
       in3_cache_add_entry(&ctx->cache, cloned_bytes(cache_key), sc.signature);
@@ -550,7 +603,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_signature_type_t type, d_paylo
       return r;
   }
   in3_log_debug("nobody picked up the signature, sending req now \n");
-  return req_send_sign_request(ctx, type, pl_type, signature, raw_data, from, meta, cache_key);
+  return req_send_sign_request(ctx, digest_type, curve_type, pl_type, signature, raw_data, from, meta, cache_key);
 }
 
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {

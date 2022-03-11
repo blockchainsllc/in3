@@ -31,9 +31,11 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#define IN3_INTERNAL
 
 #include "stringbuilder.h"
 #include "../util/bytes.h"
+#include "../util/crypto.h"
 #include "../util/utils.h"
 #include "debug.h"
 #include "mem.h"
@@ -87,8 +89,8 @@ sb_t* sb_add_chars(sb_t* sb, const char* chars) {
   return sb;
 }
 
-sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
-  int l       = strlen(chars);
+sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int l) {
+  if (l == -1) l = strlen(chars);
   int escapes = 0;
   if (l == 0 || chars == NULL) return sb;
   for (int i = 0; i < l; i++) {
@@ -207,10 +209,26 @@ void sb_free(sb_t* sb) {
 
 char* format_json(const char* json) {
   sb_t  _sb = {0}, level = {0};
-  sb_t* sb = &_sb;
+  sb_t* sb       = &_sb;
+  bool  in_quote = false;
   sb_add_char(&level, '\n');
   for (char c = *json; c; c = *(++json)) {
+    if (in_quote && c != '\\' && c != '"') {
+      sb_add_char(sb, c);
+      continue;
+    }
     switch (c) {
+      case '"':
+        in_quote = !in_quote;
+        sb_add_char(sb, c);
+        break;
+      case '\\':
+        sb_add_char(sb, c);
+        if (!(c = *(++json)))
+          --json;
+        else
+          sb_add_char(sb, c);
+        break;
       case '{':
         sb_add_char(sb, c);
         sb_add_chars(&level, "  ");
@@ -224,6 +242,12 @@ char* format_json(const char* json) {
       case ',':
         sb_add_char(sb, c);
         sb_add_range(sb, level.data, 0, level.len);
+        break;
+      case '\n':
+      case ' ':
+        break;
+      case ':':
+        sb_add_chars(sb, ": ");
         break;
       default:
         sb_add_char(sb, c);
@@ -293,13 +317,13 @@ sb_t* sb_print(sb_t* sb, const char* fmt, ...) {
 
 sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
   if (!token) return sb;
-  if (prefix) sb_add_chars(sb, prefix);
+  if (prefix && *prefix) sb_add_chars(sb, prefix);
   switch (d_type(token)) {
     case T_ARRAY:
     case T_OBJECT: {
-      const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
-      str_range_t r        = d_to_json(token);
+      str_range_t r = d_to_json(token);
       if (r.data) return sb_add_range(sb, r.data, 0, r.len);
+      const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
       sb_add_char(sb, brackets[0]);
       for (d_iterator_t iter = d_iter(token); iter.left; d_iter_next(&iter))
         sb_add_json(sb, iter.token != token + 1 ? "," : "", iter.token);
@@ -309,11 +333,14 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
       return sb_add_chars(sb, d_int(token) ? "true" : "false");
     case T_INTEGER:
       return sb_add_int(sb, d_int(token));
-    case T_BYTES:
-      return sb_add_bytes(sb, NULL, d_bytes(token), 1, false);
+    case T_BYTES: {
+      bytes_t b = d_bytes(token);
+      sb_add_rawbytes(sb, "\"0x", b, b.len < 20 && !(b.len && b.data[0] == 0) ? -1 : 0);
+      return sb_add_char(sb, '"');
+    }
     case T_STRING: {
       sb_add_char(sb, '\"');
-      sb_add_escaped_chars(sb, d_string(token));
+      sb_add_escaped_chars(sb, (char*) token->data, d_len(token));
       return sb_add_char(sb, '\"');
     }
     case T_NULL:
@@ -322,10 +349,8 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
   return sb;
 }
 
-sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
+void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
   check_size(sb, strlen(fmt));
-  va_list args;
-  va_start(args, fmt);
   for (const char* c = fmt; *c; c++) {
     if (*c == '%') {
       c++;
@@ -334,28 +359,63 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
           sb_add_chars(sb, va_arg(args, char*));
           break;
         case 'S':
-          sb_add_escaped_chars(sb, va_arg(args, char*));
+          sb_add_escaped_chars(sb, va_arg(args, char*), -1);
           break;
         case 'i':
         case 'd':
+          sb_add_int(sb, (int64_t) va_arg(args, int32_t));
+          break;
         case 'u':
+          sb_add_int(sb, (int64_t) va_arg(args, uint32_t));
+          break;
+        case 'I':
+        case 'D':
+        case 'U':
           sb_add_int(sb, va_arg(args, int64_t));
           break;
+        case 'w': {
+          bytes_t wei = va_arg(args, bytes_t);
+          if (wei.len > 32) {
+            sb_add_char(sb, 'X');
+            break;
+          }
+          char* tmp = _malloc(wei.len * 3 + 1);
+          if (encode(ENC_DECIMAL, wei, tmp) < 0) sprintf(tmp, "<not supported>");
+          sb_add_chars(sb, tmp);
+          _free(tmp);
+          break;
+        }
         case 'x':
           sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
           break;
         case 'b':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), 0);
           break;
+        case 'B':
+          sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), 0);
+          break;
         case 'v':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), -1);
+          break;
+        case 'V':
+          sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), -1);
           break;
         case 'j':
           sb_add_json(sb, "", va_arg(args, d_token_t*));
           break;
+        case 'J': {
+          sb_t tmp = {0};
+          sb_add_json(&tmp, "", va_arg(args, d_token_t*));
+          if (tmp.data) {
+            char* t2 = format_json(tmp.data);
+            sb_add_chars(sb, t2);
+            _free(t2);
+            _free(tmp.data);
+          }
+          break;
+        }
         case 0:
-          va_end(args);
-          return sb;
+          return;
         default:
           break;
       }
@@ -364,7 +424,21 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
     if (sb->len + 1 >= sb->allocted) check_size(sb, 1);
     sb->data[sb->len++] = *c;
   }
-  va_end(args);
   sb->data[sb->len] = 0;
+}
+sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(sb, fmt, args);
+  va_end(args);
   return sb;
+}
+
+char* sprintx(const char* fmt, ...) {
+  sb_t    s = {0};
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(&s, fmt, args);
+  va_end(args);
+  return s.data;
 }

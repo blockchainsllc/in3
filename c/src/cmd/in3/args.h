@@ -56,6 +56,7 @@ const char* help_args = "\
 --zksync.create_proof_method  -zcpm  rpc-method, which will be used to create the proof needed for cosigning\n\
 --key                         -k     the client key to sign requests\n\
 --pk                          -pk    registers raw private keys as signers for transactions\n\
+--pk_ed25519                  -pk_ed25519registers raw private keys as signers for ed25519 transactions\n\
 --btc                                configure the Bitcoin verification\n\
 --btc.maxDAP                         max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets\n\
 --btc.maxDiff                        max increase (in percent) of the difference between targets when accepting new targets\n\
@@ -69,6 +70,7 @@ const char* help_args = "\
 --data                        -d     the data for a transaction\n\
 --gas_price                   -gp    the gas price to use when sending transactions\n\
 --gas                         -gas   the gas limit to use when sending transactions\n\
+--token                       -token the address of the erc20-token contract\n\
 --nonce                       -nonce the nonce\n\
 --test                        -test  creates a new json-test written to stdout with the name as specified\n\
 --path                        -path  the HD wallet derivation path \n\
@@ -156,6 +158,7 @@ const char* aliases[] = {
     "zcpm", "zksync.create_proof_method",
     "k", "key",
     "pk", "pk",
+    "pk_ed25519", "pk_ed25519",
     "ccache", "clearCache=true",
     "e", "eth=true",
     "port", "port",
@@ -166,6 +169,7 @@ const char* aliases[] = {
     "d", "data",
     "gp", "gas_price",
     "gas", "gas",
+    "token", "token",
     "nonce", "nonce",
     "test", "test",
     "path", "path",

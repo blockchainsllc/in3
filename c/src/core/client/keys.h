@@ -78,6 +78,7 @@
 #define K_S                 key("s")
 #define K_V                 key("v")
 
+#define K_ETH_TX_TYPE       key("eth_tx_type")
 #define K_MAX_FEE_PER_GAS   key("maxFeePerGas")
 #define K_MAX_PRIORITY_FEE_PER_GAS key("maxPriorityFeePerGas")
 #define K_ACCESS_LIST       key("accessList")

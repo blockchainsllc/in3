@@ -91,8 +91,8 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
 
   res->in_active_chain = !!d_get_intd(t, key("in_active_chain"), 1);
   res->vin             = data;
-  res->vout            = ((void*) res->vin) + d_len(t_vin) * sizeof(btc_transaction_in_t);
-  res->data            = bytes(((void*) res->vout) + d_len(t_vout) * sizeof(btc_transaction_out_t), d_len(t_hex) / 2);
+  res->vout            = (void*) (((uint8_t*) (void*) res->vin) + d_len(t_vin) * sizeof(btc_transaction_in_t));
+  res->data            = bytes(((uint8_t*) (void*) res->vout) + d_len(t_vout) * sizeof(btc_transaction_out_t), d_len(t_hex) / 2);
   res->vin_len         = d_len(t_vin),
   res->vout_len        = d_len(t_vout);
   res->size            = d_get_int(t, key("size"));
@@ -123,7 +123,7 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
     if (!p) return IN3_EINVAL;
 
     btc_transaction_in_t* r = res->vin + i;
-    r->script               = vin.script;
+    r->script               = vin.script.data;
     r->sequence             = vin.sequence;
     r->txinwitness          = NULL_BYTES;
     r->vout                 = vin.prev_tx_index;
@@ -140,7 +140,7 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
 
     btc_transaction_out_t* r = res->vout + i;
     r->n                     = i;
-    r->script_pubkey         = vout.script;
+    r->script_pubkey         = vout.script.data;
     r->value                 = vout.value;
   }
 
@@ -149,8 +149,8 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
 
 btc_transaction_t* btc_d_to_tx(d_token_t* t) {
   if (d_type(t) != T_OBJECT) RETURN_NULL_ERROR(IN3_EINVAL, "invalid json");
-  void* res = _malloc(tx_data_size(t) + sizeof(btc_transaction_t));
-  TRY_OR_NULL(fill_tx(t, res, res + sizeof(btc_transaction_t), NULL), "invalid transaction-data");
+  btc_transaction_t* res = _malloc(tx_data_size(t) + sizeof(btc_transaction_t));
+  TRY_OR_NULL(fill_tx(t, res, res + 1, NULL), "invalid transaction-data");
   return res;
 }
 
@@ -192,7 +192,7 @@ btc_block_txids_t* btc_d_to_block_txids(d_token_t* t) {
   TRY_OR_NULL(fill_blockheader(t, &res->header), "invalid blockheader");
 
   // set the txids
-  uint8_t* p  = ((void*) res) + sizeof(btc_block_txids_t);
+  uint8_t* p  = ((uint8_t*) (void*) res) + sizeof(btc_block_txids_t);
   res->tx_len = d_len(tx);
   res->tx     = (void*) p;
   for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), p += 32)
@@ -214,8 +214,8 @@ btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t) {
   btc_block_txdata_t* res = _malloc(sizeof(btc_block_txdata_t) + d_len(tx) * sizeof(btc_transaction_t) + total_data);
   TRY_OR_NULL(fill_blockheader(t, &res->header), "invalid blockheader");
 
-  btc_transaction_t* txp = ((void*) res) + sizeof(btc_block_txdata_t);
-  uint8_t*           p   = ((void*) txp) + sizeof(btc_transaction_t) * d_len(tx);
+  btc_transaction_t* txp = (void*) (res + 1);
+  uint8_t*           p   = ((uint8_t*) (void*) txp) + sizeof(btc_transaction_t) * d_len(tx);
   res->tx_len            = d_len(tx);
   res->tx                = txp;
   for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), txp++) {

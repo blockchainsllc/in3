@@ -33,6 +33,7 @@
 ###############################################################################
 
 
+
 add_static_library(
   NAME     core_api 
   REGISTER in3_register_core_api
@@ -42,5 +43,6 @@ add_static_library(
     core_api.c 
 
   DEPENDS 
+    core
     api_utils
 )

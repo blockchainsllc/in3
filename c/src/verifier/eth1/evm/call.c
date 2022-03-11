@@ -264,13 +264,13 @@ static void add_log(json_ctx_t* receipt, int logs, logs_t* log, uint32_t* index)
   if (!log) return;
   add_log(receipt, logs, log->next, index);
   int l = json_create_object(receipt);
-  json_array_add_value(receipt, logs, receipt->result + l);
+  json_array_add_value(receipt, logs, ((d_token_internal_t*) receipt->result) + l);
   json_object_add_prop(receipt, l, key("transactionLogIndex"), json_create_int(receipt, *index));
   *index = *index + 1;
   json_object_add_prop(receipt, l, key("address"), json_create_bytes(receipt, bytes(log->address, 20)));
   json_object_add_prop(receipt, l, key("data"), json_create_bytes(receipt, log->data));
   int topics = json_create_array(receipt);
-  json_object_add_prop(receipt, l, key("topics"), receipt->result + topics);
+  json_object_add_prop(receipt, l, key("topics"), ((d_token_internal_t*) receipt->result) + topics);
 
   for (unsigned int i = 0; i < log->topics.len; i += 32)
     json_array_add_value(receipt, topics, json_create_bytes(receipt, bytes(log->topics.data + i, 32)));
@@ -280,7 +280,7 @@ static void add_receipt(evm_t* evm, json_ctx_t* receipt, uint64_t gas_used) {
   int r = json_create_object(receipt);
   json_object_add_prop(receipt, r, key("gasUsed"), json_create_int(receipt, gas_used));
   int logs = json_create_array(receipt);
-  json_object_add_prop(receipt, r, key("logs"), receipt->result + logs);
+  json_object_add_prop(receipt, r, key("logs"), ((d_token_internal_t*) receipt->result) + logs);
   uint32_t log_index = 0;
   add_log(receipt, logs, evm->logs, &log_index);
 }

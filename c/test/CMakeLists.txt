@@ -32,6 +32,9 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wpointer-arith ")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wpointer-arith ")
+
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
 if (MSVC OR MSYS OR MINGW)
@@ -62,8 +65,7 @@ if (CODE_COVERAGE)
 endif()
 # first we build the runners
 add_executable(runner runner.c)
-target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API} ${IN3_NODESELECT})
-
+target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API} init ${IN3_NODESELECT})
 add_executable(junit util/junit.c)
 target_link_libraries(junit eth_full)
 
@@ -110,6 +112,20 @@ foreach (file ${files})
     )
     set_tests_properties("in3_${testname}" PROPERTIES 
       ENVIRONMENT LLVM_PROFILE_FILE=in3_${testname}.profraw
+    )
+
+endforeach ()
+
+file(GLOB files "testdata/requests/generated/*.json")
+foreach (file ${files})
+    get_filename_component(testname "${file}" NAME_WE)
+    add_test(
+            NAME "in3_generated_${testname}"
+            COMMAND ${WINE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
+    )
+    set_tests_properties("in3_generated_${testname}" PROPERTIES 
+      ENVIRONMENT LLVM_PROFILE_FILE=in3_generated_${testname}.profraw
     )
 
 endforeach ()
@@ -219,6 +235,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*(RawCreateFailGasValue(Transfer|Transfer2)).json$") # in "GeneralStateTests/stEIP150singleCodeGasPrices"
     list(FILTER files EXCLUDE REGEX ".*(CallContractToCreateContract(NoCash|OOG)).json$") # in "GeneralStateTests/stInitCodeTest"
 
+#    list(FILTER files EXCLUDE REGEX ".*.json$") # in "GeneralStateTests/stInitCodeTest"
     foreach (file ${files})
         get_filename_component(testname "${file}" NAME_WE)
         add_test(

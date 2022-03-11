@@ -120,16 +120,18 @@ format:
     - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-13 -i
     - git diff --patch --exit-code
 
-cpd:
-  stage: analysis
-  needs: []
-  image: rawdee/pmd:6.40.0
-  tags:
-    - short-jobs
-  script:
-    - cpd --minimum-tokens 180 --language cpp --exclude c/src/third-party   --exclude c/src/signer/zk_wallet/iamo_deploy.h  --files c/src
-    - cpd --minimum-tokens 150 --language java --files java/src
-    - cpd --minimum-tokens 150 --language python --files python
+#cpd:
+#  allow_failure: true
+#  stage: analysis
+#  needs: []
+#  image: rawdee/pmd:6.40.0
+#  tags:
+#    - short-jobs
+#  script:
+#    - cpd -help || cpd --help
+#    - cpd -minimum-tokens 180 --language cpp --exclude c/src/third-party --exclude c/src/signer/zk_wallet/iamo_deploy.h  --files c/src 
+#    - cpd -minimum-tokens 150 --language java --files java/src
+#    - cpd -minimum-tokens 150 --language python --files python
 
 vulnerabilities:
   rules:

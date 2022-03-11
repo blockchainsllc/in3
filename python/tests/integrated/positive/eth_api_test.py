@@ -28,7 +28,6 @@ class EthereumTest(unittest.TestCase):
         self.assertIsNotNone(self.client.eth.keccak256(''))
         self.assertIsNotNone(self.client.eth.keccak256(123))
         self.assertIsNotNone(self.client.eth.keccak256(True))
-        self.assertIsNotNone(self.client.eth.keccak256(None))
 
     def test_eth_gasPrice(self):
         self.assertGreater(self.client.eth.gas_price(), 1000000)

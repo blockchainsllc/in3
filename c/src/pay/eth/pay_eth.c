@@ -36,8 +36,6 @@
 #include "../../core/client/request.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include <assert.h>
@@ -155,7 +153,7 @@ static in3_ret_t pay_eth_handle_request(in3_pay_eth_t* data, in3_pay_handle_ctx_
       started = true;
 
       uint64_t val = data->bulk_size * node->price;
-      uint64_t v   = ctx->client->chain.chain_id;
+      uint64_t v   = ctx->client->chain.id;
       if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
       create_signed_tx(data, plugin_ctx->pk, sb, node->address, data->bulk_size * node->price, v);
       data->nonce++;

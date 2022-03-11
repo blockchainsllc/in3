@@ -34,10 +34,10 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request.h"
+#include "../../../core/util/crypto.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../third-party/crypto/bignum.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
@@ -47,8 +47,7 @@
 static const uint8_t* EMPTY_HASH      = (uint8_t*) "\xc5\xd2\x46\x01\x86\xf7\x23\x3c\x92\x7e\x7d\xb2\xdc\xc7\x03\xc0\xe5\x00\xb6\x53\xca\x82\x27\x3b\x7b\xfa\xd8\x04\x5d\x85\xa4\x70";
 static const uint8_t* EMPTY_ROOT_HASH = (uint8_t*) "\x56\xe8\x1f\x17\x1b\xcc\x55\xa6\xff\x83\x45\xe6\x92\xc0\xf8\x6e\x5b\x48\xe0\x1b\x99\x6c\xad\xc0\x01\x62\x2f\xb5\xe3\x63\xb4\x21";
 static int            is_not_existened(d_token_t* account) {
-  d_token_t* t = NULL;
-  return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_long(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
+  return d_get_long(account, K_BALANCE) == 0 && bytes_cmp(d_bytesl(d_get(account, K_CODE_HASH), 32), bytes((uint8_t*) EMPTY_HASH, 32)) && bytes_cmp(d_bytesl(d_get(account, K_STORAGE_HASH), 32), bytes((uint8_t*) EMPTY_ROOT_HASH, 32)) && d_get_long(account, K_NONCE) == 0;
 }
 const uint8_t*   empty_hash() { return EMPTY_HASH; }
 static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
@@ -56,14 +55,14 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   int             i;
   uint8_t         hash[32], val[36];
   bytes_t**       proof;
-  bytes_t *       tmp, root, *account_raw, path = {.data = hash, .len = 32};
+  bytes_t         tmp, root, *account_raw, path = {.data = hash, .len = 32};
   bytes_builder_t bb = {.bsize = 36, .b = {.data = val, .len = 0}};
 
   // verify the account proof
   if (rlp_decode_in_list(header, BLOCKHEADER_STATE_ROOT, &root) != 1) return vc_err(vc, "no state root in the header");
 
-  if ((tmp = d_get_byteskl(account, K_ADDRESS, 20)))
-    keccak(*tmp, hash);
+  if ((tmp = d_get_byteskl(account, K_ADDRESS, 20)).data)
+    keccak(tmp, hash);
   else
     return vc_err(vc, "no address in the account");
 
@@ -83,14 +82,13 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   if (!(storage_proof = d_get(account, K_STORAGE_PROOF))) return vc_err(vc, "no stortage-proof found!");
 
   if ((t = d_getl(account, K_STORAGE_HASH, 32)))
-    root = *d_bytes(t);
+    root = d_bytes(t);
   else
     return vc_err(vc, "no storage-hash found!");
 
-  //                                "storageHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
   bool is_empty = memcmp(root.data, EMPTY_ROOT_HASH, 32) == 0;
 
-  for (i = 0, p = storage_proof + 1; i < d_len(storage_proof); i++, p = d_next(p)) {
+  for (i = 0, p = d_get_at(storage_proof, 0); i < d_len(storage_proof); i++, p = d_next(p)) {
     d_token_t* pt = d_get(p, K_PROOF);
     bb.b.len      = d_bytes_to(d_get(p, K_VALUE), val, 32);
     if (is_empty) {
@@ -98,7 +96,7 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
       optimize_len(vp, bb.b.len);
       if (bb.b.len > 1 || (bb.b.len == 1 && *vp))
         return vc_err(vc, "empty storagehash, so we exepct 0 values");
-      if (d_type(pt) != T_ARRAY || d_len(pt) > 1 || (d_len(pt) == 1 && (d_type(pt + 1) != T_INTEGER || d_int(pt + 1) != 0x80)))
+      if (d_type(pt) != T_ARRAY || d_len(pt) > 1 || (d_len(pt) == 1 && d_get_int_at(pt, 0) != 0x80))
         return vc_err(vc, "invalid proof");
     }
     else {
@@ -137,10 +135,10 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
 
 in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
-  d_token_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
-  bytes_t    tmp;
-  uint8_t    hash[32];
-  int        i;
+  d_token_internal_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
+  bytes_t             tmp;
+  uint8_t             hash[32];
+  int                 i;
 
   // no result -> nothing to verify
   if (!vc->result) return IN3_OK;
@@ -150,13 +148,13 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   }
 
   // verify header
-  bytes_t* header = d_get_bytes(vc->proof, K_BLOCK);
-  if (!header) return vc_err(vc, "no blockheader");
-  if (eth_verify_blockheader(vc, header, NULL)) return vc_err(vc, "invalid blockheader");
+  bytes_t header = d_get_bytes(vc->proof, K_BLOCK);
+  if (!header.data) return vc_err(vc, "no blockheader");
+  if (eth_verify_blockheader(vc, header, NULL_BYTES)) return vc_err(vc, "invalid blockheader");
 
   // make sure we blockheader is based on the right blocknumber (unless it is a nodelist or a 'latest'-string)
   t = d_get(vc->request, K_PARAMS);
-  if (strcmp(vc->method, "in3_nodeList") && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
+  if (strcmp(vc->method, "in3_nodeList") && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(&header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
     return vc_err(vc, "the blockheader has the wrong blocknumber");
 
   // get the account this proof is based on
@@ -168,7 +166,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
   // now check the results
   if (!(accounts = d_get(vc->proof, K_ACCOUNTS))) return vc_err(vc, "no accounts");
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-    if (verify_proof(vc, header, t))
+    if (verify_proof(vc, &header, t))
       return vc_err(vc, "failed verifying the account");
     else if (proofed_account == NULL && d_eq(contract, d_getl(t, K_ADDRESS, 20)))
       proofed_account = t;
@@ -185,12 +183,12 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
       return vc_err(vc, "the nonce in the proof is different");
   }
   else if (strcmp(vc->method, "eth_getCode") == 0) {
-    bytes_t data = d_to_bytes(vc->result);
+    bytes_t data = d_bytes(vc->result);
     if (data.len) {
-      if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
+      if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32).data, hash, 32))
         return vc_err(vc, "the codehash in the proof is different");
     }
-    else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, EMPTY_HASH, 32)) // must be empty
+    else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32).data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");
   }
   else if (strcmp(vc->method, "eth_getStorageAt") == 0) {
@@ -198,15 +196,15 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     d_bytes_to(vc->result, result, 32);
     d_token_t* storage       = d_get(proofed_account, K_STORAGE_PROOF);
     d_token_t* skey          = d_get_at(d_get(vc->request, K_PARAMS), 1);
-    bytes_t    requested_key = d_to_bytes(skey);
+    bytes_t    requested_key = d_bytes(skey);
     if (!requested_key.data) return vc_err(vc, "missing key");
     b_optimize_len(&requested_key);
 
-    for (i = 0, t = storage + 1; i < d_len(storage); i++, t = d_next(t)) {
-      bytes_t storage_key = d_to_bytes(d_get(t, K_KEY));
+    for (d_iterator_t it = d_iter(storage); it.left; d_iter_next(&it)) {
+      bytes_t storage_key = d_bytes(d_get(it.token, K_KEY));
       b_optimize_len(&storage_key);
       if (b_cmp(&storage_key, &requested_key)) {
-        d_bytes_to(d_get(t, K_VALUE), proofed_result, 32);
+        d_bytes_to(d_get(it.token, K_VALUE), proofed_result, 32);
         if (memcmp(result, proofed_result, 32) == 0)
           return IN3_OK;
         break;

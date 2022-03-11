@@ -42,7 +42,7 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
   bytes32_t b = {0};
   switch (coder->type) {
     case ABI_ADDRESS: {
-      bytes_t data = d_to_bytes(src);
+      bytes_t data = d_bytes(src);
       if (data.len != 20) return encode_error("Invalid address-length", error);
       memcpy(b + 12, data.data, 20);
       break;
@@ -53,12 +53,13 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       break;
     }
     case ABI_FIXED_BYTES: {
-      bytes_t data = d_to_bytes(src);
+      bytes_t data = d_bytes(src);
       if (data.len > 32) return encode_error("Invalid bytes-length", error);
       memcpy(b, data.data, min((unsigned) coder->data.fixed.len, data.len));
       break;
     }
     case ABI_NUMBER: {
+      d_bytes(src);
       bytes_t      data;
       unsigned int bl = coder->data.number.size / 8;
       if (d_type(src) == T_STRING) {
@@ -82,7 +83,7 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
         data = bytes(tmp + 32 - bl, bl);
       }
       else {
-        data = d_to_bytes(src);
+        data = d_bytes(src);
         if (data.len < bl) {
           uint8_t* tmp = alloca(bl);
           memset(tmp, 0, bl);
@@ -100,9 +101,10 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
       return encode_tuple(coder, src, bb, error);
     case ABI_STRING:
     case ABI_BYTES: {
+      d_bytes(src);
       if (d_type(src) != T_STRING && d_type(src) != T_BYTES && d_type(src) != T_INTEGER)
         return encode_error("invalid bytes or string value", error);
-      bytes_t data = d_to_bytes(src);
+      bytes_t data = d_bytes(src);
       int_to_bytes(data.len, b + 28);
       bb_write_raw_bytes(bb, b, 32);
       for (int i = 0; i < (int) data.len; i += 32) {
@@ -173,8 +175,8 @@ static in3_ret_t encode_tuple(abi_coder_t* tuple, d_token_t* src, bytes_builder_
     if (updates[i] != -1) int_to_bytes(bytes_to_int(b_static.b.data + 28 + updates[i], 4) + b_static.b.len, b_static.b.data + 28 + updates[i]);
   }
 
-  bb_write_fixed_bytes(bb, &b_static.b);
-  bb_write_fixed_bytes(bb, &b_dynamic.b);
+  bb_write_fixed_bytes(bb, b_static.b);
+  bb_write_fixed_bytes(bb, b_dynamic.b);
 
 clean:
   if (b_dynamic.b.data) _free(b_dynamic.b.data);

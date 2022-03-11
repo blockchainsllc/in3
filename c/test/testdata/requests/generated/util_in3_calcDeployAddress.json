@@ -1,0 +1,15 @@
+[
+  {
+    "descr": "in3_calcDeployAddress",
+    "request": {
+      "method": "in3_calcDeployAddress",
+      "params": [
+        "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c",
+        6054986
+      ]
+    },
+    "result": "0xba866e7bd2573be3eaf5077b557751bb6d58076e",
+    "config": {},
+    "response": []
+  }
+]
