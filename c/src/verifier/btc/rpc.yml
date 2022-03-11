@@ -859,6 +859,7 @@ btc:
 
 
   getaddresses:
+    apiName: getAddresses
     descr: Returns a list of addresses or public keys extracted from the outputs of a transaction
     params:
       tx:
