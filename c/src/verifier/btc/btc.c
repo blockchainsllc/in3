@@ -607,7 +607,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 
   // -- For each output, extract addresses or public keys
   for (uint32_t i = 0; i < tx_ctx.output_count; i++) {
-    btc_address_t addr;
+    btc_address_t addr = {0};
     bool          has_addr;
     tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
     btc_stype_t script_type       = extract_address_from_output(&tx_ctx.outputs[i], &addr);
@@ -643,6 +643,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
     if (i != tx_ctx.output_count - 1) {
       sb_add_chars(&addrs, ",");
     }
+    _free(addr.encoded);
   }
   sb_add_chars(&addrs, "]");
   TRY_FINAL(in3_rpc_handle_with_string(ctx, addrs.data), _free(addrs.data));

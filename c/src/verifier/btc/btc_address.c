@@ -15,6 +15,7 @@ void btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_
   memcpy(dst->as_bytes + (size_t) 21, checksum, 4);
 
   // calculate base58 address encoding
+  dst->encoded = _malloc(encode_size(ENC_BASE58, BTC_ADDRESS_SIZE_BYTES));
   encode(ENC_BASE58, bytes(dst->as_bytes, BTC_ADDRESS_SIZE_BYTES), dst->encoded);
 }
 
