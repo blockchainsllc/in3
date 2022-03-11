@@ -11,13 +11,13 @@ utils:
     expected_output:
       type: 2
       hash: "0x4bb11ae4af2bd4d40e448a29c01fcac7050f8ce00d6bb5765bf5259517e34103"
-      chainId: 1
-      nonce: 18
+      chainId: "0x1"
+      nonce: "0x12"
       maxPriorityFeePerGas: 1500000000
       maxFeePerGas: 73062449982
-      gas: 46267
+      gas: "0xb4bb"
       to: "0x283af0b28c62c092c9727f1ee09c02ca627eb7f5"
-      value: 0
+      value: "0x0"
       data: "0xf14fcbc8570e1c3a1976b37166e49ae15c8668b80e6b22cb19ab92ab6e0a85b22c5763d8"
       accessList: []
       v: "0x"
@@ -34,7 +34,7 @@ utils:
       - "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005"
     expected_output:
       - "0x1234567890123456789012345678901234567890"
-      - 0x5
+      - "0x5"
 
   in3_checksumAddress:
     input:

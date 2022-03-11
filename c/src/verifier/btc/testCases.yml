@@ -2686,6 +2686,24 @@ btc:
         res:
           result: 688582
 
+  getblockhash:
+    config:
+      proof: 'none'
+      chainId: 'btc'
+    input:
+      - 726833
+    expected_output: "00000000000000000003842eb452fa7a119e7a56940d2409f0cf374aedb37c7e"
+    mockedResponses:
+      -
+        req:
+          method: "POST"
+          body:
+            method: "getblockhash"
+            params:
+              - 726833
+        res:
+          result: "00000000000000000003842eb452fa7a119e7a56940d2409f0cf374aedb37c7e"
+
   getdifficulty:
     config:
       proof: 'none'
