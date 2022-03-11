@@ -10,7 +10,8 @@
     },
     "result": "I love Incubed",
     "config": {
-      "proof": "none"
+      "proof": "none",
+      "chainId": "ipfs"
     },
     "response": [
       {
