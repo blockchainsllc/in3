@@ -2535,6 +2535,39 @@ btc:
             res:
               result: *btc_segwit_tx
 
+  createaddress:
+    -
+      descr: "Create p2pkh address from uncompressed pub key"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "043cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd092f56b5492adbfc570b15644c74cc8a4874ed20dfe47e5dce2e08601d6f11f5a4"
+        - "p2pkh"
+      result:
+        - "19P1LctLQmH6tuHCRkv8QznNBGBvFCyKxi"
+    -
+      descr: "Create p2pkh address from compressed pub key"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "023cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd09"
+        - "p2pkh"
+      result:
+        - "16JrGhLx5bcBSA34kew9V6Mufa4aXhFe9X"
+    - 
+      descr: "Create p2psh address"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "00143a38d44d6a0c8d0bb84e0232cc632b7e48c72e0e"
+        - "p2sh"
+      result:
+        - "34N3tf5m5rdNhW5zpTXNEJucHviFEa8KEq"
+
+
   getaddresses:
     -
       descr: |
