@@ -5,6 +5,7 @@
 #include "btc_serialize.h"
 
 #define BTC_ADDRESS_SIZE_BYTES 25
+#define MAX_BECH32_STRING_LEN  90
 
 /* btc address prefixes */
 typedef enum {
@@ -25,6 +26,9 @@ typedef struct btc_address {
 
 int btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t prefix, btc_address_t* dst);
 int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_address_t* dst);
+int btc_segwit_addr_from_pub_key_hash(ripemd160_t pub_key_hash, btc_address_t* dst);
+int btc_segwit_addr_from_pub_key(bytes_t pub_key, btc_address_t* dst);
+int btc_segwit_addr_from_witness_program(bytes_t witness_program, btc_address_t* dst);
 
 btc_address_prefix_t btc_script_type_to_prefix(btc_stype_t script_type);
 

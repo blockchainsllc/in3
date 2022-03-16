@@ -32,36 +32,9 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if(BTC)
-  add_subdirectory( bech32 )
-endif(BTC)
-if(CRYPTO_TREZOR)
-  add_subdirectory( crypto )
-endif()
-if(USE_SCRYPT)
-  add_subdirectory( libscrypt )
-endif()
-if (ETH_FULL)
-  add_subdirectory( tommath )
-endif()
-
-if (USE_SEGGER_RTT)
-  add_subdirectory( segger_rtt )
-endif()
-
-if (BASE64)
-  add_subdirectory( libb64 )
-endif()
-
-if (ZKSYNC)
-  add_subdirectory( zkcrypto )
-endif()
-
-if (LEDGER_NANO)
-  add_subdirectory( hidapi )
-endif()
-
-if (SENTRY)
-  #  ADD_DEFINITIONS(-DBUILD_SHARED_LIBS=false)
-   add_subdirectory( sentry-native )
-endif()
+add_static_library(
+  NAME     bech32 
+  
+  SOURCES
+    segwit_addr.c
+)
