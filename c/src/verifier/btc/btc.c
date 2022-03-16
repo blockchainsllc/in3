@@ -570,7 +570,7 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
       btc_address_prefix_t prefix = btc_script_type_to_prefix(addr_type);
       btc_address_t        dst    = {0};
 
-      bool seed_valid = (((addr_type == BTC_P2PK || addr_type == BTC_P2PK) && pub_key_is_valid(raw_seed)) ||
+      bool seed_valid = (((addr_type == BTC_P2PK || addr_type == BTC_P2PKH) && pub_key_is_valid(raw_seed)) ||
                          (addr_type == BTC_P2SH && script_is_standard(btc_get_script_type(raw_seed))));
 
       if (!seed_valid) {

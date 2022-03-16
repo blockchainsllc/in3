@@ -57,7 +57,7 @@ void btc_hash160(bytes_t data, address_t dst) {
   in3_digest_t ctx = crypto_create_hash(DIGEST_RIPEMD_160);
   crypto_update_hash(ctx, data);
   crypto_finalize_hash(ctx, tmp);
-  rev_copy(dst, tmp);
+  rev_copyl(dst, bytes(tmp, 20), 20);
 }
 
 // copy 32 bytes in revers order
