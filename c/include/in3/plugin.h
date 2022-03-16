@@ -104,6 +104,20 @@ typedef struct {
   d_token_t*       params;   /**< the params */
 } in3_rpc_handle_ctx_t;
 
+#define RPC_THROW(ctx, msg, code) \
+  { return req_set_error(ctx->req, msg, code); }
+#define RPC_ASSERT(cond, msg)                                     \
+  {                                                               \
+    if (!(cond)) return req_set_error(ctx->req, msg, IN3_EINVAL); \
+  }
+#define RPC_ASSERT_CATCH(cond, msg, f)                 \
+  {                                                    \
+    if (!(cond)) {                                     \
+      { f; }                                           \
+      return req_set_error(ctx->req, msg, IN3_EINVAL); \
+    }                                                  \
+  }
+
 /**
  * creates a response and returns a stringbuilder to add the result-data.
  */

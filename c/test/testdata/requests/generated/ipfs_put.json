@@ -10,7 +10,8 @@
     },
     "result": "Qmb5Z7B4mCCRSBTtqzF8cvejA9UqiZ3EoZFPVh21Vx2UoH",
     "config": {
-      "proof": "none"
+      "proof": "none",
+      "chainId": "ipfs"
     },
     "response": [
       {

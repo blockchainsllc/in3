@@ -6,6 +6,7 @@
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
+#include "btc_address.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
 #include "btc_sign.h"
@@ -463,6 +464,12 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     return btc_verify_blockcount(conf, vc);
   }
 #endif
+#if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHASH)
+  if (VERIFY_RPC("getblockhash")) {
+    REQUIRE_EXPERIMENTAL(vc->req, "btc")
+    return IN3_OK;
+  }
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHEADER)
   if (VERIFY_RPC("getblockheader")) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
@@ -492,7 +499,6 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
     return btc_verify_tx(conf, vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
 #endif
-
   // TODO: Uncomment and implement functions bellow once conditions are met
   // #if !defined(RPC_ONLY) || defined(RPC_GETUTXOS)
 
@@ -543,6 +549,110 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   return IN3_EIGNORE;
 }
 
+in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
+  bytes_t    transaction;
+  d_token_t* result = NULL;
+  char*      txid;
+  char*      blockhash;
+  TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
+  TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
+
+  size_t tx_len = strlen(txid);
+  if (tx_len < BTC_TX_HASH_SIZE_BYTES * 2) {
+    return req_set_error(ctx->req, "ERROR: btc_get_addresses: invalid txid", IN3_EINVAL);
+  }
+  else if (tx_len == BTC_TX_HASH_SIZE_BYTES * 2) {
+    // we received a txid, so we need to fetch the raw transaction data from the blockchain
+    sb_t sb = {0};
+    sb_add_chars(&sb, "\"");
+    sb_add_chars(&sb, txid);
+    sb_add_chars(&sb, "\",0");
+    if (blockhash) {
+      sb_add_chars(&sb, ",\"");
+      sb_add_chars(&sb, blockhash);
+      sb_add_chars(&sb, "\"");
+    }
+    TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+    transaction      = bytes(NULL, d_len(result) / 2);
+    transaction.data = alloca(transaction.len);
+    TRY(hex_to_bytes(d_string(result), -1, transaction.data, transaction.len))
+  }
+  else {
+    // we received raw transaction data, so we just convert it to bytes
+    transaction      = bytes(NULL, tx_len / 2);
+    transaction.data = alloca(transaction.len);
+    TRY(hex_to_bytes(txid, -1, transaction.data, transaction.len))
+  }
+
+  // Create transaction context
+  btc_tx_ctx_t tx_ctx;
+  btc_init_tx_ctx(&tx_ctx);
+  btc_parse_tx(transaction, &tx_ctx.tx);
+
+  // Extract all outputs
+  uint8_t* p   = tx_ctx.tx.output.data;
+  uint8_t* end = p + tx_ctx.tx.output.len;
+  while (p < end) {
+    btc_tx_out_t new_output;
+    p                                   = btc_parse_tx_out(p, &new_output);
+    tx_ctx.outputs                      = _realloc(tx_ctx.outputs, (tx_ctx.output_count + 1) * sizeof(btc_tx_out_t), tx_ctx.output_count * sizeof(btc_tx_out_t));
+    tx_ctx.outputs[tx_ctx.output_count] = new_output;
+    tx_ctx.output_count++;
+  }
+
+  // Build return object
+  sb_t addrs = {0};
+  sb_add_chars(&addrs, "[");
+
+  // -- For each output, extract addresses or public keys
+  for (uint32_t i = 0; i < tx_ctx.output_count; i++) {
+    btc_address_t addr = {0};
+    bool          has_addr;
+    tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
+    btc_stype_t script_type       = extract_address_from_output(&tx_ctx.outputs[i], &addr);
+    bytes_t     addr_as_bytes     = bytes(addr.as_bytes, BTC_ADDRESS_SIZE_BYTES);
+
+    has_addr = script_type != BTC_P2MS && script_is_standard(script_type);
+
+    sb_add_chars(&addrs, "{\"index\":");
+    sb_add_int(&addrs, i);
+    sb_add_chars(&addrs, ",\"script_type\":\"");
+    sb_add_chars(&addrs, btc_script_type_to_string(script_type));
+    sb_add_chars(&addrs, "\",\"addr\":\"");
+    if (has_addr) sb_add_chars(&addrs, addr.encoded);
+    sb_add_chars(&addrs, "\",\"raw_addr\":\"");
+    if (has_addr) sb_add_rawbytes(&addrs, NULL, addr_as_bytes, addr_as_bytes.len);
+    sb_add_chars(&addrs, "\",\"pub_keys\":[");
+    if (script_type == BTC_P2MS) {
+      // extract public keys
+      bytes_t* pub_key_list = NULL;
+      uint32_t pub_key_list_len;
+      pub_key_list_len = extract_public_keys_from_multisig(tx_ctx.outputs[i].script.data, &pub_key_list);
+      if (!pub_key_list || pub_key_list_len == 0) return req_set_error(ctx->req, "Error while parsing p2ms public keys", IN3_ERPC);
+
+      // Add public keys to return object
+      for (uint32_t j = 0; j < pub_key_list_len; j++) {
+        if (j > 0) sb_add_chars(&addrs, ",");
+        sb_add_chars(&addrs, "\"");
+        sb_add_rawbytes(&addrs, NULL, pub_key_list[j], pub_key_list[j].len);
+        sb_add_chars(&addrs, "\"");
+        _free(pub_key_list[j].data);
+      }
+      _free(pub_key_list);
+    }
+    sb_add_chars(&addrs, "]}");
+    if (i != tx_ctx.output_count - 1) {
+      sb_add_chars(&addrs, ",");
+    }
+    _free(addr.encoded);
+  }
+  _free(tx_ctx.outputs);
+  sb_add_chars(&addrs, "]");
+  TRY_FINAL(in3_rpc_handle_with_string(ctx, addrs.data), _free(addrs.data));
+  return IN3_OK;
+}
+
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
   // This is the RPC that abstracts most of what is done in the background before sending a transaction:
@@ -578,8 +688,9 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   btc_init_tx_ctx(&tx_ctx);
 
   // first parameter is the btc address which shall receive the remaining change, discounting fees, after transaction is complete
+  // TODO: Receive address as Base58 or BECH32 encoding, instead of bytes
   bytes_t from_addr = d_bytes(d_get_at(params, 0));
-  if (from_addr.len != BTC_ADDR_SIZE) return req_set_error(req, "ERROR: Invalid btc address", IN3_EINVAL);
+  if (from_addr.len != BTC_ADDRESS_SIZE_BYTES) return req_set_error(req, "ERROR: Invalid btc address", IN3_EINVAL);
 
   // second parameter is the ethereum account used by the signer api
   d_token_t* sig_acc = d_get_at(params, 1);
@@ -638,6 +749,9 @@ static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t
   // make sure the conf is filled with data from the cache
   btc_check_conf(req, conf);
 
+#if !defined(RPC_ONLY) || defined(RPC_GETADDRESSES)
+  TRY_RPC("getaddresses", btc_get_addresses(conf, ctx))
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
 
   // SERVER: sendtransaction(raw_signed_tx)

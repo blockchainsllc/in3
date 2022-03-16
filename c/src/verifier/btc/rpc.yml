@@ -9,8 +9,8 @@ types:
 
   btc_value:
     address:
-      descr: a 20-byte btc address which should receive the specified value
-      type: address
+      descr: a 25-byte btc address which should receive the specified value
+      type: bytes
     value:
       descr: the amount in satoshis the provided address should receive 
       type: uint64
@@ -63,7 +63,47 @@ types:
       type: btc_utxo_args
       optional: true
 
-  
+  btc_output_address:
+    index:
+      descr: The transaction output index from which the addresses were extracted
+      type: uint32
+    script_type:
+      descr: |
+        The script type from wich the address was extracted. 
+        Can be one of "p2pk", "p2pkh", "p2wpkh", "p2sh", "p2wsh", "p2ms", "non_standard", "unsupported" or "unknown"
+        - When this value is "unknown", "non_standard" or "unsupported", the addr field is empty
+        - When this value is "p2ms" (pay-to-multisig), the addr field is empty and stores btc public keys. For now, this is the 
+        only case in which the array will have more than one element. 
+        - When this value is "p2sh" or "p2wsh", addr field stores a single BECH32 encoded address
+        - For every other value, addr stores a single Base58 encoded btc address
+      type: string
+      enum:
+        p2pk: p2pk
+        p2pkh: p2pkh
+        p2wpkh: p2wpkh
+        p2sh: p2sh
+        p2wsh: p2wsh
+        p2ms: p2ms
+        non_standard: non_standard
+        unsupported: unsupported
+        unknown: unknown
+    addr:
+      descr: |
+        The bitcoin address defined in the output script. Depending on the script type, can be encoded as base58 or bech32.
+        This field is empty in an output of type p2ms 
+      type: string
+    raw_addr:
+      descr: |
+        The bitcoin raw bytes of the address defined in the output script. This field is empty in an output of type p2ms
+      type: string
+    pub_keys:
+      descr: |
+        when possible, this structure will also include the public keys related to the transaction output. This field will
+        only be filled when dealing with a p2ms output, when it stores a set of btc public keys
+      type: string
+      array: true
+
+
   btcblockheader:
     hash:
       descr: the block hash (same as provided)
@@ -817,6 +857,28 @@ btc:
           cbtx: 0x010000000001010000000000000000000000000000000...9da2fc
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a...52e688
 
+
+  getaddresses:
+    apiName: getAddresses
+    descr: Returns a list of addresses or public keys extracted from the outputs of a transaction
+    params:
+      tx:
+        descr: |
+          Either the transaction id or the raw btc transaction.
+          When this field is 64 characters long (32 bytes), it is treated as transaction id the function will fetch the raw transaction
+          from the configured chain with a subrequest.
+          When it is bigger than 64 characters (32 bytes), this field is treated as a raw transaction, and no subrequest will be made.
+        type: string
+      blockhash:
+        descr: The block in which to look for the transaction
+        type: bytes32
+        optional: true
+    result:
+      descr: The addresses and/or public keys extracted fom transaction outputs
+      type: btc_output_address
+      array: true
+
+
   getblockcount:
     descr: Returns the number of blocks in the longest blockchain.
     in3Params:
@@ -857,6 +919,18 @@ btc:
           final: "0x00008020f61dfcc47a6daed717b12221855196dee02d844ebb9c...774f4c"
           cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
           cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
+
+
+  getblockhash:
+    descr: Returns hash of block in best-block-chain at height provided.
+    params:
+      height:
+        descr: The block number
+        type: uint64
+    result:
+      descr: the current blockheight
+      type: bytes32
+
 
   getdifficulty:
     descr: Returns the proof-of-work difficulty as a multiple of the minimum difficulty.
