@@ -58,6 +58,7 @@ extern "C" {
 #endif
 
 #include "bytes.h"
+#include "crypto.h"
 #include "mem.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -134,6 +135,7 @@ typedef struct json_parser {
  */
 bytes_t                      d_bytes(d_token_t* item);                                                                             /**< converts the data to bytes .*/
 bytes_t                      d_bytesl(d_token_t* item, uint32_t len);                                                              /**< converts the data to bytes .*/
+bytes_t                      d_bytes_enc(d_token_t* item, in3_encoding_type_t enc);                                                /**< convertes the item to bytea assuming the given encoding */
 bytes_t                      d_num_bytes(d_token_t* f);                                                                            /**< converts the token into bytes, assuming this to be a numeric value. in case of an string it will be converted (chainging the token) */
 int                          d_bytes_to(d_token_t* item, uint8_t* dst, const int max);                                             /**< writes the byte-representation to the dst. details see d_bytes.*/
 bytes_t*                     d_as_bytes(d_token_t* item);                                                                          /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
