@@ -1,4 +1,5 @@
 types:
+
   btc_sign_acc:
     address:
       descr: eth address used by in3 to sign btc transactions
@@ -856,6 +857,30 @@ btc:
           merkleProof: 0x348d4bb04943400a80f162c4ef64b746bc4af0...52e688
           cbtx: 0x010000000001010000000000000000000000000000000...9da2fc
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a...52e688
+
+  createaddress:
+    descr: Returns a btc address given some inut data and an address type
+    params:
+      data:
+        descr: |
+          This is the data used by the api to generate and address.
+          The nature of this parameted changes according to the type of address to generate.
+          For "p2pkh" this field should contain a 65-byte btc public key or a 33-byte btc compressed pub key.
+          For "p2sh", this field should contain a raw btc locking script.
+        type: string
+      type:
+        descr: |
+          The address type to generate.
+        type: string
+        enum:
+          p2pk: p2pk
+          p2pkh: p2pkh
+          p2wpkh: p2wpkh
+          p2sh: p2sh
+          p2wsh: p2wsh
+    result:
+      descr: The encoded btc address
+      type: string
 
 
   getaddresses:

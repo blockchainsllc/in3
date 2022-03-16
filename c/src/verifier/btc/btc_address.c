@@ -1,5 +1,18 @@
 #include "btc_address.h"
 
+btc_address_prefix_t btc_script_type_to_prefix(btc_stype_t script_type) {
+  switch (script_type) {
+    case BTC_P2PK:
+      return BTC_P2PK_PREFIX;
+    case BTC_P2PKH:
+      return BTC_P2PKH_PREFIX;
+    case BTC_P2SH:
+      return BTC_P2SH_PREFIX;
+    default:
+      return BTC_INVALID_PREFIX;
+  }
+}
+
 void btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t prefix, btc_address_t* dst) {
   uint8_t tmp[21], hash256_result[32], checksum[4];
 
