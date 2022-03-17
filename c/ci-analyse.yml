@@ -91,6 +91,7 @@ valgrind:
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f; done
     - for f in ../c/test/testdata/requests/*.json; do valgrind $VALGRIND_OPTS test/runner $(pwd)/$f; done
+    - for f in ../c/test/testdata/requests/generated/*.json; do valgrind $VALGRIND_OPTS test/runner $(pwd)/$f; done
 
 code_quality:
   rules:

@@ -859,6 +859,7 @@ btc:
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a...52e688
 
   createaddress:
+    apiName: createAddress
     descr: Returns a btc address given some inut data and an address type
     params:
       data:
