@@ -419,8 +419,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   return in3_rpc_handle_with_string(hctx, s);
 }
 
-in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
-  bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
+static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child, bool use_cache) {
   if (params == NULL) params = "";
   char* req = NULL;
   if (use_cache) {
@@ -505,6 +504,15 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
     }
   }
   return ret;
+}
+
+in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
+  bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
+  return req_send_sub_request_internal(parent, method, params, in3, result, child, use_cache);
+}
+
+in3_ret_t req_send_id_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
+  return req_send_sub_request_internal(parent, method, params, in3, result, child, true);
 }
 
 static inline const char* method_for_sigtype(d_digest_type_t type) {
