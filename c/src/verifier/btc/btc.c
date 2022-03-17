@@ -565,23 +565,20 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
     }
 
     if (addr_type == BTC_P2PKH || addr_type == BTC_P2PK || addr_type == BTC_P2SH) {
-      bytes_t* raw_seed = b_new(NULL, strlen(seed) / 2);
-      hex_to_bytes(seed, -1, raw_seed->data, raw_seed->len);
+      uint32_t seed_len_bytes = strlen(seed) / 2;
+      bytes_t  raw_seed       = bytes(alloca(seed_len_bytes), seed_len_bytes);
+      hex_to_bytes(seed, -1, raw_seed.data, raw_seed.len);
       btc_address_prefix_t prefix = btc_script_type_to_prefix(addr_type);
       btc_address_t        dst    = {0};
 
-      bool seed_valid = (((addr_type == BTC_P2PK || addr_type == BTC_P2PKH) && pub_key_is_valid(raw_seed)) ||
-                         (addr_type == BTC_P2SH && script_is_standard(btc_get_script_type(raw_seed))));
+      bool seed_valid = (((addr_type == BTC_P2PK || addr_type == BTC_P2PKH) && pub_key_is_valid(&raw_seed)) ||
+                         (addr_type == BTC_P2SH && script_is_standard(btc_get_script_type(&raw_seed))));
 
       if (!seed_valid) {
-        _free(raw_seed->data);
-        _free(raw_seed);
         return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for the address type chosen.", IN3_EINVAL);
       }
 
-      if (btc_addr_from_pub_key(*raw_seed, prefix, &dst) < 0) {
-        _free(raw_seed->data);
-        _free(raw_seed);
+      if (btc_addr_from_pub_key(raw_seed, prefix, &dst) < 0) {
         if (dst.encoded) _free(dst.encoded);
         return req_set_error(ctx->req, "ERROR: btc_create_address: Error during address generation from public key.", IN3_EINVAL);
       }
@@ -590,9 +587,7 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
       sb_add_chars(&sb, dst.encoded);
       sb_add_char(&sb, '\"');
 
-      _free(raw_seed->data);
       _free(dst.encoded);
-      _free(raw_seed);
     }
     else {
       return req_set_error(ctx->req, "ERROR: btc_create_address: Address type is still not supported.", IN3_ENOTSUP);
