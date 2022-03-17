@@ -1,4 +1,5 @@
 #include "btc_address.h"
+#include "../../core/util/log.h"
 
 btc_address_prefix_t btc_script_type_to_prefix(btc_stype_t script_type) {
   switch (script_type) {
@@ -19,7 +20,7 @@ int btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t
   uint8_t tmp[21], hash256_result[32], checksum[4];
 
   // First build prefix+hash160(pub_key)
-  tmp[0] = prefix & 0xff;
+  tmp[0] = prefix;
   memcpy(tmp + 1, pub_key_hash160, 20);
 
   // Calculate hash256(prefiix-hash160). Fist 4 bytes will be used as address checksum
@@ -36,6 +37,8 @@ int btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t
 
 int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_address_t* dst) {
   ripemd160_t pub_key_hash;
-  btc_hash160(pub_key, pub_key_hash);
+  uint8_t hash256_result[32];
+  btc_hash256(pub_key, hash256_result);
+  btc_hash160(bytes(hash256_result, 32), pub_key_hash);
   return btc_addr_from_pub_key_hash(pub_key_hash, prefix, dst);
 }

@@ -575,11 +575,13 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
 
       if (!seed_valid) {
         _free(raw_seed->data);
+        _free(raw_seed);
         return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for the address type chosen.", IN3_EINVAL);
       }
 
-      if (btc_addr_from_pub_key(*raw_seed, prefix, &dst)) {
+      if (btc_addr_from_pub_key(*raw_seed, prefix, &dst) < 0) {
         _free(raw_seed->data);
+        _free(raw_seed);
         if (dst.encoded) _free(dst.encoded);
         return req_set_error(ctx->req, "ERROR: btc_create_address: Error during address generation from public key.", IN3_EINVAL);
       }
@@ -590,6 +592,7 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
 
       _free(raw_seed->data);
       _free(dst.encoded);
+      _free(raw_seed);
     }
     else {
       return req_set_error(ctx->req, "ERROR: btc_create_address: Address type is still not supported.", IN3_ENOTSUP);
