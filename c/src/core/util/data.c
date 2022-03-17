@@ -148,8 +148,10 @@ bytes_t d_bytes_enc(d_token_t* item, in3_encoding_type_t enc) {
       item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
       return bytes(item->data, l);
     }
-    else
+    else {
       _free(dst);
+      return NULL_BYTES;
+    }
   }
   return d_bytes(item);
 }

@@ -78,6 +78,29 @@
     if (max_len && (int) target.len > (int) max_len) return req_set_error(ctx->req, "Param at " #index " must have max " #max_len "bytes", IN3_EINVAL); \
   }
 
+/* fetches the parameter with the given index as bytes and stores it in the target, which must be a bytes_t variable*/
+#define TRY_PARAM_GET_BYTES_AS(target, ctx, index, min_len, max_len, enc)                                                                                 \
+  {                                                                                                                                                       \
+    d_token_t* t = d_get_at(ctx->params, index);                                                                                                          \
+    if (d_type(t) == T_NULL)                                                                                                                              \
+      target = NULL_BYTES;                                                                                                                                \
+    else {                                                                                                                                                \
+      target = d_bytes_enc(t, enc);                                                                                                                       \
+      if (!target.data) return req_set_error(ctx->req, "Param at " #index " must be encoded as " #enc, IN3_EINVAL);                                       \
+      if ((int) target.len < (int) min_len) return req_set_error(ctx->req, "Param at " #index " must have at least a length of " #min_len, IN3_EINVAL);   \
+      if (max_len && (int) target.len > (int) max_len) return req_set_error(ctx->req, "Param at " #index " must have max " #max_len "bytes", IN3_EINVAL); \
+    }                                                                                                                                                     \
+  }
+
+/* fetches the required parameter with the given index as bytes and stores it in the target, which must be a bytes_t variable*/
+#define TRY_PARAM_GET_REQUIRED_BYTES_AS(target, ctx, index, min_len, max_len, enc)                                                                      \
+  {                                                                                                                                                     \
+    target = d_bytes_enc(d_get_at(ctx->params, index), enc);                                                                                            \
+    if (!target.data) return req_set_error(ctx->req, "Param at " #index " must be valid bytes as " #enc, IN3_EINVAL);                                   \
+    if ((int) target.len < (int) min_len) return req_set_error(ctx->req, "Param at " #index " must have at least a length of " #min_len, IN3_EINVAL);   \
+    if (max_len && (int) target.len > (int) max_len) return req_set_error(ctx->req, "Param at " #index " must have max " #max_len "bytes", IN3_EINVAL); \
+  }
+
 /* fetches the parameter with the given index as integer and stores it in the target, which must be a int or int32_t variable. If a the last arg(def) is not NULL, it will be used as default if the parameter is not set.*/
 #define TRY_PARAM_GET_INT(target, ctx, index, def)                                                 \
   {                                                                                                \
