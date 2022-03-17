@@ -37,7 +37,7 @@ int btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t
 
 int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_address_t* dst) {
   ripemd160_t pub_key_hash;
-  uint8_t hash256_result[32];
+  uint8_t     hash256_result[32];
   btc_hash256(pub_key, hash256_result);
   btc_hash160(bytes(hash256_result, 32), pub_key_hash);
   return btc_addr_from_pub_key_hash(pub_key_hash, prefix, dst);
