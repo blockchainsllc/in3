@@ -136,6 +136,27 @@ bool script_is_standard(btc_stype_t script_type) {
   return script_type != BTC_NON_STANDARD && script_type != BTC_UNSUPPORTED && script_type != BTC_UNKNOWN;
 }
 
+btc_stype_t btc_string_to_script_type(const char* type) {
+  btc_stype_t result = BTC_UNKNOWN;
+  if (!strcmp(type, "p2pkh"))
+    result = BTC_P2PKH;
+  else if (!strcmp(type, "p2sh"))
+    result = BTC_P2SH;
+  else if (!strcmp(type, "p2ms"))
+    result = BTC_P2MS;
+  else if (!strcmp(type, "p2wpkh"))
+    result = BTC_V0_P2WPKH;
+  else if (!strcmp(type, "p2wsh"))
+    result = BTC_P2WSH;
+  else if (!strcmp(type, "p2pk"))
+    result = BTC_P2PK;
+  else if (!strcmp(type, "unsupported"))
+    result = BTC_UNSUPPORTED;
+  else if (!strcmp(type, "non_standard"))
+    result = BTC_NON_STANDARD;
+  return result;
+}
+
 const char* btc_script_type_to_string(btc_stype_t type) {
   switch (type) {
     // Default case is purposefuly missing, so the compiler

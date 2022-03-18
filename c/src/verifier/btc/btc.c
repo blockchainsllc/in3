@@ -549,6 +549,59 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   return IN3_EIGNORE;
 }
 
+in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
+
+  sb_t  sb = {0};
+  char *seed, *type;
+  TRY_PARAM_GET_REQUIRED_STRING(seed, ctx, 0);
+  TRY_PARAM_GET_REQUIRED_STRING(type, ctx, 1);
+
+  btc_stype_t addr_type = btc_string_to_script_type(type);
+
+  if (script_is_standard(addr_type)) {
+    if (addr_type == BTC_P2MS) {
+      return req_set_error(ctx->req, "ERROR: btc_create_address: P2MS scripts have no intrinsic address. Cannot create address.", IN3_EINVAL);
+    }
+
+    if (addr_type == BTC_P2PKH || addr_type == BTC_P2PK || addr_type == BTC_P2SH) {
+      uint32_t seed_len_bytes = strlen(seed) / 2;
+      bytes_t  raw_seed       = bytes(alloca(seed_len_bytes), seed_len_bytes);
+      hex_to_bytes(seed, -1, raw_seed.data, raw_seed.len);
+      btc_address_prefix_t prefix = btc_script_type_to_prefix(addr_type);
+      btc_address_t        dst    = {0};
+
+      bool seed_valid = (((addr_type == BTC_P2PK || addr_type == BTC_P2PKH) && pub_key_is_valid(&raw_seed)) ||
+                         (addr_type == BTC_P2SH && script_is_standard(btc_get_script_type(&raw_seed))));
+
+      if (!seed_valid) {
+        return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for the address type chosen.", IN3_EINVAL);
+      }
+
+      if (btc_addr_from_pub_key(raw_seed, prefix, &dst) < 0) {
+        if (dst.encoded) _free(dst.encoded);
+        return req_set_error(ctx->req, "ERROR: btc_create_address: Error during address generation from public key.", IN3_EINVAL);
+      }
+
+      sb_add_char(&sb, '\"');
+      sb_add_chars(&sb, dst.encoded);
+      sb_add_char(&sb, '\"');
+
+      _free(dst.encoded);
+    }
+    else {
+      return req_set_error(ctx->req, "ERROR: btc_create_address: Address type is still not supported.", IN3_ENOTSUP);
+    }
+  }
+  else {
+    return req_set_error(ctx->req, "ERROR: btc_create_address: Address type was not recognized. Cannot create address.", IN3_EINVAL);
+  }
+
+  if (!sb.data) return req_set_error(ctx->req, "ERROR: btc_create_address: Unexpected error. No address could be created", IN3_EINVAL);
+  TRY_FINAL(in3_rpc_handle_with_string(ctx, sb.data), _free(sb.data));
+  return IN3_OK;
+}
+
 in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
   bytes_t    transaction;
@@ -749,11 +802,13 @@ static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t
   // make sure the conf is filled with data from the cache
   btc_check_conf(req, conf);
 
+#if !defined(RPC_ONLY) || defined(RPC_CREATEADDRESSES)
+  TRY_RPC("createaddress", btc_create_address(conf, ctx))
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_GETADDRESSES)
   TRY_RPC("getaddresses", btc_get_addresses(conf, ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
-
   // SERVER: sendtransaction(raw_signed_tx)
   TRY_RPC("sendtransaction", send_transaction(conf, ctx))
 #endif

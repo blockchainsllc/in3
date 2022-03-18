@@ -93,8 +93,16 @@ in3_ret_t req_handle_failable(
     in3_req_t* req /**< [in] the current request context. */
 );
 
+/**
+ * sends a subrequest, which will be identified by method and params
+ */
 NONULL_FOR((1, 2, 3, 5))
-in3_ret_t        req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
+in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
+/**
+ * sends a subrequest, which will be identified by a hash from method and params, which allows even modification of the original request
+ */
+NONULL_FOR((1, 2, 3, 5))
+in3_ret_t        req_send_id_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
 NONULL in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta);
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
