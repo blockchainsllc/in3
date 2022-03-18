@@ -95,7 +95,7 @@ account:
         type: string
         optional: true
     result:
-      descr: the address or public key of given key.
+      descr: the unique identifier for the sdk of given key.
       type: bytes
     example:
       request:
@@ -171,11 +171,11 @@ account:
   eth_accounts:
     sync: true
     descr: |
-      returns a array of account-addresss the incubed client is able to sign with. 
+      returns a array of signer_ids the client is able to sign with. 
 
-      In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the addresses of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
+      In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the signer_ids of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
     result:
-      descr: the array of addresses of all registered signers.
+      descr: the array of signer_ids of all registered signers.
       array: true
       type: address
     example:
