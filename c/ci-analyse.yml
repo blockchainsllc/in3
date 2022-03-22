@@ -9,7 +9,7 @@
 
 coverage:
   stage: analysis
-  image: silkeh/clang:dev
+  image: docker.slock.it/build-images/cmake:clang14
   coverage: '/TOTAL.*\s+(\d+.\d+\%)\s*$/'
   extends: .only_full
   needs: []
@@ -22,9 +22,12 @@ coverage:
     - ../scripts/lcov_report.sh | xargs llvm-cov report
     - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
     - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
+    - lcov_cobertura ccov/all-merged/lcov.info -b .. -o coverage.xml    
   artifacts:
     paths:
       - cov_build/ccov/all-merged
+    reports:
+      cobertura: cov_build/coverage.xml
 
 clangcheck:
   stage: analysis
