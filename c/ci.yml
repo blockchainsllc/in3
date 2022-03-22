@@ -125,7 +125,7 @@ clang50:
     - .only_full
 
 clang13:
-  image: docker.slock.it/build-images/cmake:clang13
+  image: docker.slock.it/build-images/cmake:clang14
   extends:
     - .conanbuild
     - .only_full
