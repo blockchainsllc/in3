@@ -32,7 +32,10 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-null-pointer-subtraction")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-null-pointer-subtraction")
 
+-Wnull-pointer-subtraction
 set(CRYPTO_SRC 
   ecdsa.c
   address.c
