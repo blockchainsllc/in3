@@ -32,6 +32,10 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-type")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type")
+
 add_static_library(
   NAME     bech32 
   
