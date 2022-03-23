@@ -32,7 +32,7 @@
     "response": []
   },
   {
-    "descr": "Create p2psh address",
+    "descr": "Create p2sh address",
     "request": {
       "method": "createaddress",
       "params": [
@@ -41,6 +41,38 @@
       ]
     },
     "result": "34N3tf5m5rdNhW5zpTXNEJucHviFEa8KEq",
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": []
+  },
+  {
+    "descr": "Create p2wpkh address",
+    "request": {
+      "method": "createaddress",
+      "params": [
+        "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "p2wpkh"
+      ]
+    },
+    "result": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": []
+  },
+  {
+    "descr": "Create p2wsh address",
+    "request": {
+      "method": "createaddress",
+      "params": [
+        "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
+        "p2wsh"
+      ]
+    },
+    "result": "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3",
     "config": {
       "proof": "none",
       "chainId": "btc"
