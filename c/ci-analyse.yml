@@ -22,10 +22,12 @@ coverage:
     - ../scripts/lcov_report.sh | xargs llvm-cov report
     - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
     - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
-    - lcov_cobertura ccov/all-merged/lcov.info -b .. -o coverage.xml    
+    - lcov_cobertura ccov/all-merged/lcov.info -b $(dirname "$PWD") -o coverage.xml
+    - node -p "const fs=require('fs');fs.writeFileSync('coverage.xml',fs.readFileSync('coverage.xml','utf8').split('../../../../../../../../builds/in3/c/in3-core/').join(''),'utf8')"
   artifacts:
     paths:
       - cov_build/ccov/all-merged
+      - cov_build/coverage.xml
     reports:
       cobertura: cov_build/coverage.xml
 
