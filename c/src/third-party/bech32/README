@@ -1,0 +1,7 @@
+- version: commit ef0181a
+- website: https://github.com/sipa/bech32/tree/master/ref/c
+- notes:
+  - This is the reference implementation for bech32 and bech32m encoding algorithms in C, as described by BIP0173 and BIP0350
+  - BIP0173 can be found on https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+  - BIP0350 can be found on https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki
+  - files from C implementation were copied without changes
