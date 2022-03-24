@@ -35,6 +35,7 @@ subcmds=(
     'in3_signData: signs the given data <msg> <account> <msgType>'
     'in3_signTx: signs the given raw Tx (as prepared by in3_prepareTx ) <tx> <from>'
     'btc_proofTarget: Whenever the client is not able to trust the changes of the target (which is the case if a block can... <target_dap> <verified_dap> <max_diff> <max_dap> <limit>'
+    'createaddress: Returns a btc address given some inut data and an address type <data> <type>'
     'getaddresses: Returns a list of addresses or public keys extracted from the outputs of a transaction <tx> <blockhash>'
     'getbestblockhash: Returns the hash of the best (tip) block in the longest blockchain'
     'getblock: Returns data of block for given block hash <hash> <verbosity>'

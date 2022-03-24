@@ -20,12 +20,14 @@ typedef enum {
 
 typedef uint8_t ripemd160_t[20];
 
-bytes_t   btc_block_get(bytes_t block, btc_block_field field);
-void      btc_hash(bytes_t data, bytes32_t dst);
-void      btc_hash256(bytes_t data, bytes32_t dst);
-void      btc_hash160(bytes_t data, address_t dst);
-in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header);
+/* btc hash functions */
+void btc_hash(bytes_t data, bytes32_t dst);
+void btc_hash256(bytes_t data, bytes32_t dst);
+void btc_hash160(bytes_t data, address_t dst);
 
+/* btc utils functions */
+bytes_t   btc_block_get(bytes_t block, btc_block_field field);
+in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header);
 void      rev_copy(uint8_t* dst, uint8_t* src);        // copy 32 bytes in reverse order
 void      rev_copyl(uint8_t* dst, bytes_t src, int l); // copy bytes in reverse order
 uint32_t  le_to_int(uint8_t* data);

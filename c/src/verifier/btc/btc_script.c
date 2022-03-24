@@ -136,6 +136,10 @@ bool script_is_standard(btc_stype_t script_type) {
   return script_type != BTC_NON_STANDARD && script_type != BTC_UNSUPPORTED && script_type != BTC_UNKNOWN;
 }
 
+bool script_is_witness(btc_stype_t script_type) {
+  return (script_type == BTC_P2WSH || script_type == BTC_V0_P2WPKH);
+}
+
 btc_stype_t btc_string_to_script_type(const char* type) {
   btc_stype_t result = BTC_UNKNOWN;
   if (!strcmp(type, "p2pkh"))
