@@ -6,9 +6,6 @@
 #include "../../core/util/error.h"
 #include <stdint.h>
 
-#define MAX_BECH_32_STRING_LEN 90
-#define BECH32_CHARSET         "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-
 /** type of a token. */
 typedef enum {
   BTC_B_VERSION     = 0,
