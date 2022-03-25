@@ -2,6 +2,7 @@
 
 const yaml = require('yaml')
 const fs = require('fs')
+const { resolve } = require('path')
 const {
     getType,
     asArray,
@@ -19,6 +20,7 @@ const doc_dir = []
 const args_file = []
 const zsh_file = []
 const generators = []
+const rpc_dirs = {}
 let cmdName = 'in3'
 let sdkName = 'IN3'
 process.argv.slice(2).forEach(a => {
@@ -29,6 +31,14 @@ process.argv.slice(2).forEach(a => {
     else if (a.startsWith('--cmd=')) cmdName = a.substr(6)
     else if (a.startsWith('--sdk=')) sdkName = a.substr(6)
     else if (a.startsWith('--gen=')) generators.push(require(a.substr(6)))
+    else if (a.startsWith('--rpc_dirs=')) {
+        try {
+            fs.readFileSync(a.substr(11), 'utf8').split(';').forEach(_ => rpc_dirs[resolve(_)] = true)
+        }
+        catch (x) {
+            //            console.error(x)
+        }
+    }
     else throw new Error('Invalid argument : ' + a)
 })
 if (!src_dirs.length) src_dirs.push('../c/src')
@@ -38,7 +48,6 @@ let examples = {};
         examples = { ...examples, ...JSON.parse(fs.readFileSync(p + '/rpc_examples.json', 'utf-8')) }
     } catch (x) { }
 })
-
 
 //const doc_dir = process.argv[process.argv.length - 1]
 const main_conf = yaml.parse(fs.readFileSync(in3_core_dir + '/c/src/cmd/in3/in3.yml', 'utf-8'))
@@ -53,8 +62,10 @@ let docs = {}, config = {}, types = {}, testCases = {}
 
 
 function scan(dir) {
+    const is_valid = !!(Object.keys(rpc_dirs).length == 0 || rpc_dirs[resolve(dir)] || dir.endsWith('api_ext') || dir.endsWith('core/client'))
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
-        if (f.name == 'rpc.yml') {
+        if (f.name == 'rpc.yml' && !is_valid) console.error("SKIP" + dir + '/rpc.yml')
+        if (f.name == 'rpc.yml' && is_valid) {
             console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             if (ob.types) {
@@ -75,7 +86,7 @@ function scan(dir) {
                 lastAPI = k
             }
         }
-        else if (f.name == 'testCases.yml') {
+        else if (f.name == 'testCases.yml' && is_valid) {
             console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             for (const k of Object.keys(ob)) {
