@@ -1,4 +1,13 @@
 types:
+  eth_accesslist:
+    address: 
+      type: address
+      descr: the address of the contract
+    storageKeys:
+      array: true
+      type: bytes32
+      descr: list of storageKeys
+      
   eth_internal_tx:
     op:
       descr: type of transaction or opcode used to send it (CALL, DELEGATECALL, STATICCALL, CALLCODE, ..)
@@ -90,59 +99,6 @@ types:
       descr: the raw unsigned transaction to extract the hash for the signature
       type: bytes
       optional: true
-
-  keyparams:
-    version:
-      descr: the version
-      type: string
-    id:
-      descr: the id
-      type: string
-    address:
-      descr: the address
-      type: string
-    crypto:
-      descr: the cryptoparams
-      type: cryptoParams
-
-  cryptoParams:
-    ciphertext:
-      descr: the cipher text
-      type: string
-    cipherparams:
-      descr: the cipherparams
-      type: cipherParams
-    cipher:
-      descr: the cipher
-      type: string
-    kdf:
-      descr: the kdf
-      type: string
-    kdfparams:
-      descr: the kdfparams
-      type: kdfParams
-    mac:
-      descr: the mac
-      type: string
-
-  cipherParams:
-    iv:
-      descr: the iv
-      type: string
-
-  kdfParams:
-    dklen:
-      descr: the dklen
-      type: uint64
-    salt:
-      descr: the salt
-      type: string
-    c:
-      descr: the c
-      type: uint64
-    prf:
-      descr: the prf
-      type: string
 
 utils:
   descr: |

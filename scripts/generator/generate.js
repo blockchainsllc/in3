@@ -21,8 +21,10 @@ const args_file = []
 const zsh_file = []
 const generators = []
 const rpc_dirs = {}
+const apiConf = {}
 let cmdName = 'in3'
 let sdkName = 'IN3'
+let cmake_data = null
 process.argv.slice(2).forEach(a => {
     if (a.startsWith('--src=')) src_dirs.push(a.substr(6))
     else if (a.startsWith('--doc=')) doc_dir.push(a.substr(6))
@@ -31,13 +33,21 @@ process.argv.slice(2).forEach(a => {
     else if (a.startsWith('--cmd=')) cmdName = a.substr(6)
     else if (a.startsWith('--sdk=')) sdkName = a.substr(6)
     else if (a.startsWith('--gen=')) generators.push(require(a.substr(6)))
-    else if (a.startsWith('--rpc_dirs=')) {
+    else if (a.startsWith('--cmake=')) {
         try {
-            fs.readFileSync(a.substr(11), 'utf8').split(';').forEach(_ => rpc_dirs[resolve(_)] = true)
+            cmake_data = JSON.parse(fs.readFileSync(a.substr(8), 'utf8'))
+            apiConf.modules = {}
+            cmake_data.dirs.split(';').forEach(_ => rpc_dirs[resolve(_)] = true)
+            cmake_data.apis.split(';').forEach(_ => apiConf.modules[_] = true)
         }
         catch (x) {
-            //            console.error(x)
+            console.error(x)
         }
+    }
+    else if (a.startsWith('--api.')) {
+        const args = a.substring(6).split('=', 2);
+        if (!args.length == 2) throw new Error("Invalid api-config " + a);
+        apiConf[args[0]] = args[1]
     }
     else throw new Error('Invalid argument : ' + a)
 })
@@ -60,6 +70,12 @@ const bool_props = []
 
 let docs = {}, config = {}, types = {}, testCases = {}
 
+function check_depends(n) {
+    if (Array.isArray(n)) return check_depends(n[0])
+    return (n && n.depends && apiConf.modules)
+        ? !asArray(n.depends).find(_ => !apiConf.modules[_])
+        : true
+}
 
 function scan(dir) {
     const is_valid = !!(Object.keys(rpc_dirs).length == 0 || rpc_dirs[resolve(dir)] || dir.endsWith('api_ext') || dir.endsWith('core/client'))
@@ -76,6 +92,12 @@ function scan(dir) {
             for (const k of Object.keys(ob)) {
                 if (ob[k].config) config = { ...config, ...ob[k].config }
                 delete ob[k].config
+                for (const t of Object.keys(ob[k])) {
+                    if (!check_depends(ob[k][t])) {
+                        delete ob[k][t]
+                        console.error(`skipping ${k} :: ${t}`)
+                    }
+                }
                 if (!generators.length && ob[k].fields && lastAPI) {
                     delete ob[k].fields
                     for (const n of Object.keys(ob[k]).filter(_ => docs[lastAPI][_])) delete ob[k][n]
@@ -90,6 +112,12 @@ function scan(dir) {
             console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             for (const k of Object.keys(ob)) {
+                for (const t of Object.keys(ob[k])) {
+                    if (!check_depends(ob[k][t])) {
+                        delete ob[k][t]
+                        console.error(`skipping ${k} :: ${t}`)
+                    }
+                }
                 testCases[k] = { ...testCases[k], ...ob[k] }
             }
         }
@@ -216,6 +244,7 @@ rpc_doc.push('This section describes the behavior for each RPC-method supported 
 config_doc.push('# Configuration\n\n')
 config_doc.push('When creating a new Incubed Instance you can configure it. The Configuration depends on the registered plugins. This page describes the available configuration parameters.\n\n')
 let zsh_cmds = [], zsh_conf = []
+const sorted_rpcs = []
 for (const s of Object.keys(docs).sort()) {
     const rpcs = docs[s]
     const rdescr = rpcs.descr
@@ -327,9 +356,16 @@ for (const s of Object.keys(docs).sort()) {
     console.log('generate ' + s + '\n   ' + Object.keys(rpcs).join('\n   '))
 
     if (Object.values(rpcs).filter(_ => !_.skipApi).length)
-        generators.forEach(_ => _.generateAPI(s, rpcs, rdescr, types, testCases[s]))
-
+        sorted_rpcs.push({
+            api: s,
+            rpcs,
+            descr: rdescr,
+            testCases: testCases[s]
+        })
 }
+generators.forEach(_ => _.generateAPI && sorted_rpcs.forEach(api => _.generateAPI(api.api, api.rpcs, api.descr, types, api.testCases, apiConf)))
+generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs({ apis: sorted_rpcs, types, conf: apiConf }))
+
 
 handle_config(config, '')
 
