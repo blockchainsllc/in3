@@ -10,8 +10,8 @@ types:
 
   btc_value:
     address:
-      descr: a 25-byte btc address which should receive the specified value
-      type: bytes
+      descr: a btc address which should receive the specified value
+      type: string
     value:
       descr: the amount in satoshis the provided address should receive
       type: uint64

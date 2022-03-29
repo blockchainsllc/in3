@@ -3,6 +3,7 @@
 #include "../../third-party/bech32/segwit_addr.h"
 #include "btc_script.h"
 #include "btc_types.h"
+#include <string.h>
 
 static const char* btc_mainnet_hrp = "bc";
 
@@ -16,7 +17,6 @@ static uint8_t op_n_to_n(uint8_t op) {
 btc_address_prefix_t btc_script_type_to_prefix(btc_stype_t script_type) {
   switch (script_type) {
     case BTC_P2PK:
-      return BTC_P2PK_PREFIX;
     case BTC_P2PKH:
       return BTC_P2PKH_PREFIX;
     case BTC_P2SH:
@@ -24,6 +24,10 @@ btc_address_prefix_t btc_script_type_to_prefix(btc_stype_t script_type) {
     default:
       return BTC_INVALID_PREFIX;
   }
+}
+
+btc_address_t btc_addr(bytes_t as_bytes, char* encoded) {
+  return (btc_address_t){.as_bytes = as_bytes, .encoded = encoded};
 }
 
 int btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t prefix, btc_address_t* dst) {
@@ -39,12 +43,12 @@ int btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t
   btc_hash(bytes(tmp, 21), hash256_result);
   rev_copyl(checksum, bytes(hash256_result + 28, 4), 4);
 
-  memcpy(dst->as_bytes, tmp, 21);
-  memcpy(dst->as_bytes + (size_t) 21, checksum, 4);
+  memcpy(dst->as_bytes.data, tmp, 21);
+  memcpy(dst->as_bytes.data + (size_t) 21, checksum, 4);
+  dst->as_bytes.len = BTC_PK_ADDR_SIZE_BYTES;
 
   // calculate base58 address encoding
-  dst->encoded = _malloc(encode_size(ENC_BASE58, BTC_ADDRESS_SIZE_BYTES));
-  return encode(ENC_BASE58, bytes(dst->as_bytes, BTC_ADDRESS_SIZE_BYTES), dst->encoded);
+  return encode(ENC_BASE58, dst->as_bytes, dst->encoded);
 }
 
 int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_address_t* dst) {
@@ -55,10 +59,46 @@ int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_addr
   return btc_addr_from_pub_key_hash(pub_key_hash, prefix, dst);
 }
 
+btc_stype_t btc_get_addr_type(const char* address) {
+  if (address[0] == '1') {
+    return BTC_P2PKH;
+  }
+
+  if (address[0] == '3') {
+    return BTC_P2SH;
+  }
+
+  if (address[0] == 'b' && address[1] == 'c' && address[2] == '1' && address[3] == 'q') {
+    size_t addr_len = strlen(address);
+    if (addr_len == 42) return BTC_V0_P2WPKH;
+    if (addr_len == 62) return BTC_P2WSH;
+  }
+
+  return BTC_UNSUPPORTED;
+}
+
+int btc_decode_address(bytes_t* dst, const char* src) {
+  UNUSED_VAR(dst);
+  btc_stype_t addr_type = btc_get_addr_type(src);
+  switch (addr_type) {
+    case BTC_P2PKH:
+    case BTC_P2SH:
+      return decode(ENC_BASE58, src, strlen(src), dst->data);
+    case BTC_V0_P2WPKH:
+    case BTC_P2WSH: {
+      int ver;
+      int ret = segwit_addr_decode(&ver, dst->data, (size_t*) &dst->len, "bc", src);
+      return (ret - 1);
+    }
+    default:
+      return -1;
+  }
+}
+
 int btc_segwit_addr_from_pub_key_hash(ripemd160_t pub_key_hash, btc_address_t* dst) {
   if (!dst) return -1;
-  memzero(dst->as_bytes, BTC_ADDRESS_SIZE_BYTES);
-  dst->encoded = _malloc(MAX_BECH32_STRING_LEN + 1);
+  memzero(dst->as_bytes.data, BTC_MAX_ADDR_SIZE_BYTES);
+  dst->encoded = _malloc(BTC_MAX_ADDR_STRING_SIZE + 1);
   return segwit_addr_encode(dst->encoded, btc_mainnet_hrp, 0, pub_key_hash, 20);
 }
 
@@ -76,8 +116,8 @@ int btc_segwit_addr_from_witness_program(bytes_t witness_program, btc_address_t*
   uint8_t  witver    = op_n_to_n(witness_program.data[0]);
   uint8_t* hash_data = witness_program.data + 2; // witness programs have format: VERSION(1) | HASH_LEN(1) | HASH(20 or 32 bytes)
   uint8_t  hash_len  = witness_program.data[1];
-  dst->encoded       = _malloc(MAX_BECH32_STRING_LEN + 1);
+  dst->encoded       = _malloc(BTC_MAX_ADDR_STRING_SIZE + 1);
   int ret            = segwit_addr_encode(dst->encoded, btc_mainnet_hrp, witver, hash_data, hash_len);
-  memzero(dst->as_bytes, BTC_ADDRESS_SIZE_BYTES);
+  memzero(dst->as_bytes.data, BTC_MAX_ADDR_SIZE_BYTES);
   return ret;
 }

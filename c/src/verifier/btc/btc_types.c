@@ -236,6 +236,39 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   return IN3_OK;
 }
 
+in3_ret_t btc_parse_tx_ctx(bytes_t raw_tx, btc_tx_ctx_t* dst) {
+  if (!dst) return IN3_EINVAL;
+  btc_init_tx_ctx(dst);
+
+  uint32_t i;
+  uint8_t *start, *end;
+
+  // Fill tx
+  btc_parse_tx(raw_tx, &dst->tx);
+
+  // Fill inputs
+  dst->input_count = dst->tx.input_count;
+  dst->inputs      = _calloc(dst->input_count, sizeof(btc_tx_in_t));
+  start            = dst->tx.input.data;
+  end              = dst->tx.input.data + dst->tx.input.len;
+  for (i = 0; i < dst->tx.input_count; i++) {
+    start = btc_parse_tx_in(start, &dst->inputs[i], end);
+    if (!start || start > end) return IN3_EINVAL;
+  }
+
+  // Fill outputs
+  dst->output_count = dst->tx.output_count;
+  dst->outputs      = _calloc(dst->output_count, sizeof(btc_tx_out_t));
+  start             = dst->tx.output.data;
+  end               = dst->tx.output.data + dst->tx.output.len;
+  for (i = 0; i < dst->tx.input_count; i++) {
+    start = btc_parse_tx_out(start, &dst->outputs[i]);
+    if (!start || start > end) return IN3_EINVAL;
+  }
+
+  return IN3_OK;
+}
+
 uint32_t btc_get_raw_tx_size(const btc_tx_t* tx) {
   return (BTC_TX_VERSION_SIZE_BYTES +
           (2 * tx->flag) +
@@ -560,7 +593,7 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
 
     bytes_t  btc_addr = d_bytes(d_get(output_data, key("address")));
     uint64_t value    = d_get_long(output_data, key("value"));
-    if (btc_addr.len != 20) return req_set_error(req, "ERROR: one or more outputs have invalid address", IN3_EINVAL);
+    //if (btc_addr.len != 20) return req_set_error(req, "ERROR: one or more outputs have invalid address", IN3_EINVAL);
     if (value == 0) return req_set_error(req, "ERROR: output value cannot be zero", IN3_EINVAL);
 
     new_tx_out.value       = value;

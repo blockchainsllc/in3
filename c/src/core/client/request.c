@@ -693,6 +693,13 @@ in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path,
   return req_add_required(req, found);
 }
 
+in3_ret_t req_require_pub_key(in3_req_t* ctx, d_curve_type_t curve_type, bytes_t from, uint8_t* dst) {
+  in3_sign_public_key_ctx_t sc = {.account = from.data, .req = ctx, .curve_type = curve_type, .public_key = *dst};
+  in3_ret_t                 r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN_PUBLICKEY, &sc);
+  if (r != IN3_WAITING && r != IN3_OK) return req_set_error(ctx, "Signer not found", r);
+  return r;
+}
+
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
 #ifdef LOGGING
   (void) req_set_error(vc->req, msg, IN3_EUNKNOWN);
