@@ -183,7 +183,7 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
 /** gets the v-value from the chain_id */
 static inline uint64_t get_v(chain_id_t chain) {
   uint64_t v = chain;
-  if (v > 0xFF && v != 1337) v = 0; // this is only valid for ethereum chains.
+  if (v == CHAIN_ID_IPFS) v = 0; // this is only valid for ethereum chains.
   return v;
 }
 
