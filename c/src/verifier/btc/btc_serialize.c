@@ -6,6 +6,30 @@
 #include "btc_types.h"
 #include <string.h>
 
+void btc_hash(bytes_t data, bytes32_t dst) {
+  bytes32_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256_BTC);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
+  rev_copy(dst, tmp);
+}
+
+void btc_hash256(bytes_t data, bytes32_t dst) {
+  bytes32_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
+  memcpy(dst, tmp, 32);
+}
+
+void btc_hash160(bytes_t data, address_t dst) {
+  address_t    tmp;
+  in3_digest_t ctx = crypto_create_hash(DIGEST_RIPEMD_160);
+  crypto_update_hash(ctx, data);
+  crypto_finalize_hash(ctx, tmp);
+  memcpy(dst, tmp, 20);
+}
+
 static void rev_hex(char* hex, uint8_t* dst, int l) {
   int len = hex ? strlen(hex) : 0, i, j, out_len = (len + 1) >> 1;
   if (out_len > l)
@@ -34,30 +58,6 @@ bytes_t btc_block_get(bytes_t block, btc_block_field field) {
     case BTC_B_HEADER: return bytes(block.data, 80);
     default: return NULL_BYTES;
   }
-}
-
-void btc_hash(bytes_t data, bytes32_t dst) {
-  bytes32_t    tmp;
-  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256_BTC);
-  crypto_update_hash(ctx, data);
-  crypto_finalize_hash(ctx, tmp);
-  rev_copy(dst, tmp);
-}
-
-void btc_hash256(bytes_t data, bytes32_t dst) {
-  bytes32_t    tmp;
-  in3_digest_t ctx = crypto_create_hash(DIGEST_SHA256);
-  crypto_update_hash(ctx, data);
-  crypto_finalize_hash(ctx, tmp);
-  memcpy(dst, tmp, 32);
-}
-
-void btc_hash160(bytes_t data, address_t dst) {
-  address_t    tmp;
-  in3_digest_t ctx = crypto_create_hash(DIGEST_RIPEMD_160);
-  crypto_update_hash(ctx, data);
-  crypto_finalize_hash(ctx, tmp);
-  memcpy(dst, tmp, 20);
 }
 
 // copy 32 bytes in revers order

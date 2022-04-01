@@ -9,7 +9,7 @@
 
 coverage:
   stage: analysis
-  image: silkeh/clang:dev
+  image: docker.slock.it/build-images/cmake:clang14
   coverage: '/TOTAL.*\s+(\d+.\d+\%)\s*$/'
   extends: .only_full
   needs: []
@@ -22,13 +22,18 @@ coverage:
     - ../scripts/lcov_report.sh | xargs llvm-cov report
     - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
     - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
+    - lcov_cobertura ccov/all-merged/lcov.info -b $(dirname "$PWD") -o coverage.xml
+    - node -p "const fs=require('fs');fs.writeFileSync('coverage.xml',fs.readFileSync('coverage.xml','utf8').split('../../../../../../../../builds/in3/c/in3-core/').join(''),'utf8')"
   artifacts:
     paths:
       - cov_build/ccov/all-merged
+      - cov_build/coverage.xml
+    reports:
+      cobertura: cov_build/coverage.xml
 
 clangcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang13
+  image: docker.slock.it/build-images/cmake:clang14
   needs: []
   extends: .only_full
   allow_failure: false
@@ -37,8 +42,8 @@ clangcheck:
   script:
     - mkdir _build
     - cd _build
-    - scan-build-13 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-13 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make
+    - scan-build-14 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-14 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make
   artifacts:
     paths:
       - report
@@ -75,7 +80,7 @@ gcc10check:
 
 valgrind:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:valgrind
+  image: docker.slock.it/build-images/cmake:clang14
   extends: .only_full
   #  allow_failure: true
   needs: []
@@ -114,11 +119,11 @@ code_quality:
 format:
   stage: analysis
   needs: []
-  image: docker.slock.it/build-images/cmake:clang13
+  image: docker.slock.it/build-images/cmake:clang14
   tags:
     - short-jobs
   script:
-    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-13 -i
+    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-14 -i
     - git diff --patch --exit-code
 
 #cpd:

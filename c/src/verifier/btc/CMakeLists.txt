@@ -47,5 +47,6 @@ add_static_library(
     btc.c 
 
   DEPENDS 
-    core
+  bech32  
+  core
 )

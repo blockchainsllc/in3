@@ -1,0 +1,82 @@
+[
+  {
+    "descr": "Create p2pkh address from uncompressed pub key",
+    "request": {
+      "method": "createaddress",
+      "params": [
+        "043cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd092f56b5492adbfc570b15644c74cc8a4874ed20dfe47e5dce2e08601d6f11f5a4",
+        "p2pkh"
+      ]
+    },
+    "result": "19P1LctLQmH6tuHCRkv8QznNBGBvFCyKxi",
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": []
+  },
+  {
+    "descr": "Create p2pkh address from compressed pub key",
+    "request": {
+      "method": "createaddress",
+      "params": [
+        "023cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd09",
+        "p2pkh"
+      ]
+    },
+    "result": "16JrGhLx5bcBSA34kew9V6Mufa4aXhFe9X",
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": []
+  },
+  {
+    "descr": "Create p2sh address",
+    "request": {
+      "method": "createaddress",
+      "params": [
+        "00143a38d44d6a0c8d0bb84e0232cc632b7e48c72e0e",
+        "p2sh"
+      ]
+    },
+    "result": "34N3tf5m5rdNhW5zpTXNEJucHviFEa8KEq",
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": []
+  },
+  {
+    "descr": "Create p2wpkh address",
+    "request": {
+      "method": "createaddress",
+      "params": [
+        "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "p2wpkh"
+      ]
+    },
+    "result": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": []
+  },
+  {
+    "descr": "Create p2wsh address",
+    "request": {
+      "method": "createaddress",
+      "params": [
+        "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
+        "p2wsh"
+      ]
+    },
+    "result": "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3",
+    "config": {
+      "proof": "none",
+      "chainId": "btc"
+    },
+    "response": []
+  }
+]
