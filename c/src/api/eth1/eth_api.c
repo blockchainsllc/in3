@@ -59,7 +59,7 @@ static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
 }
 
 /** creates a uin256_t from a flexible byte */
-static uint256_t uint256_from_bytes(bytes_t bytes) {
+uint256_t uint256_from_bytes(bytes_t bytes) {
   uint256_t d = {0};
   copy_fixed(d.data, 32, bytes);
   return d;
