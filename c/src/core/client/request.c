@@ -614,6 +614,52 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_c
   return req_send_sign_request(ctx, digest_type, curve_type, pl_type, signature, raw_data, from, meta, cache_key);
 }
 
+in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path, char* payload, char* jwt, d_token_t** result, in3_req_t** child, uint32_t wait_in_ms) {
+  sb_t       rp    = {0};
+  in3_req_t* found = req;
+
+  // build payload
+  sb_printx(&rp, "{\"method\":\"in3_http\",\"params\":[\"%s\",\"%S%S\",%s,[", method, url, path ? path : "", payload ? payload : "null");
+  if (jwt) sb_printx(&rp, "\"Authorization: Bearer %S\"", jwt);
+  sb_add_chars(&rp, "]]");
+  if (wait_in_ms > 0) sb_printx(&rp, ", \"in3\": {\"wait\":%u}", wait_in_ms);
+  sb_add_chars(&rp, "}");
+
+  // look for the subrequest
+  for (; found; found = found->required) {
+    for (cache_entry_t* e = found->cache; e; e = e->next) {
+      if (e->props & CACHE_PROP_SRC_REQ && strcmp((char*) e->value.data, rp.data) == 0) break;
+    }
+  }
+
+  if (found) {
+    if (child) *child = found;
+    _free(rp.data);
+    switch (in3_req_state(found)) {
+      case REQ_ERROR:
+        return req_set_error(req, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
+      case REQ_SUCCESS:
+        *result = found->responses[0];
+        return *result ? IN3_OK : req_set_error(req, "error executing provider call", IN3_ERPC);
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+    }
+  }
+
+  in3_log_debug("http-request: %s\n", rp.data);
+  found = req_new(req->client, rp.data);
+  if (!found) {
+    _free(rp.data);
+    return req_set_error(req, "Invalid request!", IN3_ERPC);
+  }
+  if (child) *child = found;
+
+  in3_cache_add_ptr(&found->cache, rp.data)->props = CACHE_PROP_SRC_REQ;
+
+  return req_add_required(req, found);
+}
+
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
 #ifdef LOGGING
   (void) req_set_error(vc->req, msg, IN3_EUNKNOWN);

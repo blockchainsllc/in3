@@ -98,6 +98,26 @@ in3_ret_t req_handle_failable(
  */
 NONULL_FOR((1, 2, 3, 5))
 in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
+
+/**
+ * sends a subrequest as http-request.
+ * use it as
+ * TRY(send_http_request(...))
+ *
+ */
+NONULL_FOR((1, 2, 3, 7))
+in3_ret_t send_http_request(
+    in3_req_t*  req,       /**< [in] the request. */
+    char*       url,       /**< [in] the base url */
+    char*       method,    /**< [in] the HTTP-Method. */
+    char*       path,      /**< [in] the path which will be added to the url ( can be NULL). */
+    char*       payload,   /**< [in] the payload, which may be a json-formated string or NULL in case there is no payload. */
+    char*       jwt,       /**< [in] an optional jwt-token, which would be included */
+    d_token_t** result,    /**< [in] the pointer to the resulting token.This will be set to point to the result of the request. */
+    in3_req_t** sub_req,   /**< [in] pointer to a variable, which will be set to point to the newly created subrequest (in case you want to manually clean up), can be NULL, if not interessted */
+    uint32_t    wait_in_ms /**< [in] a time in ms wo wait before sending. This allows polling features */
+);
+
 /**
  * sends a subrequest, which will be identified by a hash from method and params, which allows even modification of the original request
  */
