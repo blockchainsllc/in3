@@ -1,0 +1,15 @@
+[
+  {
+    "descr": "in3_crypto_convert",
+    "request": {
+      "method": "in3_crypto_convert",
+      "params": [
+        "0xb838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9",
+        "pub_der"
+      ]
+    },
+    "result": "0x3056301006072a8648ce3d020106052b8104000a03420004b838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9",
+    "config": {},
+    "response": []
+  }
+]

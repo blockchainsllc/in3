@@ -302,3 +302,32 @@ account:
         - "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07"
         - "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
       response: true
+
+  in3_crypto_convert:
+    sync: true
+    descr: |
+      converts cyrptographic data based on the curve and type into a different form.
+    params:
+      data:
+        descr: the data to convert. The length and kind of data depends on the conversion type.
+        type: bytes
+      type:
+        type: string
+        descr: | 
+          the conversion type.
+          This Type may be prefixed with curvetype to be used (`ecdsa_` or `eddsa_`) , like `eddsa_pub32`.
+
+          The following types are supported:
+          - pub64 : converts a private key (32 bytes) to a public key (64 bytes)
+          - pub32 : converts a private key (32 bytes) to a public key (32 bytes)
+          - sig_der : converts a signature (65 bytes) to a DER-encoded signature
+          - pub_der : converts a public key (32 or 64 bytes) to a DER-encoded pubkey
+    result:
+      descr: the converted bytes.
+      type: bytes
+    example:
+      request: 
+        - "0xb838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9"
+        - "pub_der"
+      response: "0x3056301006072a8648ce3d020106052b8104000a03420004b838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9"
+          

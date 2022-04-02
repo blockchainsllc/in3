@@ -23,6 +23,7 @@ subcmds=(
     'in3_bip39_create: generates a mnemonic based on bip39 <seed>'
     'in3_bip39_decode: decodes a mnemonic and returns the seed as 64 bytes <mnemonic> <passphrase>'
     'in3_createKey: Generates 32 random bytes <seed>'
+    'in3_crypto_convert: converts cyrptographic data based on the curve and type into a different form <data> <type>'
     'in3_decryptKey: decrypts a JSON Keystore file as defined in the  <key> <passphrase>'
     'in3_ecrecover: extracts the public key and address from signature <msg> <sig> <sigtype>'
     'in3_ed25519_pk2pub: Generates the public key from a private key for ed25519 <pk>'

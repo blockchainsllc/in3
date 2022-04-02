@@ -169,6 +169,40 @@ static in3_ret_t in3_encode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type)
              : in3_rpc_handle_finish(ctx);
 }
 
+static in3_ret_t in3_crypto_convert(in3_rpc_handle_ctx_t* ctx) {
+  bytes_t data;
+  char*   type;
+  TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 0)
+  TRY_PARAM_GET_REQUIRED_STRING(type, ctx, 1)
+
+  in3_curve_type_t   curve = ECDSA_SECP256K1;
+  in3_convert_type_t ct    = CONV_PK32_TO_PUB64;
+  if (strncmp(type, "ecdsa_", 6) == 0) {
+    curve = ECDSA_SECP256K1;
+    type += 6;
+  }
+  else if (strncmp(type, "eddsa_", 6) == 0) {
+    curve = EDDSA_ED25519;
+    type += 6;
+  }
+
+  if (strcmp(type, "pub64") == 0)
+    ct = CONV_PK32_TO_PUB64;
+  else if (strcmp(type, "pub32") == 0)
+    ct = CONV_PK32_TO_PUB32;
+  else if (strcmp(type, "sig_der") == 0)
+    ct = CONV_SIG65_TO_DER;
+  else if (strcmp(type, "pub_der") == 0)
+    ct = CONV_PUB64_TO_DER;
+  else
+    return req_set_error(ctx->req, "Unknown convert type", IN3_EINVAL);
+
+  uint8_t buf[100]; // 100 bytes are enough, because even converting a signature to der will not take more.
+  int     buf_len;
+  TRY(crypto_convert(curve, ct, data, buf, &buf_len))
+  return in3_rpc_handle_with_bytes(ctx, bytes(buf, buf_len));
+}
+
 static in3_ret_t in3_decode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type) {
   char* txt;
   TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
@@ -273,6 +307,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_ed25519_sign", in3_ed25519_sign(ctx))
   TRY_RPC("in3_ed25519_pk2pub", in3_ed25519_pk2pub(ctx))
   TRY_RPC("in3_ed25519_verify", in3_ed25519_verify(ctx))
+#if !defined(RPC_ONLY) || defined(RPC_IN3_CONVERT)
+  TRY_RPC("in3_crypto_convert", in3_crypto_convert(ctx))
+#endif
   return IN3_EIGNORE;
 }
 
