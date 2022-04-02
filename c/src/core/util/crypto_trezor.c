@@ -139,7 +139,7 @@ static in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* p
   }
 }
 static in3_ret_t convert_to_der(in3_curve_type_t type, bytes_t src, uint8_t* dst, int* dst_len) {
-  bytes_t id        = NULL_BYTES;
+  bytes_t id;
   uint8_t prefix[2] = {0};
   switch (type) {
     case ECDSA_SECP256K1:
