@@ -69,6 +69,31 @@
     }                                                                                                                                                     \
   }
 
+/* fetches the parameter with the given index as bytes and stores it in the target, which must be a bytes_t variable*/
+#define TRY_PARAM_GET_UINT256(target, ctx, index)                                                                         \
+  {                                                                                                                       \
+    d_token_t* t = d_get_at(ctx->params, index);                                                                          \
+    if (d_type(t) == T_NULL)                                                                                              \
+      target = NULL_BYTES;                                                                                                \
+    else if (!d_is_bytes(t) && d_type(t) != T_INTEGER && !d_num_bytes(t).data)                                            \
+      return req_set_error(ctx->req, "Param at " #index " must be a numeric value!", IN3_EINVAL);                         \
+    else {                                                                                                                \
+      target = d_num_bytes(t);                                                                                            \
+      if (target.len > 32) return req_set_error(ctx->req, "Param at " #index " must have max 32 bytes long", IN3_EINVAL); \
+    }                                                                                                                     \
+  }
+
+#define TRY_PARAM_GET_REQUIRED_UINT256(target, ctx, index)                                                                \
+  {                                                                                                                       \
+    d_token_t* t = d_get_at(ctx->params, index);                                                                          \
+    if (d_type(t) == T_NULL || (!d_is_bytes(t) && d_type(t) != T_INTEGER && !d_num_bytes(t).data))                        \
+      return req_set_error(ctx->req, "Param at " #index " must be a numeric value!", IN3_EINVAL);                         \
+    else {                                                                                                                \
+      target = d_num_bytes(t);                                                                                            \
+      if (target.len > 32) return req_set_error(ctx->req, "Param at " #index " must have max 32 bytes long", IN3_EINVAL); \
+    }                                                                                                                     \
+  }
+
 /* fetches the required parameter with the given index as bytes and stores it in the target, which must be a bytes_t variable*/
 #define TRY_PARAM_GET_REQUIRED_BYTES(target, ctx, index, min_len, max_len)                                                                              \
   {                                                                                                                                                     \
@@ -121,6 +146,16 @@
     d_num_bytes(t);                                                                                \
     if (d_type(t) != T_INTEGER)                                                                    \
       return req_set_error(ctx->req, "Param at " #index " must be an integer value!", IN3_EINVAL); \
+    else                                                                                           \
+      target = d_int(t);                                                                           \
+  }
+
+/* fetches the required parameter with the given index as integer and stores it in the target, which must be a int or int32_t variable*/
+#define TRY_PARAM_GET_REQUIRED_BOOL(target, ctx, index)                                            \
+  {                                                                                                \
+    d_token_t* t = d_get_at(ctx->params, index);                                                   \
+    if (d_type(t) != T_BOOLEAN)                                                                    \
+      return req_set_error(ctx->req, "Param at " #index " must be an boolean value!", IN3_EINVAL); \
     else                                                                                           \
       target = d_int(t);                                                                           \
   }
