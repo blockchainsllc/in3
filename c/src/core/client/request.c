@@ -614,9 +614,16 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_c
   return req_send_sign_request(ctx, digest_type, curve_type, pl_type, signature, raw_data, from, meta, cache_key);
 }
 
+static d_token_t* find_req(in3_req_t* found, char* req) {
+  for (; found; found = found->required) {
+    for (cache_entry_t* e = found->cache; e; e = e->next) {
+      if (e->props & CACHE_PROP_SRC_REQ && strcmp((char*) e->value.data, req) == 0) return found;
+    }
+  }
+  return NULL;
+}
 in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path, char* payload, char* jwt, d_token_t** result, in3_req_t** child, uint32_t wait_in_ms) {
-  sb_t       rp    = {0};
-  in3_req_t* found = req;
+  sb_t rp = {0};
 
   // build payload
   sb_printx(&rp, "{\"method\":\"in3_http\",\"params\":[\"%s\",\"%S%S\",%s,[", method, url, path ? path : "", payload ? payload : "null");
@@ -626,12 +633,7 @@ in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path,
   sb_add_chars(&rp, "}");
 
   // look for the subrequest
-  for (; found; found = found->required) {
-    for (cache_entry_t* e = found->cache; e; e = e->next) {
-      if (e->props & CACHE_PROP_SRC_REQ && strcmp((char*) e->value.data, rp.data) == 0) break;
-    }
-  }
-
+  in3_req_t* found = find_req(req, rp.data);
   if (found) {
     if (child) *child = found;
     _free(rp.data);
