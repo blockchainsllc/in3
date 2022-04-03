@@ -47,7 +47,7 @@ const compliance_header = [
 
 const path = require('path');
 function comment(ind, str) {
-    return ind + '/**\n' + asArray(str).join('\n').split('\n').map(_ => ind + ' * ' + _ + '\n').join('') + ind + ' */'
+    return ind + '/**\n' + asArray(str).join('\n').trim().split('\n').map(_ => ind + ' * ' + _ + '\n').join('') + ind + ' */'
 }
 
 exports.updateConfig = function (pre, c, key, types) { }
