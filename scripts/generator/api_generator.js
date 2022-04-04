@@ -104,6 +104,20 @@ function getCType(def, name, index) {
                         : `TRY_PARAM_GET_REQUIRED_BYTES(${name}, ctx, ${index}, ${def.minLength || 0}, ${def.maxLength || 0})`,
                     code_pass: name
                 }
+        case 'address':
+            return def.array
+                ? {
+                    args: 'bool* ' + name + ', int ' + name + '_len',
+                    code_def: ''
+                }
+                : {
+                    args: 'uint8_t* ' + name,
+                    code_def: 'uint8_t* ' + name,
+                    code_read: def.optional
+                        ? `TRY_PARAM_GET_ADDRESS(${name}, ctx, ${index}, NULL)`
+                        : `TRY_PARAM_GET_REQUIRED_ADDRESS(${name}, ctx, ${index})`,
+                    code_pass: name
+                }
         case 'string':
             return def.array
                 ? {

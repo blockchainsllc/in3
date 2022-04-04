@@ -603,6 +603,19 @@ typedef struct {
   }
 
 /**
+ * sets the bytes as taken from the given property to the target and raises an error if the len does not fit.
+ */
+#define CNF_SET_BYTES_MALLOC(dst, token, property, l)               \
+  {                                                                 \
+    const bytes_t tmp = d_bytes(d_get(token, key(property)));       \
+    if (tmp.data) {                                                 \
+      if (tmp.len != l) CNF_ERROR(property " must be " #l " bytes") \
+      _free(dst);                                                   \
+      memcpy(dst = _malloc(l), tmp.data, l);                        \
+    }                                                               \
+  }
+
+/**
  * sets the string as taken from the given property to the target and raises an error if the len does not fit.
  */
 #define CNF_SET_STRING(dst, token, property)                                                        \

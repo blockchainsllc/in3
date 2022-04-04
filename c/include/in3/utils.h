@@ -276,7 +276,8 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
 /** sets an int at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
 #define ABI_UINT32(index, val) int_to_bytes(val, WORD_ADR(index, 4))
 /** sets an uint256 as bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
-#define ABI_UINT256(index, data, len) memcpy(WORD_ADR(index, len), data, len)
+#define ABI_UINT256(index, data, len) \
+  if (data) memcpy(WORD_ADR(index, len), data, len)
 /** writes the bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
 #define ABI_BYTES(index, bytes)                                         \
   {                                                                     \

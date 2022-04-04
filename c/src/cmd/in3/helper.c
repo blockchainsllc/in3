@@ -372,7 +372,7 @@ void display_result(char* method, char* result) {
   abi_sig_t* req = get_txdata()->abi_sig;
 
   // if the request was a eth_call, we decode the result
-  if (req) {
+  if (req && (strcmp(method, "call") == 0 || strcmp(method, "eth_call") == 0)) {
     int l = strlen(result) / 2 - 1;
     if (l) {
       char*       error = NULL;
@@ -426,7 +426,7 @@ static inline bool is_json(char* c) {
 }
 static inline bool needs_hex_number(char* arg, char* method) {
   // for eth, zksync (but not for eth_feeHistory)
-  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0) && strcmp(method, "eth_feeHistory") && is_convertable_number(arg);
+  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0 || strncmp(method, "defi_", 5) == 0) && strcmp(method, "eth_feeHistory") && is_convertable_number(arg);
 }
 
 void add_argument(char* arg, sb_t* args, in3_t* c, char* method) {
