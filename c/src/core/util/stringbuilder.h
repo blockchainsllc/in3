@@ -110,7 +110,8 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
  * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
  * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
  * %j - expects a d_token_t* and inserts the json-representation
- * %w - expects a bytes_t and inserts the decimal representation of bytes as bugendian (max 32 bytes)
+ * %w - expects a bytes_t and inserts the decimal representation of bytes  (max 32 bytes)
+ * %W- expects a dec_t and inserts the decimal representation of those bytes including the decimal (max 32 bytes)
  *
  */
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
@@ -136,6 +137,7 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
  * %j - expects a d_token_t* and inserts the json-representation
  * %w - expects a bytes_t and inserts the decimal representation of bytes as bugendian (max 32 bytes)
+ * %W- expects a dec_t and inserts the decimal representation of those bytes including the decimal (max 32 bytes)
  *
  */
 char* sprintx(const char* fmt, ...);

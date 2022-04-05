@@ -89,6 +89,39 @@ chain_id_t in3_chain_id(const in3_req_t* req) {
   }
   return req->client->chain.id;
 }
+in3_ret_t in3_resolve_chain_id(in3_req_t* req, chain_id_t* chain_id) {
+  // make sure, we have the correct chain_id
+  *chain_id = in3_chain_id(req);
+  if (*chain_id == CHAIN_ID_LOCAL) {
+    char cachekey[50];
+    sprintf(cachekey, "chain_id_%x", req->client->chain.version);
+    if (req->client->chain.id == CHAIN_ID_LOCAL) {
+      if (req->client->chain.version && !(req->client->chain.version & 0x80000000)) {
+        // we have a url-hash, which can lookup in the cache
+        in3_cache_ctx_t cache = {.content = NULL, .key = cachekey, .req = req};
+        in3_plugin_execute_first_or_none(req, PLGN_ACT_CACHE_GET, &cache);
+        if (cache.content && cache.content->len == 8) {
+          *chain_id                  = bytes_to_long(cache.content->data, 8);
+          req->client->chain.version = ((uint32_t) *chain_id) | 0x80000000;
+          return IN3_OK;
+        }
+      }
+    }
+
+    d_token_t* r = NULL;
+    TRY(req_send_sub_request(req, "eth_chainId", "", NULL, &r, NULL))
+    *chain_id = d_long(r);
+    if (req->client->chain.id == CHAIN_ID_LOCAL) {
+      uint8_t data[8];
+      bytes_t b = bytes(data, 8);
+      long_to_bytes(*chain_id, data);
+      in3_cache_ctx_t cache = {.content = &b, .key = cachekey, .req = req};
+      in3_plugin_execute_first_or_none(req, PLGN_ACT_CACHE_SET, &cache);
+      req->client->chain.version = ((uint32_t) *chain_id) | 0x80000000;
+    }
+  }
+  return IN3_OK;
+}
 
 in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id) {
   in3_chain_t* chain = &c->chain;

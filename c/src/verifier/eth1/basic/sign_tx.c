@@ -271,6 +271,7 @@ static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_
  */
 in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta) {
   eth_tx_data_t td = {0};
+  chain_id_t    chain_id;
 
   // read the values
   td.type                     = d_get_int(tx, d_get(tx, K_ETH_TX_TYPE) ? K_ETH_TX_TYPE : K_TYPE);
@@ -285,12 +286,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   td.max_priority_fee_per_gas = get(tx, K_MAX_PRIORITY_FEE_PER_GAS);
 
   // make sure, we have the correct chain_id
-  chain_id_t chain_id = in3_chain_id(ctx);
-  if (chain_id == CHAIN_ID_LOCAL) {
-    d_token_t* r = NULL;
-    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r, NULL))
-    chain_id = d_long(r);
-  }
+  TRY(in3_resolve_chain_id(ctx, &chain_id))
   TRY(get_from_address(tx, ctx, td.from))
 
   // write state?

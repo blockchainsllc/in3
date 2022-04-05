@@ -163,6 +163,9 @@ NONULL in3_req_t* in3_req_last_waiting(
 /** returns the chain id for the given reques*/
 NONULL chain_id_t in3_chain_id(const in3_req_t* req);
 
+/** returns the real chain_id supporting rpc-urls and sending a eth_chain_id request */
+NONULL in3_ret_t in3_resolve_chain_id(in3_req_t* req, chain_id_t* chain_id);
+
 /** returns the chain-definition for the given id (or creates it if it does not exists) */
 NONULL in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id);
 

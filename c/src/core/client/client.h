@@ -128,8 +128,8 @@ typedef struct in3_verified_hash {
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  uint8_t              version;         /**< version of the chain */
   chain_id_t           id;              /**< chain_id, which could be a free or based on the public ethereum networkId*/
+  uint32_t             version;         /**< version or a hash of the chain */
   in3_chain_type_t     type;            /**< chain-type */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   struct in3_chain*    next;            /**< next chain in case multiple chains are specified */
