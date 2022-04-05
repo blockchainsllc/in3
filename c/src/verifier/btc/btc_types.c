@@ -586,21 +586,39 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
   if (d_type(output_data) != T_ARRAY) return req_set_error(req, "ERROR: in btc_prepare_outputs: invalid output data format", IN3_EINVAL);
 
   uint32_t output_count = d_len(output_data);
+
   for (uint32_t i = 0; i < output_count; i++) {
-    btc_tx_out_t new_tx_out;
-    d_token_t*   output_item = d_get_at(output_data, i);
-    if (d_type(output_item) != T_OBJECT) return req_set_error(req, "ERROR: invalid output data format", IN3_EINVAL);
+    btc_tx_out_t tx_out;
+    btc_init_tx_out(&tx_out);
 
-    bytes_t  btc_addr = d_bytes(d_get(output_data, key("address")));
-    uint64_t value    = d_get_long(output_data, key("value"));
-    //if (btc_addr.len != 20) return req_set_error(req, "ERROR: one or more outputs have invalid address", IN3_EINVAL);
-    if (value == 0) return req_set_error(req, "ERROR: output value cannot be zero", IN3_EINVAL);
+    // Extract output value
+    uint64_t value = d_get_long(output_data, key("value"));
+    if (!value) return req_set_error(req, "ERROR: in btc_prepare_outputs: output value cannot e zero", IN3_EINVAL);
 
-    new_tx_out.value       = value;
-    new_tx_out.script.data = btc_build_locking_script(&btc_addr, BTC_P2PKH, NULL, 0);
-    new_tx_out.script.type = btc_get_script_type(&new_tx_out.script.data);
+    // alloc memory for address conversion into hex format
+    uint8_t       addr_bytes[BTC_MAX_ADDR_SIZE_BYTES];
+    btc_address_t addr = btc_addr(bytes(to_addr_bytes, BTC_MAX_ADDR_SIZE_BYTES), d_get_string(tx, K_TO));
 
-    TRY(btc_add_output_to_tx(req, tx_ctx, &new_tx_out))
+    // Verify address type
+    btc_stype_t addr_type = btc_get_addr_type(to_addr.encoded);
+
+    if (!script_is_standard(addr_type)) {
+      return req_set_error(req, "ERROR: btc_prepare_transaction: provided address has unsupported type", IN3_ENOTSUP);
+    }
+
+    // serialize address
+    if (btc_decode_address(&addr.as_bytes, addr.encoded)) {
+      return req_set_error(req, "ERROR: btc_prepare_transaction: btc address could not be decoded. Invalid format", IN3_EINVAL);
+    }
+
+    // Fill transaction output
+    // TODO: Implement possibility of creating 'relative locktime' transactions
+    tx_out.value       = tx_value;
+    tx_out.script.type = to_addr_type;
+    tx_out.script.data = btc_build_locking_script(&to_addr.as_bytes, to_addr_type, NULL, 0);
+
+    // Add output to transaction
+    TRY(btc_add_output_to_tx(req, &tx_ctx, &tx_out));
   }
   return IN3_OK;
 }
@@ -704,7 +722,6 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   return IN3_OK;
 }
 
-// TODO: Currently we are adding all utxo_inputs to the list of selected_utxos. Implement an algorithm to select only the necessary utxos for the transaction, given the outputs.
 in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_account, d_token_t* utxo_inputs) {
   if (!tx_ctx || !utxo_inputs) return req_set_error(req, "ERROR: in btc_prepare_utxos: transaction context cannot be null", IN3_EINVAL);
   if (d_type(utxo_inputs) != T_ARRAY) return req_set_error(req, "ERROR: in btc_prepare_utxos: invalid utxo data format", IN3_EINVAL);
@@ -714,16 +731,18 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pu
   tx_ctx->utxos       = _malloc(utxo_count * sizeof(btc_utxo_t));
 
   // Read and initialize each utxo we need for the transaction
-  // TODO: Only add the necessary utxos to transaction. Choose them based on set of outputs
   for (uint32_t i = 0; i < utxo_count; i++) {
     btc_utxo_t utxo;
-    d_token_t* utxo_input = d_get_at(utxo_inputs, i);
     btc_init_utxo(&utxo);
+
+    d_token_t* utxo_input = d_get_at(utxo_inputs, i);
     TRY_CATCH(btc_fill_utxo(&utxo, utxo_input), btc_free_utxo(&utxo));
+
     btc_stype_t script_type = utxo.tx_out.script.type;
     if (script_type == BTC_UNKNOWN || script_type == BTC_NON_STANDARD || script_type == BTC_UNSUPPORTED) {
       return req_set_error(req, "ERROR: in btc_prepare_utxos: utxo script type is non standard or unsupported", IN3_ENOTSUP);
     }
+
     // finally, add utxo to context
     tx_ctx->utxos[i] = utxo;
     tx_ctx->utxo_count++;
