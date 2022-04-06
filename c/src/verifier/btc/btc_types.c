@@ -592,12 +592,12 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
     btc_init_tx_out(&tx_out);
 
     // Extract output value
-    uint64_t value = d_get_long(output_data, key("value"));
+    uint64_t value = d_get_long(d_get_at(output_data, i), key("value"));
     if (!value) return req_set_error(req, "ERROR: in btc_prepare_outputs: output value cannot e zero", IN3_EINVAL);
 
     // alloc memory for address conversion into hex format
     uint8_t       addr_bytes[BTC_MAX_ADDR_SIZE_BYTES];
-    btc_address_t addr = btc_addr(bytes(addr_bytes, BTC_MAX_ADDR_SIZE_BYTES), d_get_string(output_data, key("address")));
+    btc_address_t addr = btc_addr(bytes(addr_bytes, BTC_MAX_ADDR_SIZE_BYTES), d_get_string(d_get_at(output_data, i), key("address")));
 
     // Verify address type
     btc_stype_t addr_type = btc_get_addr_type(addr.encoded);
