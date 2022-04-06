@@ -597,10 +597,10 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
 
     // alloc memory for address conversion into hex format
     uint8_t       addr_bytes[BTC_MAX_ADDR_SIZE_BYTES];
-    btc_address_t addr = btc_addr(bytes(to_addr_bytes, BTC_MAX_ADDR_SIZE_BYTES), d_get_string(tx, K_TO));
+    btc_address_t addr = btc_addr(bytes(addr_bytes, BTC_MAX_ADDR_SIZE_BYTES), d_get_string(output_data, key("address")));
 
     // Verify address type
-    btc_stype_t addr_type = btc_get_addr_type(to_addr.encoded);
+    btc_stype_t addr_type = btc_get_addr_type(addr.encoded);
 
     if (!script_is_standard(addr_type)) {
       return req_set_error(req, "ERROR: btc_prepare_transaction: provided address has unsupported type", IN3_ENOTSUP);
@@ -613,12 +613,12 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
 
     // Fill transaction output
     // TODO: Implement possibility of creating 'relative locktime' transactions
-    tx_out.value       = tx_value;
-    tx_out.script.type = to_addr_type;
-    tx_out.script.data = btc_build_locking_script(&to_addr.as_bytes, to_addr_type, NULL, 0);
+    tx_out.value       = value;
+    tx_out.script.type = addr_type;
+    tx_out.script.data = btc_build_locking_script(&addr.as_bytes, addr_type, NULL, 0);
 
     // Add output to transaction
-    TRY(btc_add_output_to_tx(req, &tx_ctx, &tx_out));
+    TRY(btc_add_output_to_tx(req, tx_ctx, &tx_out));
   }
   return IN3_OK;
 }
