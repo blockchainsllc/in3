@@ -291,19 +291,15 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
 
   // write state?
   if (meta) {
-    sb_add_rawbytes(meta, "\"input\":{\"to\":\"0x", td.to, 0);
-    sb_add_rawbytes(meta, "\",\"sender\":\"0x", bytes(td.from, 20), 0);
-    sb_add_rawbytes(meta, "\",\"value\":\"0x", td.value, 0);
-    sb_add_rawbytes(meta, "\",\"data\":\"0x", td.data, 0);
-    sb_add_rawbytes(meta, "\",\"gas\":\"0x", td.gas_limit, 0);
-    sb_add_rawbytes(meta, "\",\"gasPrice\":\"0x", td.gas_price, 0);
-    sb_add_rawbytes(meta, "\",\"nonce\":\"0x", td.nonce, 0);
-    sb_add_chars(meta, "\",\"eth_tx_type\":");
-    sb_add_int(meta, (int64_t) td.type);
-    if (td.max_fee_per_gas.data) sb_add_rawbytes(meta, "\",\"maxFeePerGas\":\"0x", td.max_fee_per_gas, -1);
-    if (td.max_priority_fee_per_gas.data) sb_add_rawbytes(meta, "\",\"maxPriorityFeePerGas\":\"0x", td.max_fee_per_gas, -1);
+    sb_printx(meta, "\"input\":{\"to\":\"%B\",\"sender\":\"%B\",\"value\":\"%V\"", td.to, bytes(td.from, 20), td.value);
+    sb_printx(meta, ",\"data\":\"%B\",\"gas\":\"%V\",\"gasPrice\":\"%V\"", td.data, td.gas_limit, td.gas_price);
+    sb_printx(meta, ",\"nonce\":\"%V\",\"eth_tx_type\":%u", td.nonce, td.type);
+
+    if (td.max_fee_per_gas.data) sb_printx(meta, ",\"maxFeePerGas\":\"%V\"", td.max_fee_per_gas);
+    if (td.max_priority_fee_per_gas.data) sb_printx(meta, ",\"maxPriorityFeePerGas\":\"%V\"", td.max_fee_per_gas);
+
     sb_add_json(meta, ",\"accessList\":", td.access_list);
-    sb_add_chars(meta, "\",\"layer\":\"l1\"");
+    sb_add_chars(meta, ",\"layer\":\"l1\"");
     sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));
     sb_add_json(meta, ",\"fn_args\":", d_get(tx, key("fn_args")));
     sb_add_json(meta, ",\"token\":", d_get(tx, key("token")));
