@@ -1153,6 +1153,11 @@ d_token_t* token_from_bytes(bytes_t b, d_token_t* d) {
   }
   return d;
 }
+d_token_t* token_from_int(uint32_t val, d_token_t* d) {
+  d->data = NULL;
+  d->len  = T_INTEGER << 28 | val;
+  return d;
+}
 
 bytes_t d_num_bytes(d_token_t* f) {
   bytes_t bb = d_bytes(f);
