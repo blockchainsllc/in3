@@ -324,6 +324,15 @@ function align_vars(items, ind, del = ' ') {
 }
 
 function generate_rpc(path, api_name, rpcs, descr, types) {
+    let use_conf = false
+    try {
+        use_conf = fs.readFileSync(`${path}/${api_name}.h`, 'utf8').indexOf(`${api_name}_config_t`) >= 0;
+    } catch (x) { }
+
+    const rpc_exec = []
+    const type_defs = {}
+    const conf = use_conf ? `${api_name}_config_t* conf, ` : ''
+
     const header = [
         compliance_header.join('\n') + '\n',
         comment('', "@file\n" + descr),
@@ -336,16 +345,16 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         '#include "../../in3/c/src/core/client/client.h"',
         '#include "../../in3/c/src/core/client/plugin.h"',
 
-        `#include "${api_name}.h"\n`,
+        use_conf ? `#include "${api_name}.h"\n` : '',
 
         comment('', `handles the rpc commands for the ${api_name} modules.`),
-        `in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx); \n`
+        `in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx); \n`
     ]
 
     const impl = [
         compliance_header.join('\n') + '\n',
         `#include "${api_name}_rpc.h"`,
-        `#include "${api_name}.h"\n`,
+        use_conf ? `#include "${api_name}.h"\n` : '',
 
         '#include "../../in3/c/src/core/client/keys.h"',
         '#include "../../in3/c/src/core/client/plugin.h"',
@@ -355,11 +364,10 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         '#include "../../in3/c/src/core/util/mem.h"',
         '#include "../../in3/c/src/core/util/utils.h"\n',
     ]
-
-    const rpc_exec = []
-    const type_defs = {}
     const impl_converter_pos = impl.length
     const header_converter_pos = header.findIndex(_ => _ == `#include "${api_name}.h"\n`) + 1
+
+
 
     Object.keys(rpcs).filter(_ => _ != 'fields' && !_.startsWith('_')).forEach(rpc_name => {
         const r = rpcs[rpc_name];
@@ -385,14 +393,14 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
             header.push(comment('', r.descr))
             if (params.length) impl.push(comment('', r.descr))
         }
-        header.push(`in3_ret_t ${rpc_name}(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''}); \n`)
+        header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''}); \n`)
         if (params.length) {
-            impl.push(`static in3_ret_t handle_${rpc_name}(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx) {`)
+            impl.push(`static in3_ret_t handle_${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
             align_vars(code.pre, '  ').forEach(_ => impl.push(_))
             align_vars(code.set, '  ', '=').forEach(_ => impl.push(_))
             impl.push('')
             code.read.forEach(_ => impl.push(_))
-            impl.push(`\n  return ${rpc_name}(conf, ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
+            impl.push(`\n  return ${rpc_name}(${use_conf ? 'conf, ' : ''}ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
             impl.push('}\n')
         }
         rpc_exec.push(`#if !defined(RPC_ONLY) || defined(RPC_${rpc_name.toUpperCase()})`)
@@ -413,7 +421,7 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
     fs.writeFileSync(path + `/${api_name}_rpc.h`, header.join('\n'), 'utf8')
 
     impl.push(comment('', 'handle rpc-requests and delegate execution'));
-    impl.push(`in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+    impl.push(`in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx) {
             `);
     impl.push(`  if (strncmp(ctx->method, "${api_name}_", ${api_name.length + 1})) return IN3_EIGNORE; \n`)
     rpc_exec.forEach(_ => impl.push(_))
