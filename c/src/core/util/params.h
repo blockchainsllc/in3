@@ -285,4 +285,18 @@
       return req_set_error(ctx->req, "Param at " #index " must be a valid array!", IN3_EINVAL); \
   }
 
+#define TRY_PARAM_CONVERT_REQUIRED_OBJECT(dst, ctx, index, fn) \
+  {                                                            \
+    d_token_t* ob;                                             \
+    TRY_PARAM_GET_REQUIRED_OBJECT(ob, ctx, index)              \
+    TRY(fn(ctx->req, ob, &dst))                                \
+  }
+
+#define TRY_PARAM_CONVERT_OBJECT(dst, ctx, index, fn) \
+  {                                                   \
+    d_token_t* ob;                                    \
+    TRY_PARAM_GET_OBJECT(ob, ctx, index)              \
+    if (ob) TRY(fn(ctx->req, ob, &dst))               \
+  }
+
 #endif

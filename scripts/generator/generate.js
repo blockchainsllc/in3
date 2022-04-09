@@ -83,6 +83,7 @@ function scan(dir) {
         if (f.name == 'rpc.yml' && !is_valid) console.error("SKIP" + dir + '/rpc.yml')
         if (f.name == 'rpc.yml' && is_valid) {
             console.error('parse ' + dir + '/' + f.name)
+            const fullpath = resolve(dir).trim()
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             if (ob.types) {
                 types = { ...types, ...ob.types }
@@ -98,6 +99,7 @@ function scan(dir) {
                         console.error(`skipping ${k} :: ${t}`)
                     }
                 }
+                if (ob[k]._generate_rpc) Object.keys(ob[k]).filter(_ => !_.startsWith('_')).forEach(_ => ob[k][_]._src = fullpath)
                 if (!generators.length && ob[k].fields && lastAPI) {
                     delete ob[k].fields
                     for (const n of Object.keys(ob[k]).filter(_ => docs[lastAPI][_])) delete ob[k][n]
