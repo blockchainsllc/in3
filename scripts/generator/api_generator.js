@@ -56,131 +56,289 @@ exports.generate_config = function () { }
 
 exports.mergeExamples = function (all) { return all }
 
-function getCType(def, name, index) {
-    let c = ''
-    switch (def.type) {
-        case 'bool': return def.array
+function getBool(def, name, index) {
+    return def.array
+        ? {
+            args: 'bool* ' + name + ', int ' + name + '_len',
+            code_def: ''
+        }
+        : {
+            args: 'bool ' + name,
+            code_def: 'bool ' + name,
+            code_read: def.optional
+                ? `TRY_PARAM_GET_BOOL(${name}, ctx, ${index}, ${def.default || 'false'})`
+                : `TRY_PARAM_GET_REQUIRED_BOOL(${name}, ctx, ${index})`,
+            code_pass: name
+        }
+}
+function getUint(def, name, index) {
+    const len = parseInt(def.type.substring(def.type.startsWith('uint') ? 4 : 3) || "256")
+    if (len < 33)
+        return def.array
             ? {
                 args: 'bool* ' + name + ', int ' + name + '_len',
                 code_def: ''
             }
             : {
-                args: 'bool ' + name,
-                code_def: 'bool ' + name,
+                args: def.type + '_t ' + name,
+                code_def: 'int32_t ' + name,
                 code_read: def.optional
-                    ? `TRY_PARAM_GET_BOOL(${name}, ctx, ${index}, ${def.default || 'false'})`
-                    : `TRY_PARAM_GET_REQUIRED_BOOL(${name}, ctx, ${index})`,
+                    ? `TRY_PARAM_GET_INT(${name}, ctx,${index}, ${def.default || 0})`
+                    : `TRY_PARAM_GET_REQUIRED_INT(${name}, ctx, ${index})`,
+                code_pass: (def.type == 'uint32' ? '(uint32_t)' : '') + ' ' + name
+            }
+    else if (len < 65)
+        return def.array
+            ? {
+                args: 'bool* ' + name + ', int ' + name + '_len',
+                code_def: ''
+            }
+            : {
+                args: 'uint64_t ' + name,
+                code_def: 'uint64_t ' + name,
+                code_read: def.optional
+                    ? `TRY_PARAM_GET_LONG(${name}, ctx, ${index}, ${def.default || 0})`
+                    : `TRY_PARAM_GET_REQUIRED_LONG(${name}, ctx, ${index})`,
                 code_pass: name
             }
-        case 'uint':
-        case 'uint128':
-        case 'int128':
-        case 'uint256':
-        case 'int256':
-            return def.array
-                ? {
-                    args: 'bool* ' + name + ', int ' + name + '_len',
-                    code_def: ''
-                }
-                : {
-                    args: 'bytes_t ' + name,
-                    code_def: 'bytes_t ' + name,
-                    code_read: def.optional
-                        ? `TRY_PARAM_GET_UINT256(${name}, ctx, ${index})`
-                        : `TRY_PARAM_GET_REQUIRED_UINT256(${name}, ctx, ${index})`,
-                    code_pass: name
-                }
-        case 'bytes':
-            return def.array
-                ? {
-                    args: 'bool* ' + name + ', int ' + name + '_len',
-                    code_def: ''
-                }
-                : {
-                    args: 'bytes_t ' + name,
-                    code_def: 'bytes_t ' + name,
-                    code_read: def.optional
-                        ? `TRY_PARAM_GET_BYTES(${name}, ctx, ${index}, ${def.minLength || 0}, ${def.maxLength || 0})`
-                        : `TRY_PARAM_GET_REQUIRED_BYTES(${name}, ctx, ${index}, ${def.minLength || 0}, ${def.maxLength || 0})`,
-                    code_pass: name
-                }
-        case 'address':
-            return def.array
-                ? {
-                    args: 'bool* ' + name + ', int ' + name + '_len',
-                    code_def: ''
-                }
-                : {
-                    args: 'uint8_t* ' + name,
-                    code_def: 'uint8_t* ' + name,
-                    code_read: def.optional
-                        ? `TRY_PARAM_GET_ADDRESS(${name}, ctx, ${index}, NULL)`
-                        : `TRY_PARAM_GET_REQUIRED_ADDRESS(${name}, ctx, ${index})`,
-                    code_pass: name
-                }
-        case 'string':
-            return def.array
-                ? {
-                    args: 'bool* ' + name + ', int ' + name + '_len',
-                    code_def: ''
-                }
-                : {
-                    args: 'char* ' + name,
-                    code_def: 'char* ' + name,
-                    code_read: def.optional
-                        ? `TRY_PARAM_GET_STRING(${name}, ctx, ${index}, ${def.default ? '"' + def.default + '"' : ''})`
-                        : `TRY_PARAM_GET_REQUIRED_STRING(${name}, ctx, ${index})`,
-                    code_pass: name
-                }
-        case 'int32':
-        case 'uint32':
-            return def.array
-                ? {
-                    args: 'bool* ' + name + ', int ' + name + '_len',
-                    code_def: ''
-                }
-                : {
-                    args: def.type + '_t ' + name,
-                    code_def: 'int32_t ' + name,
-                    code_read: def.optional
-                        ? `TRY_PARAM_GET_INT(${name}, ctx,${index}, ${def.default || 0})`
-                        : `TRY_PARAM_GET_REQUIRED_INT(${name}, ctx, ${index})`,
-                    code_pass: (def.type == 'uint32' ? '(uint32_t)' : '') + ' ' + name
-                }
-        case 'uint64':
-            return def.array
-                ? {
-                    args: 'bool* ' + name + ', int ' + name + '_len',
-                    code_def: ''
-                }
-                : {
-                    args: 'uint64_t ' + name,
-                    code_def: 'uint64_t ' + name,
-                    code_read: def.optional
-                        ? `TRY_PARAM_GET_LONG(${name}, ctx, ${index}, ${def.default || 0})`
-                        : `TRY_PARAM_GET_REQUIRED_LONG(${name}, ctx, ${index})`,
-                    code_pass: name
-                }
-        default:
-            return {
-                args: 'd_token_t* ' + name,
-                code_def: 'd_token_t* ' + name,
+    else
+        return def.array
+            ? {
+                args: 'bool* ' + name + ', int ' + name + '_len',
+                code_def: ''
+            }
+            : {
+                args: 'bytes_t ' + name,
+                code_def: 'bytes_t ' + name,
                 code_read: def.optional
-                    ? `TRY_PARAM_GET_OBJECT( ${name}, ctx, ${index})`
-                    : `TRY_PARAM_GET_REQUIRED_OBJECT( ${name}, ctx, ${index})`,
+                    ? `TRY_PARAM_GET_UINT256(${name}, ctx, ${index})`
+                    : `TRY_PARAM_GET_REQUIRED_UINT256(${name}, ctx, ${index})`,
                 code_pass: name
             }
+}
+function getBytes(def, name, index) {
+    const len = parseInt(def.type.substring(5) || "0")
+    return def.array
+        ? {
+            args: 'bool* ' + name + ', int ' + name + '_len',
+            code_def: ''
+        }
+        : {
+            args: 'bytes_t ' + name,
+            code_def: 'bytes_t ' + name,
+            code_read: def.optional
+                ? `TRY_PARAM_GET_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`
+                : `TRY_PARAM_GET_REQUIRED_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`,
+            code_pass: name
+        }
+}
+function getAddress(def, name, index) {
+    return def.array
+        ? {
+            args: 'bool* ' + name + ', int ' + name + '_len',
+            code_def: ''
+        }
+        : {
+            args: 'uint8_t* ' + name,
+            code_def: 'uint8_t* ' + name,
+            code_read: def.optional
+                ? `TRY_PARAM_GET_ADDRESS(${name}, ctx, ${index}, NULL)`
+                : `TRY_PARAM_GET_REQUIRED_ADDRESS(${name}, ctx, ${index})`,
+            code_pass: name
+        }
+}
 
+function get_key_hash(name) {
+    let val = 0
+    for (let l = 0; l < name.length; l++)
+        val ^= (name.charCodeAt(l) | val << 7) & 0xFFFF
+    return '0x' + val.toString(16)
+}
+
+function getString(def, name, index) {
+    return def.array
+        ? {
+            args: 'bool* ' + name + ', int ' + name + '_len',
+            code_def: ''
+        }
+        : {
+            args: 'char* ' + name,
+            code_def: 'char* ' + name,
+            code_read: def.optional
+                ? `TRY_PARAM_GET_STRING(${name}, ctx, ${index}, ${def.default ? '"' + def.default + '"' : ''})`
+                : `TRY_PARAM_GET_REQUIRED_STRING(${name}, ctx, ${index})`,
+            code_pass: name
+        }
+}
+function get_type_name(name) {
+    let r = name[0].toLowerCase()
+    for (let i = 1; i < name.length; i++) {
+        if (name[i] >= 'A' && name[i] <= 'Z' && !(name[i - 1] >= 'A' && name[i - 1] <= 'Z') && name[i - 1] != '_') r += '_'
+        r += name[i].toLowerCase()
+    }
+    return r
+}
+
+function defineType(type_name, type, types, api, type_defs, descr, init) {
+    const def = {
+        header: '/** ' + descr + ' */\ntypedef struct {\n',
+        impl: `static in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val) {\n` +
+            '  if (d_type(ob) != T_OBJECT) return req_set_error(r, "Invalid object", IN3_EINVAL);\n' +
+            '  for (d_iterator_t iter = d_iter(ob); iter.left; d_iter_next(&iter)) {\n' +
+            '    switch (d_get_key(iter.token)) {\n'
+    }
+    let required = ''
+    let simple_typename = type_name.substring(api.length + 1, type_name.length - 2)
+    let struct_vars = []
+    // TODO handle default-values
+    Object.keys(type).forEach(prop => {
+        def.impl += `      case ${get_key_hash(prop)}: // ${prop}\n`
+        const pt = type[prop]
+        const prop_name = get_type_name(prop)
+        const descr = (pt.descr || prop).split('\n').join(' ')
+        let is_ob = false
+        let req = ''
+        if (typeof (pt.type) === 'string') {
+            if (pt.type.startsWith("uint") || pt.type.startsWith('int')) {
+                const signed = pt.type.startsWith('int')
+                const len = parseInt(pt.type.substring(signed ? 3 : 4) || "256")
+                if (len < 33) {
+                    struct_vars.push(`  ${signed ? 'int32_t' : 'uint32_t'} ${prop_name}; // ${descr}`)
+                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a numeric value!", IN3_EINVAL);\n`
+                    if (signed)
+                        def.impl += `        val->${prop_name} = d_int(iter.token);\n`
+                    else
+                        def.impl += `        val->${prop_name} = (uint32_t) d_long(iter.token);\n`
+                }
+                else if (len < 65) {
+                    struct_vars.push(`  ${signed ? 'int64_t' : 'uint64_t'} ${prop_name}; // ${descr}`)
+                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a numeric value!", IN3_EINVAL);\n`
+                    def.impl += `        val->${prop_name} = d_long(iter.token);\n`
+                }
+                else {
+                    struct_vars.push(`  bytes_t ${prop_name}; // ${descr}`)
+                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a numeric value!", IN3_EINVAL);\n`
+                    def.impl += `        val->${prop_name} = d_num_bytes(iter.token);\n`
+                }
+                req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
+            }
+            else if (pt.type.startsWith("bytes")) {
+                const len = parseInt(pt.type.substring(5) || "0")
+                struct_vars.push(`  bytes_t ${prop_name}; // ${descr}`)
+                if (pt.encoding)
+                    def.impl += `        val->${prop_name} = d_bytes_enc(iter.token, ENC_${pt.encoding.toUpperCase()});\n`
+                else
+                    def.impl += `        val->${prop_name} = d_bytes(iter.token);\n`
+                def.impl += `        if (!val->${prop_name}.data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a bytes value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                if (len)
+                    def.impl += `        if (val->${prop_name}.len != ${len}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be exactly ${len} bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                req = `!val->${prop_name}.data`
+            }
+            else if (pt.type == 'address') {
+                struct_vars.push(`  uint8_t* ${prop_name}; // ${descr}`)
+                def.impl += `        if (d_bytes(iter.token).len != 20) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid address with 20 bytes!", IN3_EINVAL);\n`
+                def.impl += `        val->${prop_name} = d_bytes(iter.token).data;\n`
+                req = `!val->${prop_name}`
+            }
+            else if (pt.type == 'bool') {
+                struct_vars.push(`  bool ${prop_name}; // ${descr}`)
+                def.impl += `        if (d_type(iter.token) != T_BOOLEAN) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a boolean value!", IN3_EINVAL);\n`
+                def.impl += `        val->${prop_name} = d_int(iter.token);\n`
+                req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
+            }
+            else if (pt.type == 'string') {
+                struct_vars.push(`  char* ${prop_name}; // ${descr}`)
+                def.impl += `        val->${prop_name} = d_string(iter.token);\n`
+                def.impl += `        if (!val->${prop_name}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a string value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                req = `!val->${prop_name}`
+            }
+            else is_ob = true
+        } else
+            is_ob = true
+
+        if (is_ob) {
+            let ob_name = pt.typeName | pt.type
+            if (typeof (ob_name) != 'string') ob_name = prop
+            ob_name = api + '_' + get_type_name(ob_name) + '_t'
+            defineType(ob_name, getType(pt.type, types), types, api, type_defs, prop, { ...init, name: init.name + '_' + prop_name })
+
+            if (pt.optional) {
+                struct_vars.push(`  ${ob_name}* ${prop_name}; // ${descr}`)
+                required += `  if (d_type(d_get(ob, key("${prop}"))) == T_NULL) val->${prop_name} = NULL;\n`
+                def.impl += `        if (d_type(iter.token) != T_NULL && ${convert_fn_name(api, ob_name)}(r, iter.token, val->${prop_name})) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid ${ob_name}!", IN3_EINVAL);\n`
+                init.vars.push(`${ob_name} ${init.name}_${prop_name}`)
+                init.set.push(`${init.name}.${prop_name} =  &${init.name}_${prop_name}`)
+            }
+            else {
+                struct_vars.push(`  ${ob_name} ${prop_name}; // ${descr}`)
+                def.impl += `        if (${convert_fn_name(api, ob_name)}(r, iter.token, &val->${prop_name})) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid ${ob_name}!", IN3_EINVAL);\n`
+                req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
+            }
+        }
+        def.impl += `        break;\n`
+        if (!pt.optional && req) required += `  if (${req}) return req_set_error(r, "Property ${prop} in ${simple_typename} is missing but required!", IN3_EINVAL);\n`
+    })
+
+    def.header += align_vars(align_vars(struct_vars, '', ' '), '  ', '//').join('\n') + '\n'
+
+    def.impl += `      default: return req_throw_unknown_prop(r, ob, iter.token, "${simple_typename}");\n`
+    def.impl += '    }\n  }\n'
+    def.impl += required
+    def.impl += '  return IN3_OK;\n'
+    def.impl += '}'
+    def.header += `} ${type_name};`
+    type_defs[type_name] = def
+
+}
+
+function convert_fn_name(api, type_name) {
+    const c = type_name.substring(api.length + 1)
+    return 'json_to_' + c.substring(0, c.length - 2);
+}
+
+function getObject(def, name, index, types, api) {
+    let ob_name = def.typeName || def.type
+    if (typeof (ob_name) != 'string') ob_name = name
+    ob_name = api + '_' + get_type_name(ob_name) + '_t'
+    const type_defs = {}
+    let init = { name, vars: [], set: [] }
+    defineType(ob_name, getType(def.type, types), types, api, type_defs, ob_name, init)
+
+    return {
+        type_defs,
+        args: ob_name + '* ' + name,
+        code_def: ob_name + ' ' + name + init.vars.map(_ => ';' + _).join(''),
+        code_set: init.set.join('\n  '),
+        code_read: def.optional
+            ? `TRY_PARAM_CONVERT_OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`
+            : `TRY_PARAM_CONVERT_REQUIRED_OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`,
+        code_pass: def.optional
+            ? `d_type(d_get_at(ctx -> params, ${index})) == T_NULL ? NULL : &${name} `
+            : '&' + name
+    }
+
+}
+
+function getCType(def, name, index, types, api) {
+    let c = ''
+    if (typeof (def.type) != 'string') return getObject(def, name, index, types, api)
+    if (def.type.startsWith("uint") || def.type.startsWith('int')) return getUint(def, name, index)
+    if (def.type.startsWith("bytes")) return getBytes(def, name, index)
+    switch (def.type) {
+        case 'bool': return getBool(def, name, index)
+        case 'address': return getAddress(def, name, index)
+        case 'string': return getString(def, name, index)
+        default: return getObject(def, name, index, types, api)
     }
 }
 
-function align_vars(items, ind) {
-    let maxl = items.reduce((p, v) => Math.max(p, (v.trim().split(' ', 1)[0] || '').length), 0)
+function align_vars(items, ind, del = ' ') {
+    let maxl = items.reduce((p, v) => Math.max(p, (v.trim().split(del, 1)[0] || '').length), 0)
     return items.map(_ => _.trim()).map(_ => {
-        let type = _.split(' ', 1)[0] || ''
-        const rest = _.substring(type.length).trim()
+        let type = _.split(del, 1)[0] || ''
+        const rest = _.substring(type.length + del.length).trim()
         while (type.length < maxl) type += ' '
-        return ind + type + ' ' + rest
+        return ind + type + del + (del.trim().length ? ' ' : '') + rest
     })
 }
 
@@ -200,7 +358,7 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         `#include "${api_name}.h"\n`,
 
         comment('', `handles the rpc commands for the ${api_name} modules.`),
-        `in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx);\n`
+        `in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t * ctx); \n`
     ]
 
     const impl = [
@@ -218,40 +376,53 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
     ]
 
     const rpc_exec = []
+    const type_defs = {}
+    const impl_converter_pos = impl.length
+    const header_converter_pos = header.findIndex(_ => _ == `#include "${api_name}.h"\n`) + 1
 
     Object.keys(rpcs).filter(_ => _ != 'fields' && !_.startsWith('_')).forEach(rpc_name => {
         const r = rpcs[rpc_name];
-
-
         const params = []
         const code = {
             pre: [],
             read: [],
-            pass: []
+            pass: [],
+            set: []
         }
         Object.keys(r.params || {}).forEach((p, i) => {
-            const t = getCType(r.params[p], p, i)
+            const t = getCType(r.params[p], p, i, types, api_name)
             params.push(t.args)
-            code.pre.push('  ' + t.code_def + ';')
+            t.code_def.split(';').forEach(_ => code.pre.push('  ' + _.trim() + ';'))
             code.read.push('  ' + t.code_read)
             code.pass.push(t.code_pass)
+            asArray(t.code_set).forEach(_ => code.set.push('  ' + _.trim() + ';'))
+            if (t.type_defs)
+                Object.keys(t.type_defs).forEach(_ => type_defs[_] = t.type_defs[_])
         })
+        code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "${rpc_name} only accepts ${params.length} arguments."); `)
         if (r.descr) {
             header.push(comment('', r.descr))
             if (params.length) impl.push(comment('', r.descr))
         }
-        header.push(`in3_ret_t ${rpc_name}(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''});\n`)
+        header.push(`in3_ret_t ${rpc_name}(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''}); \n`)
         if (params.length) {
             impl.push(`static in3_ret_t handle_${rpc_name}(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx) {`)
             align_vars(code.pre, '  ').forEach(_ => impl.push(_))
+            align_vars(code.set, '  ', '=').forEach(_ => impl.push(_))
+            impl.push('')
             code.read.forEach(_ => impl.push(_))
-            impl.push(`  return ${rpc_name}(conf, ctx${params.length ? ', ' + code.pass.join(', ') : ''});`)
+            impl.push(`\n  return ${rpc_name}(conf, ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
             impl.push('}\n')
         }
         rpc_exec.push(`#if !defined(RPC_ONLY) || defined(RPC_${rpc_name.toUpperCase()})`)
         rpc_exec.push(`  TRY_RPC("${rpc_name}", ${params.length ? 'handle_' : ''}${rpc_name}(conf, ctx))`)
         rpc_exec.push('#endif\n')
     })
+
+    if (Object.keys(type_defs).length) {
+        header.splice(header_converter_pos, 0, Object.values(type_defs).map(_ => _.header).join('\n\n'))
+        impl.splice(impl_converter_pos, 0, Object.values(type_defs).map(_ => _.impl).join('\n\n') + '\n')
+    }
 
     header.push('#ifdef __cplusplus')
     header.push('}')
@@ -261,10 +432,11 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
     fs.writeFileSync(path + `/${api_name}_rpc.h`, header.join('\n'), 'utf8')
 
     impl.push(comment('', 'handle rpc-requests and delegate execution'));
-    impl.push(`in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx) {`);
-    impl.push(`  if (strncmp(ctx->method, "${api_name}_", ${api_name.length + 1})) return IN3_EIGNORE;\n`)
+    impl.push(`in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
+            `);
+    impl.push(`  if (strncmp(ctx->method, "${api_name}_", ${api_name.length + 1})) return IN3_EIGNORE; \n`)
     rpc_exec.forEach(_ => impl.push(_))
-    impl.push(`  return req_set_error(ctx->req, "unknown ${api_name} method", IN3_EUNKNOWN);`)
+    impl.push(`  return req_set_error(ctx->req, "unknown ${api_name} method", IN3_EUNKNOWN); `)
     impl.push('}')
 
     fs.writeFileSync(path + `/${api_name}_rpc.c`, impl.join('\n'), 'utf8')
@@ -276,15 +448,30 @@ exports.generateAPI = function (api_name, rpcs, descr, types, testCases) {
     const imports = {}
     if (api_name === 'utils') api_name = 'util'
 
-    if (rpcs._generate_rpc) generate_rpc(rpcs._generate_rpc, api_name, rpcs, descr, types)
-
-
     // checking for testcases
     if (testCases)
 
         // iterating through all testcases
         Object.keys(testCases).forEach(tc => createTestCaseFunction(tc, testCases[tc], api_name, rpcs[tc]))
 
+}
+
+exports.generateAllAPIs = function ({ apis, types, conf }) {
+    const all = {}
+    apis.forEach(api => {
+        Object.keys(api.rpcs).forEach(rpc => {
+            const src = api.rpcs[rpc]._src
+            if (src) {
+                const nrpc = all[src] || (all[src] = {})
+                nrpc[rpc] = api.rpcs[rpc]
+            }
+        })
+    })
+    Object.keys(all).forEach(path => {
+        const p = path.split('/')
+        const api = p[p.length - 1].trim()
+        generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', types)
+    })
 }
 
 function createTest(descr, method, tests, tc) {
