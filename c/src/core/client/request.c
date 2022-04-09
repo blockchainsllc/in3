@@ -704,3 +704,12 @@ in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
 #endif
   return IN3_EUNKNOWN;
 }
+
+in3_ret_t req_throw_unknown_prop(in3_req_t* r, d_token_t* ob, d_token_t* prop, char* ob_name) {
+  char* missing = d_get_property_name(ob, d_get_key(prop));
+  char* m       = missing ? sprintx("The property '%s' does not exist in %s", missing, ob_name) : sprintx("Unknown property for the the type %s", ob_name);
+  req_set_error(r, m, IN3_EINVAL);
+  _free(missing);
+  _free(m);
+  return IN3_EINVAL;
+}
