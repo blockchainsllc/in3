@@ -57,95 +57,65 @@ exports.generate_config = function () { }
 exports.mergeExamples = function (all) { return all }
 
 function getBool(def, name, index) {
-    return def.array
-        ? {
-            args: 'bool* ' + name + ', int ' + name + '_len',
-            code_def: ''
-        }
-        : {
-            args: 'bool ' + name,
-            code_def: 'bool ' + name,
-            code_read: def.optional
-                ? `TRY_PARAM_GET_BOOL(${name}, ctx, ${index}, ${def.default || 'false'})`
-                : `TRY_PARAM_GET_REQUIRED_BOOL(${name}, ctx, ${index})`,
-            code_pass: name
-        }
+    return {
+        args: 'bool ' + name,
+        code_def: 'bool ' + name,
+        code_read: def.optional
+            ? `TRY_PARAM_GET_BOOL(${name}, ctx, ${index}, ${def.default || 'false'})`
+            : `TRY_PARAM_GET_REQUIRED_BOOL(${name}, ctx, ${index})`,
+        code_pass: name
+    }
 }
 function getUint(def, name, index) {
     const len = parseInt(def.type.substring(def.type.startsWith('uint') ? 4 : 3) || "256")
     if (len < 33)
-        return def.array
-            ? {
-                args: 'bool* ' + name + ', int ' + name + '_len',
-                code_def: ''
-            }
-            : {
-                args: def.type + '_t ' + name,
-                code_def: 'int32_t ' + name,
-                code_read: def.optional
-                    ? `TRY_PARAM_GET_INT(${name}, ctx,${index}, ${def.default || 0})`
-                    : `TRY_PARAM_GET_REQUIRED_INT(${name}, ctx, ${index})`,
-                code_pass: (def.type == 'uint32' ? '(uint32_t)' : '') + ' ' + name
-            }
-    else if (len < 65)
-        return def.array
-            ? {
-                args: 'bool* ' + name + ', int ' + name + '_len',
-                code_def: ''
-            }
-            : {
-                args: 'uint64_t ' + name,
-                code_def: 'uint64_t ' + name,
-                code_read: def.optional
-                    ? `TRY_PARAM_GET_LONG(${name}, ctx, ${index}, ${def.default || 0})`
-                    : `TRY_PARAM_GET_REQUIRED_LONG(${name}, ctx, ${index})`,
-                code_pass: name
-            }
-    else
-        return def.array
-            ? {
-                args: 'bool* ' + name + ', int ' + name + '_len',
-                code_def: ''
-            }
-            : {
-                args: 'bytes_t ' + name,
-                code_def: 'bytes_t ' + name,
-                code_read: def.optional
-                    ? `TRY_PARAM_GET_UINT256(${name}, ctx, ${index})`
-                    : `TRY_PARAM_GET_REQUIRED_UINT256(${name}, ctx, ${index})`,
-                code_pass: name
-            }
-}
-function getBytes(def, name, index) {
-    const len = parseInt(def.type.substring(5) || "0")
-    return def.array
-        ? {
-            args: 'bool* ' + name + ', int ' + name + '_len',
-            code_def: ''
+        return {
+            args: def.type + '_t ' + name,
+            code_def: 'int32_t ' + name,
+            code_read: def.optional
+                ? `TRY_PARAM_GET_INT(${name}, ctx,${index}, ${def.default || 0})`
+                : `TRY_PARAM_GET_REQUIRED_INT(${name}, ctx, ${index})`,
+            code_pass: (def.type == 'uint32' ? '(uint32_t)' : '') + ' ' + name
         }
-        : {
+    else if (len < 65)
+        return {
+            args: 'uint64_t ' + name,
+            code_def: 'uint64_t ' + name,
+            code_read: def.optional
+                ? `TRY_PARAM_GET_LONG(${name}, ctx, ${index}, ${def.default || 0})`
+                : `TRY_PARAM_GET_REQUIRED_LONG(${name}, ctx, ${index})`,
+            code_pass: name
+        }
+    else
+        return {
             args: 'bytes_t ' + name,
             code_def: 'bytes_t ' + name,
             code_read: def.optional
-                ? `TRY_PARAM_GET_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`
-                : `TRY_PARAM_GET_REQUIRED_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`,
+                ? `TRY_PARAM_GET_UINT256(${name}, ctx, ${index})`
+                : `TRY_PARAM_GET_REQUIRED_UINT256(${name}, ctx, ${index})`,
             code_pass: name
         }
 }
+function getBytes(def, name, index) {
+    const len = parseInt(def.type.substring(5) || "0")
+    return {
+        args: 'bytes_t ' + name,
+        code_def: 'bytes_t ' + name,
+        code_read: def.optional
+            ? `TRY_PARAM_GET_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`
+            : `TRY_PARAM_GET_REQUIRED_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`,
+        code_pass: name
+    }
+}
 function getAddress(def, name, index) {
-    return def.array
-        ? {
-            args: 'bool* ' + name + ', int ' + name + '_len',
-            code_def: ''
-        }
-        : {
-            args: 'uint8_t* ' + name,
-            code_def: 'uint8_t* ' + name,
-            code_read: def.optional
-                ? `TRY_PARAM_GET_ADDRESS(${name}, ctx, ${index}, NULL)`
-                : `TRY_PARAM_GET_REQUIRED_ADDRESS(${name}, ctx, ${index})`,
-            code_pass: name
-        }
+    return {
+        args: 'uint8_t* ' + name,
+        code_def: 'uint8_t* ' + name,
+        code_read: def.optional
+            ? `TRY_PARAM_GET_ADDRESS(${name}, ctx, ${index}, NULL)`
+            : `TRY_PARAM_GET_REQUIRED_ADDRESS(${name}, ctx, ${index})`,
+        code_pass: name
+    }
 }
 
 function get_key_hash(name) {
@@ -156,19 +126,14 @@ function get_key_hash(name) {
 }
 
 function getString(def, name, index) {
-    return def.array
-        ? {
-            args: 'bool* ' + name + ', int ' + name + '_len',
-            code_def: ''
-        }
-        : {
-            args: 'char* ' + name,
-            code_def: 'char* ' + name,
-            code_read: def.optional
-                ? `TRY_PARAM_GET_STRING(${name}, ctx, ${index}, ${def.default ? '"' + def.default + '"' : ''})`
-                : `TRY_PARAM_GET_REQUIRED_STRING(${name}, ctx, ${index})`,
-            code_pass: name
-        }
+    return {
+        args: 'char* ' + name,
+        code_def: 'char* ' + name,
+        code_read: def.optional
+            ? `TRY_PARAM_GET_STRING(${name}, ctx, ${index}, ${def.default ? '"' + def.default + '"' : ''})`
+            : `TRY_PARAM_GET_REQUIRED_STRING(${name}, ctx, ${index})`,
+        code_pass: name
+    }
 }
 function get_type_name(name) {
     let r = name[0].toLowerCase()
@@ -198,7 +163,13 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
         const descr = (pt.descr || prop).split('\n').join(' ')
         let is_ob = false
         let req = ''
-        if (typeof (pt.type) === 'string') {
+        if (pt.array) {
+            struct_vars.push(`  d_token_t* ${prop_name}; // ${descr}`)
+            def.impl += `        if (d_type(iter.token) != T_ARRAY) return req_set_error(r, "Property ${prop} in ${simple_typename} must be an array", IN3_EINVAL);\n`
+            def.impl += `        val->${prop_name} = iter.token;\n`
+            req = `!val->${prop_name}`
+        }
+        else if (typeof (pt.type) === 'string') {
             if (pt.type.startsWith("uint") || pt.type.startsWith('int')) {
                 const signed = pt.type.startsWith('int')
                 const len = parseInt(pt.type.substring(signed ? 3 : 4) || "256")
@@ -309,18 +280,28 @@ function getObject(def, name, index, types, api) {
         args: ob_name + '* ' + name,
         code_def: ob_name + ' ' + name + init.vars.map(_ => ';' + _).join(''),
         code_set: init.set.join('\n  '),
-        code_read: def.optional
-            ? `TRY_PARAM_CONVERT_OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`
-            : `TRY_PARAM_CONVERT_REQUIRED_OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`,
+        code_read: `TRY_PARAM_CONVERT_${def.optional ? '' : 'REQUIRED_'}OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`,
         code_pass: def.optional
-            ? `d_type(d_get_at(ctx -> params, ${index})) == T_NULL ? NULL : &${name} `
+            ? `d_type(d_get_at(ctx->params, ${index})) == T_NULL ? NULL : &${name} `
             : '&' + name
     }
 
 }
 
+function getArray(def, name, index) {
+    return {
+        args: 'd_token_t* ' + name,
+        code_def: 'd_token_t* ' + name,
+        code_read: def.optional
+            ? `TRY_PARAM_GET_ARRAY(${name}, ctx, ${index})`
+            : `TRY_PARAM_GET_REQUIRED_ARRAY(${name}, ctx, ${index})`,
+        code_pass: name
+    }
+}
+
 function getCType(def, name, index, types, api) {
     let c = ''
+    if (def.array) return getArray(def, name, index)
     if (typeof (def.type) != 'string') return getObject(def, name, index, types, api)
     if (def.type.startsWith("uint") || def.type.startsWith('int')) return getUint(def, name, index)
     if (def.type.startsWith("bytes")) return getBytes(def, name, index)
@@ -358,7 +339,7 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         `#include "${api_name}.h"\n`,
 
         comment('', `handles the rpc commands for the ${api_name} modules.`),
-        `in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t * ctx); \n`
+        `in3_ret_t ${api_name}_rpc(${api_name}_config_t* conf, in3_rpc_handle_ctx_t* ctx); \n`
     ]
 
     const impl = [
@@ -395,7 +376,7 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
             t.code_def.split(';').forEach(_ => code.pre.push('  ' + _.trim() + ';'))
             code.read.push('  ' + t.code_read)
             code.pass.push(t.code_pass)
-            asArray(t.code_set).forEach(_ => code.set.push('  ' + _.trim() + ';'))
+            if (t.code_set) asArray(t.code_set).forEach(_ => code.set.push('  ' + _.trim() + ';'))
             if (t.type_defs)
                 Object.keys(t.type_defs).forEach(_ => type_defs[_] = t.type_defs[_])
         })
@@ -420,7 +401,7 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
     })
 
     if (Object.keys(type_defs).length) {
-        header.splice(header_converter_pos, 0, Object.values(type_defs).map(_ => _.header).join('\n\n'))
+        header.splice(header_converter_pos, 0, Object.values(type_defs).map(_ => _.header).join('\n\n') + '\n')
         impl.splice(impl_converter_pos, 0, Object.values(type_defs).map(_ => _.impl).join('\n\n') + '\n')
     }
 
