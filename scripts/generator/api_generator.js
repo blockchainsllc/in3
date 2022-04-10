@@ -75,7 +75,8 @@ function getUint(def, name, index) {
             code_read: def.optional
                 ? `TRY_PARAM_GET_INT(${name}, ctx,${index}, ${def.default || 0})`
                 : `TRY_PARAM_GET_REQUIRED_INT(${name}, ctx, ${index})`,
-            code_pass: (def.type == 'uint32' ? '(uint32_t)' : '') + ' ' + name
+            code_pass: (def.type == 'uint32' ? '(uint32_t)' : '') + ' ' + name,
+            validate: validate(def, name, 'ctx->req', name)
         }
     else if (len < 65)
         return {
@@ -84,7 +85,8 @@ function getUint(def, name, index) {
             code_read: def.optional
                 ? `TRY_PARAM_GET_LONG(${name}, ctx, ${index}, ${def.default || 0})`
                 : `TRY_PARAM_GET_REQUIRED_LONG(${name}, ctx, ${index})`,
-            code_pass: name
+            code_pass: name,
+            validate: validate(def, name, 'ctx->req', name)
         }
     else
         return {
@@ -93,7 +95,8 @@ function getUint(def, name, index) {
             code_read: def.optional
                 ? `TRY_PARAM_GET_UINT256(${name}, ctx, ${index})`
                 : `TRY_PARAM_GET_REQUIRED_UINT256(${name}, ctx, ${index})`,
-            code_pass: name
+            code_pass: name,
+            validate: validate(def, name, 'ctx->req', name)
         }
 }
 function getBytes(def, name, index) {
@@ -104,7 +107,8 @@ function getBytes(def, name, index) {
         code_read: def.optional
             ? `TRY_PARAM_GET_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`
             : `TRY_PARAM_GET_REQUIRED_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`,
-        code_pass: name
+        code_pass: name,
+        validate: validate(def, name, 'ctx->req', name)
     }
 }
 function getAddress(def, name, index) {
@@ -114,7 +118,8 @@ function getAddress(def, name, index) {
         code_read: def.optional
             ? `TRY_PARAM_GET_ADDRESS(${name}, ctx, ${index}, NULL)`
             : `TRY_PARAM_GET_REQUIRED_ADDRESS(${name}, ctx, ${index})`,
-        code_pass: name
+        code_pass: name,
+        validate: validate(def, name, 'ctx->req', name)
     }
 }
 
@@ -132,7 +137,8 @@ function getString(def, name, index) {
         code_read: def.optional
             ? `TRY_PARAM_GET_STRING(${name}, ctx, ${index}, ${def.default ? '"' + def.default + '"' : 'NULL'})`
             : `TRY_PARAM_GET_REQUIRED_STRING(${name}, ctx, ${index})`,
-        code_pass: name
+        code_pass: name,
+        validate: validate(def, name, 'ctx->req', name)
     }
 }
 function get_type_name(name) {
@@ -245,7 +251,7 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
                 struct_vars.push(`  ${ob_name}* ${prop_name}; // ${descr}`)
                 required += `  if (d_type(d_get(ob, key("${prop}"))) == T_NULL) val->${prop_name} = NULL;\n`
                 def.impl += `        if (d_type(iter.token) != T_NULL && ${convert_fn_name(api, ob_name)}(r, iter.token, val->${prop_name})) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid ${ob_name}!", IN3_EINVAL);\n`
-                init.vars.push(`${ob_name} ${vname}_${prop_name}`)
+                init.vars.push(`${ob_name} ${vname}_${prop_name} = {0}`)
                 init.set.push(`${init.name}${prop_name} =  &${vname}_${prop_name}`)
             }
             else {
@@ -254,6 +260,8 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
                 req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
             }
         }
+        const val = validate(pt, `val->${prop_name}`, 'r', prop)
+        val.check.forEach(_ => def.impl += '        ' + _ + '\n')
         def.impl += `        break;\n`
         if (!pt.optional && req) required += `  if (${req}) return req_set_error(r, "Property ${prop} in ${simple_typename} is missing but required!", IN3_EINVAL);\n`
     })
@@ -275,6 +283,56 @@ function convert_fn_name(api, type_name) {
     return 'json_to_' + c.substring(0, c.length - 2);
 }
 
+function validate(def, val, req, propname) {
+    const res = []
+
+    if (def.enum) {
+        const vals = Array.isArray(def.enum) ? def.enum : Object.keys(def.enum)
+        res.push('if (' + val + ' && ' + vals.map(_ => `strcmp(${val}, "${_}")`).join(' && ') + ')')
+        res.push('  return req_set_error(' + req + ', "' + propname + ' must be one of ' + vals.join(', ') + '", IN3_EINVAL);')
+    }
+
+    if (def.validate) def = def.validate
+    asArray(def.code).forEach(_ => res.push(_.split('$val').join(val)))
+
+    if (def.array) {
+        if (def.min)
+            res.push(`if (${def.optional ? val + ' && ' : ''}d_len(${val}) < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min} items long", IN3_EINVAL);`)
+        if (def.max)
+            res.push(`if (${def.optional ? val + ' && ' : ''}d_len(${val}) > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max} items long", IN3_EINVAL);`)
+    }
+    else if (def.type == 'bytes') {
+        if (def.min)
+            res.push(`if (${def.optional ? val + '.data && ' : ''}${val}.len < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min} bytes long", IN3_EINVAL);`)
+        if (def.max)
+            res.push(`if (${def.optional ? val + '.data && ' : ''}${val}.len > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max} bytes long", IN3_EINVAL);`)
+    }
+    else if (def.type == 'string') {
+        if (def.min)
+            res.push(`if (${def.optional ? val + ' && ' : ''}strlen(${val}) < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min} characters long", IN3_EINVAL);`)
+        if (def.max)
+            res.push(`if (${def.optional ? val + ' && ' : ''}strlen(${val}) > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max} characters long", IN3_EINVAL);`)
+    }
+    else if (def.type == 'uint32' || def.type == 'uint64') {
+        if (def.min)
+            res.push(`if (${val} < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min}", IN3_EINVAL);`)
+        if (def.max)
+            res.push(`if (${val} > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max}", IN3_EINVAL);`)
+    }
+
+    if (def.type) {
+        switch (def.type) {
+            case 'url':
+                res.push(`if (${def.optional ? val + ' && (' : ''}!strchr(${val},':') || !strchr(${val},'/')${def.optional ? ')' : ''}) return req_set_error(${req}, "${propname} must be a valid url", IN3_EINVAL);`)
+                break
+        }
+    }
+
+
+
+    return { check: res, constants: {} }
+}
+
 function getObject(def, name, index, types, api) {
     let ob_name = def.typeName || def.type
     if (typeof (ob_name) != 'string') ob_name = name
@@ -286,7 +344,7 @@ function getObject(def, name, index, types, api) {
     return {
         type_defs,
         args: ob_name + '* ' + name,
-        code_def: ob_name + ' ' + name + init.vars.map(_ => ';' + _).join(''),
+        code_def: ob_name + ' ' + name + ' = {0}' + init.vars.map(_ => ';' + _).join(''),
         code_set: init.set.join(';\n  '),
         code_read: `TRY_PARAM_CONVERT_${def.optional ? '' : 'REQUIRED_'}OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`,
         code_pass: def.optional
@@ -303,7 +361,8 @@ function getArray(def, name, index) {
         code_read: def.optional
             ? `TRY_PARAM_GET_ARRAY(${name}, ctx, ${index})`
             : `TRY_PARAM_GET_REQUIRED_ARRAY(${name}, ctx, ${index})`,
-        code_pass: name
+        code_pass: name,
+        validate: validate(def, name, 'ctx->req', name)
     }
 }
 
@@ -325,13 +384,16 @@ function align_vars(src_items, ind, del = ' ', reverse) {
     let items = []
     asArray(src_items).forEach(s => s.split('\n').forEach(_ => items.push(_)))
     if (reverse) items.reverse()
+    const none = items.filter(_ => _.indexOf(del) == -1)
+    items = items.filter(_ => _.indexOf(del) >= 0)
+
     let maxl = items.reduce((p, v) => Math.max(p, (v.trim().split(del, 1)[0] || '').length), 0)
-    return items.map(_ => _.trim()).map(_ => {
+    return [...none.map(_ => ind + _.trim()), ...items.map(_ => _.trim()).map(_ => {
         let type = _.split(del, 1)[0] || ''
         const rest = _.substring(type.length + del.length).trim()
         while (type.length < maxl) type += ' '
         return ind + type + del + (del.trim().length ? ' ' : '') + rest
-    })
+    })]
 }
 
 function generate_rpc(path, api_name, rpcs, descr, types) {
@@ -387,7 +449,8 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
             pre: [],
             read: [],
             pass: [],
-            set: []
+            set: [],
+            checks: []
         }
         Object.keys(r.params || {}).forEach((p, i) => {
             const t = getCType(r.params[p], p, i, types, api_name)
@@ -398,6 +461,8 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
             if (t.code_set) asArray(t.code_set).forEach(_ => code.set.push('  ' + _.trim() + ';'))
             if (t.type_defs)
                 Object.keys(t.type_defs).forEach(_ => type_defs[_] = t.type_defs[_])
+            if (t.validate && t.validate.check)
+                t.validate.check.forEach(_ => code.checks.push(_))
         })
         code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "${rpc_name} only accepts ${params.length} arguments."); `)
         if (r.descr) {
@@ -407,10 +472,15 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''}); \n`)
         if (params.length) {
             impl.push(`static in3_ret_t handle_${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
-            align_vars(code.pre, '  ').forEach(_ => impl.push(_))
+            align_vars(align_vars(code.pre, '  '), '  ', '=').forEach(_ => impl.push(_))
+            if (code.set.length) impl.push('')
             align_vars(code.set, '  ', '=', true).forEach(_ => impl.push(_))
             impl.push('')
             code.read.forEach(_ => impl.push(_))
+            if (code.checks.length) {
+                impl.push('')
+                code.checks.forEach(_ => impl.push('  ' + _))
+            }
             impl.push(`\n  return ${rpc_name}(${use_conf ? 'conf, ' : ''}ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
             impl.push('}\n')
         }
