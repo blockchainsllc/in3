@@ -130,7 +130,7 @@ function getString(def, name, index) {
         args: 'char* ' + name,
         code_def: 'char* ' + name,
         code_read: def.optional
-            ? `TRY_PARAM_GET_STRING(${name}, ctx, ${index}, ${def.default ? '"' + def.default + '"' : ''})`
+            ? `TRY_PARAM_GET_STRING(${name}, ctx, ${index}, ${def.default ? '"' + def.default + '"' : 'NULL'})`
             : `TRY_PARAM_GET_REQUIRED_STRING(${name}, ctx, ${index})`,
         code_pass: name
     }
@@ -141,7 +141,11 @@ function get_type_name(name) {
         if (name[i] >= 'A' && name[i] <= 'Z' && !(name[i - 1] >= 'A' && name[i - 1] <= 'Z') && name[i - 1] != '_') r += '_'
         r += name[i].toLowerCase()
     }
-    return r
+    switch (r) {
+        case 'unsigned': return 'unsigned_raw';
+        case 'signed': return 'signed_raw';
+        default: return r
+    }
 }
 
 function defineType(type_name, type, types, api, type_defs, descr, init) {
@@ -149,12 +153,15 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
         header: '/** ' + descr + ' */\ntypedef struct {\n',
         impl: `static in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val) {\n` +
             '  if (d_type(ob) != T_OBJECT) return req_set_error(r, "Invalid object", IN3_EINVAL);\n' +
+            '  val->json = ob;\n' +
             '  for (d_iterator_t iter = d_iter(ob); iter.left; d_iter_next(&iter)) {\n' +
             '    switch (d_get_key(iter.token)) {\n'
     }
     let required = ''
     let simple_typename = type_name.substring(api.length + 1, type_name.length - 2)
-    let struct_vars = []
+    let struct_vars = [
+        '  d_token_t* json; // json-token'
+    ]
     // TODO handle default-values
     Object.keys(type).forEach(prop => {
         def.impl += `      case ${get_key_hash(prop)}: // ${prop}\n`
@@ -231,14 +238,15 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
             let ob_name = pt.typeName | pt.type
             if (typeof (ob_name) != 'string') ob_name = prop
             ob_name = api + '_' + get_type_name(ob_name) + '_t'
-            defineType(ob_name, getType(pt.type, types), types, api, type_defs, prop, { ...init, name: init.name + '_' + prop_name })
+            defineType(ob_name, getType(pt.type, types), types, api, type_defs, prop, { ...init, name: init.name + prop_name + (pt.optional ? '->' : '.') })
 
             if (pt.optional) {
+                const vname = init.name.substring(0, init.name.length - (init.name.endsWith('->') ? 2 : 1)).split('.').join('_').split('->').join('_')
                 struct_vars.push(`  ${ob_name}* ${prop_name}; // ${descr}`)
                 required += `  if (d_type(d_get(ob, key("${prop}"))) == T_NULL) val->${prop_name} = NULL;\n`
                 def.impl += `        if (d_type(iter.token) != T_NULL && ${convert_fn_name(api, ob_name)}(r, iter.token, val->${prop_name})) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid ${ob_name}!", IN3_EINVAL);\n`
-                init.vars.push(`${ob_name} ${init.name}_${prop_name}`)
-                init.set.push(`${init.name}.${prop_name} =  &${init.name}_${prop_name}`)
+                init.vars.push(`${ob_name} ${vname}_${prop_name}`)
+                init.set.push(`${init.name}${prop_name} =  &${vname}_${prop_name}`)
             }
             else {
                 struct_vars.push(`  ${ob_name} ${prop_name}; // ${descr}`)
@@ -272,14 +280,14 @@ function getObject(def, name, index, types, api) {
     if (typeof (ob_name) != 'string') ob_name = name
     ob_name = api + '_' + get_type_name(ob_name) + '_t'
     const type_defs = {}
-    let init = { name, vars: [], set: [] }
+    let init = { name: name + '.', vars: [], set: [] }
     defineType(ob_name, getType(def.type, types), types, api, type_defs, ob_name, init)
 
     return {
         type_defs,
         args: ob_name + '* ' + name,
         code_def: ob_name + ' ' + name + init.vars.map(_ => ';' + _).join(''),
-        code_set: init.set.join('\n  '),
+        code_set: init.set.join(';\n  '),
         code_read: `TRY_PARAM_CONVERT_${def.optional ? '' : 'REQUIRED_'}OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`,
         code_pass: def.optional
             ? `d_type(d_get_at(ctx->params, ${index})) == T_NULL ? NULL : &${name} `
@@ -313,7 +321,10 @@ function getCType(def, name, index, types, api) {
     }
 }
 
-function align_vars(items, ind, del = ' ') {
+function align_vars(src_items, ind, del = ' ', reverse) {
+    let items = []
+    asArray(src_items).forEach(s => s.split('\n').forEach(_ => items.push(_)))
+    if (reverse) items.reverse()
     let maxl = items.reduce((p, v) => Math.max(p, (v.trim().split(del, 1)[0] || '').length), 0)
     return items.map(_ => _.trim()).map(_ => {
         let type = _.split(del, 1)[0] || ''
@@ -397,7 +408,7 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         if (params.length) {
             impl.push(`static in3_ret_t handle_${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
             align_vars(code.pre, '  ').forEach(_ => impl.push(_))
-            align_vars(code.set, '  ', '=').forEach(_ => impl.push(_))
+            align_vars(code.set, '  ', '=', true).forEach(_ => impl.push(_))
             impl.push('')
             code.read.forEach(_ => impl.push(_))
             impl.push(`\n  return ${rpc_name}(${use_conf ? 'conf, ' : ''}ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
