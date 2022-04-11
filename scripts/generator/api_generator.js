@@ -304,7 +304,7 @@ function validate(def, val, req, propname) {
     if (def.enum) {
         const vals = Array.isArray(def.enum) ? def.enum : Object.keys(def.enum)
         res.push('if (' + val + ' && ' + vals.map(_ => `strcmp(${val}, "${_}")`).join(' && ') + ')')
-        res.push('  return rpc_throw(' + req + ', "%s must be one of %s", "${propname}","' + vals.join(', ') + '");')
+        res.push('  return rpc_throw(' + req + ', "%s must be one of %s", "${propname}", "' + vals.join(', ') + '");')
     }
 
     if (def.validate) def = def.validate
