@@ -260,12 +260,20 @@ in3_ret_t req_check_response_error(in3_req_t* c, int i) {
     return req_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber, const char* filename, const char* function, int line) {
+in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber, const char* filename, const char* function, int line, ...) {
   assert(ctx);
 
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING || errnumber == IN3_OK) return errnumber;
   if (message) {
+    sb_t sb = {0};
+    if (strchr(message, '%')) {
+      va_list args;
+      va_start(args, line);
+      sb_vprintx(&sb, message, args);
+      va_end(args);
+      message = sb.data;
+    }
 
     const size_t l   = strlen(message);
     char*        dst = NULL;
@@ -281,6 +289,7 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error = dst;
+    _free(sb.data);
 
     error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .req = ctx};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);

@@ -184,10 +184,11 @@ NONULL void       json_array_add_value(json_ctx_t* jp, int parent_index, d_token
 
 NONULL d_token_t* token_from_string(char* val, d_token_t* d, bytes32_t buffer); /**< returns a token ptr using the val without allocating memory in the heap, which can be used to pass values as token */
 NONULL d_token_t* token_from_bytes(bytes_t b, d_token_t* d);                    /**< returns a token ptr using the val without allocating memory in the heap, which can be used to pass values as token */
+NONULL d_token_t* token_from_int(uint32_t val, d_token_t* d);                   /**< returns a token ptr using the val without allocating memory in the heap, which can be used to pass values as token */
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
-char* d_get_keystr(json_ctx_t* json, d_key_t k); /**< returns the string for a key. This only works for index keys or known keys! */
-
+char*                        d_get_keystr(json_ctx_t* json, d_key_t k);              /**< returns the string for a key. This only works for index keys or known keys! */
+char*                        d_get_property_name(d_token_internal_t* ob, d_key_t k); /**< searches within the properties of the object for the one with name for the key. if found the returned pointer must be free after use! */
 NONULL static inline d_key_t key(const char* c) {
   uint16_t val = 0;
   size_t   l   = strlen(c);

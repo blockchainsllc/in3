@@ -165,19 +165,19 @@ function get_type_name(name) {
 }
 
 function defineType(type_name, type, types, api, type_defs, descr, init, src_type) {
-    const def = {
-        header: '/** ' + descr + ' */\ntypedef struct {\n',
-        impl: `in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val) {\n` +
-            '  if (d_type(ob) != T_OBJECT) return req_set_error(r, "Invalid object", IN3_EINVAL);\n' +
-            '  val->json = ob;\n' +
-            '  for (d_iterator_t iter = d_iter(ob); iter.left; d_iter_next(&iter)) {\n' +
-            '    switch (d_get_key(iter.token)) {\n'
-    }
     let required = ''
     let simple_typename = type_name.substring(4, type_name.length - 2)
     let struct_vars = [
         '  d_token_t* json; // json-token'
     ]
+    const def = {
+        header: '/** ' + descr + ' */\ntypedef struct {\n',
+        impl: `in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val) {\n` +
+            `  if (d_type(ob) != T_OBJECT) return rpc_throw(r, "Invalid %s object", "${simple_typename}");\n` +
+            '  val->json = ob;\n' +
+            '  for (d_iterator_t iter = d_iter(ob); iter.left; d_iter_next(&iter)) {\n' +
+            '    switch (d_get_key(iter.token)) {\n'
+    }
     // TODO handle default-values
     Object.keys(type).forEach(prop => {
         def.impl += `      case ${get_key_hash(prop)}: // ${prop}\n`
@@ -189,7 +189,7 @@ function defineType(type_name, type, types, api, type_defs, descr, init, src_typ
         let req = ''
         if (pt.array) {
             struct_vars.push(`  d_token_t* ${prop_name}; // ${descr}`)
-            def.impl += `        if (d_type(iter.token) != T_ARRAY) return req_set_error(r, "Property ${prop} in ${simple_typename} must be an array", IN3_EINVAL);\n`
+            def.impl += `        if (d_type(iter.token) != T_ARRAY) return rpc_throw(r, "%s.%s must be an array.", "${prop}", "${simple_typename}");\n`
             def.impl += `        val->${prop_name} = iter.token;\n`
             req = `!val->${prop_name}`
         }
@@ -199,7 +199,7 @@ function defineType(type_name, type, types, api, type_defs, descr, init, src_typ
                 const len = parseInt(pt.type.substring(signed ? 3 : 4) || "256")
                 if (len < 33) {
                     struct_vars.push(`  ${signed ? 'int32_t' : 'uint32_t'} ${prop_name}; // ${descr}`)
-                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a numeric value!", IN3_EINVAL);\n`
+                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return rpc_throw(r, "%s.%s must be a integer.", "${prop}", "${simple_typename}");\n`
                     if (signed)
                         def.impl += `        val->${prop_name} = d_int(iter.token);\n`
                     else
@@ -207,12 +207,12 @@ function defineType(type_name, type, types, api, type_defs, descr, init, src_typ
                 }
                 else if (len < 65) {
                     struct_vars.push(`  ${signed ? 'int64_t' : 'uint64_t'} ${prop_name}; // ${descr}`)
-                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a numeric value!", IN3_EINVAL);\n`
+                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return rpc_throw(r, "%s.%s must be a integer.", "${prop}", "${simple_typename}");\n`
                     def.impl += `        val->${prop_name} = d_long(iter.token);\n`
                 }
                 else {
                     struct_vars.push(`  bytes_t ${prop_name}; // ${descr}`)
-                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a numeric value!", IN3_EINVAL);\n`
+                    def.impl += `        if (!d_is_bytes(iter.token) && d_type(iter.token) != T_INTEGER && !d_num_bytes(iter.token).data) return rpc_throw(r, "%s.%s must be a numeric value.", "${prop}", "${simple_typename}");\n`
                     def.impl += `        val->${prop_name} = d_num_bytes(iter.token);\n`
                 }
                 req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
@@ -224,27 +224,27 @@ function defineType(type_name, type, types, api, type_defs, descr, init, src_typ
                     def.impl += `        val->${prop_name} = d_bytes_enc(iter.token, ENC_${pt.encoding.toUpperCase()});\n`
                 else
                     def.impl += `        val->${prop_name} = d_bytes(iter.token);\n`
-                def.impl += `        if (${opt_check}!val->${prop_name}.data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a bytes value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                def.impl += `        if (${opt_check}!val->${prop_name}.data) return rpc_throw(r, "%s.%s must be bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", "${prop}", "${simple_typename}");\n`
                 if (len)
-                    def.impl += `        if (${opt_check}val->${prop_name}.len != ${len}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be exactly ${len} bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                    def.impl += `        if (${opt_check}val->${prop_name}.len != ${len}) return rpc_throw(r, "%s.%s must be exactly %u bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", "${prop}", "${simple_typename}", ${len});\n`
                 req = `!val->${prop_name}.data`
             }
             else if (pt.type == 'address') {
                 struct_vars.push(`  uint8_t* ${prop_name}; // ${descr}`)
-                def.impl += `        if (${opt_check}d_bytes(iter.token).len != 20) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid address with 20 bytes!", IN3_EINVAL);\n`
+                def.impl += `        if (${opt_check}d_bytes(iter.token).len != 20) return rpc_throw(r, "%s.%s must be a valid address with 20 bytes!", "${prop}", "${simple_typename}");\n`
                 def.impl += `        val->${prop_name} = d_bytes(iter.token).data;\n`
                 req = `!val->${prop_name}`
             }
             else if (pt.type == 'bool') {
                 struct_vars.push(`  bool ${prop_name}; // ${descr}`)
-                def.impl += `        if (d_type(iter.token) != T_BOOLEAN) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a boolean value!", IN3_EINVAL);\n`
+                def.impl += `        if (d_type(iter.token) != T_BOOLEAN) return rpc_throw(r, "%s.%s must be a boolean value!", "${prop}", "${simple_typename}");\n`
                 def.impl += `        val->${prop_name} = d_int(iter.token);\n`
                 req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
             }
             else if (pt.type == 'string') {
                 struct_vars.push(`  char* ${prop_name}; // ${descr}`)
                 def.impl += `        val->${prop_name} = d_string(iter.token);\n`
-                def.impl += `        if (${opt_check}!val->${prop_name}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a string value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                def.impl += `        if (${opt_check}!val->${prop_name}) return rpc_throw(r, "%s.%s must be a string value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", "${prop}", "${simple_typename}");\n`
                 req = `!val->${prop_name}`
             }
             else is_ob = true
@@ -261,20 +261,20 @@ function defineType(type_name, type, types, api, type_defs, descr, init, src_typ
                 const vname = init.name.substring(0, init.name.length - (init.name.endsWith('->') ? 2 : 1)).split('.').join('_').split('->').join('_')
                 struct_vars.push(`  ${ob_name}* ${prop_name}; // ${descr}`)
                 required += `  if (d_type(d_get(ob, key("${prop}"))) == T_NULL) val->${prop_name} = NULL;\n`
-                def.impl += `        if (d_type(iter.token) != T_NULL && ${convert_fn_name(api, ob_name)}(r, iter.token, val->${prop_name})) return req_set_error(r, "${prop}->", IN3_EINVAL);\n`
+                def.impl += `        if (d_type(iter.token) != T_NULL && ${convert_fn_name(api, ob_name)}(r, iter.token, val->${prop_name})) return rpc_throw(r, "%s->", "${prop}");\n`
                 init.vars.push(`${ob_name} ${vname}_${prop_name} = {0}`)
                 init.set.push(`${init.name}${prop_name} =  &${vname}_${prop_name}`)
             }
             else {
                 struct_vars.push(`  ${ob_name} ${prop_name}; // ${descr}`)
-                def.impl += `        if (${convert_fn_name(api, ob_name)}(r, iter.token, &val->${prop_name})) return req_set_error(r, "${prop}->", IN3_EINVAL);\n`
+                def.impl += `        if (${convert_fn_name(api, ob_name)}(r, iter.token, &val->${prop_name})) return rpc_throw(r, "%s->", "${prop}");\n`
                 req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
             }
         }
         const val = validate(pt, `val->${prop_name}`, 'r', prop)
         val.check.forEach(_ => def.impl += '        ' + _ + '\n')
         def.impl += `        break;\n`
-        if (!pt.optional && req) required += `  if (${req}) return req_set_error(r, "Property ${prop} in ${simple_typename} is missing but required!", IN3_EINVAL);\n`
+        if (!pt.optional && req) required += `  if (${req}) return rpc_throw(r, "%s.%s is missing but required!", "${prop}", "${simple_typename}");\n`
     })
 
     def.header += align_vars(align_vars(struct_vars, '', ' '), '  ', '//').join('\n') + '\n'
@@ -304,7 +304,7 @@ function validate(def, val, req, propname) {
     if (def.enum) {
         const vals = Array.isArray(def.enum) ? def.enum : Object.keys(def.enum)
         res.push('if (' + val + ' && ' + vals.map(_ => `strcmp(${val}, "${_}")`).join(' && ') + ')')
-        res.push('  return req_set_error(' + req + ', "' + propname + ' must be one of ' + vals.join(', ') + '", IN3_EINVAL);')
+        res.push('  return rpc_throw(' + req + ', "%s must be one of %s", "${propname}","' + vals.join(', ') + '");')
     }
 
     if (def.validate) def = def.validate
@@ -312,33 +312,33 @@ function validate(def, val, req, propname) {
 
     if (def.array) {
         if (def.min)
-            res.push(`if (${def.optional ? val + ' && ' : ''}d_len(${val}) < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min} items long", IN3_EINVAL);`)
+            res.push(`if (${def.optional ? val + ' && ' : ''}d_len(${val}) < ${def.min}) return rpc_throw(${req}, "%s must be at least %u items long", "${propname}", ${def.min});`)
         if (def.max)
-            res.push(`if (${def.optional ? val + ' && ' : ''}d_len(${val}) > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max} items long", IN3_EINVAL);`)
+            res.push(`if (${def.optional ? val + ' && ' : ''}d_len(${val}) > ${def.max}) return rpc_throw(${req}, "%s must be max %u items long", "${propname}", ${def.max});`)
     }
     else if (def.type == 'bytes') {
         if (def.min)
-            res.push(`if (${def.optional ? val + '.data && ' : ''}${val}.len < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min} bytes long", IN3_EINVAL);`)
+            res.push(`if (${def.optional ? val + '.data && ' : ''}${val}.len < ${def.min}) return rpc_throw(${req}, "%s must be at least ${def.min} bytes long", "${propname}", ${def.min});`)
         if (def.max)
-            res.push(`if (${def.optional ? val + '.data && ' : ''}${val}.len > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max} bytes long", IN3_EINVAL);`)
+            res.push(`if (${def.optional ? val + '.data && ' : ''}${val}.len > ${def.max}) return rpc_throw(${req}, "%s must be max ${def.max} bytes long", "${propname}", ${def.max});`)
     }
     else if (def.type == 'string') {
         if (def.min)
-            res.push(`if (${def.optional ? val + ' && ' : ''}strlen(${val}) < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min} characters long", IN3_EINVAL);`)
+            res.push(`if (${def.optional ? val + ' && ' : ''}strlen(${val}) < ${def.min}) return rpc_throw(${req}, "%s must be at least ${def.min} characters long", "${propname}", ${def.min});`)
         if (def.max)
-            res.push(`if (${def.optional ? val + ' && ' : ''}strlen(${val}) > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max} characters long", IN3_EINVAL);`)
+            res.push(`if (${def.optional ? val + ' && ' : ''}strlen(${val}) > ${def.max}) return rpc_throw(${req}, "%s must be max ${def.max} characters long", "${propname}", ${def.max});`)
     }
     else if (def.type == 'uint32' || def.type == 'uint64') {
         if (def.min)
-            res.push(`if (${val} < ${def.min}) return req_set_error(${req}, "${propname} must be at least ${def.min}", IN3_EINVAL);`)
+            res.push(`if (${val} < ${def.min}) return rpc_throw(${req}, "%s must be at least ${def.min}", "${propname}", ${def.min});`)
         if (def.max)
-            res.push(`if (${val} > ${def.max}) return req_set_error(${req}, "${propname} must be max ${def.max}", IN3_EINVAL);`)
+            res.push(`if (${val} > ${def.max}) return rpc_throw(${req}, "%s must be max ${def.max}", "${propname}", ${def.max});`)
     }
 
     if (def.type) {
         switch (def.type) {
             case 'url':
-                res.push(`if (${def.optional ? val + ' && (' : ''}!strchr(${val},':') || !strchr(${val},'/')${def.optional ? ')' : ''}) return req_set_error(${req}, "${propname} must be a valid url", IN3_EINVAL);`)
+                res.push(`if (${def.optional ? val + ' && (' : ''}!strchr(${val},':') || !strchr(${val},'/')${def.optional ? ')' : ''}) return rpc_throw(${req}, "%s must be a valid url", "${propname}");`)
                 break
         }
     }
@@ -487,7 +487,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             if (t.validate && t.validate.check)
                 t.validate.check.forEach(_ => code.checks.push(_))
         })
-        code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "${rpc_name} only accepts ${params.length} arguments."); `)
+        code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "%s only accepts %u arguments.", "${rpc_name}", ${params.length}); `)
         if (r.descr) {
             header.push(comment('', r.descr))
             if (params.length) impl.push(comment('', r.descr))
@@ -536,7 +536,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
     if (fs.readdirSync(path + '/..').filter(_ => _.startsWith(api_name)).length > 1)
         impl.push(`  return IN3_EIGNORE; `)
     else
-        impl.push(`  return req_set_error(ctx->req, "unknown ${api_name} method", IN3_EUNKNOWN); `)
+        impl.push(`  return rpc_throw(ctx->req, "unknown %s method", "${api_name}"); `)
     impl.push('}')
     state.files[`${path}/${api_name}_rpc.c`] = { lines: impl }
 

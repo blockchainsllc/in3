@@ -106,9 +106,9 @@ typedef struct {
 
 #define RPC_THROW(ctx, msg, code) \
   { return req_set_error(ctx->req, msg, code); }
-#define RPC_ASSERT(cond, msg)                                     \
-  {                                                               \
-    if (!(cond)) return req_set_error(ctx->req, msg, IN3_EINVAL); \
+#define RPC_ASSERT(cond, msg, args...)                  \
+  {                                                     \
+    if (!(cond)) return rpc_throw(ctx->req, msg, args); \
   }
 #define RPC_ASSERT_CATCH(cond, msg, f)                 \
   {                                                    \

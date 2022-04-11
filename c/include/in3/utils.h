@@ -290,7 +290,7 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
 /** calculates the number of words (32 bytes) needed to hold the specified bytes */
 #define ABI_WORDS(byte_len) ((byte_len + 31) / 32)
 /** writes the offset (as word) at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
-#define ABI_OFFSET(index, word) ABI_UINT32(index, (word * 32))
+#define ABI_OFFSET(index, word) ABI_UINT32(index, ((word) *32))
 
 /**
  * Pluggable functions:
