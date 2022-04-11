@@ -1065,7 +1065,7 @@ static char       _tmp[7];
 char* d_get_property_name(d_token_internal_t* ob, d_key_t k) {
   str_range_t r = d_to_json(ob);
   if (!r.data) return NULL;
-  for (char* s = strchr(r.data, '"'); s && r.data + r.len > s; s = strchr(s + 1, '"')) {
+  for (char* s = strchr(r.data, '"'); s && r.data + r.len > s; s = s ? strchr(s + 1, '"') : NULL) {
     char* e = s + 1;
     for (e = strchr(e, '"'); e && r.data + r.len > e; e = strchr(e + 1, '"')) {
       if (e[-1] == '\\') continue;
