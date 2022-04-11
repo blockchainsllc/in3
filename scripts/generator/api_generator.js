@@ -56,6 +56,16 @@ exports.generate_config = function () { }
 
 exports.mergeExamples = function (all) { return all }
 
+
+function resolveTypeDependency(typename, state) {
+    if (typeof (typename) != 'string') return null
+    const def_dir = state.cmake_types[typename]
+    if (!def_dir || def_dir == state.path || !state.cmake_types[def_dir]) return null
+    // find relative_path
+    const p = def_dir.split('/')
+    return path.relative(state.path, def_dir + '/' + p[p.length - 1] + '_rpc.h')
+}
+
 function getBool(def, name, index) {
     return {
         args: 'bool ' + name,
@@ -154,17 +164,17 @@ function get_type_name(name) {
     }
 }
 
-function defineType(type_name, type, types, api, type_defs, descr, init) {
+function defineType(type_name, type, types, api, type_defs, descr, init, src_type) {
     const def = {
         header: '/** ' + descr + ' */\ntypedef struct {\n',
-        impl: `static in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val) {\n` +
+        impl: `in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val) {\n` +
             '  if (d_type(ob) != T_OBJECT) return req_set_error(r, "Invalid object", IN3_EINVAL);\n' +
             '  val->json = ob;\n' +
             '  for (d_iterator_t iter = d_iter(ob); iter.left; d_iter_next(&iter)) {\n' +
             '    switch (d_get_key(iter.token)) {\n'
     }
     let required = ''
-    let simple_typename = type_name.substring(api.length + 1, type_name.length - 2)
+    let simple_typename = type_name.substring(4, type_name.length - 2)
     let struct_vars = [
         '  d_token_t* json; // json-token'
     ]
@@ -174,6 +184,7 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
         const pt = type[prop]
         const prop_name = get_type_name(prop)
         const descr = (pt.descr || prop).split('\n').join(' ')
+        const opt_check = pt.optional ? 'd_type(iter.token) != T_NULL && ' : ''
         let is_ob = false
         let req = ''
         if (pt.array) {
@@ -213,14 +224,14 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
                     def.impl += `        val->${prop_name} = d_bytes_enc(iter.token, ENC_${pt.encoding.toUpperCase()});\n`
                 else
                     def.impl += `        val->${prop_name} = d_bytes(iter.token);\n`
-                def.impl += `        if (!val->${prop_name}.data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a bytes value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                def.impl += `        if (${opt_check}!val->${prop_name}.data) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a bytes value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
                 if (len)
-                    def.impl += `        if (val->${prop_name}.len != ${len}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be exactly ${len} bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                    def.impl += `        if (${opt_check}val->${prop_name}.len != ${len}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be exactly ${len} bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
                 req = `!val->${prop_name}.data`
             }
             else if (pt.type == 'address') {
                 struct_vars.push(`  uint8_t* ${prop_name}; // ${descr}`)
-                def.impl += `        if (d_bytes(iter.token).len != 20) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid address with 20 bytes!", IN3_EINVAL);\n`
+                def.impl += `        if (${opt_check}d_bytes(iter.token).len != 20) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid address with 20 bytes!", IN3_EINVAL);\n`
                 def.impl += `        val->${prop_name} = d_bytes(iter.token).data;\n`
                 req = `!val->${prop_name}`
             }
@@ -233,7 +244,7 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
             else if (pt.type == 'string') {
                 struct_vars.push(`  char* ${prop_name}; // ${descr}`)
                 def.impl += `        val->${prop_name} = d_string(iter.token);\n`
-                def.impl += `        if (!val->${prop_name}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a string value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
+                def.impl += `        if (${opt_check}!val->${prop_name}) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a string value ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", IN3_EINVAL);\n`
                 req = `!val->${prop_name}`
             }
             else is_ob = true
@@ -241,22 +252,22 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
             is_ob = true
 
         if (is_ob) {
-            let ob_name = pt.typeName | pt.type
-            if (typeof (ob_name) != 'string') ob_name = prop
-            ob_name = api + '_' + get_type_name(ob_name) + '_t'
-            defineType(ob_name, getType(pt.type, types), types, api, type_defs, prop, { ...init, name: init.name + prop_name + (pt.optional ? '->' : '.') })
+            let ob_name = pt.type
+            if (typeof (ob_name) != 'string') ob_name = pt.typeName || prop
+            ob_name = 'rpc_' + get_type_name(ob_name) + '_t'
+            defineType(ob_name, getType(pt.type, types), types, api, type_defs, prop, { ...init, name: init.name + prop_name + (pt.optional ? '->' : '.') }, pt.type)
 
             if (pt.optional) {
                 const vname = init.name.substring(0, init.name.length - (init.name.endsWith('->') ? 2 : 1)).split('.').join('_').split('->').join('_')
                 struct_vars.push(`  ${ob_name}* ${prop_name}; // ${descr}`)
                 required += `  if (d_type(d_get(ob, key("${prop}"))) == T_NULL) val->${prop_name} = NULL;\n`
-                def.impl += `        if (d_type(iter.token) != T_NULL && ${convert_fn_name(api, ob_name)}(r, iter.token, val->${prop_name})) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid ${ob_name}!", IN3_EINVAL);\n`
+                def.impl += `        if (d_type(iter.token) != T_NULL && ${convert_fn_name(api, ob_name)}(r, iter.token, val->${prop_name})) return req_set_error(r, "${prop}->", IN3_EINVAL);\n`
                 init.vars.push(`${ob_name} ${vname}_${prop_name} = {0}`)
                 init.set.push(`${init.name}${prop_name} =  &${vname}_${prop_name}`)
             }
             else {
                 struct_vars.push(`  ${ob_name} ${prop_name}; // ${descr}`)
-                def.impl += `        if (${convert_fn_name(api, ob_name)}(r, iter.token, &val->${prop_name})) return req_set_error(r, "Property ${prop} in ${simple_typename} must be a valid ${ob_name}!", IN3_EINVAL);\n`
+                def.impl += `        if (${convert_fn_name(api, ob_name)}(r, iter.token, &val->${prop_name})) return req_set_error(r, "${prop}->", IN3_EINVAL);\n`
                 req = `d_type(d_get(ob, key("${prop}"))) == T_NULL`
             }
         }
@@ -273,14 +284,18 @@ function defineType(type_name, type, types, api, type_defs, descr, init) {
     def.impl += required
     def.impl += '  return IN3_OK;\n'
     def.impl += '}'
-    def.header += `} ${type_name};`
-    type_defs[type_name] = def
+    def.header += `} ${type_name};\n\n`
+    def.header += `/** converts a d_token_t* object to a ${type_name} */\n`
+    def.header += `in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val);`
+
+    if (!init.is_include)
+        type_defs[type_name] = def
 
 }
 
 function convert_fn_name(api, type_name) {
-    const c = type_name.substring(api.length + 1)
-    return 'json_to_' + c.substring(0, c.length - 2);
+    const c = type_name.substring(4)
+    return 'in3_json_to_' + c.substring(0, c.length - 2);
 }
 
 function validate(def, val, req, propname) {
@@ -333,15 +348,20 @@ function validate(def, val, req, propname) {
     return { check: res, constants: {} }
 }
 
-function getObject(def, name, index, types, api) {
+function getObject(def, name, index, types, api, state) {
     let ob_name = def.typeName || def.type
     if (typeof (ob_name) != 'string') ob_name = name
-    ob_name = api + '_' + get_type_name(ob_name) + '_t'
+    ob_name = 'rpc_' + get_type_name(ob_name) + '_t'
     const type_defs = {}
-    let init = { name: name + '.', vars: [], set: [] }
-    defineType(ob_name, getType(def.type, types), types, api, type_defs, ob_name, init)
+    const type_includes = []
+    const dep = resolveTypeDependency(def.type, state)
+    if (dep)
+        type_includes.push(`#include "${dep}"`)
+    let init = { name: name + '.', vars: [], set: [], state, is_include: !!dep }
+    defineType(ob_name, getType(def.type, types), types, api, type_defs, ob_name, init, def.type)
 
     return {
+        type_includes,
         type_defs,
         args: ob_name + '* ' + name,
         code_def: ob_name + ' ' + name + ' = {0}' + init.vars.map(_ => ';' + _).join(''),
@@ -366,17 +386,17 @@ function getArray(def, name, index) {
     }
 }
 
-function getCType(def, name, index, types, api) {
+function getCType(def, name, index, types, api, state) {
     let c = ''
     if (def.array) return getArray(def, name, index)
-    if (typeof (def.type) != 'string') return getObject(def, name, index, types, api)
+    if (typeof (def.type) != 'string') return getObject(def, name, index, types, api, state)
     if (def.type.startsWith("uint") || def.type.startsWith('int')) return getUint(def, name, index)
     if (def.type.startsWith("bytes")) return getBytes(def, name, index)
     switch (def.type) {
         case 'bool': return getBool(def, name, index)
         case 'address': return getAddress(def, name, index)
         case 'string': return getString(def, name, index)
-        default: return getObject(def, name, index, types, api)
+        default: return getObject(def, name, index, types, api, state)
     }
 }
 
@@ -396,7 +416,8 @@ function align_vars(src_items, ind, del = ' ', reverse) {
     })]
 }
 
-function generate_rpc(path, api_name, rpcs, descr, types) {
+function generate_rpc(path, api_name, rpcs, descr, state) {
+    const types = state.types
     let use_conf = false
     try {
         use_conf = fs.readFileSync(`${path}/${api_name}.h`, 'utf8').indexOf(`${api_name}_config_t`) >= 0;
@@ -438,7 +459,8 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         '#include "../../in3/c/src/core/util/utils.h"\n',
     ]
     const impl_converter_pos = impl.length
-    const header_converter_pos = header.findIndex(_ => _ == `#include "${api_name}.h"\n`) + 1
+    let header_converter_pos = header.findIndex(_ => _ == `#include "${api_name}.h"\n`) + 1
+    const type_includes = []
 
 
 
@@ -453,7 +475,8 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
             checks: []
         }
         Object.keys(r.params || {}).forEach((p, i) => {
-            const t = getCType(r.params[p], p, i, types, api_name)
+            const t = getCType(r.params[p], p, i, types, api_name, { ...state, path })
+            asArray(t.type_includes).forEach(i => type_includes.indexOf(i) < 0 ? type_includes.push(i) : '')
             params.push(t.args)
             t.code_def.split(';').forEach(_ => code.pre.push('  ' + _.trim() + ';'))
             code.read.push('  ' + t.code_read)
@@ -489,6 +512,9 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
         rpc_exec.push('#endif\n')
     })
 
+    header.splice(header_converter_pos - 1, 0, ...type_includes)
+    header_converter_pos += type_includes.length
+
     if (Object.keys(type_defs).length) {
         header.splice(header_converter_pos, 0, Object.values(type_defs).map(_ => _.header).join('\n\n') + '\n')
         impl.splice(impl_converter_pos, 0, Object.values(type_defs).map(_ => _.impl).join('\n\n') + '\n')
@@ -499,17 +525,22 @@ function generate_rpc(path, api_name, rpcs, descr, types) {
     header.push('#endif\n')
     header.push('#endif')
 
-    fs.writeFileSync(path + `/${api_name}_rpc.h`, header.join('\n'), 'utf8')
+    //    fs.writeFileSync(path + `/${api_name}_rpc.h`, header.join('\n'), 'utf8')
+    state.files[`${path}/${api_name}_rpc.h`] = { lines: header }
 
     impl.push(comment('', 'handle rpc-requests and delegate execution'));
     impl.push(`in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx) {
             `);
     impl.push(`  if (strncmp(ctx->method, "${api_name}_", ${api_name.length + 1})) return IN3_EIGNORE; \n`)
     rpc_exec.forEach(_ => impl.push(_))
-    impl.push(`  return req_set_error(ctx->req, "unknown ${api_name} method", IN3_EUNKNOWN); `)
+    if (fs.readdirSync(path + '/..').filter(_ => _.startsWith(api_name)).length > 1)
+        impl.push(`  return IN3_EIGNORE; `)
+    else
+        impl.push(`  return req_set_error(ctx->req, "unknown ${api_name} method", IN3_EUNKNOWN); `)
     impl.push('}')
+    state.files[`${path}/${api_name}_rpc.c`] = { lines: impl }
 
-    fs.writeFileSync(path + `/${api_name}_rpc.c`, impl.join('\n'), 'utf8')
+    //    fs.writeFileSync(path + `/${api_name}_rpc.c`, impl.join('\n'), 'utf8')
 }
 
 exports.generateAPI = function (api_name, rpcs, descr, types, testCases) {
@@ -526,7 +557,7 @@ exports.generateAPI = function (api_name, rpcs, descr, types, testCases) {
 
 }
 
-exports.generateAllAPIs = function ({ apis, types, conf }) {
+exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types }) {
     const all = {}
     apis.forEach(api => {
         Object.keys(api.rpcs).forEach(rpc => {
@@ -537,11 +568,15 @@ exports.generateAllAPIs = function ({ apis, types, conf }) {
             }
         })
     })
+    const files = {}
     Object.keys(all).forEach(path => {
         const p = path.split('/')
         const api = p[p.length - 1].trim()
-        generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', types)
+        generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files })
     })
+    Object.keys(files).forEach(file => fs.writeFileSync(file, files[file].lines.join('\n'), 'utf8'))
+
+    //    console.log('cmake_deps:', cmake_types)
 }
 
 function createTest(descr, method, tests, tc) {

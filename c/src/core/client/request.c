@@ -418,20 +418,7 @@ in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
 in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {
   if (!result) return req_set_error(ctx->req, "No result", IN3_ERPC);
   sb_t* sb = in3_rpc_handle_start(ctx);
-
-  // As the API might return an empty string as a response,
-  // we at least convert it into an empty object
-  if ((d_type(result) == T_STRING || d_type(result) == T_BYTES) && d_len(result) == 0) {
-    sb_add_chars(sb, "{}");
-  }
-  else {
-    sb_add_json(sb, "", result);
-  }
-
-  // now convert all kebab-case to pascal case
-  for (char* c = sb->data; *c; c++) {
-    if (*c == '-' && in_property_name(c)) *c = '_';
-  }
+  sb_add_json(sb, "", result);
   return in3_rpc_handle_finish(ctx);
 }
 
