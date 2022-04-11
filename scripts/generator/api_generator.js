@@ -83,7 +83,7 @@ function getUint(def, name, index) {
             args: def.type + '_t ' + name,
             code_def: 'int32_t ' + name,
             code_read: def.optional
-                ? `TRY_PARAM_GET_INT(${name}, ctx,${index}, ${def.default || 0})`
+                ? `TRY_PARAM_GET_INT(${name}, ctx, ${index}, ${def.default || 0})`
                 : `TRY_PARAM_GET_REQUIRED_INT(${name}, ctx, ${index})`,
             code_pass: (def.type == 'uint32' ? '(uint32_t)' : '') + ' ' + name,
             validate: validate(def, name, 'ctx->req', name)
@@ -442,7 +442,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
         use_conf ? `#include "${api_name}.h"\n` : '',
 
         comment('', `handles the rpc commands for the ${api_name} modules.`),
-        `in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx); \n`
+        `in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx);\n`
     ]
 
     const impl = [
@@ -492,7 +492,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             header.push(comment('', r.descr))
             if (params.length) impl.push(comment('', r.descr))
         }
-        header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''}); \n`)
+        header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''});\n`)
         if (params.length) {
             impl.push(`static in3_ret_t handle_${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
             align_vars(align_vars(code.pre, '  '), '  ', '=').forEach(_ => impl.push(_))
@@ -574,7 +574,7 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
         const api = p[p.length - 1].trim()
         generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files })
     })
-    Object.keys(files).forEach(file => fs.writeFileSync(file, files[file].lines.join('\n'), 'utf8'))
+    Object.keys(files).forEach(file => fs.writeFileSync(file, files[file].lines.join('\n').split('\n').map(l => l.trimEnd()).join('\n'), 'utf8'))
 
     //    console.log('cmake_deps:', cmake_types)
 }
