@@ -139,6 +139,11 @@ NONULL in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t d
 NONULL in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result);
 
 /**
+ * creates a response based on a template
+ */
+NONULL in3_ret_t in3_rpc_handle(in3_rpc_handle_ctx_t* hctx, char* fmt, ...);
+
+/**
  * creates a response with string.
  */
 NONULL in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data);

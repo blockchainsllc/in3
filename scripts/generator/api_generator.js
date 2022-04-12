@@ -419,8 +419,10 @@ function align_vars(src_items, ind, del = ' ', reverse) {
 function generate_rpc(path, api_name, rpcs, descr, state) {
     const types = state.types
     let use_conf = false
+    let use_main = ''
     try {
-        use_conf = fs.readFileSync(`${path}/${api_name}.h`, 'utf8').indexOf(`${api_name}_config_t`) >= 0;
+        use_main = fs.readFileSync(`${path}/${api_name}.h`, 'utf8')
+        use_conf = use_main.indexOf(`${api_name}_config_t`) >= 0;
     } catch (x) { }
 
     const rpc_exec = []
@@ -439,7 +441,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
         '#include "../../in3/c/src/core/client/client.h"',
         '#include "../../in3/c/src/core/client/plugin.h"',
 
-        use_conf ? `#include "${api_name}.h"\n` : '',
+        use_main ? `#include "${api_name}.h"\n` : '',
 
         comment('', `handles the rpc commands for the ${api_name} modules.`),
         `in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx);\n`
@@ -508,7 +510,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             impl.push('}\n')
         }
         rpc_exec.push(`#if !defined(RPC_ONLY) || defined(RPC_${rpc_name.toUpperCase()})`)
-        rpc_exec.push(`  TRY_RPC("${rpc_name}", ${params.length ? 'handle_' : ''}${rpc_name}(conf, ctx))`)
+        rpc_exec.push(`  TRY_RPC("${rpc_name}", ${params.length ? 'handle_' : ''}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
         rpc_exec.push('#endif\n')
     })
 

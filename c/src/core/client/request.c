@@ -411,6 +411,14 @@ in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   return in3_rpc_handle_finish(hctx);
 }
 
+in3_ret_t in3_rpc_handle(in3_rpc_handle_ctx_t* hctx, char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(in3_rpc_handle_start(hctx), fmt, args);
+  va_end(args);
+  return in3_rpc_handle_finish(hctx);
+}
+
 in3_ret_t in3_rpc_handle_with_uint256(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   b_optimize_len(&data);
   sb_t* sb = in3_rpc_handle_start(hctx);
