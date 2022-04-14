@@ -76,6 +76,10 @@ function check_depends(n) {
         ? !asArray(n.depends).find(_ => !apiConf.modules[_])
         : true
 }
+function is_testcase(t) {
+    t = asArray(t)[0]
+    return t.expected_output !== undefined || t.expected_failure
+}
 
 function scan(dir) {
     const is_valid = !!(Object.keys(rpc_dirs).length == 0 || rpc_dirs[resolve(dir)] || dir.endsWith('api_ext') || dir.endsWith('core/client'))
@@ -108,7 +112,7 @@ function scan(dir) {
                 lastAPI = k
             }
         }
-        else if (f.name == 'testCases.yml' && is_valid) {
+        else if (f.name.startsWith("testCases") && f.name.endsWith('.yml') && is_valid) {
             console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             for (const k of Object.keys(ob)) {
@@ -117,6 +121,8 @@ function scan(dir) {
                         delete ob[k][t]
                         console.error(`skipping ${k} :: ${t}`)
                     }
+                    else if (testCases[k] && testCases[k][t] && is_testcase(testCases[k][t]))
+                        ob[k][t] = [...asArray(testCases[k][t]), ...asArray(ob[k][t])]  // merge testcases
                 }
                 testCases[k] = { ...testCases[k], ...ob[k] }
             }

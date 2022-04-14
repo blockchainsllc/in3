@@ -291,7 +291,8 @@ function createTest(descr, method, tests, tc) {
     tests.push({
         descr,
         request: { method, params: tc.input || [] },
-        result: getResult(tc.expected_output),
+        result: getResult(tc.expected_output || null),
+        success: tc.expected_failure ? false : true,
         config: tc.config || {},
         response: asArray(tc.mockedResponses).map(r => r.req.body?.params || r.res.result === undefined ? r.res : r.res.result)
     });
@@ -313,7 +314,7 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
     if (!rpc) console.log("::: missing rpc-def for " + api_name + ' ' + testname)
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
-        const tn = t.descr || testname + (index ? ('_' + (index + 1)) : '')
+        const tn = (t.descr || testname + (index ? ('_' + (index + 1)) : '')) + (t.extra ? ' : ' + t.extra : '')
         if (rpcResult.options && t.expected_output && t.expected_output.options)
             Object.keys(t.expected_output.options).forEach(k => {
                 const tc = { ...t, input: [...t.input], expected_output: t.expected_output.options[k], mockedResponses: t.mockedResponses.options[k] }
