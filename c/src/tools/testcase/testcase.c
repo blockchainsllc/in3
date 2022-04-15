@@ -26,33 +26,26 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
     if (!rec.mock_count) sb_add_chars(&rec.mocks, "\n      mockedResponses:");
 
     rec.mock_count++;
-    sb_printx(&rec.mocks, "\n        - *mock_%u", rec.mock_count);
-
-    fprintf(rec.f, "\n\n  - &mock_%i\n    req:\n      method: %s\n      url: %s", rec.mock_count, req->method, req->urls[0]);
+    sb_printx(&rec.mocks, "\n        - req:\n            method: %s\n            url: %s", req->method, req->urls[0]);
     bool is_array = true;
     if (req->payload_len) {
       json_ctx_t* ctx = parse_json(req->payload);
       is_array        = d_type(ctx->result) == T_ARRAY && d_len(ctx->result) != 1;
-      fprintf(rec.f, "\n      body:");
-      sb_t sb = {0};
-      sb_to_yaml(&sb, is_array ? ctx->result : d_get_at(ctx->result, 0), 4, false);
-      fprintf(rec.f, "%s", sb.data);
+      sb_add_chars(&rec.mocks, "\n            body:");
+      sb_to_yaml(&rec.mocks, is_array ? ctx->result : d_get_at(ctx->result, 0), 7, false);
       json_free(ctx);
-      _free(sb.data);
     }
     in3_response_t* r = req->req->raw_response;
     if (r->time) {
       char*       data = r->data.data ? r->data.data : "";
       json_ctx_t* ctx  = parse_json(data);
       if (ctx) {
-        sb_t sb = {0};
-        sb_to_yaml(&sb, is_array ? ctx->result : d_get_at(ctx->result, 0), 3, false);
-        fprintf(rec.f, "\n    res:%s", sb.data);
-        _free(sb.data);
+        sb_printx(&rec.mocks, "\n          res:");
+        sb_to_yaml(&rec.mocks, is_array ? ctx->result : d_get_at(ctx->result, 0), 6, false);
         json_free(ctx);
       }
       else
-        fprintf(rec.f, "\n    res: '%s'", data);
+        sb_printx(&rec.mocks, "\n          res: '%s'", data);
     }
   }
   return res;
