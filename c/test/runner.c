@@ -190,7 +190,7 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   }
 
   if (!_tmp_bin) {
-    char* res = sprintx(strcmp(d_get_string(req->req->requests[0], key("method")), "in3_http") == 0 ? "%j" : "[%j]", d_get_at(_tmp_responses, _tmp_pos));
+    char* res = sprintx(strcmp(d_get_string(req->req->requests[0], key("method")), "in3_http") == 0 || req->req->len > 1 ? "%j" : "[%j]", d_get_at(_tmp_responses, _tmp_pos));
     if (fuzz_pos >= 0)
       mod_hex(res + fuzz_pos + 1);
     response = bytes((uint8_t*) res, strlen(res));
@@ -207,6 +207,24 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   _free(response.data);
   _tmp_pos++;
   return 0;
+}
+char* replace_float(char* val) {
+  char* f = val;
+  while ((f = strchr(f + 1, '.'))) {
+    for (int i = 1; i < 30; i++) {
+      if (f[i] < '0' || f[i] > '9') {
+        // end of number
+        if (f[i] == '\n' || f[i] == ' ' || f[i] == ',' || f[i] == ']' || f[i] == '}') {
+          // valid end
+          if (i > 10)
+            // cut it down to 10
+            memmove(f + 10, f + i, strlen(f + i) + 1);
+        }
+        break;
+      }
+    }
+  }
+  return val;
 }
 
 int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* descr) {
@@ -256,8 +274,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
     json_ctx_t* actual_json = parse_json(res);
     d_token_t*  actual      = actual_json->result;
     if (!d_eq(actual, result)) {
-      char* a = sprintx("%J ", actual);
-      char* b = sprintx("%J ", result);
+      char* a = replace_float(sprintx("%J ", actual));
+      char* b = replace_float(sprintx("%J ", result));
       if (strcmp(a, b)) {
         for (int i = 0; a[i] && b[i]; i++) {
           if (a[i] != b[i]) {
