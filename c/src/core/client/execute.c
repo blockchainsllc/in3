@@ -958,7 +958,8 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   // if there is response we are done.
   if (req->response_context && req->verification_state == IN3_OK) return IN3_OK;
 
-  in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_string(req->requests[0], K_METHOD), req->attempt + 1);
+  // logging only if there is not sub-request yet
+  if (!req->required && !req->raw_response) { in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "... attempt %i\n", d_get_string(req->requests[0], K_METHOD), d_get(req->requests[0], K_PARAMS), req->attempt + 1); }
 
   switch (req->type) {
     case RT_RPC: {

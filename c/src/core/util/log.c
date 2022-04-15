@@ -30,6 +30,7 @@
 #endif
 #include "log.h"
 #include "mem.h"
+#include "stringbuilder.h"
 
 static struct {
   void*           udata;
@@ -145,8 +146,11 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
     }
 
     va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
+    sb_t sb = {0};
+    sb_vprintx(&sb, fmt, args);
     va_end(args);
+    fprintf(stderr, "%s", sb.data);
+    _free(sb.data);
     fflush(stderr);
 #else
     va_list args;
@@ -164,10 +168,14 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
     else {
       printk("%s", L.prefix);
     }
+
     va_start(args, fmt);
-    vprintk(fmt, args);
+    sb_t sb = {0};
+    sb_vprintx(&sb, fmt, args);
     va_end(args);
+    vprintk("%s", sb.data);
     fflush(stderr);
+    _free(sb.data);
 #endif
     // fflush(stderr);
   }
@@ -184,9 +192,12 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
         fprintf(L.fp, "%s", L.prefix);
     }
     va_start(args, fmt);
-    vfprintf(L.fp, fmt, args);
+    sb_t sb = {0};
+    sb_vprintx(&sb, fmt, args);
     va_end(args);
+    vfprintf(L.fp, "%s", sb.data);
     fflush(L.fp);
+    _free(sb.data);
   }
 
   /* Release lock */
