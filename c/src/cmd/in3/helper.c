@@ -117,6 +117,7 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
     for (; b; b--) sb_add_char(&sb, '}');
   }
   char* error = in3_configure(c, sb.data);
+  recorder_configure(sb.data);
   _free(sb.data);
   if (error) {
     char* msg = _malloc(200 + (strlen(error) + strlen(name) + strlen(value)));
