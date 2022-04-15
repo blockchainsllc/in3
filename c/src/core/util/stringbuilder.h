@@ -141,6 +141,7 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  *
  */
 char* sprintx(const char* fmt, ...);
+void  sb_vprintx(sb_t* sb, const char* fmt, va_list args);
 
 #ifdef __cplusplus
 }
