@@ -173,7 +173,7 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
     sb_t sb = {0};
     sb_vprintx(&sb, fmt, args);
     va_end(args);
-    vprintk("%s", sb.data);
+    printk("%s", sb.data);
     fflush(stderr);
     _free(sb.data);
 #endif
