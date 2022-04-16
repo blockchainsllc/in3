@@ -107,6 +107,7 @@ valgrind:
     - long-jobs
   variables:
     VALGRIND_OPTS: "-v -q --num-callers=50  --main-stacksize=4000 --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+    
   script:
     - mkdir _build
     - cd _build

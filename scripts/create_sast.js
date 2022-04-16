@@ -22,7 +22,7 @@ input.forEach((line, i) => {
         //        ==2129==    by 0x4243F6: eth_set_pk_signer (c/src/signer/pk-signer/signer.c:215)
 
         for (let n = i; n >= 0; n--) {
-            const r = /==([0-9]+)==.*:([0-9a-zA-Z_]+)\s*\(([0-9a-zA-Z_/\.]+):([0-9]+)\)/g;
+            const r = /==([0-9]+)==.*?:\s+([0-9a-zA-Z_]+)\s+\(([0-9a-zA-Z_/\.\-]+):([0-9]+)\)/g;
             if (!input[n].startsWith('==' + m[1] + '==')) break;
             let mm = r.exec(input[n])
             if (mm && !is_malloc) {
@@ -120,7 +120,7 @@ input.forEach((line, i) => {
 
         }
     }
-    else if (res.length) {
+    else if (res.length && tool != 'valgrind') {
         res[res.length - 1].raw_source_code_extract += '\n' + line
         res[res.length - 1].details.path.value += '\n' + line
     }
