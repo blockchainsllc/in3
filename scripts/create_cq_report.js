@@ -12,7 +12,7 @@ input.forEach(line => {
     let m;
     if ((m = regex.exec(line)) !== null) {
         const [all, path, lin, col, level, description] = m
-        if (path.indexOf('third-party') > 0) return
+        if (level == 'note' || path.indexOf('third-party') > 0) return
         const fingerprint = crypto.createHash('sha256')
             .update(path.substring(root.length + 1), 'utf8')
             .update(description, 'utf8')
