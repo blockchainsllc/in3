@@ -2,7 +2,11 @@ include:
   - template: Security/SAST.gitlab-ci.yml
 variables:
   SAST_DISABLE_DIND: "true"
-  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
+#  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
+  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman,bandit,flawfinder,eslint,semgrep
+  SAST_EXCLUDED_PATHS:	spec, test, tests, tmp, examples
+  SAST_BANDIT_EXCLUDED_PATHS: '*/tests/*, */venv/*, */c/*'
+  SAST_FLAWFINDER_LEVEL: 3
 
 .only_full:
   rules:
@@ -83,10 +87,10 @@ gcc11check:
     - cd _build
     - cmake -DGCC_ANALYZER=true -DIN3_SERVER=true ..
     - make 2> err.log || cat err.log
-    - node ../scripts/create_cq_report.js .. <err.log >code-quality-gcc11.json
+    - node ../scripts/create_sast.js .. <err.log >sast.json
   artifacts:
     reports:
-      codequality: _build/code-quality-gcc11.json
+      sast: _build/sast.json
   
 
 valgrind:
