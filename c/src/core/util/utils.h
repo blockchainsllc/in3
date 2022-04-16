@@ -260,6 +260,7 @@ uint64_t current_ms();
  * returns true if all pytes (specified by l) of pts have a value of zero.
  */
 static inline bool memiszero(uint8_t* ptr, size_t l) {
+  if (!ptr) return true;
   assert(l > 0);
   while (l) {
     if (*ptr) return false;
