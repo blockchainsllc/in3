@@ -27,7 +27,7 @@ input.forEach(line => {
                 name: 'gcc11'
             },
             description: '',
-            severity: level == 'note' ? 'Info' : (level == 'warning' ? 'Info' : 'Critical'), // info, minor, major, critical, or blocker
+            severity: level == 'note' ? 'Info' : (level == 'warning' ? 'Medium' : 'Critical'), // info, minor, major, critical, or blocker
             location: {
                 file: path.substring(root.length + 1),
                 start_line: parseInt(lin)
@@ -40,7 +40,8 @@ input.forEach(line => {
             }]
         })
     }
-    else if (res.length) res[res.length - 1].description += '\n' + line
+    else if (res.length) res[res.length - 1].raw_source_code_extract += '\n' + line
 })
+//res.forEach(_ => _.description = '```\n' + _.description + '\n```\n')
 console.log(JSON.stringify({ version: '14.0.4', vulnerabilities: res }, null, 2))
 if (res.length) process.exitCode = 1
