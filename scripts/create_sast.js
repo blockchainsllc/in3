@@ -15,7 +15,7 @@ input.forEach(line => {
         if (level == 'note' || path.indexOf('third-party') > 0) return
         const id = crypto.createHash('sha256')
             .update(path.substring(root.length + 1), 'utf8')
-            .update(description, 'utf8')
+            .update(message, 'utf8')
             .digest('hex')
         res.push({
             id,
@@ -38,7 +38,7 @@ input.forEach(line => {
 
         })
     }
-    //    else if (res.length) res[res.length - 1].description += '\n' + line
+    else if (res.length) res[res.length - 1].description += '\n' + line
 })
 console.log(JSON.stringify({ version: '14.0.4', vulnerabilities: res }, null, 2))
 if (res.length) process.exitCode = 1
