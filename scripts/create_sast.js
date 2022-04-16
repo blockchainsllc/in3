@@ -33,6 +33,9 @@ input.forEach((line, i) => {
             else if (!is_malloc && input[n].indexOf('malloc') >= 0) is_malloc = true
             content = input[n].substring(4 + m[1].length) + '\n' + content
         }
+        const id = crypto.createHash('sha256')
+            .update(content, 'utf8')
+            .digest('hex')
         res.push({
             id,
             category: 'sast',
