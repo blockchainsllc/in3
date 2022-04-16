@@ -585,7 +585,7 @@ function createTest(descr, method, tests, tc) {
     tests.push({
         descr,
         request: { method, params: tc.input || [] },
-        result: getResult(tc.expected_output || null),
+        result: getResult(tc.expected_output),
         success: tc.expected_failure ? false : true,
         config: tc.config || {},
         response: asArray(tc.mockedResponses).map(r => r.req.body?.params || r.res.result === undefined ? r.res : r.res.result)

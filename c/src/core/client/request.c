@@ -636,7 +636,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_c
     return IN3_OK;
   }
 
-  in3_log_debug("requesting signature type=%d from account %x\n", digest_type, from.len > 2 ? bytes_to_int(from.data, 4) : 0);
+  in3_log_debug("requesting signature type=%d from account %B for %B\n", digest_type, from, raw_data);
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
