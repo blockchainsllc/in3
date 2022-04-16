@@ -22,7 +22,7 @@ input.forEach(line => {
             category: 'sast',
             message,
             cve: '',
-            scanne: {
+            scanner: {
                 id: 'gcc11',
                 name: 'gcc11'
             },
@@ -32,10 +32,12 @@ input.forEach(line => {
                 file: path.substring(root.length + 1),
                 start_line: parseInt(lin)
             },
-            identifiers: [
-
-            ],
-
+            confidence: 'High',
+            identifiers: [{
+                "type": "gcc11",
+                "name": "GCC warning",
+                "value": "gcc"
+            }]
         })
     }
     else if (res.length) res[res.length - 1].description += '\n' + line
