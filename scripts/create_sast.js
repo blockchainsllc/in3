@@ -30,7 +30,7 @@ input.forEach((line, i) => {
                 last_path = mm[3]
                 last_method = mm[2]
             }
-            else if (!is_malloc && input[n].indexOf('malloc') >= 0) is_malloc = true
+            if (!is_malloc && input[n].indexOf('malloc') >= 0) is_malloc = true
             content = input[n].substring(4 + m[1].length) + '\n' + content
         }
         const id = crypto.createHash('sha256')
