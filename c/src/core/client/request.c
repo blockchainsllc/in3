@@ -203,6 +203,9 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   }
   // if this is the first request, we initialize the plugins now
   in3_plugin_init(ctx);
+
+  in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "\n", d_get_string(ctx->requests[0], K_METHOD), d_get(ctx->requests[0], K_PARAMS));
+
   return ctx;
 }
 
