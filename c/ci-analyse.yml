@@ -34,7 +34,12 @@ spotbugs-sast:
   needs: []
   stage: analysis
 
+bandit-sast:
+  needs: []
+  stage: analysis
+
 brakeman-sast:
+  needs: []
   stage: analysis
 #  when: never  
   variables:
