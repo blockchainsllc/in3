@@ -368,7 +368,7 @@ function getObject(def, name, index, types, api, state) {
         code_set: init.set.join(';\n  '),
         code_read: `TRY_PARAM_CONVERT_${def.optional ? '' : 'REQUIRED_'}OBJECT(${name}, ctx, ${index}, ${convert_fn_name(api, ob_name)})`,
         code_pass: def.optional
-            ? `d_type(d_get_at(ctx->params, ${index})) == T_NULL ? NULL : &${name} `
+            ? `d_type(d_get_at(ctx->params, ${index})) == T_NULL ? NULL : &${name}`
             : '&' + name
     }
 
