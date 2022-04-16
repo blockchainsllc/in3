@@ -81,7 +81,6 @@ gcc11check:
   artifacts:
     reports:
       codequality: _build/code-quality-gcc11.json
-    expire_in: 1 week
   
 
 valgrind:
