@@ -4,47 +4,6 @@ variables:
   SAST_DISABLE_DIND: "true"
   SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
 
-semgrep-sast:
-  needs: []
-  stage: analysis
-  variables:
-    SAST_ANALYZER_IMAGE_TAG: "2.16"
-
-eslint-sast:
-  needs: []
-  variables:
-    SAST_ANALYZER_IMAGE_TAG: "2.16"
-  stage: analysis
-
-flawfinder-sast:
-  needs: []
-  stage: analysis
-
-gosec-sast:
-  needs: []
-#  when: never  
-  stage: analysis
-
-nodejs-scan-sast:
-  needs: []
-#  when: never  
-  stage: analysis
-
-spotbugs-sast:
-  needs: []
-  stage: analysis
-
-bandit-sast:
-  needs: []
-  stage: analysis
-
-brakeman-sast:
-  needs: []
-  stage: analysis
-#  when: never  
-  variables:
-    SAST_ANALYZER_IMAGE_TAG: "2.21.1"
-
 .only_full:
   rules:
     - changes:
@@ -240,3 +199,49 @@ metrics:
       - metrics.txt
     reports:
       metrics: metrics.txt
+
+
+
+semgrep-sast:
+  needs: []
+  stage: analysis
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.16"
+
+eslint-sast:
+  needs: []
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.16"
+  stage: analysis
+
+flawfinder-sast:
+  needs: []
+  stage: analysis
+security-code-scan-sast:
+  needs: []
+  stage: analysis
+
+gosec-sast:
+  needs: []
+#  when: never  
+  stage: analysis
+
+nodejs-scan-sast:
+  needs: []
+#  when: never  
+  stage: analysis
+
+spotbugs-sast:
+  needs: []
+  stage: analysis
+
+bandit-sast:
+  needs: []
+  stage: analysis
+
+brakeman-sast:
+  needs: []
+  stage: analysis
+#  when: never  
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.21.1"
