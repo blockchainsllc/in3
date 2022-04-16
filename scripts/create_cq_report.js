@@ -12,10 +12,14 @@ input.forEach(line => {
     let m;
     if ((m = regex.exec(line)) !== null) {
         const [all, path, lin, col, level, description] = m
+        const fingerprint = crypto.createHash('sha256')
+            .update(path.substring(root.length + 1), 'utf8')
+            .update(description, 'utf8')
+            .digest('hex')
         res.push({
             description,
-            fingerprint: '',
-            severity: level == 'warning' ? 'major' : 'critical', // info, minor, major, critical, or blocker
+            fingerprint,
+            severity: level == 'note' ? 'info' : (level == 'warning' ? 'minor' : 'critical'), // info, minor, major, critical, or blocker
             location: {
                 path: path.substring(root.length + 1),
                 lines: {
@@ -24,7 +28,7 @@ input.forEach(line => {
             }
         })
     }
-    else if (res.length) res[res.length - 1].description += '\n' + line
+    //    else if (res.length) res[res.length - 1].description += '\n' + line
 })
 console.log(JSON.stringify(res, null, 2))
 if (res.length) process.exitCode = 1
