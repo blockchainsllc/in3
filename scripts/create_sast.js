@@ -25,12 +25,12 @@ input.forEach((line, i) => {
             const r = /==([0-9]+)==.*?:\s+([0-9a-zA-Z_]+)\s+\(([0-9a-zA-Z_/\.\-]+):([0-9]+)\)/g;
             if (!input[n].startsWith('==' + m[1] + '==')) break;
             let mm = r.exec(input[n])
-            if (mm && !is_malloc) {
+            if (!is_malloc && input[n].indexOf('malloc') >= 0) is_malloc = true
+            else if (mm && !is_malloc) {
                 last_line = parseInt(mm[4])
                 last_path = mm[3]
                 last_method = mm[2]
             }
-            if (!is_malloc && input[n].indexOf('malloc') >= 0) is_malloc = true
             content = input[n].substring(4 + m[1].length) + '\n' + content
         }
         const id = crypto.createHash('sha256')
@@ -105,7 +105,7 @@ input.forEach((line, i) => {
             }]
         })
 
-        const cwe = /\[CWE-([0-9]+)\]/g
+        const cwe = /\[CWE.+([0-9]+)\]/g
         if ((m = regex.exec(message)) !== null) {
             res[res.length - 1].details.more = {
                 type: 'url',
