@@ -200,7 +200,7 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
     }
 
     case PLGN_ACT_TERM: {
-      //      _free(k); // danger!!!! MEMORYLEAK
+      _free(k);
       return IN3_OK;
     }
 
@@ -449,8 +449,6 @@ in3_ret_t eth_register_pk_signer(in3_t* in3) {
 
 /** sets the signer and a pk to the client*/
 void eth_set_pk_signer_hex(in3_t* in3, char* key) {
-  if (!in3 && in3->plugins) return; // invalid, but safe if not called with null, just to test sast
-
   if (key[0] == '0' && key[1] == 'x') key += 2;
   if (strlen(key) != 64) return;
   bytes32_t key_bytes;
