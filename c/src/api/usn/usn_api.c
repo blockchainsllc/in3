@@ -98,7 +98,6 @@ static usn_device_t* find_device(usn_device_conf_t* conf, char* url) {
 
 static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
   if (!id) return NULL;
-  if (!conf && conf->devices) return NULL;
   for (int i = 0; i < conf->len_devices; i++) {
     if (memcmp(id, conf->devices[i].id, 32) == 0) return conf->devices + i;
   }
