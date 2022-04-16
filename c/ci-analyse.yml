@@ -76,8 +76,8 @@ gcc11check:
     - mkdir _build
     - cd _build
     - cmake -DGCC_ANALYZER=true -DIN3_SERVER=true ..
-    - make >2 err.log || echo "failed with warnings"
-    - node ../scripts/create_cq_report.js .. < err.log > code-quality-gcc11.json
+    - make >2 err.log || cat err.log
+    - node ../scripts/create_cq_report.js .. <err.log >code-quality-gcc11.json
   artifacts:
     reports:
       codequality: _build/code-quality-gcc11.json
