@@ -3,6 +3,7 @@ const crypto = require('crypto')
 const path = require("path")
 var stdinBuffer = fs.readFileSync(0)
 const input = stdinBuffer.toString().split('\n').filter(_ => !(_.startsWith('cc1:') || _.startsWith('make[') || _.startsWith('make:')))
+const tool = process.argv.pop()
 const root = path.resolve(process.argv.pop())
 
 //input.forEach(_ => console.log('::: ' + _))
@@ -23,8 +24,8 @@ input.forEach(line => {
             message,
             cve: '',
             scanner: {
-                id: 'gcc11',
-                name: 'gcc11'
+                id: tool,
+                name: tool
             },
             description: '',
             raw_source_code_extract: '',
@@ -42,9 +43,9 @@ input.forEach(line => {
             },
             confidence: 'High',
             identifiers: [{
-                "type": "gcc11",
-                "name": "GCC warning",
-                "value": "gcc"
+                "type": tool,
+                "name": tool + " warning",
+                "value": tool
             }]
         })
     }

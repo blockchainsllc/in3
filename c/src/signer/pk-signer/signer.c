@@ -200,7 +200,7 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
     }
 
     case PLGN_ACT_TERM: {
-      _free(k);
+      //      _free(k); // danger!!!! MEMORYLEAK
       return IN3_OK;
     }
 
