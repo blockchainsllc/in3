@@ -3,6 +3,42 @@ include:
 variables:
   SAST_DISABLE_DIND: "true"
 
+semgrep-sast:
+  needs: []
+  stage: analysis
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.16"
+
+eslint-sast:
+  needs: []
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.16"
+  stage: analysis
+
+flawfinder-sast:
+  needs: []
+  stage: analysis
+
+gosec-sast:
+  needs: []
+  when: never  
+  stage: analysis
+
+nodejs-scan-sast:
+  needs: []
+  when: never  
+  stage: analysis
+
+spotbugs-sast:
+  needs: []
+  stage: analysis
+
+brakeman-sast:
+  stage: analysis
+  when: never  
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.21.1"
+
 .only_full:
   rules:
     - changes:

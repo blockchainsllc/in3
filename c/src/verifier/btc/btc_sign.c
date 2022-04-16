@@ -251,7 +251,7 @@ static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in
 
   // Before signing, input script field should temporarilly be equal to the utxo we want to redeem
   tx_in->script.data = bytes(_malloc(utxo->tx_out.script.data.len), utxo->tx_out.script.data.len);
-  if (!utxo->tx_out.script.data) return IN3_EUNKNOWN;
+  if (!utxo->tx_out.script.data.data) return IN3_EUNKNOWN;
   memcpy(tx_in->script.data.data, utxo->tx_out.script.data.data, tx_in->script.data.len);
   tx_in->script.type = utxo->tx_out.script.type;
 
