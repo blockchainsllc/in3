@@ -86,7 +86,7 @@ input.forEach((line, i) => {
             },
             description: '',
             raw_source_code_extract: '',
-            severity: level == 'note' ? 'Info' : (level == 'warning' ? 'Medium' : 'Critical'), // info, minor, major, critical, or blocker
+            severity: level == 'note' ? 'Info' : (level == 'warning' ? 'High' : 'Critical'), // info, minor, major, critical, or blocker
             location: {
                 file: path.substring(root.length + 1),
                 start_line: parseInt(lin)
