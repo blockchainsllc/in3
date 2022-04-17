@@ -62,7 +62,7 @@ clangcheck:
     reports:
       sast: _build/sast.json
   variables:
-    OPTS:  -enable-checker alpha.core.SizeofPtr  -enable-checker alpha.core.TestAfterDivZero   -enable-checker alpha.security.ArrayBoundV2 -enable-checker alpha.security.MallocOverflow  -enable-checker alpha.security.ReturnPtrRange  -enable-checker alpha.valist.Unterminated   -enable-checker alpha.valist.Uninitialized  -enable-checker optin.performance.Padding
+    OPTS:  -enable-checker alpha.core.SizeofPtr  -enable-checker alpha.core.TestAfterDivZero   -enable-checker alpha.security.ArrayBoundV2 -enable-checker alpha.security.MallocOverflow  -enable-checker alpha.security.ReturnPtrRange  -enable-checker optin.performance.Padding
 
 cppcheck:
   stage: analysis
