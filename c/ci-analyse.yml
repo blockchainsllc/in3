@@ -3,7 +3,7 @@ include:
 variables:
   SAST_DISABLE_DIND: "true"
 #  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
-  SAST_EXCLUDED_ANALYZERS: spotbugs,gosec,nodejs-scan,brakeman,flawfinder,eslint,security-code-scan
+  SAST_EXCLUDED_ANALYZERS: spotbugs,gosec,nodejs-scan,brakeman,flawfinder,eslint,semgrep,security-code-scan
   SAST_EXCLUDED_PATHS:	spec, test, tests, tmp, examples
   SAST_BANDIT_EXCLUDED_PATHS: '*/tests/*, */venv/*, */c/*'
   SAST_FLAWFINDER_LEVEL: 3
@@ -52,8 +52,8 @@ clangcheck:
   script:
     - mkdir _build
     - cd _build
-    - scan-build-14 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-14 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make 2> err.log || cat err.log
+    - scan-build-14 $OPTS cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-14 $OPTS --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make 2> err.log || cat err.log
     - node ../scripts/create_sast.js .. scan-build <err.log >sast.json
 
   artifacts:
@@ -61,6 +61,8 @@ clangcheck:
       - report
     reports:
       sast: _build/sast.json
+  variables:
+    OPTS:  -enable-checker alpha.core.SizeofPtr  -enable-checker alpha.core.TestAfterDivZero   -enable-checker alpha.security.ArrayBoundV2 -enable-checker alpha.security.MallocOverflow  -enable-checker alpha.security.ReturnPtrRange  -enable-checker alpha.valist.Unterminated   -enable-checker alpha.valist.Uninitialized  -enable-checker optin.performance.Padding
 
 cppcheck:
   stage: analysis
