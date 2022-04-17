@@ -64,7 +64,7 @@ clangcheck:
 
 cppcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:gcc10
+  image: docker.slock.it/build-images/cmake:gcc11
   extends: .only_full
   allow_failure: true
   needs: []
@@ -91,7 +91,7 @@ gcc11check:
     - cd _build
     - cmake -DGCC_ANALYZER=true -DIN3_SERVER=true ..
     - make 2> err.log || cat err.log
-    - node ../scripts/create_sast.js .. gcc11 <err.log >sast.json
+    - node ../scripts/create_sast.js .. gcc11 <err.log >sast.json || echo "reported issues"
   artifacts:
     reports:
       sast: _build/sast.json
