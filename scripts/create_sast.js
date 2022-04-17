@@ -128,8 +128,8 @@ input.forEach((line, i) => {
 })
 //res.forEach(_ => _.description = '```\n' + _.description + '\n```\n')
 console.log(JSON.stringify({ version: '14.0.4', vulnerabilities: res }, null, 2))
-console.log("found Vulnerbilities : ", res.length);
+console.error("found Vulnerbilities : ", res.length);
 if (res.length) {
-    console.log(res.map(_ => `- ${_.severity} : ${_.message}`).join('\n'))
+    console.error(res.map(_ => `- ${_.severity} : ${_.message}`).join('\n'))
     process.exitCode = 1
 }
