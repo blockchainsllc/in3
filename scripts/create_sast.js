@@ -54,6 +54,7 @@ input.forEach((line, i) => {
             },
             details: {
                 path: {
+                    name: "stack",
                     type: "code",
                     lang: 'c',
                     value: content
@@ -92,6 +93,7 @@ input.forEach((line, i) => {
             },
             details: {
                 path: {
+                    name: "path",
                     type: "code",
                     lang: 'c',
                     value: ''
@@ -105,8 +107,8 @@ input.forEach((line, i) => {
             }]
         })
 
-        const cwe = /\[CWE.+([0-9]+)\]/g
-        if ((m = regex.exec(message)) !== null) {
+        const cwe = /\[CWE-([0-9]+)\]/g
+        if ((m = cwe.exec(message)) !== null) {
             res[res.length - 1].details.more = {
                 type: 'url',
                 href: 'https://cwe.mitre.org/data/definitions/' + m[1] + '.html'
