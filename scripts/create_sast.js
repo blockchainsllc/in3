@@ -19,8 +19,6 @@ input.forEach((line, i) => {
         let last_line = 0
         let last_method = ''
         let is_malloc = false
-        //        ==2129==    by 0x4243F6: eth_set_pk_signer (c/src/signer/pk-signer/signer.c:215)
-
         for (let n = i; n >= 0; n--) {
             const r = /==([0-9]+)==.*?:\s+([0-9a-zA-Z_]+)\s+\(([0-9a-zA-Z_/\.\-]+):([0-9]+)\)/g;
             if (!input[n].startsWith('==' + m[1] + '==')) break;
@@ -130,4 +128,8 @@ input.forEach((line, i) => {
 })
 //res.forEach(_ => _.description = '```\n' + _.description + '\n```\n')
 console.log(JSON.stringify({ version: '14.0.4', vulnerabilities: res }, null, 2))
-if (res.length) process.exitCode = 1
+console.log("found Vulnerbilities : ", res.length);
+if (res.length) {
+    console.log(res.map(_ => `- ${_.severity} : ${_.message}`).join('\n'))
+    process.exitCode = 1
+}
