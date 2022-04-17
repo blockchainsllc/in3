@@ -363,3 +363,8 @@ void recorder_exit(int code) {
 
   exit(code);
 }
+
+void recorder_request(char* req) { UNUSED_VAR(req); }
+void recorder_response(char* req) { UNUSED_VAR(req); }
+void recorder_error(char* req) { UNUSED_VAR(req); }
+void recorder_configure(char* conf) { UNUSED_VAR(conf); }

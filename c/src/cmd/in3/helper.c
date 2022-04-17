@@ -117,6 +117,7 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
     for (; b; b--) sb_add_char(&sb, '}');
   }
   char* error = in3_configure(c, sb.data);
+  recorder_configure(sb.data);
   _free(sb.data);
   if (error) {
     char* msg = _malloc(200 + (strlen(error) + strlen(name) + strlen(value)));
@@ -314,7 +315,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t ty
   if (pk_file) {
     if (!pwd) {
       recorder_print(1, "Passphrase:\n");
-      pwd = malloc(500);
+      pwd = _malloc(500);
       read_pass(pwd, 500);
     }
     char* content;

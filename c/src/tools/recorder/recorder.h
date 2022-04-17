@@ -19,4 +19,8 @@ void           recorder_write_start(in3_t* c, char* file, int argc, char* argv[]
 void           recorder_read_start(in3_t* c, char* file);
 void           recorder_update_cmd(char* file, int* argc, char** argv[]);
 void           recorder_print(int err, const char*, ...);
+void           recorder_request(char* req);
+void           recorder_response(char* req);
+void           recorder_error(char* req);
+void           recorder_configure(char* conf);
 _Noreturn void recorder_exit(int code);

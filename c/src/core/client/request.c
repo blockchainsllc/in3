@@ -203,6 +203,9 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   }
   // if this is the first request, we initialize the plugins now
   in3_plugin_init(ctx);
+
+  in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "\n", d_get_string(ctx->requests[0], K_METHOD), d_get(ctx->requests[0], K_PARAMS));
+
   return ctx;
 }
 
@@ -260,12 +263,20 @@ in3_ret_t req_check_response_error(in3_req_t* c, int i) {
     return req_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber, const char* filename, const char* function, int line) {
+in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber, const char* filename, const char* function, int line, ...) {
   assert(ctx);
 
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING || errnumber == IN3_OK) return errnumber;
   if (message) {
+    sb_t sb = {0};
+    if (strchr(message, '%')) {
+      va_list args;
+      va_start(args, line);
+      sb_vprintx(&sb, message, args);
+      va_end(args);
+      message = sb.data;
+    }
 
     const size_t l   = strlen(message);
     char*        dst = NULL;
@@ -281,6 +292,7 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error = dst;
+    _free(sb.data);
 
     error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .req = ctx};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
@@ -402,6 +414,14 @@ in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   return in3_rpc_handle_finish(hctx);
 }
 
+in3_ret_t in3_rpc_handle(in3_rpc_handle_ctx_t* hctx, char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(in3_rpc_handle_start(hctx), fmt, args);
+  va_end(args);
+  return in3_rpc_handle_finish(hctx);
+}
+
 in3_ret_t in3_rpc_handle_with_uint256(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   b_optimize_len(&data);
   sb_t* sb = in3_rpc_handle_start(hctx);
@@ -418,20 +438,7 @@ in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
 in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {
   if (!result) return req_set_error(ctx->req, "No result", IN3_ERPC);
   sb_t* sb = in3_rpc_handle_start(ctx);
-
-  // As the API might return an empty string as a response,
-  // we at least convert it into an empty object
-  if ((d_type(result) == T_STRING || d_type(result) == T_BYTES) && d_len(result) == 0) {
-    sb_add_chars(sb, "{}");
-  }
-  else {
-    sb_add_json(sb, "", result);
-  }
-
-  // now convert all kebab-case to pascal case
-  for (char* c = sb->data; *c; c++) {
-    if (*c == '-' && in_property_name(c)) *c = '_';
-  }
+  sb_add_json(sb, "", result);
   return in3_rpc_handle_finish(ctx);
 }
 
@@ -703,4 +710,13 @@ in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
   (void) vc;
 #endif
   return IN3_EUNKNOWN;
+}
+
+in3_ret_t req_throw_unknown_prop(in3_req_t* r, d_token_t* ob, d_token_t* prop, char* ob_name) {
+  char* missing = d_get_property_name(ob, d_get_key(prop));
+  char* m       = missing ? sprintx("The property '%s' does not exist in %s", missing, ob_name) : sprintx("Unknown property for the the type %s", ob_name);
+  req_set_error(r, m, IN3_EINVAL);
+  _free(missing);
+  _free(m);
+  return IN3_EINVAL;
 }

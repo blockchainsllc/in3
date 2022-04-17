@@ -35,6 +35,7 @@
 #include "rlp.h"
 
 static int ref(bytes_t* d, bytes_t* b, size_t l, uint8_t* s, int r) {
+  if (!d) return -1;
   d->len  = l;
   d->data = s;
   return (s >= b->data && (s + l) >= b->data && (s + l) <= (b->data + b->len)) ? r : -1;

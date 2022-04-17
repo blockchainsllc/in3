@@ -106,9 +106,9 @@ typedef struct {
 
 #define RPC_THROW(ctx, msg, code) \
   { return req_set_error(ctx->req, msg, code); }
-#define RPC_ASSERT(cond, msg)                                     \
-  {                                                               \
-    if (!(cond)) return req_set_error(ctx->req, msg, IN3_EINVAL); \
+#define RPC_ASSERT(cond, msg, args...)                  \
+  {                                                     \
+    if (!(cond)) return rpc_throw(ctx->req, msg, args); \
   }
 #define RPC_ASSERT_CATCH(cond, msg, f)                 \
   {                                                    \
@@ -137,6 +137,11 @@ NONULL in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t d
  * creates a response with a json token.
  */
 NONULL in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result);
+
+/**
+ * creates a response based on a template
+ */
+NONULL in3_ret_t in3_rpc_handle(in3_rpc_handle_ctx_t* hctx, char* fmt, ...);
 
 /**
  * creates a response with string.

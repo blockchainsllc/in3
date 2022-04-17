@@ -23,6 +23,7 @@ bool exec_weights(in3_t* c) {
   char*    more = "WEIGHT";
   in3_plugin_execute_all(c, PLGN_ACT_CHAIN_CHANGE, c);
   in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
+  if (!nl) return false;
   if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
   if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
   recorder_print(0, "   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);

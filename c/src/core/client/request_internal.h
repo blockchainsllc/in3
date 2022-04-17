@@ -39,8 +39,10 @@
 
 #ifdef LOGGING
 #define req_set_error(c, msg, err) req_set_error_intern(c, msg, err, __FILE__, __func__, __LINE__)
+#define rpc_throw(c, msg, ...)     req_set_error_intern(c, msg, IN3_EINVAL, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #else
 #define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err, __FILE__, __func__, __LINE__)
+#define rpc_throw(c, msg, ...)     req_set_error_intern(c, NULL, IN3_EINVAL, __FILE__, __func__, __LINE__)
 #endif
 #define REQUIRE_EXPERIMENTAL(req, feature) \
   if ((req->client->flags & FLAGS_ALLOW_EXPERIMENTAL) == 0) return req_set_error(req, "The feature " feature " is still experimental. You need to explicitly allow it in the config.", IN3_ECONFIG);
@@ -82,7 +84,8 @@ in3_ret_t req_set_error_intern(
     char*       msg,       /**< [in] the error message. (This string will be copied) */
     in3_ret_t   errnumber, /**< [in] the error code to return */
     const char* filename,
-    const char* function, int line);
+    const char* function, int line,
+    ...);
 
 /**
  * handles a failable context
@@ -147,5 +150,6 @@ NONULL void in3_req_free_nodes(node_match_t* c);
 int         req_nodes_len(node_match_t* root);
 NONULL bool req_is_method(const in3_req_t* req, const char* method);
 in3_ret_t   req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key);
+in3_ret_t   req_throw_unknown_prop(in3_req_t* r, d_token_t* ob, d_token_t* prop, char* ob_name);
 
 #endif // REQ_INTERNAL_H

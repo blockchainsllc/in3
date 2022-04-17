@@ -13,6 +13,8 @@ const {
     short_descr
 } = require('./util')
 
+const cmake_types = {}
+const cmake_deps = {}
 const pargs = process.argv.slice(2)
 const in3_core_dir = process.argv[1].replace('/scripts/generator/generate.js', '')
 const src_dirs = []
@@ -87,8 +89,10 @@ function scan(dir) {
         if (f.name == 'rpc.yml' && !is_valid) console.error("SKIP" + dir + '/rpc.yml')
         if (f.name == 'rpc.yml' && is_valid) {
             console.error('parse ' + dir + '/' + f.name)
+            const fullpath = resolve(dir).trim()
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             if (ob.types) {
+                Object.keys(ob.types).forEach(t => cmake_types[t] = fullpath)
                 types = { ...types, ...ob.types }
                 delete ob.types
             }
@@ -101,6 +105,10 @@ function scan(dir) {
                         delete ob[k][t]
                         console.error(`skipping ${k} :: ${t}`)
                     }
+                }
+                if (ob[k]._generate_rpc) {
+                    Object.keys(ob[k]).filter(_ => !_.startsWith('_')).forEach(_ => ob[k][_]._src = fullpath)
+                    cmake_types[fullpath] = true
                 }
                 if (!generators.length && ob[k].fields && lastAPI) {
                     delete ob[k].fields
@@ -127,11 +135,26 @@ function scan(dir) {
                 testCases[k] = { ...testCases[k], ...ob[k] }
             }
         }
+        else if (f.name == 'CMakeLists.txt') {
+            const content = fs.readFileSync(`${dir}/${f.name}`, 'utf8')
+            content.split('add_static_library').slice(1).forEach(s => {
+                const c = (s.split('(')[1] || '').split(')', 1)[0]
+                if (!c) return
+                const words = c.split(/[ ,\n]+/).filter(_ => _)
+                let n = words.indexOf('NAME')
+                let name = words[n + 1]
+                let depends = []
+                n = words.indexOf('DEPENDS')
+                if (n >= 0) depends = words.slice(n + 1)
+                cmake_deps[name] = {
+                    dir: resolve(dir).trim(),
+                    depends
+                }
+            })
+        }
         else if (f.isDirectory()) scan(dir + '/' + f.name)
     }
 }
-
-
 
 function print_object(def, pad, useNum, doc, pre) {
     let i = 1
@@ -369,8 +392,9 @@ for (const s of Object.keys(docs).sort()) {
             testCases: testCases[s]
         })
 }
+Object.keys(cmake_deps).forEach(m => { cmake_deps[m].depends = cmake_deps[m].depends.filter(_ => cmake_deps[_]) })
 generators.forEach(_ => _.generateAPI && sorted_rpcs.forEach(api => _.generateAPI(api.api, api.rpcs, api.descr, types, api.testCases, apiConf)))
-generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs({ apis: sorted_rpcs, types, conf: apiConf }))
+generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs({ apis: sorted_rpcs, types, conf: apiConf, cmake_deps, cmake_types }))
 
 
 handle_config(config, '')
