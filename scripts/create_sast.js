@@ -110,6 +110,7 @@ input.forEach((line, i) => {
         const cwe = /\[CWE-([0-9]+)\]/g
         if ((m = cwe.exec(message)) !== null) {
             res[res.length - 1].details.more = {
+                name: "explaination",
                 type: 'url',
                 href: 'https://cwe.mitre.org/data/definitions/' + m[1] + '.html'
             }
