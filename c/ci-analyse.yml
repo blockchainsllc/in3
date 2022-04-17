@@ -3,7 +3,7 @@ include:
 variables:
   SAST_DISABLE_DIND: "true"
 #  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
-  SAST_EXCLUDED_ANALYZERS: spotbugs,gosec,nodejs-scan,brakeman,flawfinder,eslint,semgrep,security-code-scan
+  SAST_EXCLUDED_ANALYZERS: spotbugs,gosec,nodejs-scan,brakeman,eslint,semgrep,security-code-scan
   SAST_EXCLUDED_PATHS:	spec, test, tests, tmp, examples
   SAST_BANDIT_EXCLUDED_PATHS: '*/tests/*, */venv/*, */c/*'
   SAST_FLAWFINDER_LEVEL: 3
