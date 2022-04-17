@@ -315,7 +315,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t ty
   if (pk_file) {
     if (!pwd) {
       recorder_print(1, "Passphrase:\n");
-      pwd = malloc(500);
+      pwd = _malloc(500);
       read_pass(pwd, 500);
     }
     char* content;
