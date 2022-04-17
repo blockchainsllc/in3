@@ -77,7 +77,9 @@ def libin3_new(chain_id: int, transport_fn, cache_enabled: bool = True, determin
     Returns:
          instance (int): Memory address of the client instance, return value from libin3_new
     """
-    assert isinstance(chain_id, int)
+    if not isinstance(chain_id, int):
+        raise AssertionError('invalid state')
+
     """
     /** registers a plugin with the client */
     in3_ret_t in3_plugin_register(

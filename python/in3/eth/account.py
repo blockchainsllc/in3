@@ -101,8 +101,10 @@ class EthAccountApi:
         Returns:
             tx_hash (hex): Transaction hash, used to get the receipt and check if the transaction was mined.
         """
-        assert isinstance(transaction, NewTransaction)
-        assert isinstance(sender, Account)
+        if not isinstance(transaction, NewTransaction):
+            raise AssertionError('invalid state')
+        if not isinstance(sender, Account):
+            raise AssertionError('invalid state')
         if not sender.secret or not len(hex(sender.secret)) == 66:
             raise AssertionError('To send a transaction, the sender\'s secret must be known by the application. \
             To send a pre-signed transaction use `send_raw_transaction` instead.')
