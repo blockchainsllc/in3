@@ -107,7 +107,7 @@ function scan(dir) {
                     }
                 }
                 if (ob[k]._generate_rpc) {
-                    Object.keys(ob[k]).filter(_ => !_.startsWith('_')).forEach(_ => ob[k][_]._src = fullpath)
+                    Object.keys(ob[k]).filter(_ => !_.startsWith('_') && _ != 'fields').forEach(_ => ob[k][_]._src = fullpath)
                     cmake_types[fullpath] = true
                 }
                 if (!generators.length && ob[k].fields && lastAPI) {
