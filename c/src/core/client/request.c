@@ -229,6 +229,10 @@ char* req_get_response_data(in3_req_t* ctx) {
     if (i) sb_add_char(&sb, ',');
     str_range_t rr    = d_to_json(ctx->responses[i]);
     char*       start = NULL;
+    if (!rr.data) { // it's a binary response, so we can't return the json
+      _free(sb.data);
+      return NULL;
+    }
     if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[i], K_IN3)).data) && start < rr.data + rr.len) {
       while (*start != ',' && start > rr.data) start--;
       sb_add_range(&sb, rr.data, 0, start - rr.data + 1);
@@ -443,20 +447,7 @@ in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result)
 }
 
 in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
-  uint8_t val[8];
-  long_to_bytes(value, val);
-  bytes_t b = bytes(val, 8);
-  b_optimize_len(&b);
-  char* s = alloca(b.len * 2 + 5);
-  bytes_to_hex(b.data, b.len, s + 3);
-  if (s[3] == '0') s++;
-  size_t l = strlen(s + 3) + 3;
-  s[0]     = '"';
-  s[1]     = '0';
-  s[2]     = 'x';
-  s[l]     = '"';
-  s[l + 1] = 0;
-  return in3_rpc_handle_with_string(hctx, s);
+  return in3_rpc_handle(hctx, "\"%x\"", value);
 }
 
 static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child, bool use_cache) {

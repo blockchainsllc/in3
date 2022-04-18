@@ -41,8 +41,8 @@ add_subdirectory(src/third-party)
 
 if (GCC_ANALYZER) 
   ADD_DEFINITIONS(-DGCC_ANALYZER=1)
-  add_compile_options(-fanalyzer  -Wno-nonnull-compare)
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer")
+  add_compile_options(-fanalyzer -Wno-nonnull-compare)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fanalyzer")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer")
 endif()
 

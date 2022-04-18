@@ -101,9 +101,9 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   if (error) return req_set_error(ctx->req, error, IN3_EINVAL);
 
   // create response
-  sb_add_json(in3_rpc_handle_start(ctx), "", result->result);
+  in3_rpc_handle_with_json(ctx, result->result);
   if (result) json_free(result);
-  return in3_rpc_handle_finish(ctx);
+  return IN3_OK;
 }
 
 // recursive function decoding and writing the result

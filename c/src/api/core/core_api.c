@@ -136,11 +136,11 @@ static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
   }
 
   char* r = mnemonic_create(pk);
-  sb_printx(in3_rpc_handle_start(ctx), "\"%s\"", r);
+  in3_rpc_handle(ctx, "\"%s\"", r);
   memzero(hash, 32);
   memzero(r, strlen(r));
   _free(r);
-  return in3_rpc_handle_finish(ctx);
+  return IN3_OK;
 }
 
 static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
@@ -151,7 +151,7 @@ static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_STRING(mnemonic, ctx, 0)
   TRY_PARAM_GET_STRING(passphrase, ctx, 1, "")
 
-  if (mnemonic_verify(mnemonic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
+  if (mnemonic_verify(mnemonic)) return rpc_throw(ctx->req, "Invalid mnemonic! %s", mnemonic);
 
   mnemonic_to_seed(mnemonic, passphrase, seed, NULL);
   return in3_rpc_handle_with_bytes(ctx, bytes(seed, 64));
@@ -195,7 +195,7 @@ static in3_ret_t in3_crypto_convert(in3_rpc_handle_ctx_t* ctx) {
   else if (strcmp(type, "pub_der") == 0)
     ct = CONV_PUB64_TO_DER;
   else
-    return req_set_error(ctx->req, "Unknown convert type", IN3_EINVAL);
+    return rpc_throw(ctx->req, "Unknown convert type (%s)", type);
 
   uint8_t buf[100]; // 100 bytes are enough, because even converting a signature to der will not take more.
   int     buf_len;
