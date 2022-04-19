@@ -31,11 +31,38 @@ files.forEach(file => {
             const api_data = data[api]
             Object.keys(api_data).filter(_ => !_.startsWith('_') && _ != 'fields' && _ != 'descr' && _ != 'config').forEach(func => {
                 check_properties("Error in " + file + ': The function ' + func + ' in params', api_data[func].params || {})
+                check_type("Error in " + file + ': The function ' + func + ' in result', (api_data[func].result || {}).type)
             })
 
         })
 
+    } else if (file.split('/').pop().startsWith("test")) {
+        Object.keys(data).forEach(api => {
+            //            console.error(`### check api in ${file} : ${api} `)
+
+            if (apis[api]) {
+                Object.keys(data[api]).forEach(test => {
+                    if (!apis[api][test]) {
+                        console.error(`Error in ${file} : The test is not associated with a rpc-function : ${test} `)
+                        process.exitCode = 1
+                    } else {
+                        apis[api][test].has_test = true
+
+                    }
+                    // TODO check test
+                })
+            }
+            //            else 
+            //                console.error(`::: unknown api in ${file} : ${api} `)
+        })
     }
+})
+
+Object.keys(apis).forEach(api => {
+    Object.keys(apis[api]).filter(_ => !_.startsWith('_') && _ != 'fields' && _ != 'descr' && _ != 'config' && !apis[api][_].has_test).forEach(func => {
+        console.error(`Warning : The ${func}  has no testdata `)
+    })
+
 })
 
 function check_properties(prefix, props) {
@@ -48,7 +75,7 @@ function check_properties(prefix, props) {
 function check_type(prefix, t) {
     if (!t) return
     if (typeof (t) === 'object') {
-        return check_properties(prefix, t)
+        return check_properties(prefix + '/type', t)
     }
     switch (t) {
         case 'uint32':

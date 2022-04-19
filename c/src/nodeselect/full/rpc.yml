@@ -42,7 +42,7 @@ nodelist:
 
     nodeProps:
       descr: used to identify the capabilities of the node.
-      type: hex
+      type: string
       optional: true
       example: "0xffff"
 
@@ -127,7 +127,7 @@ nodelist:
               type: string
             props:
               descr: used to identify the capabilities of the node (defaults to 0xFFFF).
-              type: hex
+              type: string
 
   # Verified RPCs
   in3_nodeList:
@@ -171,7 +171,7 @@ nodelist:
               type: uint256
             props:
               descr: the bitset of capabilities as described in the [Node Structure](spec.html#node-structure)
-              type: hex
+              type: string
             timeout:
               descr: the time in seconds describing how long the deposit would be locked when trying to unregister a node.
               type: uint64

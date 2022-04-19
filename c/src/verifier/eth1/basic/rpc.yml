@@ -958,7 +958,7 @@ eth:
         type: uint64
     result:
       descr: the code as hex
-      type: hex
+      type: bytes
     proof:
       alias: eth_getStorageAt
     example:
@@ -1004,7 +1004,7 @@ eth:
         descr: the blockNumber or`latest`
         type: uint64
     result:
-      type: hex
+      type: bytes
       descr: the value of the storage slot.
     proof:
       type:

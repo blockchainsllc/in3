@@ -884,7 +884,7 @@ zksync:
         type: string
     result:
       descr: the token price
-      type: float
+      type: double
     example:
       cmdParams: -x
       request:
