@@ -205,7 +205,7 @@ test_rpc:
     - short-jobs
   script:
     - cd scripts/generator; npm i && cd ../..
-    - find c/src -name 'rpc.yml' | xargs node validate_schema.js
+    - find c/src -name 'rpc.yml' | xargs node scripts/generator/validate_schema.js
 
 test_qemu_cortexm3:
   image: docker.io/zephyrprojectrtos/zephyr-build:v0.12
