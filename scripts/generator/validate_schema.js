@@ -6,9 +6,7 @@ const schema = require('./rpc_schema.json')
 process.argv.filter(_ => _.endsWith('rpc.yml')).forEach(file => {
     const data = yaml.parse(fs.readFileSync(file, 'utf8'))
     const result = jsonschema.validate(data, schema)
-    if (!result.errors.length)
-        console.log(`${file} is valid.`)
-    else {
+    if (result.errors.length) {
         for (let err of result.errors)
             console.log('Error in ' + file + ' : ' + err.toString().replace('instance.', ''))
         process.exitCode = 1

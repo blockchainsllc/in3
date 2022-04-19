@@ -67,7 +67,7 @@
                     ]
                 },
                 "key": {
-                    "type": "string",
+                    "type": "boolean",
                     "description": "if set the type will be a map"
                 },
                 "nullable": {
