@@ -1,5 +1,5 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 types:
-
   keyparams:
     version:
       descr: the version
@@ -162,9 +162,9 @@ account:
       array: true
     example:
       request:
-        - 'time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful'
+        - "time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful"
         - test
-      response: 
+      response:
         - "0xd66a0C40d3d8B245211C7E174f89CA3a5bA93795"
 
   eth_accounts:

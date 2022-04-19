@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 utils:
   in3_cacheClear:
     sync: true
@@ -5,7 +6,7 @@ utils:
     result:
       type: bool
       descr: true indicating the success
-    example: 
+    example:
       request: []
       response: true
 
@@ -26,7 +27,7 @@ utils:
 
       See [web3_sha3](https://eth.wiki/json-rpc/API#web3_sha3) for spec.
 
-      No proof needed, since the client will execute this locally. 
+      No proof needed, since the client will execute this locally.
     params:
       data:
         descr: data to hash
@@ -108,7 +109,7 @@ utils:
     descr: |
       Returns sha-256 of the given data.
 
-      No proof needed, since the client will execute this locally. 
+      No proof needed, since the client will execute this locally.
     params:
       data:
         descr: data to hash
@@ -121,11 +122,10 @@ utils:
         - "0x1234567890"
       response: "0x6c450e037e79b76f231a71a22ff40403f7d9b74b15e014e52fe1156d3666c3e6"
 
-
   in3_http:
     apiName: fetchHttp
     descr: sends a simple http-request. This is used internally to fetch data from REST-APIs.
-    params: 
+    params:
       method:
         type: string
         descr: the HTTP-method to use like 'GET', 'POST', 'PUT', 'DELETE',...
@@ -149,16 +149,12 @@ utils:
       request:
         - POST
         - https://reqbin.com/echo/post/json
-        - {"id":78912,"Customer":"Jason Sweet","Price": 18}
-        - ["Accept: application/json","Content-Type: application/json"]
-      response: 
+        - { "id": 78912, "Customer": "Jason Sweet", "Price": 18 }
+        - ["Accept: application/json", "Content-Type: application/json"]
+      response:
         success: true
-      
-      
-      
 
 account:
-
   in3_createKey:
     sync: true
     descr: |
@@ -199,12 +195,11 @@ account:
       descr: theprivate key
       type: bytes32
     example:
-      request: 
+      request:
         - "0x1234567890123456789012345678901234567890"
         - secp256k1
         - m/4
       response: "0xd747eb5734828a3c3fc617cb98c47964bd1df96ec05ce2a2c6618782d2c43645"
-
 
   in3_bip39_create:
     sync: true
@@ -219,7 +214,7 @@ account:
       descr: a list of words based on bip39
       type: string
     example:
-      request: 
+      request:
         - "0x1ff06206d4d2e44b104644b619d070821a781c05ccca2579728bab0be6010e52"
       response: "cable loan like predict comic cereal donate silk render soldier bring aerobic pole asthma blame off century slide pepper figure salmon above deer found"
 
@@ -238,11 +233,10 @@ account:
       descr: the resulting seed
       type: bytes
     example:
-      request: 
+      request:
         - "cable loan like predict comic cereal donate silk render soldier bring aerobic pole asthma blame off century slide pepper figure salmon above deer found"
         - test
       response: "0x751ff30f38a674397010348a36c4ba0dac0f943bfaca936ea725a6ac2e16f68798e0ef8fa11992882b2c2f968c44e6afbc8aced61b96403834998e7b7faeeb5e"
-
 
   in3_ed25519_pk2pub:
     sync: true
@@ -255,10 +249,9 @@ account:
       descr: the 32byte public key
       type: bytes32
     example:
-      request: 
+      request:
         - "0x4c5b4b2225e51d284ff82947c186a03d89440e591020ff213c18135757df156a"
       response: "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
-
 
   in3_ed25519_sign:
     sync: true
@@ -274,11 +267,10 @@ account:
       descr: the 64byte signature
       type: bytes
     example:
-      request: 
+      request:
         - "0x1234567890"
         - "0x4c5b4b2225e51d284ff82947c186a03d89440e591020ff213c18135757df156a"
       response: "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07"
-
 
   in3_ed25519_verify:
     sync: true
@@ -297,7 +289,7 @@ account:
       descr: true, if could be successfully verified.
       type: bool
     example:
-      request: 
+      request:
         - "0x1234567890"
         - "0x6764ba5cce521c887c7ea15df94962351a88b4b6c40e129b4085db6dfa7da5d3de40fb967f8928f9753cf6f468fe42eec8118742c4eed19d923feaf05030ee07"
         - "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
@@ -313,7 +305,7 @@ account:
         type: bytes
       type:
         type: string
-        descr: | 
+        descr: |
           the conversion type.
           This Type may be prefixed with curvetype to be used (`ecdsa_` or `eddsa_`) , like `eddsa_pub32`.
 
@@ -326,8 +318,7 @@ account:
       descr: the converted bytes.
       type: bytes
     example:
-      request: 
+      request:
         - "0xb838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9"
         - "pub_der"
       response: "0x3056301006072a8648ce3d020106052b8104000a03420004b838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9"
-          

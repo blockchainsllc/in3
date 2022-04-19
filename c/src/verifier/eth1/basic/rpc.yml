@@ -1,13 +1,13 @@
+# yaml-language-server: $schema=../../../../../scripts/generator/rpc_schema.json
 types:
   eth_accesslist:
-    address: 
+    address:
       type: address
       descr: the address of the contract
     storageKeys:
       array: true
       type: bytes32
       descr: list of storageKeys
-    
 
   eth_transaction:
     to:
@@ -60,11 +60,10 @@ types:
       descr: the data-section of the transaction
       type: bytes
       optional: true
-    signatures:  
+    signatures:
       descr: additional signatures which should be used when sending through a multisig
       type: bytes
       optional: true
-
 
   eth_blockheader:
     number:
@@ -127,7 +126,6 @@ types:
       descr: block fees based on EIP 1559 starting with the London hard fork
       type: uint64
       optional: true
-    
 
   eth_blockdataWithTxHashes:
     _extends: eth_blockheader
@@ -209,18 +207,14 @@ types:
       descr: the max priority Fee gas as defined in EIP-1559
       type: uint64
 
-
-
 eth:
-
   eth_gasPrice:
     descr: returns the current gasPrice in wei per gas
-    params: []
     result:
       descr: the current gasPrice in wei per gas
       type: uint64
     example:
-      response: '0x0625900800'
+      response: "0x0625900800"
 
   eth_feeHistory:
     descr: |
@@ -235,19 +229,19 @@ eth:
       newestBlock:
         descr: the Highest blockNumber or one of `latest`, `earliest`or `pending`
         type: uint64
-        internalDefault : latest
+        internalDefault: latest
         optional: true
       rewardPercentiles:
         descr: A monotonically increasing list of percentile values to sample from each block's effective priority fees per gas in ascending order, weighted by gas used.
         type: double
-        internalDefault : []
+        internalDefault: []
         optional: true
         array: true
     result:
       descr: Fee history for the returned block range. This can be a subsection of the requested range if not all blocks are available.
       typeName: FeeHistory
-      type: 
-        oldestBlock: 
+      type:
+        oldestBlock:
           descr: Lowest number block of the returned range.
           type: uint64
         baseFeePerGas:
@@ -262,11 +256,6 @@ eth:
           descr: An array of rewards
           array: true
           type: uint64
-          
-
-
-
-    
 
   eth_blockNumber:
     descr: |
@@ -291,7 +280,7 @@ eth:
       blockNumber:
         descr: the blockNumber or one of `latest`, `earliest`or `pending`
         type: uint64
-        internalDefault : latest
+        internalDefault: latest
         optional: true
       fullTx:
         descr: if true the full transactions are contained in the result.
@@ -315,51 +304,50 @@ eth:
       descr: the blockdata, or in case the block with that number does not exist, `null` will be returned.
       type: eth_blockdata
 
-
     example:
       request:
         - latest
         - false
       response:
-        author: '0x0000000000000000000000000000000000000000'
-        difficulty: '0x2'
-        extraData: '0x696e667572612d696f0000000000000...31570f1e500'
-        gasLimit: '0x7a1200'
-        gasUsed: '0x20e145'
-        hash: '0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585'
-        logsBloom: '0x000008000000000000...00400100000000080'
-        miner: '0x0000000000000000000000000000000000000000'
-        number: '0x449956'
-        parentHash: '0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694'
-        receiptsRoot: '0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff'
+        author: "0x0000000000000000000000000000000000000000"
+        difficulty: "0x2"
+        extraData: "0x696e667572612d696f0000000000000...31570f1e500"
+        gasLimit: "0x7a1200"
+        gasUsed: "0x20e145"
+        hash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585"
+        logsBloom: "0x000008000000000000...00400100000000080"
+        miner: "0x0000000000000000000000000000000000000000"
+        number: "0x449956"
+        parentHash: "0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694"
+        receiptsRoot: "0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff"
         sealFields:
-        - '0xa00000000000000000000000000000000000000000000000000000000000000000'
-        - '0x880000000000000000'
-        sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347'
-        size: '0x74b'
-        stateRoot: '0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910'
-        timestamp: '0x605aec86'
-        totalDifficulty: '0x6564de'
+          - "0xa00000000000000000000000000000000000000000000000000000000000000000"
+          - "0x880000000000000000"
+        sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+        size: "0x74b"
+        stateRoot: "0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910"
+        timestamp: "0x605aec86"
+        totalDifficulty: "0x6564de"
         transactions:
-        - '0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58'
-        - '0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641'
-        - '0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75'
-        - '0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d'
-        - '0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5'
-        - '0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8'
-        transactionsRoot: '0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc'
+          - "0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58"
+          - "0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641"
+          - "0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75"
+          - "0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d"
+          - "0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5"
+          - "0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8"
+        transactionsRoot: "0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc"
         uncles: []
       in3:
         proof:
           type: blockProof
           signatures: []
           transactions:
-          - '0xf8ac830331f78449504f80830186a094f74a...8a83ce8dc'
-          - '0xf8ac830331f88449504f80830186a094f74a...a81c2f1fee77'
-          - '0xf8a91e843b9aca008315a92594f0277caffea...c30d64dd139'
-          - '0xf8c601843b9aca008305573094309906d7b701...62f5e7a2319a'
-          - '0xf8c680843b9aca008305573094309906d7b701...78289116eac194e'
-          - '0xf9014b82020a843b9aca0083010f6894786f8d72...b649'
+            - "0xf8ac830331f78449504f80830186a094f74a...8a83ce8dc"
+            - "0xf8ac830331f88449504f80830186a094f74a...a81c2f1fee77"
+            - "0xf8a91e843b9aca008315a92594f0277caffea...c30d64dd139"
+            - "0xf8c601843b9aca008305573094309906d7b701...62f5e7a2319a"
+            - "0xf8c680843b9aca008305573094309906d7b701...78289116eac194e"
+            - "0xf9014b82020a843b9aca0083010f6894786f8d72...b649"
     proof:
       descr: |
         The `eth_getBlockBy...` methods return the Block-Data. 
@@ -414,7 +402,6 @@ eth:
         - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
         - `uncles`: only if `fullProof` is requested we add  all blockheaders of the uncles to the proof in order to verify the uncleRoot.
 
-
   eth_getBlockByHash:
     descr: |
       Returns information about a block by hash.
@@ -450,49 +437,48 @@ eth:
       alias: eth_getBlockByNumber
     example:
       request:
-        - '0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585'
+        - "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585"
         - false
       response:
-        author: '0x0000000000000000000000000000000000000000'
-        difficulty: '0x2'
-        extraData: '0x696e667572612d696f0000000000000...31570f1e500'
-        gasLimit: '0x7a1200'
-        gasUsed: '0x20e145'
-        hash: '0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585'
-        logsBloom: '0x000008000000000000...00400100000000080'
-        miner: '0x0000000000000000000000000000000000000000'
-        number: '0x449956'
-        parentHash: '0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694'
-        receiptsRoot: '0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff'
+        author: "0x0000000000000000000000000000000000000000"
+        difficulty: "0x2"
+        extraData: "0x696e667572612d696f0000000000000...31570f1e500"
+        gasLimit: "0x7a1200"
+        gasUsed: "0x20e145"
+        hash: "0x2baa54adcd8a105cdedfd9c6635d48d07b8f0e805af0a5853190c179e5a18585"
+        logsBloom: "0x000008000000000000...00400100000000080"
+        miner: "0x0000000000000000000000000000000000000000"
+        number: "0x449956"
+        parentHash: "0x2c2a4fcd11aa9aea6b9767651a10e7dbd2bcddbdaba703c74458ad6faf7c2694"
+        receiptsRoot: "0x0240b90272b5600bef7e25d0894868f85125174c2f387ef3236fc9ed9bfb3eff"
         sealFields:
-        - '0xa00000000000000000000000000000000000000000000000000000000000000000'
-        - '0x880000000000000000'
-        sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347'
-        size: '0x74b'
-        stateRoot: '0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910'
-        timestamp: '0x605aec86'
-        totalDifficulty: '0x6564de'
+          - "0xa00000000000000000000000000000000000000000000000000000000000000000"
+          - "0x880000000000000000"
+        sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+        size: "0x74b"
+        stateRoot: "0xf44699575afd2668060be5ba77e66e1e80edb77ad1b5070969ddfa63da6a4910"
+        timestamp: "0x605aec86"
+        totalDifficulty: "0x6564de"
         transactions:
-        - '0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58'
-        - '0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641'
-        - '0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75'
-        - '0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d'
-        - '0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5'
-        - '0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8'
-        transactionsRoot: '0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc'
+          - "0xcb7edfdb3229c9beeb418ab1ef1a3c9210ecfb22f0157791c3287085d798da58"
+          - "0x0fb803696521ba109c40b3eecb773c93dc6ee891172af0f620c8d44c05198641"
+          - "0x3ef6725cab4470889c3c7d53609a5d4b263701f5891aa98c9ed48b73b6b2fb75"
+          - "0x4010c4c112514756dcdcf14f91117503826dcbe15b03a1636c07aa713da24b8d"
+          - "0xd9c14daa5e2e9cc955534865365ef6bde3045c70e3a984a74c298606c4d67bb5"
+          - "0xfa2326237ba5dcca2127241562be16b68c48fed93d29add8d62f79a00518c2d8"
+        transactionsRoot: "0xddbbd7bf723abdfe885539406540671c2c0eb97684972175ad199258c75416cc"
         uncles: []
       in3:
         proof:
           type: blockProof
           signatures: []
           transactions:
-          - '0xf8ac830331f78449504f80830186a094f74a...8a83ce8dc'
-          - '0xf8ac830331f88449504f80830186a094f74a...a81c2f1fee77'
-          - '0xf8a91e843b9aca008315a92594f0277caffea...c30d64dd139'
-          - '0xf8c601843b9aca008305573094309906d7b701...62f5e7a2319a'
-          - '0xf8c680843b9aca008305573094309906d7b701...78289116eac194e'
-          - '0xf9014b82020a843b9aca0083010f6894786f8d72...b649'      
-      
+            - "0xf8ac830331f78449504f80830186a094f74a...8a83ce8dc"
+            - "0xf8ac830331f88449504f80830186a094f74a...a81c2f1fee77"
+            - "0xf8a91e843b9aca008315a92594f0277caffea...c30d64dd139"
+            - "0xf8c601843b9aca008305573094309906d7b701...62f5e7a2319a"
+            - "0xf8c680843b9aca008305573094309906d7b701...78289116eac194e"
+            - "0xf9014b82020a843b9aca0083010f6894786f8d72...b649"
 
   eth_getBlockTransactionCountByHash:
     descr: returns the number of transactions. For Spec, see [eth_getBlockTransactionCountByHash](https://eth.wiki/json-rpc/API#eth_getBlockTransactionCountByHash).
@@ -575,37 +561,36 @@ eth:
 
     example:
       request:
-        - '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
-        - '0xd5'
+        - "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee"
+        - "0xd5"
       response:
-        blockHash: '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
-        blockNumber: '0xb8a4a9'
-        from: '0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98'
-        gas: '0xac6b'
-        gasPrice: '0x1bf08eb000'
-        hash: '0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea'
-        input: '0x095ea7b300000000000000000000000...a7640000'
-        nonce: '0xa'
-        to: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce'
-        transactionIndex: '0xd5'
-        value: '0x0'
-        type: '0x0'
-        v: '0x25'
-        r: '0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4'
-        s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
+        blockHash: "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee"
+        blockNumber: "0xb8a4a9"
+        from: "0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98"
+        gas: "0xac6b"
+        gasPrice: "0x1bf08eb000"
+        hash: "0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea"
+        input: "0x095ea7b300000000000000000000000...a7640000"
+        nonce: "0xa"
+        to: "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+        transactionIndex: "0xd5"
+        value: "0x0"
+        type: "0x0"
+        v: "0x25"
+        r: "0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4"
+        s: "0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78"
       in3:
         proof:
           type: eth_transactionProof
-          block: '0xf90212a033a7afd1b9...fa16cf2'
+          block: "0xf90212a033a7afd1b9...fa16cf2"
           merkleProof:
-          - '0xf90131a0...91604f2f58080808080808080'
-          - '0xf851a06f...0808080808080808080'
-          - '0xf8d18080...8a2ac871c5808080'
-          - '0xf90111a05...0808080808080808080'
-          - '0xf8ae20b8...000a8ff46d2a2dd78'
+            - "0xf90131a0...91604f2f58080808080808080"
+            - "0xf851a06f...0808080808080808080"
+            - "0xf8d18080...8a2ac871c5808080"
+            - "0xf90111a05...0808080808080808080"
+            - "0xf8ae20b8...000a8ff46d2a2dd78"
           txIndex: 213
           signatures: []
- 
 
   eth_getTransactionByBlockNumberAndIndex:
     descr: |
@@ -628,37 +613,36 @@ eth:
 
     example:
       request:
-        - '0xb8a4a9'
-        - '0xd5'
+        - "0xb8a4a9"
+        - "0xd5"
       response:
-        blockHash: '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
-        blockNumber: '0xb8a4a9'
-        from: '0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98'
-        gas: '0xac6b'
-        gasPrice: '0x1bf08eb000'
-        hash: '0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea'
-        input: '0x095ea7b300000000000000000000000...a7640000'
-        nonce: '0xa'
-        to: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce'
-        transactionIndex: '0xd5'
-        value: '0x0'
-        type: '0x0'
-        v: '0x25'
-        r: '0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4'
-        s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
+        blockHash: "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee"
+        blockNumber: "0xb8a4a9"
+        from: "0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98"
+        gas: "0xac6b"
+        gasPrice: "0x1bf08eb000"
+        hash: "0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea"
+        input: "0x095ea7b300000000000000000000000...a7640000"
+        nonce: "0xa"
+        to: "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+        transactionIndex: "0xd5"
+        value: "0x0"
+        type: "0x0"
+        v: "0x25"
+        r: "0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4"
+        s: "0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78"
       in3:
         proof:
           type: eth_transactionProof
-          block: '0xf90212a033a7afd1b9...fa16cf2'
+          block: "0xf90212a033a7afd1b9...fa16cf2"
           merkleProof:
-          - '0xf90131a0...91604f2f58080808080808080'
-          - '0xf851a06f...0808080808080808080'
-          - '0xf8d18080...8a2ac871c5808080'
-          - '0xf90111a05...0808080808080808080'
-          - '0xf8ae20b8...000a8ff46d2a2dd78'
+            - "0xf90131a0...91604f2f58080808080808080"
+            - "0xf851a06f...0808080808080808080"
+            - "0xf8d18080...8a2ac871c5808080"
+            - "0xf90111a05...0808080808080808080"
+            - "0xf8ae20b8...000a8ff46d2a2dd78"
           txIndex: 213
           signatures: []
- 
 
   eth_getTransactionByHash:
     descr: |
@@ -670,43 +654,41 @@ eth:
         descr: the transactionHash of the transaction.
         type: bytes32
     result:
-      optional: true   
+      optional: true
       descr: the transactiondata or `null` if it does not exist
       type: eth_transactiondata
- 
 
     example:
       request:
-        - '0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b'
+        - "0xe9c15c3b26342e3287bb069e433de48ac3fa4ddd32a31b48e426d19d761d7e9b"
       response:
-        blockHash: '0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee'
-        blockNumber: '0xb8a4a9'
-        from: '0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98'
-        gas: '0xac6b'
-        gasPrice: '0x1bf08eb000'
-        hash: '0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea'
-        input: '0x095ea7b300000000000000000000000...a7640000'
-        nonce: '0xa'
-        to: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce'
-        transactionIndex: '0xd5'
-        value: '0x0'
-        type: '0x0'
-        v: '0x25'
-        r: '0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4'
-        s: '0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78'
+        blockHash: "0x4fc08daf8d670a23eba7a1aca1f09591c19147305c64d25e1ddd3dd43ff658ee"
+        blockNumber: "0xb8a4a9"
+        from: "0xcaa6cfc2ca92cabbdbce5a46901ee8b831e00a98"
+        gas: "0xac6b"
+        gasPrice: "0x1bf08eb000"
+        hash: "0xd635a97452d604f735116d9de29ac946e9987a20f99607fb03516ef267ea0eea"
+        input: "0x095ea7b300000000000000000000000...a7640000"
+        nonce: "0xa"
+        to: "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+        transactionIndex: "0xd5"
+        value: "0x0"
+        type: "0x0"
+        v: "0x25"
+        r: "0xb18e0928c988d898d3217b145d78439072db15ea7de1005a73cf5feaf01a57d4"
+        s: "0x6b530c2613f543f9e26ef9c27a7986c748fbc856aaeacd6000a8ff46d2a2dd78"
       in3:
         proof:
           type: eth_transactionProof
-          block: '0xf90212a033a7afd1b9...fa16cf2'
+          block: "0xf90212a033a7afd1b9...fa16cf2"
           merkleProof:
-          - '0xf90131a0...91604f2f58080808080808080'
-          - '0xf851a06f...0808080808080808080'
-          - '0xf8d18080...8a2ac871c5808080'
-          - '0xf90111a05...0808080808080808080'
-          - '0xf8ae20b8...000a8ff46d2a2dd78'
+            - "0xf90131a0...91604f2f58080808080808080"
+            - "0xf851a06f...0808080808080808080"
+            - "0xf8d18080...8a2ac871c5808080"
+            - "0xf90111a05...0808080808080808080"
+            - "0xf8ae20b8...000a8ff46d2a2dd78"
           txIndex: 213
           signatures: []
-      
 
     proof:
       descr: |
@@ -776,8 +758,6 @@ eth:
 
         While there is no proof for a non existing transaction, if the request was a  `eth_getTransactionByBlock...` the node must deliver a partial merkle-proof to verify that this node does not exist.
 
-
-
   eth_getLogs:
     descr: searches for events matching the given criteria. See [eth_getLogs](https://eth.wiki/json-rpc/API#eth_getLogs) for the spec.
     proof:
@@ -814,7 +794,7 @@ eth:
         The merkle-proofs for receipts are created as described in the [Receipt Proof](#eth-gettransactionreceipt).
 
 
-        If the request requires proof (`verification`: `proof`) the node will provide an Transaction Proof as part of the in3-section of the response. 
+        If the request requires proof (`verification`: `proof`) the node will provide an Transaction Proof as part of the in3-section of the response.
       type:
         type:
           descr: proofType, which is `logProof`
@@ -877,16 +857,14 @@ eth:
       type: ethlog
       descr: array with all found event matching the specified filter
 
-          
-
   eth_getBalance:
     descr: gets the balance of an account for a given block
-    params: 
+    params:
       account:
         descr: address of the account
         type: address
       block:
-        internalDefault : latest
+        internalDefault: latest
         optionalAPI: true
         descr: the blockNumber or `latest`
         type: uint64
@@ -899,42 +877,40 @@ eth:
       request:
         - "0x2e333ec090f1028df0a3c39a918063443be82b2b"
         - latest
-      response: '0x20599832af6ec00'
+      response: "0x20599832af6ec00"
       in3:
         proof:
           type: accountProof
-          block: '0xf90212a0af...5643f426d'
+          block: "0xf90212a0af...5643f426d"
           signatures: []
           accounts:
-            '0x2e333EC090f1028df0a3c39a918063443Be82B2b':
-              address: '0x2e333ec090f1028df0a3c39a918063443be82b2b'
+            "0x2e333EC090f1028df0a3c39a918063443Be82B2b":
+              address: "0x2e333ec090f1028df0a3c39a918063443be82b2b"
               accountProof:
-              - '0xf90211a099a5e...6d9f924480'
-              - '0xf90211a052b61...b19ff23445180'
-              - '0xf90211a0cc125...7e7afd9170280'
-              - '0xf90211a088c91...555f0b76fc6ec80'
-              - '0xf90211a0641a3...477d355d557a180'
-              - '0xf90211a0619e5...5977318c9487280'
-              - '0xf90111a0e25a1...641683d34adae808080'
-              - '0xf86e9d3f681a18...2273b7bfad8045d85a470'
-              balance: '0x20599832af6ec00'
-              codeHash: '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
-              nonce: '0x5'
-              storageHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421'
+                - "0xf90211a099a5e...6d9f924480"
+                - "0xf90211a052b61...b19ff23445180"
+                - "0xf90211a0cc125...7e7afd9170280"
+                - "0xf90211a088c91...555f0b76fc6ec80"
+                - "0xf90211a0641a3...477d355d557a180"
+                - "0xf90211a0619e5...5977318c9487280"
+                - "0xf90111a0e25a1...641683d34adae808080"
+                - "0xf86e9d3f681a18...2273b7bfad8045d85a470"
+              balance: "0x20599832af6ec00"
+              codeHash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+              nonce: "0x5"
+              storageHash: "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
               storageProof: []
-
-
 
   eth_getTransactionCount:
     descr: gets the nonce or number of transaction sent from this account at a given block
-    params: 
+    params:
       account:
         descr: address of the account
         type: address
       block:
-        internalDefault : latest
+        internalDefault: latest
         optionalAPI: true
-        descr: the blockNumber or  `latest` 
+        descr: the blockNumber or  `latest`
         type: uint64
     result:
       descr: the nonce
@@ -945,41 +921,38 @@ eth:
       request:
         - "0x2e333ec090f1028df0a3c39a918063443be82b2b"
         - latest
-      response: '0x5'
+      response: "0x5"
       in3:
         proof:
           type: accountProof
-          block: '0xf90212a0af...5643f426d'
+          block: "0xf90212a0af...5643f426d"
           signatures: []
           accounts:
-            '0x2e333EC090f1028df0a3c39a918063443Be82B2b':
-              address: '0x2e333ec090f1028df0a3c39a918063443be82b2b'
+            "0x2e333EC090f1028df0a3c39a918063443Be82B2b":
+              address: "0x2e333ec090f1028df0a3c39a918063443be82b2b"
               accountProof:
-              - '0xf90211a099a5e...6d9f924480'
-              - '0xf90211a052b61...b19ff23445180'
-              - '0xf90211a0cc125...7e7afd9170280'
-              - '0xf90211a088c91...555f0b76fc6ec80'
-              - '0xf90211a0641a3...477d355d557a180'
-              - '0xf90211a0619e5...5977318c9487280'
-              - '0xf90111a0e25a1...641683d34adae808080'
-              - '0xf86e9d3f681a18...2273b7bfad8045d85a470'
-              balance: '0x20599832af6ec00'
-              codeHash: '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
-              nonce: '0x5'
-              storageHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421'
+                - "0xf90211a099a5e...6d9f924480"
+                - "0xf90211a052b61...b19ff23445180"
+                - "0xf90211a0cc125...7e7afd9170280"
+                - "0xf90211a088c91...555f0b76fc6ec80"
+                - "0xf90211a0641a3...477d355d557a180"
+                - "0xf90211a0619e5...5977318c9487280"
+                - "0xf90111a0e25a1...641683d34adae808080"
+                - "0xf86e9d3f681a18...2273b7bfad8045d85a470"
+              balance: "0x20599832af6ec00"
+              codeHash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+              nonce: "0x5"
+              storageHash: "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
               storageProof: []
-
-
-
 
   eth_getCode:
     descr: gets the code of a given contract
-    params: 
+    params:
       account:
         descr: address of the account
         type: address
       block:
-        internalDefault : latest
+        internalDefault: latest
         optional: true
         descr: the blockNumber or `latest`
         type: uint64
@@ -992,35 +965,33 @@ eth:
       request:
         - "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
         - latest
-      response: '0x6080604052348...6c634300050a0040'
+      response: "0x6080604052348...6c634300050a0040"
       in3:
         proof:
           type: accountProof
-          block: '0xf9020da02776...8ba1d5458be3b98'
+          block: "0xf9020da02776...8ba1d5458be3b98"
           signatures: []
           accounts:
-            '0xaC1b824795E1EB1F6e609FE0dA9b9af8bEaAb60F':
-              address: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f'
+            "0xaC1b824795E1EB1F6e609FE0dA9b9af8bEaAb60F":
+              address: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
               accountProof:
-              - '0xf90211a03...c41e862bd80'
-              - '0xf90211a02...c5766ac3ec9180'
-              - '0xf90211a0f...cdad27ecdfbc1c4c66e680'
-              - '0xf90211a08...84621739c3777ea1d5080'
-              - '0xf90211a00...02388c08615b82ef0320614380'
-              - '0xf90211a03...1b16a8c050f61d80'
-              - '0xf8f18080a...cafe05823be8080'
-              - '0xf8669d3ad8...903305697a1'
-              balance: '0x0'
-              codeHash: '0x29140efcd5358d1dd75badfaa179e3df0dd53f17a883a30152d82903305697a1'
-              nonce: '0x1'
-              storageHash: '0x4d6c5972bcc0c8229c8b041df4aa70879e37e9f7eb47530e4232b317438524ed'
+                - "0xf90211a03...c41e862bd80"
+                - "0xf90211a02...c5766ac3ec9180"
+                - "0xf90211a0f...cdad27ecdfbc1c4c66e680"
+                - "0xf90211a08...84621739c3777ea1d5080"
+                - "0xf90211a00...02388c08615b82ef0320614380"
+                - "0xf90211a03...1b16a8c050f61d80"
+                - "0xf8f18080a...cafe05823be8080"
+                - "0xf8669d3ad8...903305697a1"
+              balance: "0x0"
+              codeHash: "0x29140efcd5358d1dd75badfaa179e3df0dd53f17a883a30152d82903305697a1"
+              nonce: "0x1"
+              storageHash: "0x4d6c5972bcc0c8229c8b041df4aa70879e37e9f7eb47530e4232b317438524ed"
               storageProof: []
 
-
-
   eth_getStorageAt:
-    descr: gets the storage value of a given key 
-    params: 
+    descr: gets the storage value of a given key
+    params:
       account:
         descr: address of the account
         type: address
@@ -1028,7 +999,7 @@ eth:
         descr: key to look for
         type: bytes32
       block:
-        internalDefault : latest
+        internalDefault: latest
         optional: true
         descr: the blockNumber or`latest`
         type: uint64
@@ -1086,7 +1057,7 @@ eth:
           array: true
           descr: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
           type: bytes
-        
+
       descr: |
         Each of these account values are stored in the account-object:
 
@@ -1192,36 +1163,36 @@ eth:
         - "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
         - "0x0"
         - latest
-      response: '0x19'
+      response: "0x19"
       in3:
         proof:
           type: accountProof
-          block: '0xf90218a0e625bee...87a38707dbbc'
+          block: "0xf90218a0e625bee...87a38707dbbc"
           signatures: []
           accounts:
-            '0xaC1b824795E1EB1F6e609FE0dA9b9af8bEaAb60F':
-              address: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f'
+            "0xaC1b824795E1EB1F6e609FE0dA9b9af8bEaAb60F":
+              address: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
               accountProof:
-              - '0xf90211a0cef18...56e5cfcf3ef70de80'
-              - '0xf90211a0b67e01...2a13db20dcf291d533480'
-              - '0xf90211a05df65...be23ffb94580'
-              - '0xf90211a0825413...75d61184621739c3777ea1d5080'
-              - '0xf90211a000a403...82ef0320614380'
-              - '0xf90211a03b0114...a6e41b16a8c050f61d80'
-              - '0xf8f18080a01a27...96fcdfe84cafe05823be8080'
-              - '0xf8669d3ad8a871b...d82903305697a1'
-              balance: '0x0'
-              codeHash: '0x29140efcd5358d1dd75badfaa179e3df0dd53f17a883a30152d82903305697a1'
-              nonce: '0x1'
-              storageHash: '0x4d6c5972bcc0c8229c8b041df4aa70879e37e9f7eb47530e4232b317438524ed'
+                - "0xf90211a0cef18...56e5cfcf3ef70de80"
+                - "0xf90211a0b67e01...2a13db20dcf291d533480"
+                - "0xf90211a05df65...be23ffb94580"
+                - "0xf90211a0825413...75d61184621739c3777ea1d5080"
+                - "0xf90211a000a403...82ef0320614380"
+                - "0xf90211a03b0114...a6e41b16a8c050f61d80"
+                - "0xf8f18080a01a27...96fcdfe84cafe05823be8080"
+                - "0xf8669d3ad8a871b...d82903305697a1"
+              balance: "0x0"
+              codeHash: "0x29140efcd5358d1dd75badfaa179e3df0dd53f17a883a30152d82903305697a1"
+              nonce: "0x1"
+              storageHash: "0x4d6c5972bcc0c8229c8b041df4aa70879e37e9f7eb47530e4232b317438524ed"
               storageProof:
-              - key: '0x0'
-                value: '0x19'
-                proof:
-                - '0xf90211a084b9482...1ad85a4f2f1680'
-                - '0xf901b1a0625f8d3...6e0788855d2780'
-                - '0xf851a08a14eff77...08080808080808080'
-                - '0xe19f3decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56319'
+                - key: "0x0"
+                  value: "0x19"
+                  proof:
+                    - "0xf90211a084b9482...1ad85a4f2f1680"
+                    - "0xf901b1a0625f8d3...6e0788855d2780"
+                    - "0xf851a08a14eff77...08080808080808080"
+                    - "0xe19f3decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56319"
 
   eth_sendTransaction:
     descr: signs and sends a Transaction
@@ -1245,7 +1216,6 @@ eth:
       descr: the transactionReceipt
       type: eth_transactionReceipt
 
-        
   eth_sendRawTransaction:
     descr: sends or broadcasts a prviously signed raw transaction. See [eth_sendRawTransaction](https://eth.wiki/json-rpc/API#eth_sendRawTransaction)
     params:
@@ -1255,6 +1225,3 @@ eth:
     result:
       descr: the transactionhash
       type: bytes32
-
-        
-    

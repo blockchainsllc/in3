@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "jsonschema": "^1.4.0",
     "yaml": "^1.10.2"
   }
 }

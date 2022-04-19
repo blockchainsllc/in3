@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 types:
   zk_receipt:
     type:
@@ -33,10 +34,9 @@ types:
     validFrom:
       descr: valid from
       type: uint64
-    validUntil: 
+    validUntil:
       descr: valid until
       type: uint64
-
 
   zk_tx:
     accountId:
@@ -225,33 +225,32 @@ zksync:
 
     Also in order to sign messages you need to set a signer!
 
-    All zksync-methods can be used with `zksync_` or `zk_` prefix. 
+    All zksync-methods can be used with `zksync_` or `zk_` prefix.
 
   # config
   config:
-
     zksync:
       descr: configuration for zksync-api  ( only available if build with `-DZKSYNC=true`, which is on per default).
       example:
-        - account: '0x995628aa92d6a016da55e7de8b1727e1eb97d337'
-          sync_key: '0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816'
+        - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
+          sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
           signer_type: contract
-        - account: '0x995628aa92d6a016da55e7de8b1727e1eb97d337'
-          sync_key: '0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816'
+        - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
+          sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
           signer_type: create2
           create2:
-            creator: '0x6487c3ae644703c1f07527c18fe5569592654bcb'
-            saltarg: '0xb90306e2391fefe48aa89a8e91acbca502a94b2d734acc3335bb2ff5c266eb12'
-            codehash: '0xd6af3ee91c96e29ddab0d4cb9b5dd3025caf84baad13bef7f2b87038d38251e5'
-        - account:  '0x995628aa92d6a016da55e7de8b1727e1eb97d337'
+            creator: "0x6487c3ae644703c1f07527c18fe5569592654bcb"
+            saltarg: "0xb90306e2391fefe48aa89a8e91acbca502a94b2d734acc3335bb2ff5c266eb12"
+            codehash: "0xd6af3ee91c96e29ddab0d4cb9b5dd3025caf84baad13bef7f2b87038d38251e5"
+        - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
           signer_type: pk
-          musig_pub_keys: '0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d8160x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816'
-          sync_key: '0xe8f2ee64be83c0ab9466b0490e4888dbf5a070fd1d82b567e33ebc90457a5734'
-          musig_urls: 
+          musig_pub_keys: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d8160x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
+          sync_key: "0xe8f2ee64be83c0ab9466b0490e4888dbf5a070fd1d82b567e33ebc90457a5734"
+          musig_urls:
             - null
-            - 'https://approver.service.com'
+            - "https://approver.service.com"
 
-      type: 
+      type:
         provider_url:
           descr: url of the zksync-server (if not defined it will be choosen depending on the chain)
           type: string
@@ -290,7 +289,7 @@ zksync:
             pk: Private matching the account is used ( for EOA)
             contract: Contract Signature  based EIP 1271
             create2: create2 optionas are used
-            
+
           optional: true
           default: pk
           cmd: zkat
@@ -302,7 +301,7 @@ zksync:
           cmd: zms
 
         musig_urls:
-          descr:  a array of strings with urls based on the `musig_pub_keys`. It is used so generate the combined signature by exchaing signature data (commitment and signatureshares) if the local client does not hold this key.
+          descr: a array of strings with urls based on the `musig_pub_keys`. It is used so generate the combined signature by exchaing signature data (commitment and signatureshares) if the local client does not hold this key.
           type: string
           array: true
           optional: true
@@ -321,9 +320,9 @@ zksync:
               descr: a salt-argument, which will be added to the pubkeyhash and create the create2-salt.
               type: bytes32
             codehash:
-              descr: the hash of the actual deploy-tx including the constructor-arguments. 
+              descr: the hash of the actual deploy-tx including the constructor-arguments.
               type: bytes32
-        
+
         verify_proof_method:
           descr: rpc-method, which will be used to verify the incomming proof before cosigning.
           type: string
@@ -335,7 +334,6 @@ zksync:
           type: string
           cmd: zcpm
           optional: true
-
 
   # rpc
   zksync_contract_address:
@@ -351,11 +349,10 @@ zksync:
           descr: the address of the main contract
           type: address
     example:
-      cmdParams: -x       
-      response: 
+      cmdParams: -x
+      response:
         govContract: "0x34460C0EB5074C29A9F6FE13b8e7E23A0D08aF01"
         mainContract: "0xaBEA9132b05A70803a4E85094fD0e1800777fBEF"
-
 
   zksync_tokens:
     descr: returns the list of all available tokens
@@ -377,25 +374,25 @@ zksync:
           descr: symbol for the token
           type: string
     example:
-      cmdParams: -x       
-      response: 
+      cmdParams: -x
+      response:
         BAT:
-          address: '0x0d8775f648430679a709e98d2b0cb6250d2887ef'
+          address: "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
           decimals: 18
           id: 8
           symbol: BAT
         BUSD:
-          address: '0x4fabb145d64652a948d72533023f6e7a623c7c53'
+          address: "0x4fabb145d64652a948d72533023f6e7a623c7c53"
           decimals: 18
           id: 6
           symbol: BUSD
         DAI:
-          address: '0x6b175474e89094c44da98b954eedeac495271d0f'
+          address: "0x6b175474e89094c44da98b954eedeac495271d0f"
           decimals: 18
           id: 1
           symbol: DAI
         ETH:
-          address: '0x0000000000000000000000000000000000000000'
+          address: "0x0000000000000000000000000000000000000000"
           decimals: 18
           id: 0
           symbol: ETH
@@ -472,8 +469,8 @@ zksync:
               type: uint256
     example:
       cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000
-      response: 
-        address: '0x3b2a1bd631d9d7b17e87429a8e78dbbd9b4de292'
+      response:
+        address: "0x3b2a1bd631d9d7b17e87429a8e78dbbd9b4de292"
         committed:
           balances: {}
           nonce: 0
@@ -485,7 +482,6 @@ zksync:
           balances: {}
           nonce: 0
           pubKeyHash: sync:0000000000000000000000000000000000000000
-
 
   zksync_tx_info:
     descr: returns the state or receipt of the the zksync-tx
@@ -501,13 +497,13 @@ zksync:
           typeName: ZkSyncTransactionBlock
           descr: the block
           type:
-            blockNumber: 
+            blockNumber:
               descr: the blockNumber containing the tx or `null` if still pending
               type: uint64
-            committed: 
+            committed:
               descr: true, if the block has been commited
               type: bool
-            verified: 
+            verified:
               descr: true, if the block has been verified
               type: bool
           optional: true
@@ -523,15 +519,14 @@ zksync:
           type: string
           optional: true
     example:
-      cmdParams: -x       
+      cmdParams: -x
       request:
         - "sync-tx:e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000"
-      response: 
+      response:
         block: null
         executed: false
         failReason: null
         success: null
-
 
   zksync_tx_data:
     descr: returns the full input data of a transaction. In order to use this, the `rest_api` needs to be set in the config.
@@ -583,33 +578,31 @@ zksync:
       cmdParams: -x -zkr https://rinkeby-api.zksync.io/api/v0.1
       request:
         - "0xc06ddc1c0914e8f9ca4d5bc98f609f7d758f6de2733fdcb8e3ec"
-      response: 
+      response:
         tx_type: Transfer
-        from: '0x627d8e8c1a663cfea17432ec6dbbd3cc2c8a1f9a'
-        to: '0x03e2c10b74a260f46ab5cf881938c5888a6142df'
+        from: "0x627d8e8c1a663cfea17432ec6dbbd3cc2c8a1f9a"
+        to: "0x03e2c10b74a260f46ab5cf881938c5888a6142df"
         token: 1
-        amount: '5000000'
-        fee: '2190'
+        amount: "5000000"
+        fee: "2190"
         block_number: 29588
         nonce: 20
-        created_at: '2021-06-01T10:32:16.248564'
+        created_at: "2021-06-01T10:32:16.248564"
         fail_reason:
         tx:
-          to: '0x03e2c10b74a260f46ab5cf881938c5888a6142df'
-          fee: '2190'
-          from: '0x627d8e8c1a663cfea17432ec6dbbd3cc2c8a1f9a'
+          to: "0x03e2c10b74a260f46ab5cf881938c5888a6142df"
+          fee: "2190"
+          from: "0x627d8e8c1a663cfea17432ec6dbbd3cc2c8a1f9a"
           type: Transfer
           nonce: 20
           token: 1
-          amount: '5000000'
+          amount: "5000000"
           accountId: 161578
           signature:
             pubKey: 91b533af2c430d7ad48db3ccc4ccb54befaff48307180c9a19a369099331d0a6
             signature: d17637db375a7a587474c8fee519fd7520f6ef98e1370e7a13d5de8176a6d0a22309e24a19dae50dad94ac9634ab3398427cf67abe8408e6c965c6b350b80c02
           validFrom: 0
           validUntil: 4294967295
-
-
 
   zksync_account_history:
     descr: returns the history of transaction for a given account.
@@ -634,19 +627,19 @@ zksync:
       cmdParams: -x -zkr https://rinkeby-api.zksync.io/api/v0.1
       request:
         - "0x9df215737e137acddd0ad99e32f9a6b980ea526d"
-      response: 
-        - tx_id: '29411,1'
+      response:
+        - tx_id: "29411,1"
           hash: sync-tx:e83b1b982b4d8a08a21f87717e85a268e3b3a5305bdf5efc465e7fd8f0ad5335
           eth_block:
           pq_id:
           tx:
-            to: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
-            fee: '11060000000000'
-            from: '0x9df215737e137acddd0ad99e32f9a6b980ea526d'
+            to: "0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f"
+            fee: "11060000000000"
+            from: "0x9df215737e137acddd0ad99e32f9a6b980ea526d"
             type: Transfer
             nonce: 1
             token: ETH
-            amount: '1000000000000000'
+            amount: "1000000000000000"
             accountId: 161418
             signature:
               pubKey: 74835ee6dd9009b67fd4e4aef4a6f63ee2a597ced5e59f33b019905d1df70d91
@@ -657,19 +650,19 @@ zksync:
           fail_reason:
           commited: true
           verified: true
-          created_at: '2021-05-31T11:54:56.248569Z'
-        - tx_id: '29376,10'
+          created_at: "2021-05-31T11:54:56.248569Z"
+        - tx_id: "29376,10"
           hash: sync-tx:5f92999f7bbc5d84fe0d34ebe8b7a0c38f977caece844686d3007bc48e5944e0
           eth_block:
           pq_id:
           tx:
-            to: '0xc98fc74a085cd7ecd91d9e8d860a18ef6769d873'
-            fee: '10450000000000'
-            from: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
+            to: "0xc98fc74a085cd7ecd91d9e8d860a18ef6769d873"
+            fee: "10450000000000"
+            from: "0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f"
             type: Transfer
             nonce: 1
             token: ETH
-            amount: '10000000000000000'
+            amount: "10000000000000000"
             accountId: 161391
             signature:
               pubKey: 06cce677912252a9eb87090b795e5bd84a079cb398dfec7f6a6645ee456dc721
@@ -680,16 +673,16 @@ zksync:
           fail_reason:
           commited: true
           verified: true
-          created_at: '2021-05-31T08:11:17.250144Z'
-        - tx_id: '29376,5'
+          created_at: "2021-05-31T08:11:17.250144Z"
+        - tx_id: "29376,5"
           hash: sync-tx:78550bbcaefdfd4cc4275bd1a0168dd73efb1953bb17a9689381fea6729c924e
           eth_block:
           pq_id:
           tx:
-            fee: '37500000000000'
+            fee: "37500000000000"
             type: ChangePubKey
             nonce: 0
-            account: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
+            account: "0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f"
             feeToken: 0
             accountId: 161391
             newPkHash: sync:1ae5a093f285ddd23b54bea2780ef4e9a4e348ea
@@ -700,34 +693,32 @@ zksync:
             validUntil: 4294967295
             ethAuthData:
               type: CREATE2
-              saltArg: '0xd32a7ec6157d2433c9ae7f4fdc35dfac9bba6f92831d1ca20b09d04d039d8dd7'
-              codeHash: '0x96657bf6bdcbffce06518530907d2d729e4659ad3bc7b5cc1f5c5567d964272c'
-              creatorAddress: '0xaa8c54c65c14f132804f0809bdbef19970673709'
+              saltArg: "0xd32a7ec6157d2433c9ae7f4fdc35dfac9bba6f92831d1ca20b09d04d039d8dd7"
+              codeHash: "0x96657bf6bdcbffce06518530907d2d729e4659ad3bc7b5cc1f5c5567d964272c"
+              creatorAddress: "0xaa8c54c65c14f132804f0809bdbef19970673709"
             ethSignature:
           success: true
           fail_reason:
           commited: true
           verified: true
-          created_at: '2021-05-31T08:09:11.249472Z'
-        - tx_id: '29376,0'
-          hash: '0xc63566212c1569a0e64b255a07320483ed8476cd36b54aa37d3bd6f93b70f7f8'
+          created_at: "2021-05-31T08:09:11.249472Z"
+        - tx_id: "29376,0"
+          hash: "0xc63566212c1569a0e64b255a07320483ed8476cd36b54aa37d3bd6f93b70f7f8"
           eth_block: 8680840
           pq_id: 57181
           tx:
             type: Deposit
             account_id: 161391
             priority_op:
-              to: '0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f'
-              from: '0x9d646b325787c6d7d612eb37915ca3023eea4dac'
+              to: "0xb7b2af693a2362c5c7575841ca6eb72ad2aed77f"
+              from: "0x9d646b325787c6d7d612eb37915ca3023eea4dac"
               token: ETH
-              amount: '500000000000000000'
+              amount: "500000000000000000"
           success: true
           fail_reason:
           commited: true
           verified: true
-          created_at: '2021-05-31T08:07:31.237817Z'
-
-
+          created_at: "2021-05-31T08:07:31.237817Z"
 
   zksync_set_key:
     descr: |
@@ -763,7 +754,7 @@ zksync:
   zksync_pubkeyhash:
     sync: true
     descr: returns the current PubKeyHash based on the configuration set.
-    params: 
+    params:
       pubKey:
         descr: the packed public key to hash ( if given the hash is build based on the given hash, otherwise the hash is based on the config)
         type: bytes32
@@ -772,13 +763,12 @@ zksync:
       descr: the pubKeyHash
       type: address
     example:
-      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000 
+      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000
       response: "sync:4dcd9bb4463121470c7232efb9ff23ec21398e58"
-
 
   zksync_pubkey:
     sync: true
-    descr: | 
+    descr: |
       returns the current packed PubKey based on the config set.
 
       If the config contains public keys for musig-signatures, the keys will be aggregated, otherwise the pubkey will be derrived from the signing key set.
@@ -786,10 +776,8 @@ zksync:
       descr: the pubKey
       type: bytes32
     example:
-      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000 
+      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000
       response: "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc04"
-  
-
 
   zksync_account_address:
     sync: true
@@ -798,11 +786,8 @@ zksync:
       descr: the account used.
       type: address
     example:
-      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000 
+      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000
       response: "0x3b2a1bd631d9d7b17e87429a8e78dbbd9b4de292"
-  
-  
-
 
   zksync_sign:
     descr: |
@@ -823,17 +808,17 @@ zksync:
         - `[64..96]` s-value
       type: bytes96
     example:
-      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000 
+      cmdParams: -x -pk 0xe41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000
       request:
-        - '0xaabbccddeeff'
+        - "0xaabbccddeeff"
       response: "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c3980e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31b69cd0910a432156a0977c3a5baa404547e01"
-  
+
   zksync_verify:
     sync: true
     descr: |
       returns 0 or 1 depending on the successfull verification of the signature.
 
-      if the `musig_pubkeys` are set it will also verify against the given public keys list. 
+      if the `musig_pubkeys` are set it will also verify against the given public keys list.
 
     params:
       message:
@@ -846,15 +831,15 @@ zksync:
       descr: 1 if the signature(which contains the pubkey as the first 32bytes) matches the message.
       type: int
     example:
-      cmdParams: -x       
+      cmdParams: -x
       request:
-        - '0xaabbccddeeff'
-        - '0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c3980e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31b69cd0910a432156a0977c3a5baa404547e01'
+        - "0xaabbccddeeff"
+        - "0xfca80a469dbb53f8002eb1e2569d66f156f0df24d71bd589432cc7bc647bfc0493f69034c3980e7352741afa6c171b8e18355e41ed7427f6e706f8432e32e920c3e61e6c3aa00cfe0c202c29a31b69cd0910a432156a0977c3a5baa404547e01"
       response: 1
-  
+
   zksync_ethop_info:
     descr: returns the state or receipt of the the PriorityOperation
-    params: 
+    params:
       opId:
         descr: the opId of a layer-operstion (like depositing)
         type: uint64
@@ -901,7 +886,7 @@ zksync:
       descr: the token price
       type: float
     example:
-      cmdParams: -x       
+      cmdParams: -x
       request:
         - WBTC
       response: 11320.002167
@@ -910,7 +895,7 @@ zksync:
     descr: calculates the fees for a transaction.
     params:
       txType:
-        descr: The Type of the transaction "Withdraw" or "Transfer" 
+        descr: The Type of the transaction "Withdraw" or "Transfer"
         type: string
       address:
         descr: the address of the receipient
@@ -941,10 +926,10 @@ zksync:
           descr: zkpFee
           type: uint64
     example:
-      cmdParams: -x       
+      cmdParams: -x
       request:
         - Transfer
-        - '0xabea9132b05a70803a4e85094fd0e1800777fbef'
+        - "0xabea9132b05a70803a4e85094fd0e1800777fbef"
         - BAT
       response:
         feeType: "TransferToNew"
@@ -953,15 +938,15 @@ zksync:
         gasTxAmount: "350"
         totalFee: "66000000000000000"
         zkpFee: "18378682992117666"
-                
+
   zksync_sync_key:
     descr: returns private key used for signing zksync-transactions
     result:
       type: bytes
       descr: the raw private key configured based on the signers seed
-    example: 
+    example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
-      response: '0x019125314fda133d5bf62cb454ee8c60927d55b68eae8b8b8bd13db814389cd6'
+      response: "0x019125314fda133d5bf62cb454ee8c60927d55b68eae8b8b8bd13db814389cd6"
 
   zksync_deposit:
     descr: sends a deposit-transaction and returns the opId, which can be used to tradck progress.
@@ -983,46 +968,46 @@ zksync:
     result:
       descr: the receipt and the receipopId. You can use `zksync_ethop_info` to follow the state-changes.
       typeName: ZkSyncDepositResult
-      type: 
+      type:
         receipt:
           descr: the transactionreceipt
           type: eth_transactionReceipt
         priorityOpId:
           descr: the operationId to rack to progress
           type: uint64
-        
+
     example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
       request:
         - 1000
         - WBTC
-      response: 
+      response:
         receipt:
-          blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
-          blockNumber: '0x8c1e39'
+          blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+          blockNumber: "0x8c1e39"
           contractAddress:
-          cumulativeGasUsed: '0x2466d'
-          gasUsed: '0x2466d'
+          cumulativeGasUsed: "0x2466d"
+          gasUsed: "0x2466d"
           logs:
-          - address: '0x85ec283a3ed4b66df4da23656d4bf8a507383bca'
-            blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
-            blockNumber: '0x8c1e39'
-            data: 0x00000000000...
-            logIndex: '0x0'
-            removed: false
-            topics:
-            - '0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8'
-            - '0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6'
-            - '0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000'
-            transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
-            transactionIndex: '0x0'
-            transactionLogIndex: '0x0'
-            type: mined
+            - address: "0x85ec283a3ed4b66df4da23656d4bf8a507383bca"
+              blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+              blockNumber: "0x8c1e39"
+              data: 0x00000000000...
+              logIndex: "0x0"
+              removed: false
+              topics:
+                - "0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8"
+                - "0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6"
+                - "0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000"
+              transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+              transactionIndex: "0x0"
+              transactionLogIndex: "0x0"
+              type: mined
           logsBloom: 0x00000000000000000000200000...
           root:
-          status: '0x1'
-          transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
-          transactionIndex: '0x0'
+          status: "0x1"
+          transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+          transactionIndex: "0x0"
         priorityOpId: 74
 
   zksync_transfer:
@@ -1053,14 +1038,13 @@ zksync:
       response:
         type: Transfer
         accountId: 1
-        from: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
-        to: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
+        from: "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
+        to: "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
         token: 0
         amount: 10
         fee: 3780000000000000
         nonce: 4
-        txHash: 'sync-tx:40008d91ab92f7c539e45b06e708e186a4b906ad10c4b7a29f855fe02e7e7668'
-    
+        txHash: "sync-tx:40008d91ab92f7c539e45b06e708e186a4b906ad10c4b7a29f855fe02e7e7668"
 
   zksync_withdraw:
     descr: withdraws the amount to the given `ethAddress` for the given token.
@@ -1090,14 +1074,13 @@ zksync:
       response:
         type: Transfer
         accountId: 1
-        from: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
-        to: '0x8a91dc2d28b689474298d91899f0c1baf62cb85b'
+        from: "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
+        to: "0x8a91dc2d28b689474298d91899f0c1baf62cb85b"
         token: 0
         amount: 10
         fee: 3780000000000000
         nonce: 4
-        txHash: 'sync-tx:40008d91ab92f7c539e45b06e708e186a4b906ad10c4b7a29f855fe02e7e7668'
-
+        txHash: "sync-tx:40008d91ab92f7c539e45b06e708e186a4b906ad10c4b7a29f855fe02e7e7668"
 
   zksync_emergency_withdraw:
     descr: withdraws all tokens for the specified token as a onchain-transaction. This is useful in case the zksync-server is offline or tries to be malicious.
@@ -1110,41 +1093,41 @@ zksync:
       type: eth_transactionReceipt
     example:
       cmdParams: -x -pk 0xb0f60e4783ccc1f6234deed9e21f16d460c4176fd7adbd4f31d17e283b8cfb1c
-      request: 
+      request:
         - WBTC
       response:
-        blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
-        blockNumber: '0x8c1e39'
+        blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+        blockNumber: "0x8c1e39"
         contractAddress:
-        cumulativeGasUsed: '0x2466d'
-        gasUsed: '0x2466d'
+        cumulativeGasUsed: "0x2466d"
+        gasUsed: "0x2466d"
         logs:
-        - address: '0x85ec283a3ed4b66df4da23656d4bf8a507383bca'
-          blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
-          blockNumber: '0x8c1e39'
-          data: 0x00000000000...
-          logIndex: '0x0'
-          removed: false
-          topics:
-          - '0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8'
-          - '0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6'
-          - '0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000'
-          transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
-          transactionIndex: '0x0'
-          transactionLogIndex: '0x0'
-          type: mined
+          - address: "0x85ec283a3ed4b66df4da23656d4bf8a507383bca"
+            blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+            blockNumber: "0x8c1e39"
+            data: 0x00000000000...
+            logIndex: "0x0"
+            removed: false
+            topics:
+              - "0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8"
+              - "0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6"
+              - "0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000"
+            transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+            transactionIndex: "0x0"
+            transactionLogIndex: "0x0"
+            type: mined
         logsBloom: 0x00000000000000000000200000...
         root:
-        status: '0x1'
-        transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
-        transactionIndex: '0x0'
+        status: "0x1"
+        transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+        transactionIndex: "0x0"
 
   zksync_aggregate_pubkey:
     sync: true
     descr: calculate the public key based on multiple public keys signing together using schnorr musig signatures.
     params:
       pubkeys:
-        descr: concatinated packed publickeys of the signers. the length of the bytes must be `num_keys * 32` 
+        descr: concatinated packed publickeys of the signers. the length of the bytes must be `num_keys * 32`
         type: bytes
     result:
       descr: the compact public Key
@@ -1152,9 +1135,5 @@ zksync:
     example:
       cmdParams: -x
       request:
-        - '0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409'
-      response: '0x9ce5b6f8db3fbbe66a3bdbd3b4731f19ec27f80ee03ead3c0708798dd949882b'
-
-
-
-
+        - "0x0f61bfe164cc43b5a112bfbfb0583004e79dbfafc97a7daad14c5d511fea8e2435065ddd04329ec94be682bf004b03a5a4eeca9bf50a8b8b6023942adc0b3409"
+      response: "0x9ce5b6f8db3fbbe66a3bdbd3b4731f19ec27f80ee03ead3c0708798dd949882b"

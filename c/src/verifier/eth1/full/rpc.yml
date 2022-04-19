@@ -1,39 +1,38 @@
+# yaml-language-server: $schema=../../../../../scripts/generator/rpc_schema.json
 eth:
-
   eth_estimateGas:
-    descr: calculates the gas needed to execute a transaction. for spec see [eth_estimateGas](https://eth.wiki/json-rpc/API#eth_estimateGas) 
+    descr: calculates the gas needed to execute a transaction. for spec see [eth_estimateGas](https://eth.wiki/json-rpc/API#eth_estimateGas)
     params:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
         type: eth_transaction
       block:
-        internalDefault : latest
+        internalDefault: latest
         optionalAPI: true
         descr: the blockNumber or  `latest`
         type: uint64
-          
+
     result:
       descr: the amount of gass needed.
       type: uint64
     proof:
       alias: eth_call
 
-
   eth_call:
-    descr: calls a function of a contract (or simply executes the evm opcodes) and returns the result. for spec see [eth_call](https://eth.wiki/json-rpc/API#eth_call) 
+    descr: calls a function of a contract (or simply executes the evm opcodes) and returns the result. for spec see [eth_call](https://eth.wiki/json-rpc/API#eth_call)
     params:
       tx:
         descr: the tx-object, which is the same as specified in [eth_sendTransaction](https://eth.wiki/json-rpc/API#eth_sendTransaction).
         type: eth_transaction
       block:
-        internalDefault : latest
+        internalDefault: latest
         optionalAPI: true
         descr: the blockNumber or  `latest`
-        type: uint64          
+        type: uint64
     result:
       type: hex
       descr: the abi-encoded result of the function.
-    
+
     example:
       request:
         - to: "0x2736D225f85740f42D17987100dc8d58e9e16252"
@@ -45,41 +44,41 @@ eth:
           type: callProof
           block: 0xf90215a0c...
           signatures:
-          - "..."
+            - "..."
           accounts:
-            '0x2736D225f85740f42D17987100dc8d58e9e16252':
+            "0x2736D225f85740f42D17987100dc8d58e9e16252":
               accountProof:
-              - 0xf90211a095...
-              - 0xf90211a010...
-              - 0xf90211a062...
-              - 0xf90211a091...
-              - 0xf90211a03a...
-              - 0xf901f1a0d1...
-              - 0xf8b18080808...
-              address: '0x2736d225f85740f42d17987100dc8d58e9e16252'
-              balance: '0x4fffb'
-              codeHash: '0x2b8bdc59ce78fd8c248da7b5f82709e04f2149c39e899c4cdf4587063da8dc69'
-              nonce: '0x1'
-              storageHash: '0xbf904e79d4ebf851b2380d81aab081334d79e231295ae1b87f2dd600558f126e'
+                - 0xf90211a095...
+                - 0xf90211a010...
+                - 0xf90211a062...
+                - 0xf90211a091...
+                - 0xf90211a03a...
+                - 0xf901f1a0d1...
+                - 0xf8b18080808...
+              address: "0x2736d225f85740f42d17987100dc8d58e9e16252"
+              balance: "0x4fffb"
+              codeHash: "0x2b8bdc59ce78fd8c248da7b5f82709e04f2149c39e899c4cdf4587063da8dc69"
+              nonce: "0x1"
+              storageHash: "0xbf904e79d4ebf851b2380d81aab081334d79e231295ae1b87f2dd600558f126e"
               storageProof:
-              - key: '0x0'
-                proof:
-                - 0xf901f1a0db74...
-                - 0xf87180808080...
-                - 0xe2a0200decd9....05
-                value: '0x5'
-              - key: '0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e569'
-                proof:
-                - 0xf901f1a0db74...
-                - 0xf891a0795a99...
-                - 0xe2a020ab8540...43
-                value: '0x43'
-              - key: '0xaaab8540682e3a537d17674663ea013e92c83fdd69958f314b4521edb3b76f1a'
-                proof:
-                - 0xf901f1a0db747...
-                - 0xf891808080808...
-                - 0xf843a0207bd5ee...
-                value: '0x68747470733a2f2f696e332e736c6f636b2e69742f6d61696e6e65742f6e642d'
+                - key: "0x0"
+                  proof:
+                    - 0xf901f1a0db74...
+                    - 0xf87180808080...
+                    - 0xe2a0200decd9....05
+                  value: "0x5"
+                - key: "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e569"
+                  proof:
+                    - 0xf901f1a0db74...
+                    - 0xf891a0795a99...
+                    - 0xe2a020ab8540...43
+                  value: "0x43"
+                - key: "0xaaab8540682e3a537d17674663ea013e92c83fdd69958f314b4521edb3b76f1a"
+                  proof:
+                    - 0xf901f1a0db747...
+                    - 0xf891808080808...
+                    - 0xf843a0207bd5ee...
+                  value: "0x68747470733a2f2f696e332e736c6f636b2e69742f6d61696e6e65742f6e642d"
     proof:
       type:
         type:
@@ -89,7 +88,7 @@ eth:
           descr: serialized blockheader
           type: bytes
         accounts:
-          descr:  Object with the addresses of all accounts required to run the call as keys. This includes also all storage values (SLOAD) including proof used. The DataStructure of the Proof for each account is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof).
+          descr: Object with the addresses of all accounts required to run the call as keys. This includes also all storage values (SLOAD) including proof used. The DataStructure of the Proof for each account is exactly the same as the result of - [`eth_getProof`](https://eth.wiki/json-rpc/API#eth_getproof).
           type:
             address:
               descr: address of the account
@@ -197,4 +196,3 @@ eth:
         In the future, we will be using the same approach to verify calls with ewasm.
 
         If the request requires proof (`verification`: `proof`) the node will provide an Call Proof as part of the in3-section of the response. Details on how create the proof can be found in the [CallProof-Chapter](#call-proof).
-

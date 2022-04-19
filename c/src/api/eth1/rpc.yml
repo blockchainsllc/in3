@@ -1,13 +1,14 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 types:
   eth_accesslist:
-    address: 
+    address:
       type: address
       descr: the address of the contract
     storageKeys:
       array: true
       type: bytes32
       descr: list of storageKeys
-      
+
   eth_internal_tx:
     op:
       descr: type of transaction or opcode used to send it (CALL, DELEGATECALL, STATICCALL, CALLCODE, ..)
@@ -71,31 +72,31 @@ types:
     data:
       descr: the data-section of the transaction
       type: bytes
-    signature:  
+    signature:
       descr: the 65 bytes signature
       type: bytes
       optional: true
-    chainId:  
+    chainId:
       descr: the chainId as encoded in the transaction. (only missing in legacy tx if EIP-155 is not used)
       type: uint64
       optional: true
-    v:  
+    v:
       descr: the recovery-byte. For legacy-tx ( this will be either + 27 or chain_id*2 + 35 - See EIP 155)
       type: bytes
       optional: true
-    r:  
+    r:
       descr: r-value of the sifgnature ( the R.y value)
       type: bytes32
       optional: true
-    s:  
-      descr: s-value of the sifgnature 
+    s:
+      descr: s-value of the sifgnature
       type: bytes32
       optional: true
-    publicKey:  
+    publicKey:
       descr: the public Key of the sender as 64 bytes
       type: bytes
       optional: true
-    unsigned:  
+    unsigned:
       descr: the raw unsigned transaction to extract the hash for the signature
       type: bytes
       optional: true
@@ -163,17 +164,17 @@ utils:
       descr: a array with the values after decodeing. The result is either a hex-string or an array.
     example:
       request:
-        - '0xf83b808508e1409836829c40a86161616135663833353262373034623139653362616338373262343866326537663639356662653681ff82bbbb018080'
+        - "0xf83b808508e1409836829c40a86161616135663833353262373034623139653362616338373262343866326537663639356662653681ff82bbbb018080"
       response:
-        -  "0x"
-        -  "0x08e1409836"
-        -  "0x9c40"
-        -  "0x61616161356638333532623730346231396533626163383732623438663265376636393566626536"
-        -  "0xff"
-        -  "0xbbbb"
-        -  "0x01"
-        -  "0x"
-        -  "0x"
+        - "0x"
+        - "0x08e1409836"
+        - "0x9c40"
+        - "0x61616161356638333532623730346231396533626163383732623438663265376636393566626536"
+        - "0xff"
+        - "0xbbbb"
+        - "0x01"
+        - "0x"
+        - "0x"
 
   in3_decodeTx:
     sync: true
@@ -187,26 +188,26 @@ utils:
       descr: the decoded transaction.
     example:
       request:
-        - '0x02f8b0013f8459682f008518c2cdf18982bcbb940...edbc296ce'
+        - "0x02f8b0013f8459682f008518c2cdf18982bcbb940...edbc296ce"
       response:
         type: 2
-        hash: '0x0a7f5daa71ad3e0115cae737559d14cdf914510a6a19c16267b8d5142d82de42'
-        chainId: '0x1'
-        nonce: '0x3f'
-        maxPriorityFeePerGas: '0x59682f00'
-        maxFeePerGas: '0x18c2cdf189'
-        gas: '0xbcbb'
-        to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
-        value: '0x0'
-        data: '0x1896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        hash: "0x0a7f5daa71ad3e0115cae737559d14cdf914510a6a19c16267b8d5142d82de42"
+        chainId: "0x1"
+        nonce: "0x3f"
+        maxPriorityFeePerGas: "0x59682f00"
+        maxFeePerGas: "0x18c2cdf189"
+        gas: "0xbcbb"
+        to: "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e"
+        value: "0x0"
+        data: "0x1896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41"
         accessList: []
         v: 0x
-        r: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b06587798'
-        s: '0x37b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce'
-        unsigned: '0x02f86d013f8459682f008518c2cdf18982bcbb9400000000000c2e074ec69a0dfb2997ba6c7d2e1e80b8441896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41c0'
-        signature: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b0658779837b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce00'
-        publicKey: '0x63cfcd2900a37247214361d0ca3637980af8e4b64acdf2f1e1b11573b502b576df4387cbf6f94c6cdc750e3aaa23026c5b0cef0f3bb2f5bb42c093ec394fd1bb'
-        from: '0xd034648eaea1d29f4e9cfa8312feff9783f31fd4'
+        r: "0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b06587798"
+        s: "0x37b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce"
+        unsigned: "0x02f86d013f8459682f008518c2cdf18982bcbb9400000000000c2e074ec69a0dfb2997ba6c7d2e1e80b8441896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41c0"
+        signature: "0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b0658779837b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce00"
+        publicKey: "0x63cfcd2900a37247214361d0ca3637980af8e4b64acdf2f1e1b11573b502b576df4387cbf6f94c6cdc750e3aaa23026c5b0cef0f3bb2f5bb42c093ec394fd1bb"
+        from: "0xd034648eaea1d29f4e9cfa8312feff9783f31fd4"
 
   in3_checksumAddress:
     sync: true
@@ -240,10 +241,10 @@ utils:
       request:
         - ethereum:0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7/transfer?address=0x8e23ee67d1332ad560396262c48ffbb01f93d052&uint256=1
       response:
-        to: '0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7'
+        to: "0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7"
         fn_sig: transfer(address,uint256)
         fn_args:
-          - '0x8e23ee67d1332ad560396262c48ffbb01f93d052'
+          - "0x8e23ee67d1332ad560396262c48ffbb01f93d052"
           - 1
 
   in3_toWei:
@@ -570,29 +571,28 @@ account:
     example:
       request:
         - "0x8f78eb6e9916a4f187b6761d67f56bf6a828b6f197c7443b753e404efa21c8b1"
-      response: 
+      response:
         - op: CALL
-          to: '0x1'
-          value: '0x0'
-          from: '0x7be8076f4ea4a4ad08075c2508e481d6c946d12b'
+          to: "0x1"
+          value: "0x0"
+          from: "0x7be8076f4ea4a4ad08075c2508e481d6c946d12b"
           depth: 1
-          gas: '0x277854'
+          gas: "0x277854"
         - op: DELEGATECALL
-          to: '0xf9e266af4bca5890e2781812cc6a6e89495a79f2'
+          to: "0xf9e266af4bca5890e2781812cc6a6e89495a79f2"
           value:
-          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          from: "0xd3441e016ea14fd66ebd6a44ead7aac261dd6425"
           depth: 2
-          gas: '0x181525'
+          gas: "0x181525"
         - op: CALL
-          to: '0xa5409ec958c83c3f309868babaca7c86dcb077c1'
-          value: '0x0'
-          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          to: "0xa5409ec958c83c3f309868babaca7c86dcb077c1"
+          value: "0x0"
+          from: "0xd3441e016ea14fd66ebd6a44ead7aac261dd6425"
           depth: 3
-          gas: '0x170850'
+          gas: "0x170850"
         - op: CALL
-          to: '0x64dc7f3624a1456a7ba52025fcfddf428fff92e0'
-          value: '0x0'
-          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          to: "0x64dc7f3624a1456a7ba52025fcfddf428fff92e0"
+          value: "0x0"
+          from: "0xd3441e016ea14fd66ebd6a44ead7aac261dd6425"
           depth: 3
-          gas: '0x169426'
-
+          gas: "0x169426"
