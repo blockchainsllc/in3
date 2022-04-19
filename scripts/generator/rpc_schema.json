@@ -67,8 +67,15 @@
                     ]
                 },
                 "key": {
-                    "type": "boolean",
-                    "description": "if set the type will be a map"
+                    "description": "if set the type will be a map",
+                    "oneOf": [
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
                 },
                 "nullable": {
                     "type": "boolean",

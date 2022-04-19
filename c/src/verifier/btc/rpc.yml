@@ -55,7 +55,7 @@ types:
       type: string
     tx_index:
       descr: the transaction index that this utxo refers to
-      type: uint
+      type: uint32
     tx_out:
       descr: the output this utxo represents
       type: btc_tx_output
@@ -119,7 +119,7 @@ types:
       type: int
     versionHex:
       descr: The block version formatted in hexadecimal
-      type: hex
+      type: string
     merkleroot:
       descr: The merkle root ( 32 bytes )
       type: bytes32
@@ -140,7 +140,7 @@ types:
       type: double
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: hex
+      type: string
     nTx:
       descr: The number of transactions in the block.
       type: int
@@ -219,7 +219,7 @@ types:
       type:
         value:
           descr: The Value in BTC
-          type: float
+          type: double
         n:
           descr: the index
           type: int
@@ -318,7 +318,7 @@ types:
       type:
         value:
           descr: The Value in BTC
-          type: float
+          type: double
         n:
           descr: the index
           type: int
@@ -370,7 +370,7 @@ types:
       type: int
     versionHex:
       descr: The block version formatted in hexadecimal
-      type: hex
+      type: string
     merkleroot:
       descr: The merkle root ( 32 bytes )
       type: bytes32
@@ -391,7 +391,7 @@ types:
       type: double
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: hex
+      type: string
     nTx:
       descr: The number of transactions in the block.
       type: int
@@ -430,7 +430,7 @@ types:
       type: int
     versionHex:
       descr: The block version formatted in hexadecimal
-      type: hex
+      type: string
     merkleroot:
       descr: The merkle root ( 32 bytes )
       type: bytes32
@@ -451,7 +451,7 @@ types:
       type: double
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: hex
+      type: string
     nTx:
       descr: The number of transactions in the block.
       type: int

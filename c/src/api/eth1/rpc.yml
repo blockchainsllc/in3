@@ -117,7 +117,7 @@ utils:
         array: true
         descr: a array of arguments. the number of arguments must match the arguments in the signature.
     result:
-      type: hex
+      type: string
       descr: the ABI-encoded data as hex including the 4 byte function-signature. These data can be used for `eth_call` or to send a transaction.
     example:
       request:
@@ -253,7 +253,7 @@ utils:
     params:
       value:
         descr: the value, which may be floating number as string
-        type: string | uint
+        type: string
         example: "0.9"
       unit:
         descr: the unit of the value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
@@ -286,7 +286,7 @@ utils:
         optional: true
     result:
       descr: the value as string.
-      type: float
+      type: double
     example:
       request:
         - "0x234324abadefdef"
@@ -362,7 +362,7 @@ account:
     params:
       msg:
         descr: the message the signature is based on.
-        type: hex
+        type: string
       sig:
         descr: the 65 bytes signature as hex.
         type: bytes
@@ -412,7 +412,7 @@ account:
     params:
       tx:
         descr: the raw unsigned transactiondata
-        type: hex
+        type: string
       from:
         descr: the account to sign
         type: address
@@ -430,10 +430,10 @@ account:
     params:
       msg:
         descr: the message to sign.
-        type: hex
+        type: string
       account:
         descr: the account to sign if the account is a bytes32 it will be used as private key
-        type: address | bytes32
+        type: bytes
       msgType:
         descr: "the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data)"
         type: string
