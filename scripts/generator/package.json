@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "axios": "^0.26.1",
     "jsonschema": "^1.4.0",
     "yaml": "^1.10.2"
   }

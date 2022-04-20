@@ -19,7 +19,7 @@ const props = {
 }
 
 function getProp(prop, def, level) {
-    let res = `${level}- **${prop}** : \`${getType(def)}\` - ${def.description}`
+    let res = `${level}* **${prop}** : \`${getType(def)}\` - ${def.description}`
     let e = def.enum;
     (def.anyOf || []).forEach(_ => {
         if (_.enum) e = _.enum
@@ -29,7 +29,7 @@ function getProp(prop, def, level) {
     if (def.type == 'object') sub_ob = def.properties
     else if (def.type == 'array' && def.items && def.items.type == 'object') sub_ob = def.items.properties
     if (sub_ob) {
-        res += `\n\n${level}    The object${def.type == 'array' ? 's' : ''} may have the following properties:\n\n`
+        res += `\n${level}    The object${def.type == 'array' ? 's' : ''} may have the following properties:\n`
         res += Object.keys(sub_ob).map(p => getProp(p, sub_ob[p], level + '    ')).join('') + '\n'
     }
     return res + '\n'
