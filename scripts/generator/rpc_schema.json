@@ -67,7 +67,7 @@
                     ]
                 },
                 "key": {
-                    "description": "if set the type will be a map",
+                    "description": "if set the type will be a map and if string in the definiotn should describe the meaning of the key-property",
                     "oneOf": [
                         {
                             "type": "boolean"
@@ -258,12 +258,15 @@
                     "description": "for the examples this should be used for the path to the api.",
                     "properties": {
                         "js": {
+                            "description": "path for js",
                             "type": "string"
                         },
                         "swift": {
+                            "description": "path for swift",
                             "type": "string"
                         },
                         "java": {
+                            "description": "path for java",
                             "type": "string"
                         }
                     }
@@ -274,6 +277,7 @@
                     "description": "if set the generated SDK will hold a getter for this API (defaults: true). If the value is not a boolean, it specifies the code to be used.",
                     "properties": {
                         "js": {
+                            "description": "getter for js",
                             "anyOf": [
                                 {
                                     "type": "boolean"
@@ -290,6 +294,7 @@
                             ]
                         },
                         "swift": {
+                            "description": "getter for swift",
                             "anyOf": [
                                 {
                                     "type": "boolean"
@@ -306,6 +311,7 @@
                             ]
                         },
                         "java": {
+                            "description": "getter for java",
                             "anyOf": [
                                 {
                                     "type": "boolean"
