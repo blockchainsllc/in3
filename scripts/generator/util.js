@@ -9,7 +9,7 @@ exports.camelCaseUp = s => {
 }
 exports.camelCaseLow = s => s ? s.substr(0, 1).toLowerCase() + camelCase(s).substr(1) : ''
 exports.snake_case = s => {
-    let r = s[0]
+    let r = s[0].toLowerCase()
     for (let i = 1; i < s.length; i++) {
         if (s[i].toUpperCase() == s[i] && s[i - 1].toUpperCase() != s[i - 1]) r += '_'
 
@@ -17,7 +17,13 @@ exports.snake_case = s => {
     }
     return r.split('__').join('_')
 }
-
+exports.mergeTo = function (src, dst) {
+    Object.keys(src).forEach(k => {
+        if (Array.isArray(src[k]) || typeof (dst[k]) !== 'object')
+            dst[k] = src[k]
+        else exports.mergeTo(src[k], dst[k])
+    })
+}
 exports.asArray = val => val == undefined ? [] : (Array.isArray(val) ? val : [val])
 exports.link = (name, label) => '[' + (label || name) + '](#' + name.toLowerCase().replace('_', '-') + ')'
 exports.getType = (val, types) => {

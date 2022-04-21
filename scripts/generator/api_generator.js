@@ -542,7 +542,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
 
         const r = rpcs[rpc_name];
         const params = []
-        const direct_impl = !!r._generate_openapi
+        const direct_impl = !!r._generate_openapi && !r.skipGenerate
         const code = {
             pre: [],
             read: [],

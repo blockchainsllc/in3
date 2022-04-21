@@ -261,6 +261,12 @@
                                 "send_macro": {
                                     "type": "string",
                                     "description": "name of the macro which will be used when sending http-request. default: HTTP_SEND"
+                                },
+                                "custom": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "$ref": "#/$defs/func"
+                                    }
                                 }
                             }
                         },
@@ -374,6 +380,10 @@
                 "alias": {
                     "type": "string",
                     "description": "defines this function as the same configuration as the specified function."
+                },
+                "skipGenerate": {
+                    "type": "boolean",
+                    "description": "this has only an effect if this is a generated function from openapi. In this case, this function will be implemented manually."
                 },
                 "validation": {
                     "type": "string",

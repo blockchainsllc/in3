@@ -1,7 +1,7 @@
 const axios = require('axios')
 const fs = require('fs')
 const yaml = require('yaml')
-const { snake_case } = require('./util')
+const { snake_case, mergeTo } = require('./util')
 async function getDef(config) {
     const url = config.url
     if (!url) throw new Error('Missing url in openai generator config')
@@ -46,8 +46,24 @@ function get_fn_name(config, method, path, def) {
         else
             throw new Error("duplicate name " + name)
     }
+
+    const custom = (config.api._generate_rpc || {}).custom
+    if (custom && custom[name]) {
+        const alias = custom[name].alias
+        if (alias) {
+            custom[alias] = { ...custom[name] }
+            delete custom[alias].alias
+            name = alias
+        }
+    }
+
+
     post_names[name] = true
     return snake_case(name)
+}
+
+function resolve_ref(config, ref) {
+    return ref.split('/').reduce((val, p) => p == '#' ? config.data : val[p], null)
 }
 
 function get_type(config, content, names, parent = {}) {
@@ -58,6 +74,10 @@ function get_type(config, content, names, parent = {}) {
     let schema = content
     if (schema.example) parent.example = schema.example
     if (content.schema) schema = content.schema
+    if (schema.$ref) {
+        names.splice(0, 0, snake_case(schema.$ref.split('/').pop()))
+        schema = { ...resolve_ref(config, schema.$ref), ...schema }
+    }
     if (schema.example) parent.example = schema.example
     let type = schema.type || 'string'
     switch (type) {
@@ -153,6 +173,10 @@ function get_type(config, content, names, parent = {}) {
 function create_fn(config, method, path, def) {
     const base_name = snake_case(path.split('/').filter(_ => _.trim() && _[0] != '{').join('_'))
     const fn_name = get_fn_name(config, method, path, def)
+    const custom = ((config.api._generate_rpc || {}).custom || {})[fn_name]
+    if (custom && custom.skipApi) return
+
+
     const fn = (config.api[fn_name] = {
         descr: def.description || def.summary
     })
@@ -186,10 +210,8 @@ function create_fn(config, method, path, def) {
     fn.result = {
         descr: response.description || ''
     }
-    fn.result.type = get_type(config, response.content, [base_name + '_result', base_name + '_' + method + '_result'], fn.result)
-
-
-
+    fn.result.type = get_type(config, response.content, [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
+    if (custom) mergeTo(custom, fn)
 }
 
 
@@ -211,8 +233,8 @@ if (require.main === module) {
     const types = {}
     const api = {}
     //    const url = 'https://equs.git-pages.slock.it/interop/ssi/ssi-core/swagger-build.yaml' // process.argv.pop()
-    //const url = '/Users/simon/ws/crypto/kms/api-spec/public/swagger.json'
-    const url = '/Users/simon/ws/sdk/sdk-core/src/id/openapi.yml'
+    const url = '/Users/simon/ws/crypto/kms/api-spec/public/swagger.json'
+    //const url = '/Users/simon/ws/sdk/sdk-core/src/id/openapi.yml'
 
     exports.generate_openapi({ url, api_name: 'id', api, types }).then(() => {
         console.log(yaml.stringify({ types, id: api }))
