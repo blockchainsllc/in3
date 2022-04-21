@@ -79,6 +79,11 @@ function get_type(config, content, names, parent = {}) {
         schema = { ...resolve_ref(config, schema.$ref), ...schema }
     }
     if (schema.example) parent.example = schema.example
+    if (schema.type == 'object' && !schema.properties && schema.example && Array.isArray(schema.example)) {
+        // quickfix
+        schema.type = 'array'
+        schema.items = { type: 'string' }
+    }
     let type = schema.type || 'string'
     switch (type) {
         case 'boolean': return 'bool'
