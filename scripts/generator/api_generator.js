@@ -435,8 +435,8 @@ function impl_add_param(res, qname, pdef, ind) {
     if (pdef.array) {
         res.push(`${ind}for (d_iterator_t iter = d_iter(${name}); iter.left ; d_iter_next(&iter))`)
         switch (pdef.type) {
-            case 'string': res.push(`${ind}  sb_add_params(&_path, "${qname}=%s", d_string(iter.token));`); break
-            case 'uint32': res.push(`${ind}  sb_add_params(&_path, "${qname}=%u", d_int(iter.token));`); break
+            case 'string': res.push(`${ind}    sb_add_params(&_path, "${qname}=%s", d_string(iter.token));`); break
+            case 'uint32': res.push(`${ind}    sb_add_params(&_path, "${qname}=%u", d_int(iter.token));`); break
             default: throw new Error('invalid type in array ' + pdef.type + ' for ' + name)
         }
         return
