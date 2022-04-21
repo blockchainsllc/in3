@@ -472,3 +472,18 @@ char* sprintx(const char* fmt, ...) {
   va_end(args);
   return s.data;
 }
+
+void sb_add_params(sb_t* sb, const char* fmt, ...) {
+  sb_add_char(sb, (sb->data && strchr(sb->data, '?')) ? '&' : '?');
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(sb, fmt, args);
+  va_end(args);
+}
+void sb_add_value(sb_t* sb, const char* fmt, ...) {
+  if (sb->data && sb->len && sb->data[sb->len - 1] != '{' && sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(sb, fmt, args);
+  va_end(args);
+}

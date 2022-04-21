@@ -241,8 +241,33 @@
                     }
                 },
                 "_generate_rpc": {
-                    "type": "boolean",
-                    "description": "if true it will let the scripts/build_rpc.sh to generate the _rpc.c and _rpc.h file for the given api"
+                    "description": "if true it will let the scripts/build_rpc.sh to generate the _rpc.c and _rpc.h file for the given api",
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "openapi": {
+                                    "type": "string",
+                                    "description": "the url or filepath to the openapi-definition"
+                                },
+                                "structs": {
+                                    "type": "boolean",
+                                    "description": "if true structs will be generated, false means only d_token_t will be used"
+                                },
+                                "validate": {
+                                    "type": "boolean",
+                                    "description": "if true, objects will be validated, otherwise it will only be checked if the type is correct"
+                                },
+                                "send_macro": {
+                                    "type": "string",
+                                    "description": "name of the macro which will be used when sending http-request. default: HTTP_SEND"
+                                }
+                            }
+                        },
+                        {
+                            "type": "boolean"
+                        }
+                    ]
                 },
                 "_extensionVar": {
                     "type": "string",

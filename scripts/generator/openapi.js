@@ -23,7 +23,7 @@ function get_fn_name(config, method, path, def) {
     let post_names = config.post_names || (config.post_names = {})
     let name = path
     let parts = name.split('/').filter(_ => _.trim())
-    let args = parts.filter(_ => _.startsWith('{')).map(_ => _.substring(1, _.length - 2))
+    let args = parts.filter(_ => _.startsWith('{')).map(_ => _.substring(1, _.length - 1))
     let i = parts.length - 1
     for (; i >= 0; i--) {
         if (!parts[i].startsWith('{')) break
@@ -151,16 +151,16 @@ function get_type(config, content, names, parent = {}) {
 
 
 function create_fn(config, method, path, def) {
-    //    console.log(method + ' ' + path, '    - ' + def.summary || def.description)
-
     const base_name = snake_case(path.split('/').filter(_ => _.trim() && _[0] != '{').join('_'))
     const fn_name = get_fn_name(config, method, path, def)
     const fn = (config.api[fn_name] = {
         descr: def.description || def.summary
     })
 
+    fn._generate_openapi = { path, method }
     fn.params = {}
     if (def.requestBody) {
+        fn._generate_openapi.body = 'data'
         fn.params.data = {
             descr: 'the data object'
         }
@@ -169,12 +169,17 @@ function create_fn(config, method, path, def) {
     }
     if (def.parameters)
         def.parameters.forEach(p => {
+            const n = snake_case(p.name)
+            if (p.in == 'query') {
+                fn._generate_openapi.query = fn._generate_openapi.query || []
+                fn._generate_openapi.query.push(p.name)
+            }
             const d = {
                 descr: p.description || 'the ' + p
             }
-            def.parameters[p.name] = d
+            fn.params[n] = d
             if (p.required === false) d.optional = true
-            d.type = get_type(config, p, [p.name, base_name + '_' + p], d)
+            d.type = get_type(config, p, [n, base_name + '_' + p], d)
         })
     const response = Object.keys(def.responses || {}).map(_ => parseInt(_) < 400 ? def.responses[_] : null).find(_ => _)
     if (!response) throw new Error('no response found')
@@ -185,16 +190,18 @@ function create_fn(config, method, path, def) {
 
 
 
-
 }
 
 
 
 exports.generate_openapi = async function (config) {
-    const data = await getDef(config)
-    Object.keys(data.paths).forEach(_ =>
-        Object.keys(data.paths[_]).forEach(m => create_fn(config, m, _, data.paths[_][m]))
+    config.data = await getDef(config)
+    Object.keys(config.data.paths).forEach(_ =>
+        Object.keys(config.data.paths[_]).forEach(m => create_fn(config, m, _, config.data.paths[_][m]))
     )
+    //    config.api._generate_rpc = config.api._generate_rpc || {}
+    //    config.api._generate_rpc.schema = config.data
+    //    config.api._generate_rpc.schema = config.data
 
 }
 

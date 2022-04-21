@@ -6,6 +6,7 @@ const {
     camelCaseLow,
     camelCaseUp,
     addAll,
+    snake_case,
 } = require('./util')
 const compliance_header = [
     '/*******************************************************************************',
@@ -349,6 +350,16 @@ function validate(def, val, req, propname) {
 }
 
 function getObject(def, name, index, types, api, state) {
+    if (!need_structs(state)) return {
+        args: 'd_token_t* ' + name,
+        code_def: 'd_token_t* ' + name,
+        code_read: def.optional
+            ? `TRY_PARAM_GET_OBJECT(${name}, ctx, ${index})`
+            : `TRY_PARAM_GET_REQUIRED_OBJECT(${name}, ctx, ${index})`,
+        code_pass: name,
+        validate: validate(def, name, 'ctx->req', name)
+    }
+
     let ob_name = def.typeName || def.type
     if (typeof (ob_name) != 'string') ob_name = name
     ob_name = 'rpc_' + get_type_name(ob_name) + '_t'
@@ -385,6 +396,8 @@ function getArray(def, name, index) {
         validate: validate(def, name, 'ctx->req', name)
     }
 }
+function need_structs(state) { return typeof (state.generate_rpc) == 'object' && state.generate_rpc.structs !== undefined ? state.generate_rpc.structs : true }
+function need_validate(state) { return typeof (state.generate_rpc) == 'object' && state.generate_rpc.validate !== undefined ? state.generate_rpc.validate : true }
 
 function getCType(def, name, index, types, api, state) {
     let c = ''
@@ -414,6 +427,64 @@ function align_vars(src_items, ind, del = ' ', reverse) {
         while (type.length < maxl) type += ' '
         return ind + type + del + (del.trim().length ? ' ' : '') + rest
     })]
+}
+
+function impl_add_param(res, qname, pdef, ind) {
+    const name = snake_case(qname)
+
+    if (pdef.array) {
+        res.push(`${ind}for (d_iterator_t iter = d_iter(${name}); iter.left ; d_iter_next(&iter))`)
+        switch (pdef.type) {
+            case 'string': res.push(`${ind}  sb_add_params(&_path, "${qname}=%s", d_string(iter.token));`); break
+            case 'uint32': res.push(`${ind}  sb_add_params(&_path, "${qname}=%u", d_int(iter.token));`); break
+            default: throw new Error('invalid type in array ' + pdef.type + ' for ' + name)
+        }
+        return
+    }
+    switch (pdef.type) {
+        case 'string': res.push(`${ind}sb_add_params(&_path, "${qname}=%s", ${name});`); break
+        case 'uint32': res.push(`${ind}sb_add_params(&_path, "${qname}=%u", ${name});`); break
+        default: res.push(`${ind}sb_add_json(&_path, "", ${qname});`); break
+
+    }
+}
+
+function impl_openapi(fn, state) {
+    const def = fn._generate_openapi
+    const send = (state.generate_rpc || {}).send_macro || 'HTTP_SEND'
+    const res = [`${send}("${def.method.toUpperCase()}",`]
+    const parts = def.path.split('/')
+    const args = []
+    const ind = "".padStart(send.length + 1, ' ')
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i].startsWith('{')) {
+            const arg = snake_case(parts[i].substring(1, parts[i].length - 1))
+            const pdef = fn.params[arg]
+            if (!pdef)
+                throw new Error('missing parameter in path ' + arg)
+            args.push(arg)
+            switch (pdef.type) {
+                case 'string': parts[i] = '%s'; break
+                case 'uint32': parts[i] = '%u'; break
+                default: throw new Error('invalid type in path ' + pdef.type + ' for ' + arg)
+            }
+        }
+    }
+    if (args.length) res[res.length - 1] += ` sb_printx(&_path, "${parts.join('/')}", ${args.join(', ')});`
+    else res[res.length - 1] += ` sb_add_chars(&_path, "${parts.join('/')}");`
+    for (let q of def.query || []) {
+        const pdef = fn.params[snake_case(q)]
+        if (!pdef) throw new Error('missing query parameter in path ' + q)
+        impl_add_param(res, q, pdef, ind)
+    }
+    if (def.body) switch (fn.params[def.body].type) {
+        case 'string': res.push(`${ind}sb_add_chars(&_data, ${def.body});`); break
+        case 'uint32': res.push(`${ind}sb_add_int(&_data, ${def.body});`); break
+        default: res.push(`${ind}sb_add_json(&_data, "", ${def.body});`);
+    }
+
+    res[res.length - 1] += ')'
+    return res
 }
 
 function generate_rpc(path, api_name, rpcs, descr, state) {
@@ -467,8 +538,11 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
 
 
     Object.keys(rpcs).filter(_ => _ != 'fields' && !_.startsWith('_')).forEach(rpc_name => {
+        let prefix = ''
+
         const r = rpcs[rpc_name];
         const params = []
+        const direct_impl = !!r._generate_openapi
         const code = {
             pre: [],
             read: [],
@@ -491,12 +565,13 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
         })
         code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "%s only accepts %u arguments.", "${rpc_name}", ${params.length}); `)
         if (r.descr) {
-            header.push(comment('', r.descr))
+            if (!direct_impl) header.push(comment('', r.descr))
             if (params.length) impl.push(comment('', r.descr))
         }
-        header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''});\n`)
-        if (params.length) {
-            impl.push(`static in3_ret_t handle_${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
+        if (!direct_impl) header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''});\n`)
+        if (params.length || direct_impl) {
+            if (!direct_impl) prefix = 'handle_'
+            impl.push(`static in3_ret_t ${prefix}${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
             align_vars(align_vars(code.pre, '  '), '  ', '=').forEach(_ => impl.push(_))
             if (code.set.length) impl.push('')
             align_vars(code.set, '  ', '=', true).forEach(_ => impl.push(_))
@@ -506,11 +581,14 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
                 impl.push('')
                 code.checks.forEach(_ => impl.push('  ' + _))
             }
-            impl.push(`\n  return ${rpc_name}(${use_conf ? 'conf, ' : ''}ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
+            if (direct_impl)
+                impl_openapi(r, state).forEach(_ => impl.push('  ' + _))
+            else
+                impl.push(`\n  return ${rpc_name}(${use_conf ? 'conf, ' : ''}ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
             impl.push('}\n')
         }
         rpc_exec.push(`#if !defined(RPC_ONLY) || defined(RPC_${rpc_name.toUpperCase()})`)
-        rpc_exec.push(`  TRY_RPC("${rpc_name}", ${params.length ? 'handle_' : ''}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
+        rpc_exec.push(`  TRY_RPC("${rpc_name}", ${prefix}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
         rpc_exec.push('#endif\n')
     })
 
@@ -574,7 +652,7 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
     Object.keys(all).forEach(path => {
         const p = path.split('/')
         const api = p[p.length - 1].trim()
-        generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files })
+        generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files, generate_rpc: all[path][Object.keys(all[path])[0]]._generate_rpc })
     })
     Object.keys(files).forEach(file => fs.writeFileSync(file, files[file].lines.join('\n').split('\n').map(l => l.trimEnd()).join('\n'), 'utf8'))
 
