@@ -112,7 +112,7 @@ async function scan(dir) {
                 }
                 if (ob[k]._generate_rpc) {
                     if (ob[k]._generate_rpc.openapi)
-                        await generate_openapi({ types, api_name: k, api: ob[k], url: ob[k]._generate_rpc.openapi })
+                        await generate_openapi({ types, api_name: k, api: ob[k], url: ob[k]._generate_rpc.openapi.startsWith('http') ? ob[k]._generate_rpc.openapi : fullpath + '/' + ob[k]._generate_rpc.openapi })
                     Object.keys(ob[k]).filter(_ => !_.startsWith('_') && _ != 'fields').forEach(_ => {
                         ob[k][_]._src = fullpath
                         ob[k][_]._generate_rpc = ob[k]._generate_rpc
