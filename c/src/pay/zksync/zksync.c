@@ -235,12 +235,18 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     for (char* p = json + strlen(json) - 1; *p && p > json; p--) {
       if (*p == '"') continue;
       if (*p == '0' && p > json) {
-        if (p[-1] == '.') break;
-        *p   = '"';
-        p[1] = 0;
+        if (p[-1] == '.') {
+          in3_rpc_handle_with_string(ctx, json + 1);
+          _free(json);
+          return IN3_OK;
+        };
+        *p = 0;
       }
-      else
-        break;
+      else {
+        in3_rpc_handle_with_string(ctx, json + 1);
+        _free(json);
+        return IN3_OK;
+      }
     }
   }
   in3_rpc_handle_with_string(ctx, json);
