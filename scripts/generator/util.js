@@ -45,7 +45,7 @@ exports.short_descr = function (d) {
     if (zd.indexOf('\n') >= 0) zd = zd.substr(0, zd.indexOf('\n'))
     if (zd.indexOf('[') >= 0) zd = zd.substr(0, zd.indexOf('['))
     if (zd.length > 100) zd = zd.substr(0, 100) + '...'
-    return zd
+    return zd.split("'").join(' ')
 }
 exports.addAll = function addAll(array, elements) {
     exports.asArray(elements).forEach(_ => array.push(_))
