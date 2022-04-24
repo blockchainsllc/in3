@@ -610,7 +610,7 @@ zksync:
       account:
         descr: the address of the account
         type: address
-      ref:
+      ref_start:
         descr: the reference or start. this could be a tx_id prefixed with `<` or `>`for newer or older than the specified  tx or `pending` returning all pending tx.
         type: string
         optional: true

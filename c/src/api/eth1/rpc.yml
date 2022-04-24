@@ -112,7 +112,7 @@ utils:
       signature:
         type: string
         descr: the signature of the function. e.g. `getBalance(uint256)`. The format is the same as used by solidity to create the functionhash. optional you can also add the return type, which in this case is ignored.
-      params:
+      parameters:
         type: any
         array: true
         descr: a array of arguments. the number of arguments must match the arguments in the signature.
