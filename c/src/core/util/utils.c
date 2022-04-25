@@ -33,6 +33,7 @@
  *******************************************************************************/
 #define _POSIX_C_SOURCE 199309L
 #include "utils.h"
+#include "../../third-party/tommath/tommath.h"
 #include "bytes.h"
 #include "debug.h"
 #include "mem.h"
@@ -40,6 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #endif
@@ -443,4 +445,57 @@ int tokenize(char* str, const char* del) {
   }
   if (l != str) c++;
   return c;
+}
+
+in3_ret_t parse_decimal(char* val, int l, bytes32_t target, size_t* target_len) {
+  if (l < 0) l = strlen(val);
+  if (l > 79) return IN3_EINVAL;
+  char input[80];
+  memcpy(input, val, l);
+  memset(target, 0, 32);
+  input[l] = 0;
+  // handle exp
+  char* e = strchr(input, 'e');
+  if (!e) e = strchr(input, 'E');
+  if (e) {
+    char*         p;
+    unsigned long exp = strtoul(e, &p, 10);
+    if (p != input + l) return IN3_EINVAL;
+    l = e - input;
+    p = strchr(input, '.');
+    if (!p) { // no comma, just add the zeros...
+      if (l + exp > 79) return IN3_EINVAL;
+      memset(input + l, '0', exp);
+      l += exp;
+      input[l] = 0;
+    }
+    else if (p > e)
+      return IN3_EINVAL;
+    else {
+      if ((p - input) + exp > 79) return IN3_EINVAL;
+      memmove(p, p + 1, e - p - 1);
+      if (((p + exp) - input) > l) memset(input + l, '0', (p + exp) - input - l);
+      l      = (p + exp) - input;
+      p[exp] = 0;
+    }
+  }
+
+#if defined(ETH_FULL) && defined(ETH_API)
+  mp_int d;
+  mp_init(&d);
+  if (mp_read_radix(&d, input, 10)) {
+    // this is not a number
+    mp_clear(&d);
+    return IN3_EINVAL;
+  }
+  mp_export(target, target_len, 1, sizeof(uint8_t), 1, 0, &d);
+  mp_clear(&d);
+#else
+  for (int i = 0; i < l; i++) {
+    if (val[i] < '0' || val[i] > '9') return IN3_EINVAL;
+  }
+  *target_len = 8;
+  long_to_bytes(parse_float_val(input, 0), target);
+#endif
+  return IN3_OK;
 }

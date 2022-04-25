@@ -6,6 +6,7 @@
       "params": []
     },
     "result": "0xd274ec1a5e9a513ff8f4eeb344fc02ca61e0823a7821c76e459ea0e8c5140826",
+    "success": true,
     "config": {
       "proof": "none",
       "experimental": true,

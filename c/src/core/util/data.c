@@ -33,7 +33,6 @@
  *******************************************************************************/
 #define IN3_INTERNAL
 #include "data.h"
-#include "../../third-party/tommath/tommath.h"
 #include "bytes.h"
 #include "crypto.h"
 #include "debug.h"
@@ -1194,30 +1193,10 @@ bytes_t d_num_bytes(d_token_t* f) {
   bytes_t bb = d_bytes(f);
   if (bb.data && d_type(f) == T_STRING && d_len(f) < 80) {
     // still a string?, then we need to look for numeric values
-    char input[80];
-    memcpy(input, bb.data, bb.len);
-    input[bb.len]    = 0;
-    bytes32_t target = {0};
-    bytes_t   b      = bytes(target, 0);
-#if defined(ETH_FULL) && defined(ETH_API)
-    size_t s = 0;
-    mp_int d;
-    mp_init(&d);
-    if (mp_read_radix(&d, input, 10)) {
-      // this is not a number
-      mp_clear(&d);
-      return bb;
-    }
-    mp_export(target, &s, 1, sizeof(uint8_t), 1, 0, &d);
-    mp_clear(&d);
-    b.len = s;
-#else
-    for (int i = 0; i < d_len(f); i++) {
-      if (f->data[i] < '0' || f->data[i] > '9') return bb;
-    }
-    b.len = 8;
-    long_to_bytes(parse_float_val(input, 0), target);
-#endif
+    bytes32_t dst = {0};
+    size_t    dst_len;
+    if (parse_decimal((void*) bb.data, bb.len, dst, &dst_len)) return bb;
+    bytes_t b = bytes(dst, dst_len);
     b_optimize_len(&b);
 
     if (b.len < 4) {

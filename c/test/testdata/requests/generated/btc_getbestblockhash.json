@@ -6,6 +6,7 @@
       "params": []
     },
     "result": "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "btc"

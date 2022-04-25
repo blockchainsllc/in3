@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 #include "bytes.h"
+#include "error.h"
 #include <assert.h>
 #include <stdint.h>
 
@@ -344,6 +345,11 @@ void in3_sleep(uint32_t ms);
 int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
+/**
+ * parses a decimal string, which can include scientific notation ( only positive is allowed)
+ * like '123.45e18'
+ */
+in3_ret_t parse_decimal(char* val, int l, bytes32_t target, size_t* target_len);
 
 /**
  * simple add function, which adds the bytes (b) to a
@@ -368,11 +374,11 @@ char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const 
 #define INIT_LOCK(NAME)                                                                                               \
   static HANDLE _NAME(_lock_handle_, NAME) = NULL;                                                                    \
   static void   _NAME(_lock, NAME)() {                                                                                \
-    if (!_NAME(_lock_handle_, NAME)) {                                                                              \
-      HANDLE p = CreateMutex(NULL, FALSE, NULL);                                                                    \
-      if (InterlockedCompareExchangePointer((PVOID*) &_NAME(_lock_handle_, NAME), (PVOID) p, NULL)) CloseHandle(p); \
+      if (!_NAME(_lock_handle_, NAME)) {                                                                              \
+        HANDLE p = CreateMutex(NULL, FALSE, NULL);                                                                    \
+        if (InterlockedCompareExchangePointer((PVOID*) &_NAME(_lock_handle_, NAME), (PVOID) p, NULL)) CloseHandle(p); \
     }                                                                                                               \
-    WaitForSingleObject(_NAME(_lock_handle_, NAME), INFINITE);                                                      \
+      WaitForSingleObject(_NAME(_lock_handle_, NAME), INFINITE);                                                      \
   }
 
 #define LOCK(NAME, code)                          \

@@ -63,6 +63,7 @@
         "tx_id": "32067,5"
       }
     ],
+    "success": true,
     "config": {
       "proof": "none",
       "experimental": true,

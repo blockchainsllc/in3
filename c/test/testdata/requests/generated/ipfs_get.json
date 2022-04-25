@@ -9,6 +9,7 @@
       ]
     },
     "result": "I love Incubed",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "ipfs"

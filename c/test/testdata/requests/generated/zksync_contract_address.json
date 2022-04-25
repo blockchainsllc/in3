@@ -9,6 +9,7 @@
       "mainContract": "0x82f67958a5474e40e1485742d648c0b0686b6e5d",
       "govContract": "0xc8568f373484cd51fdc1fe3675e46d8c0dc7d246"
     },
+    "success": true,
     "config": {
       "proof": "none",
       "experimental": true,

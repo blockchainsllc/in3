@@ -8,6 +8,7 @@
       ]
     },
     "result": "00000000000000000003842eb452fa7a119e7a56940d2409f0cf374aedb37c7e",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "btc"

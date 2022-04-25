@@ -17,6 +17,7 @@
       "gasTxAmount": "700",
       "feeType": "Transfer"
     },
+    "success": true,
     "config": {
       "proof": "none",
       "experimental": true,

@@ -229,24 +229,6 @@ utils:
         - false
       response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
 
-  in3_parse_tx_url:
-    descr: parse a ethereum-url based on EIP 681 (https://eips.ethereum.org/EIPS/eip-681)
-    params:
-      url:
-        descr: the url with the tx-params
-        type: string
-    result:
-      type: tx_input
-    example:
-      request:
-        - ethereum:0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7/transfer?address=0x8e23ee67d1332ad560396262c48ffbb01f93d052&uint256=1
-      response:
-        to: "0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7"
-        fn_sig: transfer(address,uint256)
-        fn_args:
-          - "0x8e23ee67d1332ad560396262c48ffbb01f93d052"
-          - 1
-
   in3_toWei:
     sync: true
     descr: converts the given value into wei.

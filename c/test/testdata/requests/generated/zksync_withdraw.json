@@ -23,6 +23,7 @@
       "nonce": 2,
       "txHash": "sync-tx:46e73c497fe623fbc9d41e0f8242f808cb80447b84e2bcba42fe5970f158aefa"
     },
+    "success": true,
     "config": {
       "proof": "none",
       "experimental": true,
