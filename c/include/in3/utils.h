@@ -374,11 +374,11 @@ char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const 
 #define INIT_LOCK(NAME)                                                                                               \
   static HANDLE _NAME(_lock_handle_, NAME) = NULL;                                                                    \
   static void   _NAME(_lock, NAME)() {                                                                                \
-      if (!_NAME(_lock_handle_, NAME)) {                                                                              \
-        HANDLE p = CreateMutex(NULL, FALSE, NULL);                                                                    \
-        if (InterlockedCompareExchangePointer((PVOID*) &_NAME(_lock_handle_, NAME), (PVOID) p, NULL)) CloseHandle(p); \
+    if (!_NAME(_lock_handle_, NAME)) {                                                                              \
+      HANDLE p = CreateMutex(NULL, FALSE, NULL);                                                                    \
+      if (InterlockedCompareExchangePointer((PVOID*) &_NAME(_lock_handle_, NAME), (PVOID) p, NULL)) CloseHandle(p); \
     }                                                                                                               \
-      WaitForSingleObject(_NAME(_lock_handle_, NAME), INFINITE);                                                      \
+    WaitForSingleObject(_NAME(_lock_handle_, NAME), INFINITE);                                                      \
   }
 
 #define LOCK(NAME, code)                          \
