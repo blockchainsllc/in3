@@ -552,7 +552,7 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
         return 0;
       case '\\':
         if (*jp->c == 'u') {
-          for (int n = 0; n < 4; n++, jp->c++) {
+          for (int n = 0; n < 4; n++) {
             if (hexchar_to_int(*(++jp->c)) == 255) return JSON_E_INVALID_CHAR;
           }
           escape += 4;
@@ -626,7 +626,6 @@ static NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         }
       }
     case '"':
-    case '\'':
       return parse_string(jp, parsed_next_item(jp, T_STRING, key, parent));
     case 't':
       if (strncmp(jp->c, "rue", 3) == 0) {
