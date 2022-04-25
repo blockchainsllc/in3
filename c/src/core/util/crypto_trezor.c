@@ -255,8 +255,16 @@ in3_ret_t mnemonic_verify(const char* mnemonic) {
 }
 
 in3_ret_t aes_128_ctr_decrypt(uint8_t* aeskey, bytes_t cipher, uint8_t* iv_data, bytes32_t dst) {
+#ifdef ESP_IDF
+  UNUSED_VAR(aeskey);
+  UNUSED_VAR(cipher);
+  UNUSED_VAR(iv_data);
+  UNUSED_VAR(dst);
+  return IN3_ENOTSUP;
+#else
   aes_init();
   aes_encrypt_ctx cx[1];
   aes_encrypt_key128(aeskey, cx);
   return aes_ctr_decrypt(cipher.data, dst, cipher.len, iv_data, aes_ctr_cbuf_inc, cx) ? IN3_EPASS : IN3_OK;
+#endif
 }
