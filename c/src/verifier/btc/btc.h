@@ -22,7 +22,7 @@ in3_ret_t in3_register_btc(in3_t* c);
  */
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, /**< the current context */
                                   bytes_t*   dst, /**< the bytes to write the result to. */
-                                  d_token_t* outputs, d_token_t* utxos, bytes_t* account, bytes_t* pub_key,
+                                  d_token_t* outputs, d_token_t* utxos, bytes_t* account, bytes_t* pub_key, bool is_testnet,
                                   sb_t* meta /**< a stringbuilder in order write the wallet_state and metadata depending on the tx. */
 );
 

@@ -99,6 +99,7 @@ typedef struct btc_tx_ctx {
   uint32_t      input_count;
   btc_tx_out_t* outputs;
   uint32_t      output_count;
+  bool          is_testnet;
 } btc_tx_ctx_t;
 
 void btc_init_tx(btc_tx_t* tx);
@@ -135,7 +136,7 @@ uint32_t btc_weight(btc_tx_t* tx);
  * parsed address can be founs on 'dst' after function execution
  * returns the type of scriptPubKey the adress was extracted from
  */
-btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst);
+btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst, bool is_testnet);
 
 /*
  * Parses a p2ms script to extract a list of defined public keys

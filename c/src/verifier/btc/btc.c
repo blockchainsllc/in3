@@ -554,8 +554,10 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
 
   sb_t  sb = {0};
   char *seed, *type;
+  bool  is_testnet;
   TRY_PARAM_GET_REQUIRED_STRING(seed, ctx, 0);
   TRY_PARAM_GET_REQUIRED_STRING(type, ctx, 1);
+  TRY_PARAM_GET_BOOL(is_testnet, ctx, 2, false);
 
   btc_stype_t addr_type = btc_string_to_script_type(type);
 
@@ -572,7 +574,7 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
 
     // Get the encoded address
     if (addr_type == BTC_P2PKH || addr_type == BTC_P2PK || addr_type == BTC_P2SH) {
-      btc_address_prefix_t prefix = btc_script_type_to_prefix(addr_type);
+      btc_address_prefix_t prefix = btc_script_type_to_prefix(addr_type, is_testnet);
 
       seed_valid = (((addr_type == BTC_P2PK || addr_type == BTC_P2PKH) && pub_key_is_valid(&raw_seed)) ||
                     (addr_type == BTC_P2SH && script_is_standard(btc_get_script_type(&raw_seed))));
@@ -594,7 +596,7 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
       if (!seed_valid) {
         return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for p2wpkh (public key).", IN3_EINVAL);
       }
-      if (btc_segwit_addr_from_pub_key(raw_seed, &dst) < 0) {
+      if (btc_segwit_addr_from_pub_key(raw_seed, &dst, is_testnet) < 0) {
         if (dst.encoded) _free(dst.encoded);
         req_set_error(ctx->req, "ERROR: btc_create_address: Error during segwit address generation from public key.", IN3_EINVAL);
       }
@@ -604,7 +606,7 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
       if (!seed_valid) {
         return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for p2wsh (witness program).", IN3_EINVAL);
       }
-      if (btc_segwit_addr_from_witness_program(raw_seed, &dst) < 0) {
+      if (btc_segwit_addr_from_witness_program(raw_seed, &dst, is_testnet) < 0) {
         if (dst.encoded) _free(dst.encoded);
         req_set_error(ctx->req, "ERROR: btc_create_address: Error during segwit address generation from witness program.", IN3_EINVAL);
       }
@@ -636,8 +638,10 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
   d_token_t* result = NULL;
   char*      txid;
   char*      blockhash;
+  bool       is_testnet;
   TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
   TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
+  TRY_PARAM_GET_BOOL(is_testnet, ctx, 2, false);
 
   size_t tx_len = strlen(txid);
   if (tx_len < BTC_TX_HASH_SIZE_BYTES * 2) {
@@ -693,7 +697,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
     btc_address_t addr = btc_addr(bytes(data, BTC_MAX_ADDR_SIZE_BYTES), enc);
     bool          has_addr, is_witness;
     tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
-    btc_stype_t script_type       = extract_address_from_output(&tx_ctx.outputs[i], &addr);
+    btc_stype_t script_type       = extract_address_from_output(&tx_ctx.outputs[i], &addr, is_testnet);
     bytes_t     addr_as_bytes     = addr.as_bytes;
 
     has_addr   = script_type != BTC_P2MS && script_is_standard(script_type);
@@ -740,11 +744,13 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 /**
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
-in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outputs, d_token_t* utxos, bytes_t* account, bytes_t* pub_key, sb_t* meta) {
+in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outputs, d_token_t* utxos, bytes_t* account, bytes_t* pub_key, bool is_testnet, sb_t* meta) {
   UNUSED_VAR(meta);
   btc_account_pub_key_t default_account;
   btc_tx_ctx_t          tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
+  tx_ctx.is_testnet = is_testnet;
+
   default_account.account = *account;
   default_account.pub_key = *pub_key;
   if (!default_account.account.data || !default_account.pub_key.data) return req_set_error(req, "ERROR: Required signing account data is null or missing", IN3_EINVAL);

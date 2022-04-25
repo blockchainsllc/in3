@@ -397,7 +397,7 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t** pu
 // WARNING: You should free dst.encoded after calling this function
 // WARNING: P2WPKH and P2WSH scripts still not supported
 // Returns BTC_UNKNOWN when something goes wrong
-btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst) {
+btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst, bool is_testnet) {
   if (!tx_out || !dst) return BTC_UNKNOWN;
   btc_stype_t script_type = (tx_out->script.type == BTC_UNKNOWN) ? btc_get_script_type(&tx_out->script.data) : tx_out->script.type;
 
@@ -430,11 +430,11 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
     case BTC_V0_P2WPKH: {
       ripemd160_t pkhash;
       memcpy(pkhash, tx_out->script.data.data + 2, BTC_HASH160_SIZE_BYTES);
-      btc_segwit_addr_from_pub_key_hash(pkhash, dst);
+      btc_segwit_addr_from_pub_key_hash(pkhash, dst, is_testnet);
       break;
     }
     case BTC_P2WSH:
-      btc_segwit_addr_from_witness_program(tx_out->script.data, dst);
+      btc_segwit_addr_from_witness_program(tx_out->script.data, dst, is_testnet);
       break;
     default:
       return BTC_UNSUPPORTED;
@@ -607,7 +607,7 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
     }
 
     // serialize address
-    if (btc_decode_address(&addr.as_bytes, addr.encoded)) {
+    if (btc_decode_address(&addr.as_bytes, addr.encoded, tx_ctx->is_testnet)) {
       return req_set_error(req, "ERROR: btc_prepare_transaction: btc address could not be decoded. Invalid format", IN3_EINVAL);
     }
 
