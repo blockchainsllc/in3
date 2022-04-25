@@ -297,8 +297,8 @@ static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
   char      result[45];
   in3_ret_t res = to_checksum(src, use_chain_id ? in3_chain_id(ctx->req) : 0, result + 1);
   if (res) return req_set_error(ctx->req, "Could not create the checksum address", res);
-  result[0]  = '\'';
-  result[43] = '\'';
+  result[0]  = '"';
+  result[43] = '"';
   result[44] = 0;
 
   return in3_rpc_handle_with_string(ctx, result);

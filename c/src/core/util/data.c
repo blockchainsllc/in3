@@ -509,39 +509,56 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
 
   while (true) {
     switch (*(jp->c++)) {
-      case 0:
-        return JSON_E_END_OF_STRING;
-      case '\'':
+      case 0: return JSON_E_END_OF_STRING;
       case '"':
-        if (start[-1] != jp->c[-1]) continue; // is the kind of quote the same as the quote we used to start the string?
-        l = jp->c - start - 1;
-        if (l == 6 && *start == '\\' && start[1] == 'u') {
-          item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
-          item->len   = 1;
-          item->data  = _malloc(1);
-          *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
-        }
-        else {
-          if (*(start - 1) == '\'') {
-            // this is a escape-sequence which forces this to handled as string
-            // here we do change or fix the input string because this would be an invalid string otherwise.
-            *(jp->c - 1) = (*(start - 1) = '"');
-          }
-          l -= escape;
-          item->len  = l | T_STRING << 28;
-          item->data = escape ? _malloc(l + 1) : start;
-          if (escape) {
-            char* x = start;
-            for (size_t n = 0; n < l; n++, x++) {
-              if (*x == '\\') x++;
-              item->data[n] = *x;
+        l          = jp->c - start - 1 - escape;
+        item->len  = l | T_STRING << 28;
+        item->data = escape ? _malloc(l + 1) : start;
+        if (escape) {
+          char* x = start;
+          for (size_t n = 0; n < l; n++, x++) {
+            if (*x == '\\') {
+              switch (x[1]) {
+                case 'u':
+                  item->data[n] = hexchar_to_int(x[4]) << 4 | hexchar_to_int(x[5]);
+                  x += 4;
+                  break;
+                case 'n':
+                  item->data[n] = '\n';
+                  break;
+                case 't':
+                  item->data[n] = '\t';
+                  break;
+                case 'b':
+                  item->data[n] = '\b';
+                  break;
+                case 'f':
+                  item->data[n] = '\f';
+                  break;
+                case 'r':
+                  item->data[n] = '\r';
+                  break;
+                default:
+                  item->data[n] = x[1];
+              }
+              x++;
             }
-            item->state   = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
-            item->data[l] = 0;
+            else
+              item->data[n] = *x;
           }
+          item->state   = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+          item->data[l] = 0;
         }
         return 0;
       case '\\':
+        if (*jp->c == 'u') {
+          for (int n = 0; n < 4; n++, jp->c++) {
+            if (hexchar_to_int(*(++jp->c)) == 255) return JSON_E_INVALID_CHAR;
+          }
+          escape += 4;
+        }
+        else if (jp->c != '"' && jp->c != '/' && jp->c != '\\' && jp->c != 'b' && jp->c != 'f' && jp->c != 'n' && jp->c != 'r' && jp->c != 't')
+          return JSON_E_INVALID_CHAR;
         jp->c++;
         escape++;
         break;
