@@ -46,6 +46,7 @@
       "transactionsRoot": "0x4ef7e5d9d75b2598430b2de32f62b3272a3aa42e56e72b9dcf4def35bc8b35f5",
       "uncles": []
     },
+    "success": true,
     "config": {
       "proof": "none"
     },
@@ -125,6 +126,7 @@
       "transactionsRoot": "0x4ef7e5d9d75b2598430b2de32f62b3272a3aa42e56e72b9dcf4def35bc8b35f5",
       "uncles": []
     },
+    "success": true,
     "config": {
       "proof": "none"
     },

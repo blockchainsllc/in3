@@ -54,10 +54,7 @@ set(CRYPTO_SRC
   groestl.c
   pbkdf2.c
   rfc6979.c
-  aes/aes_modes.c
-  aes/aescrypt.c
-  aes/aeskey.c
-  aes/aestab.c
+
 
   bip39.c
 
@@ -87,7 +84,13 @@ endif()
 
 
 if (NOT ESP_IDF)
-    set(CRYPTO_SRC ${CRYPTO_SRC} hmac.c)
+    set(CRYPTO_SRC ${CRYPTO_SRC} 
+    hmac.c
+    aes/aes_modes.c
+    aes/aescrypt.c
+    aes/aeskey.c
+    aes/aestab.c    
+    )
 endif()
 
 add_static_library(

@@ -297,8 +297,8 @@ static in3_ret_t in3_checkSumAddress(in3_rpc_handle_ctx_t* ctx) {
   char      result[45];
   in3_ret_t res = to_checksum(src, use_chain_id ? in3_chain_id(ctx->req) : 0, result + 1);
   if (res) return req_set_error(ctx->req, "Could not create the checksum address", res);
-  result[0]  = '\'';
-  result[43] = '\'';
+  result[0]  = '"';
+  result[43] = '"';
   result[44] = 0;
 
   return in3_rpc_handle_with_string(ctx, result);
@@ -542,121 +542,6 @@ static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
   }
   else
     return in3_rpc_handle_with_bytes(ctx, bytes(public_key, 64));
-}
-
-static in3_ret_t parse_tx_param(in3_rpc_handle_ctx_t* ctx, char* params, sb_t* fn_args, sb_t* fn_sig, sb_t* sb) {
-  while (*params) {
-    char* eq = strchr(params, '=');
-    if (!eq || eq == params) return req_set_error(ctx->req, "invalid params, missing =", IN3_EINVAL);
-    char* n = strchr(params, '&');
-    if (n == NULL) n = params + strlen(params);
-    if (n <= eq) return req_set_error(ctx->req, "invalid params, missing value", IN3_EINVAL);
-    if ((eq - params) > 30) return req_set_error(ctx->req, "invalid params, name too long", IN3_EINVAL);
-    char* name  = params;
-    char* value = eq + 1;
-    *eq         = 0;
-    params      = *n ? n + 1 : n;
-    *n          = 0;
-    if (strcmp(name, "value") == 0) {
-      bytes32_t tmp = {0};
-      string_val_to_bytes(value, NULL, tmp);
-      bytes_t b = bytes(tmp, 32);
-      b_optimize_len(&b);
-      sb_add_bytes(sb, ",\"value\":", &b, 1, false);
-    }
-    else if (strcmp(name, "gas") == 0 || strcmp(name, "gasLimit") == 0) {
-      sb_add_chars(sb, ",\"gas\":");
-      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
-    }
-    else if (strcmp(name, "gasPrice") == 0) {
-      sb_add_chars(sb, ",\"gasPrice\":");
-      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
-    }
-    else if (strcmp(name, "data") == 0) {
-      sb_add_chars(sb, ",\"data\":");
-      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
-    }
-    else if (strcmp(name, "data") == 0) {
-      sb_add_chars(sb, ",\"data\":");
-      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
-    }
-    else if (strcmp(name, "from") == 0) {
-      sb_add_chars(sb, ",\"from\":");
-      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
-    }
-    else if (strcmp(name, "nonce") == 0) {
-      sb_add_chars(sb, ",\"nonce\":");
-      sb_print(sb, (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
-    }
-    else if (strcmp(name, "layer") == 0) {
-      sb_print(sb, ",\"layer\":\"%s\"", value);
-    }
-    else {
-      if (fn_args->len) {
-        sb_add_char(fn_args, ',');
-        sb_add_char(fn_sig, ',');
-      }
-      sb_add_chars(fn_sig, name);
-      sb_print(fn_args, *name == 's' || (value[0] == '0' && value[1] == 'x') ? "\"%s\"" : "%s", value);
-    }
-  }
-
-  if (fn_sig->data) {
-    sb_add_chars(sb, ",\"fn_sig\":\"");
-    sb_add_chars(sb, fn_sig->data);
-    sb_add_chars(sb, ")\",\"fn_args\":[");
-    if (fn_args->data) sb_add_chars(sb, fn_args->data);
-    sb_add_chars(sb, "]");
-  }
-  sb_add_chars(sb, "}");
-
-  return IN3_OK;
-}
-
-static in3_ret_t parse_tx_url(in3_rpc_handle_ctx_t* ctx) {
-  char*      aurl      = NULL;
-  d_token_t* url_token = d_get_at(ctx->params, 0);
-  if (d_type(url_token) != T_STRING) return req_set_error(ctx->req, "missing the url as first arg'", IN3_EINVAL);
-  char* url = d_string(url_token);
-  if (strncmp(url, "ethereum:", 9)) return req_set_error(ctx->req, "URL must start with 'ethereum:'", IN3_EINVAL);
-  url += 9;
-  sb_t  sb     = {0};
-  int   l      = strlen(url);
-  char* s1     = strchr(url, '/');
-  char* q      = strchr(url, '?');
-  int   to_len = s1 ? s1 - url : (q ? q - url : l);
-  if (to_len == 42 && url[0] == '0' && url[1] == 'x') {
-    sb_add_chars(&sb, "{\"to\":\"");
-    sb_add_range(&sb, url, 0, 42);
-    sb_add_chars(&sb, "\"");
-  }
-  else
-    return req_set_error(ctx->req, "invalid address in url. Currently ENS names are notsupported yet!", IN3_EINVAL);
-  url          = _strdupn(url + to_len, -1);
-  q            = strchr(url, '?');
-  aurl         = url;
-  sb_t fn_args = {0};
-  sb_t fn_sig  = {0};
-
-  if (*url == '/') {
-    l = q > url ? (int) (q - url) : (int) (strlen(url));
-    if (l) {
-      sb_add_range(&fn_sig, url, 1, l - 1);
-      sb_add_char(&fn_sig, '(');
-    }
-    url += l + (q ? 1 : 0);
-  }
-  in3_ret_t res = IN3_OK;
-  TRY_GOTO(parse_tx_param(ctx, url, &fn_args, &fn_sig, &sb))
-  sb_add_chars(in3_rpc_handle_start(ctx), sb.data);
-  res = in3_rpc_handle_finish(ctx);
-
-clean:
-  _free(sb.data);
-  _free(fn_args.data);
-  _free(fn_sig.data);
-  _free(aurl);
-  return res;
 }
 
 static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
@@ -949,9 +834,6 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CALCDEPLOYADDRESS)
   TRY_RPC("in3_calcDeployAddress", in3_calcDeployAddress(ctx))
-#endif
-#if !defined(RPC_ONLY) || defined(RPC_IN3_PARSE_TX_URL)
-  TRY_RPC("in3_parse_tx_url", parse_tx_url(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PGET_INTERNAL_TX)
   TRY_RPC("in3_get_internal_tx", eth_getInternalTx(ctx))

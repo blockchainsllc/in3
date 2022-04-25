@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 #include "bytes.h"
+#include "error.h"
 #include <assert.h>
 #include <stdint.h>
 
@@ -344,6 +345,11 @@ void in3_sleep(uint32_t ms);
 int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
+/**
+ * parses a decimal string, which can include scientific notation ( only positive is allowed)
+ * like '123.45e18'
+ */
+in3_ret_t parse_decimal(char* val, int l, bytes32_t target, size_t* target_len);
 
 /**
  * simple add function, which adds the bytes (b) to a

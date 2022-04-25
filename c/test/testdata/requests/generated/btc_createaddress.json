@@ -9,6 +9,7 @@
       ]
     },
     "result": "19P1LctLQmH6tuHCRkv8QznNBGBvFCyKxi",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "btc"
@@ -25,6 +26,7 @@
       ]
     },
     "result": "16JrGhLx5bcBSA34kew9V6Mufa4aXhFe9X",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "btc"
@@ -41,6 +43,7 @@
       ]
     },
     "result": "34N3tf5m5rdNhW5zpTXNEJucHviFEa8KEq",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "btc"
@@ -57,6 +60,7 @@
       ]
     },
     "result": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "btc"
@@ -73,6 +77,7 @@
       ]
     },
     "result": "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3",
+    "success": true,
     "config": {
       "proof": "none",
       "chainId": "btc"

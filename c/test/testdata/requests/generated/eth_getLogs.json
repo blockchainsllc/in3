@@ -30,6 +30,7 @@
         "type": "mined"
       }
     ],
+    "success": true,
     "config": {
       "proof": "none"
     },

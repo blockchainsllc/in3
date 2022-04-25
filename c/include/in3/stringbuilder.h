@@ -79,6 +79,8 @@ NONULL sb_t* sb_add_char(sb_t* sb, char c);                                     
 NONULL sb_t* sb_add_chars(sb_t* sb, const char* chars);                                                     /**< adds a string */
 NONULL sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len);                                 /**< add a string range */
 NONULL sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int value_len, bool as_string); /**< adds a value with an optional key. if as_string is true the value will be quoted. */
+NONULL void  sb_add_params(sb_t* sb, const char* fmt, ...);                                                 /**< adds params and includes the ? or the & automaticly, like sb_add_params(path, "limit=%u", limit)*/
+NONULL void  sb_add_value(sb_t* sb, const char* fmt, ...);                                                  /**< adds values and automaticly adds a ',' if the last char is a '{' or a '[' sb_add_params(path, "limit=%u", limit)*/
 NONULL_FOR((1, 3))
 sb_t*        sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array); /**< add bytes as 0x-prefixed hexcoded string (including an optional prefix), if len>1 is passed bytes maybe an array ( if as_array==true)  */
 NONULL sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);                                     /**< add a integer value as hexcoded, 0x-prefixed string*/
@@ -141,6 +143,7 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  *
  */
 char* sprintx(const char* fmt, ...);
+void  sb_vprintx(sb_t* sb, const char* fmt, va_list args);
 
 /**
  * prints a string based a var args.
