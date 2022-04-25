@@ -154,6 +154,7 @@ bool     btc_nsequence_is_relative_locktime(uint32_t nsequence);
 
 in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* output_data);
 in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_account, d_token_t* utxo_inputs);
+in3_ret_t btc_prepare_inputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx);
 in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);
 
 bool btc_public_key_is_valid(const bytes_t* public_key);

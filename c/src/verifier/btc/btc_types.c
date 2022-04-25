@@ -783,6 +783,27 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pu
   return IN3_OK;
 }
 
+static void btc_utxo_to_input(btc_tx_in_t* dst, btc_utxo_t src) {
+  dst->prev_tx_hash  = src.tx_hash;
+  dst->prev_tx_index = src.tx_index;
+  dst->script.type   = BTC_UNKNOWN;
+  dst->script.data   = NULL_BYTES;
+  dst->sequence      = src.sequence;
+}
+
+// parses the utxos included in transaction context into inputs
+in3_ret_t btc_prepare_inputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
+  if (tx_ctx->input_count > 0) { // If inputs are already set, do nothing
+    for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+      btc_tx_in_t tx_in;
+      btc_init_tx_in(&tx_in);
+      btc_utxo_to_input(&tx_in, tx_ctx->utxos[i]);
+      TRY(btc_add_input_to_tx(req, tx_ctx, &tx_in));
+    }
+  }
+  return IN3_OK;
+}
+
 in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx) {
   tx_ctx->tx.flag = 0;
   for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {

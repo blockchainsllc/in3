@@ -750,12 +750,18 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outpu
   if (!default_account.account.data || !default_account.pub_key.data) return req_set_error(req, "ERROR: Required signing account data is null or missing", IN3_EINVAL);
   if (!btc_public_key_is_valid((const bytes_t*) &default_account.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
 
+  // Add oututs into transaction context
   if (!outputs || d_type(outputs) != T_ARRAY || d_len(outputs) < 1) return req_set_error(req, "ERROR: Invalid transaction output data", IN3_EINVAL);
   TRY(btc_prepare_outputs(req, &tx_ctx, outputs));
 
+  // Add utxos to transaction context
   if (!utxos || d_type(utxos) != T_ARRAY || d_len(utxos) < 1) return req_set_error(req, "ERROR: Invalid unspent outputs (utxos) data", IN3_EINVAL);
   TRY(btc_prepare_utxos(req, &tx_ctx, &default_account, utxos));
 
+  // Convert utxos into transaction inputs
+  TRY(btc_prepare_inputs(req, &tx_ctx));
+
+  // Is is a witness transaction?
   TRY(btc_set_segwit(&tx_ctx));
 
   return btc_serialize_tx(req, &tx_ctx.tx, dst);
