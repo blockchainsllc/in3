@@ -557,7 +557,7 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
           }
           escape += 4;
         }
-        else if (jp->c != '"' && jp->c != '/' && jp->c != '\\' && jp->c != 'b' && jp->c != 'f' && jp->c != 'n' && jp->c != 'r' && jp->c != 't')
+        else if (*jp->c != '"' && *jp->c != '/' && *jp->c != '\\' && *jp->c != 'b' && *jp->c != 'f' && *jp->c != 'n' && *jp->c != 'r' && *jp->c != 't')
           return JSON_E_INVALID_CHAR;
         jp->c++;
         escape++;
