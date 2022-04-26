@@ -230,6 +230,34 @@
                 "$ref": "#/$defs/func"
             }
         },
+        "generate_rpc": {
+            "type": "object",
+            "properties": {
+                "openapi": {
+                    "type": "string",
+                    "description": "the url or filepath to the openapi-definition"
+                },
+                "structs": {
+                    "type": "boolean",
+                    "description": "if true structs will be generated, false means only d_token_t will be used"
+                },
+                "validate": {
+                    "type": "boolean",
+                    "description": "if true, objects will be validated, otherwise it will only be checked if the type is correct"
+                },
+                "send_macro": {
+                    "type": "string",
+                    "description": "name of the macro which will be used when sending http-request. default: HTTP_SEND"
+                },
+                "custom": {
+                    "description": "thr properties of this object are the names of the generated functions which need to be customized. the alias-property will give them a new name. other properties like `skipAPI` will skip it completly or `skipGenerate` will allow a manual implementation of pregenerated header.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/$defs/func"
+                    }
+                }
+            }
+        },
         "api_conf": {
             "type": "object",
             "description": "a API Definition",
@@ -257,31 +285,7 @@
                     "description": "if true it will let the scripts/build_rpc.sh to generate the _rpc.c and _rpc.h file for the given api",
                     "oneOf": [
                         {
-                            "type": "object",
-                            "properties": {
-                                "openapi": {
-                                    "type": "string",
-                                    "description": "the url or filepath to the openapi-definition"
-                                },
-                                "structs": {
-                                    "type": "boolean",
-                                    "description": "if true structs will be generated, false means only d_token_t will be used"
-                                },
-                                "validate": {
-                                    "type": "boolean",
-                                    "description": "if true, objects will be validated, otherwise it will only be checked if the type is correct"
-                                },
-                                "send_macro": {
-                                    "type": "string",
-                                    "description": "name of the macro which will be used when sending http-request. default: HTTP_SEND"
-                                },
-                                "custom": {
-                                    "type": "object",
-                                    "additionalProperties": {
-                                        "$ref": "#/$defs/func"
-                                    }
-                                }
-                            }
+                            "$ref": "#/$def/generate_rpc"
                         },
                         {
                             "type": "boolean"

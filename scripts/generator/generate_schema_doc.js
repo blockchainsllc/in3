@@ -7,8 +7,11 @@ const props = {
     properties: Object.keys(schema.$defs.property.properties).map(prop =>
         getProp(prop, schema.$defs.property.properties[prop], '')
     ).join(''),
-    api: Object.keys(schema.$defs.api.properties).map(prop =>
-        getProp(prop, schema.$defs.api.properties[prop], '')
+    api: Object.keys(schema.$defs.api_conf.properties).map(prop =>
+        getProp(prop, schema.$defs.api_conf.properties[prop], '')
+    ).join(''),
+    generate_rpc: Object.keys(schema.$defs.generate_rpc.properties).map(prop =>
+        getProp(prop, schema.$defs.generate_rpc.properties[prop], '')
     ).join(''),
     func: Object.keys(schema.$defs.func.properties).map(prop =>
         getProp(prop, schema.$defs.func.properties[prop], '')

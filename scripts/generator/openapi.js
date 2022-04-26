@@ -47,7 +47,7 @@ function get_fn_name(config, method, path, def) {
             throw new Error("duplicate name " + name)
     }
 
-    const custom = (config.api._generate_rpc || {}).custom
+    const custom = (config.generate_rpc || {}).custom
     if (custom && custom[name]) {
         const alias = custom[name].alias
         if (alias) {
@@ -178,7 +178,7 @@ function get_type(config, content, names, parent = {}) {
 function create_fn(config, method, path, def) {
     const base_name = snake_case(path.split('/').filter(_ => _.trim() && _[0] != '{').join('_'))
     const fn_name = get_fn_name(config, method, path, def)
-    const custom = ((config.api._generate_rpc || {}).custom || {})[fn_name]
+    const custom = ((config.generate_rpc || {}).custom || {})[fn_name]
     if (custom && custom.skipApi) return
 
 

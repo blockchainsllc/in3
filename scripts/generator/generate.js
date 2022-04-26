@@ -104,6 +104,8 @@ async function scan(dir) {
             for (const k of Object.keys(ob)) {
                 const apic = { ...api_conf[k], ...ob[k].api }
                 api_conf[k] = apic
+                const generate_rpc = apic.generate_rpc
+                delete apic.generate_rpc
                 delete ob[k].api
                 if (apic.config) config = { ...config, ...apic.config }
                 for (const t of Object.keys(ob[k])) {
@@ -112,12 +114,12 @@ async function scan(dir) {
                         console.error(`skipping ${k} :: ${t}`)
                     }
                 }
-                if (apic.generate_rpc) {
-                    if (apic.generate_rpc.openapi)
-                        await generate_openapi({ types, api_name: k, api: ob[k], url: apic.generate_rpc.openapi.startsWith('http') ? apic.generate_rpc.openapi : fullpath + '/' + apic.generate_rpc.openapi })
+                if (generate_rpc) {
+                    if (generate_rpc.openapi)
+                        await generate_openapi({ generate_rpc, types, api_name: k, api: ob[k], url: generate_rpc.openapi.startsWith('http') ? generate_rpc.openapi : fullpath + '/' + generate_rpc.openapi })
                     Object.keys(ob[k]).forEach(_ => {
                         ob[k][_].src = fullpath
-                        ob[k][_].generate_rpc = apic.generate_rpc
+                        ob[k][_].generate_rpc = generate_rpc
                     })
                     cmake_types[fullpath] = true
                 }
