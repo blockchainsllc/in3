@@ -41,6 +41,8 @@
 #include "util/log.h"
 #include "util/mem.h"
 #include "util/stringbuilder.h"
+
+
 /**
  * In3 Setup and usage
  * **/
@@ -83,9 +85,9 @@ in3_t* init_in3_goerli(in3_plugin_act_fn custom_transport) {
 
 //this instruction makes the qemu exit, not in a clean way yet but it works
 static inline void _exit_qemu() {
-  register u32_t r0 __asm__("r0");
+  register uint32_t r0 __asm__("r0");
   r0 = 0x18;
-  register u32_t r1 __asm__("r1");
+  register uint32_t r1 __asm__("r1");
   r1 = 0x20026;
   __asm__ volatile("bkpt #0xAB");
 }
