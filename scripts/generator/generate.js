@@ -24,9 +24,10 @@ const args_file = []
 const zsh_file = []
 const generators = []
 const rpc_dirs = {}
-const apiConf = {}
+const cmake = {}
 const zsh_cmds = []
 const zsh_conf = []
+const api_conf = {}
 
 let cmdName = 'in3'
 let sdkName = 'IN3'
@@ -42,9 +43,9 @@ process.argv.slice(2).forEach(a => {
     else if (a.startsWith('--cmake=')) {
         try {
             cmake_data = JSON.parse(fs.readFileSync(a.substr(8), 'utf8'))
-            apiConf.modules = {}
+            cmake.modules = {}
             cmake_data.dirs.split(';').forEach(_ => rpc_dirs[resolve(_)] = true)
-            cmake_data.apis.split(';').forEach(_ => apiConf.modules[_] = true)
+            cmake_data.apis.split(';').forEach(_ => cmake.modules[_] = true)
         }
         catch (x) {
             console.error(x)
@@ -53,7 +54,7 @@ process.argv.slice(2).forEach(a => {
     else if (a.startsWith('--api.')) {
         const args = a.substring(6).split('=', 2);
         if (!args.length == 2) throw new Error("Invalid api-config " + a);
-        apiConf[args[0]] = args[1]
+        cmake[args[0]] = args[1]
     }
     else throw new Error('Invalid argument : ' + a)
 })
@@ -78,8 +79,8 @@ let docs = {}, config = {}, types = {}, testCases = {}
 
 function check_depends(n) {
     if (Array.isArray(n)) return check_depends(n[0])
-    return (n && n.depends && apiConf.modules)
-        ? !asArray(n.depends).find(_ => !apiConf.modules[_])
+    return (n && n.depends && cmake.modules)
+        ? !asArray(n.depends).find(_ => !cmake.modules[_])
         : true
 }
 function is_testcase(t) {
@@ -100,27 +101,27 @@ async function scan(dir) {
                 types = { ...types, ...ob.types }
                 delete ob.types
             }
-            let lastAPI = null
             for (const k of Object.keys(ob)) {
-                if (ob[k].config) config = { ...config, ...ob[k].config }
-                delete ob[k].config
+                const apic = { ...api_conf[k], ...ob[k].api }
+                api_conf[k] = apic
+                delete ob[k].api
+                if (apic.config) config = { ...config, ...apic.config }
                 for (const t of Object.keys(ob[k])) {
                     if (!check_depends(ob[k][t])) {
                         delete ob[k][t]
                         console.error(`skipping ${k} :: ${t}`)
                     }
                 }
-                if (ob[k]._generate_rpc) {
-                    if (ob[k]._generate_rpc.openapi)
-                        await generate_openapi({ types, api_name: k, api: ob[k], url: ob[k]._generate_rpc.openapi.startsWith('http') ? ob[k]._generate_rpc.openapi : fullpath + '/' + ob[k]._generate_rpc.openapi })
-                    Object.keys(ob[k]).filter(_ => !_.startsWith('_') && _ != 'fields').forEach(_ => {
-                        ob[k][_]._src = fullpath
-                        ob[k][_]._generate_rpc = ob[k]._generate_rpc
+                if (apic.generate_rpc) {
+                    if (apic.generate_rpc.openapi)
+                        await generate_openapi({ types, api_name: k, api: ob[k], url: apic.generate_rpc.openapi.startsWith('http') ? apic.generate_rpc.openapi : fullpath + '/' + apic.generate_rpc.openapi })
+                    Object.keys(ob[k]).forEach(_ => {
+                        ob[k][_].src = fullpath
+                        ob[k][_].generate_rpc = apic.generate_rpc
                     })
                     cmake_types[fullpath] = true
                 }
-                if (!generators.length && ob[k].fields && lastAPI) {
-                    delete ob[k].fields
+                if (!generators.length && apic.fields && lastAPI) {
                     for (const n of Object.keys(ob[k]).filter(_ => docs[lastAPI][_])) delete ob[k][n]
                     docs[lastAPI] = { ...docs[lastAPI], ...ob[k] }
                 }
@@ -291,7 +292,7 @@ async function main() {
         if (rdescr) rpc_doc.push(rdescr + '\n')
         delete rpcs.descr
 
-        for (const rpc of Object.keys(rpcs).filter(_ => _ != 'fields' && !_.startsWith('_')).sort()) {
+        for (const rpc of Object.keys(rpcs).sort()) {
             const def = rpcs[rpc]
             def.returns = def.returns || def.result
             def.result = def.returns || def.result
@@ -396,15 +397,15 @@ async function main() {
         if (Object.values(rpcs).filter(_ => !_.skipApi).length)
             sorted_rpcs.push({
                 api: s,
+                conf: api_conf[s],
                 rpcs,
                 descr: rdescr,
                 testCases: testCases[s]
             })
     }
     Object.keys(cmake_deps).forEach(m => { cmake_deps[m].depends = cmake_deps[m].depends.filter(_ => cmake_deps[_]) })
-    generators.forEach(_ => _.generateAPI && sorted_rpcs.forEach(api => _.generateAPI(api.api, api.rpcs, api.descr, types, api.testCases, apiConf)))
-    generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs({ apis: sorted_rpcs, types, conf: apiConf, cmake_deps, cmake_types }))
-
+    generators.forEach(_ => _.generateAPI && sorted_rpcs.forEach(api => _.generateAPI(api.api, api.rpcs, api.descr, types, api.testCases, cmake)))
+    generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs({ apis: sorted_rpcs, types, conf: cmake, cmake_deps, cmake_types }))
 
     handle_config(config, '')
 

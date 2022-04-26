@@ -537,7 +537,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
 
 
 
-    Object.keys(rpcs).filter(_ => _ != 'fields' && !_.startsWith('_')).forEach(rpc_name => {
+    Object.keys(rpcs).forEach(rpc_name => {
         let prefix = ''
 
         const r = rpcs[rpc_name];
@@ -641,7 +641,7 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
     const all = {}
     apis.forEach(api => {
         Object.keys(api.rpcs).forEach(rpc => {
-            const src = api.rpcs[rpc]._src
+            const src = api.rpcs[rpc].src
             if (src) {
                 const nrpc = all[src] || (all[src] = {})
                 nrpc[rpc] = api.rpcs[rpc]
@@ -652,11 +652,9 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
     Object.keys(all).forEach(path => {
         const p = path.split('/')
         const api = p[p.length - 1].trim()
-        generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files, generate_rpc: all[path][Object.keys(all[path])[0]]._generate_rpc })
+        generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files, generate_rpc: all[path][Object.keys(all[path])[0]].generate_rpc })
     })
     Object.keys(files).forEach(file => fs.writeFileSync(file, files[file].lines.join('\n').split('\n').map(l => l.trimEnd()).join('\n'), 'utf8'))
-
-    //    console.log('cmake_deps:', cmake_types)
 }
 
 function createTest(descr, method, tests, tc) {

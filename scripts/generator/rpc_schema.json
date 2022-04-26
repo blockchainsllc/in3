@@ -222,6 +222,19 @@
             "type": "object",
             "description": "a API Definition",
             "properties": {
+                "api": {
+                    "$ref": "#/$defs/api_conf"
+                }
+            },
+            "additionalProperties": {
+                "$ref": "#/$defs/func"
+            }
+        },
+        "api_conf": {
+            "type": "object",
+            "description": "a API Definition",
+            "additionalProperties": false,
+            "properties": {
                 "descr": {
                     "type": "string",
                     "description": "the API- Description in Markdown"
@@ -240,7 +253,7 @@
                         "$ref": "#/$defs/property"
                     }
                 },
-                "_generate_rpc": {
+                "generate_rpc": {
                     "description": "if true it will let the scripts/build_rpc.sh to generate the _rpc.c and _rpc.h file for the given api",
                     "oneOf": [
                         {
@@ -275,15 +288,15 @@
                         }
                     ]
                 },
-                "_extensionVar": {
+                "extensionVar": {
                     "type": "string",
                     "description": "if set, the extension will get a property pointing to this Api with the specified property"
                 },
-                "_extension": {
+                "extension": {
                     "type": "string",
                     "description": "if set API-name which will get the extension-var pointing to this api."
                 },
-                "_examplePath": {
+                "examplePath": {
                     "type": "object",
                     "additionalProperties": false,
                     "description": "for the examples this should be used for the path to the api.",
@@ -302,7 +315,7 @@
                         }
                     }
                 },
-                "_sdk_getter": {
+                "sdk_getter": {
                     "type": "object",
                     "additionalProperties": false,
                     "description": "if set the generated SDK will hold a getter for this API (defaults: true). If the value is not a boolean, it specifies the code to be used.",
@@ -360,9 +373,6 @@
                         }
                     }
                 }
-            },
-            "additionalProperties": {
-                "$ref": "#/$defs/func"
             }
         },
         "func": {
