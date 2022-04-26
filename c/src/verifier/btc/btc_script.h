@@ -177,8 +177,10 @@ bool is_p2wpkh(const bytes_t* script);
 bool is_p2wsh(const bytes_t* script);
 bool is_witness_program(const bytes_t* script);
 bool script_is_standard(btc_stype_t script_type);
+bool script_is_witness(btc_stype_t script_type);
 
 btc_stype_t btc_get_script_type(const bytes_t* script);
+btc_stype_t btc_string_to_script_type(const char* type);
 const char* btc_script_type_to_string(btc_stype_t type);
 
 #endif

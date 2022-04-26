@@ -371,10 +371,10 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
   switch (script_type) {
     case BTC_P2PK: {
       // extract raw PubKey from script
-      bytes_t* pub_key = b_new(tx_out->script.data.data + 1, tx_out->script.data.data[0]);
-
-      // use public key to calculate address
-      btc_addr_from_pub_key(*pub_key, BTC_P2PK_PREFIX, dst);
+      bytes_t pub_key = bytes(tx_out->script.data.data + 1, (uint32_t) tx_out->script.data.data[0]);
+      if (pub_key_is_valid(&pub_key))
+        // use public key to calculate address
+        btc_addr_from_pub_key(pub_key, BTC_P2PKH_PREFIX, dst);
       break;
     }
     case BTC_P2PKH: {
@@ -384,9 +384,9 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
       break;
     }
     case BTC_P2SH: {
-      ripemd160_t pkhash;
-      memcpy(pkhash, tx_out->script.data.data + 2, BTC_HASH160_SIZE_BYTES);
-      btc_addr_from_pub_key_hash(pkhash, BTC_P2SH_PREFIX, dst);
+      ripemd160_t script_hash;
+      memcpy(script_hash, tx_out->script.data.data + 2, BTC_HASH160_SIZE_BYTES);
+      btc_addr_from_pub_key_hash(script_hash, BTC_P2SH_PREFIX, dst);
       break;
     }
     case BTC_P2MS:
@@ -394,12 +394,15 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
       // Should call extract_public_keys_from_multisig
       // Only return the script type
       break;
-    case BTC_V0_P2WPKH:
-      // Warning: Not supported yet
-      // TODO: Implement BENCH32 encoding
+    case BTC_V0_P2WPKH: {
+      ripemd160_t pkhash;
+      memcpy(pkhash, tx_out->script.data.data + 2, BTC_HASH160_SIZE_BYTES);
+      btc_segwit_addr_from_pub_key_hash(pkhash, dst);
+      break;
+    }
     case BTC_P2WSH:
-      // WARNING: NOT SUPPORTED YET
-      // TODO: implement BENCH32 encoding
+      btc_segwit_addr_from_witness_program(tx_out->script.data, dst);
+      break;
     default:
       return BTC_UNSUPPORTED;
   }

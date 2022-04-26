@@ -273,7 +273,10 @@ void init_env(in3_t* c, int argc, char* argv[]) {
 
   FILE* cnf_file = fopen(cnf, "r");
   if (cnf_file) {
-    char* error = in3_configure(c, (char*) readFile(cnf_file).data);
+    char* data  = (char*) readFile(cnf_file).data;
+    char* error = in3_configure(c, data);
+    recorder_configure(data);
+
     if (error) {
       char* msg = _malloc(strlen(error) + 200);
       sprintf(msg, "Error reading the in3_conf.json : %s", error);

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 config:
   descr: |
     There are also some Incubed specific rpc-methods, which will help the clients to bootstrap and update the nodeLists.
@@ -7,14 +8,13 @@ config:
 
   # config
   config:
-
     chainId:
       type: string | uint
       descr: the chainId or the name of a known chain. It defines the nodelist to connect to.
       example: goerli
       optional: true
       default: mainnet
-      enum: 
+      enum:
         mainnet: Mainnet Chain
         goerli: Goerli Testnet
         ewc: Energy WebFoundation
@@ -22,7 +22,7 @@ config:
         ipfs: ipfs
         local: local-chain
       cmd: c
-    
+
     finality:
       type: int
       descr: the number in percent needed in order reach finality (% of signature of the validators).
@@ -30,7 +30,7 @@ config:
       optional: true
       default: 0
       cmd: f
-    
+
     includeCode:
       type: bool
       descr: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
@@ -52,7 +52,7 @@ config:
       optional: true
       default: 7
       cmd: a
-    
+
     keepIn3:
       type: bool
       descr: if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
@@ -60,14 +60,13 @@ config:
       optional: true
       default: false
       cmd: kin3
-    
+
     stats:
       type: bool
       descr: if true, requests sent will be used for stats.
       example: false
       optional: true
       default: true
-    
 
     useBinary:
       type: bool
@@ -75,7 +74,7 @@ config:
       example: true
       optional: true
       default: false
-    
+
     experimental:
       type: bool
       descr: if true the client allows to use use experimental features, otherwise a exception is thrown if those would be used.
@@ -92,7 +91,7 @@ config:
       default: 20000
 
     proof:
-      descr:  if true the nodes should send a proof of the response. If set to none, verification is turned off completly.
+      descr: if true the nodes should send a proof of the response. If set to none, verification is turned off completly.
       type: string
       optional: true
       enum:
@@ -104,12 +103,11 @@ config:
       cmd: p
 
     replaceLatestBlock:
-      descr:  if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
+      descr: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
       type: int
       optional: true
       example: 6
       cmd: l
-
 
   # rpc-commands
 
@@ -118,8 +116,8 @@ config:
     descr: changes the configuration of a client. The configuration is passed as the first param and may contain only the values to change.
     params:
       config:
-        descr:  a Object with config-params.
-   
+        descr: a Object with config-params.
+
     result:
       descr: an boolean confirming that the config has changed.
     example:
@@ -129,10 +127,10 @@ config:
           nodeLimit: 10
           nodes:
             nodeList:
-              - address:  "0x1234567890123456789012345678901234567890"
+              - address: "0x1234567890123456789012345678901234567890"
                 url: "https://mybootnode-A.com"
                 props: "0xFFFF"
-              - address:  "0x1234567890123456789012345678901234567890"
+              - address: "0x1234567890123456789012345678901234567890"
                 url: "https://mybootnode-B.com"
                 props: "0xFFFF"
       response: true

@@ -2535,6 +2535,53 @@ btc:
             res:
               result: *btc_segwit_tx
 
+  createaddress:
+    -
+      descr: "Create p2pkh address from uncompressed pub key"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "043cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd092f56b5492adbfc570b15644c74cc8a4874ed20dfe47e5dce2e08601d6f11f5a4"
+        - "p2pkh"
+      expected_output: "19P1LctLQmH6tuHCRkv8QznNBGBvFCyKxi"
+    -
+      descr: "Create p2pkh address from compressed pub key"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "023cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd09"
+        - "p2pkh"
+      expected_output: "16JrGhLx5bcBSA34kew9V6Mufa4aXhFe9X"
+    - 
+      descr: "Create p2sh address"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "00143a38d44d6a0c8d0bb84e0232cc632b7e48c72e0e"
+        - "p2sh"
+      expected_output: "34N3tf5m5rdNhW5zpTXNEJucHviFEa8KEq"
+    - 
+      descr: "Create p2wpkh address"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+        - "p2wpkh"
+      expected_output: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+    - 
+      descr: "Create p2wsh address"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
+        - "p2wsh"
+      expected_output: "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
+
   getaddresses:
     -
       descr: |
@@ -2668,8 +2715,82 @@ btc:
                 - 0 
           res:
             result: "0100000001ffc0d6d6b592cd2b4160300a278ea5e250b5055b5536dcfb2da5dcc46022765a00000000694630430220575ddd235a989befbf98f43b008666e56af07be89e47e09d18690c75846fb587021f00830605aa09febc51132001e0dbcad860e54d4657b55aaf961b527a935b8a01210281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1fffffffff03204e0000000000002551210281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1f51ae204e0000000000001976a914a988f8039a203cf86136e0d32b9d77eafa5a6bef88ac46f4d501000000001976a914161d7a3d0ee15c793ab300433192f949d8f3566588ac00000000"
-      
-      
+    -
+      descr: |
+        "v0 p2wpkh transaction"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "5950c074b07c3d511e9022de7b692eb394737e7a85151cc5bd82b05b30ed23bf"
+      expected_output:
+        -
+          index: 0
+          script_type: "p2wpkh"
+          addr: "bc1q0qhkyql6ceyhgev53nph9ej4tfzeccyjfux0rd"
+          raw_addr: ""
+          pub_keys: []
+        -
+          index: 1
+          script_type: "p2wpkh"
+          addr: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
+          raw_addr: ""
+          pub_keys: []
+      mockedResponses:
+        -
+          req: 
+            method: "POST"
+            body:
+              method: "getrawtransaction"
+              params:
+                - "5950c074b07c3d511e9022de7b692eb394737e7a85151cc5bd82b05b30ed23bf"
+                - 0 
+          res:
+            result: "0200000001fe97aac7b7ebc028943779fc12223f3e131a181a41dcf93250c5efc4969ec572010000006a473044022053e02dcdeaebc76f9425539a701a0c0226f4d8119dbc90fc84f8b499c53b34fb02201f6aa51d6f626ab3895dab8a2e657987944b456e2baf7035d9d73e6005361669012102ba5a4c75dee25527914e612507f837ad76a34695ffd3c6e6fe8863ab6ef42fb4ffffffff022733000000000000160014782f6203fac6497465948cc372e6555a459c609257b4000000000000160014e8df018c7e326cc253faac7e46cdc51e68542c4200000000"
+    -
+      descr: |
+        "transaction with 1 p2wsh, 1 compressed p2pk, 1 uncompressed p2pk and one invalid p2pk outputs"
+      config:
+        proof: 'none'
+        chainId: 'btc'
+      input:
+        - "519c79dc444009744e5dec35817d0a7530ba3601aed58ac34837397134177db8"
+      expected_output:
+        -
+          index: 0
+          script_type: "p2pk"
+          addr: "19w2zCWinDYkiJawA6ddw1BQCNZetzJn4P"
+          raw_addr: "0061f9204dccbb75dbf618eca57645557b6cac9263d9297a70"
+          pub_keys: []
+        -
+          index: 1
+          script_type: "p2pk"
+          addr: "1KyPUP5DhkcRhhSmk6KuPXZXGi6iuSTZd8"
+          raw_addr: "00d01c511438c66081b649c60cc3a2cf72bffd5324bd001b8f"
+          pub_keys: []
+        -
+          index: 2
+          script_type: "p2pk"
+          addr: ""
+          raw_addr: ""
+          pub_keys: []
+        -
+          index: 3
+          script_type: "p2wsh"
+          addr: "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
+          raw_addr: ""
+          pub_keys: []
+      mockedResponses:
+        -
+          req: 
+            method: "POST"
+            body:
+              method: "getrawtransaction"
+              params:
+                - "519c79dc444009744e5dec35817d0a7530ba3601aed58ac34837397134177db8"
+                - 0 
+          res:
+            result: "0100000001b6104fbcc1b9d5df0c448eba5ce97b81857342292adfcbe18f1dde222c616c80000000008a4730440220151ccb9551e8c7310b82915e6f9aafae28c9006c7a031dcd00ce64c13b24e0310220633737de8ba7a0bca46e5069dce33ddbcb4567090e5d893a21420f69a80e76be01410419c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbf08be7bd54fa7ebe9dad426b6777bdb6ccaa00a69ff040ca526f67ccdd2bf40d3ffffffff04b71200000000000023210319c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbfac010b00000000000043410419c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbf08be7bd54fa7ebe9dad426b6777bdb6ccaa00a69ff040ca526f67ccdd2bf40d3ac010b00000000000043410719c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbf08be7bd54fa7ebe9dad426b6777bdb6ccaa00a69ff040ca526f67ccdd2bf40d3ac010b0000000000002200201863143c14c5166804bd19203356da136c985678cd4d27a1b8c632960490326200000000"
 
   getblockcount:
     config:

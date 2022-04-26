@@ -1,5 +1,5 @@
+# yaml-language-server: $schema=../../../../../scripts/generator/rpc_schema.json
 types:
-
   ethlog:
     address:
       descr: the address triggering the event.
@@ -30,7 +30,7 @@ types:
       descr: transactionIndex within the containing block.
       type: int
     transactionLogIndex:
-      descr: index of the event within the transaction. 
+      descr: index of the event within the transaction.
       type: int
       optional: true
     type:
@@ -47,7 +47,7 @@ types:
       type: bytes32
     contractAddress:
       descr: the deployed contract in case the tx did deploy a new contract
-      type:  address
+      type: address
       optional: true
     cumulativeGasUsed:
       descr: gas used for all transaction up to this one in the block
@@ -113,7 +113,7 @@ eth:
     *  **logProof** [LogProof](#logproof) - The Log Proof in case of a `eth_getLogs`-request.   
     *  **accounts** `object` - A map of addresses and their AccountProof.   
     *  **txIndex** `integer` - The transactionIndex within the block (for transaactions and receipts).   
-    *  **signatures** `Signature[]` - Requested signatures.   
+    *  **signatures** `Signature[]` - Requested signatures.
 
   eth_getTransactionReceipt:
     descr: The Receipt of a Transaction. For Details, see [eth_getTransactionReceipt](https://eth.wiki/json-rpc/API#eth_gettransactionreceipt).
@@ -125,49 +125,49 @@ eth:
       optional: true
       descr: the TransactionReceipt or `null`  if it does not exist.
       type: eth_transactionReceipt
-    
+
     example:
       request:
-        - '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
+        - "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
       response:
-        blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
-        blockNumber: '0x8c1e39'
+        blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+        blockNumber: "0x8c1e39"
         contractAddress:
-        cumulativeGasUsed: '0x2466d'
-        gasUsed: '0x2466d'
+        cumulativeGasUsed: "0x2466d"
+        gasUsed: "0x2466d"
         logs:
-        - address: '0x85ec283a3ed4b66df4da23656d4bf8a507383bca'
-          blockHash: '0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304'
-          blockNumber: '0x8c1e39'
-          data: 0x00000000000...
-          logIndex: '0x0'
-          removed: false
-          topics:
-          - '0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8'
-          - '0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6'
-          - '0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000'
-          transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
-          transactionIndex: '0x0'
-          transactionLogIndex: '0x0'
-          type: mined
+          - address: "0x85ec283a3ed4b66df4da23656d4bf8a507383bca"
+            blockHash: "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304"
+            blockNumber: "0x8c1e39"
+            data: 0x00000000000...
+            logIndex: "0x0"
+            removed: false
+            topics:
+              - "0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8"
+              - "0xa2f7689fc12ea917d9029117d32b9fdef2a53462c853462ca86b71b97dd84af6"
+              - "0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000"
+            transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+            transactionIndex: "0x0"
+            transactionLogIndex: "0x0"
+            type: mined
         logsBloom: 0x00000000000000000000200000...
         root:
-        status: '0x1'
-        transactionHash: '0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e'
-        transactionIndex: '0x0'
+        status: "0x1"
+        transactionHash: "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+        transactionIndex: "0x0"
       in3:
         proof:
           type: receiptProof
           block: 0xf9023fa019e9d929ab...
           txProof:
-          - 0xf851a083c8446ab932130...
+            - 0xf851a083c8446ab932130...
           merkleProof:
-          - 0xf851a0b0f5b7429a54b10...
+            - 0xf851a0b0f5b7429a54b10...
           txIndex: 0
           signatures:
-          - "..."
+            - "..."
           merkleProofPrev:
-          - 0xf851a0b0f5b7429a54b10...
+            - 0xf851a0b0f5b7429a54b10...
 
     proof:
       descr: |
@@ -240,4 +240,3 @@ eth:
         - `merkleProof`: the serialized nodes of the Transaction Receipt trie starting with the root node.
         - `merkleProofPrev`: the serialized nodes of the previous Transaction Receipt (if txInxdex>0) trie starting with the root node. This is only needed if full-verification is requested. With a verified previous Receipt we can proof the `usedGas`.
         - `finalityBlocks`: a array of blockHeaders which were mined after the requested block. The number of blocks depends on the request-property `finality`. If this is not specified, this property will not be defined.
-

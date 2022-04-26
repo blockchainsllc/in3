@@ -1,3 +1,58 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
+types:
+  keyparams:
+    version:
+      descr: the version
+      type: string
+    id:
+      descr: the id
+      type: string
+    address:
+      descr: the address
+      type: string
+    crypto:
+      descr: the cryptoparams
+      type: cryptoParams
+
+  cryptoParams:
+    ciphertext:
+      descr: the cipher text
+      type: string
+    cipherparams:
+      descr: the cipherparams
+      type: cipherParams
+    cipher:
+      descr: the cipher
+      type: string
+    kdf:
+      descr: the kdf
+      type: string
+    kdfparams:
+      descr: the kdfparams
+      type: kdfParams
+    mac:
+      descr: the mac
+      type: string
+
+  cipherParams:
+    iv:
+      descr: the iv
+      type: string
+
+  kdfParams:
+    dklen:
+      descr: the dklen
+      type: uint64
+    salt:
+      descr: the salt
+      type: string
+    c:
+      descr: the c
+      type: uint64
+    prf:
+      descr: the prf
+      type: string
+
 account:
   # config
   config:
@@ -107,9 +162,9 @@ account:
       array: true
     example:
       request:
-        - 'time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful'
+        - "time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful"
         - test
-      response: 
+      response:
         - "0xd66a0C40d3d8B245211C7E174f89CA3a5bA93795"
 
   eth_accounts:

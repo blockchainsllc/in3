@@ -32,6 +32,9 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+if(BTC)
+  add_subdirectory( bech32 )
+endif(BTC)
 if(CRYPTO_TREZOR)
   add_subdirectory( crypto )
 endif()

@@ -32,7 +32,7 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
   json_free(key_data);
 
   // create a signer with this key
-  eth_set_pk_signer(c, pk, SIGNER_ECDSA);
+  eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA);
 }
 
 int main(int argc, char* argv[]) {

@@ -39,8 +39,10 @@
 
 #ifdef LOGGING
 #define req_set_error(c, msg, err) req_set_error_intern(c, msg, err, __FILE__, __func__, __LINE__)
+#define rpc_throw(c, msg, ...)     req_set_error_intern(c, msg, IN3_EINVAL, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #else
 #define req_set_error(c, msg, err) req_set_error_intern(c, NULL, err, __FILE__, __func__, __LINE__)
+#define rpc_throw(c, msg, ...)     req_set_error_intern(c, NULL, IN3_EINVAL, __FILE__, __func__, __LINE__)
 #endif
 #define REQUIRE_EXPERIMENTAL(req, feature) \
   if ((req->client->flags & FLAGS_ALLOW_EXPERIMENTAL) == 0) return req_set_error(req, "The feature " feature " is still experimental. You need to explicitly allow it in the config.", IN3_ECONFIG);
@@ -82,7 +84,8 @@ in3_ret_t req_set_error_intern(
     char*       msg,       /**< [in] the error message. (This string will be copied) */
     in3_ret_t   errnumber, /**< [in] the error code to return */
     const char* filename,
-    const char* function, int line);
+    const char* function, int line,
+    ...);
 
 /**
  * handles a failable context
@@ -98,6 +101,26 @@ in3_ret_t req_handle_failable(
  */
 NONULL_FOR((1, 2, 3, 5))
 in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
+
+/**
+ * sends a subrequest as http-request.
+ * use it as
+ * TRY(send_http_request(...))
+ *
+ */
+NONULL_FOR((1, 2, 3, 7))
+in3_ret_t send_http_request(
+    in3_req_t*  req,       /**< [in] the request. */
+    char*       url,       /**< [in] the base url */
+    char*       method,    /**< [in] the HTTP-Method. */
+    char*       path,      /**< [in] the path which will be added to the url ( can be NULL). */
+    char*       payload,   /**< [in] the payload, which may be a json-formated string or NULL in case there is no payload. */
+    char*       jwt,       /**< [in] an optional jwt-token, which would be included */
+    d_token_t** result,    /**< [in] the pointer to the resulting token.This will be set to point to the result of the request. */
+    in3_req_t** sub_req,   /**< [in] pointer to a variable, which will be set to point to the newly created subrequest (in case you want to manually clean up), can be NULL, if not interessted */
+    uint32_t    wait_in_ms /**< [in] a time in ms wo wait before sending. This allows polling features */
+);
+
 /**
  * sends a subrequest, which will be identified by a hash from method and params, which allows even modification of the original request
  */
@@ -127,5 +150,6 @@ NONULL void in3_req_free_nodes(node_match_t* c);
 int         req_nodes_len(node_match_t* root);
 NONULL bool req_is_method(const in3_req_t* req, const char* method);
 in3_ret_t   req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key);
+in3_ret_t   req_throw_unknown_prop(in3_req_t* r, d_token_t* ob, d_token_t* prop, char* ob_name);
 
 #endif // REQ_INTERNAL_H

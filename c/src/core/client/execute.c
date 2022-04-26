@@ -958,8 +958,6 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   // if there is response we are done.
   if (req->response_context && req->verification_state == IN3_OK) return IN3_OK;
 
-  in3_log_debug("ctx_execute %s ... attempt %i\n", d_get_string(req->requests[0], K_METHOD), req->attempt + 1);
-
   switch (req->type) {
     case RT_RPC: {
 

@@ -20,7 +20,12 @@ static void send_request(in3_t* c, int argc, char** argv, char* method, sb_t* ar
   }
   else
     sb_add_chars(sb, "}");
+  recorder_request(sb->data);
   in3_client_rpc_raw(c, sb->data, result, error);
+  if (*result)
+    recorder_response(*result);
+  else
+    recorder_error(*error ? *error : "Error");
   sb_free(sb);
   check_last_output();
 #ifdef NODESELECT_DEF

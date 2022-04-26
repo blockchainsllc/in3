@@ -183,7 +183,7 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
 /** gets the v-value from the chain_id */
 static inline uint64_t get_v(chain_id_t chain) {
   uint64_t v = chain;
-  if (v > 0xFF && v != 1337) v = 0; // this is only valid for ethereum chains.
+  if (v == CHAIN_ID_IPFS) v = 0; // this is only valid for ethereum chains.
   return v;
 }
 
@@ -303,6 +303,7 @@ static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t from, bytes
  */
 in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta) {
   eth_tx_data_t td = {0};
+  chain_id_t    chain_id;
 
   // read the values
   td.type                     = d_get_int(tx, d_get(tx, K_ETH_TX_TYPE) ? K_ETH_TX_TYPE : K_TYPE);
@@ -317,27 +318,18 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   td.max_priority_fee_per_gas = get(tx, K_MAX_PRIORITY_FEE_PER_GAS);
 
   // make sure, we have the correct chain_id
-  chain_id_t chain_id = in3_chain_id(ctx);
-  if (chain_id == CHAIN_ID_LOCAL) {
-    d_token_t* r = NULL;
-    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r, NULL))
-    chain_id = d_long(r);
-  }
+  TRY(in3_resolve_chain_id(ctx, &chain_id))
   TRY(get_from_address(tx, ctx, td.from))
 
   // write state?
   if (meta) {
-    sb_add_rawbytes(meta, "\"input\":{\"to\":\"0x", td.to, 0);
-    sb_add_rawbytes(meta, "\",\"sender\":\"0x", bytes(td.from, 20), 0);
-    sb_add_rawbytes(meta, "\",\"value\":\"0x", td.value, 0);
-    sb_add_rawbytes(meta, "\",\"data\":\"0x", td.data, 0);
-    sb_add_rawbytes(meta, "\",\"gas\":\"0x", td.gas_limit, 0);
-    sb_add_rawbytes(meta, "\",\"gasPrice\":\"0x", td.gas_price, 0);
-    sb_add_rawbytes(meta, "\",\"nonce\":\"0x", td.nonce, 0);
-    sb_add_chars(meta, "\",\"eth_tx_type\":");
-    sb_add_int(meta, (int64_t) td.type);
+    sb_printx(meta, "\"input\":{\"to\":\"%B\",\"sender\":\"%B\",\"value\":\"%V\"", td.to, bytes(td.from, 20), td.value);
+    sb_printx(meta, ",\"data\":\"%B\",\"gas\":\"%V\",\"gasPrice\":\"%V\"", td.data, td.gas_limit, td.gas_price);
+    sb_printx(meta, ",\"nonce\":\"%V\",\"eth_tx_type\":%u", td.nonce, td.type);
+
     if (td.max_fee_per_gas.data) sb_printx(meta, ",\"maxFeePerGas\":\"%V\"", td.max_fee_per_gas);
     if (td.max_priority_fee_per_gas.data) sb_printx(meta, ",\"maxPriorityFeePerGas\":\"%V\"", td.max_fee_per_gas);
+
     sb_add_json(meta, ",\"accessList\":", td.access_list);
     sb_add_chars(meta, ",\"layer\":\"l1\"");
     sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));

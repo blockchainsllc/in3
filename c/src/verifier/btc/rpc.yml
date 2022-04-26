@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 types:
   btc_sign_acc:
     address:
@@ -12,9 +13,9 @@ types:
       descr: a 25-byte btc address which should receive the specified value
       type: bytes
     value:
-      descr: the amount in satoshis the provided address should receive 
+      descr: the amount in satoshis the provided address should receive
       type: uint64
-  
+
   btc_rlt:
     rlt_type:
       descr: |
@@ -27,12 +28,12 @@ types:
 
   btc_tx_output:
     value:
-      descr: the amount in satoshis in this transaction output 
+      descr: the amount in satoshis in this transaction output
       type: uint64
     script:
       descr: the locking script of this output
       type: string
-  
+
   btc_utxo_args:
     script:
       descr: unhashed script used to redeem P2SH and P2WSH transactions
@@ -54,7 +55,7 @@ types:
       type: string
     tx_index:
       descr: the transaction index that this utxo refers to
-      type: uint
+      type: uint32
     tx_out:
       descr: the output this utxo represents
       type: btc_tx_output
@@ -90,7 +91,7 @@ types:
     addr:
       descr: |
         The bitcoin address defined in the output script. Depending on the script type, can be encoded as base58 or bech32.
-        This field is empty in an output of type p2ms 
+        This field is empty in an output of type p2ms
       type: string
     raw_addr:
       descr: |
@@ -102,7 +103,6 @@ types:
         only be filled when dealing with a p2ms output, when it stores a set of btc public keys
       type: string
       array: true
-
 
   btcblockheader:
     hash:
@@ -119,9 +119,9 @@ types:
       type: int
     versionHex:
       descr: The block version formatted in hexadecimal
-      type: hex
+      type: string
     merkleroot:
-      descr:  The merkle root ( 32 bytes )
+      descr: The merkle root ( 32 bytes )
       type: bytes32
     time:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
@@ -140,7 +140,7 @@ types:
       type: double
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: hex
+      type: string
     nTx:
       descr: The number of transactions in the block.
       type: int
@@ -165,7 +165,7 @@ types:
       descr: The serialized transaction size
       type: uint64
     vsize:
-      descr:  The virtual transaction size (differs from size for witness transactions)
+      descr: The virtual transaction size (differs from size for witness transactions)
       type: uint64
     weight:
       descr: The transaction's weight (between `vsize`\*4-3 and `vsize`\*4)
@@ -181,7 +181,7 @@ types:
       descr: array of json objects of incoming txs to be used
       array: true
       type:
-        txid: 
+        txid:
           descr: the transaction id
           type: bytes32
           optional: true
@@ -201,7 +201,7 @@ types:
               type: string
           optional: true
         sequence:
-          descr:  The script sequence number
+          descr: The script sequence number
           type: uint64
         txinwitness:
           array: true
@@ -219,12 +219,12 @@ types:
       type:
         value:
           descr: The Value in BTC
-          type: float
+          type: double
         n:
           descr: the index
           type: int
         scriptPubKey:
-          descr: the script pubkey 
+          descr: the script pubkey
           typeName: BtcTxScriptPubKey
           type:
             asm:
@@ -238,7 +238,7 @@ types:
               type: int
               optional: true
             type:
-              descr: The type, eg 'pubkeyhash' 
+              descr: The type, eg 'pubkeyhash'
               type: string
             addresses:
               descr: Array of address(each representing a bitcoin adress)
@@ -264,7 +264,7 @@ types:
       descr: The serialized transaction size
       type: uint64
     vsize:
-      descr:  The virtual transaction size (differs from size for witness transactions)
+      descr: The virtual transaction size (differs from size for witness transactions)
       type: uint64
     weight:
       descr: The transaction's weight (between `vsize`\*4-3 and `vsize`\*4)
@@ -280,7 +280,7 @@ types:
       descr: array of json objects of incoming txs to be used
       array: true
       type:
-        txid: 
+        txid:
           descr: the transaction id
           type: bytes32
           optional: true
@@ -300,7 +300,7 @@ types:
               type: string
           optional: true
         sequence:
-          descr:  The script sequence number
+          descr: The script sequence number
           type: uint64
         txinwitness:
           array: true
@@ -318,12 +318,12 @@ types:
       type:
         value:
           descr: The Value in BTC
-          type: float
+          type: double
         n:
           descr: the index
           type: int
         scriptPubKey:
-          descr: the script pubkey 
+          descr: the script pubkey
           typeName: BtcTxScriptPubKey
           type:
             asm:
@@ -336,7 +336,7 @@ types:
               descr: the required signatures
               type: int
             type:
-              descr: The type, eg 'pubkeyhash' 
+              descr: The type, eg 'pubkeyhash'
               type: string
             addresses:
               descr: Array of address(each representing a bitcoin adress)
@@ -352,7 +352,7 @@ types:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
       type: uint64
     time:
-      descr:  Same as "blocktime"
+      descr: Same as "blocktime"
       type: uint64
 
   btcblockWithTx:
@@ -370,9 +370,9 @@ types:
       type: int
     versionHex:
       descr: The block version formatted in hexadecimal
-      type: hex
+      type: string
     merkleroot:
-      descr:  The merkle root ( 32 bytes )
+      descr: The merkle root ( 32 bytes )
       type: bytes32
     time:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
@@ -391,7 +391,7 @@ types:
       type: double
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: hex
+      type: string
     nTx:
       descr: The number of transactions in the block.
       type: int
@@ -430,9 +430,9 @@ types:
       type: int
     versionHex:
       descr: The block version formatted in hexadecimal
-      type: hex
+      type: string
     merkleroot:
-      descr:  The merkle root ( 32 bytes )
+      descr: The merkle root ( 32 bytes )
       type: bytes32
     time:
       descr: The block time in seconds since epoch (Jan 1 1970 GMT)
@@ -451,7 +451,7 @@ types:
       type: double
     chainwork:
       descr: Expected number of hashes required to produce the current chain (in hex)
-      type: hex
+      type: string
     nTx:
       descr: The number of transactions in the block.
       type: int
@@ -493,14 +493,13 @@ btc:
 
   # config
   config:
-
     btc:
       descr: configure the Bitcoin verification
       example:
         maxDAP: 30
         maxDiff: 5
 
-      type: 
+      type:
         maxDAP:
           descr: max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets.
           type: int
@@ -514,7 +513,6 @@ btc:
           example: 5
           default: 10
           optional: true
-
 
   getblockheader:
     descr: Returns data of block header for given block hash. The returned level of details depends on the argument verbosity.
@@ -539,7 +537,7 @@ btc:
             verbosity: false
           name: getblockheaderAsHex
           descr: returns a hex representation of the blockheader
-          example: '3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d'
+          example: "3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d"
           result:
             optional: true
             type: bytes
@@ -590,12 +588,11 @@ btc:
           descr: the height of the block (block number)
           type: uint64
 
-
     example:
       in3Params:
         finality: 8
         preBIP34: true
-      cmdParams: -x -c btc -f 8 
+      cmdParams: -x -c btc -f 8
       request:
         - "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220"
         - true
@@ -620,9 +617,6 @@ btc:
           final: 0x00e0ff2720723034053c305058beb92ed010...276470
           cbtx: 0x0100000000010100000000000000000000000...39da2fc
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a64667b...52e688
-
-
-
 
   getblock:
     descr: Returns data of block for given block hash. The returned level of details depends on the argument verbosity.
@@ -649,7 +643,7 @@ btc:
         - params:
             verbosity: 0
           name: getBlockAsHex
-          example: '3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d'
+          example: "3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d"
           descr: returns a hex representation of the block
           result:
             optional: true
@@ -674,7 +668,6 @@ btc:
         - verbose `1` or `true`: an object representing the blockheader.
       type: btcblockWithTx
 
-
     proof:
       alias: getblockheader
 
@@ -682,7 +675,7 @@ btc:
       in3Params:
         finality: 8
         preBIP34: true
-      cmdParams: -x -c btc -f 8 
+      cmdParams: -x -c btc -f 8
       request:
         - "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220"
         - 1
@@ -724,7 +717,7 @@ btc:
         optional: true
         default: 1
       blockhash:
-        descr:  The block in which to look for the transaction
+        descr: The block in which to look for the transaction
         type: bytes32
         optional: true
     in3Params:
@@ -742,7 +735,7 @@ btc:
         - params:
             verbosity: 0
           name: getRawTransactionAsHex
-          example: '3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d'
+          example: "3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d"
           descr: returns a hex representation of the tx
           result:
             optional: true
@@ -756,9 +749,9 @@ btc:
             type: btctransaction
       descr: |
         - verbose `0` or `false`: a string that is serialized, hex-encoded data for `txid`
-        - verbose `1` or `false`: an object representing the transaction.        
+        - verbose `1` or `false`: an object representing the transaction.
       type: btctransaction
-    
+
     proof:
       descr: |
         - for blocks before BIP34 (height < 227836) and `in3.preBIP34` = false
@@ -786,15 +779,15 @@ btc:
             - **cbtxMerkleProof** - the merkle proof of the coinbase transaction, proving the correctness of the `cbtx`
 
 
-        Transactions of old blocks (height < 227836) with `in3.preBIP34` disabled cannot be verified (proving the finality does not provide any security as explained in [preBIP34 proof](bitcoin.html#id1) and relying on the merkle proof is only possible when the block is final). Transactions of old blocks with `in3.preBIP34` enabled can be verified by performing a [preBIP34 proof](bitcoin.html#id1) and a [merkle proof](bitcoin.html#transaction-proof-merkle-proof). Verifying newer blocks requires multiple proofs. The block header from the `block`-field and the finality headers from the `final`-field will be used to perform a [finality proof](bitcoin.html#finality-proof). By doing a [merkle proof](bitcoin.html#transaction-proof-merkle-proof) using the `txIndex`-field and the `merkleProof`-field the correctness of the requested transation can be proven. Furthermore we are going to perform a [block number proof](bitcoin.html#block-number-proof) using the coinbase transaction (`cbtx`-field) and the [merkle proof](bitcoin.html#transaction-proof-merkle-proof) for the coinbase transaction (`cbtxMerkleProof`-field). 
+        Transactions of old blocks (height < 227836) with `in3.preBIP34` disabled cannot be verified (proving the finality does not provide any security as explained in [preBIP34 proof](bitcoin.html#id1) and relying on the merkle proof is only possible when the block is final). Transactions of old blocks with `in3.preBIP34` enabled can be verified by performing a [preBIP34 proof](bitcoin.html#id1) and a [merkle proof](bitcoin.html#transaction-proof-merkle-proof). Verifying newer blocks requires multiple proofs. The block header from the `block`-field and the finality headers from the `final`-field will be used to perform a [finality proof](bitcoin.html#finality-proof). By doing a [merkle proof](bitcoin.html#transaction-proof-merkle-proof) using the `txIndex`-field and the `merkleProof`-field the correctness of the requested transation can be proven. Furthermore we are going to perform a [block number proof](bitcoin.html#block-number-proof) using the coinbase transaction (`cbtx`-field) and the [merkle proof](bitcoin.html#transaction-proof-merkle-proof) for the coinbase transaction (`cbtxMerkleProof`-field).
     example:
       in3Params:
         finality: 8
-      cmdParams: -x -c btc -f 8 
+      cmdParams: -x -c btc -f 8
       request:
-        - 'f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf'
-   #     - true
-   #     - '000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220'
+        - "f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf"
+      #     - true
+      #     - '000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220'
       response:
         in_active_chain: true
         txid: f3c06e17b04ef748ce6604ad68e5b9f68ca96914b57c2118a1bb9a09a194ddaf
@@ -805,45 +798,46 @@ btc:
         weight: 2072
         locktime: 0
         vin:
-        - txid: 0a74f6e5f99bc69af80da9f0d9878ea6afbfb5fbb2d43f1ff899bcdd641a098c
-          vout: 0
-          scriptSig:
-            asm: 30440220481f2b3a49b202e26c73ac1b7bce022e4a74aff08473228cc...254874
-            hex: 4730440220481f2b3a49b202e26c73ac1b7bce022e4a74aff08473228...254874
-          sequence: 4294967295
-        - txid: 869c5e82d4dfc3139c8a153d2ee126e30a467cf791718e6ea64120e5b19e5044
-          vout: 0
-          scriptSig:
-            asm: 3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d
-            hex: 483045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745...f3255d
-          sequence: 4294967295
-        - txid: 8a03d29a1b8ae408c94a2ae15bef8329bc3d6b04c063d36b2e8c997273fa8eff
-          vout: 1
-          scriptSig:
-            asm: 304402200bf7c5c7caec478bf6d7e9c5127c71505034302056d1284...0045da
-            hex: 47304402200bf7c5c7caec478bf6d7e9c5127c71505034302056d12...0045da
-          sequence: 4294967295
+          - txid: 0a74f6e5f99bc69af80da9f0d9878ea6afbfb5fbb2d43f1ff899bcdd641a098c
+            vout: 0
+            scriptSig:
+              asm: 30440220481f2b3a49b202e26c73ac1b7bce022e4a74aff08473228cc...254874
+              hex: 4730440220481f2b3a49b202e26c73ac1b7bce022e4a74aff08473228...254874
+            sequence: 4294967295
+          - txid: 869c5e82d4dfc3139c8a153d2ee126e30a467cf791718e6ea64120e5b19e5044
+            vout: 0
+            scriptSig:
+              asm: 3045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4...f3255d
+              hex: 483045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745...f3255d
+            sequence: 4294967295
+          - txid: 8a03d29a1b8ae408c94a2ae15bef8329bc3d6b04c063d36b2e8c997273fa8eff
+            vout: 1
+            scriptSig:
+              asm: 304402200bf7c5c7caec478bf6d7e9c5127c71505034302056d1284...0045da
+              hex: 47304402200bf7c5c7caec478bf6d7e9c5127c71505034302056d12...0045da
+            sequence: 4294967295
         vout:
-        - value: 0.00017571
-          n: 0
-          scriptPubKey:
-            asm: OP_DUP OP_HASH160 53196749b85367db9443ef9a5aec25cf0bdceedf OP_EQUALVERIFY
-              OP_CHECKSIG
-            hex: 76a91453196749b85367db9443ef9a5aec25cf0bdceedf88ac
-            reqSigs: 1
-            type: pubkeyhash
-            addresses:
-            - 18aPWzBTq1nzs9o86oC9m3BQbxZWmV82UU
-        - value: 0.00915732
-          n: 1
-          scriptPubKey:
-            asm: OP_HASH160 8bb2b4b848d0b6336cc64ea57ae989630f447cba OP_EQUAL
-            hex: a9148bb2b4b848d0b6336cc64ea57ae989630f447cba87
-            reqSigs: 1
-            type: scripthash
-            addresses:
-            - 3ERfvuzAYPPpACivh1JnwYbBdrAjupTzbw
-        hex: '01000000038c091a64ddbc99f81f3fd4b2fbb5bfafa68e8...000000'
+          - value: 0.00017571
+            n: 0
+            scriptPubKey:
+              asm:
+                OP_DUP OP_HASH160 53196749b85367db9443ef9a5aec25cf0bdceedf OP_EQUALVERIFY
+                OP_CHECKSIG
+              hex: 76a91453196749b85367db9443ef9a5aec25cf0bdceedf88ac
+              reqSigs: 1
+              type: pubkeyhash
+              addresses:
+                - 18aPWzBTq1nzs9o86oC9m3BQbxZWmV82UU
+          - value: 0.00915732
+            n: 1
+            scriptPubKey:
+              asm: OP_HASH160 8bb2b4b848d0b6336cc64ea57ae989630f447cba OP_EQUAL
+              hex: a9148bb2b4b848d0b6336cc64ea57ae989630f447cba87
+              reqSigs: 1
+              type: scripthash
+              addresses:
+                - 3ERfvuzAYPPpACivh1JnwYbBdrAjupTzbw
+        hex: "01000000038c091a64ddbc99f81f3fd4b2fbb5bfafa68e8...000000"
         blockhash: 000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220
         confirmations: 15307
         time: 1586333924
@@ -857,6 +851,30 @@ btc:
           cbtx: 0x010000000001010000000000000000000000000000000...9da2fc
           cbtxMerkleProof: 0x6a8077bb4ce76b71d7742ddd368770279a...52e688
 
+  createaddress:
+    apiName: createAddress
+    descr: Returns a btc address given some inut data and an address type
+    params:
+      data:
+        descr: |
+          This is the data used by the api to generate and address.
+          The nature of this parameted changes according to the type of address to generate.
+          For "p2pkh" this field should contain a 65-byte btc public key or a 33-byte btc compressed pub key.
+          For "p2sh", this field should contain a raw btc locking script.
+        type: string
+      type:
+        descr: |
+          The address type to generate.
+        type: string
+        enum:
+          p2pk: p2pk
+          p2pkh: p2pkh
+          p2wpkh: p2wpkh
+          p2sh: p2sh
+          p2wsh: p2wsh
+    result:
+      descr: The encoded btc address
+      type: string
 
   getaddresses:
     apiName: getAddresses
@@ -877,7 +895,6 @@ btc:
       descr: The addresses and/or public keys extracted fom transaction outputs
       type: btc_output_address
       array: true
-
 
   getblockcount:
     descr: Returns the number of blocks in the longest blockchain.
@@ -911,7 +928,7 @@ btc:
       descr: The actual latest block is block `#640395` and `in3.finality` is set to `8`. The server is going to calculate `640395` - `8` and returns `640387` as the latest block number to the client. The headers of block `640388`..`640395` will be returned as finality headers.
       in3Params:
         finality: 8
-      cmdParams: -x -c btc -f 8 
+      cmdParams: -x -c btc -f 8
       response: 640387
       in3:
         proof:
@@ -919,7 +936,6 @@ btc:
           final: "0x00008020f61dfcc47a6daed717b12221855196dee02d844ebb9c...774f4c"
           cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
           cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
-
 
   getblockhash:
     descr: Returns hash of block in best-block-chain at height provided.
@@ -930,7 +946,6 @@ btc:
     result:
       descr: the current blockheight
       type: bytes32
-
 
   getdifficulty:
     descr: Returns the proof-of-work difficulty as a multiple of the minimum difficulty.
@@ -991,7 +1006,7 @@ btc:
     example:
       in3Params:
         finality: 8
-      cmdParams: -x -c btc -f 8 
+      cmdParams: -x -c btc -f 8
       response: 15138043247082.88
       in3:
         proof:
@@ -1002,7 +1017,7 @@ btc:
 
   btc_proofTarget:
     descr: Whenever the client is not able to trust the changes of the target (which is the case if a block can't be found in the verified target cache *and* the value of the target changed more than the client's limit `max_diff`) he will call this method. It will return additional proof data to verify the changes of the target on the side of the client. This is not a standard Bitcoin rpc-method like the other ones, but more like an internal method.
-    params: 
+    params:
       target_dap:
         descr: the number of the difficulty adjustment period (dap) we are looking for
         type: uint64
@@ -1049,12 +1064,12 @@ btc:
       This graph shows the usage of this method and visualizes the result from above. The client is not able to trust the changes of the target due to his limits (`max_diff` and `max_dap`). This method provides a path of daps in which the limits are fulfilled from dap to another. The client is going to trust the target of the target dap since he is able to perform a step by step verification of the target by using the path of daps.
 
       ![](proofTarget.png)
- 
+
     result:
       array: true
       typeName: BtcProofTargetResult
       type:
-        dap: 
+        dap:
           descr: the difficulty adjustement period
           type: uint64
         block:
@@ -1063,14 +1078,14 @@ btc:
         final:
           descr: the finality header
           type: bytes
-        cbtx: 
+        cbtx:
           descr: the coinbase transaction as hex
           type: bytes
         cbtxMerkleProof:
           descr: the coinbasetx merkle proof
           type: bytes
 
-      descr: A path of daps from the `verified_dap` to the `target_dap` which fulfils the conditions of `max_diff`, `max_dap` and `limit`. Each dap of the path is a `dap`-object with corresponding proof data. 
+      descr: A path of daps from the `verified_dap` to the `target_dap` which fulfils the conditions of `max_diff`, `max_dap` and `limit`. Each dap of the path is a `dap`-object with corresponding proof data.
     proof:
       descr: |
         Each `dap`-object contains the following properties:
@@ -1098,7 +1113,7 @@ btc:
 
         The goal is to verify the target of the `target_dap`. We will use the daps of the result to verify the target step by step starting with the `verified_dap`. For old blocks (height < 227,836) with `in3.preBIP34` disabled the target cannot be verified (proving the finality does not provide any security as explained in [preBIP34 proof](bitcoin.html#id1)). For old blocks with `in.preBIP34` enabled the block header can be verified by performing a [preBIP34 proof](bitcoin.html#id1). Verifying newer blocks requires multiple proofs. The block header from the `block`-field and the finality headers from the `final`-field will be used to perform a [finality proof](bitcoin.html#finality-proof). Having a verified block header allows us to consider the target of the block header as verified. Therefore, we have a verified target for the whole `dap`. Having a verified block header (and therefore a verified merkle root) enables the possibility of a [block number proof](bitcoin.html#block-number-proof) using the coinbase transaction (`cbtx`-field) and the [merkle proof](bitcoin.html#transaction-proof-merkle-proof) for the coinbase transaction (`cbtxMerkleProof`-field). This proof is needed to verify the dap number (`dap`). Having a verified dap number allows us to verify the mapping between the target and the dap number.
     example:
-      cmdParams: -x -c btc -f 8 
+      cmdParams: -x -c btc -f 8
       request:
         - 230
         - 200
@@ -1163,20 +1178,20 @@ btc:
 
         The client can set `in3.finality` equal to `0` to get the actual latest block hash. **Caution**: This block is not final and could no longer be part of the blockchain later on due to the possibility of a fork. Additionally, there may already be a newer block that the server does not yet know about due to latency in the network.
     example:
-      cmdParams: -x -c btc -f 8 
+      cmdParams: -x -c btc -f 8
       descr: The actual latest block is block `#640395` and `in3.finality` is set to `8`. The server is going to calculate `640395` - `8` and returns the hash of block `#640387` to the client. The headers of block `640388`..`640395` will be returned as finality headers.
       in3Params:
         finality: 8
-      response: '000000000000000000039cbb4e842de0de9651852122b117d7ae6d7ac4fc1df6'
+      response: "000000000000000000039cbb4e842de0de9651852122b117d7ae6d7ac4fc1df6"
       in3:
         proof:
           block: "0x0000e020bd3eecbd741522e1aa78cd7b375744590502939aef9b...9c8b18"
           final: "0x00008020f61dfcc47a6daed717b12221855196dee02d844ebb9c...774f4c"
           cbtx: "0x02000000000101000000000000000000000000000000000000000...000000"
           cbtxMerkleProof: "0xa3d607b274770911e53f06dbdb76440580ff968239...0ba297"
-  
+
   sendtransaction:
-    descr: | 
+    descr: |
       signs and sends a transaction to a btc node
     params:
       from:

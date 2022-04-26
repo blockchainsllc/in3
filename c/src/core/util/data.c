@@ -33,7 +33,6 @@
  *******************************************************************************/
 #define IN3_INTERNAL
 #include "data.h"
-#include "../../third-party/tommath/tommath.h"
 #include "bytes.h"
 #include "crypto.h"
 #include "debug.h"
@@ -148,8 +147,10 @@ bytes_t d_bytes_enc(d_token_t* item, in3_encoding_type_t enc) {
       item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
       return bytes(item->data, l);
     }
-    else
+    else {
       _free(dst);
+      return NULL_BYTES;
+    }
   }
   return d_bytes(item);
 }
@@ -507,39 +508,56 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
 
   while (true) {
     switch (*(jp->c++)) {
-      case 0:
-        return JSON_E_END_OF_STRING;
-      case '\'':
+      case 0: return JSON_E_END_OF_STRING;
       case '"':
-        if (start[-1] != jp->c[-1]) continue; // is the kind of quote the same as the quote we used to start the string?
-        l = jp->c - start - 1;
-        if (l == 6 && *start == '\\' && start[1] == 'u') {
-          item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
-          item->len   = 1;
-          item->data  = _malloc(1);
-          *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
-        }
-        else {
-          if (*(start - 1) == '\'') {
-            // this is a escape-sequence which forces this to handled as string
-            // here we do change or fix the input string because this would be an invalid string otherwise.
-            *(jp->c - 1) = (*(start - 1) = '"');
-          }
-          l -= escape;
-          item->len  = l | T_STRING << 28;
-          item->data = escape ? _malloc(l + 1) : start;
-          if (escape) {
-            char* x = start;
-            for (size_t n = 0; n < l; n++, x++) {
-              if (*x == '\\') x++;
-              item->data[n] = *x;
+        l          = jp->c - start - 1 - escape;
+        item->len  = l | T_STRING << 28;
+        item->data = escape ? _malloc(l + 1) : start;
+        if (escape) {
+          char* x = start;
+          for (size_t n = 0; n < l; n++, x++) {
+            if (*x == '\\') {
+              switch (x[1]) {
+                case 'u':
+                  item->data[n] = hexchar_to_int(x[4]) << 4 | hexchar_to_int(x[5]);
+                  x += 4;
+                  break;
+                case 'n':
+                  item->data[n] = '\n';
+                  break;
+                case 't':
+                  item->data[n] = '\t';
+                  break;
+                case 'b':
+                  item->data[n] = '\b';
+                  break;
+                case 'f':
+                  item->data[n] = '\f';
+                  break;
+                case 'r':
+                  item->data[n] = '\r';
+                  break;
+                default:
+                  item->data[n] = x[1];
+              }
+              x++;
             }
-            item->state   = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
-            item->data[l] = 0;
+            else
+              item->data[n] = *x;
           }
+          item->state   = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+          item->data[l] = 0;
         }
         return 0;
       case '\\':
+        if (*jp->c == 'u') {
+          for (int n = 0; n < 4; n++) {
+            if (hexchar_to_int(*(++jp->c)) == 255) return JSON_E_INVALID_CHAR;
+          }
+          escape += 4;
+        }
+        else if (*jp->c != '"' && *jp->c != '/' && *jp->c != '\\' && *jp->c != 'b' && *jp->c != 'f' && *jp->c != 'n' && *jp->c != 'r' && *jp->c != 't')
+          return JSON_E_INVALID_CHAR;
         jp->c++;
         escape++;
         break;
@@ -607,7 +625,6 @@ static NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         }
       }
     case '"':
-    case '\'':
       return parse_string(jp, parsed_next_item(jp, T_STRING, key, parent));
     case 't':
       if (strncmp(jp->c, "rue", 3) == 0) {
@@ -1060,6 +1077,21 @@ void d_serialize_binary(bytes_builder_t* bb, d_token_t* t) {
 static const char _hex[] = "0123456789abcdef";
 static char       _tmp[7];
 
+char* d_get_property_name(d_token_internal_t* ob, d_key_t k) {
+  str_range_t r = d_to_json(ob);
+  if (!r.data) return NULL;
+  for (char* s = strchr(r.data, '"'); s && r.data + r.len > s; s = s ? strchr(s + 1, '"') : NULL) {
+    char* e = s + 1;
+    for (e = strchr(e, '"'); e && r.data + r.len > e; e = strchr(e + 1, '"')) {
+      if (e[-1] == '\\') continue;
+      if (keyn(s + 1, e - s - 1) == k) return _strdupn(s + 1, e - s - 1);
+      break;
+    }
+    s = e;
+  }
+  return NULL;
+}
+
 char* d_get_keystr(json_ctx_t* ctx, d_key_t k) {
   if (ctx && ctx->keys) return get_key_str(ctx, k);
 #ifdef LOGGING
@@ -1151,35 +1183,20 @@ d_token_t* token_from_bytes(bytes_t b, d_token_t* d) {
   }
   return d;
 }
+d_token_t* token_from_int(uint32_t val, d_token_t* d) {
+  d->data = NULL;
+  d->len  = T_INTEGER << 28 | val;
+  return d;
+}
 
 bytes_t d_num_bytes(d_token_t* f) {
   bytes_t bb = d_bytes(f);
   if (bb.data && d_type(f) == T_STRING && d_len(f) < 80) {
     // still a string?, then we need to look for numeric values
-    char input[80];
-    memcpy(input, bb.data, bb.len);
-    input[bb.len]    = 0;
-    bytes32_t target = {0};
-    bytes_t   b      = bytes(target, 0);
-#if defined(ETH_FULL) && defined(ETH_API)
-    size_t s = 0;
-    mp_int d;
-    mp_init(&d);
-    if (mp_read_radix(&d, input, 10)) {
-      // this is not a number
-      mp_clear(&d);
-      return bb;
-    }
-    mp_export(target, &s, 1, sizeof(uint8_t), 1, 0, &d);
-    mp_clear(&d);
-    b.len = s;
-#else
-    for (int i = 0; i < d_len(f); i++) {
-      if (f->data[i] < '0' || f->data[i] > '9') return bb;
-    }
-    b.len = 8;
-    long_to_bytes(parse_float_val(input, 0), target);
-#endif
+    bytes32_t dst = {0};
+    size_t    dst_len;
+    if (parse_decimal((void*) bb.data, bb.len, dst, &dst_len)) return bb;
+    bytes_t b = bytes(dst, dst_len);
     b_optimize_len(&b);
 
     if (b.len < 4) {

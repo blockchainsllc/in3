@@ -1,0 +1,454 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "JSON Schema for Incubed rpc definitions",
+    "description": "Incubed, JSON-RPC definitions",
+    "$defs": {
+        "property": {
+            "type": "object",
+            "description": "a Property Definition",
+            "additionalProperties": false,
+            "requiredProperties": [
+                "type",
+                "descr"
+            ],
+            "properties": {
+                "type": {
+                    "description": "type of the property, which could be either a predefined or inline typedef",
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "the buildin type",
+                            "enum": [
+                                "uint32",
+                                "uint64",
+                                "bytes",
+                                "bytes32",
+                                "string",
+                                "bool",
+                                "address",
+                                "double",
+                                "any"
+                            ]
+                        },
+                        {
+                            "type": "string",
+                            "minLength": 3,
+                            "description": "the name of a predefined type"
+                        },
+                        {
+                            "$ref": "#/$defs/type"
+                        }
+                    ]
+                },
+                "descr": {
+                    "type": "string",
+                    "description": "The description of the property, which could include markdown"
+                },
+                "array": {
+                    "type": "boolean",
+                    "description": "if true the type will be used as array"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "if true the propery may be ommited or set to null"
+                },
+                "cmd": {
+                    "description": "the commandline argument which can be used to configure this option. Only available within config.",
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    ]
+                },
+                "key": {
+                    "description": "if set the type will be a map and if string in the definiotn should describe the meaning of the key-property",
+                    "oneOf": [
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                "nullable": {
+                    "type": "boolean",
+                    "description": "if true, the values of the map may be null."
+                },
+                "min": {
+                    "type": "number",
+                    "description": "the min length of the value ( depends on the type )"
+                },
+                "max": {
+                    "type": "number",
+                    "description": "the max length of the value ( depends on the type )"
+                },
+                "default": {
+                    "description": "a default value"
+                },
+                "typeName": {
+                    "type": "string",
+                    "description": "the name used when generating the API"
+                },
+                "example": {
+                    "description": "an example value"
+                },
+                "instance": {
+                    "type": "string",
+                    "description": "the instance variable, which should be used to set this value automaticly"
+                },
+                "plainInt": {
+                    "type": "boolean",
+                    "description": "for integer value this enforce this integer to be passed as plain integer while the default is passed by 0x-prefixed hex value."
+                },
+                "internalDefault": {
+                    "description": "default value which will be used if null is provided"
+                },
+                "optionalAPI": {
+                    "type": "boolean",
+                    "description": "if true the API should allow to emmit this argument. While optional simply allows null-values. In case the property is undefined or emmited, the internalDefault will be used."
+                },
+                "options": {
+                    "description": "lists options for different result-types. This is only available in the result-type of a function.",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "description": "a option of a return value",
+                        "properties": {
+                            "params": {
+                                "type": "object",
+                                "description": "List of properties, which should be replaces with fixed values"
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "name to be used in the API"
+                            },
+                            "descr": {
+                                "type": "string",
+                                "description": "description of the API-Method"
+                            },
+                            "result": {
+                                "description": "the resulting type of this option",
+                                "$ref": "#/$defs/property"
+                            },
+                            "example": {
+                                "description": "the example value"
+                            }
+                        }
+                    }
+                },
+                "validate": {
+                    "type": "object",
+                    "description": "defines additional validation restriction, which will be used when generating the code with build_rpc.sh ( only used if _generate_rpc is true )",
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "a predefined type, like url"
+                        }
+                    }
+                },
+                "enum": {
+                    "description": "Array of enum-values",
+                    "anyOf": [
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "type": {
+            "type": "object",
+            "description": "a Type Definition",
+            "properties": {
+                "_extends": {
+                    "type": "string",
+                    "description": "the type to inherit the properties from"
+                }
+            },
+            "additionalProperties": {
+                "$ref": "#/$defs/property"
+            }
+        },
+        "example": {
+            "type": "object",
+            "description": "a Example",
+            "additionalProperties": false,
+            "properties": {
+                "request": {
+                    "type": "array",
+                    "description": "array of input arguments"
+                },
+                "descr": {
+                    "type": "string",
+                    "description": "description of the example"
+                },
+                "response": {
+                    "description": "resulting value"
+                },
+                "cmdParams": {
+                    "type": "string",
+                    "description": "comandline arguments needed to run it on the comandline"
+                },
+                "proof": {
+                    "description": "description of the proof"
+                },
+                "in3Params": {
+                    "description": "object with additional properties to be used within the in3-section of the request"
+                },
+                "in3": {
+                    "description": "the in3-section"
+                }
+            }
+        },
+        "api": {
+            "type": "object",
+            "description": "a API Definition",
+            "properties": {
+                "descr": {
+                    "type": "string",
+                    "description": "the API- Description in Markdown"
+                },
+                "config": {
+                    "description": "the config to be used. This will be merged from all apis.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/$defs/property"
+                    }
+                },
+                "fields": {
+                    "type": "object",
+                    "description": "defines a list of properties the generated API should have in order to use it as 'instance' later on.",
+                    "additionalProperties": {
+                        "$ref": "#/$defs/property"
+                    }
+                },
+                "_generate_rpc": {
+                    "description": "if true it will let the scripts/build_rpc.sh to generate the _rpc.c and _rpc.h file for the given api",
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "openapi": {
+                                    "type": "string",
+                                    "description": "the url or filepath to the openapi-definition"
+                                },
+                                "structs": {
+                                    "type": "boolean",
+                                    "description": "if true structs will be generated, false means only d_token_t will be used"
+                                },
+                                "validate": {
+                                    "type": "boolean",
+                                    "description": "if true, objects will be validated, otherwise it will only be checked if the type is correct"
+                                },
+                                "send_macro": {
+                                    "type": "string",
+                                    "description": "name of the macro which will be used when sending http-request. default: HTTP_SEND"
+                                },
+                                "custom": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "$ref": "#/$defs/func"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "type": "boolean"
+                        }
+                    ]
+                },
+                "_extensionVar": {
+                    "type": "string",
+                    "description": "if set, the extension will get a property pointing to this Api with the specified property"
+                },
+                "_extension": {
+                    "type": "string",
+                    "description": "if set API-name which will get the extension-var pointing to this api."
+                },
+                "_examplePath": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "for the examples this should be used for the path to the api.",
+                    "properties": {
+                        "js": {
+                            "description": "path for js",
+                            "type": "string"
+                        },
+                        "swift": {
+                            "description": "path for swift",
+                            "type": "string"
+                        },
+                        "java": {
+                            "description": "path for java",
+                            "type": "string"
+                        }
+                    }
+                },
+                "_sdk_getter": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "if set the generated SDK will hold a getter for this API (defaults: true). If the value is not a boolean, it specifies the code to be used.",
+                    "properties": {
+                        "js": {
+                            "description": "getter for js",
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "swift": {
+                            "description": "getter for swift",
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "java": {
+                            "description": "getter for java",
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "additionalProperties": {
+                "$ref": "#/$defs/func"
+            }
+        },
+        "func": {
+            "type": "object",
+            "description": "a RPC Function",
+            "properties": {
+                "descr": {
+                    "type": "string",
+                    "description": "the API-Description in Markdown"
+                },
+                "apiName": {
+                    "type": "string",
+                    "description": "the name to be used in the api"
+                },
+                "alias": {
+                    "type": "string",
+                    "description": "defines this function as the same configuration as the specified function."
+                },
+                "skipGenerate": {
+                    "type": "boolean",
+                    "description": "this has only an effect if this is a generated function from openapi. In this case, this function will be implemented manually."
+                },
+                "validation": {
+                    "type": "string",
+                    "description": "a deexplanation how this function validates its result"
+                },
+                "params": {
+                    "type": "object",
+                    "description": "The input arguments",
+                    "additionalProperties": {
+                        "$ref": "#/$defs/property"
+                    }
+                },
+                "in3Params": {
+                    "type": "object",
+                    "description": "additional arguments to be used within a in3-section of the request",
+                    "additionalProperties": {
+                        "$ref": "#/$defs/property"
+                    }
+                },
+                "sync": {
+                    "description": "if true this function will not use any subrequests and can be called sync instead of async",
+                    "type": "boolean"
+                },
+                "skipApi": {
+                    "description": "if true, the API will not generate a function",
+                    "type": "boolean"
+                },
+                "proof": {
+                    "description": "description of the proof"
+                },
+                "result": {
+                    "description": "The result",
+                    "$ref": "#/$defs/property"
+                },
+                "example": {
+                    "description": "a example",
+                    "anyOf": [
+                        {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/example"
+                            }
+                        },
+                        {
+                            "$ref": "#/$defs/example"
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "type": "object",
+    "properties": {
+        "types": {
+            "description": "a collection of pre defined types",
+            "type": "object",
+            "additionalProperties": {
+                "description": "a pre defined types with the key as name",
+                "$ref": "#/$defs/type"
+            }
+        }
+    },
+    "additionalProperties": {
+        "description": "a pre defined types with the key as name",
+        "$ref": "#/$defs/api"
+    }
+}

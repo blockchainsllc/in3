@@ -57,7 +57,7 @@ if [ "$CONTAINER" = "--help" ]; then
    echo "     - android-clang8-armv8"
    echo "     - centos"
    echo "     - android"
-   echo "     - clang13"
+   echo "     - clang14"
    echo "     - clang10"
    echo "     - clang9"
    echo "     - clang50"
@@ -121,7 +121,7 @@ elif [ "$CONTAINER" = "wasm_local" ]; then
   emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true -DIPFS=false -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
   make -j8 in3_wasm
 elif [ "$CONTAINER" = "wasm" ]; then
-  CONTAINER=docker.slock.it/build-images/cmake:clang13
+  CONTAINER=docker.slock.it/build-images/cmake:clang14
   echo $CONTAINER > build/container.txt
   docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DBTC_PRE_BPI34=false -DWASM_EMMALLOC=true -DZKSYNC=true -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
 elif [ "$CONTAINER" = "asmjs_local" ]; then
@@ -130,7 +130,7 @@ elif [ "$CONTAINER" = "asmjs_local" ]; then
   emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DWASM=true -DASMJS=true -DZKSYNC=false -DBTC=true -DBTC_PRE_BPI34=false -DIPFS=true -DWASM_EMMALLOC=true  -DCMAKE_BUILD_TYPE=$BUILDTYPE .. 
   make -j8 in3_wasm
 elif [ "$CONTAINER" = "asmjs" ]; then
-  CONTAINER=docker.slock.it/build-images/cmake:clang13
+  CONTAINER=docker.slock.it/build-images/cmake:clang14
   echo $CONTAINER > build/container.txt
   docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMMALLOC=true -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
 else                                  

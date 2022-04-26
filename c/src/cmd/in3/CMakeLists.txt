@@ -51,6 +51,12 @@ if (MULTISIG)
     set(LIBS ${LIBS} multisig)
 endif()
 
+if (TESTCASE)
+set(SRC ${SRC} ../../tools/testcase/testcase.c ../../tools/testcase/yaml.c)
+else()
+set(SRC ${SRC} ../../tools/recorder/recorder.c)
+endif()
+
 
 add_executable(${CMD_NAME} 
   helper.c 
@@ -62,7 +68,7 @@ add_executable(${CMD_NAME}
   tx.c 
   weights.c 
   in3_storage.c 
-  ../../tools/recorder/recorder.c
+  ${SRC}
 )
 target_compile_definitions(${CMD_NAME} PRIVATE _XOPEN_SOURCE=600)
 

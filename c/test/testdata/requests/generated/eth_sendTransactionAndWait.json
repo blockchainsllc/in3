@@ -63,6 +63,7 @@
       "transactionHash": "0x02de07114d5c6e5a81e73e164b4cb623727024822318b300b93bad54482a6416",
       "transactionIndex": "0x22"
     },
+    "success": true,
     "config": {
       "proof": "none",
       "pk": [

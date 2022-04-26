@@ -74,7 +74,14 @@ account:
       - "0xe6e7d351014618d9cac351241979864f274a543f54793a32d7d3b9a55efb0f52"
     expected_output: true
 
-      
+
+  in3_crypto_convert:
+    input:
+      - "0xb838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9"
+      - "pub_der"
+    expected_output: "0x3056301006072a8648ce3d020106052b8104000a03420004b838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6ff0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9"
+
+            
 #account:
 
 #  in3_createKey:

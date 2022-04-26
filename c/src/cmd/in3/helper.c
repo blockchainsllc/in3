@@ -117,6 +117,7 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
     for (; b; b--) sb_add_char(&sb, '}');
   }
   char* error = in3_configure(c, sb.data);
+  recorder_configure(sb.data);
   _free(sb.data);
   if (error) {
     char* msg = _malloc(200 + (strlen(error) + strlen(name) + strlen(value)));
@@ -314,7 +315,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t ty
   if (pk_file) {
     if (!pwd) {
       recorder_print(1, "Passphrase:\n");
-      pwd = malloc(500);
+      pwd = _malloc(500);
       read_pass(pwd, 500);
     }
     char* content;
@@ -372,7 +373,7 @@ void display_result(char* method, char* result) {
   abi_sig_t* req = get_txdata()->abi_sig;
 
   // if the request was a eth_call, we decode the result
-  if (req) {
+  if (req && (strcmp(method, "call") == 0 || strcmp(method, "eth_call") == 0)) {
     int l = strlen(result) / 2 - 1;
     if (l) {
       char*       error = NULL;
@@ -426,7 +427,7 @@ static inline bool is_json(char* c) {
 }
 static inline bool needs_hex_number(char* arg, char* method) {
   // for eth, zksync (but not for eth_feeHistory)
-  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0) && strcmp(method, "eth_feeHistory") && is_convertable_number(arg);
+  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0 || strncmp(method, "defi_", 5) == 0) && strcmp(method, "eth_feeHistory") && is_convertable_number(arg);
 }
 
 void add_argument(char* arg, sb_t* args, in3_t* c, char* method) {

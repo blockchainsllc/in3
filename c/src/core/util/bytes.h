@@ -75,6 +75,12 @@ typedef struct bytes {
   uint32_t len;  /**< the length of the array ion bytes */
 } bytes_t;
 
+/** a bytes value definition to represented as decimal */
+typedef struct {
+  bytes_t val; /**< the value */
+  int     dec; /**< the decimals to be used */
+} dec_t;
+
 /** a byte-buffer to attach byte-functions. */
 typedef struct {
   size_t  bsize; /**< size of the currently allocated bytes */
@@ -117,9 +123,10 @@ RETURNS_NONULL NONULL bytes_t* bb_move_to_bytes(bytes_builder_t* bb);           
 NONULL uint64_t                bb_read_long(bytes_builder_t* bb, size_t* i);                                             /**< reads a long from the builder */
 NONULL uint32_t                bb_read_int(bytes_builder_t* bb, size_t* i);                                              /**< reads a int from the builder */
 
-static inline bytes_t     bytes(uint8_t* a, uint32_t len) { return (bytes_t){.data = a, .len = len}; } /**< converts the given bytes to a bytes struct */
-bytes_t                   cloned_bytes(bytes_t data);                                                  /**< cloned the passed data*/
-NONULL static inline void b_optimize_len(bytes_t* b) {                                                 /**< changed the data and len to remove leading 0-bytes */
+static inline bytes_t     bytes(uint8_t* a, uint32_t len) { return (bytes_t){.data = a, .len = len}; }                           /**< converts the given bytes to a bytes struct */
+static inline dec_t       dec(uint8_t* a, uint32_t len, int decimals) { return (dec_t){.dec = decimals, .val = bytes(a, len)}; } /**< converts the given data to a dec-type struct */
+bytes_t                   cloned_bytes(bytes_t data);                                                                            /**< cloned the passed data*/
+NONULL static inline void b_optimize_len(bytes_t* b) {                                                                           /**< changed the data and len to remove leading 0-bytes */
   while (b->len > 1 && *b->data == 0) {
     b->data++;
     b->len--;

@@ -549,6 +549,87 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   return IN3_EIGNORE;
 }
 
+in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
+  UNUSED_VAR(conf);
+
+  sb_t  sb = {0};
+  char *seed, *type;
+  TRY_PARAM_GET_REQUIRED_STRING(seed, ctx, 0);
+  TRY_PARAM_GET_REQUIRED_STRING(type, ctx, 1);
+
+  btc_stype_t addr_type = btc_string_to_script_type(type);
+
+  if (script_is_standard(addr_type)) {
+    if (addr_type == BTC_P2MS) {
+      return req_set_error(ctx->req, "ERROR: btc_create_address: P2MS scripts have no intrinsic address. Cannot create address.", IN3_EINVAL);
+    }
+
+    uint32_t seed_len_bytes = strlen(seed) / 2;
+    bytes_t  raw_seed       = bytes(alloca(seed_len_bytes), seed_len_bytes);
+    hex_to_bytes(seed, -1, raw_seed.data, raw_seed.len);
+    btc_address_t dst        = {0};
+    bool          seed_valid = false;
+
+    // Get the encoded address
+    if (addr_type == BTC_P2PKH || addr_type == BTC_P2PK || addr_type == BTC_P2SH) {
+      btc_address_prefix_t prefix = btc_script_type_to_prefix(addr_type);
+
+      seed_valid = (((addr_type == BTC_P2PK || addr_type == BTC_P2PKH) && pub_key_is_valid(&raw_seed)) ||
+                    (addr_type == BTC_P2SH && script_is_standard(btc_get_script_type(&raw_seed))));
+
+      if (!seed_valid) {
+        return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for the address type chosen (pub key or btc script).", IN3_EINVAL);
+      }
+
+      // Clarification: For a p2sh, the raw_seed would represent a script instead of a pub key.
+      // However, the algorithm for creating an address is the same for both cases, so here we
+      // just call btc_addr_from_pub_key for whatever the raw_seed may be.
+      if (btc_addr_from_pub_key(raw_seed, prefix, &dst) < 0) {
+        if (dst.encoded) _free(dst.encoded);
+        return req_set_error(ctx->req, "ERROR: btc_create_address: Error during address generation from public key.", IN3_EINVAL);
+      }
+    }
+    else if (addr_type == BTC_V0_P2WPKH) {
+      seed_valid = pub_key_is_valid(&raw_seed);
+      if (!seed_valid) {
+        return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for p2wpkh (public key).", IN3_EINVAL);
+      }
+      if (btc_segwit_addr_from_pub_key(raw_seed, &dst) < 0) {
+        if (dst.encoded) _free(dst.encoded);
+        req_set_error(ctx->req, "ERROR: btc_create_address: Error during segwit address generation from public key.", IN3_EINVAL);
+      }
+    }
+    else if (addr_type == BTC_P2WSH) {
+      seed_valid = is_p2wsh(&raw_seed);
+      if (!seed_valid) {
+        return req_set_error(ctx->req, "ERROR: btc_create_address: Invalid input for p2wsh (witness program).", IN3_EINVAL);
+      }
+      if (btc_segwit_addr_from_witness_program(raw_seed, &dst) < 0) {
+        if (dst.encoded) _free(dst.encoded);
+        req_set_error(ctx->req, "ERROR: btc_create_address: Error during segwit address generation from witness program.", IN3_EINVAL);
+      }
+    }
+    else {
+      return req_set_error(ctx->req, "ERROR: btc_create_address: Address type is not supported.", IN3_ENOTSUP);
+    }
+
+    // Write encoded address in string builder
+    if (dst.encoded) {
+      sb_add_char(&sb, '\"');
+      sb_add_chars(&sb, dst.encoded);
+      sb_add_char(&sb, '\"');
+      _free(dst.encoded);
+    }
+  }
+  else {
+    return req_set_error(ctx->req, "ERROR: btc_create_address: Address type was not recognized. Cannot create address.", IN3_EINVAL);
+  }
+
+  if (!sb.data) return req_set_error(ctx->req, "ERROR: btc_create_address: Unexpected error. No address could be created", IN3_EINVAL);
+  TRY_FINAL(in3_rpc_handle_with_string(ctx, sb.data), _free(sb.data));
+  return IN3_OK;
+}
+
 in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   UNUSED_VAR(conf);
   bytes_t    transaction;
@@ -608,21 +689,22 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
   // -- For each output, extract addresses or public keys
   for (uint32_t i = 0; i < tx_ctx.output_count; i++) {
     btc_address_t addr = {0};
-    bool          has_addr;
+    bool          has_addr, is_witness;
     tx_ctx.outputs[i].script.type = btc_get_script_type(&tx_ctx.outputs[i].script.data);
     btc_stype_t script_type       = extract_address_from_output(&tx_ctx.outputs[i], &addr);
     bytes_t     addr_as_bytes     = bytes(addr.as_bytes, BTC_ADDRESS_SIZE_BYTES);
 
-    has_addr = script_type != BTC_P2MS && script_is_standard(script_type);
+    has_addr   = script_type != BTC_P2MS && script_is_standard(script_type);
+    is_witness = script_is_witness(script_type);
 
     sb_add_chars(&addrs, "{\"index\":");
     sb_add_int(&addrs, i);
     sb_add_chars(&addrs, ",\"script_type\":\"");
     sb_add_chars(&addrs, btc_script_type_to_string(script_type));
     sb_add_chars(&addrs, "\",\"addr\":\"");
-    if (has_addr) sb_add_chars(&addrs, addr.encoded);
+    if (has_addr && addr.encoded) sb_add_chars(&addrs, addr.encoded);
     sb_add_chars(&addrs, "\",\"raw_addr\":\"");
-    if (has_addr) sb_add_rawbytes(&addrs, NULL, addr_as_bytes, addr_as_bytes.len);
+    if (has_addr && !is_witness && addr.encoded) sb_add_rawbytes(&addrs, NULL, addr_as_bytes, addr_as_bytes.len);
     sb_add_chars(&addrs, "\",\"pub_keys\":[");
     if (script_type == BTC_P2MS) {
       // extract public keys
@@ -749,11 +831,13 @@ static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t
   // make sure the conf is filled with data from the cache
   btc_check_conf(req, conf);
 
+#if !defined(RPC_ONLY) || defined(RPC_CREATEADDRESSES)
+  TRY_RPC("createaddress", btc_create_address(conf, ctx))
+#endif
 #if !defined(RPC_ONLY) || defined(RPC_GETADDRESSES)
   TRY_RPC("getaddresses", btc_get_addresses(conf, ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
-
   // SERVER: sendtransaction(raw_signed_tx)
   TRY_RPC("sendtransaction", send_transaction(conf, ctx))
 #endif

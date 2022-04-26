@@ -56,7 +56,8 @@ in3_ret_t call_func_rpc(in3_t* c) {
     printf("Result: \n%s\n", result);
     free(result);
     return 0;
-  } else {
+  }
+  else {
     printf("Error sending tx: \n%s\n", error);
     free(error);
     return IN3_EUNKNOWN;
@@ -89,10 +90,10 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
     }
 
     char*    url     = d_get_string_at(response->result, 0); // get the first item of the result (the url)
-    bytes_t* owner   = d_get_bytes_at(response->result, 1);  // get the second item of the result (the owner)
+    bytes_t  owner   = d_get_bytes_at(response->result, 1);  // get the second item of the result (the owner)
     uint64_t deposit = d_get_long_at(response->result, 2);   // get the third item of the result (the deposit)
 
-    printf("Server %i : %s owner = %02x%02x...", i, url, owner->data[0], owner->data[1]);
+    printf("Server %i : %s owner = %02x%02x...", i, url, owner.data[0], owner.data[1]);
     printf(", deposit = %" PRIu64 "\n", deposit);
 
     // free memory

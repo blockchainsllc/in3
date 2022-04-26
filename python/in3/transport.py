@@ -32,6 +32,8 @@ def https_transport(in3_request: In3Request, in3_response: In3Response):
             }
             request = urllib.request.Request(**request_params)
             timeout = 180000
+            if "http" not in request.type:
+                raise TransportException('only http or https request are supported!')
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 if not response.status == 200:
                     raise TransportException('Request failed with status: {}'.format(str(response.status)))

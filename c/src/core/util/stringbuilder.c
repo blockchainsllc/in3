@@ -385,6 +385,36 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           _free(tmp);
           break;
         }
+        case 'W': {
+          dec_t wei = va_arg(args, dec_t);
+          if (wei.val.len > 32) {
+            sb_add_char(sb, 'X');
+            break;
+          }
+          char tmp[100];
+          int  len = encode(ENC_DECIMAL, wei.val, tmp);
+          if (len < 0)
+            sprintf(tmp, "<not supported>");
+          else {
+            if (wei.dec >= len) {
+              memmove(tmp + (2 + wei.dec - len), tmp, len + 1);
+              memset(tmp, '0', (2 + wei.dec - len));
+              tmp[1] = '.';
+              for (int l = strlen(tmp) - 1; l > 1; l--) {
+                if (tmp[l] != '0' || tmp[l - 1] == '.') {
+                  tmp[l + 1] = 0;
+                  break;
+                }
+              }
+            }
+            else if (wei.dec) {
+              memmove(tmp + (len - wei.dec) + 1, tmp + (len - wei.dec), wei.dec + 1);
+              tmp[len - wei.dec] = '.';
+            }
+          }
+          sb_add_chars(sb, tmp);
+          break;
+        }
         case 'x':
           sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
           break;
@@ -441,4 +471,19 @@ char* sprintx(const char* fmt, ...) {
   sb_vprintx(&s, fmt, args);
   va_end(args);
   return s.data;
+}
+
+void sb_add_params(sb_t* sb, const char* fmt, ...) {
+  sb_add_char(sb, (sb->data && strchr(sb->data, '?')) ? '&' : '?');
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(sb, fmt, args);
+  va_end(args);
+}
+void sb_add_value(sb_t* sb, const char* fmt, ...) {
+  if (sb->data && sb->len && sb->data[sb->len - 1] != '{' && sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(sb, fmt, args);
+  va_end(args);
 }

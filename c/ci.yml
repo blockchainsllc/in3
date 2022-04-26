@@ -124,8 +124,8 @@ clang50:
     - .conanbuild
     - .only_full
 
-clang13:
-  image: docker.slock.it/build-images/cmake:clang13
+clang14:
+  image: docker.slock.it/build-images/cmake:clang14
   extends:
     - .conanbuild
     - .only_full
@@ -196,6 +196,16 @@ test_c:
       - Testing
       - mac_test_c.xml
       - mac_test_c.log
+
+test_rpc:
+  image: docker.slock.it/build-images/cmake:clang14
+  stage: test
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - cd scripts/generator; npm i && cd ../..
+    - find c/src -name 'rpc.yml' | xargs node scripts/generator/validate_schema.js
 
 test_qemu_cortexm3:
   image: docker.io/zephyrprojectrtos/zephyr-build:v0.12
@@ -269,8 +279,6 @@ examples_macos:
     - ./build.sh
   tags:
     - mac-os
-
-
 #integration_longrun:
 #  stage: integration
 #  extends: .only_release

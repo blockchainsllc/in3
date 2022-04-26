@@ -240,7 +240,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
 // Fill tx_in fields, preparing the input for signing
 // WARNING: You need to free tx_in->prev_tx_hash after calling this function
 static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in_t* tx_in) {
-  if (!utxo || !tx_in) {
+  if (!utxo || !tx_in || !utxo->tx_out.script.data.data) {
     // TODO: Implement better error treatment
     return req_set_error(req, "ERROR: in prepare_tx_in: function arguments can not be null!", IN3_EINVAL);
   }
@@ -250,11 +250,11 @@ static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in
   memcpy(tx_in->prev_tx_hash, utxo->tx_hash, 32);
 
   // Before signing, input script field should temporarilly be equal to the utxo we want to redeem
-  tx_in->script.data = bytes(_malloc(utxo->tx_out.script.data.len), utxo->tx_out.script.data.len);
+  tx_in->script.type      = utxo->tx_out.script.type;
+  tx_in->sequence         = utxo->sequence;
+  tx_in->script.data.len  = utxo->tx_out.script.data.len;
+  tx_in->script.data.data = _malloc(tx_in->script.data.len);
   memcpy(tx_in->script.data.data, utxo->tx_out.script.data.data, tx_in->script.data.len);
-  tx_in->script.type = utxo->tx_out.script.type;
-
-  tx_in->sequence = utxo->sequence;
   return IN3_OK;
 }
 
@@ -348,7 +348,7 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
 
     btc_tx_in_t tx_in   = {0};
     bytes_t     witness = NULL_BYTES;
-    TRY(prepare_tx_in(req, &tx_ctx->utxos[i], &tx_in))
+    TRY(prepare_tx_in(req, tx_ctx->utxos + i, &tx_in))
 
     bool is_segwit = (script_type == BTC_V0_P2WPKH || script_type == BTC_P2WSH);
 

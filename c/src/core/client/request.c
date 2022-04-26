@@ -89,6 +89,39 @@ chain_id_t in3_chain_id(const in3_req_t* req) {
   }
   return req->client->chain.id;
 }
+in3_ret_t in3_resolve_chain_id(in3_req_t* req, chain_id_t* chain_id) {
+  // make sure, we have the correct chain_id
+  *chain_id = in3_chain_id(req);
+  if (*chain_id == CHAIN_ID_LOCAL) {
+    char cachekey[50];
+    sprintf(cachekey, "chain_id_%x", req->client->chain.version);
+    if (req->client->chain.id == CHAIN_ID_LOCAL) {
+      if (req->client->chain.version && !(req->client->chain.version & 0x80000000)) {
+        // we have a url-hash, which can lookup in the cache
+        in3_cache_ctx_t cache = {.content = NULL, .key = cachekey, .req = req};
+        in3_plugin_execute_first_or_none(req, PLGN_ACT_CACHE_GET, &cache);
+        if (cache.content && cache.content->len == 8) {
+          *chain_id                  = bytes_to_long(cache.content->data, 8);
+          req->client->chain.version = ((uint32_t) *chain_id) | 0x80000000;
+          return IN3_OK;
+        }
+      }
+    }
+
+    d_token_t* r = NULL;
+    TRY(req_send_sub_request(req, "eth_chainId", "", NULL, &r, NULL))
+    *chain_id = d_long(r);
+    if (req->client->chain.id == CHAIN_ID_LOCAL) {
+      uint8_t data[8];
+      bytes_t b = bytes(data, 8);
+      long_to_bytes(*chain_id, data);
+      in3_cache_ctx_t cache = {.content = &b, .key = cachekey, .req = req};
+      in3_plugin_execute_first_or_none(req, PLGN_ACT_CACHE_SET, &cache);
+      req->client->chain.version = ((uint32_t) *chain_id) | 0x80000000;
+    }
+  }
+  return IN3_OK;
+}
 
 in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id) {
   in3_chain_t* chain = &c->chain;
@@ -170,6 +203,9 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   }
   // if this is the first request, we initialize the plugins now
   in3_plugin_init(ctx);
+
+  in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "\n", d_get_string(ctx->requests[0], K_METHOD), d_get(ctx->requests[0], K_PARAMS));
+
   return ctx;
 }
 
@@ -193,6 +229,10 @@ char* req_get_response_data(in3_req_t* ctx) {
     if (i) sb_add_char(&sb, ',');
     str_range_t rr    = d_to_json(ctx->responses[i]);
     char*       start = NULL;
+    if (!rr.data) { // it's a binary response, so we can't return the json
+      _free(sb.data);
+      return NULL;
+    }
     if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[i], K_IN3)).data) && start < rr.data + rr.len) {
       while (*start != ',' && start > rr.data) start--;
       sb_add_range(&sb, rr.data, 0, start - rr.data + 1);
@@ -227,12 +267,20 @@ in3_ret_t req_check_response_error(in3_req_t* c, int i) {
     return req_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber, const char* filename, const char* function, int line) {
+in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumber, const char* filename, const char* function, int line, ...) {
   assert(ctx);
 
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING || errnumber == IN3_OK) return errnumber;
   if (message) {
+    sb_t sb = {0};
+    if (strchr(message, '%')) {
+      va_list args;
+      va_start(args, line);
+      sb_vprintx(&sb, message, args);
+      va_end(args);
+      message = sb.data;
+    }
 
     const size_t l   = strlen(message);
     char*        dst = NULL;
@@ -248,6 +296,7 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error = dst;
+    _free(sb.data);
 
     error_log_ctx_t sctx = {.msg = message, .error = -errnumber, .req = ctx};
     in3_plugin_execute_first_or_none(ctx, PLGN_ACT_LOG_ERROR, &sctx);
@@ -369,6 +418,14 @@ in3_ret_t in3_rpc_handle_with_bytes(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   return in3_rpc_handle_finish(hctx);
 }
 
+in3_ret_t in3_rpc_handle(in3_rpc_handle_ctx_t* hctx, char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(in3_rpc_handle_start(hctx), fmt, args);
+  va_end(args);
+  return in3_rpc_handle_finish(hctx);
+}
+
 in3_ret_t in3_rpc_handle_with_uint256(in3_rpc_handle_ctx_t* hctx, bytes_t data) {
   b_optimize_len(&data);
   sb_t* sb = in3_rpc_handle_start(hctx);
@@ -385,38 +442,12 @@ in3_ret_t in3_rpc_handle_with_string(in3_rpc_handle_ctx_t* hctx, char* data) {
 in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result) {
   if (!result) return req_set_error(ctx->req, "No result", IN3_ERPC);
   sb_t* sb = in3_rpc_handle_start(ctx);
-
-  // As the API might return an empty string as a response,
-  // we at least convert it into an empty object
-  if ((d_type(result) == T_STRING || d_type(result) == T_BYTES) && d_len(result) == 0) {
-    sb_add_chars(sb, "{}");
-  }
-  else {
-    sb_add_json(sb, "", result);
-  }
-
-  // now convert all kebab-case to pascal case
-  for (char* c = sb->data; *c; c++) {
-    if (*c == '-' && in_property_name(c)) *c = '_';
-  }
+  sb_add_json(sb, "", result);
   return in3_rpc_handle_finish(ctx);
 }
 
 in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
-  uint8_t val[8];
-  long_to_bytes(value, val);
-  bytes_t b = bytes(val, 8);
-  b_optimize_len(&b);
-  char* s = alloca(b.len * 2 + 5);
-  bytes_to_hex(b.data, b.len, s + 3);
-  if (s[3] == '0') s++;
-  size_t l = strlen(s + 3) + 3;
-  s[0]     = '"';
-  s[1]     = '0';
-  s[2]     = 'x';
-  s[l]     = '"';
-  s[l + 1] = 0;
-  return in3_rpc_handle_with_string(hctx, s);
+  return in3_rpc_handle(hctx, "\"%x\"", value);
 }
 
 static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child, bool use_cache) {
@@ -596,7 +627,7 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_c
     return IN3_OK;
   }
 
-  in3_log_debug("requesting signature type=%d from account %x\n", digest_type, from.len > 2 ? bytes_to_int(from.data, 4) : 0);
+  in3_log_debug("requesting signature type=%d from account %B for %B\n", digest_type, from, raw_data);
 
   // first try internal plugins for signing, before we create an context.
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN)) {
@@ -614,6 +645,54 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_c
   return req_send_sign_request(ctx, digest_type, curve_type, pl_type, signature, raw_data, from, meta, cache_key);
 }
 
+static d_token_t* find_req(in3_req_t* found, char* req) {
+  for (; found; found = found->required) {
+    for (cache_entry_t* e = found->cache; e; e = e->next) {
+      if (e->props & CACHE_PROP_SRC_REQ && strcmp((char*) e->value.data, req) == 0) return found;
+    }
+  }
+  return NULL;
+}
+in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path, char* payload, char* jwt, d_token_t** result, in3_req_t** child, uint32_t wait_in_ms) {
+  sb_t rp = {0};
+
+  // build payload
+  sb_printx(&rp, "{\"method\":\"in3_http\",\"params\":[\"%s\",\"%S%S\",%s,[", method, url, path ? path : "", payload ? payload : "null");
+  if (jwt) sb_printx(&rp, "\"Authorization: Bearer %S\"", jwt);
+  sb_add_chars(&rp, "]]");
+  if (wait_in_ms > 0) sb_printx(&rp, ", \"in3\": {\"wait\":%u}", wait_in_ms);
+  sb_add_chars(&rp, "}");
+
+  // look for the subrequest
+  in3_req_t* found = find_req(req, rp.data);
+  if (found) {
+    if (child) *child = found;
+    _free(rp.data);
+    switch (in3_req_state(found)) {
+      case REQ_ERROR:
+        return req_set_error(req, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
+      case REQ_SUCCESS:
+        *result = found->responses[0];
+        return *result ? IN3_OK : req_set_error(req, "error executing provider call", IN3_ERPC);
+      case REQ_WAITING_TO_SEND:
+      case REQ_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+    }
+  }
+
+  in3_log_debug("http-request: %s\n", rp.data);
+  found = req_new(req->client, rp.data);
+  if (!found) {
+    _free(rp.data);
+    return req_set_error(req, "Invalid request!", IN3_ERPC);
+  }
+  if (child) *child = found;
+
+  in3_cache_add_ptr(&found->cache, rp.data)->props = CACHE_PROP_SRC_REQ;
+
+  return req_add_required(req, found);
+}
+
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
 #ifdef LOGGING
   (void) req_set_error(vc->req, msg, IN3_EUNKNOWN);
@@ -622,4 +701,13 @@ in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
   (void) vc;
 #endif
   return IN3_EUNKNOWN;
+}
+
+in3_ret_t req_throw_unknown_prop(in3_req_t* r, d_token_t* ob, d_token_t* prop, char* ob_name) {
+  char* missing = d_get_property_name(ob, d_get_key(prop));
+  char* m       = missing ? sprintx("The property '%s' does not exist in %s", missing, ob_name) : sprintx("Unknown property for the the type %s", ob_name);
+  req_set_error(r, m, IN3_EINVAL);
+  _free(missing);
+  _free(m);
+  return IN3_EINVAL;
 }

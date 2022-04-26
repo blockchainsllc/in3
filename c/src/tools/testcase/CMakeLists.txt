@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/blockchainsllc/in3
 # 
-# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -33,10 +33,11 @@
 ###############################################################################
 
 
-# static lib
-add_library(eth_rpc_o OBJECT
-        rpc.c
+add_static_library(
+  NAME     testcase 
+  SOURCES 
+    testcase.c
+    yaml.c
+  DEPENDS 
+    core
 )
-
-add_library(eth_rpc STATIC $<TARGET_OBJECTS:eth_rpc_o>)
-target_link_libraries(eth_rpc core)

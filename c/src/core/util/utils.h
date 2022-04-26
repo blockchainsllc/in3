@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 #include "bytes.h"
+#include "error.h"
 #include <assert.h>
 #include <stdint.h>
 
@@ -260,6 +261,7 @@ uint64_t current_ms();
  * returns true if all pytes (specified by l) of pts have a value of zero.
  */
 static inline bool memiszero(uint8_t* ptr, size_t l) {
+  if (!ptr) return true;
   assert(l > 0);
   while (l) {
     if (*ptr) return false;
@@ -276,7 +278,8 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
 /** sets an int at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
 #define ABI_UINT32(index, val) int_to_bytes(val, WORD_ADR(index, 4))
 /** sets an uint256 as bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
-#define ABI_UINT256(index, data, len) memcpy(WORD_ADR(index, len), data, len)
+#define ABI_UINT256(index, data, len) \
+  if (data) memcpy(WORD_ADR(index, len), data, len)
 /** writes the bytes at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
 #define ABI_BYTES(index, bytes)                                         \
   {                                                                     \
@@ -289,7 +292,7 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
 /** calculates the number of words (32 bytes) needed to hold the specified bytes */
 #define ABI_WORDS(byte_len) ((byte_len + 31) / 32)
 /** writes the offset (as word) at the word index in a abi-encoded data (assuming data = bytes_t res exists) */
-#define ABI_OFFSET(index, word) ABI_UINT32(index, (word * 32))
+#define ABI_OFFSET(index, word) ABI_UINT32(index, ((word) *32))
 
 /**
  * Pluggable functions:
@@ -342,6 +345,11 @@ void in3_sleep(uint32_t ms);
 int64_t parse_float_val(const char* data, /**< the data string*/
                         int32_t     expo  /**< the exponent */
 );
+/**
+ * parses a decimal string, which can include scientific notation ( only positive is allowed)
+ * like '123.45e18'
+ */
+in3_ret_t parse_decimal(char* val, int l, bytes32_t target, size_t* target_len);
 
 /**
  * simple add function, which adds the bytes (b) to a

@@ -30,19 +30,19 @@ static void   _lock_registry() {
   }
   MUTEX_LOCK(lock_registry);
 }
-#define LOCK_REGISTRY(code)         \
-  {                                 \
-    _lock_registry();               \
-    code                            \
-        MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)     \
+  {                             \
+    _lock_registry();           \
+    code                        \
+    MUTEX_UNLOCK(lock_registry) \
   }
 #else
 static pthread_mutex_t lock_registry = PTHREAD_MUTEX_INITIALIZER;
-#define LOCK_REGISTRY(code)         \
-  {                                 \
-    MUTEX_LOCK(lock_registry);      \
-    code                            \
-        MUTEX_UNLOCK(lock_registry) \
+#define LOCK_REGISTRY(code)     \
+  {                             \
+    MUTEX_LOCK(lock_registry);  \
+    code                        \
+    MUTEX_UNLOCK(lock_registry) \
   }
 #endif
 #else
@@ -302,10 +302,12 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
   else if (d_is_key(token, CONFIG_KEY("rpc"))) {
     EXPECT_TOK_STR(token);
     TRY(nodelist_seperate_from_registry(&data, w))
+    char*  url         = d_string(token);
     in3_t* c           = ctx->client;
     c->proof           = PROOF_NONE;
     c->signature_count = 0;
     c->chain.id        = CHAIN_ID_LOCAL;
+    c->chain.version   = strncmp(url, "https://", 8) ? 0 : (0x7fffffff & (((uint32_t) key(url)) << 16 | ((uint32_t) key(url + strlen(url) / 2)))); // hash the url, but set the last bit to 0
     w->request_count   = 1;
 
     clear_nodes(data);

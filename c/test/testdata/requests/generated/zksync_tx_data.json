@@ -35,6 +35,7 @@
       "to": "0x8c469877b27932abdd2313c4b6bf7cff5667fdb9",
       "nonce": 8724
     },
+    "success": true,
     "config": {
       "proof": "none",
       "experimental": true,

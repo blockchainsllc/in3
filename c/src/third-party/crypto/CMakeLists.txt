@@ -31,7 +31,10 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-
+string(REGEX MATCH "^[0-9]+" MAJOR_VERSION ${CMAKE_C_COMPILER_VERSION})
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND MAJOR_VERSION GREATER 12)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-null-pointer-subtraction")
+endif()
 
 set(CRYPTO_SRC 
   ecdsa.c
@@ -51,10 +54,7 @@ set(CRYPTO_SRC
   groestl.c
   pbkdf2.c
   rfc6979.c
-  aes/aes_modes.c
-  aes/aescrypt.c
-  aes/aeskey.c
-  aes/aestab.c
+
 
   bip39.c
 
@@ -84,7 +84,13 @@ endif()
 
 
 if (NOT ESP_IDF)
-    set(CRYPTO_SRC ${CRYPTO_SRC} hmac.c)
+    set(CRYPTO_SRC ${CRYPTO_SRC} 
+    hmac.c
+    aes/aes_modes.c
+    aes/aescrypt.c
+    aes/aeskey.c
+    aes/aestab.c    
+    )
 endif()
 
 add_static_library(

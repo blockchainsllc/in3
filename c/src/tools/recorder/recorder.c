@@ -40,13 +40,13 @@ typedef struct {
 
 static sb_t*      result = NULL;
 static recorder_t rec    = {
-    .transport  = NULL,
-    .f          = NULL,
-    .cache      = NULL,
-    .queue      = NULL,
-    .has_result = false,
-    .is_out     = false,
-    .time       = 0};
+       .transport  = NULL,
+       .f          = NULL,
+       .cache      = NULL,
+       .queue      = NULL,
+       .has_result = false,
+       .is_out     = false,
+       .time       = 0};
 
 static int rand_out(void* s) {
   UNUSED_VAR(s);
@@ -363,3 +363,8 @@ void recorder_exit(int code) {
 
   exit(code);
 }
+
+void recorder_request(char* req) { UNUSED_VAR(req); }
+void recorder_response(char* req) { UNUSED_VAR(req); }
+void recorder_error(char* req) { UNUSED_VAR(req); }
+void recorder_configure(char* conf) { UNUSED_VAR(conf); }

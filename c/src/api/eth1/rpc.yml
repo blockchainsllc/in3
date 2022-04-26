@@ -1,4 +1,14 @@
+# yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 types:
+  eth_accesslist:
+    address:
+      type: address
+      descr: the address of the contract
+    storageKeys:
+      array: true
+      type: bytes32
+      descr: list of storageKeys
+
   eth_internal_tx:
     op:
       descr: type of transaction or opcode used to send it (CALL, DELEGATECALL, STATICCALL, CALLCODE, ..)
@@ -62,87 +72,34 @@ types:
     data:
       descr: the data-section of the transaction
       type: bytes
-    signature:  
+    signature:
       descr: the 65 bytes signature
       type: bytes
       optional: true
-    chainId:  
+    chainId:
       descr: the chainId as encoded in the transaction. (only missing in legacy tx if EIP-155 is not used)
       type: uint64
       optional: true
-    v:  
+    v:
       descr: the recovery-byte. For legacy-tx ( this will be either + 27 or chain_id*2 + 35 - See EIP 155)
       type: bytes
       optional: true
-    r:  
+    r:
       descr: r-value of the sifgnature ( the R.y value)
       type: bytes32
       optional: true
-    s:  
-      descr: s-value of the sifgnature 
+    s:
+      descr: s-value of the sifgnature
       type: bytes32
       optional: true
-    publicKey:  
+    publicKey:
       descr: the public Key of the sender as 64 bytes
       type: bytes
       optional: true
-    unsigned:  
+    unsigned:
       descr: the raw unsigned transaction to extract the hash for the signature
       type: bytes
       optional: true
-
-  keyparams:
-    version:
-      descr: the version
-      type: string
-    id:
-      descr: the id
-      type: string
-    address:
-      descr: the address
-      type: string
-    crypto:
-      descr: the cryptoparams
-      type: cryptoParams
-
-  cryptoParams:
-    ciphertext:
-      descr: the cipher text
-      type: string
-    cipherparams:
-      descr: the cipherparams
-      type: cipherParams
-    cipher:
-      descr: the cipher
-      type: string
-    kdf:
-      descr: the kdf
-      type: string
-    kdfparams:
-      descr: the kdfparams
-      type: kdfParams
-    mac:
-      descr: the mac
-      type: string
-
-  cipherParams:
-    iv:
-      descr: the iv
-      type: string
-
-  kdfParams:
-    dklen:
-      descr: the dklen
-      type: uint64
-    salt:
-      descr: the salt
-      type: string
-    c:
-      descr: the c
-      type: uint64
-    prf:
-      descr: the prf
-      type: string
 
 utils:
   descr: |
@@ -155,12 +112,12 @@ utils:
       signature:
         type: string
         descr: the signature of the function. e.g. `getBalance(uint256)`. The format is the same as used by solidity to create the functionhash. optional you can also add the return type, which in this case is ignored.
-      params:
+      parameters:
         type: any
         array: true
         descr: a array of arguments. the number of arguments must match the arguments in the signature.
     result:
-      type: hex
+      type: string
       descr: the ABI-encoded data as hex including the 4 byte function-signature. These data can be used for `eth_call` or to send a transaction.
     example:
       request:
@@ -207,17 +164,17 @@ utils:
       descr: a array with the values after decodeing. The result is either a hex-string or an array.
     example:
       request:
-        - '0xf83b808508e1409836829c40a86161616135663833353262373034623139653362616338373262343866326537663639356662653681ff82bbbb018080'
+        - "0xf83b808508e1409836829c40a86161616135663833353262373034623139653362616338373262343866326537663639356662653681ff82bbbb018080"
       response:
-        -  "0x"
-        -  "0x08e1409836"
-        -  "0x9c40"
-        -  "0x61616161356638333532623730346231396533626163383732623438663265376636393566626536"
-        -  "0xff"
-        -  "0xbbbb"
-        -  "0x01"
-        -  "0x"
-        -  "0x"
+        - "0x"
+        - "0x08e1409836"
+        - "0x9c40"
+        - "0x61616161356638333532623730346231396533626163383732623438663265376636393566626536"
+        - "0xff"
+        - "0xbbbb"
+        - "0x01"
+        - "0x"
+        - "0x"
 
   in3_decodeTx:
     sync: true
@@ -231,26 +188,26 @@ utils:
       descr: the decoded transaction.
     example:
       request:
-        - '0x02f8b0013f8459682f008518c2cdf18982bcbb940...edbc296ce'
+        - "0x02f8b0013f8459682f008518c2cdf18982bcbb940...edbc296ce"
       response:
         type: 2
-        hash: '0x0a7f5daa71ad3e0115cae737559d14cdf914510a6a19c16267b8d5142d82de42'
-        chainId: '0x1'
-        nonce: '0x3f'
-        maxPriorityFeePerGas: '0x59682f00'
-        maxFeePerGas: '0x18c2cdf189'
-        gas: '0xbcbb'
-        to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
-        value: '0x0'
-        data: '0x1896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        hash: "0x0a7f5daa71ad3e0115cae737559d14cdf914510a6a19c16267b8d5142d82de42"
+        chainId: "0x1"
+        nonce: "0x3f"
+        maxPriorityFeePerGas: "0x59682f00"
+        maxFeePerGas: "0x18c2cdf189"
+        gas: "0xbcbb"
+        to: "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e"
+        value: "0x0"
+        data: "0x1896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41"
         accessList: []
         v: 0x
-        r: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b06587798'
-        s: '0x37b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce'
-        unsigned: '0x02f86d013f8459682f008518c2cdf18982bcbb9400000000000c2e074ec69a0dfb2997ba6c7d2e1e80b8441896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41c0'
-        signature: '0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b0658779837b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce00'
-        publicKey: '0x63cfcd2900a37247214361d0ca3637980af8e4b64acdf2f1e1b11573b502b576df4387cbf6f94c6cdc750e3aaa23026c5b0cef0f3bb2f5bb42c093ec394fd1bb'
-        from: '0xd034648eaea1d29f4e9cfa8312feff9783f31fd4'
+        r: "0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b06587798"
+        s: "0x37b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce"
+        unsigned: "0x02f86d013f8459682f008518c2cdf18982bcbb9400000000000c2e074ec69a0dfb2997ba6c7d2e1e80b8441896f70a978895d45a43dc4d455ecd98702a630d6acce4393cec9bdd412ffebe687ddf820000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41c0"
+        signature: "0x22b7c68abd0d362b0682fb5047e82d4b47acd4f5dc1f1b3556af0a8b0658779837b4f0d22ec65fad0920d9b24ef1b6b0c088afa20ace41f79188bd1edbc296ce00"
+        publicKey: "0x63cfcd2900a37247214361d0ca3637980af8e4b64acdf2f1e1b11573b502b576df4387cbf6f94c6cdc750e3aaa23026c5b0cef0f3bb2f5bb42c093ec394fd1bb"
+        from: "0xd034648eaea1d29f4e9cfa8312feff9783f31fd4"
 
   in3_checksumAddress:
     sync: true
@@ -272,31 +229,13 @@ utils:
         - false
       response: "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
 
-  in3_parse_tx_url:
-    descr: parse a ethereum-url based on EIP 681 (https://eips.ethereum.org/EIPS/eip-681)
-    params:
-      url:
-        descr: the url with the tx-params
-        type: string
-    result:
-      type: tx_input
-    example:
-      request:
-        - ethereum:0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7/transfer?address=0x8e23ee67d1332ad560396262c48ffbb01f93d052&uint256=1
-      response:
-        to: '0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7'
-        fn_sig: transfer(address,uint256)
-        fn_args:
-          - '0x8e23ee67d1332ad560396262c48ffbb01f93d052'
-          - 1
-
   in3_toWei:
     sync: true
     descr: converts the given value into wei.
     params:
       value:
         descr: the value, which may be floating number as string
-        type: string | uint
+        type: string
         example: "0.9"
       unit:
         descr: the unit of the value, which must be one of `wei`, `kwei`,  `Kwei`,  `babbage`,  `femtoether`,  `mwei`,  `Mwei`,  `lovelace`,  `picoether`,  `gwei`,  `Gwei`,  `shannon`,  `nanoether`,  `nano`,  `szabo`,  `microether`,  `micro`,  `finney`,  `milliether`,  `milli`,  `ether`,  `eth`,  `kether`,  `grand`,  `mether`,  `gether` or  `tether`
@@ -329,7 +268,7 @@ utils:
         optional: true
     result:
       descr: the value as string.
-      type: float
+      type: double
     example:
       request:
         - "0x234324abadefdef"
@@ -405,7 +344,7 @@ account:
     params:
       msg:
         descr: the message the signature is based on.
-        type: hex
+        type: string
       sig:
         descr: the 65 bytes signature as hex.
         type: bytes
@@ -455,7 +394,7 @@ account:
     params:
       tx:
         descr: the raw unsigned transactiondata
-        type: hex
+        type: string
       from:
         descr: the account to sign
         type: address
@@ -473,10 +412,10 @@ account:
     params:
       msg:
         descr: the message to sign.
-        type: hex
+        type: string
       account:
         descr: the account to sign if the account is a bytes32 it will be used as private key
-        type: address | bytes32
+        type: bytes
       msgType:
         descr: "the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data)"
         type: string
@@ -614,29 +553,28 @@ account:
     example:
       request:
         - "0x8f78eb6e9916a4f187b6761d67f56bf6a828b6f197c7443b753e404efa21c8b1"
-      response: 
+      response:
         - op: CALL
-          to: '0x1'
-          value: '0x0'
-          from: '0x7be8076f4ea4a4ad08075c2508e481d6c946d12b'
+          to: "0x1"
+          value: "0x0"
+          from: "0x7be8076f4ea4a4ad08075c2508e481d6c946d12b"
           depth: 1
-          gas: '0x277854'
+          gas: "0x277854"
         - op: DELEGATECALL
-          to: '0xf9e266af4bca5890e2781812cc6a6e89495a79f2'
+          to: "0xf9e266af4bca5890e2781812cc6a6e89495a79f2"
           value:
-          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          from: "0xd3441e016ea14fd66ebd6a44ead7aac261dd6425"
           depth: 2
-          gas: '0x181525'
+          gas: "0x181525"
         - op: CALL
-          to: '0xa5409ec958c83c3f309868babaca7c86dcb077c1'
-          value: '0x0'
-          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          to: "0xa5409ec958c83c3f309868babaca7c86dcb077c1"
+          value: "0x0"
+          from: "0xd3441e016ea14fd66ebd6a44ead7aac261dd6425"
           depth: 3
-          gas: '0x170850'
+          gas: "0x170850"
         - op: CALL
-          to: '0x64dc7f3624a1456a7ba52025fcfddf428fff92e0'
-          value: '0x0'
-          from: '0xd3441e016ea14fd66ebd6a44ead7aac261dd6425'
+          to: "0x64dc7f3624a1456a7ba52025fcfddf428fff92e0"
+          value: "0x0"
+          from: "0xd3441e016ea14fd66ebd6a44ead7aac261dd6425"
           depth: 3
-          gas: '0x169426'
-
+          gas: "0x169426"

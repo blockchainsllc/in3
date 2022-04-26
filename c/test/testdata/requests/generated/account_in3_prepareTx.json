@@ -12,6 +12,7 @@
       ]
     },
     "result": "0xe48080829c409463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080",
+    "success": true,
     "config": {
       "proof": "none"
     },
@@ -38,6 +39,7 @@
       ]
     },
     "result": "0xe480808252089463f666a23cbd135a91187499b5cc51d589c302a085010000000080018080",
+    "success": true,
     "config": {
       "proof": "none"
     },

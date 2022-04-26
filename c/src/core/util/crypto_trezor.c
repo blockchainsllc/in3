@@ -138,7 +138,35 @@ static in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* p
     default: return IN3_ENOTSUP;
   }
 }
+static in3_ret_t convert_to_der(in3_curve_type_t type, bytes_t src, uint8_t* dst, int* dst_len) {
+  bytes_t id;
+  uint8_t prefix[2] = {0};
+  switch (type) {
+    case ECDSA_SECP256K1:
+      id = bytes((void*) "\x30\x10\x06\x07\x2A\x86\x48\xCE\x3D\x02\x01\x06\x05\x2B\x81\x04\x00\x0A", 18); // sequence of ecPublicKey and secp256k1
+      if (src.len != 64) return IN3_EINVAL;
+      prefix[1] = 4;
+      break;
 
+    case EDDSA_ED25519:
+      id = bytes((void*) "\x30\x10\x06\x07\x2A\x86\x48\xCE\x3D\x02\x01\x06\x05\x2B\x81\x04\x00\x0A", 18); // sequence of ecPublicKey and secp256k1
+      if (src.len != 32) return IN3_EINVAL;
+      prefix[1] = 4;
+      break;
+
+    default: return IN3_ENOTSUP;
+  }
+
+  dst[0]          = 0x30;                 // sequence
+  dst[1]          = 4 + src.len + id.len; // length
+  dst[2 + id.len] = 0x03;                 // BIT STRING
+  dst[3 + id.len] = 2 + src.len;          // len+2
+  memcpy(dst + 2, id.data, id.len);
+  memcpy(dst + 4 + id.len, prefix, 2);
+  memcpy(dst + 6 + id.len, src.data, src.len);
+  *dst_len = 6 + id.len + src.len;
+  return IN3_OK;
+}
 in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, bytes_t src, uint8_t* dst, int* dst_len) {
   switch (type) {
     case ECDSA_SECP256K1:
@@ -153,6 +181,7 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
           if (dst_len) *dst_len = l;
           return l >= 0 ? IN3_OK : IN3_EINVAL;
         }
+        case CONV_PUB64_TO_DER: return convert_to_der(type, src, dst, dst_len);
         default: return IN3_ENOTSUP;
       }
     case EDDSA_ED25519:
@@ -167,6 +196,7 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
           return IN3_ENOTSUP;
 #endif
         }
+        case CONV_PUB64_TO_DER: return convert_to_der(type, src, dst, dst_len);
         default: return IN3_ENOTSUP;
       }
     default: return IN3_ENOTSUP;
@@ -225,8 +255,16 @@ in3_ret_t mnemonic_verify(const char* mnemonic) {
 }
 
 in3_ret_t aes_128_ctr_decrypt(uint8_t* aeskey, bytes_t cipher, uint8_t* iv_data, bytes32_t dst) {
+#ifdef ESP_IDF
+  UNUSED_VAR(aeskey);
+  UNUSED_VAR(cipher);
+  UNUSED_VAR(iv_data);
+  UNUSED_VAR(dst);
+  return IN3_ENOTSUP;
+#else
   aes_init();
   aes_encrypt_ctx cx[1];
   aes_encrypt_key128(aeskey, cx);
   return aes_ctr_decrypt(cipher.data, dst, cipher.len, iv_data, aes_ctr_cbuf_inc, cx) ? IN3_EPASS : IN3_OK;
+#endif
 }

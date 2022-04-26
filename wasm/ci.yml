@@ -34,7 +34,7 @@ test_asmjs:
 
 
 wasm:
-  image: docker.slock.it/build-images/cmake:clang13
+  image: docker.slock.it/build-images/cmake:clang14
   needs: []
   stage: bindings
   tags:
