@@ -459,7 +459,7 @@ in3_ret_t parse_decimal(char* val, int l, bytes32_t target, size_t* target_len) 
   if (!e) e = strchr(input, 'E');
   if (e) {
     char*         p;
-    unsigned long exp = strtoul(e, &p, 10);
+    unsigned long exp = strtoul(e + 1, &p, 10);
     if (p != input + l) return IN3_EINVAL;
     l = e - input;
     p = strchr(input, '.');
@@ -475,7 +475,6 @@ in3_ret_t parse_decimal(char* val, int l, bytes32_t target, size_t* target_len) 
       if ((p - input) + exp > 79) return IN3_EINVAL;
       memmove(p, p + 1, e - p - 1);
       if (((p + exp) - input) > l) memset(input + l, '0', (p + exp) - input - l);
-      l      = (p + exp) - input;
       p[exp] = 0;
     }
   }
