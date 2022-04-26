@@ -278,8 +278,18 @@ function handle_config(conf, pre, title, descr) {
     }
 }
 
+function check_extension(api) {
+    const aconf = api_conf[api]
+    if (aconf.extension) {
+        const fields = check_extension(aconf.extension.toLowerCase())
+        if (fields) aconf.fields = { ...fields, ...aconf.fields }
+    }
+    return aconf.fields
+}
+
 async function main() {
     for (let s of src_dirs) await scan(s)
+    Object.keys(api_conf).forEach(check_extension)
     docs.config.in3_config.params.config.type = config
     rpc_doc.push('# API RPC\n\n')
     rpc_doc.push('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
@@ -288,11 +298,10 @@ async function main() {
     const sorted_rpcs = []
     for (const s of Object.keys(docs).sort()) {
         const rpcs = docs[s]
-        const rdescr = rpcs.descr
+        const rdescr = api_conf[s].descr
 
         rpc_doc.push("## " + s + "\n\n")
         if (rdescr) rpc_doc.push(rdescr + '\n')
-        delete rpcs.descr
 
         for (const rpc of Object.keys(rpcs).sort()) {
             const def = rpcs[rpc]
