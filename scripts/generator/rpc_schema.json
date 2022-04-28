@@ -285,7 +285,7 @@
                     "description": "if true it will let the scripts/build_rpc.sh to generate the _rpc.c and _rpc.h file for the given api",
                     "oneOf": [
                         {
-                            "$ref": "#/$def/generate_rpc"
+                            "$ref": "#/$defs/generate_rpc"
                         },
                         {
                             "type": "boolean"
