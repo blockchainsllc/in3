@@ -1,39 +1,40 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3-example-espidf
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
 #include "block_number.h"
 #include "cJSON.h"
+#include "esp_netif.h"
 #include "esp_system.h"
 #include "eth_call.h"
 #include "freertos/FreeRTOS.h"
@@ -53,6 +54,7 @@
 #include <in3/stringbuilder.h>  // stringbuilder tool for dynamic memory string handling
 #include <in3/utils.h>
 #include <sys/param.h>
+#include <esp_netif.h>          // //Functions for network interface moved to ESP-NETIF from v4.1 onwards.
 
 static const char* REST_TAG = "esp-rest";
 // in3 client
@@ -108,7 +110,7 @@ void eth_call(void) {
   address_t contract;
   // setup lock access contract address to be excuted with eth_call
   hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
-  //ask for the access to the lock
+  // ask for the access to the lock
   json_ctx_t* response = eth_call_fn(c, contract, BLKNUM_LATEST(), "hasAccess():bool");
   if (!response) {
     ESP_LOGI(REST_TAG, "Could not get the response: %s", eth_last_error());
@@ -141,7 +143,7 @@ void app_main() {
   // esp_err_t error = heap_caps_register_failed_alloc_callback(heap_caps_alloc_failed_hook);
 
   nvs_flash_init();
-  tcpip_adapter_init();
+  esp_netif_init();	//Migration of TCP/IP Adapter network interface to its successor ESP-NETIF from v4.1 onwards.  
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   // execute evm call for in3
   xTaskCreate(in3_task_evm, "uTask", 1024 * 100, NULL, 7, NULL);
