@@ -383,12 +383,12 @@ public class IN3 {
 
   // Test it
   public static void main(String[] args) {
-    IN3          in3     = new IN3(Chain.GOERLI);
-    SimpleWallet wallet  = new SimpleWallet();
-    String       pk      = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
-    String       address = wallet.addRawKey(pk);
-    byte[] res           = wallet.sign("1e194c68360307cfb715bf17878791ad1ced8da7d2e5f42b691074c577f41eac",
-                                       address, SignatureType.eth_sign, PayloadType.PL_SIGN_ETHTX, null);
+    IN3          in3      = new IN3(Chain.GOERLI);
+    SimpleWallet wallet   = new SimpleWallet();
+    String       pk       = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
+    String       signerId = wallet.addRawKey(pk);
+    byte[] res            = wallet.sign("1e194c68360307cfb715bf17878791ad1ced8da7d2e5f42b691074c577f41eac",
+                                        signerId, SignatureType.eth_sign, PayloadType.PL_SIGN_ETHTX, null);
 
     System.out.println(res);
   }
