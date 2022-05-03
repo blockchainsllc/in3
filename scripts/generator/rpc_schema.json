@@ -222,6 +222,47 @@
             "type": "object",
             "description": "a API Definition",
             "properties": {
+                "api": {
+                    "$ref": "#/$defs/api_conf"
+                }
+            },
+            "additionalProperties": {
+                "$ref": "#/$defs/func"
+            }
+        },
+        "generate_rpc": {
+            "type": "object",
+            "properties": {
+                "openapi": {
+                    "type": "string",
+                    "description": "the url or filepath to the openapi-definition"
+                },
+                "structs": {
+                    "type": "boolean",
+                    "description": "if true structs will be generated, false means only d_token_t will be used"
+                },
+                "validate": {
+                    "type": "boolean",
+                    "description": "if true, objects will be validated, otherwise it will only be checked if the type is correct"
+                },
+                "send_macro": {
+                    "type": "string",
+                    "description": "name of the macro which will be used when sending http-request. default: HTTP_SEND"
+                },
+                "custom": {
+                    "description": "thr properties of this object are the names of the generated functions which need to be customized. the alias-property will give them a new name. other properties like `skipAPI` will skip it completly or `skipGenerate` will allow a manual implementation of pregenerated header.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/$defs/func"
+                    }
+                }
+            }
+        },
+        "api_conf": {
+            "type": "object",
+            "description": "a API Definition",
+            "additionalProperties": false,
+            "properties": {
                 "descr": {
                     "type": "string",
                     "description": "the API- Description in Markdown"
@@ -240,50 +281,26 @@
                         "$ref": "#/$defs/property"
                     }
                 },
-                "_generate_rpc": {
+                "generate_rpc": {
                     "description": "if true it will let the scripts/build_rpc.sh to generate the _rpc.c and _rpc.h file for the given api",
                     "oneOf": [
                         {
-                            "type": "object",
-                            "properties": {
-                                "openapi": {
-                                    "type": "string",
-                                    "description": "the url or filepath to the openapi-definition"
-                                },
-                                "structs": {
-                                    "type": "boolean",
-                                    "description": "if true structs will be generated, false means only d_token_t will be used"
-                                },
-                                "validate": {
-                                    "type": "boolean",
-                                    "description": "if true, objects will be validated, otherwise it will only be checked if the type is correct"
-                                },
-                                "send_macro": {
-                                    "type": "string",
-                                    "description": "name of the macro which will be used when sending http-request. default: HTTP_SEND"
-                                },
-                                "custom": {
-                                    "type": "object",
-                                    "additionalProperties": {
-                                        "$ref": "#/$defs/func"
-                                    }
-                                }
-                            }
+                            "$ref": "#/$defs/generate_rpc"
                         },
                         {
                             "type": "boolean"
                         }
                     ]
                 },
-                "_extensionVar": {
+                "extensionVar": {
                     "type": "string",
                     "description": "if set, the extension will get a property pointing to this Api with the specified property"
                 },
-                "_extension": {
+                "extension": {
                     "type": "string",
                     "description": "if set API-name which will get the extension-var pointing to this api."
                 },
-                "_examplePath": {
+                "examplePath": {
                     "type": "object",
                     "additionalProperties": false,
                     "description": "for the examples this should be used for the path to the api.",
@@ -302,7 +319,7 @@
                         }
                     }
                 },
-                "_sdk_getter": {
+                "sdk_getter": {
                     "type": "object",
                     "additionalProperties": false,
                     "description": "if set the generated SDK will hold a getter for this API (defaults: true). If the value is not a boolean, it specifies the code to be used.",
@@ -360,9 +377,6 @@
                         }
                     }
                 }
-            },
-            "additionalProperties": {
-                "$ref": "#/$defs/func"
             }
         },
         "func": {

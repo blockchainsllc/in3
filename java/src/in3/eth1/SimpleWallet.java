@@ -61,17 +61,17 @@ public class SimpleWallet extends Signer {
   }
 
   /**
-   * adds a key to the wallet and returns its public address.
+   * adds a key to the wallet and returns its signer id.
    */
   public String addRawKey(String data) {
-    String address = getAddressFromKey(data);
-    // create address
-    privateKeys.put(address.toLowerCase(), data);
-    return address;
+    String signerId = getAddressFromKey(data);
+    // create signer id
+    privateKeys.put(signerId.toLowerCase(), data);
+    return signerId;
   }
 
   /**
-   * adds a key to the wallet and returns its public address.
+   * adds a key to the wallet and returns its signer id.
    */
   public String addKeyStore(String jsonData, String passphrase) {
     String data = decodeKeystore(jsonData, passphrase);

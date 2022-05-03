@@ -1,133 +1,134 @@
 # yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 nodelist:
-  descr: special Incubed nodelist-handling functions. Most of those are only used internally.
+  api:
+    descr: special Incubed nodelist-handling functions. Most of those are only used internally.
 
-  # config
-  config:
-    autoUpdateList:
-      type: bool
-      optional: true
-      descr: if true the nodelist will be automaticly updated if the lastBlock is newer.
-      example: false
-      default: true
+    # config
+    config:
+      autoUpdateList:
+        type: bool
+        optional: true
+        descr: if true the nodelist will be automaticly updated if the lastBlock is newer.
+        example: false
+        default: true
 
-    signatureCount:
-      descr: number of signatures requested in order to verify the blockhash.
-      type: int
-      optional: true
-      example: 2
-      default: 1
-      cmd: s
+      signatureCount:
+        descr: number of signatures requested in order to verify the blockhash.
+        type: int
+        optional: true
+        example: 2
+        default: 1
+        cmd: s
 
-    bootWeights:
-      descr: if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
-      type: bool
-      optional: true
-      example: true
-      default: true
-      cmd: bw
+      bootWeights:
+        descr: if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+        type: bool
+        optional: true
+        example: true
+        default: true
+        cmd: bw
 
-    useHttp:
-      descr: if true the client will try to use http instead of https.
-      type: bool
-      optional: true
-      example: true
-      default: false
+      useHttp:
+        descr: if true the client will try to use http instead of https.
+        type: bool
+        optional: true
+        example: true
+        default: false
 
-    minDeposit:
-      descr: min stake of the server. Only nodes owning at least this amount will be chosen.
-      type: uint256
-      optional: true
-      example: 10000000
+      minDeposit:
+        descr: min stake of the server. Only nodes owning at least this amount will be chosen.
+        type: uint256
+        optional: true
+        example: 10000000
 
-    nodeProps:
-      descr: used to identify the capabilities of the node.
-      type: string
-      optional: true
-      example: "0xffff"
+      nodeProps:
+        descr: used to identify the capabilities of the node.
+        type: string
+        optional: true
+        example: "0xffff"
 
-    requestCount:
-      descr: the number of request send in parallel when getting an answer. More request will make it more expensive, but increase the chances to get a faster answer, since the client will continue once the first verifiable response was received.
-      type: int
-      optional: true
-      example: 3
-      default: 2
-      cmd:
-        - rc
+      requestCount:
+        descr: the number of request send in parallel when getting an answer. More request will make it more expensive, but increase the chances to get a faster answer, since the client will continue once the first verifiable response was received.
+        type: int
+        optional: true
+        example: 3
+        default: 2
+        cmd:
+          - rc
 
-    rpc:
-      descr: url of one or more direct rpc-endpoints to use. (list can be comma seperated). If this is used, proof will automaticly be turned off.
-      type: string
-      optional: true
-      example: http://loalhost:8545
+      rpc:
+        descr: url of one or more direct rpc-endpoints to use. (list can be comma seperated). If this is used, proof will automaticly be turned off.
+        type: string
+        optional: true
+        example: http://loalhost:8545
 
-    nodes:
-      descr: defining the nodelist. collection of JSON objects with chain Id (hex string) as key.
-      optional: true
-      example:
-        contract: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
-        nodeList:
-          - address: "0x45d45e6ff99e6c34a235d263965910298985fcfe"
-            url: "https://in3-v2.slock.it/mainnet/nd-1"
-            props: "0xFFFF"
-      type:
-        contract:
-          descr: address of the registry contract. (This is the data-contract!)
-          optional: true
-          type: address
+      nodes:
+        descr: defining the nodelist. collection of JSON objects with chain Id (hex string) as key.
+        optional: true
+        example:
+          contract: "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+          nodeList:
+            - address: "0x45d45e6ff99e6c34a235d263965910298985fcfe"
+              url: "https://in3-v2.slock.it/mainnet/nd-1"
+              props: "0xFFFF"
+        type:
+          contract:
+            descr: address of the registry contract. (This is the data-contract!)
+            optional: true
+            type: address
 
-        whiteListContract:
-          descr: address of the whiteList contract. This cannot be combined with whiteList!
-          type: address
-          optional: true
+          whiteListContract:
+            descr: address of the whiteList contract. This cannot be combined with whiteList!
+            type: address
+            optional: true
 
-        whiteList:
-          descr: manual whitelist.
-          type: address
-          array: true
-          optional: true
+          whiteList:
+            descr: manual whitelist.
+            type: address
+            array: true
+            optional: true
 
-        registryId:
-          descr: identifier of the registry.
-          type: bytes32
-          optional: true
+          registryId:
+            descr: identifier of the registry.
+            type: bytes32
+            optional: true
 
-        needsUpdate:
-          descr: if set, the nodeList will be updated before next request.
-          type: bool
-          optional: true
+          needsUpdate:
+            descr: if set, the nodeList will be updated before next request.
+            type: bool
+            optional: true
 
-        avgBlockTime:
-          descr: average block time (seconds) for this chain.
-          type: int
-          optional: true
+          avgBlockTime:
+            descr: average block time (seconds) for this chain.
+            type: int
+            optional: true
 
-        verifiedHashes:
-          descr: if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
-          optional: true
-          array: true
-          type:
-            block:
-              descr: block number
-              type: uint64
-            hash:
-              descr: verified hash corresponding to block number.
-              type: bytes32
+          verifiedHashes:
+            descr: if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
+            optional: true
+            array: true
+            type:
+              block:
+                descr: block number
+                type: uint64
+              hash:
+                descr: verified hash corresponding to block number.
+                type: bytes32
 
-        nodeList:
-          descr: manual nodeList. As Value a array of Node-Definitions is expected.
-          optional: true
-          array: true
-          type:
-            url:
-              descr: URL of the node.
-              type: string
-            address:
-              descr: address of the node
-              type: string
-            props:
-              descr: used to identify the capabilities of the node (defaults to 0xFFFF).
-              type: string
+          nodeList:
+            descr: manual nodeList. As Value a array of Node-Definitions is expected.
+            optional: true
+            array: true
+            type:
+              url:
+                descr: URL of the node.
+                type: string
+              address:
+                descr: address of the node
+                type: string
+              props:
+                descr: used to identify the capabilities of the node (defaults to 0xFFFF).
+                type: string
 
   # Verified RPCs
   in3_nodeList:

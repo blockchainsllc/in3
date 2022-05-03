@@ -27,33 +27,33 @@ namespace In3.Crypto
         /// Adds a private key to be managed by the wallet and sign transactions.
         /// </summary>
         /// <param name="privateKey">The private key to be stored by the wallet.</param>
-        /// <returns>The address derived from the <paramref name="privateKey" /></returns>
+        /// <returns>The signer id derived from the <paramref name="privateKey" /></returns>
         public string AddRawKey(string privateKey)
         {
-            string address = GetAddress(privateKey);
-            PrivateKeys.Add(address.ToLower(), privateKey);
-            return address;
+            string signerId = GetAddress(privateKey);
+            PrivateKeys.Add(signerId.ToLower(), privateKey);
+            return signerId;
         }
 
         /// <summary>
-        /// Check if this address is managed by this wallet.
+        /// Check if this signer id is managed by this wallet.
         /// </summary>
-        /// <param name="address">The address. Value returned by <see cref="SimpleWallet.AddRawKey" />.</param>
-        /// <returns><see langword="true" /> if the address is managed by this wallter, <see langword="false" /> if not.</returns>
-        public bool CanSign(string address)
+        /// <param name="signerId">The signer id. Value returned by <see cref="SimpleWallet.AddRawKey" />.</param>
+        /// <returns><see langword="true" /> if the signer id is managed by this wallet, <see langword="false" /> if not.</returns>
+        public bool CanSign(string signerId)
         {
-            return PrivateKeys.ContainsKey(address);
+            return PrivateKeys.ContainsKey(signerId);
         }
 
         /// <summary>
         /// Signs the transaction data by invoking <see cref="Crypto.Api.SignData" />.
         /// </summary>
         /// <param name="data">Data to be signed.</param>
-        /// <param name="address">Address managed by the wallet, see <see cref="SimpleWallet.AddRawKey" /></param>
+        /// <param name="signerId">Signer Id managed by the wallet, see <see cref="SimpleWallet.AddRawKey" /></param>
         /// <returns>Signed transaction data.</returns>
-        public Task<string> Sign(string data, string address)
+        public Task<string> Sign(string data, string signerId)
         {
-            string key = PrivateKeys[address.ToLower()];
+            string key = PrivateKeys[signerId.ToLower()];
             return Task.Run(() => NativeWallet.Sign(key, data));
         }
 

@@ -102,8 +102,9 @@ types:
       optional: true
 
 utils:
-  descr: |
-    a Collection of utility-function.
+  api:
+    descr: |
+      a Collection of utility-function.
 
   in3_abiEncode:
     sync: true
@@ -303,10 +304,11 @@ utils:
       type: uint64
 
 account:
-  descr: |
-    Account Handling includes handling signers and preparing and signing transacrtion and data.
+  api:
+    descr: |
+      Account Handling includes handling signers and preparing and signing transacrtion and data.
 
-    Signers are Plugins able to create signatures. Those functions will use the registered plugins.
+      Signers are Plugins able to create signatures. Those functions will use the registered plugins.
 
   in3_pk2address:
     sync: true

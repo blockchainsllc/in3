@@ -218,122 +218,123 @@ types:
               optional: true
 
 zksync:
-  descr: |
-    *Important: This feature is still experimental and not considered stable yet. In order to use it, you need to set the experimental-flag (-x on the comandline or `"experimental":true`!*
+  api:
+    descr: |
+      *Important: This feature is still experimental and not considered stable yet. In order to use it, you need to set the experimental-flag (-x on the comandline or `"experimental":true`!*
 
-    the zksync-plugin is able to handle operations to use [zksync](https://zksync.io/) like deposit transfer or withdraw. Also see the #in3-config on how to configure the zksync-server or account.
+      the zksync-plugin is able to handle operations to use [zksync](https://zksync.io/) like deposit transfer or withdraw. Also see the #in3-config on how to configure the zksync-server or account.
 
-    Also in order to sign messages you need to set a signer!
+      Also in order to sign messages you need to set a signer!
 
-    All zksync-methods can be used with `zksync_` or `zk_` prefix.
+      All zksync-methods can be used with `zksync_` or `zk_` prefix.
 
-  # config
-  config:
-    zksync:
-      descr: configuration for zksync-api  ( only available if build with `-DZKSYNC=true`, which is on per default).
-      example:
-        - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
-          sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
-          signer_type: contract
-        - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
-          sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
-          signer_type: create2
-          create2:
-            creator: "0x6487c3ae644703c1f07527c18fe5569592654bcb"
-            saltarg: "0xb90306e2391fefe48aa89a8e91acbca502a94b2d734acc3335bb2ff5c266eb12"
-            codehash: "0xd6af3ee91c96e29ddab0d4cb9b5dd3025caf84baad13bef7f2b87038d38251e5"
-        - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
-          signer_type: pk
-          musig_pub_keys: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d8160x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
-          sync_key: "0xe8f2ee64be83c0ab9466b0490e4888dbf5a070fd1d82b567e33ebc90457a5734"
+    # config
+    config:
+      zksync:
+        descr: configuration for zksync-api  ( only available if build with `-DZKSYNC=true`, which is on per default).
+        example:
+          - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
+            sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
+            signer_type: contract
+          - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
+            sync_key: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
+            signer_type: create2
+            create2:
+              creator: "0x6487c3ae644703c1f07527c18fe5569592654bcb"
+              saltarg: "0xb90306e2391fefe48aa89a8e91acbca502a94b2d734acc3335bb2ff5c266eb12"
+              codehash: "0xd6af3ee91c96e29ddab0d4cb9b5dd3025caf84baad13bef7f2b87038d38251e5"
+          - account: "0x995628aa92d6a016da55e7de8b1727e1eb97d337"
+            signer_type: pk
+            musig_pub_keys: "0x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d8160x9ad89ac0643ffdc32b2dab859ad0f9f7e4057ec23c2b17699c9b27eff331d816"
+            sync_key: "0xe8f2ee64be83c0ab9466b0490e4888dbf5a070fd1d82b567e33ebc90457a5734"
+            musig_urls:
+              - null
+              - "https://approver.service.com"
+
+        type:
+          provider_url:
+            descr: url of the zksync-server (if not defined it will be choosen depending on the chain)
+            type: string
+            optional: true
+            default: https://api.zksync.io/jsrpc
+            cmd: zks
+
+          rest_api:
+            descr: url of the zksync rest api (if not defined it will be choosen depending on the chain)
+            type: string
+            optional: true
+            example: https://rinkeby-api.zksync.io/api/v0.1/
+            cmd: zkr
+
+          account:
+            descr: the account to be used. if not specified, the first signer will be used.
+            type: address
+            optional: true
+            cmd: zka
+
+          sync_key:
+            descr: the seed used to generate the sync_key. This way you can explicitly set the pk instead of derriving it from a signer.
+            type: bytes32
+            optional: true
+            cmd: zsk
+
+          main_contract:
+            descr: address of the main contract- If not specified it will be taken from the server.
+            type: address
+            optional: true
+
+          signer_type:
+            descr: type of the account. Must be either `pk`(default), `contract` (using contract signatures) or `create2` using the create2-section.
+            type: string
+            enum:
+              pk: Private matching the account is used ( for EOA)
+              contract: Contract Signature  based EIP 1271
+              create2: create2 optionas are used
+
+            optional: true
+            default: pk
+            cmd: zkat
+
+          musig_pub_keys:
+            descr: concatenated packed public keys (32byte) of the musig signers. if set the pubkey and pubkeyhash will based on the aggregated pubkey. Also the signing will use multiple keys.
+            type: bytes
+            optional: true
+            cmd: zms
+
           musig_urls:
-            - null
-            - "https://approver.service.com"
+            descr: a array of strings with urls based on the `musig_pub_keys`. It is used so generate the combined signature by exchaing signature data (commitment and signatureshares) if the local client does not hold this key.
+            type: string
+            array: true
+            optional: true
+            nullable: true
+            cmd: zmu
 
-      type:
-        provider_url:
-          descr: url of the zksync-server (if not defined it will be choosen depending on the chain)
-          type: string
-          optional: true
-          default: https://api.zksync.io/jsrpc
-          cmd: zks
+          create2:
+            descr: create2-arguments for sign_type `create2`. This will allow to sign for contracts which are not deployed yet.
+            cmd: zc2
+            optional: true
+            type:
+              creator:
+                descr: The address of contract or EOA deploying the contract ( for example the GnosisSafeFactory )
+                type: address
+              saltarg:
+                descr: a salt-argument, which will be added to the pubkeyhash and create the create2-salt.
+                type: bytes32
+              codehash:
+                descr: the hash of the actual deploy-tx including the constructor-arguments.
+                type: bytes32
 
-        rest_api:
-          descr: url of the zksync rest api (if not defined it will be choosen depending on the chain)
-          type: string
-          optional: true
-          example: https://rinkeby-api.zksync.io/api/v0.1/
-          cmd: zkr
+          verify_proof_method:
+            descr: rpc-method, which will be used to verify the incomming proof before cosigning.
+            type: string
+            cmd: zvpm
+            optional: true
 
-        account:
-          descr: the account to be used. if not specified, the first signer will be used.
-          type: address
-          optional: true
-          cmd: zka
-
-        sync_key:
-          descr: the seed used to generate the sync_key. This way you can explicitly set the pk instead of derriving it from a signer.
-          type: bytes32
-          optional: true
-          cmd: zsk
-
-        main_contract:
-          descr: address of the main contract- If not specified it will be taken from the server.
-          type: address
-          optional: true
-
-        signer_type:
-          descr: type of the account. Must be either `pk`(default), `contract` (using contract signatures) or `create2` using the create2-section.
-          type: string
-          enum:
-            pk: Private matching the account is used ( for EOA)
-            contract: Contract Signature  based EIP 1271
-            create2: create2 optionas are used
-
-          optional: true
-          default: pk
-          cmd: zkat
-
-        musig_pub_keys:
-          descr: concatenated packed public keys (32byte) of the musig signers. if set the pubkey and pubkeyhash will based on the aggregated pubkey. Also the signing will use multiple keys.
-          type: bytes
-          optional: true
-          cmd: zms
-
-        musig_urls:
-          descr: a array of strings with urls based on the `musig_pub_keys`. It is used so generate the combined signature by exchaing signature data (commitment and signatureshares) if the local client does not hold this key.
-          type: string
-          array: true
-          optional: true
-          nullable: true
-          cmd: zmu
-
-        create2:
-          descr: create2-arguments for sign_type `create2`. This will allow to sign for contracts which are not deployed yet.
-          cmd: zc2
-          optional: true
-          type:
-            creator:
-              descr: The address of contract or EOA deploying the contract ( for example the GnosisSafeFactory )
-              type: address
-            saltarg:
-              descr: a salt-argument, which will be added to the pubkeyhash and create the create2-salt.
-              type: bytes32
-            codehash:
-              descr: the hash of the actual deploy-tx including the constructor-arguments.
-              type: bytes32
-
-        verify_proof_method:
-          descr: rpc-method, which will be used to verify the incomming proof before cosigning.
-          type: string
-          cmd: zvpm
-          optional: true
-
-        create_proof_method:
-          descr: rpc-method, which will be used to create the proof needed for cosigning.
-          type: string
-          cmd: zcpm
-          optional: true
+          create_proof_method:
+            descr: rpc-method, which will be used to create the proof needed for cosigning.
+            type: string
+            cmd: zcpm
+            optional: true
 
   # rpc
   zksync_contract_address:

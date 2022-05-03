@@ -59,7 +59,7 @@ files.forEach(file => {
 })
 
 Object.keys(apis).forEach(api => {
-    Object.keys(apis[api]).filter(_ => !_.startsWith('_') && _ != 'fields' && _ != 'descr' && _ != 'config' && !apis[api][_].has_test).forEach(func => {
+    Object.keys(apis[api]).filter(_ => _ != 'api' && !apis[api][_].has_test).forEach(func => {
         console.error(`Warning : The ${func}  has no testdata `)
     })
 

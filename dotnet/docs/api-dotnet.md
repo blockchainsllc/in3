@@ -3015,7 +3015,7 @@ Adds a private key to be managed by the wallet and sign transactions.
 
 ###### Returns
 
-The address derived from the `privateKey`
+An identifer for the signer related to the `privateKey`
 
 ###### Parameters
 
@@ -3029,7 +3029,7 @@ Check if this address is managed by this wallet.
 
 ###### Returns
 
-`true` if the address is managed by this wallter, `false` if not.
+`true` if the address is managed by this wallet, `false` if not.
 
 ###### Parameters
 

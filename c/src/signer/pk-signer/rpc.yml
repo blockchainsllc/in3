@@ -54,32 +54,33 @@ types:
       type: string
 
 account:
-  # config
-  config:
-    key:
-      type: bytes32
-      descr: the client key to sign requests. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
-      example: "0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"
-      optional: true
-      cmd: k
+  api:
+    # config
+    config:
+      key:
+        type: bytes32
+        descr: the client key to sign requests. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
+        example: "0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"
+        optional: true
+        cmd: k
 
-    pk:
-      type: bytes32
-      array: true
-      descr: registers raw private keys as signers for transactions. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
-      example:
-        ["0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"]
-      optional: true
-      cmd: pk
+      pk:
+        type: bytes32
+        array: true
+        descr: registers raw private keys as signers for transactions. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
+        example:
+          ["0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"]
+        optional: true
+        cmd: pk
 
-    pk_ed25519:
-      type: bytes32
-      array: true
-      descr: registers raw private keys as signers for ed25519 transactions. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
-      example:
-        ["0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"]
-      optional: true
-      cmd: pk_ed25519
+      pk_ed25519:
+        type: bytes32
+        array: true
+        descr: registers raw private keys as signers for ed25519 transactions. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
+        example:
+          ["0xc9564409cbfca3f486a07996e8015124f30ff8331fc6dcbd610a050f1f983afe"]
+        optional: true
+        cmd: pk_ed25519
 
   # RPC
   in3_addRawKey:
@@ -94,7 +95,7 @@ account:
         type: string
         optional: true
     result:
-      descr: the address or public key of given key.
+      descr: the unique identifier for the sdk of given key.
       type: bytes
     example:
       request:
@@ -167,17 +168,22 @@ account:
       response:
         - "0xd66a0C40d3d8B245211C7E174f89CA3a5bA93795"
 
-  eth_accounts:
+  signer_ids:
     sync: true
     descr: |
-      returns a array of account-addresss the incubed client is able to sign with. 
+      returns a array of signer_ids the client is able to sign with. 
 
-      In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the addresses of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
+      In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the signer_ids of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
     result:
-      descr: the array of addresses of all registered signers.
+      descr: the array of signer_ids of all registered signers.
       array: true
       type: address
     example:
       response:
         - "0x2e988a386a799f506693793c6a5af6b54dfaabfb"
         - "0x93793c6a5af6b54dfaabfb2e988a386a799f5066"
+
+  eth_accounts:
+    sync: true
+    alias: signer_ids
+
