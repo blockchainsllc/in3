@@ -87,7 +87,7 @@ static char* get_key_str(json_ctx_t* ctx, d_key_t k) {
   return !ctx || !ctx->keys || !k || k > ctx->keys_last ? NULL : ((char*) ctx->keys + (int) k);
 }
 
-static d_key_t add_key(json_ctx_t* ctx, const char* name, size_t len) {
+d_key_t d_add_key(json_ctx_t* ctx, const char* name, size_t len) {
   if (!ctx->keys) return keyn(name, len);
   d_key_t found = get_key(ctx, name, len);
   if (found) return found;
@@ -417,7 +417,7 @@ static NONULL int parse_key(json_ctx_t* jp) {
     switch (*(jp->c++)) {
       case 0: return JSON_E_INVALID_CHAR;
       case '"':
-        r = add_key(jp, start, jp->c - start - 1);
+        r = d_add_key(jp, start, jp->c - start - 1);
         return next_char(jp) == ':' ? r : -2;
       case '\\':
         jp->c++;

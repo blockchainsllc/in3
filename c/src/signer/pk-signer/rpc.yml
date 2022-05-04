@@ -53,7 +53,7 @@ types:
       descr: the prf
       type: string
 
-account:
+signers:
   api:
     # config
     config:

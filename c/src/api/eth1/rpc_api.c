@@ -101,7 +101,9 @@ static in3_ret_t in3_abiDecode(in3_rpc_handle_ctx_t* ctx) {
   if (error) return req_set_error(ctx->req, error, IN3_EINVAL);
 
   // create response
-  in3_rpc_handle_with_json(ctx, result->result);
+  char* json = d_create_json(result, result->result);
+  in3_rpc_handle_with_string(ctx, json);
+  _free(json);
   if (result) json_free(result);
   return IN3_OK;
 }
