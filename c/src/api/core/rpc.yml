@@ -154,7 +154,7 @@ utils:
       response:
         success: true
 
-account:
+signers:
   in3_createKey:
     sync: true
     descr: |
