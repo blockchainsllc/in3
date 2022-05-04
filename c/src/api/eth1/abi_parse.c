@@ -59,7 +59,7 @@ static abi_coder_t* create_coder(char* token, char** error) {
     start_number            = token + (coder->data.number.sign ? 5 : 6);
     char* x                 = strchr(token, 'x');
 #ifdef __clang_analyzer__
-    *start_number = 0; // the analyser is able to understand, that start_number can noot point to a garbage-value.
+    *start_number = 0; // the analyser is able to understand, that start_number can not point to a garbage-value.
 #endif
     if (!*start_number) {
       coder->data.number.n    = 18;
@@ -121,10 +121,19 @@ static abi_coder_t* create_array(char* val, abi_coder_t* el, char** error, char*
   return abi_error(error, "missing end braces in array", NULL);
 }
 
+int abi_chars_len(char* s) {
+  int c = 0;
+  while ((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') || (*s >= '0' && *s <= '9') || *s == '_') {
+    s++;
+    c++;
+  }
+  return c;
+}
+
 static abi_coder_t* create_tuple(char* val, char** error, char** next) {
   bool braces = *val == '(';
   if (braces) val++;
-  char         token[40];
+  char         token[100];
   int          tl    = 0;
   abi_coder_t* tuple = _calloc(1, sizeof(abi_coder_t));
   tuple->type        = ABI_TUPLE;
@@ -132,7 +141,7 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
 
   for (char c = *val; !*error; c = *(++val)) {
     if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
-      if (tl == 40) return abi_error(error, "toke too long", tuple);
+      if (tl == 100) return abi_error(error, "token too long", tuple);
       token[tl++] = c;
       continue;
     }
@@ -153,7 +162,7 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
       coder = create_tuple(val, error, &val);
       c     = *(++val);
     }
-    else if (c != ',' && c != ' ' && c != ' ' && c && c != ')')
+    else if (c != ',' && c != ' ' && c && c != ')')
       return abi_error(error, "invalid character", tuple);
 
     if (c == '[' && !*error) {
@@ -171,6 +180,13 @@ static abi_coder_t* create_tuple(char* val, char** error, char** next) {
     }
 
     if (coder) {
+      while (*val == ' ') val++;
+      int namelen = abi_chars_len(val);
+      if (namelen) {
+        coder->name = val;
+        val += namelen;
+        c = *val;
+      }
       coder->indexed                                        = indexed;
       indexed                                               = false;
       tuple->data.tuple.components                          = tuple->data.tuple.len
@@ -247,11 +263,25 @@ void abi_sig_free(abi_sig_t* c) {
   _free(c);
 }
 
+char* find_end(char* str) {
+  char* src = str;
+  for (int level = 0; *str; str++) {
+    if (*str == '(')
+      level++;
+    else if (*str == ')' && level == 1)
+      return str;
+    else if (*str == ')')
+      level--;
+  }
+  return src;
+}
+
 abi_sig_t* abi_sig_create(char* signature, char** error) {
   *error            = NULL;
   char* input_start = strchr(signature, '(');
   if (!input_start) input_start = signature;
-  char* output_start = strchr(signature, ':');
+  char* input_end    = *input_start == '(' ? find_end(input_start) : signature;
+  char* output_start = strchr(input_end, ':');
   output_start       = output_start && output_start[1] ? output_start + 1 : NULL;
 
   abi_sig_t* sig    = _calloc(1, sizeof(abi_sig_t));

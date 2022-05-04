@@ -183,7 +183,8 @@ function create_fn(config, method, path, def) {
 
 
     const fn = (config.api[fn_name] = {
-        descr: def.description || def.summary
+        descr: def.description || def.summary,
+        _generate_impl: impl_openapi
     })
 
     fn._generate_openapi = { path, method }
@@ -220,7 +221,6 @@ function create_fn(config, method, path, def) {
 }
 
 
-
 exports.generate_openapi = async function (config) {
     config.data = await getDef(config)
     Object.keys(config.data.paths).forEach(_ =>
@@ -245,4 +245,66 @@ if (require.main === module) {
         console.log(yaml.stringify({ types, id: api }))
     }, console.error)
 
+}
+
+
+
+function impl_add_param(res, qname, pdef, ind) {
+    const name = snake_case(qname)
+
+    if (pdef.array) {
+        res.push(`${ind}for (d_iterator_t iter = d_iter(${name}); iter.left; d_iter_next(&iter))`)
+        switch (pdef.type) {
+            case 'string': res.push(`${ind}    sb_add_params(&_path, "${qname}=%s", d_string(iter.token));`); break
+            case 'uint32': res.push(`${ind}    sb_add_params(&_path, "${qname}=%u", d_int(iter.token));`); break
+            default: throw new Error('invalid type in array ' + pdef.type + ' for ' + name)
+        }
+        return
+    }
+    switch (pdef.type) {
+        case 'string': res.push(`${ind}sb_add_params(&_path, "${qname}=%s", ${name});`); break
+        case 'uint32': res.push(`${ind}sb_add_params(&_path, "${qname}=%u", ${name});`); break
+        default: res.push(`${ind}sb_add_json(&_path, "", ${qname});`); break
+
+    }
+}
+
+
+
+function impl_openapi(fn, state) {
+    const def = fn._generate_openapi
+    const send = (state.generate_rpc || {}).send_macro || 'HTTP_SEND'
+    const res = [`${send}("${def.method.toUpperCase()}",`]
+    const parts = def.path.split('/')
+    const args = []
+    const ind = "".padStart(send.length + 1, ' ')
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i].startsWith('{')) {
+            const arg = snake_case(parts[i].substring(1, parts[i].length - 1))
+            const pdef = fn.params[arg]
+            if (!pdef)
+                throw new Error('missing parameter in path ' + arg)
+            args.push(arg)
+            switch (pdef.type) {
+                case 'string': parts[i] = '%s'; break
+                case 'uint32': parts[i] = '%u'; break
+                default: throw new Error('invalid type in path ' + pdef.type + ' for ' + arg)
+            }
+        }
+    }
+    if (args.length) res[res.length - 1] += ` sb_printx(&_path, "${parts.join('/')}", ${args.join(', ')});`
+    else res[res.length - 1] += ` sb_add_chars(&_path, "${parts.join('/')}");`
+    for (let q of def.query || []) {
+        const pdef = fn.params[snake_case(q)]
+        if (!pdef) throw new Error('missing query parameter in path ' + q)
+        impl_add_param(res, q, pdef, ind)
+    }
+    if (def.body) switch (fn.params[def.body].type) {
+        case 'string': res.push(`${ind}sb_add_chars(&_data, ${def.body});`); break
+        case 'uint32': res.push(`${ind}sb_add_int(&_data, ${def.body});`); break
+        default: res.push(`${ind}sb_add_json(&_data, "", ${def.body});`);
+    }
+
+    res[res.length - 1] += ')'
+    return res
 }

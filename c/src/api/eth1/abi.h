@@ -32,10 +32,11 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../core/util/bytes.h"
-#include "../../core/util/data.h"
 #ifndef _ETH_API__ABI2_H_
 #define _ETH_API__ABI2_H_
+#include "../../core/client/plugin.h"
+#include "../../core/util/bytes.h"
+#include "../../core/util/data.h"
 
 /**
  * the type of data structured use in the signature-
@@ -57,6 +58,7 @@ typedef enum {
  */
 typedef struct signature {
   abi_coder_type_t type;    /**< the type of the coder */
+  char*            name;    /**< the name in case of a named tubles*/
   bool             indexed; /**< marks a tuple as being indexed, which is relevant for event decoding */
   union {
     struct {
@@ -170,5 +172,44 @@ json_ctx_t* abi_decode_event(
     char**     error   /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
 
 );
+
+/**
+ * calls a smart contract function.
+ * if successful the result will contain a json-ctx with the decoded result.
+ * You must free the result with json_free() after usage!
+ */
+in3_ret_t abi_call(in3_rpc_handle_ctx_t* ctx, json_ctx_t** result, address_t to, char* sig, ...);
+
+/**
+ * generates the bytes to encode the arguments
+ */
+bytes_t abi_encode_args(in3_rpc_handle_ctx_t* ctx, char* sig, ...);
+
+/**
+ * sends a ethcall and encodes the result as json
+ */
+#define SEND_ETH_CALL(ctx, to, sig, ...)                                                   \
+  {                                                                                        \
+    json_ctx_t* result = NULL;                                                             \
+    TRY_CATCH(abi_call(ctx, &result, to, sig, __VA_ARGS__), if (result) json_free(result)) \
+    char* json = d_create_json(result, result->result);                                    \
+    json_free(result);                                                                     \
+    in3_rpc_handle_with_string(ctx, json);                                                 \
+    _free(json);                                                                           \
+    return IN3_OK;                                                                         \
+  }
+/**
+ * sends a ethcall and encodes the result as json
+ */
+#define SEND_ETH_CALL_NO_ARGS(ctx, to, sig)                                   \
+  {                                                                           \
+    json_ctx_t* result = NULL;                                                \
+    TRY_CATCH(abi_call(ctx, &result, to, sig), if (result) json_free(result)) \
+    char* json = d_create_json(result, result->result);                       \
+    json_free(result);                                                        \
+    in3_rpc_handle_with_string(ctx, json);                                    \
+    _free(json);                                                              \
+    return IN3_OK;                                                            \
+  }
 
 #endif // _ETH_API__ABI_H_

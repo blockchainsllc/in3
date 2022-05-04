@@ -52,6 +52,7 @@ add_static_library(
     abi_parse.c
     abi_encode.c
     abi_decode.c
+    abi_call.c
     key.c 
     rpc_api.c 
     ens.c

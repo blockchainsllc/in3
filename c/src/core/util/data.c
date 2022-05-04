@@ -774,29 +774,26 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
         dst[s.len] = 0;
       }
       else {
-        sb_t* sb = sb_new(d_type(item) == T_ARRAY ? "[" : "{");
+        sb_t sb = {0};
+        sb_add_char(&sb, d_type(item) == T_ARRAY ? '[' : '{');
         for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
           char* p = d_create_json(ctx, it.token);
-          if (sb->len > 1) sb_add_char(sb, ',');
+          if (sb.len > 1) sb_add_char(&sb, ',');
           if (d_type(item) == T_OBJECT) {
             char* kn = d_get_keystr(ctx, it.token->key);
-            if (kn) {
-              sb_add_char(sb, '"');
-              sb_add_chars(sb, kn);
-              sb_add_chars(sb, "\":");
-            }
+            if (kn)
+              sb_printx(&sb, "\"%s\":", kn);
             else {
               char tmp[8];
               sprintf(tmp, "\"%04x\":", (uint32_t) it.token->key);
-              sb_add_chars(sb, tmp);
+              sb_add_chars(&sb, tmp);
             }
           }
-          sb_add_chars(sb, p);
+          sb_add_chars(&sb, p);
           _free(p);
         }
-        sb_add_char(sb, d_type(item) == T_ARRAY ? ']' : '}');
-        dst = sb->data;
-        _free(sb);
+        sb_add_char(&sb, d_type(item) == T_ARRAY ? ']' : '}');
+        dst = sb.data;
       }
       return dst;
     case T_BOOLEAN:

@@ -2,6 +2,7 @@
   "dependencies": {
     "axios": "^0.26.1",
     "jsonschema": "^1.4.0",
+    "solc": "^0.8.13",
     "yaml": "^1.10.2"
   }
 }

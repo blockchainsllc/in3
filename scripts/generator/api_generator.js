@@ -305,7 +305,7 @@ function validate(def, val, req, propname) {
     if (def.enum) {
         const vals = Array.isArray(def.enum) ? def.enum : Object.keys(def.enum)
         res.push('if (' + val + ' && ' + vals.map(_ => `strcmp(${val}, "${_}")`).join(' && ') + ')')
-        res.push('  return rpc_throw(' + req + ', "%s must be one of %s", "${propname}", "' + vals.join(', ') + '");')
+        res.push('  return rpc_throw(' + req + ', "%s must be one of %s", "' + propname + '", "' + vals.join(', ') + '");')
     }
 
     if (def.validate) def = def.validate
@@ -429,63 +429,7 @@ function align_vars(src_items, ind, del = ' ', reverse) {
     })]
 }
 
-function impl_add_param(res, qname, pdef, ind) {
-    const name = snake_case(qname)
 
-    if (pdef.array) {
-        res.push(`${ind}for (d_iterator_t iter = d_iter(${name}); iter.left; d_iter_next(&iter))`)
-        switch (pdef.type) {
-            case 'string': res.push(`${ind}    sb_add_params(&_path, "${qname}=%s", d_string(iter.token));`); break
-            case 'uint32': res.push(`${ind}    sb_add_params(&_path, "${qname}=%u", d_int(iter.token));`); break
-            default: throw new Error('invalid type in array ' + pdef.type + ' for ' + name)
-        }
-        return
-    }
-    switch (pdef.type) {
-        case 'string': res.push(`${ind}sb_add_params(&_path, "${qname}=%s", ${name});`); break
-        case 'uint32': res.push(`${ind}sb_add_params(&_path, "${qname}=%u", ${name});`); break
-        default: res.push(`${ind}sb_add_json(&_path, "", ${qname});`); break
-
-    }
-}
-
-function impl_openapi(fn, state) {
-    const def = fn._generate_openapi
-    const send = (state.generate_rpc || {}).send_macro || 'HTTP_SEND'
-    const res = [`${send}("${def.method.toUpperCase()}",`]
-    const parts = def.path.split('/')
-    const args = []
-    const ind = "".padStart(send.length + 1, ' ')
-    for (let i = 0; i < parts.length; i++) {
-        if (parts[i].startsWith('{')) {
-            const arg = snake_case(parts[i].substring(1, parts[i].length - 1))
-            const pdef = fn.params[arg]
-            if (!pdef)
-                throw new Error('missing parameter in path ' + arg)
-            args.push(arg)
-            switch (pdef.type) {
-                case 'string': parts[i] = '%s'; break
-                case 'uint32': parts[i] = '%u'; break
-                default: throw new Error('invalid type in path ' + pdef.type + ' for ' + arg)
-            }
-        }
-    }
-    if (args.length) res[res.length - 1] += ` sb_printx(&_path, "${parts.join('/')}", ${args.join(', ')});`
-    else res[res.length - 1] += ` sb_add_chars(&_path, "${parts.join('/')}");`
-    for (let q of def.query || []) {
-        const pdef = fn.params[snake_case(q)]
-        if (!pdef) throw new Error('missing query parameter in path ' + q)
-        impl_add_param(res, q, pdef, ind)
-    }
-    if (def.body) switch (fn.params[def.body].type) {
-        case 'string': res.push(`${ind}sb_add_chars(&_data, ${def.body});`); break
-        case 'uint32': res.push(`${ind}sb_add_int(&_data, ${def.body});`); break
-        default: res.push(`${ind}sb_add_json(&_data, "", ${def.body});`);
-    }
-
-    res[res.length - 1] += ')'
-    return res
-}
 
 function generate_rpc(path, api_name, rpcs, descr, state) {
     const types = state.types
@@ -535,14 +479,25 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
     let header_converter_pos = header.findIndex(_ => _ == `#include "${api_name}.h"\n`) + 1
     const type_includes = []
 
+    let checked_prefix = null
+
 
 
     Object.keys(rpcs).forEach(rpc_name => {
+        if (checked_prefix === null) checked_prefix = rpc_name
+        else {
+            for (let n = 0; n < checked_prefix.length; n++) {
+                if (checked_prefix[n] != rpc_name[n]) {
+                    checked_prefix = checked_prefix.substring(0, n)
+                    break;
+                }
+            }
+        }
         let prefix = ''
 
         const r = rpcs[rpc_name];
         const params = []
-        const direct_impl = !!r._generate_openapi && !r.skipGenerate
+        const direct_impl = !r.skipGenerate && r._generate_impl
         const code = {
             pre: [],
             read: [],
@@ -582,7 +537,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
                 code.checks.forEach(_ => impl.push('  ' + _))
             }
             if (direct_impl)
-                impl_openapi(r, state).forEach(_ => impl.push('  ' + _))
+                direct_impl(r, state, type_includes).forEach(_ => impl.push('  ' + _))
             else
                 impl.push(`\n  return ${rpc_name}(${use_conf ? 'conf, ' : ''}ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
             impl.push('}\n')
@@ -611,9 +566,9 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
     impl.push(comment('', 'handle rpc-requests and delegate execution'));
     impl.push(`in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx) {
             `);
-    impl.push(`  if (strncmp(ctx->method, "${api_name}_", ${api_name.length + 1})) return IN3_EIGNORE; \n`)
+    if (checked_prefix) impl.push(`  if (strncmp(ctx->method, "${checked_prefix}", ${checked_prefix.length})) return IN3_EIGNORE; \n`)
     rpc_exec.forEach(_ => impl.push(_))
-    if (fs.readdirSync(path + '/..').filter(_ => _.startsWith(api_name)).length > 1)
+    if (!checked_prefix || fs.readdirSync(path + '/..').filter(_ => _.startsWith(api_name)).length > 1)
         impl.push(`  return IN3_EIGNORE; `)
     else
         impl.push(`  return rpc_throw(ctx->req, "unknown %s method", "${api_name}"); `)
