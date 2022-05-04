@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
+int              abi_chars_len(char* s);
 static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool as_array, bytes_t* topics, char** error);
 
 static in3_ret_t next_word(int* offset, bytes_t* data, uint8_t** dst, char** error) {
@@ -28,8 +28,9 @@ static in3_ret_t next_word(int* offset, bytes_t* data, uint8_t** dst, char** err
 }
 
 static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int* data_read, char** error) {
-  uint8_t* word = NULL;
-  int      pos  = 0;
+  uint8_t* word     = NULL;
+  int      pos      = 0;
+  int      json_pos = res->len;
   switch (c->type) {
     case ABI_ADDRESS: {
       TRY(next_word(&pos, &data, &word, error))
@@ -83,7 +84,8 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
       break;
     }
     case ABI_TUPLE:
-      return decode_tuple(c, data, res, data_read, true, NULL, error);
+      TRY(decode_tuple(c, data, res, data_read, true, NULL, error))
+      break;
     case ABI_ARRAY: {
       int len = c->data.array.len;
       if (!len) {
@@ -107,12 +109,19 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
   }
 
   if (data_read) *data_read = pos;
+  if (c->name) {
+    if (!res->keys) res->keys = _calloc(1, 128);
+    res->result[json_pos].key = d_add_key(res, c->name, abi_chars_len(c->name));
+  }
   return IN3_OK;
 }
 
 static in3_ret_t decode_tuple(abi_coder_t* tuple, bytes_t data, json_ctx_t* res, int* data_read, bool add_array, bytes_t* topics, char** error) {
   if (add_array) {
-    json_create_array(res);
+    if (tuple->type == ABI_TUPLE && tuple->data.tuple.components[0]->name)
+      json_create_object(res);
+    else
+      json_create_array(res);
     res->result[res->len - 1].len |= tuple->data.tuple.len;
   }
   uint8_t* word      = NULL;
