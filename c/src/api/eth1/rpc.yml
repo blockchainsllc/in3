@@ -303,7 +303,7 @@ utils:
       descr: the network id
       type: uint64
 
-account:
+signers:
   api:
     descr: |
       Account Handling includes handling signers and preparing and signing transacrtion and data.
