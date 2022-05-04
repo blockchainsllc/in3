@@ -298,7 +298,7 @@ async function main() {
     rpc_doc.push('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
     config_doc.push('# Configuration\n\n')
     config_doc.push('When creating a new Incubed Instance you can configure it. The Configuration depends on the registered plugins. This page describes the available configuration parameters.\n\n')
-    const sorted_rpcs = []
+    let sorted_rpcs = []
     for (const s of Object.keys(docs).sort()) {
         const rpcs = docs[s]
         const rdescr = api_conf[s].descr
@@ -408,15 +408,16 @@ async function main() {
         }
         console.log('generate ' + s + '\n   ' + Object.keys(rpcs).join('\n   '))
 
-        if (Object.values(rpcs).filter(_ => !_.skipApi).length)
-            sorted_rpcs.push({
-                api: s,
-                conf: api_conf[s],
-                rpcs,
-                descr: rdescr,
-                testCases: testCases[s]
-            })
+        //        if (Object.values(rpcs).filter(_ => !_.skipApi).length)
+        sorted_rpcs.push({
+            api: s,
+            conf: api_conf[s],
+            rpcs,
+            descr: rdescr,
+            testCases: testCases[s]
+        })
     }
+    sorted_rpcs = sorted_rpcs.filter(a => Object.values(a.rpcs).filter(_ => !_.skipApi).length || sorted_rpcs.find(_ => camelCaseLow(a.api) == camelCaseLow(_.conf.extension || '')))
     Object.keys(cmake_deps).forEach(m => { cmake_deps[m].depends = cmake_deps[m].depends.filter(_ => cmake_deps[_]) })
     generators.forEach(_ => _.generateAPI && sorted_rpcs.forEach(api => _.generateAPI(api.api, api.rpcs, api.descr, types, api.testCases, cmake)))
     generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs({ apis: sorted_rpcs, types, conf: cmake, cmake_deps, cmake_types }))

@@ -62,6 +62,13 @@ function create_sig(fn, includeNames, includeOutput) {
     }
     return sig
 }
+function fix_type(t) {
+    if (t.type && t.type.endsWith('[]')) {
+        t.type = t.type.substring(0, t.type.length - 2)
+        t.array = true
+    }
+    return t
+}
 function create_def(ctx) {
     const doc = ctx.contract.devdoc || {}
     const abi = ctx.contract.abi
@@ -80,7 +87,7 @@ function create_def(ctx) {
             solidity: { ctx, fn }
         }
         ctx.api[ctx.sol.prefix + '_' + snake_case(fn.name)] = def
-        fn.inputs.forEach(n => { def.params[n.name] = { type: n.internalType || n.type } })
+        fn.inputs.forEach(n => def.params[n.name] = fix_type({ type: n.internalType || n.type }))
         if (fn.stateMutability == 'view') {
             def.solidity.sig = create_sig(fn, true, true)
             def.result = {
@@ -90,7 +97,7 @@ function create_def(ctx) {
                 def.result.type = fn.outputs[0].type
             else {
                 def.result.type = {}
-                fn.inputs.forEach((n, i) => def.result.type[n.name || 'p' + (i + 1)] = { type: n.internalType || n.type, descr: n.name })
+                fn.inputs.forEach((n, i) => def.result.type[n.name || 'p' + (i + 1)] = fix_type({ type: n.internalType || n.type, descr: n.name }))
             }
         }
         else {
