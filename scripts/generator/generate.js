@@ -84,9 +84,15 @@ function check_depends(n) {
         ? !asArray(n.depends).find(_ => !cmake.modules[_])
         : true
 }
-function is_testcase(t) {
-    t = asArray(t)[0]
-    return t.expected_output !== undefined || t.expected_failure
+
+function add_testcase(k, t) {
+    const first = asArray(t)[0]
+    if (!first || (first.expected_output === undefined && first.expected_failure === undefined)) return false
+    if (!check_depends(t)) return false
+
+    if (testCases[k]) testCases[k] = [...asArray(testCases[k]), ...asArray(t)]
+    else testCases[k] = asArray(k)
+    return true
 }
 
 async function scan(dir) {
@@ -139,15 +145,8 @@ async function scan(dir) {
             console.error('parse ' + dir + '/' + f.name)
             const ob = yaml.parse(fs.readFileSync(dir + '/' + f.name, 'utf-8'))
             for (const k of Object.keys(ob)) {
-                for (const t of Object.keys(ob[k])) {
-                    if (!check_depends(ob[k][t])) {
-                        delete ob[k][t]
-                        console.error(`skipping ${k} :: ${t}`)
-                    }
-                    else if (testCases[k] && testCases[k][t] && is_testcase(testCases[k][t]))
-                        ob[k][t] = [...asArray(testCases[k][t]), ...asArray(ob[k][t])]  // merge testcases
-                }
-                testCases[k] = { ...testCases[k], ...ob[k] }
+                if (add_testcase(k, ob[k])) continue
+                for (const t of Object.keys(ob[k])) add_testcase(t, ob[k][t])
             }
         }
         else if (f.name == 'CMakeLists.txt') {
@@ -292,7 +291,9 @@ function check_extension(api) {
 
 async function main() {
     for (let s of src_dirs) await scan(s)
+    // do we have extensions?
     Object.keys(api_conf).forEach(check_extension)
+
     docs.config.in3_config.params.config.type = config
     rpc_doc.push('# API RPC\n\n')
     rpc_doc.push('This section describes the behavior for each RPC-method supported with incubed.\n\nThe core of incubed is to execute rpc-requests which will be send to the incubed nodes and verified. This means the available RPC-Requests are defined by the clients itself.\n\n')
@@ -406,15 +407,14 @@ async function main() {
             z += "'"
             zsh_cmds.push(z)
         }
-        console.log('generate ' + s + '\n   ' + Object.keys(rpcs).join('\n   '))
+        console.log('generate ' + s + '\n   ' + Object.keys(rpcs).map(k => k + (testCases[k] ? '' : ' '.padStart(70 - k.length) + ':: no testcase')).join('\n   '))
 
-        //        if (Object.values(rpcs).filter(_ => !_.skipApi).length)
         sorted_rpcs.push({
             api: s,
             conf: api_conf[s],
             rpcs,
             descr: rdescr,
-            testCases: testCases[s]
+            testCases: Object.keys(rpcs).filter(k => !!testCases[k]).reduce((p, v) => { p[v] = testCases[v]; return p }, {})
         })
     }
     sorted_rpcs = sorted_rpcs.filter(a => Object.values(a.rpcs).filter(_ => !_.skipApi).length || sorted_rpcs.find(_ => camelCaseLow(a.api) == camelCaseLow(_.conf.extension || '')))
