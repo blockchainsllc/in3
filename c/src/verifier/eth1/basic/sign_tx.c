@@ -373,8 +373,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   }
 
   if (meta) {
-    sb_add_rawbytes(meta, ",\"unsigned\":\"0x", *dst, 0);
-    sb_add_chars(meta, "\"");
+    sb_add_rawbytes(meta, ",\"unsigned\":[\"0x", *dst, 0);
+    sb_add_chars(meta, "\"]");
   }
 
   // cleanup subcontexts
