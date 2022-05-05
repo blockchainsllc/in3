@@ -113,7 +113,7 @@ in3_ret_t abi_call(in3_rpc_handle_ctx_t* ctx, json_ctx_t** ret, address_t to, ch
   char* tx_data = sprintx("{\"to\":\"%B\",\"data\":\"%B\"},\"latest\"", bytes(to, 20), data);
   _free(data.data);
 
-  TRY_CATCH(req_send_sub_request(ctx->req, "eth_call", tx_data, NULL, &result, NULL),
+  TRY_CATCH(req_send_sub_request(ctx->req, FN_ETH_CALL, tx_data, NULL, &result, NULL),
             abi_sig_free(s);
             _free(tx_data))
 
