@@ -310,7 +310,7 @@ static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
   }
 }
 
-static in3_ret_t eth_accounts(in3_rpc_handle_ctx_t* ctx) {
+static in3_ret_t signer_ids(in3_rpc_handle_ctx_t* ctx) {
   sb_t*                  sb    = in3_rpc_handle_start(ctx);
   bool                   first = true;
   in3_sign_account_ctx_t sc    = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0, .curve_type = SIGN_CURVE_ECDSA};
@@ -383,8 +383,11 @@ static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ADDMNEMONIC)
       TRY_RPC("in3_addMnemonic", in3_addMnemonic(ctx))
 #endif
-#if !defined(RPC_ONLY) || defined(RPC_ETH_ACCOUNTS)
-      TRY_RPC("eth_accounts", eth_accounts(ctx))
+#if !defined(RPC_ONLY) || defined(RPC_SIGNER_IDS)
+      TRY_RPC("signer_ids", signer_ids(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_SIGNER_IDS)
+      TRY_RPC("eth_accounts", signer_ids(ctx)) // Legacy RPC call. Please, use signer_ids instead
 #endif
       return IN3_EIGNORE;
     }
