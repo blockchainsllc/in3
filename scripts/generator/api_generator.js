@@ -577,7 +577,28 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
 
     //    fs.writeFileSync(path + `/${api_name}_rpc.c`, impl.join('\n'), 'utf8')
 }
+function sort_includes(lines) {
+    lines = lines.join('\n').split('\n')
+    let includes = lines.filter(_ => _.startsWith('#include '))
+    let pos = lines.findIndex(_ => _.startsWith('#include '))
+    if (pos >= 0 && includes.length) {
+        let a = includes.filter(_ => _.startsWith('#include ".'))
+        let b = includes.filter(_ => !_.startsWith('#include ".'))
 
+        a.sort((_a, _b) => _a.localeCompare(_b))
+        b.sort((_a, _b) => _a.localeCompare(_b))
+        includes = b.length && a.length ? [...b, '', ...a] : [...b, ...a]
+
+
+        lines = lines.filter(_ => !_.startsWith('#include '))
+        lines.splice(pos, 0, ...includes)
+    }
+
+    // remove duplicate empty lines
+    lines = lines.filter((l, i) => l.trim() || (i == 0 || lines[i - 1].trim()))
+    return lines
+
+}
 exports.generateAPI = function (api_name, rpcs, descr, types, testCases) {
     let ext = ''
     const typeMapping = {}
@@ -609,7 +630,7 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
         const api = p[p.length - 1].trim()
         generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files, generate_rpc: all[path][Object.keys(all[path])[0]].generate_rpc })
     })
-    Object.keys(files).forEach(file => fs.writeFileSync(file, files[file].lines.join('\n').split('\n').map(l => l.trimEnd()).join('\n'), 'utf8'))
+    Object.keys(files).forEach(file => fs.writeFileSync(file, sort_includes(files[file].lines).join('\n').split('\n').map(l => l.trimEnd()).join('\n'), 'utf8'))
 }
 
 function createTest(descr, method, tests, tc) {
