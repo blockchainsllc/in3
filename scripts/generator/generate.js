@@ -111,6 +111,7 @@ async function scan(dir) {
             for (const k of Object.keys(ob)) {
                 const apic = { ...api_conf[k], ...ob[k].api }
                 api_conf[k] = apic
+                if (!apic.api_dir || apic.descr) apic.api_dir = fullpath
                 const generate_rpc = apic.generate_rpc
                 delete apic.generate_rpc
                 delete ob[k].api

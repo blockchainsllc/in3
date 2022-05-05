@@ -46,7 +46,6 @@ extern "C" {
 #endif
 #include "client.h"
 #include "request.h"
-#include "rpcs.h"
 
 // ---------- plugin management -----------------
 

@@ -8,6 +8,8 @@
 #include "../../core/util/mem.h"
 #include "../../core/util/stringbuilder.h"
 #include "../../core/util/utils.h"
+#include "../../verifier/eth1/nano/rpcs.h"
+
 #include "abi.h"
 #include <stdbool.h>
 #include <stdint.h>

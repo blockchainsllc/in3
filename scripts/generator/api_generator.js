@@ -615,7 +615,9 @@ exports.generateAPI = function (api_name, rpcs, descr, types, testCases) {
 
 exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types }) {
     const all = {}
+    const dirs = {}
     apis.forEach(api => {
+        dirs[api.conf.api_dir] = [...(dirs[api.conf.api_dir] || []), api]
         Object.keys(api.rpcs).forEach(rpc => {
             const src = api.rpcs[rpc].src
             if (src) {
@@ -630,16 +632,31 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
         const api = p[p.length - 1].trim()
         generate_rpc(path, p[p.length - 1], all[path], p[p.length - 1] + ' module', { types, cmake_types, cmake_deps, files, generate_rpc: all[path][Object.keys(all[path])[0]].generate_rpc })
     })
-    if (fs.existsSync('../in3/c'))
-        files['../in3/c/src/core/client/rpcs.h'] = {
+
+    Object.keys(dirs).forEach(dir => {
+        let path = ''
+        let s = dir.split('/')
+        if (s.indexOf('in3') >= 0)
+            path = s.slice(s.indexOf('in3') + 3).map(_ => '../').join('') + 'core/client/request_internal.h'
+        else
+            path = '../../in3/c/src/core/client/request_internal.h'
+        const mod = '__RPC_' + dirs[dir][0].api.toUpperCase() + '_H'
+        const apis = dirs[dir]
+
+        files[dir + '/rpcs.h'] = {
             lines: [
-                ...compliance_header, '', '// list of availbale rpc-functions', '// @PUBLIC_HEADER', '#ifndef __RPCS_H', '#define __RPCS_H', '',
+                ...compliance_header, '', `#include "${path}"`, '', '// list of availbale rpc-functions', `#ifndef ${mod}`, `#define ${mod}`, '',
                 ...apis.reduce((result, api) => {
-                    Object.keys(api.rpcs || []).forEach(rpc => generate_rpc_define(rpc, api.rpcs[rpc], result))
+                    Object.keys(api.rpcs || []).filter(_ => !api.rpcs[_].alias).forEach(rpc => generate_rpc_define(rpc, api.rpcs[rpc], result))
                     return result
                 }, []),
                 '#endif']
         }
+    })
+
+
+
+
     Object.keys(files).forEach(file => fs.writeFileSync(file, sort_includes(files[file].lines).join('\n').split('\n').map(l => l.trimEnd()).join('\n'), 'utf8'))
 }
 
@@ -716,33 +733,30 @@ function generate_rpc_define(rpc, r, content) {
             case 'uint8_t*': return { p, def, t, fmt: '\\"%B\\"', arg: 'bytes(' + p + ', 20)', conv: 'd_bytes(' + p + ').data' }
             case 'uint64_t': return { p, def, t, fmt: '\\"%U\\"', arg: '(uint64_t)' + p, conv: 'd_long(' + p + ')' }
             case 'char*': return { p, def, t, fmt: '\\"%S\\"', arg: '(char*)' + p, conv: 'd_string(' + p + ')' }
-            default: return { p, def, t, fmt: '\\"%u\\"', arg: '(uint32_t)' + p, conv: '(uint32_t) d_long(' + p + ')' }
+            default: return { p, def, t: t || 'uint32_t', fmt: '\\"%u\\"', arg: '(uint32_t)' + p, conv: '(uint32_t) d_long(' + p + ')' }
         }
 
     }
     const params = Object.keys(r.params || {}).map(p => get_type(p, r.params[p]))
     const rt = get_type('res', r.result || {})
-    let macro = `#define TRY_CALL_${rpc.toUpperCase()}(ctx, _res${Object.keys(r.params || {}).map(_ => ', ' + _).join('')})\\\n  {\\`
-    if (rt.t == 'd_token_t*')
-        macro = macro.replace('ctx, _res', 'ctx, res')
+    const use_res = rt.t != 'd_token_t*'
+    let macro = `\nstatic inline in3_ret_t rpc_call_${rpc}(in3_rpc_handle_ctx_t* ctx, ${rt.t}* _res${params.map(_ => ', ' + _.t + ' ' + _.p).join('')}) {`
+    if (!use_res)
+        macro = macro.replace('ctx, d_token_t** _res', 'ctx, d_token_t** res')
     else
-        macro += '\n    d_token_t* res;\\'
+        macro += '\n  d_token_t* res = NULL;'
     if (params.length) {
-        macro += `\n    char*      jpayload = sprintx("${params.map(_ => _.fmt).join()}"${params.map(_ => _.arg).map(_ => ', ' + _).join('')});\\`
-        macro += `\n    in3_ret_t  r        = req_send_sub_request(ctx->req, FN_${rpc.toUpperCase()}, jpayload, NULL, &res, NULL);\\`
-        macro += `\n    _free(jpayload);\\`
+        macro += `\n  char*      jpayload = sprintx("${params.map(_ => _.fmt).join()}"${params.map(_ => ', ' + _.arg).join('')});`
+        macro += `\n  in3_ret_t  r        = req_send_sub_request(ctx->req, "${rpc}", jpayload, NULL, ${use_res ? '&' : ''}res, NULL);`
+        macro += `\n  _free(jpayload);`
     }
     else
-        macro += `\n    in3_ret_t  r        = req_send_sub_request(ctx->req, FN_${rpc.toUpperCase()}, "", NULL, &res, NULL);\\`
-    macro += `\n    if (r) return r;\\`
-    if (rt.t != 'd_token_t*')
-        macro += `\n    _res = ${rt.conv};\\`
-    macro += `\n  }`
+        macro += `\n  in3_ret_t  r        = req_send_sub_request(ctx->req, "${rpc}", "", NULL, ${use_res ? '&' : ''}res, NULL);`
+    if (use_res)
+        macro += `\n  if (!r) *_res = ${rt.conv};`
+    macro += `\n  return r;`
+    macro += `\n}`
 
-    let m = macro.split('\n')
-    let max = Math.max(...m.map(_ => _.length))
-    m.filter((l, i) => i != m.length - 1).forEach((l, i) => m[i] = l.substring(0, l.length - 1).padEnd(max) + '\\')
-    macro = '\n' + m.join('\n')
 
     let parameters = params.map(p => `${p.t} ${p.p} :  (${p.def.type}) ${(p.def.descr || p.p).split('\n').join('<brk>')}`)
     parameters = align_vars(parameters, '')
