@@ -91,7 +91,7 @@ function add_testcase(k, t) {
     if (!check_depends(t)) return false
 
     if (testCases[k]) testCases[k] = [...asArray(testCases[k]), ...asArray(t)]
-    else testCases[k] = asArray(k)
+    else testCases[k] = asArray(t)
     return true
 }
 
