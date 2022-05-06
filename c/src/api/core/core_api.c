@@ -128,11 +128,24 @@ static in3_ret_t in3_bip32(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t hash;
-  bytes_t   pk = {0};
+  bytes_t   pk      = {0};
+  int       words   = 24;
+  int       seedlen = 256;
   TRY_PARAM_GET_BYTES(pk, ctx, 0, 0, 0)
+  TRY_PARAM_GET_INT(words, ctx, 1, 24)
+
+  switch (words) {
+    case 24: seedlen = 256; break;
+    case 21: seedlen = 224; break;
+    case 18: seedlen = 192; break;
+    case 15: seedlen = 160; break;
+    case 12: seedlen = 128; break;
+    default: return rpc_throw(ctx->req, "The wordlen (%i) must be either 12,15,18,21 or 24", words);
+  }
+
   if (!pk.data) {
-    random_buffer(hash, 32);
-    pk = bytes(hash, 32);
+    random_buffer(hash, seedlen / 8);
+    pk = bytes(hash, seedlen / 8);
   }
 
   char* r = mnemonic_create(pk);
