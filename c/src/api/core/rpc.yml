@@ -213,7 +213,7 @@ account:
       words:
         descr: the number of words. it must one of 12, 15, 18, 21 or 24 (default). This number will also have an effect on the entropy or security.
         optional: true
-        type: bytes
+        type: uint32
     result:
       descr: a list of words based on bip39
       type: string
