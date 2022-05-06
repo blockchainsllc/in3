@@ -409,7 +409,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
 #elif defined(__ZEPHYR__)
-        k_sleep(timeout);
+        k_msleep(timeout);
 #else
         nanosleep((const struct timespec[]){{timeout / 1000, ((long) timeout % 1000) * 1000000L}}, NULL);
 #endif
