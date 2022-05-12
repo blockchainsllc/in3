@@ -367,8 +367,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
 
   // write state?
   if (meta) {
-    sb_add_rawbytes(meta, "},\"pre_unsigned\":\"0x", *dst, 0);
-    sb_add_chars(meta, "\"");
+    sb_add_rawbytes(meta, ",\"unsigned\":[\"0x", *dst, 0);
+    sb_add_chars(meta, "\"]");
   }
 
   // do we need to change it?
