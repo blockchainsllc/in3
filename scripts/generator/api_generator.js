@@ -731,27 +731,29 @@ function generate_rpc_define(rpc, r, content) {
             case 'bool': return { p, def, t, fmt: '%i', arg: '(int) ' + p, conv: 'd_int(' + p + ')' }
             case 'bytes_t': return { p, def, t, fmt: '\\"%B\\"', arg: '(bytes_t) ' + p, conv: 'd_bytes(' + p + ')' }
             case 'uint8_t*': return { p, def, t, fmt: '\\"%B\\"', arg: 'bytes(' + p + ', 20)', conv: 'd_bytes(' + p + ').data' }
-            case 'uint64_t': return { p, def, t, fmt: '\\"%U\\"', arg: '(uint64_t)' + p, conv: 'd_long(' + p + ')' }
-            case 'char*': return { p, def, t, fmt: '\\"%S\\"', arg: '(char*)' + p, conv: 'd_string(' + p + ')' }
-            default: return { p, def, t: t || 'uint32_t', fmt: '\\"%u\\"', arg: '(uint32_t)' + p, conv: '(uint32_t) d_long(' + p + ')' }
+            case 'uint64_t': return { p, def, t, fmt: '\\"%U\\"', arg: '(uint64_t) ' + p, conv: 'd_long(' + p + ')' }
+            case 'char*': return { p, def, t, fmt: '\\"%S\\"', arg: '(char*) ' + p, conv: 'd_string(' + p + ')' }
+            default: return { p, def, t: t || 'uint32_t', fmt: '\\"%u\\"', arg: '(uint32_t) ' + p, conv: '(uint32_t) d_long(' + p + ')' }
         }
 
     }
     const params = Object.keys(r.params || {}).map(p => get_type(p, r.params[p]))
     const rt = get_type('res', r.result || {})
     const use_res = rt.t != 'd_token_t*'
+    const aligned = []
     let macro = `\nstatic inline in3_ret_t rpc_call_${rpc}(in3_rpc_handle_ctx_t* ctx, ${rt.t}* _res${params.map(_ => ', ' + _.t + ' ' + _.p).join('')}) {`
     if (!use_res)
         macro = macro.replace('ctx, d_token_t** _res', 'ctx, d_token_t** res')
     else
-        macro += '\n  d_token_t* res = NULL;'
+        aligned.push('d_token_t* res = NULL;')
     if (params.length) {
-        macro += `\n  char*      jpayload = sprintx("${params.map(_ => _.fmt).join()}"${params.map(_ => ', ' + _.arg).join('')});`
-        macro += `\n  in3_ret_t  r        = req_send_sub_request(ctx->req, "${rpc}", jpayload, NULL, ${use_res ? '&' : ''}res, NULL);`
+        aligned.push(`char*      jpayload = sprintx("${params.map(_ => _.fmt).join()}"${params.map(_ => ', ' + _.arg).join('')});`)
+        aligned.push(`in3_ret_t  r        = req_send_sub_request(ctx->req, "${rpc}", jpayload, NULL, ${use_res ? '&' : ''}res, NULL);`)
+        macro += '\n' + align_vars(align_vars(aligned, '  '), '  ', '=').join('\n')
         macro += `\n  _free(jpayload);`
     }
     else
-        macro += `\n  in3_ret_t  r        = req_send_sub_request(ctx->req, "${rpc}", "", NULL, ${use_res ? '&' : ''}res, NULL);`
+        macro += '\n' + align_vars(align_vars([...aligned, `in3_ret_t  r = req_send_sub_request(ctx->req, "${rpc}", "", NULL, ${use_res ? '&' : ''}res, NULL);`], '  '), '  ', '=').join('\n')
     if (use_res)
         macro += `\n  if (!r) *_res = ${rt.conv};`
     macro += `\n  return r;`
