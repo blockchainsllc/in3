@@ -47,7 +47,7 @@
  *   - d_token_t* : ([object Object]) fetches the contract addresses from the zksync server. This request also caches them and will return the results from cahe if available.
  */
 static inline in3_ret_t rpc_call_zksync_contract_address(in3_rpc_handle_ctx_t* ctx, d_token_t** res) {
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_contract_address", "", NULL, res, NULL);
+  in3_ret_t r = req_send_sub_request(ctx->req, "zksync_contract_address", "", NULL, res, NULL);
   return r;
 }
 #define FN_ZKSYNC_CONTRACT_ADDRESS "zksync_contract_address"
@@ -59,7 +59,7 @@ static inline in3_ret_t rpc_call_zksync_contract_address(in3_rpc_handle_ctx_t* c
  *   - d_token_t* : ([object Object]) a array of tokens-definitions. This request also caches them and will return the results from cahe if available.
  */
 static inline in3_ret_t rpc_call_zksync_tokens(in3_rpc_handle_ctx_t* ctx, d_token_t** res) {
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_tokens", "", NULL, res, NULL);
+  in3_ret_t r = req_send_sub_request(ctx->req, "zksync_tokens", "", NULL, res, NULL);
   return r;
 }
 #define FN_ZKSYNC_TOKENS "zksync_tokens"
@@ -75,8 +75,8 @@ static inline in3_ret_t rpc_call_zksync_tokens(in3_rpc_handle_ctx_t* ctx, d_toke
  *   - d_token_t* : ([object Object]) the current state of the requested account.
  */
 static inline in3_ret_t rpc_call_zksync_account_info(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint8_t* address) {
-  char*      jpayload = sprintx("\"%B\"", bytes(address, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_account_info", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", bytes(address, 20));
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_account_info", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -93,8 +93,8 @@ static inline in3_ret_t rpc_call_zksync_account_info(in3_rpc_handle_ctx_t* ctx, 
  *   - d_token_t* : ([object Object]) the current state of the requested tx.
  */
 static inline in3_ret_t rpc_call_zksync_tx_info(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx) {
-  char*      jpayload = sprintx("\"%B\"", (bytes_t) tx);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_tx_info", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_tx_info", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -111,8 +111,8 @@ static inline in3_ret_t rpc_call_zksync_tx_info(in3_rpc_handle_ctx_t* ctx, d_tok
  *   - d_token_t* : ([object Object]) the data and state of the requested tx.
  */
 static inline in3_ret_t rpc_call_zksync_tx_data(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx) {
-  char*      jpayload = sprintx("\"%B\"", (bytes_t) tx);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_tx_data", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_tx_data", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -131,8 +131,8 @@ static inline in3_ret_t rpc_call_zksync_tx_data(in3_rpc_handle_ctx_t* ctx, d_tok
  *   - d_token_t* : (zk_history) the data and state of the requested tx.
  */
 static inline in3_ret_t rpc_call_zksync_account_history(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint8_t* account, char* ref_start, bytes_t limit) {
-  char*      jpayload = sprintx("\"%B\",\"%S\",\"%B\"", bytes(account, 20), (char*)ref_start, (bytes_t) limit);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_account_history", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%S\",\"%B\"", bytes(account, 20), (char*) ref_start, (bytes_t) limit);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_account_history", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -164,8 +164,8 @@ static inline in3_ret_t rpc_call_zksync_account_history(in3_rpc_handle_ctx_t* ct
  *   - uint8_t* : (address) the pubKeyHash, if it was executed successfully
  */
 static inline in3_ret_t rpc_call_zksync_set_key(in3_rpc_handle_ctx_t* ctx, uint8_t** _res, char* token) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%S\"", (char*)token);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%S\"", (char*) token);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_set_key", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res).data;
@@ -184,7 +184,7 @@ static inline in3_ret_t rpc_call_zksync_set_key(in3_rpc_handle_ctx_t* ctx, uint8
  *   - uint8_t* : (address) the pubKeyHash
  */
 static inline in3_ret_t rpc_call_zksync_pubkeyhash(in3_rpc_handle_ctx_t* ctx, uint8_t** _res, bytes_t pubKey) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) pubKey);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_pubkeyhash", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -204,7 +204,7 @@ static inline in3_ret_t rpc_call_zksync_pubkeyhash(in3_rpc_handle_ctx_t* ctx, ui
  */
 static inline in3_ret_t rpc_call_zksync_pubkey(in3_rpc_handle_ctx_t* ctx, bytes_t* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_pubkey", "", NULL, &res, NULL);
+  in3_ret_t  r   = req_send_sub_request(ctx->req, "zksync_pubkey", "", NULL, &res, NULL);
   if (!r) *_res = d_bytes(res);
   return r;
 }
@@ -218,7 +218,7 @@ static inline in3_ret_t rpc_call_zksync_pubkey(in3_rpc_handle_ctx_t* ctx, bytes_
  */
 static inline in3_ret_t rpc_call_zksync_account_address(in3_rpc_handle_ctx_t* ctx, uint8_t** _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_account_address", "", NULL, &res, NULL);
+  in3_ret_t  r   = req_send_sub_request(ctx->req, "zksync_account_address", "", NULL, &res, NULL);
   if (!r) *_res = d_bytes(res).data;
   return r;
 }
@@ -242,7 +242,7 @@ static inline in3_ret_t rpc_call_zksync_account_address(in3_rpc_handle_ctx_t* ct
  *         - `[64..96]` s-value
  */
 static inline in3_ret_t rpc_call_zksync_sign(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t message) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) message);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_sign", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -266,7 +266,7 @@ static inline in3_ret_t rpc_call_zksync_sign(in3_rpc_handle_ctx_t* ctx, bytes_t*
  *   - bytes_t : (int) 1 if the signature(which contains the pubkey as the first 32bytes) matches the message.
  */
 static inline in3_ret_t rpc_call_zksync_verify(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t message, bytes_t signature) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) message, (bytes_t) signature);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_verify", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -286,8 +286,8 @@ static inline in3_ret_t rpc_call_zksync_verify(in3_rpc_handle_ctx_t* ctx, bytes_
  *   - d_token_t* : ([object Object]) state of the PriorityOperation
  */
 static inline in3_ret_t rpc_call_zksync_ethop_info(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint64_t opId) {
-  char*      jpayload = sprintx("\"%U\"", (uint64_t)opId);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_ethop_info", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%U\"", (uint64_t) opId);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_ethop_info", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -304,8 +304,8 @@ static inline in3_ret_t rpc_call_zksync_ethop_info(in3_rpc_handle_ctx_t* ctx, d_
  *   - d_token_t* : (double) the token price
  */
 static inline in3_ret_t rpc_call_zksync_get_token_price(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* token) {
-  char*      jpayload = sprintx("\"%S\"", (char*)token);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_get_token_price", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%S\"", (char*) token);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_get_token_price", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -324,8 +324,8 @@ static inline in3_ret_t rpc_call_zksync_get_token_price(in3_rpc_handle_ctx_t* ct
  *   - d_token_t* : ([object Object]) the fees split up into single values
  */
 static inline in3_ret_t rpc_call_zksync_get_tx_fee(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* txType, uint8_t* address, char* token) {
-  char*      jpayload = sprintx("\"%S\",\"%B\",\"%S\"", (char*)txType, bytes(address, 20), (char*)token);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_get_tx_fee", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%S\",\"%B\",\"%S\"", (char*) txType, bytes(address, 20), (char*) token);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_get_tx_fee", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -339,7 +339,7 @@ static inline in3_ret_t rpc_call_zksync_get_tx_fee(in3_rpc_handle_ctx_t* ctx, d_
  */
 static inline in3_ret_t rpc_call_zksync_sync_key(in3_rpc_handle_ctx_t* ctx, bytes_t* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_sync_key", "", NULL, &res, NULL);
+  in3_ret_t  r   = req_send_sub_request(ctx->req, "zksync_sync_key", "", NULL, &res, NULL);
   if (!r) *_res = d_bytes(res);
   return r;
 }
@@ -359,8 +359,8 @@ static inline in3_ret_t rpc_call_zksync_sync_key(in3_rpc_handle_ctx_t* ctx, byte
  *   - d_token_t* : ([object Object]) the receipt and the receipopId. You can use `zksync_ethop_info` to follow the state-changes.
  */
 static inline in3_ret_t rpc_call_zksync_deposit(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t amount, char* token, bool approveDepositAmountForERC20, uint8_t* account) {
-  char*      jpayload = sprintx("\"%B\",\"%S\",%i,\"%B\"", (bytes_t) amount, (char*)token, (int) approveDepositAmountForERC20, bytes(account, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_deposit", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%S\",%i,\"%B\"", (bytes_t) amount, (char*) token, (int) approveDepositAmountForERC20, bytes(account, 20));
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_deposit", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -380,8 +380,8 @@ static inline in3_ret_t rpc_call_zksync_deposit(in3_rpc_handle_ctx_t* ctx, d_tok
  *   - d_token_t* : (zk_receipt) the transactionReceipt. use `zksync_tx_info` to check the progress.
  */
 static inline in3_ret_t rpc_call_zksync_transfer(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint8_t* to, bytes_t amount, char* token, uint8_t* account) {
-  char*      jpayload = sprintx("\"%B\",\"%B\",\"%S\",\"%B\"", bytes(to, 20), (bytes_t) amount, (char*)token, bytes(account, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_transfer", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%B\",\"%S\",\"%B\"", bytes(to, 20), (bytes_t) amount, (char*) token, bytes(account, 20));
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_transfer", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -401,8 +401,8 @@ static inline in3_ret_t rpc_call_zksync_transfer(in3_rpc_handle_ctx_t* ctx, d_to
  *   - d_token_t* : (zk_receipt) the transactionReceipt. use `zksync_tx_info` to check the progress.
  */
 static inline in3_ret_t rpc_call_zksync_withdraw(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint8_t* ethAddress, bytes_t amount, char* token, uint8_t* account) {
-  char*      jpayload = sprintx("\"%B\",\"%B\",\"%S\",\"%B\"", bytes(ethAddress, 20), (bytes_t) amount, (char*)token, bytes(account, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_withdraw", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%B\",\"%S\",\"%B\"", bytes(ethAddress, 20), (bytes_t) amount, (char*) token, bytes(account, 20));
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_withdraw", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -419,8 +419,8 @@ static inline in3_ret_t rpc_call_zksync_withdraw(in3_rpc_handle_ctx_t* ctx, d_to
  *   - d_token_t* : (eth_transactionReceipt) the transactionReceipt
  */
 static inline in3_ret_t rpc_call_zksync_emergency_withdraw(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* token) {
-  char*      jpayload = sprintx("\"%S\"", (char*)token);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_emergency_withdraw", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%S\"", (char*) token);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zksync_emergency_withdraw", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -437,7 +437,7 @@ static inline in3_ret_t rpc_call_zksync_emergency_withdraw(in3_rpc_handle_ctx_t*
  *   - bytes_t : (bytes32) the compact public Key
  */
 static inline in3_ret_t rpc_call_zksync_aggregate_pubkey(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t pubkeys) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) pubkeys);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "zksync_aggregate_pubkey", jpayload, NULL, &res, NULL);
   _free(jpayload);

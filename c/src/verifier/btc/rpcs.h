@@ -54,8 +54,8 @@
  *         - verbose `1` or `true`: an object representing the blockheader.
  */
 static inline in3_ret_t rpc_call_getblockheader(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t hash, bool verbosity) {
-  char*      jpayload = sprintx("\"%B\",%i", (bytes_t) hash, (int) verbosity);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "getblockheader", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",%i", (bytes_t) hash, (int) verbosity);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "getblockheader", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -75,8 +75,8 @@ static inline in3_ret_t rpc_call_getblockheader(in3_rpc_handle_ctx_t* ctx, d_tok
  *         - verbose `1` or `true`: an object representing the blockheader.
  */
 static inline in3_ret_t rpc_call_getblock(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t hash, bytes_t verbosity) {
-  char*      jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) hash, (bytes_t) verbosity);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "getblock", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) hash, (bytes_t) verbosity);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "getblock", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -96,8 +96,8 @@ static inline in3_ret_t rpc_call_getblock(in3_rpc_handle_ctx_t* ctx, d_token_t**
  *         - verbose `1` or `false`: an object representing the transaction.
  */
 static inline in3_ret_t rpc_call_getrawtransaction(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t txid, bytes_t verbosity, bytes_t blockhash) {
-  char*      jpayload = sprintx("\"%B\",\"%B\",\"%B\"", (bytes_t) txid, (bytes_t) verbosity, (bytes_t) blockhash);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "getrawtransaction", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%B\",\"%B\"", (bytes_t) txid, (bytes_t) verbosity, (bytes_t) blockhash);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "getrawtransaction", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -120,8 +120,8 @@ static inline in3_ret_t rpc_call_getrawtransaction(in3_rpc_handle_ctx_t* ctx, d_
  *   - char* : (string) The encoded btc address
  */
 static inline in3_ret_t rpc_call_createaddress(in3_rpc_handle_ctx_t* ctx, char** _res, char* data, char* type) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%S\",\"%S\"", (char*)data, (char*)type);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%S\",\"%S\"", (char*) data, (char*) type);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "createaddress", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_string(res);
@@ -145,8 +145,8 @@ static inline in3_ret_t rpc_call_createaddress(in3_rpc_handle_ctx_t* ctx, char**
  *   - d_token_t* : (btc_output_address) The addresses and/or public keys extracted fom transaction outputs
  */
 static inline in3_ret_t rpc_call_getaddresses(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* tx, bytes_t blockhash) {
-  char*      jpayload = sprintx("\"%S\",\"%B\"", (char*)tx, (bytes_t) blockhash);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "getaddresses", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%S\",\"%B\"", (char*) tx, (bytes_t) blockhash);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "getaddresses", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -160,7 +160,7 @@ static inline in3_ret_t rpc_call_getaddresses(in3_rpc_handle_ctx_t* ctx, d_token
  */
 static inline in3_ret_t rpc_call_getblockcount(in3_rpc_handle_ctx_t* ctx, uint64_t* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "getblockcount", "", NULL, &res, NULL);
+  in3_ret_t  r   = req_send_sub_request(ctx->req, "getblockcount", "", NULL, &res, NULL);
   if (!r) *_res = d_long(res);
   return r;
 }
@@ -177,8 +177,8 @@ static inline in3_ret_t rpc_call_getblockcount(in3_rpc_handle_ctx_t* ctx, uint64
  *   - bytes_t : (bytes32) the current blockheight
  */
 static inline in3_ret_t rpc_call_getblockhash(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint64_t height) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%U\"", (uint64_t)height);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%U\"", (uint64_t) height);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "getblockhash", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -194,7 +194,7 @@ static inline in3_ret_t rpc_call_getblockhash(in3_rpc_handle_ctx_t* ctx, bytes_t
  *         - `blocknumber` is `latest`, `earliest`, `pending` or empty: the difficulty of the latest block (`actual latest block` minus `in3.finality`)
  */
 static inline in3_ret_t rpc_call_getdifficulty(in3_rpc_handle_ctx_t* ctx, d_token_t** res) {
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "getdifficulty", "", NULL, res, NULL);
+  in3_ret_t r = req_send_sub_request(ctx->req, "getdifficulty", "", NULL, res, NULL);
   return r;
 }
 #define FN_GETDIFFICULTY "getdifficulty"
@@ -214,8 +214,8 @@ static inline in3_ret_t rpc_call_getdifficulty(in3_rpc_handle_ctx_t* ctx, d_toke
  *   - d_token_t* : ([object Object]) A path of daps from the `verified_dap` to the `target_dap` which fulfils the conditions of `max_diff`, `max_dap` and `limit`. Each dap of the path is a `dap`-object with corresponding proof data.
  */
 static inline in3_ret_t rpc_call_btc_proofTarget(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint64_t target_dap, uint64_t verified_dap, bytes_t max_diff, bytes_t max_dap, bytes_t limit) {
-  char*      jpayload = sprintx("\"%U\",\"%U\",\"%B\",\"%B\",\"%B\"", (uint64_t)target_dap, (uint64_t)verified_dap, (bytes_t) max_diff, (bytes_t) max_dap, (bytes_t) limit);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "btc_proofTarget", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%U\",\"%U\",\"%B\",\"%B\",\"%B\"", (uint64_t) target_dap, (uint64_t) verified_dap, (bytes_t) max_diff, (bytes_t) max_dap, (bytes_t) limit);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "btc_proofTarget", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -229,7 +229,7 @@ static inline in3_ret_t rpc_call_btc_proofTarget(in3_rpc_handle_ctx_t* ctx, d_to
  */
 static inline in3_ret_t rpc_call_getbestblockhash(in3_rpc_handle_ctx_t* ctx, bytes_t* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "getbestblockhash", "", NULL, &res, NULL);
+  in3_ret_t  r   = req_send_sub_request(ctx->req, "getbestblockhash", "", NULL, &res, NULL);
   if (!r) *_res = d_bytes(res);
   return r;
 }
@@ -250,7 +250,7 @@ static inline in3_ret_t rpc_call_getbestblockhash(in3_rpc_handle_ctx_t* ctx, byt
  *   - bytes_t : (bytes32) the transactionhash
  */
 static inline in3_ret_t rpc_call_sendtransaction(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint8_t* from, d_token_t* account, d_token_t* outputs, d_token_t* utxos) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",%j,%j,%j", bytes(from, 20), (d_token_t*) account, (d_token_t*) outputs, (d_token_t*) utxos);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "sendtransaction", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -270,8 +270,8 @@ static inline in3_ret_t rpc_call_sendtransaction(in3_rpc_handle_ctx_t* ctx, byte
  *   - bytes_t : (bytes32) the transactionhash
  */
 static inline in3_ret_t rpc_call_sendrawtransaction(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* transaction) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%S\"", (char*)transaction);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%S\"", (char*) transaction);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "sendrawtransaction", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);

@@ -54,7 +54,7 @@
  *   - bytes_t : (bytes32) the 32byte random data
  */
 static inline in3_ret_t rpc_call_in3_createKey(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t seed) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) seed);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_createKey", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -77,8 +77,8 @@ static inline in3_ret_t rpc_call_in3_createKey(in3_rpc_handle_ctx_t* ctx, bytes_
  *   - bytes_t : (bytes32) theprivate key
  */
 static inline in3_ret_t rpc_call_in3_bip32(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t seed, char* curve, char* path) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%B\",\"%S\",\"%S\"", (bytes_t) seed, (char*)curve, (char*)path);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%B\",\"%S\",\"%S\"", (bytes_t) seed, (char*) curve, (char*) path);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_bip32", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -98,7 +98,7 @@ static inline in3_ret_t rpc_call_in3_bip32(in3_rpc_handle_ctx_t* ctx, bytes_t* _
  *   - char* : (string) a list of words based on bip39
  */
 static inline in3_ret_t rpc_call_in3_bip39_create(in3_rpc_handle_ctx_t* ctx, char** _res, bytes_t seed) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) seed);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_bip39_create", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -120,8 +120,8 @@ static inline in3_ret_t rpc_call_in3_bip39_create(in3_rpc_handle_ctx_t* ctx, cha
  *   - bytes_t : (bytes) the resulting seed
  */
 static inline in3_ret_t rpc_call_in3_bip39_decode(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* mnemonic, char* passphrase) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%S\",\"%S\"", (char*)mnemonic, (char*)passphrase);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%S\",\"%S\"", (char*) mnemonic, (char*) passphrase);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_bip39_decode", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -140,7 +140,7 @@ static inline in3_ret_t rpc_call_in3_bip39_decode(in3_rpc_handle_ctx_t* ctx, byt
  *   - bytes_t : (bytes32) the 32byte public key
  */
 static inline in3_ret_t rpc_call_in3_ed25519_pk2pub(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t pk) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) pk);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_ed25519_pk2pub", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -161,7 +161,7 @@ static inline in3_ret_t rpc_call_in3_ed25519_pk2pub(in3_rpc_handle_ctx_t* ctx, b
  *   - bytes_t : (bytes) the 64byte signature
  */
 static inline in3_ret_t rpc_call_in3_ed25519_sign(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t message, bytes_t pk) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) message, (bytes_t) pk);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_ed25519_sign", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -183,7 +183,7 @@ static inline in3_ret_t rpc_call_in3_ed25519_sign(in3_rpc_handle_ctx_t* ctx, byt
  *   - bool : (bool) true, if could be successfully verified.
  */
 static inline in3_ret_t rpc_call_in3_ed25519_verify(in3_rpc_handle_ctx_t* ctx, bool* _res, bytes_t message, bytes_t signature, bytes_t pubkey) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",\"%B\",\"%B\"", (bytes_t) message, (bytes_t) signature, (bytes_t) pubkey);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_ed25519_verify", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -213,8 +213,8 @@ static inline in3_ret_t rpc_call_in3_ed25519_verify(in3_rpc_handle_ctx_t* ctx, b
  *   - bytes_t : (bytes) the converted bytes.
  */
 static inline in3_ret_t rpc_call_in3_crypto_convert(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t data, char* type) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%B\",\"%S\"", (bytes_t) data, (char*)type);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%B\",\"%S\"", (bytes_t) data, (char*) type);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_crypto_convert", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -233,7 +233,7 @@ static inline in3_ret_t rpc_call_in3_crypto_convert(in3_rpc_handle_ctx_t* ctx, b
  *   - bytes_t : (bytes) the address
  */
 static inline in3_ret_t rpc_call_in3_pk2address(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t pk) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) pk);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_pk2address", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -253,7 +253,7 @@ static inline in3_ret_t rpc_call_in3_pk2address(in3_rpc_handle_ctx_t* ctx, bytes
  *   - bytes_t : (bytes) the public key as 64 bytes
  */
 static inline in3_ret_t rpc_call_in3_pk2public(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t pk) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) pk);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_pk2public", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -275,8 +275,8 @@ static inline in3_ret_t rpc_call_in3_pk2public(in3_rpc_handle_ctx_t* ctx, bytes_
  *   - d_token_t* : ([object Object]) the extracted public key and address
  */
 static inline in3_ret_t rpc_call_in3_ecrecover(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* msg, bytes_t sig, char* sigtype) {
-  char*      jpayload = sprintx("\"%S\",\"%B\",\"%S\"", (char*)msg, (bytes_t) sig, (char*)sigtype);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_ecrecover", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%S\",\"%B\",\"%S\"", (char*) msg, (bytes_t) sig, (char*) sigtype);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_ecrecover", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -293,7 +293,7 @@ static inline in3_ret_t rpc_call_in3_ecrecover(in3_rpc_handle_ctx_t* ctx, d_toke
  *   - bytes_t : (bytes) the unsigned raw transaction as hex.
  */
 static inline in3_ret_t rpc_call_in3_prepareTx(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, d_token_t* tx) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("%j", (d_token_t*) tx);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_prepareTx", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -314,8 +314,8 @@ static inline in3_ret_t rpc_call_in3_prepareTx(in3_rpc_handle_ctx_t* ctx, bytes_
  *   - bytes_t : (bytes) the raw transaction with signature.
  */
 static inline in3_ret_t rpc_call_in3_signTx(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* tx, uint8_t* from) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%S\",\"%B\"", (char*)tx, bytes(from, 20));
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%S\",\"%B\"", (char*) tx, bytes(from, 20));
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_signTx", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -336,8 +336,8 @@ static inline in3_ret_t rpc_call_in3_signTx(in3_rpc_handle_ctx_t* ctx, bytes_t* 
  *   - d_token_t* : ([object Object]) the signature
  */
 static inline in3_ret_t rpc_call_in3_signData(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* msg, bytes_t account, char* msgType) {
-  char*      jpayload = sprintx("\"%S\",\"%B\",\"%S\"", (char*)msg, (bytes_t) account, (char*)msgType);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_signData", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%S\",\"%B\",\"%S\"", (char*) msg, (bytes_t) account, (char*) msgType);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_signData", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -355,8 +355,8 @@ static inline in3_ret_t rpc_call_in3_signData(in3_rpc_handle_ctx_t* ctx, d_token
  *   - bytes_t : (bytes32) a raw private key (32 bytes)
  */
 static inline in3_ret_t rpc_call_in3_decryptKey(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, d_token_t* key, char* passphrase) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("%j,\"%S\"", (d_token_t*) key, (char*)passphrase);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("%j,\"%S\"", (d_token_t*) key, (char*) passphrase);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_decryptKey", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -385,7 +385,7 @@ static inline in3_ret_t rpc_call_in3_decryptKey(in3_rpc_handle_ctx_t* ctx, bytes
  *   - bytes_t : (bytes) the signature (65 bytes) for the given message.
  */
 static inline in3_ret_t rpc_call_eth_sign(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint8_t* account, bytes_t message) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",\"%B\"", bytes(account, 20), (bytes_t) message);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_sign", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -405,7 +405,7 @@ static inline in3_ret_t rpc_call_eth_sign(in3_rpc_handle_ctx_t* ctx, bytes_t* _r
  *   - bytes_t : (bytes) the raw signed transaction
  */
 static inline in3_ret_t rpc_call_eth_signTransaction(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, d_token_t* tx) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("%j", (d_token_t*) tx);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_signTransaction", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -425,8 +425,8 @@ static inline in3_ret_t rpc_call_eth_signTransaction(in3_rpc_handle_ctx_t* ctx, 
  *   - d_token_t* : (eth_internal_tx) an array of internal transactions
  */
 static inline in3_ret_t rpc_call_in3_get_internal_tx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx_hash) {
-  char*      jpayload = sprintx("\"%B\"", (bytes_t) tx_hash);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_get_internal_tx", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx_hash);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_get_internal_tx", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -444,8 +444,8 @@ static inline in3_ret_t rpc_call_in3_get_internal_tx(in3_rpc_handle_ctx_t* ctx, 
  *   - bytes_t : (bytes) the unique identifier for the sdk of given key.
  */
 static inline in3_ret_t rpc_call_in3_addRawKey(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t pk, char* curve) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%B\",\"%S\"", (bytes_t) pk, (char*)curve);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%B\",\"%S\"", (bytes_t) pk, (char*) curve);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_addRawKey", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -465,8 +465,8 @@ static inline in3_ret_t rpc_call_in3_addRawKey(in3_rpc_handle_ctx_t* ctx, bytes_
  *   - uint8_t* : (address) the added address
  */
 static inline in3_ret_t rpc_call_in3_addJsonKey(in3_rpc_handle_ctx_t* ctx, uint8_t** _res, d_token_t* key, char* passphrase) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("%j,\"%S\"", (d_token_t*) key, (char*)passphrase);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("%j,\"%S\"", (d_token_t*) key, (char*) passphrase);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_addJsonKey", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res).data;
@@ -488,8 +488,8 @@ static inline in3_ret_t rpc_call_in3_addJsonKey(in3_rpc_handle_ctx_t* ctx, uint8
  *   - d_token_t* : (address) the added address
  */
 static inline in3_ret_t rpc_call_in3_addMnemonic(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* mnemomic, char* passphrase, d_token_t* derivation, char* curve) {
-  char*      jpayload = sprintx("\"%S\",\"%S\",%j,\"%S\"", (char*)mnemomic, (char*)passphrase, (d_token_t*) derivation, (char*)curve);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_addMnemonic", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%S\",\"%S\",%j,\"%S\"", (char*) mnemomic, (char*) passphrase, (d_token_t*) derivation, (char*) curve);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_addMnemonic", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -505,7 +505,7 @@ static inline in3_ret_t rpc_call_in3_addMnemonic(in3_rpc_handle_ctx_t* ctx, d_to
  *   - d_token_t* : (address) the array of signer_ids of all registered signers.
  */
 static inline in3_ret_t rpc_call_signer_ids(in3_rpc_handle_ctx_t* ctx, d_token_t** res) {
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "signer_ids", "", NULL, res, NULL);
+  in3_ret_t r = req_send_sub_request(ctx->req, "signer_ids", "", NULL, res, NULL);
   return r;
 }
 #define FN_SIGNER_IDS "signer_ids"
@@ -518,7 +518,7 @@ static inline in3_ret_t rpc_call_signer_ids(in3_rpc_handle_ctx_t* ctx, d_token_t
  *   - d_token_t* : (address) the array of signer_ids of all registered signers.
  */
 static inline in3_ret_t rpc_call_eth_accounts(in3_rpc_handle_ctx_t* ctx, d_token_t** res) {
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_accounts", "", NULL, res, NULL);
+  in3_ret_t r = req_send_sub_request(ctx->req, "eth_accounts", "", NULL, res, NULL);
   return r;
 }
 #define FN_ETH_ACCOUNTS "eth_accounts"

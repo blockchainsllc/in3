@@ -52,8 +52,8 @@
  *   - d_token_t* : (tx_message) a collection of messages describing the action in the transaction.
  */
 static inline in3_ret_t rpc_call_in3_analyze_by_txhash(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx) {
-  char*      jpayload = sprintx("\"%B\"", (bytes_t) tx);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_analyze_by_txhash", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_analyze_by_txhash", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -72,8 +72,8 @@ static inline in3_ret_t rpc_call_in3_analyze_by_txhash(in3_rpc_handle_ctx_t* ctx
  *   - d_token_t* : (tx_message) a collection of messages describing the action in the transaction.
  */
 static inline in3_ret_t rpc_call_in3_analyze_tx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, d_token_t* tx, uint8_t* sender) {
-  char*      jpayload = sprintx("%j,\"%B\"", (d_token_t*) tx, bytes(sender, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_analyze_tx", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("%j,\"%B\"", (d_token_t*) tx, bytes(sender, 20));
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_analyze_tx", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -92,8 +92,8 @@ static inline in3_ret_t rpc_call_in3_analyze_tx(in3_rpc_handle_ctx_t* ctx, d_tok
  *   - d_token_t* : (tx_message) a collection of messages describing the action in the transaction.
  */
 static inline in3_ret_t rpc_call_in3_analyze_rawtx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx, uint8_t* sender) {
-  char*      jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) tx, bytes(sender, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_analyze_rawtx", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) tx, bytes(sender, 20));
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_analyze_rawtx", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -107,7 +107,7 @@ static inline in3_ret_t rpc_call_in3_analyze_rawtx(in3_rpc_handle_ctx_t* ctx, d_
  */
 static inline in3_ret_t rpc_call_eth_gasPrice(in3_rpc_handle_ctx_t* ctx, uint64_t* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_gasPrice", "", NULL, &res, NULL);
+  in3_ret_t  r   = req_send_sub_request(ctx->req, "eth_gasPrice", "", NULL, &res, NULL);
   if (!r) *_res = d_long(res);
   return r;
 }
@@ -129,8 +129,8 @@ static inline in3_ret_t rpc_call_eth_gasPrice(in3_rpc_handle_ctx_t* ctx, uint64_
  *   - d_token_t* : ([object Object]) Fee history for the returned block range. This can be a subsection of the requested range if not all blocks are available.
  */
 static inline in3_ret_t rpc_call_eth_feeHistory(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint64_t blockCount, uint64_t newestBlock, d_token_t* rewardPercentiles) {
-  char*      jpayload = sprintx("\"%U\",\"%U\",%j", (uint64_t)blockCount, (uint64_t)newestBlock, (d_token_t*) rewardPercentiles);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_feeHistory", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%U\",\"%U\",%j", (uint64_t) blockCount, (uint64_t) newestBlock, (d_token_t*) rewardPercentiles);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_feeHistory", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -150,7 +150,7 @@ static inline in3_ret_t rpc_call_eth_feeHistory(in3_rpc_handle_ctx_t* ctx, d_tok
  */
 static inline in3_ret_t rpc_call_eth_blockNumber(in3_rpc_handle_ctx_t* ctx, uint64_t* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_blockNumber", "", NULL, &res, NULL);
+  in3_ret_t  r   = req_send_sub_request(ctx->req, "eth_blockNumber", "", NULL, &res, NULL);
   if (!r) *_res = d_long(res);
   return r;
 }
@@ -171,8 +171,8 @@ static inline in3_ret_t rpc_call_eth_blockNumber(in3_rpc_handle_ctx_t* ctx, uint
  *   - d_token_t* : (eth_blockdata) the blockdata, or in case the block with that number does not exist, `null` will be returned.
  */
 static inline in3_ret_t rpc_call_eth_getBlockByNumber(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint64_t blockNumber, bool fullTx) {
-  char*      jpayload = sprintx("\"%U\",%i", (uint64_t)blockNumber, (int) fullTx);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getBlockByNumber", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%U\",%i", (uint64_t) blockNumber, (int) fullTx);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getBlockByNumber", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -193,8 +193,8 @@ static inline in3_ret_t rpc_call_eth_getBlockByNumber(in3_rpc_handle_ctx_t* ctx,
  *   - d_token_t* : (eth_blockdata) the blockdata, or in case the block with that number does not exist, `null` will be returned.
  */
 static inline in3_ret_t rpc_call_eth_getBlockByHash(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t blockHash, bool fullTx) {
-  char*      jpayload = sprintx("\"%B\",%i", (bytes_t) blockHash, (int) fullTx);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getBlockByHash", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",%i", (bytes_t) blockHash, (int) fullTx);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getBlockByHash", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -211,7 +211,7 @@ static inline in3_ret_t rpc_call_eth_getBlockByHash(in3_rpc_handle_ctx_t* ctx, d
  *   - bytes_t : (int) the number of transactions in the block
  */
 static inline in3_ret_t rpc_call_eth_getBlockTransactionCountByHash(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t blockHash) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) blockHash);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getBlockTransactionCountByHash", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -231,8 +231,8 @@ static inline in3_ret_t rpc_call_eth_getBlockTransactionCountByHash(in3_rpc_hand
  *   - bytes_t : (int) the number of transactions in the block
  */
 static inline in3_ret_t rpc_call_eth_getBlockTransactionCountByNumber(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint64_t blockNumber) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%U\"", (uint64_t)blockNumber);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%U\"", (uint64_t) blockNumber);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getBlockTransactionCountByNumber", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -251,7 +251,7 @@ static inline in3_ret_t rpc_call_eth_getBlockTransactionCountByNumber(in3_rpc_ha
  *   - bytes_t : (int) the number of uncles
  */
 static inline in3_ret_t rpc_call_eth_getUncleCountByBlockHash(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t blockHash) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) blockHash);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getUncleCountByBlockHash", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -271,8 +271,8 @@ static inline in3_ret_t rpc_call_eth_getUncleCountByBlockHash(in3_rpc_handle_ctx
  *   - bytes_t : (int) the number of uncles
  */
 static inline in3_ret_t rpc_call_eth_getUncleCountByBlockNumber(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint64_t blockNumber) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%U\"", (uint64_t)blockNumber);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%U\"", (uint64_t) blockNumber);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getUncleCountByBlockNumber", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -295,8 +295,8 @@ static inline in3_ret_t rpc_call_eth_getUncleCountByBlockNumber(in3_rpc_handle_c
  *   - d_token_t* : (eth_transactiondata) the transactiondata or `null` if it does not exist
  */
 static inline in3_ret_t rpc_call_eth_getTransactionByBlockHashAndIndex(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t blockHash, bytes_t index) {
-  char*      jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) blockHash, (bytes_t) index);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getTransactionByBlockHashAndIndex", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) blockHash, (bytes_t) index);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getTransactionByBlockHashAndIndex", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -317,8 +317,8 @@ static inline in3_ret_t rpc_call_eth_getTransactionByBlockHashAndIndex(in3_rpc_h
  *   - d_token_t* : (eth_transactiondata) the transactiondata or `null` if it does not exist
  */
 static inline in3_ret_t rpc_call_eth_getTransactionByBlockNumberAndIndex(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint64_t blockNumber, bytes_t index) {
-  char*      jpayload = sprintx("\"%U\",\"%B\"", (uint64_t)blockNumber, (bytes_t) index);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getTransactionByBlockNumberAndIndex", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%U\",\"%B\"", (uint64_t) blockNumber, (bytes_t) index);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getTransactionByBlockNumberAndIndex", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -338,8 +338,8 @@ static inline in3_ret_t rpc_call_eth_getTransactionByBlockNumberAndIndex(in3_rpc
  *   - d_token_t* : (eth_transactiondata) the transactiondata or `null` if it does not exist
  */
 static inline in3_ret_t rpc_call_eth_getTransactionByHash(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t txHash) {
-  char*      jpayload = sprintx("\"%B\"", (bytes_t) txHash);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getTransactionByHash", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", (bytes_t) txHash);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getTransactionByHash", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -356,8 +356,8 @@ static inline in3_ret_t rpc_call_eth_getTransactionByHash(in3_rpc_handle_ctx_t* 
  *   - d_token_t* : (ethlog) array with all found event matching the specified filter
  */
 static inline in3_ret_t rpc_call_eth_getLogs(in3_rpc_handle_ctx_t* ctx, d_token_t** res, d_token_t* filter) {
-  char*      jpayload = sprintx("%j", (d_token_t*) filter);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getLogs", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("%j", (d_token_t*) filter);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getLogs", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -375,8 +375,8 @@ static inline in3_ret_t rpc_call_eth_getLogs(in3_rpc_handle_ctx_t* ctx, d_token_
  *   - bytes_t : (uint256) the balance
  */
 static inline in3_ret_t rpc_call_eth_getBalance(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint8_t* account, uint64_t block) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%B\",\"%U\"", bytes(account, 20), (uint64_t)block);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%B\",\"%U\"", bytes(account, 20), (uint64_t) block);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getBalance", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -396,8 +396,8 @@ static inline in3_ret_t rpc_call_eth_getBalance(in3_rpc_handle_ctx_t* ctx, bytes
  *   - uint64_t : (uint64) the nonce
  */
 static inline in3_ret_t rpc_call_eth_getTransactionCount(in3_rpc_handle_ctx_t* ctx, uint64_t* _res, uint8_t* account, uint64_t block) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%B\",\"%U\"", bytes(account, 20), (uint64_t)block);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%B\",\"%U\"", bytes(account, 20), (uint64_t) block);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getTransactionCount", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_long(res);
@@ -417,8 +417,8 @@ static inline in3_ret_t rpc_call_eth_getTransactionCount(in3_rpc_handle_ctx_t* c
  *   - bytes_t : (bytes) the code as hex
  */
 static inline in3_ret_t rpc_call_eth_getCode(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint8_t* account, uint64_t block) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%B\",\"%U\"", bytes(account, 20), (uint64_t)block);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%B\",\"%U\"", bytes(account, 20), (uint64_t) block);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getCode", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -439,8 +439,8 @@ static inline in3_ret_t rpc_call_eth_getCode(in3_rpc_handle_ctx_t* ctx, bytes_t*
  *   - bytes_t : (bytes) the value of the storage slot.
  */
 static inline in3_ret_t rpc_call_eth_getStorageAt(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint8_t* account, bytes_t key, uint64_t block) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("\"%B\",\"%B\",\"%U\"", bytes(account, 20), (bytes_t) key, (uint64_t)block);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%B\",\"%B\",\"%U\"", bytes(account, 20), (bytes_t) key, (uint64_t) block);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getStorageAt", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);
@@ -459,7 +459,7 @@ static inline in3_ret_t rpc_call_eth_getStorageAt(in3_rpc_handle_ctx_t* ctx, byt
  *   - bytes_t : (bytes) the transactionHash
  */
 static inline in3_ret_t rpc_call_eth_sendTransaction(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, d_token_t* tx) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("%j", (d_token_t*) tx);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_sendTransaction", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -479,8 +479,8 @@ static inline in3_ret_t rpc_call_eth_sendTransaction(in3_rpc_handle_ctx_t* ctx, 
  *   - d_token_t* : (eth_transactionReceipt) the transactionReceipt
  */
 static inline in3_ret_t rpc_call_eth_sendTransactionAndWait(in3_rpc_handle_ctx_t* ctx, d_token_t** res, d_token_t* tx) {
-  char*      jpayload = sprintx("%j", (d_token_t*) tx);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_sendTransactionAndWait", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("%j", (d_token_t*) tx);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_sendTransactionAndWait", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -497,7 +497,7 @@ static inline in3_ret_t rpc_call_eth_sendTransactionAndWait(in3_rpc_handle_ctx_t
  *   - bytes_t : (bytes32) the transactionhash
  */
 static inline in3_ret_t rpc_call_eth_sendRawTransaction(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t tx) {
-  d_token_t* res = NULL;
+  d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) tx);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_sendRawTransaction", jpayload, NULL, &res, NULL);
   _free(jpayload);
@@ -518,8 +518,8 @@ static inline in3_ret_t rpc_call_eth_sendRawTransaction(in3_rpc_handle_ctx_t* ct
  *   - uint64_t : (uint64) the amount of gass needed.
  */
 static inline in3_ret_t rpc_call_eth_estimateGas(in3_rpc_handle_ctx_t* ctx, uint64_t* _res, d_token_t* tx, uint64_t block) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("%j,\"%U\"", (d_token_t*) tx, (uint64_t)block);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("%j,\"%U\"", (d_token_t*) tx, (uint64_t) block);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_estimateGas", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_long(res);
@@ -539,8 +539,8 @@ static inline in3_ret_t rpc_call_eth_estimateGas(in3_rpc_handle_ctx_t* ctx, uint
  *   - char* : (string) the abi-encoded result of the function.
  */
 static inline in3_ret_t rpc_call_eth_call(in3_rpc_handle_ctx_t* ctx, char** _res, d_token_t* tx, uint64_t block) {
-  d_token_t* res = NULL;
-  char*      jpayload = sprintx("%j,\"%U\"", (d_token_t*) tx, (uint64_t)block);
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("%j,\"%U\"", (d_token_t*) tx, (uint64_t) block);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_call", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_string(res);
@@ -559,8 +559,8 @@ static inline in3_ret_t rpc_call_eth_call(in3_rpc_handle_ctx_t* ctx, char** _res
  *   - d_token_t* : (eth_transactionReceipt) the TransactionReceipt or `null`  if it does not exist.
  */
 static inline in3_ret_t rpc_call_eth_getTransactionReceipt(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t txHash) {
-  char*      jpayload = sprintx("\"%B\"", (bytes_t) txHash);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "eth_getTransactionReceipt", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", (bytes_t) txHash);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getTransactionReceipt", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }

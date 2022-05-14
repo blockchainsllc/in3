@@ -53,8 +53,8 @@
  *   - d_token_t* : ([object Object]) the current nodelist
  */
 static inline in3_ret_t rpc_call_in3_nodeList(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t limit, bytes_t seed, d_token_t* addresses) {
-  char*      jpayload = sprintx("\"%B\",\"%B\",%j", (bytes_t) limit, (bytes_t) seed, (d_token_t*) addresses);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_nodeList", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\",\"%B\",%j", (bytes_t) limit, (bytes_t) seed, (d_token_t*) addresses);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_nodeList", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -77,8 +77,8 @@ static inline in3_ret_t rpc_call_in3_nodeList(in3_rpc_handle_ctx_t* ctx, d_token
  *   - d_token_t* : ([object Object]) the Array with signatures of all the requires blocks.
  */
 static inline in3_ret_t rpc_call_in3_sign(in3_rpc_handle_ctx_t* ctx, d_token_t** res, d_token_t* blocks) {
-  char*      jpayload = sprintx("%j", (d_token_t*) blocks);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_sign", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("%j", (d_token_t*) blocks);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_sign", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
@@ -95,8 +95,8 @@ static inline in3_ret_t rpc_call_in3_sign(in3_rpc_handle_ctx_t* ctx, d_token_t**
  *   - d_token_t* : ([object Object]) the whitelisted addresses
  */
 static inline in3_ret_t rpc_call_in3_whitelist(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint8_t* address) {
-  char*      jpayload = sprintx("\"%B\"", bytes(address, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_whitelist", jpayload, NULL, res, NULL);
+  char*     jpayload = sprintx("\"%B\"", bytes(address, 20));
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_whitelist", jpayload, NULL, res, NULL);
   _free(jpayload);
   return r;
 }
