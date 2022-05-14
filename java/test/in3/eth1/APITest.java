@@ -411,7 +411,7 @@ public class APITest {
     IN3    in3              = builder.constructClient(new String[][] {});
     String signature        = "(address,uint256)";
     String encoded          = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005";
-    String[] expectedDecode = new String[] {"0x1234567890123456789012345678901234567890", "0x5"};
+    String[] expectedDecode = new String[] {"0x1234567890123456789012345678901234567890", "0x05"};
     String[] result         = in3.getEth1API().abiDecode(signature, encoded);
     Assertions.assertArrayEquals(expectedDecode, result);
   }

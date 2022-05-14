@@ -75,7 +75,7 @@ namespace Test.Eth1
 
             string signature = "(address,uint256)";
             string encoded = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005";
-            object[] expectedDecode = { "0x1234567890123456789012345678901234567890", "0x5" };
+            object[] expectedDecode = { "0x1234567890123456789012345678901234567890", "0x05" };
 
             object[] result = await in3.Eth1.AbiDecode(signature, encoded);
 
@@ -359,7 +359,7 @@ namespace Test.Eth1
             request.Function = "servers(uint256):(string,address,uint32,uint256,uint256,address)";
             request.Params = new object[] { 1 };
 
-            object[] res1 = (object[]) await in3.Eth1.Call(request, BlockParameter.Latest);
+            object[] res1 = (object[])await in3.Eth1.Call(request, BlockParameter.Latest);
 
             Assert.That(res1.Length, Is.EqualTo(6));
             Assert.That(res1[0], Is.EqualTo("https://in3.slock.it/mainnet/nd-4"));
@@ -384,7 +384,7 @@ namespace Test.Eth1
             object[] res1 = (object[])await in3.Eth1.Call(request, BlockParameter.Latest);
 
             Assert.That(res1.Length, Is.EqualTo(1));
-            Assert.That(res1[0], Is.EqualTo("0x5"));
+            Assert.That(res1[0], Is.EqualTo("0x05"));
         }
 
         [Test]
@@ -589,7 +589,7 @@ namespace Test.Eth1
 
             transport.AddMockedresponse("eth_call", "eth_call_6.json");
             string owner = await in3.Eth1.Ens(cryptoKittiesDomain, ENSParameter.Owner);
-            
+
             Assert.That(owner, Is.EqualTo("0xfb3ca875955675d091e6f82038a288e97284400f"));
         }
 

@@ -76,7 +76,7 @@ class MainNetContractTest(unittest.TestCase):
             self.client.eth.contract.decode(*err3)
         params = "(address,uint256)", "0x0000000000000000000000001234567890123456789012345678901234567890000000000" + \
                  "0000000000000000000000000000000000000000000000000000005"
-        expected = ['0x1234567890123456789012345678901234567890', '0x5']
+        expected = ['0x1234567890123456789012345678901234567890', '0x05']
         decoded = self.client.eth.contract.decode(*params)
         self.assertEqual(decoded, expected)
         params = "(address,string,uint8,string)", \
