@@ -798,10 +798,13 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
       return dst;
     case T_BOOLEAN:
       return d_int(item) ? _strdupn("true", 4) : _strdupn("false", 5);
-    case T_INTEGER:
-      dst = _malloc(10); // a integer can use up to 2**28 and so 9 digits
-      sprintf(dst, "%i", d_int(item));
-      return dst;
+    case T_INTEGER: {
+      bytes_t b  = d_bytes(item);
+      sb_t    sb = {.allocted = 15, .data = _malloc(16), .len = 0};
+      sb_add_rawbytes(&sb, "\"0x", b, -1);
+      return sb_add_char(&sb, '"')->data;
+      //      return sb_add_int(&sb, d_int(item))->data;
+    }
     case T_NULL:
       return _strdupn("null", 4);
     case T_STRING: {
@@ -811,15 +814,13 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
       sb_add_char(&sb, '"');
       return sb.data;
     }
-    case T_BYTES:
-      dst    = _malloc(l * 2 + 5);
-      dst[0] = '"';
-      dst[1] = '0';
-      dst[2] = 'x';
-      bytes_to_hex(item->data, item->len, dst + 3);
-      dst[l * 2 + 3] = '"';
-      dst[l * 2 + 4] = 0;
-      return dst;
+    case T_BYTES: {
+      bytes_t b  = d_bytes(item);
+      sb_t    sb = {.allocted = l * 2 + 5, .len = 0};
+      sb.data    = _malloc(sb.allocted);
+      sb_add_rawbytes(&sb, "\"0x", b, b.len < 20 && !(b.len && b.data[0] == 0) ? -1 : 0);
+      return sb_add_char(&sb, '"')->data;
+    }
   }
   return NULL;
 }
