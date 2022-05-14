@@ -799,8 +799,8 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
     case T_BOOLEAN:
       return d_int(item) ? _strdupn("true", 4) : _strdupn("false", 5);
     case T_INTEGER:
-      dst = _malloc(16);
-      sprintf(dst, "\"0x%x\"", d_int(item));
+      dst = _malloc(10); // a integer can use up to 2**28 and so 9 digits
+      sprintf(dst, "%i", d_int(item));
       return dst;
     case T_NULL:
       return _strdupn("null", 4);
