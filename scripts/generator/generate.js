@@ -126,7 +126,7 @@ async function scan(dir) {
                     if (generate_rpc.openapi)
                         await generate_openapi({ generate_rpc, types, api_name: k, api: ob[k], url: generate_rpc.openapi.startsWith('http') ? generate_rpc.openapi : fullpath + '/' + generate_rpc.openapi })
                     if (generate_rpc.solidity)
-                        await generate_solidity({ generate_rpc, types, api_name: k, api: ob[k], dir: fullpath, api_def: apic })
+                        await generate_solidity({ generate_rpc, types, api_name: k, api: ob[k], dir: fullpath, api_def: apic, allapis: docs })
                     Object.keys(ob[k]).forEach(_ => {
                         ob[k][_].src = fullpath
                         ob[k][_].generate_rpc = generate_rpc
