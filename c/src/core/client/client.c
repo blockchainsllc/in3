@@ -142,7 +142,27 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   }
 
   // we have a result and copy it
-  if (result) *result = d_create_json(ctx->response_context, r);
+  if (result) {
+    if (d_type(r) == T_INTEGER) {
+      str_range_t s = d_to_json(ctx->responses[0]);
+      if (s.data) {
+        char* rp = str_find(s.data, "\"result\":");
+        if (rp) {
+          rp += 9;
+          char* end1 = strchr(rp, '}');
+          char* end2 = strchr(rp, ',');
+          if (end1 && end2 && end2 < end1) end1 = end2;
+          if (end1) {
+            *result = _malloc(end1 - rp + 1);
+            memcpy(*result, rp, end1 - rp);
+            *result[end1 - rp] = 0;
+            goto clean;
+          }
+        }
+      }
+    }
+    *result = d_create_json(ctx->response_context, r);
+  }
 
 clean:
   req_free(ctx);
