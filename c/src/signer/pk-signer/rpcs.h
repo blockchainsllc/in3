@@ -87,19 +87,20 @@ static inline in3_ret_t rpc_call_in3_bip32(in3_rpc_handle_ctx_t* ctx, bytes_t* _
 #define FN_IN3_BIP32 "in3_bip32"
 
 /**
- * generates a mnemonic based on bip39
+ * generates a mnemonic based on bip39 ( https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki )
  *
  *
  *
  * Parameters:
  *
- *   - bytes_t seed : (bytes) the seed. if a seed is passed, this seed will be used to generate it, making it deterministic.
+ *   - bytes_t  seed  : (bytes) the seed. if a seed is passed, this seed will be used to generate it, making it deterministic.
+ *   - uint32_t words : (uint32) the number of words. it must one of 12, 15, 18, 21 or 24 (default). This number will also have an effect on the entropy or security.
  * Returns:
  *   - char* : (string) a list of words based on bip39
  */
-static inline in3_ret_t rpc_call_in3_bip39_create(in3_rpc_handle_ctx_t* ctx, char** _res, bytes_t seed) {
+static inline in3_ret_t rpc_call_in3_bip39_create(in3_rpc_handle_ctx_t* ctx, char** _res, bytes_t seed, uint32_t words) {
   d_token_t* res      = NULL;
-  char*      jpayload = sprintx("\"%B\"", (bytes_t) seed);
+  char*      jpayload = sprintx("\"%B\",\"%u\"", (bytes_t) seed, (uint32_t) words);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_bip39_create", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_string(res);
