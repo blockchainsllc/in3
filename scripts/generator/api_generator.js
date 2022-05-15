@@ -645,7 +645,7 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
 
         files[dir + '/rpcs.h'] = {
             lines: [
-                ...compliance_header, '', `#include "${path}"`, '', '// list of availbale rpc-functions', `#ifndef ${mod}`, `#define ${mod}`, '',
+                ...compliance_header, '// clang-format off', '', `#include "${path}"`, '', '// list of availbale rpc-functions', `#ifndef ${mod}`, `#define ${mod}`, '',
                 ...apis.reduce((result, api) => {
                     Object.keys(api.rpcs || []).filter(_ => !api.rpcs[_].alias).forEach(rpc => generate_rpc_define(rpc, api.rpcs[rpc], result))
                     return result
