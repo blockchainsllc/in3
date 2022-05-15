@@ -1,6 +1,6 @@
 [
   {
-    "descr": "\"transaction with 2 p2sh outputs\"\n",
+    "descr": "transaction with 2 p2sh outputs",
     "request": {
       "method": "getaddresses",
       "params": [
@@ -35,7 +35,7 @@
     ]
   },
   {
-    "descr": "\"transaction with 2 p2sh outputs - raw transaction as input\"\n",
+    "descr": "transaction with 2 p2sh outputs - raw transaction as input",
     "request": {
       "method": "getaddresses",
       "params": [
@@ -66,7 +66,7 @@
     "response": []
   },
   {
-    "descr": "\"raw 1-2 multisig with uncompressed public keys and 2 p2pkh outputs\"\n",
+    "descr": "raw 1-2 multisig with uncompressed public keys and 2 p2pkh outputs",
     "request": {
       "method": "getaddresses",
       "params": [
@@ -111,7 +111,7 @@
     ]
   },
   {
-    "descr": "\"raw 1-1 multisig with compressed public keys + 2 p2pkh\"\n",
+    "descr": "raw 1-1 multisig with compressed public keys + 2 p2pkh",
     "request": {
       "method": "getaddresses",
       "params": [
@@ -155,7 +155,7 @@
     ]
   },
   {
-    "descr": "\"v0 p2wpkh transaction\"\n",
+    "descr": "v0 p2wpkh transaction",
     "request": {
       "method": "getaddresses",
       "params": [
@@ -190,7 +190,7 @@
     ]
   },
   {
-    "descr": "\"transaction with 1 p2wsh, 1 compressed p2pk, 1 uncompressed p2pk and one invalid p2pk outputs\"\n",
+    "descr": "transaction with 1 p2wsh, 1 compressed p2pk, 1 uncompressed p2pk and one invalid p2pk outputs",
     "request": {
       "method": "getaddresses",
       "params": [

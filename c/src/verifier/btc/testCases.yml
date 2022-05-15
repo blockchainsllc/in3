@@ -6,7 +6,7 @@ btc_full_with_tx_hash: &btc_full_with_tx_hash
   weight: 5984
   height: 125552
   version: 1
-  versionHex: '00000001'
+  versionHex: "00000001"
   merkleroot: 2b12fcf1b09288fcaff797d71e950e71ae42b91e8bdb2304758dfcffc2b620e3
   tx:
     - "51d37bdd871c9e1f4d5541be67a6ab625e32028744d7d4609d0c37747b40cd2d"
@@ -31,7 +31,7 @@ btc_full_with_tx: &btc_full_with_tx
   weight: 5984
   height: 125552
   version: 1
-  versionHex: '00000001'
+  versionHex: "00000001"
   merkleroot: 2b12fcf1b09288fcaff797d71e950e71ae42b91e8bdb2304758dfcffc2b620e3
   tx:
     - txid: 51d37bdd871c9e1f4d5541be67a6ab625e32028744d7d4609d0c37747b40cd2d
@@ -46,7 +46,7 @@ btc_full_with_tx: &btc_full_with_tx
           sequence: 4294967295
       vout:
         - value: 50.01
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               04d879d5ef8b70cf0a33925101b64429ad7eb370da8ad0b05c9cd60922c363a1eada85bcc2843b7378e226735048786c790b30b28438d22acfade24ef047b5f865
@@ -78,7 +78,7 @@ btc_full_with_tx: &btc_full_with_tx
           sequence: 4294967295
       vout:
         - value: 0.5
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 6f31097e564b9d54ebad662d5c4b5621c18ff523
@@ -89,7 +89,7 @@ btc_full_with_tx: &btc_full_with_tx
             addresses:
               - 1B8vkT58i8KUPVJvvyQfrbc8Wjwu3vEarQ
         - value: 29
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 7228033b48b380900501c39c61da4ab453ca88e8
@@ -138,7 +138,7 @@ btc_full_with_tx: &btc_full_with_tx
           sequence: 4294967295
       vout:
         - value: 0.01
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 429e6bd3c9a9ca4be00a4b2b02fd4f5895c14059
@@ -149,7 +149,7 @@ btc_full_with_tx: &btc_full_with_tx
             addresses:
               - 175FNxcLc1YrTwwG6TcsywcsHYdVqyhbwC
         - value: 4.85
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 e55756cb5395a4b39369d0f1f0a640c12fd867b2
@@ -189,7 +189,7 @@ btc_full_with_tx: &btc_full_with_tx
           sequence: 4294967295
       vout:
         - value: 0.15
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 e43f7c61b3ef143b0fe4461c7d26f67377fd2075
@@ -223,8 +223,8 @@ btc_full_tx: &btc_full_tx
     - txid: 7c6c587fa6c48cd3d4f10e5d23fe63ec2d159eca61f08567293023846f29baad
       vout: 0
       scriptSig:
-        asm: ''
-        hex: ''
+        asm: ""
+        hex: ""
       txinwitness:
         - >-
           3045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e7801
@@ -232,7 +232,7 @@ btc_full_tx: &btc_full_tx
       sequence: 4294967294
   vout:
     - value: 0.5
-      'n': 0
+      "n": 0
       scriptPubKey:
         asm: OP_HASH160 e9f20f1225a9528739495649405861ae5d77ba1e OP_EQUAL
         hex: a914e9f20f1225a9528739495649405861ae5d77ba1e87
@@ -241,7 +241,7 @@ btc_full_tx: &btc_full_tx
         addresses:
           - 3P21LnWRCWp92mPNuY2HWvbi4JFrLx1Kwr
     - value: 0.98552092
-      'n': 1
+      "n": 1
       scriptPubKey:
         asm: OP_HASH160 1abf9a43d3a56f06930b95b1a8f0161bc0b0c9be OP_EQUAL
         hex: a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be87
@@ -268,8 +268,8 @@ btc_segwit_tx: &btc_segwit_tx
     - txid: 181ad955a662d8efd47cd2fb07c191043452b71b0418543e36cbab1b44a32944
       vout: 0
       scriptSig:
-        asm: ''
-        hex: ''
+        asm: ""
+        hex: ""
       txinwitness:
         - >-
           3045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a01
@@ -277,7 +277,7 @@ btc_segwit_tx: &btc_segwit_tx
       sequence: 4294967293
   vout:
     - value: 0.00227671
-      'n': 0
+      "n": 0
       scriptPubKey:
         asm: 0 583f0afea3c306744856572107c5a80e6ca141b1
         hex: 0014583f0afea3c306744856572107c5a80e6ca141b1
@@ -286,7 +286,7 @@ btc_segwit_tx: &btc_segwit_tx
         addresses:
           - bc1qtqls4l4rcvr8gjzk2uss03dgpek2zsd3qujhsy
     - value: 0.02720963
-      'n': 1
+      "n": 1
       scriptPubKey:
         asm: 0 64b3b903602a28bacb8f6d914bfce514e7062341
         hex: 001464b3b903602a28bacb8f6d914bfce514e7062341
@@ -301,11 +301,6 @@ btc_segwit_tx: &btc_segwit_tx
   time: 1625736960
   blocktime: 1625736960
 
-
-
-
-
-
 btcBlock_segwit_txHashes: &btcBlock_segwit_txHashes
   hash: 0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2
   confirmations: 37
@@ -314,7 +309,7 @@ btcBlock_segwit_txHashes: &btcBlock_segwit_txHashes
   weight: 36582
   height: 690099
   version: 536870916
-  versionHex: '20000004'
+  versionHex: "20000004"
   merkleroot: 71c2a459044009c4daf075a0eb3ef45b70956287ef574b78f7f15a56b9896d76
   tx:
     - e7ba742d3938f2f315f29e7ebe46d1d246487d34b85d346e427c6f444b579ba6
@@ -367,7 +362,7 @@ btc_full_segwit_block: &btc_full_segwit_block
   weight: 36582
   height: 690099
   version: 536870916
-  versionHex: '20000004'
+  versionHex: "20000004"
   merkleroot: 71c2a459044009c4daf075a0eb3ef45b70956287ef574b78f7f15a56b9896d76
   tx:
     - txid: e7ba742d3938f2f315f29e7ebe46d1d246487d34b85d346e427c6f444b579ba6
@@ -383,7 +378,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 6.2523162
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 536ffa992491508dca0354e52f32a3a7a679a53a
@@ -394,7 +389,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 18cBEMRxXHqzWWCxZNtU91F5sbUNKhL5PX
         - value: 0
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_RETURN
@@ -403,7 +398,7 @@ btc_full_segwit_block: &btc_full_segwit_block
               6a2952534b424c4f434b3a0e83dfab6533b32ac33dbaabffc4b3f5d6ced40c50dcf46ee0031d2a003560dc
             type: nulldata
         - value: 0
-          'n': 2
+          "n": 2
           scriptPubKey:
             asm: >-
               OP_RETURN
@@ -412,7 +407,7 @@ btc_full_segwit_block: &btc_full_segwit_block
               6a24b9e11b6dbffd356eb5da59e244a03b4144279f8dd61b4bb9813d812c4a9f9a20d9911391
             type: nulldata
         - value: 0
-          'n': 3
+          "n": 3
           scriptPubKey:
             asm: >-
               OP_RETURN
@@ -442,7 +437,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.51972292
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 508951bdcbdd0d956514e5544cd35b578b11ae41
             hex: 0014508951bdcbdd0d956514e5544cd35b578b11ae41
@@ -471,7 +466,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.0047954
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 528dad2141cd58294c0d3d8dd8d322d319956854
@@ -502,7 +497,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00534228
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 528dad2141cd58294c0d3d8dd8d322d319956854
@@ -533,7 +528,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00499396
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 528dad2141cd58294c0d3d8dd8d322d319956854
@@ -556,8 +551,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 6d9d3cdcfc3f48a9a9412027d81c8f25da034ec192fea370e89056e831d36435
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               30440220360091e4ca5a9e4f25eff0a9139123859499b69c5f8f1f48380eefffff3f2af402206a420e59a0373d450a94320e893500898236d717805a140ab6b64be5988c5b1801
@@ -565,7 +560,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.03366305
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 6bb7140ad4c793d14021f48e672c2d266b3270c3
             hex: 00146bb7140ad4c793d14021f48e672c2d266b3270c3
@@ -574,7 +569,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qdwm3gzk5c7fazspp7j8xwtpdye4nyuxrt2e5a6
         - value: 0.00448296
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: OP_HASH160 584e23c934e8342026c14070ea525b36b244d8a6 OP_EQUAL
             hex: a914584e23c934e8342026c14070ea525b36b244d8a687
@@ -595,8 +590,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 33acd772b5dcfecb3d684d033439e2259fbed85d7a5e806cd2764a8138a314c5
           vout: 8
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402206e1c1909a3cfff3f7f2ac82ebcb90fcdb3d9b07c8ed95d0a10478664f7d160c60220689aebf63dfc81d234298ad3ad8265f349039bffe243f9ec103f0821accf022801
@@ -604,7 +599,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967294
       vout:
         - value: 0.00113685
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: OP_HASH160 3b956676f8748666c71424b301a9a1d4554e0849 OP_EQUAL
             hex: a9143b956676f8748666c71424b301a9a1d4554e084987
@@ -613,7 +608,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3784mNc2kkbsHJdy96wBLamQYufCBUZ44d
         - value: 3.48494348
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 ff955c763d5c6d5092e121ee42e806490704ecfc
             hex: 0014ff955c763d5c6d5092e121ee42e806490704ecfc
@@ -622,7 +617,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1ql724ca3at3k4pyhpy8hy96qxfyrsfm8u7020y2
         - value: 0.002
-          'n': 2
+          "n": 2
           scriptPubKey:
             asm: OP_HASH160 e441bf8eb1b00e1e99c07984aeb5d1b23b8c26cf OP_EQUAL
             hex: a914e441bf8eb1b00e1e99c07984aeb5d1b23b8c26cf87
@@ -643,8 +638,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 6a9a93a5253e16c58c2383b2c0060f9ef0aa3bed3e43bbee54cd91a84109329d
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               30440220307ddd38d20a7214177077d497424f77284c7846477b8882f26c82f928f7e4a00220643c16e67e1397749732076c03355f9b0ef1e4ef27e3953c986f439cff94ebb301
@@ -652,7 +647,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967293
       vout:
         - value: 0.00113228
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 1debbd78f6e6734ba3ad902df3781d8010ade747
             hex: 00141debbd78f6e6734ba3ad902df3781d8010ade747
@@ -661,7 +656,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qrh4m678kuee5hgadjqklx7qasqg2me68fvnlm3
         - value: 0.00449488
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: OP_HASH160 7b9a9e6d60400e5deb08c2be1a72a4afd411337e OP_EQUAL
             hex: a9147b9a9e6d60400e5deb08c2be1a72a4afd411337e87
@@ -682,8 +677,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 4d8ddbbe5f5c81597919285e4ff8be2d968c4a18d51f49539b51d0d7665f3c9e
           vout: 59
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304502210089ca3893f1180326d1bbc27f89b23ce5e2ef4f35c9130eaff088f0484896c08f02205559db4a068aaa1547972e18ce77181de04206e8d2e2a4b2bfcff6a531cce19901
@@ -691,7 +686,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.0304203
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 c378ded906a60a72b6345b5eaff0d933427218a5
@@ -702,7 +697,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1JpZZduyUs75KZoqQHyqy8NvW4Yj7eapNJ
         - value: 0.01575548
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 cb60668f051c001353e14e4218806911879e934e
             hex: 0014cb60668f051c001353e14e4218806911879e934e
@@ -711,7 +706,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qedsxdrc9rsqpx5lpfepp3qrfzxreay6waydz3k
         - value: 0.00269812
-          'n': 2
+          "n": 2
           scriptPubKey:
             asm: OP_HASH160 53e13860d18555d9d2d595c8df33823a177d40ee OP_EQUAL
             hex: a91453e13860d18555d9d2d595c8df33823a177d40ee87
@@ -720,7 +715,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 39LXp3MZZjtVJ5CaH8H6tKP1rEgZZXtxE8
         - value: 0.01453799
-          'n': 3
+          "n": 3
           scriptPubKey:
             asm: OP_HASH160 02de054ac7322088ff02f28d09f4e24653e870b7 OP_EQUAL
             hex: a91402de054ac7322088ff02f28d09f4e24653e870b787
@@ -729,7 +724,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 31xBFCDRYaBFJBJcDRQDN2uA9odx4oCmhy
         - value: 0.00335709
-          'n': 4
+          "n": 4
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 6b6c4f33d3931c52cc3760e0e864ac905b5aafb0
@@ -740,7 +735,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1Ao13zeE4dr12kChGSpVziCVQNMdssZZPg
         - value: 0.001412
-          'n': 5
+          "n": 5
           scriptPubKey:
             asm: OP_HASH160 03c04e312012941bbc2941e2a1c9e1db3f58e741 OP_EQUAL
             hex: a91403c04e312012941bbc2941e2a1c9e1db3f58e74187
@@ -749,7 +744,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 322rKjbfXr3sHKWYc28NoSSxEAXDrh8JQr
         - value: 0.00119916
-          'n': 6
+          "n": 6
           scriptPubKey:
             asm: OP_HASH160 4eb5ef7073cfa46e1dcbd432e5461169b69d87d1 OP_EQUAL
             hex: a9144eb5ef7073cfa46e1dcbd432e5461169b69d87d187
@@ -758,7 +753,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 38sCabNdWjpDF1vsXT3zMZu7wBwdTyxJ76
         - value: 0.00056951
-          'n': 7
+          "n": 7
           scriptPubKey:
             asm: OP_HASH160 8b219ff8975fdc4e92e99f2adc52396cf86d23b0 OP_EQUAL
             hex: a9148b219ff8975fdc4e92e99f2adc52396cf86d23b087
@@ -767,7 +762,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3ENg8WKQ4YC2nZrssnGuLjrtrPhdzU7NFK
         - value: 0.00020192
-          'n': 8
+          "n": 8
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 9a716a4e526dc3e1ff3d8fdb9513d21a584bb41f
@@ -778,7 +773,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1F5cvmnTH3ncX6YEMAstU6ceP9Kw9Rmq9M
         - value: 0.00419707
-          'n': 9
+          "n": 9
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 e739159436dcac622b027fc8fe03266a940ec821
@@ -789,7 +784,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1N5bUbk87zwDb6ALZ6UEyvNRKaRnN4NbNR
         - value: 0.0007791
-          'n': 10
+          "n": 10
           scriptPubKey:
             asm: OP_HASH160 5e683f3531dc04fbfd40f77375e920d5d241a954 OP_EQUAL
             hex: a9145e683f3531dc04fbfd40f77375e920d5d241a95487
@@ -798,7 +793,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3AJCKn4iq68W5qnYcvThruWuQY7r1z3k2H
         - value: 0.00068243
-          'n': 11
+          "n": 11
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 7762c98e0e3367094084716de9c539d489e64417
@@ -809,7 +804,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1BtFkh6uq7KSZcQwfqxkHdoZiSY1nZiEXi
         - value: 0.00604712
-          'n': 12
+          "n": 12
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 08f99e916e4cf152e6a241c05c79cedc09084864
@@ -820,7 +815,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1pTSPv2KKcAbdFZTwme94vhdiJQtyfdY4
         - value: 0.00425588
-          'n': 13
+          "n": 13
           scriptPubKey:
             asm: OP_HASH160 d3f1766bf4170e8491e522abc5f403c8c5b00cb3 OP_EQUAL
             hex: a914d3f1766bf4170e8491e522abc5f403c8c5b00cb387
@@ -829,7 +824,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3M1fm8keq5aD2h6RuQuKXv1P75Qs5BvYoa
         - value: 0.00284066
-          'n': 14
+          "n": 14
           scriptPubKey:
             asm: OP_HASH160 af3ed025d98feaf94600c016bc71023edc305273 OP_EQUAL
             hex: a914af3ed025d98feaf94600c016bc71023edc30527387
@@ -838,7 +833,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3HfdRSfEZkFnkLS6dN52w5VjE6uzoBHsa1
         - value: 0.00599581
-          'n': 15
+          "n": 15
           scriptPubKey:
             asm: OP_HASH160 7fc5ada0ec0d456d5c5b58fd21b7968bdd7a02df OP_EQUAL
             hex: a9147fc5ada0ec0d456d5c5b58fd21b7968bdd7a02df87
@@ -847,7 +842,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3DLcYq9P6MN2HVPooeRcqXER9X4aBEBndn
         - value: 0.06290286
-          'n': 16
+          "n": 16
           scriptPubKey:
             asm: OP_HASH160 e0e95aacb6866119226c2b391fbb8e165e1b9c87 OP_EQUAL
             hex: a914e0e95aacb6866119226c2b391fbb8e165e1b9c8787
@@ -856,7 +851,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3NCEqFKTcDSiifRY57d4qFAwBFQRmNuijS
         - value: 0.00053355
-          'n': 17
+          "n": 17
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 51564fb5db5530ec7d6fa333647a01af7380d217
@@ -867,7 +862,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 18R58ZKjfXUTZiYGdkwFuB3uuXXXrKjVra
         - value: 0.11230255
-          'n': 18
+          "n": 18
           scriptPubKey:
             asm: OP_HASH160 9501fed908d5114cedd9386660873e62ca2f3dff OP_EQUAL
             hex: a9149501fed908d5114cedd9386660873e62ca2f3dff87
@@ -876,7 +871,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3FGtzmyPenpW1o6jNeL8X36R8hB6ZortH3
         - value: 0.00449093
-          'n': 19
+          "n": 19
           scriptPubKey:
             asm: OP_HASH160 b83032f7d5cca0051f788f1a2eff90ab2d79e3d4 OP_EQUAL
             hex: a914b83032f7d5cca0051f788f1a2eff90ab2d79e3d487
@@ -885,7 +880,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3JUuzmkMPhGjKXzuDBmqJS2gyMmdwy8XfR
         - value: 0.005768
-          'n': 20
+          "n": 20
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 eeb8bacc9220f59abb663e432985ee200d427f30
@@ -896,7 +891,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1NmF7u9aTbeq5AP2sbW3f1q6uosFuig7pK
         - value: 0.00284898
-          'n': 21
+          "n": 21
           scriptPubKey:
             asm: 0 4a12310c411a22a565621fa258e8426bd7c8d0b3
             hex: 00144a12310c411a22a565621fa258e8426bd7c8d0b3
@@ -905,7 +900,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qfgfrzrzprg322etzr73936zzd0tu359nujnlfl
         - value: 0.003
-          'n': 22
+          "n": 22
           scriptPubKey:
             asm: OP_HASH160 d5d8c6caf78fc21061fc4731c24b0c89a36c7ad6 OP_EQUAL
             hex: a914d5d8c6caf78fc21061fc4731c24b0c89a36c7ad687
@@ -914,7 +909,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3MBjYJRqvTJWpUWJQXeRwtJjQzjscbp41M
         - value: 0.00075
-          'n': 23
+          "n": 23
           scriptPubKey:
             asm: OP_HASH160 8289e1a729717438ebcdf8c9e07596ec2d3acbaa OP_EQUAL
             hex: a9148289e1a729717438ebcdf8c9e07596ec2d3acbaa87
@@ -923,7 +918,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3DbEweqv1HzaBVYB4F8wNgmrzoQYkVbcec
         - value: 0.00287073
-          'n': 24
+          "n": 24
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 6451b87e24ca86905eea9d851e28c5b8aa9dee39
@@ -934,7 +929,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1A9SUEdmz4FKARPZgM2h26MoiNyhUdzPq2
         - value: 0.001681
-          'n': 25
+          "n": 25
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 d37556e83e286f550870db5c825e6fffc312e555
@@ -945,7 +940,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1LH69NFFXdbkCcRzbS18N71gX4nBwmSUpk
         - value: 0.0001499
-          'n': 26
+          "n": 26
           scriptPubKey:
             asm: 0 353b138c3be7387ddc491c83e7159d736c537de1
             hex: 0014353b138c3be7387ddc491c83e7159d736c537de1
@@ -954,7 +949,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qx5a38rpmuuu8mhzfrjp7w9vawdk9xl0pv2lkw2
         - value: 0.00074948
-          'n': 27
+          "n": 27
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 845c12e6aedc4cdbc79f2eacce9ca30d631b9aa7
@@ -965,7 +960,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1D4rViyML5HzizezD6MbaVeKAA5R9924EG
         - value: 0.00081844
-          'n': 28
+          "n": 28
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 0e09830988a068eb6507dbae420639dd881b47c4
@@ -976,7 +971,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 12HDrajJ7RB6aBzUY4DKRYjfMBPLbduobh
         - value: 0.00168096
-          'n': 29
+          "n": 29
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 7e66edc27e301deb97e19ce70e4204ea670196e1
@@ -987,7 +982,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1CXMSnZP8h2byzS3HSj9qNjRTDFDBtCNsC
         - value: 0.00079431
-          'n': 30
+          "n": 30
           scriptPubKey:
             asm: OP_HASH160 168046f69a90adcf31e4ed4dd580b643894f3815 OP_EQUAL
             hex: a914168046f69a90adcf31e4ed4dd580b643894f381587
@@ -996,7 +991,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 33jzTcvTv6vzaXte2WAbAwFFVEyZf9DMCP
         - value: 0.02874012
-          'n': 31
+          "n": 31
           scriptPubKey:
             asm: 0 23b91d13fd85c250078bef3e696141afbc7d67d7
             hex: 001423b91d13fd85c250078bef3e696141afbc7d67d7
@@ -1005,7 +1000,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qywu36ylashp9qputaulxjc2p47786e7h49khmw
         - value: 0.00023983
-          'n': 32
+          "n": 32
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 81316d20a965c57e365ddbd88cf0b33df182497c
@@ -1016,7 +1011,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1Cn7NwmRDBdcnknkB5dTaG1tQZLGkH9VhV
         - value: 0.00056266
-          'n': 33
+          "n": 33
           scriptPubKey:
             asm: OP_HASH160 40aa6e55061da5ef2b270b375d169df7d578785a OP_EQUAL
             hex: a91440aa6e55061da5ef2b270b375d169df7d578785a87
@@ -1025,7 +1020,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 37awLaCvyD61vHfk1TCTWh1aAJbZPQU2cY
         - value: 0.002848
-          'n': 34
+          "n": 34
           scriptPubKey:
             asm: OP_HASH160 71084b0c6799c2db9ad5ba2afd88af69cfaf38db OP_EQUAL
             hex: a91471084b0c6799c2db9ad5ba2afd88af69cfaf38db87
@@ -1034,7 +1029,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3BzgDSS6tiLzu3YLHuA1ZvfzVyZZ2uYrAS
         - value: 0.05660079
-          'n': 35
+          "n": 35
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 fd61259381494884b2094a6c7e015ecf964dcedb
@@ -1045,7 +1040,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1Q6kLQmiE4RP428d85VGYH7cANJ4XkEZ62
         - value: 0.002848
-          'n': 36
+          "n": 36
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 d3e27eac3b18ab2fe0e543b0e24a457aba4508a7
@@ -1056,7 +1051,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1LKLucVQYdE7HQK6Vayg5GM7JyNN3fWe3v
         - value: 0.00014987
-          'n': 37
+          "n": 37
           scriptPubKey:
             asm: 0 4bf26007bb626433beb32f46989c534c0ea36b94
             hex: 00144bf26007bb626433beb32f46989c534c0ea36b94
@@ -1065,7 +1060,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qf0exqpamvfjr804n9arf38znfs82x6u5y6knw2
         - value: 0.00299666
-          'n': 38
+          "n": 38
           scriptPubKey:
             asm: OP_HASH160 fec8bce62d0b8caf0881ce3596c1ca37d48df3ef OP_EQUAL
             hex: a914fec8bce62d0b8caf0881ce3596c1ca37d48df3ef87
@@ -1074,7 +1069,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3QvC2nHZAN2PyPZB7udefhoV3etnRzNG2H
         - value: 0.06105704
-          'n': 39
+          "n": 39
           scriptPubKey:
             asm: 0 715f70274118762b58a11dcfbff636faa4be8a3d
             hex: 0014715f70274118762b58a11dcfbff636faa4be8a3d
@@ -1083,7 +1078,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qw90hqf6prpmzkk9prh8mla3kl2jtaz3annek34
         - value: 0.00071196
-          'n': 40
+          "n": 40
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 cac8f77da9673a862a29d6e24f9a0a3b4d6285d0
@@ -1094,7 +1089,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1KVEFAaRWQthRqABrZV7eQSiHVEhmrzc9z
         - value: 0.01467459
-          'n': 41
+          "n": 41
           scriptPubKey:
             asm: OP_HASH160 4c79e8d15a93ef96ffe849ff1d013907a71f29cb OP_EQUAL
             hex: a9144c79e8d15a93ef96ffe849ff1d013907a71f29cb87
@@ -1103,7 +1098,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 38fPKYFMFjETnk2h3QHqZoRtHyWbHKtKxC
         - value: 0.00275465
-          'n': 42
+          "n": 42
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 93d66c36e24f6750c3b1f714d26ccc06e30f8c0c
@@ -1114,7 +1109,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1EUhCYvGuGYEXKwBcJkdzm1wppUpsLNzfp
         - value: 0.001413
-          'n': 43
+          "n": 43
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 670d8e194515294a39ca836bcd89c5e63946ad77
@@ -1125,7 +1120,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1APtqajF3AqK9m4jHnF5ycJZUoGJET5fn9
         - value: 0.00096567
-          'n': 44
+          "n": 44
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 bd744f75e1051670b45ea769f2807ce42ffc3760
@@ -1136,7 +1131,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1JGk3eLP6cnTMpVewxo635epPfwpFVwYJe
         - value: 0.00020986
-          'n': 45
+          "n": 45
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 a2f869675fc607b7e32c21536b8882781057f3a7
@@ -1147,7 +1142,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1Fri42XhTqUo9oZYH7tVfkxBEDgeuRk9r4
         - value: 0.00605577
-          'n': 46
+          "n": 46
           scriptPubKey:
             asm: OP_HASH160 0cbf435d9f011cf09c193a18c2c69c8c1319d5e0 OP_EQUAL
             hex: a9140cbf435d9f011cf09c193a18c2c69c8c1319d5e087
@@ -1156,7 +1151,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 32rRA3Q7Ao2LfXEHJQF4zuXTh4McSMop3i
         - value: 0.00514602
-          'n': 47
+          "n": 47
           scriptPubKey:
             asm: OP_HASH160 72b85f3d0b3091ffe3e1e33499bc850cb2e1bb62 OP_EQUAL
             hex: a91472b85f3d0b3091ffe3e1e33499bc850cb2e1bb6287
@@ -1165,7 +1160,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3C9bpofL67kQRNuLcu69W5oCJZB31uUPqz
         - value: 0.00932193
-          'n': 48
+          "n": 48
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 9fd915599b7f06b822f0296bd90abacd129f4f76
@@ -1176,7 +1171,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1FaCVim4b3m1XhbYKwKL7yjfABRbXzWNGK
         - value: 0.01506707
-          'n': 49
+          "n": 49
           scriptPubKey:
             asm: OP_HASH160 8f9ef19321ad0a62eeb1034ffc41303658095a91 OP_EQUAL
             hex: a9148f9ef19321ad0a62eeb1034ffc41303658095a9187
@@ -1197,8 +1192,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: fd2c4bfc533daf07a3a3a4b48727330b3d0df03b8d10bfb6f2c44ea6f375869a
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402203822f1f9b7908e8e80b3cb4a655cb80425feaa04319098af909d640bfc07e5a30220071eeed6e1f86a8fba49c6d29eeec5487bcf3c8d6833d0c181d41baa374ce95001
@@ -1206,7 +1201,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00662213
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 6c18ac26595dd955b85b174a3d8c78e387071e8c
             hex: 00146c18ac26595dd955b85b174a3d8c78e387071e8c
@@ -1231,7 +1226,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             hex: >-
               2200201050f81f3cf192e8c5f1923700e7fa222aa2d4845303a4087f019408d972fd12
           txinwitness:
-            - ''
+            - ""
             - >-
               30440220077cd1a4eda2fd2251bb4e88fe9cb9abe73c40244c61916e54e19425ec38f43f02204c2ead8de4a7f7e537e2b71a0dd831d20d6f8fbfd0ad957221832f1a5ee884de01
             - >-
@@ -1241,7 +1236,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.01522308
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: OP_HASH160 dfb610f26c86fbaab363c3b264bb283facabaa58 OP_EQUAL
             hex: a914dfb610f26c86fbaab363c3b264bb283facabaa5887
@@ -1250,7 +1245,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3N5tiW96XeYngeJ8hrNL63p4Ja1JiUbFud
         - value: 2.24037374
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: OP_HASH160 f02f35dfd649ccfdbb1e9a19156c3fb99a0d13ad OP_EQUAL
             hex: a914f02f35dfd649ccfdbb1e9a19156c3fb99a0d13ad87
@@ -1280,7 +1275,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967294
       vout:
         - value: 0.0035976
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 1d4f2ad2a9e6d7ddd83469425ff59441e4f9eb23
             hex: 00141d4f2ad2a9e6d7ddd83469425ff59441e4f9eb23
@@ -1301,8 +1296,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: ccb2592f7ee5f59f663416d466fb4af5cf77df6021211c6e451766bc29ce8163
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100c8f748b7101f2ff35c4a80be66e31e131f19c889993e3b1980c4e87bf049b91e0220432099cdc708c333a1c8a79632b01762a7b10cbc2224d0f2f64ef896e7e9810801
@@ -1310,7 +1305,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967294
       vout:
         - value: 0.00029956
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 0f30034977561e424564ce8eca6554f721693f06
@@ -1321,7 +1316,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 12PJesM7FM9zg6k9byhGjFTGTxfC5RDtwY
         - value: 0.00009794
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 ce5bd11f4c403d73717538794d0d9c333c82585c
             hex: 0014ce5bd11f4c403d73717538794d0d9c333c82585c
@@ -1342,8 +1337,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 63bddc99cb614942b367ef9f9ad86e95c972cd5309c1990f99f8435c8b182a87
           vout: 19
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100f2d38235d74912cfad18a1bbb834c29a330f15675b159157749a9c88d31816b602206a161222a42ede172d15c88141d812003dfdbe519108a94bcbbbe831a07e4b1001
@@ -1351,7 +1346,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 0
       vout:
         - value: 0.00005991
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: OP_HASH160 c1e70061f0c8d24dcf42b1dd3ee7749c841118ba OP_EQUAL
             hex: a914c1e70061f0c8d24dcf42b1dd3ee7749c841118ba87
@@ -1360,7 +1355,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3KNH4qDuaYVtHbC3DJgCo26jMfVWJGd1ac
         - value: 0.34677699
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 26da8ead36f9cb7232885e24bed55db638983b83
             hex: 001426da8ead36f9cb7232885e24bed55db638983b83
@@ -1389,7 +1384,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 1
       vout:
         - value: 0.00450316
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 b1da96c6d9f8ca1df601b6f0b375cca783a4de42
@@ -1400,7 +1395,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1HDQTnMejNiaJMjqKHpnak2B3snQBxoM38
         - value: 0.44870761
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 1e7c72c338f790b929422397218d8785a4aeda61
@@ -1452,7 +1447,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967293
       vout:
         - value: 0.03014448
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: OP_HASH160 cf3fd4edf20dc374e92523385f306553c0a43dd1 OP_EQUAL
             hex: a914cf3fd4edf20dc374e92523385f306553c0a43dd187
@@ -1482,7 +1477,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967293
       vout:
         - value: 0.00305021
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: OP_HASH160 3831317df36b605e41b860c0ac218542cd85808a OP_EQUAL
             hex: a9143831317df36b605e41b860c0ac218542cd85808a87
@@ -1491,7 +1486,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 36p8hJGoDuobgVSpAomNmjihD4wwLj4P3t
         - value: 17.00925009
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: OP_HASH160 1ba7a9a53c05d26a6983f216f4d1205634ac80fd OP_EQUAL
             hex: a9141ba7a9a53c05d26a6983f216f4d1205634ac80fd87
@@ -1521,8 +1516,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 1f1633948447a18e2fafa43dc6b9b8a6b0fd99dfad65ef193aeb477769e35124
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               30440220182c99a1329e72d102c1d82eb6cd09ac563e46384fdea9d7853294ccd7ac2ea902200db86458cc3e9e49904e5f35272015f7b4db7701fe892f38088b3547a0f837a101
@@ -1530,7 +1525,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00007771
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 10d60ff8a884cd7fd25248d0530bd5af1ddd68b9
             hex: 001410d60ff8a884cd7fd25248d0530bd5af1ddd68b9
@@ -1539,7 +1534,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qzrtql79gsnxhl5jjfrg9xz744uwa669er26dj8
         - value: 0.02763349
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 1c17013569299a011183890111b8d49fb6038e32
@@ -1562,8 +1557,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 4ea698176feac29a081d4b906f887d97123aea766edcdae40fc8acd69e46873c
           vout: 2
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402200a7201ccebb8eae607f01f1e73dc43022881c8fa4505e5cf7d068dba2d9f10d302206084c24192f6ddbd04b00be4d7addc5d5a6ea2fe3a4734bb3bd021017e4015b801
@@ -1572,8 +1567,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 824ae16e5526b0c3bc88ba2ce4eb66981dbbfc91c3d3e853720182d34f922e66
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402200e6adcc67185f0f8c12ab99eadd6f36a32f187911af084bd021a6240156ce68f02202d461ea2bc4509145cc11c6f69ab2db67106818b132288be637ca211d6ff024801
@@ -1582,8 +1577,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 82844f219fd63590bde707001d13141a8400e9e1175d3b40306f14ecc033beb5
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402202db1cc195f387ff5dbd4a79fbaeb8e7dd7a4990a3d4c47ad981ca6f3f3768391022068d94d5f29552765be2e311ddf6761e54f378f9414602b913f7c56076faecf2c01
@@ -1592,8 +1587,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: beda79db1b8a5e4f50b29112a33c6d7704e8f48da96a04fb82b0a49c1b50cfe5
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402201dbc1edb23acc6adcf6e631822d4abd4f797055bce1e65cbcc428f75757b853202201f958da9d493f2ab806d58fdd68e8f6c29274d29d0b8ebe72d73acf52ab986db01
@@ -1602,8 +1597,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: ceba7a41bc03ed7d63106e3e1e0a3eef2a9feab9fdee31aa1337037a93fc54be
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402200760498a6bb830bb8ae89db766df42e9ac64728687f9e91bcacb77af0fe5d06a02206a808a0c60b894677a149f99ffad087aa1b9f17fe238c11ddbbf6b1a6fb9a34101
@@ -1612,8 +1607,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: dbdc55a55ae77b2f532360933ea8f666a6e3641d6f300477e18c4881c7836b02
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3044022004803fb767a77e55bb5d7911f43b890ce63173a20c8083927cba1c63e624d406022054dfed5ae4b5aba3cc46da6f3d1a066ff336d252e54742f85f44d96b24243f0101
@@ -1621,7 +1616,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967293
       vout:
         - value: 0.03112855
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 561c8f5dcb731ccb9af98393fa0e2dbfbefd7aee
@@ -1648,7 +1643,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             hex: >-
               2200204c17874906b9b484cebc0fde0e7c44705050792b90492bafb7d7f732812d3ce2
           txinwitness:
-            - ''
+            - ""
             - >-
               3045022100c0c650cc00bcc79d1f9fcfed118601c51682df4a17981afa6668adfc9804af7802204db5bef84360e19c97abcb2979d866766d5bb7c64a2801994b6b23c8434e4e7701
             - >-
@@ -1658,7 +1653,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.05
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 a250d351fd042f41ab739574b9a2d0578ab624bf
@@ -1669,7 +1664,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1FoFHvrtEdzr7J67v7wgj5rJ9w61xFHarr
         - value: 1.39913991
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: OP_HASH160 a2ac5855a64ba9fe3d808114146e1b440c4b3525 OP_EQUAL
             hex: a914a2ac5855a64ba9fe3d808114146e1b440c4b352587
@@ -1698,7 +1693,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 1.55690512
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 c8a6bc95dfec3fa60785b300278d5378c6d453a0
@@ -1709,7 +1704,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1KHwtS5mn7NMUm7Ls7Y1XwxLqMriLdaGbX
         - value: 0.01498873
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 19dfb6e485d667649eb9027c577fc051dae71f0b
             hex: 001419dfb6e485d667649eb9027c577fc051dae71f0b
@@ -1734,7 +1729,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             hex: >-
               22002028cdcdad4c4a07bb6ec5925f2196c4e293898127650b3044fbdb6bab317a7099
           txinwitness:
-            - ''
+            - ""
             - >-
               304402205797dac01c67c55dc766706c6cd8f5a26a30dc98bf05f2363acb9b9bcbbf317f022018c7e041a3a8b1f1b54a348fabaf6109a4f3d1a5f58f2ed55ac98ba372ede53201
             - >-
@@ -1744,7 +1739,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00425163
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 178412a75e907720a886591d008f10f9f3466f51
@@ -1755,7 +1750,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 139LkzkdvXoXEVbQyaXKFZNMFTRv26Juv3
         - value: 5.4261758
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: OP_HASH160 ba695f1c0d90e1b0fbcc0f1f4623b815848a51f2 OP_EQUAL
             hex: a914ba695f1c0d90e1b0fbcc0f1f4623b815848a51f287
@@ -1776,8 +1771,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 7f1af3eaaa18972df7e4c5ffa6079f3649e00f2fc958259e74244bc890910525
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100a06e32275e2398421c06b8a2e05716435dfd3d0338115c0121f17611f9cae15102200c7e7429ce64879c9a668d600185b8692aba933b3af2cb0d1bb645268452253b01
@@ -1785,7 +1780,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00148219
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 4e11f3feec543860df274eeab67012608ba93996
             hex: 00144e11f3feec543860df274eeab67012608ba93996
@@ -1794,7 +1789,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qfcgl8lhv2suxphe8fm4tvuqjvz96jwvkhcksrf
         - value: 0.00149835
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 ec03ec56b76c9398626fd14e17ea23c5e6ee0188
@@ -1825,7 +1820,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.02293671
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 4a58af826227a82b45bd48a69c0618e5f1de0d46
@@ -1836,7 +1831,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 17n7FBK8DxyGq4ijx12NWeTa7GW2qDW6m4
         - value: 0.00115675
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 5a4f089fe01c25c865b23ee7eacd0ca7cf76e5e7
             hex: 00145a4f089fe01c25c865b23ee7eacd0ca7cf76e5e7
@@ -1865,7 +1860,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.03004015
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: OP_HASH160 0e9259a0faf3c56342caeeec43d61e2184a1144a OP_EQUAL
             hex: a9140e9259a0faf3c56342caeeec43d61e2184a1144a87
@@ -1874,7 +1869,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3324hp8mgcAN9xYU1NeJsJDPXJNixgSkB2
         - value: 0.20598408
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 8b41c041d8dadc41d3efd8b0d430ac80274377ec
@@ -1915,8 +1910,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 7b5c1238aa9d6be5c6c673d233cbe41b320cb39ac91c031ca9c85feddf0870b1
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3044022041bf6e490c22f9b2e817322257e269d712896091414ea5444098815ec8537fdd0220280101a6b811d57b79258b36f69bf4b16bfec35b96d75ce80f83de872884678601
@@ -1925,8 +1920,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 6b8988d701d13b97775b0f0bcdc33ecd833fe53a83ec6df4225d3822e8c748b4
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100933da4eed06a472c7a8911b9885ed1e25675c7f6dbfdcddc8a2be437184dade502202a40b5b2a5f6a647d01b8f9177f89132947b39e0ec7f4d60bd1ad1ec504d22f301
@@ -1935,8 +1930,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 6a9f50060d2a0fc44c0a4701b0f6e72a758545b474d9582c9f669b2d91e65331
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               30440220097003a8faeba34e9118b16920390ab2748970ee14c8ba484e691173330eea5f02201ca72e92ebf06541d91499b81b8f4f5a322997f610e06c16cf0eecf04c621cf901
@@ -1944,7 +1939,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.0796458
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 36552a1c649baccfee51d6bffb1951e3685ed692
             hex: 001436552a1c649baccfee51d6bffb1951e3685ed692
@@ -1973,7 +1968,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00519844
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 c248b989aae8d90a6242da04f19fa912dc6e8f10
@@ -2014,8 +2009,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 55547dc947bdf347d230d26bf0fe3c52a32f6dc3cf950ed19d6bfa201ee5a8ad
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               30440220673f1e40d5977a114633e8822c520bd0b0d96a83e0b0378a26de89ede6c15d1102201a0989d550e84cfa342e5bd8ed28b364e0c4702c1f271245bb3277b6ae204e5d01
@@ -2023,7 +2018,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.03539112
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 de83d2189cedab4d984ab78488f00dfdf5e32870
             hex: 0014de83d2189cedab4d984ab78488f00dfdf5e32870
@@ -2032,7 +2027,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qm6payxyuak45mxz2k7zg3uqdlh67x2rsux9lvp
         - value: 0.00960533
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 ea01e04aaafa8255b47ede6648e7a0c111431bca
             hex: 0014ea01e04aaafa8255b47ede6648e7a0c111431bca
@@ -2070,7 +2065,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.0261158
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 8bfc0653d121bf6367c9b78f0f12c3a6880bf166
@@ -2081,7 +2076,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 1DmAqedH6fKhjH4pMg6UMrhaiZW9FyGnYf
         - value: 0.031484
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: >-
               OP_DUP OP_HASH160 205826a3fb33a0fcd8c8e177247b48877508260f
@@ -2104,8 +2099,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 876f687396eaa1dc1f22afee63294b5750a1190e3d012ea30e8ef8d1bb4ca3e6
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100c99a034876bab21f203f6a8c0f7de3c43ab2aea76e8a2747c39dc9440eb42882022007a636ac3e8f822c9843e8ab2a03792657dfb01703009b016cd778ecd50bf95901
@@ -2114,8 +2109,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 07e3544edd4bd669c7c3ca1e47a096421b762a5f85a3dce3d38e63eb79b6a79c
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               30450221009b718162daff3ee7e235371b022d23d0592ab019671bbc7d3cf172a72a8479860220745e9050835eff30c3d7d70cddc84632819d110a3a6a245abd42b9bae23bba1801
@@ -2123,7 +2118,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.01348519
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 7eef9a2c606f75f7ee5995b6b5a65ee512e08451
             hex: 00147eef9a2c606f75f7ee5995b6b5a65ee512e08451
@@ -2132,7 +2127,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1q0mhe5trqda6l0mjejkmttfj7u5fwppz3lfa98e
         - value: 0.00800995
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 59f627e531193db7f3a525ae32df9eb453703284
             hex: 001459f627e531193db7f3a525ae32df9eb453703284
@@ -2153,8 +2148,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: bff39ede27c5991021c0a6f325acb773cb658660e11148523e1f6441e8adca52
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3044022020c878f15145a3c407126a712862a19e8d0c6066ae26edb100dd8f2ac410bdfe022034d547cc3e9fc059b4c4ca52cca2a6a4c44c34d563abdda59738dbdae08950e601
@@ -2162,7 +2157,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.00059934
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: OP_HASH160 69ab330f75fd4cc065a2151a3fc7676fefb8a75b OP_EQUAL
             hex: a91469ab330f75fd4cc065a2151a3fc7676fefb8a75b87
@@ -2171,7 +2166,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - 3BKjxqF6iZGXWkABFCpUk8ke6V2JLQ6QSs
         - value: 0.00293909
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 c4485c0c4bf12c3eba18a86c35611662f9216d63
             hex: 0014c4485c0c4bf12c3eba18a86c35611662f9216d63
@@ -2192,8 +2187,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 0cfae00dd82e83c046809afe0996e109e4c86a3e974148e85c8941e0e98f40d8
           vout: 16
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               304402201147a76e63ed59be3cf36ca41f0a6820a54b36b05ac7fa0754bc73f584f80fce022073bc8f2af98b17abdf25add10bb518201b99398940f86a769760c011f1e4d5c301
@@ -2202,8 +2197,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 68e6c3131adebc689902d35f7f7a1ec76c5f8860c4bbfe7db59493f380e43c82
           vout: 1
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100e3a3598e60387c3494fbf2e554ccd66d7535ba3f5f611c2cf94e5d76d318e77102207987a0d22c313bf95eade88e076d4a4a9d180aeb160917024426ad250285507701
@@ -2212,8 +2207,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: 8f4841c5e1de8d72cda38c4af1567301e226773618b964150890cfef29456c33
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100ae8235cfa4affd0a3c27b9ea2aef31eb6155ad8362b6ec2708299a6e4f3ea60202203d1f2d2cc993be5a199df912982d72263a632c18bfc69d00a09406acb1ba674701
@@ -2222,8 +2217,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: a8e91599535a157b6eb8528635b43145752eddfa1206e241a62105ea9105b463
           vout: 0
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3044022064a248d9b84e327eaae7dfb7394281807d813b52f955384684842f523462024c0220544fe4345f8ae496ae26cff6eaaac607fa6495156460ec4820f41fafe6d08f8701
@@ -2232,8 +2227,8 @@ btc_full_segwit_block: &btc_full_segwit_block
         - txid: d4365c7c2b04a6ea70e67d0ee5dc935d90fc0d0c3422564b9059c9b7e599f6af
           vout: 59
           scriptSig:
-            asm: ''
-            hex: ''
+            asm: ""
+            hex: ""
           txinwitness:
             - >-
               3045022100a40cb59269085e50bd95c4d83a814cdaa9d0923dfbbbebfa3ddace33e567a9ab02205aa027d73e5896b125ce43943a45823710f43402f0a998cee9ca3486945197c201
@@ -2241,7 +2236,7 @@ btc_full_segwit_block: &btc_full_segwit_block
           sequence: 4294967295
       vout:
         - value: 0.01
-          'n': 0
+          "n": 0
           scriptPubKey:
             asm: 0 2ff099afd4dbc6506ad488760a39574d521e51b8
             hex: 00142ff099afd4dbc6506ad488760a39574d521e51b8
@@ -2250,7 +2245,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1q9lcfnt75m0r9q6k53pmq5w2hf4fpu5dc3ttakw
         - value: 0.01
-          'n': 1
+          "n": 1
           scriptPubKey:
             asm: 0 ce6fcea06b82087b16a78a8372b3c6b3a961e764
             hex: 0014ce6fcea06b82087b16a78a8372b3c6b3a961e764
@@ -2259,7 +2254,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qeehuagrtsgy8k94832ph9v7xkw5kremymp57zu
         - value: 0.01
-          'n': 2
+          "n": 2
           scriptPubKey:
             asm: 0 db151b79d83e1864c0c3d5541d45ef9f2c4d2193
             hex: 0014db151b79d83e1864c0c3d5541d45ef9f2c4d2193
@@ -2268,7 +2263,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1qmv23k7wc8cvxfsxr642p6300nuky6gvncvm8tr
         - value: 0.01
-          'n': 3
+          "n": 3
           scriptPubKey:
             asm: 0 f05fa715a390cea1736a7b2a0259c23c3d77c4c0
             hex: 0014f05fa715a390cea1736a7b2a0259c23c3d77c4c0
@@ -2277,7 +2272,7 @@ btc_full_segwit_block: &btc_full_segwit_block
             addresses:
               - bc1q7p06w9drjr82zum20v4qykwz8s7h03xqux9qvq
         - value: 0.01
-          'n': 4
+          "n": 4
           scriptPubKey:
             asm: 0 f18aed18bce9d56deb56115cd351fbe9990a7a5a
             hex: 0014f18aed18bce9d56deb56115cd351fbe9990a7a5a
@@ -2297,18 +2292,12 @@ btc_full_segwit_block: &btc_full_segwit_block
   previousblockhash: 000000000000000000051d08578c5869136ba1fedc857c79c244846d3f988cf1
   nextblockhash: 00000000000000000013825a2e7d5da4f3f003ed6a7c05e0bcff3328a0366927
 
-
-
-
-
-
-
 btc:
   getblockheader:
     config:
-      proof: 'none'
-      chainId: 'btc'
-    input: 
+      proof: "none"
+      chainId: "btc"
+    input:
       - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
     expected_output:
       options:
@@ -2332,474 +2321,419 @@ btc:
     mockedResponses:
       options:
         bytes:
-          -
-            req:
+          - req:
               method: "POST"
               body:
                 method: "getblockheader"
-                params: 
+                params:
                   - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
-                  - false 
+                  - false
             res:
               result: 0100000081cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0f1fc122bc7f5d74df2b9441a42a14695
         btcblockheader:
-          -
-            req:
+          - req:
               method: "POST"
               body:
                 method: "getblockheader"
-                params: 
+                params:
                   - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
                   - true
             res:
               result:
-                  hash: "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
-                  confirmations: 560364
-                  height: 125552
-                  version: 1
-                  versionHex: "00000001"
-                  merkleroot: "2b12fcf1b09288fcaff797d71e950e71ae42b91e8bdb2304758dfcffc2b620e3"
-                  time: 1305998791
-                  mediantime: 1305995943
-                  nonce: 2504433986
-                  bits: 1a44b9f2
-                  difficulty: 244112.4877743364
-                  chainwork: 0000000000000000000000000000000000000000000000006aa84fd45b2350c9
-                  nTx: 4
-                  previousblockhash: "00000000000008a3a41b85b8b29ad444def299fee21793cd8b9e567eab02cd81"
-                  nextblockhash: "0000000000001c0533ea776756cb6fdedbd952d3ab8bc71de3cd3f8a44cbaf85"
+                hash: "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
+                confirmations: 560364
+                height: 125552
+                version: 1
+                versionHex: "00000001"
+                merkleroot: "2b12fcf1b09288fcaff797d71e950e71ae42b91e8bdb2304758dfcffc2b620e3"
+                time: 1305998791
+                mediantime: 1305995943
+                nonce: 2504433986
+                bits: 1a44b9f2
+                difficulty: 244112.4877743364
+                chainwork: 0000000000000000000000000000000000000000000000006aa84fd45b2350c9
+                nTx: 4
+                previousblockhash: "00000000000008a3a41b85b8b29ad444def299fee21793cd8b9e567eab02cd81"
+                nextblockhash: "0000000000001c0533ea776756cb6fdedbd952d3ab8bc71de3cd3f8a44cbaf85"
 
   getblock:
-    -
-      config:
-        proof: 'none'
-        chainId: 'btc'
+    - config:
+        proof: "none"
+        chainId: "btc"
       input:
         - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
       expected_output:
-        options: 
+        options:
           bytes: "0100000081cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0f1fc122bc7f5d74df2b9441a42a146950401000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804f2b9441a022a01ffffffff014034152a01000000434104d879d5ef8b70cf0a33925101b64429ad7eb370da8ad0b05c9cd60922c363a1eada85bcc2843b7378e226735048786c790b30b28438d22acfade24ef047b5f865ac000000000100000001ad6279669bcc8e3003267d97c9e364a9835ea7a5b53871d057783ef96f468d73000000008c4930460221009805aa00cb6f80ca984584d4ca40f637fc948e3dbe159ea5c4eb6941bf4eb763022100e1cc0852d3f6eb87839edca1f90169088ed3502d8cde2f495840acac69eefc9801410486477e6a23cb25c9a99f0c467c6fc86197e718ebfd41d1aef7cc3cbd75197c1f1aaba985b22b366a0729ccb8aa38277809d6d218cf4077ac9f29a953b5435222ffffffff0280f0fa02000000001976a9146f31097e564b9d54ebad662d5c4b5621c18ff52388ac007ddaac000000001976a9147228033b48b380900501c39c61da4ab453ca88e888ac0000000001000000035a19f341c42071f9cec7df37c4853c95d6aecc95e3bf19e3181d30d99552b8c9000000008a473044022025bca5dc0fe42aca5f07c9b3fe1b3f72113ffbc3522f8d3ebb2457f5bdf8f9b2022030ff687c00a63e810b21e447d3a57b2749ebea553cab763eb9b99e1b9839653b014104469f7eb54b90d90106b1a5412b41a23516028e81ad35e0418a4460707ae39a4bf0101b632260fb08979aba0ceea576b5400c7cf30b539b055ec4c0b96ab00984ffffffff5b72d3f4b6b72b3511bddd9994f28a91cc03212f200f71b91df13e711d58c1da000000008c493046022100fbef2589b7c52a3be0fd8dd3624445da9c8930f0e51f6a33d76dc0ca0304473d0221009ec433ca6a9f16184db46468ff39cafaa9643021e0c66a1de1e6f9a612092790014104b27f4de096ac6431eec4b807a0d3db3e9f9be48faab692d5559624acb1faf4334dd440ebf32a81506b7c49d8cf40e4b3f5c6b6e99fcb6d3e8a298174bd2b348dffffffff292e94738851718433a3168e43cab1c6a811e9a0f35b06b6cec60fea9abe0f43010000008a4730440220582813f2c2d7cbb84521f81d6c2a1147e5296e90bee05f583b3df108fdac72010220232b43a2e596cef59f82c8bfff1a310d85e7beb3e607076ff8966d6d374dc12b014104a8514ca51137c6d8a4befa476a7521197b886fceafa9f5c2830bea6df62792a6dd46f2b26812b250f13fad473e5cab6dcceaa2d53cf2c82e8e03d95a0e70836bffffffff0240420f00000000001976a914429e6bd3c9a9ca4be00a4b2b02fd4f5895c1405988ac4083e81c000000001976a914e55756cb5395a4b39369d0f1f0a640c12fd867b288ac000000000100000002c8a8356402b9271ae73116b3a613d0a489aa3441a72d4b53a98eb7837584e17a010000008a4730440220771ae3ed7f2507f5682d6f63f59fa17187f1c4bdb33aa96373e73d42795d23b702206545376155d36db49560cf9c959d009f8e8ea668d93f47a4c8e9b27dc6b330230141048a976a8aa3f805749bf62df59168e49c163abafde1d2b596d685985807a221cbddf5fb72687678c41e35de46db82b49a48a2b9accea3648407c9ce2430724829ffffffffa4f0111c9248f7360b6e3fed4856563eb0aa82b10303c14befae96ed4818c7fe010000008c49304602210087fc57bd3ce0a03f0f7a3300a84dde8d5eba23dfdc64b8f2c17950c5213158d102210098141fbd22da33629cfc25b84d49b397144e1ec6287e0edd53dbb426aa6a72ed014104dee3ef362ae99b46422c8028f900a138c872776b2fcffed3f9cd02ee4b068a6df516a50249ae6d8f420f9ce19cdfc4663961296a71cd62b04a2c8a14ff89b1d0ffffffff01c0e1e400000000001976a914e43f7c61b3ef143b0fe4461c7d26f67377fd207588ac00000000"
           btcblock: *btc_full_with_tx_hash
           btcblockWithTx: *btc_full_with_tx
       mockedResponses:
         options:
           bytes:
-            -
-              req:
+            - req:
                 method: "POST"
                 body:
                   method: getblock
-                  params: 
+                  params:
                     - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
                     - 0
-              res: 
+              res:
                 result: "0100000081cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0f1fc122bc7f5d74df2b9441a42a146950401000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804f2b9441a022a01ffffffff014034152a01000000434104d879d5ef8b70cf0a33925101b64429ad7eb370da8ad0b05c9cd60922c363a1eada85bcc2843b7378e226735048786c790b30b28438d22acfade24ef047b5f865ac000000000100000001ad6279669bcc8e3003267d97c9e364a9835ea7a5b53871d057783ef96f468d73000000008c4930460221009805aa00cb6f80ca984584d4ca40f637fc948e3dbe159ea5c4eb6941bf4eb763022100e1cc0852d3f6eb87839edca1f90169088ed3502d8cde2f495840acac69eefc9801410486477e6a23cb25c9a99f0c467c6fc86197e718ebfd41d1aef7cc3cbd75197c1f1aaba985b22b366a0729ccb8aa38277809d6d218cf4077ac9f29a953b5435222ffffffff0280f0fa02000000001976a9146f31097e564b9d54ebad662d5c4b5621c18ff52388ac007ddaac000000001976a9147228033b48b380900501c39c61da4ab453ca88e888ac0000000001000000035a19f341c42071f9cec7df37c4853c95d6aecc95e3bf19e3181d30d99552b8c9000000008a473044022025bca5dc0fe42aca5f07c9b3fe1b3f72113ffbc3522f8d3ebb2457f5bdf8f9b2022030ff687c00a63e810b21e447d3a57b2749ebea553cab763eb9b99e1b9839653b014104469f7eb54b90d90106b1a5412b41a23516028e81ad35e0418a4460707ae39a4bf0101b632260fb08979aba0ceea576b5400c7cf30b539b055ec4c0b96ab00984ffffffff5b72d3f4b6b72b3511bddd9994f28a91cc03212f200f71b91df13e711d58c1da000000008c493046022100fbef2589b7c52a3be0fd8dd3624445da9c8930f0e51f6a33d76dc0ca0304473d0221009ec433ca6a9f16184db46468ff39cafaa9643021e0c66a1de1e6f9a612092790014104b27f4de096ac6431eec4b807a0d3db3e9f9be48faab692d5559624acb1faf4334dd440ebf32a81506b7c49d8cf40e4b3f5c6b6e99fcb6d3e8a298174bd2b348dffffffff292e94738851718433a3168e43cab1c6a811e9a0f35b06b6cec60fea9abe0f43010000008a4730440220582813f2c2d7cbb84521f81d6c2a1147e5296e90bee05f583b3df108fdac72010220232b43a2e596cef59f82c8bfff1a310d85e7beb3e607076ff8966d6d374dc12b014104a8514ca51137c6d8a4befa476a7521197b886fceafa9f5c2830bea6df62792a6dd46f2b26812b250f13fad473e5cab6dcceaa2d53cf2c82e8e03d95a0e70836bffffffff0240420f00000000001976a914429e6bd3c9a9ca4be00a4b2b02fd4f5895c1405988ac4083e81c000000001976a914e55756cb5395a4b39369d0f1f0a640c12fd867b288ac000000000100000002c8a8356402b9271ae73116b3a613d0a489aa3441a72d4b53a98eb7837584e17a010000008a4730440220771ae3ed7f2507f5682d6f63f59fa17187f1c4bdb33aa96373e73d42795d23b702206545376155d36db49560cf9c959d009f8e8ea668d93f47a4c8e9b27dc6b330230141048a976a8aa3f805749bf62df59168e49c163abafde1d2b596d685985807a221cbddf5fb72687678c41e35de46db82b49a48a2b9accea3648407c9ce2430724829ffffffffa4f0111c9248f7360b6e3fed4856563eb0aa82b10303c14befae96ed4818c7fe010000008c49304602210087fc57bd3ce0a03f0f7a3300a84dde8d5eba23dfdc64b8f2c17950c5213158d102210098141fbd22da33629cfc25b84d49b397144e1ec6287e0edd53dbb426aa6a72ed014104dee3ef362ae99b46422c8028f900a138c872776b2fcffed3f9cd02ee4b068a6df516a50249ae6d8f420f9ce19cdfc4663961296a71cd62b04a2c8a14ff89b1d0ffffffff01c0e1e400000000001976a914e43f7c61b3ef143b0fe4461c7d26f67377fd207588ac00000000"
           btcblock:
-            -
-              req:
+            - req:
                 method: "POST"
                 body:
                   method: getblock
-                  params: 
+                  params:
                     - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
                     - 1
               res:
                 result: *btc_full_with_tx_hash
           btcblockWithTx:
-            -
-              req:
+            - req:
                 method: "POST"
                 body:
                   method: getblock
-                  params: 
+                  params:
                     - "00000000000000001e8d6829a8a21adc5d38d0a473b144b6765798e61f98bd1d"
                     - 2
               res:
                 result: *btc_full_with_tx
-    -
-      config:
-        proof: 'none'
-        chainId: 'btc'
+    - config:
+        proof: "none"
+        chainId: "btc"
       extra: "with Segwit"
       input:
         - "0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2"
       expected_output:
-        options: 
+        options:
           bytes: "04000020f18c983f6d8444c2797c85dcfea16b1369588c57081d05000000000000000000766d89b9565af1f7784b57ef876295705bf43eeba075f0dac409400459a4c2717163e660ce98131704f180e020010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff6103b3870a1e2f5669614254432f4d696e656420627920657266616e6d6f73616465712f2cfabe6d6d0fd649a10013c36addb756cf1d9c9218e8df928061dc99646b05a9f16c44301c1000000000000000106d391e0cabf695c5562fa47f7b150000ffffffff0404474425000000001976a914536ffa992491508dca0354e52f32a3a7a679a53a88ac00000000000000002b6a2952534b424c4f434b3a0e83dfab6533b32ac33dbaabffc4b3f5d6ced40c50dcf46ee0031d2a003560dc0000000000000000266a24b9e11b6dbffd356eb5da59e244a03b4144279f8dd61b4bb9813d812c4a9f9a20d99113910000000000000000266a24aa21a9ed2a45c4ead8566147106555d74ee978c78db04d97e716c3b1eac678fb63c78261012000000000000000000000000000000000000000000000000000000000000000000000000001000000000101eda2df1f9d38f3af3fba3a6c26fc7b9a26950a51daed78d423f56bc6970678ef2700000017160014764273e0504b0f3660c45e8ad0fa1ccc33c65186ffffffff01c408190300000000160014508951bdcbdd0d956514e5544cd35b578b11ae410247304402205c03d3214220d20dd8a79849d67d69c778870e693af41c706755156944e2b8db022013a88f61457768e76060fd6e7a80cee5b53106099a53dc5723d54e6573a13c8601210327ad7578e80043bb5b2d51daa7012f433d7c3f34a81b4a506d40b32b24c267a80000000001000000010a75c9cebe539bc0d56c79bff766d4144aa84915bcc95ead38f7f543cb0cae51490000006a47304402206ecc7ee06ed9e5198a69f28926161ee6bd8050aeaf3e7f221d45d9907bd3acbf02203cd7ec7eb88555cf73100522b4ede5c58b9f10f0ccab010c01307866e47d618b0121033ec98c3f20406c8748febca81c0755b46bb128db0142a642f8f447ef4e79d680ffffffff0134510700000000001976a914528dad2141cd58294c0d3d8dd8d322d31995685488ac000000000100000001b8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d730a00006a47304402201b42dcbac53ae8cd40a6b7fc9a115278c68cbac9e5dc1cda7b75e66dfc848545022077f349bd2f6517d8b4a95f1640ee871d1f2c48085529da499eaadf52d9ae619801210226fb8a4429f73e7094d8125f8c8f3d9742306edad6bca096f2e501ca8f438842ffffffff01d4260800000000001976a914528dad2141cd58294c0d3d8dd8d322d31995685488ac000000000100000001b8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d410d00006b483045022100d0c573af05451873741984fa8bf72ae132265ee13916cdfad90654730bcbb69902203d8c9ae9d4735efd901a97d8792f560eacc7c049414d5cef8c9774500585e6bd01210346702a3a0d900fdc122c7e5514d80f4edb84a2ed5b1c33fa165cc92398806885ffffffff01c49e0700000000001976a914528dad2141cd58294c0d3d8dd8d322d31995685488ac00000000010000000001013564d331e85690e870a3fe92c14e03da258f1cd8272041a9a9483ffcdc3c9d6d0000000000ffffffff02a15d3300000000001600146bb7140ad4c793d14021f48e672c2d266b3270c328d706000000000017a914584e23c934e8342026c14070ea525b36b244d8a687024730440220360091e4ca5a9e4f25eff0a9139123859499b69c5f8f1f48380eefffff3f2af402206a420e59a0373d450a94320e893500898236d717805a140ab6b64be5988c5b18012102064b8200ae425f73ac9a591094e4827b1a83ad6c44e8c8c7ca231649c0d189d90000000002000000000101c514a338814a76d26c805e7a5dd8be9f25e23934034d683dcbfedcb572d7ac330800000000feffffff0315bc01000000000017a9143b956676f8748666c71424b301a9a1d4554e0849870c9ac51400000000160014ff955c763d5c6d5092e121ee42e806490704ecfc400d03000000000017a914e441bf8eb1b00e1e99c07984aeb5d1b23b8c26cf870247304402206e1c1909a3cfff3f7f2ac82ebcb90fcdb3d9b07c8ed95d0a10478664f7d160c60220689aebf63dfc81d234298ad3ad8265f349039bffe243f9ec103f0821accf0228012102eea9ba79990ec589ce0c60d895ae5283f933e98b583872f0e3e90e795becb897b1870a00020000000001019d320941a891cd54eebb433eed3baaf09e0f06c0b283238cc5163e25a5939a6a0000000000fdffffff024cba0100000000001600141debbd78f6e6734ba3ad902df3781d8010ade747d0db06000000000017a9147b9a9e6d60400e5deb08c2be1a72a4afd411337e87024730440220307ddd38d20a7214177077d497424f77284c7846477b8882f26c82f928f7e4a00220643c16e67e1397749732076c03355f9b0ef1e4ef27e3953c986f439cff94ebb30121020a820f6114b3cdf4d761ca1f31aa2d9dd19ae4c7eea7e694709b9ac94a4455ccb1870a00010000000001019e3c5f66d7d0519b53491fd5184a8c962dbef84f5e28197959815c5fbedb8d4d3b00000000ffffffff32ee6a2e00000000001976a914c378ded906a60a72b6345b5eaff0d933427218a588ac7c0a180000000000160014cb60668f051c001353e14e4218806911879e934ef41d04000000000017a91453e13860d18555d9d2d595c8df33823a177d40ee87e72e16000000000017a91402de054ac7322088ff02f28d09f4e24653e870b7875d1f0500000000001976a9146b6c4f33d3931c52cc3760e0e864ac905b5aafb088ac902702000000000017a91403c04e312012941bbc2941e2a1c9e1db3f58e741876cd401000000000017a9144eb5ef7073cfa46e1dcbd432e5461169b69d87d18777de00000000000017a9148b219ff8975fdc4e92e99f2adc52396cf86d23b087e04e0000000000001976a9149a716a4e526dc3e1ff3d8fdb9513d21a584bb41f88ac7b670600000000001976a914e739159436dcac622b027fc8fe03266a940ec82188ac563001000000000017a9145e683f3531dc04fbfd40f77375e920d5d241a95487930a0100000000001976a9147762c98e0e3367094084716de9c539d489e6441788ac283a0900000000001976a91408f99e916e4cf152e6a241c05c79cedc0908486488ac747e06000000000017a914d3f1766bf4170e8491e522abc5f403c8c5b00cb387a25504000000000017a914af3ed025d98feaf94600c016bc71023edc305273871d2609000000000017a9147fc5ada0ec0d456d5c5b58fd21b7968bdd7a02df876efb5f000000000017a914e0e95aacb6866119226c2b391fbb8e165e1b9c87876bd00000000000001976a91451564fb5db5530ec7d6fa333647a01af7380d21788ac2f5cab000000000017a9149501fed908d5114cedd9386660873e62ca2f3dff8745da06000000000017a914b83032f7d5cca0051f788f1a2eff90ab2d79e3d48720cd0800000000001976a914eeb8bacc9220f59abb663e432985ee200d427f3088ace2580400000000001600144a12310c411a22a565621fa258e8426bd7c8d0b3e09304000000000017a914d5d8c6caf78fc21061fc4731c24b0c89a36c7ad687f82401000000000017a9148289e1a729717438ebcdf8c9e07596ec2d3acbaa8761610400000000001976a9146451b87e24ca86905eea9d851e28c5b8aa9dee3988aca4900200000000001976a914d37556e83e286f550870db5c825e6fffc312e55588ac8e3a000000000000160014353b138c3be7387ddc491c83e7159d736c537de1c4240100000000001976a914845c12e6aedc4cdbc79f2eacce9ca30d631b9aa788acb43f0100000000001976a9140e09830988a068eb6507dbae420639dd881b47c488aca0900200000000001976a9147e66edc27e301deb97e19ce70e4204ea670196e188ac473601000000000017a914168046f69a90adcf31e4ed4dd580b643894f3815879cda2b000000000016001423b91d13fd85c250078bef3e696141afbc7d67d7af5d0000000000001976a91481316d20a965c57e365ddbd88cf0b33df182497c88accadb00000000000017a91440aa6e55061da5ef2b270b375d169df7d578785a87805804000000000017a91471084b0c6799c2db9ad5ba2afd88af69cfaf38db87af5d5600000000001976a914fd61259381494884b2094a6c7e015ecf964dcedb88ac80580400000000001976a914d3e27eac3b18ab2fe0e543b0e24a457aba4508a788ac8b3a0000000000001600144bf26007bb626433beb32f46989c534c0ea36b94929204000000000017a914fec8bce62d0b8caf0881ce3596c1ca37d48df3ef87682a5d0000000000160014715f70274118762b58a11dcfbff636faa4be8a3d1c160100000000001976a914cac8f77da9673a862a29d6e24f9a0a3b4d6285d088ac436416000000000017a9144c79e8d15a93ef96ffe849ff1d013907a71f29cb8709340400000000001976a91493d66c36e24f6750c3b1f714d26ccc06e30f8c0c88acf4270200000000001976a914670d8e194515294a39ca836bcd89c5e63946ad7788ac37790100000000001976a914bd744f75e1051670b45ea769f2807ce42ffc376088acfa510000000000001976a914a2f869675fc607b7e32c21536b8882781057f3a788ac893d09000000000017a9140cbf435d9f011cf09c193a18c2c69c8c1319d5e0872ada07000000000017a91472b85f3d0b3091ffe3e1e33499bc850cb2e1bb628761390e00000000001976a9149fd915599b7f06b822f0296bd90abacd129f4f7688ac93fd16000000000017a9148f9ef19321ad0a62eeb1034ffc41303658095a91870248304502210089ca3893f1180326d1bbc27f89b23ce5e2ef4f35c9130eaff088f0484896c08f02205559db4a068aaa1547972e18ce77181de04206e8d2e2a4b2bfcff6a531cce199012102efd56b2aa9c332bafdadee106a21d3feea0e93e83b2c01e30172719b5e5a0e0b00000000020000000001019a8675f3a64ec4f2b6bf108d3bf00d3d0b332787b4a4a3a307af3d53fc4b2cfd0000000000ffffffff01c51a0a00000000001600146c18ac26595dd955b85b174a3d8c78e387071e8c0247304402203822f1f9b7908e8e80b3cb4a655cb80425feaa04319098af909d640bfc07e5a30220071eeed6e1f86a8fba49c6d29eeec5487bcf3c8d6833d0c181d41baa374ce950012102de8829afb19976f347b0f0b6fc27117abba6a336366aa16c0ffa6fc4a456afb60000000001000000000101e87926c591f6b4835afdc422aeeec569fd1fb35b1fadc16ec5c4042b3e181e2101000000232200201050f81f3cf192e8c5f1923700e7fa222aa2d4845303a4087f019408d972fd12ffffffff02843a17000000000017a914dfb610f26c86fbaab363c3b264bb283facabaa5887fe895a0d0000000017a914f02f35dfd649ccfdbb1e9a19156c3fb99a0d13ad8704004730440220077cd1a4eda2fd2251bb4e88fe9cb9abe73c40244c61916e54e19425ec38f43f02204c2ead8de4a7f7e537e2b71a0dd831d20d6f8fbfd0ad957221832f1a5ee884de014730440220187cc4f3f86a1fdb8dd9e688f85568bab932e4347fef9e1f052a8e68497808530220328c1918fec26d10a81d938bbb5f708eacd39884d57e60e0fa23ebad1c530e9301695221036414da3ee01031b225fff42f958db3f35064540a820a46dea3c5af79b1ef6a352102fae595ff8c0a41acbd2533e211a0236626b903472dab1c79cd3101c856d01faf2102c94ac1e83cd87f7566251b51112e20d79c69cc6d6bfcd5b3cbba3428b6ef2b8653aeb1870a0002000000000101a5b3a22222027d823b10ea60e917b4b5bd9e9d5edfa8f09126ea9305e2b7d7080000000017160014d8e7dfd2980abb8a17160af2eb778bed171f51a4feffffff01507d0500000000001600141d4f2ad2a9e6d7ddd83469425ff59441e4f9eb230247304402204c5b54e1026e7b8e424d10a1e7fe55c5268e27350beeb3195e3e92623ba1c14f02207448cca3450a71f5ca7cbbbf95e6022afdc964642f6f0bc8f0513677e8373eb90121021b1654ea4843ddfbf7c2c9bbdd0add4f81c1789b4531739c07bc169b7a523bc8b1870a00010000000001016381ce29bc6617456e1c212160df77cff54afb66d41634669ff5e57e2f59b2cc0100000000feffffff0204750000000000001976a9140f30034977561e424564ce8eca6554f721693f0688ac4226000000000000160014ce5bd11f4c403d73717538794d0d9c333c82585c02483045022100c8f748b7101f2ff35c4a80be66e31e131f19c889993e3b1980c4e87bf049b91e0220432099cdc708c333a1c8a79632b01762a7b10cbc2224d0f2f64ef896e7e98108012103d9ac44f61276f12807d3a66711d4a9b385fab4fd24e61b67de3610d5bbbc4d580000000001000000000101872a188b5c43f8990f99c10953cd72c9956ed89a9fef67b3424961cb99dcbd6313000000000000000002671700000000000017a914c1e70061f0c8d24dcf42b1dd3ee7749c841118ba87c32311020000000016001426da8ead36f9cb7232885e24bed55db638983b8302483045022100f2d38235d74912cfad18a1bbb834c29a330f15675b159157749a9c88d31816b602206a161222a42ede172d15c88141d812003dfdbe519108a94bcbbbe831a07e4b1001210330d24edc6c5646162672257ba2689297ecbc59c8005952f6aea51198df520d6c000000000100000001bb96ddbd2666d7c62f72f824bb6a8f8cee2d1a22c4b421afc9bb86e1b0bc27fe010000006b483045022100b3299607ff35cfbc2017b1841aa3d31c27f9135a008b949481357c013e061d560220748e3af715112ac5ac189a1328ede5b98f157ca6fd62d50f691a5c1b6698c4c20121031e9a636ef528970636cc811384ffde2a2c6d131a67d02e8e082b0c09c1669f5401000000020cdf0600000000001976a914b1da96c6d9f8ca1df601b6f0b375cca783a4de4288ac69acac02000000001976a9141e7c72c338f790b929422397218d8785a4aeda6188ac0000000002000000000103b8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d9f0100001716001469c11bcdbf3462cf93c59b8005afcf0b524eabf0fdffffffb8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d140b000017160014b016e01e92bf06c9be72807ac0fc4bc7019f7f30fdffffff9c4bb54d5060d1472adf4501099b49061beaaaffbca6da34dcc4532b4fadbfd32b00000017160014de89107b16de1d796cfedc3504dad23319499db9fdffffff0130ff2d000000000017a914cf3fd4edf20dc374e92523385f306553c0a43dd187024730440220531ce32754eb3f2a514e222d2f2cb831f07caba2f6ea6ca6ac5728f64b69ac4202204e20882cfe413982a6a04464487c7b7794f2f9bfd90743d18668378bc4be91f5012103abc33ddacdf49de4b23dd1129d09447ceb65c63d53fde522eda5ea02769548a9024730440220053eefd97e286c0c36713642f4845e19e4cdde2ef69dc598fe075c034b291cc702204149106ea978b851607830d937900c2c72a84b07244ae3341f12061139c190a801210210527396e491eadb17a4fb4a8c8f565c1479df2792ed9ac054e88deb8e263fb002473044022014ab0be12a8adf968e9a4491588cbc1d253be126a77c615a3d9fb6fd31de2d3e02207f03060c5fe44081d2b19ca6688e71e03d611bbfe516310cd711de5b3659b417012102c2faa9505090a725080ef731b099fd38b525b14c291c78dc9c15d8355bdc91a9b1870a00020000000001016f646bf26972b886246bd126ca3ce494fd8af18cc8f11b2a0c1eec9846061e45000000001716001480090cde8f2563879e0108a6b729178c4ff91d7afdffffff027da704000000000017a9143831317df36b605e41b860c0ac218542cd85808a87510e62650000000017a9141ba7a9a53c05d26a6983f216f4d1205634ac80fd8702473044022069ee012d64ed6d2af86a0cc318a419218717b9d4607fb6da3fd4233e7ef44b7e022002c769b0b9bd3d664849e73868d77efc4addbe1d41c242d901338a5e6b73a7b2012102dbc646d2d44ec390542a4abd6902c387afa9e4ce559b512343ed691fc481d8a1b1870a0001000000000102f9d6feea9503d67b39f794086cda7d5e68ffb686da541e9252b00575804b6a7a150000006b483045022100b0e1f5e48421310cc6ae7ab8aeb701ae2aa3529da7707355f3783ba7f83f10c002203305e035234f70d40a2d734520c10eaa96fa2e102f38bceb172a64fbf9291a94012102e68bd9ba1d05767adf0c3033c4a6466f815ad597e14ff85cfafc75570ffa1245ffffffff2451e3697747eb3a19ef65addf99fdb0a6b8b9c63da4af2f8ea147849433161f0000000000ffffffff025b1e00000000000016001410d60ff8a884cd7fd25248d0530bd5af1ddd68b9552a2a00000000001976a9141c17013569299a011183890111b8d49fb6038e3288ac00024730440220182c99a1329e72d102c1d82eb6cd09ac563e46384fdea9d7853294ccd7ac2ea902200db86458cc3e9e49904e5f35272015f7b4db7701fe892f38088b3547a0f837a1012102471061ab49123d49c68003fc6aa248d5653415400328ab52b0d1a63b6b13d88c00000000020000000001063c87469ed6acc80fe4dadc6e76ea3a12977d886f904b1d089ac2ea6f1798a64e0200000000fdffffff662e924fd382017253e8d3c391fcbb1d9866ebe42cba88bcc3b026556ee14a820000000000fdffffffb5be33c0ec146f30403b5d17e1e900841a14131d0007e7bd9035d69f214f84820100000000fdffffffe5cf501b9ca4b082fb046aa98df4e804776d3ca31291b2504f5e8a1bdb79dabe0000000000fdffffffbe54fc937a033713aa31eefdb9ea9f2aef3e0a1e3e6e10637ded03bc417abace0100000000fdffffff026b83c781488ce17704306f1d64e3a666f6a83e936023532f7be75aa555dcdb0100000000fdffffff01977f2f00000000001976a914561c8f5dcb731ccb9af98393fa0e2dbfbefd7aee88ac0247304402200a7201ccebb8eae607f01f1e73dc43022881c8fa4505e5cf7d068dba2d9f10d302206084c24192f6ddbd04b00be4d7addc5d5a6ea2fe3a4734bb3bd021017e4015b80121037bdada249cff349769d9ea6d2efe5d76d1e3beddac5429d735fbe7f6553edcd90247304402200e6adcc67185f0f8c12ab99eadd6f36a32f187911af084bd021a6240156ce68f02202d461ea2bc4509145cc11c6f69ab2db67106818b132288be637ca211d6ff024801210373e81d5ad095408ff305fcc7c2c14c81e6fa962c50fe3ffa1bdc41e1890b17f20247304402202db1cc195f387ff5dbd4a79fbaeb8e7dd7a4990a3d4c47ad981ca6f3f3768391022068d94d5f29552765be2e311ddf6761e54f378f9414602b913f7c56076faecf2c012103cd29ef645c1948fcb04cec63e7a45ccbc8b65497616978b6ea8ae13fe4687bf70247304402201dbc1edb23acc6adcf6e631822d4abd4f797055bce1e65cbcc428f75757b853202201f958da9d493f2ab806d58fdd68e8f6c29274d29d0b8ebe72d73acf52ab986db01210273e4e29485a8da1af6695d4139d256b79e58aec75e75c77143f5241018ae821d0247304402200760498a6bb830bb8ae89db766df42e9ac64728687f9e91bcacb77af0fe5d06a02206a808a0c60b894677a149f99ffad087aa1b9f17fe238c11ddbbf6b1a6fb9a3410121033461ad224af04730d6fdfabca98252076c3ae3806fca31caa878f08458aa38cc02473044022004803fb767a77e55bb5d7911f43b890ce63173a20c8083927cba1c63e624d406022054dfed5ae4b5aba3cc46da6f3d1a066ff336d252e54742f85f44d96b24243f01012102063a9e0afe23cc732864101599f8d07be84228f89f838bff29494075f02f39dab1870a000100000000010190d17c5ec983685ae455910a8588a68c49b3c9792f986a68c9e9b64e6d1d32d902000000232200204c17874906b9b484cebc0fde0e7c44705050792b90492bafb7d7f732812d3ce2ffffffff02404b4c00000000001976a914a250d351fd042f41ab739574b9a2d0578ab624bf88ac07eb56080000000017a914a2ac5855a64ba9fe3d808114146e1b440c4b3525870400483045022100c0c650cc00bcc79d1f9fcfed118601c51682df4a17981afa6668adfc9804af7802204db5bef84360e19c97abcb2979d866766d5bb7c64a2801994b6b23c8434e4e770147304402204faa619c7fb1cc4838ed885793cb8f7cbd9520aca90f80047e28ef2214dd2ec3022074dd4fab67a11ce003e92aad6c5daeb2ca52e0d5c81c8a85106479cc205dcda20169522102f86574bbff94767438fd14e8c27e4f074200b351f520cf44cbb182843a3a8d6121033df348ef562e41a2a38c3fc1ccd38a3184c04671f0dd9dd83cb8f0e03ec2708e2102670a229788bd59d537b0379739daeeffaf9fcfe7c411fc8cb785a0a586664fdf53aeb1870a000100000001e9860bc1c053e376100a92db44dd0eb3d6241b851955ee2db514894ef3cf51c3020000006a47304402200fadb0b7d19d0aca703a203ba612c3ca72fae86e863947ad7d6ea5cc628050a302204a1a3ee196b09e63ed6201af722d213b8bcdf3b2d935a6610450524bd72d1e8d012102936c15394948d03a7ba3d4a7e7c7523e14194b3ab808cfe5baed526e15bc0651ffffffff0210a64709000000001976a914c8a6bc95dfec3fa60785b300278d5378c6d453a088acf9de16000000000016001419dfb6e485d667649eb9027c577fc051dae71f0b0000000001000000000101bcc3cdb83fd60ac062fb15f3c8d9852d39fb28a6575b68314f1598d96a58c625010000002322002028cdcdad4c4a07bb6ec5925f2196c4e293898127650b3044fbdb6bab317a7099ffffffff02cb7c0600000000001976a914178412a75e907720a886591d008f10f9f3466f5188acecaf57200000000017a914ba695f1c0d90e1b0fbcc0f1f4623b815848a51f287040047304402205797dac01c67c55dc766706c6cd8f5a26a30dc98bf05f2363acb9b9bcbbf317f022018c7e041a3a8b1f1b54a348fabaf6109a4f3d1a5f58f2ed55ac98ba372ede53201483045022100b6a487645eb046b8dc028a7cfe758bbb03dea784655edeb443afe89cb61d14c70220655df45427eea9387e776b8ad7fe848fd9c215de8269f0348d381c4a0b1251170147522102ce06807bdaf64c3f40d3e4fe990910c82e8b8c3ac8df0c3cf373fa72823f958321039332e240be260cc87f6b1bae52aac5e37fcd61dd89849a8113f14d977e5f39dd52ae000000000200000000010125059190c84b24749e2558c92f0fe049369f07a6ffc5e4f72d9718aaeaf31a7f0100000000ffffffff02fb420200000000001600144e11f3feec543860df274eeab67012608ba939964b490200000000001976a914ec03ec56b76c9398626fd14e17ea23c5e6ee018888ac02483045022100a06e32275e2398421c06b8a2e05716435dfd3d0338115c0121f17611f9cae15102200c7e7429ce64879c9a668d600185b8692aba933b3af2cb0d1bb645268452253b012102bdf3289ab542598c6cbb9d5fe8f07fe31da4495203061a11c9add18b57cf0c4b00000000010000000188273ebd36c7147382027c43325fb618a6192a5a5e10e25072e3c19e696ebb86010000006b483045022100f08866af42bd3b4cde4e0322aef9905e7e91b6f2fd6f74e07f98c4650c9449f502202419439695dfbaf00a43788de8ba6db011d19022f3c0f07dcbf7f712aa70cb42012103f9d3a6ee01d462dcd9e9833150169001afceb41c1076e08a2f435b59f8b1261affffffff02a7ff2200000000001976a9144a58af826227a82b45bd48a69c0618e5f1de0d4688acdbc30100000000001600145a4f089fe01c25c865b23ee7eacd0ca7cf76e5e7000000000200000001b1410d3e8d263ff4a268b53e2e722946e4260b2fa0cec06a8fa402a9ea22e7c5010000006a47304402204782f4a1a2ebc065ed1ff361784f2ea79242bf3f1c9720317754478041a734af02202bcd541b4e7b6b232a6b62a1b8679508b1e27e5e4f697b7f9a5d5fbf18a76387012102b1822ad675522904b61ac135b8a9d36e9b28a1c13b6e54e7e281e746d4d0bb73ffffffff026fd62d000000000017a9140e9259a0faf3c56342caeeec43d61e2184a1144a87884e3a01000000001976a9148b41c041d8dadc41d3efd8b0d430ac80274377ec88ac000000000100000000010506ebe3e53c05518abb9e265e104daab7271f9bd2283d655dc56108eb41eddb5f000000006b483045022100cb23733b6e14b9ef5381db429cc02bd7dcecb2ec620981f17e3cf9d007852d240220090f16b37f50daccd81cbd4b1a154263f9100ecdb76a7ead967f26d280ae9c1f012103da3e84d6d636f2022282db92433773f703d2fb738fe59a5d77da5adc3e2c7e1dffffffff73c175c9f8f657672be8061e079ba63efa89437b1fb693855e881a7964fd7e25000000006a47304402204d6c6a89b44588f1fc2d77f01217eafa122d4c5487e62026a7a5d56f1d1ca119022002239b5f2cccf82f2bf0b7c8621020bc499757dcd14b126906503599c425a3a301210387114296e1c4edadc0c47482b0961e8c9ca37ea256d097c2b49583f19ac59856ffffffffb17008dfed5fc8a91c031cc99ab30c321be4cb33d273c6c6e56b9daa38125c7b0000000000ffffffffb448c7e822385d22f46dec833ae53f83cd3ec3cd0b0f5b77973bd101d788896b0000000000ffffffff3153e6912d9b669f2c58d974b44585752ae7f6b001470a4cc40f2a0d06509f6a0000000000ffffffff01a48779000000000016001436552a1c649baccfee51d6bffb1951e3685ed692000002473044022041bf6e490c22f9b2e817322257e269d712896091414ea5444098815ec8537fdd0220280101a6b811d57b79258b36f69bf4b16bfec35b96d75ce80f83de872884678601210363e40bd07d4ef8b06aedc340b7a0ad588d5bee7234b74a69313872cba2d0dc2902483045022100933da4eed06a472c7a8911b9885ed1e25675c7f6dbfdcddc8a2be437184dade502202a40b5b2a5f6a647d01b8f9177f89132947b39e0ec7f4d60bd1ad1ec504d22f3012103093f9569270b106f0b41cf96e56363ef093b90d1c97da552322f7e67bac7f151024730440220097003a8faeba34e9118b16920390ab2748970ee14c8ba484e691173330eea5f02201ca72e92ebf06541d91499b81b8f4f5a322997f610e06c16cf0eecf04c621cf9012102f8857de858c14dc3836b026ab88b6038f5716f923275d40fe7207e43c687bc60000000000100000001981c89d9e62bdfc5918094ad88ffe9bfa272ddf8f796a5d189874df57c1ec07c000000008b483045022100ba0fd24606b8c9480d28478b40486dbc0c830ac11ad6f56cdaaf3273026f02ab02202c1e0673a2dd7be785425c83bed148890db59d51377eb124e4beba068b239c8e0141048454d039fb7bde4e32c0fccd96dac9a7de33879666ee3ed2e9c88971ce4ed9e37b2828d634789b222c053f6547e6ecdf4869201e74f72267f48f297b7b644339ffffffff01a4ee0700000000001976a914c248b989aae8d90a6242da04f19fa912dc6e8f1088ac00000000020000000001034afd8a48de844106fffb892e53d6269a84b72e0a00c1e94b7175ab0bac46902a0c0000006a47304402204378a0385b713cb38224082a571a195f44680607480be725a7caa7c2ae74883e022002f72e9c716fe958f0346270c7225fba8ed5c6e5e5e4fccd9d0b18c5aed34a71012102a3576bc2466fb6233dadf3df9ce7c92f93965b56b2b1de17ecd933de21eb16b0ffffffffdee1f0b61569b67d592a66c27f53b4164b08bfeefb46b1bb7cdad9a4f65ecb49000000006a47304402200cb20f9b6e76cc4c37dc4ce8899e556726dd475e5115e381b8a980ad0a95eb58022078e5af79d0bd41ce07568eba335123dd17c1f1aae8d0c87377368ad4cb7e0d09012102a3576bc2466fb6233dadf3df9ce7c92f93965b56b2b1de17ecd933de21eb16b0ffffffffada8e51e20fa6b9dd10e95cfc36d2fa3523cfef06bd230d247f3bd47c97d54550100000000ffffffff02a800360000000000160014de83d2189cedab4d984ab78488f00dfdf5e3287015a80e0000000000160014ea01e04aaafa8255b47ede6648e7a0c111431bca0000024730440220673f1e40d5977a114633e8822c520bd0b0d96a83e0b0378a26de89ede6c15d1102201a0989d550e84cfa342e5bd8ed28b364e0c4702c1f271245bb3277b6ae204e5d012102b648eb3b32f72dc612c0412db37bba2ac30c44014e7a7581f52ce54e4d67b9d800000000020000000270867509979084a1d4b7d68f98da815d0ea4bcb0ad6908d0d26bbae80814af76000000006a473044022048966d6c364ec2cbac56965426a62ad8ff0055fbdaef9114da883b9f99baeb300220484dc01e8f5d71d33b8e6d09c5c5a4051a8ca0613e1dd41318e9a1eec955a6ae012102537169a50154c653f1f9799cfda9ea4440108225370cb3db520a0e260ef4ef03ffffffffb4d85fc9249012ac332342c0c1a0d3861c988bf7c7de7de8924a54d486c0e779000000006a473044022001f390a3895940a9c777c0190c0f54716c2bfbd6a278458b7bbbab1e9a974b1a022001d553243f0f025ed609fa2519015682b8c4fe8167cfc5eb2ff34e107ea38708012102537169a50154c653f1f9799cfda9ea4440108225370cb3db520a0e260ef4ef03ffffffff027cd92700000000001976a9148bfc0653d121bf6367c9b78f0f12c3a6880bf16688ac700a3000000000001976a914205826a3fb33a0fcd8c8e177247b48877508260f88ac0000000002000000000102e6a34cbbd1f88e0ea32e013d0e19a150574b2963eeaf221fdca1ea9673686f870100000000ffffffff9ca7b679eb638ed3e3dca3855f2a761b4296a0471ecac3c769d64bdd4e54e3070100000000ffffffff02a7931400000000001600147eef9a2c606f75f7ee5995b6b5a65ee512e08451e3380c000000000016001459f627e531193db7f3a525ae32df9eb45370328402483045022100c99a034876bab21f203f6a8c0f7de3c43ab2aea76e8a2747c39dc9440eb42882022007a636ac3e8f822c9843e8ab2a03792657dfb01703009b016cd778ecd50bf9590121022ee959f516a8d466b32e0a856411a389ea452c8a3b82b12f2f648aba82e00562024830450221009b718162daff3ee7e235371b022d23d0592ab019671bbc7d3cf172a72a8479860220745e9050835eff30c3d7d70cddc84632819d110a3a6a245abd42b9bae23bba18012102cc4a45037362de7a630870382f1fee915a1dfcaa0d1738dc9b503eb7726504b4000000000200000000010152caade841641f3e524811e1608665cb73b7ac25f3a6c0211099c527de9ef3bf0100000000ffffffff021eea00000000000017a91469ab330f75fd4cc065a2151a3fc7676fefb8a75b87157c040000000000160014c4485c0c4bf12c3eba18a86c35611662f9216d6302473044022020c878f15145a3c407126a712862a19e8d0c6066ae26edb100dd8f2ac410bdfe022034d547cc3e9fc059b4c4ca52cca2a6a4c44c34d563abdda59738dbdae08950e6012102b86fbb247c7a6ae45aac84f5633b59ba2a09a3dd09d0fe239d36e202671049640000000001000000000105d8408fe9e041895ce84841973e6ac8e409e19609fe9a8046c0832ed80de0fa0c1000000000ffffffff823ce480f39394b57dfebbc460885f6cc71e7a7f5fd3029968bcde1a13c3e6680100000000ffffffff336c4529efcf90081564b918367726e2017356f14a8ca3cd728ddee1c541488f0000000000ffffffff63b40591ea0521a641e20612fadd2e754531b4358652b86e7b155a539915e9a80000000000ffffffffaff699e5b7c959904b5622340c0dfc905d93dce50e7de670eaa6042b7c5c36d43b00000000ffffffff0540420f00000000001600142ff099afd4dbc6506ad488760a39574d521e51b840420f0000000000160014ce6fcea06b82087b16a78a8372b3c6b3a961e76440420f0000000000160014db151b79d83e1864c0c3d5541d45ef9f2c4d219340420f0000000000160014f05fa715a390cea1736a7b2a0259c23c3d77c4c040420f0000000000160014f18aed18bce9d56deb56115cd351fbe9990a7a5a0247304402201147a76e63ed59be3cf36ca41f0a6820a54b36b05ac7fa0754bc73f584f80fce022073bc8f2af98b17abdf25add10bb518201b99398940f86a769760c011f1e4d5c30121028660ea442a740bc31c79c1b4edbde91c0ccda97fe43a8f32c4116daacbce632d02483045022100e3a3598e60387c3494fbf2e554ccd66d7535ba3f5f611c2cf94e5d76d318e77102207987a0d22c313bf95eade88e076d4a4a9d180aeb160917024426ad2502855077012102899f0e9705052e458e67339e9812535f648fdc55242fdd43fa9474387745f44802483045022100ae8235cfa4affd0a3c27b9ea2aef31eb6155ad8362b6ec2708299a6e4f3ea60202203d1f2d2cc993be5a199df912982d72263a632c18bfc69d00a09406acb1ba67470121023f578ac20dfb94d1ccb0d067f4e2f610006ac2ceeaec39f74fcaa0cb515cef4602473044022064a248d9b84e327eaae7dfb7394281807d813b52f955384684842f523462024c0220544fe4345f8ae496ae26cff6eaaac607fa6495156460ec4820f41fafe6d08f87012103b61a1d01ca68ad214724ee0df5d96b201faf16dc3abc02346d51c6c097211cab02483045022100a40cb59269085e50bd95c4d83a814cdaa9d0923dfbbbebfa3ddace33e567a9ab02205aa027d73e5896b125ce43943a45823710f43402f0a998cee9ca3486945197c20121037175a85efd47494b868919a5cd31e909fd5b3be180c1117be5ebe7b2afabbcaa00000000"
           btcblock: *btcBlock_segwit_txHashes
           btcblockWithTx: *btc_full_segwit_block
       mockedResponses:
         options:
           bytes:
-            -
-              req:
+            - req:
                 method: "POST"
                 body:
                   method: getblock
-                  params: 
+                  params:
                     - "0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2"
                     - 0
-              res: 
+              res:
                 result: "04000020f18c983f6d8444c2797c85dcfea16b1369588c57081d05000000000000000000766d89b9565af1f7784b57ef876295705bf43eeba075f0dac409400459a4c2717163e660ce98131704f180e020010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff6103b3870a1e2f5669614254432f4d696e656420627920657266616e6d6f73616465712f2cfabe6d6d0fd649a10013c36addb756cf1d9c9218e8df928061dc99646b05a9f16c44301c1000000000000000106d391e0cabf695c5562fa47f7b150000ffffffff0404474425000000001976a914536ffa992491508dca0354e52f32a3a7a679a53a88ac00000000000000002b6a2952534b424c4f434b3a0e83dfab6533b32ac33dbaabffc4b3f5d6ced40c50dcf46ee0031d2a003560dc0000000000000000266a24b9e11b6dbffd356eb5da59e244a03b4144279f8dd61b4bb9813d812c4a9f9a20d99113910000000000000000266a24aa21a9ed2a45c4ead8566147106555d74ee978c78db04d97e716c3b1eac678fb63c78261012000000000000000000000000000000000000000000000000000000000000000000000000001000000000101eda2df1f9d38f3af3fba3a6c26fc7b9a26950a51daed78d423f56bc6970678ef2700000017160014764273e0504b0f3660c45e8ad0fa1ccc33c65186ffffffff01c408190300000000160014508951bdcbdd0d956514e5544cd35b578b11ae410247304402205c03d3214220d20dd8a79849d67d69c778870e693af41c706755156944e2b8db022013a88f61457768e76060fd6e7a80cee5b53106099a53dc5723d54e6573a13c8601210327ad7578e80043bb5b2d51daa7012f433d7c3f34a81b4a506d40b32b24c267a80000000001000000010a75c9cebe539bc0d56c79bff766d4144aa84915bcc95ead38f7f543cb0cae51490000006a47304402206ecc7ee06ed9e5198a69f28926161ee6bd8050aeaf3e7f221d45d9907bd3acbf02203cd7ec7eb88555cf73100522b4ede5c58b9f10f0ccab010c01307866e47d618b0121033ec98c3f20406c8748febca81c0755b46bb128db0142a642f8f447ef4e79d680ffffffff0134510700000000001976a914528dad2141cd58294c0d3d8dd8d322d31995685488ac000000000100000001b8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d730a00006a47304402201b42dcbac53ae8cd40a6b7fc9a115278c68cbac9e5dc1cda7b75e66dfc848545022077f349bd2f6517d8b4a95f1640ee871d1f2c48085529da499eaadf52d9ae619801210226fb8a4429f73e7094d8125f8c8f3d9742306edad6bca096f2e501ca8f438842ffffffff01d4260800000000001976a914528dad2141cd58294c0d3d8dd8d322d31995685488ac000000000100000001b8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d410d00006b483045022100d0c573af05451873741984fa8bf72ae132265ee13916cdfad90654730bcbb69902203d8c9ae9d4735efd901a97d8792f560eacc7c049414d5cef8c9774500585e6bd01210346702a3a0d900fdc122c7e5514d80f4edb84a2ed5b1c33fa165cc92398806885ffffffff01c49e0700000000001976a914528dad2141cd58294c0d3d8dd8d322d31995685488ac00000000010000000001013564d331e85690e870a3fe92c14e03da258f1cd8272041a9a9483ffcdc3c9d6d0000000000ffffffff02a15d3300000000001600146bb7140ad4c793d14021f48e672c2d266b3270c328d706000000000017a914584e23c934e8342026c14070ea525b36b244d8a687024730440220360091e4ca5a9e4f25eff0a9139123859499b69c5f8f1f48380eefffff3f2af402206a420e59a0373d450a94320e893500898236d717805a140ab6b64be5988c5b18012102064b8200ae425f73ac9a591094e4827b1a83ad6c44e8c8c7ca231649c0d189d90000000002000000000101c514a338814a76d26c805e7a5dd8be9f25e23934034d683dcbfedcb572d7ac330800000000feffffff0315bc01000000000017a9143b956676f8748666c71424b301a9a1d4554e0849870c9ac51400000000160014ff955c763d5c6d5092e121ee42e806490704ecfc400d03000000000017a914e441bf8eb1b00e1e99c07984aeb5d1b23b8c26cf870247304402206e1c1909a3cfff3f7f2ac82ebcb90fcdb3d9b07c8ed95d0a10478664f7d160c60220689aebf63dfc81d234298ad3ad8265f349039bffe243f9ec103f0821accf0228012102eea9ba79990ec589ce0c60d895ae5283f933e98b583872f0e3e90e795becb897b1870a00020000000001019d320941a891cd54eebb433eed3baaf09e0f06c0b283238cc5163e25a5939a6a0000000000fdffffff024cba0100000000001600141debbd78f6e6734ba3ad902df3781d8010ade747d0db06000000000017a9147b9a9e6d60400e5deb08c2be1a72a4afd411337e87024730440220307ddd38d20a7214177077d497424f77284c7846477b8882f26c82f928f7e4a00220643c16e67e1397749732076c03355f9b0ef1e4ef27e3953c986f439cff94ebb30121020a820f6114b3cdf4d761ca1f31aa2d9dd19ae4c7eea7e694709b9ac94a4455ccb1870a00010000000001019e3c5f66d7d0519b53491fd5184a8c962dbef84f5e28197959815c5fbedb8d4d3b00000000ffffffff32ee6a2e00000000001976a914c378ded906a60a72b6345b5eaff0d933427218a588ac7c0a180000000000160014cb60668f051c001353e14e4218806911879e934ef41d04000000000017a91453e13860d18555d9d2d595c8df33823a177d40ee87e72e16000000000017a91402de054ac7322088ff02f28d09f4e24653e870b7875d1f0500000000001976a9146b6c4f33d3931c52cc3760e0e864ac905b5aafb088ac902702000000000017a91403c04e312012941bbc2941e2a1c9e1db3f58e741876cd401000000000017a9144eb5ef7073cfa46e1dcbd432e5461169b69d87d18777de00000000000017a9148b219ff8975fdc4e92e99f2adc52396cf86d23b087e04e0000000000001976a9149a716a4e526dc3e1ff3d8fdb9513d21a584bb41f88ac7b670600000000001976a914e739159436dcac622b027fc8fe03266a940ec82188ac563001000000000017a9145e683f3531dc04fbfd40f77375e920d5d241a95487930a0100000000001976a9147762c98e0e3367094084716de9c539d489e6441788ac283a0900000000001976a91408f99e916e4cf152e6a241c05c79cedc0908486488ac747e06000000000017a914d3f1766bf4170e8491e522abc5f403c8c5b00cb387a25504000000000017a914af3ed025d98feaf94600c016bc71023edc305273871d2609000000000017a9147fc5ada0ec0d456d5c5b58fd21b7968bdd7a02df876efb5f000000000017a914e0e95aacb6866119226c2b391fbb8e165e1b9c87876bd00000000000001976a91451564fb5db5530ec7d6fa333647a01af7380d21788ac2f5cab000000000017a9149501fed908d5114cedd9386660873e62ca2f3dff8745da06000000000017a914b83032f7d5cca0051f788f1a2eff90ab2d79e3d48720cd0800000000001976a914eeb8bacc9220f59abb663e432985ee200d427f3088ace2580400000000001600144a12310c411a22a565621fa258e8426bd7c8d0b3e09304000000000017a914d5d8c6caf78fc21061fc4731c24b0c89a36c7ad687f82401000000000017a9148289e1a729717438ebcdf8c9e07596ec2d3acbaa8761610400000000001976a9146451b87e24ca86905eea9d851e28c5b8aa9dee3988aca4900200000000001976a914d37556e83e286f550870db5c825e6fffc312e55588ac8e3a000000000000160014353b138c3be7387ddc491c83e7159d736c537de1c4240100000000001976a914845c12e6aedc4cdbc79f2eacce9ca30d631b9aa788acb43f0100000000001976a9140e09830988a068eb6507dbae420639dd881b47c488aca0900200000000001976a9147e66edc27e301deb97e19ce70e4204ea670196e188ac473601000000000017a914168046f69a90adcf31e4ed4dd580b643894f3815879cda2b000000000016001423b91d13fd85c250078bef3e696141afbc7d67d7af5d0000000000001976a91481316d20a965c57e365ddbd88cf0b33df182497c88accadb00000000000017a91440aa6e55061da5ef2b270b375d169df7d578785a87805804000000000017a91471084b0c6799c2db9ad5ba2afd88af69cfaf38db87af5d5600000000001976a914fd61259381494884b2094a6c7e015ecf964dcedb88ac80580400000000001976a914d3e27eac3b18ab2fe0e543b0e24a457aba4508a788ac8b3a0000000000001600144bf26007bb626433beb32f46989c534c0ea36b94929204000000000017a914fec8bce62d0b8caf0881ce3596c1ca37d48df3ef87682a5d0000000000160014715f70274118762b58a11dcfbff636faa4be8a3d1c160100000000001976a914cac8f77da9673a862a29d6e24f9a0a3b4d6285d088ac436416000000000017a9144c79e8d15a93ef96ffe849ff1d013907a71f29cb8709340400000000001976a91493d66c36e24f6750c3b1f714d26ccc06e30f8c0c88acf4270200000000001976a914670d8e194515294a39ca836bcd89c5e63946ad7788ac37790100000000001976a914bd744f75e1051670b45ea769f2807ce42ffc376088acfa510000000000001976a914a2f869675fc607b7e32c21536b8882781057f3a788ac893d09000000000017a9140cbf435d9f011cf09c193a18c2c69c8c1319d5e0872ada07000000000017a91472b85f3d0b3091ffe3e1e33499bc850cb2e1bb628761390e00000000001976a9149fd915599b7f06b822f0296bd90abacd129f4f7688ac93fd16000000000017a9148f9ef19321ad0a62eeb1034ffc41303658095a91870248304502210089ca3893f1180326d1bbc27f89b23ce5e2ef4f35c9130eaff088f0484896c08f02205559db4a068aaa1547972e18ce77181de04206e8d2e2a4b2bfcff6a531cce199012102efd56b2aa9c332bafdadee106a21d3feea0e93e83b2c01e30172719b5e5a0e0b00000000020000000001019a8675f3a64ec4f2b6bf108d3bf00d3d0b332787b4a4a3a307af3d53fc4b2cfd0000000000ffffffff01c51a0a00000000001600146c18ac26595dd955b85b174a3d8c78e387071e8c0247304402203822f1f9b7908e8e80b3cb4a655cb80425feaa04319098af909d640bfc07e5a30220071eeed6e1f86a8fba49c6d29eeec5487bcf3c8d6833d0c181d41baa374ce950012102de8829afb19976f347b0f0b6fc27117abba6a336366aa16c0ffa6fc4a456afb60000000001000000000101e87926c591f6b4835afdc422aeeec569fd1fb35b1fadc16ec5c4042b3e181e2101000000232200201050f81f3cf192e8c5f1923700e7fa222aa2d4845303a4087f019408d972fd12ffffffff02843a17000000000017a914dfb610f26c86fbaab363c3b264bb283facabaa5887fe895a0d0000000017a914f02f35dfd649ccfdbb1e9a19156c3fb99a0d13ad8704004730440220077cd1a4eda2fd2251bb4e88fe9cb9abe73c40244c61916e54e19425ec38f43f02204c2ead8de4a7f7e537e2b71a0dd831d20d6f8fbfd0ad957221832f1a5ee884de014730440220187cc4f3f86a1fdb8dd9e688f85568bab932e4347fef9e1f052a8e68497808530220328c1918fec26d10a81d938bbb5f708eacd39884d57e60e0fa23ebad1c530e9301695221036414da3ee01031b225fff42f958db3f35064540a820a46dea3c5af79b1ef6a352102fae595ff8c0a41acbd2533e211a0236626b903472dab1c79cd3101c856d01faf2102c94ac1e83cd87f7566251b51112e20d79c69cc6d6bfcd5b3cbba3428b6ef2b8653aeb1870a0002000000000101a5b3a22222027d823b10ea60e917b4b5bd9e9d5edfa8f09126ea9305e2b7d7080000000017160014d8e7dfd2980abb8a17160af2eb778bed171f51a4feffffff01507d0500000000001600141d4f2ad2a9e6d7ddd83469425ff59441e4f9eb230247304402204c5b54e1026e7b8e424d10a1e7fe55c5268e27350beeb3195e3e92623ba1c14f02207448cca3450a71f5ca7cbbbf95e6022afdc964642f6f0bc8f0513677e8373eb90121021b1654ea4843ddfbf7c2c9bbdd0add4f81c1789b4531739c07bc169b7a523bc8b1870a00010000000001016381ce29bc6617456e1c212160df77cff54afb66d41634669ff5e57e2f59b2cc0100000000feffffff0204750000000000001976a9140f30034977561e424564ce8eca6554f721693f0688ac4226000000000000160014ce5bd11f4c403d73717538794d0d9c333c82585c02483045022100c8f748b7101f2ff35c4a80be66e31e131f19c889993e3b1980c4e87bf049b91e0220432099cdc708c333a1c8a79632b01762a7b10cbc2224d0f2f64ef896e7e98108012103d9ac44f61276f12807d3a66711d4a9b385fab4fd24e61b67de3610d5bbbc4d580000000001000000000101872a188b5c43f8990f99c10953cd72c9956ed89a9fef67b3424961cb99dcbd6313000000000000000002671700000000000017a914c1e70061f0c8d24dcf42b1dd3ee7749c841118ba87c32311020000000016001426da8ead36f9cb7232885e24bed55db638983b8302483045022100f2d38235d74912cfad18a1bbb834c29a330f15675b159157749a9c88d31816b602206a161222a42ede172d15c88141d812003dfdbe519108a94bcbbbe831a07e4b1001210330d24edc6c5646162672257ba2689297ecbc59c8005952f6aea51198df520d6c000000000100000001bb96ddbd2666d7c62f72f824bb6a8f8cee2d1a22c4b421afc9bb86e1b0bc27fe010000006b483045022100b3299607ff35cfbc2017b1841aa3d31c27f9135a008b949481357c013e061d560220748e3af715112ac5ac189a1328ede5b98f157ca6fd62d50f691a5c1b6698c4c20121031e9a636ef528970636cc811384ffde2a2c6d131a67d02e8e082b0c09c1669f5401000000020cdf0600000000001976a914b1da96c6d9f8ca1df601b6f0b375cca783a4de4288ac69acac02000000001976a9141e7c72c338f790b929422397218d8785a4aeda6188ac0000000002000000000103b8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d9f0100001716001469c11bcdbf3462cf93c59b8005afcf0b524eabf0fdffffffb8a6998b775445af1f3c24f80240b49106672ee41079f5e18ec0d636710dc47d140b000017160014b016e01e92bf06c9be72807ac0fc4bc7019f7f30fdffffff9c4bb54d5060d1472adf4501099b49061beaaaffbca6da34dcc4532b4fadbfd32b00000017160014de89107b16de1d796cfedc3504dad23319499db9fdffffff0130ff2d000000000017a914cf3fd4edf20dc374e92523385f306553c0a43dd187024730440220531ce32754eb3f2a514e222d2f2cb831f07caba2f6ea6ca6ac5728f64b69ac4202204e20882cfe413982a6a04464487c7b7794f2f9bfd90743d18668378bc4be91f5012103abc33ddacdf49de4b23dd1129d09447ceb65c63d53fde522eda5ea02769548a9024730440220053eefd97e286c0c36713642f4845e19e4cdde2ef69dc598fe075c034b291cc702204149106ea978b851607830d937900c2c72a84b07244ae3341f12061139c190a801210210527396e491eadb17a4fb4a8c8f565c1479df2792ed9ac054e88deb8e263fb002473044022014ab0be12a8adf968e9a4491588cbc1d253be126a77c615a3d9fb6fd31de2d3e02207f03060c5fe44081d2b19ca6688e71e03d611bbfe516310cd711de5b3659b417012102c2faa9505090a725080ef731b099fd38b525b14c291c78dc9c15d8355bdc91a9b1870a00020000000001016f646bf26972b886246bd126ca3ce494fd8af18cc8f11b2a0c1eec9846061e45000000001716001480090cde8f2563879e0108a6b729178c4ff91d7afdffffff027da704000000000017a9143831317df36b605e41b860c0ac218542cd85808a87510e62650000000017a9141ba7a9a53c05d26a6983f216f4d1205634ac80fd8702473044022069ee012d64ed6d2af86a0cc318a419218717b9d4607fb6da3fd4233e7ef44b7e022002c769b0b9bd3d664849e73868d77efc4addbe1d41c242d901338a5e6b73a7b2012102dbc646d2d44ec390542a4abd6902c387afa9e4ce559b512343ed691fc481d8a1b1870a0001000000000102f9d6feea9503d67b39f794086cda7d5e68ffb686da541e9252b00575804b6a7a150000006b483045022100b0e1f5e48421310cc6ae7ab8aeb701ae2aa3529da7707355f3783ba7f83f10c002203305e035234f70d40a2d734520c10eaa96fa2e102f38bceb172a64fbf9291a94012102e68bd9ba1d05767adf0c3033c4a6466f815ad597e14ff85cfafc75570ffa1245ffffffff2451e3697747eb3a19ef65addf99fdb0a6b8b9c63da4af2f8ea147849433161f0000000000ffffffff025b1e00000000000016001410d60ff8a884cd7fd25248d0530bd5af1ddd68b9552a2a00000000001976a9141c17013569299a011183890111b8d49fb6038e3288ac00024730440220182c99a1329e72d102c1d82eb6cd09ac563e46384fdea9d7853294ccd7ac2ea902200db86458cc3e9e49904e5f35272015f7b4db7701fe892f38088b3547a0f837a1012102471061ab49123d49c68003fc6aa248d5653415400328ab52b0d1a63b6b13d88c00000000020000000001063c87469ed6acc80fe4dadc6e76ea3a12977d886f904b1d089ac2ea6f1798a64e0200000000fdffffff662e924fd382017253e8d3c391fcbb1d9866ebe42cba88bcc3b026556ee14a820000000000fdffffffb5be33c0ec146f30403b5d17e1e900841a14131d0007e7bd9035d69f214f84820100000000fdffffffe5cf501b9ca4b082fb046aa98df4e804776d3ca31291b2504f5e8a1bdb79dabe0000000000fdffffffbe54fc937a033713aa31eefdb9ea9f2aef3e0a1e3e6e10637ded03bc417abace0100000000fdffffff026b83c781488ce17704306f1d64e3a666f6a83e936023532f7be75aa555dcdb0100000000fdffffff01977f2f00000000001976a914561c8f5dcb731ccb9af98393fa0e2dbfbefd7aee88ac0247304402200a7201ccebb8eae607f01f1e73dc43022881c8fa4505e5cf7d068dba2d9f10d302206084c24192f6ddbd04b00be4d7addc5d5a6ea2fe3a4734bb3bd021017e4015b80121037bdada249cff349769d9ea6d2efe5d76d1e3beddac5429d735fbe7f6553edcd90247304402200e6adcc67185f0f8c12ab99eadd6f36a32f187911af084bd021a6240156ce68f02202d461ea2bc4509145cc11c6f69ab2db67106818b132288be637ca211d6ff024801210373e81d5ad095408ff305fcc7c2c14c81e6fa962c50fe3ffa1bdc41e1890b17f20247304402202db1cc195f387ff5dbd4a79fbaeb8e7dd7a4990a3d4c47ad981ca6f3f3768391022068d94d5f29552765be2e311ddf6761e54f378f9414602b913f7c56076faecf2c012103cd29ef645c1948fcb04cec63e7a45ccbc8b65497616978b6ea8ae13fe4687bf70247304402201dbc1edb23acc6adcf6e631822d4abd4f797055bce1e65cbcc428f75757b853202201f958da9d493f2ab806d58fdd68e8f6c29274d29d0b8ebe72d73acf52ab986db01210273e4e29485a8da1af6695d4139d256b79e58aec75e75c77143f5241018ae821d0247304402200760498a6bb830bb8ae89db766df42e9ac64728687f9e91bcacb77af0fe5d06a02206a808a0c60b894677a149f99ffad087aa1b9f17fe238c11ddbbf6b1a6fb9a3410121033461ad224af04730d6fdfabca98252076c3ae3806fca31caa878f08458aa38cc02473044022004803fb767a77e55bb5d7911f43b890ce63173a20c8083927cba1c63e624d406022054dfed5ae4b5aba3cc46da6f3d1a066ff336d252e54742f85f44d96b24243f01012102063a9e0afe23cc732864101599f8d07be84228f89f838bff29494075f02f39dab1870a000100000000010190d17c5ec983685ae455910a8588a68c49b3c9792f986a68c9e9b64e6d1d32d902000000232200204c17874906b9b484cebc0fde0e7c44705050792b90492bafb7d7f732812d3ce2ffffffff02404b4c00000000001976a914a250d351fd042f41ab739574b9a2d0578ab624bf88ac07eb56080000000017a914a2ac5855a64ba9fe3d808114146e1b440c4b3525870400483045022100c0c650cc00bcc79d1f9fcfed118601c51682df4a17981afa6668adfc9804af7802204db5bef84360e19c97abcb2979d866766d5bb7c64a2801994b6b23c8434e4e770147304402204faa619c7fb1cc4838ed885793cb8f7cbd9520aca90f80047e28ef2214dd2ec3022074dd4fab67a11ce003e92aad6c5daeb2ca52e0d5c81c8a85106479cc205dcda20169522102f86574bbff94767438fd14e8c27e4f074200b351f520cf44cbb182843a3a8d6121033df348ef562e41a2a38c3fc1ccd38a3184c04671f0dd9dd83cb8f0e03ec2708e2102670a229788bd59d537b0379739daeeffaf9fcfe7c411fc8cb785a0a586664fdf53aeb1870a000100000001e9860bc1c053e376100a92db44dd0eb3d6241b851955ee2db514894ef3cf51c3020000006a47304402200fadb0b7d19d0aca703a203ba612c3ca72fae86e863947ad7d6ea5cc628050a302204a1a3ee196b09e63ed6201af722d213b8bcdf3b2d935a6610450524bd72d1e8d012102936c15394948d03a7ba3d4a7e7c7523e14194b3ab808cfe5baed526e15bc0651ffffffff0210a64709000000001976a914c8a6bc95dfec3fa60785b300278d5378c6d453a088acf9de16000000000016001419dfb6e485d667649eb9027c577fc051dae71f0b0000000001000000000101bcc3cdb83fd60ac062fb15f3c8d9852d39fb28a6575b68314f1598d96a58c625010000002322002028cdcdad4c4a07bb6ec5925f2196c4e293898127650b3044fbdb6bab317a7099ffffffff02cb7c0600000000001976a914178412a75e907720a886591d008f10f9f3466f5188acecaf57200000000017a914ba695f1c0d90e1b0fbcc0f1f4623b815848a51f287040047304402205797dac01c67c55dc766706c6cd8f5a26a30dc98bf05f2363acb9b9bcbbf317f022018c7e041a3a8b1f1b54a348fabaf6109a4f3d1a5f58f2ed55ac98ba372ede53201483045022100b6a487645eb046b8dc028a7cfe758bbb03dea784655edeb443afe89cb61d14c70220655df45427eea9387e776b8ad7fe848fd9c215de8269f0348d381c4a0b1251170147522102ce06807bdaf64c3f40d3e4fe990910c82e8b8c3ac8df0c3cf373fa72823f958321039332e240be260cc87f6b1bae52aac5e37fcd61dd89849a8113f14d977e5f39dd52ae000000000200000000010125059190c84b24749e2558c92f0fe049369f07a6ffc5e4f72d9718aaeaf31a7f0100000000ffffffff02fb420200000000001600144e11f3feec543860df274eeab67012608ba939964b490200000000001976a914ec03ec56b76c9398626fd14e17ea23c5e6ee018888ac02483045022100a06e32275e2398421c06b8a2e05716435dfd3d0338115c0121f17611f9cae15102200c7e7429ce64879c9a668d600185b8692aba933b3af2cb0d1bb645268452253b012102bdf3289ab542598c6cbb9d5fe8f07fe31da4495203061a11c9add18b57cf0c4b00000000010000000188273ebd36c7147382027c43325fb618a6192a5a5e10e25072e3c19e696ebb86010000006b483045022100f08866af42bd3b4cde4e0322aef9905e7e91b6f2fd6f74e07f98c4650c9449f502202419439695dfbaf00a43788de8ba6db011d19022f3c0f07dcbf7f712aa70cb42012103f9d3a6ee01d462dcd9e9833150169001afceb41c1076e08a2f435b59f8b1261affffffff02a7ff2200000000001976a9144a58af826227a82b45bd48a69c0618e5f1de0d4688acdbc30100000000001600145a4f089fe01c25c865b23ee7eacd0ca7cf76e5e7000000000200000001b1410d3e8d263ff4a268b53e2e722946e4260b2fa0cec06a8fa402a9ea22e7c5010000006a47304402204782f4a1a2ebc065ed1ff361784f2ea79242bf3f1c9720317754478041a734af02202bcd541b4e7b6b232a6b62a1b8679508b1e27e5e4f697b7f9a5d5fbf18a76387012102b1822ad675522904b61ac135b8a9d36e9b28a1c13b6e54e7e281e746d4d0bb73ffffffff026fd62d000000000017a9140e9259a0faf3c56342caeeec43d61e2184a1144a87884e3a01000000001976a9148b41c041d8dadc41d3efd8b0d430ac80274377ec88ac000000000100000000010506ebe3e53c05518abb9e265e104daab7271f9bd2283d655dc56108eb41eddb5f000000006b483045022100cb23733b6e14b9ef5381db429cc02bd7dcecb2ec620981f17e3cf9d007852d240220090f16b37f50daccd81cbd4b1a154263f9100ecdb76a7ead967f26d280ae9c1f012103da3e84d6d636f2022282db92433773f703d2fb738fe59a5d77da5adc3e2c7e1dffffffff73c175c9f8f657672be8061e079ba63efa89437b1fb693855e881a7964fd7e25000000006a47304402204d6c6a89b44588f1fc2d77f01217eafa122d4c5487e62026a7a5d56f1d1ca119022002239b5f2cccf82f2bf0b7c8621020bc499757dcd14b126906503599c425a3a301210387114296e1c4edadc0c47482b0961e8c9ca37ea256d097c2b49583f19ac59856ffffffffb17008dfed5fc8a91c031cc99ab30c321be4cb33d273c6c6e56b9daa38125c7b0000000000ffffffffb448c7e822385d22f46dec833ae53f83cd3ec3cd0b0f5b77973bd101d788896b0000000000ffffffff3153e6912d9b669f2c58d974b44585752ae7f6b001470a4cc40f2a0d06509f6a0000000000ffffffff01a48779000000000016001436552a1c649baccfee51d6bffb1951e3685ed692000002473044022041bf6e490c22f9b2e817322257e269d712896091414ea5444098815ec8537fdd0220280101a6b811d57b79258b36f69bf4b16bfec35b96d75ce80f83de872884678601210363e40bd07d4ef8b06aedc340b7a0ad588d5bee7234b74a69313872cba2d0dc2902483045022100933da4eed06a472c7a8911b9885ed1e25675c7f6dbfdcddc8a2be437184dade502202a40b5b2a5f6a647d01b8f9177f89132947b39e0ec7f4d60bd1ad1ec504d22f3012103093f9569270b106f0b41cf96e56363ef093b90d1c97da552322f7e67bac7f151024730440220097003a8faeba34e9118b16920390ab2748970ee14c8ba484e691173330eea5f02201ca72e92ebf06541d91499b81b8f4f5a322997f610e06c16cf0eecf04c621cf9012102f8857de858c14dc3836b026ab88b6038f5716f923275d40fe7207e43c687bc60000000000100000001981c89d9e62bdfc5918094ad88ffe9bfa272ddf8f796a5d189874df57c1ec07c000000008b483045022100ba0fd24606b8c9480d28478b40486dbc0c830ac11ad6f56cdaaf3273026f02ab02202c1e0673a2dd7be785425c83bed148890db59d51377eb124e4beba068b239c8e0141048454d039fb7bde4e32c0fccd96dac9a7de33879666ee3ed2e9c88971ce4ed9e37b2828d634789b222c053f6547e6ecdf4869201e74f72267f48f297b7b644339ffffffff01a4ee0700000000001976a914c248b989aae8d90a6242da04f19fa912dc6e8f1088ac00000000020000000001034afd8a48de844106fffb892e53d6269a84b72e0a00c1e94b7175ab0bac46902a0c0000006a47304402204378a0385b713cb38224082a571a195f44680607480be725a7caa7c2ae74883e022002f72e9c716fe958f0346270c7225fba8ed5c6e5e5e4fccd9d0b18c5aed34a71012102a3576bc2466fb6233dadf3df9ce7c92f93965b56b2b1de17ecd933de21eb16b0ffffffffdee1f0b61569b67d592a66c27f53b4164b08bfeefb46b1bb7cdad9a4f65ecb49000000006a47304402200cb20f9b6e76cc4c37dc4ce8899e556726dd475e5115e381b8a980ad0a95eb58022078e5af79d0bd41ce07568eba335123dd17c1f1aae8d0c87377368ad4cb7e0d09012102a3576bc2466fb6233dadf3df9ce7c92f93965b56b2b1de17ecd933de21eb16b0ffffffffada8e51e20fa6b9dd10e95cfc36d2fa3523cfef06bd230d247f3bd47c97d54550100000000ffffffff02a800360000000000160014de83d2189cedab4d984ab78488f00dfdf5e3287015a80e0000000000160014ea01e04aaafa8255b47ede6648e7a0c111431bca0000024730440220673f1e40d5977a114633e8822c520bd0b0d96a83e0b0378a26de89ede6c15d1102201a0989d550e84cfa342e5bd8ed28b364e0c4702c1f271245bb3277b6ae204e5d012102b648eb3b32f72dc612c0412db37bba2ac30c44014e7a7581f52ce54e4d67b9d800000000020000000270867509979084a1d4b7d68f98da815d0ea4bcb0ad6908d0d26bbae80814af76000000006a473044022048966d6c364ec2cbac56965426a62ad8ff0055fbdaef9114da883b9f99baeb300220484dc01e8f5d71d33b8e6d09c5c5a4051a8ca0613e1dd41318e9a1eec955a6ae012102537169a50154c653f1f9799cfda9ea4440108225370cb3db520a0e260ef4ef03ffffffffb4d85fc9249012ac332342c0c1a0d3861c988bf7c7de7de8924a54d486c0e779000000006a473044022001f390a3895940a9c777c0190c0f54716c2bfbd6a278458b7bbbab1e9a974b1a022001d553243f0f025ed609fa2519015682b8c4fe8167cfc5eb2ff34e107ea38708012102537169a50154c653f1f9799cfda9ea4440108225370cb3db520a0e260ef4ef03ffffffff027cd92700000000001976a9148bfc0653d121bf6367c9b78f0f12c3a6880bf16688ac700a3000000000001976a914205826a3fb33a0fcd8c8e177247b48877508260f88ac0000000002000000000102e6a34cbbd1f88e0ea32e013d0e19a150574b2963eeaf221fdca1ea9673686f870100000000ffffffff9ca7b679eb638ed3e3dca3855f2a761b4296a0471ecac3c769d64bdd4e54e3070100000000ffffffff02a7931400000000001600147eef9a2c606f75f7ee5995b6b5a65ee512e08451e3380c000000000016001459f627e531193db7f3a525ae32df9eb45370328402483045022100c99a034876bab21f203f6a8c0f7de3c43ab2aea76e8a2747c39dc9440eb42882022007a636ac3e8f822c9843e8ab2a03792657dfb01703009b016cd778ecd50bf9590121022ee959f516a8d466b32e0a856411a389ea452c8a3b82b12f2f648aba82e00562024830450221009b718162daff3ee7e235371b022d23d0592ab019671bbc7d3cf172a72a8479860220745e9050835eff30c3d7d70cddc84632819d110a3a6a245abd42b9bae23bba18012102cc4a45037362de7a630870382f1fee915a1dfcaa0d1738dc9b503eb7726504b4000000000200000000010152caade841641f3e524811e1608665cb73b7ac25f3a6c0211099c527de9ef3bf0100000000ffffffff021eea00000000000017a91469ab330f75fd4cc065a2151a3fc7676fefb8a75b87157c040000000000160014c4485c0c4bf12c3eba18a86c35611662f9216d6302473044022020c878f15145a3c407126a712862a19e8d0c6066ae26edb100dd8f2ac410bdfe022034d547cc3e9fc059b4c4ca52cca2a6a4c44c34d563abdda59738dbdae08950e6012102b86fbb247c7a6ae45aac84f5633b59ba2a09a3dd09d0fe239d36e202671049640000000001000000000105d8408fe9e041895ce84841973e6ac8e409e19609fe9a8046c0832ed80de0fa0c1000000000ffffffff823ce480f39394b57dfebbc460885f6cc71e7a7f5fd3029968bcde1a13c3e6680100000000ffffffff336c4529efcf90081564b918367726e2017356f14a8ca3cd728ddee1c541488f0000000000ffffffff63b40591ea0521a641e20612fadd2e754531b4358652b86e7b155a539915e9a80000000000ffffffffaff699e5b7c959904b5622340c0dfc905d93dce50e7de670eaa6042b7c5c36d43b00000000ffffffff0540420f00000000001600142ff099afd4dbc6506ad488760a39574d521e51b840420f0000000000160014ce6fcea06b82087b16a78a8372b3c6b3a961e76440420f0000000000160014db151b79d83e1864c0c3d5541d45ef9f2c4d219340420f0000000000160014f05fa715a390cea1736a7b2a0259c23c3d77c4c040420f0000000000160014f18aed18bce9d56deb56115cd351fbe9990a7a5a0247304402201147a76e63ed59be3cf36ca41f0a6820a54b36b05ac7fa0754bc73f584f80fce022073bc8f2af98b17abdf25add10bb518201b99398940f86a769760c011f1e4d5c30121028660ea442a740bc31c79c1b4edbde91c0ccda97fe43a8f32c4116daacbce632d02483045022100e3a3598e60387c3494fbf2e554ccd66d7535ba3f5f611c2cf94e5d76d318e77102207987a0d22c313bf95eade88e076d4a4a9d180aeb160917024426ad2502855077012102899f0e9705052e458e67339e9812535f648fdc55242fdd43fa9474387745f44802483045022100ae8235cfa4affd0a3c27b9ea2aef31eb6155ad8362b6ec2708299a6e4f3ea60202203d1f2d2cc993be5a199df912982d72263a632c18bfc69d00a09406acb1ba67470121023f578ac20dfb94d1ccb0d067f4e2f610006ac2ceeaec39f74fcaa0cb515cef4602473044022064a248d9b84e327eaae7dfb7394281807d813b52f955384684842f523462024c0220544fe4345f8ae496ae26cff6eaaac607fa6495156460ec4820f41fafe6d08f87012103b61a1d01ca68ad214724ee0df5d96b201faf16dc3abc02346d51c6c097211cab02483045022100a40cb59269085e50bd95c4d83a814cdaa9d0923dfbbbebfa3ddace33e567a9ab02205aa027d73e5896b125ce43943a45823710f43402f0a998cee9ca3486945197c20121037175a85efd47494b868919a5cd31e909fd5b3be180c1117be5ebe7b2afabbcaa00000000"
           btcblock:
-            -
-              req:
+            - req:
                 method: "POST"
                 body:
                   method: getblock
-                  params: 
+                  params:
                     - "0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2"
                     - 1
               res:
                 result: *btcBlock_segwit_txHashes
           btcblockWithTx:
-            -
-              req:
+            - req:
                 method: "POST"
                 body:
                   method: getblock
-                  params: 
+                  params:
                     - "0000000000000000000a276fc7641724fe5ad132f598c96eff403958e76667e2"
                     - 2
               res:
                 result: *btc_full_segwit_block
 
   getrawtransaction:
-  -
-    config:
-      proof: 'none'
-      chainId: 'btc'
-    input:
-      - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
-    expected_output:
-      options:
-        bytes: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
-        btctransaction: *btc_full_tx
-    mockedResponses:
-      options:
-        bytes: 
-          -
-            req:
-              method: "POST"
-              body:
-                method: "getrawtransaction"
-                params:
-                  - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
-                  - 0 
-            res:
-              result: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
-        btctransaction: 
-          -
-            req:
-              method: "POST"
-              body:
-                method: "getrawtransaction"
-                params:
-                  - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
-                  - 1
-            res:
-              result: *btc_full_tx
-  -
-    config:
-      proof: 'none'
-      chainId: 'btc'
-    extra: "with Segwit"
-    input:
-      - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
-    expected_output:
-      options:
-        bytes: "020000000001014429a3441babcb363e5418041bb752340491c107fbd27cd4efd862a655d91a180000000000fdffffff025779030000000000160014583f0afea3c306744856572107c5a80e6ca141b1c38429000000000016001464b3b903602a28bacb8f6d914bfce514e706234102483045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a012102a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e63400000000"
-        btctransaction: *btc_segwit_tx
-    mockedResponses:
-      options:
-        bytes: 
-          -
-            req:
-              method: "POST"
-              body:
-                method: "getrawtransaction"
-                params:
-                  - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
-                  - 0 
-            res:
-              result: "020000000001014429a3441babcb363e5418041bb752340491c107fbd27cd4efd862a655d91a180000000000fdffffff025779030000000000160014583f0afea3c306744856572107c5a80e6ca141b1c38429000000000016001464b3b903602a28bacb8f6d914bfce514e706234102483045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a012102a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e63400000000"
-        btctransaction: 
-          -
-            req:
-              method: "POST"
-              body:
-                method: "getrawtransaction"
-                params:
-                  - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
-                  - 1
-            res:
-              result: *btc_segwit_tx
+    - config:
+        proof: "none"
+        chainId: "btc"
+      input:
+        - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+      expected_output:
+        options:
+          bytes: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
+          btctransaction: *btc_full_tx
+      mockedResponses:
+        options:
+          bytes:
+            - req:
+                method: "POST"
+                body:
+                  method: "getrawtransaction"
+                  params:
+                    - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+                    - 0
+              res:
+                result: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
+          btctransaction:
+            - req:
+                method: "POST"
+                body:
+                  method: "getrawtransaction"
+                  params:
+                    - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
+                    - 1
+              res:
+                result: *btc_full_tx
+    - config:
+        proof: "none"
+        chainId: "btc"
+      extra: "with Segwit"
+      input:
+        - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
+      expected_output:
+        options:
+          bytes: "020000000001014429a3441babcb363e5418041bb752340491c107fbd27cd4efd862a655d91a180000000000fdffffff025779030000000000160014583f0afea3c306744856572107c5a80e6ca141b1c38429000000000016001464b3b903602a28bacb8f6d914bfce514e706234102483045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a012102a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e63400000000"
+          btctransaction: *btc_segwit_tx
+      mockedResponses:
+        options:
+          bytes:
+            - req:
+                method: "POST"
+                body:
+                  method: "getrawtransaction"
+                  params:
+                    - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
+                    - 0
+              res:
+                result: "020000000001014429a3441babcb363e5418041bb752340491c107fbd27cd4efd862a655d91a180000000000fdffffff025779030000000000160014583f0afea3c306744856572107c5a80e6ca141b1c38429000000000016001464b3b903602a28bacb8f6d914bfce514e706234102483045022100ad54ac2f0c0867432ad08efee0ac63a9a5f1f9c7fa6e19c41f82be5fdeadf3ba0220780caf96eef2db4c0a302764da3e53c120c4238dde25e4cb1a7eec9fde7d8c0a012102a1cde3dfe8d92f8ae2626c5548dd039c95cdb6605071168527a5a052e037e63400000000"
+          btctransaction:
+            - req:
+                method: "POST"
+                body:
+                  method: "getrawtransaction"
+                  params:
+                    - "754f3816c6d4d0729e00939c39441a55223463570ddbe455b783f0bfd61d8c45"
+                    - 1
+              res:
+                result: *btc_segwit_tx
 
   createaddress:
-    -
-      descr: "Create p2pkh address from uncompressed pub key"
+    - descr: "Create p2pkh address from uncompressed pub key"
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "043cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd092f56b5492adbfc570b15644c74cc8a4874ed20dfe47e5dce2e08601d6f11f5a4"
         - "p2pkh"
       expected_output: "19P1LctLQmH6tuHCRkv8QznNBGBvFCyKxi"
-    -
-      descr: "Create p2pkh address from compressed pub key"
+    - descr: "Create p2pkh address from compressed pub key"
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "023cba1f4d12d1ce0bced725373769b2262c6daa97be6a0588cfec8ce1a5f0bd09"
         - "p2pkh"
       expected_output: "16JrGhLx5bcBSA34kew9V6Mufa4aXhFe9X"
-    - 
-      descr: "Create p2sh address"
+    - descr: "Create p2sh address"
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "00143a38d44d6a0c8d0bb84e0232cc632b7e48c72e0e"
         - "p2sh"
       expected_output: "34N3tf5m5rdNhW5zpTXNEJucHviFEa8KEq"
-    - 
-      descr: "Create p2wpkh address"
+    - descr: "Create p2wpkh address"
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
         - "p2wpkh"
       expected_output: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-    - 
-      descr: "Create p2wsh address"
+    - descr: "Create p2wsh address"
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
         - "p2wsh"
       expected_output: "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
 
   getaddresses:
-    -
-      descr: |
-        "transaction with 2 p2sh outputs"
+    - descr: transaction with 2 p2sh outputs
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
       expected_output:
-        - 
-          index: 0
+        - index: 0
           script_type: "p2sh"
           addr: "3P21LnWRCWp92mPNuY2HWvbi4JFrLx1Kwr"
           raw_addr: "05e9f20f1225a9528739495649405861ae5d77ba1e5e5f6a85"
           pub_keys: []
-        - 
-          index: 1
+        - index: 1
           script_type: "p2sh"
           addr: "348T2K7sdJSH6zdgvdan5pxqmDfg5zSYxK"
           raw_addr: "051abf9a43d3a56f06930b95b1a8f0161bc0b0c9be64619f9c"
           pub_keys: []
       mockedResponses:
-        -
-          req: 
+        - req:
             method: "POST"
             body:
               method: "getrawtransaction"
               params:
                 - "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d"
-                - 0 
+                - 0
           res:
             result: "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
-    -
-      descr: |
-        "transaction with 2 p2sh outputs - raw transaction as input"
+    - descr: transaction with 2 p2sh outputs - raw transaction as input
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900"
       expected_output:
-        - 
-          index: 0
+        - index: 0
           script_type: "p2sh"
           addr: "3P21LnWRCWp92mPNuY2HWvbi4JFrLx1Kwr"
           raw_addr: "05e9f20f1225a9528739495649405861ae5d77ba1e5e5f6a85"
           pub_keys: []
-        - 
-          index: 1
+        - index: 1
           script_type: "p2sh"
           addr: "348T2K7sdJSH6zdgvdan5pxqmDfg5zSYxK"
           raw_addr: "051abf9a43d3a56f06930b95b1a8f0161bc0b0c9be64619f9c"
-          pub_keys: []   
-    -
-      descr: |
-        "raw 1-2 multisig with uncompressed public keys and 2 p2pkh outputs"
+          pub_keys: []
+    - descr: raw 1-2 multisig with uncompressed public keys and 2 p2pkh outputs
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1"
       expected_output:
-        -
-          index: 0
+        - index: 0
           script_type: "p2ms"
           addr: ""
           raw_addr: ""
           pub_keys:
             - "04cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4"
             - "0461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af"
-        -
-          index: 1
+        - index: 1
           script_type: "p2pkh"
           addr: "1KEtUA8f76CpHmFukC28uUsfsUduexvsSB"
           raw_addr: "00c812a297b8e0e778d7a22bb2cd6d23c3e789472bb9697594"
-          pub_keys: [] 
-        - 
-          index: 2
+          pub_keys: []
+        - index: 2
           script_type: "p2pkh"
           addr: "1A8JiWcwvpY7tAopUkSnGuEYHmzGYfZPiq"
           raw_addr: "00641ad5051edd97029a003fe9efb29359fcee409ddd756292"
-          pub_keys: [] 
+          pub_keys: []
       mockedResponses:
-        -
-          req: 
+        - req:
             method: "POST"
             body:
               method: "getrawtransaction"
               params:
                 - "60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1"
-                - 0 
+                - 0
           res:
             result: "010000000337bd40a022eea1edd40a678cddabe200b131afd5797b232ac21861d8e97eb367020000008a4730440220e8343f8ac7e96582d92a450ce314668db4f7a0e2c94a97aa6df026f93ebee2290220866b5728d4247688d91b4a30144762bc8bfd7f385de7f7d326d665ff5e3e900301410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342afffffffff96420befb14a9357181e5da089824a3e6ea5a95856ff74c06c7d5ea98d633cf9020000008a4730440220b7227a8f816f3810f97057102edf8be4434c1e00f48b4440976bcc478f1431030220af3cba150afdd44618de4369cdc65fea73e447d7b5fbe135d2f08f86d82aa85f01410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342afffffffff96420befb14a9357181e5da089824a3e6ea5a95856ff74c06c7d5ea98d633cf9010000008a47304402207d689e1a61e06440eab18d961517a97c49219a91f2c59d9630e902fcb2f4ea8b0220dcd274349ca264d8bd2bee5135664a92899e94a319a349d6d6e3660d04b564ad0141047a4c5d104002ebc203bef5cab6f13ff57ab624bb5f9f1186beb64c83a396da0d912e11a18ea15a2c784a62fed2bbd8258c3413c18bf4c3f2ba28f3d5565e328bffffffff0340420f000000000087514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae50cec402000000001976a914c812a297b8e0e778d7a22bb2cd6d23c3e789472b88ac20a10700000000001976a914641ad5051edd97029a003fe9efb29359fcee409d88ac00000000"
-    -
-      descr: |
-        "raw 1-1 multisig with compressed public keys + 2 p2pkh"
+    - descr: raw 1-1 multisig with compressed public keys + 2 p2pkh
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "ac1d9ed701af32ea52fabd0834acfb1ba4e3584cf0553551f1b61b3d7fb05ee7"
       expected_output:
-        -
-          index: 0
+        - index: 0
           script_type: "p2ms"
           addr: ""
           raw_addr: ""
           pub_keys:
             - "0281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1f"
-        -
-          index: 1
+        - index: 1
           script_type: "p2pkh"
           addr: "1GTRHBNKDnxdaJ5sojxrjQyL5xx9iauucc"
           raw_addr: "00a988f8039a203cf86136e0d32b9d77eafa5a6bef500e17b1"
-          pub_keys: [] 
-        -
-          index: 2
+          pub_keys: []
+        - index: 2
           script_type: "p2pkh"
           addr: "131wBMSiEXZ8bkahDcgF8K3Sh33sFm9iGT"
           raw_addr: "00161d7a3d0ee15c793ab300433192f949d8f35665e5619084"
-          pub_keys: [] 
+          pub_keys: []
       mockedResponses:
-        -
-          req: 
+        - req:
             method: "POST"
             body:
               method: "getrawtransaction"
               params:
                 - "ac1d9ed701af32ea52fabd0834acfb1ba4e3584cf0553551f1b61b3d7fb05ee7"
-                - 0 
+                - 0
           res:
             result: "0100000001ffc0d6d6b592cd2b4160300a278ea5e250b5055b5536dcfb2da5dcc46022765a00000000694630430220575ddd235a989befbf98f43b008666e56af07be89e47e09d18690c75846fb587021f00830605aa09febc51132001e0dbcad860e54d4657b55aaf961b527a935b8a01210281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1fffffffff03204e0000000000002551210281feb90c058c3436f8bc361930ae99fcfb530a699cdad141d7244bfcad521a1f51ae204e0000000000001976a914a988f8039a203cf86136e0d32b9d77eafa5a6bef88ac46f4d501000000001976a914161d7a3d0ee15c793ab300433192f949d8f3566588ac00000000"
-    -
-      descr: |
-        "v0 p2wpkh transaction"
+    - descr: v0 p2wpkh transaction
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "5950c074b07c3d511e9022de7b692eb394737e7a85151cc5bd82b05b30ed23bf"
       expected_output:
-        -
-          index: 0
+        - index: 0
           script_type: "p2wpkh"
           addr: "bc1q0qhkyql6ceyhgev53nph9ej4tfzeccyjfux0rd"
           raw_addr: ""
           pub_keys: []
-        -
-          index: 1
+        - index: 1
           script_type: "p2wpkh"
           addr: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
           raw_addr: ""
           pub_keys: []
       mockedResponses:
-        -
-          req: 
+        - req:
             method: "POST"
             body:
               method: "getrawtransaction"
               params:
                 - "5950c074b07c3d511e9022de7b692eb394737e7a85151cc5bd82b05b30ed23bf"
-                - 0 
+                - 0
           res:
             result: "0200000001fe97aac7b7ebc028943779fc12223f3e131a181a41dcf93250c5efc4969ec572010000006a473044022053e02dcdeaebc76f9425539a701a0c0226f4d8119dbc90fc84f8b499c53b34fb02201f6aa51d6f626ab3895dab8a2e657987944b456e2baf7035d9d73e6005361669012102ba5a4c75dee25527914e612507f837ad76a34695ffd3c6e6fe8863ab6ef42fb4ffffffff022733000000000000160014782f6203fac6497465948cc372e6555a459c609257b4000000000000160014e8df018c7e326cc253faac7e46cdc51e68542c4200000000"
-    -
-      descr: |
-        "transaction with 1 p2wsh, 1 compressed p2pk, 1 uncompressed p2pk and one invalid p2pk outputs"
+    - descr: transaction with 1 p2wsh, 1 compressed p2pk, 1 uncompressed p2pk and one invalid p2pk outputs
       config:
-        proof: 'none'
-        chainId: 'btc'
+        proof: "none"
+        chainId: "btc"
       input:
         - "519c79dc444009744e5dec35817d0a7530ba3601aed58ac34837397134177db8"
       expected_output:
-        -
-          index: 0
+        - index: 0
           script_type: "p2pk"
           addr: "19w2zCWinDYkiJawA6ddw1BQCNZetzJn4P"
           raw_addr: "0061f9204dccbb75dbf618eca57645557b6cac9263d9297a70"
           pub_keys: []
-        -
-          index: 1
+        - index: 1
           script_type: "p2pk"
           addr: "1KyPUP5DhkcRhhSmk6KuPXZXGi6iuSTZd8"
           raw_addr: "00d01c511438c66081b649c60cc3a2cf72bffd5324bd001b8f"
           pub_keys: []
-        -
-          index: 2
+        - index: 2
           script_type: "p2pk"
           addr: ""
           raw_addr: ""
           pub_keys: []
-        -
-          index: 3
+        - index: 3
           script_type: "p2wsh"
           addr: "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
           raw_addr: ""
           pub_keys: []
       mockedResponses:
-        -
-          req: 
+        - req:
             method: "POST"
             body:
               method: "getrawtransaction"
               params:
                 - "519c79dc444009744e5dec35817d0a7530ba3601aed58ac34837397134177db8"
-                - 0 
+                - 0
           res:
             result: "0100000001b6104fbcc1b9d5df0c448eba5ce97b81857342292adfcbe18f1dde222c616c80000000008a4730440220151ccb9551e8c7310b82915e6f9aafae28c9006c7a031dcd00ce64c13b24e0310220633737de8ba7a0bca46e5069dce33ddbcb4567090e5d893a21420f69a80e76be01410419c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbf08be7bd54fa7ebe9dad426b6777bdb6ccaa00a69ff040ca526f67ccdd2bf40d3ffffffff04b71200000000000023210319c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbfac010b00000000000043410419c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbf08be7bd54fa7ebe9dad426b6777bdb6ccaa00a69ff040ca526f67ccdd2bf40d3ac010b00000000000043410719c980631d9039e3abe7768ec96e91c97cb85073c579d3c8eebe12ec86f42fbf08be7bd54fa7ebe9dad426b6777bdb6ccaa00a69ff040ca526f67ccdd2bf40d3ac010b0000000000002200201863143c14c5166804bd19203356da136c985678cd4d27a1b8c632960490326200000000"
 
   getblockcount:
     config:
-      proof: 'none'
-      chainId: 'btc'
+      proof: "none"
+      chainId: "btc"
     expected_output: 688582
     mockedResponses:
-      -
-        req:
+      - req:
           method: "POST"
           body:
             method: "getblockcount"
@@ -2809,14 +2743,13 @@ btc:
 
   getblockhash:
     config:
-      proof: 'none'
-      chainId: 'btc'
+      proof: "none"
+      chainId: "btc"
     input:
       - 726833
     expected_output: "00000000000000000003842eb452fa7a119e7a56940d2409f0cf374aedb37c7e"
     mockedResponses:
-      -
-        req:
+      - req:
           method: "POST"
           body:
             method: "getblockhash"
@@ -2827,14 +2760,13 @@ btc:
 
   getdifficulty:
     config:
-      proof: 'none'
-      chainId: 'btc'
+      proof: "none"
+      chainId: "btc"
     expected_output: 19932791027262.74
     mockedResponses:
-      -
-        req:
+      - req:
           method: "POST"
-          body: 
+          body:
             method: "getdifficulty"
             params: []
         res:
@@ -2842,16 +2774,14 @@ btc:
 
   getbestblockhash:
     config:
-      proof: 'none'
-      chainId: 'btc'
+      proof: "none"
+      chainId: "btc"
     expected_output: "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096"
     mockedResponses:
-      -
-        req:
+      - req:
           method: "POST"
           body:
             method: getbestblockhash
             params: []
         res:
           result: "00000000000000000007337908f2581dc58cecd2d6e1aaaafe2260461e946096"
-            

@@ -187,7 +187,7 @@ function impl_solidity(fn, state, includes) {
     let res = []
     if (sol.fn.stateMutability == 'view')
         res.push(`SEND_ETH_CALL${sol.fn.inputs.length == 0 ? '_NO_ARGS' : ''}(ctx, contract, "${sol.sig}"${sol.fn.inputs.map(_ => ', ' + _.name).join('')})`)
-    else if (sol.deploy) {
+    else if (sol.deploy && sol.fn.type == 'constructor') {
         res.push('TRY(wallet_check(ctx->req, &wallet, WT_ETH))')
         res.push('')
         res.push('tx_args_t arg    = {0};')

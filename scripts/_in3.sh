@@ -61,7 +61,7 @@ subcmds=(
     'in3_addMnemonic: adds a signer from a mnemomic phrase <mnemomic> <passphrase> <derivation> <curve>'
     'in3_addRawKey: adds a raw private key as signer, which allows signing transactions <pk> <curve>'
     'in3_bip32: Generates 32 byte private key based on BIP 32 <seed> <curve> <path>'
-    'in3_bip39_create: generates a mnemonic based on bip39 <seed>'
+    'in3_bip39_create: generates a mnemonic based on bip39 ( https://github <seed> <words>'
     'in3_bip39_decode: decodes a mnemonic and returns the seed as 64 bytes <mnemonic> <passphrase>'
     'in3_createKey: Generates 32 random bytes <seed>'
     'in3_crypto_convert: converts cyrptographic data based on the curve and type into a different form <data> <type>'
