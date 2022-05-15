@@ -1,8 +1,8 @@
 [
   {
-    "descr": "eth_accounts",
+    "descr": "signer_ids",
     "request": {
-      "method": "eth_accounts",
+      "method": "signer_ids",
       "params": []
     },
     "result": [],
@@ -11,9 +11,9 @@
     "response": []
   },
   {
-    "descr": "eth_accounts_2",
+    "descr": "signer_ids_2",
     "request": {
-      "method": "eth_accounts",
+      "method": "signer_ids",
       "params": []
     },
     "result": [
