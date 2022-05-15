@@ -49,5 +49,5 @@ foreach(dep ${IN3_DEPS})
   include_directories ("${dep}")
 endforeach()
 target_include_directories (app PRIVATE "../include")
-
+target_include_directories (app PRIVATE "$ENV{ZEPHYR_BASE}/include")
 

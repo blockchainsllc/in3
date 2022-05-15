@@ -93,7 +93,7 @@ void in3_sleep(uint32_t ms) {
 #if defined(_WIN32) || defined(WIN32)
   Sleep(ms);
 #elif defined(__ZEPHYR__)
-  k_sleep(ms);
+  k_msleep(ms);
 #elif defined(ESP_IDF)
   usleep(ms);
 #elif defined(WASM)

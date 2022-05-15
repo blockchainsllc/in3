@@ -204,12 +204,16 @@ signers:
   in3_bip39_create:
     sync: true
     descr: |
-      generates a mnemonic based on bip39
+      generates a mnemonic based on bip39 ( https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki )
     params:
       seed:
         descr: the seed. if a seed is passed, this seed will be used to generate it, making it deterministic.
         optional: true
         type: bytes
+      words:
+        descr: the number of words. it must one of 12, 15, 18, 21 or 24 (default). This number will also have an effect on the entropy or security.
+        optional: true
+        type: uint32
     result:
       descr: a list of words based on bip39
       type: string
