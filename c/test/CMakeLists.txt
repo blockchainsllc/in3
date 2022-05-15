@@ -83,9 +83,9 @@ foreach (file ${files})
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
 
      if( LEDGER_NANO )
-       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API} ${IN3_NODESELECT})
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer plugin_client_data ${IN3_API} ${IN3_NODESELECT})
      else()
-       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api recorder ${IN3_API} ${IN3_NODESELECT})
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api recorder plugin_client_data ${IN3_API} ${IN3_NODESELECT})
      endif()
 
      add_test(
