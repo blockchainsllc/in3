@@ -268,6 +268,7 @@ static in3_ret_t config_free(zksync_config_t* conf, bool free_conf) {
   if (conf->account) _free(conf->account);
   if (conf->tokens) _free(conf->tokens);
   if (conf->proof_verify_method) _free(conf->proof_verify_method);
+  if (conf->proof_create_method) _free(conf->proof_create_method);
   if (conf->musig_pub_keys.data) _free(conf->musig_pub_keys.data);
   if (conf->incentive && conf->incentive->token) _free(conf->incentive->token);
   if (conf->incentive) {
