@@ -818,7 +818,7 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
       bytes_t b  = d_bytes(item);
       sb_t    sb = {.allocted = l * 2 + 5, .len = 0};
       sb.data    = _malloc(sb.allocted);
-      sb_add_rawbytes(&sb, "\"0x", b, b.len < 20 && !(b.len && b.data[0] == 0) ? -1 : 0);
+      sb_add_rawbytes(&sb, "\"0x", b, b.len < 4 && !(b.len && b.data[0] == 0) ? -1 : 0);
       return sb_add_char(&sb, '"')->data;
     }
   }
