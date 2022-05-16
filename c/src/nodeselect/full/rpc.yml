@@ -1,6 +1,8 @@
 # yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 nodelist:
   api:
+    extension: eth
+    extensionVar: nodelist
     descr: special Incubed nodelist-handling functions. Most of those are only used internally.
 
     # config

@@ -228,6 +228,9 @@ zksync:
 
       All zksync-methods can be used with `zksync_` or `zk_` prefix.
 
+    extension: eth
+    extensionVar: zksync
+
     # config
     config:
       zksync:
