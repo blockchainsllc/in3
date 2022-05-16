@@ -208,7 +208,7 @@ function create_fn(config, method, path, def) {
                 descr: p.description || 'the ' + p
             }
             fn.params[n] = d
-            if (p.required === false) d.optional = true
+            if (!p.required) d.optional = true // default is not required
             d.type = get_type(config, p, [n, base_name + '_' + p], d)
         })
     const response = Object.keys(def.responses || {}).map(_ => parseInt(_) < 400 ? def.responses[_] : null).find(_ => _)
