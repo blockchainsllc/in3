@@ -42,6 +42,80 @@
 #define __RPC_ZKSYNC_H
 
 /**
+ * creates a new Layer 2 Wallet.
+ *
+ * This wallet is created directly in Layer 2 (Zksync), but features a full multisig wallet. It also holds the option to deploy contracts to layer 1 if needed. This is the case if,
+ *
+ * - the zksync operator stops its service or censors your tx
+ * - if the approver service stop running or rejects valid requests
+ *
+ * In this case a deployment to Layer 1 may cost some fees, but ensures full access to all funds.
+ *
+ * In order to use this the SDK needs to have those properties in `zk_wallet` configured:
+ *
+ * - `zksync.musig_urls` - the url of the approving service
+ * - `zksync.sync_key` - the seed for the signing key
+ * - `zksync.create_proof_method` - which creates the proof needed. This should be `zk_wallet_create_signatures` for most cases.
+ *
+ *
+ *
+ * Parameters:
+ *
+ *   - bytes_t    threshold : (int) the minimal number of signatures needed for the multisig to approve a transaction. It must be at least one and less or equal to the number of owners.
+ *   - d_token_t* owners    : (string) array of owners.
+ *                            Each owner is described by either the address ( with role as approver) or `ROLE:ADDRESS`.
+ *                            Role can be either
+ *                            - `R` - Recovery : this owner can challenge other owners in order to recover, but not approve or initiate a transaction
+ *                            - `A` - Approver: a signature from this owner counts towards the threshhold, but this role alone can not initiate a transaction.
+ *                            - `I` - Initiator: is allowed to initiate a transaction.
+ *
+ *                            you can combine multiple Role like `IA:0xab35d7cb3...`
+ *
+ * Returns:
+ *   - d_token_t* : ([object Object]) a collection of relevant data you may need for the new wallet
+ */
+static inline in3_ret_t rpc_call_zk_wallet_create(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t threshold, d_token_t* owners) {
+  char*     jpayload = sprintx("\"%B\",%j", (bytes_t) threshold, (d_token_t*) owners);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "zk_wallet_create", jpayload, NULL, res, NULL);
+  _free(jpayload);
+  return r;
+}
+#define FN_ZK_WALLET_CREATE "zk_wallet_create"
+
+/**
+ * reads the current configuration from the cosigner. This function will only be used internally and is not available as direct comand in the client.
+ *
+ * Returns:
+ *   - d_token_t* : ([object Object]) the current config of the signer.
+ */
+static inline in3_ret_t rpc_call_zk_wallet_get_config(in3_rpc_handle_ctx_t* ctx, d_token_t** res) {
+  in3_ret_t r = req_send_sub_request(ctx->req, "zk_wallet_get_config", "", NULL, res, NULL);
+  return r;
+}
+#define FN_ZK_WALLET_GET_CONFIG "zk_wallet_get_config"
+
+/**
+ * updates the local wallet configuration.
+ *
+ *
+ *
+ * Parameters:
+ *
+ *   - d_token_t* wallet : (zk_wallet) the wallet-config.
+ * Returns:
+ *   - bool : (bool) the success confirmation or a error is thrown.
+ */
+static inline in3_ret_t rpc_call_zk_wallet_configure(in3_rpc_handle_ctx_t* ctx, bool* _res, d_token_t* wallet) {
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("%j", (d_token_t*) wallet);
+  in3_ret_t  r        = req_send_sub_request(ctx->req, "zk_wallet_configure", jpayload, NULL, &res, NULL);
+  _free(jpayload);
+  if (!r) *_res = d_int(res);
+  return r;
+}
+#define FN_ZK_WALLET_CONFIGURE "zk_wallet_configure"
+
+/**
  * returns the contract address
  *
  * Returns:
