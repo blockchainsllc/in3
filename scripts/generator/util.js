@@ -50,3 +50,18 @@ exports.short_descr = function (d) {
 exports.addAll = function addAll(array, elements) {
     exports.asArray(elements).forEach(_ => array.push(_))
 }
+
+
+exports.apiPath = function apiPath(api_name, all) {
+    api_name = snake_case(api_name)
+    if (api_name == 'util') api_name = 'utils'
+    const api = all.apis.find(_ => _.api == api_name)
+    if (!api) throw new Error("No api for " + api_name)
+    const aconf = all.apis.find(_ => _.api == api_name).conf
+    let v = aconf.extensionVar || api_name
+    if (v == 'wallet') v = 'defaultWallet'
+    if (v == 'util') v = 'utils'
+    if (aconf.extension)
+        return apiPath(aconf.extension, all) + '.' + v
+    return v
+}
