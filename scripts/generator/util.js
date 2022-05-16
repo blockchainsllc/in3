@@ -53,7 +53,7 @@ exports.addAll = function addAll(array, elements) {
 
 
 exports.apiPath = function apiPath(api_name, all) {
-    api_name = snake_case(api_name)
+    api_name = exports.snake_case(api_name)
     if (api_name == 'util') api_name = 'utils'
     const api = all.apis.find(_ => _.api == api_name)
     if (!api) throw new Error("No api for " + api_name)
