@@ -101,7 +101,7 @@ static inline in3_ret_t rpc_call_zk_wallet_get_config(in3_rpc_handle_ctx_t* ctx,
  *
  * Parameters:
  *
- *   - d_token_t* wallet : (zk_wallet) the wallet-config.
+ *   - d_token_t* wallet : (zk_wallet_config) the wallet-config.
  * Returns:
  *   - bool : (bool) the success confirmation or a error is thrown.
  */
