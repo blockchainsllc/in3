@@ -88,6 +88,7 @@ function get_type(config, content, names, parent = {}) {
     switch (type) {
         case 'boolean': return 'bool'
         case 'number': return 'uint32'
+        case 'integer': return schema.format || 'uint32'
         case 'object': {
             let props = schema.properties
             let requiredProps = schema.requiredProperties || schema.required || []
@@ -197,8 +198,12 @@ function create_fn(config, method, path, def) {
         fn.params.data.type = get_type(config, def.requestBody.content || {}, [base_name, base_name + '_data', base_name + '_' + method + '_data'], fn.params.data)
         if (def.requestBody.require === false) fn.params.data.optional = true
     }
-    if (def.parameters)
-        def.parameters.forEach(p => {
+    if (def.parameters) {
+        // This attempts to keep the params in the declared order while throwing anything that isnt required to the end (that is because some languages only accept optional params at the end)
+        const requiredParams = def.parameters.filter(p => !!p.required)
+        const optionalParams = def.parameters.filter(p => !p.required)
+        const ordered = [...requiredParams, ...optionalParams]
+        ordered.forEach(p => {
             const n = snake_case(p.name)
             if (p.in == 'query') {
                 fn._generate_openapi.query = fn._generate_openapi.query || []
@@ -211,6 +216,7 @@ function create_fn(config, method, path, def) {
             if (!p.required) d.optional = true // default is not required
             d.type = get_type(config, p, [n, base_name + '_' + p], d)
         })
+    }
     const response = Object.keys(def.responses || {}).map(_ => parseInt(_) < 400 ? def.responses[_] : null).find(_ => _)
     if (!response) throw new Error('no response found')
     fn.result = {
