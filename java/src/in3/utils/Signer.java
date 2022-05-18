@@ -55,7 +55,7 @@ public abstract class Signer {
   /**
    * signing of the raw data.
    */
-  public abstract byte[] sign(String data, String address, SignatureType signtype, PayloadType payloadType, JSON meta) throws Exception;
+  public abstract byte[] sign(String data, String address, SignatureType signtype, PayloadType payloadType, CurveType cuveType, JSON meta) throws Exception;
 
   public static native String getAddressFromKey(String key);
 

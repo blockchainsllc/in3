@@ -37,6 +37,7 @@ package in3;
 import in3.config.ClientConfiguration;
 import in3.eth1.SimpleWallet;
 import in3.utils.Crypto;
+import in3.utils.CurveType;
 import in3.utils.JSON;
 import in3.utils.PayloadType;
 import in3.utils.SignatureType;
@@ -388,7 +389,7 @@ public class IN3 {
     String       pk       = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
     String       signerId = wallet.addRawKey(pk);
     byte[] res            = wallet.sign("1e194c68360307cfb715bf17878791ad1ced8da7d2e5f42b691074c577f41eac",
-                                        signerId, SignatureType.eth_sign, PayloadType.PL_SIGN_ETHTX, null);
+                                        signerId, SignatureType.ethSign, PayloadType.ethTx, CurveType.ecdsa, null);
 
     System.out.println(res);
   }

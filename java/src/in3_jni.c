@@ -600,14 +600,15 @@ in3_ret_t jsign(in3_sign_ctx_t* sc) {
 
   jobject jSignatureType = get_enum("in3/utils/SignatureType", "(I)Lin3/utils/SignatureType;", sc->digest_type);
   jobject jPayloadType   = get_enum("in3/utils/PayloadType", "(I)Lin3/utils/PayloadType;", sc->payload_type);
+  jobject jcurveType     = get_enum("in3/utils/CurveType", "(I)Lin3/utils/CurveType;", sc->curve_type);
   jstring jdata          = (*jni)->NewStringUTF(jni, data);
   jstring jaddress       = (*jni)->NewStringUTF(jni, address);
   jclass  cls            = (*jni)->GetObjectClass(jni, signer);
 
-  jmethodID mid = (*jni)->GetMethodID(jni, cls, "sign", "(Ljava/lang/String;Ljava/lang/String;Lin3/utils/SignatureType;Lin3/utils/PayloadType;Lin3/utils/JSON;)[B");
+  jmethodID mid = (*jni)->GetMethodID(jni, cls, "sign", "(Ljava/lang/String;Ljava/lang/String;Lin3/utils/SignatureType;Lin3/utils/PayloadType;Lin3/utils/CurveType;Lin3/utils/JSON;)[B");
 
   (*jni)->ExceptionClear(jni);
-  jbyteArray jsignature        = (*jni)->CallObjectMethod(jni, signer, mid, jdata, jaddress, jSignatureType, jPayloadType, toObject(jni, sc->meta));
+  jbyteArray jsignature        = (*jni)->CallObjectMethod(jni, signer, mid, jdata, jaddress, jSignatureType, jPayloadType, jcurveType, toObject(jni, sc->meta));
   jthrowable signing_exception = (*jni)->ExceptionOccurred(jni);
 
   if (signing_exception) {
