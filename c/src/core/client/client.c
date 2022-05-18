@@ -245,6 +245,33 @@ bytes_t in3_sign_ctx_get_account(
 }
 
 /**
+ * helper function to retrieve the digest_type from a in3_sign_ctx_t
+ */
+d_digest_type_t in3_sign_ctx_get_digest_type(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->digest_type;
+}
+
+/**
+ * helper function to retrieve the payload_type from a in3_sign_ctx_t
+ */
+d_payload_type_t in3_sign_ctx_get_payload_type(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->payload_type;
+}
+
+/**
+ * helper function to retrieve the curve_type from a in3_sign_ctx_t
+ */
+d_curve_type_t in3_sign_ctx_get_curve_type(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->curve_type;
+}
+
+/**
  * helper function to retrieve the signature from a in3_sign_ctx_t
  */
 void in3_sign_ctx_set_signature_hex(

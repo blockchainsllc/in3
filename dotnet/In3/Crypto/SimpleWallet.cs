@@ -50,11 +50,14 @@ namespace In3.Crypto
         /// </summary>
         /// <param name="data">Data to be signed.</param>
         /// <param name="signerId">Signer Id managed by the wallet, see <see cref="SimpleWallet.AddRawKey" /></param>
-        /// <returns>Signed transaction data.</returns>
-        public Task<string> Sign(string data, string signerId)
+        /// <param name="digestType">The digest type used for signing.</param>
+        /// <param name="payloadType">The payload type, used for deserialization.</param>
+        /// <param name="curveType">The type of the curve.</param>
+        /// <returns>The signed transaction data.</returns>
+        public Task<string> Sign(string data, string signerId, DigestType digestType, PayloadType payloadType, CurveType curveType)
         {
             string key = PrivateKeys[signerId.ToLower()];
-            return Task.Run(() => NativeWallet.Sign(key, data));
+            return Task.Run(() => NativeWallet.Sign(key, data, digestType));
         }
 
         /// <summary>

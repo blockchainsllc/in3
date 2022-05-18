@@ -512,7 +512,6 @@ namespace In3.Eth1
         public async Task<TransactionReceipt> SendTransactionAndWait(TransactionRequest tx)
         {
             ValidateTransaction(tx);
-            tx = _in3.Signer.PrepareTransaction(tx);
 
             string jsonResponse = await _in3.SendRpc(EthSendTransactionAndWait, new object[] { await MapTransactionToRpc(tx) });
             return RpcHandler.From<TransactionReceipt>(jsonResponse);
@@ -540,7 +539,6 @@ namespace In3.Eth1
         public async Task<string> SendTransaction(TransactionRequest tx)
         {
             ValidateTransaction(tx);
-            tx = _in3.Signer.PrepareTransaction(tx);
 
             string jsonResponse = await _in3.SendRpc(EthSendTransaction, new object[] { await MapTransactionToRpc(tx) });
             return RpcHandler.From<string>(jsonResponse);
