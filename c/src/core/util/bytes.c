@@ -124,7 +124,7 @@ bytes_t b_concat(int cnt, ...) {
   va_start(ap, cnt);
   for (i = 0, len = 0; i < cnt; i++, len += b.len) {
     b = va_arg(ap, bytes_t);
-    memcpy(b.data + len, b.data, b.len);
+    memcpy(out.data + len, b.data, b.len);
   }
   va_end(ap);
   return out;

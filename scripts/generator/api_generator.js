@@ -526,6 +526,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
         if (!direct_impl) header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''});\n`)
         if (params.length || direct_impl) {
             if (!direct_impl) prefix = 'handle_'
+            if (r.cmakeOptions) impl.push(`#if ${asArray(r.cmakeOptions).map(_ => `defined(${_})`).join(' && ')}`)
             impl.push(`static in3_ret_t ${prefix}${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
             align_vars(align_vars(code.pre, '  '), '  ', '=').forEach(_ => impl.push(_))
             if (code.set.length) impl.push('')
@@ -541,10 +542,18 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             else
                 impl.push(`\n  return ${rpc_name}(${use_conf ? 'conf, ' : ''}ctx${params.length ? ', ' + code.pass.join(', ') : ''}); `)
             impl.push('}\n')
+            if (r.cmakeOptions) impl.push('#endif')
+        }
+        if (r.cmakeOptions) {
+            if (asArray(r.cmakeOptions).length == 1)
+                rpc_exec.push(`#ifdef ${asArray(r.cmakeOptions)[0]}`)
+            else
+                rpc_exec.push(`#if ${asArray(r.cmakeOptions).map(_ => `defined(${_})`).join(' && ')}`)
         }
         rpc_exec.push(`#if !defined(RPC_ONLY) || defined(RPC_${rpc_name.toUpperCase()})`)
         rpc_exec.push(`  TRY_RPC("${rpc_name}", ${prefix}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
         rpc_exec.push('#endif\n')
+        if (r.cmakeOptions) rpc_exec.push('#endif')
     })
 
     header.splice(header_converter_pos - 1, 0, ...type_includes)

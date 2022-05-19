@@ -2,7 +2,7 @@
 
 const yaml = require('yaml')
 const fs = require('fs')
-const { resolve } = require('path')
+const { resolve, dirname } = require('path')
 const { generate_openapi } = require('./openapi')
 const { generate_solidity } = require('./solidity')
 const {
@@ -47,6 +47,12 @@ process.argv.slice(2).forEach(a => {
             cmake.modules = {}
             cmake_data.dirs.split(';').forEach(_ => rpc_dirs[resolve(_)] = true)
             cmake_data.apis.split(';').forEach(_ => cmake.modules[_] = true)
+            cmake.options = {}
+            fs.readFileSync(dirname(a.substr(8)) + '/CMakeCache.txt', 'utf8').split('\n').filter(_ => _.indexOf('=') >= 0 && !_.trim().startsWith('#')).forEach(op => {
+                let [name, val] = op.split('=', 2)
+                let [option, type] = name.split(':', 2)
+                cmake.options[option] = type == 'BOOL' ? (val.toUpperCase() == 'ON' || val.toUpperCase() == 'TRUE') : val
+            })
         }
         catch (x) {
             console.error(x)
@@ -450,4 +456,4 @@ async function main() {
         fs.writeFileSync(args_file[0], '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[] = {' + bool_props.map(_ => '"' + _ + '", ').join('') + 'NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
 
 }
-main().catch(console.error)
+main().then(_ => { console.log('done'); process.exit(0) }, console.error)

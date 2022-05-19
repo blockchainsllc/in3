@@ -20,7 +20,21 @@ function resolve_inputs(sources, dir) {
 
 function compile(ctx) {
     let input = {
-        language: 'Solidity', sources: {}, settings: {
+        language: 'Solidity',
+        sources: {},
+        settings: {
+            // See the solidity docs for advice about optimization and evmVersion
+            optimizer: {
+                enabled: true,
+                runs: 200,
+                details: {
+                    yul: true,
+                    yulDetails: {
+                        stackAllocation: true,
+                    },
+                }
+            },
+
             "outputSelection": {
                 "*": {
                     "*": [
@@ -30,10 +44,30 @@ function compile(ctx) {
             }
         }
     }
+    const cache = ctx.dir + '/.cache'
+    const cacheFile = cache + '/' + ctx.api_name + '.json'
+    if (!fs.existsSync(cache)) fs.mkdirSync(cache)
+    const cachedTime = fs.existsSync(cacheFile) ? fs.lstatSync(cacheFile).mtime : null
+
     ctx.files.forEach(f => input.sources[path.resolve(ctx.dir + '/' + f)] = { content: fs.readFileSync(ctx.dir + '/' + f, 'utf8') })
     resolve_inputs(input.sources, ctx.dir)
-    const res = JSON.parse(solc.compile(JSON.stringify(input)))
-    if (res.errors) throw new Error('Solidity Errors : ' + res.errors.map(_ => _.formattedMessage).join('\n'))
+    Object.keys(input.sources).forEach(file => {
+        let lines = input.sources[file].content.split('\n')
+        lines = lines.map(_ => _.trim().startsWith('pragma solidity 0.8') ? _.replace(' 0.8', ' ^0.8') : _)
+        if (!lines.find(_ => _.indexOf('// SPDX-License-Identifier:') >= 0)) lines.splice(0, 0, '// SPDX-License-Identifier: UNLICENSED')
+
+        input.sources[file].content = lines.join('\n')
+    })
+    let res = undefined
+    if (!cachedTime || Object.keys(input.sources).reduce((p, v) => Math.max(p, fs.lstatSync(v).mtime.getTime()), 0) > cachedTime.getTime()) {
+        console.error(":: compiling ... ", ctx.files.join())
+        res = JSON.parse(solc.compile(JSON.stringify(input)))
+        fs.writeFileSync(cacheFile, JSON.stringify(res, null, 2), 'utf8')
+    }
+    else
+        res = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, 'utf8')) : null
+    if (res.errors)
+        throw new Error('Solidity Errors : ' + res.errors.map(_ => _.formattedMessage).join('\n'))
 
     let all_contracts = {}
     Object.keys(res.contracts).forEach(file => all_contracts = { ...all_contracts, ...res.contracts[file] })
@@ -55,34 +89,58 @@ exports.generate_solidity = async function ({ generate_rpc, types, api_name, api
     api_def.fields = { contract: { descr: 'the address of the contract', type: 'address' }, ...api_def.fields }
 }
 
-
+function resolve_type(f, includeNames = true) {
+    if (f.type == 'tuple')
+        return '(' + f.components.map(_ => resolve_type(_, includeNames)).join() + ')'
+    return f.type + (includeNames ? ' ' + f.name : '')
+}
 function create_sig(fn, includeNames, includeOutput) {
-    let sig = `${fn.name || 'ctr'}(${fn.inputs.map(_ => (_.internalType || _.type) + (includeNames ? ' ' + _.name : '')).join()})`
+    let sig = `${fn.name || 'ctr'}(${fn.inputs.map(_ => resolve_type(_, includeNames)).join()})`
     if (includeOutput) {
         sig += ':'
         if (fn.outputs.length == 1) sig += fn.outputs[0].type
-        else sig += `(${fn.outputs.map(_ => (_.internalType || _.type) + (includeNames && _.name ? ' ' + _.name : '')).join()})`
+        else sig += `(${fn.outputs.map(_ => (_.type) + (includeNames && _.name ? ' ' + _.name : '')).join()})`
     }
     return sig
 }
-function fix_type(t) {
-    if (t.type && t.type.endsWith('[]')) {
-        t.type = t.type.substring(0, t.type.length - 2)
-        t.array = true
+function fix_type(t, ctx, sig) {
+    let type = t.type
+    let res = { descr: t.descr || get_descr(ctx, sig, true, t.name) }
+    if (type && type.indexOf('[') > 0) {
+        type = type.split('[')[0]
+        res.array = true
     }
-    return t
+    if (type == 'tuple') {
+        type = {}
+        if (t.internalType && t.internalType.startsWith('struct '))
+            res.typeName = t.internalType.substring(7).replace('.', '')
+        t.components.forEach(c => type[c.name] = fix_type(c))
+    }
+    res.type = type
+    return res
+}
+function get_descr(ctx, sig, generate, param) {
+    if (!sig && !param) return ''
+    const descr = param
+        ? d => ((d && d.params) ? (d.params[param] || d.params['_' + param]) : '') || ''
+        : d => Object.keys(d || {}).filter(_ => _ != 'params').map(_ => d[_] + '\n\n').join('')
+    const dev_doc = ctx && (ctx.contract.devdoc || {}).methods
+    const user_doc = ctx && (ctx.contract.userdoc || {}).methods
+    sig = sig ? sig.replace(/ \w+/g, '') : ''
+    let d = (descr((user_doc || {})[sig]) + '\n\n' + descr((dev_doc || {})[sig])).trim()
+    return d || (generate ? snake_case(param || sig.split('(', 1)[0] || '').split('_').join(' ') : '')
 }
 function create_def(ctx) {
-    const doc = ctx.contract.devdoc || {}
     const abi = ctx.contract.abi
     ctx.functions = []
     const deploy = ctx.sol.deploy && ctx.contract.evm.bytecode && ctx.contract.evm.bytecode.object && '0x' + ctx.contract.evm.bytecode.object
+    if (deploy && !abi.find(_ => _.type == 'constructor')) abi.push({ type: 'constructor', inputs: [], "stateMutability": "nonpayable" })
     for (let fn of abi.filter(_ => _.type == 'function' || _.type == 'constructor')) {
         fn.inputs.forEach(_ => _.name = (_.name || 'ctr').replace('_', ''))
         let ctr = fn.type == 'constructor'
         let sig = create_sig(fn)
         let def = {
-            descr: (ctr ? 'deploy the ' + camelCaseUp(ctx.abi_name) + ' contract.' : '') + (doc.methods[sig] || {}).details || '',
+            descr: (ctr ? 'deploy the ' + camelCaseUp(ctx.abi_name) + ' contract.' : '') + '\n' + get_descr(ctx, sig, !ctr),
             params: {},
             _generate_impl: impl_solidity,
             solidity: { ctx, fn, deploy }
@@ -99,22 +157,23 @@ function create_def(ctx) {
             ctx.allapis[ctx.sol.deploy][ctx.sol.deploy + '_deploy_' + ctx.api_name] = def
             def.src = ctx.dir
             def.generate_rpc = ctx.generate_rpc
+            def.cmakeOptions = ['MOD_CONTRACTS_DEPLOY']
         }
         else
             ctx.api[ctx.sol.prefix + '_' + snake_case(fn.name)] = def
 
 
-        fn.inputs.forEach(n => def.params[n.name] = fix_type({ type: n.internalType || n.type }))
+        fn.inputs.forEach(n => def.params[n.name] = fix_type(n, ctx, sig))
         if (fn.stateMutability == 'view') {
             def.solidity.sig = create_sig(fn, true, true)
             def.result = {
                 descr: "the resulting data structure"
             }
             if (fn.outputs.length == 1)
-                def.result = { ...def.result, ...fix_type({ type: fn.outputs[0].type }) }
+                def.result = { ...def.result, ...fix_type(fn.outputs[0]) }
             else {
                 def.result.type = {}
-                fn.inputs.forEach((n, i) => def.result.type[n.name || 'p' + (i + 1)] = fix_type({ type: n.internalType || n.type, descr: n.name }))
+                fn.inputs.forEach((n, i) => def.result.type[n.name || 'p' + (i + 1)] = fix_type(n))
             }
         }
         else {
@@ -177,6 +236,7 @@ function chex(val) {
     return res
 }
 function impl_solidity(fn, state, includes) {
+    const to_arg = _ => ', ' + ((_.components && !_.type.endsWith(']')) ? _.name + '.json' : _.name)
     const abi_include = '#include "../../in3/c/src/api/eth1/abi.h"'
     const wallet_include = '#include "../wallet/wallet.h"'
     const l1_include = '#include "../l1_wallet/l1_wallet.h"'
@@ -186,7 +246,7 @@ function impl_solidity(fn, state, includes) {
     const sol = fn.solidity
     let res = []
     if (sol.fn.stateMutability == 'view')
-        res.push(`SEND_ETH_CALL${sol.fn.inputs.length == 0 ? '_NO_ARGS' : ''}(ctx, contract, "${sol.sig}"${sol.fn.inputs.map(_ => ', ' + _.name).join('')})`)
+        res.push(`SEND_ETH_CALL${sol.fn.inputs.length == 0 ? '_NO_ARGS' : ''}(ctx, contract, "${sol.sig}"${sol.fn.inputs.map(to_arg).join('')})`)
     else if (sol.deploy && sol.fn.type == 'constructor') {
         res.push('TRY(wallet_check(ctx->req, &wallet, WT_ETH))')
         res.push('')
@@ -196,8 +256,8 @@ function impl_solidity(fn, state, includes) {
         res.push('arg.target_level = wallet_get_exec_level(exec, EXL_RECEIPT);')
         res.push(`arg.data         = bytes((void*) "${chex(sol.deploy)}", ${sol.deploy.length / 2 - 1});`)
         if (sol.fn.inputs.length) {
-            res.push(`bytes_t arg_data = abi_encode_args(ctx, "${sol.sig}"${sol.fn.inputs.map(_ => ', ' + _.name).join('')});`)
-            res.push('arg.data         = b_concat(2, arg.data, arg_data);')
+            res.push(`bytes_t arg_data = abi_encode_args(ctx, "${sol.sig}"${sol.fn.inputs.map(to_arg).join('')});`)
+            res.push('arg.data         = b_concat(2, arg.data, bytes(arg_data.data + 4, arg_data.len - 4));')
             res.push('_free(arg_data.data);')
             res.push('')
             res.push('if (ctx->req->error) return ctx->req->verification_state;')
@@ -211,7 +271,7 @@ function impl_solidity(fn, state, includes) {
         res.push('')
         res.push('tx_args_t arg    = {0};')
         res.push('arg.to           = contract;')
-        res.push(`arg.data         = abi_encode_args(ctx, "${sol.sig}"${sol.fn.inputs.map(_ => ', ' + _.name).join('')});`)
+        res.push(`arg.data         = abi_encode_args(ctx, "${sol.sig}"${sol.fn.inputs.map(to_arg).join('')});`)
         res.push('arg.gas          = 300000;')
         res.push('arg.wallet       = wallet;')
         res.push('arg.target_level = wallet_get_exec_level(exec, EXL_RECEIPT);')
