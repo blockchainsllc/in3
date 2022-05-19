@@ -139,20 +139,23 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
   }
 
   // fix gas_price
-  if (tx->type < 2 && !tx->gas_price.len) {
-    bytes_t gp = NULL_BYTES;
-    merge_result(&ret, get_from_nodes(ctx, "eth_gasPrice", "[]", &gp));
-    if (ret == IN3_OK && gp.data) {
-      if (tx->gas_price.data && tx->gas_price.len == 0 && gp.len <= 8) {
-        long_to_bytes(bytes_to_long(gp.data, gp.len) + 1, tx->gas_price.data);
-        tx->gas_price.len = 8;
-        b_optimize_len(&tx->gas_price);
+  if (tx->type < 2 && !tx->gas_price.data)
+    merge_result(&ret, get_from_nodes(ctx, "eth_gasPrice", "[]", &tx->gas_price));
+  /*
+    if (tx->type < 2 && !tx->gas_price.len) {
+      bytes_t gp = NULL_BYTES;
+      merge_result(&ret, get_from_nodes(ctx, "eth_gasPrice", "[]", &gp));
+      if (ret == IN3_OK && gp.data) {
+        if (tx->gas_price.data && tx->gas_price.len == 0 && gp.len <= 8) {
+          long_to_bytes(bytes_to_long(gp.data, gp.len) + 1, tx->gas_price.data);
+          tx->gas_price.len = 8;
+          b_optimize_len(&tx->gas_price);
+        }
+        else
+          tx->gas_price = gp;
       }
-      else
-        tx->gas_price = gp;
     }
-  }
-
+  */
   // fill access_list if this is a call
   if (tx->type > 0 && tx->data.len >= 4 && !tx->access_list) {
     sb_t       sb = {0};
@@ -313,9 +316,9 @@ static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t from, bytes
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
 in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta) {
-  eth_tx_data_t td                 = {0};
-  uint8_t       gasprice_buffer[8] = {0};
+  eth_tx_data_t td = {0};
   chain_id_t    chain_id;
+  //  uint8_t       gasprice_buffer[8] = {0};
 
   // read the values
   td.type                     = d_get_int(tx, d_get(tx, K_ETH_TX_TYPE) ? K_ETH_TX_TYPE : K_TYPE);
@@ -328,7 +331,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   td.gas_price                = get(tx, K_GAS_PRICE);
   td.max_fee_per_gas          = get(tx, K_MAX_FEE_PER_GAS);
   td.max_priority_fee_per_gas = get(tx, K_MAX_PRIORITY_FEE_PER_GAS);
-  td.gas_price.data           = td.gas_price.data ? td.gas_price.data : gasprice_buffer;
+  //  td.gas_price.data           = td.gas_price.data ? td.gas_price.data : gasprice_buffer;
 
   // make sure, we have the correct chain_id
   TRY(in3_resolve_chain_id(ctx, &chain_id))
