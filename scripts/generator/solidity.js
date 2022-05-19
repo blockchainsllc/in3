@@ -66,7 +66,7 @@ function compile(ctx) {
     }
     else
         res = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, 'utf8')) : null
-    if (res.errors)
+    if (res.errors && res.errors.filter(_ => _.severity != "warning").length)
         throw new Error('Solidity Errors : ' + res.errors.map(_ => _.formattedMessage).join('\n'))
 
     let all_contracts = {}
@@ -248,10 +248,12 @@ function impl_solidity(fn, state, includes) {
     if (sol.fn.stateMutability == 'view')
         res.push(`SEND_ETH_CALL${sol.fn.inputs.length == 0 ? '_NO_ARGS' : ''}(ctx, contract, "${sol.sig}"${sol.fn.inputs.map(to_arg).join('')})`)
     else if (sol.deploy && sol.fn.type == 'constructor') {
+        let gas = sol.ctx.contract.evm.gasEstimates.creation.totalCost
+        gas = gas == 'infinite' ? 460000 : parseInt(gas) + 500000
         res.push('TRY(wallet_check(ctx->req, &wallet, WT_ETH))')
         res.push('')
         res.push('tx_args_t arg    = {0};')
-        res.push('arg.gas          = 3000000;')
+        res.push('arg.gas          = ' + gas + ';')
         res.push('arg.wallet       = wallet;')
         res.push('arg.target_level = wallet_get_exec_level(exec, EXL_RECEIPT);')
         res.push(`arg.data         = bytes((void*) "${chex(sol.deploy)}", ${sol.deploy.length / 2 - 1});`)

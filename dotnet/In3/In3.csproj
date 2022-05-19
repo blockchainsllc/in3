@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RootNamespace>In3</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Authors>Blockchains LLC</Authors>
@@ -19,6 +20,11 @@
     <PackageProjectUrl>https://in3.readthedocs.io</PackageProjectUrl>
     <PackageTags>In3;C;Arm;X86;X64;Macos;Windows;Linux;Blockchain;Ethereum;Bitcoin;Ipfs</PackageTags>
     <DocumentationMarkdown>$(MSBuildProjectDirectory)\bin\$(Configuration)\IN3.md</DocumentationMarkdown>
+
+    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'True'">True</IsWindows>
+    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True'">True</IsLinux>
+    <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'True'">True</IsOSX>
+
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Text.Json, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
@@ -29,9 +35,54 @@
       <Pack>true</Pack>
       <PackagePath>runtimes</PackagePath>
     </None>
-    <None Include="Blockchains.In3.targets">
-      <Pack>true</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
   </ItemGroup>
+
+<!--
+  <ItemGroup Condition="'$(IsPublicBuild)' == 'True'">
+    <Content Include="./../../artifacts/bin32/SOEM_wrapper/Release/soem_wrapper.dll" Link="runtimes/win-x86/native/soem_wrapper.dll">
+      <PackagePath>runtimes/win-x86/native</PackagePath>
+    </Content>
+    <Content Include="./../../artifacts/bin64/SOEM_wrapper/Release/soem_wrapper.dll" Link="runtimes/win-x64/native/soem_wrapper.dll">
+      <PackagePath>runtimes/win-x64/native</PackagePath>
+    </Content>
+    <Content Include="./../../artifacts/download/bin32/libsoem_wrapper.so" Link="runtimes/linux-x86/native/libsoem_wrapper.so">
+      <PackagePath>runtimes/linux-x86/native</PackagePath>
+    </Content>
+    <Content Include="./../../artifacts/download/bin64/libsoem_wrapper.so" Link="runtimes/linux-x64/native/libsoem_wrapper.so">
+      <PackagePath>runtimes/linux-x64/native</PackagePath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPublicBuild)' == '' AND $(IsWindows) == 'True'">
+    <Content Include="./../../artifacts/bin32/SOEM_wrapper/Release/soem_wrapper.dll" Link="runtimes/win-x86/native/soem_wrapper.dll">
+      <PackagePath>runtimes/win-x86/native</PackagePath>
+    </Content>
+    <Content Include="./../../artifacts/bin64/SOEM_wrapper/Release/soem_wrapper.dll" Link="runtimes/win-x64/native/soem_wrapper.dll">
+      <PackagePath>runtimes/win-x64/native</PackagePath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPublicBuild)' == '' AND $(IsLinux) == 'True'">
+    <Content Include="./../../artifacts/bin32/SOEM_wrapper/libsoem_wrapper.so" Link="runtimes/linux-x86/native/libsoem_wrapper.so">
+      <PackagePath>runtimes/linux-x86/native</PackagePath>
+    </Content>
+    <Content Include="./../../artifacts/bin64/SOEM_wrapper/libsoem_wrapper.so" Link="runtimes/linux-x64/native/libsoem_wrapper.so">
+      <PackagePath>runtimes/linux-x64/native</PackagePath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPublicBuild)' == '' AND $(IsOSX) == 'True'">
+    <Content Include="./../../artifacts/bin32/SOEM_wrapper/libsoem_wrapper.so" Link="runtimes/linux-x86/native/libsoem_wrapper.so">
+      <PackagePath>runtimes/linux-x86/native</PackagePath>
+    </Content>
+    <Content Include="./../../artifacts/bin64/SOEM_wrapper/libsoem_wrapper.so" Link="runtimes/linux-x64/native/libsoem_wrapper.so">
+      <PackagePath>runtimes/linux-x64/native</PackagePath>
+    </Content>
+  </ItemGroup>
+
+-->
+
+  
+  <Import Project="Blockchains.In3.targets" />
+
 </Project>

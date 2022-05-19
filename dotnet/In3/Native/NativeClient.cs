@@ -50,6 +50,7 @@ namespace In3.Native
             }
         }
 
+
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_init();
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_free(IntPtr ptr);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_for_chain_default(Chain chainId);

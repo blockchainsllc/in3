@@ -15,6 +15,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(OSX))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='Arm64'">
+    <None Include="$(MSBuildThisFileDirectory)\runtimes\osx-arm64\native\libin3.dylib">
+      <Link>libin3.dylib</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(Linux))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='X64'">
     <None Include="$(MSBuildThisFileDirectory)\runtimes\linux-x64\native\libin3.so">
       <Link>libin3.so</Link>
