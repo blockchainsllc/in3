@@ -26,7 +26,7 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, /**< the current context */
                                   sb_t* meta /**< a stringbuilder in order write the wallet_state and metadata depending on the tx. */
 );
 
-in3_ret_t btc_sign_raw_tx(in3_req_t* ctx, bytes_t* raw_tx, address_t signer_id, bytes_t* dst);
+in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst);
 
 #ifdef __cplusplus
 }

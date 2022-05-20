@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 types:
-  btc_sign_acc:
-    address:
-      descr: eth address used by in3 to sign btc transactions
+  btc_signer:
+    signer_id:
+      descr: the signer id to sign btc transactions
       type: address
     btc_pub_key:
-      descr: btc public key linked to previously provided eth address
+      descr: btc public key linked to the provided signer_id
       type: bytes
 
   btc_value:
@@ -43,9 +43,9 @@ types:
       descr: relative-locktime (rlt) configurations. When null, rlt is deactivated as defined by BIP68, relative locktime (RLT) is a repurpose of the sequence number of a transaction input to allow it to remain invalid until a certain time constraint is met.
       type: btc_rlt
       optional: true
-    accounts:
-      descr: additional eth signing accounts used for multisig
-      type: btc_sign_acc
+    signers:
+      descr: additional signer ids used for multisig
+      type: btc_signer
       array: true
       optional: true
 
@@ -1204,13 +1204,10 @@ btc:
     descr: |
       signs and sends a transaction to a btc node
     params:
-      from:
-        descr: 20-byte btc address to which the "change" from the utxos will be sent
-        type: address
-      account:
-        descr: default eth account used by in3 to sign btc transactions
-        type: btc_sign_acc
-      outputs:
+      signer:
+        descr: the signer id used to sign btc transactions
+        type: btc_signer
+      txoutputs:
         descr: how much and to which adresses we want to send funds
         type: btc_value
         array: true

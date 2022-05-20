@@ -60,16 +60,19 @@ int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_addr
   return btc_addr_from_pub_key_hash(pub_key_hash, prefix, dst);
 }
 
-btc_stype_t btc_get_addr_type(const char* address) {
-  if (address[0] == '1') {
+btc_stype_t btc_get_addr_type(const char* address, bool is_testnet) {
+  if ((!is_testnet && address[0] == '1') || 
+      (is_testnet && (address[0] == 'm' || address[0] == 'n'))) {
     return BTC_P2PKH;
   }
 
-  if (address[0] == '3') {
+  if ((!is_testnet && address[0] == '3') || 
+       (is_testnet && address[0] == '2')) {
     return BTC_P2SH;
   }
 
-  if (address[0] == 'b' && address[1] == 'c' && address[2] == '1' && address[3] == 'q') {
+  if ((!is_testnet && (address[0] == 'b' && address[1] == 'c' && address[2] == '1' && address[3] == 'q')) || 
+     (is_testnet && (address[0] == 't' && address[1] == 'b' && address[2] == '1' && address[3] == 'q'))) {
     size_t addr_len = strlen(address);
     if (addr_len == 42) return BTC_V0_P2WPKH;
     if (addr_len == 62) return BTC_P2WSH;
@@ -80,7 +83,7 @@ btc_stype_t btc_get_addr_type(const char* address) {
 
 int btc_decode_address(bytes_t* dst, const char* src, bool is_testnet) {
   UNUSED_VAR(dst);
-  btc_stype_t addr_type = btc_get_addr_type(src);
+  btc_stype_t addr_type = btc_get_addr_type(src, is_testnet);
   switch (addr_type) {
     case BTC_P2PKH:
     case BTC_P2SH:

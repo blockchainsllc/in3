@@ -30,7 +30,7 @@ int btc_segwit_addr_from_pub_key_hash(ripemd160_t pub_key_hash, btc_address_t* d
 int btc_segwit_addr_from_pub_key(bytes_t pub_key, btc_address_t* dst, bool is_testnet);
 int btc_segwit_addr_from_witness_program(bytes_t witness_program, btc_address_t* dst, bool is_testnet);
 
-btc_stype_t btc_get_addr_type(const char* address);
+btc_stype_t btc_get_addr_type(const char* address, bool is_testnet);
 int         btc_decode_address(bytes_t* dst, const char* src, bool is_testnet);
 
 btc_address_prefix_t btc_script_type_to_prefix(btc_stype_t script_type, bool is_testnet);
