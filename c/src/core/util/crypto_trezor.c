@@ -175,6 +175,14 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
           if (dst_len) *dst_len = 64;
           return src.len == 32 ? crypto_pk_to_public_key(type, src.data, dst) : IN3_EINVAL;
         }
+        case CONV_PK32_TO_ADRESS: {
+          uint8_t hash[64];
+          if (dst_len) *dst_len = 20;
+          if (src.len != 32 || crypto_pk_to_public_key(type, src.data, hash)) return IN3_EINVAL;
+          keccak(bytes(hash, 64), hash);
+          memcpy(dst, hash + 12, 20);
+          return IN3_OK;
+        }
         case CONV_SIG65_TO_DER: {
           if (src.len != 65) return IN3_EINVAL;
           int l = ecdsa_sig_to_der(src.data, dst);

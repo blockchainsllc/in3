@@ -85,7 +85,7 @@ static bool add_key(in3_t* c, bytes32_t pk, d_curve_type_t type) {
     }
   }
 
-  eth_set_pk_signer(c, pk, type);
+  eth_set_pk_signer(c, pk, type, NULL);
   return true;
 }
 /** Signs message after hashing it with hasher function given in 'hasher_t', with the given private key*/
@@ -210,12 +210,13 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
 }
 
 /** sets the signer and a pk to the client*/
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk, d_curve_type_t type) {
+in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk, d_curve_type_t type, uint8_t** address) {
   if (!pk) return IN3_EINVAL;
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   k->type         = type;
   k->account_len  = get_address(pk, k->account, type);
   memcpy(k->pk, pk, 32);
+  if (address) *address = k->account;
   return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM | PLGN_ACT_SIGN_PUBLICKEY, eth_sign_pk, k, false);
 }
 
@@ -456,5 +457,5 @@ void eth_set_pk_signer_hex(in3_t* in3, char* key) {
   if (strlen(key) != 64) return;
   bytes32_t key_bytes;
   hex_to_bytes(key, 64, key_bytes, 32);
-  eth_set_pk_signer(in3, key_bytes, SIGN_CURVE_ECDSA);
+  eth_set_pk_signer(in3, key_bytes, SIGN_CURVE_ECDSA, NULL);
 }
