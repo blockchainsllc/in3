@@ -209,6 +209,7 @@ static inline bytes_t  d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_byt
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                     /**< check if the parser context was created from binary data. */
 bytes_t                d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
 d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
+d_key_t                d_add_key(json_ctx_t* ctx, const char* name, size_t len);
 /**
  * iterator over elements of a array opf object.
  *

@@ -69,7 +69,7 @@ static void test_sign() {
 
   bytes32_t pk;
   hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
-  eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA);
+  eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA, NULL);
 
   add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
                "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
@@ -100,7 +100,7 @@ static void test_tx() {
   hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
 
   // create a simple signer with this key
-  eth_set_pk_signer(in3, pk, SIGN_CURVE_ECDSA);
+  eth_set_pk_signer(in3, pk, SIGN_CURVE_ECDSA, NULL);
 
   address_t to, from;
   hex_to_bytes("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
@@ -160,7 +160,7 @@ static void test_signer() {
   in3_t*    c = in3_for_chain(CHAIN_ID_MAINNET);
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
-  eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA);
+  eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA, NULL);
   in3_req_t*     ctx      = req_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   char*          data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
   bytes_t*       data     = hex_to_new_bytes(data_str, strlen(data_str));
@@ -197,7 +197,7 @@ static void test_signer_prepare_tx() {
   in3_t*    c = in3_for_chain(CHAIN_ID_MAINNET);
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
-  eth_set_pk_signer(c, pk);
+  eth_set_pk_signer(c, pk, NULL);
 
   // prepare request
   in3_req_t* ctx        = req_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");

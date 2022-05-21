@@ -252,7 +252,7 @@ void init_env(in3_t* c, int argc, char* argv[]) {
     bytes32_t pk;
     for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) {
       hex_to_bytes(cc, -1, pk, 32);
-      eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA);
+      eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA, NULL);
     }
   }
   // PK
@@ -261,7 +261,7 @@ void init_env(in3_t* c, int argc, char* argv[]) {
     bytes32_t pk;
     for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) {
       hex_to_bytes(cc, -1, pk, 32);
-      eth_set_pk_signer(c, pk, SIGN_CURVE_ED25519);
+      eth_set_pk_signer(c, pk, SIGN_CURVE_ED25519, NULL);
     }
   }
 
