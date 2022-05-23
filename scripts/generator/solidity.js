@@ -239,7 +239,7 @@ function impl_solidity(fn, state, includes) {
     const to_arg = _ => ', ' + ((_.components && !_.type.endsWith(']')) ? _.name + '.json' : _.name)
     const abi_include = '#include "../../in3/c/src/api/eth1/abi.h"'
     const wallet_include = '#include "../wallet/wallet.h"'
-    const l1_include = '#include "../l1_wallet/l1_wallet.h"'
+    const l1_include = '#include "../eth_wallet/eth_wallet.h"'
     if (includes.indexOf(abi_include) < 0) includes.push(abi_include)
     if (includes.indexOf(wallet_include) < 0) includes.push(wallet_include)
     if (includes.indexOf(l1_include) < 0) includes.push(l1_include)
