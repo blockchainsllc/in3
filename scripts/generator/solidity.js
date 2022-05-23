@@ -263,7 +263,7 @@ function impl_solidity(fn, state, includes) {
             res.push('_free(arg_data.data);')
             res.push('')
             res.push('if (ctx->req->error) return ctx->req->verification_state;')
-            res.push('TRY_FINAL(l1_exec(ctx, &arg, NULL), _free(arg.data.data));')
+            res.push('TRY_FINAL(eth_exec(ctx, &arg, NULL), _free(arg.data.data));')
             res.push('return IN3_OK;')
         } else
             res.push('return eth_exec(ctx, &arg, NULL);')
