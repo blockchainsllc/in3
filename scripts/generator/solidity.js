@@ -266,7 +266,7 @@ function impl_solidity(fn, state, includes) {
             res.push('TRY_FINAL(l1_exec(ctx, &arg, NULL), _free(arg.data.data));')
             res.push('return IN3_OK;')
         } else
-            res.push('return l1_exec(ctx, &arg, NULL);')
+            res.push('return eth_exec(ctx, &arg, NULL);')
     }
     else {
         res.push('TRY(wallet_check(ctx->req, &wallet, WT_ETH))')
@@ -279,7 +279,7 @@ function impl_solidity(fn, state, includes) {
         res.push('arg.target_level = wallet_get_exec_level(exec, EXL_RECEIPT);')
         res.push('')
         res.push('if (ctx->req->error) return ctx->req->verification_state;')
-        res.push('TRY_FINAL(l1_exec(ctx, &arg, NULL), _free(arg.data.data));')
+        res.push('TRY_FINAL(eth_exec(ctx, &arg, NULL), _free(arg.data.data));')
         res.push('return IN3_OK;')
     }
 
