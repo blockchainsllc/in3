@@ -3,10 +3,10 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
+#include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
-#include "../../core/util/log.h"
 #include "btc_address.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
@@ -537,16 +537,16 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   //   }
   // #endif
 
-  #if !defined(RPC_ONLY) || defined(RPC_SENDRAWTRANSACTION)
+  // #if !defined(RPC_ONLY) || defined(RPC_SENDRAWTRANSACTION)
 
-    if (VERIFY_RPC("sendrawtransaction")) {
-      REQUIRE_EXPERIMENTAL(vc->req, "btc")
-      // Get raw transaction
-      // verify if transaction is well-formed before sending
-      // send transaction to in3 server
-      // return success or error code
-    }
-  #endif
+  //   if (VERIFY_RPC("sendrawtransaction")) {
+  //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
+  //     // Get raw transaction
+  //     // verify if transaction is well-formed before sending
+  //     // send transaction to in3 server
+  //     // return success or error code
+  //   }
+  // #endif
   return IN3_EIGNORE;
 }
 
@@ -748,12 +748,12 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, sb_t* meta) {
   UNUSED_VAR(meta);
   btc_signer_pub_key_t signer;
-  btc_tx_ctx_t          tx_ctx;
+  btc_tx_ctx_t         tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
   tx_ctx.is_testnet = is_testnet;
 
   signer.signer_id = *signer_id;
-  signer.pub_key = *signer_pub_key;
+  signer.pub_key   = *signer_pub_key;
 
   if (!signer.signer_id.data || !signer.pub_key.data) return req_set_error(req, "ERROR: Required signer data is null or missing", IN3_EINVAL);
   if (!btc_public_key_is_valid((const bytes_t*) &signer.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
@@ -777,12 +777,6 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outpu
 
 // 010000000182d620e74130085e19ebef624c9dd8cdb83c977e7e2afdcd9bd07b58e73147cb030000006b483045022100f54a048c6363b41cdf1b17a6373592bc53d33459cc3fe433c837542def22d58c0220523b06aab20710aaede5726379d8e4e764b784e2e5c79a41cecab1d9330acaea012102f7b118d198b6a28f1caed033075b0b39e33f94fbccdb5770ffa1046b889f43a6fdffffff040000000000000000536a4c5058325b84b830609ecb0ca5075e319c058117c3f140af0498b45bb07306ef37eb1a0049856c26d424f7693d5d78e953f643f0e65e5f99097a06ffe27591d5a0dc26eab2000b21be002d000b073600fb2c9cce03000000000017a914d3abeb25887cace2f06abd69be15b8d11bb01af0879cce0300000000001976a914d1e25908aa135c3f00b59b9c5973aaa7edc6d8be88ac7da56c11000000001976a914065931c73bf56e6ddc0edea069f64bd061c8e0be88ac00000000
 in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst) {
-  //UNUSED_VAR(signer_id);
-
-  char tx_str[1024];
-  bytes_to_hex(raw_tx->data, raw_tx->len, tx_str);
-  in3_log_debug("%s\n", tx_str);
-  
   btc_tx_ctx_t tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
   TRY(btc_parse_tx_ctx(*raw_tx, &tx_ctx, signer_id, signer_pub_key));
@@ -820,16 +814,16 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // Get parameters
   d_token_t *signer, *outputs, *utxos;
-  bytes_t unsigned_tx = NULL_BYTES, signed_tx = NULL_BYTES, signer_id = NULL_BYTES, signer_pub_key = NULL_BYTES;
+  bytes_t    unsigned_tx = NULL_BYTES, signed_tx = NULL_BYTES, signer_id = NULL_BYTES, signer_pub_key = NULL_BYTES;
 
-  signer = d_get_at(params, 0);
-  signer_id = d_get_bytes(signer, key("signer_id"));
-  char* pub_key_str = d_get_string(signer, key("btc_pub_key"));
+  signer              = d_get_at(params, 0);
+  signer_id           = d_get_bytes(signer, key("signer_id"));
+  char* pub_key_str   = d_get_string(signer, key("btc_pub_key"));
   signer_pub_key.data = alloca(65);
-  signer_pub_key.len = hex_to_bytes(pub_key_str, -1, signer_pub_key.data, 65);
+  signer_pub_key.len  = hex_to_bytes(pub_key_str, -1, signer_pub_key.data, 65);
 
   outputs = d_get_at(params, 1);
-  utxos = d_get_at(params, 2);
+  utxos   = d_get_at(params, 2);
 
   btc_prepare_unsigned_tx(req, &unsigned_tx, outputs, utxos, &signer_id, &signer_pub_key, true, NULL);
   if (unsigned_tx.len == 0) return IN3_EINVAL;

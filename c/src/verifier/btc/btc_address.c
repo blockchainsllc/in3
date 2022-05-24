@@ -61,18 +61,18 @@ int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_addr
 }
 
 btc_stype_t btc_get_addr_type(const char* address, bool is_testnet) {
-  if ((!is_testnet && address[0] == '1') || 
+  if ((!is_testnet && address[0] == '1') ||
       (is_testnet && (address[0] == 'm' || address[0] == 'n'))) {
     return BTC_P2PKH;
   }
 
-  if ((!is_testnet && address[0] == '3') || 
-       (is_testnet && address[0] == '2')) {
+  if ((!is_testnet && address[0] == '3') ||
+      (is_testnet && address[0] == '2')) {
     return BTC_P2SH;
   }
 
-  if ((!is_testnet && (address[0] == 'b' && address[1] == 'c' && address[2] == '1' && address[3] == 'q')) || 
-     (is_testnet && (address[0] == 't' && address[1] == 'b' && address[2] == '1' && address[3] == 'q'))) {
+  if ((!is_testnet && (address[0] == 'b' && address[1] == 'c' && address[2] == '1' && address[3] == 'q')) ||
+      (is_testnet && (address[0] == 't' && address[1] == 'b' && address[2] == '1' && address[3] == 'q'))) {
     size_t addr_len = strlen(address);
     if (addr_len == 42) return BTC_V0_P2WPKH;
     if (addr_len == 62) return BTC_P2WSH;

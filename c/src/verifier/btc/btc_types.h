@@ -78,16 +78,16 @@ typedef struct btc_tx_out {
 } btc_tx_out_t;
 
 typedef struct btc_utxo {
-  uint8_t*               tx_hash;        // Hash of previous transaction
-  uint32_t               tx_index;       // Putput index inside previous transaction
-  btc_tx_out_t           tx_out;         // Previous output which the utxo represents
-  btc_script_t           raw_script;     // Unhashed script used to redeem P2SH or P2WSH utxos
-  uint32_t               req_sigs;       // Number of signatures we need to provide in order to unlock the utxo
-  bytes_t*               signatures;     // Array of signatures used to redeem the utxo
-  uint32_t               sig_count;      // Number of signatures we currently have in our array
+  uint8_t*              tx_hash;       // Hash of previous transaction
+  uint32_t              tx_index;      // Putput index inside previous transaction
+  btc_tx_out_t          tx_out;        // Previous output which the utxo represents
+  btc_script_t          raw_script;    // Unhashed script used to redeem P2SH or P2WSH utxos
+  uint32_t              req_sigs;      // Number of signatures we need to provide in order to unlock the utxo
+  bytes_t*              signatures;    // Array of signatures used to redeem the utxo
+  uint32_t              sig_count;     // Number of signatures we currently have in our array
   btc_signer_pub_key_t* signers;       // Array of signer_ids used to sign BTC transactions
-  uint32_t               signers_count; // Number of signer_ids we currently have in our array
-  uint32_t               sequence;       // Desired sequence number when utxo is converted to a transaction input
+  uint32_t              signers_count; // Number of signer_ids we currently have in our array
+  uint32_t              sequence;      // Desired sequence number when utxo is converted to a transaction input
 } btc_utxo_t;
 
 // Bitcoin transaction context

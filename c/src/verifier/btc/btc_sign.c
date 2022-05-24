@@ -120,7 +120,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
   if (!tx_in) {
     return req_set_error(req, "ERROR: in build_unlocking_script: tx_in missing.", IN3_EINVAL);
   }
-  
+
   if (utxo->tx_out.script.type == BTC_P2SH || utxo->tx_out.script.type == BTC_P2WSH) {
     if (utxo->raw_script.data.len == 0) {
       return req_set_error(req, "ERROR: in build_unlocking_script: trying to redeem a P2SH or P2WSH utxo without providing a valid script.", IN3_EINVAL);
@@ -154,12 +154,12 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       // Unlocking script format is: DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
       uint8_t *buf, *old;
       uint32_t script_len     = 1 + signatures[0]->len + 1 + 64; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
-      old = tx_in->script.data.data;
-      buf = _malloc(script_len);
-      tx_in->script.data.data = buf;//tx_in->script.data.data ? _realloc(tx_in->script.data.data, script_len, tx_in->script.data.len) : _malloc(script_len);
+      old                     = tx_in->script.data.data;
+      buf                     = _malloc(script_len);
+      tx_in->script.data.data = buf; // tx_in->script.data.data ? _realloc(tx_in->script.data.data, script_len, tx_in->script.data.len) : _malloc(script_len);
       if (old) _free(old);
-      tx_in->script.data.len  = script_len;
-      
+      tx_in->script.data.len = script_len;
+
       bytes_t* b     = &tx_in->script.data;
       uint32_t index = 0;
 
@@ -276,15 +276,15 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // Generate an unsigned transaction. This will be used to generate the hash provided to
   // the ecdsa signing algorithm
 
-  const btc_tx_t*   tx              = &tx_ctx->tx;
+  const btc_tx_t*   tx        = &tx_ctx->tx;
   const bytes_t*    signer_id = &tx_ctx->utxos[utxo_index].signers[signer_index].signer_id;
-  const btc_utxo_t* utxos           = tx_ctx->utxos;
+  const btc_utxo_t* utxos     = tx_ctx->utxos;
 
   // Create a temporary unsigned transaction with "empty" input data, which will
   // be used to create our signature
   btc_tx_ctx_t tmp_tx;
   btc_init_tx_ctx(&tmp_tx);
-  tmp_tx.utxos = tx_ctx->utxos;
+  tmp_tx.utxos           = tx_ctx->utxos;
   tmp_tx.tx.flag         = tx->flag;
   tmp_tx.tx.version      = tx->version;
   tmp_tx.tx.output_count = tx->output_count;
@@ -301,10 +301,10 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
       tmp_tx_in = *tx_in;
     }
     else {
-      tmp_tx_in.prev_tx_hash     = utxos[i].tx_hash;
-      tmp_tx_in.prev_tx_index    = utxos[i].tx_index;
-      tmp_tx_in.sequence         = utxos[i].sequence;
-      tmp_tx_in.script.data = NULL_BYTES;
+      tmp_tx_in.prev_tx_hash  = utxos[i].tx_hash;
+      tmp_tx_in.prev_tx_index = utxos[i].tx_index;
+      tmp_tx_in.sequence      = utxos[i].sequence;
+      tmp_tx_in.script.data   = NULL_BYTES;
     }
     btc_add_input_to_tx(req, &tmp_tx, &tmp_tx_in);
   }
@@ -312,7 +312,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // prepare array for hashing
   bytes_t hash_message = NULL_BYTES;
   TRY(build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_index, sighash))
-   // Finally, sign transaction input
+  // Finally, sign transaction input
   // -- Obtain DER signature
   bytes_t sig = NULL_BYTES;
   int     l;
@@ -324,7 +324,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // signature is complete
   _free(hash_message.data);
   _free(tmp_tx.inputs);
-  //btc_free_tx_ctx(&tmp_tx);
+  // btc_free_tx_ctx(&tmp_tx);
   return IN3_OK;
 }
 
@@ -342,9 +342,9 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
   if (tx_ctx->inputs || tx_ctx->input_count) return req_set_error(req, "ERROR: in btc_sign_tx: transaction should not already contain input data.", IN3_EINVAL);
 
   // Cleanup old inputs from transaction
-  tx_ctx->tx.input = NULL_BYTES;
+  tx_ctx->tx.input       = NULL_BYTES;
   tx_ctx->tx.input_count = 0;
-  
+
   // for each selected utxo in a tx:
   for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
     // if script type is unknown, try to identify it
