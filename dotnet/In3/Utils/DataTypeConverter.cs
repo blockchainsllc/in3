@@ -62,18 +62,26 @@ namespace In3.Utils
 
         internal static string AddHexPrefixer(string integerString)
         {
+            if (integerString == null) return null;
             if (integerString.StartsWith("0x") || integerString.StartsWith("-0x")) return integerString;
             return BigIntToPrefixedHex(BigInteger.Parse(integerString));
+        }
+
+        internal static string TrimZeroPrefix(string prefixedString)
+        {
+            if (prefixedString != null && prefixedString.StartsWith("0x")) return prefixedString.Substring(2);
+            return prefixedString;
         }
 
         internal static byte[] HexStringToByteArray(string hexString)
         {
             if (String.IsNullOrEmpty(hexString)) return new byte[] { };
 
-            byte[] a = new byte[hexString.Length / 2];
-            for (int i = 0, h = 0; h < hexString.Length; i++, h += 2)
+            string finalHex = (hexString.StartsWith("0x")) ? hexString.Substring(2, hexString.Length - 2) : hexString;
+            byte[] a = new byte[finalHex.Length / 2];
+            for (int i = 0, h = 0; h < finalHex.Length; i++, h += 2)
             {
-                a[i] = (byte)Int32.Parse(hexString.Substring(h, 2), System.Globalization.NumberStyles.HexNumber);
+                a[i] = (byte)Int32.Parse(finalHex.Substring(h, 2), System.Globalization.NumberStyles.HexNumber);
             }
 
             return a;

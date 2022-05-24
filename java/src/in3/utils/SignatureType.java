@@ -4,9 +4,9 @@ package in3.utils;
  * Constants for the type of Signature
  */
 public enum SignatureType {
-  eth_sign(2),
+  ethSign(2),
   /**
-   * < add Ethereum Signed Message-Proefix, hash and sign the data
+   * < add Ethereum Signed Message-Prefix, hash and sign the data
    */
   raw(0),
   /**

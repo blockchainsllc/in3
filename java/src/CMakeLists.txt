@@ -85,6 +85,7 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/zksync/TxFee.java
     in3/zksync/Tx.java
     in3/utils/Account.java
+    in3/utils/CurveType.java
     in3/utils/Crypto.java
     in3/utils/JSON.java
     in3/utils/Converter.java

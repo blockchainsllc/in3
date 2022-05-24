@@ -17,6 +17,8 @@ namespace In3.Native
         }
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] public static extern void _free_(IntPtr ptr);
+
         [DllImport("libin3", CharSet = CharSet.Ansi)] public static extern int hex_to_bytes(string buf, int len, IntPtr dst, int outbuf_size);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] public static extern IntPtr hex_to_new_bytes(string buf, int len);
     }
 }

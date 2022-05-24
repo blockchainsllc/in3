@@ -173,7 +173,7 @@ bytes_t* hex_to_new_bytes(const char* buf, int len) {
   bytes_t* bytes = _malloc(sizeof(bytes_t));
   bytes->len     = (len + 1) / 2;
   bytes->data    = _malloc(bytes->len);
-  hex_to_bytes(buf, len, bytes->data, bytes->len);
+  bytes->len     = hex_to_bytes(buf, len, bytes->data, bytes->len);
   return bytes;
 }
 

@@ -1,6 +1,7 @@
 package in3.eth1;
 
 import in3.eth1.SimpleWallet;
+import in3.utils.CurveType;
 import in3.utils.PayloadType;
 import in3.utils.SignatureType;
 import org.junit.jupiter.api.Assertions;
@@ -23,7 +24,7 @@ public class SimpleWalletTest {
 
     Assertions.assertEquals(signerId, "0x082977959d0C5A1bA627720ac753Ec2ADB5Bd7d0".toLowerCase());
     Assertions.assertArrayEquals(wallet.sign("1e194c68360307cfb715bf17878791ad1ced8da7d2e5f42b691074c577f41eac",
-                                             signerId, SignatureType.eth_sign, PayloadType.PL_SIGN_ETHTX, null),
+                                             signerId, SignatureType.ethSign, PayloadType.ethTx, CurveType.ecdsa, null),
                                  expectedSignature);
   }
 }

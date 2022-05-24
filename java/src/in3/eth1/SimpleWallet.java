@@ -94,7 +94,7 @@ public class SimpleWallet extends Signer {
   /**
    * signing of the raw data.
    */
-  public byte[] sign(String data, String address, SignatureType signatureType, PayloadType j, JSON payload) {
+  public byte[] sign(String data, String address, SignatureType signatureType, PayloadType j, CurveType curveCurveType, JSON payload) {
     String key = privateKeys.get(address.toLowerCase());
     return signData(key, data, signatureType);
   }
