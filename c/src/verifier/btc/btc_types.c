@@ -248,7 +248,7 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
 }
 
 // Parse a raw transaction and prepare it for signing
-in3_ret_t btc_parse_tx_ctx(bytes_t raw_tx, btc_tx_ctx_t* dst, address_t signer_id, bytes_t* signer_pub_key) {
+in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_id, bytes_t* signer_pub_key) {
   if (!dst) return IN3_EINVAL;
   btc_init_tx_ctx(dst);
 
@@ -278,14 +278,6 @@ in3_ret_t btc_parse_tx_ctx(bytes_t raw_tx, btc_tx_ctx_t* dst, address_t signer_i
     add_signer_pub_key_to_utxo(&dst->utxos[i], &signer);
     if (!start || start > end) return IN3_EINVAL;
   }
-  // dst->input_count = dst->tx.input_count;
-  // dst->inputs      = _calloc(dst->input_count, sizeof(btc_tx_in_t));
-  // start            = dst->tx.input.data;
-  // end              = dst->tx.input.data + dst->tx.input.len;
-  // for (i = 0; i < dst->tx.input_count; i++) {
-  //   start = btc_parse_tx_in(start, &dst->inputs[i], end);
-  //   if (!start || start > end) return IN3_EINVAL;
-  // }
 
   // Fill outputs
   dst->output_count = dst->tx.output_count;
@@ -429,7 +421,7 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t** pu
 // WARNING: You should free dst.encoded after calling this function
 // WARNING: P2WPKH and P2WSH scripts still not supported
 // Returns BTC_UNKNOWN when something goes wrong
-btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst, bool is_testnet) {
+btc_stype_t extract_address_from_output(btc_address_t* dst, btc_tx_out_t* tx_out, bool is_testnet) {
   if (!tx_out || !dst) return BTC_UNKNOWN;
   btc_stype_t script_type = (tx_out->script.type == BTC_UNKNOWN) ? btc_get_script_type(&tx_out->script.data) : tx_out->script.type;
 

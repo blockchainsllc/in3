@@ -5,8 +5,8 @@
 #include "btc_types.h"
 #include <string.h>
 
-static const char* btc_mainnet_hrp = "bc";
-static const char* btc_testnet_hrp = "tb";
+static const char* BTC_MAINNET_HRP = "bc";
+static const char* BTC_TESTNET_HRP = "tb";
 
 // Converts a OP_N operation to an N integer.
 // example1: op_n_to_n(OP_0) => 0
@@ -82,7 +82,6 @@ btc_stype_t btc_get_addr_type(const char* address, bool is_testnet) {
 }
 
 int btc_decode_address(bytes_t* dst, const char* src, bool is_testnet) {
-  UNUSED_VAR(dst);
   btc_stype_t addr_type = btc_get_addr_type(src, is_testnet);
   switch (addr_type) {
     case BTC_P2PKH:
@@ -91,7 +90,7 @@ int btc_decode_address(bytes_t* dst, const char* src, bool is_testnet) {
     case BTC_V0_P2WPKH:
     case BTC_P2WSH: {
       int         ver;
-      const char* hrp = is_testnet ? btc_testnet_hrp : btc_mainnet_hrp;
+      const char* hrp = is_testnet ? BTC_TESTNET_HRP : BTC_MAINNET_HRP;
       int         ret = segwit_addr_decode(&ver, dst->data, (size_t*) &dst->len, hrp, src);
       return (ret - 1);
     }
@@ -103,7 +102,7 @@ int btc_decode_address(bytes_t* dst, const char* src, bool is_testnet) {
 int btc_segwit_addr_from_pub_key_hash(ripemd160_t pub_key_hash, btc_address_t* dst, bool is_testnet) {
   if (!dst) return -1;
   memzero(dst->as_bytes.data, dst->as_bytes.len);
-  const char* hrp = is_testnet ? btc_testnet_hrp : btc_mainnet_hrp;
+  const char* hrp = is_testnet ? BTC_TESTNET_HRP : BTC_MAINNET_HRP;
   return segwit_addr_encode(dst->encoded, hrp, 0, pub_key_hash, 20);
 }
 
@@ -122,7 +121,7 @@ int btc_segwit_addr_from_witness_program(bytes_t witness_program, btc_address_t*
   uint8_t     witver    = op_n_to_n(witness_program.data[0]);
   uint8_t*    hash_data = witness_program.data + 2; // witness programs have format: VERSION(1) | HASH_LEN(1) | HASH(20 or 32 bytes)
   uint8_t     hash_len  = witness_program.data[1];  // the script len is encoed on the scod byte of a witness script
-  const char* hrp       = is_testnet ? btc_testnet_hrp : btc_mainnet_hrp;
+  const char* hrp       = is_testnet ? BTC_TESTNET_HRP : BTC_MAINNET_HRP;
   int         ret       = segwit_addr_encode(dst->encoded, hrp, witver, hash_data, hash_len);
   memzero(dst->as_bytes.data, dst->as_bytes.len);
   return ret;

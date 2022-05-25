@@ -117,7 +117,7 @@ bytes_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, 
 bool    pub_key_is_valid(const bytes_t* pub_key);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
-in3_ret_t btc_parse_tx_ctx(bytes_t raw_tx, btc_tx_ctx_t* dst, address_t signer_id, bytes_t* signer_pub_key);
+in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_id, bytes_t* signer_pub_key);
 uint32_t  btc_get_raw_tx_size(const btc_tx_t* tx);
 in3_ret_t btc_serialize_tx(in3_req_t* req, const btc_tx_t* tx, bytes_t* dst);
 in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst);
@@ -136,7 +136,7 @@ uint32_t btc_weight(btc_tx_t* tx);
  * parsed address can be founs on 'dst' after function execution
  * returns the type of scriptPubKey the adress was extracted from
  */
-btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst, bool is_testnet);
+btc_stype_t extract_address_from_output(btc_address_t* dst, btc_tx_out_t* tx_out, bool is_testnet);
 
 /*
  * Parses a p2ms script to extract a list of defined public keys
