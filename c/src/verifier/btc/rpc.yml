@@ -499,6 +499,7 @@ btc:
         example:
           maxDAP: 30
           maxDiff: 5
+          testnet: false
 
         type:
           maxDAP:
@@ -513,6 +514,13 @@ btc:
             type: int
             example: 5
             default: 10
+            optional: true
+          
+          testnet:
+            descr: If this flag is set to true, all address prefixes and scripts will be set to testnet mode.
+            type: bool
+            example: true
+            default: false
             optional: true
 
   getblockheader:
@@ -873,11 +881,6 @@ btc:
           p2wpkh: p2wpkh
           p2sh: p2sh
           p2wsh: p2wsh
-      testnet:
-        descr: |
-          If true, returned address will be in testnet format
-        type: bool
-        optional: true
     result:
       descr: The encoded btc address
       type: string
@@ -896,10 +899,6 @@ btc:
       blockhash:
         descr: The block in which to look for the transaction
         type: bytes32
-        optional: true
-      testnet:
-        descr: If true, function will assume testnet prefixes
-        type: bool
         optional: true
     result:
       descr: The addresses and/or public keys extracted fom transaction outputs

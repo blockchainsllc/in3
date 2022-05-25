@@ -26,6 +26,7 @@ typedef struct btc_target_conf {
   uint_fast16_t max_diff;
   uint_fast16_t dap_limit;
   chain_id_t    chain_id;
+  bool          is_testnet;
 } btc_target_conf_t;
 
 /**

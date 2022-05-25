@@ -3,7 +3,6 @@
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
 #include "../../core/util/debug.h"
-#include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
@@ -551,14 +550,11 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
 }
 
 in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  UNUSED_VAR(conf);
-
   sb_t  sb = {0};
   char *seed, *type;
-  bool  is_testnet;
+  bool  is_testnet = conf->is_testnet;
   TRY_PARAM_GET_REQUIRED_STRING(seed, ctx, 0);
   TRY_PARAM_GET_REQUIRED_STRING(type, ctx, 1);
-  TRY_PARAM_GET_BOOL(is_testnet, ctx, 2, false);
 
   btc_stype_t addr_type = btc_string_to_script_type(type);
 
@@ -634,15 +630,13 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
 }
 
 in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  UNUSED_VAR(conf);
   bytes_t    transaction;
   d_token_t* result = NULL;
   char*      txid;
   char*      blockhash;
-  bool       is_testnet;
+  bool       is_testnet = conf->is_testnet;
   TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
   TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
-  TRY_PARAM_GET_BOOL(is_testnet, ctx, 2, false);
 
   size_t tx_len = strlen(txid);
   if (tx_len < BTC_TX_HASH_SIZE_BYTES * 2) {
@@ -786,7 +780,6 @@ in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, 
 }
 
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
-  UNUSED_VAR(conf);
   // This is the RPC that abstracts most of what is done in the background before sending a transaction:
   in3_req_t* sub = req_find_required(ctx->req, "sendrawtransaction", NULL);
   if (sub) { // do we have a result?
@@ -826,7 +819,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   outputs = d_get_at(params, 1);
   utxos   = d_get_at(params, 2);
 
-  btc_prepare_unsigned_tx(req, &unsigned_tx, outputs, utxos, &signer_id, &signer_pub_key, true, NULL);
+  btc_prepare_unsigned_tx(req, &unsigned_tx, outputs, utxos, &signer_id, &signer_pub_key, conf->is_testnet, NULL);
   if (unsigned_tx.len == 0) return IN3_EINVAL;
 
   btc_sign_raw_tx(req, &unsigned_tx, signer_id.data, &signer_pub_key, &signed_tx);
@@ -885,6 +878,8 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
     }
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* cctx = pctx;
+      if (d_is_key(cctx->token, CONFIG_KEY("testnet")))
+        conf->is_testnet = d_int(cctx->token);
       if (d_is_key(cctx->token, CONFIG_KEY("maxDAP")))
         conf->max_daps = d_int(cctx->token);
       else if (d_is_key(cctx->token, CONFIG_KEY("maxDiff")))
