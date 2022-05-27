@@ -140,7 +140,15 @@ static bool set_recorder(in3_t* c, char* value, int argc, char** argv, bool writ
   return true;
 }
 static bool set_pk(in3_t* c, char* value, int argc, char** argv, d_curve_type_t type) {
-  if (value[0] != '0' || value[1] != 'x') {
+  if (strchr(value, ' ')) {
+    char* seedphrase = value;
+    char* passwd     = get_argument(argc, argv, "-pwd", "--password", true);
+    char* path       = get_argument(argc, argv, "-path", "--path", true);
+    char* err        = eth_set_pk_signer_from_string(c, seedphrase, path, passwd);
+    if (err) die(err);
+    return true;
+  }
+  else if (value[0] != '0' || value[1] != 'x') {
     read_pk(value, get_argument(argc, argv, "-pwd", "--password", true), c, NULL, type);
     return true;
   }
@@ -248,12 +256,8 @@ void init_env(in3_t* c, int argc, char* argv[]) {
 
   // PK
   if (getenv("IN3_PK") && !get_argument(argc, argv, "-pk", "--pk", true)) {
-    char*     pks = _strdupn(getenv("IN3_PK"), -1);
-    bytes32_t pk;
-    for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) {
-      hex_to_bytes(cc, -1, pk, 32);
-      eth_set_pk_signer(c, pk, SIGN_CURVE_ECDSA, NULL);
-    }
+    char* pks = _strdupn(getenv("IN3_PK"), -1);
+    for (char* cc = strtok(pks, ","); cc; cc = strtok(NULL, ",")) eth_set_pk_signer_from_string(c, cc, NULL, NULL);
   }
   // PK
   if (getenv("IN3_PK_ED25519") && !get_argument(argc, argv, "-pk_ed25519", "--pk_ed25519", true)) {

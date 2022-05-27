@@ -67,6 +67,12 @@ in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk);
  */
 void eth_set_pk_signer_hex(in3_t* in3, char* key);
 
+/**
+ * if the key are hex-data the key is taken as raw private key.
+ * if the key is a seedphrase (bip39) the path will be used to derrive the key. (path could also contain comma seperated list of paths to derrive multiple keys)
+ */
+char* eth_set_pk_signer_from_string(in3_t* in3, char* key, char* path, char* passphrase);
+
 /** Signs message after hashing it with hasher function given in 'hasher_t', with the given private key*/
 in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, d_digest_type_t hasher, uint8_t* dst);
 

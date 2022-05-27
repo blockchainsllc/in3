@@ -59,6 +59,7 @@ function compile(ctx) {
         input.sources[file].content = lines.join('\n')
     })
     let res = undefined
+    fs.writeFileSync(cache + '/' + ctx.api_name + '_input.json', JSON.stringify(input, null, 2), 'utf8')
     if (!cachedTime || Object.keys(input.sources).reduce((p, v) => Math.max(p, fs.lstatSync(v).mtime.getTime()), 0) > cachedTime.getTime()) {
         console.error(":: compiling ... ", ctx.files.join())
         res = JSON.parse(solc.compile(JSON.stringify(input)))
@@ -239,7 +240,7 @@ function impl_solidity(fn, state, includes) {
     const to_arg = _ => ', ' + ((_.components && !_.type.endsWith(']')) ? _.name + '.json' : _.name)
     const abi_include = '#include "../../in3/c/src/api/eth1/abi.h"'
     const wallet_include = '#include "../wallet/wallet.h"'
-    const l1_include = '#include "../l1_wallet/l1_wallet.h"'
+    const l1_include = '#include "../eth_wallet/eth_wallet.h"'
     if (includes.indexOf(abi_include) < 0) includes.push(abi_include)
     if (includes.indexOf(wallet_include) < 0) includes.push(wallet_include)
     if (includes.indexOf(l1_include) < 0) includes.push(l1_include)
@@ -263,10 +264,10 @@ function impl_solidity(fn, state, includes) {
             res.push('_free(arg_data.data);')
             res.push('')
             res.push('if (ctx->req->error) return ctx->req->verification_state;')
-            res.push('TRY_FINAL(l1_exec(ctx, &arg, NULL), _free(arg.data.data));')
+            res.push('TRY_FINAL(eth_exec(ctx, &arg, NULL), _free(arg.data.data));')
             res.push('return IN3_OK;')
         } else
-            res.push('return l1_exec(ctx, &arg, NULL);')
+            res.push('return eth_exec(ctx, &arg, NULL);')
     }
     else {
         res.push('TRY(wallet_check(ctx->req, &wallet, WT_ETH))')
@@ -279,7 +280,7 @@ function impl_solidity(fn, state, includes) {
         res.push('arg.target_level = wallet_get_exec_level(exec, EXL_RECEIPT);')
         res.push('')
         res.push('if (ctx->req->error) return ctx->req->verification_state;')
-        res.push('TRY_FINAL(l1_exec(ctx, &arg, NULL), _free(arg.data.data));')
+        res.push('TRY_FINAL(eth_exec(ctx, &arg, NULL), _free(arg.data.data));')
         res.push('return IN3_OK;')
     }
 
