@@ -59,6 +59,7 @@ function compile(ctx) {
         input.sources[file].content = lines.join('\n')
     })
     let res = undefined
+    fs.writeFileSync(cache + '/' + ctx.api_name + '_input.json', JSON.stringify(input, null, 2), 'utf8')
     if (!cachedTime || Object.keys(input.sources).reduce((p, v) => Math.max(p, fs.lstatSync(v).mtime.getTime()), 0) > cachedTime.getTime()) {
         console.error(":: compiling ... ", ctx.files.join())
         res = JSON.parse(solc.compile(JSON.stringify(input)))

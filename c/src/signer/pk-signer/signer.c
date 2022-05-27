@@ -452,10 +452,40 @@ in3_ret_t eth_register_pk_signer(in3_t* in3) {
 }
 
 /** sets the signer and a pk to the client*/
-void eth_set_pk_signer_hex(in3_t* in3, char* key) {
-  if (key[0] == '0' && key[1] == 'x') key += 2;
-  if (strlen(key) != 64) return;
+char* eth_set_pk_signer_from_string(in3_t* in3, char* key, char* path, char* passphrase) {
   bytes32_t key_bytes;
-  hex_to_bytes(key, 64, key_bytes, 32);
+  if (strchr(key, ' ')) { //  it is a seedphrase
+    uint8_t seed[64];
+    if (mnemonic_verify(key)) return "invalid seedphrase";
+    mnemonic_to_seed(key, passphrase, seed, NULL);
+    if (!path) path = "m/44'/60'/0'/0/0";
+
+    int path_len = strlen(path);
+    int l        = 1;
+    for (int i = 0; i < path_len; i++) {
+      if (path[i] == ' ' || path[i] == ',') l++;
+    }
+
+    uint8_t*  pks = _malloc(l * 32);
+    in3_ret_t r   = bip32(bytes(seed, 64), ECDSA_SECP256K1, path, pks);
+    memzero(seed, 64);
+    if (r == IN3_OK) {
+      for (int i = 0; i < l; i++) eth_set_pk_signer(in3, pks + i * 32, SIGN_CURVE_ECDSA, NULL);
+      memzero(pks, l * 32);
+    }
+    _free(pks);
+    return r ? in3_errmsg(r) : NULL;
+  }
+  else {
+    if (key[0] == '0' && key[1] == 'x') key += 2;
+    if (strlen(key) != 64) return "invalid keylength";
+    hex_to_bytes(key, 64, key_bytes, 32);
+  }
+
   eth_set_pk_signer(in3, key_bytes, SIGN_CURVE_ECDSA, NULL);
+  return NULL;
+}
+
+void eth_set_pk_signer_hex(in3_t* in3, char* key) {
+  eth_set_pk_signer_from_string(in3, key, NULL, NULL);
 }
