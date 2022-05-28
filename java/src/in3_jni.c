@@ -580,8 +580,8 @@ jobject get_signer(in3_req_t* ctx) {
 // This assumes a getEnum method which is not natural to every Enum, this will only work with custom ones.
 jobject get_enum(const char* qualified_class_name, const char* getter_name, int value) {
   jclass    cls = (*jni)->FindClass(jni, qualified_class_name);
-  jmethodID mid = (*jni)->GetStaticMethodID(jni, cls, "getEnum", getter_name);
-  return (jobject) (*jni)->CallStaticObjectMethod(jni, cls, mid, value);
+  jmethodID mid = cls ? (*jni)->GetStaticMethodID(jni, cls, "getEnum", getter_name) : NULL;
+  return mid ? ((jobject) (*jni)->CallStaticObjectMethod(jni, cls, mid, value)) : NULL;
 }
 
 // in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
