@@ -1,6 +1,7 @@
 #include "btc_types.h"
 #include "../../core/client/request.h"
 #include "../../core/client/request_internal.h"
+#include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "btc_script.h"
@@ -46,6 +47,7 @@ void btc_init_tx_out(btc_tx_out_t* tx_out) {
 void btc_init_utxo(btc_utxo_t* utxo) {
   if (utxo) {
     memset(utxo, 0, sizeof(btc_utxo_t));
+    utxo->req_sigs = 1;
     utxo->sequence = DEFAULT_TXIN_SEQUENCE_NUMBER;
   }
 }
@@ -84,12 +86,12 @@ void btc_free_utxo(btc_utxo_t* utxo) {
       _free(utxo->signatures);
     }
 
-    if (utxo->accounts) {
-      for (uint32_t i = 0; i < utxo->accounts_count; i++) {
-        _free(utxo->accounts[i].pub_key.data);
-        _free(utxo->accounts[i].account.data);
+    if (utxo->signers) {
+      for (uint32_t i = 0; i < utxo->signers_count; i++) {
+        _free(utxo->signers[i].pub_key.data);
+        _free(utxo->signers[i].signer_id.data);
       }
-      _free(utxo->accounts);
+      _free(utxo->signers);
     }
   }
 }
@@ -133,7 +135,7 @@ uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
 // TODO: Implement support for "Coinbase" inputs
 // TODO: Handle null arguments
 // TODO: Handle max script len = 10000 bytes
-in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) {
+in3_ret_t btc_serialize_tx_in(in3_req_t* req, const btc_tx_in_t* tx_in, bytes_t* dst) {
   if (!tx_in || !dst) return req_set_error(req, "ERROR: in btc_serialize_tx_in: Arguments cannot be null", IN3_EINVAL);
   if (!tx_in->prev_tx_hash) return req_set_error(req, "ERROR: in btc_serialize_tx_in: missing previous transaction hash", IN3_ERPC);
 
@@ -157,6 +159,7 @@ in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst) 
   long_to_compact_uint(dst, index, tx_in->script.data.len);
   index += get_compact_uint_size(tx_in->script.data.len);
   memcpy(dst->data + index, tx_in->script.data.data, tx_in->script.data.len);
+  index += tx_in->script.data.len;
 
   // -- sequence
   uint_to_le(dst, index, tx_in->sequence);
@@ -202,6 +205,14 @@ in3_ret_t btc_serialize_tx_out(in3_req_t* req, btc_tx_out_t* tx_out, bytes_t* ds
   return IN3_OK;
 }
 
+static void add_signer_pub_key_to_utxo(btc_utxo_t* utxo, btc_signer_pub_key_t* sig_pk) {
+  size_t current_size                = utxo->signers_count * sizeof(btc_signer_pub_key_t);
+  size_t new_size                    = current_size + sizeof(btc_signer_pub_key_t);
+  utxo->signers                      = utxo->signers ? _realloc(utxo->signers, new_size, current_size) : _malloc(new_size);
+  utxo->signers[utxo->signers_count] = *sig_pk;
+  utxo->signers_count++;
+}
+
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   uint64_t     val;
   btc_tx_in_t  tx_in;
@@ -236,6 +247,51 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   return IN3_OK;
 }
 
+// Parse a raw transaction and prepare it for signing
+in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_id, bytes_t* signer_pub_key) {
+  if (!dst) return IN3_EINVAL;
+  btc_init_tx_ctx(dst);
+
+  uint32_t i;
+  uint8_t *start, *end;
+
+  btc_signer_pub_key_t signer;
+  signer.signer_id = bytes(signer_id, 20);
+  signer.pub_key   = *signer_pub_key;
+
+  // Fill tx
+  btc_parse_tx(raw_tx, &dst->tx);
+
+  // Fill utxos
+  dst->utxo_count = dst->tx.input_count;
+  dst->utxos      = _calloc(dst->utxo_count, sizeof(btc_utxo_t));
+  start           = dst->tx.input.data;
+  end             = dst->tx.input.data + dst->tx.input.len;
+  for (i = 0; i < dst->tx.input_count; i++) {
+    btc_tx_in_t temp;
+    start = btc_parse_tx_in(start, &temp, end);
+    btc_init_utxo(&dst->utxos[i]);
+    dst->utxos[i].tx_hash            = temp.prev_tx_hash;
+    dst->utxos[i].tx_index           = temp.prev_tx_index;
+    dst->utxos[i].tx_out.script      = temp.script;
+    dst->utxos[i].tx_out.script.type = btc_get_script_type(&dst->utxos[i].tx_out.script.data);
+    add_signer_pub_key_to_utxo(&dst->utxos[i], &signer);
+    if (!start || start > end) return IN3_EINVAL;
+  }
+
+  // Fill outputs
+  dst->output_count = dst->tx.output_count;
+  dst->outputs      = _calloc(dst->output_count, sizeof(btc_tx_out_t));
+  start             = dst->tx.output.data;
+  end               = dst->tx.output.data + dst->tx.output.len;
+  for (i = 0; i < dst->tx.input_count; i++) {
+    start = btc_parse_tx_out(start, &dst->outputs[i]);
+    if (!start || start > end) return IN3_EINVAL;
+  }
+
+  return IN3_OK;
+}
+
 uint32_t btc_get_raw_tx_size(const btc_tx_t* tx) {
   return (BTC_TX_VERSION_SIZE_BYTES +
           (2 * tx->flag) +
@@ -259,6 +315,7 @@ in3_ret_t btc_serialize_tx(in3_req_t* req, const btc_tx_t* tx, bytes_t* dst) {
 
   dst->data = dst->data ? _realloc(dst->data, tx_size, dst->len) : _malloc(tx_size);
   dst->len  = tx_size;
+  memzero(dst->data, dst->len);
 
   // Serialize transaction data
   uint32_t index = 0;
@@ -364,7 +421,7 @@ uint32_t extract_public_keys_from_multisig(bytes_t multisig_script, bytes_t** pu
 // WARNING: You should free dst.encoded after calling this function
 // WARNING: P2WPKH and P2WSH scripts still not supported
 // Returns BTC_UNKNOWN when something goes wrong
-btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst) {
+btc_stype_t extract_address_from_output(btc_address_t* dst, btc_tx_out_t* tx_out, bool is_testnet) {
   if (!tx_out || !dst) return BTC_UNKNOWN;
   btc_stype_t script_type = (tx_out->script.type == BTC_UNKNOWN) ? btc_get_script_type(&tx_out->script.data) : tx_out->script.type;
 
@@ -397,11 +454,11 @@ btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst
     case BTC_V0_P2WPKH: {
       ripemd160_t pkhash;
       memcpy(pkhash, tx_out->script.data.data + 2, BTC_HASH160_SIZE_BYTES);
-      btc_segwit_addr_from_pub_key_hash(pkhash, dst);
+      btc_segwit_addr_from_pub_key_hash(pkhash, dst, is_testnet);
       break;
     }
     case BTC_P2WSH:
-      btc_segwit_addr_from_witness_program(tx_out->script.data, dst);
+      btc_segwit_addr_from_witness_program(tx_out->script.data, dst, is_testnet);
       break;
     default:
       return BTC_UNSUPPORTED;
@@ -414,27 +471,41 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
     return req_set_error(req, "ERROR: in add_to_tx: Function arguments cannot be null!", IN3_EINVAL);
   }
 
-  bytes_t  raw_src = NULL_BYTES, *dst;
+  bytes_t  raw_src = NULL_BYTES, *dst = NULL;
   uint32_t old_len;
   bool     must_free = false;
 
+  // Add data structure to context
   switch (field_type) {
-    case BTC_INPUT:
-      TRY(btc_serialize_tx_in(req, (btc_tx_in_t*) src, &raw_src))
+    case BTC_INPUT: {
+      btc_tx_in_t* tx_in = (btc_tx_in_t*) src;
+      TRY(btc_serialize_tx_in(req, tx_in, &raw_src))
       old_len             = tx_ctx->tx.input.len;
       dst                 = &tx_ctx->tx.input;
       tx_ctx->input_count = tx_ctx->tx.input_count;
       tx_ctx->tx.input_count++;
       tx_ctx->inputs = tx_ctx->inputs ? _realloc(tx_ctx->inputs, tx_ctx->input_count * sizeof(btc_tx_in_t), (tx_ctx->input_count + 1) * sizeof(btc_tx_in_t)) : _malloc(sizeof(btc_tx_in_t));
+
+      // Input deep copy
+      tx_ctx->inputs[tx_ctx->input_count].prev_tx_index    = tx_in->prev_tx_index;
+      tx_ctx->inputs[tx_ctx->input_count].sequence         = tx_in->sequence;
+      tx_ctx->inputs[tx_ctx->input_count].script.type      = tx_in->script.type;
+      tx_ctx->inputs[tx_ctx->input_count].script.data.len  = tx_in->script.data.len;
+      tx_ctx->inputs[tx_ctx->input_count].script.data.data = _malloc(tx_in->script.data.len);
+      tx_ctx->inputs[tx_ctx->input_count].prev_tx_hash     = _malloc(BTC_TX_HASH_SIZE_BYTES);
+      memcpy(tx_ctx->inputs[tx_ctx->input_count].prev_tx_hash, tx_in->prev_tx_hash, BTC_TX_HASH_SIZE_BYTES);
+      memcpy(tx_ctx->inputs[tx_ctx->input_count].script.data.data, tx_in->script.data.data, tx_in->script.data.len);
+
       tx_ctx->input_count++;
       must_free = true;
-      break;
+    } break;
     case BTC_OUTPUT:
       TRY(btc_serialize_tx_out(req, (btc_tx_out_t*) src, &raw_src))
       old_len = tx_ctx->tx.output.len;
       dst     = &tx_ctx->tx.output;
       tx_ctx->tx.output_count++;
-      tx_ctx->outputs = tx_ctx->outputs ? _realloc(tx_ctx->outputs, tx_ctx->output_count * sizeof(btc_tx_out_t), (tx_ctx->output_count + 1) * sizeof(btc_tx_out_t)) : _malloc(sizeof(btc_tx_out_t));
+      tx_ctx->outputs                       = tx_ctx->outputs ? _realloc(tx_ctx->outputs, tx_ctx->output_count * sizeof(btc_tx_out_t), (tx_ctx->output_count + 1) * sizeof(btc_tx_out_t)) : _malloc(sizeof(btc_tx_out_t));
+      tx_ctx->outputs[tx_ctx->output_count] = *(btc_tx_out_t*) src;
       tx_ctx->output_count++;
       must_free = true;
       break;
@@ -448,6 +519,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
       return req_set_error(req, "ERROR: in add_to_tx: Unrecognized transaction field code.", IN3_EINVAL);
   }
 
+  // Write add serialized structure to transaction data
   dst->len += raw_src.len;
   if (raw_src.data) {
     dst->data = (dst->data) ? _realloc(dst->data, dst->len, old_len) : _malloc(dst->len);
@@ -456,7 +528,6 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
   else {
     dst->data = NULL;
   }
-
   if (must_free) {
     _free(raw_src.data);
   }
@@ -553,31 +624,41 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
   if (d_type(output_data) != T_ARRAY) return req_set_error(req, "ERROR: in btc_prepare_outputs: invalid output data format", IN3_EINVAL);
 
   uint32_t output_count = d_len(output_data);
+
   for (uint32_t i = 0; i < output_count; i++) {
-    btc_tx_out_t new_tx_out;
-    d_token_t*   output_item = d_get_at(output_data, i);
-    if (d_type(output_item) != T_OBJECT) return req_set_error(req, "ERROR: invalid output data format", IN3_EINVAL);
+    btc_tx_out_t tx_out;
+    btc_init_tx_out(&tx_out);
 
-    bytes_t  btc_addr = d_bytes(d_get(output_data, key("address")));
-    uint64_t value    = d_get_long(output_data, key("value"));
-    if (btc_addr.len != 20) return req_set_error(req, "ERROR: one or more outputs have invalid address", IN3_EINVAL);
-    if (value == 0) return req_set_error(req, "ERROR: output value cannot be zero", IN3_EINVAL);
+    // Extract output value
+    uint64_t value = d_get_long(d_get_at(output_data, i), key("value"));
+    if (!value) return req_set_error(req, "ERROR: in btc_prepare_outputs: output value cannot e zero", IN3_EINVAL);
 
-    new_tx_out.value       = value;
-    new_tx_out.script.data = btc_build_locking_script(&btc_addr, BTC_P2PKH, NULL, 0);
-    new_tx_out.script.type = btc_get_script_type(&new_tx_out.script.data);
+    // alloc memory for address conversion into hex format
+    uint8_t       addr_bytes[BTC_MAX_ADDR_SIZE_BYTES];
+    btc_address_t addr = btc_addr(bytes(addr_bytes, BTC_MAX_ADDR_SIZE_BYTES), d_get_string(d_get_at(output_data, i), key("address")));
 
-    TRY(btc_add_output_to_tx(req, tx_ctx, &new_tx_out))
+    // Verify address type
+    btc_stype_t addr_type = btc_get_addr_type(addr.encoded, tx_ctx->is_testnet);
+
+    if (!script_is_standard(addr_type)) {
+      return req_set_error(req, "ERROR: btc_prepare_transaction: provided address has unsupported type", IN3_ENOTSUP);
+    }
+
+    // serialize address
+    if (btc_decode_address(&addr.as_bytes, addr.encoded, tx_ctx->is_testnet) < 0) {
+      return req_set_error(req, "ERROR: btc_prepare_transaction: btc address could not be decoded. Invalid format", IN3_EINVAL);
+    }
+
+    // Fill transaction output
+    // TODO: Implement possibility of creating 'relative locktime' transactions
+    tx_out.value       = value;
+    tx_out.script.type = addr_type;
+    tx_out.script.data = btc_build_locking_script(&addr.as_bytes, addr_type, NULL, 0);
+
+    // Add output to transaction
+    TRY(btc_add_output_to_tx(req, tx_ctx, &tx_out));
   }
   return IN3_OK;
-}
-
-static void add_account_pub_key_to_utxo(btc_utxo_t* utxo, btc_account_pub_key_t* acc_pk) {
-  size_t current_size                  = utxo->accounts_count * sizeof(btc_account_pub_key_t);
-  size_t new_size                      = current_size + sizeof(btc_account_pub_key_t);
-  utxo->accounts                       = utxo->accounts ? _realloc(utxo->accounts, new_size, current_size) : _malloc(new_size);
-  utxo->accounts[utxo->accounts_count] = *acc_pk;
-  utxo->accounts_count++;
 }
 
 static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
@@ -633,13 +714,13 @@ static in3_ret_t handle_utxo_arg(btc_utxo_t* utxo, d_token_t* arg) {
 
     // include all provided accounts on our utxo
     for (uint32_t i = 0; i < accs_len; i++) {
-      btc_account_pub_key_t acc_pk;
-      acc_pk.account = d_bytes(d_get(accs, key("address")));
-      acc_pk.pub_key = d_bytes(d_get(accs, key("pub_key")));
+      btc_signer_pub_key_t acc_pk;
+      acc_pk.signer_id = d_bytes(d_get(accs, key("address")));
+      acc_pk.pub_key   = d_bytes(d_get(accs, key("pub_key")));
 
-      if (!acc_pk.account.data || !acc_pk.pub_key.data) return IN3_EINVAL;
+      if (!acc_pk.signer_id.data || !acc_pk.pub_key.data) return IN3_EINVAL;
 
-      add_account_pub_key_to_utxo(utxo, &acc_pk);
+      add_signer_pub_key_to_utxo(utxo, &acc_pk);
     }
   }
 
@@ -650,12 +731,19 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   if (!utxo || !utxo_input) return IN3_EINVAL;
   if (d_type(utxo_input) != T_OBJECT) return IN3_EINVAL;
 
-  bytes_t  tx_hash  = d_bytes(d_get(utxo_input, key("tx_hash")));
+  bytes_t tx_hash = bytes(_malloc(BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
+  hex_to_bytes(d_get_string(utxo_input, key("tx_hash")), tx_hash.len * 2, tx_hash.data, tx_hash.len);
   uint32_t tx_index = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
 
-  d_token_t* prevout_data   = d_get(utxo_input, key("tx_out"));
-  uint64_t   value          = d_get_long(d_get(prevout_data, key("value")), 0L);
-  bytes_t    locking_script = d_bytes(d_get(prevout_data, key("script")));
+  d_token_t* prevout_data = d_get(utxo_input, key("tx_out"));
+  uint64_t   value        = d_get_long(d_get(prevout_data, key("value")), 0L);
+
+  bytes_t  locking_script = NULL_BYTES;
+  char*    script_str     = d_get_string(prevout_data, key("script"));
+  uint8_t* script_bytes   = alloca(MAX_SCRIPT_SIZE_BYTES);
+  locking_script.len      = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
+  locking_script.data     = _malloc(locking_script.len);
+  memcpy(locking_script.data, script_bytes, locking_script.len);
 
   d_token_t* utxo_args = d_get(utxo_input, key("args"));
 
@@ -666,13 +754,13 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   utxo->tx_out.value       = value;
   utxo->tx_out.script.data = locking_script;
   utxo->tx_out.script.type = btc_get_script_type(&locking_script);
+  utxo->req_sigs           = is_p2ms(&locking_script) ? btc_get_multisig_req_sig_count(&locking_script) : 1;
   TRY_CATCH(handle_utxo_arg(utxo, utxo_args), btc_free_utxo(utxo))
 
   return IN3_OK;
 }
 
-// TODO: Currently we are adding all utxo_inputs to the list of selected_utxos. Implement an algorithm to select only the necessary utxos for the transaction, given the outputs.
-in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_account, d_token_t* utxo_inputs) {
+in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_signer_pub_key_t* default_signer, d_token_t* utxo_inputs) {
   if (!tx_ctx || !utxo_inputs) return req_set_error(req, "ERROR: in btc_prepare_utxos: transaction context cannot be null", IN3_EINVAL);
   if (d_type(utxo_inputs) != T_ARRAY) return req_set_error(req, "ERROR: in btc_prepare_utxos: invalid utxo data format", IN3_EINVAL);
 
@@ -681,16 +769,19 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pu
   tx_ctx->utxos       = _malloc(utxo_count * sizeof(btc_utxo_t));
 
   // Read and initialize each utxo we need for the transaction
-  // TODO: Only add the necessary utxos to transaction. Choose them based on set of outputs
   for (uint32_t i = 0; i < utxo_count; i++) {
     btc_utxo_t utxo;
-    d_token_t* utxo_input = d_get_at(utxo_inputs, i);
     btc_init_utxo(&utxo);
+
+    d_token_t* utxo_input = d_get_at(utxo_inputs, i);
     TRY_CATCH(btc_fill_utxo(&utxo, utxo_input), btc_free_utxo(&utxo));
+    if (!utxo.signers) add_signer_pub_key_to_utxo(&utxo, default_signer); // Guarantee every utxo will have at least 1 signer
+
     btc_stype_t script_type = utxo.tx_out.script.type;
     if (script_type == BTC_UNKNOWN || script_type == BTC_NON_STANDARD || script_type == BTC_UNSUPPORTED) {
       return req_set_error(req, "ERROR: in btc_prepare_utxos: utxo script type is non standard or unsupported", IN3_ENOTSUP);
     }
+
     // finally, add utxo to context
     tx_ctx->utxos[i] = utxo;
     tx_ctx->utxo_count++;
@@ -722,12 +813,33 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pu
       utxo->req_sigs = 1;
     }
 
-    // Guarantee every utxo has at least one account<->pub_key pair assigned to it
-    if (!utxo->accounts) {
-      add_account_pub_key_to_utxo(utxo, default_account);
-    }
+    // // Guarantee every utxo has at least one signer<->pub_key pair assigned to it
+    // if (!utxo->signers) {
+    //   add_signer_pub_key_to_utxo(utxo, default_signer);
+    // }
   }
 
+  return IN3_OK;
+}
+
+static void btc_utxo_to_input(btc_tx_in_t* dst, btc_utxo_t src) {
+  dst->prev_tx_hash  = src.tx_hash;
+  dst->prev_tx_index = src.tx_index;
+  dst->script.data   = src.tx_out.script.data;
+  dst->script.type   = btc_get_script_type(&src.tx_out.script.data);
+  dst->sequence      = src.sequence;
+}
+
+// parses the utxos included in transaction context into inputs
+in3_ret_t btc_prepare_inputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
+  if (tx_ctx->input_count == 0) { // If inputs are already set, we do nothing
+    for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+      btc_tx_in_t tx_in;
+      btc_init_tx_in(&tx_in);
+      btc_utxo_to_input(&tx_in, tx_ctx->utxos[i]);
+      TRY(btc_add_input_to_tx(req, tx_ctx, &tx_in));
+    }
+  }
   return IN3_OK;
 }
 

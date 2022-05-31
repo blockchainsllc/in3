@@ -48,10 +48,10 @@
 #define SEQUENCE_LOCKTIME_MASK 0x0000ffff
 
 // Ethereum account which stores our private key. Used by signer module
-typedef struct btc_account_pub_key {
+typedef struct btc_signer_pub_key {
+  bytes_t signer_id;
   bytes_t pub_key;
-  bytes_t account;
-} btc_account_pub_key_t;
+} btc_signer_pub_key_t;
 
 typedef struct btc_tx {
   bytes_t  all;     // This transaction, serialized
@@ -78,16 +78,16 @@ typedef struct btc_tx_out {
 } btc_tx_out_t;
 
 typedef struct btc_utxo {
-  uint8_t*               tx_hash;        // Hash of previous transaction
-  uint32_t               tx_index;       // Putput index inside previous transaction
-  btc_tx_out_t           tx_out;         // Previous output which the utxo represents
-  btc_script_t           raw_script;     // Unhashed script used to redeem P2SH or P2WSH utxos
-  uint32_t               req_sigs;       // Number of signatures we need to provide in order to unlock the utxo
-  bytes_t*               signatures;     // Array of signatures used to redeem the utxo
-  uint32_t               sig_count;      // Number of signatures we currently have in our array
-  btc_account_pub_key_t* accounts;       // Array of ETH accounts used by in3 to sign BTC transactions
-  uint32_t               accounts_count; // Number of accounts we currently have in our array
-  uint32_t               sequence;       // Desired sequence number when utxo is converted to a transaction input
+  uint8_t*              tx_hash;       // Hash of previous transaction
+  uint32_t              tx_index;      // Putput index inside previous transaction
+  btc_tx_out_t          tx_out;        // Previous output which the utxo represents
+  btc_script_t          raw_script;    // Unhashed script used to redeem P2SH or P2WSH utxos
+  uint32_t              req_sigs;      // Number of signatures we need to provide in order to unlock the utxo
+  bytes_t*              signatures;    // Array of signatures used to redeem the utxo
+  uint32_t              sig_count;     // Number of signatures we currently have in our array
+  btc_signer_pub_key_t* signers;       // Array of signer_ids used to sign BTC transactions
+  uint32_t              signers_count; // Number of signer_ids we currently have in our array
+  uint32_t              sequence;      // Desired sequence number when utxo is converted to a transaction input
 } btc_utxo_t;
 
 // Bitcoin transaction context
@@ -99,6 +99,7 @@ typedef struct btc_tx_ctx {
   uint32_t      input_count;
   btc_tx_out_t* outputs;
   uint32_t      output_count;
+  bool          is_testnet;
 } btc_tx_ctx_t;
 
 void btc_init_tx(btc_tx_t* tx);
@@ -116,12 +117,13 @@ bytes_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, 
 bool    pub_key_is_valid(const bytes_t* pub_key);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
+in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_id, bytes_t* signer_pub_key);
 uint32_t  btc_get_raw_tx_size(const btc_tx_t* tx);
 in3_ret_t btc_serialize_tx(in3_req_t* req, const btc_tx_t* tx, bytes_t* dst);
 in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst);
 
 uint8_t*  btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit);
-in3_ret_t btc_serialize_tx_in(in3_req_t* req, btc_tx_in_t* tx_in, bytes_t* dst);
+in3_ret_t btc_serialize_tx_in(in3_req_t* req, const btc_tx_in_t* tx_in, bytes_t* dst);
 
 uint8_t*  btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst);
 in3_ret_t btc_serialize_tx_out(in3_req_t* req, btc_tx_out_t* tx_out, bytes_t* dst);
@@ -134,7 +136,7 @@ uint32_t btc_weight(btc_tx_t* tx);
  * parsed address can be founs on 'dst' after function execution
  * returns the type of scriptPubKey the adress was extracted from
  */
-btc_stype_t extract_address_from_output(btc_tx_out_t* tx_out, btc_address_t* dst);
+btc_stype_t extract_address_from_output(btc_address_t* dst, btc_tx_out_t* tx_out, bool is_testnet);
 
 /*
  * Parses a p2ms script to extract a list of defined public keys
@@ -152,7 +154,8 @@ uint16_t btc_nsequence_get_relative_locktime_value(uint32_t nsequence);
 bool     btc_nsequence_is_relative_locktime(uint32_t nsequence);
 
 in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* output_data);
-in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_account_pub_key_t* default_account, d_token_t* utxo_inputs);
+in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_signer_pub_key_t* default_account, d_token_t* utxo_inputs);
+in3_ret_t btc_prepare_inputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx);
 in3_ret_t btc_set_segwit(btc_tx_ctx_t* tx_ctx);
 
 bool btc_public_key_is_valid(const bytes_t* public_key);
