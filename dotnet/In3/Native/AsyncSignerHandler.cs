@@ -33,11 +33,11 @@ namespace In3.Native
             Marshal.Copy(message.data, messageBytes, 0, message.len);
             string messageStr = DataTypeConverter.BytesToHexString(messageBytes, message.len);
 
-            uint digestType = in3_sign_ctx_get_digest_type(ctx);
-            uint payloadType = in3_sign_ctx_get_payload_type(ctx);
-            uint curveType = in3_sign_ctx_get_curve_type(ctx);
+            uint digestType = in3_sign_ctx_get_digest_type(signCtx);
+            uint payloadType = in3_sign_ctx_get_payload_type(signCtx);
+            uint curveType = in3_sign_ctx_get_curve_type(signCtx);
 
-            string signedData = await _wrapper.Client.Signer.Sign(messageStr, accountStr, (DigestType) digestType, (PayloadType) payloadType, (CurveType) curveType);
+            string signedData = await _wrapper.Client.Signer.Sign(messageStr, accountStr, (DigestType)digestType, (PayloadType)payloadType, (CurveType)curveType);
             in3_sign_ctx_set_signature_hex(signCtx, signedData);
             in3_sign_ctx_set_signature(ctx, signCtx);
             Utils._free_(signCtx);
