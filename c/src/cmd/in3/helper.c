@@ -338,8 +338,12 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t ty
       recorder_print(0, "0x%s\n", tmp);
       recorder_exit(0);
     }
-    else
+    else {
       eth_set_pk_signer(c, pk_seed, type, NULL);
+      char* conf = sprintx("{\"pk\":\"%B\"}", bytes(pk_seed, 32));
+      recorder_configure(conf);
+      _free(conf);
+    }
   }
 }
 
@@ -360,7 +364,7 @@ char* get_argument(int argc, char* argv[], char* alias, char* arg, bool has_valu
 
 static uint32_t conf = 0;
 uint32_t*       get_output_conf() {
-  return &conf;
+        return &conf;
 }
 
 void display_result(char* method, char* result) {
