@@ -60,7 +60,6 @@ function get_fn_name(config, method, path, def) {
         }
     }
 
-
     post_names[name] = true
     return snake_case(name)
 }
@@ -165,7 +164,6 @@ function get_type(config, content, names, parent = {}) {
             })
 
             config.types[name] = type_def.type
-            //            console.log('add type ' + name, type_def.type)
             return name
         }
 
@@ -179,9 +177,6 @@ function get_type(config, content, names, parent = {}) {
         }
     }
 }
-
-
-
 
 function create_fn(config, method, path, def) {
     const base_name = snake_case(path.split('/').filter(_ => _.trim() && _[0] != '{').join('_'))
@@ -221,10 +216,17 @@ function create_fn(config, method, path, def) {
             }
             fn.params[n] = d
             if (!p.required) d.optional = true // default is not required
-            d.type = get_type(config, p, [n, base_name + '_' + p], d)
+            d.type = get_type(config, p, [n, base_name + '_' + (p.name || p)], d)
         })
     }
-    const response = Object.keys(def.responses || {}).map(_ => parseInt(_) < 400 ? def.responses[_] : null).find(_ => _)
+    const response = Object.keys(def.responses || {}).map(_ => {
+        if (parseInt(_) < 400) {
+            return def.responses[_]
+        } else if (def.responses.RESPONSE) { // Not too sure what this is but its needed for CMS
+            return def.responses.RESPONSE
+        }
+        return null
+    }).find(_ => _)
     if (!response) throw new Error('no response found')
     fn.result = {
         descr: response.description || ''
@@ -232,35 +234,6 @@ function create_fn(config, method, path, def) {
     fn.result.type = get_type(config, response.content, [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
     if (custom) mergeTo(custom, fn)
 }
-
-
-exports.generate_openapi = async function (config) {
-    config.data = await getDef(config)
-    Object.keys(config.data.paths).forEach(_ =>
-        Object.keys(config.data.paths[_]).forEach(m => create_fn(config, m, _, config.data.paths[_][m]))
-    )
-    //    config.api._generate_rpc = config.api._generate_rpc || {}
-    //    config.api._generate_rpc.schema = config.data
-    //    config.api._generate_rpc.schema = config.data
-
-}
-
-
-
-if (require.main === module) {
-    const types = {}
-    const api = {}
-    //    const url = 'https://equs.git-pages.slock.it/interop/ssi/ssi-core/swagger-build.yaml' // process.argv.pop()
-    const url = '/Users/simon/ws/crypto/kms/api-spec/public/swagger.json'
-    //const url = '/Users/simon/ws/sdk/sdk-core/src/id/openapi.yml'
-
-    exports.generate_openapi({ url, api_name: 'id', api, types }).then(() => {
-        console.log(yaml.stringify({ types, id: api }))
-    }, console.error)
-
-}
-
-
 
 function impl_add_param(res, qname, pdef, ind) {
     const name = snake_case(qname)
@@ -282,8 +255,6 @@ function impl_add_param(res, qname, pdef, ind) {
     }
 }
 
-
-
 function impl_openapi(fn, state) {
     const def = fn._generate_openapi
     const send = (state.generate_rpc || {}).send_macro || 'HTTP_SEND'
@@ -295,8 +266,9 @@ function impl_openapi(fn, state) {
         if (parts[i].startsWith('{')) {
             const arg = snake_case(parts[i].substring(1, parts[i].length - 1))
             const pdef = fn.params[arg]
-            if (!pdef)
+            if (!pdef){
                 throw new Error('missing parameter in path ' + arg)
+            }
             args.push(arg)
             switch (pdef.type) {
                 case 'string': parts[i] = '%s'; break
@@ -320,4 +292,15 @@ function impl_openapi(fn, state) {
 
     res[res.length - 1] += ')'
     return res
+}
+
+exports.generate_openapi = async function (config) {
+    config.data = await getDef(config)
+    Object.keys(config.data.paths).forEach(_ =>
+        Object.keys(config.data.paths[_]).forEach(m => create_fn(config, m, _, config.data.paths[_][m]))
+    )
+    //    config.api._generate_rpc = config.api._generate_rpc || {}
+    //    config.api._generate_rpc.schema = config.data
+    //    config.api._generate_rpc.schema = config.data
+
 }
