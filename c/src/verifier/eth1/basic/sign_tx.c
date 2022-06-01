@@ -336,6 +336,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   // make sure, we have the correct chain_id
   TRY(in3_resolve_chain_id(ctx, &chain_id))
   TRY(get_from_address(tx, ctx, td.from))
+  TRY(get_nonce_and_gasprice(&td, ctx))
 
   // write state?
   if (meta) {
@@ -358,7 +359,6 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
 
   // do we need to transform the tx before we sign it?
   TRY(transform_tx(ctx, tx, bytes(td.from, 20), &td.to, &td.value, &td.data, &td.gas_limit));
-  TRY(get_nonce_and_gasprice(&td, ctx))
 
   // create raw without signature
   bytes_t* raw = serialize_tx_raw(&td, chain_id, td.type ? 0 : get_v(chain_id), NULL_BYTES, NULL_BYTES);
