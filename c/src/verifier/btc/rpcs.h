@@ -243,16 +243,15 @@ static inline in3_ret_t rpc_call_getbestblockhash(in3_rpc_handle_ctx_t* ctx, byt
  *
  * Parameters:
  *
- *   - uint8_t*   from    : (address) 20-byte btc address to which the "change" from the utxos will be sent
- *   - d_token_t* account : (btc_sign_acc) default eth account used by in3 to sign btc transactions
- *   - d_token_t* outputs : (btc_value) how much and to which adresses we want to send funds
- *   - d_token_t* utxos   : (utxo) the utxos used to provide funds for the transaction
+ *   - d_token_t* signer    : (btc_signer) the signer id used to sign btc transactions
+ *   - d_token_t* txoutputs : (btc_value) how much and to which adresses we want to send funds
+ *   - d_token_t* utxos     : (utxo) the utxos used to provide funds for the transaction
  * Returns:
  *   - bytes_t : (bytes32) the transactionhash
  */
-static inline in3_ret_t rpc_call_sendtransaction(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint8_t* from, d_token_t* account, d_token_t* outputs, d_token_t* utxos) {
+static inline in3_ret_t rpc_call_sendtransaction(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, d_token_t* signer, d_token_t* txoutputs, d_token_t* utxos) {
   d_token_t* res      = NULL;
-  char*      jpayload = sprintx("\"%B\",%j,%j,%j", bytes(from, 20), (d_token_t*) account, (d_token_t*) outputs, (d_token_t*) utxos);
+  char*      jpayload = sprintx("%j,%j,%j", (d_token_t*) signer, (d_token_t*) txoutputs, (d_token_t*) utxos);
   in3_ret_t  r        = req_send_sub_request(ctx->req, "sendtransaction", jpayload, NULL, &res, NULL);
   _free(jpayload);
   if (!r) *_res = d_bytes(res);

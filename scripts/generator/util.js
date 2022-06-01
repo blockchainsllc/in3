@@ -50,6 +50,7 @@ exports.short_descr = function (d) {
 exports.addAll = function addAll(array, elements) {
     exports.asArray(elements).forEach(_ => array.push(_))
 }
+exports.typeName = (def, code) => (code ? '`' : '') + ((def.key ? '{key:$t}' : (def.array ? '$t[]' : "$t")) + (def.optional ? '?' : '')).replace('$t', typeof (def.type) === 'string' ? def.type : 'object') + (code ? '`' : '')
 
 
 exports.apiPath = function apiPath(api_name, all) {
