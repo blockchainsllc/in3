@@ -14,7 +14,8 @@ const {
 
 const title = (val, head) => `${head || ''} ${val}\n\n`
 
-function print_object(ctx, def, pad, useNum, doc, pre) {
+
+function print_object(ctx, def, pad, useNum, doc, pre, handled = []) {
 
     let i = 1
     for (const prop of Object.keys(def)) {
@@ -23,7 +24,8 @@ function print_object(ctx, def, pad, useNum, doc, pre) {
         while (typeof p.type == 'string' && typeof (ctx.types[p.type]) === 'string') p.type = ctx.types[p.type]
 
         const pt = getType(p.type, ctx.types)
-        if (p.type) s += ' : ' + typeName(p, true)
+        const tname = p.type && typeName(p, true)
+        if (p.type) s += ' : ' + tname
         if (p.optional) s += ' *(optional)*'
         if (p.descr) s += ' - ' + p.descr
         if (p.key) s += ' with ' + p.key + ' as keys in the object'
@@ -32,9 +34,9 @@ function print_object(ctx, def, pad, useNum, doc, pre) {
         if (p.alias) s += '\n' + pad + 'The data structure of ' + prop + ' is the same  as ' + link(p.alias) + '. See Details there.'
         if (p.cmd) asArray(p.cmd).forEach(_ => s += '\n' + pad + 'This option can also be used in its short-form in the comandline client `-' + _ + '` .')
         doc.push(s)
-        if (typeof pt === 'object') {
+        if (typeof pt === 'object' && !(tname && handled.indexOf(tname) >= 0)) {
             doc.push(pad + '    The ' + prop + ' object supports the following properties :\n' + pad)
-            print_object(ctx, pt, pad + '    ', false, doc)
+            print_object(ctx, pt, pad + '    ', false, doc, undefined, [...handled, tname])
         }
         if (ctx.rpc_doc === doc) {
             if (p.example) doc.push('\n' + pad + '    *Example* : ' + prop + ': ' + JSON.stringify(p.example))

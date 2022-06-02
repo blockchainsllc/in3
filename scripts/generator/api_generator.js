@@ -112,12 +112,13 @@ function getUint(def, name, index) {
 }
 function getBytes(def, name, index) {
     const len = parseInt(def.type.substring(5) || "0")
+    const enc = def.encoding_param_index !== undefined ? `, d_encoding_from_string(d_get_string_at(ctx->params, ${def.encoding_param_index}), ENC_HEX)` : ''
     return {
         args: 'bytes_t ' + name,
         code_def: 'bytes_t ' + name,
         code_read: def.optional
-            ? `TRY_PARAM_GET_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`
-            : `TRY_PARAM_GET_REQUIRED_BYTES(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len})`,
+            ? `TRY_PARAM_GET_BYTES${enc ? '_AS' : ''}(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len}${enc})`
+            : `TRY_PARAM_GET_REQUIRED_BYTES${enc ? '_AS' : ''}(${name}, ctx, ${index}, ${def.minLength || len}, ${def.maxLength || len}${enc})`,
         code_pass: name,
         validate: validate(def, name, 'ctx->req', name)
     }
