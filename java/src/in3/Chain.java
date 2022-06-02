@@ -17,6 +17,10 @@ public final class Chain {
    */
   public static final long GOERLI = 0x5;
   /**
+   * use mumbai testnet
+   */
+  public static final long MUMBAI = 0x13881;
+  /**
    * use ewf chain
    */
   public static final long EWC = 0xf6;

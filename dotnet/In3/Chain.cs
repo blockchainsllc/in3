@@ -11,6 +11,9 @@ namespace In3
         /// <summary>Goerli testnet.</summary>
         Goerli = 0x5,
 
+        /// <summary>Mumbai testnet.</summary>
+        Mumbai = 0x13881,
+
         /// <summary>Bitcoin chain.</summary>
         Btc = 0x99,
 
