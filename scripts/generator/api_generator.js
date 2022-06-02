@@ -697,12 +697,9 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
     if (!rpc) console.log("::: missing rpc-def for " + api_name + ' ' + testname)
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
-        console.log("api name =" + api_name + ", testname=" + testname)
         const tn = (t.descr || testname + (index ? ('_' + (index + 1)) : '')) + (t.extra ? ' : ' + t.extra : '')
         if (rpcResult.options && t.expected_output && t.expected_output.options) {
-            console.log("=====??? " + JSON.stringify(rpcResult.options))
             rpcResult.options.forEach(functionDef => {
-                console.log("function def=" + JSON.stringify(functionDef) + ", " + JSON.stringify(t))
                 const resultType = functionDef.result.array ? functionDef.result.type + "[]" : functionDef.result.type
                 const tc = { ...t, input: Array.isArray(t.input) ? [...t.input] : t.input[functionDef.name], expected_output: t.expected_output.options[resultType], mockedResponses: t.mockedResponses.options[resultType] }
                 Object.keys(functionDef.params).forEach(prop => {
