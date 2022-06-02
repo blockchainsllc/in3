@@ -140,12 +140,14 @@ async function scan(dir) {
                     })
                     cmake_types[fullpath] = true
                 }
+                /*
                 if (!generators.length && apic.fields && lastAPI && docs[lastAPI]) {
                     for (const n of Object.keys(ob[k]).filter(_ => docs[lastAPI][_])) delete ob[k][n]
                     docs[lastAPI] = { ...docs[lastAPI], ...ob[k] }
                 }
                 else
-                    docs[k] = { ...docs[k], ...ob[k] }
+                */
+                docs[k] = { ...docs[k], ...ob[k] }
                 lastAPI = k
             }
         }
