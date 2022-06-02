@@ -68,7 +68,7 @@ function compile(ctx) {
     else
         res = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, 'utf8')) : null
     if (res.errors && res.errors.filter(_ => _.severity != "warning").length)
-        throw new Error('Solidity Errors : ' + res.errors.map(_ => _.formattedMessage).join('\n'))
+        throw new Error('Solidity Errors : ' + res.errors.filter(_ => _.severity == "error").map(_ => _.severity + ':::' + _.formattedMessage).join('\n'))
 
     let all_contracts = {}
     Object.keys(res.contracts).forEach(file => all_contracts = { ...all_contracts, ...res.contracts[file] })
