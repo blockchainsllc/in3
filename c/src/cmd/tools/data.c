@@ -222,6 +222,21 @@ static void print_debug(bytes_t* data) {
   read_token(data->data, &p, 0, &index, -1);
 }
 
+static void make_bytes(d_token_t* t) {
+  switch (d_type(t)) {
+    case T_OBJECT:
+    case T_ARRAY:
+      for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter)) make_bytes(iter.token);
+      break;
+    case T_STRING:
+      if (d_is_bytes(t)) d_bytes(t);
+      break;
+
+    default:
+      break;
+  }
+}
+
 int main(int argc, char* argv[]) {
   bytes_t input  = NULL_BYTES;
   char*   format = "auto";
@@ -275,6 +290,7 @@ int main(int argc, char* argv[]) {
   if (!ctx)
     printf("Invalid Json : %s\n", (char*) input.data);
   else {
+    make_bytes(ctx->result);
     bytes_builder_t* bb = bb_new();
     d_serialize_binary(bb, ctx->result);
 
