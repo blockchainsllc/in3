@@ -20,8 +20,22 @@
 #include "../../third-party/libb64/cencode.h"
 #endif
 
+in3_encoding_type_t d_encoding_from_string(char* enc, in3_encoding_type_t def) {
+  if (!enc) return def;
+  if (strcmp(enc, "hex") == 0) return ENC_HEX;
+  if (strcmp(enc, "base58") == 0) return ENC_BASE58;
+  if (strcmp(enc, "base64") == 0) return ENC_BASE64;
+  if (strcmp(enc, "decimal") == 0) return ENC_DECIMAL;
+  if (strcmp(enc, "utf8") == 0) return ENC_UTF8;
+  return def;
+}
+
 int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
   switch (type) {
+    case ENC_UTF8:
+      memcpy(dst, src.data, src.len);
+      dst[src.len] = 0;
+      return src.len;
     case ENC_HEX: return bytes_to_hex(src.data, src.len, dst);
     case ENC_BASE58: {
 #ifdef CRYPTO_TREZOR
@@ -66,12 +80,14 @@ int encode_size(in3_encoding_type_t type, int src_len) {
     case ENC_BASE58: return src_len * 2;
     case ENC_BASE64: return src_len * 2;
     case ENC_DECIMAL: return src_len * 3;
+    case ENC_UTF8: return src_len + 1;
     default: return src_len;
   }
 }
 int decode(in3_encoding_type_t type, const char* src, int src_len, uint8_t* dst) {
   if (src_len < 0) src_len = strlen(src);
   switch (type) {
+    case ENC_UTF8: memcpy(dst, src, src_len); return src_len;
     case ENC_HEX: return hex_to_bytes(src, src_len, dst, src_len * 2);
     case ENC_BASE58: {
 #ifdef CRYPTO_TREZOR
@@ -110,6 +126,7 @@ int decode_size(in3_encoding_type_t type, int src_len) {
     case ENC_HEX: return (src_len + 1) / 2;
     case ENC_BASE58: return src_len;
     case ENC_BASE64: return src_len;
+    case ENC_UTF8: return src_len;
     default: return src_len;
   }
 }

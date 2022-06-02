@@ -52,6 +52,10 @@
                     "type": "boolean",
                     "description": "if true the propery may be ommited or set to null"
                 },
+                "encoding_param_index": {
+                    "type": "number",
+                    "description": "if set, the bytes will be decoded based on the encoding described with the parameter with the given index. hex will be default if not set."
+                },
                 "cmd": {
                     "description": "the commandline argument which can be used to configure this option. Only available within config.",
                     "anyOf": [
