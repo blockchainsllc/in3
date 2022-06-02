@@ -99,6 +99,8 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
     in3_client_register_chain(c, 0x01, CHAIN_ETH, 2);
   else if (chain_id == CHAIN_ID_GOERLI)
     in3_client_register_chain(c, 0x05, CHAIN_ETH, 2);
+  else if (chain_id == CHAIN_ID_MUMBAI)
+    in3_client_register_chain(c, CHAIN_ID_MUMBAI, CHAIN_ETH, 2);
   else if (chain_id == CHAIN_ID_IPFS)
     in3_client_register_chain(c, 0x7d0, CHAIN_IPFS, 2);
   else if (chain_id == CHAIN_ID_BTC)
@@ -186,6 +188,7 @@ chain_id_t in3_token_chain_id(d_token_t* t) {
     char* c = d_string(t);
     if (!strcmp(c, "mainnet")) return CHAIN_ID_MAINNET;
     if (!strcmp(c, "goerli")) return CHAIN_ID_GOERLI;
+    if (!strcmp(c, "mumbai")) return CHAIN_ID_MUMBAI;
     if (!strcmp(c, "ewc")) return CHAIN_ID_EWC;
     if (!strcmp(c, "btc")) return CHAIN_ID_BTC;
     if (!strcmp(c, "ipfs")) return CHAIN_ID_IPFS;
@@ -212,6 +215,7 @@ static in3_chain_type_t chain_type_from_id(chain_id_t id) {
   switch (id) {
     case CHAIN_ID_MAINNET:
     case CHAIN_ID_GOERLI:
+    case CHAIN_ID_MUMBAI:
     case CHAIN_ID_EWC:
     case CHAIN_ID_LOCAL:
       return CHAIN_ETH;
