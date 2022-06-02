@@ -75,7 +75,7 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
       long_to_bytes(gas, gasdata);
       g_bytes = bytes(gasdata, 8);
       b_optimize_len(&g_bytes);
-      sb_add_bytes(params, ", \"gasLimit\":", &g_bytes, 1, false);
+      sb_add_bytes(params, ", \"gas\":", &g_bytes, 1, false);
     }
     sb_add_chars(params, "}]");
   }
