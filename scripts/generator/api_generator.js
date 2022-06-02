@@ -225,9 +225,10 @@ function defineType(type_name, type, types, api, type_defs, descr, init, src_typ
                     def.impl += `        val->${prop_name} = d_bytes_enc(iter.token, ENC_${pt.encoding.toUpperCase()});\n`
                 else
                     def.impl += `        val->${prop_name} = d_bytes(iter.token);\n`
-                def.impl += `        if (${opt_check}!val->${prop_name}.data) return rpc_throw(r, "%s.%s must be bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", "${prop}", "${simple_typename}");\n`
-                if (len)
+                if (len) {
+                    def.impl += `        if (${opt_check}!val->${prop_name}.data) return rpc_throw(r, "%s.%s must be bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", "${prop}", "${simple_typename}");\n`
                     def.impl += `        if (${opt_check}val->${prop_name}.len != ${len}) return rpc_throw(r, "%s.%s must be exactly %u bytes ${pt.encoding ? '( encoded as ' + pt.encoding + ')' : ''}!", "${prop}", "${simple_typename}", ${len});\n`
+                }
                 req = `!val->${prop_name}.data`
             }
             else if (pt.type == 'address') {
@@ -645,8 +646,8 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
     Object.keys(dirs).forEach(dir => {
         let path = ''
         let s = dir.split('/')
-        if (s.indexOf('in3') >= 0)
-            path = s.slice(s.indexOf('in3') + 3).map(_ => '../').join('') + 'core/client/request_internal.h'
+        if (s.indexOf('in3') >= 0 && dir.indexOf("in3/c") > 0)
+            path = s.slice(s.lastIndexOf('in3') + 3).map(_ => '../').join('') + 'core/client/request_internal.h'
         else
             path = '../../in3/c/src/core/client/request_internal.h'
         const mod = '__RPC_' + dirs[dir][0].api.toUpperCase() + '_H'
@@ -696,26 +697,30 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
     if (!rpc) console.log("::: missing rpc-def for " + api_name + ' ' + testname)
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
+        console.log("api name =" + api_name + ", testname=" + testname)
         const tn = (t.descr || testname + (index ? ('_' + (index + 1)) : '')) + (t.extra ? ' : ' + t.extra : '')
-        if (rpcResult.options && t.expected_output && t.expected_output.options)
-            Object.keys(t.expected_output.options).forEach(k => {
-                const tc = { ...t, input: [...t.input], expected_output: t.expected_output.options[k], mockedResponses: t.mockedResponses.options[k] }
-                const option = rpcResult.options.find(_ => _.result && (_.result.type == k || _.name == k))
-                if (option && option.params) {
-                    Object.keys(option.params).forEach(prop => {
-                        let i = Object.keys(rpc.params).indexOf(prop)
-                        if (i < 0)
-                            console.error("Invalid property " + prop + " in " + testname)
-                        else {
+        if (rpcResult.options && t.expected_output && t.expected_output.options) {
+            console.log("=====??? " + JSON.stringify(rpcResult.options))
+            rpcResult.options.forEach(functionDef => {
+                console.log("function def=" + JSON.stringify(functionDef) + ", " + JSON.stringify(t))
+                const resultType = functionDef.result.array ? functionDef.result.type + "[]" : functionDef.result.type
+                const tc = { ...t, input: Array.isArray(t.input) ? [...t.input] : t.input[functionDef.name], expected_output: t.expected_output.options[resultType], mockedResponses: t.mockedResponses.options[resultType] }
+                Object.keys(functionDef.params).forEach(prop => {
+                    let i = Object.keys(rpc.params).indexOf(prop)
+                    if (i < 0)
+                        console.error("Invalid property " + prop + " in " + testname)
+                    else {
+                        if (tc.input) {
                             while (tc.input.length <= 0) tc.input.add(0)
-                            tc.input[i] = option.params[prop]
+                            tc.input[i] = functionDef.params[prop]
                         }
-                    })
-                    createTest(tn + '_' + k, testname, tests, tc)
-                }
+                    }
+                })
+                createTest(tn + '_' + functionDef.name, testname, tests, tc)
             })
-        else
+        } else {
             createTest(tn, testname, tests, t)
+        }
     })
 
     const folders = [
