@@ -306,9 +306,9 @@ exports.generate_openapi = async function (config) {
     Object.keys(config.data.paths).forEach(_ =>
         Object.keys(config.data.paths[_]).forEach(m => create_fn(config, m, _, config.data.paths[_][m]))
     )
-    const d = { types: config.types || '' }
+    //    const d = { types: config.types || '' }
 
-    fs.writeFileSync(config.api_name + '.yaml', yaml.stringify(d))
+    //    fs.writeFileSync(config.api_name + '.yaml', yaml.stringify(d))
     //    config.api._generate_rpc = config.api._generate_rpc || {}
     //    config.api._generate_rpc.schema = config.data
     //    config.api._generate_rpc.schema = config.data
