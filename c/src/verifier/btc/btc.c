@@ -873,13 +873,15 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
       sb_add_int(cctx->sb, conf->max_daps);
       sb_add_chars(cctx->sb, ",\"maxDiff\":");
       sb_add_int(cctx->sb, conf->max_diff);
+      sb_add_chars(cctx->sb, ",\"testnet\":");
+      sb_add_chars(cctx->sb, conf->is_testnet ? "true" : "false");
       return IN3_OK;
     }
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* cctx = pctx;
       if (d_is_key(cctx->token, CONFIG_KEY("testnet")))
         conf->is_testnet = d_int(cctx->token);
-      if (d_is_key(cctx->token, CONFIG_KEY("maxDAP")))
+      else if (d_is_key(cctx->token, CONFIG_KEY("maxDAP")))
         conf->max_daps = d_int(cctx->token);
       else if (d_is_key(cctx->token, CONFIG_KEY("maxDiff")))
         conf->max_diff = d_int(cctx->token);
