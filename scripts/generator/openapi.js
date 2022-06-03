@@ -39,6 +39,8 @@ function get_fn_name(config, method, path, def) {
     else if (method == 'delete')
         parts[i] = 'delete_' + parts[i]
 
+    if (parts[0] && ('' + parseInt(parts[0][0])) == parts[0][0]) parts[0] = 'exec_' + parts[0]
+
     name = config.api_name + '_' + parts.filter(_ => !_.startsWith('{') && _.trim()).join('_')
 
     if (post_names[name]) {
