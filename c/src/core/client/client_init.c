@@ -39,6 +39,7 @@
 #include "../util/log.h"
 #include "client.h"
 #include "plugin.h"
+#include "preconfig_json.h"
 #include "request_internal.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -257,24 +258,21 @@ char* in3_get_config(in3_t* c) {
   return r;
 }
 
-char* in3_configure(in3_t* c, const char* config) {
-  // config can not be changed as long as there are pending requests.
-  if (c->pending) return config_err("in3_configure", "can not change config because there are pending requests!");
-
-  // make sure the json-config is parseable.
-  json_ctx_t* json = parse_json((char*) config);
-  if (!json || !json->result) return config_err("in3_configure: parse error", config);
-
+char* in3_configure_internal(json_ctx_t* json, in3_t* c, bool ignore_unknown) {
   // the error-message we will return in case of an error.
   char* res        = NULL;
   int   prop_index = 0;
+
+  if (!json || !json->result) return res;
 
   // we iterate over the root-props
   for (d_iterator_t iter = d_iter(json->result); iter.left; d_iter_next(&iter), prop_index++) {
     d_token_t* token = iter.token;
     if (d_is_bytes(token)) d_bytes(token);
 
-    if (token->key == CONFIG_KEY("autoUpdateList")) {
+    if (token->key == CONFIG_KEY("environment"))
+      continue;
+    else if (token->key == CONFIG_KEY("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
     }
@@ -409,7 +407,7 @@ char* in3_configure(in3_t* c, const char* config) {
         }
       }
 
-      if (!handled) {
+      if (!handled && !ignore_unknown) {
         char tmp[100];
         sprintf(tmp, "The config with index %d is unknown or not supported!", prop_index);
         EXPECT_TOK(token, false, tmp);
@@ -426,7 +424,38 @@ char* in3_configure(in3_t* c, const char* config) {
   assert_in3(c);
 
 cleanup:
-  json_free(json);
+  return res;
+}
+
+char* in3_configure(in3_t* client_cfg, const char* config) {
+  // config can not be changed as long as there are pending requests.
+  if (client_cfg->pending) return config_err("in3_configure", "can not change config because there are pending requests!");
+
+  // make sure the json-config is parseable.
+  json_ctx_t* json = parse_json((char*) config);
+  if (!json || !json->result) return config_err("in3_configure: parse error", config);
+
+  char* res = NULL;
+#ifdef IN3_PRE_CFG
+  d_token_t* env = d_get(json->result, CONFIG_KEY("environment"));
+  if (env) {
+    json_ctx_t* json_precfg = in3_get_preconfig(env);
+    if (!json_precfg) {
+      res = sprintx("Unsupported enviroment : %s", env);
+      goto cleanup;
+    }
+    res = in3_configure_internal(json_precfg, client_cfg, true);
+    if (json_precfg || json_precfg->result) json_free(json_precfg);
+    goto cleanup;
+  }
+#endif
+  // User configuration is taken if the environment property is not chosen.
+  res = in3_configure_internal(json, client_cfg, false);
+  // Adding this line to supress the warning/error for some compiler if set "-Werror=unused-label"
+  goto cleanup;
+
+cleanup:
+  if (json || json->result) json_free(json);
   return res;
 }
 

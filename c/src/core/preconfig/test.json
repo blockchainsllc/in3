@@ -1,0 +1,19 @@
+{
+    "environment": "test",
+    "autoUpdateList": false,
+    "chainId": "mainnet",
+    "signatureCount": 0,
+    "finality": 0,
+    "includeCode": false,
+    "bootWeights": false,
+    "maxAttempts": 7,
+    "keepIn3": false,
+    "stats": true,
+    "useBinary": false,
+    "experimental": true,
+    "useHttp": false,
+    "max_verified_hashes": 5,
+    "timeout": 10000,
+    "proof": "standard",
+    "verified_hashes": 0  
+}
