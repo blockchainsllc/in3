@@ -1,5 +1,6 @@
 const axios = require('axios')
 const fs = require('fs')
+const { dirname } = require('path')
 const yaml = require('yaml')
 const { snake_case, mergeTo } = require('./util')
 async function getDef(config) {
@@ -63,7 +64,11 @@ function get_fn_name(config, method, path, def) {
 }
 
 function resolve_ref(config, ref) {
-    return ref.split('/').reduce((val, p) => p == '#' ? config.data : val[p], null)
+    const [file, path] = ref.split('#', 2)
+    let doc = config.data
+    if (file) doc = yaml.parse(fs.readFileSync(dirname(config.url) + '/' + file, 'utf8'))
+
+    return path.split('/').filter(_ => _).reduce((val, p) => p == val[p], doc)
 }
 
 function get_type(config, content, names, parent = {}) {
