@@ -69,7 +69,7 @@ function resolve_ref(config, ref) {
     let doc = config.data
     if (file) doc = yaml.parse(fs.readFileSync(dirname(config.url) + '/' + file, 'utf8'))
 
-    return path.split('/').filter(_ => _).reduce((val, p) => p == val[p], doc)
+    return path.split('/').filter(_ => _).reduce((val, p) => val[p], doc)
 }
 
 function get_type(config, content, names, parent = {}) {
@@ -90,7 +90,7 @@ function get_type(config, content, names, parent = {}) {
         schema.type = 'array'
         schema.items = { type: 'string' }
     }
-    let type = schema.type || 'string'
+    let type = schema.type || 'any'
     switch (type) {
         case 'boolean': return 'bool'
         case 'number': return 'uint32'
