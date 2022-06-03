@@ -73,7 +73,7 @@ function resolve_ref(config, ref) {
 }
 
 function get_type(config, content, names, parent = {}, example) {
-    if (!content) return 'string'
+    if (!content) return 'any'
     let _types = config._types || (config._types = {})
     let _types_names = config._types_names || (config._types_names = {})
     if (content['application/json']) content = content['application/json']
