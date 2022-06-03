@@ -72,23 +72,24 @@ function resolve_ref(config, ref) {
     return path.split('/').filter(_ => _).reduce((val, p) => val[p], doc)
 }
 
-function get_type(config, content, names, parent = {}) {
+function get_type(config, content, names, parent = {}, example) {
     if (!content) return 'string'
     let _types = config._types || (config._types = {})
     let _types_names = config._types_names || (config._types_names = {})
     if (content['application/json']) content = content['application/json']
     let schema = content
-    if (schema.example) parent.example = schema.example
+    if (!example) example = schema.example
+    if (example) parent.example = example
     if (content.schema) schema = content.schema
     if (schema.$ref) {
         names.splice(0, 0, snake_case(schema.$ref.split('/').pop()))
         schema = { ...resolve_ref(config, schema.$ref), ...schema }
     }
-    if (schema.example) parent.example = schema.example
-    if (schema.type == 'object' && !schema.properties && schema.example && Array.isArray(schema.example)) {
+    if (!example && schema.example) example = schema.example
+    if (schema.type == 'object' && !schema.properties && example && Array.isArray(example)) {
         // quickfix
         schema.type = 'array'
-        schema.items = { type: 'string' }
+        schema.items = { type: example ? typeof (example[0]) : 'string' }
     }
     let type = schema.type || 'any'
     switch (type) {
@@ -98,17 +99,23 @@ function get_type(config, content, names, parent = {}) {
         case 'object': {
             let props = schema.properties
             let requiredProps = schema.requiredProperties || schema.required || []
-            if (!props && content.example) {
+            if (!props && example) {
+                try {
+                    if (typeof (example) == 'string') example = eval('_=' + example)
+                }
+                catch (ex) {
+                    console.log(':::: The object ' + example + ' should be json!', ex)
+                }
                 props = {}
                 // guess properties
-                Object.keys(content.example).forEach(p => {
+                Object.keys(example).forEach(p => {
                     props[p] = {
-                        type: Array.isArray(content.example[p]) ? 'array' : typeof (content.example[p]),
-                        example: content.example[p],
+                        type: Array.isArray(example[p]) ? 'array' : typeof (example[p]),
+                        example: example[p],
                     }
                     if (props[p].type == 'array') {
-                        const item = content.example[p][0]
-                        props[p].items = { type: typeof (item) || 'string' }
+                        const item = example[p][0]
+                        props[p].items = { type: item ? typeof (item) : 'string' }
                     }
                 })
                 requiredProps = Object.keys(props)
@@ -169,7 +176,7 @@ function get_type(config, content, names, parent = {}) {
 
         case 'array': {
             parent.array = true
-            return get_type(config, schema.items || {}, names, {})
+            return get_type(config, schema.items || {}, names, {}, example && example[0])
         }
         default: {
             if (schema.enum) parent.enum = schema.enum
@@ -299,6 +306,9 @@ exports.generate_openapi = async function (config) {
     Object.keys(config.data.paths).forEach(_ =>
         Object.keys(config.data.paths[_]).forEach(m => create_fn(config, m, _, config.data.paths[_][m]))
     )
+    const d = { types: config.types || '' }
+
+    fs.writeFileSync(config.api_name + '.yaml', yaml.stringify(d))
     //    config.api._generate_rpc = config.api._generate_rpc || {}
     //    config.api._generate_rpc.schema = config.data
     //    config.api._generate_rpc.schema = config.data
