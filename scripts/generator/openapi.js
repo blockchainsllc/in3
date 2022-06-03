@@ -108,7 +108,7 @@ function get_type(config, content, names, parent = {}) {
                     }
                     if (props[p].type == 'array') {
                         const item = content.example[p][0]
-                        props[p].items = { type: typeof (item) }
+                        props[p].items = { type: typeof (item) || 'string' }
                     }
                 })
                 requiredProps = Object.keys(props)
@@ -266,7 +266,7 @@ function impl_openapi(fn, state) {
         if (parts[i].startsWith('{')) {
             const arg = snake_case(parts[i].substring(1, parts[i].length - 1))
             const pdef = fn.params[arg]
-            if (!pdef){
+            if (!pdef) {
                 throw new Error('missing parameter in path ' + arg)
             }
             args.push(arg)
