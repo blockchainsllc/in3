@@ -40,10 +40,6 @@ project(in3)
 
 include("c/options.cmake")
 
-IF (WASM)
-  add_subdirectory(wasm/src)
-ENDIF (WASM)
-
 # build tests
 if(TEST)
     add_subdirectory(c/test)

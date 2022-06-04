@@ -68,6 +68,7 @@ void crypto_finalize_hash(
 }
 
 in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const uint8_t* pk, const uint8_t* pubkey, uint8_t* dst) {
+  UNUSED_VAR(pubkey);
   UNUSED_VAR(type);
   UNUSED_VAR(digest);
   UNUSED_VAR(pk);
