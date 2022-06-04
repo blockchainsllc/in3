@@ -251,7 +251,6 @@ pages:
     - coverage
     - clangcheck
     - java_linux
-    - test_asmjs
     - python_linux
   script:
     - mkdir -p public/lib
