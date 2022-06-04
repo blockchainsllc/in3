@@ -55,4 +55,4 @@ wasm:
   trigger:
     project: in3/sdk/sdk-js
     strategy: depend
-    branch: develop
+    branch: wasm2
