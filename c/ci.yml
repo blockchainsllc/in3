@@ -264,7 +264,6 @@ examples_macos:
   stage: test
   allow_failure: true
   needs:
-    - wasm
     - mac_os
   script:
     - mv mac_build build
@@ -274,10 +273,6 @@ examples_macos:
     - ./build.sh
     - cd ../..
     - mv build mac_build
-    - mkdir build
-    - mv in3_wasm build/module
-    - cd wasm/examples
-    - ./build.sh
   tags:
     - mac-os
 #integration_longrun:
