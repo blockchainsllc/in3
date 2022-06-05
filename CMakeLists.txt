@@ -46,7 +46,3 @@ if(TEST)
 endif(TEST)
 
 add_subdirectory(c)
-
-IF (JAVA)
-   add_subdirectory(java)
-ENDIF (JAVA)
