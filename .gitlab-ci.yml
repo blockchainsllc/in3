@@ -41,7 +41,6 @@ include:
   - local: "/c/ci.yml"
   - local: "/c/ci-analyse.yml"
   - local: "/c/ci-deploy.yml"
-  - local: "/java/ci.yml"
   - local: "/python/ci.yml"
   - local: "/dotnet/ci.yml"
   - local: "/rust/ci.yml"
