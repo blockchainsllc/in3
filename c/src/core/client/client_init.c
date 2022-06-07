@@ -445,7 +445,7 @@ char* in3_configure(in3_t* client_cfg, const char* config) {
       goto cleanup;
     }
     res = in3_configure_internal(json_precfg, client_cfg, true);
-    if (json_precfg) json_free(json_precfg);
+    json_free(json_precfg);
     goto cleanup;
   }
 #endif
@@ -455,7 +455,7 @@ char* in3_configure(in3_t* client_cfg, const char* config) {
   goto cleanup;
 
 cleanup:
-  if (json) json_free(json);
+  json_free(json);
   return res;
 }
 
