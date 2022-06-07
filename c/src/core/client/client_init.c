@@ -437,7 +437,7 @@ char* in3_configure(in3_t* client_cfg, const char* config) {
 
   char* res = NULL;
 #ifdef IN3_PRE_CFG
-  char* env = (char*) d_get(json->result, CONFIG_KEY("environment"));
+  char* env = d_get_string(json->result, CONFIG_KEY("environment"));
   if (env) {
     json_ctx_t* json_precfg = in3_get_preconfig(env);
     if (!json_precfg) {
