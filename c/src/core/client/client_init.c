@@ -33,13 +33,13 @@
  *******************************************************************************/
 #define IN3_INTERNAL
 
+#include "../preconfig/preconfig_env.h"
 #include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "client.h"
 #include "plugin.h"
-#include "preconfig_json.h"
 #include "request_internal.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -437,7 +437,7 @@ char* in3_configure(in3_t* client_cfg, const char* config) {
 
   char* res = NULL;
 #ifdef IN3_PRE_CFG
-  d_token_t* env = d_get(json->result, CONFIG_KEY("environment"));
+  char* env = d_get_string(json->result, CONFIG_KEY("environment"));
   if (env) {
     json_ctx_t* json_precfg = in3_get_preconfig(env);
     if (!json_precfg) {
@@ -445,7 +445,7 @@ char* in3_configure(in3_t* client_cfg, const char* config) {
       goto cleanup;
     }
     res = in3_configure_internal(json_precfg, client_cfg, true);
-    if (json_precfg || json_precfg->result) json_free(json_precfg);
+    json_free(json_precfg);
     goto cleanup;
   }
 #endif
@@ -455,7 +455,7 @@ char* in3_configure(in3_t* client_cfg, const char* config) {
   goto cleanup;
 
 cleanup:
-  if (json || json->result) json_free(json);
+  json_free(json);
   return res;
 }
 
