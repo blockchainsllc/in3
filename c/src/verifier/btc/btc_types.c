@@ -739,12 +739,13 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
 
   d_token_t* prevout_data = d_get(utxo_input, key("tx_out"));
   if (!prevout_data) in3_log_debug(">>>>>>>>>>>>>>>>>>> NO OUTPUT DATA ON UTXO!\n");
+  else in3_log_debug(">>>>>>>>>>>>>>>>>>>FINALLY!!!!!!!!!!\n");
   uint64_t   value        = d_get_long(d_get(prevout_data, key("value")), 0L);
 
   bytes_t  locking_script = NULL_BYTES;
   char*    script_str     = d_get_string(prevout_data, key("script"));
   if (!script_str) {
-    in3_log_error("One of the received utxos has empty script\n");
+    in3_log_error("The received utxos has empty script\n");
     return IN3_EINVAL;
   }
   uint8_t* script_bytes   = alloca(MAX_SCRIPT_SIZE_BYTES);
