@@ -638,8 +638,6 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
     btc_address_t addr = btc_addr(bytes(addr_bytes, BTC_MAX_ADDR_SIZE_BYTES), d_get_string(d_get_at(output_data, i), key("address")));
 
     // Verify address type
-    in3_log_debug(">>>>>>>>>>>>>>>> addr.encoded = %s\n", addr.encoded);
-    in3_log_debug(">>>>>>>>>>>>>>>> is_testnet = %s\n", tx_ctx->is_testnet ? "true" : "false");
     btc_stype_t addr_type = btc_get_addr_type(addr.encoded, tx_ctx->is_testnet);
 
     if (!script_is_standard(addr_type)) {
@@ -738,20 +736,17 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   uint32_t tx_index = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
 
   d_token_t* prevout_data = d_get(utxo_input, key("tx_out"));
-  if (!prevout_data) in3_log_debug(">>>>>>>>>>>>>>>>>>> NO OUTPUT DATA ON UTXO!\n");
-  else in3_log_debug(">>>>>>>>>>>>>>>>>>>FINALLY!!!!!!!!!!\n");
   uint64_t   value        = d_get_long(d_get(prevout_data, key("value")), 0L);
 
-  bytes_t  locking_script = NULL_BYTES;
-  char*    script_str     = d_get_string(prevout_data, key("script"));
+  bytes_t locking_script = NULL_BYTES;
+  char*   script_str     = d_get_string(prevout_data, key("script"));
   if (!script_str) {
     in3_log_error("The received utxos has empty script\n");
     return IN3_EINVAL;
   }
-  uint8_t* script_bytes   = alloca(MAX_SCRIPT_SIZE_BYTES);
-  locking_script.len      = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
-  in3_log_debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> LEN = %d\n", locking_script.len);
-  locking_script.data     = _malloc(locking_script.len);
+  uint8_t* script_bytes = alloca(MAX_SCRIPT_SIZE_BYTES);
+  locking_script.len    = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
+  locking_script.data   = _malloc(locking_script.len);
   memcpy(locking_script.data, script_bytes, locking_script.len);
 
   d_token_t* utxo_args = d_get(utxo_input, key("args"));

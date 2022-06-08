@@ -741,7 +741,6 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, sb_t* meta) {
-  UNUSED_VAR(meta); // <------- TODO: Write the result in this variable instead of making it "unused"
   btc_signer_pub_key_t signer;
   btc_tx_ctx_t         tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
@@ -767,8 +766,16 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outpu
   // Is is a witness transaction?
   TRY(btc_set_segwit(&tx_ctx));
 
-  printf(">>>>>>>>>>>> BTC_PREPARE_UNSIGNED IS OVER <<<<<<<<<<<<<\n");
-  return btc_serialize_tx(req, &tx_ctx.tx, dst);
+  TRY(btc_serialize_tx(req, &tx_ctx.tx, dst));
+
+  // if we have a string builder set up, write the result to it
+  if (meta) {
+    sb_add_chars(meta, "\"unsigned\":");
+    sb_add_rawbytes(meta, "\"", *dst, -1);
+    sb_add_char(meta, '\"');
+  }
+
+  return IN3_OK;
 }
 
 in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst) {

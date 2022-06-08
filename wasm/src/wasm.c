@@ -38,7 +38,6 @@
 #include "../../c/src/core/util/crypto.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/init/in3_init.h"
-#include "../../c/src/core/util/log.h"
 #ifdef NODESELECT_DEF
 #include "../../c/src/nodeselect/full/cache.h"
 #include "../../c/src/nodeselect/full/nodelist.h"
@@ -367,7 +366,6 @@ bool EMSCRIPTEN_KEEPALIVE in3_is_alive(in3_req_t* root, in3_req_t* ctx) {
 }
 
 char* EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
-  in3_log_debug(">>>>>>>>>>>>>>>CONFIG: %s\n", conf);
   return in3_configure(a, conf);
 }
 
