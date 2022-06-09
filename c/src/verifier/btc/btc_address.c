@@ -72,7 +72,8 @@ btc_stype_t btc_get_addr_type(const char* address, bool is_testnet) {
   }
 
   if ((!is_testnet && (address[0] == 'b' && address[1] == 'c' && address[2] == '1' && address[3] == 'q')) ||
-      (is_testnet && (address[0] == 't' && address[1] == 'b' && address[2] == '1' && address[3] == 'q'))) {
+      (is_testnet && (address[0] == 't' && address[1] == 'b' && address[2] == '1' && address[3] == 'q')) ||
+      (is_testnet && (address[0] == 'b' && address[1] == 'c' && address[2] == 'r' && address[3] == 't' && address[4] == '1' && address[5] == 'q'))) {
     size_t addr_len = strlen(address);
     if (addr_len == 42) return BTC_V0_P2WPKH;
     if (addr_len == 62) return BTC_P2WSH;
