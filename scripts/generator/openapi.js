@@ -184,7 +184,10 @@ function get_type(config, content, names, parent = {}, example) {
             return get_type(config, schema.items || {}, names, {}, example && example[0])
         }
         default: {
-            if (schema.enum) parent.enum = schema.enum
+            if (schema.enum) {
+                parent.enum = schema.enum
+                type = 'string'
+            }
             return type
         }
     }
