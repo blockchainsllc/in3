@@ -738,11 +738,15 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   d_token_t* prevout_data = d_get(utxo_input, key("tx_out"));
   uint64_t   value        = d_get_long(d_get(prevout_data, key("value")), 0L);
 
-  bytes_t  locking_script = NULL_BYTES;
-  char*    script_str     = d_get_string(prevout_data, key("script"));
-  uint8_t* script_bytes   = alloca(MAX_SCRIPT_SIZE_BYTES);
-  locking_script.len      = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
-  locking_script.data     = _malloc(locking_script.len);
+  bytes_t locking_script = NULL_BYTES;
+  char*   script_str     = d_get_string(prevout_data, key("script"));
+  if (!script_str) {
+    in3_log_error("The received utxos has empty script\n");
+    return IN3_EINVAL;
+  }
+  uint8_t* script_bytes = alloca(MAX_SCRIPT_SIZE_BYTES);
+  locking_script.len    = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
+  locking_script.data   = _malloc(locking_script.len);
   memcpy(locking_script.data, script_bytes, locking_script.len);
 
   d_token_t* utxo_args = d_get(utxo_input, key("args"));

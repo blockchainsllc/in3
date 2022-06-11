@@ -264,7 +264,7 @@ static in3_ret_t transform_erc721(in3_req_t* req, d_token_t* tx, bytes_t* from, 
 
     value->len = 0; // we don't need a value anymore, since it is encoded
   }
-  else if (token)
+  else if (token && nft_id.data != NULL)
     return req_set_error(req, "Invalid Token. Only token-addresses are supported!", IN3_EINVAL);
 
   return IN3_OK;

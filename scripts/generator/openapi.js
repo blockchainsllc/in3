@@ -30,8 +30,13 @@ function get_fn_name(config, method, path, def) {
         if (!parts[i].startsWith('{')) break
     }
     if (action_prefixes.find(_ => parts[i].startsWith(_))) { }
-    else if (method == 'get')
-        parts[i] = 'get_' + parts[i] + (i == parts.length - 1 ? 's' : '') + (args.length > 1 ? '_by_' + args[args.length - 1] : '')
+    else if (method == 'get') {
+        // If we have a required Id in path, we can assume that the endpoint requires identity and is therefore associated with a single domain model.
+        const hasIdentity = def?.parameters?.find(param => param.in === "path" && param.name === "id" && !!param.required)
+        const isAlreadyPlural = parts[i].endsWith('s') // This is a frail assumption (e.g.: access)
+        const shouldAddTrailingS = !hasIdentity && !isAlreadyPlural
+        parts[i] = 'get_' + parts[i] + (shouldAddTrailingS && i == parts.length - 1 ? 's' : '') + (args.length > 1 ? '_by_' + args[args.length - 1] : '')
+    }
     else if (method == 'put')
         parts[i] = 'update_' + parts[i]
     else if (method == 'post')
@@ -179,7 +184,10 @@ function get_type(config, content, names, parent = {}, example) {
             return get_type(config, schema.items || {}, names, {}, example && example[0])
         }
         default: {
-            if (schema.enum) parent.enum = schema.enum
+            if (schema.enum) {
+                parent.enum = schema.enum
+                type = 'string'
+            }
             return type
         }
     }
@@ -257,7 +265,7 @@ function impl_add_param(res, qname, pdef, ind) {
     switch (pdef.type) {
         case 'string': res.push(`${ind}sb_add_params(&_path, "${qname}=%s", ${name});`); break
         case 'uint32': res.push(`${ind}sb_add_params(&_path, "${qname}=%u", ${name});`); break
-        default: res.push(`${ind}sb_add_json(&_path, "", ${qname});`); break
+        default: res.push(`${ind}sb_add_json(&_path, "", ${name});`); break
 
     }
 }
