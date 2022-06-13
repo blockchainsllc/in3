@@ -6,6 +6,7 @@ const files = process.argv.filter(_ => _.endsWith('.yml'))
 let types = {}
 let apis = {}
 let content = {}
+
 files.forEach(file => {
     const data = yaml.parse(fs.readFileSync(file, 'utf8'))
     content[file] = data
@@ -43,8 +44,11 @@ files.forEach(file => {
             if (apis[api]) {
                 Object.keys(data[api]).forEach(test => {
                     if (!apis[api][test]) {
-                        console.error(`Error in ${file} : The test is not associated with a rpc-function : ${test} `)
-                        process.exitCode = 1
+                        // If the rpc is generated, it wont necessarily have a definition on the rpc.yml
+                        if (!apis[api].api.generate_rpc) {
+                            console.error(`Error in ${file} : The test is not associated with a rpc-function : ${test} `)
+                            process.exitCode = 1
+                        }
                     } else {
                         apis[api][test].has_test = true
 
