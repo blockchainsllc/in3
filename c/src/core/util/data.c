@@ -443,7 +443,7 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
           // this is still a number, but not a simple integer, so we find the end and add it as string
           bool has_e = jp->c[i] == 'E' || jp->c[i] == 'e';
           i++;
-          while ((jp->c[i] >= '0' && jp->c[i] <= '9') || jp->c[i] == '-' || (!has_e && (jp->c[i] == 'E' || jp->c[i] == 'e') && (has_e = true))) i++;
+          while ((jp->c[i] >= '0' && jp->c[i] <= '9') || jp->c[i] == '-' || jp->c[i] == '.' || (!has_e && (jp->c[i] == 'E' || jp->c[i] == 'e') && (has_e = true))) i++;
           switch (jp->c[i]) {
             case ' ':
             case '\n':
@@ -552,7 +552,8 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
       case '\\':
         if (*jp->c == 'u') {
           for (int n = 0; n < 4; n++) {
-            if (hexchar_to_int(*(++jp->c)) == 255) return JSON_E_INVALID_CHAR;
+            if (hexchar_to_int(*(++jp->c)) == 255)
+              return JSON_E_INVALID_CHAR;
           }
           escape += 4;
         }
