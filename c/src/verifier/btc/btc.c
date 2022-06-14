@@ -740,6 +740,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 /**
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
+// TODO: make this method compliant with "createrawtransaction" from btc rpc
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, sb_t* meta) {
   btc_signer_pub_key_t signer;
   btc_tx_ctx_t         tx_ctx;
@@ -778,6 +779,7 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outpu
   return IN3_OK;
 }
 
+// TODO: Make this function compliant with 'signrawtransaction' from btc rpc
 in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst) {
   btc_tx_ctx_t tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
@@ -904,6 +906,13 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
     default:
       return IN3_ENOTSUP;
   }
+}
+
+btc_target_conf_t* btc_get_config(in3_t* c) {
+  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+    if (p->action_fn == handle_btc) return p->data;
+  }
+  return NULL;
 }
 
 in3_ret_t in3_register_btc(in3_t* c) {
