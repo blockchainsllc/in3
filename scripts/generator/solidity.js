@@ -273,7 +273,7 @@ function impl_solidity(fn, state, includes) {
         res.push('TRY(wallet_check(ctx->req, &wallet, WT_ETH))')
         res.push('')
         res.push('tx_args_t arg    = {0};')
-        res.push('arg.to           = contract;')
+        res.push('arg.to           = bytes(contract, 20);')
         res.push(`arg.data         = abi_encode_args(ctx, "${sol.sig}"${sol.fn.inputs.map(to_arg).join('')});`)
         res.push('arg.gas          = 300000;')
         res.push('arg.wallet       = wallet;')
