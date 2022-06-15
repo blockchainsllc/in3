@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 #include "../../core/client/plugin.h"
+#include "btc_target.h"
 
 /**
  * this function should only be called once and will register the bitcoin verifier.
@@ -27,6 +28,8 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, /**< the current context */
 );
 
 in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst);
+
+btc_target_conf_t* btc_get_config(in3_t* c);
 
 #ifdef __cplusplus
 }

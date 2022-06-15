@@ -32,7 +32,7 @@ function get_fn_name(config, method, path, def) {
     if (action_prefixes.find(_ => parts[i].startsWith(_))) { }
     else if (method == 'get') {
         // If we have a required Id in path, we can assume that the endpoint requires identity and is therefore associated with a single domain model.
-        const hasIdentity = def?.parameters?.find(param => param.in === "path" && param.name === "id" && !!param.required)
+        const hasIdentity = def && def.parameters && def.parameters.find(param => param.in === "path" && param.name === "id" && !!param.required)
         const isAlreadyPlural = parts[i].endsWith('s') // This is a frail assumption (e.g.: access)
         const shouldAddTrailingS = !hasIdentity && !isAlreadyPlural
         parts[i] = 'get_' + parts[i] + (shouldAddTrailingS && i == parts.length - 1 ? 's' : '') + (args.length > 1 ? '_by_' + args[args.length - 1] : '')
