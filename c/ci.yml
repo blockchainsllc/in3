@@ -41,8 +41,8 @@ gcc8:
     - mkdir x64_jni
     - cd x64_build
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release  -DUSE_CURL=false -DZKCRYPTO_LIB=true ..
-    - make in3_jni
-    - cp lib/libin3_jni.so ../x64_jni/
+    - make
+    - cp lib/libin3.so ../x64_jni/libin3_jni.so
     - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=true -DZKCRYPTO_LIB=true ..
     - make
