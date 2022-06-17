@@ -130,6 +130,6 @@ input.forEach((line, i) => {
 console.log(JSON.stringify({ version: '14.0.4', vulnerabilities: res }, null, 2))
 console.error("found Vulnerbilities : ", res.length);
 if (res.length) {
-    console.error(res.map(_ => `- ${_.severity} : ${_.message}`).join('\n'))
+    console.error(res.map(_ => `- ${_.severity} : ${_.message + _.details.path.value.split('\n').map(p => '\n      ' + p).join('')}`).join('\n'))
     process.exitCode = 1
 }
