@@ -575,6 +575,59 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
 
   return in3_rpc_handle_with_bytes(ctx, bytes(hash + 12, 20));
 }
+static in3_ret_t eth_verify_signature(in3_rpc_handle_ctx_t* ctx) {
+  uint8_t*  account;
+  bytes32_t hash;
+  bytes_t   msg, signature;
+  char*     sig_type;
+  uint64_t  block = 0;
+  uint8_t   sig_len[4];
+  sb_t      buf = sb_stack(alloca(50));
+
+  // get arguments
+  TRY_PARAM_GET_REQUIRED_BYTES(msg, ctx, 0, 0, 0)
+  TRY_PARAM_GET_REQUIRED_ADDRESS(account, ctx, 1)
+  TRY_PARAM_GET_REQUIRED_BYTES(signature, ctx, 2, 1, 0)
+  TRY_PARAM_GET_STRING(sig_type, ctx, 3, "raw")
+  TRY_PARAM_GET_LONG(block, ctx, 4, 0);
+
+  sb_add_hexuint(&buf, block);
+
+  if (strcmp(sig_type, "eth_sign") == 0) {
+    char*     tmp = alloca(msg.len + 30);
+    const int l   = sprintf(tmp, ETH_SIGN_PREFIX, msg.len);
+    memcpy(tmp + l, msg.data, msg.len);
+    msg.data = (uint8_t*) tmp;
+    msg.len += l;
+  }
+  if (strcmp(sig_type, "hash") == 0) {
+    if (msg.len != 32) return req_set_error(ctx->req, "The message hash must be 32 byte", IN3_EINVAL);
+    memcpy(hash, msg.data, 32);
+  }
+  else
+    keccak(msg, hash);
+
+  if (signature.len == 65) {
+    uint8_t   pub[64];
+    in3_ret_t r = crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), signature, pub);
+    if (r == IN3_OK) {
+      keccak(bytes(pub, 64), pub);
+      if (memcmp(pub + 12, account, 20) == 0) return in3_rpc_handle_with_string(ctx, "true");
+    }
+  }
+
+  // check if this is a contract signature
+  int_to_bytes(signature.len, sig_len);
+  d_token_t* result = NULL;
+  char*      params = sprintx("{\"to\":\"%B\",\"data\":\"0x1626ba7e%b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000%b%b\"},\"%s\"",
+                              bytes(account, 20), bytes(hash, 32), bytes(sig_len, 4), signature, block ? buf.data : "latest");
+  TRY_FINAL(req_send_sub_request(ctx->req, "eth_call", params, NULL, &result, NULL), _free(params))
+  if (d_is_bytes(result)) {
+    bytes_t res = d_bytes(result);
+    if (res.len > 4 && memcmp(res.data, "\x16\x26\xba\x7e", 4) == 0) return in3_rpc_handle_with_string(ctx, "true");
+  }
+  return in3_rpc_handle_with_string(ctx, "false");
+}
 
 static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   bytes32_t hash;
@@ -839,6 +892,9 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PGET_INTERNAL_TX)
   TRY_RPC("in3_get_internal_tx", eth_getInternalTx(ctx))
+#endif
+#if !defined(RPC_ONLY) || defined(RPC_IN3_VERIFYSIGNATURE)
+  TRY_RPC("in3_verifySignature", eth_verify_signature(ctx))
 #endif
 
   return IN3_EIGNORE;

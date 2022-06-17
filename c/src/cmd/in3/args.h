@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-const char* bool_props[] = {"includeCode", "debug", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
+const char* bool_props[] = {"includeCode", "debug", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "btc.testnet", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
 
 const char* help_args = "\
 --chainId                     -c     the chainId or the name of a known chain\n\
@@ -60,6 +60,7 @@ const char* help_args = "\
 --btc                                configure the Bitcoin verification\n\
 --btc.maxDAP                         max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets\n\
 --btc.maxDiff                        max increase (in percent) of the difference between targets when accepting new targets\n\
+--btc.testnet                        If this flag is set to true, all address prefixes and scripts will be set to testnet mode\n\
 --clearCache                  -ccacheclears the cache before performing any operation\n\
 --eth                         -e     converts the result (as wei) to ether\n\
 --port                        -port  if specified it will run as http-server listening to the given port\n\
