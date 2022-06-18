@@ -580,3 +580,35 @@ signers:
           from: "0xd3441e016ea14fd66ebd6a44ead7aac261dd6425"
           depth: 3
           gas: "0x169426"
+
+  in3_verifySignature:
+    descr: verifies a signature of a wallet. It will also automaticly detect a EIP-1271-Signature and verifies a multisig or other contracts.
+    params:
+      msg:
+        descr: the message the signature is based on.
+        type: string
+      account:
+        descr: the account claiming to be the signer ( can be a multisig or external owned account )
+        type: address
+      sig:
+        descr: the Signature
+        type: bytes
+      sigtype:
+        descr: "the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data). Default: `raw`"
+        type: string
+        default: raw
+        optional: true
+      blockNumber:
+        descr: the blockNumber which should be used in case of an EIP-1271 Contract Signature. You need to make sure, that the configured RPC-Endpoint is running as archive node to verify against older blocks!
+        type: uint64
+        optional: true
+    result:
+      descr: the extracted public key and address
+      type: bool
+    example:
+      request:
+        - "Hey World"
+        - "0x83cf6c46a751150e80c57a0a760f16b1b15f2364"
+        - "0x5bae677dbc31b5daefa22e762b0f80654445c414d9fbb8d824118865f43a93472aa12ecc30cfb9fddf66d0561ce04ef77d0d53047594a58e0c139c2dc2a671861b"
+        - eth_sign
+      response: true

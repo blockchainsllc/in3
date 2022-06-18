@@ -1,6 +1,6 @@
 [
   {
-    "descr": "getblock_bytes",
+    "descr": "getblock_getBlockAsHex",
     "request": {
       "method": "getblock",
       "params": [
@@ -21,7 +21,7 @@
     ]
   },
   {
-    "descr": "getblock_btcblock",
+    "descr": "getblock_getBlock",
     "request": {
       "method": "getblock",
       "params": [
@@ -92,7 +92,7 @@
     ]
   },
   {
-    "descr": "getblock_btcblockWithTx",
+    "descr": "getblock_getBlockWithTx",
     "request": {
       "method": "getblock",
       "params": [
@@ -539,7 +539,7 @@
     ]
   },
   {
-    "descr": "getblock_2 : with Segwit_bytes",
+    "descr": "getblock_2 : with Segwit_getBlockAsHex",
     "request": {
       "method": "getblock",
       "params": [
@@ -560,7 +560,7 @@
     ]
   },
   {
-    "descr": "getblock_2 : with Segwit_btcblock",
+    "descr": "getblock_2 : with Segwit_getBlock",
     "request": {
       "method": "getblock",
       "params": [
@@ -687,7 +687,7 @@
     ]
   },
   {
-    "descr": "getblock_2 : with Segwit_btcblockWithTx",
+    "descr": "getblock_2 : with Segwit_getBlockWithTx",
     "request": {
       "method": "getblock",
       "params": [

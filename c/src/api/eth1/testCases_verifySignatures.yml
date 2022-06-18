@@ -1,0 +1,16 @@
+_defines:
+  - &config
+    requestCount: 1
+    pk:
+      - "0x28fbae083d343037223a9376098403818ae8db519c0e555e198b77816bbe5c9d"
+
+in3:
+  in3_verifySignature:
+    - extra: run in3_verifySignature
+      config: *config
+      input:
+        - "Hello World"
+        - "0x668f26bac08dc0042ead656507143f7904d0ec73"
+        - "0x4e6c7cac5bfdd9969bc9eb6fe8d2f5a7a81e655539e788b1557647f866e03edf4f9c0480ea45806d488f8138fd450c0592e3a81d749a0d2485a0b1c0c1aac8e600"
+        - "eth_sign"
+      expected_output: true

@@ -1,6 +1,6 @@
 [
   {
-    "descr": "getblockheader_bytes",
+    "descr": "getblockheader_getblockheaderAsHex",
     "request": {
       "method": "getblockheader",
       "params": [
@@ -21,7 +21,7 @@
     ]
   },
   {
-    "descr": "getblockheader_btcblockheader",
+    "descr": "getblockheader_getblockheader",
     "request": {
       "method": "getblockheader",
       "params": [

@@ -1,6 +1,6 @@
 [
   {
-    "descr": "getrawtransaction_bytes",
+    "descr": "getrawtransaction_getRawTransactionAsHex",
     "request": {
       "method": "getrawtransaction",
       "params": [
@@ -21,7 +21,7 @@
     ]
   },
   {
-    "descr": "getrawtransaction_btctransaction",
+    "descr": "getrawtransaction_getRawTransaction",
     "request": {
       "method": "getrawtransaction",
       "params": [
@@ -154,7 +154,7 @@
     ]
   },
   {
-    "descr": "getrawtransaction_2 : with Segwit_bytes",
+    "descr": "getrawtransaction_2 : with Segwit_getRawTransactionAsHex",
     "request": {
       "method": "getrawtransaction",
       "params": [
@@ -175,7 +175,7 @@
     ]
   },
   {
-    "descr": "getrawtransaction_2 : with Segwit_btctransaction",
+    "descr": "getrawtransaction_2 : with Segwit_getRawTransaction",
     "request": {
       "method": "getrawtransaction",
       "params": [
