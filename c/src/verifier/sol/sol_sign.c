@@ -152,7 +152,7 @@ in3_ret_t sol_send_tx(in3_rpc_handle_ctx_t* ctx) {
     RPC_ASSERT_CATCH(pa.pubkey, "Missing valid programId in instruction", _free(accounts.data))
     ac_add_pubkey(&accounts, pa);
 
-    for (d_iterator_t ac = d_iter(d_get(it.token, key("accounts"))); ac.left; d_iter_next(&ac)) {
+    for_children_of(ac, d_get(it.token, key("accounts"))) {
       sol_account_t sac = {
           .flags  = (d_get_int(ac.token, key("write")) ? FLAG_WRITE : 0) | (d_get_int(ac.token, key("sign")) ? FLAG_SIGN : 0),
           .pubkey = get_base58_bytes(d_get(ac.token, key("pubkey")), 32)};
@@ -182,13 +182,13 @@ in3_ret_t sol_send_tx(in3_rpc_handle_ctx_t* ctx) {
 
   // add the instructions
   bb_write_raw_bytes(&bb, buf, sol_encode_len(instructions_len, buf));
-  for (d_iterator_t it = d_iter(d_get(tx, key("instructions"))); it.left; d_iter_next(&it)) {
+  for_children_of(it, d_get(tx, key("instructions"))) {
     d_token_t* accounts_idxs = d_get(it.token, key("accounts"));
     bytes_t    data          = d_bytes_enc(d_get(it.token, key("data")), ENC_BASE58);
     bb_write_byte(&bb, ac_index_of(bb.b.data + start_accounts, accounts.len, d_get_bytes(it.token, key("programId")).data));
     bb_write_raw_bytes(&bb, buf, sol_encode_len(d_len(accounts_idxs), buf));
-    for (d_iterator_t ac = d_iter(accounts_idxs); ac.left; d_iter_next(&ac))
-      bb_write_byte(&bb, ac_index_of(bb.b.data + start_accounts, accounts.len, d_get_bytes(ac.token, key("pubkey")).data));
+    for_children_of(ac, accounts_idxs)
+        bb_write_byte(&bb, ac_index_of(bb.b.data + start_accounts, accounts.len, d_get_bytes(ac.token, key("pubkey")).data));
     bb_write_raw_bytes(&bb, buf, sol_encode_len(data.len, buf));
     if (data.data) bb_write_raw_bytes(&bb, data.data, data.len);
   }

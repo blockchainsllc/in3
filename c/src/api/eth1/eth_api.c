@@ -161,13 +161,12 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       // calc size
       uint32_t s = align(sizeof(eth_block_t));
       if (include_tx) {
-        for (d_iterator_t it = d_iter(txs); it.left; d_iter_next(&it))
-          s += get_tx_size(it.token); // add all struct-size for each transaction
+        for_children_of(it, txs) s += get_tx_size(it.token); // add all struct-size for each transaction
       }
       else                    // or
         s += 32 * d_len(txs); // just the transaction hashes
       s += align(extra.len);  // extra-data
-      for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
+      for_children_of(sf, sealed) {
         bytes_t t = d_bytes(sf.token);
         rlp_decode(&t, 0, &t);
         s += align(t.len) + align(sizeof(bytes_t)); // for each field in the selad-fields we need a bytes_t-struct in the array + the data itself
@@ -204,7 +203,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       p += align(extra.len);
       b->seal_fields = (void*) p;
       p += align(sizeof(bytes_t)) * b->seal_fields_count;
-      for (d_iterator_t sfitr = d_iter(sealed); sfitr.left; d_iter_next(&sfitr)) {
+      for_children_of(sfitr, sealed) {
         bytes_t sf = d_bytes(sfitr.token);
         rlp_decode(&sf, 0, &sf);
         b->seal_fields[b->seal_fields_count - sfitr.left] = bytes(p, sf.len);
@@ -215,7 +214,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       b->tx_data   = include_tx ? (eth_tx_t*) p : NULL;
       b->tx_hashes = include_tx ? NULL : (bytes32_t*) p;
 
-      for (d_iterator_t it = d_iter(txs); it.left; d_iter_next(&it)) {
+      for_children_of(it, txs) {
         if (include_tx)
           p += write_tx(it.token, (eth_tx_t*) p);
         else {
@@ -278,7 +277,7 @@ uint64_t eth_gasPrice(in3_t* in3) {
 static eth_log_t* parse_logs(d_token_t* result) {
   eth_log_t *prev, *first;
   prev = first = NULL;
-  for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
+  for_children_of(it, result) {
     eth_log_t* log         = _calloc(1, sizeof(*log));
     log->removed           = d_get_int(it.token, K_REMOVED);
     log->log_index         = d_get_int(it.token, K_LOG_INDEX);

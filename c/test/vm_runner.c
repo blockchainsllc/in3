@@ -162,7 +162,7 @@ int runRequests(char** names, int test_index, uint32_t props) {
     d_token_t* tokens    = NULL;
 
     if (parsed->result) {
-      for (d_iterator_t it = d_iter(parsed->result); it.left; d_iter_next(&it)) {
+      for_children_of(it, parsed->result) {
         count++;
         if (test_index < 0 || count == test_index) {
           total++;

@@ -333,7 +333,7 @@ bool d_eq(d_token_t* a, d_token_t* b) {
     return true;
   }
   if (d_type(a) == T_OBJECT) {
-    for (d_iterator_t ia = d_iter((d_token_t*) a); ia.left; d_iter_next(&ia)) {
+    for_children_of(ia, a) {
       if (!d_eq(ia.token, d_get((d_token_t*) b, ia.token->key))) return false;
     }
     return true;
@@ -777,7 +777,7 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
       else {
         sb_t sb = {0};
         sb_add_char(&sb, d_type(item) == T_ARRAY ? '[' : '{');
-        for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
+        for_children_of(it, item) {
           char* p = d_create_json(ctx, it.token);
           if (sb.len > 1) sb_add_char(&sb, ',');
           if (d_type(item) == T_OBJECT) {

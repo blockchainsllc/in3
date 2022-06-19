@@ -116,4 +116,44 @@ RETURNS_NONULL void* _calloc_(size_t n, size_t size, char* file, const char* fun
 void                 _free_(void* ptr);
 #endif /* TEST */
 
+// these function are used for cleaning up allocated memory
+typedef void (*cleanup_t)(void* data);
+typedef struct tmp_mem {
+  void*           ptr;
+  cleanup_t       fn;
+  struct tmp_mem* next;
+} safe_mem_t;
+
+static inline void* _tmp_add(void* ptr, cleanup_t fn, safe_mem_t** list, safe_mem_t* next) {
+  if (!ptr) return NULL;
+  next->ptr  = ptr;
+  next->next = *list;
+  next->fn   = fn;
+  *list      = next;
+  return ptr;
+}
+#define SAFE_DEFER(ptr, fn) _tmp_add(ptr, fn, &_tmp_mem_list, alloca(sizeof(safe_mem_t)))
+#define SAFE_INIT           safe_mem_t* _tmp_mem_list = NULL;
+#define SAFE_MALLOC(size)   (size > 100 ? _tmp_add(_malloc(size), free, &_tmp_mem_list, alloca(sizeof(safe_mem_t))) : alloca(size))
+#define SAFE_RETURN(val)                                                                  \
+  {                                                                                       \
+    for (; _tmp_mem_list; _tmp_mem_list = _tmp_mem_list->next) _free(_tmp_mem_list->ptr); \
+    return val;                                                                           \
+  }
+#define TRY_SAFE(exp)                \
+  {                                  \
+    in3_ret_t r = (exp);             \
+    if (r != IN3_OK) SAFE_RETURN(r); \
+  }
+/*
+in3_ret_t tf() {
+  SAFE_INIT;
+  json_ctx* ctx = parse_json(data);
+  SAFE_DEFER(ctx, json_free);
+  if (!ctx || d_type(cxt->result)!=T_ARRAY) SAFE_RETURN(IN3_EINVAL);
+
+  SAFE_RETURN();
+}
+*/
+
 #endif /* __MEM_H__ */

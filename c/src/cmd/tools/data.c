@@ -226,7 +226,7 @@ static void make_bytes(d_token_t* t) {
   switch (d_type(t)) {
     case T_OBJECT:
     case T_ARRAY:
-      for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter)) make_bytes(iter.token);
+      for_children_of(iter, t) make_bytes(iter.token);
       break;
     case T_STRING:
       if (d_is_bytes(t)) d_bytes(t);

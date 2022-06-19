@@ -208,8 +208,7 @@ btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t) {
   if (!tx) RETURN_NULL_ERROR(IN3_EINVAL, "no tx found");
 
   size_t total_data = 0;
-  for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter))
-    total_data += tx_data_size(iter.token);
+  for_children_of(iter, tx) total_data += tx_data_size(iter.token);
 
   btc_block_txdata_t* res = _malloc(sizeof(btc_block_txdata_t) + d_len(tx) * sizeof(btc_transaction_t) + total_data);
   TRY_OR_NULL(fill_blockheader(t, &res->header), "invalid blockheader");

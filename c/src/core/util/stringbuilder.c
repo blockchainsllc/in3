@@ -325,8 +325,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
       if (r.data) return sb_add_range(sb, r.data, 0, r.len);
       const char* brackets = d_type(token) == T_ARRAY ? "[]" : "{}";
       sb_add_char(sb, brackets[0]);
-      for (d_iterator_t iter = d_iter(token); iter.left; d_iter_next(&iter))
-        sb_add_json(sb, iter.token != token + 1 ? "," : "", iter.token);
+      for_children_of(iter, token) sb_add_json(sb, iter.left != d_len(token) ? "," : "", iter.token);
       return sb_add_char(sb, brackets[1]);
     }
     case T_BOOLEAN:

@@ -230,7 +230,8 @@ static inline bool d_iter_next(d_iterator_t* const iter) {
   iter->token = d_next(iter->token);
   return iter->left--;
 } /**< fetched the next token an returns a boolean indicating whther there is a next or not.*/
-
+/** iterates over the children of parent. The it.token will hold the d_token_t* ptr of the current child. */
+#define for_children_of(it, parent) for (d_iterator_t it = d_iter(parent); it.left; d_iter_next(&it))
 #ifdef __ZEPHYR__
 
 #define printX   printk

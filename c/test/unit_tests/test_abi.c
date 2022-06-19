@@ -216,7 +216,7 @@ static void test_json() {
   json_ctx_t* jctx = parse_json(json_data);
   TEST_ASSERT_NOT_NULL_MESSAGE(jctx, "Invalid json");
   int count = 0;
-  for (d_iterator_t iter = d_iter(jctx->result); iter.left; d_iter_next(&iter)) {
+  for_children_of(iter, jctx->result) {
     count++;
     char*      error      = NULL;
     char*      sig        = d_get_string(iter.token, key("sig"));

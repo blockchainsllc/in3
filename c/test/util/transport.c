@@ -28,6 +28,7 @@ typedef struct response_s {
 static response_t* response_buffer = NULL;
 static response_t* responses;
 char*              read_json_response_buffer(char* path) {
+
   size_t pl          = strlen(path);
   char*  path_native = alloca(pl + 1);
 #ifdef WIN32
@@ -100,7 +101,7 @@ int add_response_test(char* test, char* needed_params) {
     params = d_create_json(mock, d_get(req, key("params")));
   }
   else if (d_type(mock->result) == T_ARRAY) {
-    for (d_iterator_t iter = d_iter(mock->result); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, mock->result) {
       res    = d_to_json(d_get_at(d_get(iter.token, key("response")), 0));
       req    = d_get_at(d_get(iter.token, key("request")), 0);
       params = d_create_json(mock, d_get(req, key("params")));
@@ -169,7 +170,7 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   str_range_t         params   = d_to_json(d_get(request, K_PARAMS));
   char*               p        = alloca(params.len + 1);
   sb_t*               filename = sb_new(method);
-  for (d_iterator_t iter = d_iter(d_get(request, K_PARAMS)); iter.left; d_iter_next(&iter)) {
+  for_children_of(iter, d_get(request, K_PARAMS)) {
     d_bytes(iter.token);
     switch (d_type(iter.token)) {
       case T_BOOLEAN:

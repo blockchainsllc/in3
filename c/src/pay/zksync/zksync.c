@@ -383,7 +383,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
   d_token_t* incentive = d_get(ctx->token, CONFIG_KEY("incentive"));
   if (incentive) {
     if (!conf->incentive) conf->incentive = _calloc(1, sizeof(pay_criteria_t));
-    for (d_iterator_t iter = d_iter(incentive); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, incentive) {
       if (d_is_key(iter.token, CONFIG_KEY("nodes"))) {
         conf->incentive->payed_nodes = d_int(iter.token);
         in3_req_t c                  = {0};

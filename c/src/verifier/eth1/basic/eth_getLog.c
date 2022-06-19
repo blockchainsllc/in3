@@ -64,7 +64,7 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
     return !!bytes_cmp(addrs, d_bytes(jaddrs));
   }
   else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
-    for (d_iterator_t it = d_iter(jaddrs); it.left; d_iter_next(&it)) {
+    for_children_of(it, jaddrs) {
       if (bytes_cmp(addrs, d_bytes(it.token))) return true;
     }
   }
@@ -210,7 +210,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   if (!vc->proof) return vc_err(vc, "no proof for logs found");
   if (d_len(d_get(vc->proof, K_LOG_PROOF)) > l_logs) return vc_err(vc, "too many proofs");
 
-  for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
+  for_children_of(it, d_get(vc->proof, K_LOG_PROOF)) {
     sprintf(xtmp, "0x%" PRIx64, d_get_long(it.token, K_NUMBER));
     if (strlen(xtmp) % 2) {
       memmove(xtmp + 3, xtmp + 2, strlen(xtmp) - 1);
@@ -231,7 +231,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (rlp_decode(&block, BLOCKHEADER_NUMBER, &receipts[i].block_number) != 1) return vc_err(vc, "invalid block number");
 
     // verify all receipts
-    for (d_iterator_t receipt = d_iter(d_get(it.token, K_RECEIPTS)); receipt.left; d_iter_next(&receipt)) {
+    for_children_of(receipt, d_get(it.token, K_RECEIPTS)) {
       // verify that txn hash matches key
       if (i == l_logs) return vc_err(vc, "too many receipts in the proof");
       receipt_t* r = receipts + i;
@@ -273,7 +273,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   }
 
   uint64_t prev_blk = 0;
-  for (d_iterator_t it = d_iter(vc->result); it.left; d_iter_next(&it)) {
+  for_children_of(it, vc->result) {
     receipt_t* r = NULL;
     i            = 0;
     for (int n = 0; n < l_logs; n++) {
@@ -302,7 +302,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (rlp_decode(&logddata, 1, &tops) != 2) return vc_err(vc, "invalid topics");
     if (rlp_decode_len(&tops) != d_len(topics)) return vc_err(vc, "invalid topics len");
 
-    for (d_iterator_t t = d_iter(topics); t.left; d_iter_next(&t)) {
+    for_children_of(t, topics) {
       if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, d_bytesl(t.token, 32))) return vc_err(vc, "invalid topic");
     }
 

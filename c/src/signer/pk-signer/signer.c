@@ -271,7 +271,7 @@ static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
   sb_t path = {0};
 
   if (d_type(paths) == T_ARRAY) {
-    for (d_iterator_t iter = d_iter(paths); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, paths) {
       if (path.len) sb_add_char(&path, ' ');
       sb_add_chars(&path, d_string(iter.token));
     }
@@ -332,7 +332,7 @@ static in3_ret_t signer_ids(in3_rpc_handle_ctx_t* ctx) {
 }
 static in3_ret_t pk_add_from_config(in3_configure_ctx_t* ctx, d_curve_type_t type) {
   if (d_type(ctx->token) == T_ARRAY) {
-    for (d_iterator_t iter = d_iter(ctx->token); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, ctx->token) {
       bytes_t b = d_bytes(iter.token);
       if (b.len != 32) {
         ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);

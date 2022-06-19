@@ -124,8 +124,7 @@ NONULL static void add_token_to_hash(in3_digest_t msg_hash, d_token_t* t) {
   switch (d_type(t)) {
     case T_ARRAY:
     case T_OBJECT:
-      for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter))
-        add_token_to_hash(msg_hash, iter.token);
+      for_children_of(iter, t) add_token_to_hash(msg_hash, iter.token);
       return;
     case T_NULL:
       return;
@@ -566,7 +565,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
         break;
     }
 
-    for (d_iterator_t iter = d_iter(d_get_at(params, 3)); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, d_get_at(params, 3)) {
       in3_req_header_t* t = _malloc(sizeof(in3_req_header_t));
       t->value            = d_string(iter.token);
       t->next             = request->headers;

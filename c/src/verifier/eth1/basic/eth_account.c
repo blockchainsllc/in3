@@ -200,7 +200,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     if (!requested_key.data) return vc_err(vc, "missing key");
     b_optimize_len(&requested_key);
 
-    for (d_iterator_t it = d_iter(storage); it.left; d_iter_next(&it)) {
+    for_children_of(it, storage) {
       bytes_t storage_key = d_bytes(d_get(it.token, K_KEY));
       b_optimize_len(&storage_key);
       if (b_cmp(&storage_key, &requested_key)) {

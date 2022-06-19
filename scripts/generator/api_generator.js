@@ -177,7 +177,7 @@ function defineType(type_name, type, types, api, type_defs, descr, init, src_typ
         impl: `in3_ret_t ${convert_fn_name(api, type_name)}(in3_req_t* r, d_token_t* ob, ${type_name}* val) {\n` +
             `  if (d_type(ob) != T_OBJECT) return rpc_throw(r, "Invalid %s object", "${simple_typename}");\n` +
             '  val->json = ob;\n' +
-            '  for (d_iterator_t iter = d_iter(ob); iter.left; d_iter_next(&iter)) {\n' +
+            '  for_children_of(iter, ob) {\n' +
             '    switch (d_get_key(iter.token)) {\n'
     }
     // TODO handle default-values

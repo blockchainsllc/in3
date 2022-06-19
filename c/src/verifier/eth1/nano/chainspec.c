@@ -82,7 +82,7 @@ static void           fill_aura(json_ctx_t* ctx, d_token_t* validators, consensu
     t->validators.len  = d_len(list) * 20;
     t->validators.data = _calloc(1, t->validators.len);
     int n              = 0;
-    for (d_iterator_t iter = d_iter(list); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, list) {
       bytes_t bb = d_bytes(iter.token);
       memcpy(t->validators.data + 20 * (n++) + 20 - bb.len, bb.data, bb.len);
     }
@@ -182,8 +182,8 @@ chainspec_t* chainspec_create_from_json(json_ctx_t* ctx) {
       int n                           = 0;
       spec->consensus_transitions_len = d_len(multi);
       spec->consensus_transitions     = _realloc(spec->consensus_transitions, sizeof(consensus_transition_t) * spec->consensus_transitions_len, sizeof(consensus_transition_t));
-      for (d_iterator_t iter = d_iter(multi); iter.left; d_iter_next(&iter))
-        fill_aura(ctx, iter.token, spec->consensus_transitions + (n++), d_get_keystr(ctx, iter.token->key));
+      for_children_of(iter, multi)
+          fill_aura(ctx, iter.token, spec->consensus_transitions + (n++), d_get_keystr(ctx, iter.token->key));
     }
     else
       fill_aura(ctx, params, spec->consensus_transitions, NULL);
