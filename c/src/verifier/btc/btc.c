@@ -771,8 +771,8 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outpu
 
   // if we have a string builder set up, write the result to it
   if (meta) {
-    sb_add_chars(meta, "\"unsigned\":");
-    sb_add_rawbytes(meta, "\"", *dst, -1);
+    sb_add_chars(meta, "\"unsigned\":\"");
+    sb_add_rawbytes(meta, "0", *dst, -1);
     sb_add_char(meta, '\"');
   }
 
@@ -889,14 +889,19 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
     }
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* cctx = pctx;
-      if (d_is_key(cctx->token, CONFIG_KEY("testnet")))
-        conf->is_testnet = d_int(cctx->token);
-      else if (d_is_key(cctx->token, CONFIG_KEY("maxDAP")))
-        conf->max_daps = d_int(cctx->token);
-      else if (d_is_key(cctx->token, CONFIG_KEY("maxDiff")))
-        conf->max_diff = d_int(cctx->token);
-      else
-        return IN3_EIGNORE;
+      if (!d_is_key(cctx->token, key("btc"))) return IN3_EIGNORE;
+      d_token_t* temp = d_get(cctx->token, CONFIG_KEY("testnet"));
+      if (temp) {
+        conf->is_testnet = d_int(temp);
+      }
+      temp = d_get(cctx->token, CONFIG_KEY("maxDAP"));
+      if (temp) {
+        conf->max_daps = d_int(temp);
+      }
+      temp = d_get(cctx->token, CONFIG_KEY("maxDiff"));
+      if (temp) {
+        conf->max_diff = d_int(temp);
+      }
       return IN3_OK;
     }
     case PLGN_ACT_RPC_HANDLE:
