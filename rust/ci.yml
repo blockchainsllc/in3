@@ -100,7 +100,7 @@ rust_valgrind:
     - long-jobs
 
 rust:
-  image: docker.slock.it/build-images/cmake:rust
+  image: docker.slock.it/build-images/cmake:clang14
   stage: bindings
   script:
     - export RUST_BACKTRACE=1
