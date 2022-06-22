@@ -136,7 +136,7 @@ mac_os:
     - mkdir mac_jni
     - cd mac_build
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL  -DZKCRYPTO_LIB=true -DTRANSPORTS=false -DUSE_SCRYPT=true ..
-    - make in3_jni
+    - make
     - cp lib/libin3_jni.dylib ../mac_jni/
     - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL  -DZKCRYPTO_LIB=true ..
