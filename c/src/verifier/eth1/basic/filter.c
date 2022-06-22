@@ -48,7 +48,7 @@ static bool filter_addrs_valid(d_token_t* addr) {
   else if (d_type(addr) != T_ARRAY)
     return false;
 
-  for (d_iterator_t it = d_iter(addr); it.left; d_iter_next(&it)) {
+  for_children_of(it, addr) {
     if (d_bytes(it.token).len != 20) return false;
   }
   return true;

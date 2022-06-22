@@ -191,7 +191,7 @@ function handle_config(ctx, conf, pre, title, descr) {
             c.type = types[c.type]
         }
         // handle bindings
-        generators.forEach(_ => _.updateConfig(pre, c, key, types))
+        generators.forEach(_ => _.updateConfig(pre, c, key, types, ctx))
 
         // handle doc
         if (!pre) {
@@ -295,16 +295,16 @@ async function main() {
         })
     }
     sorted_rpcs = sorted_rpcs.filter(a => Object.values(a.rpcs).filter(_ => !_.skipApi).length || sorted_rpcs.find(_ => camelCaseLow(a.api) == camelCaseLow(_.conf.extension || '')))
-    const ctx = { config_doc, cmdName, examples, doc_dir, apis: sorted_rpcs, types, conf: cmake, cmake_deps, cmake_types, config }
+    const ctx = { config_doc, cmdName, examples, doc_dir, apis: sorted_rpcs, types, conf: cmake, cmake_deps, cmake_types, config, sdkName }
     Object.keys(cmake_deps).forEach(m => { cmake_deps[m].depends = cmake_deps[m].depends.filter(_ => cmake_deps[_]) })
     generators.forEach(_ => _.generateAPI && sorted_rpcs.forEach(api => _.generateAPI(api.api, api.rpcs, api.descr, types, api.testCases, cmake)))
-    generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs({ apis: sorted_rpcs, types, conf: cmake, cmake_deps, cmake_types }))
+    generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs(ctx))
     doc_dir.forEach(doc_dir => fs.existsSync(doc_dir) && create_rpc_doc(ctx))
 
     handle_config(ctx, config, '')
 
     generators.forEach(_ => {
-        _.generate_config()
+        _.generate_config(ctx)
         if (_.mergeExamples && examples && doc_dir.length && fs.existsSync(doc_dir[0]) && _.mergeExamples(examples))
             fs.writeFileSync(doc_dir[0] + '/rpc_examples.json', JSON.stringify(examples, null, 2), { encoding: 'utf8' })
     })

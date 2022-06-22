@@ -61,7 +61,8 @@ typedef enum {
   ENC_HEX     = 1, /**< hexadecimal encoding (without any prefix ) */
   ENC_BASE58  = 2, /**< base58 encoding as used to represent addresses */
   ENC_BASE64  = 3, /**< base64 encoding */
-  ENC_DECIMAL = 4  /**< converts the bytes as a decimal number as string. ( max 32 bytes )*/
+  ENC_DECIMAL = 4, /**< converts the bytes as a decimal number as string. ( max 32 bytes )*/
+  ENC_UTF8    = 5, /**< the input is a utf-string*/
 } in3_encoding_type_t;
 
 /** type of the eliptic or edward curve */
@@ -147,7 +148,8 @@ void pbkdf2_hmac_sha256(const uint8_t* pass, int passlen, const uint8_t* salt,
                         int saltlen, uint32_t iterations, uint8_t* key,
                         int keylen);
 
-in3_ret_t aes_128_ctr_decrypt(uint8_t* aeskey, bytes_t cipher, uint8_t* iv_data, bytes32_t dst);
+in3_ret_t           aes_128_ctr_decrypt(uint8_t* aeskey, bytes_t cipher, uint8_t* iv_data, bytes32_t dst);
+in3_encoding_type_t d_encoding_from_string(char* enc, in3_encoding_type_t def);
 
 #ifdef __cplusplus
 }

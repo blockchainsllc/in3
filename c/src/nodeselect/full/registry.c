@@ -51,7 +51,7 @@ static in3_ret_t get_storage_value(d_token_t* storage_proofs, uint8_t* skey, byt
   optimize_len(skey, key_len);
   bytes_t  tmp;
   uint8_t *p, l;
-  for (d_iterator_t it = d_iter(storage_proofs); it.left; d_iter_next(&it)) {
+  for_children_of(it, storage_proofs) {
     tmp = d_bytes(d_get(it.token, K_KEY));
     p   = tmp.data;
     l   = tmp.len;
@@ -159,7 +159,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
       for (d_iterator_t itr = d_iter(required_addresses); itr.left; d_iter_next(&itr), i++) {
         bool    found = false;
         bytes_t adr   = d_bytesl(itr.token, 20);
-        for (d_iterator_t itn = d_iter(server_list); itn.left; d_iter_next(&itn)) {
+        for_children_of(itn, server_list) {
           if (bytes_cmp(d_get_byteskl(itn.token, K_ADDRESS, 20), adr)) {
             found           = true;
             seed_indexes[i] = d_get_int(itn.token, K_INDEX);
@@ -186,7 +186,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
     return vc_err(vc, "wrong number of nodes in the serverlist");
 
   // now check the content of the nodelist
-  for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it)) {
+  for_children_of(it, server_list) {
     uint32_t index = d_get_int(it.token, K_INDEX);
     create_node_hash(it.token, svalue);
     TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), svalue));
@@ -270,7 +270,7 @@ static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_t
   else
     return vc_err(vc, "no storage-hash found!");
 
-  for (d_iterator_t it = d_iter(*storage_proof); it.left; d_iter_next(&it)) {
+  for_children_of(it, *storage_proof) {
     // prepare the key
     d_bytes_to(d_get(it.token, K_KEY), hash, 32);
     keccak(path, hash);

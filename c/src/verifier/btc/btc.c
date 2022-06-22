@@ -214,7 +214,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
     list = d_get(vc->result, key("vin"));
     if (d_type(list) != T_ARRAY || d_len(list) != (int) tx_data.input_count) return vc_err(vc, "invalid vin");
 
-    for (d_iterator_t iter = d_iter(list); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, list) {
       p = btc_parse_tx_in(p, &tx_in, end);
       if (!p) return vc_err(vc, "invalid vin");
 
@@ -418,7 +418,7 @@ in3_ret_t btc_verify_target_proof(btc_target_conf_t* conf, in3_vctx_t* vc, d_tok
   if (conf->max_daps != (uint_fast16_t) d_get_int_at(params, 3)) return vc_err(vc, "invalid max_daps");
   //  if (conf->dap_limit != (uint_fast16_t) d_get_int_at(params, 4)) return vc_err(vc, "invalid dap_limit");
 
-  for (d_iterator_t iter = d_iter(vc->result); iter.left; d_iter_next(&iter)) {
+  for_children_of(iter, vc->result) {
     if (d_type(iter.token) != T_OBJECT) return vc_err(vc, "invalid type for proof");
     bytes_t header           = d_bytes(d_get(iter.token, K_BLOCK));
     bytes_t finality_headers = d_bytes(d_get(iter.token, key("final")));

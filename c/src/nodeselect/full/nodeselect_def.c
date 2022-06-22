@@ -219,7 +219,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
 #ifdef NODESELECT_DEF_WL
     bool has_wlc = false, has_man_wl = false;
 #endif
-    for (d_iterator_t cp = d_iter(token); cp.left; d_iter_next(&cp)) {
+    for_children_of(cp, token) {
       bytes_t b = d_bytes(cp.token);
       if (d_is_key(cp.token, key("contract"))) {
         EXPECT_TOK_ADDR(cp.token);
@@ -279,7 +279,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
       else if (d_is_key(cp.token, CONFIG_KEY("nodeList"))) {
         EXPECT_TOK_ARR(cp.token);
         if (clear_nodes(data) < 0) goto cleanup;
-        for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
+        for_children_of(n, cp.token) {
           EXPECT_CFG(d_get(n.token, CONFIG_KEY("url")) && d_get(n.token, CONFIG_KEY("address")), "expected URL & address");
           EXPECT_TOK_STR(d_get(n.token, CONFIG_KEY("url")));
           EXPECT_TOK_ADDR(d_get(n.token, CONFIG_KEY("address")));

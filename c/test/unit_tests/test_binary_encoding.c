@@ -99,7 +99,7 @@ static void test_binary_object() {
   // test object
   d_token_t* accounts  = d_get(d_get(d_get(ctx->result, k_in3), k_proof), k_accounts);
   char*      str_proof = NULL;
-  for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
+  for_children_of(iter, accounts) {
     d_token_t* storage_object = d_get_at(d_get(iter.token, k_storageProof), 0);
     bytes_t    proof_s        = d_get_bytes_at(d_get(storage_object, k_proof), 0);
     int32_t    key            = d_int(d_get(storage_object, k_key));
@@ -121,7 +121,7 @@ static void test_binary_array() {
   int         k_proof        = key_("proof");
   // test byte array
   d_token_t* accounts = d_get(d_get(d_get(ctx->result, k_in3), k_proof), k_accounts);
-  for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
+  for_children_of(iter, accounts) {
     d_token_t* accounts_array = d_get(iter.token, k_accountProof);
     int        index          = 0;
     char*      str_proof      = NULL;

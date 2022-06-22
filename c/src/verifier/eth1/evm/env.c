@@ -44,7 +44,7 @@ static d_token_t* get_account(in3_vctx_t* vc, d_token_t* accounts, uint8_t* addr
     vc_err(vc, "no accounts");
     return NULL;
   }
-  for (d_iterator_t it = d_iter(accounts); it.left; d_iter_next(&it)) {
+  for_children_of(it, accounts) {
     if (memcmp(d_get_byteskl(it.token, K_ADDRESS, 20).data, address, 20) == 0)
       return it.token;
   }

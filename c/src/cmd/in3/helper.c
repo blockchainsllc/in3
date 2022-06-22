@@ -283,8 +283,7 @@ void print_val(d_token_t* token) {
         if (strcmp(level, "error") == 0) recorder_print(0, COLOR_RED_STR "\n", msg);
       }
       else {
-        for (d_iterator_t it = d_iter(t); it.left; d_iter_next(&it))
-          print_val(it.token);
+        for_children_of(it, t) print_val(it.token);
       }
     } break;
     case T_BOOLEAN:

@@ -354,16 +354,44 @@ typedef struct sign_ctx {
 } in3_sign_ctx_t;
 
 /**
- * helper function to retrieve and message from a in3_sign_ctx_t
+ * helper function to retrieve the message from a in3_sign_ctx_t
  */
 bytes_t in3_sign_ctx_get_message(
     in3_sign_ctx_t* ctx /**< the signer context */
 );
 
 /**
- * helper function to retrieve and account from a in3_sign_ctx_t
+ * helper function to retrieve the account from a in3_sign_ctx_t
  */
 bytes_t in3_sign_ctx_get_account(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve the digest_type from a in3_sign_ctx_t
+ */
+d_digest_type_t in3_sign_ctx_get_digest_type(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve the d_payload_type_t from a in3_sign_ctx_t
+ */
+d_payload_type_t in3_sign_ctx_get_payload_type(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve the curve_type from a in3_sign_ctx_t
+ */
+d_curve_type_t in3_sign_ctx_get_curve_type(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve the meta from a in3_sign_ctx_t
+ */
+const char* in3_sign_ctx_get_meta(
     in3_sign_ctx_t* ctx /**< the signer context */
 );
 

@@ -81,7 +81,7 @@
 static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;
   hex_to_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
-  for (d_iterator_t iter = d_iter(d_get(receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
+  for_children_of(iter, d_get(receipt, K_LOGS)) {
     bytes_t t = d_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
     if (t.data && t.len == 32 && memcmp(event_hash, t.data, 32) == 0) return iter.token;
   }
@@ -451,7 +451,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
     }
 
     // let's iterate over the found events
-    for (d_iterator_t iter = d_iter(d_get(ctx->responses[0], K_RESULT)); iter.left; d_iter_next(&iter)) {
+    for_children_of(iter, d_get(ctx->responses[0], K_RESULT)) {
       d_token_t*    topics = d_get(iter.token, K_TOPICS);
       bytes_t       t0     = d_bytesl(d_get_at(topics, 0), 32);
       usn_device_t* device = find_device_by_id(conf, d_bytes(d_get_at(topics, 2)).data);

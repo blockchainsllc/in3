@@ -38,7 +38,7 @@ void sb_to_yaml(sb_t* sb, d_token_t* t, int level, bool as_array_item) {
       }
       else {
         bool first = true;
-        for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter)) {
+        for_children_of(iter, t) {
           if (first && as_array_item)
             sb_add_chars(sb, "-");
           else
@@ -51,7 +51,7 @@ void sb_to_yaml(sb_t* sb, d_token_t* t, int level, bool as_array_item) {
     }
     case T_OBJECT: {
       bool first = true;
-      for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter)) {
+      for_children_of(iter, t) {
         bool skip  = false;
         bool after = false;
         for (d_iterator_t iter2 = d_iter(t); iter2.left; d_iter_next(&iter2)) {
