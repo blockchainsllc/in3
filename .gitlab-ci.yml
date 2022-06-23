@@ -50,8 +50,20 @@ wasm:
   needs: []
   variables:
     UPSTREAM_BRANCH_IN3: $CI_COMMIT_REF_NAME
-    IN3_VERSION: v4.3.2 # $CI_COMMIT_TAG
+    IN3_VERSION: $CI_COMMIT_TAG
   trigger:
     project: in3/sdk/sdk-js
+    strategy: depend
+    branch: wasm2
+
+java:
+  stage: bindings
+  needs: []
+  variables:
+    UPSTREAM_BRANCH_IN3: $CI_COMMIT_REF_NAME
+    IN3_VERSION: $CI_COMMIT_TAG
+    IN3_ONLY: -DIN3_ONLY=true
+  trigger:
+    project: in3/sdk/sdk-java
     strategy: depend
     branch: wasm2
