@@ -69,7 +69,7 @@ void btc_free_tx_in(btc_tx_in_t* tx_in) {
 }
 
 void btc_free_tx_out(btc_tx_out_t* tx_out) {
-  if (tx_out && tx_out->script.data.data) _free(tx_out->script.data.data);
+  if (tx_out && tx_out->script.data.data) _free(&tx_out->script.data);
 }
 
 void btc_free_utxo(btc_utxo_t* utxo) {
@@ -484,7 +484,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
       dst                 = &tx_ctx->tx.input;
       tx_ctx->input_count = tx_ctx->tx.input_count;
       tx_ctx->tx.input_count++;
-      tx_ctx->inputs = tx_ctx->inputs ? _realloc(tx_ctx->inputs, tx_ctx->input_count * sizeof(btc_tx_in_t), (tx_ctx->input_count + 1) * sizeof(btc_tx_in_t)) : _malloc(sizeof(btc_tx_in_t));
+      tx_ctx->inputs = tx_ctx->inputs ? _realloc(tx_ctx->inputs, (tx_ctx->input_count + 1) * sizeof(btc_tx_in_t), tx_ctx->input_count * sizeof(btc_tx_in_t)) : _malloc(sizeof(btc_tx_in_t));
 
       // Input deep copy
       tx_ctx->inputs[tx_ctx->input_count].prev_tx_index    = tx_in->prev_tx_index;
@@ -499,16 +499,25 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
       tx_ctx->input_count++;
       must_free = true;
     } break;
-    case BTC_OUTPUT:
-      TRY(btc_serialize_tx_out(req, (btc_tx_out_t*) src, &raw_src))
+    case BTC_OUTPUT: {
+      btc_tx_out_t* tx_out = (btc_tx_out_t*) src;
+      TRY(btc_serialize_tx_out(req, tx_out, &raw_src))
       old_len = tx_ctx->tx.output.len;
       dst     = &tx_ctx->tx.output;
+      // tx_ctx->output_count = tx_ctx->tx.output_count;
       tx_ctx->tx.output_count++;
-      tx_ctx->outputs                       = tx_ctx->outputs ? _realloc(tx_ctx->outputs, tx_ctx->output_count * sizeof(btc_tx_out_t), (tx_ctx->output_count + 1) * sizeof(btc_tx_out_t)) : _malloc(sizeof(btc_tx_out_t));
-      tx_ctx->outputs[tx_ctx->output_count] = *(btc_tx_out_t*) src;
+      tx_ctx->outputs = tx_ctx->outputs ? _realloc(tx_ctx->outputs, (tx_ctx->output_count + 1) * sizeof(btc_tx_out_t), tx_ctx->output_count * sizeof(btc_tx_out_t)) : _malloc(sizeof(btc_tx_out_t));
+
+      // Output deep copy
+      tx_ctx->outputs[tx_ctx->output_count].value            = tx_out->value;
+      tx_ctx->outputs[tx_ctx->output_count].script.type      = tx_out->script.type;
+      tx_ctx->outputs[tx_ctx->output_count].script.data.len  = tx_out->script.data.len;
+      tx_ctx->outputs[tx_ctx->output_count].script.data.data = _malloc(tx_out->script.data.len);
+      memcpy(tx_ctx->outputs[tx_ctx->output_count].script.data.data, tx_out->script.data.data, tx_out->script.data.len);
+
       tx_ctx->output_count++;
       must_free = true;
-      break;
+    } break;
     case BTC_WITNESS:
       old_len      = tx_ctx->tx.witnesses.len;
       dst          = &tx_ctx->tx.witnesses;
@@ -609,7 +618,7 @@ bytes_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, 
       locking_script.data[0] = OP_DUP;
       locking_script.data[1] = OP_HASH160;
       locking_script.data[2] = BTC_HASH160_SIZE_BYTES;
-      memcpy(locking_script.data + 3, receiving_btc_addr, BTC_HASH160_SIZE_BYTES);
+      memcpy(locking_script.data + 3, receiving_btc_addr->data + 1, BTC_HASH160_SIZE_BYTES);
       locking_script.data[23] = OP_EQUALVERIFY;
       locking_script.data[24] = OP_CHECKSIG;
       break;
@@ -816,11 +825,6 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_signer_pub
     else {
       utxo->req_sigs = 1;
     }
-
-    // // Guarantee every utxo has at least one signer<->pub_key pair assigned to it
-    // if (!utxo->signers) {
-    //   add_signer_pub_key_to_utxo(utxo, default_signer);
-    // }
   }
 
   return IN3_OK;
