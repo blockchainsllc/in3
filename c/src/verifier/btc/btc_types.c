@@ -740,27 +740,35 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   if (!utxo || !utxo_input) return IN3_EINVAL;
   if (d_type(utxo_input) != T_OBJECT) return IN3_EINVAL;
 
-  bytes_t tx_hash = bytes(_malloc(BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
-  hex_to_bytes(d_get_string(utxo_input, key("tx_hash")), tx_hash.len * 2, tx_hash.data, tx_hash.len);
-  uint32_t tx_index = d_get_long(d_get(utxo_input, key("tx_index")), 0L);
-
+  // Get value
   d_token_t* prevout_data = d_get(utxo_input, key("tx_out"));
-  uint64_t   value        = d_get_long(d_get(prevout_data, key("value")), 0L);
+  uint64_t   value        = d_get_long(prevout_data, key("value"));
+  if (!value) {
+    in3_log_error("The received utxo has value zero\n");
+    return IN3_EINVAL;
+  }
 
+  // Get script
   bytes_t locking_script = NULL_BYTES;
   char*   script_str     = d_get_string(prevout_data, key("script"));
   if (!script_str) {
-    in3_log_error("The received utxos has empty script\n");
+    in3_log_error("The received utxo has empty script\n");
     return IN3_EINVAL;
   }
-  uint8_t* script_bytes = alloca(MAX_SCRIPT_SIZE_BYTES);
+  uint8_t script_bytes[MAX_SCRIPT_SIZE_BYTES];
   locking_script.len    = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
-  locking_script.data   = _malloc(locking_script.len);
+  locking_script.data   = _malloc(locking_script.len); // will be freed later, when we free the whole utxo data
   memcpy(locking_script.data, script_bytes, locking_script.len);
 
+  // Get previous transaction hash and index
+  bytes_t tx_hash = bytes(_malloc(BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES); // will be freed later, when we free the whole utxo data
+  hex_to_bytes(d_get_string(utxo_input, key("tx_hash")), tx_hash.len * 2, tx_hash.data, tx_hash.len);
+  uint32_t tx_index = d_get_long(utxo_input, key("tx_index"));
+
+  // Get optional arguments
   d_token_t* utxo_args = d_get(utxo_input, key("args"));
 
-  // Write the values we have
+  // Write the values we have into the struct
   btc_init_utxo(utxo);
   utxo->tx_hash            = tx_hash.data;
   utxo->tx_index           = tx_index;
@@ -769,6 +777,20 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
   utxo->tx_out.script.type = btc_get_script_type(&locking_script);
   utxo->req_sigs           = is_p2ms(&locking_script) ? btc_get_multisig_req_sig_count(&locking_script) : 1;
   TRY_CATCH(handle_utxo_arg(utxo, utxo_args), btc_free_utxo(utxo))
+
+  // Fill auxiliary fields
+  if (utxo->tx_out.script.type == BTC_P2SH || utxo->tx_out.script.type == BTC_P2WSH) {
+    // argument containing unhashed script should have been provided,
+    // otherwise it is impossible to obtain a signature
+    if (!utxo->raw_script.data.len || !script_is_standard(utxo->raw_script.type)) {
+      in3_log_error("in btc_prepare_utxos: standard unhashed script not provided for received P2SH or P2WSH utxo");
+      btc_free_utxo(utxo);
+      return IN3_EINVAL;
+    }
+  }
+  else {
+    utxo->raw_script = utxo->tx_out.script;
+  }
 
   return IN3_OK;
 }
@@ -792,39 +814,13 @@ in3_ret_t btc_prepare_utxos(in3_req_t* req, btc_tx_ctx_t* tx_ctx, btc_signer_pub
 
     btc_stype_t script_type = utxo.tx_out.script.type;
     if (script_type == BTC_UNKNOWN || script_type == BTC_NON_STANDARD || script_type == BTC_UNSUPPORTED) {
+      btc_free_utxo(&utxo);
       return req_set_error(req, "ERROR: in btc_prepare_utxos: utxo script type is non standard or unsupported", IN3_ENOTSUP);
     }
 
-    // finally, add utxo to context
+    // Add utxo to context
     tx_ctx->utxos[i] = utxo;
     tx_ctx->utxo_count++;
-  }
-
-  // Now that all optional arguments were parsed, we fill the last remaining
-  // fields into our utxo data
-  for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
-    btc_utxo_t* utxo = &tx_ctx->utxos[i];
-    btc_stype_t type = utxo->tx_out.script.type;
-
-    if (type == BTC_P2SH || type == BTC_P2WSH) {
-      // argument containing unhashed script should have been provided
-      // otherwise it is impossible to obtain a signature
-      if (!utxo->raw_script.data.len) {
-        return req_set_error(req, "ERROR: in btc_prepare_utxos: utxo unhashed script not provided in P2SH or P2WSH transaction", IN3_ENOTSUP);
-      }
-      type = utxo->raw_script.type; // get the type of the unhashed script instead
-    }
-    else {
-      utxo->raw_script = utxo->tx_out.script;
-    }
-
-    // how many signatures do we need to unlock the utxo?
-    if (type == BTC_P2MS) {
-      utxo->req_sigs = utxo->raw_script.data.data[1];
-    }
-    else {
-      utxo->req_sigs = 1;
-    }
   }
 
   return IN3_OK;
