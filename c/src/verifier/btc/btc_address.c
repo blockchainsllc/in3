@@ -86,8 +86,11 @@ int btc_decode_address(bytes_t* dst, const char* src, bool is_testnet) {
   btc_stype_t addr_type = btc_get_addr_type(src, is_testnet);
   switch (addr_type) {
     case BTC_P2PKH:
-    case BTC_P2SH:
-      return decode(ENC_BASE58, src, strlen(src), dst->data);
+    case BTC_P2SH: {
+      int ret = decode(ENC_BASE58, src, strlen(src), dst->data);
+      if (ret > 0) dst->len = ret;
+      return ret;
+    }
     case BTC_V0_P2WPKH:
     case BTC_P2WSH: {
       int         ver;

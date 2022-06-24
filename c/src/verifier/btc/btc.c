@@ -742,10 +742,8 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
  */
 // TODO: make this method compliant with "createrawtransaction" from btc rpc
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, sb_t* meta) {
-  btc_signer_pub_key_t signer;
   btc_tx_ctx_t         tx_ctx;
-  btc_init_tx_ctx(&tx_ctx);
-  tx_ctx.is_testnet = is_testnet;
+  btc_signer_pub_key_t signer;
 
   signer.signer_id = *signer_id;
   signer.pub_key   = *signer_pub_key;
@@ -753,29 +751,34 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outpu
   if (!signer.signer_id.data || !signer.pub_key.data) return req_set_error(req, "ERROR: Required signer data is null or missing", IN3_EINVAL);
   if (!btc_public_key_is_valid((const bytes_t*) &signer.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
 
+  btc_init_tx_ctx(&tx_ctx);
+  tx_ctx.is_testnet = is_testnet;
+
   // Add outputs into transaction context
   if (!outputs || d_type(outputs) != T_ARRAY || d_len(outputs) < 1) return req_set_error(req, "ERROR: Invalid transaction output data", IN3_EINVAL);
-  TRY(btc_prepare_outputs(req, &tx_ctx, outputs));
+  TRY_CATCH(btc_prepare_outputs(req, &tx_ctx, outputs), btc_free_tx_ctx(&tx_ctx));
 
   // Add utxos to transaction context
   if (!utxos || d_type(utxos) != T_ARRAY || d_len(utxos) < 1) return req_set_error(req, "ERROR: Invalid unspent outputs (utxos) data", IN3_EINVAL);
-  TRY(btc_prepare_utxos(req, &tx_ctx, &signer, utxos));
+  TRY_CATCH(btc_prepare_utxos(req, &tx_ctx, &signer, utxos), btc_free_tx_ctx(&tx_ctx));
 
   // Convert utxos into transaction inputs
-  TRY(btc_prepare_inputs(req, &tx_ctx));
+  TRY_CATCH(btc_prepare_inputs(req, &tx_ctx), btc_free_tx_ctx(&tx_ctx));
 
   // Is is a witness transaction?
-  TRY(btc_set_segwit(&tx_ctx));
+  TRY_CATCH(btc_set_segwit(&tx_ctx), btc_free_tx_ctx(&tx_ctx));
 
-  TRY(btc_serialize_tx(req, &tx_ctx.tx, dst));
+  // Finally, get the raw transaction
+  TRY_CATCH(btc_serialize_tx(req, &tx_ctx.tx, dst), btc_free_tx_ctx(&tx_ctx));
 
   // if we have a string builder set up, write the result to it
   if (meta) {
-    sb_add_chars(meta, "\"unsigned\":");
-    sb_add_rawbytes(meta, "\"", *dst, -1);
+    sb_add_chars(meta, "\"unsigned\":\"");
+    sb_add_rawbytes(meta, "", *dst, dst->len);
     sb_add_char(meta, '\"');
   }
 
+  btc_free_tx_ctx(&tx_ctx);
   return IN3_OK;
 }
 
@@ -889,14 +892,19 @@ static in3_ret_t handle_btc(void* pdata, in3_plugin_act_t action, void* pctx) {
     }
     case PLGN_ACT_CONFIG_SET: {
       in3_configure_ctx_t* cctx = pctx;
-      if (d_is_key(cctx->token, CONFIG_KEY("testnet")))
-        conf->is_testnet = d_int(cctx->token);
-      else if (d_is_key(cctx->token, CONFIG_KEY("maxDAP")))
-        conf->max_daps = d_int(cctx->token);
-      else if (d_is_key(cctx->token, CONFIG_KEY("maxDiff")))
-        conf->max_diff = d_int(cctx->token);
-      else
-        return IN3_EIGNORE;
+      if (!d_is_key(cctx->token, key("btc"))) return IN3_EIGNORE;
+      d_token_t* temp = d_get(cctx->token, CONFIG_KEY("testnet"));
+      if (temp) {
+        conf->is_testnet = d_int(temp);
+      }
+      temp = d_get(cctx->token, CONFIG_KEY("maxDAP"));
+      if (temp) {
+        conf->max_daps = d_int(temp);
+      }
+      temp = d_get(cctx->token, CONFIG_KEY("maxDiff"));
+      if (temp) {
+        conf->max_diff = d_int(temp);
+      }
       return IN3_OK;
     }
     case PLGN_ACT_RPC_HANDLE:
