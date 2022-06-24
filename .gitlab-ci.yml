@@ -54,7 +54,7 @@ wasm:
   trigger:
     project: in3/sdk/sdk-js
     strategy: depend
-    branch: wasm2
+    branch: develop
 
 java:
   stage: bindings
@@ -66,4 +66,4 @@ java:
   trigger:
     project: in3/sdk/sdk-java
     strategy: depend
-    branch: wasm2
+    branch: develop
