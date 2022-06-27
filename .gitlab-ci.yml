@@ -25,7 +25,6 @@ stages:
   - build
   - integration
   - bindings
-  - rust
   - python
   - dotnet
   - java
@@ -43,7 +42,6 @@ include:
   - local: "/c/ci-deploy.yml"
   - local: "/python/ci.yml"
   - local: "/dotnet/ci.yml"
-  - local: "/rust/ci.yml"
 
 wasm:
   stage: bindings
