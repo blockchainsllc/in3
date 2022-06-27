@@ -69,13 +69,15 @@ void btc_free_tx_in(btc_tx_in_t* tx_in) {
 }
 
 void btc_free_tx_out(btc_tx_out_t* tx_out) {
-  if (tx_out && tx_out->script.data.data) _free(&tx_out->script.data);
+  if (tx_out && tx_out->script.data.data) _free(tx_out->script.data.data);
 }
 
 void btc_free_utxo(btc_utxo_t* utxo) {
   if (utxo) {
     if (utxo->tx_hash) _free(utxo->tx_hash);
-    if (utxo->raw_script.data.data) _free(utxo->raw_script.data.data);
+    if (utxo->raw_script.data.data != utxo->tx_out.script.data.data) {
+      _free(utxo->raw_script.data.data);
+    }
 
     btc_free_tx_out(&utxo->tx_out);
 
@@ -756,8 +758,8 @@ static in3_ret_t btc_fill_utxo(btc_utxo_t* utxo, d_token_t* utxo_input) {
     return IN3_EINVAL;
   }
   uint8_t script_bytes[MAX_SCRIPT_SIZE_BYTES];
-  locking_script.len    = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
-  locking_script.data   = _malloc(locking_script.len); // will be freed later, when we free the whole utxo data
+  locking_script.len  = hex_to_bytes(script_str, -1, script_bytes, MAX_SCRIPT_SIZE_BYTES);
+  locking_script.data = _malloc(locking_script.len); // will be freed later, when we free the whole utxo data
   memcpy(locking_script.data, script_bytes, locking_script.len);
 
   // Get previous transaction hash and index
