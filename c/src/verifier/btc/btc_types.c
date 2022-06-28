@@ -605,29 +605,30 @@ uint16_t btc_nsequence_get_relative_locktime_value(uint32_t nsequence) {
   return value;
 }
 
-bytes_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, const bytes_t* args, uint32_t args_len) {
+in3_ret_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, const bytes_t* args, uint32_t args_len, bytes_t* dst) {
   // TODO: Implement support to scripts of types other than P2PKH
   UNUSED_VAR(args);
   UNUSED_VAR(args_len);
-  if (type == BTC_UNKNOWN || type == BTC_NON_STANDARD || type == BTC_UNSUPPORTED || receiving_btc_addr->len < 20) {
-    return NULL_BYTES;
+  if (!receiving_btc_addr || !receiving_btc_addr->data) {
+    in3_log_error("btc_build_locking_script: receiving btc address cannot be null");
+    return IN3_EINVAL;
   }
-  bytes_t locking_script;
   switch (type) {
     case BTC_P2PKH:
-      locking_script.len     = 25;
-      locking_script.data    = _malloc(locking_script.len);
-      locking_script.data[0] = OP_DUP;
-      locking_script.data[1] = OP_HASH160;
-      locking_script.data[2] = BTC_HASH160_SIZE_BYTES;
-      memcpy(locking_script.data + 3, receiving_btc_addr->data + 1, BTC_HASH160_SIZE_BYTES);
-      locking_script.data[23] = OP_EQUALVERIFY;
-      locking_script.data[24] = OP_CHECKSIG;
+      dst->len     = 25;
+      dst->data    = _malloc(dst->len);
+      dst->data[0] = OP_DUP;
+      dst->data[1] = OP_HASH160;
+      dst->data[2] = BTC_HASH160_SIZE_BYTES;
+      memcpy(dst->data + 3, receiving_btc_addr->data + 1, BTC_HASH160_SIZE_BYTES);
+      dst->data[23] = OP_EQUALVERIFY;
+      dst->data[24] = OP_CHECKSIG;
       break;
     default:
-      locking_script = NULL_BYTES;
+      in3_log_error("btc_build_locking_script: provided script type is unknown or not supported");
+      return IN3_EINVAL;
   }
-  return locking_script;
+  return IN3_OK;
 }
 
 in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* output_data) {
@@ -664,10 +665,10 @@ in3_ret_t btc_prepare_outputs(in3_req_t* req, btc_tx_ctx_t* tx_ctx, d_token_t* o
     // TODO: Implement possibility of creating 'relative locktime' transactions
     tx_out.value       = value;
     tx_out.script.type = addr_type;
-    tx_out.script.data = btc_build_locking_script(&addr.as_bytes, addr_type, NULL, 0);
+    TRY(btc_build_locking_script(&addr.as_bytes, addr_type, NULL, 0, &tx_out.script.data));
 
     // Add output to transaction
-    TRY(btc_add_output_to_tx(req, tx_ctx, &tx_out));
+    TRY_FINAL(btc_add_output_to_tx(req, tx_ctx, &tx_out), _free(tx_out.script.data.data));
   }
   return IN3_OK;
 }
