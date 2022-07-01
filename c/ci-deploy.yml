@@ -42,7 +42,6 @@ readthedocs:
     - gcc8
     - python
     - dotnet
-    - wasm
   extends: .only_full
   tags:
     - short-jobs
@@ -59,13 +58,8 @@ readthedocs:
     - cd generator
     - npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
-    - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - chmod 777 bin/*
-    - cd ../wasm/src
-    - cp ../../in3_wasm/index.d.ts .
-    - typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json index.d.ts
-    - cat doc.json | ../../generator/bin/slockit-docu index.d blockchainsllc/in3/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
-    - cd ../../doc/docs && make html && make text
+    - cd ../doc/docs && make html && make text
   artifacts:
     paths:
       - doc/build
@@ -85,22 +79,15 @@ release_mac_and_wasm:
     - mac_os
     - gcc8
     - readthedocs
-    - wasm
-    - java
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
-    - mkdir in3-mac-wasm
-    - cd in3-mac-wasm
     - cp -r ../mac_build/bin .
     - cp -r ../mac_build/lib .
-    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../CMakeLists.txt ../python ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
-    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
-    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - ghr -u blockchainsllc -r in3 $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
@@ -122,8 +109,6 @@ release_x64:
   needs:
     - gcc8
     - readthedocs
-    - wasm
-    - java
     - python
   extends: .only_deploy
   script:
@@ -132,10 +117,8 @@ release_x64:
     - cd in3-x64
     - cp -r ../x64_build/bin .
     - cp -r ../x64_build/lib .
-    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c ../CMakeLists.txt ../python ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
-    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
@@ -158,8 +141,6 @@ release_x86:
     - gcc8
     - gcc8-x86
     - readthedocs
-    - wasm
-    - java
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
@@ -167,10 +148,8 @@ release_x86:
     - cd in3-x86
     - cp -r ../x86_build/bin .
     - cp -r ../x86_build/lib .
-    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../CMakeLists.txt ../python ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
-    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
@@ -193,8 +172,6 @@ release_arm7:
     - gcc8
     - arm7
     - readthedocs
-    - wasm
-    - java
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
@@ -202,10 +179,8 @@ release_arm7:
     - cd in3-arm7
     - cp -r ../arm7_build/bin .
     - cp -r ../arm7_build/lib .
-    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../CMakeLists.txt ../python  ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
-    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
@@ -228,8 +203,6 @@ release_win:
     - gcc8
     - win_mingw
     - readthedocs
-    - wasm
-    - java
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
@@ -241,10 +214,8 @@ release_win:
     - mv bin/rlp bin/rlp.exe
     - mv bin/json bin/json.exe
     - mv lib/libin3.so lib/in3.dll
-    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c ../CMakeLists.txt ../python  ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../in3_wasm wasm/release-wasm
-    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cp -r ../python_multilib/in3/libin3/shared python/in3/libin3/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
@@ -268,8 +239,6 @@ pages:
     - readthedocs
     - coverage
     - clangcheck
-    - java_linux
-    - test_asmjs
     - python_linux
   script:
     - mkdir -p public/lib
@@ -279,7 +248,6 @@ pages:
     - cp -r cov_build/ccov/all-merged public/coverage
     - cp -r report/* public/code_analysis
     - cp -r doc/build public/rtd || true
-    - cp -r java/build/reports/jacoco/test/html    public/coverage_java
     - cp -r python_multilib/htmlcov public/coverage_python
     - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li><li><a href='coverage_python/index.html'>Code Coverage PYTHON</a></li></ul></body></html>" > public/index.html
   artifacts:
@@ -293,12 +261,9 @@ pages:
     - short-jobs
   needs:
     - test_c
-    - java_arm
     - examples_arm
     - examples_linux
     - examples_macos
-    - java_linux
-    - java_macos
     - readthedocs
   script:
     - mv scripts/debian .
@@ -346,12 +311,9 @@ debian_package_deploy_focal:
     - short-jobs
   needs:
     - test_c
-    - java_arm
     - examples_arm
     - examples_linux
     - examples_macos
-    - java_linux
-    - java_macos
     - readthedocs
   script:
     - mv scripts/debian .

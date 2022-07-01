@@ -223,6 +223,28 @@ static inline in3_ret_t rpc_call_in3_http(in3_rpc_handle_ctx_t* ctx, d_token_t**
 #define FN_IN3_HTTP "in3_http"
 
 /**
+ * execute a ENS-lookup
+ *
+ *
+ * Parameters:
+ *
+ *   - char*    name     : (string) the ens name
+ *   - char*    type     : (string) the type of data to resolve. "addr" - the address (default), "resolver", "owner" or "hash"
+ *   - uint8_t* registry : (address) the ENS-Registry to use
+ * Returns:
+ *   - bytes_t : (bytes) depending on the type, the resulting address or hash
+ */
+static inline in3_ret_t rpc_call_in3_ens(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* name, char* type, uint8_t* registry) {
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%S\",\"%S\",\"%B\"", (char*) name, (char*) type, bytes(registry, 20));
+  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_ens", jpayload, NULL, &res, NULL);
+  _free(jpayload);
+  if (!r) *_res = d_bytes(res);
+  return r;
+}
+#define FN_IN3_ENS "in3_ens"
+
+/**
  * based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function encodes the value given and returns it as hexstring.
  *
  *

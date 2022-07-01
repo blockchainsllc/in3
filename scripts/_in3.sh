@@ -88,6 +88,7 @@ subcmds=(
     'in3_calcDeployAddress: calculates the address of a contract about to deploy <sender> <nonce>'
     'in3_checksumAddress: Will convert an upper or lowercase Ethereum address to a checksum address <address> <useChainId>'
     'in3_decodeTx: decodes a raw transaction and returns the values <data>'
+    'in3_ens: execute a ENS-lookup <name> <type> <registry>'
     'in3_fromWei: converts a given uint (also as hex) with a wei-value into a specified unit <value> <unit> <digits>'
     'in3_http: sends a simple http-request <method> <url> <payload> <headers>'
     'in3_rlpDecode: rlp decode the data <data>'

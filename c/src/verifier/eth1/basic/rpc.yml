@@ -843,7 +843,7 @@ eth:
             type: address
             optional: true
           topics:
-            descr: Array of 32 Bytes DATA topics. Topics are order-dependent. Each topic can also be an array of DATA with “or” options.
+            descr: 'Array of 32 Bytes DATA topics. Topics are order-dependent. Each topic can also be an array of DATA with "or" options.'
             type: bytes32
             nullable: true
             array: true

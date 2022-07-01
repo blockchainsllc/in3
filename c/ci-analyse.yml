@@ -2,10 +2,10 @@ include:
   - template: Security/SAST.gitlab-ci.yml
 variables:
   SAST_DISABLE_DIND: "true"
-#  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
+  #  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
   SAST_EXCLUDED_ANALYZERS: spotbugs,gosec,nodejs-scan,brakeman,flawfinder,eslint,semgrep,security-code-scan
-  SAST_EXCLUDED_PATHS:	spec, test, tests, tmp, examples
-  SAST_BANDIT_EXCLUDED_PATHS: '*/tests/*, */venv/*, */c/*'
+  SAST_EXCLUDED_PATHS: spec, test, tests, tmp, examples
+  SAST_BANDIT_EXCLUDED_PATHS: "*/tests/*, */venv/*, */c/*"
   SAST_FLAWFINDER_LEVEL: 3
 
 .only_full:
@@ -63,7 +63,7 @@ clangcheck:
     reports:
       sast: _build/sast.json
   variables:
-    OPTS:  -enable-checker alpha.core.SizeofPtr  -enable-checker alpha.core.TestAfterDivZero   -enable-checker alpha.security.ArrayBoundV2 -enable-checker alpha.security.MallocOverflow  -enable-checker alpha.security.ReturnPtrRange  -enable-checker optin.performance.Padding
+    OPTS: -enable-checker alpha.core.SizeofPtr  -enable-checker alpha.core.TestAfterDivZero   -enable-checker alpha.security.ArrayBoundV2 -enable-checker alpha.security.MallocOverflow  -enable-checker alpha.security.ReturnPtrRange  -enable-checker optin.performance.Padding
 
 cppcheck:
   stage: analysis
@@ -98,7 +98,6 @@ gcc11check:
   artifacts:
     reports:
       sast: _build/sast.json
-  
 
 valgrind:
   stage: analysis
@@ -123,7 +122,6 @@ valgrind:
   artifacts:
     reports:
       sast: _build/sast.json
-
 
 code_quality:
   rules:
@@ -150,7 +148,7 @@ format:
   tags:
     - short-jobs
   script:
-    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-14 -i
+    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-14 -i
     - git diff --patch --exit-code
 
 #cpd:
@@ -162,7 +160,7 @@ format:
 #    - short-jobs
 #  script:
 #    - cpd -help || cpd --help
-#    - cpd -minimum-tokens 180 --language cpp --exclude c/src/third-party --exclude c/src/signer/zk_wallet/iamo_deploy.h  --files c/src 
+#    - cpd -minimum-tokens 180 --language cpp --exclude c/src/third-party --exclude c/src/signer/zk_wallet/iamo_deploy.h  --files c/src
 #    - cpd -minimum-tokens 150 --language java --files java/src
 #    - cpd -minimum-tokens 150 --language python --files python
 
@@ -199,14 +197,8 @@ metrics:
   needs:
     - mac_os
     - gcc8
-    - wasm
-    - java
   script:
     - echo "mac_cmd_size `stat -c %s mac_build/bin/in3` " > metrics.txt
-    - echo "wasm_min_size `stat -c %s in3_wasm/min.js` " >> metrics.txt
-    - echo "wasm_js_size `stat -c %s in3_wasm/wasm.js` " >> metrics.txt
-    - echo "asmjs_js_size `stat -c %s in3_wasm/index.js` " >> metrics.txt
-    - echo "java_size `stat -c %s java_build/lib/in3.jar` " >> metrics.txt
     - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
     - echo "reported metrics"; cat metrics.txt
   artifacts:
@@ -215,8 +207,6 @@ metrics:
       - metrics.txt
     reports:
       metrics: metrics.txt
-
-
 
 semgrep-sast:
   needs: []
@@ -239,12 +229,12 @@ security-code-scan-sast:
 
 gosec-sast:
   needs: []
-#  when: never  
+  #  when: never
   stage: analysis
 
 nodejs-scan-sast:
   needs: []
-#  when: never  
+  #  when: never
   stage: analysis
 
 spotbugs-sast:
@@ -258,6 +248,6 @@ bandit-sast:
 brakeman-sast:
   needs: []
   stage: analysis
-#  when: never  
+  #  when: never
   variables:
     SAST_ANALYZER_IMAGE_TAG: "2.21.1"

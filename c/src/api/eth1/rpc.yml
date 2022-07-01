@@ -106,6 +106,24 @@ utils:
     descr: |
       a Collection of utility-function.
 
+  in3_ens:
+    descr: execute a ENS-lookup
+    params:
+      name:
+        descr: the ens name
+        type: string
+      type:
+        descr: the type of data to resolve. "addr" - the address (default), "resolver", "owner" or "hash"
+        type: string
+        optional: true
+      registry:
+        descr: the ENS-Registry to use
+        type: address
+        optional: true
+    result:
+      descr: depending on the type, the resulting address or hash
+      type: bytes
+
   in3_abiEncode:
     sync: true
     descr: based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function encodes the value given and returns it as hexstring.
