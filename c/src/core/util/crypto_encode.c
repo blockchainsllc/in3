@@ -109,10 +109,19 @@ int decode(in3_encoding_type_t type, const char* src, int src_len, uint8_t* dst)
     }
     case ENC_BASE64: {
 #ifdef BASE64
-      size_t   len = 0;
-      uint8_t* r   = base64_decode(src, &len);
+      size_t len     = 0;
+      char*  to_free = NULL;
+      if (src && src[src_len] != 0) {
+        if (src_len > 200) to_free = _malloc(src_len + 1);
+        char* cpy = to_free ? to_free : alloca(src_len + 1);
+        memcpy(cpy, src, src_len);
+        cpy[src_len] = 0;
+        src          = cpy;
+      }
+      uint8_t* r = base64_decode(src, &len);
       memcpy(dst, r, len);
       _free(r);
+      _free(to_free);
       return (int) len;
 #else
       return -1;
