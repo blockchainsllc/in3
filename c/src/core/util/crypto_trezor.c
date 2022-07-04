@@ -28,11 +28,11 @@
 #include <windows.h>
 static HANDLE lock_crypto = NULL;
 static void   _lock_crypto() {
-    if (!lock_crypto) {
-      HANDLE p = CreateMutex(NULL, FALSE, NULL);
-      if (InterlockedCompareExchangePointer((PVOID*) &lock_crypto, (PVOID) p, NULL)) CloseHandle(p);
+  if (!lock_crypto) {
+    HANDLE p = CreateMutex(NULL, FALSE, NULL);
+    if (InterlockedCompareExchangePointer((PVOID*) &lock_crypto, (PVOID) p, NULL)) CloseHandle(p);
   }
-    WaitForSingleObject(lock_crypto, INFINITE);
+  WaitForSingleObject(lock_crypto, INFINITE);
 }
 #define LOCK_CRYPTO(code)      \
   {                            \
