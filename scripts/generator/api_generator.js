@@ -713,27 +713,17 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
                 const tc = { ...t, input: Array.isArray(t.input) ? [...t.input] : t.input.options[functionDef.name], expected_output: t.expected_output.options[resultType], mockedResponses: t.mockedResponses.options[resultType] }
                 Object.keys(functionDef.params).forEach(prop => {
                     let i = Object.keys(rpc.params).indexOf(prop)
-                    if (i < 0)
+                    if (i < 0) {
                         console.error("Invalid property " + prop + " in " + testname)
-                    else {
-                        /*
-                        if (tc.input) {
-                            console.log("prop==" + prop + ", input = " + tc.input)
-                            while (tc.input.length <= 0) tc.input.add(0)
-                            tc.input[i] = functionDef.params[prop]
-                        }
-                        */
-                        if (tc.input) {
-                            while (tc.input.length <= 0) tc.input.add(0)
-                            if (functionDef.params[prop].fixed !== undefined) {
-                                tc.input[i] = functionDef.params[prop].fixed
-                            } else if (functionDef.params[prop].optional === false) {
-                                // if the param is "required", use the given input
-                            } else {
-                                tc.input[i] = functionDef.params[prop]
-                            }
-                        }
+                    } else if (functionDef.params[prop].fixed !== undefined) {
+                        tc.input = tc.input ?? []
+                        tc.input[i] = functionDef.params[prop].fixed
+                    } else if (functionDef.params[prop].optional === false) {
+                        // if the param is "required", use the given input
+                    } else if (tc.input) {
+                        tc.input[i] = functionDef.params[prop]
                     }
+                
                 })
                 createTest(tn + '_' + functionDef.name, testname, tests, tc)
             })
