@@ -34,11 +34,11 @@ static void   _lock_crypto() {
   }
     WaitForSingleObject(lock_crypto, INFINITE);
 }
-#define LOCK_CRYPTO(code)     \
-  {                           \
-    _lock_crypto();           \
-    code                      \
-    ReleaseMutex(lock_crypto) \
+#define LOCK_CRYPTO(code)      \
+  {                            \
+    _lock_crypto();            \
+    code;                      \
+    ReleaseMutex(lock_crypto); \
   }
 #else
 
