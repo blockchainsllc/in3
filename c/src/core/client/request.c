@@ -153,8 +153,7 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert(req_data);
 
   if (client->pending == 0xFFFF) return NULL; // avoid overflows by not creating any new ctx anymore
-  in3_req_t* ctx = _calloc(1, sizeof(in3_req_t));
-  if (!ctx) return NULL;
+  in3_req_t* ctx          = _calloc(1, sizeof(in3_req_t));
   ctx->client             = client;
   ctx->verification_state = IN3_WAITING;
   client->pending++;
@@ -700,16 +699,6 @@ in3_ret_t req_require_pub_key(in3_req_t* ctx, d_curve_type_t curve_type, bytes_t
   if (r != IN3_WAITING && r != IN3_OK) return req_set_error(ctx, "Signer not found", r);
   memcpy(dst, sc.public_key, 64);
   return r;
-}
-
-in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
-#ifdef LOGGING
-  (void) req_set_error(vc->req, msg, IN3_EUNKNOWN);
-#else
-  (void) msg;
-  (void) vc;
-#endif
-  return IN3_EUNKNOWN;
 }
 
 in3_ret_t req_throw_unknown_prop(in3_req_t* r, d_token_t* ob, d_token_t* prop, char* ob_name) {

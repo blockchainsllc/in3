@@ -482,9 +482,11 @@ void in3_set_storage_handler(
 // ----------- VERIFY --------------
 
 #ifdef LOGGING
-#define vc_err(vc, msg) vc_set_error(vc, msg)
+#define vc_set_error(vc, msg) req_set_error(vc->req, msg, IN3_EUNKNOWN)
+#define vc_err(vc, msg)       vc_set_error(vc, msg)
 #else
-#define vc_err(vc, msg) vc_set_error(vc, NULL)
+#define vc_set_error(vc, msg) IN3_EUNKNOWN
+#define vc_err(vc, msg)       vc_set_error(vc, NULL)
 #endif
 
 /**
@@ -508,14 +510,6 @@ typedef struct {
 #ifdef LOGGING
 NONULL
 #endif
-
-/*
- * creates an error attaching it to the context and returns -1.
- */
-in3_ret_t vc_set_error(
-    in3_vctx_t* vc, /**< the verification context. */
-    char*       msg /**< the error message. */
-);
 
 // ---- PLGN_ACT_PAY_FOLLOWUP -----------
 
@@ -661,6 +655,8 @@ typedef struct {
       dst = _strdupn(tmp, -1);                                                                      \
     }                                                                                               \
   }
+
+#include "request_internal.h"
 
 #ifdef __cplusplus
 }
