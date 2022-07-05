@@ -771,11 +771,7 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, d_token_t* outputs, d_token_t*
   TRY_CATCH(btc_serialize_tx(req, &tx_ctx.tx, dst), btc_free_tx_ctx(&tx_ctx));
 
   // if we have a string builder set up, write the result to it
-  if (meta) {
-    sb_add_chars(meta, "\"unsigned\":\"");
-    sb_add_rawbytes(meta, "", *dst, dst->len);
-    sb_add_char(meta, '\"');
-  }
+  if (meta) sb_printx(meta, "\"unsigned\":[\"%B\"]", *dst);
 
   btc_free_tx_ctx(&tx_ctx);
   return IN3_OK;
