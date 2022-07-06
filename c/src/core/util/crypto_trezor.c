@@ -138,6 +138,33 @@ static in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* p
     default: return IN3_ENOTSUP;
   }
 }
+
+static in3_ret_t next_number(bytes_t src, bytes_t dst, size_t* p) {
+  if (*p + 1 >= src.len || src.data[*p] != 2) return IN3_EINVAL;
+  size_t len = src.data[*p + 1];
+  if (*p + 2 + len > src.len) return IN3_EINVAL;
+  *p += 2;
+  if (len > dst.len) {
+    *p += len - dst.len;
+    len = dst.len;
+  }
+  memcpy(dst.data + dst.len - len, src.data + *p, len);
+  *p += len;
+  return IN3_OK;
+}
+
+static in3_ret_t convert_sig_from_der(bytes_t src, uint8_t* dst) {
+  if (src.len < 6) return IN3_EINVAL;
+  if (src.data[0] != 0x30) return IN3_EINVAL;
+  if (src.data[1] + 2 > src.len) return IN3_EINVAL;
+  memset(dst, 0, 65);
+  size_t p = 2;
+  TRY(next_number(src, bytes(dst, 32), &p))
+  TRY(next_number(src, bytes(dst + 32, 32), &p))
+  dst[64] = 1;
+  return IN3_OK;
+}
+
 static in3_ret_t convert_to_der(in3_curve_type_t type, bytes_t src, uint8_t* dst, int* dst_len) {
   bytes_t id;
   uint8_t prefix[2] = {0};
@@ -188,6 +215,10 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
           int l = ecdsa_sig_to_der(src.data, dst);
           if (dst_len) *dst_len = l;
           return l >= 0 ? IN3_OK : IN3_EINVAL;
+        }
+        case CONV_SIGDER_TO_SIG65: {
+          if (dst_len) *dst_len = 65;
+          return convert_sig_from_der(src, dst);
         }
         case CONV_PUB64_TO_DER: return convert_to_der(type, src, dst, dst_len);
         default: return IN3_ENOTSUP;

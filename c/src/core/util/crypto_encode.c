@@ -12,7 +12,7 @@
 #include "../../third-party/crypto/bignum.h"
 
 #ifdef WASM
-#include "emscripten.h"
+#include <emscripten.h>
 #endif
 
 #ifdef BASE64

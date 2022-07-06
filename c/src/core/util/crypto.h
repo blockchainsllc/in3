@@ -73,11 +73,12 @@ typedef enum {
 
 /** type of converter for any signature or private key */
 typedef enum {
-  CONV_PK32_TO_PUB64  = 1, /**< extract the publickey from a private key as raw point (64bytes) without any prefix */
-  CONV_PK32_TO_PUB32  = 2, /**< extract the publickey from a private key as raw point (32bytes) without any prefix ( for EDDSA )*/
-  CONV_PK32_TO_ADRESS = 3, /**< extract the public address from a private key as raw point (32bytes) without any prefix ( for EDDSA )*/
-  CONV_SIG65_TO_DER   = 4, /**< converts a 65 byte signtature to a DER format */
-  CONV_PUB64_TO_DER   = 5  /**< converts a 64 byte public key to a DER format */
+  CONV_PK32_TO_PUB64   = 1, /**< extract the publickey from a private key as raw point (64bytes) without any prefix */
+  CONV_PK32_TO_PUB32   = 2, /**< extract the publickey from a private key as raw point (32bytes) without any prefix ( for EDDSA )*/
+  CONV_PK32_TO_ADRESS  = 3, /**< extract the public address from a private key as raw point (32bytes) without any prefix ( for EDDSA )*/
+  CONV_SIG65_TO_DER    = 4, /**< converts a 65 byte signtature to a DER format */
+  CONV_SIGDER_TO_SIG65 = 5, /**< converts a DER Signature to 65 byte signtature using 1 as recovery-bit */
+  CONV_PUB64_TO_DER    = 6  /**< converts a 64 byte public key to a DER format */
 } in3_convert_type_t;
 
 /** represents a digest to use for hashing */
