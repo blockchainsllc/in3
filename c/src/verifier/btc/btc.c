@@ -741,12 +741,11 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
 // TODO: make this method compliant with "createrawtransaction" from btc rpc
-in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, sb_t* meta) {
+in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, bytes_t* dst, sb_t* meta) {
   btc_tx_ctx_t         tx_ctx;
   btc_signer_pub_key_t signer;
-
-  signer.signer_id = *signer_id;
-  signer.pub_key   = *signer_pub_key;
+  signer.signer_id = bytes_dup(*signer_id);      // Will be freed once we free tx_ctx
+  signer.pub_key   = bytes_dup(*signer_pub_key); // Will be freed once we free tx_ctx
 
   if (!signer.signer_id.data || !signer.pub_key.data) return req_set_error(req, "ERROR: Required signer data is null or missing", IN3_EINVAL);
   if (!btc_public_key_is_valid((const bytes_t*) &signer.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
@@ -772,11 +771,7 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, bytes_t* dst, d_token_t* outpu
   TRY_CATCH(btc_serialize_tx(req, &tx_ctx.tx, dst), btc_free_tx_ctx(&tx_ctx));
 
   // if we have a string builder set up, write the result to it
-  if (meta) {
-    sb_add_chars(meta, "\"unsigned\":\"");
-    sb_add_rawbytes(meta, "", *dst, dst->len);
-    sb_add_char(meta, '\"');
-  }
+  if (meta) sb_printx(meta, "\"unsigned\":[\"%B\"]", *dst);
 
   btc_free_tx_ctx(&tx_ctx);
   return IN3_OK;
@@ -831,7 +826,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   outputs = d_get_at(params, 1);
   utxos   = d_get_at(params, 2);
 
-  btc_prepare_unsigned_tx(req, &unsigned_tx, outputs, utxos, &signer_id, &signer_pub_key, conf->is_testnet, NULL);
+  btc_prepare_unsigned_tx(req, outputs, utxos, &signer_id, &signer_pub_key, conf->is_testnet, &unsigned_tx, NULL);
   if (unsigned_tx.len == 0) return IN3_EINVAL;
 
   btc_sign_raw_tx(req, &unsigned_tx, signer_id.data, &signer_pub_key, &signed_tx);

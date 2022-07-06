@@ -1,3 +1,7 @@
+#define __USE_GNU
+#define _XOPEN_SOURCE   600
+#define _POSIX_C_SOURCE 200809L
+
 #include "bytes.h"
 #include "crypto.h"
 #include "debug.h"
@@ -18,6 +22,40 @@
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/crypto/sha3.h"
+
+#ifdef THREADSAFE
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <windows.h>
+static HANDLE lock_crypto = NULL;
+static void   _lock_crypto() {
+  if (!lock_crypto) {
+    HANDLE p = CreateMutex(NULL, FALSE, NULL);
+    if (InterlockedCompareExchangePointer((PVOID*) &lock_crypto, (PVOID) p, NULL)) CloseHandle(p);
+  }
+  WaitForSingleObject(lock_crypto, INFINITE);
+}
+#define LOCK_CRYPTO(code)      \
+  {                            \
+    _lock_crypto();            \
+    code;                      \
+    ReleaseMutex(lock_crypto); \
+  }
+#else
+
+#include <pthread.h>
+static pthread_mutex_t lock_crypto = PTHREAD_MUTEX_INITIALIZER;
+#define LOCK_CRYPTO(code)               \
+  {                                     \
+    pthread_mutex_lock(&lock_crypto);   \
+    code;                               \
+    pthread_mutex_unlock(&lock_crypto); \
+  }
+
+#endif
+#else
+#define LOCK_CRYPTO(code) \
+  { code }
+#endif
 
 /** writes 32 bytes to the pointer. */
 in3_ret_t keccak(bytes_t data, void* dst) {
@@ -97,8 +135,13 @@ void crypto_finalize_hash(in3_digest_t digest, void* dst) {
 }
 
 in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const uint8_t* pk, const uint8_t* pubkey, uint8_t* dst) {
+  in3_ret_t res = IN3_OK;
   switch (type) {
-    case ECDSA_SECP256K1: return ecdsa_sign_digest(&secp256k1, pk, digest.data, dst, dst + 64, NULL) < 0 ? IN3_EINVAL : IN3_OK;
+    case ECDSA_SECP256K1: {
+      LOCK_CRYPTO(
+          res = ecdsa_sign_digest(&secp256k1, pk, digest.data, dst, dst + 64, NULL) < 0 ? IN3_EINVAL : IN3_OK;)
+      return res;
+    }
     case EDDSA_ED25519: {
 #ifdef ED25519
       ed25519_sign(digest.data, digest.len, pk, pubkey, dst);
@@ -114,10 +157,12 @@ in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const 
 in3_ret_t crypto_recover(in3_curve_type_t type, const bytes_t digest, bytes_t signature, uint8_t* dst) {
   switch (type) {
     case ECDSA_SECP256K1: {
-      uint8_t pub[65] = {0};
-      if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, digest.data, signature.data[64] % 27)) return IN3_EINVAL;
-      memcpy(dst, pub + 1, 64);
-      return IN3_OK;
+      in3_ret_t res     = IN3_OK;
+      uint8_t   pub[65] = {0};
+      LOCK_CRYPTO(
+          if (ecdsa_recover_pub_from_sig(&secp256k1, pub, signature.data, digest.data, signature.data[64] % 27)) res = IN3_EINVAL;
+          else memcpy(dst, pub + 1, 64);)
+      return res;
     }
 #ifdef ED25519
     case EDDSA_ED25519: {
@@ -131,7 +176,7 @@ static in3_ret_t crypto_pk_to_public_key(in3_curve_type_t type, const uint8_t* p
   switch (type) {
     case ECDSA_SECP256K1: {
       uint8_t public_key[65];
-      ecdsa_get_public_key65(&secp256k1, pk, public_key);
+      LOCK_CRYPTO(ecdsa_get_public_key65(&secp256k1, pk, public_key);)
       memcpy(dst, public_key + 1, 64);
       return IN3_OK;
     }
@@ -212,7 +257,8 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
         }
         case CONV_SIG65_TO_DER: {
           if (src.len != 65) return IN3_EINVAL;
-          int l = ecdsa_sig_to_der(src.data, dst);
+          int l = -1;
+          LOCK_CRYPTO(l = ecdsa_sig_to_der(src.data, dst);)
           if (dst_len) *dst_len = l;
           return l >= 0 ? IN3_OK : IN3_EINVAL;
         }

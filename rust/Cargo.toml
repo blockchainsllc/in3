@@ -1,6 +1,0 @@
-[workspace]
-
-members = [
-    "in3-rs",
-    "in3-sys",
-]

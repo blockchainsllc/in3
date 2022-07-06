@@ -113,8 +113,8 @@ void btc_free_tx_out(btc_tx_out_t* tx_out);
 void btc_free_utxo(btc_utxo_t* utxo);
 void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx);
 
-bytes_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, const bytes_t* args, uint32_t args_len);
-bool    pub_key_is_valid(const bytes_t* pub_key);
+in3_ret_t btc_build_locking_script(bytes_t* receiving_btc_addr, btc_stype_t type, const bytes_t* args, uint32_t args_len, bytes_t* dst);
+bool      pub_key_is_valid(const bytes_t* pub_key);
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
 in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_id, bytes_t* signer_pub_key);
