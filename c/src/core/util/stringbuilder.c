@@ -417,9 +417,28 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         case 'x':
           sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
           break;
+        case 'p':
+          sb_add_hexuint_l(sb, (uint64_t) (va_arg(args, void*)), sizeof(uint64_t));
+          break;
         case 'b':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), 0);
           break;
+        case '6': {
+          bytes_t b = va_arg(args, bytes_t);
+          check_size(sb, encode_size(ENC_BASE64, b.len));
+          int l                 = encode(ENC_BASE64, b, sb->data + sb->len);
+          sb->data[sb->len + l] = 0;
+          sb->len += l;
+          break;
+        }
+        case '5': {
+          bytes_t b = va_arg(args, bytes_t);
+          check_size(sb, encode_size(ENC_BASE58, b.len));
+          int l                 = encode(ENC_BASE58, b, sb->data + sb->len);
+          sb->data[sb->len + l] = 0;
+          sb->len += l;
+          break;
+        }
         case 'B':
           sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), 0);
           break;

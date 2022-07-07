@@ -28,11 +28,11 @@
 #include <windows.h>
 static HANDLE lock_crypto = NULL;
 static void   _lock_crypto() {
-  if (!lock_crypto) {
-    HANDLE p = CreateMutex(NULL, FALSE, NULL);
-    if (InterlockedCompareExchangePointer((PVOID*) &lock_crypto, (PVOID) p, NULL)) CloseHandle(p);
+    if (!lock_crypto) {
+      HANDLE p = CreateMutex(NULL, FALSE, NULL);
+      if (InterlockedCompareExchangePointer((PVOID*) &lock_crypto, (PVOID) p, NULL)) CloseHandle(p);
   }
-  WaitForSingleObject(lock_crypto, INFINITE);
+    WaitForSingleObject(lock_crypto, INFINITE);
 }
 #define LOCK_CRYPTO(code)      \
   {                            \
@@ -206,7 +206,6 @@ static in3_ret_t convert_sig_from_der(bytes_t src, uint8_t* dst) {
   size_t p = 2;
   TRY(next_number(src, bytes(dst, 32), &p))
   TRY(next_number(src, bytes(dst + 32, 32), &p))
-  dst[64] = 1;
   return IN3_OK;
 }
 
