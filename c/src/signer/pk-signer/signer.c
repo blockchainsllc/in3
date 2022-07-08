@@ -292,6 +292,7 @@ static in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
   memzero(seed, 64);
   if (r == IN3_OK) {
     sb_t* sb = in3_rpc_handle_start(ctx);
+    sb_add_char(sb, '[');
     for (int i = 0; i < l; i++) {
       if (add_key(ctx->req->client, pks + i * 32, ct)) {
         if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
