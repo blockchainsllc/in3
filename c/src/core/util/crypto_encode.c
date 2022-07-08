@@ -143,6 +143,21 @@ int decode_size(in3_encoding_type_t type, int src_len) {
 #ifdef WASM
 EM_JS(void, wasm_random_buffer, (uint8_t * dst, size_t len), {
   // unload len
+  function randomBytes() {
+    var vals = new Uint8Array(len);
+    try {
+      return crypto.getRandomValues(vals);
+    } catch (x) {
+      try {
+        return require('crypto').randomBytes(len);
+      } catch (y) {
+        const seed = Date.now();
+        for (let i = 0; i < len; i++) vals[i] = seed[i % 32] ^ Math.floor(Math.random() * 256);
+        return vals;
+      }
+    }
+  }
+
   var res = randomBytes(len);
   for (var i = 0; i < len; i++) {
     HEAPU8[dst + i] = res[i];
