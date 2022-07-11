@@ -60,6 +60,7 @@ extern "C" {
 #define CHAIN_ID_MAINNET    0x01    /**< chain_id for mainnet */
 #define CHAIN_ID_GOERLI     0x5     /**< chain_id for goerlii */
 #define CHAIN_ID_MUMBAI     0x13881 /**< chain_id for mumbai */
+#define CHAIN_ID_POLYGON    0x89    /**< chain_id for polygon */
 #define CHAIN_ID_EWC        0xf6    /**< chain_id for ewc */
 #define CHAIN_ID_IPFS       0x7d0   /**< chain_id for ipfs */
 #define CHAIN_ID_BTC        0x99    /**< chain_id for btc */
