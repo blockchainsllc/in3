@@ -98,6 +98,9 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
  *
  * The format supports:
  *
+ * %5 - expects bytes_t and encodes it as base58
+ * %6 - expects bytes_t and encodes it as base64
+ * %p - expects pointer and encodes it address as hex
  * %s - expects a char* and inserts the string
  * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
  * %i - expects int32_t and inserts a decimal representation
@@ -124,6 +127,9 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  *
  * The format supports:
  *
+ * %5 - expects bytes_t and encodes it as base58
+ * %6 - expects bytes_t and encodes it as base64
+ * %p - expects pointer and encodes it address as hex
  * %s - expects a char* and inserts the string
  * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
  * %i - expects int32_t and inserts a decimal representation
