@@ -707,10 +707,10 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
         const tn = (t.descr || testname + (index ? ('_' + (index + 1)) : '')) + (t.extra ? ' : ' + t.extra : '')
-        if (rpcResult.options && t.expected_output && t.expected_output.options) {
+        if (rpcResult.options && (t?.expected_output?.options || t?.expected_failure?.options)) {
             rpcResult.options.forEach(functionDef => {
                 const resultType = functionDef.result.array ? functionDef.result.type + "[]" : functionDef.result.type
-                const tc = { ...t, input: Array.isArray(t.input) ? [...t.input] : t.input.options[functionDef.name], expected_output: t.expected_output.options[resultType], mockedResponses: t.mockedResponses.options[resultType] }
+                const tc = { ...t, input: Array.isArray(t.input) ? [...t.input] : t.input.options[functionDef.name], expected_output: t?.expected_output?.options[resultType], mockedResponses: t.mockedResponses.options[resultType] }
                 Object.keys(functionDef.params).forEach(prop => {
                     let i = Object.keys(rpc.params).indexOf(prop)
                     if (i < 0) {
