@@ -317,6 +317,7 @@ signers:
           - pub64 : converts a private key (32 bytes) to a public key (64 bytes)
           - pub32 : converts a private key (32 bytes) to a public key (32 bytes)
           - sig_der : converts a signature (65 bytes) to a DER-encoded signature
+          - sig_from_der : converts a  DER-encoded signature to a signature (65 bytes)
           - pub_der : converts a public key (32 or 64 bytes) to a DER-encoded pubkey
     result:
       descr: the converted bytes.
