@@ -98,8 +98,8 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
  *
  * The format supports:
  *
- * %5 - expects bytes_t and encodes it as base58
- * %6 - expects bytes_t and encodes it as base64
+ * %b58 - expects bytes_t and encodes it as base58
+ * %b64 - expects bytes_t and encodes it as base64
  * %p - expects pointer and encodes it address as hex
  * %s - expects a char* and inserts the string
  * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
@@ -118,6 +118,12 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
  * %w - expects a bytes_t and inserts the decimal representation of bytes  (max 32 bytes)
  * %W- expects a dec_t and inserts the decimal representation of those bytes including the decimal (max 32 bytes)
  *
+ * optional any placeholder can be prefixed by a length which will be padded left or (negative sign for right):
+ *
+ * examples:
+ *  sprintx("%-4x",1l) -> "1   "
+ *  sprintx("%4x",1l)  -> "   1"
+ *  sprintx("%04x",1l) -> "0001"
  */
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
 
@@ -127,8 +133,8 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  *
  * The format supports:
  *
- * %5 - expects bytes_t and encodes it as base58
- * %6 - expects bytes_t and encodes it as base64
+ * %b58 - expects bytes_t and encodes it as base58
+ * %b64 - expects bytes_t and encodes it as base64
  * %p - expects pointer and encodes it address as hex
  * %s - expects a char* and inserts the string
  * %S - expects a char* and inserts a escaped string (replacing quotes and newlines to be included in json)
@@ -147,6 +153,12 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  * %w - expects a bytes_t and inserts the decimal representation of bytes as bugendian (max 32 bytes)
  * %W- expects a dec_t and inserts the decimal representation of those bytes including the decimal (max 32 bytes)
  *
+ * optional any placeholder can be prefixed by a length which will be padded left or (negative sign for right):
+ *
+ * examples:
+ *  sprintx("%-4x",1l) -> "1   "
+ *  sprintx("%4x",1l)  -> "   1"
+ *  sprintx("%04x",1l) -> "0001"
  */
 char* sprintx(const char* fmt, ...);
 void  sb_vprintx(sb_t* sb, const char* fmt, va_list args);
