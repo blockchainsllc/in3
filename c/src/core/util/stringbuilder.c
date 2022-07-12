@@ -353,6 +353,28 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
   for (const char* c = fmt; *c; c++) {
     if (*c == '%') {
       c++;
+      bool   zero    = false;
+      bool   uselong = false;
+      bool   leftpad = false;
+      size_t len     = 0;
+      size_t old_len = sb->len;
+      if (*c == '-') {
+        c++;
+        leftpad = true;
+      }
+      if (*c == '0') {
+        c++;
+        zero = true;
+      }
+      while (*c >= '0' && *c <= '9') {
+        len = len * 10 + (*c - '0');
+        c++;
+      }
+      while (*c == 'l') {
+        uselong = true;
+        c++;
+      }
+      if (len) check_size(sb, len + 1);
       switch (*c) {
         case 's':
           sb_add_chars(sb, va_arg(args, char*));
@@ -365,7 +387,10 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           sb_add_int(sb, (int64_t) va_arg(args, int32_t));
           break;
         case 'u':
-          sb_add_int(sb, (int64_t) va_arg(args, uint32_t));
+          if (uselong)
+            sb_add_int(sb, va_arg(args, int64_t));
+          else
+            sb_add_int(sb, (int64_t) va_arg(args, uint32_t));
           break;
         case 'I':
         case 'D':
@@ -414,9 +439,14 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           sb_add_chars(sb, tmp);
           break;
         }
-        case 'x':
-          sb_add_hexuint_l(sb, va_arg(args, uint64_t), sizeof(uint64_t));
+        case 'x': {
+          char tmp[19] = {0}; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+          int  l       = sprintf(tmp, "%" PRIx64, va_arg(args, uint64_t));
+          check_size(sb, l);
+          memcpy(sb->data + sb->len, tmp, l + 1);
+          sb->len += l;
           break;
+        }
         case 'p':
           sb_add_hexuint_l(sb, (uint64_t) (va_arg(args, void*)), sizeof(uint64_t));
           break;
@@ -467,6 +497,19 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         default:
           break;
       }
+      if (len && sb->len < old_len + len) {
+        int written = sb->len - old_len;
+        if (leftpad) {
+          memset(sb->data + sb->len, zero ? '0' : ' ', len - written);
+          sb->data[sb->len + len - written] = 0;
+        }
+        else {
+          memmove(sb->data + old_len + len - written, sb->data + old_len, written + 1);
+          memset(sb->data + old_len, zero ? '0' : ' ', len - written);
+        }
+        sb->len += len - written;
+      }
+
       continue;
     }
     if (sb->len + 1 >= sb->allocted) check_size(sb, 1);

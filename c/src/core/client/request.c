@@ -446,7 +446,7 @@ in3_ret_t in3_rpc_handle_with_json(in3_rpc_handle_ctx_t* ctx, d_token_t* result)
 }
 
 in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
-  return in3_rpc_handle(hctx, "\"%x\"", value);
+  return in3_rpc_handle(hctx, "\"0x%x\"", value);
 }
 
 static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child, bool use_cache) {
