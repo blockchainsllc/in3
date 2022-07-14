@@ -152,7 +152,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     } break;
     case BTC_P2PKH: {
       // Unlocking script format is: DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
-      uint32_t script_len = 1 + signatures[0]->len + 1 + 64; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
+      uint32_t script_len = 1 + signatures[0]->len + 1 + pub_key->len; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
 
       tx_in->script.data.data = tx_in->script.data.data ? _realloc(tx_in->script.data.data, script_len, tx_in->script.data.len) : _malloc(script_len);
       tx_in->script.data.len  = script_len;

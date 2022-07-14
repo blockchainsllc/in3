@@ -124,7 +124,9 @@ void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx) {
 
 uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
-  dst->prev_tx_hash     = data;
+  // dst->prev_tx_hash     = data;
+  dst->prev_tx_hash = dst->prev_tx_hash ? _realloc(dst->prev_tx_hash, BTC_TX_HASH_SIZE_BYTES, BTC_TX_HASH_SIZE_BYTES) : _malloc(BTC_TX_HASH_SIZE_BYTES);
+  rev_copyl(dst->prev_tx_hash, bytes(data, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
   dst->prev_tx_index    = le_to_int(data + BTC_TX_HASH_SIZE_BYTES);
   dst->script.data.data = data + BTC_TX_IN_PREV_OUPUT_SIZE_BYTES + decode_var_int(data + BTC_TX_IN_PREV_OUPUT_SIZE_BYTES, &len);
   dst->script.data.len  = (uint32_t) len;
@@ -270,7 +272,7 @@ in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_i
   start           = dst->tx.input.data;
   end             = dst->tx.input.data + dst->tx.input.len;
   for (i = 0; i < dst->tx.input_count; i++) {
-    btc_tx_in_t temp;
+    btc_tx_in_t temp = {0};
     start = btc_parse_tx_in(start, &temp, end);
     btc_init_utxo(&dst->utxos[i]);
     dst->utxos[i].tx_hash            = temp.prev_tx_hash;
