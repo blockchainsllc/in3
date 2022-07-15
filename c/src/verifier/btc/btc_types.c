@@ -273,7 +273,7 @@ in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_i
   end             = dst->tx.input.data + dst->tx.input.len;
   for (i = 0; i < dst->tx.input_count; i++) {
     btc_tx_in_t temp = {0};
-    start = btc_parse_tx_in(start, &temp, end);
+    start            = btc_parse_tx_in(start, &temp, end);
     btc_init_utxo(&dst->utxos[i]);
     dst->utxos[i].tx_hash            = temp.prev_tx_hash;
     dst->utxos[i].tx_index           = temp.prev_tx_index;

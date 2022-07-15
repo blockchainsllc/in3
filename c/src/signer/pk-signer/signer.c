@@ -191,7 +191,7 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       if (k->type != ctx->curve_type || (ctx->account && memcmp(ctx->account, k->account, k->account_len))) return IN3_EIGNORE;
       switch (ctx->curve_type) {
         case SIGN_CURVE_ECDSA:
-          return crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(k->pk, 32), ctx->public_key, NULL);
+          return crypto_convert(ECDSA_SECP256K1, ctx->convert_type, bytes(k->pk, 32), ctx->public_key, NULL);
         case SIGN_CURVE_ED25519:
           return crypto_convert(EDDSA_ED25519, CONV_PK32_TO_PUB32, bytes(k->pk, 32), ctx->public_key, NULL);
         default:

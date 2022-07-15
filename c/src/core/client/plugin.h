@@ -301,10 +301,11 @@ typedef struct sign_account_ctx {
  * action context when retrieving the public key of the signer.
  */
 typedef struct sign_public_key_ctx {
-  struct in3_req* req;            /**< the context of the request in order report errors */
-  d_curve_type_t  curve_type;     /**< the type of the curve used */
-  uint8_t*        account;        /**< the account to use for the signature */
-  uint8_t         public_key[64]; /**< the public key in case the plugin returns IN3_OK */
+  struct in3_req*    req;            /**< the context of the request in order report errors */
+  d_curve_type_t     curve_type;     /**< the type of the curve used */
+  in3_convert_type_t convert_type;   /**< the type of conversion to be made */
+  uint8_t*           account;        /**< the account to use for the signature */
+  uint8_t            public_key[64]; /**< the public key in case the plugin returns IN3_OK */
 } in3_sign_public_key_ctx_t;
 
 // ----------- SIGN_PREPARE ---------------
