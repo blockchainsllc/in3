@@ -21,8 +21,15 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
     case BTC_P2SH:
     case BTC_P2PK:
     case BTC_P2PKH: {
-      TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message));                               // write serialized transaction
-      uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash); // write sighash at the end of the input
+      TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message)); // write serialized transaction
+      if (hash_message->len) {
+        _realloc(hash_message->data, hash_message->len + BTC_TX_IN_SIGHASH_SIZE_BYTES, hash_message->len); // Allocate memory for appending sighash
+        hash_message->len += BTC_TX_IN_SIGHASH_SIZE_BYTES;
+        uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash); // write sighash at the end of the input
+      }
+      else {
+        return req_set_error(req, "ERROR: in build_tx_in_hash_msg: Failed to build transaction signing message", IN3_EUNKNOWN);
+      }
     } break;
     case BTC_P2WSH:
     case BTC_V0_P2WPKH: {
