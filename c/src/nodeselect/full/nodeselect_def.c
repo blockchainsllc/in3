@@ -308,7 +308,8 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     c->signature_count = 0;
     c->chain.id        = CHAIN_ID_LOCAL;
     c->chain.version   = strncmp(url, "https://", 8) ? 0 : (0x7fffffff & (((uint32_t) key(url)) << 16 | ((uint32_t) key(url + strlen(url) / 2)))); // hash the url, but set the last bit to 0
-    w->request_count   = 1;
+    BITMASK_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
+    w->request_count = 1;
 
     clear_nodes(data);
     _free(data->nodelist_upd8_params);
