@@ -180,11 +180,10 @@ bytes_t* serialize_tx(d_token_t* tx) {
   return convert_to_typed_list(rlp, type);
 }
 
-// bytes_t* serialize_tx_raw(int type, bytes_t nonce, bytes_t gas_price, bytes_t max_fee_per_gas, bytes_t max_priority_fee_per_gas, d_token_t* access_list, uint64_t chain_id, bytes_t gas_limit, bytes_t to, bytes_t value, bytes_t data, uint64_t v, bytes_t r, bytes_t s) {
-bytes_t* serialize_tx_raw(eth_tx_data_t* tx, uint64_t chain_id, uint64_t v, bytes_t r, bytes_t s) {
+bytes_t serialize_tx_raw(eth_tx_data_t* tx, uint64_t v, bytes_t r, bytes_t s) {
   bytes_builder_t* rlp = bb_new();
   uint8_t          chain_tmp[8];
-  long_to_bytes(chain_id, chain_tmp);
+  long_to_bytes(tx->chain_id, chain_tmp);
 
   // clang-format off
   switch (tx->type) {
@@ -231,7 +230,10 @@ bytes_t* serialize_tx_raw(eth_tx_data_t* tx, uint64_t chain_id, uint64_t v, byte
   }
 
   // clang-format on
-  return convert_to_typed_list(rlp, tx->type);
+  bytes_t* res    = convert_to_typed_list(rlp, tx->type);
+  bytes_t  result = *res;
+  _free(res);
+  return result;
 }
 
 bytes_t* serialize_block_header(d_token_t* block) {

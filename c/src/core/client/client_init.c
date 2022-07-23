@@ -321,6 +321,10 @@ char* in3_configure_internal(json_ctx_t* json, in3_t* c, bool ignore_unknown) {
       EXPECT_CFG(d_int(token), "maxAttempts must be at least 1");
       c->max_attempts = d_int(token);
     }
+    else if (token->key == CONFIG_KEY("gasPrio")) {
+      EXPECT_TOK_U16(token);
+      c->gas_prio = d_int(token);
+    }
     else if (token->key == CONFIG_KEY("keepIn3")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_KEEP_IN3, (d_int(token) ? true : false));

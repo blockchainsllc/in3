@@ -48,6 +48,10 @@
 #include <stdio.h>
 #include <string.h>
 
+// defines the default gas to be used if no gas is specified.
+// default: 40000 gas
+const bytes_t default_gas = {.data = (uint8_t*) "\x9c\x40", .len = 2};
+
 /** helper to get a key and convert it to bytes*/
 static inline bytes_t get(d_token_t* t, uint16_t key) {
   return d_num_bytes(d_get(t, key));
@@ -141,7 +145,8 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
   // fix gas_price
   if (tx->type < 2 && !tx->gas_price.data)
     merge_result(&ret, get_from_nodes(ctx, "eth_gasPrice", "[]", &tx->gas_price));
-  /*
+
+    /*
     if (tx->type < 2 && !tx->gas_price.len) {
       bytes_t gp = NULL_BYTES;
       merge_result(&ret, get_from_nodes(ctx, "eth_gasPrice", "[]", &gp));
@@ -312,74 +317,58 @@ static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t from, bytes
   return IN3_OK;
 }
 
-/**
- * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
- */
-in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta) {
-  eth_tx_data_t td = {0};
-  chain_id_t    chain_id;
-  //  uint8_t       gasprice_buffer[8] = {0};
+static in3_ret_t simulate_tx(in3_req_t* req, eth_tx_data_t* tx, bytes_t wallet, d_token_t** result, char* method, uint64_t init_gas) {
+  sb_t sb = {.allocted = 100, .data = _malloc(100), .len = 0};
+  sb_printx(&sb, "{\"gas\":\"0x%x\",\"data\":\"%B\",\"from\":\"%B\"", init_gas, tx->data, wallet.len == 20 ? wallet : bytes(tx->from, 20));
+  if (tx->to.data) sb_printx(&sb, ",\"to\":\"%B\"", tx->to);
+  if (strcmp(method, "eth_call") == 0) sb_add_chars(&sb, ",\"latest\"");
+  TRY_FINAL(req_send_sub_request(req, method, sb.data, NULL, result, NULL), _free(sb.data))
+  return IN3_OK;
+}
 
-  // read the values
-  td.type                     = d_get_int(tx, d_get(tx, K_ETH_TX_TYPE) ? K_ETH_TX_TYPE : K_TYPE);
-  td.access_list              = d_get(tx, K_ACCESS_LIST);
-  td.gas_limit                = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x9c\x40", 2)); // default: 40000 gas
-  td.to                       = getl(tx, K_TO, 20);
-  td.value                    = get(tx, K_VALUE);
-  td.data                     = get(tx, K_DATA);
-  td.nonce                    = get(tx, K_NONCE);
-  td.gas_price                = get(tx, K_GAS_PRICE);
-  td.max_fee_per_gas          = get(tx, K_MAX_FEE_PER_GAS);
-  td.max_priority_fee_per_gas = get(tx, K_MAX_PRIORITY_FEE_PER_GAS);
-  //  td.gas_price.data           = td.gas_price.data ? td.gas_price.data : gasprice_buffer;
-
-  // make sure, we have the correct chain_id
-  TRY(in3_resolve_chain_id(ctx, &chain_id))
-  TRY(get_from_address(tx, ctx, td.from))
-  TRY(get_nonce_and_gasprice(&td, ctx))
-
-  // write state?
-  if (meta) {
-    sb_printx(meta, "\"input\":{\"to\":\"%B\",\"sender\":\"%B\",\"value\":\"%V\"", td.to, bytes(td.from, 20), td.value);
-    sb_printx(meta, ",\"data\":\"%B\",\"gas\":\"%V\",\"gasPrice\":\"%V\"", td.data, td.gas_limit, td.gas_price);
-    sb_printx(meta, ",\"nonce\":\"%V\",\"eth_tx_type\":%u", td.nonce, td.type);
-
-    if (td.max_fee_per_gas.data) sb_printx(meta, ",\"maxFeePerGas\":\"%V\"", td.max_fee_per_gas);
-    if (td.max_priority_fee_per_gas.data) sb_printx(meta, ",\"maxPriorityFeePerGas\":\"%V\"", td.max_fee_per_gas);
-
-    sb_add_json(meta, ",\"accessList\":", td.access_list);
-    sb_add_chars(meta, ",\"layer\":\"l1\"");
-    sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));
-    sb_add_json(meta, ",\"fn_args\":", d_get(tx, key("fn_args")));
-    sb_add_json(meta, ",\"token\":", d_get(tx, key("token")));
-    sb_add_json(meta, ",\"wallet\":", d_get(tx, key("wallet")));
-    sb_add_json(meta, ",\"url\":", d_get(tx, key("url")));
-    sb_add_json(meta, ",\"delegate\":", d_get(tx, key("delegate")));
+static in3_ret_t determine_gas(in3_req_t* req, eth_tx_data_t* tx, bytes_t wallet) {
+  if (tx->gas_limit.data) return IN3_OK;
+  if (tx->data.len > 3) {
+    uint64_t   init_gas = 20000000;
+    d_token_t* result;
+    TRY(simulate_tx(req, tx, wallet, &result, "eth_estimateGas", init_gas))
+    uint64_t gas = d_long(result);
+    if (gas == init_gas) return req_set_error(req, "The transaction would fail if being send this way", IN3_EINVAL);
+    tx->gas_limit = d_bytes(result);
   }
+  else
+    tx->gas_limit = default_gas;
+  return IN3_OK;
+}
 
-  // do we need to transform the tx before we sign it?
-  TRY(transform_tx(ctx, tx, bytes(td.from, 20), &td.to, &td.value, &td.data, &td.gas_limit));
+static in3_ret_t print_input(sb_t* meta, d_token_t* tx, eth_tx_data_t* td) {
+  if (!meta) return IN3_OK;
+  sb_printx(meta, "\"input\":{\"to\":\"%B\",\"sender\":\"%B\",\"value\":\"%V\"", td->to, bytes(td->from, 20), td->value);
+  sb_printx(meta, ",\"data\":\"%B\",\"gasPrice\":\"%V\"", td->data, td->gas_price);
+  sb_printx(meta, ",\"nonce\":\"%V\",\"eth_tx_type\":%u", td->nonce, td->type);
 
-  // create raw without signature
-  bytes_t* raw = serialize_tx_raw(&td, chain_id, td.type ? 0 : get_v(chain_id), NULL_BYTES, NULL_BYTES);
-  *dst         = *raw;
-  _free(raw);
+  if (td->max_fee_per_gas.data) sb_printx(meta, ",\"maxFeePerGas\":\"%V\"", td->max_fee_per_gas);
+  if (td->max_priority_fee_per_gas.data) sb_printx(meta, ",\"maxPriorityFeePerGas\":\"%V\"", td->max_fee_per_gas);
 
-  // write state?
-  if (meta) {
-    sb_add_rawbytes(meta, "},\"pre_unsigned\":\"0x", *dst, 0);
-    sb_add_chars(meta, "\"");
-  }
+  sb_add_json(meta, ",\"accessList\":", td->access_list);
+  sb_add_chars(meta, ",\"layer\":\"l1\"");
+  sb_add_json(meta, ",\"fn_sig\":", d_get(tx, key("fn_sig")));
+  sb_add_json(meta, ",\"fn_args\":", d_get(tx, key("fn_args")));
+  sb_add_json(meta, ",\"token\":", d_get(tx, key("token")));
+  sb_add_json(meta, ",\"wallet\":", d_get(tx, key("wallet")));
+  sb_add_json(meta, ",\"url\":", d_get(tx, key("url")));
+  sb_add_json(meta, ",\"delegate\":", d_get(tx, key("delegate")));
+  return IN3_OK;
+}
 
-  // do we need to change it?
+static in3_ret_t customize_transaction(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta, uint8_t* from) {
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
-    in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = {0}, .output = meta, .tx = tx};
-    memcpy(pctx.account, td.from, 20);
+    in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = NULL_BYTES, .output = meta, .tx = tx};
+    memcpy(pctx.account, from, 20);
     in3_ret_t prep_res = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN_PREPARE, &pctx);
 
     if (prep_res) {
-      if (dst->data) _free(dst->data);
-      if (pctx.new_tx.data) _free(pctx.new_tx.data);
+      _free(pctx.new_tx.data);
       return prep_res;
     }
     else if (pctx.new_tx.data) {
@@ -387,15 +376,47 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
       *dst = pctx.new_tx;
     }
   }
+  return IN3_OK;
+}
 
-  if (meta) {
-    sb_add_rawbytes(meta, ",\"unsigned\":[\"0x", *dst, 0);
-    sb_add_chars(meta, "\"]");
-  }
+/**
+ * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
+ */
+in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta) {
+  eth_tx_data_t td = {0}; // transaction definition
+
+  // read the values from json
+  td.type                     = d_get_int(tx, d_get(tx, K_ETH_TX_TYPE) ? K_ETH_TX_TYPE : K_TYPE);
+  td.access_list              = d_get(tx, K_ACCESS_LIST);
+  td.gas_limit                = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : NULL_BYTES);
+  td.to                       = getl(tx, K_TO, 20);
+  td.value                    = get(tx, K_VALUE);
+  td.data                     = get(tx, K_DATA);
+  td.nonce                    = get(tx, K_NONCE);
+  td.gas_price                = get(tx, K_GAS_PRICE);
+  td.max_fee_per_gas          = get(tx, K_MAX_FEE_PER_GAS);
+  td.max_priority_fee_per_gas = get(tx, K_MAX_PRIORITY_FEE_PER_GAS);
+
+  TRY(in3_resolve_chain_id(ctx, &td.chain_id))                                                // make sure, we have the correct chain_id
+  TRY(get_from_address(tx, ctx, td.from))                                                     // if no from address is specified we take the first signer
+  TRY(get_nonce_and_gasprice(&td, ctx))                                                       // determine the gas price
+  TRY(print_input(meta, tx, &td))                                                             // if this is part of the wallet_exec, we add the input
+  TRY(transform_tx(ctx, tx, bytes(td.from, 20), &td.to, &td.value, &td.data, &td.gas_limit)); // do we need to transform the tx before we sign it?
+  TRY(determine_gas(ctx, &td, d_get_bytes(tx, key("wallet"))))                                // how much gas are we going to need?
+
+  // create raw without signature
+  *dst = serialize_tx_raw(&td, td.type ? 0 : get_v(td.chain_id), NULL_BYTES, NULL_BYTES);
+
+  // write state?
+  if (meta) sb_printx(meta, ",\"gas\":\"%V\"},\"pre_unsigned\":\"%B\"", td.gas_limit, *dst);
+
+  TRY_CATCH(customize_transaction(tx, ctx, dst, meta, td.from), _free(dst->data)) // in case of a wallet-tx, it will recreate the tx-data usinf execTransaction
+
+  if (meta) sb_printx(meta, ",\"unsigned\":[\"%B\"]", *dst);
 
   // cleanup subcontexts
-  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount", NULL), false))
-  TRY(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice", NULL), false))
+  TRY_CATCH(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount", NULL), false), _free(dst->data))
+  TRY_CATCH(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice", NULL), false), _free(dst->data))
 
   return IN3_OK;
 }
@@ -404,28 +425,23 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
 in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_t* dst) {
-  bytes_t signature;
+  bytes_t    signature;
+  chain_id_t chain_id;
 
-  // make sure, we have the correct chain_id
-  chain_id_t chain_id = in3_chain_id(ctx);
-  if (chain_id == CHAIN_ID_LOCAL) {
-    d_token_t* r = NULL;
-    TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &r, NULL))
-    chain_id = d_long(r);
-  }
+  // make sure, we know the chain_id
+  TRY(in3_resolve_chain_id(ctx, &chain_id))
 
+  // get the signature from required
   TRY(req_require_signature(ctx, SIGN_EC_HASH, SIGN_CURVE_ECDSA, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
-  // get the signature from required
-
   // if we reached that point we have a valid signature in sig
   // create raw transaction with signature
-  uint8_t  type = raw_tx.len && raw_tx.data[0] < 10 ? raw_tx.data[0] : 0;
   bytes_t  data, last;
+  uint8_t  type      = raw_tx.len && raw_tx.data[0] < 10 ? raw_tx.data[0] : 0;
   uint32_t v         = type ? signature.data[64] : (27 + signature.data[64] + (get_v(chain_id) ? (get_v(chain_id) * 2 + 8) : 0));
-  int      last_item = 5;
-  if (type) {
+  int      last_item = 5; // the last item int he rlp encoded tx before the signature starts
+  if (type) {             // we skip the first byte, since it defines the type
     raw_tx.data++;
     raw_tx.len--;
     if (type == 1) last_item = 7;
@@ -482,25 +498,21 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   }
   else
     TRY(eth_prepare_unsigned_tx(tx, ctx, &unsigned_tx, NULL));
-  TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
-            if (unsigned_tx.data) _free(unsigned_tx.data);)
+  TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx), _free(unsigned_tx.data);)
 
   // build the RPC-request
-  char* old_req = ctx->request_context->c;
-  sb_t  sb      = {0};
-  sb_add_rawbytes(&sb, "{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[\"0x", signed_tx, 0);
-  sb_add_chars(&sb, "\"]");
-  sb_add_chars(&sb, "}");
+  char* old_req     = ctx->request_context->c;
+  char* raw_request = sprintx("{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"%B\"]}", signed_tx);
 
   // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
   _free(signed_tx.data);
   json_free(ctx->request_context);
 
   // set the new RPC-Request.
-  ctx->request_context                           = parse_json(sb.data);
-  ctx->requests[0]                               = ctx->request_context->result;
-  in3_cache_add_ptr(&ctx->cache, sb.data)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-  in3_cache_add_ptr(&ctx->cache, old_req)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_NOT_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards, butt only for subrequests
+  ctx->request_context                               = parse_json(raw_request);
+  ctx->requests[0]                                   = ctx->request_context->result;
+  in3_cache_add_ptr(&ctx->cache, raw_request)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+  in3_cache_add_ptr(&ctx->cache, old_req)->props     = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_NOT_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards, butt only for subrequests
   return IN3_OK;
 }
 

@@ -215,6 +215,7 @@ typedef struct in3_t_ {
   uint_fast16_t          max_verified_hashes;   /**< max number of verified hashes to cache (actual number may temporarily exceed this value due to pending requests) */
   uint_fast16_t          alloc_verified_hashes; /**< number of currently allocated verified hashes */
   uint_fast16_t          pending;               /**< number of pending requests created with this instance */
+  uint_fast16_t          gas_prio;              /**< percent to be multiplied with the avg-gas price */
   uint32_t               cache_timeout;         /**< number of seconds requests can be cached. */
   uint32_t               timeout;               /**< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
   uint32_t               id_count;              /**< counter for use as JSON RPC id - incremented for every request */

@@ -39,6 +39,7 @@
  *
  * */
 
+#include "../../../core/client/client.h"
 #include "../../../core/util/data.h"
 
 typedef struct {
@@ -53,6 +54,7 @@ typedef struct {
   bytes_t    max_priority_fee_per_gas;
   d_token_t* access_list;
   address_t  from;
+  chain_id_t chain_id;
 } eth_tx_data_t;
 
 /**
@@ -77,11 +79,11 @@ bytes_t* serialize_tx(d_token_t* tx);
 /**
  * creates rlp-encoded raw bytes for a transaction from direct values.
  *
- * The bytes must be freed with b_free after use!
+ * The bytes.data must be freed with b_free after use!
  *
  *
  */
-bytes_t* serialize_tx_raw(eth_tx_data_t* tx, uint64_t chain_id, uint64_t v, bytes_t r, bytes_t s);
+bytes_t serialize_tx_raw(eth_tx_data_t* tx, uint64_t v, bytes_t r, bytes_t s);
 /**
  * creates rlp-encoded raw bytes for a account.
  *

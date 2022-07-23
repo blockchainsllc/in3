@@ -54,6 +54,14 @@ config:
         default: 7
         cmd: a
 
+      gasPrio:
+        type: int
+        descr: the factor in percent to be used when calculating the gasPrice (50 = 50% of average gasPrice, 200 = double of the current gasPrice).
+        example: 120
+        optional: true
+        default: 100
+        cmd: g
+
       keepIn3:
         type: bool
         descr: if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
