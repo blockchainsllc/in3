@@ -107,15 +107,16 @@ typedef uint64_t in3_node_props_t;
  * a list of flags defining the behavior of the incubed client. They should be used as bitmask for the flags-property.
  */
 typedef enum {
-  FLAGS_KEEP_IN3           = 0x1,  /**< the in3-section with the proof will also returned */
-  FLAGS_AUTO_UPDATE_LIST   = 0x2,  /**< the nodelist will be automatically updated if the last_block is newer  */
-  FLAGS_INCLUDE_CODE       = 0x4,  /**< the code is included when sending eth_call-requests  */
-  FLAGS_BINARY             = 0x8,  /**< the client will use binary format  */
-  FLAGS_HTTP               = 0x10, /**< the client will try to use http instead of https  */
-  FLAGS_STATS              = 0x20, /**< nodes will keep track of the stats (default=true)  */
-  FLAGS_NODE_LIST_NO_SIG   = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
-  FLAGS_BOOT_WEIGHTS       = 0x80, /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
-  FLAGS_ALLOW_EXPERIMENTAL = 0x100 /**< if true the client will support experimental features.*/
+  FLAGS_KEEP_IN3           = 0x1,   /**< the in3-section with the proof will also returned */
+  FLAGS_AUTO_UPDATE_LIST   = 0x2,   /**< the nodelist will be automatically updated if the last_block is newer  */
+  FLAGS_INCLUDE_CODE       = 0x4,   /**< the code is included when sending eth_call-requests  */
+  FLAGS_BINARY             = 0x8,   /**< the client will use binary format  */
+  FLAGS_HTTP               = 0x10,  /**< the client will try to use http instead of https  */
+  FLAGS_STATS              = 0x20,  /**< nodes will keep track of the stats (default=true)  */
+  FLAGS_NODE_LIST_NO_SIG   = 0x40,  /**< nodelist update request will not automatically ask for signatures and proof */
+  FLAGS_BOOT_WEIGHTS       = 0x80,  /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
+  FLAGS_ALLOW_EXPERIMENTAL = 0x100, /**< if true the client will support experimental features.*/
+  FLAGS_USE_TX_TYPE2       = 0x200  /**< if true the send Transaction will create type 2 transaction if not explicitly specified.*/
 } in3_flags_type_t;
 
 /** represents a blockhash which was previously verified */

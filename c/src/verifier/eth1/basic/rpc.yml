@@ -31,6 +31,10 @@ types:
       type: uint64
       optional: true
       default: 21000
+    gasPrio:
+      descr: if set gasPrice will be determined by using the average gasPrice multiplied by this factor ( as percent ), which means 50 = half the avergae gas price and 200 means twice the avergae gas price.
+      type: uint32
+      optional: true
     gasPrice:
       descr: the price in wei for one gas-unit. If not specified it will be fetched using `eth_gasPrice`
       type: uint64

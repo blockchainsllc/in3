@@ -316,6 +316,10 @@ char* in3_configure_internal(json_ctx_t* json, in3_t* c, bool ignore_unknown) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_BOOT_WEIGHTS, (d_int(token) ? true : false));
     }
+    else if (token->key == CONFIG_KEY("useTxType2")) {
+      EXPECT_TOK_BOOL(token);
+      BITMASK_SET_BOOL(c->flags, FLAGS_USE_TX_TYPE2, (d_int(token) ? true : false));
+    }
     else if (token->key == CONFIG_KEY("maxAttempts")) {
       EXPECT_TOK_U16(token);
       EXPECT_CFG(d_int(token), "maxAttempts must be at least 1");

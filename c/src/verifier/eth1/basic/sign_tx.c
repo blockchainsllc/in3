@@ -50,7 +50,7 @@
 
 // defines the default gas to be used if no gas is specified.
 // default: 40000 gas
-const bytes_t default_gas = {.data = (uint8_t*) "\x9c\x40", .len = 2};
+const uint64_t default_gas = 40000;
 
 /** helper to get a key and convert it to bytes*/
 static inline bytes_t get(d_token_t* t, uint16_t key) {
@@ -136,64 +136,45 @@ static in3_ret_t merge_result(in3_ret_t* prev, in3_ret_t res) {
 static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
   d_token_t* result;
   in3_ret_t  ret = IN3_OK;
+
+  // is the nonce set?
   if (!tx->nonce.data) {
     char* payload = sprintx("[\"%B\",\"latest\"]", bytes(tx->from, 20));
     ret           = get_from_nodes(ctx, "eth_getTransactionCount", payload, &tx->nonce);
     _free(payload);
   }
 
-  // fix gas_price
-  if (tx->type < 2 && !tx->gas_price.data)
-    merge_result(&ret, get_from_nodes(ctx, "eth_gasPrice", "[]", &tx->gas_price));
+  if (tx->type < 2) {
+    // legacy -tx
+    if (!tx->gas_price) {
+      in3_ret_t r = req_send_sub_request(ctx, "eth_gasPrice", "", NULL, &result, NULL);
+      if (r == IN3_OK) {
+        tx->gas_price = d_long(result);
+        if (!tx->gas_price)
+          r = req_set_error(ctx, "Invalid GasPrice", IN3_ERPC);
+        else if (tx->gas_prio)
+          tx->gas_price = (tx->gas_price * tx->gas_prio) / 100;
+      }
+      merge_result(&ret, r);
+    }
+  }
+  else if (tx->max_fee_per_gas == 0 || tx->max_priority_fee_per_gas == 0) {
+    // tx type 2
 
-    /*
-    if (tx->type < 2 && !tx->gas_price.len) {
-      bytes_t gp = NULL_BYTES;
-      merge_result(&ret, get_from_nodes(ctx, "eth_gasPrice", "[]", &gp));
-      if (ret == IN3_OK && gp.data) {
-        if (tx->gas_price.data && tx->gas_price.len == 0 && gp.len <= 8) {
-          long_to_bytes(bytes_to_long(gp.data, gp.len) + 1, tx->gas_price.data);
-          tx->gas_price.len = 8;
-          b_optimize_len(&tx->gas_price);
-        }
-        else
-          tx->gas_price = gp;
+    // get gas_price
+    uint64_t gas_price = merge_result(&ret, req_send_sub_request(ctx, "eth_gasPrice", "", NULL, &result, NULL)) == IN3_OK ? d_long(result) : 0;
+
+    // get latest block
+    if (merge_result(&ret, req_send_sub_request(ctx, "eth_getBlockByNumber", "\"latest\",false", NULL, &result, NULL)) == IN3_OK && gas_price) {
+      uint64_t base_fee = d_get_long(result, K_BASE_GAS_FEE);
+      tx->gas_price     = tx->gas_prio ? (gas_price * tx->gas_prio) / 100 : gas_price;
+      if (!base_fee)
+        tx->type = 0; // looks like we don't support tx type 2, so we use legacy tx
+      else {
+        tx->max_priority_fee_per_gas = 1000000000L;
+        tx->max_fee_per_gas          = base_fee * 2 + tx->max_priority_fee_per_gas;
       }
     }
-  */
-  // fill access_list if this is a call
-  if (tx->type > 0 && tx->data.len >= 4 && !tx->access_list) {
-    sb_t       sb = {0};
-    in3_req_t* child;
-    sb_printx(&sb, "{\"data\":\"%B\",\"from\":\"%B\"", tx->data, bytes(tx->from, 20));
-    if (tx->to.data) sb_printx(&sb, ",\"to\":\"%B\"", tx->to);
-    sb_add_chars(&sb, "}");
-    if (merge_result(&ret, req_send_sub_request(ctx, "eth_call", sb.data, "{\"verification\":\"proof\"}", &result, &child)) == IN3_OK)
-      tx->access_list = child ? d_get(d_get(d_get(child->responses[0], K_IN3), K_PROOF), K_ACCOUNTS) : NULL;
-    _free(sb.data);
-  }
-
-  // fill priority_gas
-  if (tx->type == 2 && (!tx->max_fee_per_gas.data || !tx->max_priority_fee_per_gas.data) && merge_result(&ret, req_send_sub_request(ctx, "eth_feeHistory", "\"0x4\",\"latest\",[50]", NULL, &result, NULL)) == IN3_OK) {
-    d_token_t* fees     = d_get(result, K_BASE_GAS_FEE);
-    uint64_t   base_fee = 0;
-    uint64_t   prio_fee = 0;
-    if (fees && d_len(fees) && d_type(fees) == T_ARRAY)
-      base_fee = d_get_long_at(fees, d_len(fees) - 1);
-    fees = d_get(result, key("reward"));
-    if (fees && d_len(fees) && d_type(fees) == T_ARRAY) {
-      for (int i = d_len(fees) - 1; i >= 0 && tx->max_priority_fee_per_gas.len < 2; i--)
-        tx->max_priority_fee_per_gas = d_bytes(d_get_at(d_get_at(fees, i), 0));
-      prio_fee = tx->max_priority_fee_per_gas.data ? bytes_to_long(tx->max_priority_fee_per_gas.data, tx->max_priority_fee_per_gas.len) : 0;
-    }
-    if (!prio_fee) return req_set_error(ctx, "Could not determine the max priority fees!", IN3_EFIND);
-    uint64_t max_fees = ((base_fee + prio_fee) * 14) / 10; // we add 40% buffer
-    uint8_t  tmp[8];
-    bytes_t  fee_data = bytes(tmp, 8);
-    long_to_bytes(max_fees, tmp);
-    b_optimize_len(&fee_data);
-    bytes_t* cached     = in3_cache_get_entry(ctx->cache, &fee_data);
-    tx->max_fee_per_gas = cached ? *cached : in3_cache_add_entry(&ctx->cache, bytes_dup(fee_data), bytes_dup(fee_data))->value;
   }
 
   return ret;
@@ -219,25 +200,21 @@ static bytes_t get_or_create_cached(in3_req_t* req, d_key_t k, int size) {
   return cache->value;
 }
 
-static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td) {
   char*   token  = d_get_string(tx, key("token"));
   bytes_t nft_id = d_get_bytes(tx, key("nft_id"));
   if (token && nft_id.data == NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
-    if (to->len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
-    *data = get_or_create_cached(req, key("pdata"), 68);
-    memcpy(data->data, "\xa9\x05\x9c\xbb", 4);                         // transfer (address, uint256)
-    memcpy(data->data + 4 + 32 - 20, to->data, 20);                    // recipient
-    memcpy(data->data + 4 + 64 - value->len, value->data, value->len); // value
+    if (td->to.len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
+    td->data = get_or_create_cached(req, key("pdata"), 68);
+    memcpy(td->data.data, "\xa9\x05\x9c\xbb", 4);                                  // transfer (address, uint256)
+    memcpy(td->data.data + 4 + 32 - 20, td->to.data, 20);                          // recipient
+    memcpy(td->data.data + 4 + 64 - td->value.len, td->value.data, td->value.len); // value
 
-    *to = get_or_create_cached(req, key("pto"), 20);
-    hex_to_bytes(token, -1, to->data, to->len);
+    td->to = get_or_create_cached(req, key("pto"), 20);
+    hex_to_bytes(token, -1, td->to.data, td->to.len);
 
-    uint64_t gas = bytes_to_long(gas_limit->data, gas_limit->len) + 100000; // we add 100000 gas for using transfer
-    *gas_limit   = get_or_create_cached(req, key("pgas"), 8);
-    long_to_bytes(gas, gas_limit->data);
-    b_optimize_len(gas_limit);
-
-    value->len = 0; // we don't need a value anymore, since it is encoded
+    if (!td->gas_limit) td->gas_limit = default_gas + 100000;
+    td->value.len = 0; // we don't need a value anymore, since it is encoded
   }
   else if (token && nft_id.data == NULL)
     return req_set_error(req, "Invalid Token. Only token-addresses are supported!", IN3_EINVAL);
@@ -245,29 +222,25 @@ static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, bytes_t* to, byt
   return IN3_OK;
 }
 
-static in3_ret_t transform_erc721(in3_req_t* req, d_token_t* tx, bytes_t* from, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+static in3_ret_t transform_erc721(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td) {
   char*   token    = d_get_string(tx, key("token"));
   bytes_t nft_id   = d_get_bytes(tx, key("nft_id"));
   bytes_t nft_from = d_get_bytes(tx, key("nft_from"));
-  if (nft_from.data == NULL) nft_from = *from;
+  if (nft_from.data == NULL) nft_from = bytes(td->from, 20);
   if (token && nft_id.data != NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
-    if (to->len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
+    if (td->to.len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
     if (nft_from.len != 20) return req_set_error(req, "Invalid to nft_from address!", IN3_EINVAL);
-    *data = get_or_create_cached(req, key("pdata"), 100);
-    memcpy(data->data, "\x23\xb8\x72\xdd", 4);                         // transferFrom(address,address,uint256)
-    memcpy(data->data + 4 + 32 - 20, nft_from.data, 20);               // from
-    memcpy(data->data + 4 + 64 - 20, to->data, 20);                    // to
-    memcpy(data->data + 4 + 96 - nft_id.len, nft_id.data, nft_id.len); // tokenID
+    td->data = get_or_create_cached(req, key("pdata"), 100);
+    memcpy(td->data.data, "\x23\xb8\x72\xdd", 4);                         // transferFrom(address,address,uint256)
+    memcpy(td->data.data + 4 + 32 - 20, nft_from.data, 20);               // from
+    memcpy(td->data.data + 4 + 64 - 20, td->to.data, 20);                 // to
+    memcpy(td->data.data + 4 + 96 - nft_id.len, nft_id.data, nft_id.len); // tokenID
 
-    *to = get_or_create_cached(req, key("pto"), 20);
-    hex_to_bytes(token, -1, to->data, to->len);
+    td->to = get_or_create_cached(req, key("pto"), 20);
+    hex_to_bytes(token, -1, td->to.data, td->to.len);
 
-    uint64_t gas = bytes_to_long(gas_limit->data, gas_limit->len) + 100000; // we add 100000 gas for using transfer
-    *gas_limit   = get_or_create_cached(req, key("pgas"), 8);
-    long_to_bytes(gas, gas_limit->data);
-    b_optimize_len(gas_limit);
-
-    value->len = 0; // we don't need a value anymore, since it is encoded
+    if (!td->gas_limit) td->gas_limit = default_gas + 100000;
+    td->value.len = 0; // we don't need a value anymore, since it is encoded
   }
   else if (token && nft_id.data != NULL)
     return req_set_error(req, "Invalid Token. Only token-addresses are supported!", IN3_EINVAL);
@@ -275,7 +248,7 @@ static in3_ret_t transform_erc721(in3_req_t* req, d_token_t* tx, bytes_t* from, 
   return IN3_OK;
 }
 
-static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
+static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td) {
   char* fn = d_get_string(tx, key("fn_sig"));
 
   if (fn) {
@@ -295,25 +268,25 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, bytes_t* data) {
     TRY_FINAL(req_send_sub_request(req, "in3_abiEncode", params.data, NULL, &res, NULL), _free(params.data))
 
     if (d_type(res) != T_BYTES || d_len(res) < 4) return req_set_error(req, "abi encoded data", IN3_EINVAL);
-    if (data->data) {
+    if (td->data.len) {
       // if this is a deployment transaction we concate it with the arguments without the functionhash
-      bytes_t new_data = get_or_create_cached(req, key("deploy_data"), data->len + d_len(res) - 4);
-      memcpy(new_data.data, data->data, data->len);
-      memcpy(new_data.data + data->len, d_bytes(res).data + 4, d_len(res) - 4);
-      *data = new_data;
+      bytes_t new_data = get_or_create_cached(req, key("deploy_data"), td->data.len + d_len(res) - 4);
+      memcpy(new_data.data, td->data.data, td->data.len);
+      memcpy(new_data.data + td->data.len, d_bytes(res).data + 4, d_len(res) - 4);
+      td->data = new_data;
     }
     else
-      *data = d_bytes(res);
+      td->data = d_bytes(res);
   }
 
   return IN3_OK;
 }
 /** based on the tx-entries the transaction is manipulated before creating the raw transaction. */
-static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, bytes_t from, bytes_t* to, bytes_t* value, bytes_t* data, bytes_t* gas_limit) {
+static in3_ret_t transform_tx(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td) {
   // do we need to convert to the ERC20.transfer function?
-  TRY(transform_erc20(req, tx, to, value, data, gas_limit))
-  TRY(transform_erc721(req, tx, &from, to, value, data, gas_limit))
-  TRY(transform_abi(req, tx, data))
+  TRY(transform_erc20(req, tx, td))
+  TRY(transform_erc721(req, tx, td))
+  TRY(transform_abi(req, tx, td))
   return IN3_OK;
 }
 
@@ -321,34 +294,36 @@ static in3_ret_t simulate_tx(in3_req_t* req, eth_tx_data_t* tx, bytes_t wallet, 
   sb_t sb = {.allocted = 100, .data = _malloc(100), .len = 0};
   sb_printx(&sb, "{\"gas\":\"0x%x\",\"data\":\"%B\",\"from\":\"%B\"", init_gas, tx->data, wallet.len == 20 ? wallet : bytes(tx->from, 20));
   if (tx->to.data) sb_printx(&sb, ",\"to\":\"%B\"", tx->to);
+  sb_add_char(&sb, '}');
   if (strcmp(method, "eth_call") == 0) sb_add_chars(&sb, ",\"latest\"");
   TRY_FINAL(req_send_sub_request(req, method, sb.data, NULL, result, NULL), _free(sb.data))
   return IN3_OK;
 }
 
 static in3_ret_t determine_gas(in3_req_t* req, eth_tx_data_t* tx, bytes_t wallet) {
-  if (tx->gas_limit.data) return IN3_OK;
+  if (tx->gas_limit) return IN3_OK;
   if (tx->data.len > 3) {
     uint64_t   init_gas = 20000000;
     d_token_t* result;
     TRY(simulate_tx(req, tx, wallet, &result, "eth_estimateGas", init_gas))
     uint64_t gas = d_long(result);
     if (gas == init_gas) return req_set_error(req, "The transaction would fail if being send this way", IN3_EINVAL);
-    tx->gas_limit = d_bytes(result);
+    tx->gas_limit = (d_long(result) * 12) / 10; // we add 20% buffer
   }
   else
     tx->gas_limit = default_gas;
   return IN3_OK;
 }
 
+// print out the tx-input
 static in3_ret_t print_input(sb_t* meta, d_token_t* tx, eth_tx_data_t* td) {
   if (!meta) return IN3_OK;
   sb_printx(meta, "\"input\":{\"to\":\"%B\",\"sender\":\"%B\",\"value\":\"%V\"", td->to, bytes(td->from, 20), td->value);
-  sb_printx(meta, ",\"data\":\"%B\",\"gasPrice\":\"%V\"", td->data, td->gas_price);
+  sb_printx(meta, ",\"data\":\"%B\",\"gasPrice\":\"0x%x\"", td->data, td->gas_price);
   sb_printx(meta, ",\"nonce\":\"%V\",\"eth_tx_type\":%u", td->nonce, td->type);
 
-  if (td->max_fee_per_gas.data) sb_printx(meta, ",\"maxFeePerGas\":\"%V\"", td->max_fee_per_gas);
-  if (td->max_priority_fee_per_gas.data) sb_printx(meta, ",\"maxPriorityFeePerGas\":\"%V\"", td->max_fee_per_gas);
+  if (td->max_fee_per_gas) sb_printx(meta, ",\"maxFeePerGas\":\"0x%x\"", td->max_fee_per_gas);
+  if (td->max_priority_fee_per_gas) sb_printx(meta, ",\"maxPriorityFeePerGas\":\"0x%x\"", td->max_fee_per_gas);
 
   sb_add_json(meta, ",\"accessList\":", td->access_list);
   sb_add_chars(meta, ",\"layer\":\"l1\"");
@@ -361,6 +336,7 @@ static in3_ret_t print_input(sb_t* meta, d_token_t* tx, eth_tx_data_t* td) {
   return IN3_OK;
 }
 
+// calls all plugins to modify the raw-tx before signing
 static in3_ret_t customize_transaction(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, sb_t* meta, uint8_t* from) {
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_SIGN_PREPARE)) {
     in3_sign_prepare_ctx_t pctx = {.req = ctx, .old_tx = *dst, .new_tx = NULL_BYTES, .output = meta, .tx = tx};
@@ -379,6 +355,20 @@ static in3_ret_t customize_transaction(d_token_t* tx, in3_req_t* ctx, bytes_t* d
   return IN3_OK;
 }
 
+static in3_ret_t print_fees(in3_req_t* ctx, bytes_t raw, sb_t* meta) {
+  if (!meta || !raw.data) return IN3_OK;
+  sb_printx(meta, ",\"unsigned\":[\"%B\"]", raw);
+  if (raw.data[0] < 0xc0) { // this is a legacy-tx
+    bytes_t  tmp       = {0};
+    uint64_t gas_price = rlp_decode_in_list(&raw, 1, &tmp) == 1 && tmp.len < 9 ? bytes_to_long(tmp.data, tmp.len) : 0;
+    uint64_t gas       = rlp_decode_in_list(&raw, 2, &tmp) == 1 && tmp.len < 9 ? bytes_to_long(tmp.data, tmp.len) : 0;
+    sb_printx(meta, ",\"fee\":\"0x%x\"", gas_price * gas);
+    if (gas < 21000) return req_set_error(ctx, "not enouogh gas!", IN3_EINVAL);
+  }
+
+  return IN3_OK;
+}
+
 /**
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
@@ -386,23 +376,24 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   eth_tx_data_t td = {0}; // transaction definition
 
   // read the values from json
-  td.type                     = d_get_int(tx, d_get(tx, K_ETH_TX_TYPE) ? K_ETH_TX_TYPE : K_TYPE);
+  td.type                     = d_intd(d_get(tx, d_get(tx, K_ETH_TX_TYPE) ? K_ETH_TX_TYPE : K_TYPE), (ctx->client->flags & FLAGS_USE_TX_TYPE2) ? 2 : 0);
   td.access_list              = d_get(tx, K_ACCESS_LIST);
-  td.gas_limit                = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : NULL_BYTES);
+  td.gas_limit                = d_get(tx, K_GAS) ? d_get_long(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? d_get_long(tx, K_GAS_LIMIT) : 0);
   td.to                       = getl(tx, K_TO, 20);
   td.value                    = get(tx, K_VALUE);
   td.data                     = get(tx, K_DATA);
   td.nonce                    = get(tx, K_NONCE);
-  td.gas_price                = get(tx, K_GAS_PRICE);
-  td.max_fee_per_gas          = get(tx, K_MAX_FEE_PER_GAS);
-  td.max_priority_fee_per_gas = get(tx, K_MAX_PRIORITY_FEE_PER_GAS);
+  td.gas_price                = d_get_long(tx, K_GAS_PRICE);
+  td.max_fee_per_gas          = d_get_long(tx, K_MAX_FEE_PER_GAS);
+  td.max_priority_fee_per_gas = d_get_long(tx, K_MAX_PRIORITY_FEE_PER_GAS);
+  td.gas_prio                 = (uint_fast16_t) d_get_intd(tx, key("gasPrio"), ctx->client->gas_prio);
 
-  TRY(in3_resolve_chain_id(ctx, &td.chain_id))                                                // make sure, we have the correct chain_id
-  TRY(get_from_address(tx, ctx, td.from))                                                     // if no from address is specified we take the first signer
-  TRY(get_nonce_and_gasprice(&td, ctx))                                                       // determine the gas price
-  TRY(print_input(meta, tx, &td))                                                             // if this is part of the wallet_exec, we add the input
-  TRY(transform_tx(ctx, tx, bytes(td.from, 20), &td.to, &td.value, &td.data, &td.gas_limit)); // do we need to transform the tx before we sign it?
-  TRY(determine_gas(ctx, &td, d_get_bytes(tx, key("wallet"))))                                // how much gas are we going to need?
+  TRY(in3_resolve_chain_id(ctx, &td.chain_id))                 // make sure, we have the correct chain_id
+  TRY(get_from_address(tx, ctx, td.from))                      // if no from address is specified we take the first signer
+  TRY(get_nonce_and_gasprice(&td, ctx))                        // determine the gas price
+  TRY(print_input(meta, tx, &td))                              // if this is part of the wallet_exec, we add the input
+  TRY(transform_tx(ctx, tx, &td))                              // do we need to transform the tx before we sign it?
+  TRY(determine_gas(ctx, &td, d_get_bytes(tx, key("wallet")))) // how much gas are we going to need?
 
   // create raw without signature
   *dst = serialize_tx_raw(&td, td.type ? 0 : get_v(td.chain_id), NULL_BYTES, NULL_BYTES);
@@ -411,8 +402,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   if (meta) sb_printx(meta, ",\"gas\":\"%V\"},\"pre_unsigned\":\"%B\"", td.gas_limit, *dst);
 
   TRY_CATCH(customize_transaction(tx, ctx, dst, meta, td.from), _free(dst->data)) // in case of a wallet-tx, it will recreate the tx-data usinf execTransaction
-
-  if (meta) sb_printx(meta, ",\"unsigned\":[\"%B\"]", *dst);
+  TRY_CATCH(print_fees(ctx, *dst, meta), _free(dst->data))                        // in case of a wallet-tx, it will recreate the tx-data usinf execTransaction
 
   // cleanup subcontexts
   TRY_CATCH(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount", NULL), false), _free(dst->data))

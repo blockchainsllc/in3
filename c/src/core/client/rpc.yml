@@ -54,6 +54,13 @@ config:
         default: 7
         cmd: a
 
+      useTxType2:
+        type: bool
+        descr: if true send Transaction will create TxType 2 Transactions unless explicitly specifed.
+        example: true
+        optional: true
+        default: false
+
       gasPrio:
         type: int
         descr: the factor in percent to be used when calculating the gasPrice (50 = 50% of average gasPrice, 200 = double of the current gasPrice).

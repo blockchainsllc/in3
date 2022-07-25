@@ -42,6 +42,13 @@
 #include "../../../verifier/eth1/nano/rlp.h"
 #include <string.h>
 
+static bytes_t as_bytes(uint64_t val, uint8_t* buf) {
+  long_to_bytes(val, buf);
+  bytes_t b = bytes(buf, 8);
+  b_optimize_len(&b);
+  return b;
+}
+
 static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
   // if this is a unit we need to make sure we remove the leading zeros.
   if (!b.data) {
@@ -182,49 +189,45 @@ bytes_t* serialize_tx(d_token_t* tx) {
 
 bytes_t serialize_tx_raw(eth_tx_data_t* tx, uint64_t v, bytes_t r, bytes_t s) {
   bytes_builder_t* rlp = bb_new();
-  uint8_t          chain_tmp[8];
-  long_to_bytes(tx->chain_id, chain_tmp);
+  uint8_t          tmp[8];
 
   // clang-format off
   switch (tx->type) {
     case 0: // legacy tx
-      rlp_add_bytes(rlp, tx->nonce             , UINT);
-      rlp_add_bytes(rlp, tx->gas_price         , UINT);
-      rlp_add_bytes(rlp, tx->gas_limit         , UINT);
-      rlp_add_bytes(rlp, tx->to                , ADDRESS);
-      rlp_add_bytes(rlp, tx->value             , UINT);
-      rlp_add_bytes(rlp, tx->data              , BYTES);
+      rlp_add_bytes(rlp, tx->nonce                    , UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->gas_price, tmp) , UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->gas_limit, tmp) , UINT);
+      rlp_add_bytes(rlp, tx->to                       , ADDRESS);
+      rlp_add_bytes(rlp, tx->value                    , UINT);
+      rlp_add_bytes(rlp, tx->data                     , BYTES);
       break;
 
     case 1: // EIP 2930
-      rlp_add_bytes(rlp, bytes(chain_tmp,8), UINT);
-      rlp_add_bytes(rlp, tx->nonce             , UINT);
-      rlp_add_bytes(rlp, tx->gas_price         , UINT);
-      rlp_add_bytes(rlp, tx->gas_limit         , UINT);
-      rlp_add_bytes(rlp, tx->to                , ADDRESS);
-      rlp_add_bytes(rlp, tx->value             , UINT);
-      rlp_add_bytes(rlp, tx->data              , BYTES);
-      rlp_add_list(rlp, tx->access_list);
-      break;
-
-    case 2: // EIP 1559
-      rlp_add_bytes(rlp, bytes(chain_tmp,8)      , UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->chain_id,tmp)  , UINT);
       rlp_add_bytes(rlp, tx->nonce                   , UINT);
-      rlp_add_bytes(rlp, tx->max_priority_fee_per_gas, UINT);
-      rlp_add_bytes(rlp, tx->max_fee_per_gas         , UINT);
-      rlp_add_bytes(rlp, tx->gas_limit               , UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->gas_price,tmp) , UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->gas_limit,tmp) , UINT);
       rlp_add_bytes(rlp, tx->to                      , ADDRESS);
       rlp_add_bytes(rlp, tx->value                   , UINT);
       rlp_add_bytes(rlp, tx->data                    , BYTES);
       rlp_add_list(rlp, tx->access_list);
       break;
+
+    case 2: // EIP 1559
+      rlp_add_bytes(rlp, as_bytes(tx->chain_id,tmp)                , UINT);
+      rlp_add_bytes(rlp, tx->nonce                                 , UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->max_priority_fee_per_gas,tmp), UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->max_fee_per_gas,tmp)         , UINT);
+      rlp_add_bytes(rlp, as_bytes(tx->gas_limit,tmp)               , UINT);
+      rlp_add_bytes(rlp, tx->to                                    , ADDRESS);
+      rlp_add_bytes(rlp, tx->value                                 , UINT);
+      rlp_add_bytes(rlp, tx->data                                  , BYTES);
+      rlp_add_list(rlp, tx->access_list);
+      break;
   }
 
   if (v) {
-     uint8_t tmp[8],*p=tmp,l=8;
-     long_to_bytes(v,tmp);
-     optimize_len(p,l);
-    rlp_add_bytes(rlp, bytes(p,l)        , UINT);
+    rlp_add_bytes(rlp, as_bytes(v,tmp)   , UINT);
     rlp_add_bytes(rlp, r                 , UINT);
     rlp_add_bytes(rlp, s                 , UINT);
   }

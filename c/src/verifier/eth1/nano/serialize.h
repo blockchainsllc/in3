@@ -43,18 +43,19 @@
 #include "../../../core/util/data.h"
 
 typedef struct {
-  int        type;
-  bytes_t    gas_limit;
-  bytes_t    to;
-  bytes_t    value;
-  bytes_t    data;
-  bytes_t    nonce;
-  bytes_t    gas_price;
-  bytes_t    max_fee_per_gas;
-  bytes_t    max_priority_fee_per_gas;
-  d_token_t* access_list;
-  address_t  from;
-  chain_id_t chain_id;
+  int           type;
+  uint_fast16_t gas_prio;
+  uint64_t      gas_limit;
+  uint64_t      gas_price;
+  uint64_t      max_fee_per_gas;
+  uint64_t      max_priority_fee_per_gas;
+  bytes_t       to;
+  bytes_t       value;
+  bytes_t       data;
+  bytes_t       nonce;
+  d_token_t*    access_list;
+  address_t     from;
+  chain_id_t    chain_id;
 } eth_tx_data_t;
 
 /**
