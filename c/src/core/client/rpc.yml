@@ -63,7 +63,7 @@ config:
 
       gasPrio:
         type: int
-        descr: the factor in percent to be used when calculating the gasPrice (50 = 50% of average gasPrice, 200 = double of the current gasPrice).
+        descr: the factor in percent to be used when calculating the gasPrice (50 = half of average gasPrice, 200 = double of the current gasPrice).
         example: 120
         optional: true
         default: 100

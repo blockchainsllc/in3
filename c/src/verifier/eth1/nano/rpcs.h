@@ -42,65 +42,6 @@
 #define __RPC_ETH_H
 
 /**
- * analyzes a transaaction before signing and produces a human readbale explaination what the transaction will do.
- *
- *
- *
- * Parameters:
- *
- *   - bytes_t tx : (bytes32) the transactionhash
- * Returns:
- *   - d_token_t* : (tx_message) a collection of messages describing the action in the transaction.
- */
-static inline in3_ret_t rpc_call_in3_analyze_by_txhash(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx) {
-  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_analyze_by_txhash", jpayload, NULL, res, NULL);
-  _free(jpayload);
-  return r;
-}
-#define FN_IN3_ANALYZE_BY_TXHASH "in3_analyze_by_txhash"
-
-/**
- * analyzes a transaction before signing and produces a human readbale explaination what the transaction will do.
- *
- *
- *
- * Parameters:
- *
- *   - d_token_t* tx     : (eth_transaction) the transactiondata.
- *   - uint8_t*   sender : (address) the address of the sender who would sign the tx.
- * Returns:
- *   - d_token_t* : (tx_message) a collection of messages describing the action in the transaction.
- */
-static inline in3_ret_t rpc_call_in3_analyze_tx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, d_token_t* tx, uint8_t* sender) {
-  char*     jpayload = sprintx("%j,\"%B\"", (d_token_t*) tx, bytes(sender, 20));
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_analyze_tx", jpayload, NULL, res, NULL);
-  _free(jpayload);
-  return r;
-}
-#define FN_IN3_ANALYZE_TX "in3_analyze_tx"
-
-/**
- * analyzes a raw transaaction before signing and produces a human readbale explaination what the transaction will do.
- *
- *
- *
- * Parameters:
- *
- *   - bytes_t  tx     : (bytes) the transactiondata. if the data are 32bytes it will be handled as transactionhash, if not the raw transaction is expected.
- *   - uint8_t* sender : (address) the address of the sender who would sign the tx. This is needed if the tx is a unsigned raw transaction in order to verify the balances and nonce.
- * Returns:
- *   - d_token_t* : (tx_message) a collection of messages describing the action in the transaction.
- */
-static inline in3_ret_t rpc_call_in3_analyze_rawtx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx, uint8_t* sender) {
-  char*     jpayload = sprintx("\"%B\",\"%B\"", (bytes_t) tx, bytes(sender, 20));
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_analyze_rawtx", jpayload, NULL, res, NULL);
-  _free(jpayload);
-  return r;
-}
-#define FN_IN3_ANALYZE_RAWTX "in3_analyze_rawtx"
-
-/**
  * returns the current gasPrice in wei per gas
  *
  * Returns:

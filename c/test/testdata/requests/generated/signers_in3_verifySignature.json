@@ -10,7 +10,9 @@
         "eth_sign"
       ]
     },
-    "result": true,
+    "result": {
+      "valid": true
+    },
     "success": true,
     "config": {
       "requestCount": 1,

@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-const char* bool_props[] = {"includeCode", "debug", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "btc.testnet", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
+const char* bool_props[] = {"includeCode", "debug", "useTxType2", "keepIn3", "stats", "useBinary", "experimental", "autoUpdateList", "bootWeights", "useHttp", "nodes.needsUpdate", "btc.testnet", "clearCache", "eth", "wait", "json", "hex", "debug", "quiet", "human", "test-request", "test-health-request", "response.in", "response.out", "onlysign", "noproof", "nostats", "version", "help", NULL};
 
 const char* help_args = "\
 --chainId                     -c     the chainId or the name of a known chain\n\
@@ -10,6 +10,8 @@ const char* help_args = "\
 --includeCode                        if true, the request should include the codes of all accounts\n\
 --debug                              if true, debug messages will be written to stderr\n\
 --maxAttempts                 -a     max number of attempts in case a response is rejected\n\
+--useTxType2                         if true send Transaction will create TxType 2 Transactions unless explicitly specifed\n\
+--gasPrio                     -g     the factor in percent to be used when calculating the gasPrice (50 = half of average gasPrice, 200 =...\n\
 --keepIn3                     -kin3  if true, requests sent to the input sream of the comandline util will be send theor responses in the...\n\
 --stats                              if true, requests sent will be used for stats\n\
 --useBinary                          if true the client will use binary format\n\
@@ -140,6 +142,7 @@ const char* aliases[] = {
     "c", "chainId",
     "f", "finality",
     "a", "maxAttempts",
+    "g", "gasPrio",
     "kin3", "keepIn3=true",
     "x", "experimental=true",
     "p", "proof",
