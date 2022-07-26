@@ -150,10 +150,7 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
       in3_ret_t r = req_send_sub_request(ctx, "eth_gasPrice", "", NULL, &result, NULL);
       if (r == IN3_OK) {
         tx->gas_price = d_long(result);
-        if (!tx->gas_price)
-          r = req_set_error(ctx, "Invalid GasPrice", IN3_ERPC);
-        else if (tx->gas_prio)
-          tx->gas_price = (tx->gas_price * tx->gas_prio) / 100;
+        if (tx->gas_prio) tx->gas_price = (tx->gas_price * tx->gas_prio) / 100;
       }
       merge_result(&ret, r);
     }
@@ -399,7 +396,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   *dst = serialize_tx_raw(&td, td.type ? 0 : get_v(td.chain_id), NULL_BYTES, NULL_BYTES);
 
   // write state?
-  if (meta) sb_printx(meta, ",\"gas\":\"%V\"},\"pre_unsigned\":\"%B\"", td.gas_limit, *dst);
+  if (meta) sb_printx(meta, ",\"gas\":\"0x%x\"},\"pre_unsigned\":\"%B\"", td.gas_limit, *dst);
 
   TRY_CATCH(customize_transaction(tx, ctx, dst, meta, td.from), _free(dst->data)) // in case of a wallet-tx, it will recreate the tx-data usinf execTransaction
   TRY_CATCH(print_fees(ctx, *dst, meta), _free(dst->data))                        // in case of a wallet-tx, it will recreate the tx-data usinf execTransaction
