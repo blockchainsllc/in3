@@ -575,6 +575,7 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
 
   return in3_rpc_handle_with_bytes(ctx, bytes(hash + 12, 20));
 }
+
 static in3_ret_t eth_verify_signature(in3_rpc_handle_ctx_t* ctx) {
   uint8_t*  account;
   bytes32_t hash;
@@ -607,12 +608,23 @@ static in3_ret_t eth_verify_signature(in3_rpc_handle_ctx_t* ctx) {
   else
     keccak(msg, hash);
 
+  if (signature.len == 64) {
+    // we don't have a recovery-bit, so we need to test both options
+    uint8_t   pub[64];
+    uint8_t   sig[65] = {0};
+    bytes32_t tmp;
+    memcpy(sig, signature.data, 64);
+    if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(sig, 65), pub) == IN3_OK && keccak(bytes(pub, 64), tmp) == IN3_OK && memcmp(account, tmp + 12, 20) == 0) return in3_rpc_handle_with_string(ctx, "{\"recovery\":0,\"valid\":true}");
+    sig[64] = 1; // try recovery-bit 1
+    if (crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), bytes(sig, 65), pub) == IN3_OK && keccak(bytes(pub, 64), tmp) == IN3_OK && memcmp(account, tmp + 12, 20) == 0) return in3_rpc_handle_with_string(ctx, "{\"recovery\":1,\"valid\":true}");
+    return in3_rpc_handle_with_string(ctx, "{\"valid\":false}");
+  }
   if (signature.len == 65) {
     uint8_t   pub[64];
     in3_ret_t r = crypto_recover(ECDSA_SECP256K1, bytes(hash, 32), signature, pub);
     if (r == IN3_OK) {
       keccak(bytes(pub, 64), pub);
-      if (memcmp(pub + 12, account, 20) == 0) return in3_rpc_handle_with_string(ctx, "true");
+      if (memcmp(pub + 12, account, 20) == 0) return in3_rpc_handle_with_string(ctx, "{\"valid\":true}");
     }
   }
 
@@ -624,9 +636,9 @@ static in3_ret_t eth_verify_signature(in3_rpc_handle_ctx_t* ctx) {
   TRY_FINAL(req_send_sub_request(ctx->req, "eth_call", params, NULL, &result, NULL), _free(params))
   if (d_is_bytes(result)) {
     bytes_t res = d_bytes(result);
-    if (res.len > 4 && memcmp(res.data, "\x16\x26\xba\x7e", 4) == 0) return in3_rpc_handle_with_string(ctx, "true");
+    if (res.len > 4 && memcmp(res.data, "\x16\x26\xba\x7e", 4) == 0) return in3_rpc_handle_with_string(ctx, "{\"valid\":true}");
   }
-  return in3_rpc_handle_with_string(ctx, "false");
+  return in3_rpc_handle_with_string(ctx, "{\"valid\":false}");
 }
 
 static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {

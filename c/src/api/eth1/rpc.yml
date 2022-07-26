@@ -622,7 +622,16 @@ signers:
         optional: true
     result:
       descr: the extracted public key and address
-      type: bool
+      typeName: SignatureResult
+      type:
+        recovery:
+          descr: the recovery-bit. Only specified, if the signature does not have one.
+          optional: true
+          type: uint32
+        valid:
+          descr: whether signature is valid or not
+          type: bool
+
     example:
       request:
         - "Hey World"

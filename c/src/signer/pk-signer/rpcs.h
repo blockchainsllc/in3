@@ -447,14 +447,12 @@ static inline in3_ret_t rpc_call_in3_get_internal_tx(in3_rpc_handle_ctx_t* ctx, 
  *   - char*    sigtype     : (string) the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data). Default: `raw`
  *   - uint64_t blockNumber : (uint64) the blockNumber which should be used in case of an EIP-1271 Contract Signature. You need to make sure, that the configured RPC-Endpoint is running as archive node to verify against older blocks!
  * Returns:
- *   - bool : (bool) the extracted public key and address
+ *   - d_token_t* : ([object Object]) the extracted public key and address
  */
-static inline in3_ret_t rpc_call_in3_verifySignature(in3_rpc_handle_ctx_t* ctx, bool* _res, char* msg, uint8_t* account, bytes_t sig, char* sigtype, uint64_t blockNumber) {
-  d_token_t* res      = NULL;
-  char*      jpayload = sprintx("\"%S\",\"%B\",\"%B\",\"%S\",\"%U\"", (char*) msg, bytes(account, 20), (bytes_t) sig, (char*) sigtype, (uint64_t) blockNumber);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_verifySignature", jpayload, NULL, &res, NULL);
+static inline in3_ret_t rpc_call_in3_verifySignature(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* msg, uint8_t* account, bytes_t sig, char* sigtype, uint64_t blockNumber) {
+  char*     jpayload = sprintx("\"%S\",\"%B\",\"%B\",\"%S\",\"%U\"", (char*) msg, bytes(account, 20), (bytes_t) sig, (char*) sigtype, (uint64_t) blockNumber);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_verifySignature", jpayload, NULL, res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_int(res);
   return r;
 }
 #define FN_IN3_VERIFYSIGNATURE "in3_verifySignature"
