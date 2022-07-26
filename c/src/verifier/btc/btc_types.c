@@ -20,7 +20,7 @@ bool pub_key_is_valid(const bytes_t* pub_key) {
 void btc_init_tx(btc_tx_t* tx) {
   if (tx) {
     memset(tx, 0, sizeof(btc_tx_t));
-    tx->version = 1;
+    tx->version = 2; // After BIP0068, default protocol version is 2
   }
 }
 
