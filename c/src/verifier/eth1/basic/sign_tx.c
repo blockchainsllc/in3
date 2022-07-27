@@ -355,7 +355,7 @@ static in3_ret_t customize_transaction(d_token_t* tx, in3_req_t* ctx, bytes_t* d
 static in3_ret_t print_fees(in3_req_t* ctx, bytes_t raw, sb_t* meta) {
   if (!meta || !raw.data) return IN3_OK;
   sb_printx(meta, ",\"unsigned\":[\"%B\"]", raw);
-  if (raw.data[0] < 0xc0) { // this is a legacy-tx
+  if (raw.data[0] >= 0xc0) { // this is a legacy-tx
     bytes_t  tmp       = {0};
     uint64_t gas_price = rlp_decode_in_list(&raw, 1, &tmp) == 1 && tmp.len < 9 ? bytes_to_long(tmp.data, tmp.len) : 0;
     uint64_t gas       = rlp_decode_in_list(&raw, 2, &tmp) == 1 && tmp.len < 9 ? bytes_to_long(tmp.data, tmp.len) : 0;
