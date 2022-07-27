@@ -57,8 +57,8 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
   bytes_t     merkle_proof = d_bytes(d_get(proof, key("cbtxMerkleProof")));
   bytes_t     tx           = d_bytes(d_get(proof, key("cbtx")));
   bytes32_t   tx_id;
-  btc_tx_t    tx_data;
-  btc_tx_in_t tx_in;
+  btc_tx_t    tx_data = {0};
+  btc_tx_in_t tx_in   = {0};
 
   if (*header.data == 1 && memiszero(header.data + 1, 3)) {
     *dst_block_number = (uint32_t) d_get_int(proof, key("height"));
@@ -82,10 +82,14 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
 
   // the coinbase tx has only one input
   if (tx_data.input_count != 1) return vc_err(vc, "vin count needs to be 1 for coinbase tx");
-  if (btc_parse_tx_in(tx_data.input.data, &tx_in, tx_data.input.data + tx_data.input.len) == NULL || *tx_in.script.data.data != 3) return vc_err(vc, "invalid coinbase signature");
+  if (btc_parse_tx_in(tx_data.input.data, &tx_in, tx_data.input.data + tx_data.input.len) == NULL || *tx_in.script.data.data != 3) {
+    if (tx_in.prev_tx_hash) _free(tx_in.prev_tx_hash);
+    return vc_err(vc, "invalid coinbase signature");
+  }
 
   *dst_block_number = ((uint32_t) tx_in.script.data.data[1]) | (((uint32_t) tx_in.script.data.data[2]) << 8) | (((uint32_t) tx_in.script.data.data[3]) << 16);
 
+  if (tx_in.prev_tx_hash) _free(tx_in.prev_tx_hash);
   return IN3_OK;
 }
 
@@ -209,7 +213,7 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
     uint8_t*    p        = tx_data.input.data;
     uint8_t*    end      = p + tx_data.input.len;
     uint32_t    tx_index = d_get_int(vc->proof, key("txIndex"));
-    btc_tx_in_t tx_in;
+    btc_tx_in_t tx_in    = {0};
     char*       hex;
     list = d_get(vc->result, key("vin"));
     if (d_type(list) != T_ARRAY || d_len(list) != (int) tx_data.input_count) return vc_err(vc, "invalid vin");
@@ -219,27 +223,42 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
       if (!p) return vc_err(vc, "invalid vin");
 
       // sequence
-      if (d_get_long(iter.token, key("sequence")) != tx_in.sequence) return vc_err(vc, "invalid vin.sequence");
+      if (d_get_long(iter.token, key("sequence")) != tx_in.sequence) {
+        _free(tx_in.prev_tx_hash);
+        return vc_err(vc, "invalid vin.sequence");
+      }
 
       if (tx_index == 0) {
         // coinbase
         hex = d_get_string(iter.token, key("coinbase"));
-        if (!hex || !equals_hex(tx_in.script.data, hex)) return vc_err(vc, "invalid coinbase");
+        if (!hex || !equals_hex(tx_in.script.data, hex)) {
+          _free(tx_in.prev_tx_hash);
+          return vc_err(vc, "invalid coinbase");
+        }
       }
       else {
         // txid
         hex = d_get_string(iter.token, key("txid"));
-        if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
+        if (!equals_hex(bytes(tx_in.prev_tx_hash, 32), hex)) {
+          _free(tx_in.prev_tx_hash);
+          return vc_err(vc, "invalid vin.txid");
+        }
 
         // vout
-        if (d_get_int(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) return vc_err(vc, "invalid vin.vout");
+        if (d_get_int(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) {
+          _free(tx_in.prev_tx_hash);
+          return vc_err(vc, "invalid vin.vout");
+        }
 
         // sig.hex
         hex = d_get_string(d_get(iter.token, key("scriptSig")), key("hex"));
-        if (!equals_hex(tx_in.script.data, hex)) return vc_err(vc, "invalid vin.hex");
+        if (!equals_hex(tx_in.script.data, hex)) {
+          _free(tx_in.prev_tx_hash);
+          return vc_err(vc, "invalid vin.hex");
+        }
       }
     }
-
+    if (tx_in.prev_tx_hash) _free(tx_in.prev_tx_hash); // We alrery verified vin, so we can free allocated memory already
     p   = tx_data.output.data;
     end = p + tx_data.output.len;
     btc_tx_out_t tx_out;
@@ -743,9 +762,9 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 // TODO: make this method compliant with "createrawtransaction" from btc rpc
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, bytes_t* dst, sb_t* meta) {
   btc_tx_ctx_t         tx_ctx;
-  btc_signer_pub_key_t signer;
-  signer.signer_id = bytes_dup(*signer_id);      // Will be freed once we free tx_ctx
-  signer.pub_key   = bytes_dup(*signer_pub_key); // Will be freed once we free tx_ctx
+  btc_signer_pub_key_t signer = {0};
+  signer.signer_id            = bytes_dup(*signer_id);      // Will be freed once we free tx_ctx
+  signer.pub_key              = bytes_dup(*signer_pub_key); // Will be freed once we free tx_ctx
 
   if (!signer.signer_id.data || !signer.pub_key.data) return req_set_error(req, "ERROR: Required signer data is null or missing", IN3_EINVAL);
   if (!btc_public_key_is_valid((const bytes_t*) &signer.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);

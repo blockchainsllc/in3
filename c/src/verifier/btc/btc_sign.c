@@ -23,7 +23,7 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
     case BTC_P2PKH: {
       TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message)); // write serialized transaction
       if (hash_message->len) {
-        _realloc(hash_message->data, hash_message->len + BTC_TX_IN_SIGHASH_SIZE_BYTES, hash_message->len); // Allocate memory for appending sighash
+        hash_message->data = _realloc(hash_message->data, hash_message->len + BTC_TX_IN_SIGHASH_SIZE_BYTES, hash_message->len); // Allocate memory for appending sighash
         hash_message->len += BTC_TX_IN_SIGHASH_SIZE_BYTES;
         uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash); // write sighash at the end of the input
       }
@@ -38,14 +38,14 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
           hash_sequence[BTC_TX_HASH_SIZE_BYTES],
           hash_outputs[BTC_TX_HASH_SIZE_BYTES];
 
-      prev_outputs.len = tx_ctx->utxo_count * BTC_TX_IN_PREV_OUPUT_SIZE_BYTES;
+      prev_outputs.len = tx_ctx->utxo_count * BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES;
       sequence.len     = tx_ctx->utxo_count * BTC_TX_IN_SEQUENCE_SIZE_BYTES;
 
       prev_outputs.data = _malloc(prev_outputs.len);
       sequence.data     = _malloc(sequence.len);
 
       for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
-        rev_copy(prev_outputs.data + (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES * i), tx_ctx->utxos[i].tx_hash);
+        rev_copy(prev_outputs.data + (BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES * i), tx_ctx->utxos[i].tx_hash);
         rev_copyl(prev_outputs.data + (BTC_TX_HASH_SIZE_BYTES * i), bytes((uint8_t*) &tx_ctx->utxos[i].tx_index, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
         rev_copyl(sequence.data + (BTC_TX_IN_SEQUENCE_SIZE_BYTES * i), bytes((uint8_t*) &tx_ctx->utxos[i].sequence, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
       }
@@ -74,7 +74,7 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       hash_message->len = (BTC_TX_VERSION_SIZE_BYTES +
                            BTC_TX_HASH_SIZE_BYTES +
                            BTC_TX_HASH_SIZE_BYTES +
-                           BTC_TX_IN_PREV_OUPUT_SIZE_BYTES +
+                           BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES +
                            get_compact_uint_size((uint64_t) utxo_index) +
                            tx_ctx->utxos[utxo_index].tx_out.script.data.len +
                            BTC_TX_OUT_VALUE_SIZE_BYTES +
@@ -328,7 +328,6 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // signature is complete
   _free(hash_message.data);
   _free(tmp_tx.inputs);
-  // btc_free_tx_ctx(&tmp_tx);
   return IN3_OK;
 }
 
