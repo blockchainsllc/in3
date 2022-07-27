@@ -519,7 +519,7 @@ static in3_ret_t in3_fromWei(in3_rpc_handle_ctx_t* ctx) {
   else
     return req_set_error(ctx->req, "the unit must be eth-unit or a exponent", IN3_EINVAL);
 
-  int       digits = (unit = d_get_at(ctx->params, 2)) ? d_int(unit) : -1;
+  int       digits = d_type((unit = d_get_at(ctx->params, 2))) != T_NULL ? d_int(unit) : -1;
   char*     s      = bytes_to_string_val(val, exp, digits);
   in3_ret_t r      = in3_rpc_handle_with_string(ctx, s);
   _free(s);
