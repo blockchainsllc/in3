@@ -90,8 +90,8 @@ void btc_free_utxo(btc_utxo_t* utxo) {
 
     if (utxo->signers) {
       for (uint32_t i = 0; i < utxo->signers_count; i++) {
-        _free(utxo->signers[i].pub_key.data);
-        _free(utxo->signers[i].signer_id.data);
+        if (utxo->signers[i].pub_key.data) _free(utxo->signers[i].pub_key.data);
+        if (utxo->signers[i].signer_id.data) _free(utxo->signers[i].signer_id.data);
       }
       _free(utxo->signers);
     }
@@ -124,13 +124,12 @@ void btc_free_tx_ctx(btc_tx_ctx_t* tx_ctx) {
 
 uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
+  dst->prev_tx_hash     = data;
+  dst->prev_tx_index    = le_to_int(data + BTC_TX_HASH_SIZE_BYTES);
   dst->script.data.data = data + BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES + decode_var_int(data + BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES, &len);
   dst->script.data.len  = (uint32_t) len;
   if (dst->script.data.data + dst->script.data.len + 4 > limit) return NULL; // check limit
-  if (!dst->prev_tx_hash) dst->prev_tx_hash = _malloc(BTC_TX_HASH_SIZE_BYTES);
-  rev_copyl(dst->prev_tx_hash, bytes(data, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
-  dst->prev_tx_index = le_to_int(data + BTC_TX_HASH_SIZE_BYTES);
-  dst->sequence      = le_to_int(dst->script.data.data + dst->script.data.len);
+  dst->sequence = le_to_int(dst->script.data.data + dst->script.data.len);
   return dst->script.data.data + dst->script.data.len + 4;
 }
 
@@ -218,13 +217,13 @@ static void add_signer_pub_key_to_utxo(btc_utxo_t* utxo, btc_signer_pub_key_t* s
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   uint64_t     val;
-  btc_tx_in_t  tx_in  = {0};
-  btc_tx_out_t tx_out = {0};
-  dst->all            = tx;
-  dst->version        = le_to_int(tx.data);
-  dst->flag           = btc_is_witness(tx) ? 1 : 0;
-  uint8_t* end        = tx.data + tx.len;
-  uint8_t* p          = tx.data + (dst->flag ? 6 : 4);
+  btc_tx_in_t  tx_in;
+  btc_tx_out_t tx_out;
+  dst->all     = tx;
+  dst->version = le_to_int(tx.data);
+  dst->flag    = btc_is_witness(tx) ? 1 : 0;
+  uint8_t* end = tx.data + tx.len;
+  uint8_t* p   = tx.data + (dst->flag ? 6 : 4);
 
   p += decode_var_int(p, &val);
   if (p >= end) return IN3_EINVAL;
@@ -232,10 +231,7 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   dst->input.data  = p;
   for (uint32_t i = 0; i < dst->input_count; i++) {
     p = btc_parse_tx_in(p, &tx_in, end);
-    if (!p || p >= end) {
-      if (tx_in.prev_tx_hash) _free(tx_in.prev_tx_hash);
-      return IN3_EINVAL;
-    }
+    if (!p || p >= end) return IN3_EINVAL;
   }
   dst->input.len = p - dst->input.data;
 
@@ -244,16 +240,12 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   dst->output.data  = p;
   for (uint32_t i = 0; i < dst->output_count; i++) {
     p = btc_parse_tx_out(p, &tx_out);
-    if (p > end) {
-      if (tx_in.prev_tx_hash) _free(tx_in.prev_tx_hash);
-      return IN3_EINVAL;
-    }
+    if (p > end) return IN3_EINVAL;
   }
   dst->output.len = p - dst->output.data;
   dst->witnesses  = bytes(p, tx.data + tx.len - 4 - p);
   dst->lock_time  = le_to_int(tx.data + tx.len - 4);
 
-  if (tx_in.prev_tx_hash) _free(tx_in.prev_tx_hash);
   return IN3_OK;
 }
 
@@ -278,10 +270,11 @@ in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_i
   start           = dst->tx.input.data;
   end             = dst->tx.input.data + dst->tx.input.len;
   for (i = 0; i < dst->tx.input_count; i++) {
-    btc_tx_in_t temp = {0};
-    start            = btc_parse_tx_in(start, &temp, end);
+    btc_tx_in_t temp;
+    start = btc_parse_tx_in(start, &temp, end);
     btc_init_utxo(&dst->utxos[i]);
-    dst->utxos[i].tx_hash            = temp.prev_tx_hash;
+    dst->utxos[i].tx_hash = _malloc(BTC_TX_HASH_SIZE_BYTES); // Will be freed later, when we call btc_free_tx_ctx
+    rev_copyl(dst->utxos[i].tx_hash, bytes(temp.prev_tx_hash, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
     dst->utxos[i].tx_index           = temp.prev_tx_index;
     dst->utxos[i].tx_out.script      = temp.script;
     dst->utxos[i].tx_out.script.type = btc_get_script_type(&dst->utxos[i].tx_out.script.data);

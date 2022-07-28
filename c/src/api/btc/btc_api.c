@@ -117,13 +117,10 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
   // handle vin
   uint8_t* p     = txdata.input.data;
   uint8_t* limit = txdata.input.data + txdata.input.len;
-  btc_tx_in_t vin = {0};
   for (uint32_t i = 0; i < res->vin_len; i++) {
+    btc_tx_in_t vin;
     p = btc_parse_tx_in(p, &vin, limit);
-    if (!p) {
-      if (vin.prev_tx_hash) _free(vin.prev_tx_hash);
-      return IN3_EINVAL;
-    }
+    if (!p) return IN3_EINVAL;
     btc_transaction_in_t* r = res->vin + i;
     r->script               = vin.script.data;
     r->sequence             = vin.sequence;
@@ -131,7 +128,6 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
     r->vout                 = vin.prev_tx_index;
     memcpy(r->txid, vin.prev_tx_hash, 32);
   }
-  if (vin.prev_tx_hash) _free(vin.prev_tx_hash);
 
   // handle vout
   p     = txdata.output.data;
