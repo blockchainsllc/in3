@@ -507,7 +507,6 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
       TRY(btc_serialize_tx_out(req, tx_out, &raw_src))
       old_len = tx_ctx->tx.output.len;
       dst     = &tx_ctx->tx.output;
-      // tx_ctx->output_count = tx_ctx->tx.output_count;
       tx_ctx->tx.output_count++;
       tx_ctx->outputs = tx_ctx->outputs ? _realloc(tx_ctx->outputs, (tx_ctx->output_count + 1) * sizeof(btc_tx_out_t), tx_ctx->output_count * sizeof(btc_tx_out_t)) : _malloc(sizeof(btc_tx_out_t));
 
@@ -531,7 +530,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
       return req_set_error(req, "ERROR: in add_to_tx: Unrecognized transaction field code.", IN3_EINVAL);
   }
 
-  // Write add serialized structure to transaction data
+  // Add serialized structure to transaction data
   dst->len += raw_src.len;
   if (raw_src.data) {
     dst->data = (dst->data) ? _realloc(dst->data, dst->len, old_len) : _malloc(dst->len);

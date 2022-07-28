@@ -778,6 +778,7 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, d_token_t* outputs, d_token_t*
 
 static void free_tx_ctx_sign_raw_tx(btc_tx_ctx_t* tx_ctx) {
   // The following values are set to null because they are just pointers to external buffers, which should be handled externally
+  tx_ctx->tx.all       = NULL_BYTES;
   tx_ctx->tx.output    = NULL_BYTES;
   tx_ctx->tx.witnesses = NULL_BYTES;
   for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {

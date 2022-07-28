@@ -266,6 +266,14 @@ static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in
   return IN3_OK;
 }
 
+static void free_tx_ctx_inputs(btc_tx_ctx_t* tx_ctx) {
+  for (uint32_t i = 0; i < tx_ctx->input_count; i++) {
+    btc_free_tx_in(&tx_ctx->inputs[i]);
+  }
+  _free(tx_ctx->inputs);
+  _free(tx_ctx->tx.input.data);
+}
+
 // WARNING: You need to free der_sig.data after calling this function!
 in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* tx_ctx, const uint32_t utxo_index, const uint32_t signer_index, const btc_tx_in_t* tx_in, uint8_t sighash) {
   if (!tx_ctx || !der_sig || !tx_in) {
@@ -315,19 +323,19 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
 
   // prepare array for hashing
   bytes_t hash_message = NULL_BYTES;
-  TRY(build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_index, sighash))
+  TRY_CATCH(build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_index, sighash), free_tx_ctx_inputs(&tmp_tx);)
   // Finally, sign transaction input
   // -- Obtain DER signature
   bytes_t sig = NULL_BYTES;
   int     l;
-  TRY(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0]))
+  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0]), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->data = _malloc(75);
-  TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data))
+  TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data); _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->len                  = (uint32_t) l;
   der_sig->data[der_sig->len++] = sig.data[64]; // append verification byte to end of DER signature
   // signature is complete
   _free(hash_message.data);
-  _free(tmp_tx.inputs);
+  free_tx_ctx_inputs(&tmp_tx);
   return IN3_OK;
 }
 
