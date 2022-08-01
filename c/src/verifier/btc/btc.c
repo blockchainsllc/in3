@@ -743,8 +743,8 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, bytes_t* dst, sb_t* meta) {
   btc_tx_ctx_t         tx_ctx;
   btc_signer_pub_key_t signer;
-  signer.signer_id = bytes_dup(*signer_id);      // Will be freed once we free tx_ctx
-  signer.pub_key   = bytes_dup(*signer_pub_key); // Will be freed once we free tx_ctx
+  signer.signer_id = *signer_id;
+  signer.pub_key   = *signer_pub_key;
 
   if (!signer.signer_id.data || !signer.pub_key.data) return req_set_error(req, "ERROR: Required signer data is null or missing", IN3_EINVAL);
   if (!btc_public_key_is_valid((const bytes_t*) &signer.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);

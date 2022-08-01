@@ -208,10 +208,11 @@ in3_ret_t btc_serialize_tx_out(in3_req_t* req, btc_tx_out_t* tx_out, bytes_t* ds
 }
 
 static void add_signer_pub_key_to_utxo(btc_utxo_t* utxo, btc_signer_pub_key_t* sig_pk) {
-  size_t current_size                = utxo->signers_count * sizeof(btc_signer_pub_key_t);
-  size_t new_size                    = current_size + sizeof(btc_signer_pub_key_t);
-  utxo->signers                      = utxo->signers ? _realloc(utxo->signers, new_size, current_size) : _malloc(new_size);
-  utxo->signers[utxo->signers_count] = *sig_pk;
+  size_t current_size                          = utxo->signers_count * sizeof(btc_signer_pub_key_t);
+  size_t new_size                              = current_size + sizeof(btc_signer_pub_key_t);
+  utxo->signers                                = utxo->signers ? _realloc(utxo->signers, new_size, current_size) : _malloc(new_size);
+  utxo->signers[utxo->signers_count].pub_key   = bytes_dup(sig_pk->pub_key);
+  utxo->signers[utxo->signers_count].signer_id = bytes_dup(sig_pk->signer_id);
   utxo->signers_count++;
 }
 
