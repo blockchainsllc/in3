@@ -782,9 +782,7 @@ static void free_tx_ctx_sign_raw_tx(btc_tx_ctx_t* tx_ctx) {
   tx_ctx->tx.output    = NULL_BYTES;
   tx_ctx->tx.witnesses = NULL_BYTES;
   for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
-    tx_ctx->utxos[i].tx_out.script.data   = NULL_BYTES;
-    tx_ctx->utxos[i].signers[0].pub_key   = NULL_BYTES;
-    tx_ctx->utxos[i].signers[0].signer_id = NULL_BYTES;
+    tx_ctx->utxos[i].tx_out.script.data = NULL_BYTES;
   }
   _free(tx_ctx->outputs);
   tx_ctx->outputs = NULL;
