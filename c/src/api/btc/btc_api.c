@@ -121,7 +121,6 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes
     btc_tx_in_t vin;
     p = btc_parse_tx_in(p, &vin, limit);
     if (!p) return IN3_EINVAL;
-
     btc_transaction_in_t* r = res->vin + i;
     r->script               = vin.script.data;
     r->sequence             = vin.sequence;

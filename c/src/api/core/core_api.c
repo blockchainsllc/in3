@@ -203,6 +203,8 @@ static in3_ret_t in3_crypto_convert(in3_rpc_handle_ctx_t* ctx) {
     ct = CONV_PK32_TO_PUB64;
   else if (strcmp(type, "pub32") == 0)
     ct = CONV_PK32_TO_PUB32;
+  else if (strcmp(type, "pub33") == 0)
+    ct = CONV_PK32_TO_PUB33;
   else if (strcmp(type, "sig_der") == 0)
     ct = CONV_SIG65_TO_DER;
   else if (strcmp(type, "sig_from_der") == 0)

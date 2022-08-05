@@ -21,8 +21,15 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
     case BTC_P2SH:
     case BTC_P2PK:
     case BTC_P2PKH: {
-      TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message));                               // write serialized transaction
-      uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash); // write sighash at the end of the input
+      TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message)); // write serialized transaction
+      if (hash_message->len) {
+        hash_message->data = _realloc(hash_message->data, hash_message->len + BTC_TX_IN_SIGHASH_SIZE_BYTES, hash_message->len); // Allocate memory for appending sighash
+        hash_message->len += BTC_TX_IN_SIGHASH_SIZE_BYTES;
+        uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash); // write sighash at the end of the input
+      }
+      else {
+        return req_set_error(req, "ERROR: in build_tx_in_hash_msg: Failed to build transaction signing message", IN3_EUNKNOWN);
+      }
     } break;
     case BTC_P2WSH:
     case BTC_V0_P2WPKH: {
@@ -31,14 +38,14 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
           hash_sequence[BTC_TX_HASH_SIZE_BYTES],
           hash_outputs[BTC_TX_HASH_SIZE_BYTES];
 
-      prev_outputs.len = tx_ctx->utxo_count * BTC_TX_IN_PREV_OUPUT_SIZE_BYTES;
+      prev_outputs.len = tx_ctx->utxo_count * BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES;
       sequence.len     = tx_ctx->utxo_count * BTC_TX_IN_SEQUENCE_SIZE_BYTES;
 
       prev_outputs.data = _malloc(prev_outputs.len);
       sequence.data     = _malloc(sequence.len);
 
       for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
-        rev_copy(prev_outputs.data + (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES * i), tx_ctx->utxos[i].tx_hash);
+        rev_copy(prev_outputs.data + (BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES * i), tx_ctx->utxos[i].tx_hash);
         rev_copyl(prev_outputs.data + (BTC_TX_HASH_SIZE_BYTES * i), bytes((uint8_t*) &tx_ctx->utxos[i].tx_index, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
         rev_copyl(sequence.data + (BTC_TX_IN_SEQUENCE_SIZE_BYTES * i), bytes((uint8_t*) &tx_ctx->utxos[i].sequence, BTC_TX_IN_SEQUENCE_SIZE_BYTES), BTC_TX_IN_SEQUENCE_SIZE_BYTES);
       }
@@ -67,7 +74,7 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
       hash_message->len = (BTC_TX_VERSION_SIZE_BYTES +
                            BTC_TX_HASH_SIZE_BYTES +
                            BTC_TX_HASH_SIZE_BYTES +
-                           BTC_TX_IN_PREV_OUPUT_SIZE_BYTES +
+                           BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES +
                            get_compact_uint_size((uint64_t) utxo_index) +
                            tx_ctx->utxos[utxo_index].tx_out.script.data.len +
                            BTC_TX_OUT_VALUE_SIZE_BYTES +
@@ -152,7 +159,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     } break;
     case BTC_P2PKH: {
       // Unlocking script format is: DER_LEN|DER_SIG|PUB_KEY_LEN|PUB_BEY
-      uint32_t script_len = 1 + signatures[0]->len + 1 + 64; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
+      uint32_t script_len = 1 + signatures[0]->len + 1 + pub_key->len; // DER_SIG_LEN + DER_SIG + PUBKEY_LEN + PUBKEY
 
       tx_in->script.data.data = tx_in->script.data.data ? _realloc(tx_in->script.data.data, script_len, tx_in->script.data.len) : _malloc(script_len);
       tx_in->script.data.len  = script_len;
@@ -259,6 +266,14 @@ static in3_ret_t prepare_tx_in(in3_req_t* req, const btc_utxo_t* utxo, btc_tx_in
   return IN3_OK;
 }
 
+static void free_tx_ctx_inputs(btc_tx_ctx_t* tx_ctx) {
+  for (uint32_t i = 0; i < tx_ctx->input_count; i++) {
+    btc_free_tx_in(&tx_ctx->inputs[i]);
+  }
+  _free(tx_ctx->inputs);
+  _free(tx_ctx->tx.input.data);
+}
+
 // WARNING: You need to free der_sig.data after calling this function!
 in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* tx_ctx, const uint32_t utxo_index, const uint32_t signer_index, const btc_tx_in_t* tx_in, uint8_t sighash) {
   if (!tx_ctx || !der_sig || !tx_in) {
@@ -308,20 +323,19 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
 
   // prepare array for hashing
   bytes_t hash_message = NULL_BYTES;
-  TRY(build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_index, sighash))
+  TRY_CATCH(build_tx_in_hash_msg(req, &hash_message, &tmp_tx, utxo_index, sighash), free_tx_ctx_inputs(&tmp_tx);)
   // Finally, sign transaction input
   // -- Obtain DER signature
   bytes_t sig = NULL_BYTES;
   int     l;
-  TRY(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0]))
+  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0]), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->data = _malloc(75);
-  TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data))
+  TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data); _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->len                  = (uint32_t) l;
   der_sig->data[der_sig->len++] = sig.data[64]; // append verification byte to end of DER signature
   // signature is complete
   _free(hash_message.data);
-  _free(tmp_tx.inputs);
-  // btc_free_tx_ctx(&tmp_tx);
+  free_tx_ctx_inputs(&tmp_tx);
   return IN3_OK;
 }
 

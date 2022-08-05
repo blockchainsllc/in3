@@ -20,7 +20,7 @@ bool pub_key_is_valid(const bytes_t* pub_key) {
 void btc_init_tx(btc_tx_t* tx) {
   if (tx) {
     memset(tx, 0, sizeof(btc_tx_t));
-    tx->version = 1;
+    tx->version = 2; // After BIP0068, default protocol version is 2
   }
 }
 
@@ -90,8 +90,8 @@ void btc_free_utxo(btc_utxo_t* utxo) {
 
     if (utxo->signers) {
       for (uint32_t i = 0; i < utxo->signers_count; i++) {
-        _free(utxo->signers[i].pub_key.data);
-        _free(utxo->signers[i].signer_id.data);
+        if (utxo->signers[i].pub_key.data) _free(utxo->signers[i].pub_key.data);
+        if (utxo->signers[i].signer_id.data) _free(utxo->signers[i].signer_id.data);
       }
       _free(utxo->signers);
     }
@@ -126,7 +126,7 @@ uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
   dst->prev_tx_hash     = data;
   dst->prev_tx_index    = le_to_int(data + BTC_TX_HASH_SIZE_BYTES);
-  dst->script.data.data = data + BTC_TX_IN_PREV_OUPUT_SIZE_BYTES + decode_var_int(data + BTC_TX_IN_PREV_OUPUT_SIZE_BYTES, &len);
+  dst->script.data.data = data + BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES + decode_var_int(data + BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES, &len);
   dst->script.data.len  = (uint32_t) len;
   if (dst->script.data.data + dst->script.data.len + 4 > limit) return NULL; // check limit
   dst->sequence = le_to_int(dst->script.data.data + dst->script.data.len);
@@ -142,7 +142,7 @@ in3_ret_t btc_serialize_tx_in(in3_req_t* req, const btc_tx_in_t* tx_in, bytes_t*
   if (!tx_in->prev_tx_hash) return req_set_error(req, "ERROR: in btc_serialize_tx_in: missing previous transaction hash", IN3_ERPC);
 
   // calculate serialized tx input size in bytes
-  uint32_t tx_in_size = (BTC_TX_IN_PREV_OUPUT_SIZE_BYTES +
+  uint32_t tx_in_size = (BTC_TX_IN_PREV_OUTPUT_SIZE_BYTES +
                          get_compact_uint_size((uint64_t) tx_in->script.data.len) +
                          tx_in->script.data.len +
                          BTC_TX_IN_SEQUENCE_SIZE_BYTES);
@@ -208,10 +208,11 @@ in3_ret_t btc_serialize_tx_out(in3_req_t* req, btc_tx_out_t* tx_out, bytes_t* ds
 }
 
 static void add_signer_pub_key_to_utxo(btc_utxo_t* utxo, btc_signer_pub_key_t* sig_pk) {
-  size_t current_size                = utxo->signers_count * sizeof(btc_signer_pub_key_t);
-  size_t new_size                    = current_size + sizeof(btc_signer_pub_key_t);
-  utxo->signers                      = utxo->signers ? _realloc(utxo->signers, new_size, current_size) : _malloc(new_size);
-  utxo->signers[utxo->signers_count] = *sig_pk;
+  size_t current_size                          = utxo->signers_count * sizeof(btc_signer_pub_key_t);
+  size_t new_size                              = current_size + sizeof(btc_signer_pub_key_t);
+  utxo->signers                                = utxo->signers ? _realloc(utxo->signers, new_size, current_size) : _malloc(new_size);
+  utxo->signers[utxo->signers_count].pub_key   = bytes_dup(sig_pk->pub_key);
+  utxo->signers[utxo->signers_count].signer_id = bytes_dup(sig_pk->signer_id);
   utxo->signers_count++;
 }
 
@@ -273,7 +274,8 @@ in3_ret_t btc_parse_tx_ctx(btc_tx_ctx_t* dst, bytes_t raw_tx, address_t signer_i
     btc_tx_in_t temp;
     start = btc_parse_tx_in(start, &temp, end);
     btc_init_utxo(&dst->utxos[i]);
-    dst->utxos[i].tx_hash            = temp.prev_tx_hash;
+    dst->utxos[i].tx_hash = _malloc(BTC_TX_HASH_SIZE_BYTES); // Will be freed later, when we call btc_free_tx_ctx
+    rev_copyl(dst->utxos[i].tx_hash, bytes(temp.prev_tx_hash, BTC_TX_HASH_SIZE_BYTES), BTC_TX_HASH_SIZE_BYTES);
     dst->utxos[i].tx_index           = temp.prev_tx_index;
     dst->utxos[i].tx_out.script      = temp.script;
     dst->utxos[i].tx_out.script.type = btc_get_script_type(&dst->utxos[i].tx_out.script.data);
@@ -506,7 +508,6 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
       TRY(btc_serialize_tx_out(req, tx_out, &raw_src))
       old_len = tx_ctx->tx.output.len;
       dst     = &tx_ctx->tx.output;
-      // tx_ctx->output_count = tx_ctx->tx.output_count;
       tx_ctx->tx.output_count++;
       tx_ctx->outputs = tx_ctx->outputs ? _realloc(tx_ctx->outputs, (tx_ctx->output_count + 1) * sizeof(btc_tx_out_t), tx_ctx->output_count * sizeof(btc_tx_out_t)) : _malloc(sizeof(btc_tx_out_t));
 
@@ -530,7 +531,7 @@ static in3_ret_t add_to_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, void* src, btc_
       return req_set_error(req, "ERROR: in add_to_tx: Unrecognized transaction field code.", IN3_EINVAL);
   }
 
-  // Write add serialized structure to transaction data
+  // Add serialized structure to transaction data
   dst->len += raw_src.len;
   if (raw_src.data) {
     dst->data = (dst->data) ? _realloc(dst->data, dst->len, old_len) : _malloc(dst->len);

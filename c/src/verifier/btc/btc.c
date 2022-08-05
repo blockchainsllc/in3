@@ -239,7 +239,6 @@ in3_ret_t btc_verify_tx(btc_target_conf_t* conf, in3_vctx_t* vc, uint8_t* tx_id,
         if (!equals_hex(tx_in.script.data, hex)) return vc_err(vc, "invalid vin.hex");
       }
     }
-
     p   = tx_data.output.data;
     end = p + tx_data.output.len;
     btc_tx_out_t tx_out;
@@ -744,8 +743,8 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
 in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, d_token_t* outputs, d_token_t* utxos, bytes_t* signer_id, bytes_t* signer_pub_key, bool is_testnet, bytes_t* dst, sb_t* meta) {
   btc_tx_ctx_t         tx_ctx;
   btc_signer_pub_key_t signer;
-  signer.signer_id = bytes_dup(*signer_id);      // Will be freed once we free tx_ctx
-  signer.pub_key   = bytes_dup(*signer_pub_key); // Will be freed once we free tx_ctx
+  signer.signer_id = *signer_id;
+  signer.pub_key   = *signer_pub_key;
 
   if (!signer.signer_id.data || !signer.pub_key.data) return req_set_error(req, "ERROR: Required signer data is null or missing", IN3_EINVAL);
   if (!btc_public_key_is_valid((const bytes_t*) &signer.pub_key)) return req_set_error(req, "ERROR: Provided btc public key has invalid data format", IN3_EINVAL);
@@ -777,13 +776,27 @@ in3_ret_t btc_prepare_unsigned_tx(in3_req_t* req, d_token_t* outputs, d_token_t*
   return IN3_OK;
 }
 
+static void free_tx_ctx_sign_raw_tx(btc_tx_ctx_t* tx_ctx) {
+  // The following values are set to null because they are just pointers to external buffers, which should be handled externally
+  tx_ctx->tx.all       = NULL_BYTES;
+  tx_ctx->tx.output    = NULL_BYTES;
+  tx_ctx->tx.witnesses = NULL_BYTES;
+  for (uint32_t i = 0; i < tx_ctx->utxo_count; i++) {
+    tx_ctx->utxos[i].tx_out.script.data = NULL_BYTES;
+  }
+  _free(tx_ctx->outputs);
+  tx_ctx->outputs = NULL;
+  btc_free_tx_ctx(tx_ctx);
+}
+
 // TODO: Make this function compliant with 'signrawtransaction' from btc rpc
 in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst) {
   btc_tx_ctx_t tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
-  TRY(btc_parse_tx_ctx(&tx_ctx, *raw_tx, signer_id, signer_pub_key));
-  TRY(btc_sign_tx(req, &tx_ctx));
-  return btc_serialize_tx(req, &tx_ctx.tx, dst);
+  TRY_CATCH(btc_parse_tx_ctx(&tx_ctx, *raw_tx, signer_id, signer_pub_key), free_tx_ctx_sign_raw_tx(&tx_ctx));
+  TRY_CATCH(btc_sign_tx(req, &tx_ctx), free_tx_ctx_sign_raw_tx(&tx_ctx));
+  TRY_FINAL(btc_serialize_tx(req, &tx_ctx.tx, dst), free_tx_ctx_sign_raw_tx(&tx_ctx));
+  return IN3_OK;
 }
 
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
