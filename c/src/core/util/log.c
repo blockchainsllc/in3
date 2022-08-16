@@ -31,6 +31,41 @@
 #include "log.h"
 #include "mem.h"
 #include "stringbuilder.h"
+static char next_char(char** p, const char* delim) {
+  if (!*p || !**p) return 0;
+  while (*(++(*p))) {
+    if ((**p == 33 || **p == 0x1b) && *((*p) + 1)) {
+      (*p)++;
+      continue; // escape for color
+    }
+    if (strchr(delim, **p)) return **p;
+  }
+  return 0;
+}
+static void remove_pk_args(sb_t* sb, char* k) {
+  for (char* p = sb->data; (p = (p && p[0]) ? str_find(p + 1, k) : NULL);) {
+    p += strlen(k) - 1;
+    if (!next_char(&p, "[{\",}]")) return;
+    bool is_array = *p == '[';
+    if (is_array && next_char(&p, "[{\",}]") != '"') continue;
+    while (*p == '"') {
+      char* start = p + 1;
+      if (next_char(&p, "\"")) {
+        while (start < p) *(start++) = 'x';
+        if (is_array && next_char(&p, "[{\",}]") == ',' && next_char(&p, "[{\",}]") == '"') continue;
+      }
+      break;
+    }
+  }
+}
+
+// we remove any log output, which may contain a private key
+static void remove_pk(sb_t* sb) {
+  remove_pk_args(sb, "\"pk\":");
+  remove_pk_args(sb, "in3_addRawKey");
+  remove_pk_args(sb, "in3_addMnemonic");
+  remove_pk_args(sb, "in3_addJsonKey");
+}
 
 static struct {
   void*           udata;
@@ -149,6 +184,7 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
     sb_t sb = {0};
     sb_vprintx(&sb, fmt, args);
     va_end(args);
+    remove_pk(&sb);
     fprintf(stderr, "%s", sb.data);
     _free(sb.data);
     fflush(stderr);
@@ -173,6 +209,7 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
     sb_t sb = {0};
     sb_vprintx(&sb, fmt, args);
     va_end(args);
+    remove_pk(&sb);
     printk("%s", sb.data);
     fflush(stderr);
     _free(sb.data);
@@ -195,6 +232,7 @@ void in3_log_(in3_log_level_t level, const char* filename, const char* function,
     sb_t sb = {0};
     sb_vprintx(&sb, fmt, args);
     va_end(args);
+    remove_pk(&sb);
     fprintf(L.fp, "%s", sb.data);
     fflush(L.fp);
     _free(sb.data);
