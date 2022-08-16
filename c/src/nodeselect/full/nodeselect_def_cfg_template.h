@@ -93,16 +93,16 @@
                                       "   \"contract\": \"0x41a07f9b9bd9c972fa56a20d0e7ed68ec1559f0b\","                           \
                                       "   \"registryId\": \"0xb3e3826c9ef619acac52771e4f3015e5b03ca37d7db0c8615bfd9e47cf94c9b6\"," \
                                       "   \"nodeList\": [{"                                                                        \
+                                      "    \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","                           \
+                                      "    \"url\": \"https://in3-v2.slock.it/mumbai/nd-1","                                      \
+                                      "    \"props\": \"0xFFFF\""                                                                  \
+                                      "   }, {"                                                                                    \
+                                      "    \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","                           \
+                                      "    \"url\": \"https://in3-v2.slock.it/mumbai/nd-2","                                      \
+                                      "    \"props\": \"0xFFFF\""                                                                  \
+                                      "   }, {"                                                                                    \
                                       "    \"address\": \"0x0f72a0b5ff2fd40e415138c7bf90e4822597327b\","                           \
                                       "    \"url\": \"https://mumbai1.incubed.net\","                                      \
-                                      "    \"props\": \"0xFFFF\""                                                                  \
-                                      "   }, {"                                                                                    \
-                                      "    \"address\": \"0x15a7b884c2d1cee3cf2b22bed41bb1c8e9380999\","                           \
-                                      "    \"url\": \"https://mumbai2.incubed.net\","                                      \
-                                      "    \"props\": \"0xFFFF\""                                                                  \
-                                      "   }, {"                                                                                    \
-                                      "    \"address\": \"0xcfa887976dcf7aeab45fede030b8c51010d4e307\","                           \
-                                      "    \"url\": \"https://mumbai3.incubed.net\","                                      \
                                       "    \"props\": \"0xFFFF\""                                                                  \
                                       "   }]"                                                                                      \
                                       " }"                                                                                         \
