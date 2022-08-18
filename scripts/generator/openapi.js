@@ -225,13 +225,22 @@ function create_fn(config, method, path, def) {
             if (p.in == 'query') {
                 fn._generate_openapi.query = fn._generate_openapi.query || []
                 fn._generate_openapi.query.push(p.name)
+            } else if (p.in == 'body') {
+                fn._generate_openapi.body = 'data'
+                fn.params.data = {
+                    descr: 'the data object'
+                }
+                fn.params.data.type = get_type(config, p, [n, base_name + '_' + (p.name || p)], fn.params.data)
+                if (!p?.schema?.required?.length) fn.params.data.optional = true
             }
-            const d = {
-                descr: p.description || 'the ' + p
+            if (p.in != 'body') {
+                const d = {
+                    descr: p.description || 'the ' + p
+                }
+                fn.params[n] = d
+                if (!p.required) d.optional = true // default is not required
+                d.type = get_type(config, p, [n, base_name + '_' + (p.name || p)], d)
             }
-            fn.params[n] = d
-            if (!p.required) d.optional = true // default is not required
-            d.type = get_type(config, p, [n, base_name + '_' + (p.name || p)], d)
         })
     }
     const response = Object.keys(def.responses || {}).map(_ => {
