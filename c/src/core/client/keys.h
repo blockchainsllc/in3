@@ -132,6 +132,7 @@
 #define K_CHAIN_ID          key("chainId")
 #define K_RAW               key("raw")
 #define K_FROM              key("from")
+#define K_SENDER            key("sender")
 #define K_STANDARD_V        key("standardV")
 
 #define K_FINALITY_BLOCKS   key("finalityBlocks")
