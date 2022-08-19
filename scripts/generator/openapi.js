@@ -99,8 +99,8 @@ function get_type(config, content, names, parent = {}, example) {
     let type = schema.type || 'any'
     switch (type) {
         case 'boolean': return 'bool'
-        case 'number': return 'uint32'
-        case 'integer': return schema.format || 'uint32'
+        case 'number': return 'uint64'
+        case 'integer': return schema.format || 'uint64'
         case 'object': {
             let props = schema.properties
             let requiredProps = schema.requiredProperties || schema.required || []
@@ -255,7 +255,7 @@ function create_fn(config, method, path, def) {
     fn.result = {
         descr: response.description || ''
     }
-    fn.result.type = get_type(config, response.content, [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
+    fn.result.type = get_type(config, response.content || (response.schema && response), [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
     if (custom) mergeTo(custom, fn)
 }
 
@@ -318,15 +318,29 @@ function impl_openapi(fn, state) {
     return res
 }
 
+function filter(t) {
+    if (Array.isArray(t)) return t.map(filter)
+    if (t === undefined || t === null) return null
+    if (typeof t === 'object')
+        return Object.keys(t).reduce((p, v) => {
+            let value = t[v]
+            if (typeof (value) === 'function') return p
+            p[v] = filter(value)
+            return p
+        }, {})
+    return t
+}
+
 exports.generate_openapi = async function (config) {
     config.data = await getDef(config)
     Object.keys(config.data.paths).forEach(_ =>
         Object.keys(config.data.paths[_]).forEach(m => create_fn(config, m, _, config.data.paths[_][m]))
     )
-    //    const d = { types: config.types || '' }
 
-    //    fs.writeFileSync(config.api_name + '.yaml', yaml.stringify(d))
-    //    config.api._generate_rpc = config.api._generate_rpc || {}
+    //    fs.writeFileSync(config.api_name + '_types.yaml', yaml.stringify({ types: config.types || '' }))
+    //    fs.writeFileSync(config.api_name + '_apis.yaml', yaml.stringify({ rpc: filter(config.api) }))
+
+    //   config.api._generate_rpc = config.api._generate_rpc || {}
     //    config.api._generate_rpc.schema = config.data
     //    config.api._generate_rpc.schema = config.data
 
