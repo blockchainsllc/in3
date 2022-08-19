@@ -311,6 +311,7 @@ function impl_openapi(fn, state) {
     if (def.body) switch (fn.params[def.body].type) {
         case 'string': res.push(`${ind}sb_add_chars(&_data, ${def.body});`); break
         case 'uint32': res.push(`${ind}sb_add_int(&_data, ${def.body});`); break
+        case 'uint64': res.push(`${ind}sb_add_int(&_data, (int64_t) ${def.body});`); break
         default: res.push(`${ind}sb_add_json(&_data, "", ${def.body});`);
     }
 
