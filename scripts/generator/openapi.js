@@ -267,6 +267,7 @@ function impl_add_param(res, qname, pdef, ind) {
         switch (pdef.type) {
             case 'string': res.push(`${ind}    sb_add_params(&_path, "${qname}=%s", d_string(iter.token));`); break
             case 'uint32': res.push(`${ind}    sb_add_params(&_path, "${qname}=%u", d_int(iter.token));`); break
+            case 'uint64': res.push(`${ind}    sb_add_params(&_path, "${qname}=%U", d_long(iter.token));`); break
             default: throw new Error('invalid type in array ' + pdef.type + ' for ' + name)
         }
         return
@@ -274,6 +275,7 @@ function impl_add_param(res, qname, pdef, ind) {
     switch (pdef.type) {
         case 'string': res.push(`${ind}sb_add_params(&_path, "${qname}=%s", ${name});`); break
         case 'uint32': res.push(`${ind}sb_add_params(&_path, "${qname}=%u", ${name});`); break
+        case 'uint64': res.push(`${ind}sb_add_params(&_path, "${qname}=%U", ${name});`); break
         default: res.push(`${ind}sb_add_json(&_path, "", ${name});`); break
 
     }
