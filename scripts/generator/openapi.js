@@ -231,7 +231,7 @@ function create_fn(config, method, path, def) {
                     descr: 'the data object'
                 }
                 fn.params.data.type = get_type(config, p, [n, base_name + '_' + (p.name || p)], fn.params.data)
-                if (!p?.schema?.required?.length) fn.params.data.optional = true
+                if (!(p.schema && p.schema.required && p.schema.required.length)) fn.params.data.optional = true
             }
             if (p.in != 'body') {
                 const d = {
