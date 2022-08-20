@@ -48,13 +48,21 @@ process.argv.slice(2).forEach(a => {
             cmake_data = JSON.parse(fs.readFileSync(a.substr(8), 'utf8'))
             cmake.modules = {}
             cmake_data.dirs.split(';').forEach(_ => rpc_dirs[resolve(_)] = true)
-            cmake_data.apis.split(';').forEach(_ => cmake.modules[_] = true)
+            let p = {}
+            let type = '_api'
+            cmake_data.apis.split(';').forEach(_ => {
+                if (_.startsWith('_')) type = _
+                else if (type == '_api') p = cmake.modules[_] = {}
+                else p[type.substring(1)] = [...(p[type.substring(1)] || []), _]
+
+            })
             cmake.options = {}
             fs.readFileSync(dirname(a.substr(8)) + '/CMakeCache.txt', 'utf8').split('\n').filter(_ => _.indexOf('=') >= 0 && !_.trim().startsWith('#')).forEach(op => {
                 let [name, val] = op.split('=', 2)
                 let [option, type] = name.split(':', 2)
                 cmake.options[option] = type == 'BOOL' ? (val.toUpperCase() == 'ON' || val.toUpperCase() == 'TRUE') : val
             })
+            fs.writeFileSync(dirname(a.substr(8)) + '/mods.dot', create_modules(), 'utf8')
         }
         catch (x) {
             console.error(x)
@@ -84,6 +92,45 @@ const main_aliases = []
 const bool_props = []
 
 let docs = {}, config = {}, types = {}, testCases = {}
+
+function create_modules() {
+    const exclude = ['multisig', 'core', 'api_utils', "equs_config", "init", "recorder", "usn_api"]
+    const name = _ => _.substring(_.lastIndexOf(':') + 1)
+    let dot = [
+        'digraph "blockchains_sdk" {',
+        '    fontname="Helvetica,Arial,sans-serif"',
+        '    newrank=true',
+        '    nodesep=0.15',
+        '    splines=ortho',
+        '    concentrate=true;',
+        '    edge [arrowsize=0.5; penwidth=0.5]',
+        '    node [ fontsize = "10"; fontcolor = "gray"; fontname="Arial"; color="gray"; margin=0 ];',
+    ]
+    let sdk = [], in3 = [], libs1 = [], libs2 = []
+    Object.keys(cmake.modules || {})/*.sort()*/.forEach(api => {
+        if (exclude.indexOf(api) >= 0) return
+        const [dir] = cmake.modules[api].dir || ['']
+        let dst = (dir && dir.indexOf('/in3/c/src') >= 0) ? in3 : sdk
+        if (!cmake.modules[api] || !cmake.modules[api].register) dst = api.indexOf('_') > 0 || api == 'evm' ? libs1 : libs2
+        dst.push(`   ${name(api)} [ ${cmake.modules[api].register ? 'style=filled; fillcolor="white"; shape ="box"; color="blue"; fontcolor="blue"' : ''}] `);
+        (cmake.modules[api].dep || []).filter(_ => exclude.indexOf(_) == -1).forEach(_ => {
+            if (!cmake.modules[_] || !cmake.modules[_].register) libs2.push('       ' + name(_))
+        })
+    })
+
+    dot.push('subgraph cluster_1 {\n     style=filled\n     fillcolor="#f2f2f2"\n    label="IN3"\n' + in3.join('\n') + '\n    {\n' + libs1.join('\n') + '\n     rank=min\n     } \n    {\n' + libs2.join('\n') + '\n     #rank=same\n     }\n}')
+    dot.push('subgraph cluster_0 {\n     style=filled\n     fillcolor="#f2f2f2"\n    label="SDK"\n' + sdk.join('\n') + '\n}')
+
+    Object.keys(cmake.modules || {}).sort().reverse().forEach(api => {
+        if (exclude.indexOf(api) >= 0) return
+        //        if (!cmake.modules[api].register) return
+        (cmake.modules[api].dep || []).filter(_ => exclude.indexOf(_) == -1).forEach(_ =>
+            dot.push(`   ${name(api)} -> ${name(_)} ${(cmake.modules[_] && (cmake.modules[_].register || []).length) ? '' : '[style=dashed; color=gray]'}`))
+    })
+    dot.push('}')
+    return dot.join('\n')
+
+}
 
 function check_depends(n) {
     if (Array.isArray(n)) return check_depends(n[0])

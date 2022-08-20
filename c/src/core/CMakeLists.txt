@@ -42,13 +42,10 @@ ENDIF (IN3_STAGING)
 
 if(CRYPTO_TREZOR)
   set(CRYPTO_SRC util/crypto_trezor.c)
+  set(DEPS crypto)
 elseif(CRYPTO_OPENSSL)
   set(CRYPTO_SRC util/crypto_openssl.c)
-else()
-  set(CRYPTO_SRC util/crypto_none.c)
-endif()
-
-if(CRYPTO_OPENSSL)
+  set(DEPS crypto_ssl)
   include(ExternalProject)
   ExternalProject_Add(openssl
     GIT_REPOSITORY    https://github.com/openssl/openssl.git
@@ -67,7 +64,18 @@ if(CRYPTO_OPENSSL)
   add_library(crypto_ssl STATIC IMPORTED GLOBAL)
   set_target_properties(crypto_ssl PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/openssl/libcrypto.a)
   add_dependencies(crypto_ssl openssl)
+else()
+  set(CRYPTO_SRC util/crypto_none.c)
 endif()
+
+if (BASE64)
+  set(DEPS ${DEPS} b64)
+endif()
+
+if(ETH_FULL AND IN3API)
+  set(DEPS ${DEPS} tommath)
+endif()
+
 
 
 
@@ -90,21 +98,9 @@ add_static_library(
     util/bitset.c
     util/crypto_encode.c
     ${CRYPTO_SRC}
+  DEPENDS
+    ${DEPS}
 )
 
-if(CRYPTO_TREZOR)
-  target_link_libraries(core crypto)
-endif()
 
-if (BASE64)
-  target_link_libraries(core b64)
-endif()
-
-if(ETH_FULL AND IN3API)
-  target_link_libraries(core tommath)
-endif()
-
-if(CRYPTO_OPENSSL)
-  target_link_libraries(core crypto_ssl)
-endif()
 
