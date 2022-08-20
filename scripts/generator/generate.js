@@ -93,33 +93,79 @@ const bool_props = []
 
 let docs = {}, config = {}, types = {}, testCases = {}
 
+function has_dep(a, b, stopper = []) {
+    if (stopper.indexOf(a) >= 0) return false // circle detected
+    stopper.push(a)
+    let mod = cmake.modules[a]
+    if (!mod || !mod.dep) return false
+    if (mod.dep.indexOf(b) >= 0) return true
+    return !!mod.dep.find(_ => has_dep(_, b, stopper))
+}
+function clean_deps(m) {
+    let mod = cmake.modules[m]
+    if (!mod || !mod.dep) return
+    mod.dep.forEach(a => {
+        mod.dep.filter(_ => _ != a).forEach(b => {
+            if (has_dep(a, b)) mod.dep.splice(mod.dep.indexOf(b), 1)
+        })
+    })
+}
 function create_modules() {
-    const exclude = ['multisig', 'core', 'api_utils', "equs_config", "init", "recorder", "usn_api"]
+    Object.keys(cmake.modules).forEach(clean_deps)
+    Object.keys(cmake.modules).forEach(clean_deps)
+    const groups = {}
+    const exclude = ['nodeselect_def', 'transport_curl', 'multisig', "equs_config", "init", "usn_api"]
     const name = _ => _.substring(_.lastIndexOf(':') + 1)
+    const getGroup = (name) => {
+        if (name == 'core') name = 'in3'
+        if (name == 'pay') name = 'verifier'
+        if (!groups[name]) {
+            groups[name] = { name, subs: [], head: [], apis: [] }
+            if (name != 'in3' && name != 'sdk') {
+                getGroup('in3').subs.push(name)
+                groups[name].parent = 'in3'
+            }
+        }
+        return groups[name]
+    }
+    const createSub = g => {
+        dot.push('subgraph cluster_' + g.name.replace('-', '_') + ' {')
+        if (!g.parent) dot.push('      style=filled\n     fillcolor="#f2f2f2"\n    label=' + g.name.toUpperCase())
+        else dot.push('      rank=min; label="' + g.name + '"')
+        g.apis.forEach(_ => dot.push(_))
+        g.subs.sort().forEach(_ => createSub(groups[_]))
+        dot.push('     }')
+    }
     let dot = [
         'digraph "blockchains_sdk" {',
         '    fontname="Helvetica,Arial,sans-serif"',
         '    newrank=true',
         '    nodesep=0.15',
         '    splines=ortho',
-        '    concentrate=true;',
+        '    # concentrate=true;',
         '    edge [arrowsize=0.5; penwidth=0.5]',
         '    node [ fontsize = "10"; fontcolor = "gray"; fontname="Arial"; color="gray"; margin=0 ];',
     ]
-    let sdk = [], in3 = [], libs1 = [], libs2 = []
-    Object.keys(cmake.modules || {})/*.sort()*/.forEach(api => {
+
+    Object.keys(cmake.modules || {}).sort().forEach(api => {
         if (exclude.indexOf(api) >= 0) return
         const [dir] = cmake.modules[api].dir || ['']
-        let dst = (dir && dir.indexOf('/in3/c/src') >= 0) ? in3 : sdk
-        if (!cmake.modules[api] || !cmake.modules[api].register) dst = api.indexOf('_') > 0 || api == 'evm' ? libs1 : libs2
-        dst.push(`   ${name(api)} [ ${cmake.modules[api].register ? 'style=filled; fillcolor="white"; shape ="box"; color="blue"; fontcolor="blue"' : ''}] `);
-        (cmake.modules[api].dep || []).filter(_ => exclude.indexOf(_) == -1).forEach(_ => {
-            if (!cmake.modules[_] || !cmake.modules[_].register) libs2.push('       ' + name(_))
-        })
-    })
+        const in3_pos = (dir && dir.indexOf('/in3/c/src')) || -1
+        const g = getGroup(in3_pos >= 0 ? dir.substring(in3_pos + 11).split('/')[0] : 'sdk')
+        console.log('::: ' + dir.substring(in3_pos + 11))
 
-    dot.push('subgraph cluster_1 {\n     style=filled\n     fillcolor="#f2f2f2"\n    label="IN3"\n' + in3.join('\n') + '\n    {\n' + libs1.join('\n') + '\n     rank=min\n     } \n    {\n' + libs2.join('\n') + '\n     #rank=same\n     }\n}')
-    dot.push('subgraph cluster_0 {\n     style=filled\n     fillcolor="#f2f2f2"\n    label="SDK"\n' + sdk.join('\n') + '\n}')
+        //        if (!cmake.modules[api] || !cmake.modules[api].register) dst = api.indexOf('_') > 0 || api == 'evm' ? libs1 : libs2
+        g.apis.push(`   ${name(api)}  ${cmake.modules[api].register ? '[ style=filled; fillcolor="white"; shape ="box"; color="blue"; fontcolor="blue" ] ' : ''} `);
+        (cmake.modules[api].dep || []).filter(_ => exclude.indexOf(_) == -1).forEach(_ => {
+            if (!cmake.modules[_]) getGroup('third-party').apis.push('       ' + name(_))
+        })
+
+    })
+    // now create groups
+
+    Object.values(groups).filter(_ => !_.parent).forEach(createSub)
+
+    // now create links
 
     Object.keys(cmake.modules || {}).sort().reverse().forEach(api => {
         if (exclude.indexOf(api) >= 0) return
