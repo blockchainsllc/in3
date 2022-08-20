@@ -214,7 +214,7 @@ static in3_ret_t next_number(bytes_t src, bytes_t dst, size_t* p) {
 static in3_ret_t convert_sig_from_der(bytes_t src, uint8_t* dst) {
   if (src.len < 6) return IN3_EINVAL;
   if (src.data[0] != 0x30) return IN3_EINVAL;
-  if (src.data[1] + 2 > src.len) return IN3_EINVAL;
+  if (src.data[1] + 2 > (int) src.len) return IN3_EINVAL;
   memset(dst, 0, 65);
   size_t p = 2;
   TRY(next_number(src, bytes(dst, 32), &p))
