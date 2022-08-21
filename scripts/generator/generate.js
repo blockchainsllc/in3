@@ -62,7 +62,9 @@ process.argv.slice(2).forEach(a => {
                 let [option, type] = name.split(':', 2)
                 cmake.options[option] = type == 'BOOL' ? (val.toUpperCase() == 'ON' || val.toUpperCase() == 'TRUE') : val
             })
-            fs.writeFileSync(dirname(a.substr(8)) + '/mods.dot', create_modules(), 'utf8')
+            const { dot, md } = create_modules()
+            fs.writeFileSync(dirname(a.substr(8)) + '/mods.dot', dot, 'utf8')
+            fs.writeFileSync(dirname(a.substr(8)) + '/mods.md', md, 'utf8')
         }
         catch (x) {
             console.error(x)
@@ -120,7 +122,7 @@ function create_modules() {
         if (name == 'core') name = 'in3'
         if (name == 'pay') name = 'verifier'
         if (!groups[name]) {
-            groups[name] = { name, subs: [], head: [], apis: [] }
+            groups[name] = { name, subs: [], head: [], apis: [], md: ['## ' + name + '\n'] }
             if (name != 'in3' && name != 'sdk') {
                 getGroup('in3').subs.push(name)
                 groups[name].parent = 'in3'
@@ -144,29 +146,44 @@ function create_modules() {
         '    splines=ortho',
         '    # concentrate=true;',
         '    edge [arrowsize=0.5; penwidth=0.5]',
-        '    node [ fontsize = "10"; fontcolor = "gray"; fontname="Arial"; color="gray"; margin=0 ];',
+        '    node [ fontsize = "10"; fontcolor = "gray"; fontname="Arial"; color="gray"; margin=0; shape=component  ];',
     ]
 
     Object.keys(cmake.modules || {}).sort().forEach(api => {
         if (exclude.indexOf(api) >= 0) return
-        const [dir] = cmake.modules[api].dir || ['']
+        const mod = cmake.modules[api]
+        const [dir] = mod.dir || ['']
         const in3_pos = (dir && dir.indexOf('/in3/c/src')) || -1
         const g = getGroup(in3_pos >= 0 ? dir.substring(in3_pos + 11).split('/')[0] : 'sdk')
-        console.log('::: ' + dir.substring(in3_pos + 11))
 
-        //        if (!cmake.modules[api] || !cmake.modules[api].register) dst = api.indexOf('_') > 0 || api == 'evm' ? libs1 : libs2
-        g.apis.push(`   ${name(api)}  ${cmake.modules[api].register ? '[ style=filled; fillcolor="white"; shape ="box"; color="blue"; fontcolor="blue" ] ' : ''} `);
-        (cmake.modules[api].dep || []).filter(_ => exclude.indexOf(_) == -1).forEach(_ => {
+        // get rpc_yml
+        let apis = []
+        try {
+            let rpc = yaml.parse(fs.readFileSync(dir + '/rpc.yml', 'utf8'))
+            apis = Object.keys(rpc).filter(_ => _ != 'types').map(name => ({
+                name,
+                def: rpc[name].api || {}
+            }))
+        } catch { }
+
+        // create markdown
+        g.md.push('### ' + api + '\n')
+        if (mod.descr) g.md.push(mod.descr[0] + '\n')
+        if (apis.length && apis[0].def.descr) g.md.push(apis[0].def.descr + '\n')
+        g.md.push('    - *location* : ' + (dir.substring(dir.lastIndexOf(g.name == 'sdk' ? '/src/' : '/in3/'))))
+        g.md.push('    - *depends on* : ' + (mod.dep ? mod.dep.map(_ => '\n        - ' + _).join('') : ' no other module'))
+        if (apis.length) g.md.push('    - *APIs* : \n' + apis.map(_ => '        - ' + _.name).join('\n'))
+        g.md.push('')
+
+        g.apis.push(`   ${name(api)}  ${mod.register ? '[ style=filled; fillcolor="white"; shape ="box"; color="blue"; fontcolor="blue" ] ' : ''} `);
+        (mod.dep || []).filter(_ => exclude.indexOf(_) == -1).forEach(_ => {
             if (!cmake.modules[_]) getGroup('third-party').apis.push('       ' + name(_))
         })
-
     })
-    // now create groups
-
+    // create groups
     Object.values(groups).filter(_ => !_.parent).forEach(createSub)
 
-    // now create links
-
+    // create links
     Object.keys(cmake.modules || {}).sort().reverse().forEach(api => {
         if (exclude.indexOf(api) >= 0) return
         //        if (!cmake.modules[api].register) return
@@ -174,9 +191,21 @@ function create_modules() {
             dot.push(`   ${name(api)} -> ${name(_)} ${(cmake.modules[_] && (cmake.modules[_].register || []).length) ? '' : '[style=dashed; color=gray]'}`))
     })
     dot.push('}')
-    return dot.join('\n')
 
+
+
+    let md = [
+        '# Modules\n',
+        '```eval_rst\n',
+        '.. graphviz::\n',
+        dot.join('\n').split('\n').map(_ => '    ' + _).join('\n'),
+        '\n```'
+    ]
+    Object.values(groups).forEach(_ => md.push(_.md.join('\n') + '\n'))
+
+    return { dot: dot.join('\n'), md: md.join('\n') }
 }
+
 
 function check_depends(n) {
     if (Array.isArray(n)) return check_depends(n[0])
