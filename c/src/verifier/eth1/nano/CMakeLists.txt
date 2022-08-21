@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     eth_nano 
+  DESCR    "minimal ethereum support for Transactions and TransactionReceipts"
   REGISTER in3_register_eth_nano
 
   SOURCES 

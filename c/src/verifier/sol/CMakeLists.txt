@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     sol 
+  DESCR    "low level solana support, which includes all rpc-methods and the signing-process"
   REGISTER in3_register_sol
 
   SOURCES 

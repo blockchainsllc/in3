@@ -34,6 +34,7 @@
 
 add_static_library(
         NAME  plugin_client_data
+        DESCR "Util function used within the binding, like rust tos tore addtional data, like a rust-pointer"
 
         SOURCES
         client_data.c

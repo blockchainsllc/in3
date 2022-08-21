@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     ipfs_api 
+  DESCR    "a small API offering native C-Functions for reading and storing IPFS-Content."
   
   SOURCES 
     ipfs_api.c

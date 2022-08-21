@@ -40,6 +40,7 @@ endif()
 
 add_static_library(
    NAME     ledger_signer 
+   DESCR    "a native signer for nano ledger"
 
    SOURCES 
       ledger_signer.c

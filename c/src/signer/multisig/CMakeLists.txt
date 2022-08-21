@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME     multisig 
+  DESCR    "a simple multisig support for Gnosis Safe"
   
   SOURCES 
     multisig.c

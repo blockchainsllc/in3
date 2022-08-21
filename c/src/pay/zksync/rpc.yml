@@ -219,6 +219,8 @@ types:
 
 zksync:
   api:
+    services:
+      zksync: a zksync operator url is needed in order to send and manage transactions. This backend may be the public zksync url
     descr: |
       *Important: This feature is still experimental and not considered stable yet. In order to use it, you need to set the experimental-flag (-x on the comandline or `"experimental":true`!*
 

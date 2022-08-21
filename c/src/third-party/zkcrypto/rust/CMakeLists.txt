@@ -50,6 +50,7 @@ set_property(TARGET zk_crypto_rs PROPERTY IMPORTED_LOCATION ${OUTPUT_PATH} )
 
 add_static_library(
     NAME     zkcrypto 
+    DESCR    "the crypto-library for zksync. This library integrates the standard functions for signgin and extracting public keys based on a twisted edward curve as required by zksync."
     
     SOURCES 
       lib.c

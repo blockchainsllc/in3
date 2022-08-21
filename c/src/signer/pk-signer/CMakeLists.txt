@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME     pk_signer 
+  DESCR    "This module contains a basic Signer-Implementation and functions for decrypting or derriving private keys. The keys are managed in RAM. For more advanced Signer, use check the Signers in the bindingsd, which may take advantage of the native secure elements provided."
   REGISTER eth_register_pk_signer
 
   SOURCES 

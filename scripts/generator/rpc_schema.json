@@ -271,6 +271,14 @@
                     "type": "string",
                     "description": "the API- Description in Markdown"
                 },
+                "services": {
+                    "type": "object",
+                    "description": "a description of the consumed services",
+                    "additionalProperties": {
+                        "type": "string",
+                        "description": "a desription of the consumed service"
+                    }
+                },
                 "config": {
                     "description": "the config to be used. This will be merged from all apis.",
                     "type": "object",

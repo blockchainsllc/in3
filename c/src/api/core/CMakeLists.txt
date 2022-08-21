@@ -38,7 +38,7 @@ add_static_library(
   NAME     core_api 
   REGISTER in3_register_core_api
   OPTION   CORE_API
-  DESCR    "registers a chain independend rpc-methods util-functions"
+  DESCR    "Util-Functions which are chain-independend, like hashing and en- or decoding are managed by this module."
   SOURCES 
     core_api.c 
 

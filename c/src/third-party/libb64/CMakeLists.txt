@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     b64 
+  DESCR    "a simple but very efficient base64 en- and decoder."
   
   SOURCES 
     cencode.c

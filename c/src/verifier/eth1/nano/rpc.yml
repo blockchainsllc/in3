@@ -89,6 +89,8 @@ types:
 
 eth:
   api:
+    services:
+      in3: The Network of [Incubed Nodes](https://in3.readthedocs.io/en/latest/intro.html#architecture) are used for retrieving data and proof from a blockchain node.
     descr: |
       Standard JSON-RPC calls as described in https://eth.wiki/json-rpc/API.
 

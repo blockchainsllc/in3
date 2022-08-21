@@ -45,6 +45,7 @@ endif()
 
 add_static_library(
   NAME     eth_api 
+  DESCR    "A collection of ethereum-specific util-functions, needed when working with ethereum. This also includes the Tx-Decoder or ABI-Encoder, which is helpful when calling function of a smart contracts. Depending on the `USE_SCRYPT`-flag, it will also include a function for decrypting private keys stored in the JsonStore-Format"
   REGISTER in3_register_eth_api
   
   SOURCES 

@@ -37,6 +37,7 @@
 
 add_static_library(
   NAME     init 
+  DESCR    "a Module which holds dependencies to all defined modules. It also autoregisteres those modules when creating a new instance."
   
   SOURCES 
     in3_init.c

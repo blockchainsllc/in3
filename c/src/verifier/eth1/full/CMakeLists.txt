@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME     eth_full 
+  DESCR    "extends the ethereum function with a verifier for eth_call."
   REGISTER in3_register_eth_full
 
   SOURCES 

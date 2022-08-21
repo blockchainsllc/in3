@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     btc_api 
+  DESCR    "Thie module provides native (C) functions for handling bitcoin. It wraps the json-rpc-requests in native structs and adds utilities for btc." 
   
   SOURCES 
     btc_api.c 

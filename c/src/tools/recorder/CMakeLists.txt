@@ -34,7 +34,8 @@
 
 
 add_static_library(
-  NAME     recorder 
+  NAME     recorder
+  DESCR    "a simple extension recording all http-requests and cache-calls in order to replay the a request in the cmd."
   SOURCES 
     recorder.c
   DEPENDS 

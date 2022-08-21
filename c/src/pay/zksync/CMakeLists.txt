@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME     zksync 
+  DESCR    "a Module for managing low level zksync-function. Zksync is a layer2 for ethereum  allowing cheap transactions. The signing and managing thoise transactions are handled within this module."
   REGISTER in3_register_zksync
 
   SOURCES 

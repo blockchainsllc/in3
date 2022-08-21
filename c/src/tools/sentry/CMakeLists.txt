@@ -34,7 +34,8 @@
 
 
 add_static_library(
-  NAME     in3_sentry   
+  NAME     in3_sentry
+  DESCR    "Sentry integartion in incubed"
   REGISTER in3_register_sentry
   SOURCES 
     sentry.c

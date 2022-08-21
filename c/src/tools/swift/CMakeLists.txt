@@ -34,6 +34,7 @@
 
 add_static_library(
         NAME  in3_swift
+        DESCR "special module handling swift signing and cache. It contains the C-code needed to bridge those to swift."
 
         SOURCES
           swift.c

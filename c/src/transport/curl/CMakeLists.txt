@@ -100,6 +100,7 @@ endif ()
 # add lib
 add_static_library(
   NAME     transport_curl 
+  DESCR    "The default (for linux and mac) transport implementation using curl to send the http-request."
   REGISTER in3_register_curl
 
   SOURCES 

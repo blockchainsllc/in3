@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME     testcase 
+  DESCR    "This module allows to execute a request with the cmd, and export a testcase with all the mockdata."
   SOURCES 
     testcase.c
     yaml.c

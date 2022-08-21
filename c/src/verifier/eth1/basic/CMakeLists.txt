@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     eth_basic 
+  DESCR    "the basic ethereum rpc-functions are handled here, which includes blocks, and signing and sending transactions."
   REGISTER in3_register_eth_basic
   
   SOURCES 

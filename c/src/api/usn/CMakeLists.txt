@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     usn_api
+  DESCR    " a simple module for handling USN-Requests"
   
   SOURCES 
     usn_api.c 

@@ -38,6 +38,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type")
 
 add_static_library(
   NAME     bech32 
+  DESCR    "a simple bech32 encoder library used for BTC to encode Bitcoin addresses"
   
   SOURCES
     segwit_addr.c

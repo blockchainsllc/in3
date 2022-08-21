@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     scrypt 
+  DESCR    "scrypt-decoder, which allows to decrypt ethereum keys stored in JSON-Store-Format."
   
   SOURCES 
     b64.c

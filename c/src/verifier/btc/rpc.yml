@@ -477,6 +477,8 @@ types:
 
 btc:
   api:
+    services:
+      in3: The Network of [Incubed Nodes](https://in3.readthedocs.io/en/latest/intro.html#architecture) are used for retrieving data and proof from a btc blockchain node.
     descr: |
       *Important: This feature is still experimental and not considered stable yet. In order to use it, you need to set the experimental-flag (-x on the comandline or `"experimental":true`!*
 
@@ -515,7 +517,7 @@ btc:
             example: 5
             default: 10
             optional: true
-          
+
           testnet:
             descr: If this flag is set to true, all address prefixes and scripts will be set to testnet mode.
             type: bool

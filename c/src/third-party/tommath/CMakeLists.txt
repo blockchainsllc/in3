@@ -269,6 +269,7 @@ endif(SWIFT)
 
 add_static_library(
   NAME     tommath 
+  DESCR    "crypto also means dealing with values which may be bigger that 64 bits. This tommath library offers all basic math function for big numbers."
   
   SOURCES 
     ${SRC}

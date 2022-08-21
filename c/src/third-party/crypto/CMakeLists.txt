@@ -95,6 +95,7 @@ endif()
 
 add_static_library(
   NAME     crypto 
+  DESCR    "The tresor - firmare crypto library containing all essential crypto functions, like hashing, signgin and key derrivation ..."
   
   SOURCES 
     ${CRYPTO_SRC}

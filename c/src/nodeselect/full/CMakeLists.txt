@@ -36,6 +36,7 @@
 add_static_library(
   NAME  nodeselect_def
   REGISTER in3_register_nodeselect_def
+  DESCR "NodeList Management ofr incubed. This means updating the nodeList, healthchecks and caching the data as well selecting the nodes to send the request to."
 
   SOURCES
     nodeselect_def.c

@@ -148,6 +148,7 @@ function create_modules() {
         '    edge [arrowsize=0.5; penwidth=0.5]',
         '    node [ fontsize = "10"; fontcolor = "gray"; fontname="Arial"; color="gray"; margin=0; shape=component  ];',
     ]
+    let used_services = {}
 
     Object.keys(cmake.modules || {}).sort().forEach(api => {
         if (exclude.indexOf(api) >= 0) return
@@ -166,13 +167,18 @@ function create_modules() {
             }))
         } catch { }
 
+        // collect data about services
+        const services = apis.filter(_ => _.def.services).map(s => Object.keys(s.def.services).map(a => '\n    - ' + a + ' : ' + s.def.services[a]).join('')).join('')
+        apis.forEach(api => Object.keys(api.def.services || {}).forEach(s => (used_services[s] || (used_services[s] = {}))[api.name] = api.def.services[s]))
+
         // create markdown
         g.md.push('### ' + api + '\n')
         if (mod.descr) g.md.push(mod.descr[0] + '\n')
         if (apis.length && apis[0].def.descr) g.md.push(apis[0].def.descr + '\n')
-        g.md.push('    - *location* : ' + (dir.substring(dir.lastIndexOf(g.name == 'sdk' ? '/src/' : '/in3/'))))
-        g.md.push('    - *depends on* : ' + (mod.dep ? mod.dep.map(_ => '\n        - ' + _).join('') : ' no other module'))
-        if (apis.length) g.md.push('    - *APIs* : \n' + apis.map(_ => '        - ' + _.name).join('\n'))
+        g.md.push('- *location* : ' + (dir.substring(dir.lastIndexOf(g.name == 'sdk' ? '/src/' : '/in3/'))))
+        g.md.push('- *depends on* : ' + (mod.dep ? mod.dep.map(_ => `\n    - [${_}](#${_.replace('_', '-')})`).join('') : ' no other module'))
+        if (apis.length) g.md.push('- *APIs* : \n' + apis.map(_ => '    - ' + _.name).join('\n'))
+        if (services.trim()) g.md.push('- *consumed Services* : ' + services)
         g.md.push('')
 
         g.apis.push(`   ${name(api)}  ${mod.register ? '[ style=filled; fillcolor="white"; shape ="box"; color="blue"; fontcolor="blue" ] ' : ''} `);
@@ -195,13 +201,25 @@ function create_modules() {
 
 
     let md = [
-        '# Modules\n',
+        '# Architecture\n',
         '```eval_rst\n',
         '.. graphviz::\n',
         dot.join('\n').split('\n').map(_ => '    ' + _).join('\n'),
         '\n```'
     ]
+    if (groups.sdk) {
+        md.push(groups.sdk.md.join('\n') + '\n')
+        delete groups.sdk
+    }
+
     Object.values(groups).forEach(_ => md.push(_.md.join('\n') + '\n'))
+
+    md.push('\n## Consumed Services\n')
+    Object.keys(used_services).forEach(s => {
+        md.push('\n### ' + s + '\n')
+        md.push("The following services are using the " + s + " backend:\n")
+        Object.keys(used_services[s]).forEach(m => md.push('- [' + m + '](#' + m.replace('_', '-') + ') : ' + used_services[s][m]))
+    })
 
     return { dot: dot.join('\n'), md: md.join('\n') }
 }

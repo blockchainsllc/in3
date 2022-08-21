@@ -81,6 +81,7 @@ endif()
 
 add_static_library(
   NAME     core 
+  DESCR    "The core of SDK and Incubed, which defines the plugin-concept and handles the request execution life cycle."
   
   SOURCES 
     client/request.c

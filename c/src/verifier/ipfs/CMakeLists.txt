@@ -35,6 +35,7 @@
 
 add_static_library(
   NAME     ipfs 
+  DESCR    "basic IPFS-Support reading and storing content."
   REGISTER in3_register_ipfs
 
   SOURCES 

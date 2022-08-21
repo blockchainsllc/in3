@@ -34,6 +34,7 @@
 
 add_static_library(
   NAME     api_utils
+  DESCR    "internal Module for macros and helper functions for APIs"
   
   SOURCES 
     api_utils.c

@@ -1,6 +1,8 @@
 # yaml-language-server: $schema=../../../../scripts/generator/rpc_schema.json
 ipfs:
   api:
+    services:
+      in3: The Network of [Incubed Nodes](https://in3.readthedocs.io/en/latest/intro.html#architecture) are used for retrieving data from a IPFS node.
     descr: |
       A Node supporting IPFS must support these 2 RPC-Methods for uploading and downloading IPFS-Content. The node itself will run a ipfs-client to handle them.
 
