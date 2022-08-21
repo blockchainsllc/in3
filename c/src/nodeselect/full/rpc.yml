@@ -44,7 +44,7 @@ nodelist:
         example: 10000000
 
       nodeProps:
-        descr: used to identify the capabilities of the node.
+        descr: Defines the requirements of an in3 node in order to be used by this instance.
         type: string
         optional: true
         example: "0xffff"

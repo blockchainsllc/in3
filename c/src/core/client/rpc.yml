@@ -26,7 +26,7 @@ config:
 
       finality:
         type: int
-        descr: the number in percent needed in order reach finality (% of signature of the validators).
+        descr: In case of a Proof of Authority chain finality indicates the amount of blocks needed to reach finality, which is important for in3 verifications. For Bitcoin chains this indicates the amount of blockheader that are requested from the in3 node.
         example: 50
         optional: true
         default: 0
@@ -34,7 +34,9 @@ config:
 
       includeCode:
         type: bool
-        descr: if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
+        descr: |
+          *legecy option*
+          if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
         example: true
         optional: true
         default: false
@@ -48,7 +50,7 @@ config:
 
       maxAttempts:
         type: int
-        descr: max number of attempts in case a response is rejected.
+        descr: max number of attempts in case a response is rejected. The default only makes sense if in3 is used. For other rpc based ethereum endpoints it should be set to 1.
         example: 1
         optional: true
         default: 7
@@ -71,7 +73,7 @@ config:
 
       keepIn3:
         type: bool
-        descr: if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
+        descr: if true, requests sent to the input sream of the comandline util will be send the responses in the same form as the server did. This means it will keep the proofs within the in3 object. Usefull mostly for debugging.
         example: true
         optional: true
         default: false
@@ -79,7 +81,7 @@ config:
 
       stats:
         type: bool
-        descr: if true, requests sent will be used for stats.
+        descr: In3 Server keeping stats about requests. If false, the server will not keep stats from this instances requests. You want that for example for automated tests etc. If true, requests sent will be used for stats.
         example: false
         optional: true
         default: true
@@ -119,7 +121,7 @@ config:
         cmd: p
 
       replaceLatestBlock:
-        descr: if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
+        descr: Defines the number of blocks that will be substracted from latest.
         type: int
         optional: true
         example: 6
