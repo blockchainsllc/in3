@@ -332,7 +332,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   der_sig->data = _malloc(75);
   TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data); _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->len                  = (uint32_t) l;
-  der_sig->data[der_sig->len++] = sig.data[64]; // append verification byte to end of DER signature
+  der_sig->data[der_sig->len++] = sighash; // append sighash byte to end of DER signature
   // signature is complete
   _free(hash_message.data);
   free_tx_ctx_inputs(&tmp_tx);
