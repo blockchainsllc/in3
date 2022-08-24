@@ -591,6 +591,7 @@ typedef enum {
   GET_DATA_REGISTRY_ID,         /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
   GET_DATA_NODE_MIN_BLK_HEIGHT, /* returns a pointer to an internal bitmask; NO cleanup required */
   GET_DATA_CLIENT_DATA,         /* returns an opaque pointer that was previously set by caller */
+  GET_DATA_SSI_JWT,             /* returns an opaque pointer to a NULL-terminated string with a JWT-Token. The token may be copied right away, since the ptr may not be valid later. */
 } in3_get_data_type_t;
 
 /**
