@@ -37,10 +37,11 @@
 #include "plugin.h"
 #include "request.h"
 
+/** a http-header entry */
 typedef struct in3_http_header {
-  char*                   key;
-  char*                   value;
-  struct in3_http_header* next;
+  char*                   key;   /**< [in] the name of the header entry. */
+  char*                   value; /**< [in] the value. */
+  struct in3_http_header* next;  /**< [in] pointer to next entry */
 } in3_http_header_t;
 
 #ifdef LOGGING

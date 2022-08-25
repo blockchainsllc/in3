@@ -37,6 +37,13 @@
 #include "plugin.h"
 #include "request.h"
 
+/** a http-header entry */
+typedef struct in3_http_header {
+  char*                   key;   /**< [in] the name of the header entry. */
+  char*                   value; /**< [in] the value. */
+  struct in3_http_header* next;  /**< [in] pointer to next entry */
+} in3_http_header_t;
+
 #ifdef LOGGING
 #define req_set_error(c, msg, err) req_set_error_intern(c, msg, err, __FILE__, __func__, __LINE__)
 #define rpc_throw(c, msg, ...)     req_set_error_intern(c, msg, IN3_EINVAL, __FILE__, __func__, __LINE__, __VA_ARGS__)
@@ -110,15 +117,15 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
  */
 NONULL_FOR((1, 2, 3, 7))
 in3_ret_t send_http_request(
-    in3_req_t*  req,       /**< [in] the request. */
-    char*       url,       /**< [in] the base url */
-    char*       method,    /**< [in] the HTTP-Method. */
-    char*       path,      /**< [in] the path which will be added to the url ( can be NULL). */
-    char*       payload,   /**< [in] the payload, which may be a json-formated string or NULL in case there is no payload. */
-    char*       jwt,       /**< [in] an optional jwt-token, which would be included */
-    d_token_t** result,    /**< [in] the pointer to the resulting token.This will be set to point to the result of the request. */
-    in3_req_t** sub_req,   /**< [in] pointer to a variable, which will be set to point to the newly created subrequest (in case you want to manually clean up), can be NULL, if not interessted */
-    uint32_t    wait_in_ms /**< [in] a time in ms wo wait before sending. This allows polling features */
+    in3_req_t*         req,       /**< [in] the request. */
+    char*              url,       /**< [in] the base url */
+    char*              method,    /**< [in] the HTTP-Method. */
+    char*              path,      /**< [in] the path which will be added to the url ( can be NULL). */
+    char*              payload,   /**< [in] the payload, which may be a json-formated string or NULL in case there is no payload. */
+    in3_http_header_t* headers,   /**< [in] an optional list of headers */
+    d_token_t**        result,    /**< [in] the pointer to the resulting token.This will be set to point to the result of the request. */
+    in3_req_t**        sub_req,   /**< [in] pointer to a variable, which will be set to point to the newly created subrequest (in case you want to manually clean up), can be NULL, if not interessted */
+    uint32_t           wait_in_ms /**< [in] a time in ms wo wait before sending. This allows polling features */
 );
 
 /**
@@ -127,7 +134,7 @@ in3_ret_t send_http_request(
 NONULL_FOR((1, 2, 3, 5))
 in3_ret_t        req_send_id_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
 NONULL in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta);
-NONULL in3_ret_t req_require_pub_key(in3_req_t* ctx, d_curve_type_t curve_type, bytes_t from, uint8_t dst[64]); // Attention: dst buffer MUST have at least 64 bytes allocated
+NONULL in3_ret_t req_require_pub_key(in3_req_t* ctx, d_curve_type_t curve_type, in3_convert_type_t convert_type, bytes_t from, uint8_t dst[64]); // Attention: dst buffer MUST have at least 64 bytes allocated
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
 #define assert_in3_req(ctx)                                                                    \

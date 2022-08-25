@@ -301,10 +301,11 @@ typedef struct sign_account_ctx {
  * action context when retrieving the public key of the signer.
  */
 typedef struct sign_public_key_ctx {
-  struct in3_req* req;            /**< the context of the request in order report errors */
-  d_curve_type_t  curve_type;     /**< the type of the curve used */
-  uint8_t*        account;        /**< the account to use for the signature */
-  uint8_t         public_key[64]; /**< the public key in case the plugin returns IN3_OK */
+  struct in3_req*    req;            /**< the context of the request in order report errors */
+  d_curve_type_t     curve_type;     /**< the type of the curve used */
+  in3_convert_type_t convert_type;   /**< the type of conversion to be made */
+  uint8_t*           account;        /**< the account to use for the signature */
+  uint8_t            public_key[64]; /**< the public key in case the plugin returns IN3_OK */
 } in3_sign_public_key_ctx_t;
 
 // ----------- SIGN_PREPARE ---------------
@@ -591,7 +592,7 @@ typedef enum {
   GET_DATA_REGISTRY_ID,         /* returns a pointer to an internal bytes32_t representation; NO cleanup required */
   GET_DATA_NODE_MIN_BLK_HEIGHT, /* returns a pointer to an internal bitmask; NO cleanup required */
   GET_DATA_CLIENT_DATA,         /* returns an opaque pointer that was previously set by caller */
-  GET_DATA_SSI_JWT,             /* returns an opaque pointer to a NULL-terminated string with a JWT-Token. The token may be copied right away, since the ptr may not be valid later. */
+  GET_DATA_SSI_JWT              /* returns an opaque pointer to a NULL-terminated string with a JWT-Token. The token may be copied right away, since the ptr may not be valid later. */
 } in3_get_data_type_t;
 
 /**
