@@ -105,9 +105,12 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
 /** gets the from-fied from the tx or ask the signer */
 in3_ret_t get_from_address(d_token_t* tx, in3_req_t* ctx, address_t res) {
   bytes_t t = d_get_bytes(tx, K_FROM);
+  if (!t.data) {
+    t = d_get_bytes(tx, K_SENDER);
+  }
   if (t.data) {
     // we only accept valid from addresses which need to be 20 bytes
-    if (t.len != 20) return req_set_error(ctx, "invalid from address in tx", IN3_EINVAL);
+    if (t.len != 20) return req_set_error(ctx, "invalid from or sender address in tx", IN3_EINVAL);
     memcpy(res, t.data, 20);
     return IN3_OK;
   }
