@@ -652,12 +652,13 @@ static d_token_t* find_req(in3_req_t* found, char* req) {
   }
   return NULL;
 }
-in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path, char* payload, char* jwt, d_token_t** result, in3_req_t** child, uint32_t wait_in_ms) {
+in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path, char* payload,
+                            in3_http_header_t* headers, d_token_t** result, in3_req_t** child, uint32_t wait_in_ms) {
   sb_t rp = {0};
-
   // build payload
   sb_printx(&rp, "{\"method\":\"in3_http\",\"params\":[\"%s\",\"%S%S\",%s,[", method, url, path ? path : "", payload ? payload : "null");
-  if (jwt) sb_printx(&rp, "\"Authorization: Bearer %S\"", jwt);
+  for (in3_http_header_t* h = headers; h; h = h->next) sb_add_value(&rp, "\"%S: %S\"", h->key, h->value);
+
   sb_add_chars(&rp, "]]");
   if (wait_in_ms > 0) sb_printx(&rp, ", \"in3\": {\"wait\":%u}", wait_in_ms);
   sb_add_chars(&rp, "}");

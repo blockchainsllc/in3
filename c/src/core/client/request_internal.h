@@ -37,6 +37,12 @@
 #include "plugin.h"
 #include "request.h"
 
+typedef struct in3_http_header {
+  char*                   key;
+  char*                   value;
+  struct in3_http_header* next;
+} in3_http_header_t;
+
 #ifdef LOGGING
 #define req_set_error(c, msg, err) req_set_error_intern(c, msg, err, __FILE__, __func__, __LINE__)
 #define rpc_throw(c, msg, ...)     req_set_error_intern(c, msg, IN3_EINVAL, __FILE__, __func__, __LINE__, __VA_ARGS__)
@@ -110,15 +116,15 @@ in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, ch
  */
 NONULL_FOR((1, 2, 3, 7))
 in3_ret_t send_http_request(
-    in3_req_t*  req,       /**< [in] the request. */
-    char*       url,       /**< [in] the base url */
-    char*       method,    /**< [in] the HTTP-Method. */
-    char*       path,      /**< [in] the path which will be added to the url ( can be NULL). */
-    char*       payload,   /**< [in] the payload, which may be a json-formated string or NULL in case there is no payload. */
-    char*       jwt,       /**< [in] an optional jwt-token, which would be included */
-    d_token_t** result,    /**< [in] the pointer to the resulting token.This will be set to point to the result of the request. */
-    in3_req_t** sub_req,   /**< [in] pointer to a variable, which will be set to point to the newly created subrequest (in case you want to manually clean up), can be NULL, if not interessted */
-    uint32_t    wait_in_ms /**< [in] a time in ms wo wait before sending. This allows polling features */
+    in3_req_t*         req,       /**< [in] the request. */
+    char*              url,       /**< [in] the base url */
+    char*              method,    /**< [in] the HTTP-Method. */
+    char*              path,      /**< [in] the path which will be added to the url ( can be NULL). */
+    char*              payload,   /**< [in] the payload, which may be a json-formated string or NULL in case there is no payload. */
+    in3_http_header_t* headers,   /**< [in] an optional list of headers */
+    d_token_t**        result,    /**< [in] the pointer to the resulting token.This will be set to point to the result of the request. */
+    in3_req_t**        sub_req,   /**< [in] pointer to a variable, which will be set to point to the newly created subrequest (in case you want to manually clean up), can be NULL, if not interessted */
+    uint32_t           wait_in_ms /**< [in] a time in ms wo wait before sending. This allows polling features */
 );
 
 /**
