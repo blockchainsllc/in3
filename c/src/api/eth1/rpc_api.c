@@ -43,7 +43,9 @@
 #include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
+#include "../../verifier/eth1/nano/serialize.h"
 #include "abi.h"
+#include "abi_sigs.h"
 #include "ens.h"
 #include "eth_api.h"
 #include <errno.h>
@@ -51,6 +53,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef ETH_FULL
 #include "../../third-party/tommath/tommath.h"
 #endif
@@ -143,6 +146,44 @@ static const char* TX_FIELDS_0[] = {"nonce", "gasPrice", "gas", "to", "value", "
 static const char* TX_FIELDS_1[] = {"chainId", "nonce", "gasPrice", "gas", "to", "value", "data", "accessList", "v", "r", "s", 0};
 static const char* TX_FIELDS_2[] = {"chainId", "nonce", "maxPriorityFeePerGas", "maxFeePerGas", "gas", "to", "value", "data", "accessList", "v", "r", "s", 0};
 
+static void decode_tx_data(sb_t* sb, bytes_t data) {
+  if (data.len < 4) return;
+  uint32_t fn_hash = bytes_to_int(data.data, 4);
+  int      len     = sizeof(abi_known_functions) / sizeof(abi_fn_t);
+  char*    sig     = NULL;
+  for (int i = 0; i < len; i++) {
+    if (abi_known_functions[i].fn == fn_hash) {
+      sig = abi_known_functions[i].signature;
+      break;
+    }
+  }
+  if (!sig) return;
+  char* b = strchr(sig, '(');
+  if (b) {
+    sb_add_value(sb, "\"function\":\"");
+    sb_add_range(sb, sig, 0, b - sig);
+    sb_add_char(sb, '"');
+  }
+  sb_add_value(sb, "\"function_signature\":\"%S\"", sig);
+
+  char*       error         = NULL;
+  json_ctx_t* decode_res    = NULL;
+  abi_sig_t*  abi_signature = abi_sig_create(sig, &error);
+  if (!error) decode_res = abi_decode(abi_signature, bytes(data.data + 4, data.len - 4), &error);
+  if (!error) {
+    char* json = d_create_json(decode_res, decode_res->result);
+    sb_add_value(sb, "\"args\":%s", json);
+    if (fn_hash == 0x6a761202) {
+      sb->len--;
+      decode_tx_data(sb, d_get_bytes(decode_res->result, ikey(decode_res, "data")));
+      sb_add_char(sb, '}');
+    }
+    _free(json);
+  }
+  if (abi_signature) abi_sig_free(abi_signature);
+  if (decode_res) json_free(decode_res);
+}
+
 static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
   bytes_t      data = {0}, val;        // rlp decoded data
   bytes32_t    hash;                   // tx hash
@@ -152,6 +193,17 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
 
   // we only require bytes as input
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 1, 0)
+
+  if (data.len == 32) { // this is a txhash, so we need to fetch the rawtx
+    d_token_t* tx;
+    sb_t       params = sb_stack(alloca(70));
+    sb_printx(&params, "\"%B\"", data);
+    TRY(req_send_sub_request(ctx->req, "eth_getTransactionByHash", params.data, NULL, &tx, NULL))
+    bytes_t* raw = serialize_tx(tx);
+    data         = *raw;
+    _free(raw);
+    in3_cache_add_ptr(&ctx->req->cache, data.data);
+  }
 
   // create the transactionhash
   keccak(data, hash);
@@ -218,6 +270,9 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
       _free(response.data);
       return req_set_error(ctx->req, "Invalid Tx-Data, wrong item", IN3_EINVAL);
     }
+
+    if (strcmp(fields[i], "data") == 0)
+      decode_tx_data(&response, val);
   }
 
   // determine from-address, but only if we have all the fields or a signed tx

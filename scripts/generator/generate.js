@@ -4,7 +4,7 @@ const yaml = require('yaml')
 const fs = require('fs')
 const { resolve, dirname } = require('path')
 const { generate_openapi } = require('./openapi')
-const { generate_solidity } = require('./solidity')
+const { generate_solidity, create_abi_sigs } = require('./solidity')
 const {
     getType,
     asArray,
@@ -466,6 +466,8 @@ async function main() {
     }
     if (args_file.length)
         fs.writeFileSync(args_file[0], '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[] = {' + bool_props.map(_ => '"' + _ + '", ').join('') + 'NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
+
+    create_abi_sigs(in3_core_dir + '/c/src/api/eth1/abi_sigs.h')
 
 }
 main().then(_ => { console.log('done'); process.exit(0) }, console.error)

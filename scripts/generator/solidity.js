@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const yaml = require('yaml')
 const { snake_case, mergeTo, asArray, camelCaseUp } = require('./util')
-
+const all_hashes = {}
 const solClasses = {}
 
 function resolve_inputs(sources, dir) {
@@ -178,6 +178,7 @@ function create_def(ctx) {
             }
         }
         else {
+
             def.solidity.sig = create_sig(fn, true, false)
             def.result = {
                 descr: "The transaction data. Depending on the execl_level different properties will be defined.",
@@ -200,10 +201,10 @@ function create_def(ctx) {
                 type: 'address',
                 optional: true
             }
+            let id = ctx.contract.evm.methodIdentifiers[create_sig(fn, false)]
+            while (id && id.startsWith('0')) id = id.substring(1)
+            if (id) all_hashes[def.solidity.sig] = id
         }
-
-
-
     }
 
 }
@@ -285,4 +286,19 @@ function impl_solidity(fn, state, includes) {
     }
 
     return res
+}
+
+
+exports.create_abi_sigs = function (path) {
+    let content = [
+        '#include <stdint.h>',
+        'typedef struct {',
+        '  uint32_t fn;',
+        '  char*    signature;',
+        '} abi_fn_t;\n',
+        'const abi_fn_t abi_known_functions[] = {'
+    ]
+    Object.keys(all_hashes).forEach(k => content.push('    {.signature = "' + k + '", .fn = 0x' + all_hashes[k] + '},'))
+    if (content[content.length - 1].endsWith(',')) content[content.length - 1] = content[content.length - 1].substring(0, content[content.length - 1].length - 1) + '};'
+    fs.writeFileSync(path, content.join('\n'), 'utf8')
 }
