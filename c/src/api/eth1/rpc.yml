@@ -72,6 +72,18 @@ types:
     data:
       descr: the data-section of the transaction
       type: bytes
+    function:
+      descr: the name of the function being called (only availble if part of the known functions)
+      type: string
+      optional: true
+    function_signature:
+      descr: the signature of the function being called (only availble if part of the known functions)
+      type: string
+      optional: true
+    args:
+      descr: decoded arguments of the call
+      optional: true
+      type: any
     signature:
       descr: the 65 bytes signature
       type: bytes
