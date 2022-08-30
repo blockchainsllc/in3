@@ -181,26 +181,28 @@ bytes_t d_bytes(d_token_t* item) {
 
       // we have a hex string, we need to convert.
       //  we can store it as number ?
-      if (l == 2) {
+      if (l == 2) { //  empty bytes, so we don't allocate anything
         if (item->state & TOKEN_STATE_ALLOCATED) _free(item->data);
         item->data  = NULL;
         item->len   = 0;
         item->state = TOKEN_STATE_CONVERTED;
         return bytes((uint8_t*) &item->data, 0);
       }
-      else if (l < 10) {
+      else if (l < 10) { //  integer-type, no allocation
+        if (item->state & TOKEN_STATE_ALLOCATED) _free(item->data);
         item->data  = NULL;
         int tl      = hex_to_bytes(start, l, (uint8_t*) &item->data, 4);
         item->len   = T_INTEGER << 28 | bytes_to_int((uint8_t*) &item->data, tl);
         item->state = TOKEN_STATE_CONVERTED;
         return bytes((uint8_t*) &item->data, tl);
       }
-
-      item->len   = (l - 1) / 2;
-      item->data  = item->state & TOKEN_STATE_ALLOCATED ? item->data : _malloc(item->len);
-      item->len   = hex_to_bytes(start, l, item->data, item->len);
-      item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
-      return bytes(item->data, item->len);
+      else {
+        item->len   = (l - 1) / 2;
+        item->data  = item->state & TOKEN_STATE_ALLOCATED ? item->data : _malloc(item->len);
+        item->len   = hex_to_bytes(start, l, item->data, item->len);
+        item->state = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+        return bytes(item->data, item->len);
+      }
     }
     case T_INTEGER:
     case T_BOOLEAN: {
