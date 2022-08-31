@@ -275,7 +275,7 @@ static void free_tx_ctx_inputs(btc_tx_ctx_t* tx_ctx) {
 }
 
 // WARNING: You need to free der_sig.data after calling this function!
-in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* tx_ctx, const uint32_t utxo_index, const uint32_t signer_index, const btc_tx_in_t* tx_in, uint8_t sighash) {
+in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* tx_ctx, const uint32_t utxo_index, const uint32_t signer_index, const btc_tx_in_t* tx_in, uint8_t sighash, sb_t* sb) {
   if (!tx_ctx || !der_sig || !tx_in) {
     return req_set_error(req, "ERROR: in btc_sign_tx_in: function arguments cannot be NULL.", IN3_ERPC);
   }
@@ -328,7 +328,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // -- Obtain DER signature
   bytes_t sig = NULL_BYTES;
   int     l;
-  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0]), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
+  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0], sb), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->data = _malloc(75);
   TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data); _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->len                  = (uint32_t) l;
@@ -347,7 +347,7 @@ static void add_sig_to_utxo(btc_utxo_t* utxo, const bytes_t* sig) {
   utxo->sig_count++;
 }
 
-in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
+in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx, sb_t* sb) {
   if (!tx_ctx->utxos || !tx_ctx->utxo_count) return req_set_error(req, "ERROR: in btc_sign_tx: utxo list cannot be empty or null.", IN3_EINVAL);
   if (!tx_ctx->outputs || !tx_ctx->output_count) return req_set_error(req, "ERROR: in btc_sign_tx: transaction should have at least one output.", IN3_EINVAL);
   if (tx_ctx->inputs || tx_ctx->input_count) return req_set_error(req, "ERROR: in btc_sign_tx: transaction should not already contain input data.", IN3_EINVAL);
@@ -377,7 +377,7 @@ in3_ret_t btc_sign_tx(in3_req_t* req, btc_tx_ctx_t* tx_ctx) {
     for (uint32_t j = 0; j < tx_ctx->utxos[i].req_sigs; j++) {
       bytes_t sig = NULL_BYTES;
       // TODO: select random unused key to sign if multisig
-      TRY_CATCH(btc_sign_tx_in(req, &sig, tx_ctx, i, j, &tx_in, BTC_SIGHASH_ALL),
+      TRY_CATCH(btc_sign_tx_in(req, &sig, tx_ctx, i, j, &tx_in, BTC_SIGHASH_ALL, sb),
                 _free(tx_in.script.data.data);
                 _free(tx_in.prev_tx_hash);)
       add_sig_to_utxo(&tx_ctx->utxos[i], &sig);

@@ -128,7 +128,7 @@ static int ac_filter(sol_account_list_t* list, bytes_builder_t* bb, uint32_t fla
 
 static in3_ret_t sol_sign_message(in3_rpc_handle_ctx_t* ctx, uint8_t* pubkey, bytes_t msg, uint8_t* dst) {
   bytes_t sig;
-  TRY(req_require_signature(ctx->req, SIGN_EC_RAW, SIGN_CURVE_ED25519, PL_SIGN_ANY, &sig, msg, bytes(pubkey, 32), ctx->request))
+  TRY(req_require_signature(ctx->req, SIGN_EC_RAW, SIGN_CURVE_ED25519, PL_SIGN_ANY, &sig, msg, bytes(pubkey, 32), ctx->request, NULL))
   if (sig.len != 64) RPC_THROW(ctx, "Invalid signature!", IN3_EINVAL);
   memcpy(dst, sig.data, sig.len);
   return IN3_OK;

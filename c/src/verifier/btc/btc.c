@@ -790,11 +790,11 @@ static void free_tx_ctx_sign_raw_tx(btc_tx_ctx_t* tx_ctx) {
 }
 
 // TODO: Make this function compliant with 'signrawtransaction' from btc rpc
-in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst) {
+in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, bytes_t* signer_pub_key, bytes_t* dst, sb_t* sb) {
   btc_tx_ctx_t tx_ctx;
   btc_init_tx_ctx(&tx_ctx);
   TRY_CATCH(btc_parse_tx_ctx(&tx_ctx, *raw_tx, signer_id, signer_pub_key), free_tx_ctx_sign_raw_tx(&tx_ctx));
-  TRY_CATCH(btc_sign_tx(req, &tx_ctx), free_tx_ctx_sign_raw_tx(&tx_ctx));
+  TRY_CATCH(btc_sign_tx(req, &tx_ctx, sb), free_tx_ctx_sign_raw_tx(&tx_ctx));
   TRY_FINAL(btc_serialize_tx(req, &tx_ctx.tx, dst), free_tx_ctx_sign_raw_tx(&tx_ctx));
   return IN3_OK;
 }
@@ -842,7 +842,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   btc_prepare_unsigned_tx(req, outputs, utxos, &signer_id, &signer_pub_key, conf->is_testnet, &unsigned_tx, NULL);
   if (unsigned_tx.len == 0) return IN3_EINVAL;
 
-  btc_sign_raw_tx(req, &unsigned_tx, signer_id.data, &signer_pub_key, &signed_tx);
+  btc_sign_raw_tx(req, &unsigned_tx, signer_id.data, &signer_pub_key, &signed_tx, NULL);
   if (signed_tx.len == 0) return IN3_EINVAL;
 
   sb_t sb = {0};

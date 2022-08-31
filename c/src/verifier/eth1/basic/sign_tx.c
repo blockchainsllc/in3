@@ -414,7 +414,7 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
 /**
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
-in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_t* dst) {
+in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_t* dst, d_token_t* tx_data, sb_t* tx_output) {
   bytes_t    signature;
   chain_id_t chain_id;
 
@@ -422,7 +422,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
   TRY(in3_resolve_chain_id(ctx, &chain_id))
 
   // get the signature from required
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, SIGN_CURVE_ECDSA, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), ctx->requests[0]));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, SIGN_CURVE_ECDSA, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), tx_data ? tx_data : ctx->requests[0], tx_output));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // if we reached that point we have a valid signature in sig
@@ -488,7 +488,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   }
   else
     TRY(eth_prepare_unsigned_tx(tx, ctx, &unsigned_tx, NULL));
-  TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx), _free(unsigned_tx.data);)
+  TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx, NULL, NULL), _free(unsigned_tx.data);)
 
   // build the RPC-request
   char* old_req     = ctx->request_context->c;
