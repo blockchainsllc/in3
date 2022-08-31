@@ -80,6 +80,7 @@ typedef enum {
   IN3_EAPDU             = -20, /**< error in hardware wallet communication  */
   IN3_EPLGN_NONE        = -21, /**< no plugin could handle specified action */
   IN3_ERETRY            = -22, /**< request to retry all plugins again */
+  IN3_EINCOMPLETE       = -23, /**< the operation can not be completed, because the data are not complete yet */
 
   IN3_HTTP_BAD_REQUEST        = -400, /**< Bad Request */
   IN3_HTTP_UNAUTHORIZED       = -401, /**< Unauthorized */

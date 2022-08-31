@@ -352,6 +352,7 @@ typedef struct sign_ctx {
   bytes_t          message;      /**< the message to sign*/
   bytes_t          account;      /**< the account to use for the signature */
   d_token_t*       meta;         /**< optional metadata to pass a long, which could include data to present to the user before signing */
+  sb_t*            tx_output;    /**< optional stringbuild to add output to a tx_data */
 } in3_sign_ctx_t;
 
 /**

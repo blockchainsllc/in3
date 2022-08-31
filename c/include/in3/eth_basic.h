@@ -123,10 +123,12 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing th
 /**
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst.
  */
-in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction to sign */
-                          in3_req_t* req,    /**< the current context */
-                          address_t  from,   /**< the address of the account to sign with */
-                          bytes_t*   dst     /**< the bytes to write the result to. */
+in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx,   /**< the unsigned raw transaction to sign */
+                          in3_req_t* req,      /**< the current context */
+                          address_t  from,     /**< the address of the account to sign with */
+                          bytes_t*   dst,      /**< the bytes to write the result to. */
+                          d_token_t* tx_data,  /**< metadata about the tx ( optional ) */
+                          sb_t*      tx_output /**< optional output. If used the the signer may report additional data to the output */
 );
 
 /**

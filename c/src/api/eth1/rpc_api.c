@@ -885,7 +885,7 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   if (from_b.data && from_b.len == 20) memcpy(from, from_b.data, 20);
   bytes_t dst = {0};
 #if defined(ETH_BASIC) || defined(ETH_FULL)
-  TRY_FINAL(eth_sign_raw_tx(data, ctx->req, from, &dst), _free(tx_raw.data))
+  TRY_FINAL(eth_sign_raw_tx(data, ctx->req, from, &dst, NULL, NULL), _free(tx_raw.data))
 #else
   _free(tx_raw.data);
   if (data.data || ctx || from[0] || ctx->params) return req_set_error(ctx->req, "eth_basic is needed in order to use eth_signTx", IN3_EINVAL);
