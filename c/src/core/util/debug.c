@@ -102,6 +102,7 @@ char* in3_errmsg(in3_ret_t err /**< the error code */) {
     case IN3_EAPDU: return "error in usb communication protocol";
     case IN3_EPLGN_NONE: return "no plugin could handle specified action";
     case IN3_ERETRY: return "request to retry all plugins";
+    case IN3_EINCOMPLETE: return "Data are not complete yet";
     case IN3_HTTP_BAD_REQUEST: return "400 - Bad Request";
     case IN3_HTTP_UNAUTHORIZED: return "401 - Unauthorized";
     case IN3_HTTP_PAYMENT_REQUIRED: return "402 - Payment required";
