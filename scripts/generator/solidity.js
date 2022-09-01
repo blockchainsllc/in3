@@ -300,5 +300,6 @@ exports.create_abi_sigs = function (path) {
     ]
     Object.keys(all_hashes).forEach(k => content.push('    {.signature = "' + k + '", .fn = 0x' + all_hashes[k] + '},'))
     if (content[content.length - 1].endsWith(',')) content[content.length - 1] = content[content.length - 1].substring(0, content[content.length - 1].length - 1) + '};'
+    else return
     fs.writeFileSync(path, content.join('\n'), 'utf8')
 }
