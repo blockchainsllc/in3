@@ -288,6 +288,7 @@ function impl_openapi(fn, state) {
     const parts = def.path.split('/')
     const args = []
     const ind = "".padStart(send.length + 1, ' ')
+
     for (let i = 0; i < parts.length; i++) {
         if (parts[i].startsWith('{')) {
             const arg = snake_case(parts[i].substring(1, parts[i].length - 1))
@@ -314,7 +315,7 @@ function impl_openapi(fn, state) {
         case 'string': res.push(`${ind}sb_add_chars(&_data, ${def.body});`); break
         case 'uint32': res.push(`${ind}sb_add_int(&_data, ${def.body});`); break
         case 'uint64': res.push(`${ind}sb_add_int(&_data, (int64_t) ${def.body});`); break
-        default: res.push(`${ind}sb_add_json(&_data, "", ${def.body});`);
+        default: res.push(`${ind}sb_add_json(&_data, "", ${state.generate_rpc && state.generate_rpc.structs ? def.body + '.json' : def.body});`);
     }
 
     res[res.length - 1] += ')'

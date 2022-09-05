@@ -322,7 +322,22 @@ static in3_ret_t handle_error_response(in3_req_t* ctx, node_match_t* node, in3_r
   assert_in3_response(response);
 
   // and copy the error to the ctx
-  req_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC);
+  if (response->data.len && response->data.data[0] == '{') {
+    d_token_t*  value = NULL;
+    json_ctx_t* j     = parse_json(response->data.data);
+    if (!j)
+      req_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC);
+    else if ((value = d_get(j->result, K_VALUE))) {
+      char* tmp = d_get_string(value, key("detail"));
+      if (tmp) req_set_error(ctx, tmp, IN3_ERPC);
+      if ((tmp = d_get_string(value, key("title"))))
+        req_set_error(ctx, tmp, IN3_ERPC);
+      else
+        req_set_error(ctx, response->data.data, IN3_ERPC);
+    }
+  }
+  else
+    req_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC);
 
   // we block this node
   in3_nl_blacklist_ctx_t bctx = {.address = node->address, .is_addr = true, .req = ctx};
