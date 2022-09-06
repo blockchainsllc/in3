@@ -120,7 +120,14 @@ if (IN3_LIB)
         endif()
 
         if (VADE)
+            if(APPLE)
+                target_link_libraries(in3_lib "-framework Security")
+            elseif(LINUX)
+                target_link_libraries(in3_lib "-lpthread")
+            endif()
+
             target_link_libraries(in3_lib vade_evan )
+            
         endif()
 
 
