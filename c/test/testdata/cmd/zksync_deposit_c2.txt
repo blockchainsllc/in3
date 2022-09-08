@@ -41,6 +41,7 @@
   "result":"0x26"
 }]
 
+:: cache nonce_8a91dc2d28b689474298d91899f0c1baf62cb85b 0
 
 :: request http://localhost:8545 
      [{"id":6,"jsonrpc":"2.0","method":"eth_gasPrice","params":[]}]

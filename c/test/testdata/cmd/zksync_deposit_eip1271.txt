@@ -34,6 +34,8 @@
   "result":"0x9"
 }]
 
+:: cache nonce_8a91dc2d28b689474298d91899f0c1baf62cb85b 0
+
 
 :: request http://localhost:8545 
      [{"id":5,"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["0x8a91dc2d28b689474298d91899f0c1baf62cb85b","latest"]}]
@@ -44,6 +46,8 @@
   "id":5,
   "result":"0x36"
 }]
+
+:: cache nonce_8a91dc2d28b689474298d91899f0c1baf62cb85b 0
 
 
 :: request http://localhost:8545 
@@ -56,6 +60,7 @@
   "result":"0x3b9aca00"
 }]
 
+:: cache nonce_8a91dc2d28b689474298d91899f0c1baf62cb85b 0
 
 :: request http://localhost:8545 
      [{"id":7,"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x7ff5c6fab254833c037ad23ca32e2b2b2c6083a4","data":"0xa0e67e2b"},"latest"]}]
