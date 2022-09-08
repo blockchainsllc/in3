@@ -48,6 +48,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static const cache_props_t CACHE_NONCE = CACHE_PROP_MUST_FREE | 0x2000;
+
 // defines the default gas to be used if no gas is specified.
 // default: 40000 gas
 const uint64_t default_gas = 40000;
@@ -145,6 +147,32 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
     char* payload = sprintx("[\"%B\",\"latest\"]", bytes(tx->from, 20));
     ret           = get_from_nodes(ctx, "eth_getTransactionCount", payload, &tx->nonce);
     _free(payload);
+    if (ret == IN3_OK) {
+      cache_entry_t* entry = in3_cache_get_entry_by_prop(ctx->cache, CACHE_NONCE);
+      if (entry)
+        tx->nonce = entry->value;
+      else {
+
+        char tmp[64] = {0};
+        // we need to check if we have a higher nonce in the cache
+        in3_cache_ctx_t cc = {.content = NULL, .req = ctx, .key = bytes_to_hex_string(tmp, "nonce_", bytes(tx->from, 20), "")};
+        TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cc))
+        if (cc.content) {
+          uint64_t chain_nonce = bytes_to_long(tx->nonce.data, tx->nonce.len);
+          uint64_t local_nonce = bytes_to_long(cc.content->data, cc.content->len);
+          if (local_nonce > chain_nonce) {
+            uint8_t tmp[8];
+            long_to_bytes(local_nonce, tmp);
+            bytes_t nonce = bytes(tmp, 8);
+            b_optimize_len(&nonce);
+            nonce                                                      = bytes_dup(nonce);
+            in3_cache_add_entry(&ctx->cache, NULL_BYTES, nonce)->props = CACHE_NONCE;
+            tx->nonce                                                  = nonce;
+          }
+          b_free(cc.content);
+        }
+      }
+    }
   }
 
   if (tx->type < 2) {
