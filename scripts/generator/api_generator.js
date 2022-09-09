@@ -679,15 +679,15 @@ function createTest(descr, method, tests, tc) {
         success: tc.expected_failure ? false : true,
         config: tc.config || {},
         response: asArray(tc.mockedResponses)
-                    .map(r => 
-                        r.req.body?.params || r.res.result === undefined ? r.res : r.res.result
-                    )
+            .map(r =>
+                (r.req.body && r.req.body.params) || r.res.result === undefined ? r.res : r.res.result
+            )
     });
 }
 function getResult(x) {
     let r
     if (x && x.options) {
-        r = x.options[type] 
+        r = x.options[type]
     } else if (x && x.type && x.value !== undefined && Object.keys(x).length == 2) {
         if (typeof x.value === 'string') {
             if (x.type.startsWith("uint") && !x.value.startsWith('0x')) return parseInt(x.value)
@@ -707,23 +707,24 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
     const rpcResult = rpc.result || {}
     asArray(testCase).forEach((t, index) => {
         const tn = (t.descr || testname + (index ? ('_' + (index + 1)) : '')) + (t.extra ? ' : ' + t.extra : '')
-        if (rpcResult.options && (t?.expected_output?.options || t?.expected_failure?.options)) {
+        const expected = t && (t.expected_output || t.expected_failure)
+        if (rpcResult.options && expected && expected.options) {
             rpcResult.options.forEach(functionDef => {
                 const resultType = functionDef.result.array ? functionDef.result.type + "[]" : functionDef.result.type
-                const tc = { ...t, input: Array.isArray(t.input) ? [...t.input] : t.input.options[functionDef.name], expected_output: t?.expected_output?.options[resultType], mockedResponses: t.mockedResponses.options[resultType] }
+                const tc = { ...t, input: Array.isArray(t.input) ? [...t.input] : t.input.options[functionDef.name], expected_output: t.expected_output && t.expected_output.options[resultType], mockedResponses: t.mockedResponses.options[resultType] }
                 Object.keys(functionDef.params).forEach(prop => {
                     let i = Object.keys(rpc.params).indexOf(prop)
                     if (i < 0) {
                         console.error("Invalid property " + prop + " in " + testname)
                     } else if (functionDef.params[prop].fixed !== undefined) {
-                        tc.input = tc.input ?? []
+                        tc.input = tc.input || []
                         tc.input[i] = functionDef.params[prop].fixed
                     } else if (functionDef.params[prop].optional === false) {
                         // if the param is "required", use the given input
                     } else if (tc.input) {
                         tc.input[i] = functionDef.params[prop]
                     }
-                
+
                 })
                 createTest(tn + '_' + functionDef.name, testname, tests, tc)
             })
