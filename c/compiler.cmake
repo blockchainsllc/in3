@@ -12,8 +12,8 @@ else(MSVC)
 endif(MSVC)
 
 if(WASM)
-  set(CMAKE_C_FLAGS "-Wall  -Wno-deprecated-non-prototype -Wno-unknown-warning-option -Wpointer-arith -funsigned-char -Wextra -std=c99 -Wno-unused-function -Wno-null-pointer-arithmetic")
-  set(CMAKE_CXX_FLAGS "-Wall  -Wno-deprecated-non-prototype  -Wno-unknown-warning-option -Wpointer-arith -funsigned-char -Wextra  -std=c99 -Wno-unused-function -Wno-null-pointer-arithmetic -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+  set(CMAKE_C_FLAGS "-Wall -Wno-array-parameter -Wno-deprecated-non-prototype -Wno-unknown-warning-option -Wpointer-arith -funsigned-char -Wextra -std=c99 -Wno-unused-function -Wno-null-pointer-arithmetic")
+  set(CMAKE_CXX_FLAGS "-Wall -Wno-array-parameter -Wno-deprecated-non-prototype  -Wno-unknown-warning-option -Wpointer-arith -funsigned-char -Wextra  -std=c99 -Wno-unused-function -Wno-null-pointer-arithmetic -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
   if(CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined,address -fsanitize-minimal-runtime")
