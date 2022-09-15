@@ -57,7 +57,8 @@ static void* log_error(char* msg) {
 
 // supported EIPS
 static const uint32_t EIPS[] = {145, 155, 150, 160, 170, 140, 196, 197, 198, 211, 214, 658, 145, 1014, 1052, 1283, 0}; // all const
-static void           fill_aura(json_ctx_t* ctx, d_token_t* validators, consensus_transition_t* t, char* block) {
+
+static void fill_aura(json_ctx_t* ctx, d_token_t* validators, consensus_transition_t* t, char* block) {
   d_token_t* contract = d_get(validators, ikey(ctx, "contract"));
   d_token_t* list     = d_get(validators, ikey(ctx, "list"));
   if (!contract) contract = d_get(validators, ikey(ctx, "safeContract"));

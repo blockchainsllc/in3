@@ -23,7 +23,8 @@ in3_nodeselect_def_t* nodelist_registry = NULL;
 #ifdef THREADSAFE
 #if defined(_MSC_VER) || defined(__MINGW32__)
 static HANDLE lock_registry = NULL;
-static void   _lock_registry() {
+
+static void _lock_registry() {
   if (!lock_registry) {
     HANDLE p = CreateMutex(NULL, FALSE, NULL);
     if (InterlockedCompareExchangePointer((PVOID*) &lock_registry, (PVOID) p, NULL)) CloseHandle(p);

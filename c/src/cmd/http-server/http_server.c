@@ -62,7 +62,8 @@ typedef struct m {
 } method_t;
 
 method_t* allowed_methods = NULL;
-void      set_allowed_methods(char* allowed) {
+
+void set_allowed_methods(char* allowed) {
   if (!allowed) return;
   allowed = _strdupn(allowed, -1);
   for (char* m = strtok(allowed, ","); m; m = strtok(NULL, ",")) {

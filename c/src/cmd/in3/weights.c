@@ -10,7 +10,8 @@
 #include "../../transport/http/in3_http.h"
 #endif
 static uint32_t weightdata = 0;
-uint32_t*       get_weightsdata() {
+
+uint32_t* get_weightsdata() {
   return &weightdata;
 }
 

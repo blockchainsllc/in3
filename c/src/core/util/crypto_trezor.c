@@ -27,7 +27,8 @@
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <windows.h>
 static HANDLE lock_crypto = NULL;
-static void   _lock_crypto() {
+
+static void _lock_crypto() {
   if (!lock_crypto) {
     HANDLE p = CreateMutex(NULL, FALSE, NULL);
     if (InterlockedCompareExchangePointer((PVOID*) &lock_crypto, (PVOID) p, NULL)) CloseHandle(p);

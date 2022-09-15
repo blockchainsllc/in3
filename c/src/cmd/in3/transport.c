@@ -12,7 +12,8 @@ static bool     out_response = false;
 static bytes_t* last_response;
 static bytes_t  in_response      = {.data = NULL, .len = 0};
 static bool     only_show_raw_tx = false;
-in3_ret_t       debug_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
+
+in3_ret_t debug_transport(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
 
   in3_http_request_t* req = plugin_ctx;

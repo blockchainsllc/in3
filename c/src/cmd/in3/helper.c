@@ -362,7 +362,8 @@ char* get_argument(int argc, char* argv[], char* alias, char* arg, bool has_valu
 }
 
 static uint32_t conf = 0;
-uint32_t*       get_output_conf() {
+
+uint32_t* get_output_conf() {
   return &conf;
 }
 
