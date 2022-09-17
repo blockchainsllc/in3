@@ -44,6 +44,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "../util/crypto.h"
 #include "client.h"
 #include "request.h"
 
