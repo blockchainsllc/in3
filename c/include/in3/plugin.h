@@ -281,12 +281,6 @@ typedef enum {
   SIGNER_EIP1271 = 2
 } in3_signer_type_t;
 
-/** type of the curve used for signing*/
-typedef enum {
-  ECDSA_SECP256K1 = 1, /**< sign with ecdsa */
-  EDDSA_ED25519   = 2, /**< use ed25519 curve */
-} in3_curve_type_t;
-
 /**
  * action context when retrieving the addresses or accounts of a signer.
  */
