@@ -303,7 +303,6 @@ typedef struct sign_public_key_ctx {
   uint8_t            public_key[64]; /**< the public key in case the plugin returns IN3_OK */
 } in3_sign_public_key_ctx_t;
 
-
 /**
  * action context when retrieving the public key of the signer.
  */
@@ -313,7 +312,6 @@ typedef struct sign_derive_key_ctx {
   char*           path;        /**< the bip32 derivation path*/
   uint8_t         account[20]; /**< the account, which will be set by the signer */
 } sign_derive_key_ctx_t;
-
 
 // ----------- SIGN_PREPARE ---------------
 
