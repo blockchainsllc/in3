@@ -48,6 +48,7 @@ typedef struct in3_swift_cb {
   in3_ret_t (*_NONULL cache_set)(in3_cache_ctx_t* _Nonnull ctx);
   in3_ret_t (*_NONULL cache_clear)();
   char* _NULLABLE (*_NONULL sign_accounts)(in3_sign_account_ctx_t* _Nonnull ctx);
+  char* _NULLABLE (*_NONULL derive_key)(sign_derive_key_ctx_t* _Nonnull ctx);
 } swift_cb_t;
 
 in3_ret_t in3_register_swift(in3_t* _NONULL c, swift_cb_t* _NONULL cbs);

@@ -40,6 +40,18 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       }
       return IN3_EIGNORE;
     }
+    case PLGN_ACT_SIGN_DERIVE: {
+      sign_derive_key_ctx_t* _Nonnull ctx = plugin_ctx;
+      char* address                       = conf->derive_key(ctx);
+      if (!address) return req_set_error(ctx->req, "Could not derrive the path", IN3_EINVAL);
+      if (address[0] != '0' || address[1] != 'x' || strlen(address) != 42) {
+        req_set_error(ctx->req, address, IN3_EINVAL);
+        _free(address);
+        return IN3_EINVAL;
+      }
+      hex_to_bytes(address, -1, ctx->account, 20);
+      return IN3_OK;
+    }
     case PLGN_ACT_SIGN: {
       in3_sign_ctx_t* _Nonnull ctx = plugin_ctx;
 
@@ -55,7 +67,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
 
       int account_len = 20;
       if (ctx->curve_type == EDDSA_ED25519) account_len = 32;
-      if (ctx->account.len == account_len) {
+      if (ctx->account.len == (uint32_t) account_len) {
         char adr[65];
         bytes_to_hex_string(adr, "", ctx->account, "");
         bool found = false;

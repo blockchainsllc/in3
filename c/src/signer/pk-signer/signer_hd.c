@@ -121,6 +121,22 @@ static in3_ret_t hd_handle(void* data, in3_plugin_act_t action, void* action_ctx
       }
     }
 
+    case PLGN_ACT_SIGN_DERIVE: {
+      sign_derive_key_ctx_t* ctx     = action_ctx;
+      bytes32_t              seed_id = {0};
+      uint8_t*               adr     = NULL;
+      in3_ret_t              res     = IN3_OK;
+
+      if (ctx->seed_hash) {
+        hex_to_bytes(ctx->seed_hash, -1, seed_id, 32);
+        res = hd_signer_add_path(ctx->req->client, seed_id, ctx->path, &adr);
+      }
+      else
+        res = hd_signer_add_path(ctx->req->client, NULL, ctx->path, &adr);
+      if (adr) memcpy(ctx->account, adr, 20);
+      return res;
+    }
+
     case PLGN_ACT_TERM: {
       for (unsigned int i = 0; i < k->account_len; i++)
         _free(k->paths[i].path);
@@ -157,7 +173,7 @@ in3_ret_t register_hd_signer(in3_t* in3, bytes_t seed, in3_curve_type_t type, by
   k->seed_len = seed.len;
   memcpy(k->seed, seed.data, seed.len);
   if (seed_id) keccak(seed, seed_id);
-  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM | PLGN_ACT_SIGN_PUBLICKEY, hd_handle, k, false);
+  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM | PLGN_ACT_SIGN_DERIVE | PLGN_ACT_SIGN_PUBLICKEY, hd_handle, k, false);
 }
 
 /** sets the signer and a pk to the client*/

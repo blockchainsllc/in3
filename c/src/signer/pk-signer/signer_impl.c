@@ -145,8 +145,14 @@ in3_ret_t eth_accounts(in3_rpc_handle_ctx_t* ctx) {
  * derrives a new signer. In order to use this, you need to configure a HD Signer first ( for example by calling addMnemonic).
  */
 in3_ret_t in3_derive_signer(in3_rpc_handle_ctx_t* ctx, char* path, bytes_t seed_id) {
-  uint8_t*  adr = NULL;
-  in3_ret_t r   = hd_signer_add_path(ctx->req->client, seed_id.len == 32 ? seed_id.data : NULL, path, &adr);
-  if (r) return rpc_throw(ctx->req, "Could not derrive the key : %s", in3_errmsg(r), r);
-  return in3_rpc_handle(ctx, "\"%B\"", bytes(adr, 20));
+  uint8_t* adr        = NULL;
+  char     seed_s[67] = {0};
+  if (seed_id.len == 32) bytes_to_hex_string(seed_s, "0x", seed_id, NULL);
+  sign_derive_key_ctx_t dc = {.path = path, .seed_hash = seed_s[0] ? seed_s : NULL, .req = ctx->req, .account = {0}};
+  TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN_DERIVE, &dc))
+  /*
+      in3_ret_t r = hd_signer_add_path(ctx->req->client, seed_id.len == 32 ? seed_id.data : NULL, path, &adr);
+    if (r) return rpc_throw(ctx->req, "Could not derrive the key : %s", in3_errmsg(r), r);
+  */
+  return in3_rpc_handle(ctx, "\"%B\"", bytes(dc.account, 20));
 }

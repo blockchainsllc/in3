@@ -175,6 +175,7 @@ typedef enum {
   PLGN_ACT_CHAIN_CHANGE      = 0x4000000,  /**< chain id change event, called after setting new chain id */
   PLGN_ACT_GET_DATA          = 0x8000000,  /**< get access to plugin data as a void ptr */
   PLGN_ACT_ADD_PAYLOAD       = 0x10000000, /**< add plugin specific metadata to payload, plgn_ctx will be a sb_t pointer, make sure to begin with a comma */
+  PLGN_ACT_SIGN_DERIVE       = 0x20000000, /**< derive a key from a HD Wallet */
 } in3_plugin_act_t;
 
 /**
