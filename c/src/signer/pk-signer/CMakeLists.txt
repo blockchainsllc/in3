@@ -40,6 +40,11 @@ add_static_library(
 
   SOURCES 
     signer.c
+    signer_impl.c
+    signer_key.c
+    signer_request.c
+    signer_util.c
+    pk-signer_rpc.c
 
   DEPENDS 
     eth_nano

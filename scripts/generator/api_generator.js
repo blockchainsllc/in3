@@ -1,4 +1,5 @@
 const fs = require('fs')
+const { relative } = require('path')
 const yaml = require('yaml')
 const {
     getType,
@@ -441,10 +442,13 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
         use_main = fs.readFileSync(`${path}/${api_name}.h`, 'utf8')
         use_conf = use_main.indexOf(`${api_name}_config_t`) >= 0;
     } catch (x) { }
-
+    const in3_start = path.indexOf('/in3-core/c/src') > 0 ? path.indexOf('/in3-core/c/src') + '/in3-core/c/src'.length : (path.indexOf('/in3/c/src/') >= 0 ? path.lastIndexOf('/in3/c/src') + '/in3/c/src/'.length : -1)
+    const in3_root = in3_start == -1 ? '../../in3/c/src' : relative(path, path.substring(0, in3_start))
+    const api_file = api_name
     const rpc_exec = []
     const type_defs = {}
     const conf = use_conf ? `${api_name}_config_t* conf, ` : ''
+    api_name = snake_case(api_name)
 
     const header = [
         compliance_header.join('\n') + '\n',
@@ -455,8 +459,8 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
         'extern "C" {',
         '#endif\n',
 
-        '#include "../../in3/c/src/core/client/client.h"',
-        '#include "../../in3/c/src/core/client/plugin.h"',
+        `#include "${in3_root}/core/client/client.h"`,
+        `#include "${in3_root}/core/client/plugin.h"`,
 
         use_main ? `#include "${api_name}.h"\n` : '',
 
@@ -466,19 +470,19 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
 
     const impl = [
         compliance_header.join('\n') + '\n',
-        `#include "${api_name}_rpc.h"`,
-        use_conf ? `#include "${api_name}.h"\n` : '',
+        `#include "${api_file}_rpc.h"`,
+        use_conf ? `#include "${api_file}.h"\n` : '',
 
-        '#include "../../in3/c/src/core/client/keys.h"',
-        '#include "../../in3/c/src/core/client/plugin.h"',
-        '#include "../../in3/c/src/core/client/request_internal.h"',
-        '#include "../../in3/c/src/core/util/debug.h"',
-        '#include "../../in3/c/src/core/util/log.h"',
-        '#include "../../in3/c/src/core/util/mem.h"',
-        '#include "../../in3/c/src/core/util/utils.h"\n',
+        `#include "${in3_root}/core/client/keys.h"`,
+        `#include "${in3_root}/core/client/plugin.h"`,
+        `#include "${in3_root}/core/client/request_internal.h"`,
+        `#include "${in3_root}/core/util/debug.h"`,
+        `#include "${in3_root}/core/util/log.h"`,
+        `#include "${in3_root}/core/util/mem.h"`,
+        `#include "${in3_root}/core/util/utils.h"\n`,
     ]
     const impl_converter_pos = impl.length
-    let header_converter_pos = header.findIndex(_ => _ == `#include "${api_name}.h"\n`) + 1
+    let header_converter_pos = header.findIndex(_ => _ == `#include "${api_file}.h"\n`) + 1 || header.length
     const type_includes = []
 
     let checked_prefix = null
@@ -572,7 +576,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
     header.push('#endif')
 
     //    fs.writeFileSync(path + `/${api_name}_rpc.h`, header.join('\n'), 'utf8')
-    state.files[`${path}/${api_name}_rpc.h`] = { lines: header }
+    state.files[`${path}/${api_file}_rpc.h`] = { lines: header }
 
     impl.push(comment('', 'handle rpc-requests and delegate execution'));
     impl.push(`in3_ret_t ${api_name}_rpc(${conf}in3_rpc_handle_ctx_t* ctx) {
@@ -584,7 +588,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
     else
         impl.push(`  return rpc_throw(ctx->req, "unknown %s method", "${api_name}"); `)
     impl.push('}')
-    state.files[`${path}/${api_name}_rpc.c`] = { lines: impl }
+    state.files[`${path}/${api_file}_rpc.c`] = { lines: impl }
 
     //    fs.writeFileSync(path + `/${api_name}_rpc.c`, impl.join('\n'), 'utf8')
 }

@@ -55,6 +55,9 @@ types:
 
 signers:
   api:
+    generate_rpc:
+      validate: false
+      structs: false
     # config
     config:
       key:

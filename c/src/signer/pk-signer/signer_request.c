@@ -32,7 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "signer.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
@@ -42,57 +41,60 @@
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/serialize.h"
-#include "pk-signer_rpc.h"
+#include "signer.h"
 #include <string.h>
 
-static in3_ret_t pk_add_from_config(in3_configure_ctx_t* ctx, d_curve_type_t type) {
-  if (d_type(ctx->token) == T_ARRAY) {
-    for_children_of(iter, ctx->token) {
-      bytes_t b = d_bytes(iter.token);
-      if (b.len != 32) {
-        ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
-        return IN3_EINVAL;
-      }
-      signer_add_key(ctx->client, b.data, type);
-    }
-  }
-  else {
-    bytes_t b = d_bytes(ctx->token);
-    if (b.len != 32) {
-      ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
-      return IN3_EINVAL;
-    }
-    signer_add_key(ctx->client, b.data, type);
-  }
-  return IN3_OK;
-}
+typedef struct signer_key {
+  bytes32_t      pk;
+  uint8_t        account[64];
+  unsigned int   account_len;
+  d_curve_type_t type;
+} signer_key_t;
 
-// RPC-Handler
-static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
-  UNUSED_VAR(data);
+/// RPC-signer
+/** signs a reques*/
+in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
+  signer_key_t* k = data;
   switch (action) {
-    case PLGN_ACT_CONFIG_SET: {
-      in3_configure_ctx_t* ctx = action_ctx;
-      if (d_is_key(ctx->token, CONFIG_KEY("key"))) {
-        bytes_t b = d_bytes(ctx->token);
-        if (b.len != 32) {
-          ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
-          return IN3_EINVAL;
+    case PLGN_ACT_PAY_SIGN_REQ: {
+      in3_pay_sign_req_ctx_t* ctx = action_ctx;
+      in3_ret_t               r   = crypto_sign_digest(ECDSA_SECP256K1, bytes(ctx->request_hash, 32), k->pk, NULL, ctx->signature);
+      ctx->signature[64] += 27;
+      return r;
+    }
+    case PLGN_ACT_SIGN: {
+      in3_sign_ctx_t* ctx = action_ctx;
+      if (ctx->account.len != 20 || memcmp(k->account, ctx->account.data, 20)) return IN3_EIGNORE;
+      ctx->signature = bytes(_malloc(65), 65);
+      switch (ctx->digest_type) {
+        case SIGN_EC_RAW:
+          return crypto_sign_digest(ECDSA_SECP256K1, ctx->message, k->pk, NULL, ctx->signature.data);
+        case SIGN_EC_HASH: {
+          bytes32_t hash;
+          keccak(ctx->message, hash);
+          return crypto_sign_digest(ECDSA_SECP256K1, bytes(hash, 32), k->pk, NULL, ctx->signature.data);
         }
-        eth_set_request_signer(ctx->client, b.data);
-        return IN3_OK;
+        default:
+          _free(ctx->signature.data);
+          return IN3_ENOTSUP;
       }
-      if (d_is_key(ctx->token, CONFIG_KEY("pk"))) return pk_add_from_config(ctx, SIGN_CURVE_ECDSA);
-      if (d_is_key(ctx->token, CONFIG_KEY("pk_ed25519"))) return pk_add_from_config(ctx, SIGN_CURVE_ED25519);
-      return IN3_EIGNORE;
     }
 
-    case PLGN_ACT_RPC_HANDLE: return pk_signer_rpc(action_ctx);
-    default: return IN3_ENOTSUP;
+    case PLGN_ACT_TERM: {
+      _free(k);
+      return IN3_OK;
+    }
+
+    default:
+      return IN3_ENOTSUP;
   }
 }
 
-/** register the signer as rpc-plugin providing accounts management functions */
-in3_ret_t eth_register_pk_signer(in3_t* in3) {
-  return in3_plugin_register(in3, PLGN_ACT_CONFIG_SET | PLGN_ACT_RPC_HANDLE, pk_rpc, NULL, true);
+/** sets the signer and a pk to the client*/
+in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
+  signer_key_t* k = _malloc(sizeof(signer_key_t));
+  memcpy(k->pk, pk, 32);
+  k->account_len = eth_get_address(pk, k->account, SIGN_CURVE_ECDSA);
+  k->type        = SIGN_CURVE_ECDSA;
+  return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_sign_req, k, true);
 }
