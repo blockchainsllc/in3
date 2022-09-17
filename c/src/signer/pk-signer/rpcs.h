@@ -521,6 +521,27 @@ static inline in3_ret_t rpc_call_in3_addMnemonic(in3_rpc_handle_ctx_t* ctx, d_to
 #define FN_IN3_ADDMNEMONIC "in3_addMnemonic"
 
 /**
+ * derrives a new signer. In order to use this, you need to configure a HD Signer first ( for example by calling addMnemonic).
+ *
+ *
+ * Parameters:
+ *
+ *   - char*   path    : (string) the derrivation path
+ *   - bytes_t seed_id : (bytes32) id of seed ( which the seed-hash ). If passed, the signer is added to the seed matching the hash. ( in case multiplpe hd-wallet have been added)
+ * Returns:
+ *   - uint8_t* : (address) the added address
+ */
+static inline in3_ret_t rpc_call_in3_derive_signer(in3_rpc_handle_ctx_t* ctx, uint8_t** _res, char* path, bytes_t seed_id) {
+  d_token_t* res      = NULL;
+  char*      jpayload = sprintx("\"%S\",\"%B\"", (char*) path, (bytes_t) seed_id);
+  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_derive_signer", jpayload, NULL, &res, NULL);
+  _free(jpayload);
+  if (!r) *_res = d_bytes(res).data;
+  return r;
+}
+#define FN_IN3_DERIVE_SIGNER "in3_derive_signer"
+
+/**
  * returns a array of signer_ids the client is able to sign with.
  *
  * In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the signer_ids of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.

@@ -52,19 +52,19 @@ extern "C" {
  *
  * returns the number of of bytes if successfull or the negative error code if not.
  */
-int eth_get_address(uint8_t* pk, uint8_t* address, d_curve_type_t type);
+int eth_get_address(uint8_t* pk, uint8_t* address, in3_curve_type_t type);
 
 /**
  * registeres a private key as signer
  */
-bool signer_add_key(in3_t* c, bytes32_t pk, d_curve_type_t type);
+bool signer_add_key(in3_t* c, bytes32_t pk, in3_curve_type_t type);
 
 /**
  * simply signer with one private key.
  *
  * since the pk pointting to the 32 byte private key is not cloned, please make sure, you manage memory allocation correctly!
  */
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk, d_curve_type_t type, uint8_t** address);
+in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk, in3_curve_type_t type, uint8_t** address);
 
 /**
  * registers pk signer as plugin so you can use config or in3_addKeys as rpc
@@ -93,6 +93,12 @@ void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg);
 
 /** signs with a pk bases on the type */
 bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_digest_type_t type);
+
+/** adds a path to a hd signer */
+in3_ret_t hd_signer_add_path(in3_t* in3, bytes32_t seed_id, char* path, uint8_t** address);
+/** sets the signer and a pk to the client*/
+in3_ret_t register_hd_signer(in3_t* in3, bytes_t seed, in3_curve_type_t type, bytes32_t seed_id);
+
 #ifdef __cplusplus
 }
 #endif

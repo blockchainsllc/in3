@@ -28,7 +28,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       char* accounts                       = conf->sign_accounts(ctx);
       if (accounts) {
         int account_len = 20;
-        if (ctx->curve_type == SIGN_CURVE_ED25519) account_len = 32;
+        if (ctx->curve_type == EDDSA_ED25519) account_len = 32;
         size_t l = strlen(accounts);
         if (l % (account_len * 2) == 0) {
           ctx->accounts_len = l / (account_len * 2);
@@ -54,7 +54,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       }
 
       int account_len = 20;
-      if (ctx->curve_type == SIGN_CURVE_ED25519) account_len = 32;
+      if (ctx->curve_type == EDDSA_ED25519) account_len = 32;
       if (ctx->account.len == account_len) {
         char adr[65];
         bytes_to_hex_string(adr, "", ctx->account, "");

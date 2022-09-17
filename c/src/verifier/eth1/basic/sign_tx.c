@@ -450,7 +450,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
   TRY(in3_resolve_chain_id(ctx, &chain_id))
 
   // get the signature from required
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, SIGN_CURVE_ECDSA, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), tx_data ? tx_data : ctx->requests[0], tx_output));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, ECDSA_SECP256K1, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), tx_data ? tx_data : ctx->requests[0], tx_output));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // if we reached that point we have a valid signature in sig

@@ -53,16 +53,16 @@ in3_ret_t in3_addJsonKey(in3_rpc_handle_ctx_t* ctx, d_token_t* data, char* passp
 
   bytes_t pk = d_bytes(res);
   if (!pk.data && pk.len != 32) return req_set_error(ctx->req, "invalid key", IN3_EINVAL);
-  if (!signer_add_key(ctx->req->client, pk.data, SIGN_CURVE_ECDSA)) return req_set_error(ctx->req, "key already exists", IN3_EINVAL);
-  return in3_rpc_handle_with_bytes(ctx, bytes(adr, eth_get_address(pk.data, adr, SIGN_CURVE_ECDSA)));
+  if (!signer_add_key(ctx->req->client, pk.data, ECDSA_SECP256K1)) return req_set_error(ctx->req, "key already exists", IN3_EINVAL);
+  return in3_rpc_handle_with_bytes(ctx, bytes(adr, eth_get_address(pk.data, adr, ECDSA_SECP256K1)));
 }
 
 /**
  * adds a raw private key as signer, which allows signing transactions.
  */
 in3_ret_t in3_addRawKey(in3_rpc_handle_ctx_t* ctx, bytes_t pk, char* curve) {
-  d_curve_type_t ct = SIGN_CURVE_ECDSA;
-  if (curve && strcmp(curve, "ed25519") == 0) ct = SIGN_CURVE_ED25519;
+  in3_curve_type_t ct = ECDSA_SECP256K1;
+  if (curve && strcmp(curve, "ed25519") == 0) ct = EDDSA_ED25519;
 
   uint8_t adr[64];
   if (!signer_add_key(ctx->req->client, pk.data, ct)) return req_set_error(ctx->req, "key already exists", IN3_EINVAL);
@@ -73,60 +73,41 @@ in3_ret_t in3_addRawKey(in3_rpc_handle_ctx_t* ctx, bytes_t pk, char* curve) {
  * adds a signer from a mnemomic phrase
  */
 in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx, char* mnemomic, char* passphrase, d_token_t* derivation, char* curve) {
-  uint8_t        seed[64];
-  sb_t           path = {0};
-  d_curve_type_t ct   = SIGN_CURVE_ECDSA;
-  if (curve && strcmp(curve, "ed25519") == 0) ct = SIGN_CURVE_ED25519;
+  sb_t             res      = {0};
+  uint8_t          seed[64] = {0};
+  bytes32_t        seed_id  = {0};
+  uint8_t*         adr      = NULL;
+  in3_curve_type_t ct       = ECDSA_SECP256K1;
+
+  // verify
+  if (curve && strcmp(curve, "ed25519") == 0) ct = EDDSA_ED25519;
   if (mnemonic_verify(mnemomic)) return req_set_error(ctx->req, "Invalid mnemonic!", IN3_ERPC);
 
   // extract seed
   mnemonic_to_seed(mnemomic, passphrase ? passphrase : "", seed, NULL);
 
+  // register hd signer
+  TRY(register_hd_signer(ctx->req->client, bytes(seed, 64), ct, seed_id))
+
+  //  prepare result
+  sb_add_char(&res, '[');
+
   // derrive
   if (d_type(derivation) == T_ARRAY) {
     for_children_of(iter, derivation) {
-      if (path.len) sb_add_char(&path, ' ');
-      sb_add_chars(&path, d_string(iter.token));
+      TRY_CATCH(hd_signer_add_path(ctx->req->client, seed_id, d_string(iter.token), &adr), _free(res.data))
+      sb_add_value(&res, "\"%B\"", bytes(adr, 20));
     }
-  }
-  else if (d_type(derivation) == T_STRING)
-    sb_add_chars(&path, d_string(derivation));
-  else
-    sb_add_chars(&path, "m/44'/60'/0'/0/0");
-
-  // count the paths
-  int l = 1;
-  for (int i = 0; i < (int) path.len; i++) {
-    if (path.data[i] == ' ' || path.data[i] == ',') l++;
-  }
-
-  // derrive all private keys
-  uint8_t*  pks = _malloc(l * 32);
-  in3_ret_t r   = bip32(bytes(seed, 64), ECDSA_SECP256K1, path.data, pks);
-  _free(path.data);
-  memzero(seed, 64);
-
-  if (r == IN3_OK) {
-
-    // add keys and prepare the response
-    uint8_t adr[64] = {0};
-    sb_t*   sb      = in3_rpc_handle_start(ctx);
-    sb_add_char(sb, '[');
-    for (int i = 0; i < l; i++) {
-      if (signer_add_key(ctx->req->client, pks + i * 32, ct))
-        sb_add_value(sb, "\"%B\"", bytes(adr, eth_get_address(pks + i * 32, adr, ct)));
-    }
-    sb_add_char(sb, ']');
-
-    // cleanup
-    memzero(pks, l * 32);
-    _free(pks);
-    return in3_rpc_handle_finish(ctx);
   }
   else {
-    _free(pks);
-    return req_set_error(ctx->req, "Invalid seed or bip39 not supported!", r);
+    char* path = d_string(derivation);
+    if (!path) path = "m/44'/60'/0'/0/0";
+    TRY_CATCH(hd_signer_add_path(ctx->req->client, seed_id, path, &adr), _free(res.data))
+    sb_add_value(&res, "\"%B\"", bytes(adr, 20));
   }
+
+  TRY_FINAL(in3_rpc_handle_with_string(ctx, sb_add_char(&res, ']')->data), _free(res.data))
+  return IN3_OK;
 }
 
 /**
@@ -136,7 +117,7 @@ in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx, char* mnemomic, char* passp
  */
 in3_ret_t signer_ids(in3_rpc_handle_ctx_t* ctx) {
   sb_t*                  sb = in3_rpc_handle_start(ctx);
-  in3_sign_account_ctx_t sc = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0, .curve_type = SIGN_CURVE_ECDSA};
+  in3_sign_account_ctx_t sc = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0, .curve_type = ECDSA_SECP256K1};
 
   sb_add_char(sb, '[');
   for (in3_plugin_t* p = ctx->req->client->plugins; p; p = p->next) {
@@ -158,4 +139,14 @@ in3_ret_t signer_ids(in3_rpc_handle_ctx_t* ctx) {
  */
 in3_ret_t eth_accounts(in3_rpc_handle_ctx_t* ctx) {
   return signer_ids(ctx);
+}
+
+/**
+ * derrives a new signer. In order to use this, you need to configure a HD Signer first ( for example by calling addMnemonic).
+ */
+in3_ret_t in3_derive_signer(in3_rpc_handle_ctx_t* ctx, char* path, bytes_t seed_id) {
+  uint8_t*  adr = NULL;
+  in3_ret_t r   = hd_signer_add_path(ctx->req->client, seed_id.len == 32 ? seed_id.data : NULL, path, &adr);
+  if (r) return rpc_throw(ctx->req, "Could not derrive the key : %s", in3_errmsg(r), r);
+  return in3_rpc_handle(ctx, "\"%B\"", bytes(adr, 20));
 }

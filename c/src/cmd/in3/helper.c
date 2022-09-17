@@ -310,7 +310,7 @@ void print_val(d_token_t* token) {
   }
 }
 // decode pk
-void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t type) {
+void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, in3_curve_type_t type) {
   if (pk_file) {
     if (!pwd) {
       recorder_print(1, "Passphrase:\n");

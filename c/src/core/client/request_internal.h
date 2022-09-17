@@ -133,8 +133,8 @@ in3_ret_t send_http_request(
  */
 NONULL_FOR((1, 2, 3, 5))
 in3_ret_t        req_send_id_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
-NONULL in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, sb_t* tx_output);
-NONULL in3_ret_t req_require_pub_key(in3_req_t* ctx, d_curve_type_t curve_type, in3_convert_type_t convert_type, bytes_t from, uint8_t dst[64]); // Attention: dst buffer MUST have at least 64 bytes allocated
+NONULL in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, in3_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, sb_t* tx_output);
+NONULL in3_ret_t req_require_pub_key(in3_req_t* ctx, in3_curve_type_t curve_type, in3_convert_type_t convert_type, bytes_t from, uint8_t dst[64]); // Attention: dst buffer MUST have at least 64 bytes allocated
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
 #define assert_in3_req(ctx)                                                                    \
@@ -157,7 +157,7 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 NONULL void in3_req_free_nodes(node_match_t* c);
 int         req_nodes_len(node_match_t* root);
 NONULL bool req_is_method(const in3_req_t* req, const char* method);
-in3_ret_t   req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key);
+in3_ret_t   req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, in3_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key);
 in3_ret_t   req_throw_unknown_prop(in3_req_t* r, d_token_t* ob, d_token_t* prop, char* ob_name);
 
 #endif // REQ_INTERNAL_H

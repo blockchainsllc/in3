@@ -44,17 +44,17 @@
 #include "signer.h"
 #include <string.h>
 
-int eth_get_address(uint8_t* pk, uint8_t* address, d_curve_type_t type) {
+int eth_get_address(uint8_t* pk, uint8_t* address, in3_curve_type_t type) {
   in3_ret_t r;
   switch (type) {
-    case SIGN_CURVE_ECDSA: {
+    case ECDSA_SECP256K1: {
       uint8_t public_key[64];
       r = crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, bytes(pk, 32), public_key, NULL);
       keccak(bytes(public_key, 64), public_key);
       memcpy(address, public_key + 12, 20);
       return r == IN3_OK ? 20 : r;
     }
-    case SIGN_CURVE_ED25519:
+    case EDDSA_ED25519:
       r = crypto_convert(EDDSA_ED25519, CONV_PK32_TO_PUB32, bytes(pk, 32), address, NULL);
       return r == IN3_OK ? 32 : r;
     default:
@@ -62,7 +62,7 @@ int eth_get_address(uint8_t* pk, uint8_t* address, d_curve_type_t type) {
   }
 }
 
-bool signer_add_key(in3_t* c, bytes32_t pk, d_curve_type_t type) {
+bool signer_add_key(in3_t* c, bytes32_t pk, in3_curve_type_t type) {
   uint8_t                pub[64];
   int                    l   = eth_get_address(pk, pub, type);
   in3_sign_account_ctx_t ctx = {0};
@@ -167,7 +167,7 @@ char* eth_set_pk_signer_from_string(in3_t* in3, char* key, char* path, char* pas
     in3_ret_t r   = bip32(bytes(seed, 64), ECDSA_SECP256K1, path, pks);
     memzero(seed, 64);
     if (r == IN3_OK) {
-      for (int i = 0; i < l; i++) eth_set_pk_signer(in3, pks + i * 32, SIGN_CURVE_ECDSA, NULL);
+      for (int i = 0; i < l; i++) eth_set_pk_signer(in3, pks + i * 32, ECDSA_SECP256K1, NULL);
       memzero(pks, l * 32);
     }
     _free(pks);
@@ -179,7 +179,7 @@ char* eth_set_pk_signer_from_string(in3_t* in3, char* key, char* path, char* pas
     hex_to_bytes(key, 64, key_bytes, 32);
   }
 
-  eth_set_pk_signer(in3, key_bytes, SIGN_CURVE_ECDSA, NULL);
+  eth_set_pk_signer(in3, key_bytes, ECDSA_SECP256K1, NULL);
   return NULL;
 }
 

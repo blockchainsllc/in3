@@ -313,7 +313,7 @@ static void test_send_tx() {
   hex_to_bytes("dcb7b68bf23f6b29ffef8f316b0015bfd952385f26ae72befaf68cf0d0b6b1b6", -1, pk, 32);
 
   // create a simple signer with this key
-  eth_set_pk_signer(in3, pk, SIGN_CURVE_ECDSA, NULL);
+  eth_set_pk_signer(in3, pk, ECDSA_SECP256K1, NULL);
 
   address_t to, from;
   hex_to_bytes("0x25e10479a1AD17B895C45364a7D971e815F8867D", -1, from, 20);

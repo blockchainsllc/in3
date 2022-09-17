@@ -91,6 +91,20 @@ static in3_ret_t handle_in3_addMnemonic(in3_rpc_handle_ctx_t* ctx) {
 }
 
 /**
+ * derrives a new signer. In order to use this, you need to configure a HD Signer first ( for example by calling addMnemonic).
+ */
+static in3_ret_t handle_in3_derive_signer(in3_rpc_handle_ctx_t* ctx) {
+  char*   path;
+  bytes_t seed_id;
+
+  TRY_PARAM_GET_REQUIRED_STRING(path, ctx, 0)
+  TRY_PARAM_GET_BYTES(seed_id, ctx, 1, 32, 32)
+  RPC_ASSERT(d_len(ctx->params) <= 2, "%s only accepts %u arguments.", "in3_derive_signer", 2);
+
+  return in3_derive_signer(ctx, path, seed_id);
+}
+
+/**
  * handle rpc-requests and delegate execution
  */
 in3_ret_t pk_signer_rpc(in3_rpc_handle_ctx_t* ctx) {
@@ -105,6 +119,10 @@ in3_ret_t pk_signer_rpc(in3_rpc_handle_ctx_t* ctx) {
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ADDMNEMONIC)
   TRY_RPC("in3_addMnemonic", handle_in3_addMnemonic(ctx))
+#endif
+
+#if !defined(RPC_ONLY) || defined(RPC_IN3_DERIVE_SIGNER)
+  TRY_RPC("in3_derive_signer", handle_in3_derive_signer(ctx))
 #endif
 
 #if !defined(RPC_ONLY) || defined(RPC_SIGNER_IDS)

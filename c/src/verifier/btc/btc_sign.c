@@ -328,7 +328,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // -- Obtain DER signature
   bytes_t sig = NULL_BYTES;
   int     l;
-  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, SIGN_CURVE_ECDSA, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0], sb), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
+  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, ECDSA_SECP256K1, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0], sb), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->data = _malloc(75);
   TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data); _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->len                  = (uint32_t) l;

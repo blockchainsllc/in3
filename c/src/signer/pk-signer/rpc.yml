@@ -60,6 +60,29 @@ signers:
       structs: false
     # config
     config:
+      hd:
+        descr: a configuration of an HD-Wallet
+        array: true
+        typeName: HDWallet
+        type:
+          seed:
+            type: string
+            descr: the seed (64 bytes hex)
+            optional: true
+          seed_phrase:
+            type: string
+            descr: the seedphrase
+            optional: true
+          seed_password:
+            type: string
+            descr: a optional seed
+            optional: true
+          paths:
+            optional: true
+            descr: the derrivation paths, if not specified the default will be used
+            type: string
+            array: true
+
       key:
         type: bytes32
         descr: The client key to sign in3 requests. Used for the incentive layer. (only availble if build with `-DPK_SIGNER=true` , which is on per default)
@@ -168,6 +191,27 @@ signers:
       request:
         - "time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful"
         - test
+      response:
+        - "0xd66a0C40d3d8B245211C7E174f89CA3a5bA93795"
+
+  in3_derive_signer:
+    sync: true
+    descr: derrives a new signer. In order to use this, you need to configure a HD Signer first ( for example by calling addMnemonic).
+    params:
+      path:
+        type: string
+        descr: the derrivation path
+      seed_id:
+        optional: true
+        descr: id of seed ( which the seed-hash ). If passed, the signer is added to the seed matching the hash. ( in case multiplpe hd-wallet have been added)
+        type: bytes32
+
+    result:
+      descr: the added address
+      type: address
+    example:
+      request:
+        - "m/44'/60'/0'/0/1"
       response:
         - "0xd66a0C40d3d8B245211C7E174f89CA3a5bA93795"
 

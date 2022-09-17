@@ -45,10 +45,10 @@
 #include <string.h>
 
 typedef struct signer_key {
-  bytes32_t      pk;
-  uint8_t        account[64];
-  unsigned int   account_len;
-  d_curve_type_t type;
+  bytes32_t        pk;
+  uint8_t          account[64];
+  unsigned int     account_len;
+  in3_curve_type_t type;
 } signer_key_t;
 
 /// RPC-signer
@@ -94,7 +94,7 @@ in3_ret_t eth_sign_req(void* data, in3_plugin_act_t action, void* action_ctx) {
 in3_ret_t eth_set_request_signer(in3_t* in3, bytes32_t pk) {
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   memcpy(k->pk, pk, 32);
-  k->account_len = eth_get_address(pk, k->account, SIGN_CURVE_ECDSA);
-  k->type        = SIGN_CURVE_ECDSA;
+  k->account_len = eth_get_address(pk, k->account, ECDSA_SECP256K1);
+  k->type        = ECDSA_SECP256K1;
   return in3_plugin_register(in3, PLGN_ACT_PAY_SIGN_REQ | PLGN_ACT_TERM | PLGN_ACT_SIGN, eth_sign_req, k, true);
 }

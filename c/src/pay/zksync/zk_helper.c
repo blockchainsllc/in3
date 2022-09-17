@@ -202,7 +202,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_req_t* ctx, uint8_t* sy
   }
   TRY(zksync_get_account(conf, ctx, &account))
   assert(account);
-  TRY(req_require_signature(ctx, SIGN_EC_PREFIX, SIGN_CURVE_ECDSA, PL_SIGN_ANY, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20), ctx->requests[0], NULL))
+  TRY(req_require_signature(ctx, SIGN_EC_PREFIX, ECDSA_SECP256K1, PL_SIGN_ANY, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20), ctx->requests[0], NULL))
   if (signature.len == 65 && signature.data[64] < 2)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);

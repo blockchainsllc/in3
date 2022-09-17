@@ -69,6 +69,11 @@ in3_ret_t in3_addJsonKey(in3_rpc_handle_ctx_t* ctx, d_token_t* key, char* passph
 in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx, char* mnemomic, char* passphrase, d_token_t* derivation, char* curve);
 
 /**
+ * derrives a new signer. In order to use this, you need to configure a HD Signer first ( for example by calling addMnemonic).
+ */
+in3_ret_t in3_derive_signer(in3_rpc_handle_ctx_t* ctx, char* path, bytes_t seed_id);
+
+/**
  * returns a array of signer_ids the client is able to sign with.
  *
  * In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the signer_ids of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.

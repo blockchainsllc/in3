@@ -265,7 +265,7 @@ d_payload_type_t in3_sign_ctx_get_payload_type(
 /**
  * helper function to retrieve the curve_type from a in3_sign_ctx_t
  */
-d_curve_type_t in3_sign_ctx_get_curve_type(
+in3_curve_type_t in3_sign_ctx_get_curve_type(
     in3_sign_ctx_t* ctx /**< the signer context */
 ) {
   return ctx->curve_type;

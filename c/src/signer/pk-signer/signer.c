@@ -45,7 +45,7 @@
 #include "pk-signer_rpc.h"
 #include <string.h>
 
-static in3_ret_t pk_add_from_config(in3_configure_ctx_t* ctx, d_curve_type_t type) {
+static in3_ret_t pk_add_from_config(in3_configure_ctx_t* ctx, in3_curve_type_t type) {
   if (d_type(ctx->token) == T_ARRAY) {
     for_children_of(iter, ctx->token) {
       bytes_t b = d_bytes(iter.token);
@@ -67,26 +67,71 @@ static in3_ret_t pk_add_from_config(in3_configure_ctx_t* ctx, d_curve_type_t typ
   return IN3_OK;
 }
 
+static in3_ret_t add_hd(in3_configure_ctx_t* ctx, d_token_t* token) {
+  uint8_t          seed[64]   = {0};
+  bytes32_t        seed_id    = {0};
+  in3_curve_type_t ct         = ECDSA_SECP256K1;
+  char*            mnemomic   = d_get_string(token, key("seed_phrase"));
+  char*            passphrase = d_get_string(token, key("seed_password"));
+  bytes_t          seed_val   = d_get_bytes(token, key("seed"));
+  d_token_t*       derivation = d_get(token, key("paths"));
+
+  // verify
+  if (mnemomic) {
+    if (mnemonic_verify(mnemomic)) CNF_ERROR("Invalid seedphrase");
+    // extract seed
+    mnemonic_to_seed(mnemomic, passphrase ? passphrase : "", seed, NULL);
+    seed_val = bytes(seed, 64);
+  }
+  else if (!seed_val.len || seed_val.len > 64)
+    CNF_ERROR("Invalid seed");
+
+  // register hd signer
+  TRY(register_hd_signer(ctx->client, seed_val, ct, seed_id))
+
+  // derrive
+  if (d_type(derivation) == T_ARRAY) {
+    for_children_of(iter, derivation) hd_signer_add_path(ctx->client, seed_id, d_string(iter.token), NULL);
+  }
+  else {
+    char* path = d_string(derivation);
+    if (!path) path = "m/44'/60'/0'/0/0";
+    hd_signer_add_path(ctx->client, seed_id, path, NULL);
+  }
+  return IN3_OK;
+}
+
+static in3_ret_t pk_config_set(in3_configure_ctx_t* ctx) {
+  if (d_is_key(ctx->token, CONFIG_KEY("key"))) {
+    bytes_t b = d_bytes(ctx->token);
+    if (b.len != 32) {
+      ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
+      return IN3_EINVAL;
+    }
+    eth_set_request_signer(ctx->client, b.data);
+    return IN3_OK;
+  }
+  if (d_is_key(ctx->token, CONFIG_KEY("pk"))) return pk_add_from_config(ctx, ECDSA_SECP256K1);
+  if (d_is_key(ctx->token, CONFIG_KEY("pk_ed25519"))) return pk_add_from_config(ctx, EDDSA_ED25519);
+  if (d_is_key(ctx->token, CONFIG_KEY("hd"))) {
+    if (d_type(ctx->token) == T_OBJECT)
+      return add_hd(ctx, ctx->token);
+    else if (d_type(ctx->token) == T_ARRAY) {
+      for_children_of(iter, ctx->token) TRY(add_hd(ctx, iter.token));
+      return IN3_OK;
+    }
+    else
+      CNF_ERROR("Invalid hd-wallet");
+  }
+
+  return IN3_EIGNORE;
+}
+
 // RPC-Handler
 static in3_ret_t pk_rpc(void* data, in3_plugin_act_t action, void* action_ctx) {
   UNUSED_VAR(data);
   switch (action) {
-    case PLGN_ACT_CONFIG_SET: {
-      in3_configure_ctx_t* ctx = action_ctx;
-      if (d_is_key(ctx->token, CONFIG_KEY("key"))) {
-        bytes_t b = d_bytes(ctx->token);
-        if (b.len != 32) {
-          ctx->error_msg = _strdupn("invalid key-length, must be 32", -1);
-          return IN3_EINVAL;
-        }
-        eth_set_request_signer(ctx->client, b.data);
-        return IN3_OK;
-      }
-      if (d_is_key(ctx->token, CONFIG_KEY("pk"))) return pk_add_from_config(ctx, SIGN_CURVE_ECDSA);
-      if (d_is_key(ctx->token, CONFIG_KEY("pk_ed25519"))) return pk_add_from_config(ctx, SIGN_CURVE_ED25519);
-      return IN3_EIGNORE;
-    }
-
+    case PLGN_ACT_CONFIG_SET: return pk_config_set(action_ctx);
     case PLGN_ACT_RPC_HANDLE: return pk_signer_rpc(action_ctx);
     default: return IN3_ENOTSUP;
   }

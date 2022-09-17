@@ -555,7 +555,7 @@ static inline const char* method_for_sigtype(d_digest_type_t type) {
   }
 }
 
-in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
+in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, in3_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, bytes_t cache_key) {
 
   bytes_t* cached_sig = in3_cache_get_entry(ctx->cache, &cache_key);
   if (cached_sig) {
@@ -616,7 +616,7 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, d_curve_ty
   }
 }
 
-in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, d_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, sb_t* tx_output) {
+in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, in3_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, sb_t* tx_output) {
   bytes_t cache_key = bytes(alloca(raw_data.len + from.len), raw_data.len + from.len);
   memcpy(cache_key.data, raw_data.data, raw_data.len);
   if (from.data) memcpy(cache_key.data + raw_data.len, from.data, from.len);
@@ -693,7 +693,7 @@ in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path,
   return req_add_required(req, found);
 }
 
-in3_ret_t req_require_pub_key(in3_req_t* ctx, d_curve_type_t curve_type, in3_convert_type_t convert_type, bytes_t from, uint8_t dst[64]) {
+in3_ret_t req_require_pub_key(in3_req_t* ctx, in3_curve_type_t curve_type, in3_convert_type_t convert_type, bytes_t from, uint8_t dst[64]) {
   if (!dst) return req_set_error(ctx, "dst buffer cannot be null", IN3_EINVAL);
   in3_sign_public_key_ctx_t sc = {.account = from.data, .req = ctx, .curve_type = curve_type, .convert_type = convert_type};
   in3_ret_t                 r  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_SIGN_PUBLICKEY, &sc);

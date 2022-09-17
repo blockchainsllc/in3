@@ -281,12 +281,6 @@ typedef enum {
   SIGNER_EIP1271 = 2
 } in3_signer_type_t;
 
-/** type of the curve used for signing*/
-typedef enum {
-  SIGN_CURVE_ECDSA   = 1, /**< sign with ecdsa */
-  SIGN_CURVE_ED25519 = 2, /**< use ed25519 curve */
-} d_curve_type_t;
-
 /**
  * action context when retrieving the addresses or accounts of a signer.
  */
@@ -294,7 +288,7 @@ typedef struct sign_account_ctx {
   struct in3_req*   req;          /**< the context of the request in order report errors */
   uint8_t*          accounts;     /**< the account to use for the signature */
   int               accounts_len; /**< number of accounts */
-  d_curve_type_t    curve_type;   /**< the type of the curve used */
+  in3_curve_type_t  curve_type;   /**< the type of the curve used */
   in3_signer_type_t signer_type;  /**< the type of the signer used for this account.*/
 } in3_sign_account_ctx_t;
 /**
@@ -302,7 +296,7 @@ typedef struct sign_account_ctx {
  */
 typedef struct sign_public_key_ctx {
   struct in3_req*    req;            /**< the context of the request in order report errors */
-  d_curve_type_t     curve_type;     /**< the type of the curve used */
+  in3_curve_type_t   curve_type;     /**< the type of the curve used */
   in3_convert_type_t convert_type;   /**< the type of conversion to be made */
   uint8_t*           account;        /**< the account to use for the signature */
   uint8_t            public_key[64]; /**< the public key in case the plugin returns IN3_OK */
@@ -346,7 +340,7 @@ typedef enum {
 typedef struct sign_ctx {
   bytes_t          signature;    /**< the resulting signature  */
   d_digest_type_t  digest_type;  /**< the type of signature*/
-  d_curve_type_t   curve_type;   /**< type of curved used to sign */
+  in3_curve_type_t curve_type;   /**< type of curved used to sign */
   d_payload_type_t payload_type; /**< the type of payload in order to deserialize the payload */
   struct in3_req*  req;          /**< the context of the request in order report errors */
   bytes_t          message;      /**< the message to sign*/
@@ -386,7 +380,7 @@ d_payload_type_t in3_sign_ctx_get_payload_type(
 /**
  * helper function to retrieve the curve_type from a in3_sign_ctx_t
  */
-d_curve_type_t in3_sign_ctx_get_curve_type(
+in3_curve_type_t in3_sign_ctx_get_curve_type(
     in3_sign_ctx_t* ctx /**< the signer context */
 );
 

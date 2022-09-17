@@ -667,7 +667,7 @@ static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->message     = d_bytes(d_get_at(params, 0));
   sign_ctx->account     = d_bytes(d_get_at(params, 1));
   sign_ctx->digest_type = SIGN_EC_HASH;
-  sign_ctx->curve_type  = SIGN_CURVE_ECDSA;
+  sign_ctx->curve_type  = ECDSA_SECP256K1;
   sign_ctx->req         = ctx;
   sign_ctx->signature   = NULL_BYTES;
 }

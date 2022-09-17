@@ -750,7 +750,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
 
   in3_sign_ctx_t sc = {0};
   sc.req            = ctx->req;
-  sc.curve_type     = SIGN_CURVE_ECDSA;
+  sc.curve_type     = ECDSA_SECP256K1;
   sc.message        = data;
   sc.account        = signer;
   sc.digest_type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
@@ -758,7 +758,7 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(sig_type, "sign_ec_raw") == 0) sc.digest_type = SIGN_EC_RAW;
   if (strcmp(sig_type, "sign_ec_prefix") == 0) sc.digest_type = SIGN_EC_PREFIX;
   if (strcmp(sig_type, "sign_ec_btc") == 0) sc.digest_type = SIGN_EC_BTC;
-  if (strcmp(sig_type, "sign_ed25519") == 0) sc.curve_type = SIGN_CURVE_ED25519;
+  if (strcmp(sig_type, "sign_ed25519") == 0) sc.curve_type = EDDSA_ED25519;
 
   if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
     TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));

@@ -42,6 +42,7 @@ add_static_library(
     signer.c
     signer_impl.c
     signer_key.c
+    signer_hd.c
     signer_request.c
     signer_util.c
     pk-signer_rpc.c

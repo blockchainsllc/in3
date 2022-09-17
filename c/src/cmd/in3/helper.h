@@ -40,7 +40,7 @@ bytes_t readFile(FILE* f);
 
 bytes_t* get_std_in();
 
-void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, d_curve_type_t type);
+void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, in3_curve_type_t type);
 
 void print_val(d_token_t* t);
 

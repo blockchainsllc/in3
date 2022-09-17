@@ -45,14 +45,14 @@
 #include <string.h>
 
 typedef struct signer_key {
-  bytes32_t      pk;
-  uint8_t        account[64];
-  unsigned int   account_len;
-  d_curve_type_t type;
+  bytes32_t        pk;
+  uint8_t          account[64];
+  unsigned int     account_len;
+  in3_curve_type_t type;
 } signer_key_t;
 
 // signer_pk implementation
-static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_ctx) {
+static in3_ret_t pk_handle(void* data, in3_plugin_act_t action, void* action_ctx) {
   signer_key_t* k = data;
   switch (action) {
     case PLGN_ACT_SIGN: {
@@ -61,10 +61,10 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       // is it our key?
       if (ctx->account.len && (ctx->account.len != k->account_len || memcmp(k->account, ctx->account.data, k->account_len))) return IN3_EIGNORE;
       switch (ctx->curve_type) {
-        case SIGN_CURVE_ECDSA:
+        case ECDSA_SECP256K1:
           ctx->signature = sign_with_pk(k->pk, ctx->message, ctx->digest_type);
           break;
-        case SIGN_CURVE_ED25519: {
+        case EDDSA_ED25519: {
           uint8_t sig[64];
           TRY(crypto_sign_digest(EDDSA_ED25519, ctx->message, k->pk, k->account, sig))
           ctx->signature = bytes_dup(bytes(sig, 64));
@@ -91,9 +91,9 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
       // is it our key?
       if (k->type != ctx->curve_type || (ctx->account && memcmp(ctx->account, k->account, k->account_len))) return IN3_EIGNORE;
       switch (ctx->curve_type) {
-        case SIGN_CURVE_ECDSA:
+        case ECDSA_SECP256K1:
           return crypto_convert(ECDSA_SECP256K1, ctx->convert_type, bytes(k->pk, 32), ctx->public_key, NULL);
-        case SIGN_CURVE_ED25519:
+        case EDDSA_ED25519:
           return crypto_convert(EDDSA_ED25519, CONV_PK32_TO_PUB32, bytes(k->pk, 32), ctx->public_key, NULL);
         default:
           return IN3_ENOTSUP;
@@ -111,12 +111,12 @@ static in3_ret_t eth_sign_pk(void* data, in3_plugin_act_t action, void* action_c
 }
 
 /** sets the signer and a pk to the client*/
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk, d_curve_type_t type, uint8_t** address) {
+in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk, in3_curve_type_t type, uint8_t** address) {
   if (!pk) return IN3_EINVAL;
   signer_key_t* k = _malloc(sizeof(signer_key_t));
   k->type         = type;
   k->account_len  = eth_get_address(pk, k->account, type);
   memcpy(k->pk, pk, 32);
   if (address) *address = k->account;
-  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM | PLGN_ACT_SIGN_PUBLICKEY, eth_sign_pk, k, false);
+  return in3_plugin_register(in3, PLGN_ACT_SIGN_ACCOUNT | PLGN_ACT_SIGN | PLGN_ACT_TERM | PLGN_ACT_SIGN_PUBLICKEY, pk_handle, k, false);
 }

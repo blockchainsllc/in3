@@ -11,7 +11,7 @@
 static bool decode_keystore(char* args, int argc, char** argv) {
   json_ctx_t* ctx = parse_json(args);
   if (!ctx || d_len(ctx->result) != 1 || d_type(d_get_at(ctx->result, 0)) != T_STRING) die("decoding a key expects one argument with the filename of the keystorefile.");
-  read_pk(d_get_string_at(ctx->result, 0), get_argument(argc, argv, "-pwd", "--password", true), NULL, "key", SIGN_CURVE_ECDSA);
+  read_pk(d_get_string_at(ctx->result, 0), get_argument(argc, argv, "-pwd", "--password", true), NULL, "key", ECDSA_SECP256K1);
   json_free(ctx);
   return true;
 }
