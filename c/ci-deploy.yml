@@ -35,39 +35,39 @@ dockerhub-deploy:
     - docker tag $IMAGE_TAG slockit/in3:latest
     - docker push slockit/in3:latest
 
-readthedocs:
-  image: docker.slock.it/build-images/doc:readthedocs
-  stage: test
-  needs:
-    - gcc8
-    - python
-    - dotnet
-  extends: .only_full
-  tags:
-    - short-jobs
-  allow_failure: true
-  script:
-    - cd scripts
-    - ./update_examples.sh
-    - cd ..
-    - export PRE_DOC=`cat wasm/docs/*.md`
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/c/in3-doc.git  doc
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
-    - cp python_multilib/docs/documentation.md doc/docs/api-python.md
-    - cp dotnet/docs/api-dotnet.md doc/docs/
-    - cd generator
-    - npm i && npm run build
-    - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
-    - chmod 777 bin/*
-    - cd ../doc/docs && make html && make text
-  artifacts:
-    paths:
-      - doc/build
-  # Caches per branch - per job
-  cache:
-    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
-    paths:
-      - .npm/
+#readthedocs:
+#  image: docker.slock.it/build-images/doc:readthedocs
+#  stage: test
+#  needs:
+#    - gcc8
+#    - python
+#    - dotnet
+#  extends: .only_full
+#  tags:
+#    - short-jobs
+#  allow_failure: true
+#  script:
+#    - cd scripts
+#    - ./update_examples.sh
+#    - cd ..
+#    - export PRE_DOC=`cat wasm/docs/*.md`
+#    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/c/in3-doc.git  doc
+#    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
+#    - cp python_multilib/docs/documentation.md doc/docs/api-python.md
+#    - cp dotnet/docs/api-dotnet.md doc/docs/
+#    - cd generator
+#    - npm i && npm run build
+#    - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
+#    - chmod 777 bin/*
+#    - cd ../doc/docs && make html && make text
+#  artifacts:
+#    paths:
+#      - doc/build
+#  # Caches per branch - per job
+#  cache:
+#    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+#    paths:
+#      - .npm/
 
 release_mac_and_wasm:
   stage: deploy
@@ -78,7 +78,7 @@ release_mac_and_wasm:
   needs:
     - mac_os
     - gcc8
-    - readthedocs
+    #    - readthedocs
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
@@ -108,7 +108,7 @@ release_x64:
     - short-jobs
   needs:
     - gcc8
-    - readthedocs
+    #    - readthedocs
     - python
   extends: .only_deploy
   script:
@@ -140,7 +140,7 @@ release_x86:
   needs:
     - gcc8
     - gcc8-x86
-    - readthedocs
+    #    - readthedocs
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
@@ -171,7 +171,7 @@ release_arm7:
   needs:
     - gcc8
     - arm7
-    - readthedocs
+    #    - readthedocs
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
@@ -202,7 +202,7 @@ release_win:
   needs:
     - gcc8
     - win_mingw
-    - readthedocs
+    #    - readthedocs
     - python
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
@@ -236,7 +236,7 @@ pages:
     - if: '$CI_COMMIT_REF_NAME == "develop"'
   needs:
     - arm7
-    - readthedocs
+    #    - readthedocs
     - coverage
     - clangcheck
     - python_linux
@@ -264,7 +264,7 @@ pages:
     - examples_arm
     - examples_linux
     - examples_macos
-    - readthedocs
+  #    - readthedocs
   script:
     - mv scripts/debian .
     - mv debian/changelog-in3 debian/changelog
@@ -314,7 +314,7 @@ debian_package_deploy_focal:
     - examples_arm
     - examples_linux
     - examples_macos
-    - readthedocs
+  #    - readthedocs
   script:
     - mv scripts/debian .
     - mv debian/changelog-dev debian/changelog
