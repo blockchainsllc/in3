@@ -611,6 +611,36 @@ signers:
           depth: 3
           gas: "0x169426"
 
+  eth_getInternalTx:
+    descr: |
+      returns all the internal Transactions for a given transaction hash. 
+
+      It can be used to find out whether native tokens (which do not create any transfer event) were transfered within this tx. 
+      This function currently only works for geth-nodes, since it uses debug_traceTransaction to run through each opcode to find internal calls.
+    params:
+      tx_hash:
+        descr: the transaction hash of the Tx
+        type: bytes32
+    result:
+      array: true
+      typeName: EthInternalTx
+      type:
+        op:
+          type: string
+          descr: The opcode used for the internal tx
+        to:
+          type: address
+          descr: the receiver address
+        from:
+          type: address
+          descr: the sender address
+        depth:
+          type: uint32
+          descr: depth of the call
+        gas:
+          type: uint64
+          descr: the amount of gas passed
+
   in3_verifySignature:
     descr: verifies a signature of a wallet. It will also automaticly detect a EIP-1271-Signature and verifies a multisig or other contracts.
     params:
