@@ -317,7 +317,7 @@ static void bip32_add_path(HDNode node, char* path, uint8_t* pk) {
       char tt[50];
       strcpy(tt, p);
       tt[strlen(p) - 1] = 0;
-      hdnode_private_ckd_prime(&node, atoi(p + 1));
+      hdnode_private_ckd_prime(&node, atoi(tt));
     }
     else
       hdnode_private_ckd(&node, atoi(p));
