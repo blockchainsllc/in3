@@ -40,7 +40,7 @@ signers:
       - "0x65fadac7008e447c11c6ca9207818e2058c6b8ef437ef277ec03294036c1c34f"
       - secp256k1
       - "m/44'/60'/0'/0/0"
-    expected_output: "0xb4a0adabe68b6df6290bebf959091b3d3d67f1236617d5386d5818dc2494d5fb"
+    expected_output: "0x74cda75743c2d73571b5460220e471570cebb3ff67cf43533b36b932dd2d3932"
 
   in3_bip39_create:
     input:

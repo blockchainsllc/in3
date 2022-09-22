@@ -418,46 +418,6 @@ static inline in3_ret_t rpc_call_eth_signTransaction(in3_rpc_handle_ctx_t* ctx, 
 #define FN_ETH_SIGNTRANSACTION "eth_signTransaction"
 
 /**
- * returns the internal transactions send during execution of the tx. Currently this only works with geth with activated `debug` module (supporting `debug_traceTransaction` ). Also when running a pruned node, the state of transaction is only available for limited time ( mostly 5 min)
- *
- *
- * Parameters:
- *
- *   - bytes_t tx_hash : (bytes32) the transactionhash
- * Returns:
- *   - d_token_t* : (eth_internal_tx) an array of internal transactions
- */
-static inline in3_ret_t rpc_call_in3_get_internal_tx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx_hash) {
-  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx_hash);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_get_internal_tx", jpayload, NULL, res, NULL);
-  _free(jpayload);
-  return r;
-}
-#define FN_IN3_GET_INTERNAL_TX "in3_get_internal_tx"
-
-/**
- * returns all the internal Transactions for a given transaction hash.
- *
- * It can be used to find out whether native tokens (which do not create any transfer event) were transfered within this tx.
- * This function currently only works for geth-nodes, since it uses debug_traceTransaction to run through each opcode to find internal calls.
- *
- *
- *
- * Parameters:
- *
- *   - bytes_t tx_hash : (bytes32) the transaction hash of the Tx
- * Returns:
- *   - d_token_t* : ([object Object]) the result
- */
-static inline in3_ret_t rpc_call_eth_getInternalTx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx_hash) {
-  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx_hash);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "eth_getInternalTx", jpayload, NULL, res, NULL);
-  _free(jpayload);
-  return r;
-}
-#define FN_ETH_GETINTERNALTX "eth_getInternalTx"
-
-/**
  * verifies a signature of a wallet. It will also automaticly detect a EIP-1271-Signature and verifies a multisig or other contracts.
  *
  *

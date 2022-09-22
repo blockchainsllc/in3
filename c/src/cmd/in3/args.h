@@ -6,25 +6,25 @@ const char* bool_props[] = {"includeCode", "debug", "useTxType2", "keepIn3", "st
 
 const char* help_args = "\
 --chainId                     -c     the chainId or the name of a known chain\n\
---finality                    -f     the number in percent needed in order reach finality (% of signature of the validators)\n\
---includeCode                        if true, the request should include the codes of all accounts\n\
+--finality                    -f     In case of a Proof of Authority chain finality indicates the amount of blocks needed to reach finali...\n\
+--includeCode                        *legecy option*\n\
 --debug                              if true, debug messages will be written to stderr\n\
 --maxAttempts                 -a     max number of attempts in case a response is rejected\n\
 --useTxType2                         if true send Transaction will create TxType 2 Transactions unless explicitly specifed\n\
 --gasPrio                     -g     the factor in percent to be used when calculating the gasPrice (50 = half of average gasPrice, 200 =...\n\
---keepIn3                     -kin3  if true, requests sent to the input sream of the comandline util will be send theor responses in the...\n\
---stats                              if true, requests sent will be used for stats\n\
+--keepIn3                     -kin3  if true, requests sent to the input sream of the comandline util will be send the responses in the s...\n\
+--stats                              In3 Server keeping stats about requests\n\
 --useBinary                          if true the client will use binary format\n\
 --experimental                -x     if true the client allows to use use experimental features, otherwise a exception is thrown if those...\n\
 --timeout                            specifies the number of milliseconds before the request times out\n\
 --proof                       -p     if true the nodes should send a proof of the response\n\
---replaceLatestBlock          -l     if specified, the blocknumber *latest* will be replaced by blockNumber- specified value\n\
+--replaceLatestBlock          -l     Defines the number of blocks that will be substracted from latest\n\
 --autoUpdateList                     if true the nodelist will be automaticly updated if the lastBlock is newer\n\
 --signatureCount              -s     number of signatures requested in order to verify the blockhash\n\
 --bootWeights                 -bw    if true, the first request (updating the nodelist) will also fetch the current health status and use...\n\
 --useHttp                            if true the client will try to use http instead of https\n\
 --minDeposit                         min stake of the server\n\
---nodeProps                          used to identify the capabilities of the node\n\
+--nodeProps                          Defines the requirements of an in3 node in order to be used by this instance\n\
 --requestCount                -rc    the number of request send in parallel when getting an answer\n\
 --rpc                                url of one or more direct rpc-endpoints to use\n\
 --nodes                              defining the nodelist\n\
@@ -56,8 +56,13 @@ const char* help_args = "\
 --zksync.create2.codehash            the hash of the actual deploy-tx including the constructor-arguments\n\
 --zksync.verify_proof_method  -zvpm  rpc-method, which will be used to verify the incomming proof before cosigning\n\
 --zksync.create_proof_method  -zcpm  rpc-method, which will be used to create the proof needed for cosigning\n\
---key                         -k     the client key to sign requests\n\
---pk                          -pk    registers raw private keys as signers for transactions\n\
+--hd                                 a configuration of an HD-Wallet\n\
+--hd.seed                            the seed (64 bytes hex)\n\
+--hd.seed_phrase                     the seedphrase\n\
+--hd.seed_password                   a optional seed\n\
+--hd.paths                           the derrivation paths, if not specified the default will be used\n\
+--key                         -k     The client key to sign in3 requests\n\
+--pk                          -pk    registers raw private keys as signers for blockchain transactions\n\
 --pk_ed25519                  -pk_ed25519registers raw private keys as signers for ed25519 transactions\n\
 --btc                                configure the Bitcoin verification\n\
 --btc.maxDAP                         max number of DAPs (Difficulty Adjustment Periods) allowed when accepting new targets\n\

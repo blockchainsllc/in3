@@ -364,6 +364,24 @@ static inline in3_ret_t rpc_call_in3_toWei(in3_rpc_handle_ctx_t* ctx, bytes_t* _
 #define FN_IN3_TOWEI "in3_toWei"
 
 /**
+ * returns the internal transactions send during execution of the tx. Currently this only works with geth with activated `debug` module (supporting `debug_traceTransaction` ). Also when running a pruned node, the state of transaction is only available for limited time ( mostly 5 min)
+ *
+ *
+ * Parameters:
+ *
+ *   - bytes_t tx_hash : (bytes32) the transactionhash
+ * Returns:
+ *   - d_token_t* : (eth_internal_tx) an array of internal transactions
+ */
+static inline in3_ret_t rpc_call_in3_get_internal_tx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx_hash) {
+  char*     jpayload = sprintx("\"%B\"", (bytes_t) tx_hash);
+  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_get_internal_tx", jpayload, NULL, res, NULL);
+  _free(jpayload);
+  return r;
+}
+#define FN_IN3_GET_INTERNAL_TX "in3_get_internal_tx"
+
+/**
  * converts a given uint (also as hex) with a wei-value into a specified unit.
  *
  *
