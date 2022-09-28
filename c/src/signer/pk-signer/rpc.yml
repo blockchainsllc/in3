@@ -217,7 +217,6 @@ signers:
 
   signer_ids:
     apiName: signerIds
-    sync: true
     descr: |
       returns a array of signer_ids the client is able to sign with. 
 

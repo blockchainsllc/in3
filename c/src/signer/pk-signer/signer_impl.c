@@ -116,22 +116,33 @@ in3_ret_t in3_addMnemonic(in3_rpc_handle_ctx_t* ctx, char* mnemomic, char* passp
  * In order to add keys, you can use [in3_addRawKey](#in3-addrawkey) or configure them in the config. The result also contains the signer_ids of any signer signer-supporting the `PLGN_ACT_SIGN_ACCOUNT` action.
  */
 in3_ret_t signer_ids(in3_rpc_handle_ctx_t* ctx) {
-  sb_t*                  sb = in3_rpc_handle_start(ctx);
+  sb_t sb = {0};
+  //  sb_t*                  sb = in3_rpc_handle_start(ctx);
   in3_sign_account_ctx_t sc = {.req = ctx->req, .accounts = NULL, .accounts_len = 0, .signer_type = 0, .curve_type = ECDSA_SECP256K1};
 
-  sb_add_char(sb, '[');
+  sb_add_char(&sb, '[');
   for (in3_plugin_t* p = ctx->req->client->plugins; p; p = p->next) {
-    if (p->acts & PLGN_ACT_SIGN_ACCOUNT && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc) == IN3_OK) {
-      for (int i = 0; i < sc.accounts_len; i++)
-        sb_add_value(sb, "\"%B\"", bytes(sc.accounts + i * 20, 20));
+    if (p->acts & PLGN_ACT_SIGN_ACCOUNT) {
+      in3_ret_t r = p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &sc);
+      if (r == IN3_EIGNORE) continue;
+      if (r == IN3_OK) {
+        for (int i = 0; i < sc.accounts_len; i++)
+          sb_add_value(&sb, "\"%B\"", bytes(sc.accounts + i * 20, 20));
+      }
+      else {
+        _free(sb.data);
+        return r;
+      }
       if (sc.accounts) {
         _free(sc.accounts);
         sc.accounts_len = 0;
       }
     }
   }
-  sb_add_char(sb, ']');
-  return in3_rpc_handle_finish(ctx);
+  sb_add_char(&sb, ']');
+  in3_rpc_handle_with_string(ctx, sb.data);
+  _free(sb.data);
+  return IN3_OK;
 }
 
 /**
