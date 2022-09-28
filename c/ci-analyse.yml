@@ -38,8 +38,8 @@ coverage:
     paths:
       - cov_build/ccov/all-merged
       - cov_build/coverage.xml
-    reports:
-      cobertura: cov_build/coverage.xml
+#    reports:
+#      cobertura: cov_build/coverage.xml
 
 clangcheck:
   stage: analysis
