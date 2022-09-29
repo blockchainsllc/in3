@@ -223,6 +223,13 @@ static in3_ret_t convert_sig_from_der(bytes_t src, uint8_t* dst) {
   return IN3_OK;
 }
 
+static in3_ret_t convert_pubkey_from_der(bytes_t src, uint8_t* dst) {
+  if (src.len < 66) return IN3_EINVAL;
+  memset(dst, 0, 64);
+  memcpy(dst, src.data + src.len - 64, 64);
+  return IN3_OK;
+}
+
 static in3_ret_t convert_to_der(in3_curve_type_t type, bytes_t src, uint8_t* dst, int* dst_len) {
   bytes_t id;
   uint8_t prefix[2] = {0};
@@ -282,6 +289,10 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
         case CONV_SIGDER_TO_SIG65: {
           if (dst_len) *dst_len = 65;
           return convert_sig_from_der(src, dst);
+        }
+        case CONV_PUBDER_TO_PUB64: {
+          if (dst_len) *dst_len = 64;
+          return convert_pubkey_from_der(src, dst);
         }
         case CONV_PUB64_TO_DER: return convert_to_der(type, src, dst, dst_len);
         default: return IN3_ENOTSUP;
