@@ -786,7 +786,7 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
       in3_log_trace(request->req->raw_response[i].state
                         ? "... response(%s): \n... " COLOR_RED_STR "\n"
                         : "... response(%s): \n... " COLOR_GREEN_STR "\n",
-                    node ? node->url : "intern", data);
+                    node ? node->url : "intern", data ? data : "no data");
 #ifdef DEBUG
       _free(data);
 #endif
