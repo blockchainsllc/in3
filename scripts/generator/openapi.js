@@ -1,3 +1,4 @@
+
 const axios = require('axios')
 const fs = require('fs')
 const { dirname } = require('path')
@@ -212,6 +213,9 @@ function create_fn(config, method, path, def) {
 
     fn._generate_openapi = { path, method }
     fn.params = {}
+    path.split('/').filter(_ => _.startsWith('{') || _.startsWith(':')).map(_ => _.substring(1).replace('}', '')).forEach(p => {
+        fn.params[p] = { descr: 'the ' + p, type: 'string' }
+    })
     if (def.requestBody) {
         fn._generate_openapi.body = 'data'
         fn.params.data = {
@@ -239,19 +243,14 @@ function create_fn(config, method, path, def) {
                 if (!(p.schema && p.schema.required && p.schema.required.length)) fn.params.data.optional = true
             }
             if (p.in != 'body') {
-                const d = {
-                    descr: p.description || 'the ' + p
-                }
-                fn.params[n] = d
-                if (!p.required) d.optional = true // default is not required
+                let d = fn.params[n]
+                if (!d) d = fn.params[n] = {}
+                d.descr = p.description || 'the ' + p
+                d.optional = !p.required
                 d.type = get_type(config, p, [n, base_name + '_' + (p.name || p)], d)
             }
         })
     }
-    path.split('/').filter(_ => _.startsWith('{') || _.startsWith(':')).map(_ => _.substring(1).replace('}', '')).forEach(p => {
-        if (!fn.params[p])
-            fn.params[p] = { descr: 'the ' + p, type: 'string' }
-    })
 
     const response = Object.keys(def.responses || {}).map(_ => {
         if (parseInt(_) < 400) {
