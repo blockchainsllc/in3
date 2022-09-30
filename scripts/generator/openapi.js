@@ -214,7 +214,7 @@ function create_fn(config, method, path, def) {
     fn._generate_openapi = { path, method }
     fn.params = {}
     path.split('/').filter(_ => _.startsWith('{') || _.startsWith(':')).map(_ => _.substring(1).replace('}', '')).forEach(p => {
-        fn.params[p] = { descr: 'the ' + p, type: 'string' }
+        fn.params[snake_case(p)] = { descr: 'the ' + p, type: 'string' }
     })
     if (def.requestBody) {
         fn._generate_openapi.body = 'data'
@@ -245,7 +245,7 @@ function create_fn(config, method, path, def) {
             if (p.in != 'body') {
                 let d = fn.params[n]
                 if (!d) d = fn.params[n] = {}
-                d.descr = p.description || 'the ' + p
+                d.descr = p.description || 'the ' + n
                 d.optional = !p.required
                 d.type = get_type(config, p, [n, base_name + '_' + (p.name || p)], d)
             }
