@@ -122,15 +122,6 @@ function create_api(ctx, { api, conf, rpcs, descr }, head = '', h = '') {
             }
         }
 
-        if (!def.example)
-            def.example = {
-                request: Object.keys(def.params || {}).filter(_ => !def.params[_].optional).map(k => create_example_arg(k, def.params[k], ctx.types)),
-                response: create_example_arg('result', def.result || { type: 'string' }, ctx.types)
-            }
-
-
-
-
         let exampleList = asArray(def.example)
         if (exampleList.length) {
             for (const lang of Object.keys(ctx.examples)) {

@@ -13,6 +13,7 @@ const {
     link,
     toCmdParam,
     typeName,
+    create_example_arg,
     short_descr
 } = require('./util')
 const { create_rpc_doc, print_object } = require('./rpc_doc.js')
@@ -437,6 +438,17 @@ async function main() {
     sorted_rpcs = sorted_rpcs.filter(a => Object.values(a.rpcs).filter(_ => !_.skipApi).length || sorted_rpcs.find(_ => camelCaseLow(a.api) == camelCaseLow(_.conf.extension || '')))
     const ctx = { config_doc, cmdName, examples, doc_dir, apis: sorted_rpcs, types, conf: cmake, cmake_deps, cmake_types, config, sdkName }
     Object.keys(cmake_deps).forEach(m => { cmake_deps[m].depends = cmake_deps[m].depends.filter(_ => cmake_deps[_]) })
+    // fix examples
+    sorted_rpcs.forEach(api => {
+        Object.values(api.rpcs).filter(_ => _.result && !_.example).forEach(def =>
+            def.example = {
+                request: Object.keys(def.params || {}).filter(_ => !def.params[_].optional).map(k => create_example_arg(k, def.params[k], types)),
+                response: create_example_arg('result', def.result || { type: 'string' }, types)
+            }
+        )
+    })
+
+
     generators.forEach(_ => _.generateAPI && sorted_rpcs.forEach(api => _.generateAPI(api.api, api.rpcs, api.descr, types, api.testCases, cmake)))
     generators.forEach(_ => _.generateAllAPIs && _.generateAllAPIs(ctx))
     doc_dir.forEach(doc_dir => fs.existsSync(doc_dir) && create_rpc_doc(ctx))
