@@ -56,9 +56,9 @@ exports.typeName = (def, code) => (code ? '`' : '') + ((def.key ? '{key:$t}' : (
 exports.apiPath = function apiPath(api_name, all) {
     api_name = exports.snake_case(api_name)
     if (api_name == 'util') api_name = 'utils'
-    const api = all.apis.find(_ => _.api == api_name)
+    const api = all.apis.find(_ => exports.snake_case(_.api) == api_name)
     if (!api) throw new Error("No api for " + api_name)
-    const aconf = all.apis.find(_ => _.api == api_name).conf
+    const aconf = all.apis.find(_ => exports.snake_case(_.api) == api_name).conf
     let v = aconf.extensionVar || api_name
     if (v == 'wallet') v = 'defaultWallet'
     if (v == 'util') v = 'utils'
