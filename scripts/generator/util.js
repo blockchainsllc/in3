@@ -66,3 +66,46 @@ exports.apiPath = function apiPath(api_name, all) {
         return apiPath(aconf.extension, all) + '.' + v
     return v
 }
+
+exports.create_example_arg = function create_example_arg(argname, def, types) {
+    if (def.example) return def.example
+    let val = argname
+    switch (def.type) {
+        case 'address':
+            val = '0x1e7efabcf06dba5438c0991bc2c6612bd6e7299c'
+            break
+        case 'bool':
+            val = true
+            break
+        case 'bytes':
+            val = '0xfcb05a67afd9381f78b2150250'
+            break
+        case 'bytes32':
+            val = '0xfcb05a67afd9381f78b215b49c072bacb27dd0615bcddf74ad7c12d50aef0250'
+            break
+        case 'uint64':
+            val = 97773
+            break
+        case 'double':
+            val = 1.045
+            break
+        case 'string':
+            if (argname.indexOf('uuid') >= 0)
+                val = '4651c4fe-0117-4504-a53c-07d34d9c1b9a'
+            else if (argname.indexOf('date') >= 0 || argname.indexOf('createdAt') >= 0 || argname.indexOf('time') >= 0)
+                val = '2022-04-04T05:37:47.762Z'
+            else
+                val = 'a ' + argname
+            break
+        case 'uint32':
+            val = 23
+            break
+        default: {
+            const t = typeof def.type == 'object' ? def.type : types[def.type]
+            if (!t) break
+            val = {}
+            Object.keys(t).filter(_ => !t[_].optional).forEach(k => val[k] = create_example_arg(k, t[k], types))
+        }
+    }
+    return def.array ? [val] : val
+}

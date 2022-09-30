@@ -2,7 +2,7 @@ const solc = require('solc')
 const fs = require('fs')
 const path = require('path')
 const yaml = require('yaml')
-const { snake_case, mergeTo, asArray, camelCaseUp } = require('./util')
+const { snake_case, mergeTo, asArray, camelCaseUp, create_example_arg } = require('./util')
 const all_hashes = {}
 const solClasses = {}
 

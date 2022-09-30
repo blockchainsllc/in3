@@ -2,7 +2,10 @@ const axios = require('axios')
 const fs = require('fs')
 const { dirname } = require('path')
 const yaml = require('yaml')
-const { snake_case, mergeTo } = require('./util')
+const { snake_case, mergeTo, create_example_arg } = require('./util')
+
+
+
 async function getDef(config) {
     const url = config.url
     if (!url) throw new Error('Missing url in openai generator config')
@@ -24,10 +27,10 @@ function get_fn_name(config, method, path, def) {
     let post_names = config.post_names || (config.post_names = {})
     let name = path
     let parts = name.split('/').filter(_ => _.trim())
-    let args = parts.filter(_ => _.startsWith('{')).map(_ => _.substring(1, _.length - 1))
+    let args = parts.filter(_ => _.startsWith('{') || _.startsWith(':')).map(_ => _.substring(1).replace('}', ''))
     let i = parts.length - 1
     for (; i >= 0; i--) {
-        if (!parts[i].startsWith('{')) break
+        if (!parts[i].startsWith('{') && !parts[i].startsWith(':')) break
     }
     if (action_prefixes.find(_ => parts[i].startsWith(_))) { }
     else if (method == 'get') {
@@ -46,10 +49,10 @@ function get_fn_name(config, method, path, def) {
 
     if (parts[0] && ('' + parseInt(parts[0][0])) == parts[0][0]) parts[0] = 'exec_' + parts[0]
 
-    name = config.api_name + '_' + parts.filter(_ => !_.startsWith('{') && _.trim()).join('_')
+    name = config.api_name + '_' + parts.filter(_ => !_.startsWith('{') && !_.startsWith(':') && _.trim()).join('_')
 
     if (post_names[name]) {
-        if (parts[parts.length - 1][0] == '{')
+        if (parts[parts.length - 1][0] == '{' || parts[parts.length - 1][0] == ':')
             name += '_by_' + args[args.length - 1]
         else
             throw new Error("duplicate name " + name)
@@ -84,13 +87,13 @@ function get_type(config, content, names, parent = {}, example) {
     if (content['application/json']) content = content['application/json']
     let schema = content
     if (!example) example = schema.example
-    if (example) parent.example = example
     if (content.schema) schema = content.schema
     if (schema.$ref) {
         names.splice(0, 0, snake_case(schema.$ref.split('/').pop()))
         schema = { ...resolve_ref(config, schema.$ref), ...schema }
     }
     if (!example && schema.example) example = schema.example
+    if (example) parent.example = example
     if (schema.type == 'object' && !schema.properties && example && Array.isArray(example)) {
         // quickfix
         schema.type = 'array'
@@ -193,8 +196,10 @@ function get_type(config, content, names, parent = {}, example) {
     }
 }
 
+
+
 function create_fn(config, method, path, def) {
-    const base_name = snake_case(path.split('/').filter(_ => _.trim() && _[0] != '{').join('_'))
+    const base_name = snake_case(path.split('/').filter(_ => _.trim() && _[0] != '{' && _[0] != ':').join('_'))
     const fn_name = get_fn_name(config, method, path, def)
     const custom = ((config.generate_rpc || {}).custom || {})[fn_name]
     if (custom && custom.skipApi) return
@@ -243,6 +248,11 @@ function create_fn(config, method, path, def) {
             }
         })
     }
+    path.split('/').filter(_ => _.startsWith('{') || _.startsWith(':')).map(_ => _.substring(1).replace('}', '')).forEach(p => {
+        if (!fn.params[p])
+            fn.params[p] = { descr: 'the ' + p, type: 'string' }
+    })
+
     const response = Object.keys(def.responses || {}).map(_ => {
         if (parseInt(_) < 400) {
             return def.responses[_]
@@ -253,10 +263,26 @@ function create_fn(config, method, path, def) {
     }).find(_ => _)
     if (!response) throw new Error('no response found')
     fn.result = {
-        descr: response.description || ''
+        descr: [response.summary, response.description].filter(_ => _).join('\n\n').trim()
     }
     fn.result.type = get_type(config, response.content || (response.schema && response), [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
+
+    fn.example = {
+        request: Object.keys(fn.params).filter(_ => !fn.params[_].optional).map(k => create_example_arg(k, fn.params[k], config.types)),
+        response: find_example(response, fn.result, config.types)
+    }
     if (custom) mergeTo(custom, fn)
+}
+function find_example(el, def, types) {
+    if (el.example) return el.example
+    if (el.examples) {
+        let first = Object.values(el.examples)[0]
+        if (first && first.value) return first.value
+        return first || el.examples
+    }
+    if (el.content) return find_example(el.content, def, types)
+    if (el['application/json']) return find_example(el['application/json'], def, types)
+    return create_example_arg('result', def, types)
 }
 
 function impl_add_param(res, qname, pdef, ind) {
@@ -290,8 +316,8 @@ function impl_openapi(fn, state) {
     const ind = "".padStart(send.length + 1, ' ')
 
     for (let i = 0; i < parts.length; i++) {
-        if (parts[i].startsWith('{')) {
-            const arg = snake_case(parts[i].substring(1, parts[i].length - 1))
+        if (parts[i].startsWith('{') || parts[i].startsWith(':')) {
+            const arg = snake_case(parts[i].substring(1).replace('}', ''))
             const pdef = fn.params[arg]
             if (!pdef) {
                 throw new Error('missing parameter in path ' + arg)
