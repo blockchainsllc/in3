@@ -24,7 +24,13 @@ async function getDef(config) {
 }
 
 function get_fn_name(config, method, path, def) {
-    const action_prefixes = ['check', 'verify', 'login', 'register', 'reset', 'import', 'accept', 'logout', 'biometric', 'activate', 'deactivate']
+    const replaces = {
+        post_didcomm: 'didcomm_send',
+        post_feedback: 'handle_feedback',
+        'post_proof-request': 'create_proof_request',
+        'get_proof-request': 'get_proof_requests',
+    }
+    const action_prefixes = ['invite', 'changePrincipal', 'addRequest', 'retry', 'proof-request', 'receive', 'check', 'verify', 'login', 'register', 'reset', 'import', 'accept', 'logout', 'biometric', 'activate', 'deactivate', 'revoke', 'sign', 'send', 'transfer', 'cancel', 'prepare', 'submit', 'changePassword', 'withdraw', 'topup', 'create', 'validate', 'initiate', 'reset', 'kyc', 'verify', 'resend']
     let post_names = config.post_names || (config.post_names = {})
     let name = path
     let parts = name.split('/').filter(_ => _.trim())
@@ -33,7 +39,9 @@ function get_fn_name(config, method, path, def) {
     for (; i >= 0; i--) {
         if (!parts[i].startsWith('{') && !parts[i].startsWith(':')) break
     }
-    if (action_prefixes.find(_ => parts[i].startsWith(_))) { }
+    let repl = replaces[`${method.toLowerCase()}_${parts[i]}`]
+    if (repl) parts[i] = repl
+    else if (action_prefixes.find(_ => parts[i].startsWith(_))) { }
     else if (method == 'get') {
         // If we have a required Id in path, we can assume that the endpoint requires identity and is therefore associated with a single domain model.
         const hasIdentity = def && def.parameters && def.parameters.find(param => param.in === "path" && param.name === "id" && !!param.required)
