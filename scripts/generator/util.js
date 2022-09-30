@@ -95,7 +95,7 @@ exports.create_example_arg = function create_example_arg(argname, def, types) {
             else if (argname.indexOf('date') >= 0 || argname.indexOf('createdAt') >= 0 || argname.indexOf('time') >= 0)
                 val = '2022-04-04T05:37:47.762Z'
             else
-                val = exports.camelCaseLow('a_' + argname)
+                val = '<' + argname + '>'
             break
         case 'uint32':
             val = 23
