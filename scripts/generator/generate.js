@@ -84,6 +84,11 @@ let examples = {};
     try {
         examples = { ...examples, ...JSON.parse(fs.readFileSync(p + '/rpc_examples.json', 'utf-8')) }
     } catch (x) { }
+    fs.readdirSync(p).filter(_ => _.startsWith('rpc_examples_')).forEach(l => {
+        let lang = l.substring(13)
+        lang = lang.substring(0, lang.indexOf('.json'))
+        examples[lang] = { ...examples[lang], ...JSON.parse(fs.readFileSync(p + '/' + l, 'utf-8')) }
+    })
 })
 
 //const doc_dir = process.argv[process.argv.length - 1]
@@ -457,8 +462,14 @@ async function main() {
 
     generators.forEach(_ => {
         _.generate_config(ctx)
-        if (_.mergeExamples && examples && doc_dir.length && fs.existsSync(doc_dir[0]) && _.mergeExamples(examples))
-            fs.writeFileSync(doc_dir[0] + '/rpc_examples.json', JSON.stringify(examples, null, 2), { encoding: 'utf8' })
+        if (_.mergeExamples && doc_dir.length && fs.existsSync(doc_dir[0])) {
+            let exs = {}
+            if (_.mergeExamples(exs))
+                Object.keys(exs).forEach(lang => fs.writeFileSync(`${doc_dir[0]}/rpc_examples_${lang}.json`, JSON.stringify(exs[lang], null, 2), { encoding: 'utf8' }))
+            examples = { ...examples, ...exs }
+        }
+        //        if (_.mergeExamples && examples && doc_dir.length && fs.existsSync(doc_dir[0]) && _.mergeExamples(examples))
+        //            fs.writeFileSync(doc_dir[0] + '/rpc_examples.json', JSON.stringify(examples, null, 2), { encoding: 'utf8' })
     })
 
     handle_config(ctx, main_conf.config, '', 'cmdline options\n\nThose special options are used in the comandline client to pass additional options.\n')
