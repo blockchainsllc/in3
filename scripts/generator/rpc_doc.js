@@ -160,8 +160,11 @@ function create_api(ctx, { api, conf, rpcs, descr }, head = '', h = '') {
             rpc_doc.push('\n   .. code-tab:: yaml\n\n' + s + '# ---- Request -----\n\n' + s + yaml.stringify(req).split('\n').join('\n' + s))
             rpc_doc.push('\n' + s + '//---- Response -----\n\n' + s + yaml.stringify(data).split('\n').join('\n' + s))
 
-            for (const lang of Object.keys(ex.apis || {}).sort())
-                rpc_doc.push('\n   .. code-tab:: ' + lang + '\n\n' + s + ex.apis[lang].split('\n').join('\n' + s) + '\n')
+            for (const lang of Object.keys(ex.apis || {}).sort()) {
+                let l = lang
+                if (l == 'dotnet') l = 'java' // there is not syntax highlighter for dotnet, so we take the java
+                rpc_doc.push('\n   .. code-tab:: ' + l + ' ' + lang + '\n\n' + s + ex.apis[lang].split('\n').join('\n' + s) + '\n')
+            }
 
             rpc_doc.push('```\n')
 
