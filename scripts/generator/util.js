@@ -62,6 +62,7 @@ exports.apiPath = function apiPath(api_name, all) {
     let v = aconf.extensionVar || api_name
     if (v == 'wallet') v = 'defaultWallet'
     if (v == 'util') v = 'utils'
+    if (aconf.extension == 'contracts') v = 'get' + exports.camelCaseUp(v) + '(contractAddress)'
     if (aconf.extension)
         return apiPath(aconf.extension, all) + '.' + v
     return v
