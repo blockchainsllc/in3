@@ -58,9 +58,9 @@ function get_fn_name(config, method, path, def) {
 
     if (parts[0] && ('' + parseInt(parts[0][0])) == parts[0][0]) parts[0] = 'exec_' + parts[0]
 
-    name = config.api_name + '_' + parts.filter(_ => !_.startsWith('{') && !_.startsWith(':') && _.trim()).join('_')
+    name = config.api_name + '_' + (def.operationId || (parts.filter(_ => !_.startsWith('{') && !_.startsWith(':') && _.trim()).join('_')))
 
-    if (post_names[name]) {
+    if (post_names[name] && !def.operationId) {
         if (parts[parts.length - 1][0] == '{' || parts[parts.length - 1][0] == ':')
             name += '_by_' + args[args.length - 1]
         else
