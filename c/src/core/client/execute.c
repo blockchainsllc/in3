@@ -259,6 +259,7 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
       ctx->response_context->result       = _calloc(1, sizeof(d_token_t));
       ctx->response_context->result->len  = len;
       ctx->response_context->result->data = (uint8_t*) response_data;
+      ctx->response_context->result->state |= TOKEN_STATE_RAW;
     }
     ctx->responses    = _malloc(sizeof(d_token_t*));
     ctx->responses[0] = ctx->response_context->result;

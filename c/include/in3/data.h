@@ -85,6 +85,11 @@ typedef enum {
  */
 #define TOKEN_STATE_CONVERTED 2
 
+/**
+ * This token represents raw data and not json
+ */
+#define TOKEN_STATE_RAW 4
+
 /** a token holding any kind of value.
  *
  * This structure should be consideren internal or private and you should not rely or access those values directly.
