@@ -58,7 +58,7 @@ function get_fn_name(config, method, path, def) {
 
     if (parts[0] && ('' + parseInt(parts[0][0])) == parts[0][0]) parts[0] = 'exec_' + parts[0]
 
-    name = config.api_name + '_' + (def.operationId || (parts.filter(_ => !_.startsWith('{') && !_.startsWith(':') && _.trim()).join('_')))
+    name = config.api_name + '_' + (def.operationId || snake_case(parts.filter(_ => !_.startsWith('{') && !_.startsWith(':') && _.trim()).join('_')))
 
     if (post_names[name] && !def.operationId) {
         if (parts[parts.length - 1][0] == '{' || parts[parts.length - 1][0] == ':')
@@ -78,15 +78,43 @@ function get_fn_name(config, method, path, def) {
     }
 
     post_names[name] = true
-    return snake_case(name)
+    return name
 }
 
 function resolve_ref(config, ref) {
     const [file, path] = ref.split('#', 2)
     let doc = config.data
-    if (file) doc = yaml.parse(fs.readFileSync(dirname(config.url) + '/' + file, 'utf8'))
-
-    return path.split('/').filter(_ => _).reduce((val, p) => val[p], doc)
+    let res = path.split('/').filter(_ => _).reduce((val, p) => val[p], doc)
+    if (res === undefined && file) res = path.split('/').filter(_ => _).reduce((val, p) => val[p], yaml.parse(fs.readFileSync(dirname(config.url) + '/' + file, 'utf8')))
+    return res
+}
+function mergeSchemas(config, src) {
+    let refs = src.oneOf || src.allOf
+    if (!refs || !Array.isArray(refs)) return src
+    let schema = {}
+    refs.forEach(r => {
+        let s = r.$ref ? { ...resolve_ref(config, r.$ref) } : { ...r }
+        s = mergeSchemas(config, s)
+        Object.keys(s).forEach(k => {
+            switch (s) {
+                case 'properties':
+                    schema.properties = { ...schema.properties, ...s.properties }
+                    break
+                default:
+                    if (Array.isArray(s[k])) schema[k] = [...(schema[k] || []), ...s[k]]
+                    else schema[k] = s[k]
+            }
+        })
+    })
+    if (src.oneOf && schema.required) {
+        // if this is an or, required are only those properties, which are required in all refs.
+        const count = schema.required.reduce((p, c) => {
+            p[c] = (p[c] || 0) + 1
+            return p
+        }, {})
+        schema.required = Object.keys(count).filter(_ => count[_] == refs.length)
+    }
+    return schema
 }
 
 function get_type(config, content, names, parent = {}, example) {
@@ -108,6 +136,7 @@ function get_type(config, content, names, parent = {}, example) {
         schema.type = 'array'
         schema.items = { type: example ? typeof (example[0]) : 'string' }
     }
+    schema = mergeSchemas(config, schema)
     let type = schema.type || 'any'
     switch (type) {
         case 'boolean': return 'bool'
@@ -219,6 +248,7 @@ function create_fn(config, method, path, def) {
         _generate_impl: impl_openapi
     })
 
+    fn.descr += '\n\nThis function sends a `' + method.toUpperCase() + '` Request to **`' + path + '`**'
     fn._generate_openapi = { path, method }
     fn.params = {}
     path.split('/').filter(_ => _.startsWith('{') || _.startsWith(':')).map(_ => _.substring(1).replace('}', '')).forEach(p => {
@@ -272,7 +302,21 @@ function create_fn(config, method, path, def) {
     fn.result = {
         descr: [response.summary, response.description].filter(_ => _).join('\n\n').trim()
     }
-    fn.result.type = get_type(config, response.content || (response.schema && response), [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
+    if (response.content || (response.schema && response))
+        fn.result.type = get_type(config, response.content || (response.schema && response), [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
+    else {
+        fn._generate_openapi.empty_response = true
+        fn.result = {
+            ...fn.result,
+            typeName: 'OperationResult',
+            type: {
+                success: {
+                    type: 'bool',
+                    descr: 'true if the function was successful. If not a error will be thrown.'
+                }
+            }
+        }
+    }
 
     fn.example = {
         request: Object.keys(fn.params).filter(_ => !fn.params[_].optional).map(k => create_example_arg(k, fn.params[k], config.types)),
