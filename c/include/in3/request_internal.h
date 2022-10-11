@@ -110,6 +110,12 @@ NONULL_FOR((1, 2, 3, 5))
 in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
 
 /**
+ * sends a subrequest, and returns the error without marking it as error
+ */
+NONULL_FOR((1, 2, 3, 5))
+in3_ret_t req_get_sub_request_error(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
+
+/**
  * sends a subrequest as http-request.
  * use it as
  * TRY(send_http_request(...))

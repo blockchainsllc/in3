@@ -295,7 +295,7 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td)
     d_token_t* res;
     TRY_FINAL(req_send_sub_request(req, "in3_abiEncode", params.data, NULL, &res, NULL), _free(params.data))
 
-    if (d_type(res) != T_BYTES || d_len(res) < 4) return req_set_error(req, "abi encoded data", IN3_EINVAL);
+    if (!d_is_bytes(res) || d_bytes(res).len < 4) return req_set_error(req, "abi encoded data", IN3_EINVAL);
     if (td->data.len) {
       // if this is a deployment transaction we concate it with the arguments without the functionhash
       bytes_t new_data = get_or_create_cached(req, key("deploy_data"), td->data.len + d_len(res) - 4);

@@ -449,7 +449,7 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   return in3_rpc_handle(hctx, "\"0x%x\"", value);
 }
 
-static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child, bool use_cache) {
+static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child, bool use_cache, bool allow_error) {
   if (params == NULL) params = "";
   char* req = NULL;
   if (use_cache) {
@@ -488,7 +488,13 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
       case REQ_SUCCESS:
         *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
         if (!*result) {
-          char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+          d_token_t* error = d_get(ctx->responses[0], K_ERROR);
+          if (error && allow_error) {
+            *result = error;
+            return IN3_OK;
+          }
+
+          char* s = d_get_string(error, K_MESSAGE);
           UNUSED_VAR(s); // this makes sure we don't get a warning when building with _DLOGGING=false
           return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
         }
@@ -538,11 +544,15 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
 
 in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
   bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
-  return req_send_sub_request_internal(parent, method, params, in3, result, child, use_cache);
+  return req_send_sub_request_internal(parent, method, params, in3, result, child, use_cache, false);
+}
+
+in3_ret_t req_get_sub_request_error(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
+  return req_send_sub_request_internal(parent, method, params, in3, result, child, false, true);
 }
 
 in3_ret_t req_send_id_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
-  return req_send_sub_request_internal(parent, method, params, in3, result, child, true);
+  return req_send_sub_request_internal(parent, method, params, in3, result, child, true, false);
 }
 
 static inline const char* method_for_sigtype(d_digest_type_t type) {
