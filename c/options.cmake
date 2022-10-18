@@ -52,6 +52,12 @@ OPTION(SOL "include Solana support" ON)
 OPTION(TESTCASE "generates testCase.yml" OFF)
 option(IN3_PRE_CFG "environment for different development stages, which provides developers with multiple client configuration environment" ON)
 
+option(CRYPTOCELL_SIGNER "Enables cryptocell signer module which build for nRF targets on zephyr platform" ON)
+
+if (CRYPTOCELL_SIGNER)
+  ADD_DEFINITIONS(-DCRYPTOCELL_SIGNER)
+endif()
+
 if(WASM)
   set(TRANSPORTS false)
   set(IN3_LIB false)

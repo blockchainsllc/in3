@@ -85,25 +85,27 @@ else()
     NAME     core 
     DESCR    "The core of SDK and Incubed, which defines the plugin-concept and handles the request execution life cycle."
   
-  SOURCES 
-    client/request.c
-    client/client.c
-    client/execute.c
-    client/client_init.c
-    util/debug.c
-    util/bytes.c
-    util/utils.c
-    util/scache.c
-    util/data.c
-    util/log.c
-    util/mem.c
-    util/stringbuilder.c
-    util/bitset.c
-    util/crypto_encode.c
-    ${CRYPTO_SRC}
-  DEPENDS
-    ${DEPS}
-)
+    SOURCES 
+      client/request.c
+      client/client.c
+      client/execute.c
+      client/client_init.c
+      util/debug.c
+      util/bytes.c
+      util/utils.c
+      util/scache.c
+      util/data.c
+      util/log.c
+      util/mem.c
+      util/stringbuilder.c
+      util/bitset.c
+      util/crypto_encode.c
+      ${CRYPTO_SRC}
+    DEPENDS
+      ${DEPS}    
+  )
+endif()
 
-
-
+if (DEMO)
+  add_subdirectory(util/cryptocell)
+endif()

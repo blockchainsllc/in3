@@ -33,8 +33,8 @@
 ###############################################################################
 
 include("macro.cmake")
-if (NOT ZEPHYR_BASE)
-    include("compiler.cmake")
+if (NOT CRYPTOCELL)
+    include("compiler.cmake")    
 endif()
 
 #  build modules

@@ -31,18 +31,17 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (PK_SIGNER)
-  add_subdirectory(pk-signer)
-endif()
-
-if (LEDGER_NANO)
-  add_subdirectory(ledger-nano/signer)
-endif()
-
-if (MULTISIG)
-  add_subdirectory(multisig)
-endif()
-
-if (CRYPTOCELL_SIGNER)
-  add_subdirectory(cryptocell_signer)
+if (ZEPHYR_BASE)
+  add_library(cryptocell_signer STATIC cryptocell_signer.c)
+  add_dependencies(cryptocell_signer zephyr_interface core)
+else()
+  add_static_library(
+    NAME     cryptocell_signer  
+    DESCR    "abstraction layer for cryptocell security subsystem libraries"
+    
+    SOURCES 
+      cryptocell_signer.c
+    DEPENDS
+      core
+  )
 endif()

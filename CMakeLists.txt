@@ -35,8 +35,21 @@
 cmake_minimum_required(VERSION 3.5.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 
-# project name
+if (CRYPTOCELL)
+    find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+    include(${CMAKE_CURRENT_SOURCE_DIR}/arm-toolchain.cmake)
+endif()
+
 project(in3)
+
+if (CRYPTOCELL)
+    set(CRYPTOCELL_SOURCE_DIR              ${CMAKE_CURRENT_SOURCE_DIR}/c/src/core/util/cryptocell)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/c/include/in3)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/c/include)
+    #TODO: default zephyr naming dependency should be corrected in clean way
+    target_sources(app PRIVATE ${CRYPTOCELL_SOURCE_DIR}/src/cryptocell.c)
+    target_link_libraries(app PRIVATE core crypto init eth_basic cryptocell_signer)
+endif()
 
 include("c/options.cmake")
 
