@@ -32,16 +32,20 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+if (ZEPHYR_BASE)
+  add_library(eth_full STATIC eth_full.c)
+  add_dependencies(eth_full zephyr_interface evm eth_basic)
+else()
+  add_static_library(
+    NAME     eth_full 
+    DESCR    "extends the ethereum function with a verifier for eth_call."
+    REGISTER in3_register_eth_full
 
-add_static_library(
-  NAME     eth_full 
-  DESCR    "extends the ethereum function with a verifier for eth_call."
-  REGISTER in3_register_eth_full
+    SOURCES 
+      eth_full.c
 
-  SOURCES 
-  eth_full.c
-
-  DEPENDS 
-    evm
-    eth_basic
-)
+    DEPENDS 
+      evm
+      eth_basic
+  )
+endif()

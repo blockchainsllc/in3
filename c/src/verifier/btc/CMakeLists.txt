@@ -32,6 +32,10 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+if (ZEPHYR_BASE)
+  add_library(btc STATIC btc_merkle.c btc_script.c btc_serialize.c btc_address.c btc_types.c btc_target.c btc_sign.c btc.c)
+  add_dependencies(btc zephyr_interface bech32 core)
+else()
 add_static_library(
   NAME     btc
   REGISTER in3_register_btc
@@ -47,6 +51,9 @@ add_static_library(
     btc.c 
 
   DEPENDS 
-  bech32  
-  core
+    bech32  
+    core
 )
+endif()
+
+

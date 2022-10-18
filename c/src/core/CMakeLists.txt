@@ -77,11 +77,13 @@ if(ETH_FULL AND IN3API)
 endif()
 
 
-
-
-add_static_library(
-  NAME     core 
-  DESCR    "The core of SDK and Incubed, which defines the plugin-concept and handles the request execution life cycle."
+if (ZEPHYR_BASE)
+  add_library(core STATIC client/request.c client/client.c client/execute.c client/client_init.c util/debug.c util/bytes.c util/utils.c util/scache.c util/data.c util/log.c util/mem.c util/stringbuilder.c util/bitset.c util/crypto_encode.c ${CRYPTO_SRC})
+  add_dependencies(core zephyr_interface ${DEPS})
+else()
+  add_static_library(
+    NAME     core 
+    DESCR    "The core of SDK and Incubed, which defines the plugin-concept and handles the request execution life cycle."
   
   SOURCES 
     client/request.c

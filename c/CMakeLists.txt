@@ -33,7 +33,9 @@
 ###############################################################################
 
 include("macro.cmake")
-include("compiler.cmake")
+if (NOT ZEPHYR_BASE)
+    include("compiler.cmake")
+endif()
 
 #  build modules
 add_subdirectory(src/third-party)

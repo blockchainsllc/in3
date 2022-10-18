@@ -93,13 +93,20 @@ if (NOT ESP_IDF)
     )
 endif()
 
-add_static_library(
-  NAME     crypto 
-  DESCR    "The tresor - firmare crypto library containing all essential crypto functions, like hashing, signgin and key derrivation ..."
-  
-  SOURCES 
-    ${CRYPTO_SRC}
-)
+if (ZEPHYR_BASE)
+  add_library(crypto STATIC ${CRYPTO_SRC})
+  add_dependencies(crypto zephyr_interface)
+else()
+  add_static_library(
+    NAME     crypto 
+    DESCR    "The tresor - firmare crypto library containing all essential crypto functions, like hashing, signgin and key derrivation ..."
+    
+    SOURCES 
+      ${CRYPTO_SRC}
+  )
+endif()
+
+
 
 
 

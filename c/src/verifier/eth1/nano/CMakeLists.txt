@@ -31,23 +31,26 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+if (ZEPHYR_BASE)
+  add_library(eth_nano STATIC eth_nano.c rlp.c merkle.c serialize.c blockheader.c signature.c txreceipt.c chainspec.c)
+  add_dependencies(eth_nano zephyr_interface core)
+else()
+  add_static_library(
+    NAME     eth_nano 
+    DESCR    "minimal ethereum support for Transactions and TransactionReceipts"
+    REGISTER in3_register_eth_nano
 
-add_static_library(
-  NAME     eth_nano 
-  DESCR    "minimal ethereum support for Transactions and TransactionReceipts"
-  REGISTER in3_register_eth_nano
+    SOURCES 
+      eth_nano.c
+      rlp.c
+      merkle.c
+      serialize.c
+      blockheader.c
+      signature.c
+      txreceipt.c
+      chainspec.c
 
-  SOURCES 
-    eth_nano.c
-    rlp.c
-    merkle.c
-    serialize.c
-    blockheader.c
-    signature.c
-    txreceipt.c
-    chainspec.c
-
-  DEPENDS 
-    core
-)
-
+    DEPENDS 
+      core
+  )
+endif()

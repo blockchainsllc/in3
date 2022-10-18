@@ -32,7 +32,10 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
+if (ZEPHYR_BASE)
+  add_library(nodeselect_def STATIC nodeselect_def.c nodelist.c cache.c registry.c)
+  add_dependencies(nodeselect_def zephyr_interface core)
+else()
 add_static_library(
   NAME  nodeselect_def
   REGISTER in3_register_nodeselect_def
@@ -47,7 +50,7 @@ add_static_library(
   DEPENDS
     core
 )
-
+endif()
 
 if (THREADSAFE)
 if (MSVC OR MSYS OR MINGW)

@@ -32,8 +32,6 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
-
 if (USE_SCRYPT)
   set(LIBS ${LIBS} scrypt)
   ADD_DEFINITIONS(-DSCRYPT)
@@ -43,27 +41,30 @@ if (ETH_FULL)
   set(LIBS ${LIBS} tommath)
 endif()
 
-add_static_library(
-  NAME     eth_api 
-  DESCR    "A collection of ethereum-specific util-functions, needed when working with ethereum. This also includes the Tx-Decoder or ABI-Encoder, which is helpful when calling function of a smart contracts. Depending on the `USE_SCRYPT`-flag, it will also include a function for decrypting private keys stored in the JsonStore-Format"
-  REGISTER in3_register_eth_api
+if (ZEPHYR_BASE)
+  add_library(eth_api STATIC eth_api.c abi_parse.c abi_encode.c abi_decode.c abi_call.c key.c rpc_api.c ens.c)
+  add_dependencies(eth_api zephyr_interface eth_nano api_utils ${LIBS})
+else()
+  add_static_library(
+    NAME     eth_api 
+    DESCR    "A collection of ethereum-specific util-functions, needed when working with ethereum. This also includes the Tx-Decoder or ABI-Encoder, which is helpful when calling function of a smart contracts. Depending on the `USE_SCRYPT`-flag, it will also include a function for decrypting private keys stored in the JsonStore-Format"
+    REGISTER in3_register_eth_api
+    
+    SOURCES 
+      eth_api.c 
+      abi_parse.c
+      abi_encode.c
+      abi_decode.c
+      abi_call.c
+      key.c 
+      rpc_api.c 
+      ens.c
   
-  SOURCES 
-    eth_api.c 
-    abi_parse.c
-    abi_encode.c
-    abi_decode.c
-    abi_call.c
-    key.c 
-    rpc_api.c 
-    ens.c
-
-  DEPENDS 
-    eth_nano
-    api_utils
-    pk_signer
-    ${LIBS}
-)
-
-
-target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
+    DEPENDS 
+      eth_nano
+      api_utils
+      pk_signer
+      ${LIBS}
+  )
+  target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
+endif()

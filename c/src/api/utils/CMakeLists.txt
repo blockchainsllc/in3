@@ -31,12 +31,16 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-
-add_static_library(
-  NAME     api_utils
-  DESCR    "internal Module for macros and helper functions for APIs"
+if (ZEPHYR_BASE)
+  add_library(api_utils STATIC api_utils.c)
+  add_dependencies(api_utils zephyr_interface)
+else()
+  add_static_library(
+    NAME     api_utils
+    DESCR    "internal Module for macros and helper functions for APIs"
   
-  SOURCES 
-    api_utils.c
+    SOURCES 
+      api_utils.c
+  )
+endif()
 
-)
