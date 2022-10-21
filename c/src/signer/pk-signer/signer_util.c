@@ -69,17 +69,18 @@ bool signer_add_key(in3_t* c, bytes32_t pk, in3_curve_type_t type) {
   in3_req_t              r   = {0};
   ctx.req                    = &r;
   r.client                   = c;
+  bool is_same_address       = false;
 
   for (in3_plugin_t* p = c->plugins; p; p = p->next) {
     if ((p->acts & PLGN_ACT_SIGN_ACCOUNT) && (p->acts & PLGN_ACT_SIGN) && p->action_fn(p->data, PLGN_ACT_SIGN_ACCOUNT, &ctx) == IN3_OK && ctx.accounts_len) {
-      bool is_same_address = type == ctx.curve_type && memcmp(ctx.accounts, pub, l) == 0;
+      is_same_address = type == ctx.curve_type && memcmp(ctx.accounts, pub, l) == 0;
       _free(ctx.accounts);
-      if (r.required) TRY(req_remove_required(&r,r.required,true))
-      if (is_same_address) return false;
+      if (is_same_address) break;
     }
   }
 
-  if (r.required) TRY(req_remove_required(&r,r.required,true))
+  if (r.required) TRY(req_remove_required(&r, r.required, true))
+  if (is_same_address) return false;
 
   eth_set_pk_signer(c, pk, type, NULL);
   return true;
