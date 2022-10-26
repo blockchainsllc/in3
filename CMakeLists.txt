@@ -37,21 +37,31 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_mo
 
 if (CRYPTOCELL)
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-    include(${CMAKE_CURRENT_SOURCE_DIR}/arm-toolchain.cmake)
 endif()
 
-project(in3)
-
 if (CRYPTOCELL)
-    set(CRYPTOCELL_SOURCE_DIR              ${CMAKE_CURRENT_SOURCE_DIR}/c/src/core/util/cryptocell)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/c/include/in3)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/c/include)
-    #TODO: default zephyr naming dependency should be corrected in clean way
-    target_sources(app PRIVATE ${CRYPTOCELL_SOURCE_DIR}/src/cryptocell.c)
-    target_link_libraries(app PRIVATE core crypto init eth_basic cryptocell_signer)
+   zephyr_interface_library_named(cryptocell)
+   set(CRYPTOCELL_SOURCE_DIR              ${CMAKE_CURRENT_SOURCE_DIR}/c/src/core/util/cryptocell)
+else()
+    project(in3)
 endif()
 
 include("c/options.cmake")
+
+if (CRYPTOCELL)
+    zephyr_get_include_directories_for_lang_as_string(C includes STRIP_PREFIX)
+    zephyr_get_compile_definitions_for_lang_as_string(C definitions)
+    zephyr_get_compile_options_for_lang_as_string(C options)
+    zephyr_library_include_directories(${includes})
+    zephyr_library_compile_definitions(${definitions})
+    zephyr_library_include_directories(
+        /ncs/mbedtls/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/c/include/in3
+        ${CMAKE_CURRENT_SOURCE_DIR}/c/include
+    )
+    zephyr_library_sources(${CRYPTOCELL_SOURCE_DIR}/src/cryptocell.c)
+    zephyr_library_link_libraries(cryptocell core crypto init eth_basic cryptocell_signer)
+endif()
 
 # build tests
 if(TEST)

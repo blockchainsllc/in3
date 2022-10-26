@@ -43,6 +43,6 @@ if (MULTISIG)
   add_subdirectory(multisig)
 endif()
 
-if (CRYPTOCELL_SIGNER)
+if (CRYPTOCELL)
   add_subdirectory(cryptocell_signer)
 endif()

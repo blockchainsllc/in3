@@ -65,14 +65,12 @@ static bytes_t sign_with_cryptocell_pk(const bytes32_t pk, const bytes_t data, c
 
 static in3_ret_t cryptocell_signer_cbk(void* data, in3_plugin_act_t action, void* action_ctx) {
   cryptocell_signer_key_t* signer_key = (cryptocell_signer_key_t*) data;
-  printk("selected action:0x%x\n", action);
   switch (action) {
     case PLGN_ACT_SIGN: {
       in3_sign_ctx_t* ctx = (in3_sign_ctx_t*) action_ctx;
       switch (signer_key->type) {
         case ECDSA_SECP256K1:
           ctx->signature = sign_with_cryptocell_pk(signer_key->pk, bytes(signer_key->data->data, signer_key->data->len), SIGN_EC_RAW);
-          printk("message signed with pk\n");
           break;
         default:
           break;
@@ -84,7 +82,7 @@ static in3_ret_t cryptocell_signer_cbk(void* data, in3_plugin_act_t action, void
       in3_sign_public_key_ctx_t* ctx = (in3_sign_public_key_ctx_t*) action_ctx;
       switch (ctx->curve_type) {
         case ECDSA_SECP256K1:
-          return;
+          return IN3_ENOTSUP;
         default:
           return IN3_ENOTSUP;
       }
@@ -100,7 +98,6 @@ in3_ret_t configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info,
       if (signer_info->cbks->ld_pk_func(signer_info->ik_slot, signer_key->pk) < 0) {
         // TODO: Private key generation and storage based on various conditions
         if (signer_info->cbks->gen_pk_func(signer_key->pk) == 0) {
-          printk("private key generated for signing operation \n");
           // memcpy(private_key, signer_key->pk, PRIVATE_KEY_SIZE);
           //  store the generated private key in selected identity key slot in KMU.
           // if (signer_info->cbks->str_pk_func(signer_info->ik_slot, private_key) < 0) {
@@ -109,14 +106,12 @@ in3_ret_t configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info,
       }
       signer_key->data = signer_info->msg;
       signer_key->type = ECDSA_SECP256K1;
-      return IN3_ENOTSUP;
+      return IN3_OK;
     }
     case SIGN_CURVE_ECDH: {
-      printk("ECDH curve\n");
       return IN3_ENOTSUP;
     }
     default: {
-      printk("invalid curve type\n");
       return IN3_ENOTSUP;
     }
   }
@@ -125,21 +120,20 @@ in3_ret_t configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info,
 /** Set the cryptocell signer and register as plugin to in3 client */
 in3_ret_t eth_set_cryptocell_signer(in3_t* in3, cryptocell_signer_info_t* signer_info) {
   in3_ret_t                status;
-  cryptocell_signer_key_t* signer_key = (cryptocell_signer_key_t*) k_malloc(sizeof(cryptocell_signer_key_t));
+  cryptocell_signer_key_t* signer_key;
+#ifdef __ZEPHYR__
+  signer_key = (cryptocell_signer_key_t*) k_malloc(sizeof(cryptocell_signer_key_t));
+#endif
   configure_cryptocell_signer_key(signer_info, signer_key);
   switch (signer_key->type) {
     case ECDSA_SECP256K1: {
       status = in3_plugin_register(in3, PLGN_ACT_SIGN | PLGN_ACT_SIGN_PUBLICKEY, cryptocell_signer_cbk, signer_key, false);
-      if (status != IN3_OK) {
-        printk("register plugin failed\n");
-      }
       return status;
     }
     case EDDSA_ED25519: {
       return IN3_ENOTSUP;
     }
     default: {
-      printk("invalid curve type\n");
       return IN3_ENOTSUP;
     }
   }
