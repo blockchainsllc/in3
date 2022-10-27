@@ -54,7 +54,7 @@ extern "C" {
 
 #ifndef DATA_DEPTH_MAX
 /** the max DEPTH of the JSON-data allowed. It will throw an error if reached. */
-#define DATA_DEPTH_MAX 11
+#define DATA_DEPTH_MAX 12
 #endif
 
 #include "bytes.h"
