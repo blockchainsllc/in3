@@ -33,7 +33,7 @@
 ###############################################################################
 if (ZEPHYR_BASE)
   add_library(cryptocell_signer STATIC cryptocell_signer.c)
-  add_dependencies(cryptocell_signer zephyr_interface core)
+  add_dependencies(cryptocell_signer zephyr_interface core cryptocell)
 else()
   add_static_library(
     NAME     cryptocell_signer  

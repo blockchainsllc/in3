@@ -40,7 +40,7 @@
 typedef struct cryptocell_signer_key {
   uint8_t          pk[32];
   bytes_t*         data;
-  uint8_t          account[64];
+  uint8_t          account[65];
   unsigned int     account_len;
   in3_curve_type_t type;
 } cryptocell_signer_key_t;
@@ -95,17 +95,18 @@ static in3_ret_t cryptocell_signer_cbk(void* data, in3_plugin_act_t action, void
 in3_ret_t configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info, cryptocell_signer_key_t* signer_key) {
   switch (signer_info->curve_type) {
     case SIGN_CURVE_ECDSA: {
-      if (signer_info->cbks->ld_pk_func(signer_info->ik_slot, signer_key->pk) < 0) {
-        // TODO: Private key generation and storage based on various conditions
-        if (signer_info->cbks->gen_pk_func(signer_key->pk) == 0) {
-          // memcpy(private_key, signer_key->pk, PRIVATE_KEY_SIZE);
-          //  store the generated private key in selected identity key slot in KMU.
-          // if (signer_info->cbks->str_pk_func(signer_info->ik_slot, private_key) < 0) {
-          // printk("Identity key storage to %d failed\n", signer_info->ik_slot);}
-        }
-      }
+      int status;
       signer_key->data = signer_info->msg;
       signer_key->type = ECDSA_SECP256K1;
+      if (load_pk_identity_keyslot_kmu(signer_info->ik_slot, signer_key->pk) != 0) {
+        if (generate_pk_ecdsa_sha256(signer_key->pk) == 0) {
+          status = store_pk_identity_keyslot_kmu(signer_info->ik_slot, signer_key->pk);
+          if (status == 0) {
+            return IN3_OK;
+          }
+        }
+        return IN3_EUNKNOWN;
+      }
       return IN3_OK;
     }
     case SIGN_CURVE_ECDH: {
@@ -124,17 +125,18 @@ in3_ret_t eth_set_cryptocell_signer(in3_t* in3, cryptocell_signer_info_t* signer
 #ifdef __ZEPHYR__
   signer_key = (cryptocell_signer_key_t*) k_malloc(sizeof(cryptocell_signer_key_t));
 #endif
-  configure_cryptocell_signer_key(signer_info, signer_key);
-  switch (signer_key->type) {
-    case ECDSA_SECP256K1: {
-      status = in3_plugin_register(in3, PLGN_ACT_SIGN | PLGN_ACT_SIGN_PUBLICKEY, cryptocell_signer_cbk, signer_key, false);
-      return status;
-    }
-    case EDDSA_ED25519: {
-      return IN3_ENOTSUP;
-    }
-    default: {
-      return IN3_ENOTSUP;
+  if (configure_cryptocell_signer_key(signer_info, signer_key) == IN3_OK) {
+    switch (signer_key->type) {
+      case ECDSA_SECP256K1: {
+        status = in3_plugin_register(in3, PLGN_ACT_SIGN | PLGN_ACT_SIGN_PUBLICKEY, cryptocell_signer_cbk, signer_key, false);
+        return status;
+      }
+      case EDDSA_ED25519: {
+        return IN3_ENOTSUP;
+      }
+      default: {
+        return IN3_ENOTSUP;
+      }
     }
   }
 }
