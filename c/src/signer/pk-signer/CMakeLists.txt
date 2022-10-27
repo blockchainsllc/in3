@@ -32,23 +32,36 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
+if (ZEPHYR_BASE)
+  add_library(pk_signer 
+    STATIC 
+      signer.c 
+      signer_impl.c
+      signer_key.c
+      signer_hd.c
+      signer_request.c
+      signer_util.c
+      pk-signer_rpc.c
+  )
+  add_dependencies(pk_signer zephyr_interface eth_nano)
+else()
+  add_static_library(
+    NAME     pk_signer 
+    DESCR    "This module contains a basic Signer-Implementation and functions for decrypting or derriving private keys. The keys are managed in RAM. For more advanced Signer, use check the Signers in the bindingsd, which may take advantage of the native secure elements provided."
+    REGISTER eth_register_pk_signer
 
-add_static_library(
-  NAME     pk_signer 
-  DESCR    "This module contains a basic Signer-Implementation and functions for decrypting or derriving private keys. The keys are managed in RAM. For more advanced Signer, use check the Signers in the bindingsd, which may take advantage of the native secure elements provided."
-  REGISTER eth_register_pk_signer
+    SOURCES 
+      signer.c
+      signer_impl.c
+      signer_key.c
+      signer_hd.c
+      signer_request.c
+      signer_util.c
+      pk-signer_rpc.c
 
-  SOURCES 
-    signer.c
-    signer_impl.c
-    signer_key.c
-    signer_hd.c
-    signer_request.c
-    signer_util.c
-    pk-signer_rpc.c
-
-  DEPENDS 
-    eth_nano
-)
+    DEPENDS 
+      eth_nano
+  )
+endif()
 
 
