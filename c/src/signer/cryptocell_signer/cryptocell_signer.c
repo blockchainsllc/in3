@@ -40,12 +40,12 @@
 typedef struct cryptocell_signer_key {
   uint8_t          pk[32];
   bytes_t*         data;
-  uint8_t          account[65];
-  unsigned int     account_len;
+  uint8_t          pub_key[65];
+  unsigned int     pub_key_len;
   in3_curve_type_t type;
 } cryptocell_signer_key_t;
 
-in3_ret_t configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info, cryptocell_signer_key_t* signer_key);
+cryptocell_signer_key_t* configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info);
 
 static bytes_t sign_with_cryptocell_pk(const bytes32_t pk, const bytes_t data, const d_digest_type_t type) {
   bytes_t res = bytes(_malloc(65), 65);
@@ -92,46 +92,38 @@ static in3_ret_t cryptocell_signer_cbk(void* data, in3_plugin_act_t action, void
   }
 }
 
-in3_ret_t configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info, cryptocell_signer_key_t* signer_key) {
-  switch (signer_info->curve_type) {
-    case SIGN_CURVE_ECDSA: {
-      int status;
-      signer_key->data = signer_info->msg;
-      signer_key->type = ECDSA_SECP256K1;
-      if (load_pk_identity_keyslot_kmu(signer_info->ik_slot, signer_key->pk) != 0) {
-        if (generate_pk_ecdsa_sha256(signer_key->pk) == 0) {
-          status = store_pk_identity_keyslot_kmu(signer_info->ik_slot, signer_key->pk);
-          if (status == 0) {
-            return IN3_OK;
-          }
+cryptocell_signer_key_t* configure_cryptocell_signer_key(cryptocell_signer_info_t* signer_info) {
+  cryptocell_signer_key_t* signer_key = (cryptocell_signer_key_t*) k_malloc(sizeof(cryptocell_signer_key_t));
+  signer_key->data                    = signer_info->msg;
+  signer_key->type                    = ECDSA_SECP256K1;
+  if (pk_identity_key_is_stored(signer_info->ik_slot) != 0) {
+    if (generate_pk_keypair_ecdsa_sha256(signer_key->pk, signer_key->pub_key) == 0) {
+      if (store_pk_identity_keyslot_kmu(signer_info->ik_slot, signer_key->pk) == 0) {
+        if (load_pk_identity_keyslot_kmu(signer_info->ik_slot, signer_key->pk) == 0) {
+          return signer_key;
         }
-        return IN3_EUNKNOWN;
       }
-      return IN3_OK;
-    }
-    case SIGN_CURVE_ECDH: {
-      return IN3_ENOTSUP;
-    }
-    default: {
-      return IN3_ENOTSUP;
     }
   }
+  else {
+    if (load_pk_identity_keyslot_kmu(signer_info->ik_slot, signer_key->pk) == 0) {
+      return signer_key;
+    }
+  }
+  return NULL;
 }
 
 /** Set the cryptocell signer and register as plugin to in3 client */
 in3_ret_t eth_set_cryptocell_signer(in3_t* in3, cryptocell_signer_info_t* signer_info) {
-  in3_ret_t                status;
-  cryptocell_signer_key_t* signer_key;
-#ifdef __ZEPHYR__
-  signer_key = (cryptocell_signer_key_t*) k_malloc(sizeof(cryptocell_signer_key_t));
-#endif
-  if (configure_cryptocell_signer_key(signer_info, signer_key) == IN3_OK) {
-    switch (signer_key->type) {
-      case ECDSA_SECP256K1: {
-        status = in3_plugin_register(in3, PLGN_ACT_SIGN | PLGN_ACT_SIGN_PUBLICKEY, cryptocell_signer_cbk, signer_key, false);
-        return status;
+  cryptocell_signer_key_t* signer_key = configure_cryptocell_signer_key(signer_info);
+  if (signer_key != NULL) {
+    switch (signer_info->curve_type) {
+      case SIGN_CURVE_ECDSA: {
+        if (signer_key->type == ECDSA_SECP256K1) {
+          return in3_plugin_register(in3, PLGN_ACT_SIGN | PLGN_ACT_SIGN_PUBLICKEY, cryptocell_signer_cbk, signer_key, false);
+        }
       }
-      case EDDSA_ED25519: {
+      case SIGN_CURVE_ECDH: {
         return IN3_ENOTSUP;
       }
       default: {
@@ -139,4 +131,5 @@ in3_ret_t eth_set_cryptocell_signer(in3_t* in3, cryptocell_signer_info_t* signer
       }
     }
   }
+  return IN3_OK;
 }

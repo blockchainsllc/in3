@@ -40,7 +40,7 @@ extern "C" {
 #include "../../src/core/util/bytes.h"
 
 typedef int (*generate_ek_cbk)(uint8_t* key_label, uint32_t label_size, uint8_t* key_out);
-typedef int (*generate_pk_cbk)(uint8_t* key_out);
+typedef int (*generate_pk_cbk)(uint8_t* pk_key_out, uint8_t* pub_key_out);
 typedef int (*store_pk_kmu_cbk)(uint32_t slot, uint8_t* key);
 typedef int (*load_pk_kmu_cbk)(uint32_t slot, uint8_t* key);
 typedef int (*destroy_key_cbk)(uint8_t* key);

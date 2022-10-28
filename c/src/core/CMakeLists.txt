@@ -76,7 +76,6 @@ if(ETH_FULL AND IN3API)
   set(DEPS ${DEPS} tommath)
 endif()
 
-
 if (ZEPHYR_BASE)
   add_library(core STATIC client/request.c client/client.c client/execute.c client/client_init.c util/debug.c util/bytes.c util/utils.c util/scache.c util/data.c util/log.c util/mem.c util/stringbuilder.c util/bitset.c util/crypto_encode.c ${CRYPTO_SRC})
   add_dependencies(core zephyr_interface ${DEPS})
@@ -104,8 +103,4 @@ else()
     DEPENDS
       ${DEPS}    
   )
-endif()
-
-if (DEMO)
-  add_subdirectory(util/cryptocell)
 endif()

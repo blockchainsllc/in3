@@ -104,7 +104,7 @@ int crypto_init(void);
  * @param key_handle
  * @return int
  */
-int crypto_deinit(psa_key_handle_t key_handle);
+int crypto_deinit(psa_key_id_t key_handle);
 
 /**
  * @brief
@@ -187,10 +187,11 @@ int destroy_key(uint8_t* key);
 /**
  * @brief
  *
- * @param key_buf
- * @return psa_status_t
+ * @param pk_key_buf
+ * @param pub_key_buf
+ * @return int
  */
-int generate_pk_ecdsa_sha256(uint8_t* key_buf);
+int generate_pk_keypair_ecdsa_sha256(uint8_t* pk_key_buf, uint8_t* pub_key_buf);
 
 /**
  * @brief Set the up cryptocell object
@@ -198,6 +199,24 @@ int generate_pk_ecdsa_sha256(uint8_t* key_buf);
  * @param info
  */
 int register_cryptocell_cbk(cryptocell_cbks_t* cbks);
+
+/**
+ * @brief
+ *
+ * @param key_pair_handle
+ * @param pub_key
+ * @param pub_key_size
+ * @return int
+ */
+static int export_public_key_keypair(psa_key_id_t* key_pair_handle, uint8_t* pub_key, size_t pub_key_size);
+
+/**
+ * @brief
+ *
+ * @param slot
+ * @return int
+ */
+int pk_identity_key_is_stored(uint32_t slot);
 
 #ifdef __cplusplus
 }
