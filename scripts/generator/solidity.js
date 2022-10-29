@@ -1,8 +1,8 @@
-const solc = require('solc')
 const fs = require('fs')
 const path = require('path')
 const yaml = require('yaml')
 const { snake_case, mergeTo, asArray, camelCaseUp, create_example_arg } = require('./util')
+const { exec } = require("child_process")
 const all_hashes = {}
 const solClasses = {}
 
@@ -62,6 +62,7 @@ function compile(ctx) {
     fs.writeFileSync(cache + '/' + ctx.api_name + '_input.json', JSON.stringify(input, null, 2), 'utf8')
     if (!cachedTime || Object.keys(input.sources).reduce((p, v) => Math.max(p, fs.lstatSync(v).mtime.getTime()), 0) > cachedTime.getTime()) {
         console.error(":: compiling ... ", ctx.files.join())
+        const solc = require('solc')
         res = JSON.parse(solc.compile(JSON.stringify(input)))
         fs.writeFileSync(cacheFile, JSON.stringify(res, null, 2), 'utf8')
     }
@@ -77,10 +78,34 @@ function compile(ctx) {
     if (!ctx.contract) throw new Error('Contract not found! : ' + Object.keys(all_contracts).join())
 }
 
+
+async function get_src(sol, dir) {
+    if (sol.git) {
+        let [url, version] = sol.git.split('#', 2)
+        let repo_name = sol.git.split('/').pop().replace('.git', '').replace('#', '_')
+        const cache = dir + '/.cache'
+        const repo = cache + '/' + repo_name
+        if (!fs.existsSync(repo)) {
+            if (process.env.CI_JOB_TOKEN) url = url.replace('git@git.slock.it:', 'https://gitlab-ci-token:' + process.env.CI_JOB_TOKEN + '@git.slock.it/')
+            console.error(":: cloning ... ", repo_name)
+            await new Promise((resolve, reject) => {
+                exec('git clone --single-branch --depth 1 ' + (version ? ('-b ' + version + ' ') : '') + url + ' ' + repo, (err, stdout, stderr) => {
+                    if (err) reject(err)
+                    else resolve(stdout)
+                })
+            })
+        }
+        return asArray(sol.src).map(_ => '.cache/' + repo_name + '/' + _)
+    }
+    else
+        return asArray(sol.src)
+}
+
 exports.generate_solidity = async function ({ generate_rpc, types, api_name, api, dir, api_def, allapis }) {
+
     let sol = generate_rpc.solidity
     if (!sol.prefix) sol.prefix = api_name
-    const ctx = { files: asArray(sol.src), sol, types, api_name, api, generate_rpc, sol, dir, api_def, allapis }
+    const ctx = { files: await get_src(sol, dir), sol, types, api_name, api, generate_rpc, sol, dir, api_def, allapis }
 
     compile(ctx)
     create_def(ctx)
@@ -146,7 +171,7 @@ function create_def(ctx) {
             _generate_impl: impl_solidity,
             solidity: { ctx, fn, deploy }
         }
-        if (ctr && !deploy) return
+        if (ctr && !deploy) continue
         if (!ctr) def.params.contract = {
             descr: 'the address of the contract',
             type: 'address',

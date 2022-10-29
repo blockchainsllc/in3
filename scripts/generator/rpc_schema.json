@@ -234,9 +234,40 @@
                 "$ref": "#/$defs/func"
             }
         },
+        "solidity": {
+            "type": "object",
+            "properties": {
+                "contract": {
+                    "type": "string",
+                    "description": "Name of the contract"
+                },
+                "git": {
+                    "type": "string",
+                    "description": "the url of the git repo"
+                },
+                "deploy": {
+                    "type": "string",
+                    "description": "name of the api to add the deploy function"
+                },
+                "src": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "list of solidity-files to compile (includes will be resolved automaticly"
+                }
+            },
+            "requiredProperties": [
+                "src",
+                "contract"
+            ]
+        },
         "generate_rpc": {
             "type": "object",
             "properties": {
+                "solidity": {
+                    "$ref": "#/$defs/solidity"
+                },
                 "openapi": {
                     "type": "string",
                     "description": "the url or filepath to the openapi-definition"
