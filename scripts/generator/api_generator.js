@@ -353,7 +353,7 @@ function validate(def, val, req, propname) {
 }
 
 function getObject(def, name, index, types, api, state) {
-    if (!need_structs(state)) return {
+    if (!need_structs(state) || def.type == 'any') return {
         args: 'd_token_t* ' + name,
         code_def: 'd_token_t* ' + name,
         code_read: def.optional
