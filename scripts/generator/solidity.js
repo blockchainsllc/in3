@@ -6,11 +6,28 @@ const { exec } = require("child_process")
 const all_hashes = {}
 const solClasses = {}
 
+function resolve_path(parent, import_path) {
+    if (import_path.startsWith('@openzeppelin/')) {
+        if (parent.indexOf('.cache') == -1) throw new Error('the module is not in the cache-folder')
+        let parent_path = parent.split('/')
+        let s = ''
+        while (parent_path.pop() != '.cache') s += '../'
+        let openzep = fs.readdirSync(parent_path.join('/') + '/.cache').find(_ => _.startsWith('openzeppelin'))
+        if (!openzep) throw new Error('openzeppelin could not be found in the cache-folder')
+        return s + openzep + import_path.replace('@openzeppelin', '')
+    }
+    return import_path
+}
 function resolve_inputs(sources, dir) {
     while (true) {
         const missing = []
         Object.keys(sources).forEach(s => {
-            const imports = sources[s].content.split('\n').filter(_ => _.startsWith('import ')).map(l => path.resolve(path.dirname(s) + '/' + l.split('"')[1]))
+            const imports = sources[s].content.split('\n').filter(_ => _.startsWith('import ')).map(l => {
+                const src_path = l.split('"')[1]
+                const dst_path = resolve_path(path.dirname(s), src_path)
+                if (src_path != dst_path) sources[s].content = sources[s].content.replace(src_path, dst_path)
+                return path.resolve(path.dirname(s) + '/' + dst_path)
+            })
             imports.filter(_ => !sources[_] && missing.indexOf(_) < 0).forEach(_ => missing.push(_))
         })
         if (missing.length == 0) return;
