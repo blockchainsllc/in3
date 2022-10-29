@@ -744,17 +744,24 @@ json_ctx_t* parse_json_indexed(const char* js) {
 }
 
 static int find_end(const char* str) {
-  int         l = 0;
-  const char* c = str;
+  int         l         = 0;
+  const char* c         = str;
+  bool        in_string = false;
   while (*c != 0) {
     switch (*(c++)) {
+      case '\\':
+        if (in_string && !*(c++)) return 0; // just in case the string ends after a escape character
+        break;
+      case '"':
+        in_string = !in_string;
+        break;
       case '{':
       case '[':
-        l++;
+        if (!in_string) l++;
         break;
       case '}':
       case ']':
-        l--;
+        if (!in_string) l--;
         break;
     }
     if (l == 0)
