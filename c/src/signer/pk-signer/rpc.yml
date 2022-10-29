@@ -231,7 +231,6 @@ signers:
         - "0x93793c6a5af6b54dfaabfb2e988a386a799f5066"
 
   eth_accounts:
-    sync: true
     descr: |
       alias to signer_ids
     result:
