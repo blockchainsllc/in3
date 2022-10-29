@@ -49,9 +49,9 @@
  */
 static inline in3_ret_t rpc_call_in3_cacheClear(in3_rpc_handle_ctx_t* ctx, bool* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r   = req_send_sub_request(ctx->req, "in3_cacheClear", "", NULL, &res, NULL);
-  if (!r) *_res = d_int(res);
-  return r;
+  in3_ret_t  _r  = req_send_sub_request(ctx->req, "in3_cacheClear", "", NULL, &res, NULL);
+  if (!_r) *_res = d_int(res);
+  return _r;
 }
 #define FN_IN3_CACHECLEAR "in3_cacheClear"
 
@@ -63,9 +63,9 @@ static inline in3_ret_t rpc_call_in3_cacheClear(in3_rpc_handle_ctx_t* ctx, bool*
  */
 static inline in3_ret_t rpc_call_web3_clientVersion(in3_rpc_handle_ctx_t* ctx, char** _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r   = req_send_sub_request(ctx->req, "web3_clientVersion", "", NULL, &res, NULL);
-  if (!r) *_res = d_string(res);
-  return r;
+  in3_ret_t  _r  = req_send_sub_request(ctx->req, "web3_clientVersion", "", NULL, &res, NULL);
+  if (!_r) *_res = d_string(res);
+  return _r;
 }
 #define FN_WEB3_CLIENTVERSION "web3_clientVersion"
 
@@ -87,10 +87,10 @@ static inline in3_ret_t rpc_call_web3_clientVersion(in3_rpc_handle_ctx_t* ctx, c
 static inline in3_ret_t rpc_call_web3_sha3(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t data) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) data);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "web3_sha3", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "web3_sha3", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_WEB3_SHA3 "web3_sha3"
 
@@ -108,10 +108,10 @@ static inline in3_ret_t rpc_call_web3_sha3(in3_rpc_handle_ctx_t* ctx, bytes_t* _
 static inline in3_ret_t rpc_call_in3_base58_encode(in3_rpc_handle_ctx_t* ctx, char** _res, bytes_t data) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) data);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_base58_encode", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_base58_encode", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_string(res);
-  return r;
+  if (!_r) *_res = d_string(res);
+  return _r;
 }
 #define FN_IN3_BASE58_ENCODE "in3_base58_encode"
 
@@ -129,10 +129,10 @@ static inline in3_ret_t rpc_call_in3_base58_encode(in3_rpc_handle_ctx_t* ctx, ch
 static inline in3_ret_t rpc_call_in3_base58_decode(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* data) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%S\"", (char*) data);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_base58_decode", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_base58_decode", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_IN3_BASE58_DECODE "in3_base58_decode"
 
@@ -150,10 +150,10 @@ static inline in3_ret_t rpc_call_in3_base58_decode(in3_rpc_handle_ctx_t* ctx, by
 static inline in3_ret_t rpc_call_in3_base64_encode(in3_rpc_handle_ctx_t* ctx, char** _res, bytes_t data) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) data);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_base64_encode", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_base64_encode", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_string(res);
-  return r;
+  if (!_r) *_res = d_string(res);
+  return _r;
 }
 #define FN_IN3_BASE64_ENCODE "in3_base64_encode"
 
@@ -171,10 +171,10 @@ static inline in3_ret_t rpc_call_in3_base64_encode(in3_rpc_handle_ctx_t* ctx, ch
 static inline in3_ret_t rpc_call_in3_base64_decode(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* data) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%S\"", (char*) data);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_base64_decode", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_base64_decode", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_IN3_BASE64_DECODE "in3_base64_decode"
 
@@ -194,10 +194,10 @@ static inline in3_ret_t rpc_call_in3_base64_decode(in3_rpc_handle_ctx_t* ctx, by
 static inline in3_ret_t rpc_call_sha256(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, bytes_t data) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\"", (bytes_t) data);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "sha256", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "sha256", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_SHA256 "sha256"
 
@@ -216,9 +216,9 @@ static inline in3_ret_t rpc_call_sha256(in3_rpc_handle_ctx_t* ctx, bytes_t* _res
  */
 static inline in3_ret_t rpc_call_in3_http(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* method, char* url, char* payload, d_token_t* headers) {
   char*     jpayload = sprintx("\"%S\",\"%S\",\"%S\",%j", (char*) method, (char*) url, (char*) payload, (d_token_t*) headers);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_http", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_http", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_HTTP "in3_http"
 
@@ -237,10 +237,10 @@ static inline in3_ret_t rpc_call_in3_http(in3_rpc_handle_ctx_t* ctx, d_token_t**
 static inline in3_ret_t rpc_call_in3_ens(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* name, char* type, uint8_t* registry) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%S\",\"%S\",\"%B\"", (char*) name, (char*) type, bytes(registry, 20));
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_ens", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_ens", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_IN3_ENS "in3_ens"
 
@@ -258,10 +258,10 @@ static inline in3_ret_t rpc_call_in3_ens(in3_rpc_handle_ctx_t* ctx, bytes_t* _re
 static inline in3_ret_t rpc_call_in3_abiEncode(in3_rpc_handle_ctx_t* ctx, char** _res, char* signature, d_token_t* parameters) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%S\",%j", (char*) signature, (d_token_t*) parameters);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_abiEncode", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_abiEncode", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_string(res);
-  return r;
+  if (!_r) *_res = d_string(res);
+  return _r;
 }
 #define FN_IN3_ABIENCODE "in3_abiEncode"
 
@@ -279,9 +279,9 @@ static inline in3_ret_t rpc_call_in3_abiEncode(in3_rpc_handle_ctx_t* ctx, char**
  */
 static inline in3_ret_t rpc_call_in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_token_t** res, char* signature, bytes_t data, bytes_t topics) {
   char*     jpayload = sprintx("\"%S\",\"%B\",\"%B\"", (char*) signature, (bytes_t) data, (bytes_t) topics);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_abiDecode", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_abiDecode", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_ABIDECODE "in3_abiDecode"
 
@@ -297,9 +297,9 @@ static inline in3_ret_t rpc_call_in3_abiDecode(in3_rpc_handle_ctx_t* ctx, d_toke
  */
 static inline in3_ret_t rpc_call_in3_rlpDecode(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t data) {
   char*     jpayload = sprintx("\"%B\"", (bytes_t) data);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_rlpDecode", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_rlpDecode", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_RLPDECODE "in3_rlpDecode"
 
@@ -315,9 +315,9 @@ static inline in3_ret_t rpc_call_in3_rlpDecode(in3_rpc_handle_ctx_t* ctx, d_toke
  */
 static inline in3_ret_t rpc_call_in3_decodeTx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t data) {
   char*     jpayload = sprintx("\"%B\"", (bytes_t) data);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_decodeTx", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_decodeTx", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_DECODETX "in3_decodeTx"
 
@@ -335,10 +335,10 @@ static inline in3_ret_t rpc_call_in3_decodeTx(in3_rpc_handle_ctx_t* ctx, d_token
 static inline in3_ret_t rpc_call_in3_checksumAddress(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, uint8_t* address, bool useChainId) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",%i", bytes(address, 20), (int) useChainId);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_checksumAddress", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_checksumAddress", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_IN3_CHECKSUMADDRESS "in3_checksumAddress"
 
@@ -356,10 +356,10 @@ static inline in3_ret_t rpc_call_in3_checksumAddress(in3_rpc_handle_ctx_t* ctx, 
 static inline in3_ret_t rpc_call_in3_toWei(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* value, char* unit) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%S\",\"%S\"", (char*) value, (char*) unit);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_toWei", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_toWei", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_IN3_TOWEI "in3_toWei"
 
@@ -375,9 +375,9 @@ static inline in3_ret_t rpc_call_in3_toWei(in3_rpc_handle_ctx_t* ctx, bytes_t* _
  */
 static inline in3_ret_t rpc_call_in3_get_internal_tx(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t tx_hash) {
   char*     jpayload = sprintx("\"%B\"", (bytes_t) tx_hash);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_get_internal_tx", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_get_internal_tx", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_GET_INTERNAL_TX "in3_get_internal_tx"
 
@@ -395,9 +395,9 @@ static inline in3_ret_t rpc_call_in3_get_internal_tx(in3_rpc_handle_ctx_t* ctx, 
  */
 static inline in3_ret_t rpc_call_in3_fromWei(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t value, char* unit, bytes_t digits) {
   char*     jpayload = sprintx("\"%B\",\"%S\",\"%B\"", (bytes_t) value, (char*) unit, (bytes_t) digits);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_fromWei", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_fromWei", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_FROMWEI "in3_fromWei"
 
@@ -415,10 +415,10 @@ static inline in3_ret_t rpc_call_in3_fromWei(in3_rpc_handle_ctx_t* ctx, d_token_
 static inline in3_ret_t rpc_call_in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx, uint8_t** _res, uint8_t* sender, uint64_t nonce) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",\"%U\"", bytes(sender, 20), (uint64_t) nonce);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "in3_calcDeployAddress", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "in3_calcDeployAddress", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res).data;
-  return r;
+  if (!_r) *_res = d_bytes(res).data;
+  return _r;
 }
 #define FN_IN3_CALCDEPLOYADDRESS "in3_calcDeployAddress"
 
@@ -430,9 +430,9 @@ static inline in3_ret_t rpc_call_in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx
  */
 static inline in3_ret_t rpc_call_net_version(in3_rpc_handle_ctx_t* ctx, uint64_t* _res) {
   d_token_t* res = NULL;
-  in3_ret_t  r   = req_send_sub_request(ctx->req, "net_version", "", NULL, &res, NULL);
-  if (!r) *_res = d_long(res);
-  return r;
+  in3_ret_t  _r  = req_send_sub_request(ctx->req, "net_version", "", NULL, &res, NULL);
+  if (!_r) *_res = d_long(res);
+  return _r;
 }
 #define FN_NET_VERSION "net_version"
 

@@ -776,15 +776,15 @@ function generate_rpc_define(rpc, r, content) {
         aligned.push('d_token_t* res = NULL;')
     if (params.length) {
         aligned.push(`char*      jpayload = sprintx("${params.map(_ => _.fmt).join()}"${params.map(_ => ', ' + _.arg).join('')});`)
-        aligned.push(`in3_ret_t  r        = req_send_sub_request(ctx->req, "${rpc}", jpayload, NULL, ${use_res ? '&' : ''}res, NULL);`)
+        aligned.push(`in3_ret_t  _r       = req_send_sub_request(ctx->req, "${rpc}", jpayload, NULL, ${use_res ? '&' : ''}res, NULL);`)
         macro += '\n' + align_vars(align_vars(aligned, '  '), '  ', '=').join('\n')
         macro += `\n  _free(jpayload);`
     }
     else
-        macro += '\n' + align_vars(align_vars([...aligned, `in3_ret_t  r = req_send_sub_request(ctx->req, "${rpc}", "", NULL, ${use_res ? '&' : ''}res, NULL);`], '  '), '  ', '=').join('\n')
+        macro += '\n' + align_vars(align_vars([...aligned, `in3_ret_t _r = req_send_sub_request(ctx->req, "${rpc}", "", NULL, ${use_res ? '&' : ''}res, NULL);`], '  '), '  ', '=').join('\n')
     if (use_res)
-        macro += `\n  if (!r) *_res = ${rt.conv};`
-    macro += `\n  return r;`
+        macro += `\n  if (!_r) *_res = ${rt.conv};`
+    macro += `\n  return _r;`
     macro += `\n}`
 
 

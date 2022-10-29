@@ -55,9 +55,9 @@
  */
 static inline in3_ret_t rpc_call_in3_nodeList(in3_rpc_handle_ctx_t* ctx, d_token_t** res, bytes_t limit, bytes_t seed, d_token_t* addresses) {
   char*     jpayload = sprintx("\"%B\",\"%B\",%j", (bytes_t) limit, (bytes_t) seed, (d_token_t*) addresses);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_nodeList", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_nodeList", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_NODELIST "in3_nodeList"
 
@@ -79,9 +79,9 @@ static inline in3_ret_t rpc_call_in3_nodeList(in3_rpc_handle_ctx_t* ctx, d_token
  */
 static inline in3_ret_t rpc_call_in3_sign(in3_rpc_handle_ctx_t* ctx, d_token_t** res, d_token_t* blocks) {
   char*     jpayload = sprintx("%j", (d_token_t*) blocks);
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_sign", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_sign", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_SIGN "in3_sign"
 
@@ -97,9 +97,9 @@ static inline in3_ret_t rpc_call_in3_sign(in3_rpc_handle_ctx_t* ctx, d_token_t**
  */
 static inline in3_ret_t rpc_call_in3_whitelist(in3_rpc_handle_ctx_t* ctx, d_token_t** res, uint8_t* address) {
   char*     jpayload = sprintx("\"%B\"", bytes(address, 20));
-  in3_ret_t r        = req_send_sub_request(ctx->req, "in3_whitelist", jpayload, NULL, res, NULL);
+  in3_ret_t _r       = req_send_sub_request(ctx->req, "in3_whitelist", jpayload, NULL, res, NULL);
   _free(jpayload);
-  return r;
+  return _r;
 }
 #define FN_IN3_WHITELIST "in3_whitelist"
 

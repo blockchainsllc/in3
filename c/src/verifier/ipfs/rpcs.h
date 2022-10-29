@@ -55,10 +55,10 @@
 static inline in3_ret_t rpc_call_ipfs_get(in3_rpc_handle_ctx_t* ctx, bytes_t* _res, char* ipfshash, char* encoding) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%S\",\"%S\"", (char*) ipfshash, (char*) encoding);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "ipfs_get", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "ipfs_get", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_bytes(res);
-  return r;
+  if (!_r) *_res = d_bytes(res);
+  return _r;
 }
 #define FN_IPFS_GET "ipfs_get"
 
@@ -79,10 +79,10 @@ static inline in3_ret_t rpc_call_ipfs_get(in3_rpc_handle_ctx_t* ctx, bytes_t* _r
 static inline in3_ret_t rpc_call_ipfs_put(in3_rpc_handle_ctx_t* ctx, char** _res, bytes_t data, char* encoding) {
   d_token_t* res      = NULL;
   char*      jpayload = sprintx("\"%B\",\"%S\"", (bytes_t) data, (char*) encoding);
-  in3_ret_t  r        = req_send_sub_request(ctx->req, "ipfs_put", jpayload, NULL, &res, NULL);
+  in3_ret_t  _r       = req_send_sub_request(ctx->req, "ipfs_put", jpayload, NULL, &res, NULL);
   _free(jpayload);
-  if (!r) *_res = d_string(res);
-  return r;
+  if (!_r) *_res = d_string(res);
+  return _r;
 }
 #define FN_IPFS_PUT "ipfs_put"
 
