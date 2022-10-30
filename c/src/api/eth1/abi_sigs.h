@@ -73,12 +73,4 @@ const abi_fn_t abi_known_functions[] = {
     {.signature = "removeChallenge(address owner)", .fn = 0x3be61616},
     {.signature = "removeFromAllowlist(address prevAllowed,address accountToRemove)", .fn = 0x47a6a971},
     {.signature = "transferOwnershipAfterChallenge(address prevOwner,address ownerToTransfer)", .fn = 0x942cc08d},
-    {.signature = "createAndAddModules(address proxyFactory,bytes data)", .fn = 0x60df7f58},
-    {.signature = "pause()", .fn = 0x8456cb59},
-    {.signature = "recoverAddress(bytes32 hash,uint8 v,bytes32 r,bytes32 s)", .fn = 0x8428cf83},
-    {.signature = "redeem(address redeemer,(uint256 tokenId,uint256 minPrice,bytes32 contentHash,string tokenUri,bool unique,address signer,address[] benefectors,uint8[] percents,uint8 v,bytes32 r,bytes32 s))", .fn = 0x95056d3b},
-    {.signature = "renounceOwnership()", .fn = 0x715018a6},
-    {.signature = "setBaseURI(string newuri)", .fn = 0x55f804b3},
-    {.signature = "setURI(string newuri)", .fn = 0x2fe5305},
-    {.signature = "transferOwnership(address newOwner)", .fn = 0xf2fde38b},
-    {.signature = "unpause()", .fn = 0x3f4ba83a}};
+    {.signature = "createAndAddModules(address proxyFactory,bytes data)", .fn = 0x60df7f58}};
