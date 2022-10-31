@@ -175,6 +175,8 @@ function get_descr(ctx, sig, generate, param) {
 }
 function create_def(ctx) {
     const abi = ctx.contract.abi
+    const custom = (ctx.generate_rpc || {}).custom
+
     ctx.functions = []
     const deploy = ctx.sol.deploy && ctx.contract.evm.bytecode && ctx.contract.evm.bytecode.object && '0x' + ctx.contract.evm.bytecode.object
     if (deploy && !abi.find(_ => _.type == 'constructor')) abi.push({ type: 'constructor', inputs: [], "stateMutability": "nonpayable" })
@@ -202,8 +204,13 @@ function create_def(ctx) {
             def.generate_rpc = ctx.generate_rpc
             def.cmakeOptions = ['MOD_CONTRACTS_DEPLOY']
         }
-        else
-            ctx.api[ctx.sol.prefix + '_' + snake_case(fn.name)] = def
+        else {
+            const fn_name = ctx.sol.prefix + '_' + snake_case(fn.name)
+            const c = (custom && custom[fn_name]) || {}
+            if (c.skipGenerate) continue
+            ctx.api[fn_name] = def
+            Object.assign(def, c)
+        }
 
 
         fn.inputs.forEach(n => def.params[n.name] = fix_type(n, ctx, sig))
