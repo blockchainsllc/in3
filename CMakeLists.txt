@@ -40,28 +40,13 @@ if (CRYPTOCELL)
 endif()
 
 if (CRYPTOCELL)
-   zephyr_interface_library_named(cryptocell)
+    project(in3_zephyr)
+    add_subdirectory(c/src/core/util/cryptocell)
 else()
     project(in3)
 endif()
 
 include("c/options.cmake")
-
-if (CRYPTOCELL)
-    set(CRYPTOCELL_SOURCE_DIR              ${CMAKE_CURRENT_SOURCE_DIR}/c/src/core/util/cryptocell)
-    zephyr_get_include_directories_for_lang_as_string(C includes STRIP_PREFIX)
-    zephyr_get_compile_definitions_for_lang_as_string(C definitions)
-    zephyr_get_compile_options_for_lang_as_string(C options)
-    zephyr_library_include_directories(${includes})
-    zephyr_library_compile_definitions(${definitions})
-    zephyr_library_include_directories(
-        /ncs/mbedtls/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/c/include/in3
-        ${CMAKE_CURRENT_SOURCE_DIR}/c/include
-    )
-    zephyr_library_sources(${CRYPTOCELL_SOURCE_DIR}/src/cryptocell.c)
-    zephyr_library_link_libraries(cryptocell core crypto init eth_basic cryptocell_signer)
-endif()
 
 # build tests
 if(TEST)

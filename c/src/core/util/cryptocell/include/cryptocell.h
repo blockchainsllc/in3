@@ -45,7 +45,6 @@ extern "C" {
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <zephyr/sys/printk.h>
 
 #define SUCCESS (0)
 #define ERROR   (-1)

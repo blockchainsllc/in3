@@ -45,13 +45,15 @@ typedef int (*store_pk_kmu_cbk)(uint32_t slot, uint8_t* key);
 typedef int (*load_pk_kmu_cbk)(uint32_t slot, uint8_t* key);
 typedef int (*destroy_key_cbk)(uint8_t* key);
 typedef int (*export_publickey_cbk)(uint8_t pk, uint8_t* public_key, size_t* key_out_len);
+typedef int (*identity_key_is_stored_cbk)(uint32_t slot);
 
 typedef struct {
-  generate_pk_cbk      gen_pk_func;
-  store_pk_kmu_cbk     str_pk_func;
-  load_pk_kmu_cbk      ld_pk_func;
-  destroy_key_cbk      des_pk_func;
-  export_publickey_cbk export_publickey_func;
+  generate_pk_cbk            gen_pk_func;
+  store_pk_kmu_cbk           str_pk_func;
+  load_pk_kmu_cbk            ld_pk_func;
+  destroy_key_cbk            des_pk_func;
+  export_publickey_cbk       export_publickey_func;
+  identity_key_is_stored_cbk identity_key_is_stored_func;
 } cryptocell_cbks_t;
 
 typedef enum {
