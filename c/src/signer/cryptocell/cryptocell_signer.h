@@ -31,6 +31,57 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#ifdef CRYPTOCELL_PSA
-
+#ifndef CRYPTOCELL_SIGNER_H
+#define CRYPTOCELL_SIGNER_H
+#ifdef __cplusplus
+extern "C" {
 #endif
+#include "../../core/client/plugin.h"
+#include "../../core/util/bytes.h"
+#include "cryptocell.h"
+
+typedef int (*generate_ek_cbk)(uint8_t* key_label, uint32_t label_size, uint8_t* key_out);
+typedef int (*generate_pk_cbk)(uint8_t* pk_key_out, uint8_t* pub_key_out);
+typedef int (*store_pk_kmu_cbk)(uint32_t slot, uint8_t* key);
+typedef int (*load_pk_kmu_cbk)(uint32_t slot, uint8_t* key);
+typedef int (*destroy_key_cbk)(uint8_t* key);
+typedef int (*export_publickey_cbk)(uint8_t pk, uint8_t* public_key, size_t* key_out_len);
+typedef int (*identity_key_is_stored_cbk)(uint32_t slot);
+
+typedef struct {
+  generate_pk_cbk            gen_pk_func;
+  store_pk_kmu_cbk           str_pk_func;
+  load_pk_kmu_cbk            ld_pk_func;
+  destroy_key_cbk            des_pk_func;
+  export_publickey_cbk       export_publickey_func;
+  identity_key_is_stored_cbk identity_key_is_stored_func;
+} cryptocell_cbks_t;
+
+typedef enum {
+  SIGN_CURVE_ECDSA,
+  SIGN_CURVE_ECDH
+} cryptocell_curve_type_t;
+
+typedef struct
+{
+  bytes_t*                msg;
+  uint8_t                 pk[32];
+  uint8_t                 huk_slot;
+  uint8_t                 ik_slot;
+  cryptocell_curve_type_t curve_type;
+  cryptocell_cbks_t*      cbks;
+} cryptocell_signer_info_t;
+
+in3_ret_t eth_set_cryptocell_signer(in3_t* in3, cryptocell_signer_info_t* signer_info);
+
+/**
+ * @brief Set the up cryptocell object
+ *
+ * @param info
+ */
+int register_cryptocell_cbk(cryptocell_cbks_t* cbks);
+
+#ifdef __cplusplus
+}
+#endif
+#endif // CRYPTOCELL_SIGNER_H

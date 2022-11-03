@@ -31,31 +31,26 @@
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 # ##############################################################################
-if (ZEPHYR_BASE)
-  add_library(evm STATIC evm.c opcodes.c big.c call.c code.c env.c evm_mem.c accounts.c gas.c pre_ec.c pre_blake2.c precompiled.c)
-  add_dependencies(evm zephyr_interface eth_basic tommath)
-else()
-  add_static_library(
-    NAME evm
-    DESCR "a full EVM-Implementation, which is sued for verifying eth_call-results by replaying in a evm"
 
-    SOURCES
-      evm.c
-      opcodes.c
-      big.c
-      call.c
-      code.c
-      env.c
-      evm_mem.c
-      accounts.c
-      gas.c
-      pre_ec.c
-      pre_blake2.c
-      precompiled.c
+add_static_library(
+  NAME evm
+  DESCR "a full EVM-Implementation, which is sued for verifying eth_call-results by replaying in a evm"
 
-    DEPENDS
-      eth_basic
-      tommath
-  )
-endif()
+  SOURCES
+  evm.c
+  opcodes.c
+  big.c
+  call.c
+  code.c
+  env.c
+  evm_mem.c
+  accounts.c
+  gas.c
+  pre_ec.c
+  pre_blake2.c
+  precompiled.c
 
+  DEPENDS
+  eth_basic
+  tommath
+)

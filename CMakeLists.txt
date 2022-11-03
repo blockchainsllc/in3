@@ -39,12 +39,7 @@ if (CRYPTOCELL)
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 endif()
 
-if (CRYPTOCELL)
-    project(in3_zephyr)
-    add_subdirectory(c/src/core/util/cryptocell)
-else()
-    project(in3)
-endif()
+project(in3)
 
 include("c/options.cmake")
 

@@ -31,21 +31,17 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (ZEPHYR_BASE)
-  add_library(ipfs_api STATIC ipfs_api.c)
-  add_dependencies(ipfs_api zephyr_interface core b64 api_utils)
-else()
-  add_static_library(
-    NAME     ipfs_api 
-    DESCR    "a small API offering native C-Functions for reading and storing IPFS-Content."
-    
-    SOURCES 
-      ipfs_api.c
 
-    DEPENDS 
-      core
-      b64
-      api_utils
-  )
-endif()
+add_static_library(
+  NAME     ipfs_api 
+  DESCR    "a small API offering native C-Functions for reading and storing IPFS-Content."
+  
+  SOURCES 
+    ipfs_api.c
+
+  DEPENDS 
+    core
+    b64
+    api_utils
+)
 

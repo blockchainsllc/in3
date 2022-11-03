@@ -31,7 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#include "../include/cryptocell.h"
+#include "cryptocell.h"
 #include <hw_unique_key.h>
 #include <identity_key.h>
 #include <nrf_cc3xx_platform.h>
@@ -356,16 +356,4 @@ int generate_pk_keypair_ecdsa_sha256(uint8_t* pk_key_buf, uint8_t* pub_key_buf) 
   psa_reset_key_attributes(&key_attributes);
 
   return res;
-}
-
-/** set the cryptocell signer configuration informations */
-int register_cryptocell_cbk(cryptocell_cbks_t* cbks) {
-  if (cbks) {
-    cbks->gen_pk_func = generate_pk_keypair_ecdsa_sha256;
-    cbks->str_pk_func = store_pk_identity_keyslot_kmu;
-    cbks->ld_pk_func  = load_pk_identity_keyslot_kmu;
-    cbks->des_pk_func = destroy_key;
-    return SUCCESS;
-  }
-  return ERROR;
 }

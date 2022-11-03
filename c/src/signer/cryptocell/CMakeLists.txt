@@ -32,16 +32,12 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 if (ZEPHYR_BASE)
-  add_library(cryptocell_signer STATIC cryptocell_signer.c)
-  add_dependencies(cryptocell_signer zephyr_interface core cryptocell)
-else()
-  add_static_library(
-    NAME     cryptocell_signer  
-    DESCR    "abstraction layer for cryptocell security subsystem libraries"
-    
-    SOURCES 
-      cryptocell_signer.c
-    DEPENDS
-      core
-  )
+    zephyr_get_include_directories_for_lang_as_string(C includes STRIP_PREFIX)
+    zephyr_get_compile_definitions_for_lang_as_string(C definitions)
+    zephyr_get_compile_options_for_lang_as_string(C options)
+    zephyr_library_include_directories(${includes})
+    zephyr_library_compile_definitions(${definitions})
+    zephyr_interface_library_named(cryptocell)
+    zephyr_library_sources(cryptocell.c cryptocell_signer.c)
 endif()
+

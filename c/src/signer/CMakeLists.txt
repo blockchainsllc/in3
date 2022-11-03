@@ -44,5 +44,5 @@ if (MULTISIG)
 endif()
 
 if (CRYPTOCELL)
-  add_subdirectory(cryptocell_signer)
+  add_subdirectory(cryptocell)
 endif()

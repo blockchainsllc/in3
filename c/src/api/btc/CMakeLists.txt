@@ -31,22 +31,16 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (ZEPHYR_BASE)
-    add_library(btc_api STATIC btc_api.c)
-    add_dependencies(btc_api zephyr_interface core api_utils btc)
-else()
-    add_static_library(
-    NAME     btc_api 
-    DESCR    "Thie module provides native (C) functions for handling bitcoin. It wraps the json-rpc-requests in native structs and adds utilities for btc." 
-    
-    SOURCES 
-        btc_api.c 
 
-    DEPENDS 
-        core
-        api_utils
-        btc
-    )
-endif()
+add_static_library(
+  NAME     btc_api 
+  DESCR    "Thie module provides native (C) functions for handling bitcoin. It wraps the json-rpc-requests in native structs and adds utilities for btc." 
+  
+  SOURCES 
+    btc_api.c 
 
-
+  DEPENDS 
+    core
+    api_utils
+    btc
+)

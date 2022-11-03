@@ -31,7 +31,8 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#include "../../../include/in3/cryptocell_signer.h"
+#include "cryptocell_signer.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -132,4 +133,16 @@ in3_ret_t eth_set_cryptocell_signer(in3_t* in3, cryptocell_signer_info_t* signer
     }
   }
   return IN3_OK;
+}
+
+/** set the cryptocell signer configuration informations */
+int register_cryptocell_cbk(cryptocell_cbks_t* cbks) {
+  if (cbks) {
+    cbks->gen_pk_func = generate_pk_keypair_ecdsa_sha256;
+    cbks->str_pk_func = store_pk_identity_keyslot_kmu;
+    cbks->ld_pk_func  = load_pk_identity_keyslot_kmu;
+    cbks->des_pk_func = destroy_key;
+    return SUCCESS;
+  }
+  return ERROR;
 }

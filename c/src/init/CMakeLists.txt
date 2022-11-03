@@ -35,22 +35,17 @@
 #
 # This module does not have any dependencies and cannot be used without additional modules providing verification and transport.
 
-if (ZEPHYR_BASE)
-  add_library(init STATIC in3_init.c)
-  add_dependencies(init zephyr_interface)
-else()
-  add_static_library(
-    NAME     init 
-    DESCR    "a Module which holds dependencies to all defined modules. It also autoregisteres those modules when creating a new instance."
+add_static_library(
+  NAME     init 
+  DESCR    "a Module which holds dependencies to all defined modules. It also autoregisteres those modules when creating a new instance."
   
-    SOURCES 
-      in3_init.c
+  SOURCES 
+    in3_init.c
 
-    DEPENDS 
-      core
-      ${IN3_VERIFIER} 
-      ${IN3_API} 
-      ${IN3_TRANSPORT}
-      ${IN3_NODESELECT}
-  )
-endif()
+  DEPENDS 
+    core
+    ${IN3_VERIFIER} 
+    ${IN3_API} 
+    ${IN3_TRANSPORT}
+    ${IN3_NODESELECT}
+)

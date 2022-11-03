@@ -31,27 +31,23 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (ZEPHYR_BASE)
-  add_library(eth_basic STATIC eth_basic.c eth_getTransaction.c eth_getBlock.c eth_account.c eth_getLog.c trie.c filter.c sign_tx.c)
-  add_dependencies(eth_basic zephyr_interface eth_nano)
-else()
-  add_static_library(
-    NAME     eth_basic 
-    DESCR    "the basic ethereum rpc-functions are handled here, which includes blocks, and signing and sending transactions."
-    REGISTER in3_register_eth_basic
-  
-    SOURCES 
-      eth_basic.c
-      eth_getTransaction.c
-      eth_getBlock.c
-      eth_account.c
-      eth_getLog.c
-      trie.c
-      filter.c
-      sign_tx.c
 
-    DEPENDS 
-      eth_nano
-  )
-endif()
+add_static_library(
+  NAME     eth_basic 
+  DESCR    "the basic ethereum rpc-functions are handled here, which includes blocks, and signing and sending transactions."
+  REGISTER in3_register_eth_basic
+  
+  SOURCES 
+    eth_basic.c
+    eth_getTransaction.c
+    eth_getBlock.c
+    eth_account.c
+    eth_getLog.c
+    trie.c
+    filter.c
+    sign_tx.c
+
+  DEPENDS 
+    eth_nano
+)
 

@@ -68,6 +68,11 @@ if (CRYPTOCELL)
   set(BTC false)
 endif()
 
+# Won't build static libraries as we don't have objects
+if (ZEPHYR_BASE)
+  set(IN3_LIB false)
+endif()
+
 if(WASM)
   set(TRANSPORTS false)
   set(IN3_LIB false)

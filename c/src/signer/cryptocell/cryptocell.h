@@ -36,7 +36,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <cryptocell_signer.h>
 #include <hw_unique_key.h>
 #include <nrf_cc3xx_platform_defines.h>
 #include <nrf_cc3xx_platform_kmu.h>
@@ -191,13 +190,6 @@ int destroy_key(uint8_t* key);
  * @return int
  */
 int generate_pk_keypair_ecdsa_sha256(uint8_t* pk_key_buf, uint8_t* pub_key_buf);
-
-/**
- * @brief Set the up cryptocell object
- *
- * @param info
- */
-int register_cryptocell_cbk(cryptocell_cbks_t* cbks);
 
 /**
  * @brief

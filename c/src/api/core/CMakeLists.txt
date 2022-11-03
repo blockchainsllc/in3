@@ -32,21 +32,17 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if (ZEPHYR_BASE)
-    add_library(core_api STATIC core_api.c)
-    add_dependencies(core_api zephyr_interface core api_utils)
-else()
-    add_static_library(
-    NAME     core_api 
-    REGISTER in3_register_core_api
-    OPTION   CORE_API
-    DESCR    "Util-Functions which are chain-independend, like hashing and en- or decoding are managed by this module."
-    SOURCES 
-        core_api.c 
 
-    DEPENDS 
-        core
-        api_utils
-    )
-endif()
 
+add_static_library(
+  NAME     core_api 
+  REGISTER in3_register_core_api
+  OPTION   CORE_API
+  DESCR    "Util-Functions which are chain-independend, like hashing and en- or decoding are managed by this module."
+  SOURCES 
+    core_api.c 
+
+  DEPENDS 
+    core
+    api_utils
+)

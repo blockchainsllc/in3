@@ -32,18 +32,12 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if (ZEPHYR_BASE)
-  add_library(recorder STATIC recorder.c)
-  add_dependencies(recorder zephyr_interface)
-else()
-  add_static_library(
-    NAME     recorder
-    DESCR    "a simple extension recording all http-requests and cache-calls in order to replay the a request in the cmd."
-    SOURCES 
-      recorder.c
-    DEPENDS 
-      core    
-  )
-endif()
 
-
+add_static_library(
+  NAME     recorder
+  DESCR    "a simple extension recording all http-requests and cache-calls in order to replay the a request in the cmd."
+  SOURCES 
+    recorder.c
+  DEPENDS 
+    core
+)

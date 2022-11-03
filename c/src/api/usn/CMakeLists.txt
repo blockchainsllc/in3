@@ -31,18 +31,14 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (ZEPHYR_BASE)
-  add_library(usn_api STATIC usn_api.c)
-  add_dependencies(usn_api zephyr_interface core)
-else()
-  add_static_library(
-    NAME     usn_api
-    DESCR    " a simple module for handling USN-Requests"
 
-    SOURCES 
-      usn_api.c 
+add_static_library(
+  NAME     usn_api
+  DESCR    " a simple module for handling USN-Requests"
+  
+  SOURCES 
+    usn_api.c 
 
-    DEPENDS 
-      core    
-  )
-endif()
+  DEPENDS 
+    core
+)
