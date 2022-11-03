@@ -131,8 +131,7 @@ static psa_key_attributes_t set_psa_attr(key_type_t key_type);
  *
  * @return psa_status_t
  */
-psa_status_t
-generate_random_vector(void);
+psa_status_t generate_random_vector(void);
 
 /**
  * @brief
@@ -190,16 +189,6 @@ int destroy_key(uint8_t* key);
  * @return int
  */
 int generate_pk_keypair_ecdsa_sha256(uint8_t* pk_key_buf, uint8_t* pub_key_buf);
-
-/**
- * @brief
- *
- * @param key_pair_handle
- * @param pub_key
- * @param pub_key_size
- * @return int
- */
-static int export_public_key_keypair(psa_key_id_t* key_pair_handle, uint8_t* pub_key, size_t pub_key_size);
 
 /**
  * @brief
