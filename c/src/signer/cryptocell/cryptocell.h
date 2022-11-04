@@ -31,6 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+
 #ifndef CRYPTOCELL_HANDLER_H
 #define CRYPTOCELL_HANDLER_H
 #ifdef __cplusplus
@@ -124,7 +125,7 @@ int write_random_key_kmu(void);
  * @param attributes
  * @param psa_attr
  */
-static psa_key_attributes_t set_psa_attr(key_type_t key_type);
+psa_key_attributes_t set_psa_attr(key_type_t key_type);
 
 /**
  * @brief

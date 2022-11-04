@@ -32,6 +32,11 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+// @PUBLIC_HEADER
+/** @file
+ * activate cryptocell-signer
+ * */
+
 #ifndef CRYPTOCELL_SIGNER_H
 #define CRYPTOCELL_SIGNER_H
 #ifdef __cplusplus

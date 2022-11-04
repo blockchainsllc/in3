@@ -118,7 +118,7 @@ int write_random_key_kmu(void) {
 }
 
 /** Set attributes for the storage key */
-static psa_key_attributes_t set_psa_attr(key_type_t key_type) {
+psa_key_attributes_t set_psa_attr(key_type_t key_type) {
   /* Configure the key attributes */
   psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
   switch (key_type) {

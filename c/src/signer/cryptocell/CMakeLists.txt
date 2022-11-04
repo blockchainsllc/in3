@@ -39,5 +39,6 @@ if (ZEPHYR_BASE)
     zephyr_library_compile_definitions(${definitions})
     zephyr_interface_library_named(cryptocell)
     zephyr_library_sources(cryptocell.c cryptocell_signer.c)
+    zephyr_library_link_libraries(cryptocell core crypto)
 endif()
 
