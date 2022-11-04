@@ -171,19 +171,6 @@ docker:
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
 
-zephyr-cryptocell:
-  image: docker.slock.it/build-images/cmake:nrf-connect-sdk
-  needs: []
-  stage: build
-  script:
-    - mkdir build
-    - cd build
-    - cmake -DCRYPTOCELL=true -DBOARD=nrf5340dk_nrf5340_cpuapp -DARM_MBEDTLS_PATH=/ncs/mbedtls/ -DCMD=false  -DTRANSPORTS=false -DNODESELECT_DEF_WL=false -DUSE_SCRYPT=false -DTHREADSAFE=false -DCMAKE_BUILD_TYPE=Release -DZKSYNC=false -DBASE64=false -DIPFS=false -DMULTISIG=false -DPK_SIGNER=false -DSOL=false -DBTC=false -DIN3API=false -DCMAKE_EXPORT_COMPILE_COMMANDS=true ../c/test/qemu/cryptocell/
-    - make -j
-  artifacts:
-    paths:
-      - build
-
 # ##### test ######
 
 test_c:
@@ -216,6 +203,19 @@ test_rpc:
   script:
     - cd scripts/generator; npm i && cd ../..
     - find c/src -name 'rpc.yml' | xargs node scripts/generator/validate_schema.js
+
+test_zephyr_cryptocell:
+  image: docker.slock.it/build-images/cmake:nrf-connect-sdk
+  needs: []
+  stage: test
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DCRYPTOCELL=true -DBOARD=nrf5340dk_nrf5340_cpuapp -DARM_MBEDTLS_PATH=/ncs/mbedtls/ -DCMD=false  -DTRANSPORTS=false -DNODESELECT_DEF_WL=false -DUSE_SCRYPT=false -DTHREADSAFE=false -DCMAKE_BUILD_TYPE=Release -DZKSYNC=false -DBASE64=false -DIPFS=false -DMULTISIG=false -DPK_SIGNER=false -DSOL=false -DBTC=false -DIN3API=false -DCMAKE_EXPORT_COMPILE_COMMANDS=true ../c/test/qemu/zephyr-cryptocell/
+    - make -j
+  artifacts:
+    paths:
+      - build
 
 test_qemu_cortexm3:
   image: docker.io/zephyrprojectrtos/zephyr-build:v0.23.1
