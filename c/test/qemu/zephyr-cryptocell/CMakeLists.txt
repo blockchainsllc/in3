@@ -8,6 +8,23 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/arm-toolchain.cmake)
 
 project(demo)
 
+# set flags
+set(CRYPTOCELL true)
+set(RECORDER false)
+set(CMD false)
+set(TRANSPORTS false)
+set(NODESELECT_DEF_WL false)
+set(USE_SCRYPT false)
+set(ZKSYNC false)
+set(BASE64 false)
+set(IPFS false)
+set(MULTISIG false)
+set(SOL false)
+set(BTC false)
+set(ETH_FULL false)
+set(ED25519 false)
+set(RPC_ONLY in3_signData)
+
 set(IN3_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(IN3_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(IN3_LIB_DIR ${IN3_BUILD_DIR}/in3/lib)
