@@ -211,7 +211,7 @@ test_zephyr_cryptocell:
   script:
     - mkdir build
     - cd build
-    - cmake -DCRYPTOCELL=true -DBOARD=nrf5340dk_nrf5340_cpuapp -DARM_MBEDTLS_PATH=/ncs/mbedtls/ -DCMD=false  -DTRANSPORTS=false -DNODESELECT_DEF_WL=false -DUSE_SCRYPT=false -DTHREADSAFE=false -DCMAKE_BUILD_TYPE=Release -DZKSYNC=false -DBASE64=false -DIPFS=false -DMULTISIG=false -DPK_SIGNER=false -DSOL=false -DBTC=false -DIN3API=false -DCMAKE_EXPORT_COMPILE_COMMANDS=true ../c/test/qemu/zephyr-cryptocell/
+    - cmake -DCRYPTOCELL=true -DBOARD=nrf5340dk_nrf5340_cpuapp -DARM_MBEDTLS_PATH=/ncs/mbedtls/ -DCMD=false  -DTRANSPORTS=false -DNODESELECT_DEF_WL=false -DUSE_SCRYPT=false -DTHREADSAFE=false -DZKSYNC=false -DBASE64=false -DIPFS=false -DMULTISIG=false -DSOL=false -DBTC=false -DCMAKE_EXPORT_COMPILE_COMMANDS=true ../c/test/qemu/zephyr-cryptocell/
     - make -j
   artifacts:
     paths:
