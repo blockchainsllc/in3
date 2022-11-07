@@ -31,14 +31,15 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (ZEPHYR_BASE)
-    zephyr_get_include_directories_for_lang_as_string(C includes STRIP_PREFIX)
-    zephyr_get_compile_definitions_for_lang_as_string(C definitions)
-    zephyr_get_compile_options_for_lang_as_string(C options)
-    zephyr_library_include_directories(${includes})
-    zephyr_library_compile_definitions(${definitions})
-    zephyr_interface_library_named(cryptocell)
-    zephyr_library_sources(cryptocell.c cryptocell_signer.c)
-    zephyr_library_link_libraries(cryptocell core crypto)
-endif()
 
+add_static_library(
+  NAME     cryptocell 
+  DESCR    "This module contains a Signer-Implementation and functions for storing and signing with private keys using cryptocell. This is usually only available on arm-based embedded devices."
+  SOURCES 
+    cryptocell.c
+    cryptocell_signer.c
+
+  DEPENDS 
+    core
+    crypto
+)
