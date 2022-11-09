@@ -138,8 +138,9 @@ in3_ret_t send_http_request(
  * sends a subrequest, which will be identified by a hash from method and params, which allows even modification of the original request
  */
 NONULL_FOR((1, 2, 3, 5))
-in3_ret_t        req_send_id_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
-NONULL in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, in3_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, sb_t* tx_output);
+in3_ret_t req_send_id_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child);
+NONULL_FOR((1, 5))
+in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t type, in3_curve_type_t curve_type, d_payload_type_t pl_type, bytes_t* signature, bytes_t raw_data, bytes_t from, d_token_t* meta, sb_t* tx_output);
 NONULL in3_ret_t req_require_pub_key(in3_req_t* ctx, in3_curve_type_t curve_type, in3_convert_type_t convert_type, bytes_t from, uint8_t dst[64]); // Attention: dst buffer MUST have at least 64 bytes allocated
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
