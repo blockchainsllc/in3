@@ -514,10 +514,6 @@ typedef struct {
   char*         method;                /**< the rpc-method to verify agains */
 } in3_vctx_t;
 
-#ifdef LOGGING
-NONULL
-#endif
-
 // ---- PLGN_ACT_PAY_FOLLOWUP -----------
 
 typedef struct {
