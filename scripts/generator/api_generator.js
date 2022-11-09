@@ -683,9 +683,7 @@ function createTest(descr, method, tests, tc) {
         success: tc.expected_failure ? false : true,
         config: tc.config || {},
         response: asArray(tc.mockedResponses)
-            .map(r =>
-                (r.req.body && r.req.body.params) || r.res.result === undefined ? r.res : r.res.result
-            )
+            .map(r => r.res)
     });
 }
 function getResult(x) {

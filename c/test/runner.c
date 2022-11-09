@@ -190,7 +190,7 @@ static in3_ret_t send_mock(void* plugin_data, in3_plugin_act_t action, void* plu
   }
 
   if (!_tmp_bin) {
-    char* res = sprintx(strcmp(d_get_string(req->req->requests[0], key("method")), "in3_http") == 0 || req->req->len > 1 ? "%j" : "[%j]", d_get_at(_tmp_responses, _tmp_pos));
+    char* res = sprintx("%j", d_get_at(_tmp_responses, _tmp_pos));
     if (fuzz_pos >= 0)
       mod_hex(res + fuzz_pos + 1);
     response = bytes((uint8_t*) res, strlen(res));

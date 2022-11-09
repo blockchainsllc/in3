@@ -27,12 +27,10 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
 
     rec.mock_count++;
     sb_printx(&rec.mocks, "\n        - req:\n            method: %s\n            url: %s", req->method, req->urls[0]);
-    bool is_array = true;
     if (req->payload_len) {
       json_ctx_t* ctx = parse_json(req->payload);
-      is_array        = d_type(ctx->result) == T_ARRAY && d_len(ctx->result) != 1;
       sb_add_chars(&rec.mocks, "\n            body:");
-      sb_to_yaml(&rec.mocks, is_array ? ctx->result : d_get_at(ctx->result, 0), 7, false);
+      sb_to_yaml(&rec.mocks, ctx->result, 7, false);
       json_free(ctx);
     }
     in3_response_t* r = req->req->raw_response;
@@ -41,7 +39,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
       json_ctx_t* ctx  = parse_json(data);
       if (ctx) {
         sb_printx(&rec.mocks, "\n          res:");
-        sb_to_yaml(&rec.mocks, is_array ? ctx->result : d_get_at(ctx->result, 0), 6, false);
+        sb_to_yaml(&rec.mocks, ctx->result, 6, false);
         json_free(ctx);
       }
       else
