@@ -32,20 +32,14 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-cmake_minimum_required(VERSION 3.5.1)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
+add_static_library(
+  NAME     cryptocell 
+  DESCR    "This module contains a Signer-Implementation and functions for storing and signing with private keys using cryptocell. This is usually only available on arm-based embedded devices."
+  SOURCES 
+    cryptocell.c
+    cryptocell_signer.c
 
-if (CRYPTOCELL)
-    find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-endif()
-
-project(in3)
-
-include("c/options.cmake")
-
-# build tests
-if(TEST)
-    add_subdirectory(c/test)
-endif(TEST)
-
-add_subdirectory(c)
+  DEPENDS 
+    core
+    crypto
+)

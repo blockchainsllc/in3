@@ -10,14 +10,19 @@ macro(add_static_library)
     endif()
 
     if(${${_LIB_OPTION}})
-        # create objects
-        add_library(${_LIB_NAME}_o OBJECT ${_LIB_SOURCES})
+        if (ZEPHYR_BASE)
+            add_library(${_LIB_NAME} STATIC ${_LIB_SOURCES})
+            add_dependencies(${_LIB_NAME} zephyr_interface ${_LIB_DEPENDS})
+        else ()
+            # create objects
+            add_library(${_LIB_NAME}_o OBJECT ${_LIB_SOURCES})
 
-        # add dependency
-        add_library(${_LIB_NAME} STATIC $<TARGET_OBJECTS:${_LIB_NAME}_o>)
+            # add dependency
+            add_library(${_LIB_NAME} STATIC $<TARGET_OBJECTS:${_LIB_NAME}_o>)
 
-        target_compile_definitions(${_LIB_NAME}_o PRIVATE)
-        target_link_libraries(${_LIB_NAME} ${_LIB_DEPENDS})
+            target_compile_definitions(${_LIB_NAME}_o PRIVATE)
+            target_link_libraries(${_LIB_NAME} ${_LIB_DEPENDS})
+        endif()
         get_property(RPC_YML_TMP GLOBAL PROPERTY RPC_YML)
         get_property(tmp GLOBAL PROPERTY IN3_OBJECTS)
         set_property(GLOBAL PROPERTY IN3_OBJECTS ${tmp} $<TARGET_OBJECTS:${_LIB_NAME}_o>)

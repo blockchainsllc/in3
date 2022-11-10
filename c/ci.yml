@@ -204,6 +204,19 @@ test_rpc:
     - cd scripts/generator; npm i && cd ../..
     - find c/src -name 'rpc.yml' | xargs node scripts/generator/validate_schema.js
 
+test_zephyr_cryptocell:
+  image: docker.slock.it/build-images/cmake:nrf-connect-sdk
+  needs: []
+  stage: test
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DCRYPTOCELL=true  -DRPC_ONLY=in3_signData -DED25519=false -DBOARD=nrf5340dk_nrf5340_cpuapp -DARM_MBEDTLS_PATH=/ncs/mbedtls/ ../c/test/qemu/zephyr-cryptocell/
+    - make -j
+  artifacts:
+    paths:
+      - build
+
 test_qemu_cortexm3:
   image: docker.io/zephyrprojectrtos/zephyr-build:v0.23.1
   stage: test
