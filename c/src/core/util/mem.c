@@ -114,6 +114,13 @@ void _free_(void* ptr) {
 #endif
 }
 
+size_t _strnlen(const char* str, size_t maxlen) {
+  if (!str) return 0;
+  for (size_t n = 0; n <= maxlen; n++) {
+    if (str[n] == 0) return n;
+  }
+  return maxlen;
+}
 #ifdef TEST
 
 static int mem_count = 0;
