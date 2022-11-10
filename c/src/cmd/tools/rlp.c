@@ -74,7 +74,7 @@ char* read_from_stdin(FILE* file) {
     allocated        = new_alloc;
   }
 
-  if (len && buffer[len - 1] == '\n') buffer[len - 1] = 0;
+  if (len && buffer[len - 1] == '\n') buffer[len - 1] = 0; // NOSONAR -  len already checked
 
   buffer[len] = 0;
   if (file != stdin) fclose(file);

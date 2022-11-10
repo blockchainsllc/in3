@@ -67,7 +67,7 @@ bytes_t read_from_stdin(FILE* file) {
     allocated        = new_alloc;
   }
 
-  buffer[len] = 0;
+  buffer[len] = 0; // NOSONAR - len has already be checked
   if (file != stdin) fclose(file);
   return bytes(buffer, len);
 }

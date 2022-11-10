@@ -242,7 +242,7 @@ bytes_t readFile(FILE* f) {
     buffer           = _realloc(buffer, new_alloc, allocated);
     allocated        = new_alloc;
   }
-  buffer[len] = 0;
+  buffer[len] = 0; // NOSONAR - len has already checked by reallocating
   return bytes(buffer, len);
 }
 
