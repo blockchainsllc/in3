@@ -90,6 +90,7 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
     if (dec[i] != '0')
       return req_set_error(ctx, "The value (mantissa) can not be packed", IN3_EINVAL); // its an error
   }
+  if (cl == -1) return req_set_error(ctx, "The value (mantissa) can not be packed", IN3_EINVAL);
   dec[cl]    = 0;                                                                    // terminate the string after the value cutting off all zeros
   uint64_t c = strtoull(dec, NULL, 10);                                              // and convert this value
   if (c == ULLONG_MAX || bitlen(c) > mantissa_len)                                   // if the value can be represented with the max bits
