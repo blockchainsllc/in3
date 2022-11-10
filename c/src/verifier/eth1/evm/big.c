@@ -183,17 +183,17 @@ int big_mul(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res, wlen_t m
   uint32_t    val = 0;
   int_fast8_t i = la + lb, xs = la - 1, ys, x, y;
 
-  for (ys = lb - 1; ys >= 0; val >>= 8, ys--) {
+  for (ys = lb - 1; ys >= 0 && i; val >>= 8, ys--) {
     for (x = xs, y = ys; x >= 0 && y < lb; x--, y++) val += (uint32_t) a[x] * b[y];
     out[--i] = val & 0xFF;
   }
 
-  for (ys = 0, xs = la - 2; xs >= 0; xs--, val >>= 8) {
+  for (ys = 0, xs = la - 2; xs >= 0 && i; xs--, val >>= 8) {
     for (x = xs, y = ys; x >= 0 && y < lb; x--, y++) val += (uint32_t) a[x] * b[y];
     out[--i] = val & 0xFF;
   }
-  out[--i] = val & 0xFF;
-  i        = la + lb;
+  if (i) out[--i] = val & 0xFF;
+  i = la + lb;
   optimize_len(p, i);
   if (i > max) {
     memcpy(res, p + i - max, max);
@@ -438,7 +438,6 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
     *qlen = j + 1;
   */
   }
-  return 0;
 }
 
 int big_div(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* res) {

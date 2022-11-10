@@ -276,7 +276,7 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
   }
 
   // determine from-address, but only if we have all the fields or a signed tx
-  if (len && !fields[len]) {
+  if (len && len < 20 && !fields[len]) {
     uint8_t pub[65];                                  // pub key-data
     bytes_t last, v;                                  // bytes structs
     rlp_decode(&data, len - 1, &v);                   // get the s-field,

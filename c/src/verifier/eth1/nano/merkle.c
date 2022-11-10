@@ -37,18 +37,18 @@
 #include "../../../core/util/utils.h"
 #include <stdint.h>
 #include <string.h>
-//#include <zephyr.h>
+// #include <zephyr.h>
 
-//#include "fsm.h"
+// #include "fsm.h"
 #include "merkle.h"
 #include "rlp.h"
 
 static int nibble_len(uint8_t* a) {
   int i = 0;
   for (i = 0;; i++) {
-    if (a[i] == 0xFF) return i;
+    if (a[i] == 0xFF) break;
   }
-  return -1;
+  return i;
 }
 
 int trie_matching_nibbles(uint8_t* a, uint8_t* b) {
@@ -136,7 +136,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
           node.len = val.data + val.len - node.data;
 
           // check the embedded node
-          return check_node(&node, key, expectedValue, *(key + 1) == NULL, last_value, next_hash, depth);
+          return check_node(&node, key, expectedValue, key && *key && *(key + 1) == NULL, last_value, next_hash, depth);
         }
         else if (**key == 0xFF) {
           // readed the end, if this is the last node, it is ok.
@@ -154,7 +154,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
       last_value->data = val.data;
       last_value->len  = val.len;
       memcpy(next_hash, val.data, (val.len >= 32) ? 32 : val.len);
-      return 1;
+      break;
 
     default: // empty node
       // only if we expect no value we accept a empty node as last node

@@ -363,8 +363,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
         f->last_block = blkno;
         return IN3_OK;
       }
-    default:
-      return req_set_error(ctx, "unsupported filter type", IN3_ENOTSUP);
+    default: break;
   }
-  return IN3_OK;
+  return req_set_error(ctx, "unsupported filter type", IN3_ENOTSUP);
 }

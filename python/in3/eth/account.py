@@ -18,7 +18,7 @@ class EthAccountApi:
 
     def _create_account(self, secret: str) -> Account:
         if not secret.startswith('0x') or not len(secret) == 66:
-            TypeError('Secret must be a 256 bit hexadecimal.')
+            raise TypeError('Secret must be a 256 bit hexadecimal.')
         address = self._runtime.call(In3Methods.PK_2_ADDRESS, secret)
         account = self._factory.get_account(address, int(secret, 16))
         return account

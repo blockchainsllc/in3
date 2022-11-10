@@ -425,7 +425,7 @@ in3_ret_t handle_zksync(void* conf, in3_plugin_act_t action, void* arg) {
     case PLGN_ACT_ADD_PAYLOAD: return zksync_add_payload(arg);
     case PLGN_ACT_PAY_FOLLOWUP: return zksync_check_payment(conf, arg);
     case PLGN_ACT_INIT: return zksync_init(conf, arg);
-    default: return IN3_ENOTSUP;
+    default: break;
   }
   return IN3_EIGNORE;
 }
