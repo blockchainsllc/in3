@@ -430,7 +430,7 @@ static NONULL int parse_key(json_ctx_t* jp) {
 
 static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
   uint64_t value = 0; // the resulting value (if it is a integer)
-  jp->c--;            // we also need to include hte previous character!
+  jp->c--;            // NOSONAR -> we also need to include the previous character!
 
   for (int i = 0; i < 21; i++) {             // we are not accepting more than 20 characters, since a uint64 can hold up to 18446744073709552000 (which has 20 digits)
     if (jp->c[i] >= '0' && jp->c[i] <= '9')  // as long as this is a digit
